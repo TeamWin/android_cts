@@ -18,6 +18,7 @@ package android.gputools.cts;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.IDeviceTest;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import java.util.Scanner;
 
@@ -31,23 +32,9 @@ import org.junit.runner.RunWith;
  * Tests that exercise Rootless GPU Debug functionality supported by the loader.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
+public class CtsRootlessGpuDebugHostTest extends BaseHostJUnit4Test implements IDeviceTest {
 
     public static final String TAG = "RootlessGpuDebugDeviceActivity";
-
-    /**
-     * A reference to the device under test.
-     */
-    private ITestDevice mDevice;
-
-    public void setDevice(ITestDevice device) {
-        mDevice = device;
-    }
-
-    @Override
-    public ITestDevice getDevice() {
-        return mDevice;
-    }
 
     // This test ensures that the Vulkan and GLES loaders can use Settings to load layers
     // from the base directory of debuggable applications.  Is also tests several
@@ -115,6 +102,10 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     private static final String RELEASE_APP = "android.rootlessgpudebug.RELEASE.app";
     private static final String LAYERS_APP = "android.rootlessgpudebug.LAYERS.app";
     private static final String GLES_LAYERS_APP = "android.rootlessgpudebug.GLES_LAYERS.app";
+    private static final String DEBUG_APK = "CtsGpuToolsRootlessGpuDebugApp-DEBUG.apk";
+    private static final String RELEASE_APK = "CtsGpuToolsRootlessGpuDebugApp-RELEASE.apk";
+    private static final String LAYERS_APK = "CtsGpuToolsRootlessGpuDebugApp-LAYERS.apk";
+    private static final String GLES_LAYERS_APK = "CtsGpuToolsRootlessGpuDebugApp-GLES_LAYERS.apk";
     private static final String GLES_LAYER_A = "glesLayerA";
     private static final String GLES_LAYER_B = "glesLayerB";
     private static final String GLES_LAYER_C = "glesLayerC";
@@ -139,14 +130,14 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
      */
     private String getTime() throws Exception {
         // logcat will accept "MM-DD hh:mm:ss.mmm"
-        return mDevice.executeShellCommand("date +\"%m-%d %H:%M:%S.%3N\"");
+        return getDevice().executeShellCommand("date +\"%m-%d %H:%M:%S.%3N\"");
     }
 
     /**
      * Apply a setting and ensure it sticks before continuing
      */
     private void applySetting(String setting, String value) throws Exception {
-        mDevice.executeShellCommand("settings put global " + setting + " " + value);
+        getDevice().executeShellCommand("settings put global " + setting + " " + value);
 
         long hostStartTime = System.currentTimeMillis();
         while (((System.currentTimeMillis() - hostStartTime) < SETTING_APPLY_TIMEOUT_MS)) {
@@ -155,7 +146,7 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
             Thread.sleep(1000);
 
             // Read it back, make sure it has applied
-            String returnedValue = mDevice.executeShellCommand("settings get global " + setting);
+            String returnedValue = getDevice().executeShellCommand("settings get global " + setting);
             if ((returnedValue != null) && (returnedValue.trim().equals(value))) {
                 return;
             }
@@ -170,7 +161,7 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
      * Delete a setting and ensure it goes away before continuing
      */
     private void deleteSetting(String setting) throws Exception {
-        mDevice.executeShellCommand("shell settings delete global " + setting);
+        getDevice().executeShellCommand("shell settings delete global " + setting);
 
         long hostStartTime = System.currentTimeMillis();
         while (((System.currentTimeMillis() - hostStartTime) < SETTING_APPLY_TIMEOUT_MS)) {
@@ -179,7 +170,7 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
             Thread.sleep(1000);
 
             // Read it back, make sure it is gone
-            String returnedValue = mDevice.executeShellCommand("settings get global " + setting);
+            String returnedValue = getDevice().executeShellCommand("settings get global " + setting);
             if ((returnedValue == null) ||
                 (returnedValue.trim().isEmpty()) ||
                 (returnedValue.trim().equals("null"))) {
@@ -198,16 +189,16 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     private void setupLayer(String layer, String layerApp) throws Exception {
 
         // We use the LAYERS apk to facilitate getting layers onto the device for mixing and matching
-        String libPath = mDevice.executeAdbCommand("shell", "pm", "path", layerApp);
+        String libPath = getDevice().executeAdbCommand("shell", "pm", "path", layerApp);
         libPath = libPath.replaceAll("package:", "");
         libPath = libPath.replaceAll("base.apk", "");
         libPath = removeWhitespace(libPath);
         libPath += "lib/";
 
         // Use find to get the .so so we can ignore ABI
-        String layerPath = mDevice.executeAdbCommand("shell", "find", libPath + " -name " + layer);
+        String layerPath = getDevice().executeAdbCommand("shell", "find", libPath + " -name " + layer);
         layerPath = removeWhitespace(layerPath);
-        mDevice.executeAdbCommand("shell", "cp", layerPath + " /data/local/tmp");
+        getDevice().executeAdbCommand("shell", "cp", layerPath + " /data/local/tmp");
     }
 
     /**
@@ -245,7 +236,7 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
             // Pull the logcat since the app started, filter for tags
             // This command should look something like this:
             // adb logcat -d -t '03-27 21:35:05.392' -s "RootlessGpuDebugDeviceActivity,nullLayerC"
-            String logcat = mDevice.executeShellCommand(
+            String logcat = getDevice().executeShellCommand(
                     "logcat -d " +
                     "-t '" + removeWhitespace(appStartTime) + "' " +
                     "-s \"" + tag + "\"");
@@ -278,28 +269,32 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
      */
     @After
     public void cleanup() throws Exception {
-        mDevice.executeAdbCommand("shell", "am", "force-stop", DEBUG_APP);
-        mDevice.executeAdbCommand("shell", "am", "force-stop", RELEASE_APP);
-        mDevice.executeAdbCommand("shell", "rm", "-f", "/data/local/tmp/" + LAYER_A_LIB);
-        mDevice.executeAdbCommand("shell", "rm", "-f", "/data/local/tmp/" + LAYER_B_LIB);
-        mDevice.executeAdbCommand("shell", "rm", "-f", "/data/local/tmp/" + LAYER_C_LIB);
-        mDevice.executeAdbCommand("shell", "rm", "-f", "/data/local/tmp/" + GLES_LAYER_A_LIB);
-        mDevice.executeAdbCommand("shell", "rm", "-f", "/data/local/tmp/" + GLES_LAYER_B_LIB);
-        mDevice.executeAdbCommand("shell", "rm", "-f", "/data/local/tmp/" + GLES_LAYER_C_LIB);
-        mDevice.executeAdbCommand("shell", "settings", "delete", "global", "enable_gpu_debug_layers");
-        mDevice.executeAdbCommand("shell", "settings", "delete", "global", "gpu_debug_app");
-        mDevice.executeAdbCommand("shell", "settings", "delete", "global", "gpu_debug_layers");
-        mDevice.executeAdbCommand("shell", "settings", "delete", "global", "gpu_debug_layers_gles");
-        mDevice.executeAdbCommand("shell", "settings", "delete", "global", "gpu_debug_layer_app");
-        mDevice.executeAdbCommand("shell", "setprop", "debug.vulkan.layers", "\'\'");
-        mDevice.executeAdbCommand("shell", "setprop", "debug.gles.layers", "\'\'");
+        getDevice().executeAdbCommand("shell", "am", "force-stop", DEBUG_APP);
+        getDevice().executeAdbCommand("shell", "am", "force-stop", RELEASE_APP);
+        getDevice().executeAdbCommand("shell", "rm", "-f", "/data/local/tmp/" + LAYER_A_LIB);
+        getDevice().executeAdbCommand("shell", "rm", "-f", "/data/local/tmp/" + LAYER_B_LIB);
+        getDevice().executeAdbCommand("shell", "rm", "-f", "/data/local/tmp/" + LAYER_C_LIB);
+        getDevice().executeAdbCommand("shell", "rm", "-f", "/data/local/tmp/" + GLES_LAYER_A_LIB);
+        getDevice().executeAdbCommand("shell", "rm", "-f", "/data/local/tmp/" + GLES_LAYER_B_LIB);
+        getDevice().executeAdbCommand("shell", "rm", "-f", "/data/local/tmp/" + GLES_LAYER_C_LIB);
+        getDevice().executeAdbCommand("shell", "settings", "delete", "global", "enable_gpu_debug_layers");
+        getDevice().executeAdbCommand("shell", "settings", "delete", "global", "gpu_debug_app");
+        getDevice().executeAdbCommand("shell", "settings", "delete", "global", "gpu_debug_layers");
+        getDevice().executeAdbCommand("shell", "settings", "delete", "global", "gpu_debug_layers_gles");
+        getDevice().executeAdbCommand("shell", "settings", "delete", "global", "gpu_debug_layer_app");
+        getDevice().executeAdbCommand("shell", "setprop", "debug.vulkan.layers", "\'\'");
+        getDevice().executeAdbCommand("shell", "setprop", "debug.gles.layers", "\'\'");
     }
 
     /**
-     * Clean up before starting any tests
+     * Clean up before starting any tests, and ensure supporting packages are installed
      */
     @Before
     public void init() throws Exception {
+        installPackage(DEBUG_APK);
+        installPackage(RELEASE_APK);
+        installPackage(LAYERS_APK);
+        installPackage(GLES_LAYERS_APK);
         if (!initialized) {
             cleanup();
             initialized = true;
@@ -324,17 +319,17 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
 
 
         // Copy them over to our DEBUG app
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|",
-                "run-as", DEBUG_APP, "--user", Integer.toString(mDevice.getCurrentUser()),
+        getDevice().executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|",
+                "run-as", DEBUG_APP, "--user", Integer.toString(getDevice().getCurrentUser()),
                 "sh", "-c", "\'cat", ">", LAYER_A_LIB, ";", "chmod", "700", LAYER_A_LIB + "\'");
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_B_LIB, "|",
-                "run-as", DEBUG_APP, "--user", Integer.toString(mDevice.getCurrentUser()),
+        getDevice().executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_B_LIB, "|",
+                "run-as", DEBUG_APP, "--user", Integer.toString(getDevice().getCurrentUser()),
                 "sh", "-c", "\'cat", ">", LAYER_B_LIB, ";", "chmod", "700", LAYER_B_LIB + "\'");
 
 
         // Kick off our DEBUG app
         String appStartTime = getTime();
-        mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
+        getDevice().executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
 
         // Check that both layers were loaded, in the correct order
         String searchStringA = "nullCreateInstance called in " + LAYER_A;
@@ -364,13 +359,13 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         setupLayer(LAYER_A_LIB, LAYERS_APP);
 
         // Attempt to copy them over to our RELEASE app (this should fail)
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|",
-                "run-as", RELEASE_APP, "--user", Integer.toString(mDevice.getCurrentUser()),
+        getDevice().executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|",
+                "run-as", RELEASE_APP, "--user", Integer.toString(getDevice().getCurrentUser()),
                 "sh", "-c", "\'cat", ">", LAYER_A_LIB, ";", "chmod", "700", LAYER_A_LIB + "\'", "||", "echo", "run-as", "failed");
 
         // Kick off our RELEASE app
         String appStartTime = getTime();
-        mDevice.executeAdbCommand("shell", "am", "start", "-n", RELEASE_APP + "/" + ACTIVITY);
+        getDevice().executeAdbCommand("shell", "am", "start", "-n", RELEASE_APP + "/" + ACTIVITY);
 
         // Ensure we don't load the layer in base dir
         String searchStringA = LAYER_A_NAME + "loaded";
@@ -394,13 +389,13 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         setupLayer(LAYER_A_LIB, LAYERS_APP);
 
         // Copy it over to our DEBUG app
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|",
-                "run-as", DEBUG_APP, "--user", Integer.toString(mDevice.getCurrentUser()),
+        getDevice().executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|",
+                "run-as", DEBUG_APP, "--user", Integer.toString(getDevice().getCurrentUser()),
                 "sh", "-c", "\'cat", ">", LAYER_A_LIB, ";", "chmod", "700", LAYER_A_LIB + "\'");
 
         // Kick off our DEBUG app
         String appStartTime = getTime();
-        mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
+        getDevice().executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
 
         // Ensure we don't load the layer in base dir
         String searchStringA = LAYER_A_NAME + "loaded";
@@ -424,13 +419,13 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         setupLayer(LAYER_A_LIB, LAYERS_APP);
 
         // Copy it over to our DEBUG app
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|",
-                "run-as", DEBUG_APP, "--user", Integer.toString(mDevice.getCurrentUser()),
+        getDevice().executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|",
+                "run-as", DEBUG_APP, "--user", Integer.toString(getDevice().getCurrentUser()),
                 "sh", "-c", "\'cat", ">", LAYER_A_LIB, ";", "chmod", "700", LAYER_A_LIB + "\'");
 
         // Kick off our DEBUG app
         String appStartTime = getTime();
-        mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
+        getDevice().executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
 
         // Ensure we don't load the layer in base dir
         String searchStringA = LAYER_A_NAME + "loaded";
@@ -454,13 +449,13 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         setupLayer(LAYER_A_LIB, LAYERS_APP);
 
         // Copy it over to our DEBUG app
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|",
-                "run-as", DEBUG_APP, "--user", Integer.toString(mDevice.getCurrentUser()),
+        getDevice().executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|",
+                "run-as", DEBUG_APP, "--user", Integer.toString(getDevice().getCurrentUser()),
                 "sh", "-c", "\'cat", ">", LAYER_A_LIB, ";", "chmod", "700", LAYER_A_LIB + "\'");
 
         // Kick off our DEBUG app
         String appStartTime = getTime();
-        mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
+        getDevice().executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
 
         // Ensure layerA is not loaded
         String searchStringA = "nullCreateInstance called in " + LAYER_A;
@@ -474,19 +469,19 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     @Test
     public void testSystemPropertyEnableVulkan() throws Exception {
 
-        // Set up layerA to be loaded, but not layerB or layerC
+        // Don't enable any layers via settings
         applySetting("enable_gpu_debug_layers", "1");
         applySetting("gpu_debug_app", RELEASE_APP);
         deleteSetting("gpu_debug_layers");
 
         // Enable layerC (which is packaged with the RELEASE app) with system properties
-        mDevice.executeAdbCommand("shell", "setprop", "debug.vulkan.layers " + LAYER_C_NAME);
+        getDevice().executeAdbCommand("shell", "setprop", "debug.vulkan.layers " + LAYER_C_NAME);
 
         // Kick off our RELEASE app
         String appStartTime = getTime();
-        mDevice.executeAdbCommand("shell", "am", "start", "-n", RELEASE_APP + "/" + ACTIVITY);
+        getDevice().executeAdbCommand("shell", "am", "start", "-n", RELEASE_APP + "/" + ACTIVITY);
 
-        // Check that both layers were loaded, in the correct order
+        // Check that only layerC was loaded
         String searchStringA = LAYER_A_NAME + "loaded";
         LogScanResult resultA = scanLog(TAG + "," + LAYER_A, searchStringA, appStartTime);
         Assert.assertFalse("LayerA was enumerated", resultA.found);
@@ -512,19 +507,19 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         setupLayer(LAYER_B_LIB, LAYERS_APP);
 
         // Copy them over to our DEBUG app
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|",
-                "run-as", DEBUG_APP, "--user", Integer.toString(mDevice.getCurrentUser()),
+        getDevice().executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|",
+                "run-as", DEBUG_APP, "--user", Integer.toString(getDevice().getCurrentUser()),
                 "sh", "-c", "\'cat", ">", LAYER_A_LIB, ";", "chmod", "700", LAYER_A_LIB + "\'");
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_B_LIB, "|",
-                "run-as", DEBUG_APP, "--user", Integer.toString(mDevice.getCurrentUser()),
+        getDevice().executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_B_LIB, "|",
+                "run-as", DEBUG_APP, "--user", Integer.toString(getDevice().getCurrentUser()),
                 "sh", "-c", "\'cat", ">", LAYER_B_LIB, ";", "chmod", "700", LAYER_B_LIB + "\'");
 
         // Enable layerB with system properties
-        mDevice.executeAdbCommand("shell", "setprop", "debug.vulkan.layers " + LAYER_B_NAME);
+        getDevice().executeAdbCommand("shell", "setprop", "debug.vulkan.layers " + LAYER_B_NAME);
 
         // Kick off our DEBUG app
         String appStartTime = getTime();
-        mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
+        getDevice().executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
 
         // Ensure only layerA is loaded
         String searchStringA = "nullCreateInstance called in " + LAYER_A;
@@ -552,7 +547,7 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
 
         // Kick off our DEBUG app
         String appStartTime = getTime();
-        mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
+        getDevice().executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
 
         // Check that our external layer was loaded
         String searchStringC = "nullCreateInstance called in " + LAYER_C;
@@ -578,16 +573,16 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         setupLayer(GLES_LAYER_B_LIB, GLES_LAYERS_APP);
 
         // Copy them over to our DEBUG app
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_A_LIB, "|",
-            "run-as", DEBUG_APP, "--user", Integer.toString(mDevice.getCurrentUser()),
+        getDevice().executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_A_LIB, "|",
+            "run-as", DEBUG_APP, "--user", Integer.toString(getDevice().getCurrentUser()),
             "sh", "-c", "\'cat", ">", GLES_LAYER_A_LIB, ";", "chmod", "700", GLES_LAYER_A_LIB + "\'");
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_B_LIB, "|",
-            "run-as", DEBUG_APP, "--user", Integer.toString(mDevice.getCurrentUser()),
+        getDevice().executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_B_LIB, "|",
+            "run-as", DEBUG_APP, "--user", Integer.toString(getDevice().getCurrentUser()),
             "sh", "-c", "\'cat", ">", GLES_LAYER_B_LIB, ";", "chmod", "700", GLES_LAYER_B_LIB + "\'");
 
         // Kick off our DEBUG app
         String appStartTime = getTime();
-        mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
+        getDevice().executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
 
         // Check that both layers were loaded, in the correct order
         String searchStringA = "glesLayer_eglChooseConfig called in " + GLES_LAYER_A;
@@ -618,12 +613,12 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         setupLayer(GLES_LAYER_A_LIB, GLES_LAYERS_APP);
 
         // Attempt to copy them over to our RELEASE app (this should fail)
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_A_LIB, "|", "run-as", RELEASE_APP,
+        getDevice().executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_A_LIB, "|", "run-as", RELEASE_APP,
                                    "sh", "-c", "\'cat", ">", GLES_LAYER_A_LIB, ";", "chmod", "700", GLES_LAYER_A_LIB + "\'", "||", "echo", "run-as", "failed");
 
         // Kick off our RELEASE app
         String appStartTime = getTime();
-        mDevice.executeAdbCommand("shell", "am", "start", "-n", RELEASE_APP + "/" + ACTIVITY);
+        getDevice().executeAdbCommand("shell", "am", "start", "-n", RELEASE_APP + "/" + ACTIVITY);
 
         // Ensure we don't load the layer in base dir
         String searchStringA = GLES_LAYER_A + " loaded";
@@ -647,12 +642,12 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         setupLayer(GLES_LAYER_A_LIB, GLES_LAYERS_APP);
 
         // Copy it over to our DEBUG app
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_A_LIB, "|", "run-as", DEBUG_APP,
+        getDevice().executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_A_LIB, "|", "run-as", DEBUG_APP,
                                   "sh", "-c", "\'cat", ">", GLES_LAYER_A_LIB, ";", "chmod", "700", GLES_LAYER_A_LIB + "\'");
 
         // Kick off our DEBUG app
         String appStartTime = getTime();
-        mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
+        getDevice().executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
 
         // Ensure we don't load the layer in base dir
         String searchStringA = GLES_LAYER_A + " loaded";
@@ -676,12 +671,12 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         setupLayer(GLES_LAYER_A_LIB, GLES_LAYERS_APP);
 
         // Copy it over to our DEBUG app
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_A_LIB, "|", "run-as", DEBUG_APP,
+        getDevice().executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_A_LIB, "|", "run-as", DEBUG_APP,
                                   "sh", "-c", "\'cat", ">", GLES_LAYER_A_LIB, ";", "chmod", "700", GLES_LAYER_A_LIB + "\'");
 
         // Kick off our DEBUG app
         String appStartTime = getTime();
-        mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
+        getDevice().executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
 
         // Ensure we don't load the layer in base dir
         String searchStringA = GLES_LAYER_A + " loaded";
@@ -705,12 +700,12 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         setupLayer(GLES_LAYER_A_LIB, GLES_LAYERS_APP);
 
         // Copy it over to our DEBUG app
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_A_LIB, "|", "run-as", DEBUG_APP,
+        getDevice().executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_A_LIB, "|", "run-as", DEBUG_APP,
                                   "sh", "-c", "\'cat", ">", GLES_LAYER_A_LIB, ";", "chmod", "700", GLES_LAYER_A_LIB + "\'");
 
         // Kick off our DEBUG app
         String appStartTime = getTime();
-        mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
+        getDevice().executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
 
         // Ensure layerA is not loaded
         String searchStringA = "glesLayer_eglChooseConfig called in " + GLES_LAYER_A;
@@ -730,11 +725,11 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         deleteSetting("gpu_debug_layers_gles");
 
         // Enable layerC (which is packaged with the RELEASE app) with system properties
-        mDevice.executeAdbCommand("shell", "setprop", "debug.gles.layers " + GLES_LAYER_C_LIB);
+        getDevice().executeAdbCommand("shell", "setprop", "debug.gles.layers " + GLES_LAYER_C_LIB);
 
         // Kick off our RELEASE app
         String appStartTime = getTime();
-        mDevice.executeAdbCommand("shell", "am", "start", "-n", RELEASE_APP + "/" + ACTIVITY);
+        getDevice().executeAdbCommand("shell", "am", "start", "-n", RELEASE_APP + "/" + ACTIVITY);
 
         // Check that both layers were loaded, in the correct order
         String searchStringA = GLES_LAYER_A + "loaded";
@@ -762,19 +757,19 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         setupLayer(GLES_LAYER_B_LIB, GLES_LAYERS_APP);
 
         // Copy them over to our DEBUG app
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_A_LIB, "|",
-            "run-as", DEBUG_APP, "--user", Integer.toString(mDevice.getCurrentUser()),
+        getDevice().executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_A_LIB, "|",
+            "run-as", DEBUG_APP, "--user", Integer.toString(getDevice().getCurrentUser()),
             "sh", "-c", "\'cat", ">", GLES_LAYER_A_LIB, ";", "chmod", "700", GLES_LAYER_A_LIB + "\'");
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_B_LIB, "|",
-            "run-as", DEBUG_APP, "--user", Integer.toString(mDevice.getCurrentUser()),
+        getDevice().executeAdbCommand("shell", "cat", "/data/local/tmp/" + GLES_LAYER_B_LIB, "|",
+            "run-as", DEBUG_APP, "--user", Integer.toString(getDevice().getCurrentUser()),
             "sh", "-c", "\'cat", ">", GLES_LAYER_B_LIB, ";", "chmod", "700", GLES_LAYER_B_LIB + "\'");
 
         // Enable layerB with system properties
-        mDevice.executeAdbCommand("shell", "setprop", "debug.gles.layers " + GLES_LAYER_B_LIB);
+        getDevice().executeAdbCommand("shell", "setprop", "debug.gles.layers " + GLES_LAYER_B_LIB);
 
         // Kick off our DEBUG app
         String appStartTime = getTime();
-        mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
+        getDevice().executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
 
         // Ensure only layerA is loaded
         String searchStringA = "glesLayer_eglChooseConfig called in " + GLES_LAYER_A;
@@ -802,7 +797,7 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
 
         // Kick off our DEBUG app
         String appStartTime = getTime();
-        mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
+        getDevice().executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
 
         // Check that our external layer was loaded
         String searchStringC = "glesLayer_eglChooseConfig called in " + GLES_LAYER_C;
@@ -827,7 +822,7 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
 
         // Kick off our DEBUG app
         String appStartTime = getTime();
-        mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
+        getDevice().executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
 
         // Check that external layers were loaded from both apps
         String vulkanString = "nullCreateInstance called in " + LAYER_C;
