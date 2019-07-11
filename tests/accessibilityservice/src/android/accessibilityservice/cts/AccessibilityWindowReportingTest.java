@@ -92,8 +92,8 @@ public class AccessibilityWindowReportingTest {
 
     @Rule
     public final RuleChain mRuleChain = RuleChain
-            .outerRule(mDumpOnFailureRule)
-            .around(mActivityRule);
+            .outerRule(mActivityRule)
+            .around(mDumpOnFailureRule);
 
     @BeforeClass
     public static void oneTimeSetup() throws Exception {

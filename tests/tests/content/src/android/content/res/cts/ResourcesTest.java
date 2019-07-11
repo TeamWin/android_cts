@@ -35,7 +35,6 @@ import android.graphics.drawable.ColorStateListDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.LocaleList;
-import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
@@ -45,8 +44,6 @@ import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
-
-import androidx.test.InstrumentationRegistry;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -958,14 +955,12 @@ public class ResourcesTest extends AndroidTestCase {
                 mResources.getFont(R.font.sample_bolditalic_family).getStyle());
     }
 
-    // TODO Figure out why it fails in the instant mode.
-    @AppModeFull
-    public void testComplextColorDrawableAttrInflation() {
-        Context context = InstrumentationRegistry.getTargetContext();
-        LayoutInflater layoutInflater = (LayoutInflater) context.getSystemService(
+    public void testComplexColorDrawableAttributeInflation() {
+        final LayoutInflater layoutInflater = (LayoutInflater) getContext().getSystemService(
                 Context.LAYOUT_INFLATER_SERVICE);
 
-        View view = layoutInflater.inflate(R.layout.complex_color_drawable_attr_layout, null);
+        final View view = layoutInflater.inflate(
+                R.layout.complex_color_drawable_attr_layout, null);
         assertTrue(view.getBackground() instanceof ColorStateListDrawable);
     }
 

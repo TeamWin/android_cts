@@ -16,8 +16,6 @@
 
 package android.accessibilityservice.cts;
 
-import static android.accessibilityservice.cts.utils.CtsTestUtils.runIfNotNull;
-
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
@@ -32,6 +30,7 @@ import static org.mockito.Mockito.verify;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
+import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.accessibility.cts.common.ShellCommandBuilder;
 import android.accessibilityservice.AccessibilityService.MagnificationController;
 import android.accessibilityservice.AccessibilityService.MagnificationController.OnMagnificationChangedListener;
@@ -43,10 +42,10 @@ import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.runner.AndroidJUnit4;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -65,9 +64,22 @@ public class AccessibilityMagnificationTest {
     private StubMagnificationAccessibilityService mService;
     private Instrumentation mInstrumentation;
 
-    @Rule
-    public final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+    private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
+
+    private InstrumentedAccessibilityServiceTestRule<InstrumentedAccessibilityService>
+            mInstrumentedAccessibilityServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
+                    InstrumentedAccessibilityService.class, false);
+
+    private InstrumentedAccessibilityServiceTestRule<StubMagnificationAccessibilityService>
+            mMagnificationAccessibilityServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
+                    StubMagnificationAccessibilityService.class, false);
+
+    @Rule
+    public final RuleChain mRuleChain = RuleChain
+            .outerRule(mMagnificationAccessibilityServiceRule)
+            .around(mInstrumentedAccessibilityServiceRule)
+            .around(mDumpOnFailureRule);
 
     @Before
     public void setUp() throws Exception {
@@ -77,12 +89,7 @@ public class AccessibilityMagnificationTest {
         mInstrumentation = getInstrumentation();
         // Starting the service will force the accessibility subsystem to examine its settings, so
         // it will update magnification in the process to disable it.
-        mService = StubMagnificationAccessibilityService.enableSelf(mInstrumentation);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        runIfNotNull(mService, service -> service.runOnServiceSync(service::disableSelfAndRemove));
+        mService = mMagnificationAccessibilityServiceRule.enableService();
     }
 
     @Test
@@ -165,15 +172,11 @@ public class AccessibilityMagnificationTest {
 
         mService.runOnServiceSync(() -> mService.disableSelf());
         mService = null;
-        InstrumentedAccessibilityService service = InstrumentedAccessibilityService.enableService(
-                mInstrumentation, InstrumentedAccessibilityService.class);
+        InstrumentedAccessibilityService service =
+                mInstrumentedAccessibilityServiceRule.enableService();
         final MagnificationController controller2 = service.getMagnificationController();
-        try {
-            assertEquals("Magnification must reset when a service dies",
-                    1.0f, controller2.getScale(), 0f);
-        } finally {
-            service.runOnServiceSync(() -> service.disableSelf());
-        }
+        assertEquals("Magnification must reset when a service dies",
+                1.0f, controller2.getScale(), 0f);
     }
 
     @Test
@@ -188,16 +191,12 @@ public class AccessibilityMagnificationTest {
     public void testGetMagnificationRegion_whenCantControlMagnification_shouldBeEmpty() {
         mService.runOnServiceSync(() -> mService.disableSelf());
         mService = null;
-        InstrumentedAccessibilityService service = InstrumentedAccessibilityService.enableService(
-                mInstrumentation, InstrumentedAccessibilityService.class);
-        try {
-            final MagnificationController controller = service.getMagnificationController();
-            Region magnificationRegion = controller.getMagnificationRegion();
-            assertTrue("Magnification region should be empty when magnification "
-                    + "is not being actively controlled", magnificationRegion.isEmpty());
-        } finally {
-            service.runOnServiceSync(() -> service.disableSelf());
-        }
+        InstrumentedAccessibilityService service =
+                mInstrumentedAccessibilityServiceRule.enableService();
+        final MagnificationController controller = service.getMagnificationController();
+        Region magnificationRegion = controller.getMagnificationRegion();
+        assertTrue("Magnification region should be empty when magnification "
+                + "is not being actively controlled", magnificationRegion.isEmpty());
     }
 
     @Test
@@ -207,15 +206,14 @@ public class AccessibilityMagnificationTest {
                 .run();
         mService.runOnServiceSync(() -> mService.disableSelf());
         mService = null;
-        InstrumentedAccessibilityService service = InstrumentedAccessibilityService.enableService(
-                mInstrumentation, InstrumentedAccessibilityService.class);
+        InstrumentedAccessibilityService service =
+                mInstrumentedAccessibilityServiceRule.enableService();
         try {
             final MagnificationController controller = service.getMagnificationController();
             Region magnificationRegion = controller.getMagnificationRegion();
             assertFalse("Magnification region should not be empty when magnification "
                     + "gestures are active", magnificationRegion.isEmpty());
         } finally {
-            service.runOnServiceSync(() -> service.disableSelf());
             ShellCommandBuilder.create(mInstrumentation)
                     .deleteSecureSetting(ACCESSIBILITY_DISPLAY_MAGNIFICATION_ENABLED)
                     .run();

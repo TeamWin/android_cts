@@ -24,7 +24,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
-import android.accessibility.cts.common.InstrumentedAccessibilityService;
+import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Service;
 import android.view.accessibility.AccessibilityEvent;
@@ -33,10 +33,9 @@ import android.view.accessibility.AccessibilityManager;
 import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 import java.util.List;
@@ -51,20 +50,20 @@ import java.util.List;
 @RunWith(AndroidJUnit4.class)
 public class AccessibilityServiceInfoTest {
 
+    private InstrumentedAccessibilityServiceTestRule<SpeakingAccessibilityService>
+            mSpeakingAccessibilityServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
+                    SpeakingAccessibilityService.class);
+
+    private InstrumentedAccessibilityServiceTestRule<VibratingAccessibilityService>
+            mVibratingAccessibilityServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
+                    VibratingAccessibilityService.class);
+
     @Rule
-    public final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
-            new AccessibilityDumpOnFailureRule();
-
-    @Before
-    public void setUp() throws Exception {
-        SpeakingAccessibilityService.enableSelf(getInstrumentation());
-        VibratingAccessibilityService.enableSelf(getInstrumentation());
-    }
-
-    @After
-    public void tearDown() {
-        InstrumentedAccessibilityService.disableAllServices(getInstrumentation());
-    }
+    public final RuleChain mRuleChain = RuleChain
+            .outerRule(mVibratingAccessibilityServiceRule)
+            .around(mSpeakingAccessibilityServiceRule)
+            // Inner rule capture failure and dump data before finishing a11y service
+            .around(new AccessibilityDumpOnFailureRule());
 
     /**
      * Tests whether a service can that requested it can retrieve

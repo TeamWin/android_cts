@@ -14,7 +14,6 @@
 
 package android.accessibilityservice.cts;
 
-import static android.accessibilityservice.cts.utils.CtsTestUtils.runIfNotNull;
 import static android.content.pm.PackageManager.FEATURE_FINGERPRINT;
 
 import static org.junit.Assert.assertFalse;
@@ -24,6 +23,7 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
+import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.accessibilityservice.FingerprintGestureController;
 import android.accessibilityservice.FingerprintGestureController.FingerprintGestureCallback;
 import android.accessibilityservice.cts.activities.AccessibilityEndToEndActivity;
@@ -36,7 +36,6 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -62,13 +61,17 @@ public class AccessibilityFingerprintGestureTest {
     private ActivityTestRule<AccessibilityEndToEndActivity> mActivityRule =
             new ActivityTestRule<>(AccessibilityEndToEndActivity.class, false, false);
 
+    private InstrumentedAccessibilityServiceTestRule<StubFingerprintGestureService> mServiceRule =
+            new InstrumentedAccessibilityServiceTestRule<>(StubFingerprintGestureService.class);
+
     private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
 
     @Rule
     public final RuleChain mRuleChain = RuleChain
-            .outerRule(mDumpOnFailureRule)
-            .around(mActivityRule);
+            .outerRule(mActivityRule)
+            .around(mServiceRule)
+            .around(mDumpOnFailureRule);
 
     @Mock FingerprintManager.AuthenticationCallback mMockAuthenticationCallback;
     @Mock FingerprintGestureCallback mMockFingerprintGestureCallback;
@@ -80,15 +83,9 @@ public class AccessibilityFingerprintGestureTest {
         mFingerprintManager = instrumentation.getContext().getPackageManager()
                 .hasSystemFeature(FEATURE_FINGERPRINT)
                 ? instrumentation.getContext().getSystemService(FingerprintManager.class) : null;
-        mFingerprintGestureService = StubFingerprintGestureService.enableSelf(instrumentation);
+        mFingerprintGestureService = mServiceRule.getService();
         mFingerprintGestureController =
                 mFingerprintGestureService.getFingerprintGestureController();
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        runIfNotNull(mFingerprintGestureService,
-                service -> service.runOnServiceSync(service::disableSelf));
     }
 
     @Test

@@ -16,15 +16,13 @@
 
 package android.accessibilityservice.cts;
 
-import static android.accessibilityservice.cts.utils.CtsTestUtils.runIfNotNull;
-
 import static org.junit.Assert.assertTrue;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
+import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.cts.utils.AsyncUtils;
-import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.text.TextUtils;
 import android.view.WindowManager;
@@ -34,11 +32,11 @@ import android.widget.Button;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 import java.util.List;
@@ -47,18 +45,24 @@ import java.util.List;
 @RunWith(AndroidJUnit4.class)
 public class AccessibilityOverlayTest {
 
-    private static Instrumentation sInstrumentation;
     private static UiAutomation sUiAutomation;
     InstrumentedAccessibilityService mService;
 
-    @Rule
-    public final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+    private InstrumentedAccessibilityServiceTestRule<StubAccessibilityButtonService>
+            mServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
+                    StubAccessibilityButtonService.class);
+
+    private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
+
+    @Rule
+    public final RuleChain mRuleChain = RuleChain
+            .outerRule(mServiceRule)
+            .around(mDumpOnFailureRule);
 
     @BeforeClass
     public static void oneTimeSetUp() {
-        sInstrumentation = InstrumentationRegistry.getInstrumentation();
-        sUiAutomation = sInstrumentation
+        sUiAutomation = InstrumentationRegistry.getInstrumentation()
                 .getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
         AccessibilityServiceInfo info = sUiAutomation.getServiceInfo();
         info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
@@ -67,12 +71,7 @@ public class AccessibilityOverlayTest {
 
     @Before
     public void setUp() {
-        mService = StubAccessibilityButtonService.enableSelf(sInstrumentation);
-    }
-
-    @After
-    public void tearDown() {
-        runIfNotNull(mService, service -> service.runOnServiceSync(service::disableSelf));
+        mService = mServiceRule.getService();
     }
 
     @Test

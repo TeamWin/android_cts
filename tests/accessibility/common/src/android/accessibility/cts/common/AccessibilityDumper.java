@@ -16,15 +16,20 @@
 
 package android.accessibility.cts.common;
 
+import static android.accessibilityservice.AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
+import static android.app.UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES;
+
 import static androidx.test.InstrumentationRegistry.getContext;
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertFalse;
 
+import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.UiAutomation;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.os.Environment;
+import android.support.test.uiautomator.Configurator;
 import android.support.test.uiautomator.UiDevice;
 import android.text.TextUtils;
 import android.util.Log;
@@ -63,6 +68,8 @@ public class AccessibilityDumper {
     /** Default dump flag */
     public static final int FLAG_DUMP_ALL = FLAG_DUMPSYS | FLAG_HIERARCHY | FLAG_SCREENSHOT;
 
+    private static AccessibilityDumper sDumper;
+
     private int mFlag;
 
     /** Screenshot filename */
@@ -71,32 +78,37 @@ public class AccessibilityDumper {
     /** Root directory matching the directory-key of collector in AndroidTest.xml */
     private File mRoot;
 
+    public static synchronized AccessibilityDumper getInstance() {
+        if (sDumper == null) {
+            sDumper = new AccessibilityDumper(FLAG_DUMP_ALL);
+        }
+        return sDumper;
+    }
+
     /**
      * Define the directory to dump/clean and initial dump options
      *
      * @param flag control what to dump
      */
-    public AccessibilityDumper(int flag) {
+    private AccessibilityDumper(int flag) {
         mRoot = getDumpRoot(getContext().getPackageName());
         mFlag = flag;
     }
 
-    public AccessibilityDumper() {
-        this(FLAG_DUMP_ALL);
-    }
-
     public void dump(int flag) {
+        final UiAutomation automation = getUiAutomation();
+
         if ((flag & FLAG_DUMPSYS) != 0) {
-            dumpsysOnLogcat();
+            dumpsysOnLogcat(automation);
         }
         if ((flag & FLAG_HIERARCHY) != 0) {
             dumpHierarchyOnLogcat();
         }
         if ((flag & FLAG_SCREENSHOT) != 0) {
-            dumpScreen();
+            dumpScreen(automation);
         }
         if ((flag & FLAG_NODETREE) != 0) {
-            dumpAccessibilityNodeTreeOnLogcat();
+            dumpAccessibilityNodeTreeOnLogcat(automation);
         }
     }
 
@@ -113,8 +125,8 @@ public class AccessibilityDumper {
         return new File(Environment.getExternalStorageDirectory(), directory);
     }
 
-    private void dumpsysOnLogcat() {
-        ShellCommandBuilder.create(getInstrumentation())
+    private void dumpsysOnLogcat(UiAutomation automation) {
+        ShellCommandBuilder.create(automation)
             .addCommandPrintOnLogCat("dumpsys accessibility")
             .run();
     }
@@ -131,17 +143,16 @@ public class AccessibilityDumper {
         }
     }
 
-    private void dumpScreen() {
+    private void dumpScreen(UiAutomation automation) {
         assertNotEmpty(mName);
-        final Bitmap screenshot = getInstrumentation().getUiAutomation().takeScreenshot();
+        final Bitmap screenshot = automation.takeScreenshot();
         final String filename = String.format("%s_%s__screenshot.png", mName, LocalTime.now());
         BitmapUtils.saveBitmap(screenshot, mRoot.toString(), filename);
     }
 
     /** Dump hierarchy compactly and include nodes not visible to user */
-    private void dumpAccessibilityNodeTreeOnLogcat() {
+    private void dumpAccessibilityNodeTreeOnLogcat(UiAutomation automation) {
         final Set<AccessibilityNodeInfo> roots = new HashSet<>();
-        final UiAutomation automation = getInstrumentation().getUiAutomation();
         for (AccessibilityWindowInfo window : automation.getWindows()) {
             AccessibilityNodeInfo root = window.getRoot();
             if (root == null) {
@@ -197,9 +208,9 @@ public class AccessibilityDumper {
         out.append(node.isEnabled()         ? "E" : ".");
         out.append(node.isFocusable()       ? "F" : ".");
         out.append(node.isFocused()         ? "f" : ".");
-        out.append(node.isScrollable()      ? "S" : ".");
         out.append(node.isLongClickable()   ? "L" : ".");
         out.append(node.isPassword()        ? "P" : ".");
+        out.append(node.isScrollable()      ? "S" : ".");
         out.append(node.isSelected()        ? "s" : ".");
         out.append(node.isVisibleToUser()   ? "V" : ".");
         out.append("> ");
@@ -226,5 +237,20 @@ public class AccessibilityDumper {
 
     private void assertNotEmpty(String name) {
         assertFalse("Expected non empty name.", TextUtils.isEmpty(name));
+    }
+
+    private UiAutomation getUiAutomation() {
+        // Reuse UiAutomation from UiAutomator with the same flag
+        Configurator.getInstance().setUiAutomationFlags(
+                FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+        final UiAutomation automation = getInstrumentation().getUiAutomation(
+                FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+        // Dump window info & node tree
+        final AccessibilityServiceInfo info = automation.getServiceInfo();
+        if (info != null && ((info.flags & FLAG_RETRIEVE_INTERACTIVE_WINDOWS) == 0)) {
+            info.flags |= FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
+            automation.setServiceInfo(info);
+        }
+        return automation;
     }
 }

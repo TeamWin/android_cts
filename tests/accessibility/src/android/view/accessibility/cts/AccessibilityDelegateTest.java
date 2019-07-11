@@ -57,8 +57,9 @@ public class AccessibilityDelegateTest {
 
     @Rule
     public final RuleChain mRuleChain = RuleChain
-            .outerRule(mDumpOnFailureRule)
-            .around(mActivityRule);
+            .outerRule(mActivityRule)
+            // Inner rule capture failure and dump data before finishing activity
+            .around(mDumpOnFailureRule);
 
     @Before
     public void setUp() throws Exception {
