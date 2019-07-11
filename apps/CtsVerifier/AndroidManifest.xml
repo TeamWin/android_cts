@@ -102,7 +102,10 @@
                 android:label="@string/report_viewer" />
 
         <provider android:name=".TestResultsProvider"
-                android:authorities="com.android.cts.verifier.testresultsprovider" />
+                android:authorities="com.android.cts.verifier.testresultsprovider"
+                android:grantUriPermissions="true"
+                android:exported="true"
+                android:enabled="true" />
 
         <activity android:name=".admin.PolicySerializationTestActivity"
                 android:label="@string/da_policy_serialization_test"
