@@ -142,7 +142,8 @@ public class InstrumentedAccessibilityServiceTestRule<T extends InstrumentedAcce
     }
 
     private void callFinishOnServiceSync() {
-        final T service = getService();
+        final T service = InstrumentedAccessibilityService.getInstanceForClass(
+                mAccessibilityServiceClass);
         if (service != null) {
             service.runOnServiceSync(service::disableSelfAndRemove);
         }

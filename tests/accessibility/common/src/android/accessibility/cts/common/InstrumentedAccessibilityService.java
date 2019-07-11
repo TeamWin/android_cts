@@ -214,23 +214,34 @@ public class InstrumentedAccessibilityService extends AccessibilityService {
     }
 
     public static <T extends InstrumentedAccessibilityService> T getInstanceForClass(
-            Class clazz, long timeoutMillis) {
+            Class<T> clazz, long timeoutMillis) {
         final long timeoutTimeMillis = SystemClock.uptimeMillis() + timeoutMillis;
         while (SystemClock.uptimeMillis() < timeoutTimeMillis) {
             synchronized (sInstances) {
-                final WeakReference<InstrumentedAccessibilityService> ref = sInstances.get(clazz);
-                if (ref != null) {
-                    final T instance = (T) ref.get();
-                    if (instance == null) {
-                        sInstances.remove(clazz);
-                    } else {
-                        return instance;
-                    }
+                final T instance = getInstanceForClass(clazz);
+                if (instance != null) {
+                    return instance;
                 }
                 try {
                     sInstances.wait(timeoutTimeMillis - SystemClock.uptimeMillis());
                 } catch (InterruptedException e) {
                     return null;
+                }
+            }
+        }
+        return null;
+    }
+
+    static <T extends InstrumentedAccessibilityService> T getInstanceForClass(
+            Class<T> clazz) {
+        synchronized (sInstances) {
+            final WeakReference<InstrumentedAccessibilityService> ref = sInstances.get(clazz);
+            if (ref != null) {
+                final T instance = (T) ref.get();
+                if (instance == null) {
+                    sInstances.remove(clazz);
+                } else {
+                    return instance;
                 }
             }
         }
