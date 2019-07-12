@@ -21,8 +21,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
 import android.telephony.ims.Rcs1To1Thread;
-import android.telephony.ims.RcsManager;
-import android.telephony.ims.RcsMessageStore;
+import android.telephony.ims.RcsMessageManager;
 import android.telephony.ims.RcsMessageStoreException;
 import android.telephony.ims.RcsParticipant;
 
@@ -35,7 +34,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class Rcs1To1ThreadTest {
-    private RcsMessageStore mRcsMessageStore;
+    private RcsMessageManager mRcsMessageManager;
     private Context mContext;
 
     @BeforeClass
@@ -50,8 +49,7 @@ public class Rcs1To1ThreadTest {
         Assume.assumeTrue(IS_RCS_TABLE_SCHEMA_CODE_COMPLETE);
 
         mContext = InstrumentationRegistry.getTargetContext();
-        RcsManager rcsManager = mContext.getSystemService(RcsManager.class);
-        mRcsMessageStore = rcsManager.getRcsMessageStore();
+        mRcsMessageManager = mContext.getSystemService(RcsMessageManager.class);
 
         cleanup();
     }
@@ -63,16 +61,18 @@ public class Rcs1To1ThreadTest {
 
     @Test
     public void testRcs1To1Thread_isGroupReturnsFalse() throws RcsMessageStoreException {
-        RcsParticipant participant = mRcsMessageStore.createRcsParticipant("+1234567890", "Alice");
-        Rcs1To1Thread thread = mRcsMessageStore.createRcs1To1Thread(participant);
+        RcsParticipant participant = mRcsMessageManager.createRcsParticipant(
+                "+1234567890", "Alice");
+        Rcs1To1Thread thread = mRcsMessageManager.createRcs1To1Thread(participant);
 
         assertThat(thread.isGroup()).isFalse();
     }
 
     @Test
     public void testRcs1To1Thread_fallbackThreadIdCanBeSet() throws RcsMessageStoreException {
-        RcsParticipant participant = mRcsMessageStore.createRcsParticipant("+1234567890", "Alice");
-        Rcs1To1Thread thread = mRcsMessageStore.createRcs1To1Thread(participant);
+        RcsParticipant participant = mRcsMessageManager.createRcsParticipant(
+                "+1234567890", "Alice");
+        Rcs1To1Thread thread = mRcsMessageManager.createRcs1To1Thread(participant);
 
         thread.setFallbackThreadId(2);
 

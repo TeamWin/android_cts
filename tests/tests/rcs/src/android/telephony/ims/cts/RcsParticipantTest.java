@@ -21,8 +21,7 @@ import static android.provider.Telephony.RcsColumns.IS_RCS_TABLE_SCHEMA_CODE_COM
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
-import android.telephony.ims.RcsManager;
-import android.telephony.ims.RcsMessageStore;
+import android.telephony.ims.RcsMessageManager;
 import android.telephony.ims.RcsMessageStoreException;
 import android.telephony.ims.RcsParticipant;
 
@@ -35,7 +34,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class RcsParticipantTest {
-    RcsMessageStore mRcsMessageStore;
+    RcsMessageManager mRcsMessageManager;
     Context mContext;
 
     @BeforeClass
@@ -50,8 +49,7 @@ public class RcsParticipantTest {
         Assume.assumeTrue(IS_RCS_TABLE_SCHEMA_CODE_COMPLETE);
 
         mContext = InstrumentationRegistry.getTargetContext();
-        RcsManager rcsManager = mContext.getSystemService(RcsManager.class);
-        mRcsMessageStore = rcsManager.getRcsMessageStore();
+        mRcsMessageManager = mContext.getSystemService(RcsMessageManager.class);
 
         cleanup();
     }
@@ -83,7 +81,7 @@ public class RcsParticipantTest {
     private void createAndValidateParticipant(String expectedCanonicalAddress,
             String expectedAlias) throws RcsMessageStoreException {
         RcsParticipant rcsParticipant =
-                mRcsMessageStore.createRcsParticipant(expectedCanonicalAddress, expectedAlias);
+                mRcsMessageManager.createRcsParticipant(expectedCanonicalAddress, expectedAlias);
 
         assertThat(rcsParticipant).isNotNull();
         assertThat(rcsParticipant.getId()).isGreaterThan(0);
