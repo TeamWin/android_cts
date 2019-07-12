@@ -31,8 +31,7 @@ import android.telephony.ims.RcsGroupThreadIconChangedEvent;
 import android.telephony.ims.RcsGroupThreadNameChangedEvent;
 import android.telephony.ims.RcsGroupThreadParticipantJoinedEvent;
 import android.telephony.ims.RcsGroupThreadParticipantLeftEvent;
-import android.telephony.ims.RcsManager;
-import android.telephony.ims.RcsMessageStore;
+import android.telephony.ims.RcsMessageManager;
 import android.telephony.ims.RcsMessageStoreException;
 import android.telephony.ims.RcsParticipant;
 import android.telephony.ims.RcsParticipantAliasChangedEvent;
@@ -50,7 +49,7 @@ import org.junit.Test;
 import java.util.function.Predicate;
 
 public class RcsEventTest {
-    private RcsMessageStore mRcsMessageStore;
+    private RcsMessageManager mRcsMessageManager;
 
     private long mTimestamp;
     private RcsParticipant mParticipant1;
@@ -70,15 +69,14 @@ public class RcsEventTest {
         Assume.assumeTrue(IS_RCS_TABLE_SCHEMA_CODE_COMPLETE);
 
         Context context = InstrumentationRegistry.getTargetContext();
-        RcsManager rcsManager = context.getSystemService(RcsManager.class);
-        mRcsMessageStore = rcsManager.getRcsMessageStore();
+        mRcsMessageManager = context.getSystemService(RcsMessageManager.class);
 
         cleanup();
 
         mTimestamp = 1234567890;
-        mParticipant1 = mRcsMessageStore.createRcsParticipant("403", "p1");
-        mParticipant2 = mRcsMessageStore.createRcsParticipant("404", "p2");
-        mGroupThread = mRcsMessageStore.createGroupThread(
+        mParticipant1 = mRcsMessageManager.createRcsParticipant("403", "p1");
+        mParticipant2 = mRcsMessageManager.createRcsParticipant("404", "p2");
+        mGroupThread = mRcsMessageManager.createGroupThread(
                 Lists.newArrayList(mParticipant1, mParticipant2), "groupName", Uri.EMPTY);
 
     }
@@ -95,7 +93,7 @@ public class RcsEventTest {
                 new RcsGroupThreadParticipantJoinedEvent(
                         mTimestamp, mGroupThread, mParticipant1, mParticipant2);
 
-        mRcsMessageStore.persistRcsEvent(rcsGroupThreadParticipantJoinedEvent);
+        mRcsMessageManager.persistRcsEvent(rcsGroupThreadParticipantJoinedEvent);
 
         assertMatchingEventInQuery(
                 RcsEventQueryParams.GROUP_THREAD_PARTICIPANT_JOINED_EVENT,
@@ -109,7 +107,7 @@ public class RcsEventTest {
                 new RcsGroupThreadNameChangedEvent(
                         mTimestamp, mGroupThread, mParticipant1, "newName");
 
-        mRcsMessageStore.persistRcsEvent(rcsGroupThreadNameChangedEvent);
+        mRcsMessageManager.persistRcsEvent(rcsGroupThreadNameChangedEvent);
 
         assertMatchingEventInQuery(
                 RcsEventQueryParams.GROUP_THREAD_NAME_CHANGED_EVENT,
@@ -122,7 +120,7 @@ public class RcsEventTest {
         RcsParticipantAliasChangedEvent rcsParticipantAliasChangedEvent
                 = new RcsParticipantAliasChangedEvent(mTimestamp, mParticipant1, "newAlias");
 
-        mRcsMessageStore.persistRcsEvent(rcsParticipantAliasChangedEvent);
+        mRcsMessageManager.persistRcsEvent(rcsParticipantAliasChangedEvent);
 
         assertMatchingEventInQuery(
                 RcsEventQueryParams.PARTICIPANT_ALIAS_CHANGED_EVENT,
@@ -136,7 +134,7 @@ public class RcsEventTest {
                 new RcsGroupThreadParticipantLeftEvent(
                         mTimestamp, mGroupThread, mParticipant1, mParticipant2);
 
-        mRcsMessageStore.persistRcsEvent(rcsGroupThreadParticipantLeftEvent);
+        mRcsMessageManager.persistRcsEvent(rcsGroupThreadParticipantLeftEvent);
 
         assertMatchingEventInQuery(
                 RcsEventQueryParams.GROUP_THREAD_PARTICIPANT_LEFT_EVENT,
@@ -152,7 +150,7 @@ public class RcsEventTest {
                 new RcsGroupThreadIconChangedEvent(
                         mTimestamp, mGroupThread, mParticipant1, newIcon);
 
-        mRcsMessageStore.persistRcsEvent(rcsGroupThreadIconChangedEvent);
+        mRcsMessageManager.persistRcsEvent(rcsGroupThreadIconChangedEvent);
 
         assertMatchingEventInQuery(
                 RcsEventQueryParams.GROUP_THREAD_ICON_CHANGED_EVENT,
@@ -161,7 +159,7 @@ public class RcsEventTest {
 
     private void assertMatchingEventInQuery(int queryMessageType, Predicate<RcsEvent> predicate)
             throws RcsMessageStoreException {
-        RcsEventQueryResult queryResult = mRcsMessageStore.getRcsEvents(
+        RcsEventQueryResult queryResult = mRcsMessageManager.getRcsEvents(
                 new RcsEventQueryParams.Builder()
                         .setEventType(queryMessageType)
                         .build());
