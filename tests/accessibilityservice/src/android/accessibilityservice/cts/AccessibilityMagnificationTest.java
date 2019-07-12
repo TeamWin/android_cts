@@ -16,10 +16,15 @@
 
 package android.accessibilityservice.cts;
 
+import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
+
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
+
+import static com.android.compatibility.common.util.TestUtils.waitOn;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyFloat;
@@ -35,11 +40,21 @@ import android.accessibility.cts.common.ShellCommandBuilder;
 import android.accessibilityservice.AccessibilityService.MagnificationController;
 import android.accessibilityservice.AccessibilityService.MagnificationController.OnMagnificationChangedListener;
 import android.accessibilityservice.AccessibilityServiceInfo;
+import android.accessibilityservice.cts.activities.AccessibilityWindowQueryActivity;
+import android.app.Activity;
 import android.app.Instrumentation;
+import android.app.UiAutomation;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Region;
 import android.platform.test.annotations.AppModeFull;
+import android.util.DisplayMetrics;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.accessibility.AccessibilityNodeInfo;
+import android.widget.Button;
 
+import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
@@ -67,6 +82,9 @@ public class AccessibilityMagnificationTest {
     private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
 
+    private final ActivityTestRule<AccessibilityWindowQueryActivity> mActivityRule =
+            new ActivityTestRule<>(AccessibilityWindowQueryActivity.class, false, false);
+
     private InstrumentedAccessibilityServiceTestRule<InstrumentedAccessibilityService>
             mInstrumentedAccessibilityServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
                     InstrumentedAccessibilityService.class, false);
@@ -77,7 +95,8 @@ public class AccessibilityMagnificationTest {
 
     @Rule
     public final RuleChain mRuleChain = RuleChain
-            .outerRule(mMagnificationAccessibilityServiceRule)
+            .outerRule(mActivityRule)
+            .around(mMagnificationAccessibilityServiceRule)
             .around(mInstrumentedAccessibilityServiceRule)
             .around(mDumpOnFailureRule);
 
@@ -259,5 +278,122 @@ public class AccessibilityMagnificationTest {
 
             Thread.sleep(timeBetweenAnimationChanges);
         }
+    }
+
+    @Test
+    public void testA11yNodeInfoVisibility_whenOutOfMagnifiedArea_shouldVisible()
+            throws Exception{
+        final UiAutomation uiAutomation = mInstrumentation.getUiAutomation(
+                UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+        final Activity activity = launchActivityAndWaitForItToBeOnscreen(
+                mInstrumentation, uiAutomation, mActivityRule);
+        final MagnificationController controller = mService.getMagnificationController();
+        final Rect magnifyBounds = controller.getMagnificationRegion().getBounds();
+        final float scale = 8.0f;
+        final Button button = activity.findViewById(R.id.button1);
+        adjustViewBoundsIfNeeded(button, scale, magnifyBounds);
+
+        final AccessibilityNodeInfo buttonNode = uiAutomation.getRootInActiveWindow()
+                .findAccessibilityNodeInfosByViewId(
+                        "android.accessibilityservice.cts:id/button1").get(0);
+        assertNotNull("Can't find button on the screen", buttonNode);
+        assertTrue("Button should be visible", buttonNode.isVisibleToUser());
+
+        // Get right-bottom center position
+        final float centerX = magnifyBounds.left + (((float) magnifyBounds.width() / (2.0f * scale))
+                * ((2.0f * scale) - 1.0f));
+        final float centerY = magnifyBounds.top + (((float) magnifyBounds.height() / (2.0f * scale))
+                * ((2.0f * scale) - 1.0f));
+        try {
+            waitOnMagnificationChanged(controller, scale, centerX, centerY);
+            // Waiting for UI refresh
+            mInstrumentation.waitForIdleSync();
+            buttonNode.refresh();
+
+            final Rect boundsInScreen = new Rect();
+            final DisplayMetrics displayMetrics = new DisplayMetrics();
+            buttonNode.getBoundsInScreen(boundsInScreen);
+            mInstrumentation.getContext().getDisplay().getMetrics(displayMetrics);
+            final Rect displayRect = new Rect(0, 0,
+                    displayMetrics.widthPixels, displayMetrics.heightPixels);
+            // The boundsInScreen of button is adjusted to outside of screen by framework,
+            // for example, Rect(-xxx, -xxx, -xxx, -xxx). Intersection of button and screen
+            // should be empty.
+            assertFalse("Button shouldn't be on the screen, screen is " + displayRect
+                            + ", button bounds is " + boundsInScreen,
+                    Rect.intersects(displayRect, boundsInScreen));
+            assertTrue("Button should be visible", buttonNode.isVisibleToUser());
+        } finally {
+            mService.runOnServiceSync(() -> controller.reset(false));
+        }
+    }
+
+    private void waitOnMagnificationChanged(MagnificationController controller, float newScale,
+            float newCenterX, float newCenterY) {
+        final Object waitLock = new Object();
+        final AtomicBoolean notified = new AtomicBoolean();
+        final OnMagnificationChangedListener listener = (c, region, scale, centerX, centerY) -> {
+            final float delta = 5.0f;
+            synchronized (waitLock) {
+                if (newScale == scale
+                        && (centerX > newCenterX - delta) && (centerY > newCenterY - delta)) {
+                    notified.set(true);
+                    waitLock.notifyAll();
+                }
+            }
+        };
+        controller.addListener(listener);
+        try {
+            final AtomicBoolean setScale = new AtomicBoolean();
+            final AtomicBoolean setCenter = new AtomicBoolean();
+            mService.runOnServiceSync(() -> {
+                setScale.set(controller.setScale(newScale, false));
+                setCenter.set(controller.setCenter(newCenterX, newCenterY, false));
+            });
+            assertTrue("Failed to set scale", setScale.get());
+            assertEquals("Failed to apply scale", newScale, controller.getScale(), 0f);
+            assertTrue("Failed to set center", setCenter.get());
+            waitOn(waitLock, () -> notified.get(), LISTENER_TIMEOUT_MILLIS,
+                    "waitOnMagnificationChanged");
+        } finally {
+            controller.removeListener(listener);
+        }
+    }
+
+    /**
+     * Adjust top-left view bounds if it's still in the magnified viewport after sets magnification
+     * scale and move centers to bottom-right.
+     */
+    private void adjustViewBoundsIfNeeded(View topLeftview, float scale, Rect magnifyBounds) {
+        final Point magnifyViewportTopLeft = new Point();
+        magnifyViewportTopLeft.x = (int)((scale - 1.0f) * ((float) magnifyBounds.width() / scale));
+        magnifyViewportTopLeft.y = (int)((scale - 1.0f) * ((float) magnifyBounds.height() / scale));
+        magnifyViewportTopLeft.offset(magnifyBounds.left, magnifyBounds.top);
+
+        final int[] viewLocation = new int[2];
+        topLeftview.getLocationOnScreen(viewLocation);
+        final Rect viewBounds = new Rect(viewLocation[0], viewLocation[1],
+                viewLocation[0] + topLeftview.getWidth(),
+                viewLocation[1] + topLeftview.getHeight());
+        if (viewBounds.right < magnifyViewportTopLeft.x
+                && viewBounds.bottom < magnifyViewportTopLeft.y) {
+            // no need
+            return;
+        }
+
+        final ViewGroup.LayoutParams layoutParams = topLeftview.getLayoutParams();
+        if (viewBounds.right >= magnifyViewportTopLeft.x) {
+            layoutParams.width = topLeftview.getWidth() - 1
+                    - (viewBounds.right - magnifyViewportTopLeft.x);
+            assertTrue("Needs to fix layout", layoutParams.width > 0);
+        }
+        if (viewBounds.bottom >= magnifyViewportTopLeft.y) {
+            layoutParams.height = topLeftview.getHeight() - 1
+                    - (viewBounds.bottom - magnifyViewportTopLeft.y);
+            assertTrue("Needs to fix layout", layoutParams.height > 0);
+        }
+        mInstrumentation.runOnMainSync(() -> topLeftview.setLayoutParams(layoutParams));
+        // Waiting for UI refresh
+        mInstrumentation.waitForIdleSync();
     }
 }
