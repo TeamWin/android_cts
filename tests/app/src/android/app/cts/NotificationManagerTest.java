@@ -342,6 +342,11 @@ public class NotificationManagerTest extends AndroidTestCase {
     private void cancelAndPoll(int id) {
         mNotificationManager.cancel(id);
 
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException ex) {
+            // pass
+        }
         if (!checkNotificationExistence(id, /*shouldExist=*/ false)) {
             fail("canceled notification was still alive, id=" + id);
         }
