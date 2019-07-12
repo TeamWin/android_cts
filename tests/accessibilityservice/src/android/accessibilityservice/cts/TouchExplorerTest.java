@@ -42,8 +42,6 @@ import static android.view.accessibility.AccessibilityEvent.TYPE_TOUCH_INTERACTI
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_CLICKED;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_FOCUSED;
-import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_HOVER_ENTER;
-import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_HOVER_EXIT;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_LONG_CLICKED;
 
 import static org.hamcrest.CoreMatchers.both;
@@ -169,8 +167,6 @@ public class TouchExplorerTest {
                 TYPE_VIEW_FOCUSED,
                 TYPE_TOUCH_INTERACTION_START,
                 TYPE_TOUCH_EXPLORATION_GESTURE_START,
-                TYPE_VIEW_HOVER_ENTER,
-                TYPE_VIEW_HOVER_EXIT,
                 TYPE_TOUCH_EXPLORATION_GESTURE_END,
                 TYPE_TOUCH_INTERACTION_END);
     }
@@ -251,8 +247,6 @@ public class TouchExplorerTest {
                 TYPE_VIEW_FOCUSED,
                 TYPE_TOUCH_INTERACTION_START,
                 TYPE_TOUCH_EXPLORATION_GESTURE_START,
-                TYPE_VIEW_HOVER_ENTER,
-                TYPE_VIEW_HOVER_EXIT,
                 TYPE_TOUCH_EXPLORATION_GESTURE_END,
                 TYPE_TOUCH_INTERACTION_END);
     }
