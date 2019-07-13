@@ -4424,6 +4424,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <!--  Pro Audio Tests -->
     <string name="pro_audio_latency_test">Pro Audio Test</string>
 
+    <string name="proAudioHasProAudiolbl">Has Pro Audio</string>
     <string name="proAudioHasLLAlbl">Has Low-Latency Audio</string>
     <string name="proAudioInputLbl">Audio Input:</string>
     <string name="proAudioOutputLbl">Audio Output:</string>
@@ -4443,6 +4444,10 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_proaudio_roundtrip">Round-Trip Test</string>
     <string name="audio_proaudio_NA">N/A</string>
     <string name="audio_proaudio_pending">pending...</string>
+
+    <string name="audio_proaudio_nopa_title">Pro Audio Test</string>
+    <string name="audio_proaudio_nopa_message">This device does not set the FEATURE_AUDIO_PRO
+        flag and therefore does not need to run this test.</string>
 
     <!--  MIDI Test -->
     <string name="midi_test">MIDI Test</string>

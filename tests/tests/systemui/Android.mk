@@ -27,6 +27,7 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
+    compatibility-device-util-axt \
     ctstestrunner-axt \
     androidx.test.rules \
     ub-uiautomator
