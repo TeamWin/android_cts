@@ -2060,11 +2060,15 @@
     <string name="cp_service_started">Service should start once enabled.</string>
     <string name="cp_service_stopped">Service should stop once disabled.</string>
     <string name="cp_unsubscribe_rule">Unsubscribing to Automatic Zen Rule</string>
-    <string name="cp_delete_rule">Deleting Automatic Zen Rule</string>
+    <string name="cp_delete_rule">Deleting Automatic Zen Rule via api</string>
     <string name="cp_get_rules">Retrieving Automatic Zen Rules</string>
     <string name="cp_get_rule">Retrieving Automatic Zen Rule</string>
     <string name="cp_show_rules">Click this button to launch the Automatic Zen Rule listing page in settings, and then return to this screen</string>
     <string name="cp_show_rules_verification">Was the automatic rule screen shown?</string>
+    <string name="cp_disable_rule">Please disable rule "123" and return here.</string>
+    <string name="cp_enable_rule">Please enable rule "123" and return here.</string>
+    <string name="cp_delete_rule_broadcast">Please delete rule "123" and return here.</string>
+    <string name="cp_rule_type">CTS rule</string>
     <string name="iva_pass">Pass</string>
     <string name="iva_fail">Fail</string>
 
