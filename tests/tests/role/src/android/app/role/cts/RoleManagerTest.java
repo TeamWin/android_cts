@@ -38,11 +38,12 @@ import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
 import android.os.Process;
 import android.os.UserHandle;
+import android.provider.Telephony;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
-import android.support.test.uiautomator.Until;
+import android.telecom.TelecomManager;
 import android.util.Pair;
 
 import androidx.annotation.NonNull;
@@ -53,6 +54,7 @@ import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AppOpsUtils;
+import com.android.compatibility.common.util.TestUtils;
 import com.android.compatibility.common.util.ThrowingRunnable;
 
 import org.junit.After;
@@ -92,6 +94,18 @@ public class RoleManagerTest {
             + ".extra.IS_ROLE_HELD";
     private static final String APP_REQUEST_ROLE_ACTIVITY_NAME = APP_PACKAGE_NAME
             + ".RequestRoleActivity";
+    private static final String APP_CHANGE_DEFAULT_DIALER_ACTIVITY_NAME = APP_PACKAGE_NAME
+            + ".ChangeDefaultDialerActivity";
+    private static final String APP_CHANGE_DEFAULT_SMS_ACTIVITY_NAME = APP_PACKAGE_NAME
+            + ".ChangeDefaultSmsActivity";
+
+    private static final String APP_28_APK_PATH = "/data/local/tmp/cts/role/CtsRoleTestApp28.apk";
+    private static final String APP_28_PACKAGE_NAME = "android.app.role.cts.app28";
+    private static final String APP_28_LABEL = "CtsRoleTestApp28";
+    private static final String APP_28_CHANGE_DEFAULT_DIALER_ACTIVITY_NAME = APP_28_PACKAGE_NAME
+            + ".ChangeDefaultDialerActivity";
+    private static final String APP_28_CHANGE_DEFAULT_SMS_ACTIVITY_NAME = APP_28_PACKAGE_NAME
+            + ".ChangeDefaultSmsActivity";
 
     private static final String PERMISSION_MANAGE_ROLES_FROM_CONTROLLER =
             "com.android.permissioncontroller.permission.MANAGE_ROLES_FROM_CONTROLLER";
@@ -101,14 +115,12 @@ public class RoleManagerTest {
     private static final Context sContext = InstrumentationRegistry.getTargetContext();
     private static final PackageManager sPackageManager = sContext.getPackageManager();
     private static final RoleManager sRoleManager = sContext.getSystemService(RoleManager.class);
-    private static final UiDevice sUiDevice = UiDevice.getInstance(sInstrumentation);
 
     @Rule
     public ActivityTestRule<WaitForResultActivity> mActivityRule =
             new ActivityTestRule<>(WaitForResultActivity.class);
 
     private String mRoleHolder;
-    private int mCurrentUserId;
 
     @Before
     public void saveRoleHolder() throws Exception {
@@ -134,13 +146,14 @@ public class RoleManagerTest {
 
     @Before
     public void installApp() throws Exception {
-        mCurrentUserId = Process.myUserHandle().getIdentifier();
         installPackage(APP_APK_PATH);
+        installPackage(APP_28_APK_PATH);
     }
 
     @After
     public void uninstallApp() throws Exception {
         uninstallPackage(APP_PACKAGE_NAME);
+        uninstallPackage(APP_28_PACKAGE_NAME);
     }
 
     @Before
@@ -338,15 +351,67 @@ public class RoleManagerTest {
     }
 
     private void clearPackageData(@NonNull String packageName) {
-        runShellCommand("pm clear --user " + mCurrentUserId + " " + packageName);
+        runShellCommand("pm clear --user " + Process.myUserHandle().getIdentifier() + " "
+                + packageName);
     }
 
     private void installPackage(@NonNull String apkPath) {
-        runShellCommand("pm install -r --user " + mCurrentUserId + " " + apkPath);
+        runShellCommand("pm install -r --user " + Process.myUserHandle().getIdentifier() + " "
+                + apkPath);
     }
 
     private void uninstallPackage(@NonNull String packageName) {
-        runShellCommand("pm uninstall --user " + mCurrentUserId + " " + packageName);
+        runShellCommand("pm uninstall --user " + Process.myUserHandle().getIdentifier() + " "
+                + packageName);
+    }
+
+    @Test
+    public void targetCurrentSdkAndChangeDefaultDialerThenIsCanceled() throws Exception {
+        WaitForResultActivity activity = mActivityRule.getActivity();
+        activity.startActivityToWaitForResult(new Intent()
+                .setComponent(new ComponentName(APP_PACKAGE_NAME,
+                        APP_CHANGE_DEFAULT_DIALER_ACTIVITY_NAME))
+                .putExtra(Intent.EXTRA_PACKAGE_NAME, APP_PACKAGE_NAME));
+        Pair<Integer, Intent> result = activity.waitForActivityResult(TIMEOUT_MILLIS);
+        assertThat(result.first).isEqualTo(Activity.RESULT_CANCELED);
+    }
+
+    @Test
+    public void targetCurrentSdkAndChangeDefaultSmsThenIsCanceled() throws Exception {
+        WaitForResultActivity activity = mActivityRule.getActivity();
+        activity.startActivityToWaitForResult(new Intent()
+                .setComponent(new ComponentName(APP_PACKAGE_NAME,
+                        APP_CHANGE_DEFAULT_SMS_ACTIVITY_NAME))
+                .putExtra(Intent.EXTRA_PACKAGE_NAME, APP_PACKAGE_NAME));
+        Pair<Integer, Intent> result = activity.waitForActivityResult(TIMEOUT_MILLIS);
+        assertThat(result.first).isEqualTo(Activity.RESULT_CANCELED);
+    }
+
+    @Test
+    public void targetSdk28AndChangeDefaultDialerAndAllowThenIsDefaultDialer() throws Exception {
+        sContext.startActivity(new Intent()
+                .setComponent(new ComponentName(APP_28_PACKAGE_NAME,
+                        APP_28_CHANGE_DEFAULT_DIALER_ACTIVITY_NAME))
+                .putExtra(Intent.EXTRA_PACKAGE_NAME, APP_28_PACKAGE_NAME)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        waitFindObject(By.text(APP_28_LABEL)).click();
+        waitFindObject(By.res("android:id/button1")).click();
+        TelecomManager telecomManager = sContext.getSystemService(TelecomManager.class);
+        TestUtils.waitUntil("App is not set as default dialer app", () -> Objects.equals(
+                telecomManager.getDefaultDialerPackage(), APP_28_PACKAGE_NAME));
+    }
+
+    @Test
+    public void targetSdk28AndChangeDefaultSmsAndAllowThenIsDefaultSms() throws Exception {
+        sContext.startActivity(new Intent()
+                .setComponent(new ComponentName(APP_28_PACKAGE_NAME,
+                        APP_28_CHANGE_DEFAULT_SMS_ACTIVITY_NAME))
+                .putExtra(Intent.EXTRA_PACKAGE_NAME, APP_28_PACKAGE_NAME)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        waitFindObject(By.text(APP_28_LABEL)).click();
+        waitFindObject(By.res("android:id/button1")).click();
+        TestUtils.waitUntil("App is not set as default sms app", () -> Objects.equals(
+                Telephony.Sms.getDefaultSmsPackage(sContext), APP_28_PACKAGE_NAME));
     }
 
     @Test
