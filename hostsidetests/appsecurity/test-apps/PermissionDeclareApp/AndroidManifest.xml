@@ -92,7 +92,8 @@
                     android:pathPrefix="/yes"
                     android:readPermission="com.android.cts.permissionWithSignature"
                     android:writePermission="com.android.cts.permissionWithSignature" />
-            <grant-uri-permission android:pathPattern=".*" />
+            <grant-uri-permission android:pathPattern="/foo.*" />
+            <grant-uri-permission android:pathPattern="/yes.*" />
         </provider>
 
         <!-- Target for tests that verify path permissions can restrict access
@@ -112,5 +113,6 @@
                     android:writePermission="com.android.cts.permissionNormal" />
         </provider>
 
+        <activity android:name=".SendResultActivity" android:exported="true" />
     </application>
 </manifest>
