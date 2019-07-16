@@ -2044,8 +2044,8 @@ public class ViewTest {
         final MockView view = (MockView) mActivity.findViewById(R.id.mock_view);
 
         float density = view.getContext().getResources().getDisplayMetrics().density;
-        int size1 = (int) (100 * density + 0.5);
-        int size2 = (int) (75 * density + 0.5);
+        int size1 = (int) (75 * density + 0.5);
+        int size2 = (int) (100 * density + 0.5);
 
         assertTrue(view.hasCalledOnMeasure());
         assertEquals(size1, view.getMeasuredWidth());
@@ -2750,8 +2750,8 @@ public class ViewTest {
         Rect rect = new Rect();
 
         float density = view.getContext().getResources().getDisplayMetrics().density;
-        int size1 = (int) (100 * density + 0.5);
-        int size2 = (int) (75 * density + 0.5);
+        int size1 = (int) (75 * density + 0.5);
+        int size2 = (int) (100 * density + 0.5);
 
         assertTrue(view.getLocalVisibleRect(rect));
         assertEquals(0, rect.left);
