@@ -46,6 +46,7 @@ import android.util.SparseArray;
 import android.view.Display;
 import android.view.PointerIcon;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 
 import androidx.test.InstrumentationRegistry;
@@ -104,6 +105,8 @@ public class CapturedActivity extends Activity {
         // Set the NULL pointer icon so that it won't obstruct the captured image.
         getWindow().getDecorView().setPointerIcon(
                 PointerIcon.getSystemIcon(this, PointerIcon.TYPE_NULL));
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
 
         mProjectionManager =
                 (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
