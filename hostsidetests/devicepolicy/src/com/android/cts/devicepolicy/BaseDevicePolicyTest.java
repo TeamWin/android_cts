@@ -236,6 +236,16 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     }
 
     /**
+     * Initializes the user with the given id, and waits until the user has started and unlocked
+     * before continuing.
+     *
+     * <p>This is required so that apps can run on it.
+     */
+    protected void startUser(int userId, boolean waitFlag) throws Exception {
+        getDevice().startUser(userId, waitFlag);
+    }
+
+    /**
      * Starts switching to the user with the given ID.
      *
      * <p>This is not blocking. Some operations will be flaky if called immediately afterwards, such
