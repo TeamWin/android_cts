@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,28 @@
  * limitations under the License.
  */
 
-package android.app.role.cts.app;
+package android.app.role.cts.app28;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
+import android.provider.Telephony;
+import android.telecom.TelecomManager;
 
 /**
- * An empty activity that finishes immediately.
+ * An activity that tries to change the default SMS app.
  */
-public class EmptyActivity extends Activity {
+public class ChangeDefaultSmsActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        finish();
+        if (savedInstanceState == null) {
+            String packageName = getIntent().getStringExtra(Intent.EXTRA_PACKAGE_NAME);
+            Intent intent = new Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT)
+                    .putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, packageName);
+            startActivity(intent);
+        }
     }
 }
