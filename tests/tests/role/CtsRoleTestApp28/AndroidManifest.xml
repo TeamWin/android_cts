@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <!--
-  ~ Copyright (C) 2018 The Android Open Source Project
+  ~ Copyright (C) 2019 The Android Open Source Project
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -18,17 +18,12 @@
 
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.app.role.cts.app">
+    package="android.app.role.cts.app28">
 
-    <application>
+    <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="28"/>
 
-        <activity
-            android:name=".RequestRoleActivity"
-            android:exported="true" />
-
-        <activity
-            android:name=".IsRoleHeldActivity"
-            android:exported="true" />
+    <application
+        android:label="CtsRoleTestApp28">
 
         <activity
             android:name=".ChangeDefaultDialerActivity"
@@ -83,23 +78,5 @@
                 <data android:mimeType="application/vnd.wap.mms-message" />
             </intent-filter>
         </receiver>
-
-        <!-- Browser -->
-        <activity android:name=".BrowserActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="http" />
-            </intent-filter>
-        </activity>
-
-        <!-- Assistant -->
-        <activity android:name=".AssistantActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.ASSIST" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
     </application>
 </manifest>
