@@ -282,15 +282,24 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             return;
         }
 
+        int maxUsers = getDevice().getMaxNumberOfUsersSupported();
         int maxRunningUsers = getDevice().getMaxNumberOfRunningUsersSupported();
-        // Primary user is already running, so we can start up to maxRunningUsers -1.
-        for (int i = 0; i < maxRunningUsers - 1; i++) {
+
+        // Primary user is already running, so we can create and start up to minimum of above - 1.
+        int usersToCreateAndStart = Math.min(maxUsers, maxRunningUsers) - 1;
+        for (int i = 0; i < usersToCreateAndStart; i++) {
             executeDeviceTestMethod(".CreateAndManageUserTest",
                     "testCreateAndManageUser_StartInBackground");
         }
-        // The next startUserInBackground should return USER_OPERATION_ERROR_MAX_RUNNING_USERS.
-        executeDeviceTestMethod(".CreateAndManageUserTest",
-                "testCreateAndManageUser_StartInBackground_MaxRunningUsers");
+
+        if (maxUsers > maxRunningUsers) {
+            // The next startUserInBackground should return USER_OPERATION_ERROR_MAX_RUNNING_USERS.
+            executeDeviceTestMethod(".CreateAndManageUserTest",
+                    "testCreateAndManageUser_StartInBackground_MaxRunningUsers");
+        } else {
+            // The next createAndManageUser should return USER_OPERATION_ERROR_MAX_USERS.
+            executeDeviceTestMethod(".CreateAndManageUserTest", "testCreateAndManageUser_MaxUsers");
+        }
     }
 
     /**
