@@ -342,8 +342,9 @@ public class MediaStore_Images_MediaTest {
         }
 
         // Now remove ownership, which means that Exif/XMP location data should be redacted
-        ProviderTestUtils.executeShellCommand(
-                "content update --uri " + publishUri + " --bind owner_package_name:n:",
+        ProviderTestUtils.executeShellCommand("content update"
+                + " --user " + InstrumentationRegistry.getTargetContext().getUserId()
+                + " --uri " + publishUri + " --bind owner_package_name:n:",
                 InstrumentationRegistry.getInstrumentation().getUiAutomation());
         try (InputStream is = mContentResolver.openInputStream(publishUri)) {
             final ExifInterface exif = new ExifInterface(is);
@@ -405,8 +406,9 @@ public class MediaStore_Images_MediaTest {
     @Test
     public void testCanonicalize() throws Exception {
         // Remove all audio left over from other tests
-        ProviderTestUtils.executeShellCommand(
-                "content delete --uri " + mExternalImages,
+        ProviderTestUtils.executeShellCommand("content delete"
+                + " --user " + InstrumentationRegistry.getTargetContext().getUserId()
+                + " --uri " + mExternalImages,
                 InstrumentationRegistry.getInstrumentation().getUiAutomation());
 
         // Publish some content
