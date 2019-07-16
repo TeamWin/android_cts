@@ -47,7 +47,7 @@ public class PermissionUpdateListenerTest {
     private static final String PACKAGE_NAME =
             "android.permission.cts.appthatrequestcustompermission";
     private static final String PERMISSION_NAME = "android.permission.READ_CONTACTS";
-    private static final int TIMEOUT = 5000;
+    private static final int TIMEOUT = 30000;
 
     private static final Context sContext =
             InstrumentationRegistry.getInstrumentation().getContext();
