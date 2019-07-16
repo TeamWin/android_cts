@@ -17,10 +17,10 @@
 package android.cts.backup;
 
 import com.android.compatibility.common.util.BackupHostSideUtils;
-import com.android.compatibility.common.util.BackupUtils;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
+import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
@@ -29,6 +29,9 @@ import com.android.tradefed.targetprep.ITargetCleaner;
 import com.android.tradefed.targetprep.TargetSetupError;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Tradedfed target preparer for the backup tests.
@@ -52,13 +55,10 @@ public class BackupPreparer implements ITargetCleaner {
     private static final String LOCAL_TRANSPORT =
             "com.android.localtransport/.LocalTransport";
 
-    private static final int USER_SYSTEM = 0;
-
     private boolean mIsBackupSupported;
     private boolean mWasBackupEnabled;
     private String mOldTransport;
     private ITestDevice mDevice;
-    private BackupUtils mBackupUtils;
 
     @Override
     public void setUp(ITestDevice device, IBuildInfo buildInfo)
@@ -66,20 +66,31 @@ public class BackupPreparer implements ITargetCleaner {
         mDevice = device;
 
         mIsBackupSupported = mDevice.hasFeature("feature:" + FEATURE_BACKUP);
+
+        // In case the device was just rebooted, wait for the broadcast queue to get idle to avoid
+        // any interference from services doing backup clean up on reboot.
+        waitForBroadcastIdle();
+
         if (mIsBackupSupported) {
-            mBackupUtils = BackupHostSideUtils.createBackupUtils(mDevice);
-            try {
-                mBackupUtils.waitUntilBackupServiceIsRunning(USER_SYSTEM);
-                checkHasLocalTransport();
-                if (mEnableBackup) {
-                    mWasBackupEnabled = enableBackup(true);
-                    if (mSelectLocalTransport) {
-                        mOldTransport = setBackupTransport(LOCAL_TRANSPORT);
-                    }
-                    mBackupUtils.waitForBackupInitialization();
+            // Enable backup and select local backup transport
+            if (!hasBackupTransport(LOCAL_TRANSPORT)) {
+                throw new TargetSetupError("Device should have LocalTransport available",
+                        device.getDeviceDescriptor());
+            }
+            if (mEnableBackup) {
+                CLog.i("Enabling backup on %s", mDevice.getSerialNumber());
+                mWasBackupEnabled = enableBackup(true);
+                CLog.d("Backup was enabled? : %s", mWasBackupEnabled);
+                if (mSelectLocalTransport) {
+                    CLog.i("Selecting local transport on %s", mDevice.getSerialNumber());
+                    mOldTransport = setBackupTransport(LOCAL_TRANSPORT);
+                    CLog.d("Old transport : %s", mOldTransport);
                 }
-            } catch (Exception e) {
-                throw new TargetSetupError("Exception in setup", e);
+                try {
+                    BackupHostSideUtils.createBackupUtils(mDevice).waitForBackupInitialization();
+                } catch (IOException e) {
+                    throw new TargetSetupError("Backup not initialized", e);
+                }
             }
         }
     }
@@ -90,39 +101,75 @@ public class BackupPreparer implements ITargetCleaner {
         mDevice = device;
 
         if (mIsBackupSupported) {
-            try {
-                if (mEnableBackup) {
-                    CLog.i("Returning backup to it's previous state on %s",
+            if (mEnableBackup) {
+                CLog.i("Returning backup to it's previous state on %s", mDevice.getSerialNumber());
+                enableBackup(mWasBackupEnabled);
+                if (mSelectLocalTransport) {
+                    CLog.i("Returning selected transport to it's previous value on %s",
                             mDevice.getSerialNumber());
-                    enableBackup(mWasBackupEnabled);
-                    if (mSelectLocalTransport) {
-                        setBackupTransport(mOldTransport);
-                    }
+                    setBackupTransport(mOldTransport);
                 }
-            } catch (Exception ex) {
-                throw new DeviceNotAvailableException("Exception in tearDown", ex);
             }
         }
     }
 
-    private void checkHasLocalTransport() throws Exception {
-        if (!mBackupUtils.userHasBackupTransport(LOCAL_TRANSPORT, USER_SYSTEM)) {
-            throw new TargetSetupError(
-                    "Device should have LocalTransport available", mDevice.getDeviceDescriptor());
+    // Copied over from BackupQuotaTest
+    private boolean hasBackupTransport(String transport) throws DeviceNotAvailableException {
+        String output = mDevice.executeShellCommand("bmgr list transports");
+        for (String t : output.split(" ")) {
+            if (transport.equals(t.trim())) {
+                return true;
+            }
         }
+        return false;
     }
 
-    private boolean enableBackup(boolean enable) throws Exception {
-        CLog.i("Setting backup enabled on %s to %s", mDevice.getSerialNumber(), enable);
-        boolean previouslyEnabled = mBackupUtils.enableBackup(enable);
-        CLog.d("Backup was enabled? : %s", previouslyEnabled);
+    // Copied over from BackupQuotaTest
+    private boolean enableBackup(boolean enable) throws DeviceNotAvailableException {
+        boolean previouslyEnabled;
+        String output = mDevice.executeShellCommand("bmgr enabled");
+        Pattern pattern = Pattern.compile("^Backup Manager currently (enabled|disabled)$");
+        Matcher matcher = pattern.matcher(output.trim());
+        if (matcher.find()) {
+            previouslyEnabled = "enabled".equals(matcher.group(1));
+        } else {
+            throw new RuntimeException("non-parsable output setting bmgr enabled: " + output);
+        }
+
+        mDevice.executeShellCommand("bmgr enable " + enable);
         return previouslyEnabled;
     }
 
-    private String setBackupTransport(String transport) throws IOException {
-        CLog.i("Selecting %s on %s", transport, mDevice.getSerialNumber());
-        String oldTransport = mBackupUtils.setBackupTransportForUser(transport, USER_SYSTEM);
-        CLog.d("Old transport : %s", mOldTransport);
-        return oldTransport;
+    // Copied over from BackupQuotaTest
+    private String setBackupTransport(String transport) throws DeviceNotAvailableException {
+        String output = mDevice.executeShellCommand("bmgr transport " + transport);
+        Pattern pattern = Pattern.compile("\\(formerly (.*)\\)$");
+        Matcher matcher = pattern.matcher(output);
+        if (matcher.find()) {
+            return matcher.group(1);
+        } else {
+            throw new RuntimeException("non-parsable output setting bmgr transport: " + output);
+        }
     }
+
+    // Copied over from BaseDevicePolicyTest
+    private void waitForBroadcastIdle() throws DeviceNotAvailableException, TargetSetupError {
+        CollectingOutputReceiver receiver = new CollectingOutputReceiver();
+        try {
+            // we allow 20 min for the command to complete and 10 min for the command to start to
+            // output something
+            mDevice.executeShellCommand(
+                    "am wait-for-broadcast-idle", receiver, 20, 10, TimeUnit.MINUTES, 0);
+        } finally {
+            String output = receiver.getOutput();
+            CLog.d("Output from 'am wait-for-broadcast-idle': %s", output);
+            if (!output.contains("All broadcast queues are idle!")) {
+                // the call most likely failed we should fail the test
+                throw new TargetSetupError("'am wait-for-broadcase-idle' did not complete.",
+                        mDevice.getDeviceDescriptor());
+                // TODO: consider adding a reboot or recovery before failing if necessary
+            }
+        }
+    }
+
 }
