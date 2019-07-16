@@ -28,6 +28,7 @@ import android.net.Uri;
 import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
+import android.os.UserHandle;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
 import android.provider.cts.MediaStoreUtils.PendingParams;
@@ -321,8 +322,9 @@ public class ProviderTestUtils {
     }
 
     public static File getRawFile(Uri uri) throws Exception {
-        final String res = ProviderTestUtils.executeShellCommand(
-                "content query --uri " + uri + " --projection _data",
+        final String res = ProviderTestUtils.executeShellCommand("content query --uri " + uri
+                + " --user " + InstrumentationRegistry.getTargetContext().getUserId()
+                + " --projection _data",
                 InstrumentationRegistry.getInstrumentation().getUiAutomation());
         final int i = res.indexOf("_data=");
         if (i >= 0) {
