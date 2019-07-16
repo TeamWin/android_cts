@@ -65,7 +65,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
 
     private static final int CONFIGURE_TIMEOUT = 5000; //ms
-    private static final int CAPTURE_TIMEOUT = 1000; //ms
+    private static final int CAPTURE_TIMEOUT = 1500; //ms
 
     // For testTriggerInteractions
     private static final int PREVIEW_WARMUP_FRAMES = 60;
