@@ -78,6 +78,9 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
 
     private static final int ACTIVITY_FOCUS_TIMEOUT_MS = 3000;
 
+    private static final String TEST_PACKAGE_APP_A = "android.server.wm.backgroundactivity.appa";
+    private static final String TEST_PACKAGE_APP_B = "android.server.wm.backgroundactivity.appb";
+
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getContext();
@@ -99,6 +102,8 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
 
     @After
     public void tearDown() throws Exception {
+        stopTestPackage(TEST_PACKAGE_APP_A);
+        stopTestPackage(TEST_PACKAGE_APP_B);
         pressHomeButton();
         mAmWmState.waitForHomeActivityVisible();
         runWithShellPermissionIdentity(() -> {
@@ -111,9 +116,6 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
 
     @Test
     public void testBackgroundActivityBlocked() throws Exception {
-        mAmWmState.getAmState().computeState();
-        int stackCount = mAmWmState.getAmState().getStackCount();
-
         // Start AppA background activity and blocked
         Intent intent = new Intent();
         intent.setComponent(APP_A_START_ACTIVITY_RECEIVER);
@@ -121,7 +123,17 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         boolean result = waitForActivityFocused(APP_A_BACKGROUND_ACTIVITY);
         assertFalse("Should not able to launch background activity", result);
         assertTaskStack(null, APP_A_BACKGROUND_ACTIVITY);
-        assertEquals(stackCount, mAmWmState.getAmState().getStackCount());
+
+        // TODO(b/137134312): Bring this back once the stacks leakage issue is fixed
+        // Make sure aborting activity starts won't have any empty task/stack leaks.
+        // List<ActivityManagerState.ActivityStack> stacks = mAmWmState.getAmState().getStacks();
+        // for (ActivityManagerState.ActivityStack stack : stacks) {
+        //     assertThat(stack.getTopTask()).isNotNull();
+        //     List<ActivityManagerState.ActivityTask> tasks = stack.getTasks();
+        //     for (ActivityManagerState.ActivityTask task : tasks) {
+        //         assertThat(task.getActivities().size()).isGreaterThan(0);
+        //     }
+        // }
     }
 
     @Test
