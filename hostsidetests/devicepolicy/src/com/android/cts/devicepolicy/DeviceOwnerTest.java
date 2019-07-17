@@ -108,6 +108,15 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     /** CreateAndManageUser is available and an additional user can be created. */
     private boolean mHasCreateAndManageUserFeature;
 
+    /**
+     * Copied from {@link android.app.admin.DevicePolicyManager}
+     */
+    private static final String GLOBAL_SETTING_AUTO_TIME = "auto_time";
+    private static final String GLOBAL_SETTING_AUTO_TIME_ZONE = "auto_time_zone";
+    private static final String GLOBAL_SETTING_DATA_ROAMING = "data_roaming";
+    private static final String GLOBAL_SETTING_USB_MASS_STORAGE_ENABLED =
+            "usb_mass_storage_enabled";
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -1142,6 +1151,30 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             getDevice().uninstallPackage(BaseLauncherAppsTest.LAUNCHER_TESTS_SUPPORT_APK);
             getDevice().uninstallPackage(BaseLauncherAppsTest.LAUNCHER_TESTS_APK);
         }
+    }
+
+    public void testSetGlobalSettingLogged() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".DevicePolicyLoggingTest", "testSetGlobalSettingLogged");
+        }, new DevicePolicyEventWrapper.Builder(EventId.SET_GLOBAL_SETTING_VALUE)
+                .setAdminPackageName(DEVICE_OWNER_PKG)
+                .setStrings(GLOBAL_SETTING_AUTO_TIME, "1")
+                .build(),
+        new DevicePolicyEventWrapper.Builder(EventId.SET_GLOBAL_SETTING_VALUE)
+                .setAdminPackageName(DEVICE_OWNER_PKG)
+                .setStrings(GLOBAL_SETTING_AUTO_TIME_ZONE, "1")
+                .build(),
+        new DevicePolicyEventWrapper.Builder(EventId.SET_GLOBAL_SETTING_VALUE)
+                .setAdminPackageName(DEVICE_OWNER_PKG)
+                .setStrings(GLOBAL_SETTING_DATA_ROAMING, "1")
+                .build(),
+        new DevicePolicyEventWrapper.Builder(EventId.SET_GLOBAL_SETTING_VALUE)
+                .setAdminPackageName(DEVICE_OWNER_PKG)
+                .setStrings(GLOBAL_SETTING_USB_MASS_STORAGE_ENABLED, "1")
+                .build());
     }
 
     private void executeDeviceOwnerTest(String testClassName) throws Exception {
