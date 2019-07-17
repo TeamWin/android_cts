@@ -47,7 +47,7 @@
 #endif
 
 static const std::string kSystemLibraryPath = "/system/" LIB_DIR;
-static const std::string kRuntimeApexLibraryPath = "/apex/com.android.runtime/" LIB_DIR;
+static const std::string kArtApexLibraryPath = "/apex/com.android.art/" LIB_DIR;
 static const std::string kVendorLibraryPath = "/vendor/" LIB_DIR;
 static const std::string kProductLibraryPath = "/product/" LIB_DIR;
 
@@ -377,7 +377,7 @@ extern "C" JNIEXPORT jstring JNICALL
   // These paths should be tested too - this is because apps may rely on some
   // libraries being available there.
   system_library_search_paths.insert(kSystemLibraryPath);
-  system_library_search_paths.insert(kRuntimeApexLibraryPath);
+  system_library_search_paths.insert(kArtApexLibraryPath);
 
   if (!check_path(env, clazz, kSystemLibraryPath, system_library_search_paths,
                   system_public_libraries,
@@ -391,7 +391,7 @@ extern "C" JNIEXPORT jstring JNICALL
   bool check_absence = !android::base::GetBoolProperty("ro.vndk.lite", false);
 
   // Check the runtime libraries.
-  if (!check_path(env, clazz, kRuntimeApexLibraryPath, {kRuntimeApexLibraryPath},
+  if (!check_path(env, clazz, kArtApexLibraryPath, {kArtApexLibraryPath},
                   runtime_public_libraries,
                   // System.loadLibrary("icuuc") would fail since a copy exists in /system.
                   // TODO(b/124218500): Change to true when the bug is resolved.
