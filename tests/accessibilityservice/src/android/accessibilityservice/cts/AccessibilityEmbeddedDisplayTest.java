@@ -21,6 +21,7 @@ import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchA
 import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
 import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
@@ -81,7 +82,7 @@ public class AccessibilityEmbeddedDisplayTest {
             .around(mDumpOnFailureRule);
 
     @BeforeClass
-    public static void oneTimeSetup() throws Exception {
+    public static void oneTimeSetup() {
         sInstrumentation = InstrumentationRegistry.getInstrumentation();
         sUiAutomation = sInstrumentation.getUiAutomation();
     }
@@ -119,8 +120,14 @@ public class AccessibilityEmbeddedDisplayTest {
     public void testA11yWindowInfoHasCorrectLayer() throws Exception {
         launchActivityInActivityView();
 
-        assertTrue(findWindowByTitle(sUiAutomation, mActivityTitle).getLayer()
-                > findWindowByTitle(sUiAutomation, mParentActivityTitle).getLayer());
+        final AccessibilityWindowInfo parentActivityWindow =
+                findWindowByTitle(sUiAutomation, mParentActivityTitle);
+        final AccessibilityWindowInfo activityWindow =
+                findWindowByTitle(sUiAutomation, mActivityTitle);
+
+        assertNotNull(parentActivityWindow);
+        assertNotNull(activityWindow);
+        assertTrue(parentActivityWindow.getLayer() > activityWindow.getLayer());
     }
 
     @Presubmit
@@ -128,12 +135,23 @@ public class AccessibilityEmbeddedDisplayTest {
     public void testA11yWindowInfoAndA11yNodeInfoHasCorrectBoundsInScreen() throws Exception {
         launchActivityInActivityView();
 
+        final AccessibilityWindowInfo parentActivityWindow =
+                findWindowByTitle(sUiAutomation, mParentActivityTitle);
+        final AccessibilityWindowInfo activityWindow =
+                findWindowByTitle(sUiAutomation, mActivityTitle);
         final AccessibilityNodeInfo button = findWindowByTitle(sUiAutomation,
                 mActivityTitle).getRoot().findAccessibilityNodeInfosByViewId(
                 "android.accessibilityservice.cts:id/button").get(0);
-        final Rect parentActivityBound = getWindowBoundByTitle(mParentActivityTitle);
-        final Rect activityBound = getWindowBoundByTitle(mActivityTitle);
+
+        assertNotNull(parentActivityWindow);
+        assertNotNull(activityWindow);
+        assertNotNull(button);
+
+        final Rect parentActivityBound = new Rect();
+        final Rect activityBound = new Rect();
         final Rect buttonBound = new Rect();
+        parentActivityWindow.getBoundsInScreen(parentActivityBound);
+        activityWindow.getBoundsInScreen(activityBound);
         button.getBoundsInScreen(buttonBound);
 
         assertTrue(parentActivityBound.contains(activityBound));
@@ -152,21 +170,13 @@ public class AccessibilityEmbeddedDisplayTest {
                 (event) -> {
                     // Ensure the target activity is shown
                     final AccessibilityWindowInfo window =
-                            findWindowByTitle(sUiAutomation, mContext.getString(
-                                    R.string.accessibility_embedded_display_test_activity));
+                            findWindowByTitle(sUiAutomation, mActivityTitle);
                     if (window == null) {
                         return false;
                     }
                     window.getBoundsInScreen(bounds);
                     return !bounds.isEmpty();
                 }, DEFAULT_TIMEOUT_MS);
-    }
-
-    private Rect getWindowBoundByTitle(String title) {
-        final AccessibilityWindowInfo window = findWindowByTitle(sUiAutomation, title);
-        final Rect bound = new Rect();
-        window.getBoundsInScreen(bound);
-        return bound;
     }
 
     private boolean supportsMultiDisplay() {

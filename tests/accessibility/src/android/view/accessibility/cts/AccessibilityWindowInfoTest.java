@@ -26,6 +26,7 @@ import static org.junit.Assert.fail;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.graphics.Rect;
+import android.graphics.Region;
 import android.os.Parcel;
 import android.platform.test.annotations.Presubmit;
 import android.text.TextUtils;
@@ -95,6 +96,10 @@ public class AccessibilityWindowInfoTest {
         w.getBoundsInScreen(rect);
         assertTrue(rect.isEmpty());
 
+        Region region = new Region();
+        w.getRegionInScreen(region);
+        assertTrue(region.isEmpty());
+
         try {
             w.getChild(0);
             fail("Expected IndexOutOfBoundsException");
@@ -130,6 +135,11 @@ public class AccessibilityWindowInfoTest {
         w1.getBoundsInScreen(bounds1);
         w2.getBoundsInScreen(bounds2);
         equality &= bounds1.equals(bounds2);
+        Region regions1 = new Region();
+        Region regions2 = new Region();
+        w1.getRegionInScreen(regions1);
+        w2.getRegionInScreen(regions2);
+        equality &= regions1.equals(regions2);
         return equality;
     }
 }
