@@ -168,8 +168,9 @@ public class MediaStore_Audio_MediaTest {
     @Test
     public void testCanonicalize() throws Exception {
         // Remove all audio left over from other tests
-        ProviderTestUtils.executeShellCommand(
-                "content delete --uri " + mExternalAudio,
+        ProviderTestUtils.executeShellCommand("content delete"
+                + " --user " + InstrumentationRegistry.getTargetContext().getUserId()
+                + " --uri " + mExternalAudio,
                 InstrumentationRegistry.getInstrumentation().getUiAutomation());
 
         // Publish some content
