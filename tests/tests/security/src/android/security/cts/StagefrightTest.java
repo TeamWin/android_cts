@@ -798,6 +798,11 @@ public class StagefrightTest extends InstrumentationTestCase {
      before any existing test methods
      ***********************************************************/
 
+    @SecurityTest(minPatchLevel = "2017-07")
+    public void testStagefright_bug_36279112() throws Exception {
+        doStagefrightTest(R.raw.bug_36279112);
+    }
+
     @SecurityTest(minPatchLevel = "2018-06")
     public void testBug_73552574() throws Exception {
         int[] frameSizes = getFrameSizes(R.raw.bug_73552574_framelen);
