@@ -33,6 +33,8 @@ import android.platform.test.annotations.RequiresDevice;
 
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CddTest;
+
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertTrue;
 
@@ -117,7 +119,38 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         List<CarPropertyConfig> requiredConfigs = mCarPropertyManager.getPropertyList(mPropertyIds);
         // Vehicles need to implement all of those properties
         assertEquals(mPropertyIds.size(), requiredConfigs.size());
+    }
 
+    @CddTest(requirement="2.5.1")
+    @Test
+    public void testMustSupportGearSelection() throws Exception {
+        assertTrue("Must support GEAR_SELECTION",
+            mCarPropertyManager.getPropertyList().stream().anyMatch(cfg -> cfg.getPropertyId() ==
+                VehiclePropertyIds.GEAR_SELECTION));
+    }
+
+    @CddTest(requirement="2.5.1")
+    @Test
+    public void testMustSupportNightMode() {
+        assertTrue("Must support NIGHT_MODE",
+            mCarPropertyManager.getPropertyList().stream().anyMatch(cfg -> cfg.getPropertyId() ==
+                VehiclePropertyIds.NIGHT_MODE));
+    }
+
+    @CddTest(requirement="2.5.1")
+    @Test
+    public void testMustSupportPerfVehicleSpeed() throws Exception {
+        assertTrue("Must support PERF_VEHICLE_SPEED",
+            mCarPropertyManager.getPropertyList().stream().anyMatch(cfg -> cfg.getPropertyId() ==
+                VehiclePropertyIds.PERF_VEHICLE_SPEED));
+    }
+
+    @CddTest(requirement = "2.5.1")
+    @Test
+    public void testMustSupportParkingBrakeOn() throws Exception {
+        assertTrue("Must support PARKING_BRAKE_ON",
+            mCarPropertyManager.getPropertyList().stream().anyMatch(cfg -> cfg.getPropertyId() ==
+                VehiclePropertyIds.PARKING_BRAKE_ON));
     }
 
     @SuppressWarnings("unchecked")
@@ -297,5 +330,4 @@ public class CarPropertyManagerTest extends CarApiTestBase {
             return config.getAreaIds();
         }
     }
-
 }

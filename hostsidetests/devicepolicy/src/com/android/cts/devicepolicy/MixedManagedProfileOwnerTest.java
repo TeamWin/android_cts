@@ -19,6 +19,7 @@ package com.android.cts.devicepolicy;
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
 
+import com.android.cts.devicepolicy.annotations.PermissionsTest;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
 /**
@@ -245,14 +246,16 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
         super.testPackageInstallUserRestrictions();
     }
 
-    @FlakyTest
     @Override
+    @FlakyTest
+    @PermissionsTest
     public void testPermissionGrant() throws Exception {
         super.testPermissionGrant();
     }
 
-    @FlakyTest
     @Override
+    @FlakyTest
+    @PermissionsTest
     public void testPermissionMixedPolicies() throws Exception {
         super.testPermissionMixedPolicies();
     }
@@ -263,11 +266,34 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
         super.testScreenCaptureDisabled_assist();
     }
 
-
+    @Override
+    @PermissionsTest
+    public void testPermissionPolicy() throws Exception {
+        super.testPermissionPolicy();
+    }
 
     @FlakyTest
     @Override
     public void testSetMeteredDataDisabledPackages() throws Exception {
         super.testSetMeteredDataDisabledPackages();
+    }
+
+    @Override
+    @PermissionsTest
+    public void testPermissionAppUpdate() throws Exception {
+        super.testPermissionAppUpdate();
+    }
+
+    @Override
+    @PermissionsTest
+    public void testPermissionGrantPreMApp() throws Exception {
+        super.testPermissionGrantPreMApp();
+    }
+
+    @Override
+    @PermissionsTest
+    public void testPermissionGrantOfDisallowedPermissionWhileOtherPermIsGranted()
+            throws Exception {
+        super.testPermissionGrantOfDisallowedPermissionWhileOtherPermIsGranted();
     }
 }

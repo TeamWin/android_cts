@@ -18,6 +18,8 @@ package com.android.cts.devicepolicy;
 
 import android.platform.test.annotations.LargeTest;
 
+import com.android.cts.devicepolicy.annotations.PermissionsTest;
+
 /**
  * Set of tests for managed profile owner use cases that also apply to device owners.
  * Tests that should be run identically in both cases are added in DeviceAndProfileOwnerTestApi25.
@@ -96,5 +98,11 @@ public class MixedManagedProfileOwnerTestApi25 extends DeviceAndProfileOwnerTest
         // Unlock FBE and verify resetPassword is enabled again
         executeDeviceTestMethod(FBE_HELPER_CLASS, "testUnlockFbe");
         executeDeviceTestMethod(RESET_PASSWORD_TEST_CLASS, "testResetPasswordManagedProfile");
+    }
+
+    @Override
+    @PermissionsTest
+    public void testPermissionGrantPreMApp() throws Exception {
+        super.testPermissionGrantPreMApp();
     }
 }
