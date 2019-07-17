@@ -39,6 +39,12 @@
         <option name="push" value="CtsStoragePermissionsUserOptInSdk22.apk->/data/local/tmp/cts/permissions2/CtsStoragePermissionsUserOptInSdk22.apk" />
         <option name="push" value="CtsStoragePermissionsUserOptInSdk28.apk->/data/local/tmp/cts/permissions2/CtsStoragePermissionsUserOptInSdk28.apk" />
         <option name="push" value="CtsStoragePermissionsUserOptOutSdk29.apk->/data/local/tmp/cts/permissions2/CtsStoragePermissionsUserOptOutSdk29.apk" />
+        <option name="push" value="CtsLegacyStorageNotIsolatedWithSharedUid.apk->/data/local/tmp/cts/permissions2/CtsLegacyStorageNotIsolatedWithSharedUid.apk" />
+        <option name="push" value="CtsLegacyStorageIsolatedWithSharedUid.apk->/data/local/tmp/cts/permissions2/CtsLegacyStorageIsolatedWithSharedUid.apk" />
+        <option name="push" value="CtsLegacyStorageRestrictedWithSharedUid.apk->/data/local/tmp/cts/permissions2/CtsLegacyStorageRestrictedWithSharedUid.apk" />
+        <option name="push" value="CtsLegacyStorageRestrictedSdk28WithSharedUid.apk->/data/local/tmp/cts/permissions2/CtsLegacyStorageRestrictedSdk28WithSharedUid.apk" />
+        <option name="push" value="CtsSMSRestrictedWithSharedUid.apk->/data/local/tmp/cts/permissions2/CtsSMSRestrictedWithSharedUid.apk" />
+        <option name="push" value="CtsSMSNotRestrictedWithSharedUid.apk->/data/local/tmp/cts/permissions2/CtsSMSNotRestrictedWithSharedUid.apk" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
