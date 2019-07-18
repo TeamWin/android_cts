@@ -108,6 +108,10 @@ static void sanitizeMessage(const InputMessage& msg, InputMessage* outMsg) {
             outMsg->body.motion.xPrecision = msg.body.motion.xPrecision;
             // float yPrecision
             outMsg->body.motion.yPrecision = msg.body.motion.yPrecision;
+            // float xCursorPosition
+            outMsg->body.motion.xCursorPosition = msg.body.motion.xCursorPosition;
+            // float yCursorPosition
+            outMsg->body.motion.yCursorPosition = msg.body.motion.yCursorPosition;
             // uint32_t pointerCount
             outMsg->body.motion.pointerCount = msg.body.motion.pointerCount;
             //struct Pointer pointers[MAX_POINTERS]
