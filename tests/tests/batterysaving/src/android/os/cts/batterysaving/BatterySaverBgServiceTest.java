@@ -35,6 +35,7 @@ import android.os.cts.batterysaving.common.BatterySavingCtsCommon.Payload.TestSe
 import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -49,6 +50,11 @@ import java.util.concurrent.atomic.AtomicReference;
 @RunWith(AndroidJUnit4.class)
 public class BatterySaverBgServiceTest extends BatterySavingTestBase {
     private static final String TAG = "BatterySaverBgServiceTest";
+
+    @After
+    public void tearDown() throws Exception {
+        enableBatterySaver(false);
+    }
 
     /**
      * Make sure BG services on pre-O apps can't be started when BS is on.
