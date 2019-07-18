@@ -525,7 +525,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
     }
 
     /** Helper class to save, set, and restore overlay_display_devices preference. */
-    private static class OverlayDisplayDevicesSession extends SettingsSession<String> {
+    private class OverlayDisplayDevicesSession extends SettingsSession<String> {
         private final List<OverlayDisplayState> mDisplayStates = new ArrayList<>();
         private final WindowManager mWm;
 
@@ -574,6 +574,8 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             // Need to restore display state before display is destroyed.
             restoreDisplayStates();
             super.close();
+            waitForDisplayGone(display -> mDisplayStates.stream()
+                    .anyMatch(state -> state.mId == display.getDisplayId()));
         }
 
         private class OverlayDisplayState {

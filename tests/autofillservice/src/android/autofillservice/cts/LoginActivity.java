@@ -140,6 +140,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
             final Intent intent = new Intent(this, WelcomeActivity.class);
             final String message = getWelcomeMessage(username);
             intent.putExtra(WelcomeActivity.EXTRA_MESSAGE, message);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             setLoginMessage(message);
             startActivity(intent);
             finish();
