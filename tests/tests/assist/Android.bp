@@ -25,11 +25,9 @@ android_test {
         "CtsAssistCommon",
         "ctstestrunner-axt",
         "compatibility-device-util-axt",
+	"androidx.test.ext.junit",
     ],
-    libs: [
-        "android.test.runner.stubs",
-        "android.test.base.stubs",
-    ],
+
     srcs: ["src/**/*.java"],
     sdk_version: "test_current",
 }
