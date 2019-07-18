@@ -859,6 +859,36 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                     ".DirectDelegatedCertInstallerTest", mUserId));
     }
 
+    // This test generates a key pair and validates that an app can be silently granted
+    // access to it.
+    public void testSetKeyGrant() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        // Install an app
+        installAppAsUser(CERT_INSTALLER_APK, mUserId);
+
+        try {
+            // First, generate a key and grant the cert installer access to it.
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DelegatedCertInstallerHelper",
+                    "testManualGenerateKeyAndGrantAccess", mUserId);
+            // Test the key is usable.
+            runDeviceTestsAsUser("com.android.cts.certinstaller",
+                    ".PreSelectedKeyAccessTest", "testAccessingPreSelectedAliasExpectingSuccess",
+                    mUserId);
+            // Remove the grant
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DelegatedCertInstallerHelper",
+                    "testManualRemoveKeyGrant", mUserId);
+            // Run another test to make sure the app no longer has access to the key.
+            runDeviceTestsAsUser("com.android.cts.certinstaller",
+                    ".PreSelectedKeyAccessTest", "testAccessingPreSelectedAliasWithoutGrant", mUserId);
+        } finally {
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DelegatedCertInstallerHelper",
+                    "testManualClearGeneratedKey", mUserId);
+        }
+    }
+
     // Sets restrictions and launches non-admin app, that tries to set wallpaper.
     // Non-admin apps must not violate any user restriction.
     public void testSetWallpaper_disallowed() throws Exception {
