@@ -256,7 +256,7 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
         // Resize docked stack to fullscreen size. This will trigger activity relaunch with
         // non-empty override configuration corresponding to fullscreen size.
         separateTestJournal();
-        resizeStack(stack.mStackId, displayRect.left, displayRect.top, displayRect.width(),
+        resizeDockedStack(displayRect.left, displayRect.top, displayRect.width(),
                 displayRect.height());
 
         // Move activity back to fullscreen stack.
@@ -302,7 +302,7 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
         final int smallWidthPx = dpToPx(SMALL_WIDTH_DP, density);
         final int smallHeightPx = dpToPx(SMALL_HEIGHT_DP, density);
 
-        resizeStack(stack.mStackId, 0, 0, smallWidthPx, smallHeightPx);
+        resizeDockedStack(0, 0, smallWidthPx, smallHeightPx);
         mAmWmState.waitForValidState(
                 new WaitForValidActivityState.Builder(DIALOG_WHEN_LARGE_ACTIVITY)
                         .setWindowingMode(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY)

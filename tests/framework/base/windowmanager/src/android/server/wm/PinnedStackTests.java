@@ -290,7 +290,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         final int stackId = getPinnedStack().mStackId;
         final int top = 0;
         final int left = displayRect.width() - 200;
-        resizeStack(stackId, left, top, left + 500, top + 500);
+        resizePinnedStack(stackId, left, top, left + 500, top + 500);
 
         // Ensure that the surface insets are not negative
         windowState = getWindowState(PIP_ACTIVITY);
@@ -1010,7 +1010,8 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         // got resumed.
         separateTestJournal();
         SystemUtil.runWithShellPermissionIdentity(
-                () -> mAtm.resizeStack(stackId, new Rect(20, 20, 500, 500), true /* animate */));
+                () -> mAtm.resizePinnedStack(stackId, new Rect(20, 20, 500, 500),
+                        true /* animate */));
         mBroadcastActionTrigger.doAction(TEST_ACTIVITY_ACTION_FINISH_SELF);
         mAmWmState.waitFor((amState, wmState) ->
                         !amState.containsActivity(TRANSLUCENT_TEST_ACTIVITY),
@@ -1264,7 +1265,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         } else {
             offsetBoundsOut.offset(0, -offsetY);
         }
-        resizeStack(stack.mStackId, offsetBoundsOut.left, offsetBoundsOut.top,
+        resizePinnedStack(stack.mStackId, offsetBoundsOut.left, offsetBoundsOut.top,
                 offsetBoundsOut.right, offsetBoundsOut.bottom);
     }
 
