@@ -1212,10 +1212,11 @@
     seconds of video recording. Playback will show up in the right view
     window after recording is complete. \n - Use the spinners to choose
     camera and resolution combinations. The playback should be similar
-    to what you saw in preview. \n - After all possible combinations
-    are tested, the pass button will be enabled. You may press the pass
-    button to indicate a pass. \n - You may press fail button any time during
-    the test to indicate failure.
+    to what you saw in preview. \n - The next button triggers test for the next
+    untested resolution of the currently selected camera. - After all possible
+    combinations are tested, the pass button will be enabled. You may press the
+    pass button to indicate a pass. \n - You may press fail button any time
+    during the test to indicate failure. \n
     </string>
     <string name="video_capture_label">Video capture</string>
     <string name="video_playback_label">Video playback</string>
