@@ -1196,10 +1196,12 @@
     the right view must be horizontally mirrored relative to the left
     view.\n - Note that the frame rate of the right view may be much
     lower than on the left; this is not an indication of a failed
-    test.
+    test.\n - The next button triggers the next resolution and format
+    combination of the current camera to show; this is optional.
     </string>
     <string name="cf_preview_label">Normal preview</string>
     <string name="cf_format_label">Processed callback data</string>
+    <string name="cf_next_button">Next</string>
 
     <!-- Strings for Camera Video -->
     <string name="record_button_text">Test</string>
