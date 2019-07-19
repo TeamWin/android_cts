@@ -161,10 +161,18 @@ public class AccessControlTest {
         return !lowRamDevice || (lowRamDevice && pm.hasSystemFeature("android.hardware.type.watch"));
     }
 
+    private boolean supportOMAPIReaders() {
+        final PackageManager pm = InstrumentationRegistry.getContext().getPackageManager();
+        return (pm.hasSystemFeature(PackageManager.FEATURE_SE_OMAPI_UICC)
+            || pm.hasSystemFeature(PackageManager.FEATURE_SE_OMAPI_ESE)
+            || pm.hasSystemFeature(PackageManager.FEATURE_SE_OMAPI_SD));
+    }
+
     @Before
     public void setUp() throws Exception {
         assumeTrue(PropertyUtil.getFirstApiLevel() > Build.VERSION_CODES.O_MR1);
         assumeTrue(supportsHardware());
+        assumeTrue(supportOMAPIReaders());
         seService = new SEService(InstrumentationRegistry.getContext(), new SynchronousExecutor(), mListener);
         connectionTimer = new Timer();
         connectionTimer.schedule(mTimerTask, SERVICE_CONNECTION_TIME_OUT);
