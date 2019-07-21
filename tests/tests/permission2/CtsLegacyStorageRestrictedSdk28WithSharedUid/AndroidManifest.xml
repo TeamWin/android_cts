@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <!--
   ~ Copyright (C) 2019 The Android Open Source Project
   ~
@@ -11,22 +12,17 @@
   ~ distributed under the License is distributed on an "AS IS" BASIS,
   ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   ~ See the License for the specific language governing permissions and
-  ~ limitations under the License
+  ~ limitations under the License.
   -->
+
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.android.tests.stagedinstall.testapp.A"
-          android:versionCode="1"
-          android:versionName="1.0" >
+    package="android.permission2.cts.legacystoragewithshareduid.restrictedsdk28"
+    android:versionCode="1"
+    android:sharedUserId="android.permission2.cts.restrictedpermissionuser.shareduid">
 
+    <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="28" />
 
-    <uses-sdk android:minSdkVersion="19" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
-    <application android:label="StagedInstall Test App A v1">
-        <activity android:name="com.android.tests.stagedinstall.testapp.MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-    </application>
+    <application android:label="CtsLegacyStorageRestrictedSdk28WithSharedUid" />
 </manifest>

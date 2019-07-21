@@ -37,6 +37,7 @@ public class Install {
     private final boolean mIsMultiPackage;
     // PackageInstaller.Session parameters.
     private boolean mIsStaged = false;
+    private boolean mIsDowngrade = false;
     private boolean mEnableRollback = false;
     private int mSessionMode = PackageInstaller.SessionParams.MODE_FULL_INSTALL;
 
@@ -93,6 +94,14 @@ public class Install {
      */
     public Install setStaged() {
         mIsStaged = true;
+        return this;
+    }
+
+    /**
+     * Marks the install as a downgrade.
+     */
+    public Install setRequestDowngrade() {
+        mIsDowngrade = true;
         return this;
     }
 
@@ -182,6 +191,7 @@ public class Install {
         if (mIsStaged) {
             params.setStaged();
         }
+        params.setRequestDowngrade(mIsDowngrade);
         params.setEnableRollback(mEnableRollback);
         return InstallUtils.getPackageInstaller().createSession(params);
     }

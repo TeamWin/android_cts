@@ -69,6 +69,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.regex.Pattern;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -556,6 +557,14 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.bug_32873375);
     }
 
+    @SecurityTest(minPatchLevel = "2018-02")
+    public void testStagefright_bug_63522067() throws Exception {
+        doStagefrightTestRawBlob(R.raw.bug_63522067_1_hevc, "video/hevc", 320, 420);
+        doStagefrightTestRawBlob(R.raw.bug_63522067_2_hevc, "video/hevc", 320, 420);
+        doStagefrightTestRawBlob(R.raw.bug_63522067_3_hevc, "video/hevc", 320, 420);
+        doStagefrightTestRawBlob(R.raw.bug_63522067_4_hevc, "video/hevc", 320, 420);
+    }
+
     @SecurityTest(minPatchLevel = "2016-03")
     public void testStagefright_bug_25765591() throws Exception {
         doStagefrightTest(R.raw.bug_25765591);
@@ -807,6 +816,12 @@ public class StagefrightTest extends InstrumentationTestCase {
     @SecurityTest(minPatchLevel = "2017-07")
     public void testStagefright_bug_36279112() throws Exception {
         doStagefrightTest(R.raw.bug_36279112);
+    }
+
+    @SecurityTest(minPatchLevel = "2017-08")
+    public void testBug_37203196() throws Exception {
+        int[] frameSizes = getFrameSizes(R.raw.bug_37203196_framelen);
+        doStagefrightTestRawBlob(R.raw.bug_37203196_mpeg2, "video/mpeg2", 48, 48, frameSizes);
     }
 
     @SecurityTest(minPatchLevel = "2018-06")
@@ -1175,8 +1190,23 @@ public class StagefrightTest extends InstrumentationTestCase {
         MediaPlayer.OnPreparedListener,
         MediaPlayer.OnCompletionListener {
 
-        private final String[] validProcessNames = {
-            "mediaserver", "mediadrmserver", "media.extractor", "media.codec", "media.metrics"
+        private final Pattern[] validProcessPatterns = {
+            Pattern.compile("adsprpcd"),
+            Pattern.compile("android\\.hardware\\.cas@\\d+?\\.\\d+?-service"),
+            Pattern.compile("android\\.hardware\\.drm@\\d+?\\.\\d+?-service"),
+            Pattern.compile("android\\.hardware\\.drm@\\d+?\\.\\d+?-service\\.clearkey"),
+            Pattern.compile("android\\.hardware\\.drm@\\d+?\\.\\d+?-service\\.widevine"),
+            Pattern.compile("android\\.process\\.media"),
+            Pattern.compile("mediadrmserver"),
+            Pattern.compile("media\\.extractor"),
+            Pattern.compile("media\\.metrics"),
+            Pattern.compile("mediaserver"),
+            Pattern.compile("media\\.codec"),
+            Pattern.compile("media\\.swcodec"),
+            Pattern.compile("\\[?sdcard\\]?"), // name:/system/bin/sdcard, user:media_rw
+            // Match any vendor processes.
+            // It should only catch crashes that happen during the test.
+            Pattern.compile("vendor.*"),
         };
 
         @Override
@@ -1224,7 +1254,7 @@ public class StagefrightTest extends InstrumentationTestCase {
                 if (crashes == null) {
                     Log.e(TAG, "Crash results not found for test " + getName());
                     return what;
-                } else if (CrashUtils.detectCrash(validProcessNames, true, crashes)) {
+                } else if (CrashUtils.securityCrashDetected(crashes, true, validProcessPatterns)) {
                     return what;
                 } else {
                     Log.i(TAG, "Crash ignored due to no security crash found for test " +

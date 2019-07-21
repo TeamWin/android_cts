@@ -52,43 +52,17 @@ android_test_helper_app {
         ":StagedInstallTestApexV2_WithPreInstallHook",
         ":StagedInstallTestApexV2_WrongSha",
         ":StagedInstallTestApexV3",
-        ":StagedInstallTestAppAv1",
-        ":StagedInstallTestAppAv2",
-        ":StagedInstallTestAppBv1",
         ":StagedInstallTestAppSamePackageNameAsApex",
     ],
     static_libs: [
         "androidx.test.runner",
         "androidx.test.core",
         "truth-prebuilt",
+	"cts-install-lib",
     ],
-    sdk_version: "system_current",
+    sdk_version: "test_current",
     test_suites: ["device-tests"],
 
-}
-
-android_test_helper_app {
-    name: "StagedInstallTestAppAv1",
-
-    srcs:   ["testdata/apk/src/**/*java"],
-
-    manifest:   "testdata/apk/Av1.xml",
-}
-
-android_test_helper_app {
-    name: "StagedInstallTestAppAv2",
-
-    srcs:   ["testdata/apk/src/**/*java"],
-
-    manifest:   "testdata/apk/Av2.xml",
-}
-
-android_test_helper_app {
-    name: "StagedInstallTestAppBv1",
-
-    srcs:   ["testdata/apk/src/**/*java"],
-
-    manifest:   "testdata/apk/Bv1.xml",
 }
 
 android_test_helper_app {

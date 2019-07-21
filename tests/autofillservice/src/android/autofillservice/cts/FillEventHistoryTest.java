@@ -26,6 +26,7 @@ import static android.autofillservice.cts.Helper.assertDeprecatedClientState;
 import static android.autofillservice.cts.Helper.assertFillEventForAuthenticationSelected;
 import static android.autofillservice.cts.Helper.assertFillEventForDatasetAuthenticationSelected;
 import static android.autofillservice.cts.Helper.assertFillEventForDatasetSelected;
+import static android.autofillservice.cts.Helper.assertFillEventForDatasetShown;
 import static android.autofillservice.cts.Helper.assertFillEventForSaveShown;
 import static android.autofillservice.cts.Helper.assertNoDeprecatedClientState;
 import static android.autofillservice.cts.Helper.findAutofillIdByResourceId;
@@ -104,8 +105,9 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
         mActivity.assertAutoFilled();
 
         // Verify fill selection
-        final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
-        assertFillEventForDatasetAuthenticationSelected(events.get(0), "name",
+        final List<Event> events = InstrumentedAutoFillService.getFillEvents(2);
+        assertFillEventForDatasetShown(events.get(0), "clientStateKey", "clientStateValue");
+        assertFillEventForDatasetAuthenticationSelected(events.get(1), "name",
                 "clientStateKey", "clientStateValue");
     }
 
@@ -141,11 +143,13 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
         mUiBot.assertDatasets("dataset");
 
         // Verify fill selection
-        final FillEventHistory selection = InstrumentedAutoFillService.getFillEventHistory(1);
+        final FillEventHistory selection = InstrumentedAutoFillService.getFillEventHistory(3);
         assertDeprecatedClientState(selection, "clientStateKey", "clientStateValue");
         List<Event> events = selection.getEvents();
-        assertFillEventForAuthenticationSelected(events.get(0), NULL_DATASET_ID,
+        assertFillEventForDatasetShown(events.get(0), "clientStateKey", "clientStateValue");
+        assertFillEventForAuthenticationSelected(events.get(1), NULL_DATASET_ID,
                 "clientStateKey", "clientStateValue");
+        assertFillEventForDatasetShown(events.get(2), "clientStateKey", "clientStateValue");
     }
 
     @Test
@@ -174,10 +178,11 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
 
         {
             // Verify fill selection
-            final FillEventHistory selection = InstrumentedAutoFillService.getFillEventHistory(1);
+            final FillEventHistory selection = InstrumentedAutoFillService.getFillEventHistory(2);
             assertDeprecatedClientState(selection, "clientStateKey", "Value1");
             final List<Event> events = selection.getEvents();
-            assertFillEventForDatasetSelected(events.get(0), NULL_DATASET_ID,
+            assertFillEventForDatasetShown(events.get(0), "clientStateKey", "Value1");
+            assertFillEventForDatasetSelected(events.get(1), NULL_DATASET_ID,
                     "clientStateKey", "Value1");
         }
 
@@ -210,10 +215,11 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
 
         {
             // Verify fill selection
-            final FillEventHistory selection = InstrumentedAutoFillService.getFillEventHistory(1);
+            final FillEventHistory selection = InstrumentedAutoFillService.getFillEventHistory(2);
             assertDeprecatedClientState(selection, "clientStateKey", "Value2");
             final List<Event> events = selection.getEvents();
-            assertFillEventForDatasetSelected(events.get(0), "name3",
+            assertFillEventForDatasetShown(events.get(0), "clientStateKey", "Value2");
+            assertFillEventForDatasetSelected(events.get(1), "name3",
                     "clientStateKey", "Value2");
         }
 
@@ -223,13 +229,15 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
 
         {
             // Verify fill selection
-            final FillEventHistory selection = InstrumentedAutoFillService.getFillEventHistory(2);
+            final FillEventHistory selection = InstrumentedAutoFillService.getFillEventHistory(4);
             assertDeprecatedClientState(selection, "clientStateKey", "Value2");
 
             final List<Event> events = selection.getEvents();
-            assertFillEventForDatasetSelected(events.get(0), "name3",
+            assertFillEventForDatasetShown(events.get(0), "clientStateKey", "Value2");
+            assertFillEventForDatasetSelected(events.get(1), "name3",
                     "clientStateKey", "Value2");
-            assertFillEventForSaveShown(events.get(1), NULL_DATASET_ID,
+            assertFillEventForDatasetShown(events.get(2), "clientStateKey", "Value2");
+            assertFillEventForSaveShown(events.get(3), NULL_DATASET_ID,
                     "clientStateKey", "Value2");
         }
     }
@@ -255,10 +263,11 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
 
         {
             // Verify fill selection
-            final FillEventHistory selection = InstrumentedAutoFillService.getFillEventHistory(1);
+            final FillEventHistory selection = InstrumentedAutoFillService.getFillEventHistory(2);
             assertNoDeprecatedClientState(selection);
             final List<Event> events = selection.getEvents();
-            assertFillEventForDatasetSelected(events.get(0), NULL_DATASET_ID);
+            assertFillEventForDatasetShown(events.get(0));
+            assertFillEventForDatasetSelected(events.get(1), NULL_DATASET_ID);
         }
 
         // Second request
@@ -292,10 +301,11 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
 
         {
             // Verify fill selection
-            final FillEventHistory selection = InstrumentedAutoFillService.getFillEventHistory(1);
+            final FillEventHistory selection = InstrumentedAutoFillService.getFillEventHistory(2);
             assertNoDeprecatedClientState(selection);
             final List<Event> events = selection.getEvents();
-            assertFillEventForDatasetSelected(events.get(0), NULL_DATASET_ID);
+            assertFillEventForDatasetShown(events.get(0));
+            assertFillEventForDatasetSelected(events.get(1), NULL_DATASET_ID);
         }
 
         // Second request
@@ -329,10 +339,11 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
 
         {
             // Verify fill selection
-            final FillEventHistory selection = InstrumentedAutoFillService.getFillEventHistory(1);
+            final FillEventHistory selection = InstrumentedAutoFillService.getFillEventHistory(2);
             assertNoDeprecatedClientState(selection);
             final List<Event> events = selection.getEvents();
-            assertFillEventForDatasetSelected(events.get(0), NULL_DATASET_ID);
+            assertFillEventForDatasetShown(events.get(0));
+            assertFillEventForDatasetSelected(events.get(1), NULL_DATASET_ID);
         }
 
         // Second request
@@ -398,8 +409,9 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
         sReplier.getNextFillRequest();
 
         // Verify fill selection for Activity B
-        final FillEventHistory selectionB = InstrumentedAutoFillService.getFillEventHistory(0);
+        final FillEventHistory selectionB = InstrumentedAutoFillService.getFillEventHistory(1);
         assertDeprecatedClientState(selectionB, "activity", "B");
+        assertFillEventForDatasetShown(selectionB.getEvents().get(0), "activity", "B");
 
         // Now switch back to A...
         mUiBot.pressBack(); // dismiss autofill
@@ -424,8 +436,9 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
         sReplier.getNextSaveRequest();
 
         // Finally, make sure history is right
-        final FillEventHistory finalSelection = InstrumentedAutoFillService.getFillEventHistory(0);
+        final FillEventHistory finalSelection = InstrumentedAutoFillService.getFillEventHistory(1);
         assertDeprecatedClientState(finalSelection, "activity", "B");
+        assertFillEventForDatasetShown(finalSelection.getEvents().get(0), "activity", "B");
     }
 
     @Test
@@ -498,11 +511,12 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
         mActivity.assertAutoFilled();
         // Verify fill history
         {
-            final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
-            assertFillEventForDatasetSelected(events.get(0), "id1");
+            final List<Event> events = InstrumentedAutoFillService.getFillEvents(2);
+            assertFillEventForDatasetShown(events.get(0));
+            assertFillEventForDatasetSelected(events.get(1), "id1");
         }
 
-        // Trigger 2st autofill request (which will clear the fill event history)
+        // Trigger 2nd autofill request (which will clear the fill event history)
         sReplier.addResponse(new CannedFillResponse.Builder().addDataset(
                 new CannedDataset.Builder()
                         .setId("id2")
@@ -518,8 +532,9 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
         mActivity.assertAutoFilled();
         // Verify fill history
         {
-            final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
-            assertFillEventForDatasetSelected(events.get(0), "id2");
+            final List<Event> events = InstrumentedAutoFillService.getFillEvents(2);
+            assertFillEventForDatasetShown(events.get(0));
+            assertFillEventForDatasetSelected(events.get(1), "id2");
         }
 
         // Finish the context by login in
@@ -530,9 +545,9 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
 
         {
             // Verify fill history
-            final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
-
-            assertFillEventForDatasetSelected(events.get(0), "id2");
+            final List<Event> events = InstrumentedAutoFillService.getFillEvents(2);
+            assertFillEventForDatasetShown(events.get(0));
+            assertFillEventForDatasetSelected(events.get(1), "id2");
         }
     }
 
@@ -565,8 +580,9 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
 
         // Verify dataset selection
         {
-            final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
-            assertFillEventForDatasetSelected(events.get(0), NULL_DATASET_ID);
+            final List<Event> events = InstrumentedAutoFillService.getFillEvents(2);
+            assertFillEventForDatasetShown(events.get(0));
+            assertFillEventForDatasetSelected(events.get(1), NULL_DATASET_ID);
         }
 
         // Finish the context by login in
@@ -580,8 +596,10 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
 
         // ...and check again
         {
-            final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
-            assertFillEventForDatasetSelected(events.get(0), NULL_DATASET_ID);
+            final List<Event> events = InstrumentedAutoFillService.getFillEvents(3);
+            assertFillEventForDatasetShown(events.get(0));
+            assertFillEventForDatasetSelected(events.get(1), NULL_DATASET_ID);
+            assertFillEventForDatasetShown(events.get(2));
         }
     }
 
@@ -616,8 +634,9 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
 
         // Verify dataset selection
         {
-            final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
-            assertFillEventForDatasetSelected(events.get(0), NULL_DATASET_ID);
+            final List<Event> events = InstrumentedAutoFillService.getFillEvents(2);
+            assertFillEventForDatasetShown(events.get(0));
+            assertFillEventForDatasetSelected(events.get(1), NULL_DATASET_ID);
         }
 
         // Finish the context by login in
@@ -630,10 +649,11 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
 
         // ...and check again
         {
-            final List<Event> events = InstrumentedAutoFillService.getFillEvents(2);
-            assertFillEventForDatasetSelected(events.get(0), NULL_DATASET_ID);
+            final List<Event> events = InstrumentedAutoFillService.getFillEvents(3);
+            assertFillEventForDatasetShown(events.get(0));
+            assertFillEventForDatasetSelected(events.get(1), NULL_DATASET_ID);
 
-            FillEventHistory.Event event2 = events.get(1);
+            FillEventHistory.Event event2 = events.get(2);
             assertThat(event2.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
             assertThat(event2.getDatasetId()).isNull();
             assertThat(event2.getClientState()).isNull();
@@ -678,8 +698,9 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
 
         // Verify dataset selection
         {
-            final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
-            assertFillEventForDatasetSelected(events.get(0), "id2");
+            final List<Event> events = InstrumentedAutoFillService.getFillEvents(2);
+            assertFillEventForDatasetShown(events.get(0));
+            assertFillEventForDatasetSelected(events.get(1), "id2");
         }
 
         // Finish the context by login in
@@ -692,10 +713,11 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
 
         // ...and check again
         {
-            final List<Event> events = InstrumentedAutoFillService.getFillEvents(2);
-            assertFillEventForDatasetSelected(events.get(0), "id2");
+            final List<Event> events = InstrumentedAutoFillService.getFillEvents(3);
+            assertFillEventForDatasetShown(events.get(0));
+            assertFillEventForDatasetSelected(events.get(1), "id2");
 
-            final FillEventHistory.Event event2 = events.get(1);
+            final FillEventHistory.Event event2 = events.get(2);
             assertThat(event2.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
             assertThat(event2.getDatasetId()).isNull();
             assertThat(event2.getClientState()).isNull();
@@ -738,8 +760,10 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
         mUiBot.assertDatasets("dataset1", "dataset2");
 
         // Verify history
-        InstrumentedAutoFillService.getFillEventHistory(0);
-
+        {
+            final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
+            assertFillEventForDatasetShown(events.get(0));
+        }
         // Enter values not present at the datasets
         mActivity.onUsername((v) -> v.setText("USERNAME"));
         mActivity.onPassword((v) -> v.setText("USERNAME"));
@@ -752,8 +776,9 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
 
         // Verify history again
         {
-            final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
-            final Event event = events.get(0);
+            final List<Event> events = InstrumentedAutoFillService.getFillEvents(2);
+            assertFillEventForDatasetShown(events.get(0));
+            final Event event = events.get(1);
             assertThat(event.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
             assertThat(event.getDatasetId()).isNull();
             assertThat(event.getClientState()).isNull();
@@ -798,8 +823,9 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
 
         // Verify dataset selection
         {
-            final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
-            assertFillEventForDatasetSelected(events.get(0), "id1");
+            final List<Event> events = InstrumentedAutoFillService.getFillEvents(2);
+            assertFillEventForDatasetShown(events.get(0));
+            assertFillEventForDatasetSelected(events.get(1), "id1");
         }
 
         // Finish the context by login in
@@ -813,10 +839,12 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
 
         // ...and check again
         {
-            final List<Event> events = InstrumentedAutoFillService.getFillEvents(2);
-            assertFillEventForDatasetSelected(events.get(0), "id1");
+            final List<Event> events = InstrumentedAutoFillService.getFillEvents(4);
+            assertFillEventForDatasetShown(events.get(0));
+            assertFillEventForDatasetSelected(events.get(1), "id1");
 
-            final FillEventHistory.Event event2 = events.get(1);
+            assertFillEventForDatasetShown(events.get(2));
+            final FillEventHistory.Event event2 = events.get(3);
             assertThat(event2.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
             assertThat(event2.getDatasetId()).isNull();
             assertThat(event2.getClientState()).isNull();
@@ -865,8 +893,9 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
         mActivity.assertAutoFilled();
         {
             // Verify fill history
-            final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
-            assertFillEventForDatasetSelected(events.get(0), "id1");
+            final List<Event> events = InstrumentedAutoFillService.getFillEvents(2);
+            assertFillEventForDatasetShown(events.get(0));
+            assertFillEventForDatasetSelected(events.get(1), "id1");
         }
 
         // Autofill password
@@ -878,10 +907,12 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
 
         {
             // Verify fill history
-            final List<Event> events = InstrumentedAutoFillService.getFillEvents(2);
+            final List<Event> events = InstrumentedAutoFillService.getFillEvents(4);
 
-            assertFillEventForDatasetSelected(events.get(0), "id1");
-            assertFillEventForDatasetSelected(events.get(1), "id2");
+            assertFillEventForDatasetShown(events.get(0));
+            assertFillEventForDatasetSelected(events.get(1), "id1");
+            assertFillEventForDatasetShown(events.get(2));
+            assertFillEventForDatasetSelected(events.get(3), "id2");
         }
 
         // Finish the context by login in
@@ -894,12 +925,15 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
 
         {
             // Verify fill history
-            final List<Event> events = InstrumentedAutoFillService.getFillEvents(3);
+            final List<Event> events = InstrumentedAutoFillService.getFillEvents(6);
 
-            assertFillEventForDatasetSelected(events.get(0), "id1");
-            assertFillEventForDatasetSelected(events.get(1), "id2");
+            assertFillEventForDatasetShown(events.get(0));
+            assertFillEventForDatasetSelected(events.get(1), "id1");
+            assertFillEventForDatasetShown(events.get(2));
+            assertFillEventForDatasetSelected(events.get(3), "id2");
 
-            final FillEventHistory.Event event3 = events.get(2);
+            assertFillEventForDatasetShown(events.get(4));
+            final FillEventHistory.Event event3 = events.get(5);
             assertThat(event3.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
             assertThat(event3.getDatasetId()).isNull();
             assertThat(event3.getClientState()).isNull();
@@ -945,8 +979,9 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
         mActivity.assertAutoFilled();
         {
             // Verify fill history
-            final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
-            assertFillEventForDatasetSelected(events.get(0), "id1");
+            final List<Event> events = InstrumentedAutoFillService.getFillEvents(2);
+            assertFillEventForDatasetShown(events.get(0));
+            assertFillEventForDatasetSelected(events.get(1), "id1");
         }
 
         // Autofill password
@@ -958,10 +993,12 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
 
         {
             // Verify fill history
-            final List<Event> events = InstrumentedAutoFillService.getFillEvents(2);
+            final List<Event> events = InstrumentedAutoFillService.getFillEvents(4);
 
-            assertFillEventForDatasetSelected(events.get(0), "id1");
-            assertFillEventForDatasetSelected(events.get(1), "id2");
+            assertFillEventForDatasetShown(events.get(0));
+            assertFillEventForDatasetSelected(events.get(1), "id1");
+            assertFillEventForDatasetShown(events.get(2));
+            assertFillEventForDatasetSelected(events.get(3), "id2");
         }
 
         // Finish the context by login in
@@ -972,12 +1009,14 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
 
         {
             // Verify fill history
-            final List<Event> events = InstrumentedAutoFillService.getFillEvents(3);
+            final List<Event> events = InstrumentedAutoFillService.getFillEvents(5);
 
-            assertFillEventForDatasetSelected(events.get(0), "id1");
-            assertFillEventForDatasetSelected(events.get(1), "id2");
+            assertFillEventForDatasetShown(events.get(0));
+            assertFillEventForDatasetSelected(events.get(1), "id1");
+            assertFillEventForDatasetShown(events.get(2));
+            assertFillEventForDatasetSelected(events.get(3), "id2");
 
-            final FillEventHistory.Event event3 = events.get(2);
+            final FillEventHistory.Event event3 = events.get(4);
             assertThat(event3.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
             assertThat(event3.getDatasetId()).isNull();
             assertThat(event3.getClientState()).isNull();
@@ -1018,11 +1057,12 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
 
         // Verify dataset selection
         {
-            final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
-            assertFillEventForDatasetSelected(events.get(0), "id1");
+            final List<Event> events = InstrumentedAutoFillService.getFillEvents(2);
+            assertFillEventForDatasetShown(events.get(0));
+            assertFillEventForDatasetSelected(events.get(1), "id1");
         }
 
-        // Change the fields to different values from datasets
+        // Change the fields to different values from0 datasets
         mActivity.onUsername((v) -> v.setText("USERNAME"));
         mActivity.onPassword((v) -> v.setText("USERNAME"));
 
@@ -1037,17 +1077,19 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
 
         // ...and check again
         {
-            final List<Event> events = InstrumentedAutoFillService.getFillEvents(2);
-            assertFillEventForDatasetSelected(events.get(0), "id1");
+            final List<Event> events = InstrumentedAutoFillService.getFillEvents(4);
+            assertFillEventForDatasetShown(events.get(0));
+            assertFillEventForDatasetSelected(events.get(1), "id1");
+            assertFillEventForDatasetShown(events.get(2));
 
-            FillEventHistory.Event event2 = events.get(1);
-            assertThat(event2.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
-            assertThat(event2.getDatasetId()).isNull();
-            assertThat(event2.getClientState()).isNull();
-            assertThat(event2.getSelectedDatasetIds()).containsExactly("id1");
-            assertThat(event2.getIgnoredDatasetIds()).isEmpty();
-            assertThat(event2.getChangedFields()).isEmpty();
-            assertThat(event2.getManuallyEnteredField()).isEmpty();
+            FillEventHistory.Event event4 = events.get(3);
+            assertThat(event4.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
+            assertThat(event4.getDatasetId()).isNull();
+            assertThat(event4.getClientState()).isNull();
+            assertThat(event4.getSelectedDatasetIds()).containsExactly("id1");
+            assertThat(event4.getIgnoredDatasetIds()).isEmpty();
+            assertThat(event4.getChangedFields()).isEmpty();
+            assertThat(event4.getManuallyEnteredField()).isEmpty();
         }
     }
 
@@ -1081,7 +1123,10 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
         mUiBot.assertDatasets("dataset1", "dataset2");
 
         // Verify history
-        InstrumentedAutoFillService.getFillEventHistory(0);
+        {
+            final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
+            assertFillEventForDatasetShown(events.get(0));
+        }
 
         // Enter values present at the datasets
         mActivity.onUsername((v) -> v.setText(BACKDOOR_USERNAME));
@@ -1095,8 +1140,9 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
 
         // Verify history
         {
-            final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
-            FillEventHistory.Event event = events.get(0);
+            final List<Event> events = InstrumentedAutoFillService.getFillEvents(2);
+            assertFillEventForDatasetShown(events.get(0));
+            FillEventHistory.Event event = events.get(1);
             assertThat(event.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
             assertThat(event.getDatasetId()).isNull();
             assertThat(event.getClientState()).isNull();
@@ -1153,7 +1199,10 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
         mUiBot.assertDatasets("dataset1", "dataset2", "dataset3");
 
         // Verify history
-        InstrumentedAutoFillService.getFillEventHistory(0);
+        {
+            final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
+            assertFillEventForDatasetShown(events.get(0));
+        }
 
         // Enter values present at the datasets
         mActivity.onUsername((v) -> v.setText(BACKDOOR_USERNAME));
@@ -1167,9 +1216,10 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
 
         // Verify history
         {
-            final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
+            final List<Event> events = InstrumentedAutoFillService.getFillEvents(2);
+            assertFillEventForDatasetShown(events.get(0));
 
-            final FillEventHistory.Event event = events.get(0);
+            final FillEventHistory.Event event = events.get(1);
             assertThat(event.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
             assertThat(event.getDatasetId()).isNull();
             assertThat(event.getClientState()).isNull();
