@@ -22,8 +22,8 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import vogar.Expectation;
-import vogar.ExpectationStore;
+import vogar.expect.Expectation;
+import vogar.expect.ExpectationStore;
 
 import java.io.BufferedReader;
 import java.io.File;
