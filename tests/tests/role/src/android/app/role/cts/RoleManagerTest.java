@@ -405,6 +405,7 @@ public class RoleManagerTest {
         assertThat(result.first).isEqualTo(Activity.RESULT_CANCELED);
     }
 
+    @FlakyTest
     @Test
     public void targetSdk28AndChangeDefaultDialerAndAllowThenIsDefaultDialer() throws Exception {
         sContext.startActivity(new Intent()
@@ -412,13 +413,13 @@ public class RoleManagerTest {
                         APP_28_CHANGE_DEFAULT_DIALER_ACTIVITY_NAME))
                 .putExtra(Intent.EXTRA_PACKAGE_NAME, APP_28_PACKAGE_NAME)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-        sUiDevice.wait(Until.findObject(By.text(APP_28_LABEL)), TIMEOUT_MILLIS).click();
-        sUiDevice.wait(Until.findObject(By.res("android:id/button1")), TIMEOUT_MILLIS).click();
+        allowRoleRequestForApp28();
         TelecomManager telecomManager = sContext.getSystemService(TelecomManager.class);
         TestUtils.waitUntil("App is not set as default dialer app", () -> Objects.equals(
                 telecomManager.getDefaultDialerPackage(), APP_28_PACKAGE_NAME));
     }
 
+    @FlakyTest
     @Test
     public void targetSdk28AndChangeDefaultSmsAndAllowThenIsDefaultSms() throws Exception {
         sContext.startActivity(new Intent()
@@ -426,10 +427,25 @@ public class RoleManagerTest {
                         APP_28_CHANGE_DEFAULT_SMS_ACTIVITY_NAME))
                 .putExtra(Intent.EXTRA_PACKAGE_NAME, APP_28_PACKAGE_NAME)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-        sUiDevice.wait(Until.findObject(By.text(APP_28_LABEL)), TIMEOUT_MILLIS).click();
-        sUiDevice.wait(Until.findObject(By.res("android:id/button1")), TIMEOUT_MILLIS).click();
+        allowRoleRequestForApp28();
         TestUtils.waitUntil("App is not set as default sms app", () -> Objects.equals(
                 Telephony.Sms.getDefaultSmsPackage(sContext), APP_28_PACKAGE_NAME));
+    }
+
+    private void allowRoleRequestForApp28() throws InterruptedException, IOException {
+        UiObject2 item = sUiDevice.wait(Until.findObject(By.text(APP_28_LABEL)), TIMEOUT_MILLIS);
+        if (item == null) {
+            dumpWindowHierarchy();
+            fail("Cannot find item to click");
+        }
+        item.click();
+        UiObject2 button = sUiDevice.wait(Until.findObject(By.res("android:id/button1")),
+                TIMEOUT_MILLIS);
+        if (button == null) {
+            dumpWindowHierarchy();
+            fail("Cannot find button to click");
+        }
+        button.click();
     }
 
     @Test
