@@ -1153,6 +1153,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    @FlakyTest(bugId = 138097434)
     public void testSetGlobalSettingLogged() throws Exception {
         if (!mHasFeature) {
             return;
