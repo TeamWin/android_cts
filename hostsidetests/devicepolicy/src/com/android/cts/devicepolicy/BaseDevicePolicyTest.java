@@ -187,6 +187,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         }
 
         removeOwners();
+        switchUser(USER_SYSTEM);
         removeTestUsers();
         // Unlock keyguard before test
         wakeupAndDismissKeyguard();
@@ -201,6 +202,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         getDevice().executeShellCommand("settings put global package_verifier_enable "
                 + mPackageVerifier);
         removeOwners();
+        switchUser(USER_SYSTEM);
         removeTestUsers();
         removeTestPackages();
         super.tearDown();
