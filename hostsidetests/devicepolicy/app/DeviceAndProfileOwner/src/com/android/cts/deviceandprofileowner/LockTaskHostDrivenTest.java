@@ -13,10 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.cts.deviceowner;
-
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertTrue;
+package com.android.cts.deviceandprofileowner;
 
 import android.app.ActivityManager;
 import android.app.admin.DevicePolicyManager;
@@ -44,7 +41,7 @@ import org.junit.runner.RunWith;
  * state after running.
  */
 @RunWith(AndroidJUnit4.class)
-public class LockTaskHostDrivenTest {
+public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
 
     private static final String TAG = LockTaskHostDrivenTest.class.getName();
 
@@ -96,7 +93,7 @@ public class LockTaskHostDrivenTest {
     public void tearDown() {
         mContext.unregisterReceiver(mReceiver);
     }
-  
+
     @Test
     public void startLockTask() throws Exception {
         Log.d(TAG, "startLockTask on host-driven test (no cleanup)");
@@ -114,7 +111,7 @@ public class LockTaskHostDrivenTest {
         mUiDevice.waitForIdle();
 
         // We need to wait until the LockTaskActivity is ready
-        // since com.android.cts.deviceowner can be killed by AMS for reason "start instr".
+        // since the package can be killed by AMS for reason "start instr".
         synchronized (mActivityResumedLock) {
             if (!mIsActivityResumed) {
                 mActivityResumedLock.wait(ACTIVITY_RESUMED_TIMEOUT_MILLIS);
@@ -140,10 +137,9 @@ public class LockTaskHostDrivenTest {
     @Test
     public void clearDefaultHomeIntentReceiver() {
         mDevicePolicyManager.clearPackagePersistentPreferredActivities(
-                BasicAdminReceiver.getComponentName(mContext),
+                ADMIN_RECEIVER_COMPONENT,
                 mContext.getPackageName());
-        mDevicePolicyManager.setLockTaskPackages(BasicAdminReceiver.getComponentName(mContext),
-                new String[0]);
+        mDevicePolicyManager.setLockTaskPackages(ADMIN_RECEIVER_COMPONENT, new String[0]);
     }
 
     private void checkLockedActivityIsRunning() throws Exception {
@@ -165,13 +161,13 @@ public class LockTaskHostDrivenTest {
     }
 
     private void setDefaultHomeIntentReceiver() {
-        mDevicePolicyManager.setLockTaskPackages(BasicAdminReceiver.getComponentName(mContext),
+        mDevicePolicyManager.setLockTaskPackages(ADMIN_RECEIVER_COMPONENT,
                 new String[]{mContext.getPackageName()});
         IntentFilter intentFilter = new IntentFilter(Intent.ACTION_MAIN);
         intentFilter.addCategory(Intent.CATEGORY_HOME);
         intentFilter.addCategory(Intent.CATEGORY_DEFAULT);
         mDevicePolicyManager.addPersistentPreferredActivity(
-                BasicAdminReceiver.getComponentName(mContext), intentFilter,
+                ADMIN_RECEIVER_COMPONENT, intentFilter,
                 new ComponentName(mContext.getPackageName(), LOCK_TASK_ACTIVITY));
     }
 }

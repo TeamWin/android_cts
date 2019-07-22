@@ -72,19 +72,6 @@
         </service>
 
         <activity
-            android:name="com.android.cts.deviceowner.LockTaskUtilityActivity" />
-        <activity
-            android:name="com.android.cts.deviceowner.LockTaskUtilityActivityIfWhitelisted"
-            android:launchMode="singleInstance"
-            android:lockTaskMode="if_whitelisted">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.HOME"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-            </intent-filter>
-        </activity>
-
-        <activity
             android:name=".SetPolicyActivity"
             android:launchMode="singleTop">
             <intent-filter>
