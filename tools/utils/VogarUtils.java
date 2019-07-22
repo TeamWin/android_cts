@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import vogar.Expectation;
-import vogar.ExpectationStore;
-import vogar.ModeId;
-import vogar.Result;
+import vogar.expect.Expectation;
+import vogar.expect.ExpectationStore;
+import vogar.expect.ModeId;
+import vogar.expect.Result;
 
 import com.android.tradefed.util.AbiUtils;
 
