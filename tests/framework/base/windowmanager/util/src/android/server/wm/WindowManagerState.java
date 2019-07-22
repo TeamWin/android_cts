@@ -737,6 +737,7 @@ public class WindowManagerState {
         private Rect mDisplayRect = new Rect();
         private Rect mAppRect = new Rect();
         private int mDpi;
+        private int mFlags;
         private Rect mStableBounds;
         private String mName;
         private int mSurfaceSize;
@@ -762,6 +763,7 @@ public class WindowManagerState {
                 mDisplayRect.set(0, 0, infoProto.logicalWidth, infoProto.logicalHeight);
                 mAppRect.set(0, 0, infoProto.appWidth, infoProto.appHeight);
                 mName = infoProto.name;
+                mFlags = infoProto.flags;
             }
             final DisplayFramesProto displayFramesProto = proto.displayFrames;
             if (displayFramesProto != null) {
@@ -810,6 +812,10 @@ public class WindowManagerState {
             return mName;
         }
 
+        int getFlags() {
+            return mFlags;
+        }
+
         int getSurfaceSize() {
             return mSurfaceSize;
         }
@@ -825,7 +831,7 @@ public class WindowManagerState {
         @Override
         public String toString() {
             return "Display #" + mDisplayId + ": name=" + mName + " mDisplayRect=" + mDisplayRect
-                    + " mAppRect=" + mAppRect;
+                + " mAppRect=" + mAppRect + " mFlags=" + mFlags;
         }
     }
 
