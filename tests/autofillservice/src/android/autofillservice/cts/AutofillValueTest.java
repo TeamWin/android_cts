@@ -303,10 +303,7 @@ public class AutofillValueTest
         startAutoFill(mSpinner);
 
         // Autofill it.
-        mUiBot.selectDataset("dataset");
-
-        // TODO(b/137856201): Fix race condition in getSelectedItemPosition().
-        Thread.sleep(1000);
+        mUiBot.selectDatasetSync("dataset");
 
         if (expectAutoFill) {
             // Check the results.
