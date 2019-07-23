@@ -19,7 +19,6 @@ package vogar;
 import com.android.json.stream.JsonReader;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -30,11 +29,9 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
-import vogar.commands.Command;
 import vogar.util.Log;
 
 /**
@@ -266,44 +263,6 @@ public final class ExpectationStore {
         }
         reader.endArray();
         return result;
-    }
-
-    /**
-     * Sets the bugIsOpen status on all expectations by querying an external bug
-     * tracker.
-     */
-    public void loadBugStatuses(String openBugsCommand) {
-        Iterable<Expectation> allExpectations = Iterables.concat(outcomes.values(), failures.values());
-
-        // figure out what bug IDs we're interested in
-        Set<String> bugs = new LinkedHashSet<String>();
-        for (Expectation expectation : allExpectations) {
-            if (expectation.getBug() != -1) {
-                bugs.add(Long.toString(expectation.getBug()));
-            }
-        }
-        if (bugs.isEmpty()) {
-            return;
-        }
-
-        // query the external app for open bugs
-        List<String> openBugs = new Command.Builder()
-                .args(openBugsCommand)
-                .args(bugs)
-                .execute();
-        Set<Long> openBugsSet = new LinkedHashSet<Long>();
-        for (String bug : openBugs) {
-            openBugsSet.add(Long.parseLong(bug));
-        }
-
-        Log.verbose("tracking " + openBugsSet.size() + " open bugs: " + openBugs);
-
-        // update our expectations with that set
-        for (Expectation expectation : allExpectations) {
-            if (openBugsSet.contains(expectation.getBug())) {
-                expectation.setBugIsOpen(true);
-            }
-        }
     }
 
     public Map<String, Expectation> getAllOutComes() {

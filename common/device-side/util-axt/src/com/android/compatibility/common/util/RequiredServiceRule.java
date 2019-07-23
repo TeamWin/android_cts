@@ -75,4 +75,9 @@ public class RequiredServiceRule implements TestRule {
             return false;
         }
     }
+
+    @Override
+    public String toString() {
+        return "RequiredServiceRule[" + mService + "]";
+    }
 }
