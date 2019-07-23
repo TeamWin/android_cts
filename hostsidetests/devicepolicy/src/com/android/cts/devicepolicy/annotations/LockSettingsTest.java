@@ -22,9 +22,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Denotes that a test depends on permissions functionality and should be run in presubmit when
- * permissions code changes are made.
+ * Denotes that a test depends on screenlock functionality (e.g. setting user password, unlocking
+ * the user, etc.) and should be run in presubmit when changes are made to the relevant code.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.TYPE})
-public @interface PermissionsTest {}
+public @interface LockSettingsTest {}
