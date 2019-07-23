@@ -2803,7 +2803,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Please press the Go button to open the Settings page.
         (If this device has a separate app for work settings, ignore the Go button and navigate to that app manually).\n
         \n
-        Navigate to \"Data usage\" page and then into the \"Wi-Fi data usage\" category.\n
+        Navigate to the \"Network &amp; Internet\" page and then click on \"Wi-Fi\" and then \"Wi-Fi data usage\".\n
         Confirm that \"All work apps\" section is present and that it is possible to see the data usage for work (badged) apps.\n
         (If the section is not present, this might be because work apps have not used Wi-Fi data yet. Ensure that you have used Wi-Fi data on a work app, then repeat these instructions.)\n
         \n
@@ -2819,7 +2819,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Please press the Go button to open the Settings page.
         (If this device has a separate app for work settings, ignore the Go button and navigate to that app manually).\n
         \n
-        Navigate to \"Data usage\" page and then into the \"Mobile data usage\" category.\n
+        Navigate to the \"Network &amp; Internet\" page and then click on \"Mobile network\" and then \"App data usage\".\n
         Confirm that \"All work apps\" section is present and that it is possible to see the data usage for work (badged) apps.\n
         \n
         Then use the Back button (or navigate back to this app using Recents) to return to this test and mark accordingly.
