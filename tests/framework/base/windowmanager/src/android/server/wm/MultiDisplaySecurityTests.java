@@ -687,11 +687,6 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
         }
     }
 
-    private static void assertSecurityExceptionFromActivityLauncher() {
-        waitForOrFail("SecurityException from " + ActivityLauncher.TAG,
-                ActivityLauncher::hasCaughtSecurityException);
-    }
-
     /**
      * Test that only private virtual display can show content with insecure keyguard.
      */

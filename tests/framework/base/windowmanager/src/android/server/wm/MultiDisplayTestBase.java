@@ -247,6 +247,11 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         });
     }
 
+    void assertSecurityExceptionFromActivityLauncher() {
+        waitForOrFail("SecurityException from " + ActivityLauncher.TAG,
+            ActivityLauncher::hasCaughtSecurityException);
+    }
+
     /**
      * This class should only be used when you need to test virtual display created by a
      * non-privileged app.
