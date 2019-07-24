@@ -22,6 +22,7 @@ import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
 import android.stats.devicepolicy.EventId;
 
+import com.android.cts.devicepolicy.annotations.LockSettingsTest;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
@@ -115,6 +116,7 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
         }
     }
 
+    @LockSettingsTest
     public void testIsUsingUnifiedPassword() throws Exception {
         if (!mHasFeature || !mHasSecureLockScreen) {
             return;
@@ -130,6 +132,7 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
 
     @FlakyTest
     @LargeTest
+    @LockSettingsTest
     public void testUnlockWorkProfile_deviceWidePassword() throws Exception {
         if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
             return;
@@ -154,6 +157,7 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
 
     @FlakyTest
     @LargeTest
+    @LockSettingsTest
     public void testRebootDevice_unifiedPassword() throws Exception {
         if (!mHasFeature || !mHasSecureLockScreen) {
             return;
@@ -176,6 +180,7 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
     }
 
     @LargeTest
+    @LockSettingsTest
     public void testRebootDevice_separatePasswords() throws Exception {
         if (!mHasFeature || !mHasSecureLockScreen) {
             return;

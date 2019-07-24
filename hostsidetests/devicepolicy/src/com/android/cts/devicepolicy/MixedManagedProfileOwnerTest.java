@@ -19,6 +19,7 @@ package com.android.cts.devicepolicy;
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
 
+import com.android.cts.devicepolicy.annotations.LockSettingsTest;
 import com.android.cts.devicepolicy.annotations.PermissionsTest;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
@@ -166,6 +167,7 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @Override
+    @LockSettingsTest
     public void testResetPasswordWithToken() throws Exception {
         if (!mHasFeature || !mHasSecureLockScreen) {
             return;
