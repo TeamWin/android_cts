@@ -48,6 +48,8 @@ import androidx.annotation.Nullable;
 
 import com.android.compatibility.common.util.PollingCheck;
 
+import org.junit.AssumptionViolatedException;
+
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
@@ -238,12 +240,27 @@ public class MockImeSession implements AutoCloseable {
             @NonNull Context context,
             @NonNull UiAutomation uiAutomation,
             @Nullable ImeSettings.Builder imeSettings) throws Exception {
-        assumeTrue("Device must support installable IMEs that implement InputMethodService API",
-                context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_INPUT_METHODS));
+        final String unavailabilityReason = getUnavailabilityReason(context);
+        if (unavailabilityReason != null) {
+            throw new AssumptionViolatedException(unavailabilityReason);
+        }
 
         final MockImeSession client = new MockImeSession(context, uiAutomation);
         client.initialize(imeSettings);
         return client;
+    }
+
+    /**
+     * Checks if the {@link MockIme} can be used in this device.
+     *
+     * @return {@code null} if it can be used, or message describing why if it cannot.
+     */
+    @Nullable
+    public static String getUnavailabilityReason(@NonNull Context context) {
+        if (!context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_INPUT_METHODS)) {
+            return "Device must support installable IMEs that implement InputMethodService API";
+        }
+        return null;
     }
 
     /**
