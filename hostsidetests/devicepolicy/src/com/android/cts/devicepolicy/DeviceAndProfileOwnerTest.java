@@ -1100,8 +1100,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             executeDeviceTestMethod(".LockTaskHostDrivenTest",
                     "testLockTaskIsActiveAndCantBeInterrupted");
         } finally {
-            executeDeviceTestMethod(".LockTaskHostDrivenTest",
-                    "clearDefaultHomeIntentReceiver");
+            executeDeviceTestMethod(".LockTaskHostDrivenTest", "cleanupLockTask");
         }
     }
 
@@ -1124,8 +1123,43 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             executeDeviceTestMethod(".LockTaskHostDrivenTest",
                     "testLockTaskIsActiveAndCantBeInterrupted");
         } finally {
+            executeDeviceTestMethod(".LockTaskHostDrivenTest", "cleanupLockTask");
+        }
+    }
+
+    public void testLockTask_defaultDialer() throws Exception {
+        if (!mHasFeature || !mHasTelephony) {
+            return;
+        }
+        try {
             executeDeviceTestMethod(".LockTaskHostDrivenTest",
-                    "clearDefaultHomeIntentReceiver");
+                    "testLockTaskCanLaunchDefaultDialer");
+        } finally {
+            executeDeviceTestMethod(".LockTaskHostDrivenTest", "cleanupLockTask");
+        }
+    }
+
+    public void testLockTask_emergencyDialer() throws Exception {
+        if (!mHasFeature || !mHasTelephony) {
+            return;
+        }
+        try {
+            executeDeviceTestMethod(".LockTaskHostDrivenTest",
+                    "testLockTaskCanLaunchEmergencyDialer");
+        } finally {
+            executeDeviceTestMethod(".LockTaskHostDrivenTest", "cleanupLockTask");
+        }
+    }
+
+    public void testLockTask_exitIfNoLongerWhitelisted() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        try {
+            executeDeviceTestMethod(".LockTaskHostDrivenTest",
+                    "testLockTaskIsExitedIfNotWhitelisted");
+        } finally {
+            executeDeviceTestMethod(".LockTaskHostDrivenTest", "cleanupLockTask");
         }
     }
 
