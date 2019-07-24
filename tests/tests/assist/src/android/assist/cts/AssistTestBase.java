@@ -55,14 +55,19 @@ import androidx.annotation.Nullable;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.rule.ActivityTestRule;
 
+import com.android.compatibility.common.util.SettingsStateChangerRule;
+import com.android.compatibility.common.util.SettingsStateManager;
 import com.android.compatibility.common.util.SettingsUtils;
+import com.android.compatibility.common.util.StateKeeperRule;
 import com.android.compatibility.common.util.ThrowingRunnable;
 import com.android.compatibility.common.util.Timeout;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Rule;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 import java.util.HashMap;
@@ -89,9 +94,29 @@ abstract class AssistTestBase {
 
     private static final long SLEEP_BEFORE_RETRY_MS = 250L;
 
-    @Rule
-    public final ActivityTestRule<TestStartActivity> mActivityTestRule =
+    private static final Context sContext = getInstrumentation().getTargetContext();
+
+    private static final SettingsStateManager sStructureEnabledMgr = new SettingsStateManager(
+            sContext, SettingsUtils.NAMESPACE_SECURE, ASSIST_STRUCTURE_ENABLED);
+    private static final SettingsStateManager sScreenshotEnabledMgr = new SettingsStateManager(
+            sContext, SettingsUtils.NAMESPACE_SECURE, ASSIST_SCREENSHOT_ENABLED);
+
+    private final SettingsStateChangerRule mServiceSetterRule = new SettingsStateChangerRule(
+            sContext, Settings.Secure.VOICE_INTERACTION_SERVICE,
+            "android.assist.service/.MainInteractionService");
+    private final StateKeeperRule<String> mStructureEnabledKeeperRule = new StateKeeperRule<>(
+            sStructureEnabledMgr);
+    private final StateKeeperRule<String> mScreenshotEnabledKeeperRule = new StateKeeperRule<>(
+            sScreenshotEnabledMgr);
+    private final ActivityTestRule<TestStartActivity> mActivityTestRule =
             new ActivityTestRule<>(TestStartActivity.class, false, false);
+
+    @Rule
+    public final RuleChain mLookAllTheseRules = RuleChain
+            .outerRule(mServiceSetterRule)
+            .around(mStructureEnabledKeeperRule)
+            .around(mScreenshotEnabledKeeperRule)
+            .around(mActivityTestRule);
 
     protected ActivityManager mActivityManager;
     private TestStartActivity mTestActivity;
@@ -112,8 +137,6 @@ abstract class AssistTestBase {
         String action = result.getString(Utils.EXTRA_REMOTE_CALLBACK_ACTION);
         mActionLatchReceiver.onAction(result, action);
     });
-
-    private static final Context sContext = getInstrumentation().getTargetContext();
 
     @Nullable
     protected RemoteCallback m3pActivityCallback;
@@ -376,10 +399,8 @@ abstract class AssistTestBase {
     }
 
     protected static void logContextAndScreenshotSetting() {
-        Log.i(TAG, "Context is: " + Settings.Secure.getString(
-                sContext.getContentResolver(), "assist_structure_enabled"));
-        Log.i(TAG, "Screenshot is: " + Settings.Secure.getString(
-                sContext.getContentResolver(), "assist_screenshot_enabled"));
+        Log.i(TAG, "Context is: " + sStructureEnabledMgr.get());
+        Log.i(TAG, "Screenshot is: " + sScreenshotEnabledMgr.get());
     }
 
     /**
@@ -546,8 +567,8 @@ abstract class AssistTestBase {
     protected static void setFeaturesEnabled(StructureEnabled structure,
             ScreenshotEnabled screenshot) {
         Log.i(TAG, "setFeaturesEnabled(" + structure + ", " + screenshot + ")");
-        SettingsUtils.syncSet(sContext, ASSIST_STRUCTURE_ENABLED, structure.value);
-        SettingsUtils.syncSet(sContext, ASSIST_SCREENSHOT_ENABLED, screenshot.value);
+        sStructureEnabledMgr.set(structure.value);
+        sScreenshotEnabledMgr.set(screenshot.value);
     }
 
     /**
