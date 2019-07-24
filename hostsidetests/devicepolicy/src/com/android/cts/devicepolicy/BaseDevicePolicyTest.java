@@ -185,6 +185,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         }
 
         removeOwners();
+        switchUser(USER_SYSTEM);
         removeTestUsers();
         // Unlock keyguard before test
         wakeupAndDismissKeyguard();
@@ -199,6 +200,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         getDevice().executeShellCommand("settings put global package_verifier_enable "
                 + mPackageVerifier);
         removeOwners();
+        switchUser(USER_SYSTEM);
         removeTestUsers();
         removeTestPackages();
         super.tearDown();
@@ -233,6 +235,16 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     /** Initializes the user with the given id. This is required so that apps can run on it. */
     protected void startUser(int userId) throws Exception {
         getDevice().startUser(userId);
+    }
+
+    /**
+     * Initializes the user with the given id, and waits until the user has started and unlocked
+     * before continuing.
+     *
+     * <p>This is required so that apps can run on it.
+     */
+    protected void startUser(int userId, boolean waitFlag) throws Exception {
+        getDevice().startUser(userId, waitFlag);
     }
 
     /**
