@@ -40,7 +40,8 @@ import android.test.AndroidTestCase;
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.MediaUtils;
-
+import java.io.FileOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -246,6 +247,10 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
     }
 
     private void testThumbnail(int resId) {
+        testThumbnail(resId, null /*outPath*/);
+    }
+
+    private void testThumbnail(int resId, String outPath) {
         if (!MediaUtils.hasCodecForResourceAndDomain(getContext(), resId, "video/")) {
             MediaUtils.skipTest("no video codecs for resource");
             return;
@@ -263,7 +268,29 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
             fail("Unable to open file");
         }
 
-        assertNotNull(retriever.getFrameAtTime(-1 /* timeUs (any) */));
+        Bitmap thumbnail = retriever.getFrameAtTime(-1 /* timeUs (any) */);
+        retriever.release();
+
+        assertNotNull(thumbnail);
+
+        // save output file if needed
+        if (outPath != null) {
+            FileOutputStream out = null;
+            try {
+                out = new FileOutputStream(outPath);
+            } catch (FileNotFoundException e) {
+                fail("Can't open output file");
+            }
+
+            thumbnail.compress(Bitmap.CompressFormat.PNG, 100, out);
+
+            try {
+                out.flush();
+                out.close();
+            } catch (IOException e) {
+                fail("Can't close file");
+            }
+        }
     }
 
     public void testThumbnailH264() {
@@ -290,6 +317,17 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
         testThumbnail(R.raw.bbb_s1_720x480_mp4_hevc_mp3_1600kbps_30fps_aac_he_6ch_240kbps_48000hz);
     }
 
+    public void testThumbnailVP9Hdr() {
+        testThumbnail(R.raw.video_1280x720_vp9_hdr_static_3mbps);
+    }
+
+    public void testThumbnailAV1Hdr() {
+        testThumbnail(R.raw.video_1280x720_av1_hdr_static_3mbps);
+    }
+
+    public void testThumbnailHDR10() {
+        testThumbnail(R.raw.video_1280x720_hevc_hdr10_static_3mbps);
+    }
 
     /**
      * The following tests verifies MediaMetadataRetriever.getFrameAtTime behavior.
