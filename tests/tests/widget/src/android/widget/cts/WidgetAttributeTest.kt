@@ -17,10 +17,6 @@
 package android.widget.cts
 
 import android.app.Activity
-import androidx.test.InstrumentationRegistry
-import androidx.test.filters.MediumTest
-import androidx.test.rule.ActivityTestRule
-import androidx.test.runner.AndroidJUnit4
 import android.support.test.uiautomator.UiDevice
 import android.view.LayoutInflater
 import android.widget.LinearLayout
@@ -28,6 +24,11 @@ import android.widget.ProgressBar
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toolbar
+import android.widget.ViewAnimator
+import androidx.test.InstrumentationRegistry
+import androidx.test.filters.MediumTest
+import androidx.test.rule.ActivityTestRule
+import androidx.test.runner.AndroidJUnit4
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -121,6 +122,12 @@ class WidgetAttributeTest {
         assertEquals(R.style.ParentOfExplicitStyle1, stackTextView1textColorHighlight[2])
         assertEquals(android.R.style.Widget_Material_TextView, stackTextView1textColorHighlight[3])
         assertEquals(android.R.style.Widget_TextView, stackTextView1textColorHighlight[4])
+
+        val viewAnimator = rootView.findViewById<ViewAnimator>(R.id.viewAnimator)
+        val viewAnimatorOutAnimation =
+                viewAnimator.getAttributeResolutionStack(android.R.attr.outAnimation)
+        assertEquals(1, viewAnimatorOutAnimation.size.toLong())
+        assertEquals(R.layout.widget_attribute_layout, viewAnimatorOutAnimation[0])
     }
 
     @Test
