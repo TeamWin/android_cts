@@ -2626,8 +2626,10 @@ public class NotificationManagerTest extends AndroidTestCase {
             // Should be foreground now
             a.sendBubble(1);
 
+            boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
+
             if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
-                    true /* shouldExist */, true /* shouldBeBubble */)) {
+                    true /* shouldExist */, shouldBeBubble)) {
                 fail("couldn't find posted notification bubble with id=" + BUBBLE_NOTIF_ID);
             }
 
@@ -2637,8 +2639,6 @@ public class NotificationManagerTest extends AndroidTestCase {
 
             // The notif should be allowed to update as a bubble
             a.sendBubble(2);
-
-            boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
 
             if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
                     true /* shouldExist */, shouldBeBubble)) {
