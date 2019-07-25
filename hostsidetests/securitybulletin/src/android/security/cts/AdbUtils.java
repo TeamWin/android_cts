@@ -16,6 +16,7 @@
 
 package android.security.cts;
 
+import com.android.compatibility.common.util.CrashUtils;
 import com.android.ddmlib.NullOutputReceiver;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -27,8 +28,14 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
+import java.util.regex.Pattern;
 import java.util.concurrent.TimeUnit;
 import java.util.Scanner;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import static org.junit.Assert.*;
 
@@ -246,5 +253,71 @@ public class AdbUtils {
         int code = runCommandGetExitCode("/data/local/tmp/pacrunner " + targetPath, device);
         runCommandLine("rm " + targetPath, device);
         return code;
+    }
+
+    /**
+     * Runs the poc binary and asserts that there are no security crashes that match the expected
+     * process pattern.
+     * @param pocName a string path to poc from the /res folder
+     * @param device device to be ran on
+     * @param processPatternStrings a Pattern string to match the crash tombstone process
+     */
+    public static void runPocAssertNoCrashes(String pocName, ITestDevice device,
+            String... processPatternStrings) throws Exception {
+        AdbUtils.runCommandLine("logcat -c", device);
+        // account for the poc timer of 5 minutes (+15 seconds for safety)
+        AdbUtils.runPocNoOutput(pocName, device, 315);
+        assertNoCrashes(device, processPatternStrings);
+    }
+
+    /**
+     * Dumps logcat and asserts that there are no security crashes that match the expected process.
+     * By default, checks min crash addresses
+     * pattern. Ensure that adb logcat -c is called beforehand.
+     * @param device device to be ran on
+     * @param processPatternStrings a Pattern string to match the crash tombstone process
+     */
+    public static void assertNoCrashes(ITestDevice device, String... processPatternStrings)
+            throws Exception {
+        assertNoCrashes(device, true, processPatternStrings);
+    }
+
+    /**
+     * Dumps logcat and asserts that there are no security crashes that match the expected process
+     * pattern. Ensure that adb logcat -c is called beforehand.
+     * @param device device to be ran on
+     * @param checkMinAddress if the minimum fault address should be respected
+     * @param processPatternStrings a Pattern string to match the crash tombstone process
+     */
+    public static void assertNoCrashes(ITestDevice device, boolean checkMinAddress,
+            String... processPatternStrings) throws Exception {
+        String logcat = AdbUtils.runCommandLine("logcat -d *:S DEBUG:V", device);
+
+        Pattern[] processPatterns = new Pattern[processPatternStrings.length];
+        for (int i = 0; i < processPatternStrings.length; i++) {
+            processPatterns[i] = Pattern.compile(processPatternStrings[i]);
+        }
+        JSONArray crashes = CrashUtils.addAllCrashes(logcat, new JSONArray());
+        JSONArray securityCrashes =
+                CrashUtils.matchSecurityCrashes(crashes, checkMinAddress, processPatterns);
+
+        if (securityCrashes.length() == 0) {
+            return; // no security crashes detected
+        }
+
+        StringBuilder error = new StringBuilder();
+        error.append("Security crash detected:\n");
+        error.append("Process patterns:");
+        for (String pattern : processPatternStrings) {
+            error.append(String.format(" '%s'", pattern));
+        }
+        error.append("\nCrashes:\n");
+        for (int i = 0; i < crashes.length(); i++) {
+            try {
+                JSONObject crash = crashes.getJSONObject(i);
+                error.append(String.format("%s\n", crash));
+            } catch (JSONException e) {}
+        }
+        fail(error.toString());
     }
 }
