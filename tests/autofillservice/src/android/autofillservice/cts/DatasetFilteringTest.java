@@ -25,6 +25,8 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectBindInput;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.content.IntentSender;
 import android.os.Process;
@@ -172,11 +174,12 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
 
     @Test
     public void testFilter_usingKeyboard() throws Exception {
+        final MockImeSession mockImeSession = sMockImeSessionRule.getMockImeSession();
+        assumeTrue("MockIME not available", mockImeSession != null);
+
         final String aa = "Two A's";
         final String ab = "A and B";
         final String b = "Only B";
-
-        final MockImeSession mockImeSession = sMockImeSessionRule.getMockImeSession();
 
         enableService();
 

@@ -231,4 +231,18 @@ public class GestureDescriptionTest {
         PathMeasure measure = new PathMeasure(returnedPath, false);
         assertEquals(50, (int) measure.getLength());
     }
+
+    @Test
+    public void testSetDisplayId_getCorrectDisplayId() {
+        Path path = new Path();
+        path.moveTo(100, 100);
+        StrokeDescription stroke = new StrokeDescription(path, 150, 100);
+        GestureDescription.Builder builder = new GestureDescription.Builder();
+        builder.addStroke(stroke);
+        builder.setDisplayId(2);
+
+        GestureDescription gesture = builder.build();
+
+        assertEquals(2, gesture.getDisplayId());
+    }
 }

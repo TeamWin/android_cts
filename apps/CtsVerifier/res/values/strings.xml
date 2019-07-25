@@ -3694,10 +3694,12 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="device_owner_disallow_remove_user_info">
         Please press \'Create uninitialized user\' to create a user that is not set up. Then press the
         \'Set restriction\' button to set the user restriction.
-        Then press \'Go\' to open \'Multiple users\' setting. \n\n
+        Then press \'Go\' to open \'Multiple users\' setting. \n
+        Click the Settings icon adjacent to the managed user.\n\n
 
         Mark this test as passed if:\n\n
-        - Main switch is disabled and in off position\n
+        - \"Delete User\" is disabled.\n
+        - Tapping \"Delete user\" shows an \"Action not allowed\" dialog.\n
         \n
         Use the Back button to return to this page.
     </string>
@@ -3705,8 +3707,9 @@ You should be prompted to select credentials; choose the ones you just installed
         Please press the \'Set restriction\' button to set the user restriction.
         Then press \'Go\' to open \'Multiple users\' setting. \n\n
 
-        Mark this test as passed if one of the following conditions is met:\n\n
-        - Main switch is disabled and in off position\n
+        Mark this test as passed if all of the following conditions are met:\n\n
+        - The \"Delete managed user from this device\" option in the overflow menu is disabled\n
+        - Clicking \"Delete managed user from this device\" in the overflow menu results in an \"Action not allowed\" dialog.\n
         \n
         Use the Back button to return to this page.
     </string>
@@ -4017,7 +4020,7 @@ You should be prompted to select credentials; choose the ones you just installed
         7) Verify that at the bottom of Quick Settings, you are told the device is managed by \"Foo, Inc.\".\n
         8) Tap on the information.\n
         9) Verify that a dialog informing you about device monitoring opens.\n
-        10) Tap the \"Learn more\" link.\n
+        10) Tap the \"View Policies\" button.\n
         11) Verify that a screen informing you what your managing organization can do is shown.\n
         \n
         Use the Back button to return to this page. If this device does not have quick settings, please skip this test and mark it passing.

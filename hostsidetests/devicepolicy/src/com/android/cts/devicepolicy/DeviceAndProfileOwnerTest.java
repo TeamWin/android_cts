@@ -23,6 +23,7 @@ import android.platform.test.annotations.LargeTest;
 import android.platform.test.annotations.RequiresDevice;
 import android.stats.devicepolicy.EventId;
 
+import com.android.cts.devicepolicy.annotations.LockSettingsTest;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -1264,6 +1265,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                     .build());
     }
 
+    @LockSettingsTest
     public void testResetPasswordWithToken() throws Exception {
         if (!mHasFeature || !mHasSecureLockScreen) {
             return;
