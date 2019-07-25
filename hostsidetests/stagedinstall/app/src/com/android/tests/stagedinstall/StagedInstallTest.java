@@ -96,9 +96,13 @@ public class StagedInstallTest {
     private static final Duration WAIT_FOR_SESSION_REMOVED_TTL = Duration.ofSeconds(10);
     private static final Duration SLEEP_DURATION = Duration.ofMillis(200);
 
+    private static final String SHIM_PACKAGE_NAME = "com.android.apex.cts.shim";
     private static final TestApp TESTAPP_SAME_NAME_AS_APEX = new TestApp(
-            "TestAppSamePackageNameAsApex", "com.android.apex.cts.shim", 1, /*isApex*/ false,
+            "TestAppSamePackageNameAsApex", SHIM_PACKAGE_NAME, 1, /*isApex*/ false,
             "StagedInstallTestAppSamePackageNameAsApex.apk");
+    public static final TestApp Apex2DifferentCertificate = new TestApp(
+            "Apex2DifferentCertificate", SHIM_PACKAGE_NAME, 2, /*isApex*/true,
+            "com.android.apex.cts.shim.v2_different_certificate.apex");
 
     @Before
     public void adoptShellPermissions() {
@@ -612,6 +616,18 @@ public class StagedInstallTest {
         int sessionId = retrieveLastSessionId();
         assertSessionApplied(sessionId);
         assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(2);
+    }
+
+    @Test
+    public void testRejectsApexDifferentCertificate() throws Exception {
+        int sessionId = stageSingleApk(Apex2DifferentCertificate)
+                .assertSuccessful().getSessionId();
+        PackageInstaller.SessionInfo info =
+                SessionUpdateBroadcastReceiver.sessionBroadcasts.poll(60, TimeUnit.SECONDS);
+        assertThat(info.getSessionId()).isEqualTo(sessionId);
+        assertThat(info).isStagedSessionFailed();
+        assertThat(info.getStagedSessionErrorMessage()).contains("APK-container signature "
+                + "verification failed for package com.android.apex.cts.shim.");
     }
 
     private static long getInstalledVersion(String packageName) {
