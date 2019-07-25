@@ -21,25 +21,21 @@ import android.platform.test.annotations.SecurityTest;
 @SecurityTest
 public class Poc17_12 extends SecurityTestCase {
 
-  /**
-   * b/38045794
-   */
-  @SecurityTest(minPatchLevel = "2017-12")
-  public void testPocCVE_2017_6262() throws Exception {
-    if(containsDriver(getDevice(),"/dev/dri/renderD128")) {
-      AdbUtils.runPocNoOutput("CVE-2017-6262", getDevice(), 300);
+    /**
+     * b/38045794
+     */
+    @SecurityTest(minPatchLevel = "2017-12")
+    public void testPocCVE_2017_6262() throws Exception {
+        if(containsDriver(getDevice(),"/dev/dri/renderD128")) {
+            AdbUtils.runPocNoOutput("CVE-2017-6262", getDevice(), 300);
+        }
     }
-  }
 
-  /**
-   * CVE-2017-14904
-   */
-  @SecurityTest(minPatchLevel = "2017-12")
-  public void testPocCVE_2017_14904() throws Exception {
-    AdbUtils.runCommandLine("logcat -c", getDevice());
-    AdbUtils.runPocNoOutput("CVE-2017-14904", getDevice(), 60);
-    String logcat = AdbUtils.runCommandLine("logcat -d", getDevice());
-    assertNotMatchesMultiLine(
-        ">>> /system/bin/mediaserver <<<.*signal 11 \\(SIGSEGV\\)", logcat);
-  }
+   /**
+    * b/63662821
+    */
+    @SecurityTest(minPatchLevel = "2017-12")
+    public void testPocCVE_2017_14904() throws Exception {
+        AdbUtils.runPocAssertNoCrashes("CVE-2017-14904", getDevice(), "mediaserver");
+    }
 }
