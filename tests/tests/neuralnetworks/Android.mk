@@ -14,46 +14,6 @@
 
 nnapi_cts_dir := $(call my-dir)
 
-# Build the static library which is friendly to multi-threaded compilation.
-# The sources are located at frameworks/ml/nn/runtime/test
-LOCAL_PATH:= frameworks/ml/nn/runtime/test/
-include $(CLEAR_VARS)
-LOCAL_MODULE := CtsNNAPITests_static
-LOCAL_SRC_FILES := \
-     $(call all-cpp-files-under,generated/tests) \
-     $(call all-cpp-files-under,generated/models) \
-     $(call all-cpp-files-under,generated/examples) \
-     $(call all-cpp-files-under,fuzzing/operation_signatures) \
-     fuzzing/OperationManager.cpp \
-     fuzzing/RandomGraphGenerator.cpp \
-     fuzzing/RandomGraphGeneratorUtils.cpp \
-     fuzzing/RandomVariable.cpp \
-     fuzzing/TestRandomGraph.cpp \
-     TestGenerated.cpp \
-     TestMemory.cpp \
-     TestTrivialModel.cpp \
-     TestUnknownDimensions.cpp \
-     TestValidateModel.cpp \
-     TestValidateOperations.cpp \
-     TestValidation.cpp \
-     TestWrapper.cpp \
-     TestNeuralNetworksWrapper.cpp
-
-LOCAL_C_INCLUDES := frameworks/ml/nn/runtime/include/
-LOCAL_C_INCLUDES += frameworks/ml/nn/runtime/test/
-LOCAL_C_INCLUDES += frameworks/ml/nn/runtime/
-LOCAL_C_INCLUDES += frameworks/ml/nn/common/include
-LOCAL_C_INCLUDES += frameworks/ml/nn/tools/test_generator/include
-
-LOCAL_CFLAGS := -Werror -Wall -DNNTEST_ONLY_PUBLIC_API -DNNTEST_CTS
-
-LOCAL_SHARED_LIBRARIES := libandroid liblog libneuralnetworks
-LOCAL_STATIC_LIBRARIES := libgtest_ndk_c++ libgmock_ndk
-LOCAL_SDK_VERSION := current
-LOCAL_NDK_STL_VARIANT := c++_static
-include $(BUILD_STATIC_LIBRARY)
-
-
 # Build the actual CTS module with the static lib above.
 # This is necessary for the build system to pickup the AndroidTest.xml.
 LOCAL_PATH:= $(nnapi_cts_dir)
