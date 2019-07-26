@@ -232,9 +232,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
         syncRunOnUiThread(() -> v.visit(mUsernameEditText));
     }
 
-    /**
-     * Clears focus from input fields by focusing on the parent layout.
-     */
+    @Override
     public void clearFocus() {
         syncRunOnUiThread(() -> ((View) mUsernameContainer.getParent()).requestFocus());
     }
