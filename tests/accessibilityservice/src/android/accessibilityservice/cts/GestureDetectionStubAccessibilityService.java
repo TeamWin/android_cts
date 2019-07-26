@@ -17,6 +17,7 @@ package android.accessibilityservice.cts;
 import static org.junit.Assert.fail;
 
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
+import android.accessibilityservice.AccessibilityGestureInfo;
 import android.view.accessibility.AccessibilityEvent;
 
 import java.util.ArrayList;
@@ -29,13 +30,23 @@ public class GestureDetectionStubAccessibilityService extends InstrumentedAccess
     // Member variables
     protected final Object mLock = new Object();
     private ArrayList<Integer> mCollectedGestures = new ArrayList();
+    private ArrayList<AccessibilityGestureInfo> mCollectedGestureInfos = new ArrayList();
     protected ArrayList<Integer> mCollectedEvents = new ArrayList();
 
     @Override
     protected boolean onGesture(int gestureId) {
         synchronized (mCollectedGestures) {
             mCollectedGestures.add(gestureId);
-            mCollectedGestures.notifyAll(); // Stop waiting for gesture.
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onGesture(AccessibilityGestureInfo gestureInfo) {
+        super.onGesture(gestureInfo);
+        synchronized (mCollectedGestureInfos) {
+            mCollectedGestureInfos.add(gestureInfo);
+            mCollectedGestureInfos.notifyAll(); // Stop waiting for gesture.
         }
         return true;
     }
@@ -43,6 +54,9 @@ public class GestureDetectionStubAccessibilityService extends InstrumentedAccess
     public void clearGestures() {
         synchronized (mCollectedGestures) {
             mCollectedGestures.clear();
+        }
+        synchronized (mCollectedGestureInfos) {
+            mCollectedGestureInfos.clear();
         }
     }
 
@@ -58,17 +72,30 @@ public class GestureDetectionStubAccessibilityService extends InstrumentedAccess
         }
     }
 
-    /** Wait for onGesture() to collect next gesture. */
-    public void waitUntilGesture() {
-        synchronized (mCollectedGestures) {
-            if (mCollectedGestures.size() > 0) {
+    /** Waits for {@link #onGesture(AccessibilityGestureInfo)} to collect next gesture. */
+    public void waitUntilGestureInfo() {
+        synchronized (mCollectedGestureInfos) {
+            //Assume the size of mCollectedGestures is changed before mCollectedGestureInfos.
+            if (mCollectedGestureInfos.size() > 0) {
                 return;
             }
             try {
-                mCollectedGestures.wait(GESTURE_RECOGNIZE_TIMEOUT_MS);
+                mCollectedGestureInfos.wait(GESTURE_RECOGNIZE_TIMEOUT_MS);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
+        }
+    }
+
+    public int getGestureInfoSize() {
+        synchronized (mCollectedGestureInfos) {
+            return mCollectedGestureInfos.size();
+        }
+    }
+
+    public AccessibilityGestureInfo getGestureInfo(int index) {
+        synchronized (mCollectedGestureInfos) {
+            return mCollectedGestureInfos.get(index);
         }
     }
 

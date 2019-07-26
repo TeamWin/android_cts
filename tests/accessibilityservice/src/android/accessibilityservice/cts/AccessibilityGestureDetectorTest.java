@@ -26,6 +26,7 @@ import static org.mockito.Mockito.verify;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
+import android.accessibilityservice.AccessibilityGestureInfo;
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.GestureDescription;
 import android.accessibilityservice.GestureDescription.StrokeDescription;
@@ -37,6 +38,7 @@ import android.graphics.Point;
 import android.graphics.PointF;
 import android.platform.test.annotations.AppModeFull;
 import android.util.DisplayMetrics;
+import android.view.Display;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 
@@ -168,7 +170,7 @@ public class AccessibilityGestureDetectorTest {
                 linePath(mCenter, delta1, delta2), 0, pathDurationMs, false))
                 .build();
 
-        // Dispatch gesture motions.
+        // Dispatch gesture motions to default display.
         // Use AccessibilityService.dispatchGesture() instead of Instrumentation.sendPointerSync()
         // because accessibility services read gesture events upstream from the point where
         // sendPointerSync() injects events.
@@ -179,9 +181,14 @@ public class AccessibilityGestureDetectorTest {
                 .onCompleted(any());
 
         // Wait for gesture recognizer, and check recognized gesture.
-        mService.waitUntilGesture();
+        mService.waitUntilGestureInfo();
         assertEquals(1, mService.getGesturesSize());
         assertEquals(gestureId, mService.getGesture(0));
+
+        AccessibilityGestureInfo expectedGestureInfo = new AccessibilityGestureInfo(gestureId,
+                Display.DEFAULT_DISPLAY);
+        assertEquals(1, mService.getGestureInfoSize());
+        assertEquals(expectedGestureInfo.toString(), mService.getGestureInfo(0).toString());
     }
 
     /** Create a path from startPoint, moving by delta1, then delta2. (delta2 may be null.) */
