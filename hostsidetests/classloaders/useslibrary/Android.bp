@@ -27,4 +27,5 @@ java_test_host {
         "general-tests",
     ],
     required: [ "CtsUsesLibraryApp" ],
+    data: [ ":CtsUsesLibraryApp" ],
 }
