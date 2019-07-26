@@ -878,9 +878,7 @@ public class CellInfoTest {
         assertTrue("getTimingAdvance() out of range [0,219] | Integer.MAX_VALUE, ta=" + ta,
                 ta == Integer.MAX_VALUE || (ta >= 0 && ta <= 219));
 
-        // Dbm here does not have specific limits. So just calling to verify that it does not
-        // crash the phone
-        gsm.getDbm();
+        assertEquals(gsm.getDbm(), gsm.getRssi());
 
         int asuLevel = gsm.getAsuLevel();
         assertTrue("getLevel() out of range [0,31] (or 99 is unknown), level=" + asuLevel,
