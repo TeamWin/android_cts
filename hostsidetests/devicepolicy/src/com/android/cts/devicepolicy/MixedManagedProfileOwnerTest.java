@@ -298,4 +298,22 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
             throws Exception {
         super.testPermissionGrantOfDisallowedPermissionWhileOtherPermIsGranted();
     }
+
+    @Override
+    @FlakyTest(bugId = 138223627)
+    public void testLockTask() throws Exception {
+        super.testLockTask();
+    }
+
+    @Override
+    @FlakyTest(bugId = 138223627)
+    public void testLockTaskAfterReboot() throws Exception {
+        super.testLockTaskAfterReboot();
+    }
+
+    @Override
+    @FlakyTest(bugId = 138223627)
+    public void testLockTaskAfterReboot_tryOpeningSettings() throws Exception {
+        super.testLockTaskAfterReboot_tryOpeningSettings();
+    }
 }
