@@ -29,8 +29,6 @@ import its.device
 from its.device import ItsSession
 import its.image
 
-import numpy as np
-
 # For sanity checking the installed APK's target SDK version
 MIN_SUPPORTED_SDK_VERSION = 28  # P
 
@@ -51,16 +49,47 @@ SKIP_RET_CODE = 101  # note this must be same as tests/scene*/test_*
 VGA_HEIGHT = 480
 VGA_WIDTH = 640
 
+ALL_SCENES = ['scene0', 'scene1a', 'scene1b', 'scene2', 'scene2b',
+              'scene2c', 'scene3', 'scene4', 'scene5', 'sensor_fusion']
+
+# Scenes that can be automated through tablet display
+AUTO_SCENES = ['scene0', 'scene1a', 'scene1b', 'scene2', 'scene2b',
+               'scene2c', 'scene3', 'scene4']
+
+SCENE_REQ = {
+        'scene0': None,
+        'scene1a': 'A grey card covering at least the middle 30% of the scene',
+        'scene1b': 'A grey card covering at least the middle 30% of the scene',
+        'scene2': 'A picture containing 3 human faces',
+        'scene2b': 'A picture containing 3 human faces',
+        'scene2c': 'A picture containing 3 human faces',
+        'scene3': 'The ISO 12233 chart',
+        'scene4': 'A specific test page of a circle covering at least the '
+                  'middle 50% of the scene. See CameraITS.pdf section 2.3.4 '
+                  'for more details',
+        'scene5': 'Capture images with a diffuser attached to the camera. See '
+                  'CameraITS.pdf section 2.3.4 for more details',
+        'sensor_fusion': 'Rotating checkboard pattern. See '
+                         'sensor_fusion/SensorFusion.pdf for detailed '
+                         'instructions.\nNote that this test will be skipped '
+                         'on devices not supporting REALTIME camera timestamp.'
+}
+
+SCENE_EXTRA_ARGS = {
+        'scene5': ['doAF=False']
+}
+
 # Not yet mandated tests
 NOT_YET_MANDATED = {
         'scene0': [
                 'test_test_patterns',
                 'test_tonemap_curve'
         ],
-        'scene1': [
+        'scene1a': [
                 'test_ae_precapture_trigger',
                 'test_channel_saturation'
         ],
+        'scene1b': [],
         'scene2': [
                 'test_auto_per_frame_control'
         ],
@@ -80,10 +109,12 @@ HIDDEN_PHYSICAL_CAMERA_TESTS = {
                 'test_read_write',
                 'test_sensor_events'
         ],
-        'scene1': [
+        'scene1a': [
                 'test_exposure',
                 'test_dng_noise_model',
                 'test_linearity',
+        ],
+        'scene1b': [
                 'test_raw_exposure',
                 'test_raw_sensitivity'
         ],
@@ -102,6 +133,7 @@ HIDDEN_PHYSICAL_CAMERA_TESTS = {
                 'test_sensor_fusion'
         ]
 }
+
 
 def run_subprocess_with_timeout(cmd, fout, ferr, outdir):
     """Run subprocess with a timeout.
@@ -191,49 +223,23 @@ def main():
                  camera Ids. Ex: "camera=0,1" or "camera=1"
         device:  device id for adb
         scenes:  the test scene(s) to be executed. Use comma to separate
-                 multiple scenes. Ex: "scenes=scene0,scene1" or
-                 "scenes=0,1,sensor_fusion" (sceneX can be abbreviated by X
-                 where X is a integer)
-        chart:   [Experimental] another android device served as test chart
-                 display. When this argument presents, change of test scene
+                 multiple scenes. Ex: "scenes=scene0,scene1a" or
+                 "scenes=0,1a,sensor_fusion" (sceneX can be abbreviated by X
+                 where X is scene name minus 'scene')
+        chart:   another android device served as test chart display.
+                 When this argument presents, change of test scene
                  will be handled automatically. Note that this argument
                  requires special physical/hardware setup to work and may not
                  work on all android devices.
         result:  Device ID to forward results to (in addition to the device
                  that the tests are running on).
-        rot_rig: [Experimental] ID of the rotation rig being used (formatted as
+        rot_rig: ID of the rotation rig being used (formatted as
                  "<vendor ID>:<product ID>:<channel #>" or "default")
         tmp_dir: location of temp directory for output files
         skip_scene_validation: force skip scene validation. Used when test scene
                  is setup up front and don't require tester validation.
-        dist:    [Experimental] chart distance in cm.
+        dist:    chart distance in cm.
     """
-
-    all_scenes = ["scene0", "scene1", "scene2", "scene2b", "scene2c", "scene3", "scene4", "scene5",
-                  "sensor_fusion"]
-
-    auto_scenes = ["scene0", "scene1", "scene2", "scene2b", "scene2c", "scene3", "scene4"]
-
-    scene_req = {
-        "scene0": None,
-        "scene1": "A grey card covering at least the middle 30% of the scene",
-        "scene2": "A picture containing human faces",
-        "scene2b": "A picture containing human faces",
-        "scene2c": "A picture containing human faces",
-        "scene3": "The ISO 12233 chart",
-        "scene4": "A specific test page of a circle covering at least the "
-                  "middle 50% of the scene. See CameraITS.pdf section 2.3.4 "
-                  "for more details",
-        "scene5": "Capture images with a diffuser attached to the camera. See "
-                  "CameraITS.pdf section 2.3.4 for more details",
-        "sensor_fusion": "Rotating checkboard pattern. See "
-                         "sensor_fusion/SensorFusion.pdf for detailed "
-                         "instructions.\nNote that this test will be skipped "
-                         "on devices not supporting REALTIME camera timestamp."
-    }
-    scene_extra_args = {
-        "scene5": ["doAF=False"]
-    }
 
     camera_id_combos = []
     scenes = []
@@ -275,7 +281,7 @@ def main():
     merge_result_switch = result_device_id is not None
 
     # Run through all scenes if user does not supply one
-    possible_scenes = auto_scenes if auto_scene_switch else all_scenes
+    possible_scenes = AUTO_SCENES if auto_scene_switch else ALL_SCENES
     if not scenes:
         scenes = possible_scenes
     else:
@@ -305,7 +311,7 @@ def main():
     # Initialize test results
     results = {}
     result_key = ItsSession.RESULT_KEY
-    for s in all_scenes:
+    for s in ALL_SCENES:
         results[s] = {result_key: ItsSession.RESULT_NOT_EXECUTED}
 
     # Make output directories to hold the generated files.
@@ -428,7 +434,7 @@ def main():
             num_not_mandated_fail = 0
             numfail = 0
             validate_switch = True
-            if scene_req[scene] is not None:
+            if SCENE_REQ[scene] is not None:
                 out_path = os.path.join(topdir, id_combo_string, scene+".jpg")
                 out_arg = "out=" + out_path
                 if scene == 'sensor_fusion':
@@ -451,8 +457,8 @@ def main():
                 else:
                     # Skip scene validation under certain conditions
                     if validate_switch and not merge_result_switch:
-                        scene_arg = 'scene=' + scene_req[scene]
-                        extra_args = scene_extra_args.get(scene, [])
+                        scene_arg = 'scene=' + SCENE_REQ[scene]
+                        extra_args = SCENE_EXTRA_ARGS.get(scene, [])
                         cmd = ['python',
                                os.path.join(os.getcwd(),
                                             'tools/validate_scene.py'),
