@@ -18,6 +18,7 @@ package android.provider.cts;
 
 import static android.provider.cts.MediaStoreTest.TAG;
 
+import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assert.fail;
 
 import android.app.UiAutomation;
@@ -39,6 +40,8 @@ import android.system.OsConstants;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.Timeout;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -68,6 +71,8 @@ public class ProviderTestUtils {
 
     private static final Pattern PATTERN_STORAGE_PATH = Pattern.compile(
             "(?i)^/storage/[^/]+/(?:[0-9]+/)?");
+
+    private static final Timeout IO_TIMEOUT = new Timeout("IO_TIMEOUT", 100, 2, 2_000);
 
     static Iterable<String> getSharedVolumeNames() {
         // We test both new and legacy volume names
@@ -176,12 +181,29 @@ public class ProviderTestUtils {
         executeShellCommand("bmgr wipe " + backupTransport + " " + packageName, uiAutomation);
     }
 
+    /**
+     * Waits until a file exists, or fails.
+     *
+     * @return existing file.
+     */
+    private static File waitUntilExists(File file) throws IOException {
+        try {
+            return IO_TIMEOUT.run("file '" + file + "' doesn't exist yet", () -> {
+                return file.exists() ? file : null; // will retry if it returns null
+            });
+        } catch (Exception e) {
+            throw new IOException(e);
+        }
+    }
+
     static File stageDir(String volumeName) throws IOException {
         if (MediaStore.VOLUME_EXTERNAL.equals(volumeName)) {
             volumeName = MediaStore.VOLUME_EXTERNAL_PRIMARY;
         }
-        return Environment.buildPath(MediaStore.getVolumePath(volumeName), "Android", "media",
+        File dir = Environment.buildPath(MediaStore.getVolumePath(volumeName), "Android", "media",
                 "android.provider.cts");
+        Log.d(TAG, "stageDir(" + volumeName + "): returning " + dir);
+        return waitUntilExists(dir);
     }
 
     static File stageDownloadDir(String volumeName) throws IOException {
@@ -222,7 +244,7 @@ public class ProviderTestUtils {
                 FileUtils.copy(source, target);
             }
         }
-        return file;
+        return waitUntilExists(file);
     }
 
     static Uri stageMedia(int resId, Uri collectionUri) throws IOException {
@@ -244,11 +266,15 @@ public class ProviderTestUtils {
     }
 
     static Uri scanFile(File file) throws Exception {
-        return MediaStore.scanFile(InstrumentationRegistry.getTargetContext(), file);
+        Uri uri = MediaStore.scanFile(InstrumentationRegistry.getTargetContext(), file);
+        assertWithMessage("no URI for '%s'", file).that(uri).isNotNull();
+        return uri;
     }
 
     static Uri scanFileFromShell(File file) throws Exception {
-        return MediaStore.scanFileFromShell(InstrumentationRegistry.getTargetContext(), file);
+        Uri uri = MediaStore.scanFileFromShell(InstrumentationRegistry.getTargetContext(), file);
+        assertWithMessage("no URI for '%s'", file).that(uri).isNotNull();
+        return uri;
     }
 
     static void scanVolume(File file) throws Exception {
