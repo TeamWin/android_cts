@@ -894,19 +894,24 @@ public final class UiBot {
      * Execute a Runnable and wait for {@link AccessibilityEvent#TYPE_WINDOWS_CHANGED} or
      * {@link AccessibilityEvent#TYPE_WINDOW_STATE_CHANGED}.
      */
-    public AccessibilityEvent waitForWindowChange(Runnable runnable, long timeoutMillis)
-            throws TimeoutException {
-        return mAutoman.executeAndWaitForEvent(runnable, (AccessibilityEvent event) -> {
-            switch (event.getEventType()) {
-                case AccessibilityEvent.TYPE_WINDOWS_CHANGED:
-                case AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED:
-                    return true;
-            }
-            return false;
-        }, timeoutMillis);
+    public AccessibilityEvent waitForWindowChange(Runnable runnable, long timeoutMillis) {
+        try {
+            return mAutoman.executeAndWaitForEvent(runnable, (AccessibilityEvent event) -> {
+                switch (event.getEventType()) {
+                    case AccessibilityEvent.TYPE_WINDOWS_CHANGED:
+                    case AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED:
+                        return true;
+                    default:
+                        Log.v(TAG, "waitForWindowChange(): ignoring event " + event);
+                }
+                return false;
+            }, timeoutMillis);
+        } catch (TimeoutException e) {
+            throw new WindowChangeTimeoutException(e, timeoutMillis);
+        }
     }
 
-    public AccessibilityEvent waitForWindowChange(Runnable runnable) throws TimeoutException {
+    public AccessibilityEvent waitForWindowChange(Runnable runnable) {
         return waitForWindowChange(runnable, Timeouts.WINDOW_CHANGE_TIMEOUT_MS);
     }
 

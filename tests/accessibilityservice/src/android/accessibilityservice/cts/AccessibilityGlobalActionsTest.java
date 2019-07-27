@@ -23,6 +23,8 @@ import android.platform.test.annotations.Presubmit;
 import android.test.InstrumentationTestCase;
 import android.test.suitebuilder.annotation.MediumTest;
 
+import androidx.test.filters.FlakyTest;
+
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -85,6 +87,7 @@ public class AccessibilityGlobalActionsTest extends InstrumentationTestCase {
     }
 
     @MediumTest
+    @FlakyTest
     public void testPerformGlobalActionNotifications() throws Exception {
         // Perform the action under test
         assertTrue(getInstrumentation().getUiAutomation().performGlobalAction(
@@ -102,6 +105,7 @@ public class AccessibilityGlobalActionsTest extends InstrumentationTestCase {
     }
 
     @MediumTest
+    @FlakyTest
     public void testPerformGlobalActionQuickSettings() throws Exception {
         // Check whether the action succeeded.
         assertTrue(getInstrumentation().getUiAutomation().performGlobalAction(
@@ -122,6 +126,7 @@ public class AccessibilityGlobalActionsTest extends InstrumentationTestCase {
     }
 
     @MediumTest
+    @FlakyTest
     public void testPerformGlobalActionPowerDialog() throws Exception {
         // Check whether the action succeeded.
         assertTrue(getInstrumentation().getUiAutomation().performGlobalAction(
