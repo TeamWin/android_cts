@@ -1,13 +1,7 @@
 {
   "imports": [
     {
-      "path": "cts/tests/rollback"
-    },
-    {
-      "path": "cts/hostsidetests/rollback"
-    },
-    {
-      "path": "cts/lib/rollback"
+      "path": "cts/tests/tests/util"
     }
   ]
 }
