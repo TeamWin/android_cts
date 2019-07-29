@@ -305,7 +305,7 @@
         <activity android:name="android.server.wm.WindowFocusTests$LosingFocusActivity" />
         <activity android:name="android.app.Activity"/>
 
-        <activity android:name="android.server.wm.DragDropActivity"
+        <activity android:name="android.server.wm.DragDropTest$DragDropActivity"
                   android:screenOrientation="locked"
                   android:turnScreenOn="true"
                   android:showWhenLocked="true"
