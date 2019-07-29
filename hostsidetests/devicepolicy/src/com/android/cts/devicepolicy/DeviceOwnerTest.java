@@ -77,16 +77,9 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
 
     /**
      * Copied from {@link android.app.admin.DevicePolicyManager
-     * .InstallSystemUpdateCallback#UPDATE_ERROR_UPDATE_FILE_INVALID}
+     * .InstallSystemUpdateCallback#UPDATE_ERROR_BATTERY_LOW}
      */
-    private static final int UPDATE_ERROR_UPDATE_FILE_INVALID = 3;
-
-    /**
-     * Copied from {@link android.app.admin.DevicePolicyManager
-     * .InstallSystemUpdateCallback#UPDATE_ERROR_UNKNOWN}
-     */
-    private static final int UPDATE_ERROR_UNKNOWN = 1;
-
+    private static final int UPDATE_ERROR_BATTERY_LOW = 5;
     private static final int TYPE_NONE = 0;
 
     /**
@@ -946,18 +939,17 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        pushUpdateFileToDevice("wrongHash.zip");
+        pushUpdateFileToDevice("wrongSize.zip");
         assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".InstallUpdateTest", "testInstallUpdate_failWrongHash");
+                executeDeviceTestMethod(".InstallUpdateTest",
+                        "testInstallUpdate_notCharging_belowThreshold_failsBatteryCheck");
         }, new DevicePolicyEventWrapper.Builder(EventId.INSTALL_SYSTEM_UPDATE_VALUE)
-                    .setAdminPackageName(DEVICE_OWNER_PKG)
-                    .setBoolean(isDeviceAb())
-                    .build(),
-            new DevicePolicyEventWrapper.Builder(EventId.INSTALL_SYSTEM_UPDATE_ERROR_VALUE)
-                    .setInt(isDeviceAb()
-                            ? UPDATE_ERROR_UPDATE_FILE_INVALID
-                            : UPDATE_ERROR_UNKNOWN)
-                    .build());
+               .setAdminPackageName(DEVICE_OWNER_PKG)
+               .setBoolean(isDeviceAb())
+               .build(),
+        new DevicePolicyEventWrapper.Builder(EventId.INSTALL_SYSTEM_UPDATE_ERROR_VALUE)
+               .setInt(UPDATE_ERROR_BATTERY_LOW)
+               .build());
     }
 
     private boolean isDeviceAb() throws DeviceNotAvailableException {
