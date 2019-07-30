@@ -920,6 +920,12 @@ public class KeyAttestationTest extends AndroidTestCase {
                     X500Name signedCertSubject =
                             new JcaX509CertificateHolder(x509PrevCert).getSubject();
                     assertEquals(signedCertSubject, new X500Name("CN=Android Keystore Key"));
+                } else {
+                    // Only strongbox implementations should have strongbox in the subject line
+                    assertFalse(x509CurrCert.getSubjectDN()
+                                            .getName()
+                                            .toLowerCase()
+                                            .contains("strongbox"));
                 }
             } catch (InvalidKeyException | CertificateException | NoSuchAlgorithmException
                     | NoSuchProviderException | SignatureException e) {
