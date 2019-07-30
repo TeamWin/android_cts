@@ -72,7 +72,7 @@ public class ProviderTestUtils {
     private static final Pattern PATTERN_STORAGE_PATH = Pattern.compile(
             "(?i)^/storage/[^/]+/(?:[0-9]+/)?");
 
-    private static final Timeout IO_TIMEOUT = new Timeout("IO_TIMEOUT", 100, 2, 2_000);
+    private static final Timeout IO_TIMEOUT = new Timeout("IO_TIMEOUT", 2_000, 2, 2_000);
 
     static Iterable<String> getSharedVolumeNames() {
         // We test both new and legacy volume names
@@ -186,7 +186,7 @@ public class ProviderTestUtils {
      *
      * @return existing file.
      */
-    private static File waitUntilExists(File file) throws IOException {
+    public static File waitUntilExists(File file) throws IOException {
         try {
             return IO_TIMEOUT.run("file '" + file + "' doesn't exist yet", () -> {
                 return file.exists() ? file : null; // will retry if it returns null
@@ -203,7 +203,7 @@ public class ProviderTestUtils {
         File dir = Environment.buildPath(MediaStore.getVolumePath(volumeName), "Android", "media",
                 "android.provider.cts");
         Log.d(TAG, "stageDir(" + volumeName + "): returning " + dir);
-        return waitUntilExists(dir);
+        return dir;
     }
 
     static File stageDownloadDir(String volumeName) throws IOException {
