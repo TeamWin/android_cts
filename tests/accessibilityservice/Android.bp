@@ -35,4 +35,5 @@ android_test {
         "cts_instant",
     ],
     sdk_version: "test_current",
+    data: [":CtsAccessibilityWidgetProvider"],
 }
