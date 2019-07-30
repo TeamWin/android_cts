@@ -150,6 +150,9 @@
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$SlowActivity"/>
 
+        <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$NoDisplayActivity"
+                  android:theme="@android:style/Theme.NoDisplay" />
+
         <activity android:name="android.server.wm.StartActivityTests$TestActivity2" />
 
         <activity android:name="android.server.wm.MultiDisplaySystemDecorationTests$ImeTestActivity" />

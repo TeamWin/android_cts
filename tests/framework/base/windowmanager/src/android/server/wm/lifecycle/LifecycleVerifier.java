@@ -72,6 +72,14 @@ class LifecycleVerifier {
                 : Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME);
     }
 
+    static List<ActivityCallback> getLaunchAndDestroySequence(
+            Class<? extends Activity> activityClass) {
+        final List<ActivityCallback> expectedTransitions = new ArrayList<>();
+        expectedTransitions.addAll(getLaunchSequence(activityClass));
+        expectedTransitions.addAll(getResumeToDestroySequence(activityClass));
+        return expectedTransitions;
+    }
+
     static void assertLaunchSequence(Class<? extends Activity> launchingActivity,
             Class<? extends Activity> existingActivity, LifecycleLog lifecycleLog,
             boolean launchingIsTranslucent) {
