@@ -337,11 +337,22 @@ public final class UiBot {
     }
 
     /**
-     * Selects a dataset that should be visible in the floating UI.
+     * Selects a dataset that should be visible in the floating UI and does not need to wait for
+     * application become idle.
      */
     public void selectDataset(String name) throws Exception {
         final UiObject2 picker = findDatasetPicker(UI_DATASET_PICKER_TIMEOUT);
         selectDataset(picker, name);
+    }
+
+    /**
+     * Selects a dataset that should be visible in the floating UI and waits for application become
+     * idle if needed.
+     */
+    public void selectDatasetSync(String name) throws Exception {
+        final UiObject2 picker = findDatasetPicker(UI_DATASET_PICKER_TIMEOUT);
+        selectDataset(picker, name);
+        mDevice.waitForIdle();
     }
 
     /**
