@@ -31,5 +31,10 @@ android_test {
         "cts",
         "vts",
         "general-tests",
-    ]
+    ],
+
+    data: [
+        ":CtsRoleTestApp",
+        ":CtsRoleTestApp28",
+    ],
 }
