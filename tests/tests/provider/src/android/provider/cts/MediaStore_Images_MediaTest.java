@@ -229,7 +229,9 @@ public class MediaStore_Images_MediaTest {
         cleanExternalMediaFile(externalPath2);
 
         int numBytes = 1337;
-        FileUtils.createFile(new File(externalPath), numBytes);
+        File file = new File(externalPath);
+        FileUtils.createFile(file, numBytes);
+        ProviderTestUtils.waitUntilExists(file);
 
         ContentValues values = new ContentValues();
         values.put(Media.ORIENTATION, 0);
@@ -281,7 +283,7 @@ public class MediaStore_Images_MediaTest {
         } finally {
             // delete
             assertEquals(1, mContentResolver.delete(uri, null, null));
-            new File(externalPath).delete();
+            file.delete();
         }
     }
 
