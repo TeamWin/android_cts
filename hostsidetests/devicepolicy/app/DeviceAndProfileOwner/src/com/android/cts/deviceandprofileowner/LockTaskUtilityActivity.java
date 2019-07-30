@@ -34,6 +34,36 @@ public class LockTaskUtilityActivity extends Activity {
     public static final String RESUME_ACTION = "com.android.cts.deviceandprofileowner.LOCK_TASK_RESUME";
     public static final String INTENT_ACTION = "com.android.cts.deviceandprofileowner.LOCK_TASK_INTENT";
 
+    private static volatile boolean isActivityResumed;
+    private static final Object ACTIVITY_RESUMED_LOCK = new Object();
+
+    private static void setIsActivityResumed(boolean newValue) {
+        synchronized (ACTIVITY_RESUMED_LOCK) {
+            isActivityResumed = newValue;
+            ACTIVITY_RESUMED_LOCK.notify();
+        }
+    }
+
+    /** Returns true if it's successful. */
+    public static boolean waitUntilActivityResumed(long timeoutMs) throws InterruptedException {
+        synchronized (ACTIVITY_RESUMED_LOCK) {
+            if (!isActivityResumed) {
+                ACTIVITY_RESUMED_LOCK.wait(timeoutMs);
+            }
+            return isActivityResumed;
+        }
+    }
+
+    /** Returns true if it's successful. */
+    public static boolean waitUntilActivityPaused(long timeoutMs) throws InterruptedException {
+        synchronized (ACTIVITY_RESUMED_LOCK) {
+            if (isActivityResumed) {
+                ACTIVITY_RESUMED_LOCK.wait(timeoutMs);
+            }
+            return !isActivityResumed;
+        }
+    }
+
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
@@ -55,12 +85,14 @@ public class LockTaskUtilityActivity extends Activity {
 
     @Override
     protected void onResume() {
+        setIsActivityResumed(true);
         sendLocalBroadcast(new Intent(RESUME_ACTION));
         super.onResume();
     }
 
     @Override
     protected void onPause() {
+        setIsActivityResumed(false);
         sendLocalBroadcast(new Intent(PAUSE_ACTION));
         super.onPause();
     }
