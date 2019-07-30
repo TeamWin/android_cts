@@ -35,12 +35,15 @@ import static android.server.wm.app.Components.SINGLE_TASK_INSTANCE_DISPLAY_ACTI
 import static android.server.wm.app.Components.SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY2;
 import static android.server.wm.app.Components.SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY3;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
+import static android.server.wm.app.Components.TOP_ACTIVITY;
 import static android.server.wm.app.Components.VIRTUAL_DISPLAY_ACTIVITY;
 import static android.server.wm.second.Components.SECOND_ACTIVITY;
 import static android.server.wm.second.Components.SECOND_LAUNCH_BROADCAST_ACTION;
 import static android.server.wm.second.Components.SECOND_LAUNCH_BROADCAST_RECEIVER;
 import static android.server.wm.third.Components.THIRD_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
+
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -49,8 +52,11 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.ActivityOptions;
+import android.app.PendingIntent;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityManagerState.ActivityDisplay;
@@ -846,5 +852,52 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
                     getDisplayState(DEFAULT_DISPLAY).containsActivity(
                             SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY3));
         }
+    }
+
+    @Test
+    public void testLaunchPendingIntentActivity() throws Exception {
+        final DisplayManager displayManager =
+                getInstrumentation().getContext().getSystemService(DisplayManager.class);
+
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay activityDisplay =
+                    virtualDisplaySession.setSimulateDisplay(true).createDisplay();
+
+            // Activity should be launched on primary display by default.
+            getPendingIntentActivity(TEST_ACTIVITY).send();
+            waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
+                    "Activity launched on primary display and on top");
+
+            // Activity should be launched on target display according to the caller context.
+            final Context displayContext =
+                    mContext.createDisplayContext(displayManager.getDisplay(activityDisplay.mId));
+            getPendingIntentActivity(TOP_ACTIVITY).send(displayContext, 1 /* code */,
+                    null /* intent */);
+            waitAndAssertTopResumedActivity(TOP_ACTIVITY, activityDisplay.mId,
+                    "Activity launched on secondary display and on top");
+
+            // Activity should be brought to front on the same display if it already existed.
+            getPendingIntentActivity(TEST_ACTIVITY).send(displayContext, 1 /* code */,
+                    null /* intent */);
+            waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
+                    "Activity launched on primary display and on top");
+
+            // Activity should be moved to target display.
+            ActivityOptions options = ActivityOptions.makeBasic();
+            options.setLaunchDisplayId(activityDisplay.mId);
+            getPendingIntentActivity(TEST_ACTIVITY).send(getInstrumentation().getContext(),
+                    1 /* code */, null /* intent */, null /* onFinished */, null /* handler */,
+                    null /* requiredPermission */, options.toBundle());
+            waitAndAssertTopResumedActivity(TEST_ACTIVITY, activityDisplay.mId,
+                    "Activity launched on secondary display and on top");
+        }
+    }
+
+    private PendingIntent getPendingIntentActivity(ComponentName activity) {
+        final Intent intent = new Intent();
+        intent.setClassName(activity.getPackageName(), activity.getClassName());
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        return PendingIntent.getActivity(mContext, 1 /* requestCode */, intent,
+                PendingIntent.FLAG_CANCEL_CURRENT);
     }
 }
