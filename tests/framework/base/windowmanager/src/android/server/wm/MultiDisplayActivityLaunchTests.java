@@ -856,6 +856,8 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
 
     @Test
     public void testLaunchPendingIntentActivity() throws Exception {
+        // Prevent the launch of pure PendingIntent from being delayed after home key is pressed.
+        resumeAppSwitches();
         final DisplayManager displayManager =
                 getInstrumentation().getContext().getSystemService(DisplayManager.class);
 
