@@ -16,12 +16,5 @@ android_test_helper_app {
     name: "CtsSampleDeviceApp",
     defaults: ["cts_defaults"],
     srcs: ["src/**/*.java"],
-    // tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "vts",
-        "general-tests",
-        "cts_instant",
-    ],
     sdk_version: "current",
 }
