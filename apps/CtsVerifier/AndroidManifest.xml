@@ -3450,6 +3450,26 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.microphone:android.hardware.usb.host" />
         </activity>
 
+        <activity android:name=".audio.AudioFrequencyVoiceRecognitionActivity"
+                  android:label="@string/audio_frequency_voice_recognition_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_audio" />
+            <meta-data android:name="test_required_features" android:value="android.hardware.microphone:android.hardware.usb.host" />
+        </activity>
+
+        <activity android:name=".audio.AudioAEC"
+                  android:label="@string/audio_aec_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_audio" />
+            <meta-data android:name="test_required_features" android:value="android.hardware.microphone:android.hardware.audio.output" />
+        </activity>
+
         <service android:name=".tv.MockTvInputService"
             android:permission="android.permission.BIND_TV_INPUT">
             <intent-filter>
