@@ -549,11 +549,19 @@ public final class Helper {
     /**
      * Asserts the values of a text-based node whose string come from resoruces.
      */
-    public static ViewNode assertTextFromResouces(AssistStructure structure, String resourceId,
+    public static ViewNode assertTextFromResources(AssistStructure structure, String resourceId,
             String expectedValue, boolean isAutofillable, String expectedTextIdEntry) {
         final ViewNode node = findNodeByResourceId(structure, resourceId);
         assertText(node, expectedValue, isAutofillable);
         assertThat(node.getTextIdEntry()).isEqualTo(expectedTextIdEntry);
+        return node;
+    }
+
+    public static ViewNode assertHintFromResources(AssistStructure structure, String resourceId,
+            String expectedValue, String expectedHintIdEntry) {
+        final ViewNode node = findNodeByResourceId(structure, resourceId);
+        assertThat(node.getHint()).isEqualTo(expectedValue);
+        assertThat(node.getHintIdEntry()).isEqualTo(expectedHintIdEntry);
         return node;
     }
 

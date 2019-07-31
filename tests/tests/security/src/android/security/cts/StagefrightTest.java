@@ -77,6 +77,7 @@ import org.json.JSONObject;
 
 import android.security.cts.R;
 
+import android.security.NetworkSecurityPolicy;
 
 /**
  * Verify that the device is not vulnerable to any known Stagefright
@@ -1093,6 +1094,8 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     private void doStagefrightTest(final int rid) throws Exception {
+        NetworkSecurityPolicy policy = NetworkSecurityPolicy.getInstance();
+        policy.setCleartextTrafficPermitted(true);
         doStagefrightTestMediaPlayer(rid);
         doStagefrightTestMediaCodec(rid);
         doStagefrightTestMediaMetadataRetriever(rid);
@@ -1114,6 +1117,7 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTestMediaPlayer(url);
         doStagefrightTestMediaCodec(url);
         doStagefrightTestMediaMetadataRetriever(url);
+        policy.setCleartextTrafficPermitted(false);
         server.shutdown();
     }
 
