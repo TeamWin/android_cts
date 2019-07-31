@@ -73,7 +73,6 @@ public class DisplayTests extends MultiDisplayTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 129521230)
     public void testNonDefaultDisplayResourcesConfiguration() throws Exception {
         final int smallDisplaySize = 1000;
         final int longDisplaySize = 1920;
