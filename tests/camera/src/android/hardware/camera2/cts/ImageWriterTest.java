@@ -19,6 +19,7 @@ package android.hardware.camera2.cts;
 import static android.hardware.camera2.cts.CameraTestUtils.*;
 
 import android.graphics.ImageFormat;
+import android.graphics.SurfaceTexture;
 import android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
 import android.hardware.camera2.CameraDevice;
@@ -166,6 +167,23 @@ public class ImageWriterTest extends Camera2AndroidTestCase {
         } catch (IllegalStateException e) {
             // Expected
         } finally {
+            writer.close();
+        }
+    }
+
+    public void testWriterFormatOverride() throws Exception {
+        int[] TEXTURE_TEST_FORMATS = {ImageFormat.YV12, ImageFormat.YUV_420_888};
+        SurfaceTexture texture = new SurfaceTexture(/*random int*/1);
+        texture.setDefaultBufferSize(640, 480);
+        Surface surface = new Surface(texture);
+
+        for (int format : TEXTURE_TEST_FORMATS) {
+            // Override default buffer format of Surface texture to test format
+            ImageWriter writer = ImageWriter.newInstance(surface, MAX_NUM_IMAGES, format);
+            Image image = writer.dequeueInputImage();
+            Log.i(TAG, "testing format " + format + ", got input image format " +
+                    image.getFormat());
+            assertTrue(image.getFormat() == format);
             writer.close();
         }
     }
