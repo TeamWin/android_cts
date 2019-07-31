@@ -20,11 +20,5 @@ android_test_helper_app {
         "androidx.test.rules",
         "compatibility-device-util-axt",
     ],
-    // Tag this module as test artifact for cts,
-    test_suites: [
-        "cts",
-        "vts",
-        "general-tests",
-    ],
     sdk_version: "test_current",
 }

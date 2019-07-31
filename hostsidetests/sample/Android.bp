@@ -28,4 +28,8 @@ java_test_host {
         "tradefed",
         "compatibility-host-util",
     ],
+    data: [
+        ":CtsSampleDeviceApp",
+        ":CtsSampleDeviceApp2",
+    ],
 }
