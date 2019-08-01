@@ -49,7 +49,6 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.platform.test.annotations.Presubmit;
 
-import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 
 import com.android.compatibility.common.util.AmUtils;
@@ -63,7 +62,6 @@ import java.util.List;
  * Build/Install/Run:
  *     atest CtsWindowManagerDeviceTestCases:ActivityLifecycleTests
  */
-@FlakyTest(bugId = 77652261)
 @MediumTest
 @Presubmit
 public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {

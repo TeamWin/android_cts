@@ -71,7 +71,6 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
     }
 
     @Test
-    @FlakyTest(bugId = 131005232)
     public void testResumedWhenRecreatedFromInNonFocusedStack() throws Exception {
         // Launch first activity
         final Activity firstActivity =
@@ -107,6 +106,7 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
     }
 
     @Test
+    @FlakyTest(bugId = 127741025)
     public void testOccludingMovedBetweenStacks() throws Exception {
         // Launch first activity
         final Activity firstActivity =
