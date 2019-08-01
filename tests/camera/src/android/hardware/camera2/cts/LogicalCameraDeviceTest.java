@@ -1109,8 +1109,12 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
             Map<String, CaptureResult> physicalResultsDual =
                     totalCaptureResultDual.getPhysicalCameraResults();
             for (String physicalId : physicalCameraIds) {
-                 physicalTimestamps[index][i] = physicalResultsDual.get(physicalId).get(
-                         CaptureResult.SENSOR_TIMESTAMP);
+                 if (physicalResultsDual.containsKey(physicalId)) {
+                     physicalTimestamps[index][i] = physicalResultsDual.get(physicalId).get(
+                             CaptureResult.SENSOR_TIMESTAMP);
+                 } else {
+                     physicalTimestamps[index][i] = -1;
+                 }
                  index++;
             }
         }
@@ -1129,15 +1133,19 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
         }
         for (int i = 0; i < physicalCameraIds.size(); i++) {
             for (int j = 0 ; j < NUM_FRAMES_CHECKED-1; j++) {
-                assertTrue("Physical camera timestamp must monolithically increase",
-                        physicalTimestamps[i][j] < physicalTimestamps[i][j+1]);
-                if (j > 0) {
+                if (physicalTimestamps[i][j] != -1 && physicalTimestamps[i][j+1] != -1) {
+                    assertTrue("Physical camera timestamp must monolithically increase",
+                            physicalTimestamps[i][j] < physicalTimestamps[i][j+1]);
+                }
+                if (j > 0 && physicalTimestamps[i][j] != -1) {
                     assertTrue("Physical camera's timestamp N must be greater than logical " +
                             "camera's timestamp N-1",
                             physicalTimestamps[i][j] > logicalTimestamps[j-1]);
                 }
-                assertTrue("Physical camera's timestamp N must be less than logical camera's " +
-                        "timestamp N+1", physicalTimestamps[i][j] > logicalTimestamps[j+1]);
+                if (physicalTimestamps[i][j] != -1) {
+                    assertTrue("Physical camera's timestamp N must be less than logical camera's " +
+                            "timestamp N+1", physicalTimestamps[i][j] > logicalTimestamps[j+1]);
+                }
             }
         }
         double logicalAvgDurationMs2 = (logicalTimestamps2[NUM_FRAMES_CHECKED-1] -
