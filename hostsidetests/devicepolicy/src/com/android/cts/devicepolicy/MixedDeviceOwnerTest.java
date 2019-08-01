@@ -121,6 +121,12 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @Override
+    @FlakyTest(bugId = 138721077)
+    public void testLockTask_defaultDialer() throws Exception {
+        super.testLockTask_defaultDialer();
+    }
+
+    @Override
     Map<String, DevicePolicyEventWrapper[]> getAdditionalDelegationTests() {
         final Map<String, DevicePolicyEventWrapper[]> result = new HashMap<>();
         DevicePolicyEventWrapper[] expectedMetrics = new DevicePolicyEventWrapper[] {

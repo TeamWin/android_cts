@@ -69,4 +69,10 @@ public class MixedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     public void testPackageInstallUserRestrictions() throws Exception {
         super.testPackageInstallUserRestrictions();
     }
+
+    @Override
+    @FlakyTest(bugId = 138721077)
+    public void testLockTask_defaultDialer() throws Exception {
+        super.testLockTask_defaultDialer();
+    }
 }
