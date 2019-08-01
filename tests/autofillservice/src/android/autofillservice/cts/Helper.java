@@ -828,7 +828,18 @@ final class Helper {
             @NonNull String serviceName) {
         if (isAutofillServiceEnabled(serviceName)) return;
 
+        // Sets the setting synchronously. Note that the config itself is sets synchronously but
+        // launch of the service is asynchronous after the config is updated.
         SettingsHelper.syncSet(context, AUTOFILL_SERVICE, serviceName);
+
+        // Waits until the service is actually enabled.
+        try {
+            Timeouts.CONNECTION_TIMEOUT.run("Enabling Autofill service", () -> {
+                return isAutofillServiceEnabled(serviceName) ? serviceName : null;
+            });
+        } catch (Exception e) {
+            throw new AssertionError("Enabling Autofill service failed.");
+        }
     }
 
     /**
