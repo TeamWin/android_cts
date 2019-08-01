@@ -51,10 +51,10 @@ def main():
     dst_scene_file = '/sdcard/Download/%s.pdf' % scene
     chart_scaling = its.cv2image.calc_chart_scaling(chart_distance, camera_fov)
     if np.isclose(chart_scaling, its.cv2image.SCALE_TELE_IN_WFOV_BOX, atol=0.01):
-        file_name = '%s_%s_scaled.pdf' % (
+        file_name = '%s_%sx_scaled.pdf' % (
                 scene, str(its.cv2image.SCALE_TELE_IN_WFOV_BOX))
     elif np.isclose(chart_scaling, its.cv2image.SCALE_RFOV_IN_WFOV_BOX, atol=0.01):
-        file_name = '%s_%s_scaled.pdf' % (
+        file_name = '%s_%sx_scaled.pdf' % (
                 scene, str(its.cv2image.SCALE_RFOV_IN_WFOV_BOX))
     else:
         file_name = '%s.pdf' % scene
