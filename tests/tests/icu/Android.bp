@@ -25,6 +25,7 @@ android_test {
         "cts",
         "vts",
         "general-tests",
+	"mts",
     ],
     platform_apis: true,
 }
