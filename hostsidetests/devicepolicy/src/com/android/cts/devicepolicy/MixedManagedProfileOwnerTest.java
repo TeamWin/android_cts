@@ -316,4 +316,22 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     public void testLockTaskAfterReboot_tryOpeningSettings() throws Exception {
         super.testLockTaskAfterReboot_tryOpeningSettings();
     }
+
+    @Override
+    @FlakyTest(bugId = 138223627)
+    public void testLockTask_defaultDialer() throws Exception {
+        super.testLockTask_defaultDialer();
+    }
+
+    @Override
+    @FlakyTest(bugId = 138223627)
+    public void testLockTask_emergencyDialer() throws Exception {
+        super.testLockTask_emergencyDialer();
+    }
+
+    @Override
+    @FlakyTest(bugId = 138223627)
+    public void testLockTask_exitIfNoLongerWhitelisted() throws Exception {
+        super.testLockTask_exitIfNoLongerWhitelisted();
+    }
 }
