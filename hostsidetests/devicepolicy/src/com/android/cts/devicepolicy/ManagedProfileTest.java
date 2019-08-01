@@ -109,10 +109,8 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
         // intents resolution.
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
                 "testDisableAllBrowsers", mProfileUserId);
-        installAppAsUser(INTENT_RECEIVER_APK, mParentUserId);
-        installAppAsUser(INTENT_SENDER_APK, mParentUserId);
-        installAppAsUser(INTENT_RECEIVER_APK, mProfileUserId);
-        installAppAsUser(INTENT_SENDER_APK, mProfileUserId);
+        installAppAsUser(INTENT_RECEIVER_APK, USER_ALL);
+        installAppAsUser(INTENT_SENDER_APK, USER_ALL);
 
         changeVerificationStatus(mParentUserId, INTENT_RECEIVER_PKG, "ask");
         changeVerificationStatus(mProfileUserId, INTENT_RECEIVER_PKG, "ask");
@@ -148,10 +146,8 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
         // intents resolution.
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
                 "testDisableAllBrowsers", mProfileUserId);
-        installAppAsUser(INTENT_RECEIVER_APK, mParentUserId);
-        installAppAsUser(INTENT_SENDER_APK, mParentUserId);
-        installAppAsUser(INTENT_RECEIVER_APK, mProfileUserId);
-        installAppAsUser(INTENT_SENDER_APK, mProfileUserId);
+        installAppAsUser(INTENT_RECEIVER_APK, USER_ALL);
+        installAppAsUser(INTENT_SENDER_APK, USER_ALL);
 
         final String APP_HANDLER_COMPONENT = "com.android.cts.intent.receiver/.AppLinkActivity";
 
