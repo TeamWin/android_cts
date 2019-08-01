@@ -21,6 +21,8 @@ import time
 import its.cv2image
 import numpy as np
 
+LOAD_SCENE_DELAY = 2  # seconds
+
 
 def main():
     """Load charts on device and display."""
@@ -63,7 +65,7 @@ def main():
     cmd = 'adb -s %s push %s /mnt%s' % (screen_id, src_scene_file,
                                         dst_scene_file)
     subprocess.Popen(cmd.split())
-    time.sleep(1)  # wait-for-device doesn't always seem to work...
+    time.sleep(LOAD_SCENE_DELAY)  # wait-for-device doesn't always seem to work
     # The intent require PDF viewing app be installed on device.
     # Also the first time such app is opened it might request some permission,
     # so it's  better to grant those permissions before using this script
