@@ -109,10 +109,6 @@ public class JobSchedulerIncidentTest extends ProtoDumpTestCase {
         assertTrue(0 <= c.getMaxWorkRescheduleCount());
         assertTrue(0 <= c.getMinLinearBackoffTimeMs());
         assertTrue(0 <= c.getMinExpBackoffTimeMs());
-        assertTrue(0 <= c.getStandbyHeartbeatTimeMs());
-        for (int sb : c.getStandbyBeatsList()) {
-            assertTrue(0 <= sb);
-        }
     }
 
     private static void testDataSetProto(DataSetProto ds) throws Exception {

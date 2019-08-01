@@ -16,11 +16,14 @@
 
 package android.accessibilityservice.cts;
 
+import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangedWithChangeTypes;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.findWindowByTitle;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
 import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
+import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_BOUNDS;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
@@ -36,6 +39,8 @@ import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
+import android.view.ViewGroup;
+import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 
@@ -76,6 +81,9 @@ public class AccessibilityEmbeddedDisplayTest {
     private final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
 
+    private final static int DEFAULT_ACTIVITYVIEW_HEIGHT = 500;
+    private final static int DEFAULT_ACTIVITYVIEW_WIDTH = 500;
+
     @Rule
     public final RuleChain mRuleChain = RuleChain
             .outerRule(mActivityRule)
@@ -106,6 +114,8 @@ public class AccessibilityEmbeddedDisplayTest {
                     sInstrumentation, sUiAutomation, mActivityRule);
             mActivityView = mActivity.getActivityView();
         });
+
+        launchActivityInActivityView();
     }
 
     @After
@@ -118,8 +128,6 @@ public class AccessibilityEmbeddedDisplayTest {
     @Presubmit
     @Test
     public void testA11yWindowInfoHasCorrectLayer() throws Exception {
-        launchActivityInActivityView();
-
         final AccessibilityWindowInfo parentActivityWindow =
                 findWindowByTitle(sUiAutomation, mParentActivityTitle);
         final AccessibilityWindowInfo activityWindow =
@@ -133,8 +141,6 @@ public class AccessibilityEmbeddedDisplayTest {
     @Presubmit
     @Test
     public void testA11yWindowInfoAndA11yNodeInfoHasCorrectBoundsInScreen() throws Exception {
-        launchActivityInActivityView();
-
         final AccessibilityWindowInfo parentActivityWindow =
                 findWindowByTitle(sUiAutomation, mParentActivityTitle);
         final AccessibilityWindowInfo activityWindow =
@@ -156,6 +162,32 @@ public class AccessibilityEmbeddedDisplayTest {
 
         assertTrue(parentActivityBound.contains(activityBound));
         assertTrue(parentActivityBound.contains(buttonBound));
+    }
+
+    @Presubmit
+    @Test
+    public void testA11yWindowNotifyWhenResizeActivityView() throws Exception {
+        final AccessibilityWindowInfo oldActivityWindow =
+                findWindowByTitle(sUiAutomation, mActivityTitle);
+        final Rect oldWindowBound = new Rect();
+        oldActivityWindow.getBoundsInScreen(oldWindowBound);
+        assertEquals(DEFAULT_ACTIVITYVIEW_HEIGHT, oldWindowBound.height());
+        assertEquals(DEFAULT_ACTIVITYVIEW_WIDTH, oldWindowBound.width());
+
+        final int width = DEFAULT_ACTIVITYVIEW_WIDTH / 2;
+        final int height = DEFAULT_ACTIVITYVIEW_WIDTH / 2;
+        sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(
+                () -> mActivityView.layout(0, 0, width, height)),
+                filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_BOUNDS),
+                DEFAULT_TIMEOUT_MS);
+
+        final AccessibilityWindowInfo newActivityWindow =
+                findWindowByTitle(sUiAutomation, mActivityTitle);
+        final Rect newWindowBound = new Rect();
+        newActivityWindow.getBoundsInScreen(newWindowBound);
+
+        assertEquals(height, newWindowBound.height());
+        assertEquals(width, newWindowBound.width());
     }
 
     private void launchActivityInActivityView() throws Exception {
@@ -192,6 +224,11 @@ public class AccessibilityEmbeddedDisplayTest {
             super.onCreate(savedInstanceState);
             mActivityView = new ActivityView(this);
             setContentView(mActivityView);
+
+            ViewGroup.LayoutParams layoutParams = mActivityView.getLayoutParams();
+            layoutParams.width = DEFAULT_ACTIVITYVIEW_WIDTH;
+            layoutParams.height = DEFAULT_ACTIVITYVIEW_HEIGHT;
+            mActivityView.requestLayout();
         }
 
         ActivityView getActivityView() {
