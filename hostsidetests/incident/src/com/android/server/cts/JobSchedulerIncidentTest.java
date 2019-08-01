@@ -69,7 +69,7 @@ public class JobSchedulerIncidentTest extends ProtoDumpTestCase {
         for (JobSchedulerServiceDumpProto.PendingJob pj : dump.getPendingJobsList()) {
             testJobStatusShortInfoProto(pj.getInfo(), filterLevel);
             testJobStatusDumpProto(pj.getDump());
-            assertTrue(0 <= pj.getEnqueuedDurationMs());
+            assertTrue(0 <= pj.getPendingDurationMs());
         }
 
         for (JobSchedulerServiceDumpProto.ActiveJob aj : dump.getActiveJobsList()) {
