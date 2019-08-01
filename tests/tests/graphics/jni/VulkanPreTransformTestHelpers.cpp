@@ -35,6 +35,8 @@
     }
 #define VK_CALL(a) ASSERT(VK_SUCCESS == (a))
 
+#define TIMEOUT_30_SEC 30000000000
+
 static const float vertexData[] = {
         // L:left, T:top, R:right, B:bottom, C:center
         -1.0f, -1.0f, 0.0f, // LT
@@ -862,7 +864,7 @@ VkTestResult Renderer::drawFrame() {
     };
     VK_CALL(vkQueueSubmit(mDeviceInfo->queue(), 1, &submitInfo, mFence))
 
-    VK_CALL(vkWaitForFences(mDeviceInfo->device(), 1, &mFence, VK_TRUE, 100000000));
+    VK_CALL(vkWaitForFences(mDeviceInfo->device(), 1, &mFence, VK_TRUE, TIMEOUT_30_SEC));
 
     const VkSwapchainKHR swapchain = mSwapchainInfo->swapchain();
     const VkPresentInfoKHR presentInfo = {
