@@ -695,6 +695,7 @@ public abstract class BaseSensorTestActivity
                     logTestSkip(name, summary);
                     break;
                 case PASS:
+                    mShouldRetry = false;
                     logTestPass(name, summary);
                     break;
                 case FAIL:
