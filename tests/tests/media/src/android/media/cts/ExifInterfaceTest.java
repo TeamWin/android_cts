@@ -21,6 +21,7 @@ import android.graphics.Bitmap;
 import android.media.ExifInterface;
 import android.os.Environment;
 import android.os.FileUtils;
+import android.os.StrictMode;
 import android.platform.test.annotations.AppModeFull;
 import android.system.ErrnoException;
 import android.system.Os;
@@ -479,6 +480,16 @@ public class ExifInterfaceTest extends AndroidTestCase {
 
         // Since ExifInterface does not support for saving attributes for RAW files, do not test
         // about writing back in here.
+    }
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+
+        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+                .detectUnbufferedIo()
+                .penaltyDeath()
+                .build());
     }
 
     public void testReadExifDataFromExifByteOrderIIJpeg() throws Throwable {
