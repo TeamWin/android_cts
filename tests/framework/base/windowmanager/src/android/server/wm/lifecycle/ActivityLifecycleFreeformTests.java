@@ -243,7 +243,7 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
     public void testPreQTopProcessResumedActivityInFreeform() throws Exception {
         // Resume app switches, so the activities that we are going to launch won't be deferred
         // since Home activity was started in #setUp().
-        SystemUtil.runWithShellPermissionIdentity(ActivityManager::resumeAppSwitches);
+        resumeAppSwitches();
 
         final ActivityOptions launchOptions = ActivityOptions.makeBasic();
         launchOptions.setLaunchWindowingMode(WINDOWING_MODE_FREEFORM);

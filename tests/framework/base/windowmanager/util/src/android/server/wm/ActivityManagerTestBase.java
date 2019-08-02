@@ -448,6 +448,15 @@ public abstract class ActivityManagerTestBase {
 
     }
 
+    /**
+     * After home key is pressed ({@link #pressHomeButton} is called), the later launch may be
+     * deferred if the calling uid doesn't have android.permission.STOP_APP_SWITCHES. This method
+     * will resume the temporary stopped state, so the launch won't be affected.
+     */
+    protected void resumeAppSwitches() {
+        SystemUtil.runWithShellPermissionIdentity(ActivityManager::resumeAppSwitches);
+    }
+
     protected void moveTopActivityToPinnedStack(int stackId) {
         SystemUtil.runWithShellPermissionIdentity(
                 () -> mAtm.moveTopActivityToPinnedStack(stackId, new Rect(0, 0, 500, 500))
