@@ -73,7 +73,12 @@
                                 "state": "RESUMED"
                             }
                         ]
-                    },
+                    }
+                ],
+                "resumedActivity": "android.server.wm.cts\/android.server.wm.intent.Activities$RegularActivity"
+            },
+            {
+                "tasks": [
                     {
                         "activities": [
                             {
@@ -82,8 +87,7 @@
                             }
                         ]
                     }
-                ],
-                "resumedActivity": "android.server.wm.cts\/android.server.wm.intent.Activities$RegularActivity"
+                ]
             },
             {
                 "tasks": [
