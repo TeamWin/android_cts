@@ -56,6 +56,12 @@ VGA_WIDTH = 640
 ALL_SCENES = ['scene0', 'scene1_1', 'scene1_2', 'scene2_a', 'scene2_b',
               'scene2_c', 'scene3', 'scene4', 'scene5', 'sensor_fusion']
 
+# Scenes that are logically grouped and can be called as group
+GROUPED_SCENES = {
+        'scene1': ['scene1_1', 'scene1_2'],
+        'scene2': ['scene2_a', 'scene2_b', 'scene2_c']
+}
+
 # Scenes that can be automated through tablet display
 AUTO_SCENES = ['scene0', 'scene1_1', 'scene1_2', 'scene2_a', 'scene2_b',
                'scene2_c', 'scene3', 'scene4']
@@ -157,6 +163,20 @@ REPEATED_TESTS = {
         'scene5': [],
         'sensor_fusion': []
 }
+
+
+def expand_scene(scene, scenes):
+    """Expand a grouped scene and append its sub_scenes to scenes.
+    Args:
+        scene:      scene in GROUPED_SCENES dict
+        scenes:     list of scenes to append to
+
+    Returns:
+        updated scenes
+    """
+    print 'Expanding %s to %s.' % (scene, str(GROUPED_SCENES[scene]))
+    for sub_scene in GROUPED_SCENES[scene]:
+        scenes.append(sub_scene)
 
 
 def run_subprocess_with_timeout(cmd, fout, ferr, outdir):
@@ -315,14 +335,19 @@ def main():
         for s in scenes:
             if s in possible_scenes:
                 temp_scenes.append(s)
+            elif GROUPED_SCENES.has_key(s):
+                expand_scene(s, temp_scenes)
             else:
                 try:
                     # Try replace "X" to "sceneX"
                     scene_str = "scene" + s
-                    if scene_str not in possible_scenes:
+                    if scene_str in possible_scenes:
+                        temp_scenes.append(scene_str)
+                    elif GROUPED_SCENES.has_key(scene_str):
+                        expand_scene(scene_str, temp_scenes)
+                    else:
                         valid_scenes = False
                         break
-                    temp_scenes.append(scene_str)
                 except ValueError:
                     valid_scenes = False
                     break
@@ -330,7 +355,8 @@ def main():
         if not valid_scenes:
             print 'Unknown scene specified:', s
             assert False
-        scenes = temp_scenes
+        # assign temp_scenes back to scenes and remove duplicates
+        scenes = sorted(set(temp_scenes), key=temp_scenes.index)
 
     # Initialize test results
     results = {}
