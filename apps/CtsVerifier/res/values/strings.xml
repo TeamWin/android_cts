@@ -5106,10 +5106,10 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="bubbles_notification_test_verify_9">Click the button below and verify that a bubble
         appears on screen, auto-expanded.</string>
     <string name="bubbles_notification_test_button_9">Send auto-expanded bubble notification</string>
+    <string name="bubbles_notification_no_bubbles_low_mem">No bubbles on low memory device; no tests to run</string>
     <string name="bubbles_test_summary_title">Test Complete</string>
     <string name="bubbles_test_summary">%1$d out of %2$d tests passed</string>
     <string name="bubble_activity_title">Bubble Activity</string>
-
     <!-- Strings for Instant Apps -->
     <string name="ia_instruction_heading_label">Instructions:</string>
     <string name="ia_instruction_text_photo_label">READ BEFORE STARTING TEST</string>
