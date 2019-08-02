@@ -220,4 +220,33 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
                 "testSucceedsWithProfileOwnerIdsGrant", mUserId);
     }
 
+    @Override
+    public void testLockTask() {
+        // Managed profiles are not allowed to use lock task
+    }
+
+    @Override
+    public void testLockTaskAfterReboot() {
+        // Managed profiles are not allowed to use lock task
+    }
+
+    @Override
+    public void testLockTaskAfterReboot_tryOpeningSettings() {
+        // Managed profiles are not allowed to use lock task
+    }
+
+    @Override
+    public void testLockTask_defaultDialer() {
+        // Managed profiles are not allowed to use lock task
+    }
+
+    @Override
+    public void testLockTask_emergencyDialer() {
+        // Managed profiles are not allowed to use lock task
+    }
+
+    @Override
+    public void testLockTask_exitIfNoLongerWhitelisted() {
+        // Managed profiles are not allowed to use lock task
+    }
 }
