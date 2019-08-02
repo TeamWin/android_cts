@@ -148,8 +148,7 @@ public class ManagedProfileContactsTest extends BaseManagedProfileTest {
                     "testAddTestAccount", mProfileUserId);
 
             // Install directory provider to both primary and managed profile
-            installAppAsUser(DIRECTORY_PROVIDER_APK, mProfileUserId);
-            installAppAsUser(DIRECTORY_PROVIDER_APK, mParentUserId);
+            installAppAsUser(DIRECTORY_PROVIDER_APK, USER_ALL);
             setDirectoryPrefix(PRIMARY_DIRECTORY_PREFIX, mParentUserId);
             setDirectoryPrefix(MANAGED_DIRECTORY_PREFIX, mProfileUserId);
 
