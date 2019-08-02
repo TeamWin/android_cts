@@ -77,9 +77,10 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
 
     /**
      * Copied from {@link android.app.admin.DevicePolicyManager
-     * .InstallSystemUpdateCallback#UPDATE_ERROR_BATTERY_LOW}
+     * .InstallSystemUpdateCallback#UPDATE_ERROR_UPDATE_FILE_INVALID}
      */
-    private static final int UPDATE_ERROR_BATTERY_LOW = 5;
+    private static final int UPDATE_ERROR_UPDATE_FILE_INVALID = 3;
+
     private static final int TYPE_NONE = 0;
 
     /**
@@ -936,20 +937,19 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testInstallUpdateLogged() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !isDeviceAb()) {
             return;
         }
-        pushUpdateFileToDevice("wrongSize.zip");
+        pushUpdateFileToDevice("wrongHash.zip");
         assertMetricsLogged(getDevice(), () -> {
-                executeDeviceTestMethod(".InstallUpdateTest",
-                        "testInstallUpdate_notCharging_belowThreshold_failsBatteryCheck");
+            executeDeviceTestMethod(".InstallUpdateTest", "testInstallUpdate_failWrongHash");
         }, new DevicePolicyEventWrapper.Builder(EventId.INSTALL_SYSTEM_UPDATE_VALUE)
-               .setAdminPackageName(DEVICE_OWNER_PKG)
-               .setBoolean(isDeviceAb())
-               .build(),
-        new DevicePolicyEventWrapper.Builder(EventId.INSTALL_SYSTEM_UPDATE_ERROR_VALUE)
-               .setInt(UPDATE_ERROR_BATTERY_LOW)
-               .build());
+                    .setAdminPackageName(DEVICE_OWNER_PKG)
+                    .setBoolean(/* isDeviceAb */ true)
+                    .build(),
+            new DevicePolicyEventWrapper.Builder(EventId.INSTALL_SYSTEM_UPDATE_ERROR_VALUE)
+                    .setInt(UPDATE_ERROR_UPDATE_FILE_INVALID)
+                    .build());
     }
 
     private boolean isDeviceAb() throws DeviceNotAvailableException {
