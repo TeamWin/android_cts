@@ -164,7 +164,6 @@ public class AccessibilityEmbeddedDisplayTest {
         assertTrue(parentActivityBound.contains(buttonBound));
     }
 
-    @Presubmit
     @Test
     public void testA11yWindowNotifyWhenResizeActivityView() throws Exception {
         final AccessibilityWindowInfo oldActivityWindow =

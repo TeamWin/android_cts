@@ -300,20 +300,44 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @Override
-    @FlakyTest(bugId = 138223627)
-    public void testLockTask() throws Exception {
-        super.testLockTask();
+    public void testLockTask() {
+        // Managed profiles are not allowed to use lock task
     }
 
     @Override
-    @FlakyTest(bugId = 138223627)
-    public void testLockTaskAfterReboot() throws Exception {
-        super.testLockTaskAfterReboot();
+    public void testLockTaskAfterReboot() {
+        // Managed profiles are not allowed to use lock task
     }
 
     @Override
-    @FlakyTest(bugId = 138223627)
-    public void testLockTaskAfterReboot_tryOpeningSettings() throws Exception {
-        super.testLockTaskAfterReboot_tryOpeningSettings();
+    public void testLockTaskAfterReboot_tryOpeningSettings() {
+        // Managed profiles are not allowed to use lock task
+    }
+
+    @Override
+    public void testLockTask_defaultDialer() {
+        // Managed profiles are not allowed to use lock task
+    }
+
+    @Override
+    public void testLockTask_emergencyDialer() {
+        // Managed profiles are not allowed to use lock task
+    }
+
+    @Override
+    public void testLockTask_exitIfNoLongerWhitelisted() {
+        // Managed profiles are not allowed to use lock task
+    }
+
+    @Override
+    @FlakyTest(bugId = 138772432)
+    public void testSuspendPackage() throws Exception {
+        super.testSuspendPackage();
+    }
+
+    @Override
+    @FlakyTest(bugId = 138772432)
+    public void testSuspendPackageWithPackageManager() throws Exception {
+        super.testSuspendPackageWithPackageManager();
     }
 }

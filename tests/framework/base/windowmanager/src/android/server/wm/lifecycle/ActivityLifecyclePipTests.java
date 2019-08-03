@@ -50,7 +50,6 @@ import java.util.List;
  * Build/Install/Run:
  *     atest CtsWindowManagerDeviceTestCases:ActivityLifecyclePipTests
  */
-@FlakyTest(bugId = 77652261)
 @MediumTest
 @Presubmit
 public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
@@ -249,6 +248,7 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 127741025)
     public void testPipAboveSplitScreen() throws Exception {
         // Launch first activity
         final Activity firstActivity =

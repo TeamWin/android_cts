@@ -54,7 +54,6 @@ import android.server.wm.ActivityManagerState.ActivityTask;
 import android.server.wm.lifecycle.LifecycleLog.ActivityCallback;
 import android.util.Pair;
 
-import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 
 import org.junit.Test;
@@ -68,7 +67,6 @@ import java.util.List;
  * Build/Install/Run:
  *     atest CtsWindowManagerDeviceTestCases:ActivityLifecycleTopResumedStateTests
  */
-@FlakyTest(bugId = 117135575)
 @MediumTest
 @Presubmit
 public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClientTestBase {

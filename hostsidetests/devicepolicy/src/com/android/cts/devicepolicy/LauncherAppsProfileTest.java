@@ -56,8 +56,7 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
             startUser(mProfileUserId);
 
             // Install test APK on primary user and the managed profile.
-            installTestApps(mPrimaryUserId);
-            installTestApps(mProfileUserId);
+            installTestApps(USER_ALL);
         }
     }
 

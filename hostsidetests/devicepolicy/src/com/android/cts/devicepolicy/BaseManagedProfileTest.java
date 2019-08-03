@@ -54,8 +54,10 @@ public abstract class BaseManagedProfileTest extends BaseDevicePolicyTest {
             mProfileUserId = createManagedProfile(mParentUserId);
             startUser(mProfileUserId);
 
-            installAppAsUser(MANAGED_PROFILE_APK, mParentUserId);
-            installAppAsUser(MANAGED_PROFILE_APK, mProfileUserId);
+            // Install the APK on both primary and profile user in one single transaction.
+            // If they were installed separately, the second installation would become an app
+            // update and result in the current running test process being killed.
+            installAppAsUser(MANAGED_PROFILE_APK, USER_ALL);
             setProfileOwnerOrFail(MANAGED_PROFILE_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
                     mProfileUserId);
             waitForUserUnlock();

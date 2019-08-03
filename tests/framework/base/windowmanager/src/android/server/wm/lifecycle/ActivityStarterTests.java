@@ -38,6 +38,9 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
+
+import androidx.test.filters.FlakyTest;
+
 import android.server.wm.ActivityLauncher;
 
 import org.junit.Test;
@@ -207,6 +210,7 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
      * - Instance of single task activity is only one in its task.
      */
     @Test
+    @FlakyTest(bugId = 127741025)
     public void testLaunchSingleTaskActivity() {
         // Launch a standard activity.
         launchActivity(STANDARD_ACTIVITY);

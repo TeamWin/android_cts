@@ -49,20 +49,30 @@ SKIP_RET_CODE = 101  # note this must be same as tests/scene*/test_*
 VGA_HEIGHT = 480
 VGA_WIDTH = 640
 
-ALL_SCENES = ['scene0', 'scene1a', 'scene1b', 'scene2', 'scene2b',
-              'scene2c', 'scene3', 'scene4', 'scene5', 'sensor_fusion']
+# All possible scenes
+# Notes on scene names:
+#   scene*_1/2/... are same scene split to load balance run times for scenes
+#   scene*_a/b/... are similar scenes that share one or more tests
+ALL_SCENES = ['scene0', 'scene1_1', 'scene1_2', 'scene2_a', 'scene2_b',
+              'scene2_c', 'scene3', 'scene4', 'scene5', 'sensor_fusion']
+
+# Scenes that are logically grouped and can be called as group
+GROUPED_SCENES = {
+        'scene1': ['scene1_1', 'scene1_2'],
+        'scene2': ['scene2_a', 'scene2_b', 'scene2_c']
+}
 
 # Scenes that can be automated through tablet display
-AUTO_SCENES = ['scene0', 'scene1a', 'scene1b', 'scene2', 'scene2b',
-               'scene2c', 'scene3', 'scene4']
+AUTO_SCENES = ['scene0', 'scene1_1', 'scene1_2', 'scene2_a', 'scene2_b',
+               'scene2_c', 'scene3', 'scene4']
 
 SCENE_REQ = {
         'scene0': None,
-        'scene1a': 'A grey card covering at least the middle 30% of the scene',
-        'scene1b': 'A grey card covering at least the middle 30% of the scene',
-        'scene2': 'A picture containing 3 human faces',
-        'scene2b': 'A picture containing 3 human faces',
-        'scene2c': 'A picture containing 3 human faces',
+        'scene1_1': 'A grey card covering at least the middle 30% of the scene',
+        'scene1_2': 'A grey card covering at least the middle 30% of the scene',
+        'scene2_a': 'The picture in tests/scene2_a.pdf with 3 faces',
+        'scene2_b': 'The picture in tests/scene2_b.pdf with 3 faces',
+        'scene2_c': 'The picture in tests/scene2_c.pdf with 3 faces',
         'scene3': 'The ISO 12233 chart',
         'scene4': 'A specific test page of a circle covering at least the '
                   'middle 50% of the scene. See CameraITS.pdf section 2.3.4 '
@@ -85,16 +95,16 @@ NOT_YET_MANDATED = {
                 'test_test_patterns',
                 'test_tonemap_curve'
         ],
-        'scene1a': [
+        'scene1_1': [
                 'test_ae_precapture_trigger',
                 'test_channel_saturation'
         ],
-        'scene1b': [],
-        'scene2': [
+        'scene1_2': [],
+        'scene2_a': [
                 'test_auto_per_frame_control'
         ],
-        'scene2b': [],
-        'scene2c': [],
+        'scene2_b': [],
+        'scene2_c': [],
         'scene3': [],
         'scene4': [],
         'scene5': [],
@@ -109,21 +119,21 @@ HIDDEN_PHYSICAL_CAMERA_TESTS = {
                 'test_read_write',
                 'test_sensor_events'
         ],
-        'scene1a': [
+        'scene1_1': [
                 'test_exposure',
                 'test_dng_noise_model',
                 'test_linearity',
         ],
-        'scene1b': [
+        'scene1_2': [
                 'test_raw_exposure',
                 'test_raw_sensitivity'
         ],
-        'scene2': [
+        'scene2_a': [
                 'test_faces',
                 'test_num_faces'
         ],
-        'scene2b': [],
-        'scene2c': [],
+        'scene2_b': [],
+        'scene2_c': [],
         'scene3': [],
         'scene4': [
                 'test_aspect_ratio_and_crop'
@@ -133,6 +143,40 @@ HIDDEN_PHYSICAL_CAMERA_TESTS = {
                 'test_sensor_fusion'
         ]
 }
+
+# Tests run in more than 1 scene.
+# List is created of type ['scene_source', 'test_to_be_repeated']
+# for the test run in current scene.
+REPEATED_TESTS = {
+        'scene0': [],
+        'scene1_1': [],
+        'scene1_2': [],
+        'scene2_a': [],
+        'scene2_b': [
+                ['scene2_a', 'test_num_faces']
+        ],
+        'scene2_c': [
+                ['scene2_a', 'test_num_faces']
+        ],
+        'scene3': [],
+        'scene4': [],
+        'scene5': [],
+        'sensor_fusion': []
+}
+
+
+def expand_scene(scene, scenes):
+    """Expand a grouped scene and append its sub_scenes to scenes.
+    Args:
+        scene:      scene in GROUPED_SCENES dict
+        scenes:     list of scenes to append to
+
+    Returns:
+        updated scenes
+    """
+    print 'Expanding %s to %s.' % (scene, str(GROUPED_SCENES[scene]))
+    for sub_scene in GROUPED_SCENES[scene]:
+        scenes.append(sub_scene)
 
 
 def run_subprocess_with_timeout(cmd, fout, ferr, outdir):
@@ -223,8 +267,8 @@ def main():
                  camera Ids. Ex: "camera=0,1" or "camera=1"
         device:  device id for adb
         scenes:  the test scene(s) to be executed. Use comma to separate
-                 multiple scenes. Ex: "scenes=scene0,scene1a" or
-                 "scenes=0,1a,sensor_fusion" (sceneX can be abbreviated by X
+                 multiple scenes. Ex: "scenes=scene0,scene1_1" or
+                 "scenes=0,1_1,sensor_fusion" (sceneX can be abbreviated by X
                  where X is scene name minus 'scene')
         chart:   another android device served as test chart display.
                  When this argument presents, change of test scene
@@ -291,14 +335,19 @@ def main():
         for s in scenes:
             if s in possible_scenes:
                 temp_scenes.append(s)
+            elif GROUPED_SCENES.has_key(s):
+                expand_scene(s, temp_scenes)
             else:
                 try:
                     # Try replace "X" to "sceneX"
                     scene_str = "scene" + s
-                    if scene_str not in possible_scenes:
+                    if scene_str in possible_scenes:
+                        temp_scenes.append(scene_str)
+                    elif GROUPED_SCENES.has_key(scene_str):
+                        expand_scene(scene_str, temp_scenes)
+                    else:
                         valid_scenes = False
                         break
-                    temp_scenes.append(scene_str)
                 except ValueError:
                     valid_scenes = False
                     break
@@ -306,7 +355,8 @@ def main():
         if not valid_scenes:
             print 'Unknown scene specified:', s
             assert False
-        scenes = temp_scenes
+        # assign temp_scenes back to scenes and remove duplicates
+        scenes = sorted(set(temp_scenes), key=temp_scenes.index)
 
     # Initialize test results
     results = {}
@@ -405,7 +455,7 @@ def main():
 
     for id_combo in camera_id_combos:
         camera_fov = calc_camera_fov(id_combo.id, id_combo.sub_id)
-        id_combo_string = id_combo.id;
+        id_combo_string = id_combo.id
         has_hidden_sub_camera = id_combo.sub_id is not None
         if has_hidden_sub_camera:
             id_combo_string += ":" + id_combo.sub_id
@@ -422,9 +472,12 @@ def main():
         tot_pass = 0
         for scene in scenes:
             skip_code = None
-            tests = [(s[:-3], os.path.join("tests", scene, s))
-                     for s in os.listdir(os.path.join("tests", scene))
-                     if s[-3:] == ".py" and s[:4] == "test"]
+            tests = [(s[:-3], os.path.join('tests', scene, s))
+                     for s in os.listdir(os.path.join('tests', scene))
+                     if s[-3:] == '.py' and s[:4] == 'test']
+            if REPEATED_TESTS[scene]:
+                for t in REPEATED_TESTS[scene]:
+                    tests.append((t[1], os.path.join('tests', t[0], t[1]+'.py')))
             tests.sort()
             tot_tests.extend(tests)
 

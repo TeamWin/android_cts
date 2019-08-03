@@ -84,8 +84,11 @@ public class ItsTestActivity extends DialogTestListActivity {
     // Scenes
     private static final ArrayList<String> mSceneIds = new ArrayList<String> () { {
             add("scene0");
-            add("scene1");
-            add("scene2");
+            add("scene1_1");
+            add("scene1_2");
+            add("scene2_a");
+            add("scene2_b");
+            add("scene2_c");
             add("scene3");
             add("scene4");
             add("scene5");
@@ -95,8 +98,9 @@ public class ItsTestActivity extends DialogTestListActivity {
     private static final ArrayList<String> mHiddenPhysicalCameraSceneIds =
             new ArrayList<String> () { {
                     add("scene0");
-                    add("scene1");
-                    add("scene2");
+                    add("scene1_1");
+                    add("scene1_2");
+                    add("scene2_a");
                     add("scene4");
                     add("sensor_fusion");
              }};
