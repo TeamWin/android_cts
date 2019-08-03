@@ -62,7 +62,7 @@ import java.util.concurrent.TimeUnit;
 @Presubmit
 public class MultiDisplayClientTests extends MultiDisplayTestBase {
 
-    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5); // 5 seconds
+    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(10); // 10 seconds
     private static final String EXTRA_SHOW_IME = "show_ime";
 
     @Before
