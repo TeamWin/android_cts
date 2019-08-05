@@ -24,6 +24,7 @@ import android.test.AndroidTestCase;
 import junit.framework.TestCase;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.util.Log;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -46,6 +47,12 @@ public class EncryptionTest extends AndroidTestCase {
     private static native boolean aesIsFast();
 
     private boolean isRequired() {
+        PackageManager pm = this.getContext().getPackageManager();
+        if (pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            Log.i(TAG, "Device encryption is not needed for automotive device type");
+            return false;
+        }
+
         // Optional before MIN_API_LEVEL
         return PropertyUtil.getFirstApiLevel() >= MIN_API_LEVEL;
     }
