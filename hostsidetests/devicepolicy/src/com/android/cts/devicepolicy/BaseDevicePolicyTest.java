@@ -108,6 +108,12 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
      */
     private static final int STAY_ON_WHILE_PLUGGED_IN_FLAGS = 7;
 
+    /**
+     * User ID for all users.
+     * The value is from the UserHandle class.
+     */
+    protected static final int USER_ALL = -1;
+
     protected static interface Settings {
         public static final String GLOBAL_NAMESPACE = "global";
         public static interface Global {
