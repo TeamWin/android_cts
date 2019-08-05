@@ -20,6 +20,7 @@ import android.os.SystemProperties;
 import android.platform.test.annotations.RestrictedBuildTest;
 
 import static android.keystore.cts.Attestation.KM_SECURITY_LEVEL_SOFTWARE;
+import static android.keystore.cts.Attestation.KM_SECURITY_LEVEL_STRONG_BOX;
 import static android.keystore.cts.Attestation.KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT;
 import static android.keystore.cts.AuthorizationList.KM_ALGORITHM_EC;
 import static android.keystore.cts.AuthorizationList.KM_ALGORITHM_RSA;
@@ -48,6 +49,7 @@ import static android.security.keystore.KeyProperties.PURPOSE_VERIFY;
 import static android.security.keystore.KeyProperties.SIGNATURE_PADDING_RSA_PKCS1;
 import static android.security.keystore.KeyProperties.SIGNATURE_PADDING_RSA_PSS;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.junit.Assert.assertThat;
 import static org.junit.matchers.JUnitMatchers.either;
 import static org.junit.matchers.JUnitMatchers.hasItems;
@@ -141,7 +143,6 @@ public class KeyAttestationTest extends AndroidTestCase {
         assertEquals(0, parseSystemOsVersion("99.99.100"));
     }
 
-    @RestrictedBuildTest
     public void testEcAttestation() throws Exception {
         // Note: Curve and key sizes arrays must correspond.
         String[] curves = {
@@ -220,6 +221,41 @@ public class KeyAttestationTest extends AndroidTestCase {
         }
     }
 
+    @RestrictedBuildTest
+    public void testEcAttestation_DeviceLocked() throws Exception {
+        String keystoreAlias = "test_key";
+        Date now = new Date();
+        Date originationEnd = new Date(now.getTime() + ORIGINATION_TIME_OFFSET);
+        Date consumptionEnd = new Date(now.getTime() + CONSUMPTION_TIME_OFFSET);
+        KeyGenParameterSpec.Builder builder =
+            new KeyGenParameterSpec.Builder(keystoreAlias, PURPOSE_SIGN)
+                    .setAlgorithmParameterSpec(new ECGenParameterSpec("secp256r1"))
+                    .setDigests(DIGEST_NONE, DIGEST_SHA256, DIGEST_SHA512)
+                    .setAttestationChallenge(new byte[128])
+                    .setKeyValidityStart(now)
+                    .setKeyValidityForOriginationEnd(originationEnd)
+                    .setKeyValidityForConsumptionEnd(consumptionEnd);
+
+        if (TestUtils.hasStrongBox(getContext())) {
+            builder.setIsStrongBoxBacked(true);
+        }
+
+        generateKeyPair(KEY_ALGORITHM_EC, builder.build());
+
+        KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+        keyStore.load(null);
+
+        try {
+            Certificate certificates[] = keyStore.getCertificateChain(keystoreAlias);
+            verifyCertificateChain(certificates);
+
+            X509Certificate attestationCert = (X509Certificate) certificates[0];
+            checkDeviceLocked(new Attestation(attestationCert));
+        } finally {
+            keyStore.deleteEntry(keystoreAlias);
+        }
+    }
+
     public void testEcAttestation_KeyStoreExceptionWhenRequestingUniqueId() throws Exception {
         String keystoreAlias = "test_key";
         KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(keystoreAlias, PURPOSE_SIGN)
@@ -243,7 +279,6 @@ public class KeyAttestationTest extends AndroidTestCase {
         }
     }
 
-    @RestrictedBuildTest
     public void testRsaAttestation() throws Exception {
         int[] keySizes = { // Smallish sizes to keep test runtimes down.
                 512, 768, 1024
@@ -333,6 +368,40 @@ public class KeyAttestationTest extends AndroidTestCase {
 
             X509Certificate attestationCert = (X509Certificate) certificates[0];
             assertNull(attestationCert.getExtensionValue(Attestation.KEY_DESCRIPTION_OID));
+        } finally {
+            keyStore.deleteEntry(keystoreAlias);
+        }
+    }
+
+    @RestrictedBuildTest
+    public void testRsaAttestation_DeviceLocked() throws Exception {
+        String keystoreAlias = "test_key";
+        Date now = new Date();
+        Date originationEnd = new Date(now.getTime() + ORIGINATION_TIME_OFFSET);
+        Date consumptionEnd = new Date(now.getTime() + CONSUMPTION_TIME_OFFSET);
+        KeyGenParameterSpec.Builder builder =
+            new KeyGenParameterSpec.Builder(keystoreAlias, PURPOSE_SIGN)
+                    .setDigests(DIGEST_NONE, DIGEST_SHA256, DIGEST_SHA512)
+                    .setAttestationChallenge("challenge".getBytes())
+                    .setKeyValidityStart(now)
+                    .setKeyValidityForOriginationEnd(originationEnd)
+                    .setKeyValidityForConsumptionEnd(consumptionEnd);
+
+        if (TestUtils.hasStrongBox(getContext())) {
+            builder.setIsStrongBoxBacked(true);
+        }
+
+        generateKeyPair(KEY_ALGORITHM_RSA, builder.build());
+
+        KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+        keyStore.load(null);
+
+        try {
+            Certificate certificates[] = keyStore.getCertificateChain(keystoreAlias);
+            verifyCertificateChain(certificates);
+
+            X509Certificate attestationCert = (X509Certificate) certificates[0];
+            checkDeviceLocked(new Attestation(attestationCert));
         } finally {
             keyStore.deleteEntry(keystoreAlias);
         }
@@ -740,7 +809,7 @@ public class KeyAttestationTest extends AndroidTestCase {
                         is(KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT));
                 assertThat(attestation.getKeymasterVersion(), either(is(2)).or(is(3)).or(is(4)));
 
-                checkRootOfTrust(attestation);
+                checkRootOfTrust(attestation, false /* requireLocked */);
                 assertThat(teeEnforced.getOsVersion(), is(systemOsVersion));
                 assertThat(teeEnforced.getOsPatchLevel(), is(systemPatchLevel));
                 break;
@@ -772,13 +841,40 @@ public class KeyAttestationTest extends AndroidTestCase {
                 softwareEnforced.getRootOfTrust());
     }
 
-    private void checkRootOfTrust(Attestation attestation) {
+    private void checkDeviceLocked(Attestation attestation) {
+        assertThat("Attestation version must be >= 1",
+                attestation.getAttestationVersion(), greaterThanOrEqualTo(1));
+
+        int attestationSecurityLevel = attestation.getAttestationSecurityLevel();
+        switch (attestationSecurityLevel) {
+            case KM_SECURITY_LEVEL_STRONG_BOX:
+            case KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT:
+                assertThat("Attestation security level doesn't match keymaster security level",
+                        attestation.getKeymasterSecurityLevel(), is(attestationSecurityLevel));
+                assertThat(attestation.getKeymasterVersion(), greaterThanOrEqualTo(2));
+
+                // Devices launched in Android 10.0 (API level 29) and after should run CTS
+                // in LOCKED state.
+                boolean requireLocked = (
+                        SystemProperties.getInt("ro.product.first_api_level", 0) >= 29);
+                checkRootOfTrust(attestation, requireLocked);
+                break;
+
+            case KM_SECURITY_LEVEL_SOFTWARE:
+            default:
+                // TEE attestation has been required since Android 7.0.
+                fail("Unexpected attestation security level: " +
+                     attestation.securityLevelToString(attestationSecurityLevel));
+                break;
+        }
+    }
+
+    private void checkRootOfTrust(Attestation attestation, boolean requireLocked) {
         RootOfTrust rootOfTrust = attestation.getTeeEnforced().getRootOfTrust();
         assertNotNull(rootOfTrust);
         assertNotNull(rootOfTrust.getVerifiedBootKey());
         assertTrue(rootOfTrust.getVerifiedBootKey().length >= 32);
-        if (SystemProperties.getInt("ro.product.first_api_level", 0) >= 29) {
-            // Devices launched in Q and after should run CTS in LOCKED state.
+        if (requireLocked) {
             assertTrue(rootOfTrust.isDeviceLocked());
             assertEquals(KM_VERIFIED_BOOT_VERIFIED, rootOfTrust.getVerifiedBootState());
         }
