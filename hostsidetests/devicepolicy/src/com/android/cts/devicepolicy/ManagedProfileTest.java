@@ -118,8 +118,10 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             mProfileUserId = createManagedProfile(mParentUserId);
             startUser(mProfileUserId);
 
-            installAppAsUser(MANAGED_PROFILE_APK, mParentUserId);
-            installAppAsUser(MANAGED_PROFILE_APK, mProfileUserId);
+            // Install the APK on both primary and profile user in one single transaction.
+            // If they were installed separately, the second installation would become an app
+            // update and result in the current running test process being killed.
+            installAppAsUser(MANAGED_PROFILE_APK, USER_ALL);
             setProfileOwnerOrFail(MANAGED_PROFILE_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
                     mProfileUserId);
             waitForUserUnlock();
@@ -488,10 +490,8 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         // intents resolution.
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
                 "testDisableAllBrowsers", mProfileUserId);
-        installAppAsUser(INTENT_RECEIVER_APK, mParentUserId);
-        installAppAsUser(INTENT_SENDER_APK, mParentUserId);
-        installAppAsUser(INTENT_RECEIVER_APK, mProfileUserId);
-        installAppAsUser(INTENT_SENDER_APK, mProfileUserId);
+        installAppAsUser(INTENT_RECEIVER_APK, USER_ALL);
+        installAppAsUser(INTENT_SENDER_APK, USER_ALL);
 
         changeVerificationStatus(mParentUserId, INTENT_RECEIVER_PKG, "ask");
         changeVerificationStatus(mProfileUserId, INTENT_RECEIVER_PKG, "ask");
@@ -526,10 +526,8 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         // intents resolution.
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
                 "testDisableAllBrowsers", mProfileUserId);
-        installAppAsUser(INTENT_RECEIVER_APK, mParentUserId);
-        installAppAsUser(INTENT_SENDER_APK, mParentUserId);
-        installAppAsUser(INTENT_RECEIVER_APK, mProfileUserId);
-        installAppAsUser(INTENT_SENDER_APK, mProfileUserId);
+        installAppAsUser(INTENT_RECEIVER_APK, USER_ALL);
+        installAppAsUser(INTENT_SENDER_APK, USER_ALL);
 
         final String APP_HANDLER_COMPONENT = "com.android.cts.intent.receiver/.AppLinkActivity";
 
@@ -589,10 +587,8 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
 
         // Storage permission shouldn't be granted, we check if missing permissions are respected
         // in ContentTest#testSecurity.
-        installAppAsUser(INTENT_SENDER_APK, false /* grantPermissions */, mParentUserId);
-        installAppAsUser(INTENT_SENDER_APK, false /* grantPermissions */, mProfileUserId);
-        installAppAsUser(INTENT_RECEIVER_APK, mParentUserId);
-        installAppAsUser(INTENT_RECEIVER_APK, mProfileUserId);
+        installAppAsUser(INTENT_SENDER_APK, false /* grantPermissions */, USER_ALL);
+        installAppAsUser(INTENT_RECEIVER_APK, USER_ALL);
 
         // Test from parent to managed
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
@@ -615,8 +611,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             return;
         }
 
-        installAppAsUser(NOTIFICATION_APK, mProfileUserId);
-        installAppAsUser(NOTIFICATION_APK, mParentUserId);
+        installAppAsUser(NOTIFICATION_APK, USER_ALL);
 
         // Profile owner in the profile sets an empty whitelist
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".NotificationListenerTest",
@@ -633,8 +628,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             return;
         }
 
-        installAppAsUser(NOTIFICATION_APK, mProfileUserId);
-        installAppAsUser(NOTIFICATION_APK, mParentUserId);
+        installAppAsUser(NOTIFICATION_APK, USER_ALL);
 
         // Profile owner in the profile sets a null whitelist
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".NotificationListenerTest",
@@ -651,8 +645,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             return;
         }
 
-        installAppAsUser(NOTIFICATION_APK, mProfileUserId);
-        installAppAsUser(NOTIFICATION_APK, mParentUserId);
+        installAppAsUser(NOTIFICATION_APK, USER_ALL);
 
         // Profile owner in the profile adds listener to the whitelist
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".NotificationListenerTest",
@@ -668,8 +661,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        installAppAsUser(NOTIFICATION_APK, mProfileUserId);
-        installAppAsUser(NOTIFICATION_APK, mParentUserId);
+        installAppAsUser(NOTIFICATION_APK, USER_ALL);
 
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".NotificationListenerTest",
                 "testSetAndGetPermittedCrossProfileNotificationListeners", mProfileUserId,
@@ -680,10 +672,8 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        installAppAsUser(INTENT_RECEIVER_APK, mParentUserId);
-        installAppAsUser(INTENT_SENDER_APK, mParentUserId);
-        installAppAsUser(INTENT_RECEIVER_APK, mProfileUserId);
-        installAppAsUser(INTENT_SENDER_APK, mProfileUserId);
+        installAppAsUser(INTENT_RECEIVER_APK, USER_ALL);
+        installAppAsUser(INTENT_SENDER_APK, USER_ALL);
 
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
                 "testAllowCrossProfileCopyPaste", mProfileUserId);
@@ -1001,8 +991,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         }
 
         try {
-            installAppAsUser(WIDGET_PROVIDER_APK, mProfileUserId);
-            installAppAsUser(WIDGET_PROVIDER_APK, mParentUserId);
+            installAppAsUser(WIDGET_PROVIDER_APK, USER_ALL);
             getDevice().executeShellCommand("appwidget grantbind --user " + mParentUserId
                     + " --package " + WIDGET_PROVIDER_PKG);
             setIdleWhitelist(WIDGET_PROVIDER_PKG, true);
@@ -1048,8 +1037,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         }
 
         try {
-            installAppAsUser(WIDGET_PROVIDER_APK, mProfileUserId);
-            installAppAsUser(WIDGET_PROVIDER_APK, mParentUserId);
+            installAppAsUser(WIDGET_PROVIDER_APK, USER_ALL);
             getDevice().executeShellCommand("appwidget grantbind --user " + mParentUserId
                     + " --package " + WIDGET_PROVIDER_PKG);
             setIdleWhitelist(WIDGET_PROVIDER_PKG, true);
@@ -1738,8 +1726,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                     "testAddTestAccount", mProfileUserId);
 
             // Install directory provider to both primary and managed profile
-            installAppAsUser(DIRECTORY_PROVIDER_APK, mProfileUserId);
-            installAppAsUser(DIRECTORY_PROVIDER_APK, mParentUserId);
+            installAppAsUser(DIRECTORY_PROVIDER_APK, USER_ALL);
             setDirectoryPrefix(PRIMARY_DIRECTORY_PREFIX, mParentUserId);
             setDirectoryPrefix(MANAGED_DIRECTORY_PREFIX, mProfileUserId);
 
