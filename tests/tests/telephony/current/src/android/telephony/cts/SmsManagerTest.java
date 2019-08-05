@@ -169,6 +169,9 @@ public class SmsManagerTest {
 
     @Test
     public void testDivideMessage() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
         ArrayList<String> dividedMessages = divideMessage(LONG_TEXT);
         assertNotNull(dividedMessages);
         if (TelephonyUtils.isSkt(mTelephonyManager)) {
@@ -184,6 +187,9 @@ public class SmsManagerTest {
 
     @Test
     public void testDivideUnicodeMessage() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
         ArrayList<String> dividedMessages = divideMessage(LONG_TEXT_WITH_32BIT_CHARS);
         assertNotNull(dividedMessages);
         assertTrue(isComplete(dividedMessages, 3, LONG_TEXT_WITH_32BIT_CHARS));
@@ -437,6 +443,9 @@ public class SmsManagerTest {
 
     @Test
     public void testContentProviderAccessRestriction() throws Exception {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
         Uri dummySmsUri = null;
         Context context = getInstrumentation().getContext();
         ContentResolver contentResolver = context.getContentResolver();
