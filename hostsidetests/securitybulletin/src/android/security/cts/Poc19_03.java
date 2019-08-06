@@ -31,4 +31,12 @@ public class Poc19_03 extends SecurityTestCase {
     public void testPocBug_115739809() throws Exception {
         assertFalse(AdbUtils.runPocCheckExitCode("Bug-115739809", getDevice(), 30));
     }
+
+    /**
+     * b/116855682
+     */
+    @SecurityTest(minPatchLevel = "2019-03")
+    public void testPocCVE_2019_2025() throws Exception {
+        AdbUtils.runPocNoOutput("CVE-2019-2025", getDevice(), 300);
+    }
 }
