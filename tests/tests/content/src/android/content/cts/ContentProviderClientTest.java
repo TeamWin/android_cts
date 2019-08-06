@@ -308,6 +308,13 @@ public class ContentProviderClientTest extends AndroidTestCase {
                 mICancellationSignal);
     }
 
+    public void testOpenTypedAssetFileDescriptor() throws RemoteException, FileNotFoundException {
+        mContentProviderClient.openTypedAssetFileDescriptor(URI, MODE, ARGS, mCancellationSignal);
+
+        verify(mIContentProvider).openTypedAssetFile(PACKAGE_NAME, URI, MODE, ARGS,
+                mICancellationSignal);
+    }
+
     public void testOpenTypedAssetFile() throws RemoteException, FileNotFoundException {
         mContentProviderClient.openTypedAssetFile(URI, MODE, ARGS, mCancellationSignal);
 
