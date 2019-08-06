@@ -92,6 +92,13 @@ public class TestMediaCodec extends SecurityTestCase {
     below this comment, before any existing test methods
     ***********************************************************/
 
+    @SecurityTest(minPatchLevel = "2018-08")
+    public void testPocCVE_2018_9444() throws Exception {
+        String inputFiles[] = {"cve_2018_9444.h264"};
+        runAvcDecodeTest(inputFiles,
+                "--input " + TMP_FILE_PATH + "cve_2018_9444.h264 --num_frames -1",
+                getDevice(), null);
+    }
 
     /***********************************************************
     To prevent merge conflicts, add MPEG2 decoder tests for N
