@@ -54,8 +54,6 @@ android_test {
         "vts",
         "general-tests",
     ],
-    // NOTE: virtualdeviceknownfailures.txt is only used for simulated/cloud-based
-    // continuous build configurations, so it's not referenced in AndroidTest.xml
     java_resources: [
         ":libcore-expectations-knownfailures",
         ":libcore-expectations-virtualdeviceknownfailures",

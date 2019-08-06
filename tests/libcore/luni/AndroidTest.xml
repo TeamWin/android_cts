@@ -33,6 +33,7 @@
         <option name="instrumentation-arg" key="filter"
                 value="com.android.cts.core.runner.ExpectationBasedFilter" />
         <option name="core-expectation" value="/knownfailures.txt" />
+        <option name="virtual-device-core-expectation" value="/virtualdeviceknownfailures.txt" />
         <option name="runtime-hint" value="45m"/>
         <!-- 20x default timeout of 600sec -->
         <option name="shell-timeout" value="12000000"/>
