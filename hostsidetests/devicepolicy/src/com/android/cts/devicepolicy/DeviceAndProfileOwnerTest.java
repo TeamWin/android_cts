@@ -869,6 +869,11 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
 
+        if (!hasService("wallpaper")) {
+            CLog.d("testSetWallpaper_disallowed(): device does not support wallpapers");
+            return;
+        }
+
         installAppAsUser(CUSTOMIZATION_APP_APK, mUserId);
         try {
             changeUserRestrictionOrFail(DISALLOW_SET_WALLPAPER, true, mUserId);
@@ -883,6 +888,10 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     // inside. But these restrictions must have no effect on the device/profile owner behavior.
     public void testDisallowSetWallpaper_allowed() throws Exception {
         if (!mHasFeature) {
+            return;
+        }
+        if (!hasService("wallpaper")) {
+            CLog.d("testDisallowSetWallpaper_allowed(): device does not support wallpapers");
             return;
         }
         executeDeviceTestMethod(".CustomizationRestrictionsTest",

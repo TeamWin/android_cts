@@ -16,6 +16,7 @@
 
 package android.app.cts;
 
+import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.nullable;
@@ -72,6 +73,7 @@ public class WallpaperManagerTest {
         MockitoAnnotations.initMocks(this);
         mContext = InstrumentationRegistry.getTargetContext();
         mWallpaperManager = WallpaperManager.getInstance(mContext);
+        assumeTrue("Device does not support wallpapers", mWallpaperManager.isWallpaperSupported());
         final HandlerThread handlerThread = new HandlerThread("TestCallbacks");
         handlerThread.start();
         mHandler = new Handler(handlerThread.getLooper());
