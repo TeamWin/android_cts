@@ -200,6 +200,11 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
         context.getPackageManager().setComponentEnabledSetting(
                 new ComponentName(context, ByodPrimaryHelperActivity.class.getName()),
                 PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
+
+        // Disable the work profile instance of ByodFlowTestActivity
+        context.getPackageManager().setComponentEnabledSetting(
+                new ComponentName(context, ByodFlowTestActivity.class),
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
     }
 
     private void wipeIfNecessary(Context context, Intent intent) {
