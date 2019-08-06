@@ -2982,16 +2982,14 @@ public class ParcelTest extends AndroidTestCase {
         for (int pos = 0; pos <= thirdIntPos; pos++) {
             p.setDataPosition(pos);
             int value = p.readInt();
-            if (pos == firstIntPos) {
-                assertEquals(1, value);
-            } else if (pos == secondIntPos) {
-                assertEquals(2, value);
-            } else if (pos == thirdIntPos) {
-                assertEquals(3, value);
-            } else {
-                // All other read attempts cross into protected data and will return 0
-                assertEquals(0, value);
-            }
+
+            // WARNING: this is using unstable APIs: these positions aren't guaranteed
+            if (firstIntPos - 4 <= pos && pos <= firstIntPos) continue;
+            if (secondIntPos - 4 <= pos && pos <= secondIntPos) continue;
+            if (thirdIntPos - 4 <= pos && pos <= thirdIntPos) continue;
+
+            // All other read attempts cross into protected data and will return 0
+            assertEquals(0, value);
         }
 
         p.recycle();
@@ -3017,16 +3015,13 @@ public class ParcelTest extends AndroidTestCase {
         do {
             pos = p.dataPosition();
             int value = p.readInt();
-            if (pos == firstIntPos) {
-                assertEquals(1, value);
-            } else if (pos == secondIntPos) {
-                assertEquals(2, value);
-            } else if (pos == thirdIntPos) {
-                assertEquals(3, value);
-            } else {
-                // All other read attempts cross into protected data and will return 0
-                assertEquals(0, value);
-            }
+
+            // WARNING: this is using unstable APIs: these positions aren't guaranteed
+            if (firstIntPos - 4 <= pos && pos <= firstIntPos) continue;
+            if (secondIntPos - 4 <= pos && pos <= secondIntPos) continue;
+            if (thirdIntPos - 4 <= pos && pos <= thirdIntPos) continue;
+
+            assertEquals(0, value);
         } while(pos < end);
 
         p.recycle();
