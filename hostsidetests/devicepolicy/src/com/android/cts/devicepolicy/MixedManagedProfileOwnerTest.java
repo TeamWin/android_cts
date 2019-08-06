@@ -334,16 +334,4 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     public void testLockTask_exitIfNoLongerWhitelisted() throws Exception {
         super.testLockTask_exitIfNoLongerWhitelisted();
     }
-
-    @Override
-    @FlakyTest(bugId = 138772432)
-    public void testSuspendPackage() throws Exception {
-        super.testSuspendPackage();
-    }
-
-    @Override
-    @FlakyTest(bugId = 138772432)
-    public void testSuspendPackageWithPackageManager() throws Exception {
-        super.testSuspendPackageWithPackageManager();
-    }
 }
