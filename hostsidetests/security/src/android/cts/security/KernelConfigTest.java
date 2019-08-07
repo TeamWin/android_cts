@@ -215,6 +215,12 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
 
     private Map<String, String[]> hardwareMitigations = new HashMap<String, String[]>() {
     {
+        put("EXYNOS3830", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("EXYNOS7872", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("EXYNOS7885", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("EXYNOS9610", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("EXYNOS9630", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("EXYNOS9830", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("Kirin980", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("Kirin970", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("Kirin810", null);
