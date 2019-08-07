@@ -168,7 +168,8 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
         }
         installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
         startCallbackService(mPrimaryUserId);
-        installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
+        installAppAsUser(SIMPLE_APP_APK, /* grantPermissions */ true, /* dontKillApp */ true,
+                mProfileUserId);
         runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
                 LAUNCHER_TESTS_CLASS,
                 "testPackageChangedCallbackForUser",
