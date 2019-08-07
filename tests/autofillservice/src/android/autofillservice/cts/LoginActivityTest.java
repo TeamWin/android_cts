@@ -2080,7 +2080,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Explicitly uses the contextual menu to test that functionality.
-        mUiBot.getAutofillMenuOption(ID_USERNAME, false).click();
+        mUiBot.getAutofillMenuOption(ID_USERNAME).click();
 
         final FillRequest fillRequest = sReplier.getNextFillRequest();
         assertHasFlags(fillRequest.flags, FLAG_MANUAL_REQUEST);
@@ -2114,7 +2114,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Explicitly uses the contextual menu to test that functionality.
-        mUiBot.getAutofillMenuOption(ID_USERNAME, true).click();
+        mUiBot.getAutofillMenuOption(ID_USERNAME).click();
 
         final FillRequest fillRequest = sReplier.getNextFillRequest();
         assertHasFlags(fillRequest.flags, FLAG_MANUAL_REQUEST);
