@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -223,10 +224,20 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
 
     protected void installAppAsUser(String appFileName, boolean grantPermissions, int userId)
             throws FileNotFoundException, DeviceNotAvailableException {
+        installAppAsUser(appFileName, grantPermissions, /* dontKillApp */ false, userId);
+    }
+
+    protected void installAppAsUser(String appFileName, boolean grantPermissions,
+            boolean dontKillApp, int userId)
+                    throws FileNotFoundException, DeviceNotAvailableException {
         CLog.d("Installing app " + appFileName + " for user " + userId);
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
+        List<String> extraArgs = new LinkedList<>();
+        extraArgs.add("-t");
+        if (dontKillApp) extraArgs.add("--dont-kill");
         String result = getDevice().installPackageForUser(
-                buildHelper.getTestFile(appFileName), true, grantPermissions, userId, "-t");
+                buildHelper.getTestFile(appFileName), true, grantPermissions, userId,
+                extraArgs.toArray(new String[extraArgs.size()]));
         assertNull("Failed to install " + appFileName + " for user " + userId + ": " + result,
                 result);
     }
