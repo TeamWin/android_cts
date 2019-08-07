@@ -30,6 +30,7 @@ import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 import android.os.UserHandle;
+import android.os.UserManager;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
 import android.provider.cts.MediaStoreUtils.PendingParams;
@@ -217,10 +218,11 @@ public class ProviderTestUtils {
     static File stageFile(int resId, File file) throws IOException {
         // The caller may be trying to stage into a location only available to
         // the shell user, so we need to perform the entire copy as the shell
-        if (FileUtils.contains(Environment.getStorageDirectory(), file)) {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        UserManager userManager = context.getSystemService(UserManager.class);
+        if (userManager.isSystemUser() &&
+                    FileUtils.contains(Environment.getStorageDirectory(), file)) {
             executeShellCommand("mkdir -p " + file.getParent());
-
-            final Context context = InstrumentationRegistry.getTargetContext();
             try (AssetFileDescriptor afd = context.getResources().openRawResourceFd(resId)) {
                 final File source = ParcelFileDescriptor.getFile(afd.getFileDescriptor());
                 final long skip = afd.getStartOffset();
@@ -238,7 +240,6 @@ public class ProviderTestUtils {
             if (!dir.exists()) {
                 throw new FileNotFoundException("Failed to create parent for " + file);
             }
-            final Context context = InstrumentationRegistry.getTargetContext();
             try (InputStream source = context.getResources().openRawResource(resId);
                     OutputStream target = new FileOutputStream(file)) {
                 FileUtils.copy(source, target);

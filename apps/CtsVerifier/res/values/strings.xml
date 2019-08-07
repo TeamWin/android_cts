@@ -132,6 +132,13 @@
         framework correctly tries to open the CAR_DOCK app again.</string>
     <string name="car_mode_enable">Enable Car Mode</string>
     <string name="car_dock_activity_text">Press the Home button</string>
+    <string name="gear_selection_test">Gear Selection Test</string>
+    <string name="gear_selection_test_desc">This test ensures that the
+      GEAR_SELECTION property is implemented correctly.\n\nShift the car\'s
+      gear to the expected gear value. If it is able to shift to all the
+      implemented gears then the pass button will be enabled.</string>
+    <string name="expected_gear_selection_title">Expected Gear Selection</string>
+    <string name="current_gear_selection_title">Current Gear Selection</string>
     <string name="da_no_policy">1. Press the \"Generate Policy\" to create a random device
         policy\n\n2. Press \"Apply Policy\" to put the policy into effect.\n\n3. Reboot your
         device and return to this test in the CTS Verifier.

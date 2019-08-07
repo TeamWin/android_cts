@@ -22,6 +22,7 @@
 
     <uses-sdk android:minSdkVersion="19" android:targetSdkVersion="29"/>
 
+    <uses-permission android:name="android.car.permission.CAR_POWERTRAIN" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_LOCATION_EXTRA_COMMANDS"/>
@@ -3534,6 +3535,18 @@
                 <category android:name="android.intent.category.CAR_DOCK" />
             </intent-filter>
         </activity-alias>
+
+        <activity android:name=".car.GearSelectionTestActivity"
+                android:label="@string/gear_selection_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_car" />
+            <meta-data
+                android:name="test_required_features"
+                android:value="android.hardware.type.automotive"/>
+        </activity>
 
         <!-- 6DoF sensor test -->
         <activity
