@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package vogar;
+package vogar.expect;
 
 import com.google.common.collect.Lists;
 import java.io.PrintWriter;
@@ -22,7 +22,7 @@ import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import vogar.util.Strings;
+import vogar.expect.util.Strings;
 
 /**
  * An outcome of an action. Some actions may have multiple outcomes. For

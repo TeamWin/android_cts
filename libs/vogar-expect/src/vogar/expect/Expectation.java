@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package vogar;
+package vogar.expect;
 
 import java.util.LinkedHashSet;
 import java.util.Set;

@@ -38,8 +38,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import vogar.ExpectationStore;
-import vogar.Expectation;
+import vogar.expect.ExpectationStore;
+import vogar.expect.Expectation;
 
 import com.sun.javadoc.AnnotationDesc;
 import com.sun.javadoc.AnnotationTypeDoc;

@@ -15,7 +15,7 @@
  */
 
 
-package vogar.util;
+package vogar.expect.util;
 
 //import com.google.common.collect.Lists;
 import java.io.BufferedReader;
