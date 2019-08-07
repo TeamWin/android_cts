@@ -53,6 +53,7 @@ android_test {
         "cts",
         "vts",
         "general-tests",
+	"mts",
     ],
     // NOTE: virtualdeviceknownfailures.txt is only used for simulated/cloud-based
     // continuous build configurations, so it's not referenced in AndroidTest.xml
