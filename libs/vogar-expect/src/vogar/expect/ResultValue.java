@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 The Android Open Source Project
+ * Copyright (C) 2010 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,13 @@
  * limitations under the License.
  */
 
-package vogar;
+package vogar.expect;
 
-public enum ModeId {
-    DEVICE, JVM, ACTIVITY, SIM, HOST;
-
-    public boolean acceptsVmArgs() {
-        return this != ACTIVITY;
-    }
-
-    public boolean isHost() {
-        return this == JVM || this == SIM || this == HOST;
-    }
-
-    public boolean requiresAndroidSdk() {
-        return this == DEVICE || this == ACTIVITY || this == SIM || this == HOST;
-    }
+/**
+ * Represents an evaluation of the goodness of a result.
+ */
+public enum ResultValue {
+    OK,
+    IGNORE,
+    FAIL
 }
