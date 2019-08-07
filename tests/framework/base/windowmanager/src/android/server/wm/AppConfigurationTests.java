@@ -58,8 +58,6 @@ import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.CommandSession.SizeInfo;
 
-import androidx.test.filters.FlakyTest;
-
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -104,7 +102,6 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
      * from docked state to fullscreen (reverse).
      */
     @Test
-    @FlakyTest(bugId = 71792393)
     public void testConfigurationUpdatesWhenResizedFromDockedStack() {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
@@ -276,7 +273,6 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
      * relaunched twice and it should have same config as initial one.
      */
     @Test
-    @FlakyTest
     public void testSameConfigurationSplitFullSplitRelaunch() {
         moveActivitySplitFullSplit(TEST_ACTIVITY);
     }
@@ -285,7 +281,6 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
      * Same as {@link #testSameConfigurationSplitFullSplitRelaunch} but without relaunch.
      */
     @Test
-    @FlakyTest
     public void testSameConfigurationSplitFullSplitNoRelaunch() {
         moveActivitySplitFullSplit(RESIZEABLE_ACTIVITY);
     }
@@ -295,7 +290,6 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
      * screen.
      */
     @Test
-    @FlakyTest(bugId = 110276714)
     public void testDialogWhenLargeSplitSmall() {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
@@ -320,7 +314,6 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
      * Test that device handles consequent requested orientations and displays the activities.
      */
     @Test
-    @FlakyTest(bugId = 71875755)
     public void testFullscreenAppOrientationRequests() {
         assumeTrue("Skipping test: no rotation support", supportsRotation());
 
@@ -374,7 +367,6 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
      * change to an invisible activity.
      */
     @Test
-    @FlakyTest
     public void testAppOrientationRequestConfigChanges() {
         assumeTrue("Skipping test: no rotation support", supportsRotation());
 
@@ -565,7 +557,6 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
      * Also verify that occluded activity will not get config changes.
      */
     @Test
-    @FlakyTest
     public void testAppOrientationWhenRotating() throws Exception {
         assumeTrue("Skipping test: no rotation support", supportsRotation());
 
@@ -654,7 +645,6 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
      * Test that device handles moving between two tasks with different orientations.
      */
     @Test
-    @FlakyTest(bugId = 71792393)
     public void testTaskMoveToBackOrientation() {
         assumeTrue("Skipping test: no rotation support", supportsRotation());
 
@@ -684,7 +674,6 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
     /**
      * Test that device doesn't change device orientation by app request while in multi-window.
      */
-    @FlakyTest(bugId = 71918731)
     @Test
     public void testSplitscreenPortraitAppOrientationRequests() throws Exception {
         assumeTrue("Skipping test: no rotation support", supportsRotation());

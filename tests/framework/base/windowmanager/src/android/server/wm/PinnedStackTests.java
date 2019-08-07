@@ -114,7 +114,6 @@ import java.util.function.Function;
  * atest CtsWindowManagerDeviceTestCases:PinnedStackTests
  */
 @Presubmit
-@FlakyTest(bugId = 71792368)
 public class PinnedStackTests extends ActivityManagerTestBase {
     private static final String TAG = PinnedStackTests.class.getSimpleName();
 
@@ -273,7 +272,6 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @FlakyTest // TODO: Reintroduce to presubmit once b/71508234 is resolved.
     public void testPinnedStackOutOfBoundsInsetsNonNegative() throws Exception {
         final WindowManagerState wmState = mAmWmState.getWmState();
 
@@ -630,7 +628,6 @@ public class PinnedStackTests extends ActivityManagerTestBase {
                 WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
     }
 
-    @FlakyTest(bugId = 70746098)
     @Test
     public void testRemovePipWithHiddenFullscreenStack() throws Exception {
         // Launch a fullscreen activity, return home and while the fullscreen stack is hidden,
@@ -665,7 +662,6 @@ public class PinnedStackTests extends ActivityManagerTestBase {
                 WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME);
     }
 
-    @FlakyTest(bugId = 70906499)
     @Test
     public void testMovePipToBackWithVisibleFullscreenStack() throws Exception {
         // Launch a fullscreen activity, and a pip activity over that
@@ -681,7 +677,6 @@ public class PinnedStackTests extends ActivityManagerTestBase {
                 WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
     }
 
-    @FlakyTest(bugId = 70906499)
     @Test
     public void testMovePipToBackWithHiddenFullscreenStack() throws Exception {
         // Launch a fullscreen activity, return home and while the fullscreen stack is hidden,
@@ -795,6 +790,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackExists();
     }
 
+    @FlakyTest(bugId = 139111392)
     @Test
     public void testDisallowEnterPipActivityLocked() throws Exception {
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP_ON_PAUSE, "true");
@@ -817,7 +813,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         });
     }
 
-    @FlakyTest(bugId = 70328524)
+    @FlakyTest(bugId = 139111392)
     @Test
     public void testConfigurationChangeOrderDuringTransition() throws Exception {
         // Launch a PiP activity and ensure configuration change only happened once, and that the
@@ -1113,6 +1109,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
                 TEST_ACTIVITY).mTaskId);
     }
 
+    @FlakyTest(bugId = 139111392)
     @Test
     public void testLaunchTaskByAffinityMatchSingleTask() throws Exception {
         // Launch an activity into the pinned stack with a fixed affinity
@@ -1135,7 +1132,6 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     }
 
     /** Test that reported display size corresponds to fullscreen after exiting PiP. */
-    @FlakyTest
     @Test
     public void testDisplayMetricsPinUnpin() throws Exception {
         separateTestJournal();
@@ -1170,6 +1166,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
                 finalAppSize);
     }
 
+    @FlakyTest(bugId = 139111392)
     @Test
     public void testEnterPictureInPictureSavePosition() throws Exception {
         // Ensure we have static shelf offset by running this test over a non-home activity
@@ -1218,7 +1215,6 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 71792368)
     public void testEnterPictureInPictureDiscardSavedPositionOnFinish() throws Exception {
         // Ensure we have static shelf offset by running this test over a non-home activity
         launchActivity(NO_RELAUNCH_ACTIVITY);

@@ -21,7 +21,6 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECOND
 import static android.server.wm.ActivityManagerState.STATE_RESUMED;
 import static android.server.wm.ActivityManagerState.STATE_STOPPED;
 import static android.server.wm.ComponentNameUtils.getWindowName;
-import static android.server.wm.StateLogger.logAlways;
 import static android.server.wm.StateLogger.logE;
 import static android.server.wm.WindowManagerState.TRANSIT_TASK_CLOSE;
 import static android.server.wm.WindowManagerState.TRANSIT_TASK_OPEN;
@@ -49,7 +48,6 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
-import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityManagerState.ActivityDisplay;
 import android.server.wm.ActivityManagerState.ActivityStack;
@@ -58,12 +56,8 @@ import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.SizeInfo;
 import android.util.SparseArray;
 
-import androidx.test.filters.FlakyTest;
-
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * Build/Install/Run:
@@ -746,7 +740,6 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
      * Tests that toast works on a secondary display.
      */
     @Test
-    @FlakyTest(bugId = 131005232)
     public void testSecondaryDisplayShowToast() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             final ActivityDisplay newDisplay =

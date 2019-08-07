@@ -39,8 +39,8 @@ import static androidx.test.InstrumentationRegistry.getInstrumentation;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assume.assumeTrue;
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.content.res.Configuration;
@@ -140,7 +140,6 @@ public class WindowFocusTests extends WindowManagerTestBase {
      * - The window which lost top-focus can receive display-unspecified cancel events.
      */
     @Test
-    @FlakyTest(bugId = 131005232)
     public void testKeyReceiving() throws InterruptedException {
         final PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class,
                 DEFAULT_DISPLAY);
@@ -194,7 +193,6 @@ public class WindowFocusTests extends WindowManagerTestBase {
      * Test if a display targeted by a key event can be moved to top in a single-focus system.
      */
     @Test
-    @FlakyTest(bugId = 131005232)
     public void testMovingDisplayToTopByKeyEvent() throws InterruptedException {
         assumeTrue(supportsMultiDisplay());
         assumeFalse(perDisplayFocusEnabled());
@@ -321,7 +319,6 @@ public class WindowFocusTests extends WindowManagerTestBase {
      * window on that display.
      */
     @Test
-    @FlakyTest(bugId = 130467737)
     public void testTapNonFocusableWindow() throws InterruptedException {
         assumeTrue(supportsMultiDisplay());
         assumeFalse(perDisplayFocusEnabled());
