@@ -32,6 +32,7 @@ import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.net.Uri;
+import android.os.Build;
 import android.util.Log;
 import android.util.Range;
 
@@ -317,6 +318,11 @@ public class MediaUtils {
             return true;
 	}
 
+        // before Q, we always said yes once we found a decoder for the format.
+        if (ApiLevelUtil.isBefore(Build.VERSION_CODES.Q)) {
+            return true;
+	}
+
 	// we care about speed of decoding
         Log.d(TAG, "checking for decoding " + format + " at " +
                    rate + " fps with " + decoder);
@@ -347,16 +353,7 @@ public class MediaUtils {
             return false;
         }
 
-        if (mci.isSoftwareOnly()) {
-            String verified = MediaPerfUtils.areAchievableFrameRates(
-                              decoder, mime, width, height, rate);
-            if (verified == null) {
-                Log.d(TAG, "claims to decode content at " + rate + " fps");
-                return true;
-            }
-            Log.d(TAG, "achieveable framerates says: " + verified);
-            return false;
-        } else {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.Q) && mci.isHardwareAccelerated()) {
             MediaCodecInfo.VideoCapabilities caps =
                             mci.getCapabilitiesForType(mime).getVideoCapabilities();
             List<MediaCodecInfo.VideoCapabilities.PerformancePoint> pp =
@@ -372,7 +369,16 @@ public class MediaUtils {
             }
             Log.i(TAG, "NOT covered by any hardware performance point");
             return false;
-        }
+	} else {
+            String verified = MediaPerfUtils.areAchievableFrameRates(
+                              decoder, mime, width, height, rate);
+            if (verified == null) {
+                Log.d(TAG, "claims to decode content at " + rate + " fps");
+                return true;
+            }
+            Log.d(TAG, "achieveable framerates says: " + verified);
+            return false;
+	}
     }
 
     public static boolean supports(String codecName, String mime, int w, int h) {
