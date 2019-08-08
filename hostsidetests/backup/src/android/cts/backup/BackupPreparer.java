@@ -17,6 +17,7 @@
 package android.cts.backup;
 
 import com.android.compatibility.common.util.BackupHostSideUtils;
+import com.android.compatibility.common.util.CommonTestUtils;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
@@ -40,6 +41,7 @@ import java.util.regex.Pattern;
  */
 @OptionClass(alias = "backup-preparer")
 public class BackupPreparer implements ITargetCleaner {
+    private static final long TRANSPORT_AVAILABLE_TIMEOUT_SECONDS = TimeUnit.MINUTES.toSeconds(2);
     @Option(name="enable-backup-if-needed", description=
             "Enable backup before all the tests and return to the original state after.")
     private boolean mEnableBackup = true;
@@ -73,10 +75,8 @@ public class BackupPreparer implements ITargetCleaner {
 
         if (mIsBackupSupported) {
             // Enable backup and select local backup transport
-            if (!hasBackupTransport(LOCAL_TRANSPORT)) {
-                throw new TargetSetupError("Device should have LocalTransport available",
-                        device.getDeviceDescriptor());
-            }
+            waitForTransport(LOCAL_TRANSPORT);
+
             if (mEnableBackup) {
                 CLog.i("Enabling backup on %s", mDevice.getSerialNumber());
                 mWasBackupEnabled = enableBackup(true);
@@ -113,7 +113,18 @@ public class BackupPreparer implements ITargetCleaner {
         }
     }
 
-    // Copied over from BackupQuotaTest
+    private void waitForTransport(String transport) throws TargetSetupError {
+        try {
+            CommonTestUtils.waitUntil(
+                    "Local transport didn't become available",
+                    TRANSPORT_AVAILABLE_TIMEOUT_SECONDS,
+                    () -> hasBackupTransport(transport));
+        } catch (DeviceNotAvailableException | InterruptedException e) {
+            throw new TargetSetupError(
+                    "Device should have LocalTransport available", mDevice.getDeviceDescriptor());
+        }
+    }
+
     private boolean hasBackupTransport(String transport) throws DeviceNotAvailableException {
         String output = mDevice.executeShellCommand("bmgr list transports");
         for (String t : output.split(" ")) {

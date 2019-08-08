@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 The Android Open Source Project
+ * Copyright (C) 2010 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,25 @@
  * limitations under the License.
  */
 
-package vogar;
+package vogar.expect.util;
 
-/**
- * The result of a test or benchmark execution.
- */
-public enum Result {
+import java.util.List;
+
+public interface LogOutput {
+
+    void verbose(String s);
+
+    void warn(String message);
 
     /**
-     * An action that cannot be run by this harness, such as a shell script.
+     * Warns, and also puts a list of strings afterwards.
      */
-    UNSUPPORTED,
+    void warn(String message, List<String> list);
 
-    COMPILE_FAILED,
-    EXEC_FAILED,
-    EXEC_TIMEOUT,
-    ERROR,
-    SUCCESS
+    void info(String s);
+
+    void info(String message, Throwable throwable);
+
+    void nativeOutput(String outputLine);
+
 }
