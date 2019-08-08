@@ -1229,6 +1229,10 @@ public class TelephonyManagerTest {
      */
     @Test
     public void testGetUiccCardsInfo() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
+            return;
+        }
         try {
             // Requires READ_PRIVILEGED_PHONE_STATE or carrier privileges
             List<UiccCardInfo> infos = mTelephonyManager.getUiccCardsInfo();
