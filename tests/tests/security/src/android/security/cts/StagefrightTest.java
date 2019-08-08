@@ -984,6 +984,13 @@ public class StagefrightTest extends InstrumentationTestCase {
      before any existing test methods
      ***********************************************************/
 
+    @SecurityTest(minPatchLevel = "2019-07")
+    public void testStagefright_cve_2019_2106() throws Exception {
+        int[] frameSizes = {943, 3153};
+        doStagefrightTestRawBlob(R.raw.cve_2019_2106_hevc, "video/hevc", 320,
+                240, frameSizes);
+    }
+
     @SecurityTest(minPatchLevel = "2017-06")
     public void testStagefright_cve_2017_0637() throws Exception {
         doStagefrightTest(R.raw.cve_2017_0637, 2 * 72000);
