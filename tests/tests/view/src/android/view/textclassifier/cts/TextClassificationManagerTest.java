@@ -127,8 +127,18 @@ public class TextClassificationManagerTest {
     }
 
     @Test
+    public void testSuggestSelectionWith4Param() {
+        assertValidResult(mClassifier.suggestSelection(TEXT, START, END, LOCALES));
+    }
+
+    @Test
     public void testClassifyText() {
         assertValidResult(mClassifier.classifyText(TEXT_CLASSIFICATION_REQUEST));
+    }
+
+    @Test
+    public void testClassifyTextWith4Param() {
+        assertValidResult(mClassifier.classifyText(TEXT, START, END, LOCALES));
     }
 
     @Test
