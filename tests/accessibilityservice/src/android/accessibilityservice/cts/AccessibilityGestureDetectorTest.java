@@ -160,8 +160,9 @@ public class AccessibilityGestureDetectorTest {
         }
 
         try (final VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
-            final int displayId = displaySession.createDisplayWithDefaultDisplayMetricsAndWait
-            (InstrumentationRegistry.getInstrumentation().getTargetContext()).getDisplayId();
+            final int displayId = displaySession.createDisplayWithDefaultDisplayMetricsAndWait(
+                    InstrumentationRegistry.getInstrumentation().getTargetContext(),
+                            false).getDisplayId();
             // Compute gesture stroke lengths, in pixels.
             final int dx = mStrokeLenPxX;
             final int dy = mStrokeLenPxY;
@@ -201,6 +202,7 @@ public class AccessibilityGestureDetectorTest {
                     displayId);
         }
     }
+
     /** Convenient short alias to make a Point. */
     private static Point p(int x, int y) {
         return new Point(x, y);
@@ -303,7 +305,8 @@ public class AccessibilityGestureDetectorTest {
 
         try (final VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
             final int displayId = displaySession.createDisplayWithDefaultDisplayMetricsAndWait(
-                    InstrumentationRegistry.getInstrumentation().getTargetContext()).getDisplayId();
+                    InstrumentationRegistry.getInstrumentation().getTargetContext(),
+                    false).getDisplayId();
 
             assertEventAfterGesture(swipe(displayId),
                     AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
@@ -322,6 +325,23 @@ public class AccessibilityGestureDetectorTest {
             assertEventAfterGesture(doubleTapAndHold(displayId),
                     AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
                     AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
+        }
+    }
+
+    @Test
+    @AppModeFull
+    public void testDispatchGesture_privateDisplay_gestureCancelled() {
+        try (final VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
+            final int displayId = displaySession.createDisplayWithDefaultDisplayMetricsAndWait
+                    (InstrumentationRegistry.getInstrumentation().getTargetContext(),
+                            true).getDisplayId();
+            GestureDescription gesture = swipe(displayId);
+            mService.clearGestures();
+            mService.runOnServiceSync(() ->
+                    mService.dispatchGesture(gesture, mGestureDispatchCallback, null));
+
+            verify(mGestureDispatchCallback, timeout(GESTURE_DISPATCH_TIMEOUT_MS).atLeastOnce())
+                    .onCancelled(any());
         }
     }
 
