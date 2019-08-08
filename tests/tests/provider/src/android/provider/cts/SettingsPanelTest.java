@@ -39,6 +39,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Arrays;
+
 /**
  * Tests related SettingsPanels:
  *
@@ -154,7 +156,8 @@ public class SettingsPanelTest {
 
         final UiObject2 titleView = mDevice.findObject(By.res(mSettingsPackage, RESOURCE_TITLE));
 
-        assertThat(titleView.getText()).isEqualTo("Wi\u2011Fi");
+        // title must be "Wi\u2011Fi" or "WLAN"
+        assertThat(titleView.getText()).isIn(Arrays.asList("Wi\u2011Fi", "WLAN"));
     }
 
     @Test
