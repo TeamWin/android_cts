@@ -26,7 +26,12 @@ import android.signature.cts.DexMemberChecker;
 import android.signature.cts.DexMethod;
 import android.signature.cts.FailureType;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.text.ParseException;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -136,33 +141,21 @@ public class HiddenApiTest extends AbstractApiTest {
                     }
                 }
             };
-            parseDexApiFilesAsStream(hiddenapiFiles)
-                    .filter(memberFilter)
-                    .forEach(dexMember -> {
-                        if (shouldTestMember(dexMember)) {
-                            DexMemberChecker.checkSingleMember(dexMember, reflection, jni,
-                                    observer);
-                        }
-                    });
-        });
-    }
-
-    private Stream<DexMember> parseDexApiFilesAsStream(String[] apiFiles) {
-        DexApiDocumentParser dexApiDocumentParser = new DexApiDocumentParser();
-        // To allow parallelization with a DexMember output type, we need two
-        // pipes.
-        Stream<Stream<DexMember>> inputsAsStreams = Stream.of(apiFiles).parallel()
-                .map(name -> new File(API_FILE_DIRECTORY + "/" + name))
-                .flatMap(file -> readFileOptimized(file))
-                .map(obj -> dexApiDocumentParser.parseAsStream(obj));
-        // The flatMap inherently serializes the pipe. The number of inputs is
-        // still small here, so reduce by concatenating (note the caveats of
-        // concats).
-        return inputsAsStreams.reduce(null, (prev, stream) -> {
-            if (prev == null) {
-                return stream;
+            for (String apiFile : hiddenapiFiles) {
+                BufferedReader reader = new BufferedReader(
+                        new FileReader(API_FILE_DIRECTORY + "/" + apiFile));
+                int lineIndex = 1;
+                String line = reader.readLine();
+                while (line != null) {
+                    DexMember dexMember = DexApiDocumentParser.parseLine(line, lineIndex);
+                    if (memberFilter.test(dexMember) && shouldTestMember(dexMember)) {
+                        DexMemberChecker.checkSingleMember(dexMember, reflection, jni,
+                                observer);
+                    }
+                    line = reader.readLine();
+                    lineIndex++;
+                }
             }
-            return Stream.concat(prev, stream);
         });
     }
 
