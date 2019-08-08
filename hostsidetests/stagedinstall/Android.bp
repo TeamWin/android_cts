@@ -48,6 +48,7 @@ android_test_helper_app {
         ":StagedInstallTestApexV2",
         ":StagedInstallTestApexV2_AdditionalFile",
         ":StagedInstallTestApexV2_AdditionalFolder",
+        ":StagedInstallTestApexV2_DifferentCertificate",
         ":StagedInstallTestApexV2_WithPostInstallHook",
         ":StagedInstallTestApexV2_WithPreInstallHook",
         ":StagedInstallTestApexV2_WrongSha",
@@ -58,7 +59,7 @@ android_test_helper_app {
         "androidx.test.runner",
         "androidx.test.core",
         "truth-prebuilt",
-	"cts-install-lib",
+        "cts-install-lib",
     ],
     sdk_version: "test_current",
     test_suites: ["device-tests"],
@@ -126,5 +127,12 @@ prebuilt_apex {
     name: "StagedInstallTestApexV1_NotPreInstalled",
     src: "testdata/apex/com.android.apex.cts.shim_not_pre_installed.apex",
     filename: "com.android.apex.cts.shim_not_pre_installed.apex",
+    installable: false,
+}
+
+prebuilt_apex {
+    name: "StagedInstallTestApexV2_DifferentCertificate",
+    src: "testdata/apex/com.android.apex.cts.shim.v2_different_certificate.apex",
+    filename: "com.android.apex.cts.shim.v2_different_certificate.apex",
     installable: false,
 }
