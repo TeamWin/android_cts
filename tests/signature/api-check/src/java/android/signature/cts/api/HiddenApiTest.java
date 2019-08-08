@@ -25,15 +25,9 @@ import android.signature.cts.DexMethod;
 import android.signature.cts.FailureType;
 import android.signature.cts.VirtualPath;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.EnumSet;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 /**
  * Checks that it is not possible to access hidden APIs.
@@ -141,58 +135,26 @@ public class HiddenApiTest extends AbstractApiTest {
                     }
                 }
             };
-            parseDexApiResourcesAsStream(hiddenapiFiles)
-                    .filter(memberFilter)
-                    .forEach(dexMember -> {
-                        if (shouldTestMember(dexMember)) {
-                            DexMemberChecker.checkSingleMember(dexMember, reflection, jni,
-                                    observer);
-                        }
-                    });
-        });
-    }
 
-    private Stream<DexMember> parseDexApiResourcesAsStream(String[] apiFiles) {
-        DexApiDocumentParser dexApiDocumentParser = new DexApiDocumentParser();
-        // To allow parallelization with a DexMember output type, we need two
-        // pipes.
-        Stream<Stream<DexMember>> inputsAsStreams = Stream.of(apiFiles).parallel()
-                .flatMap(this::readResourceOptimized)
-                .map(dexApiDocumentParser::parseAsStream);
-        // The flatMap inherently serializes the pipe. The number of inputs is
-        // still small here, so reduce by concatenating (note the caveats of
-        // concats).
-        return inputsAsStreams.reduce(null, (prev, stream) -> {
-            if (prev == null) {
-                return stream;
-            }
-            return Stream.concat(prev, stream);
-        });
-    }
-
-    private Stream<Object> readResourceOptimized(String resourceName) {
-        try {
-            VirtualPath.ResourcePath resourcePath =
-                    VirtualPath.get(getClass().getClassLoader(), resourceName);
-            // Extract to a temporary file and read from there. Accessing it via an InputStream
-            // directly is too slow because the file has to be read serially and that results in
-            // the tests taking too long. Saving it as a file allows it to be mapped as a
-            // ByteBuffer and processed in parallel.
-            Path file = extractResourceToFile(resourceName, resourcePath.newInputStream());
-
-            // Map the file into a ByteBuffer, see http://b/123986482 for some background.
-            try (FileChannel fileChannel = (FileChannel) Files.newByteChannel(file,
-                    EnumSet.of(StandardOpenOption.READ))) {
-                ByteBuffer mappedByteBuffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0,
-                        fileChannel.size());
-                if (mappedByteBuffer == null) {
-                    throw new IllegalStateException("Could not map " + file);
+            for (String apiFile : hiddenapiFiles) {
+                VirtualPath.ResourcePath resourcePath =
+                        VirtualPath.get(getClass().getClassLoader(), apiFile);
+                BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(resourcePath.newInputStream()));
+                int lineIndex = 1;
+                String line = reader.readLine();
+                while (line != null) {
+                    DexMember dexMember = DexApiDocumentParser.parseLine(line, lineIndex);
+                    if (memberFilter.test(dexMember) && shouldTestMember(dexMember)) {
+                        DexMemberChecker.checkSingleMember(dexMember, reflection, jni,
+                                observer);
+                    }
+                    line = reader.readLine();
+                    lineIndex++;
                 }
-                return Stream.of(mappedByteBuffer);
+
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        });
     }
 
     private boolean shouldTestMember(DexMember member) {
