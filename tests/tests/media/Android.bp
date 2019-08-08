@@ -74,6 +74,7 @@ android_test {
         "vts",
         "general-tests",
         "cts_instant",
+        "mts",
     ],
     host_required: ["cts-dynamic-config"],
 }
