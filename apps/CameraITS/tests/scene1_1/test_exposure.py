@@ -36,6 +36,41 @@ THRESH_ROUND_DOWN_EXP0 = 1.00  # tol at 0ms exp; theoretical limit @ 4-line exp
 THRESH_EXP_KNEE = 6E6  # exposures less than knee have relaxed tol
 
 
+def find_fit_and_check(chan, mults, values, thresh_max_level_diff):
+    """Find line fit and check values.
+
+    Check for linearity. Verify sample pixel mean values are close to each
+    other. Also ensure that the images aren't clamped to 0 or 1
+    (which would make them look like flat lines).
+
+    Args:
+        chan:                   [0:2] RGB channel
+        mults:                  list of multiplication values for gain*m, exp/m
+        values:                 mean values for chan
+        thresh_max_level_diff:  threshold for max difference
+    """
+
+    m, b = numpy.polyfit(mults, values, 1).tolist()
+    max_val = max(values)
+    min_val = min(values)
+    max_diff = max_val - min_val
+    print 'Channel %d line fit (y = mx+b): m = %f, b = %f' % (chan, m, b)
+    print 'Channel max %f min %f diff %f' % (max_val, min_val, max_diff)
+    e_msg = 'max_diff: %.4f, THRESH: %.3f' % (
+            max_diff, thresh_max_level_diff)
+    assert max_diff < thresh_max_level_diff, e_msg
+    e_msg = 'b: %.2f, THRESH_MIN: %.1f, THRESH_MAX: %.1f' % (
+            b, THRESHOLD_MIN_LEVEL, THRESHOLD_MAX_LEVEL)
+    assert THRESHOLD_MAX_LEVEL > b > THRESHOLD_MIN_LEVEL, e_msg
+    for v in values:
+        e_msg = 'v: %.2f, THRESH_MIN: %.1f, THRESH_MAX: %.1f' % (
+                v, THRESHOLD_MIN_LEVEL, THRESHOLD_MAX_LEVEL)
+        assert THRESHOLD_MAX_LEVEL > v > THRESHOLD_MIN_LEVEL, e_msg
+        e_msg = 'v: %.2f, b: %.2f, THRESH_MAX_OUTLIER_DIFF: %.1f' % (
+                v, b, THRESHOLD_MAX_OUTLIER_DIFF)
+        assert abs(v - b) < THRESHOLD_MAX_OUTLIER_DIFF, e_msg
+
+
 def get_raw_active_array_size(props):
     """Return the active array w, h from props."""
     aaw = (props['android.sensor.info.preCorrectionActiveArraySize']['right'] -
@@ -167,38 +202,14 @@ def main():
         pylab.legend(numpoints=1)
         matplotlib.pyplot.savefig('%s_plot_raw_means.png' % (NAME))
 
-    # Check for linearity. Verify sample pixel mean values are close to each
-    # other. Also ensure that the images aren't clamped to 0 or 1
-    # (which would make them look like flat lines).
     for chan in xrange(3):
         values = [r_means, g_means, b_means][chan]
-        m, b = numpy.polyfit(mults, values, 1).tolist()
-        max_val = max(values)
-        min_val = min(values)
-        max_diff = max_val - min_val
-        print 'Channel %d line fit (y = mx+b): m = %f, b = %f' % (chan, m, b)
-        print 'Channel max %f min %f diff %f' % (max_val, min_val, max_diff)
-        assert max_diff < threshold_max_level_diff
-        assert b > THRESHOLD_MIN_LEVEL and b < THRESHOLD_MAX_LEVEL
-        for v in values:
-            assert v > THRESHOLD_MIN_LEVEL and v < THRESHOLD_MAX_LEVEL
-            assert abs(v - b) < THRESHOLD_MAX_OUTLIER_DIFF
+        find_fit_and_check(chan, mults, values, threshold_max_level_diff)
     if process_raw and debug:
         for chan in xrange(4):
             values = [raw_r_means, raw_gr_means, raw_gb_means,
                       raw_b_means][chan]
-            m, b = numpy.polyfit(mults, values, 1).tolist()
-            max_val = max(values)
-            min_val = min(values)
-            max_diff = max_val - min_val
-            print 'Channel %d line fit (y = mx+b): m = %f, b = %f' % (chan,
-                                                                      m, b)
-            print 'Channel max %f min %f diff %f' % (max_val, min_val, max_diff)
-            assert max_diff < threshold_max_level_diff
-            assert b > THRESHOLD_MIN_LEVEL and b < THRESHOLD_MAX_LEVEL
-            for v in values:
-                assert v > THRESHOLD_MIN_LEVEL and v < THRESHOLD_MAX_LEVEL
-                assert abs(v - b) < THRESHOLD_MAX_OUTLIER_DIFF
+            find_fit_and_check(chan, mults, values, threshold_max_level_diff)
 
 if __name__ == '__main__':
     main()
