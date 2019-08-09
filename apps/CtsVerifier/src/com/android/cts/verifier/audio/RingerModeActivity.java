@@ -136,7 +136,8 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
 
     private boolean supportsConditionProviders() {
         ActivityManager am = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
-        return !am.isLowRamDevice();
+        return !am.isLowRamDevice()
+                || mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 
     private int getVolumeDelta(int volume) {
