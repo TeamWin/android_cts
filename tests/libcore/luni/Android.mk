@@ -55,7 +55,7 @@ LOCAL_MULTILIB := both
 LOCAL_HOST_REQUIRED_MODULES := cts-dalvik-host-test-runner
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests mts
 
 # NOTE: virtualdeviceknownfailures.txt is only used for simulated/cloud-based
 # continuous build configurations, so it's not referenced in AndroidTest.xml
