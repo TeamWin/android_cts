@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package vogar.util;
+package vogar.expect.util;
 
 import java.util.List;
 

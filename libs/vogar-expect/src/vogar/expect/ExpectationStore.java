@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package vogar;
+package vogar.expect;
 
 import com.android.json.stream.JsonReader;
 import com.google.common.base.Joiner;
@@ -32,7 +32,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
-import vogar.util.Log;
+import vogar.expect.util.Log;
 
 /**
  * A database of expected outcomes. Entries in this database come in two forms.
