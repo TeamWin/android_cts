@@ -18,6 +18,7 @@ import static android.accessibilityservice.cts.utils.GestureUtils.click;
 import static android.accessibilityservice.cts.utils.GestureUtils.endTimeOf;
 import static android.accessibilityservice.cts.utils.GestureUtils.longClick;
 import static android.accessibilityservice.cts.utils.GestureUtils.startingAt;
+import static android.accessibilityservice.cts.utils.DisplayUtils.VirtualDisplaySession;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.any;
@@ -30,6 +31,7 @@ import android.accessibilityservice.AccessibilityGestureInfo;
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.GestureDescription;
 import android.accessibilityservice.GestureDescription.StrokeDescription;
+import android.accessibilityservice.cts.utils.DisplayUtils;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -150,27 +152,89 @@ public class AccessibilityGestureDetectorTest {
         testPath(p(+0, +dy), p(+0, +0), AccessibilityService.GESTURE_SWIPE_DOWN_AND_UP);
     }
 
+    @Test
+    @AppModeFull
+    public void testRecognizeGesturePathOnVirtualDisplay() {
+        if (!mHasTouchScreen || !mScreenBigEnough) {
+            return;
+        }
+
+        try (final VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
+            final int displayId = displaySession.createDisplayWithDefaultDisplayMetricsAndWait
+            (InstrumentationRegistry.getInstrumentation().getTargetContext()).getDisplayId();
+            // Compute gesture stroke lengths, in pixels.
+            final int dx = mStrokeLenPxX;
+            final int dy = mStrokeLenPxY;
+
+            // Test recognizing various gestures.
+            testPath(p(-dx, +0), AccessibilityService.GESTURE_SWIPE_LEFT, displayId);
+            testPath(p(+dx, +0), AccessibilityService.GESTURE_SWIPE_RIGHT, displayId);
+            testPath(p(+0, -dy), AccessibilityService.GESTURE_SWIPE_UP, displayId);
+            testPath(p(+0, +dy), AccessibilityService.GESTURE_SWIPE_DOWN, displayId);
+
+            testPath(p(-dx, +0), p(+0, +0), AccessibilityService.GESTURE_SWIPE_LEFT_AND_RIGHT,
+                    displayId);
+            testPath(p(-dx, +0), p(-dx, -dy), AccessibilityService.GESTURE_SWIPE_LEFT_AND_UP,
+                    displayId);
+            testPath(p(-dx, +0), p(-dx, +dy), AccessibilityService.GESTURE_SWIPE_LEFT_AND_DOWN,
+                    displayId);
+
+            testPath(p(+dx, +0), p(+0, +0), AccessibilityService.GESTURE_SWIPE_RIGHT_AND_LEFT,
+                    displayId);
+            testPath(p(+dx, +0), p(+dx, -dy), AccessibilityService.GESTURE_SWIPE_RIGHT_AND_UP,
+                    displayId);
+            testPath(p(+dx, +0), p(+dx, +dy), AccessibilityService.GESTURE_SWIPE_RIGHT_AND_DOWN,
+                    displayId);
+
+            testPath(p(+0, -dy), p(-dx, -dy), AccessibilityService.GESTURE_SWIPE_UP_AND_LEFT,
+                    displayId);
+            testPath(p(+0, -dy), p(+dx, -dy), AccessibilityService.GESTURE_SWIPE_UP_AND_RIGHT,
+                    displayId);
+            testPath(p(+0, -dy), p(+0, +0), AccessibilityService.GESTURE_SWIPE_UP_AND_DOWN,
+                    displayId);
+
+            testPath(p(+0, +dy), p(-dx, +dy), AccessibilityService.GESTURE_SWIPE_DOWN_AND_LEFT,
+                    displayId);
+            testPath(p(+0, +dy), p(+dx, +dy), AccessibilityService.GESTURE_SWIPE_DOWN_AND_RIGHT,
+                    displayId);
+            testPath(p(+0, +dy), p(+0, +0), AccessibilityService.GESTURE_SWIPE_DOWN_AND_UP,
+                    displayId);
+        }
+    }
     /** Convenient short alias to make a Point. */
     private static Point p(int x, int y) {
         return new Point(x, y);
     }
 
-    /** Test recognizing path from PATH_START to PATH_START+delta. */
+    /** Test recognizing path from PATH_START to PATH_START+delta on default display. */
     private void testPath(Point delta, int gestureId) {
-        testPath(delta, null, gestureId);
+        testPath(delta, null, gestureId, Display.DEFAULT_DISPLAY);
     }
 
-    /** Test recognizing path from PATH_START to PATH_START+delta1 to PATH_START+delta2. */
+    /** Test recognizing path from PATH_START to PATH_START+delta on specified display. */
+    private void testPath(Point delta, int gestureId, int displayId) {
+        testPath(delta, null, gestureId, displayId);
+    }
+    /** Test recognizing path from PATH_START to PATH_START+delta on default display. */
     private void testPath(Point delta1, Point delta2, int gestureId) {
+        testPath(delta1, delta2, gestureId, Display.DEFAULT_DISPLAY);
+    }
+
+    /**
+     * Test recognizing path from PATH_START to PATH_START+delta1 to PATH_START+delta2. on specified
+     * display.
+     */
+    private void testPath(Point delta1, Point delta2, int gestureId, int displayId) {
         // Create gesture motions.
         int numPathSegments = (delta2 == null) ? 1 : 2;
         long pathDurationMs = numPathSegments * STROKE_MS;
         GestureDescription gesture = new GestureDescription.Builder()
                 .addStroke(new StrokeDescription(
                 linePath(mCenter, delta1, delta2), 0, pathDurationMs, false))
+                .setDisplayId(displayId)
                 .build();
 
-        // Dispatch gesture motions to default display.
+        // Dispatch gesture motions to specified  display with GestureDescription..
         // Use AccessibilityService.dispatchGesture() instead of Instrumentation.sendPointerSync()
         // because accessibility services read gesture events upstream from the point where
         // sendPointerSync() injects events.
@@ -182,11 +246,13 @@ public class AccessibilityGestureDetectorTest {
 
         // Wait for gesture recognizer, and check recognized gesture.
         mService.waitUntilGestureInfo();
-        assertEquals(1, mService.getGesturesSize());
-        assertEquals(gestureId, mService.getGesture(0));
+        if(displayId == Display.DEFAULT_DISPLAY) {
+            assertEquals(1, mService.getGesturesSize());
+            assertEquals(gestureId, mService.getGesture(0));
+        }
 
         AccessibilityGestureInfo expectedGestureInfo = new AccessibilityGestureInfo(gestureId,
-                Display.DEFAULT_DISPLAY);
+                displayId);
         assertEquals(1, mService.getGestureInfoSize());
         assertEquals(expectedGestureInfo.toString(), mService.getGestureInfo(0).toString());
     }
@@ -209,23 +275,54 @@ public class AccessibilityGestureDetectorTest {
             return;
         }
 
-        assertEventAfterGesture(swipe(),
+        assertEventAfterGesture(swipe(Display.DEFAULT_DISPLAY),
                 AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
                 AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
 
-        assertEventAfterGesture(tap(),
+        assertEventAfterGesture(tap(Display.DEFAULT_DISPLAY),
                 AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
                 AccessibilityEvent.TYPE_TOUCH_EXPLORATION_GESTURE_START,
                 AccessibilityEvent.TYPE_TOUCH_EXPLORATION_GESTURE_END,
                 AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
 
-        assertEventAfterGesture(doubleTap(),
+        assertEventAfterGesture(doubleTap(Display.DEFAULT_DISPLAY),
                 AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
                 AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
 
-        assertEventAfterGesture(doubleTapAndHold(),
+        assertEventAfterGesture(doubleTapAndHold(Display.DEFAULT_DISPLAY),
                 AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
                 AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
+    }
+
+    @Test
+    @AppModeFull
+    public void testVerifyGestureTouchEventOnVirtualDisplay() {
+        if (!mHasTouchScreen || !mScreenBigEnough) {
+            return;
+        }
+
+        try (final VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
+            final int displayId = displaySession.createDisplayWithDefaultDisplayMetricsAndWait(
+                    InstrumentationRegistry.getInstrumentation().getTargetContext()).getDisplayId();
+
+            assertEventAfterGesture(swipe(displayId),
+                    AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
+                    AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
+
+            assertEventAfterGesture(tap(displayId),
+                    AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
+                    AccessibilityEvent.TYPE_TOUCH_EXPLORATION_GESTURE_START,
+                    AccessibilityEvent.TYPE_TOUCH_EXPLORATION_GESTURE_END,
+                    AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
+
+            assertEventAfterGesture(doubleTap(displayId),
+                    AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
+                    AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
+
+            assertEventAfterGesture(doubleTapAndHold(displayId),
+                    AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
+                    AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
+        }
     }
 
     /** Test touch for accessibility events */
@@ -243,36 +340,40 @@ public class AccessibilityGestureDetectorTest {
         }
     }
 
-    private GestureDescription swipe() {
+    private GestureDescription swipe(int displayId) {
         GestureDescription.Builder builder = new GestureDescription.Builder();
         StrokeDescription swipe = new StrokeDescription(
                 linePath(mCenter, p(0, mStrokeLenPxY), null), 0, STROKE_MS, false);
         builder.addStroke(swipe);
+        builder.setDisplayId(displayId);
         return builder.build();
     }
 
-    private GestureDescription tap() {
+    private GestureDescription tap(int displayId) {
         GestureDescription.Builder builder = new GestureDescription.Builder();
         StrokeDescription tap = click(mTapLocation);
         builder.addStroke(tap);
+        builder.setDisplayId(displayId);
         return builder.build();
     }
 
-    private GestureDescription doubleTap() {
+    private GestureDescription doubleTap(int displayId) {
         GestureDescription.Builder builder = new GestureDescription.Builder();
         StrokeDescription tap1 = click(mTapLocation);
         StrokeDescription tap2 = startingAt(endTimeOf(tap1) + 20, click(mTapLocation));
         builder.addStroke(tap1);
         builder.addStroke(tap2);
+        builder.setDisplayId(displayId);
         return builder.build();
     }
 
-    private GestureDescription doubleTapAndHold() {
+    private GestureDescription doubleTapAndHold(int displayId) {
         GestureDescription.Builder builder = new GestureDescription.Builder();
         StrokeDescription tap1 = click(mTapLocation);
         StrokeDescription tap2 = startingAt(endTimeOf(tap1) + 20, longClick(mTapLocation));
         builder.addStroke(tap1);
         builder.addStroke(tap2);
+        builder.setDisplayId(displayId);
         return builder.build();
     }
 }

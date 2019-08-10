@@ -41,7 +41,7 @@ import java.util.regex.Pattern;
  */
 @OptionClass(alias = "backup-preparer")
 public class BackupPreparer implements ITargetCleaner {
-    private static final long TRANSPORT_AVAILABLE_TIMEOUT_SECONDS = TimeUnit.MINUTES.toSeconds(2);
+    private static final long TRANSPORT_AVAILABLE_TIMEOUT_SECONDS = TimeUnit.MINUTES.toSeconds(5);
     @Option(name="enable-backup-if-needed", description=
             "Enable backup before all the tests and return to the original state after.")
     private boolean mEnableBackup = true;

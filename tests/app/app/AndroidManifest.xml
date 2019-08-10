@@ -45,6 +45,7 @@
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <application android:label="Android TestCase"
                 android:icon="@drawable/size_48x48"
@@ -417,6 +418,8 @@
                  android:label="BubblesTestsService"
                  android:exported="true">
         </service>
+
+        <service android:name="android.app.stubs.LocalAlertService" />
     </application>
 
 </manifest>
