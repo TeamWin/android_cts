@@ -34,7 +34,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 	android-icu4j-tests
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests mts
 
 LOCAL_PACKAGE_NAME := CtsIcuTestCases
 LOCAL_PRIVATE_PLATFORM_APIS := true
