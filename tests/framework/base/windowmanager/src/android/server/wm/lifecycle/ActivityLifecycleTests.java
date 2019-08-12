@@ -21,6 +21,8 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.ActivityManagerState.STATE_PAUSED;
 import static android.server.wm.ActivityManagerState.STATE_STOPPED;
 import static android.server.wm.UiDeviceUtils.pressBackButton;
+import static android.server.wm.lifecycle.ActivityLifecycleClientTestBase.LaunchForResultActivity.EXTRA_LAUNCH_ON_RESULT;
+import static android.server.wm.lifecycle.ActivityLifecycleClientTestBase.LaunchForResultActivity.EXTRA_LAUNCH_ON_RESUME_AFTER_RESULT;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_ACTIVITY_RESULT;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_CREATE;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_DESTROY;
@@ -34,6 +36,7 @@ import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_GAINED;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_LOST;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.PRE_ON_CREATE;
+import static android.server.wm.lifecycle.LifecycleVerifier.transition;
 import static android.view.Surface.ROTATION_0;
 import static android.view.Surface.ROTATION_180;
 import static android.view.Surface.ROTATION_270;
@@ -49,6 +52,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.platform.test.annotations.Presubmit;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 
 import com.android.compatibility.common.util.AmUtils;
@@ -269,6 +273,85 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 getLifecycleLog());
         LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
                 Arrays.asList(ON_RESUME), "secondDestroy");
+    }
+
+    @FlakyTest(bugId=137329632)
+    @Test
+    public void testFinishBottom() throws Exception {
+        final Activity bottomActivity = mFirstActivityTestRule.launchActivity(new Intent());
+        final Activity topActivity = mSecondActivityTestRule.launchActivity(new Intent());
+        waitAndAssertActivityStates(state(bottomActivity, ON_STOP),
+                state(topActivity, ON_RESUME));
+
+        // Finish the activity on the bottom
+        getLifecycleLog().clear();
+        bottomActivity.finish();
+
+        // Assert that activity on the bottom went directly to destroyed state, and activity on top
+        // did not get any lifecycle changes.
+        waitAndAssertActivityStates(state(bottomActivity, ON_DESTROY));
+        LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
+                Arrays.asList(ON_DESTROY), "destroyOnBottom");
+        LifecycleVerifier.assertEmptySequence(SecondActivity.class, getLifecycleLog(),
+                "destroyOnBottom");
+    }
+
+    @FlakyTest(bugId=137329632)
+    @Test
+    public void testFinishAndLaunchOnResult() throws Exception {
+        testLaunchForResultAndLaunchAfterResultSequence(EXTRA_LAUNCH_ON_RESULT);
+    }
+
+    @FlakyTest(bugId=137329632)
+    @Test
+    public void testFinishAndLaunchAfterOnResultInOnResume() throws Exception {
+        testLaunchForResultAndLaunchAfterResultSequence(EXTRA_LAUNCH_ON_RESUME_AFTER_RESULT);
+    }
+
+    /**
+     * This triggers launch of an activity for result, which immediately finishes. After receiving
+     * result new activity launch is triggered automatically.
+     * @see android.server.wm.lifecycle.ActivityLifecycleClientTestBase.LaunchForResultActivity
+     */
+    private void testLaunchForResultAndLaunchAfterResultSequence(String flag) {
+        final Intent intent = new Intent();
+        intent.putExtra(flag, true);
+        intent.putExtra(EXTRA_FINISH_IN_ON_RESUME, true);
+        mLaunchForResultActivityTestRule.launchActivity(intent);
+
+        waitAndAssertActivityStates(state(CallbackTrackingActivity.class, ON_TOP_POSITION_GAINED),
+                state(ResultActivity.class, ON_DESTROY),
+                state(LaunchForResultActivity.class, ON_STOP));
+        LifecycleVerifier.assertOrder(getLifecycleLog(), Arrays.asList(
+                // Base launching activity starting.
+                transition(LaunchForResultActivity.class, PRE_ON_CREATE),
+                transition(LaunchForResultActivity.class, ON_CREATE),
+                transition(LaunchForResultActivity.class, ON_START),
+                transition(LaunchForResultActivity.class, ON_POST_CREATE),
+                transition(LaunchForResultActivity.class, ON_RESUME),
+                transition(LaunchForResultActivity.class, ON_TOP_POSITION_GAINED),
+                // An activity is automatically launched for result.
+                transition(LaunchForResultActivity.class, ON_TOP_POSITION_LOST),
+                transition(LaunchForResultActivity.class, ON_PAUSE),
+                transition(ResultActivity.class, PRE_ON_CREATE),
+                transition(ResultActivity.class, ON_CREATE),
+                transition(ResultActivity.class, ON_START),
+                transition(ResultActivity.class, ON_RESUME),
+                transition(ResultActivity.class, ON_TOP_POSITION_GAINED),
+                // Activity that was launched for result is finished automatically - the base
+                // launching activity is brought to front.
+                transition(LaunchForResultActivity.class, ON_ACTIVITY_RESULT),
+                transition(LaunchForResultActivity.class, ON_RESUME),
+                transition(LaunchForResultActivity.class, ON_TOP_POSITION_GAINED),
+                // New activity is launched after receiving result in base activity.
+                transition(LaunchForResultActivity.class, ON_TOP_POSITION_LOST),
+                transition(LaunchForResultActivity.class, ON_PAUSE),
+                transition(CallbackTrackingActivity.class, PRE_ON_CREATE),
+                transition(CallbackTrackingActivity.class, ON_CREATE),
+                transition(CallbackTrackingActivity.class, ON_START),
+                transition(CallbackTrackingActivity.class, ON_RESUME),
+                transition(CallbackTrackingActivity.class, ON_TOP_POSITION_GAINED)),
+                "launchForResultAndLaunchAfterOnResult");
     }
 
     @Test
