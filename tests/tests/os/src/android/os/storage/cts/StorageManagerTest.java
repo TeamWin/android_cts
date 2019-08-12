@@ -27,6 +27,7 @@ import android.os.Looper;
 import android.os.ProxyFileDescriptorCallback;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
+import android.os.UserManager;
 import android.os.storage.OnObbStateChangeListener;
 import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
@@ -69,15 +70,22 @@ public class StorageManagerTest extends AndroidTestCase {
     private static final String TEST1_NEW_CONTENTS = "1\n";
 
     private StorageManager mStorageManager;
+    private UserManager mUserManager;
     private final Handler mHandler = new Handler(Looper.getMainLooper());
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         mStorageManager = (StorageManager) mContext.getSystemService(Context.STORAGE_SERVICE);
+        mUserManager = (UserManager) mContext.getSystemService(Context.USER_SERVICE);
     }
 
     public void testMountAndUnmountObbNormal() throws IOException {
+        // Mount obb only works for system user. Skip for secondary users.
+        if (!mUserManager.isSystemUser()) {
+            return;
+        }
+
         for (File target : getTargetFiles()) {
             target = new File(target, "test1_new.obb");
             Log.d(TAG, "Testing path " + target);
@@ -104,6 +112,11 @@ public class StorageManagerTest extends AndroidTestCase {
     }
 
     public void testAttemptMountNonObb() {
+        // Mount obb only works for system user. Skip for secondary users.
+        if (!mUserManager.isSystemUser()) {
+            return;
+        }
+
         for (File target : getTargetFiles()) {
             target = new File(target, "test1_nosig.obb");
             Log.d(TAG, "Testing path " + target);
@@ -141,6 +154,11 @@ public class StorageManagerTest extends AndroidTestCase {
     }
 
     public void testMountAndUnmountTwoObbs() throws IOException {
+        // Mount obb only works for system user. Skip for secondary users.
+        if (!mUserManager.isSystemUser()) {
+            return;
+        }
+
         for (File target : getTargetFiles()) {
             Log.d(TAG, "Testing target " + target);
             final File test1 = new File(target, "test1.obb");
