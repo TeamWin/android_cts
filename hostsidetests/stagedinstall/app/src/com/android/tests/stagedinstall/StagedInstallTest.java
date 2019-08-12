@@ -452,6 +452,21 @@ public class StagedInstallTest {
     }
 
     @Test
+    public void testInstallV2Apex_Commit() throws Exception {
+        int sessionId = stageSingleApk(TestApp.Apex2).assertSuccessful().getSessionId();
+        waitForIsReadyBroadcast(sessionId);
+        assertSessionReady(sessionId);
+        storeSessionId(sessionId);
+    }
+
+    @Test
+    public void testInstallV2Apex_VerifyPostReboot() throws Exception {
+        int sessionId = retrieveLastSessionId();
+        assertSessionApplied(sessionId);
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(2);
+    }
+
+    @Test
     public void testInstallV2SignedBobApex_Commit() throws Exception {
         int sessionId = stageSingleApk(Apex2SignedBobRot).assertSuccessful().getSessionId();
         waitForIsReadyBroadcast(sessionId);
@@ -540,6 +555,25 @@ public class StagedInstallTest {
         assertSessionFailed(sessionId);
         // Apex shouldn't be downgraded.
         assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(3);
+    }
+
+    @Test
+    public void testStagedInstallDowngradeApexToSystemVersion_DebugBuild_Commit()
+            throws Exception {
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(2);
+        int sessionId = stageDowngradeSingleApk(TestApp.Apex1).assertSuccessful().getSessionId();
+        waitForIsReadyBroadcast(sessionId);
+        assertSessionReady(sessionId);
+        storeSessionId(sessionId);
+    }
+
+    @Test
+    public void testStagedInstallDowngradeApexToSystemVersion_DebugBuild_VerifyPostReboot()
+            throws Exception {
+        int sessionId = retrieveLastSessionId();
+        assertSessionApplied(sessionId);
+        // Apex should be downgraded.
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(1);
     }
 
     @Test
