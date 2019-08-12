@@ -37,7 +37,7 @@ static void validateBitmapInfo(JNIEnv* env, jclass, jobject jbitmap, jint width,
     ASSERT_EQ(format, info.format);
 }
 
-static void validateNdkAccessAfterRecycle(JNIEnv* env, jclass, jobject jbitmap) {
+static void validateNdkAccessFails(JNIEnv* env, jclass, jobject jbitmap) {
     void* pixels = nullptr;
     int err = AndroidBitmap_lockPixels(env, jbitmap, &pixels);
     ASSERT_EQ(err, ANDROID_BITMAP_RESULT_JNI_EXCEPTION);
@@ -79,14 +79,29 @@ static jint getFormat(JNIEnv* env, jclass, jobject jbitmap) {
     return info.format;
 }
 
+static void testNullBitmap(JNIEnv* env, jclass) {
+    ASSERT_NE(nullptr, env);
+    AndroidBitmapInfo info;
+    int err = AndroidBitmap_getInfo(env, nullptr, &info);
+    ASSERT_EQ(err, ANDROID_BITMAP_RESULT_BAD_PARAMETER);
+
+    void* pixels = nullptr;
+    err = AndroidBitmap_lockPixels(env, nullptr, &pixels);
+    ASSERT_EQ(err, ANDROID_BITMAP_RESULT_BAD_PARAMETER);
+
+    err = AndroidBitmap_unlockPixels(env, nullptr);
+    ASSERT_EQ(err, ANDROID_BITMAP_RESULT_BAD_PARAMETER);
+}
+
 static JNINativeMethod gMethods[] = {
     { "nValidateBitmapInfo", "(Landroid/graphics/Bitmap;IIZ)V",
         (void*) validateBitmapInfo },
-    { "nValidateNdkAccessAfterRecycle", "(Landroid/graphics/Bitmap;)V",
-        (void*) validateNdkAccessAfterRecycle },
+    { "nValidateNdkAccessFails", "(Landroid/graphics/Bitmap;)V",
+        (void*) validateNdkAccessFails },
     { "nFillRgbaHwBuffer", "(Landroid/hardware/HardwareBuffer;)V",
         (void*) fillRgbaHardwareBuffer },
     { "nGetFormat", "(Landroid/graphics/Bitmap;)I", (void*) getFormat },
+    { "nTestNullBitmap", "()V", (void*) testNullBitmap },
 };
 
 int register_android_graphics_cts_BitmapTest(JNIEnv* env) {
