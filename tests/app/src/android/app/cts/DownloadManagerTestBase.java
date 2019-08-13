@@ -107,20 +107,17 @@ public class DownloadManagerTestBase {
         }
     }
 
-    protected Uri getMediaStoreUri(Uri downloadUri) throws Exception {
-        // Need to pass in the user id to support multi-user scenarios.
-        final int userId = getUserId();
-        final String cmd = String.format("content query --uri %s --projection %s --user %s",
-                downloadUri, DownloadManager.COLUMN_MEDIASTORE_URI, userId);
-        final String res = runShellCommand(cmd).trim();
-        final String str = DownloadManager.COLUMN_MEDIASTORE_URI + "=";
-        final int i = res.indexOf(str);
-        if (i >= 0) {
-            return Uri.parse(res.substring(i + str.length()));
+    protected static Uri getMediaStoreUri(Uri downloadUri) throws Exception {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        Cursor cursor = context.getContentResolver().query(downloadUri, null, null, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            // DownloadManager.COLUMN_MEDIASTORE_URI is not a column in the query result.
+            // COLUMN_MEDIAPROVIDER_URI value maybe the same as COLUMN_MEDIASTORE_URI but NOT
+            // guaranteed.
+            int index = cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_MEDIAPROVIDER_URI);
+            return Uri.parse(cursor.getString(index));
         } else {
-            throw new FileNotFoundException("Failed to find "
-                    + DownloadManager.COLUMN_MEDIASTORE_URI + " for "
-                    + downloadUri + "; found " + res);
+            throw new FileNotFoundException("Failed to find entry for " + downloadUri);
         }
     }
 
@@ -154,7 +151,8 @@ public class DownloadManagerTestBase {
 
     protected static String readFromRawFile(String filePath) throws Exception {
         Log.d(TAG, "Reading form file: " + filePath);
-        return runShellCommand("cat " + filePath);
+        return readFromFile(
+            ParcelFileDescriptor.open(new File(filePath), ParcelFileDescriptor.MODE_READ_ONLY));
     }
 
     protected static String readFromFile(ParcelFileDescriptor pfd) throws Exception {
