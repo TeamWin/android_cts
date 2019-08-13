@@ -76,6 +76,8 @@ import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.cts.helpers.DeviceInteractionHelperRule;
+import com.android.cts.helpers.ICtsPrintHelper;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
@@ -133,6 +135,10 @@ public abstract class BasePrintTest {
     private static final SparseArray<BasePrintTest> sIdToTest = new SparseArray<>();
 
     public final @Rule ShouldStartActivity mShouldStartActivityRule = new ShouldStartActivity();
+    public final @Rule DeviceInteractionHelperRule<ICtsPrintHelper> mHelperRule =
+            new DeviceInteractionHelperRule(ICtsPrintHelper.class);
+
+    protected ICtsPrintHelper mPrintHelper;
 
     /**
      * Return the UI device
@@ -303,12 +309,19 @@ public abstract class BasePrintTest {
             createActivity();
         }
 
+        mPrintHelper = mHelperRule.getHelper();
+        mPrintHelper.setUp();
+
         Log.d(LOG_TAG, "setUp() done");
     }
 
     @After
     public void tearDown() throws Exception {
         Log.d(LOG_TAG, "tearDown()");
+
+        if (mPrintHelper != null) {
+            mPrintHelper.tearDown();
+        }
 
         finishActivity();
 
@@ -733,18 +746,6 @@ public abstract class BasePrintTest {
         assertFalse(getUiDevice().hasObject(By.res("com.android.printspooler:id/print_button")));
     }
 
-    public void clickPrintButton() throws UiObjectNotFoundException, IOException {
-        getUiDevice().waitForIdle();
-
-        UiObject2 printButton = getUiDevice().wait(Until.findObject(By.res(
-                "com.android.printspooler:id/print_button")), OPERATION_TIMEOUT_MILLIS);
-        if (printButton == null) {
-            dumpWindowHierarchy();
-            throw new UiObjectNotFoundException("print button not found");
-        }
-        printButton.click();
-    }
-
     protected void clickRetryButton() throws UiObjectNotFoundException, IOException {
         try {
             UiObject retryButton = getUiDevice().findObject(new UiSelector().resourceId(
@@ -1055,7 +1056,7 @@ public abstract class BasePrintTest {
         Log.d(LOG_TAG, "selectPrinter");
         selectPrinter(printerName);
         Log.d(LOG_TAG, "clickPrintButton");
-        clickPrintButton();
+        mPrintHelper.submitPrintJob();
 
         eventually(() -> {
             Log.d(LOG_TAG, "answerPrintServicesWarning");
