@@ -260,6 +260,11 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         getDevice().startUser(userId);
     }
 
+    /** Initializes the user with waitFlag. This is required so that apps can run on it. */
+    protected void startUserAndWait(int userId) throws Exception {
+        getDevice().startUser(userId, /* waitFlag= */ true);
+    }
+
     /**
      * Initializes the user with the given id, and waits until the user has started and unlocked
      * before continuing.
