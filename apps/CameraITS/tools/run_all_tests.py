@@ -358,12 +358,6 @@ def main():
         # assign temp_scenes back to scenes and remove duplicates
         scenes = sorted(set(temp_scenes), key=temp_scenes.index)
 
-    # Initialize test results
-    results = {}
-    result_key = ItsSession.RESULT_KEY
-    for s in ALL_SCENES:
-        results[s] = {result_key: ItsSession.RESULT_NOT_EXECUTED}
-
     # Make output directories to hold the generated files.
     topdir = tempfile.mkdtemp(dir=tmp_dir)
     subprocess.call(['chmod', 'g+rx', topdir])
@@ -454,6 +448,12 @@ def main():
             assert wake_code == 0
 
     for id_combo in camera_id_combos:
+        # Initialize test results
+        results = {}
+        result_key = ItsSession.RESULT_KEY
+        for s in ALL_SCENES:
+            results[s] = {result_key: ItsSession.RESULT_NOT_EXECUTED}
+
         camera_fov = calc_camera_fov(id_combo.id, id_combo.sub_id)
         id_combo_string = id_combo.id
         has_hidden_sub_camera = id_combo.sub_id is not None
