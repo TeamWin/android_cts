@@ -39,6 +39,7 @@ import android.util.Log;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.RequiredServiceRule;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
@@ -47,6 +48,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
+import org.junit.ClassRule;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -65,6 +67,10 @@ public class AppPredictionServiceTest {
     private static final int TEST_NUM_PREDICTIONS = 10;
     private static final String TEST_LAUNCH_LOCATION = "testCollapsedLocation";
     private static final int TEST_ACTION = 2;
+
+    @ClassRule
+    public static final RequiredServiceRule mRequiredServiceRule =
+            new RequiredServiceRule(APP_PREDICTION_SERVICE);
 
     private ServiceReporter mReporter;
     private Bundle mPredictionContextExtras;
