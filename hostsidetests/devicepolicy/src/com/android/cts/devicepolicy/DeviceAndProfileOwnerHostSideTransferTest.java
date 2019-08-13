@@ -182,7 +182,7 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
             fail("Failed to set device owner");
             return -1;
         }
-        startUser(userId);
+        startUserAndWait(userId);
         return userId;
     }
 
