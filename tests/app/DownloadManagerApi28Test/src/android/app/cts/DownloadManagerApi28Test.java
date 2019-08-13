@@ -173,8 +173,6 @@ public class DownloadManagerApi28Test extends DownloadManagerTestBase {
                 receiver.waitForDownloadComplete(SHORT_TIMEOUT, downloadId);
                 assertSuccessfulDownload(downloadId, new File(downloadLocation.getPath()));
                 final Uri downloadUri = mDownloadManager.getUriForDownloadedFile(downloadId);
-                mContext.grantUriPermission("com.android.shell", downloadUri,
-                        Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 final Uri mediaStoreUri = getMediaStoreUri(downloadUri);
                 final ContentResolver contentResolver = mContext.getContentResolver();
                 assertArrayEquals(hash(contentResolver.openInputStream(downloadUri)),
@@ -216,8 +214,6 @@ public class DownloadManagerApi28Test extends DownloadManagerTestBase {
                     "text/plain", downloadLocation, fileContents.getBytes().length, true);
             assertTrue(downloadId >= 0);
             final Uri downloadUri = mDownloadManager.getUriForDownloadedFile(downloadId);
-            mContext.grantUriPermission("com.android.shell", downloadUri,
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION);
             final Uri mediaStoreUri = getMediaStoreUri(downloadUri);
             assertArrayEquals(hash(new FileInputStream(file)),
                     hash(mContext.getContentResolver().openInputStream(mediaStoreUri)));
