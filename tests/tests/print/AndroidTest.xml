@@ -42,6 +42,8 @@
         <option name="test-file-name" value="CtsPrintTestCases.apk" />
     </target_preparer>
 
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DeviceInteractionHelperInstaller" />
+
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.print.cts" />
         <option name="runtime-hint" value="33m00s" />
