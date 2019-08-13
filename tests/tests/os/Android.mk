@@ -41,7 +41,8 @@ LOCAL_SRC_FILES := \
     src/android/os/cts/IEmptyService.aidl \
     src/android/os/cts/ISeccompIsolatedService.aidl \
     src/android/os/cts/ISecondary.aidl \
-    src/android/os/cts/ISharedMemoryService.aidl
+    src/android/os/cts/ISharedMemoryService.aidl \
+    src/android/os/cts/IParcelExceptionService.aidl \
 
 LOCAL_PACKAGE_NAME := CtsOsTestCases
 
