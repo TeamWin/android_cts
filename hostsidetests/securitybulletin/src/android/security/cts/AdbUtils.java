@@ -240,6 +240,15 @@ public class AdbUtils {
                 runPocGetExitStatus(pocName, device, timeout) != 113);
     }
 
+    public static int runProxyAutoConfig(String pacName, ITestDevice device) throws Exception {
+        runCommandLine("chmod +x /data/local/tmp/pacrunner", device);
+        String targetPath = "/data/local/tmp/" + pacName + ".pac";
+        AdbUtils.pushResource("/" + pacName + ".pac", targetPath, device);
+        int code = runCommandGetExitCode("/data/local/tmp/pacrunner " + targetPath, device);
+        runCommandLine("rm " + targetPath, device);
+        return code;
+    }
+
     /**
      * Executes a given poc within a given timeout. Returns error if the
      * given poc doesnt complete its execution within timeout. It also deletes
