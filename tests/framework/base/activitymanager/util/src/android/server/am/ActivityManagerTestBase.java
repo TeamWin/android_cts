@@ -244,7 +244,11 @@ public abstract class ActivityManagerTestBase {
 
         pressWakeupButton();
         pressUnlockButton();
-        pressHomeButton();
+        // Using launchHomeActivity to replace pressHomeButton here.
+        // pressHomeButton will trigger AMS.stopAppSwitches, if we using instrumentation to launch
+        // test activity, then the activity would be launched after 5 seconds, which may cause some
+        // tests failed.
+        launchHomeActivity();
         removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
     }
 
@@ -257,7 +261,7 @@ public abstract class ActivityManagerTestBase {
         executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
         executeShellCommand(AM_FORCE_STOP_SECOND_TEST_PACKAGE);
         executeShellCommand(AM_FORCE_STOP_THIRD_TEST_PACKAGE);
-        pressHomeButton();
+        launchHomeActivity();
     }
 
     protected void removeStacksWithActivityTypes(int... activityTypes) {
