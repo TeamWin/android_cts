@@ -545,7 +545,8 @@ public class CameraVideoActivity extends PassFailButtons.Activity
                                     mUntestedCombinations.remove(combination);
                                     mTestedCombinations.add(combination);
 
-                                    if (mUntestedCombinations.isEmpty()) {
+                                    if (mUntestedCombinations.isEmpty() &&
+                                            mUntestedCameras.isEmpty()) {
                                         mPassButton.setEnabled(true);
                                         if (VERBOSE) {
                                             Log.v(TAG, "run: test success");
