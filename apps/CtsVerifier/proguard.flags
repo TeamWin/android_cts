@@ -29,6 +29,9 @@
 
 -keepclasseswithmembers class * extends com.android.cts.verifier.location.LocationModeTestActivity
 
+-keepclasseswithmembers class * extends com.android.cts.verifier.audio.HifiUltrasoundSpeakerTestActivity
+-keepclasseswithmembers class * extends com.android.cts.verifier.audio.HifiUltrasoundTestActivity
+
 # keep mockito methods
 -keep class org.mockito.** { *; }
 -keep interface org.mockito.** { *; }
