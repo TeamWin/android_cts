@@ -16,8 +16,9 @@
 
 package android.cts.backup;
 
+import static org.junit.Assert.fail;
+
 import com.android.compatibility.common.util.BackupHostSideUtils;
-import com.android.compatibility.common.util.CommonTestUtils;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
@@ -30,7 +31,10 @@ import com.android.tradefed.targetprep.ITargetCleaner;
 import com.android.tradefed.targetprep.TargetSetupError;
 
 import java.io.IOException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -115,24 +119,52 @@ public class BackupPreparer implements ITargetCleaner {
 
     private void waitForTransport(String transport) throws TargetSetupError {
         try {
-            CommonTestUtils.waitUntil(
+            waitUntilWithLastTry(
                     "Local transport didn't become available",
                     TRANSPORT_AVAILABLE_TIMEOUT_SECONDS,
-                    () -> hasBackupTransport(transport));
-        } catch (DeviceNotAvailableException | InterruptedException e) {
+                    lastTry -> uncheck(() -> hasBackupTransport(transport, lastTry)));
+        } catch (InterruptedException e) {
             throw new TargetSetupError(
                     "Device should have LocalTransport available", mDevice.getDeviceDescriptor());
         }
     }
 
-    private boolean hasBackupTransport(String transport) throws DeviceNotAvailableException {
+    private boolean hasBackupTransport(
+            String transport, boolean logIfFail) throws DeviceNotAvailableException {
         String output = mDevice.executeShellCommand("bmgr list transports");
         for (String t : output.split(" ")) {
             if (transport.equals(t.trim())) {
                 return true;
             }
         }
+        if (logIfFail) {
+            CLog.d("bmgr list transports: " + output);
+        }
         return false;
+    }
+
+    /**
+     * Calls {@code predicate} with {@code false} until time-out {@code timeoutSeconds} is reached,
+     * if {@code predicate} returns true, method returns. If time-out is reached before that, we
+     * call {@code predicate} with {@code true} one last time, if that last call returns false we
+     * fail with {@code message}.
+     *
+     * TODO: Move to CommonTestUtils
+     */
+    private static void waitUntilWithLastTry(
+            String message, long timeoutSeconds, Function<Boolean, Boolean> predicate)
+            throws InterruptedException {
+        int sleep = 125;
+        final long timeout = System.currentTimeMillis() + timeoutSeconds * 1000;
+        while (System.currentTimeMillis() < timeout) {
+            if (predicate.apply(false)) {
+                return;
+            }
+            Thread.sleep(sleep);
+        }
+        if (!predicate.apply(true)) {
+            fail(message);
+        }
     }
 
     // Copied over from BackupQuotaTest
@@ -183,4 +215,13 @@ public class BackupPreparer implements ITargetCleaner {
         }
     }
 
+    private static <T> T uncheck(Callable<T> callable) {
+        try {
+            return callable.call();
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new CompletionException(e);
+        }
+    }
 }

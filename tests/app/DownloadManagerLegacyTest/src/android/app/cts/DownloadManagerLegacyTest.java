@@ -108,8 +108,6 @@ public class DownloadManagerLegacyTest extends DownloadManagerTestBase {
                     true, "audio/mp3", downloadLocation, 0, true);
             assertTrue(downloadId >= 0);
             final Uri downloadUri = mDownloadManager.getUriForDownloadedFile(downloadId);
-            mContext.grantUriPermission("com.android.shell", downloadUri,
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION);
             final Uri mediaStoreUri = getMediaStoreUri(downloadUri);
 
             assertArrayEquals(hash(mContext.getAssets().open(assetName)),
