@@ -14,10 +14,13 @@
 
 package android.accessibilityservice.cts;
 
+import static org.junit.Assert.assertNotNull;
+
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.accessibilityservice.AccessibilityButtonController;
 import android.platform.test.annotations.AppModeFull;
+import android.view.Display;
 
 import androidx.test.runner.AndroidJUnit4;
 
@@ -36,7 +39,7 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class AccessibilityButtonTest {
 
-    private InstrumentedAccessibilityServiceTestRule<StubAccessibilityButtonService > mServiceRule =
+    private InstrumentedAccessibilityServiceTestRule<StubAccessibilityButtonService> mServiceRule =
             new InstrumentedAccessibilityServiceTestRule<>(StubAccessibilityButtonService.class);
 
     private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
@@ -74,5 +77,14 @@ public class AccessibilityButtonTest {
     public void testCallbackRegistrationUnregistration_serviceDoesNotCrash() {
         mButtonController.registerAccessibilityButtonCallback(mStubCallback);
         mButtonController.unregisterAccessibilityButtonCallback(mStubCallback);
+    }
+
+    @Test
+    @AppModeFull
+    public void testGetAccessibilityButtonControllerByDisplayId_NotReturnNull() {
+        final AccessibilityButtonController buttonController =
+                mService.getAccessibilityButtonController(
+                        Display.DEFAULT_DISPLAY);
+        assertNotNull(buttonController);
     }
 }

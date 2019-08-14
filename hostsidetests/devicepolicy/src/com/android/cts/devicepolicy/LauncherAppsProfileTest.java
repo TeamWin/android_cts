@@ -53,7 +53,7 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
                     mProfileUserId);
             mProfileSerialNumber = Integer.toString(getUserSerialNumber(mProfileUserId));
             mMainUserSerialNumber = Integer.toString(getUserSerialNumber(mParentUserId));
-            startUser(mProfileUserId);
+            startUserAndWait(mProfileUserId);
 
             // Install test APK on primary user and the managed profile.
             installTestApps(USER_ALL);
