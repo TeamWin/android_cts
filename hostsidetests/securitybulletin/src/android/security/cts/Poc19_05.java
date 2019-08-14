@@ -21,6 +21,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
 
+@SecurityTest
 public class Poc19_05 extends SecurityTestCase {
 
     /**
@@ -29,6 +30,15 @@ public class Poc19_05 extends SecurityTestCase {
     @SecurityTest(minPatchLevel = "2019-05")
     public void testPocCVE_2019_2052() throws Exception {
         int code = AdbUtils.runProxyAutoConfig("CVE-2019-2052", getDevice());
+        assertTrue(code != 139); // 128 + signal 11
+    }
+
+    /**
+     * b/129556111
+     */
+    @SecurityTest(minPatchLevel = "2019-05")
+    public void testPocCVE_2019_2045() throws Exception {
+        int code = AdbUtils.runProxyAutoConfig("CVE-2019-2045", getDevice());
         assertTrue(code != 139); // 128 + signal 11
     }
 }
