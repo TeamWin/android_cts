@@ -592,7 +592,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
             final int userId = createManagedProfile(mPrimaryUserId);
             installAppAsUser(apkName, userId);
             setProfileOwnerOrFail(adminReceiverClassName, userId);
-            startUser(userId, /* waitFlag= */ true);
+            startUserAndWait(userId);
             runDeviceTestsAsUser(
                     packageName,
                     MANAGEMENT_TEST,
