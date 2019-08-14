@@ -32,7 +32,6 @@ import android.view.WindowInsets;
 import android.view.WindowManager;
 
 import androidx.test.InstrumentationRegistry;
-import androidx.test.filters.FlakyTest;
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
@@ -48,7 +47,6 @@ import java.util.Random;
  * Build/Install/Run:
  *     atest CtsWindowManagerDeviceTestCases:WindowInputTests
  */
-@FlakyTest
 public class WindowInputTests {
     private final int TOTAL_NUMBER_OF_CLICKS = 100;
     private final ActivityTestRule<Activity> mActivityRule = new ActivityTestRule<>(Activity.class);

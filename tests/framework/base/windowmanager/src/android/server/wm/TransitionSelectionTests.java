@@ -58,7 +58,6 @@ import org.junit.Test;
  *     atest CtsWindowManagerDeviceTestCases:TransitionSelectionTests
  */
 @Presubmit
-@FlakyTest(bugId = 71792333)
 public class TransitionSelectionTests extends ActivityManagerTestBase {
 
     @Override
@@ -118,7 +117,6 @@ public class TransitionSelectionTests extends ActivityManagerTestBase {
                 false /*slowStop*/, TRANSIT_TASK_OPEN);
     }
 
-    @FlakyTest(bugId = 71792333)
     @Test
     public void testCloseTask_NeitherWallpaper() {
         testCloseTask(false /*bottomWallpaper*/, false /*topWallpaper*/,
@@ -177,7 +175,6 @@ public class TransitionSelectionTests extends ActivityManagerTestBase {
     // Test task close -- bottom task top activity slow in stopping
     // These simulate the case where the bottom activity is resumed
     // before AM receives its activitiyStopped
-    @FlakyTest(bugId = 71792333)
     @Test
     public void testCloseTask_NeitherWallpaper_SlowStop() {
         testCloseTask(false /*bottomWallpaper*/, false /*topWallpaper*/,
@@ -190,6 +187,7 @@ public class TransitionSelectionTests extends ActivityManagerTestBase {
                 true /*slowStop*/, TRANSIT_WALLPAPER_OPEN);
     }
 
+    @FlakyTest(bugId = 139111132)
     @Test
     public void testCloseTask_BothWallpaper_SlowStop() {
         testCloseTask(true /*bottomWallpaper*/, true /*topWallpaper*/,
@@ -223,7 +221,6 @@ public class TransitionSelectionTests extends ActivityManagerTestBase {
                 TRANSIT_TRANSLUCENT_ACTIVITY_CLOSE);
     }
 
-    @FlakyTest(bugId = 71792333)
     @Test
     public void testCloseTask_BottomWallpaper_Translucent() {
         testCloseTaskTranslucent(true /*bottomWallpaper*/, false /*topWallpaper*/,

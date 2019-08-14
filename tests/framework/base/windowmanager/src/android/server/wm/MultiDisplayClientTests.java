@@ -37,8 +37,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.display.DisplayManager;
-import android.platform.test.annotations.Presubmit;
 import android.os.Bundle;
+import android.platform.test.annotations.Presubmit;
 import android.view.Display;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
@@ -74,13 +74,11 @@ public class MultiDisplayClientTests extends MultiDisplayTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 130260102, detail = "Promote to presubmit once proved stable")
     public void testDisplayIdUpdateOnMove_RelaunchActivity() throws Exception {
         testDisplayIdUpdateOnMove(ClientTestActivity.class, false /* handlesConfigChange */);
     }
 
     @Test
-    @FlakyTest(bugId = 130260102, detail = "Promote to presubmit once proved stable")
     public void testDisplayIdUpdateOnMove_NoRelaunchActivity() throws Exception {
         testDisplayIdUpdateOnMove(NoRelaunchActivity.class, true /* handlesConfigChange */);
     }
@@ -149,7 +147,6 @@ public class MultiDisplayClientTests extends MultiDisplayTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 130379901, detail = "Promote to presubmit once proved stable")
     public void testDisplayIdUpdateWhenImeMove_RelaunchActivity() throws Exception {
         try (final TestActivitySession<ClientTestActivity> session = new TestActivitySession<>()) {
             testDisplayIdUpdateWhenImeMove(ClientTestActivity.class);
@@ -157,7 +154,6 @@ public class MultiDisplayClientTests extends MultiDisplayTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 130379901, detail = "Promote to presubmit once proved stable")
     public void testDisplayIdUpdateWhenImeMove_NoRelaunchActivity() throws Exception {
         try (final TestActivitySession<NoRelaunchActivity> session = new TestActivitySession<>()) {
             testDisplayIdUpdateWhenImeMove(NoRelaunchActivity.class);
@@ -203,7 +199,6 @@ public class MultiDisplayClientTests extends MultiDisplayTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 130379901, detail = "Promote to presubmit once proved stable")
     public void testInputMethodManagerDisplayId() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create a simulated display.
