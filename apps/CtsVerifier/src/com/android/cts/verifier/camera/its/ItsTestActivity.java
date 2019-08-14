@@ -96,6 +96,8 @@ public class ItsTestActivity extends DialogTestListActivity {
             new ArrayList<String> () { {
                     add("scene0");
                     add("scene1");
+                    add("scene2");
+                    add("scene4");
                     add("sensor_fusion");
              }};
 

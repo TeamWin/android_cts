@@ -64,6 +64,7 @@ def main():
 
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
+        props = cam.override_with_hidden_physical_camera_props(props)
         its.caps.skip_unless(its.caps.compute_target_exposure(props))
         sync_latency = its.caps.sync_latency(props)
         process_raw = its.caps.raw16(props) and its.caps.manual_sensor(props)
