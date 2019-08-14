@@ -241,4 +241,9 @@
 
     <!-- b/26149528 -->
     <option name="compatibility:exclude-filter" value="CtsTelecomTestCases android.telecom.cts.WiredHeadsetTest" />
+
+    <!-- b/122746861 -->
+    <option name="compatibility:exclude-filter" value="CtsBackupTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsBackupHostTestCases" />
+
 </configuration>
