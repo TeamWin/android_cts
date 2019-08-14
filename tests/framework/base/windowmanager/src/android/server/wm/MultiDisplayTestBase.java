@@ -62,6 +62,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.android.compatibility.common.util.SystemUtil;
+
 import org.junit.Before;
 
 import java.util.ArrayList;
@@ -499,6 +500,8 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             super(Settings.Global.getUriFor(Settings.Global.OVERLAY_DISPLAY_DEVICES),
                     Settings.Global::getString,
                     Settings.Global::putString);
+            // Remove existing overlay display to avoid display count problem.
+            removeExisting();
             mWm = context.getSystemService(WindowManager.class);
         }
 
@@ -554,6 +557,12 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             super.close();
             waitForDisplayGone(display -> mDisplays.stream()
                     .anyMatch(state -> state.mId == display.getDisplayId()));
+        }
+
+        private void removeExisting() {
+            if (mHasInitialValue && mInitialValue != null) {
+                delete(mUri);
+            }
         }
 
         private class OverlayDisplayState {
