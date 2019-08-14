@@ -37,9 +37,12 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 import java.util.Arrays;
 
+import com.androidplot.xy.PointLabelFormatter;
+import com.androidplot.xy.LineAndPointFormatter;
 import com.androidplot.xy.SimpleXYSeries;
+import com.androidplot.xy.XYPlot;
 import com.androidplot.xy.XYSeries;
-import com.androidplot.xy.*;
+import com.androidplot.xy.XYStepMode;
 
 import com.android.compatibility.common.util.CddTest;
 
@@ -279,7 +282,7 @@ public class HifiUltrasoundSpeakerTestActivity extends PassFailButtons.Activity 
         LineAndPointFormatter seriesFormat = new LineAndPointFormatter();
         seriesFormat.configure(getApplicationContext(),
             R.xml.ultrasound_line_formatter_trials);
-        seriesFormat.setPointLabelFormatter(null);
+        seriesFormat.setPointLabelFormatter(new PointLabelFormatter());
         plot.addSeries(series, seriesFormat);
       }
 
@@ -296,7 +299,7 @@ public class HifiUltrasoundSpeakerTestActivity extends PassFailButtons.Activity 
       LineAndPointFormatter noiseSeriesFormat = new LineAndPointFormatter();
       noiseSeriesFormat.configure(getApplicationContext(),
           R.xml.ultrasound_line_formatter_noise);
-      noiseSeriesFormat.setPointLabelFormatter(null);
+      noiseSeriesFormat.setPointLabelFormatter(new PointLabelFormatter());
       plot.addSeries(noiseSeries, noiseSeriesFormat);
 
       double[] dB = wavAnalyzerTask.getDB();
@@ -312,7 +315,7 @@ public class HifiUltrasoundSpeakerTestActivity extends PassFailButtons.Activity 
       LineAndPointFormatter seriesFormat = new LineAndPointFormatter();
       seriesFormat.configure(getApplicationContext(),
           R.xml.ultrasound_line_formatter_median);
-      seriesFormat.setPointLabelFormatter(null);
+      seriesFormat.setPointLabelFormatter(new PointLabelFormatter());
       plot.addSeries(series, seriesFormat);
 
       Double[] passX = new Double[] {Common.MIN_FREQUENCY_HZ, Common.MAX_FREQUENCY_HZ};
@@ -322,7 +325,7 @@ public class HifiUltrasoundSpeakerTestActivity extends PassFailButtons.Activity 
       LineAndPointFormatter passSeriesFormat = new LineAndPointFormatter();
       passSeriesFormat.configure(getApplicationContext(),
           R.xml.ultrasound_line_formatter_pass);
-      passSeriesFormat.setPointLabelFormatter(null);
+      passSeriesFormat.setPointLabelFormatter(new PointLabelFormatter());
       plot.addSeries(passSeries, passSeriesFormat);
     }
   }
