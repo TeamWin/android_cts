@@ -24,6 +24,7 @@ android_test {
         "cts",
         "vts",
         "general-tests",
+        "mts",
     ],
     certificate: ":cts-testkey1",
     optimize: {
