@@ -522,6 +522,8 @@ class ItsSession(object):
             cmd["awbLock"] = True
         if ev_comp != 0:
             cmd["evComp"] = ev_comp
+        if self._hidden_physical_id:
+            cmd["physicalId"] = self._hidden_physical_id
         self.sock.send(json.dumps(cmd) + "\n")
 
         # Wait for each specified 3A to converge.
@@ -607,14 +609,7 @@ class ItsSession(object):
 
         Optionally the out_surfaces field can specify physical camera id(s) if the
         current camera device is a logical multi-camera. The physical camera id
-        must refer to a physical camera backing this logical camera device. And
-        only "yuv", "raw", "raw10", "raw12" support the physical camera id field.
-
-        Currently only 2 physical streams with the same format are supported, one
-        from each physical camera:
-        - yuv physical streams of the same size.
-        - raw physical streams with the same or different sizes, depending on
-          device capability. (Different physical cameras may have different raw sizes).
+        must refer to a physical camera backing this logical camera device.
 
         Note that one or more surfaces can be specified, allowing a capture to
         request images back in multiple formats (e.g.) raw+yuv, raw+jpeg,
@@ -778,57 +773,64 @@ class ItsSession(object):
                                       "width" : max_yuv_size[0],
                                       "height": max_yuv_size[1]}]
 
-        # Figure out requested physical camera ids, physical and logical
-        # streams.
-        physical_cam_ids = {}
-        physical_buffers = {}
-        physical_cam_format = None
-        logical_cam_formats = []
+        ncap = len(cmd["captureRequests"])
+        nsurf = 1 if out_surfaces is None else len(cmd["outputSurfaces"])
+
+        cam_ids = []
+        bufs = {}
+        yuv_bufs = {}
         for i,s in enumerate(cmd["outputSurfaces"]):
             if self._hidden_physical_id:
                 s['physicalCamera'] = self._hidden_physical_id
 
-            if "format" in s and s["format"] in ["yuv", "raw", "raw10", "raw12"]:
-                if "physicalCamera" in s:
-                    if physical_cam_format is not None and s["format"] != physical_cam_format:
-                        raise its.error.Error('ITS does not support capturing multiple ' +
-                                              'physical formats yet')
-                    physical_cam_ids[i] = s["physicalCamera"]
-                    physical_buffers[s["physicalCamera"]] = []
-                    physical_cam_format = s["format"]
-                else:
-                    logical_cam_formats.append(s["format"])
+            if 'physicalCamera' in s:
+                cam_id = s['physicalCamera']
             else:
-                logical_cam_formats.append(s["format"])
+                cam_id = self._camera_id
 
-        ncap = len(cmd["captureRequests"])
-        nsurf = 1 if out_surfaces is None else len(cmd["outputSurfaces"])
-        # Only allow yuv output to multiple targets
-        logical_yuv_surfaces = [s for s in cmd["outputSurfaces"] if s["format"]=="yuv"\
-                        and "physicalCamera" not in s]
-        n_yuv = len(logical_yuv_surfaces)
-        # Compute the buffer size of YUV targets
-        yuv_maxsize_1d = 0
-        for s in logical_yuv_surfaces:
-            if not ("width" in s and "height" in s):
-                if self.props is None:
-                    raise its.error.Error('Camera props are unavailable')
-                yuv_maxsize_2d = its.objects.get_available_output_sizes(
-                    "yuv", self.props)[0]
-                yuv_maxsize_1d = yuv_maxsize_2d[0] * yuv_maxsize_2d[1] * 3 / 2
-                break
-        yuv_sizes = [c["width"]*c["height"]*3/2
-                     if "width" in c and "height" in c
-                     else yuv_maxsize_1d
-                     for c in logical_yuv_surfaces]
-        # Currently we don't pass enough metadta from ItsService to distinguish
-        # different yuv stream of same buffer size
-        if len(yuv_sizes) != len(set(yuv_sizes)):
-            raise its.error.Error(
-                    'ITS does not support yuv outputs of same buffer size')
-        if len(logical_cam_formats) > len(set(logical_cam_formats)):
-          if n_yuv != len(logical_cam_formats) - len(set(logical_cam_formats)) + 1:
-                raise its.error.Error('Duplicate format requested')
+            if cam_id not in cam_ids:
+                cam_ids.append(cam_id)
+                bufs[cam_id] = {"raw":[], "raw10":[], "raw12":[],
+                        "rawStats":[], "dng":[], "jpeg":[], "y8":[]}
+
+        for cam_id in cam_ids:
+            # Only allow yuv output to multiple targets
+            if cam_id == self._camera_id:
+                yuv_surfaces = [s for s in cmd["outputSurfaces"] if s["format"]=="yuv"\
+                                and "physicalCamera" not in s]
+                formats_for_id = [s["format"] for s in cmd["outputSurfaces"] if \
+                                 "physicalCamera" not in s]
+            else:
+                yuv_surfaces = [s for s in cmd["outputSurfaces"] if s["format"]=="yuv"\
+                                and "physicalCamera" in s and s["physicalCamera"] == cam_id]
+                formats_for_id = [s["format"] for s in cmd["outputSurfaces"] if \
+                                 "physicalCamera" in s and s["physicalCamera"] == cam_id]
+
+            n_yuv = len(yuv_surfaces)
+            # Compute the buffer size of YUV targets
+            yuv_maxsize_1d = 0
+            for s in yuv_surfaces:
+                if not ("width" in s and "height" in s):
+                    if self.props is None:
+                        raise its.error.Error('Camera props are unavailable')
+                    yuv_maxsize_2d = its.objects.get_available_output_sizes(
+                        "yuv", self.props)[0]
+                    yuv_maxsize_1d = yuv_maxsize_2d[0] * yuv_maxsize_2d[1] * 3 / 2
+                    break
+            yuv_sizes = [c["width"]*c["height"]*3/2
+                         if "width" in c and "height" in c
+                         else yuv_maxsize_1d
+                         for c in yuv_surfaces]
+            # Currently we don't pass enough metadta from ItsService to distinguish
+            # different yuv stream of same buffer size
+            if len(yuv_sizes) != len(set(yuv_sizes)):
+                raise its.error.Error(
+                        'ITS does not support yuv outputs of same buffer size')
+            if len(formats_for_id) > len(set(formats_for_id)):
+                if n_yuv != len(formats_for_id) - len(set(formats_for_id)) + 1:
+                    raise its.error.Error('Duplicate format requested')
+
+            yuv_bufs[cam_id] = {size:[] for size in yuv_sizes}
 
         raw_formats = 0;
         raw_formats += 1 if "dng" in formats else 0
@@ -862,10 +864,6 @@ class ItsSession(object):
         # the burst, however individual images of different formats can come
         # out in any order for that capture.
         nbufs = 0
-        bufs = {"raw":[], "raw10":[], "raw12":[],
-                "rawStats":[], "dng":[], "jpeg":[],
-                "y8":[]}
-        yuv_bufs = {size:[] for size in yuv_sizes}
         mds = []
         physical_mds = []
         widths = None
@@ -876,11 +874,11 @@ class ItsSession(object):
                     'raw10Image', 'raw12Image', 'rawStatsImage', 'dngImage', 'y8Image'] \
                     and buf is not None:
                 fmt = jsonObj['tag'][:-5]
-                bufs[fmt].append(buf)
+                bufs[self._camera_id][fmt].append(buf)
                 nbufs += 1
             elif jsonObj['tag'] == 'yuvImage':
                 buf_size = numpy.product(buf.shape)
-                yuv_bufs[buf_size].append(buf)
+                yuv_bufs[self._camera_id][buf_size].append(buf)
                 nbufs += 1
             elif jsonObj['tag'] == 'captureResults':
                 mds.append(jsonObj['objValue']['captureResult'])
@@ -890,35 +888,47 @@ class ItsSession(object):
                 heights = [out['height'] for out in outputs]
             else:
                 tagString = unicodedata.normalize('NFKD', jsonObj['tag']).encode('ascii', 'ignore');
-                for x in ['rawImage', 'raw10Image', 'raw12Image', 'yuvImage']:
-                    if (tagString.startswith(x)):
-                        physicalId = jsonObj['tag'][len(x):];
-                        if physicalId in physical_cam_ids.values():
-                            physical_buffers[physicalId].append(buf)
-                            nbufs += 1
+                for x in ['jpegImage', 'rawImage', \
+                        'raw10Image', 'raw12Image', 'rawStatsImage', 'yuvImage']:
+                    if tagString.startswith(x):
+                        if x == 'yuvImage':
+                            physicalId = jsonObj['tag'][len(x):]
+                            if physicalId in cam_ids:
+                                buf_size = numpy.product(buf.shape)
+                                yuv_bufs[physicalId][buf_size].append(buf)
+                                nbufs += 1
+                        else:
+                            physicalId = jsonObj['tag'][len(x):]
+                            if physicalId in cam_ids:
+                                fmt = x[:-5]
+                                bufs[physicalId][fmt].append(buf)
+                                nbufs += 1
         rets = []
         for j,fmt in enumerate(formats):
             objs = []
+            if "physicalCamera" in cmd["outputSurfaces"][j]:
+                cam_id = cmd["outputSurfaces"][j]["physicalCamera"]
+            else:
+                cam_id = self._camera_id
+
             for i in range(ncap):
                 obj = {}
                 obj["width"] = widths[j]
                 obj["height"] = heights[j]
                 obj["format"] = fmt
-                if j in physical_cam_ids:
-                    for physical_md in physical_mds[i]:
-                        if physical_cam_ids[j] in physical_md:
-                            obj["metadata"] = physical_md[physical_cam_ids[j]]
-                            break
-                else:
+                if cam_id == self._camera_id:
                     obj["metadata"] = mds[i]
-
-                if j in physical_cam_ids:
-                    obj["data"] = physical_buffers[physical_cam_ids[j]][i]
-                elif fmt == "yuv":
-                    buf_size = widths[j] * heights[j] * 3 / 2
-                    obj["data"] = yuv_bufs[buf_size][i]
                 else:
-                    obj["data"] = bufs[fmt][i]
+                    for physical_md in physical_mds[i]:
+                        if cam_id in physical_md:
+                            obj["metadata"] = physical_md[cam_id]
+                            break
+
+                if fmt == "yuv":
+                    buf_size = widths[j] * heights[j] * 3 / 2
+                    obj["data"] = yuv_bufs[cam_id][buf_size][i]
+                else:
+                    obj["data"] = bufs[cam_id][fmt][i]
                 objs.append(obj)
             rets.append(objs if ncap > 1 else objs[0])
         self.sock.settimeout(self.SOCK_TIMEOUT)
