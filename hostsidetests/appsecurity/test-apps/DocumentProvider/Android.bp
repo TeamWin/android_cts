@@ -30,6 +30,7 @@ android_test_helper_app {
         "cts",
         "vts",
         "general-tests",
+        "mts",
     ],
     certificate: ":cts-testkey1",
     optimize: {
