@@ -49,6 +49,7 @@ android_test_helper_app {
         ":ApexKeyRotationTestV3_SignedBob",
         ":ApexKeyRotationTestV3_SignedBobRot",
         ":StagedInstallTestApexV1_NotPreInstalled",
+        ":StagedInstallTestApexV1",
         ":StagedInstallTestApexV2",
         ":StagedInstallTestApexV2_AdditionalFile",
         ":StagedInstallTestApexV2_AdditionalFolder",
@@ -103,6 +104,13 @@ prebuilt_apex {
     name: "ApexKeyRotationTestV3_SignedBobRot",
     src: "testdata/apex/com.android.apex.cts.shim.v3_signed_bob_rot.apex",
     filename: "com.android.apex.cts.shim.v3_signed_bob_rot.apex",
+    installable: false,
+}
+
+prebuilt_apex {
+    name: "StagedInstallTestApexV1",
+    src: "testdata/apex/com.android.apex.cts.shim.v1.apex",
+    filename: "com.android.apex.cts.shim.v1.apex",
     installable: false,
 }
 
