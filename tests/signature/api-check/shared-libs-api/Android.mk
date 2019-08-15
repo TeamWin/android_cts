@@ -20,8 +20,8 @@ all_shared_libs_modules :=
 
 $(foreach ver,$(call int_range_list,28,$(PLATFORM_SDK_VERSION)),\
   $(foreach api_level,public system,\
-    $(foreach lib,$(filter-out android,$(filter-out %removed,\
-      $(basename $(notdir $(wildcard $(HISTORICAL_SDK_VERSIONS_ROOT)/$(ver)/$(api_level)/api/*.txt))))),\
+    $(foreach lib,$(filter-out android,$(filter-out %removed,$(filter-out incompatibilities,\
+      $(basename $(notdir $(wildcard $(HISTORICAL_SDK_VERSIONS_ROOT)/$(ver)/$(api_level)/api/*.txt)))))),\
         $(eval all_shared_libs_modules += $(lib)-$(ver)-$(api_level).txt))))
 
 all_shared_libs_files := $(addprefix $(COMPATIBILITY_TESTCASES_OUT_cts)/,$(all_shared_libs_modules))
