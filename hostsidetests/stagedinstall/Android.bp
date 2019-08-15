@@ -44,6 +44,10 @@ android_test_helper_app {
     manifest : "app/AndroidManifest.xml",
 
     java_resources:  [
+        ":ApexKeyRotationTestV2_SignedBob",
+        ":ApexKeyRotationTestV2_SignedBobRot",
+        ":ApexKeyRotationTestV3_SignedBob",
+        ":ApexKeyRotationTestV3_SignedBobRot",
         ":StagedInstallTestApexV1_NotPreInstalled",
         ":StagedInstallTestApexV2",
         ":StagedInstallTestApexV2_AdditionalFile",
@@ -72,6 +76,34 @@ android_test_helper_app {
     srcs:   ["testdata/apk/src/**/*java"],
 
     manifest:   "testdata/apk/StagedInstallTestAppSamePackageNameAsApex.xml",
+}
+
+prebuilt_apex {
+    name: "ApexKeyRotationTestV2_SignedBob",
+    src: "testdata/apex/com.android.apex.cts.shim.v2_signed_bob.apex",
+    filename: "com.android.apex.cts.shim.v2_signed_bob.apex",
+    installable: false,
+}
+
+prebuilt_apex {
+    name: "ApexKeyRotationTestV2_SignedBobRot",
+    src: "testdata/apex/com.android.apex.cts.shim.v2_signed_bob_rot.apex",
+    filename: "com.android.apex.cts.shim.v2_signed_bob_rot.apex",
+    installable: false,
+}
+
+prebuilt_apex {
+    name: "ApexKeyRotationTestV3_SignedBob",
+    src: "testdata/apex/com.android.apex.cts.shim.v3_signed_bob.apex",
+    filename: "com.android.apex.cts.shim.v3_signed_bob.apex",
+    installable: false,
+}
+
+prebuilt_apex {
+    name: "ApexKeyRotationTestV3_SignedBobRot",
+    src: "testdata/apex/com.android.apex.cts.shim.v3_signed_bob_rot.apex",
+    filename: "com.android.apex.cts.shim.v3_signed_bob_rot.apex",
+    installable: false,
 }
 
 prebuilt_apex {
