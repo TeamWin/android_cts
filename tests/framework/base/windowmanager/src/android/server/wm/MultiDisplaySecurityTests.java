@@ -65,8 +65,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 
-import androidx.test.filters.FlakyTest;
-
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestUtils;
 
@@ -716,7 +714,6 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      * Test setting system decoration flag and show IME flag without sufficient permissions.
      */
     @Test
-    @FlakyTest(bugId = 130284250)
     public void testSettingFlagWithoutInternalSystemPermission() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // The reason to use a trusted display is that we can guarantee the security exception
@@ -760,7 +757,6 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      * Test getting system decoration flag and show IME flag without sufficient permissions.
      */
     @Test
-    @FlakyTest(bugId = 130284250)
     public void testGettingFlagWithoutInternalSystemPermission() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // The reason to use a trusted display is that we can guarantee the security exception
@@ -791,7 +787,6 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      * Test setting system decoration flag and show IME flag to the untrusted display.
      */
     @Test
-    @FlakyTest(bugId = 130284250)
     public void testSettingFlagToUntrustedDisplay() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             final ActivityDisplay untrustedDisplay = virtualDisplaySession.createDisplay();
@@ -838,7 +833,6 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      * Test getting system decoration flag and show IME flag from the untrusted display.
      */
     @Test
-    @FlakyTest(bugId = 130284250)
     public void testGettingFlagFromUntrustedDisplay() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             final ActivityDisplay untrustedDisplay = virtualDisplaySession.createDisplay();
@@ -860,7 +854,6 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      * Test setting system decoration flag and show IME flag to the trusted display.
      */
     @Test
-    @FlakyTest(bugId = 130284250)
     public void testSettingFlagToTrustedDisplay() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             final ActivityDisplay trustedDisplay = virtualDisplaySession

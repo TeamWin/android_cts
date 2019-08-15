@@ -46,7 +46,6 @@ import android.server.wm.TestJournalProvider.TestJournalContainer;
 import android.server.wm.settings.SettingsSession;
 
 import androidx.annotation.IntDef;
-import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -119,7 +118,6 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 110533226, detail = "Promote to presubmit once confirm it's not flaky")
     public void testRotation180RelaunchWithCutout() throws Exception {
         assumeTrue("Skipping test: no rotation support", supportsRotation());
         assumeTrue("Skipping test: no display cutout", hasDisplayCutout());
@@ -128,7 +126,6 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 110533226, detail = "Promote to presubmit once confirm it's not flaky")
     public void testRotation180NoRelaunchWithCutout() throws Exception {
         assumeTrue("Skipping test: no rotation support", supportsRotation());
         assumeTrue("Skipping test: no display cutout", hasDisplayCutout());
@@ -141,7 +138,6 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
      * reverse-landscape rotations should result in same screen space available for apps.
      */
     @Test
-    @FlakyTest(bugId = 110533226, detail = "Promote to presubmit once confirm it's not flaky")
     public void testConfigChangeWhenRotatingWithCutout() throws Exception {
         assumeTrue("Skipping test: no rotation support", supportsRotation());
         assumeTrue("Skipping test: no display cutout", hasDisplayCutout());

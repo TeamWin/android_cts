@@ -54,7 +54,6 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Looper;
-import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
@@ -67,6 +66,7 @@ import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ProtoUtils;
 import com.android.server.job.nano.JobSchedulerServiceDumpProto;
 import com.android.server.job.nano.JobSchedulerServiceDumpProto.RegisteredJob;
 
@@ -77,8 +77,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 
@@ -213,26 +211,8 @@ public class LocationAccessCheckTest {
      * Get the state of the job scheduler
      */
     public static JobSchedulerServiceDumpProto getJobSchedulerDump() throws Exception {
-        ParcelFileDescriptor pfd = sUiAutomation.executeShellCommand("dumpsys jobscheduler --proto");
-
-        try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
-            // Copy data from 'is' into 'os'
-            try (FileInputStream is = new ParcelFileDescriptor.AutoCloseInputStream(pfd)) {
-                byte[] buffer = new byte[16384];
-
-                while (true) {
-                    int numRead = is.read(buffer);
-
-                    if (numRead == -1) {
-                        break;
-                    } else {
-                        os.write(buffer, 0, numRead);
-                    }
-                }
-            }
-
-            return JobSchedulerServiceDumpProto.parseFrom(os.toByteArray());
-        }
+        return ProtoUtils.getProto(sUiAutomation, JobSchedulerServiceDumpProto.class,
+                ProtoUtils.DUMPSYS_JOB_SCHEDULER);
     }
 
     /**

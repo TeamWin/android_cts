@@ -63,8 +63,6 @@ import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.ActivitySessionClient;
 import android.server.wm.app.Components;
 
-import androidx.test.filters.FlakyTest;
-
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -79,7 +77,6 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     public final DisableScreenDozeRule mDisableScreenDozeRule = new DisableScreenDozeRule();
 
     @Test
-    @FlakyTest(bugId = 110276714)
     public void testTranslucentActivityOnTopOfPinnedStack() throws Exception {
         if (!supportsPip()) {
             return;
@@ -208,7 +205,6 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 110276714)
     public void testFinishActivityInNonFocusedStack() throws Exception {
         if (!supportsSplitScreenMultiWindow()) {
             // Skipping test: no multi-window support
@@ -254,13 +250,11 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @FlakyTest
     public void testFinishActivityWithMoveTaskToBackAfterPause() throws Exception {
         performFinishActivityWithMoveTaskToBack(FINISH_POINT_ON_PAUSE);
     }
 
     @Test
-    @FlakyTest
     public void testFinishActivityWithMoveTaskToBackAfterStop() throws Exception {
         performFinishActivityWithMoveTaskToBack(FINISH_POINT_ON_STOP);
     }
@@ -447,7 +441,6 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @FlakyTest
     public void testTurnScreenOnAttrRemove() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.sleepDevice();

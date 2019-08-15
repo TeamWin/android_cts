@@ -1959,7 +1959,7 @@ public class BitmapTest {
         nValidateBitmapInfo(bitmap, 10, 20, true);
         bitmap.recycle();
         nValidateBitmapInfo(bitmap, 10, 20, true);
-        nValidateNdkAccessAfterRecycle(bitmap);
+        nValidateNdkAccessFails(bitmap);
     }
 
     @Test
@@ -2161,6 +2161,48 @@ public class BitmapTest {
         }
     }
 
+    @Test
+    public void testNdkFormats() {
+        for (ConfigToFormat pair : CONFIG_TO_FORMAT) {
+            Bitmap bm = Bitmap.createBitmap(10, 10, pair.config);
+            assertNotNull(bm);
+            int nativeFormat = nGetFormat(bm);
+            assertEquals("Config: " + pair.config, pair.format, nativeFormat);
+        }
+    }
+
+    @Test
+    public void testNdkFormatsHardware() {
+        for (ConfigToFormat pair : CONFIG_TO_FORMAT) {
+            Bitmap bm = Bitmap.createBitmap(10, 10, pair.config);
+            bm = bm.copy(Bitmap.Config.HARDWARE, false);
+
+            // ALPHA_8 is not supported in HARDWARE.
+            if (bm == null) {
+                assertEquals(Bitmap.Config.ALPHA_8, pair.config);
+                continue;
+            }
+            assertNotEquals(Bitmap.Config.ALPHA_8, pair.config);
+
+            int nativeFormat = nGetFormat(bm);
+            if (pair.config == Bitmap.Config.RGBA_F16) {
+                // It is possible the system does not support RGBA_F16 in HARDWARE.
+                // In that case, it will fall back to ARGB_8888.
+                assertTrue(nativeFormat == ANDROID_BITMAP_FORMAT_RGBA_8888
+                        || nativeFormat == ANDROID_BITMAP_FORMAT_RGBA_F16);
+            } else {
+                assertEquals("Config: " + pair.config, pair.format, nativeFormat);
+            }
+
+            nValidateNdkAccessFails(bm);
+        }
+    }
+
+    @Test
+    public void testNullBitmapNdk() {
+        nTestNullBitmap();
+    }
+
     private void strictModeTest(Runnable runnable) {
         StrictMode.ThreadPolicy originalPolicy = StrictMode.getThreadPolicy();
         StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
@@ -2177,12 +2219,35 @@ public class BitmapTest {
 
     private static native void nValidateBitmapInfo(Bitmap bitmap, int width, int height,
             boolean is565);
-    private static native void nValidateNdkAccessAfterRecycle(Bitmap bitmap);
+    private static native void nValidateNdkAccessFails(Bitmap bitmap);
 
     private static native void nFillRgbaHwBuffer(HardwareBuffer hwBuffer);
+    private static native void nTestNullBitmap();
 
     private static final int ANDROID_BITMAP_FORMAT_RGBA_8888 = 1;
     private static final int ANDROID_BITMAP_FORMAT_RGB_565 = 4;
+    private static final int ANDROID_BITMAP_FORMAT_A_8 = 8;
+    private static final int ANDROID_BITMAP_FORMAT_RGBA_F16 = 9;
+
+    private static class ConfigToFormat {
+        public final Config config;
+        public final int format;
+
+        ConfigToFormat(Config c, int f) {
+            this.config = c;
+            this.format = f;
+        }
+    }
+
+    private static final ConfigToFormat[] CONFIG_TO_FORMAT = new ConfigToFormat[] {
+        new ConfigToFormat(Bitmap.Config.ARGB_8888, ANDROID_BITMAP_FORMAT_RGBA_8888),
+        // ARGB_4444 is deprecated, and createBitmap converts to 8888.
+        new ConfigToFormat(Bitmap.Config.ARGB_4444, ANDROID_BITMAP_FORMAT_RGBA_8888),
+        new ConfigToFormat(Bitmap.Config.RGB_565, ANDROID_BITMAP_FORMAT_RGB_565),
+        new ConfigToFormat(Bitmap.Config.ALPHA_8, ANDROID_BITMAP_FORMAT_A_8),
+        new ConfigToFormat(Bitmap.Config.RGBA_F16, ANDROID_BITMAP_FORMAT_RGBA_F16),
+    };
+
     private static native int nGetFormat(Bitmap bitmap);
 
     private static HardwareBuffer createTestBuffer(int width, int height, boolean cpuAccess) {

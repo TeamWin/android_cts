@@ -29,8 +29,6 @@ import static org.junit.Assume.assumeTrue;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityManagerState.ActivityDisplay;
 
-import androidx.test.filters.FlakyTest;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -56,7 +54,6 @@ public class MultiDisplayLockedKeyguardTests extends MultiDisplayTestBase {
      * Test that virtual display content is hidden when device is locked.
      */
     @Test
-    @FlakyTest(bugId = 131005232)
     public void testVirtualDisplayHidesContentWhenLocked() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession();
              final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
