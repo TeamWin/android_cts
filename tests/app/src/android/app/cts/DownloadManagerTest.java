@@ -36,7 +36,9 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
+import android.provider.MediaStore;
 import android.util.Log;
+import android.util.Pair;
 
 import androidx.test.filters.FlakyTest;
 import androidx.test.InstrumentationRegistry;
@@ -49,6 +51,7 @@ import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.InputStream;
 
 @RunWith(AndroidJUnit4.class)
 public class DownloadManagerTest extends DownloadManagerTestBase {
@@ -583,6 +586,61 @@ public class DownloadManagerTest extends DownloadManagerTestBase {
             fail("addCompletedDownload should have failed for adding random string");
         } catch (Exception e) {
             // expected
+        }
+    }
+
+    @Test
+    public void testDownload_mediaScanned() throws Exception {
+        final String[] destinations = {
+                Environment.DIRECTORY_MUSIC,
+                Environment.DIRECTORY_DOWNLOADS,
+        };
+        final String[] subPaths = {
+                "testmp3.mp3",
+                "testvideo.3gp",
+        };
+        final Pair<String, String>[] expectedMediaAttributes = new Pair[] {
+                Pair.create(MediaStore.Audio.AudioColumns.IS_MUSIC, "1"),
+                Pair.create(MediaStore.Video.VideoColumns.DURATION, "11047"),
+        };
+
+        for (int i = 0; i < destinations.length; ++i) {
+            final String destination = destinations[i];
+            final String subPath = subPaths[i];
+
+            final DownloadCompleteReceiver receiver = new DownloadCompleteReceiver();
+            try {
+                IntentFilter intentFilter = new IntentFilter(
+                        DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+                mContext.registerReceiver(receiver, intentFilter);
+
+                DownloadManager.Request requestPublic = new DownloadManager.Request(
+                        getAssetUrl(subPath));
+                requestPublic.setDestinationInExternalPublicDir(destination, subPath);
+                long id = mDownloadManager.enqueue(requestPublic);
+
+                int allDownloads = getTotalNumberDownloads();
+                assertEquals(1, allDownloads);
+
+                receiver.waitForDownloadComplete(SHORT_TIMEOUT, id);
+                assertSuccessfulDownload(id, new File(
+                        Environment.getExternalStoragePublicDirectory(destination), subPath));
+
+                final Uri downloadUri = mDownloadManager.getUriForDownloadedFile(id);
+                mContext.grantUriPermission("com.android.shell", downloadUri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                final Uri mediaStoreUri = getMediaStoreUri(downloadUri);
+                assertEquals(expectedMediaAttributes[i].second,
+                        getMediaStoreColumnValue(mediaStoreUri, expectedMediaAttributes[i].first));
+                final int expectedSize = getTotalBytes(
+                        mContext.getContentResolver().openInputStream(downloadUri));
+                assertEquals(expectedSize, Integer.parseInt(getMediaStoreColumnValue(
+                        mediaStoreUri, MediaStore.MediaColumns.SIZE)));
+
+                assertRemoveDownload(id, 0);
+            } finally {
+                mContext.unregisterReceiver(receiver);
+            }
         }
     }
 }
