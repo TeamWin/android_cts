@@ -31,6 +31,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.concurrent.Callable;
@@ -81,21 +82,30 @@ public class SystemUtil {
      */
     public static String runShellCommand(UiAutomation automation, String cmd)
             throws IOException {
+        return new String(runShellCommandByteOutput(automation, cmd));
+    }
+
+    /**
+     * Executes a shell command using shell user identity, and return the standard output as a byte
+     * array
+     * <p>Note: calling this function requires API level 21 or above
+     *
+     * @param automation {@link UiAutomation} instance, obtained from a test running in
+     *                   instrumentation framework
+     * @param cmd        the command to run
+     * @return the standard output of the command as a byte array
+     */
+    static byte[] runShellCommandByteOutput(UiAutomation automation, String cmd)
+            throws IOException {
         Log.v(TAG, "Running command: " + cmd);
         if (cmd.startsWith("pm grant ") || cmd.startsWith("pm revoke ")) {
             throw new UnsupportedOperationException("Use UiAutomation.grantRuntimePermission() "
                     + "or revokeRuntimePermission() directly, which are more robust.");
         }
         ParcelFileDescriptor pfd = automation.executeShellCommand(cmd);
-        byte[] buf = new byte[512];
-        int bytesRead;
-        FileInputStream fis = new ParcelFileDescriptor.AutoCloseInputStream(pfd);
-        StringBuffer stdout = new StringBuffer();
-        while ((bytesRead = fis.read(buf)) != -1) {
-            stdout.append(new String(buf, 0, bytesRead));
+        try (FileInputStream fis = new ParcelFileDescriptor.AutoCloseInputStream(pfd)) {
+            return FileUtils.readInputStreamFully(fis);
         }
-        fis.close();
-        return stdout.toString();
     }
 
     /**
