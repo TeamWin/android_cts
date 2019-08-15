@@ -25,6 +25,7 @@ import numpy
 
 IMG_STATS_GRID = 9  # find used to find the center 11.11%
 NAME = os.path.basename(__file__).split('.')[0]
+NUM_PTS_2X_GAIN = 3  # 3 points every 2x increase in gain
 THRESHOLD_MAX_OUTLIER_DIFF = 0.1
 THRESHOLD_MIN_LEVEL = 0.1
 THRESHOLD_MAX_LEVEL = 0.9
@@ -172,7 +173,7 @@ def main():
                 raw_b_means.append(b[IMG_STATS_GRID/2, IMG_STATS_GRID/2]
                                    * request_result_ratio)
             # Test 3 steps per 2x gain
-            m *= pow(2, 1.0 / 3)
+            m *= pow(2, 1.0 / NUM_PTS_2X_GAIN)
 
         # Allow more threshold for devices with wider exposure range
         if m >= 64.0:
@@ -180,24 +181,28 @@ def main():
 
     # Draw plots
     pylab.figure('rgb data')
-    pylab.plot(mults, r_means, 'ro-')
-    pylab.plot(mults, g_means, 'go-')
-    pylab.plot(mults, b_means, 'bo-')
+    pylab.semilogx(mults, r_means, 'ro-')
+    pylab.semilogx(mults, g_means, 'go-')
+    pylab.semilogx(mults, b_means, 'bo-')
     pylab.title(NAME + 'RGB Data')
     pylab.xlabel('Gain Multiplier')
     pylab.ylabel('Normalized RGB Plane Avg')
+    pylab.minorticks_off()
+    pylab.xticks(mults[0::NUM_PTS_2X_GAIN], mults[0::NUM_PTS_2X_GAIN])
     pylab.ylim([0, 1])
     matplotlib.pyplot.savefig('%s_plot_means.png' % (NAME))
 
     if process_raw and debug:
         pylab.figure('raw data')
-        pylab.plot(mults, raw_r_means, 'ro-', label='R')
-        pylab.plot(mults, raw_gr_means, 'go-', label='GR')
-        pylab.plot(mults, raw_gb_means, 'ko-', label='GB')
-        pylab.plot(mults, raw_b_means, 'bo-', label='B')
+        pylab.semilogx(mults, raw_r_means, 'ro-', label='R')
+        pylab.semilogx(mults, raw_gr_means, 'go-', label='GR')
+        pylab.semilogx(mults, raw_gb_means, 'ko-', label='GB')
+        pylab.semilogx(mults, raw_b_means, 'bo-', label='B')
         pylab.title(NAME + 'RAW Data')
         pylab.xlabel('Gain Multiplier')
         pylab.ylabel('Normalized RAW Plane Avg')
+        pylab.minorticks_off()
+        pylab.xticks(mults[0::NUM_PTS_2X_GAIN], mults[0::NUM_PTS_2X_GAIN])
         pylab.ylim([0, 1])
         pylab.legend(numpoints=1)
         matplotlib.pyplot.savefig('%s_plot_raw_means.png' % (NAME))
