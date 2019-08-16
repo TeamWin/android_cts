@@ -53,7 +53,9 @@
     <string name="test_results_clear_cancel">Cancel</string>
     <string name="test_results_cleared">Test results cleared.</string>
     <string name="view">View</string>
-    <string name="test_results_error">Couldn\'t create test results report.</string>
+    <string name="test_results_error">Couldn\'t create test results report. Try running the
+        following command if you haven\'t yet.\n\"adb shell appops set com.android.cts.verifier
+        android:read_device_identifiers allow\" </string>
     <string name="runtime_permissions_error">Please grant runtime permissions, otherwise, tests might fail.</string>
     <string name="export">Export</string>
     <string name="no_storage">Cannot save report to external storage, see log for details.</string>
