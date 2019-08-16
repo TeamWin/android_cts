@@ -24,8 +24,13 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Arrays;
+
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class ApexTest extends BaseHostJUnit4Test {
+  private boolean isApexUpdatable() throws Exception {
+    return Boolean.parseBoolean(getDevice().getProperty("ro.apex.updatable"));
+  }
 
   /**
    * Ensures that the built-in APEXes are all with flattened APEXes
@@ -51,7 +56,7 @@ public class ApexTest extends BaseHostJUnit4Test {
         "No APEX found",
         (numFlattenedApexes + numNonFlattenedApexes) != 0);
 
-    if (Boolean.parseBoolean(getDevice().getProperty("ro.apex.updatable"))) {
+    if (isApexUpdatable()) {
       Assert.assertTrue(numFlattenedApexes +
           " flattened APEX(es) found on a device supporting updatable APEX",
           numFlattenedApexes == 0);
@@ -78,5 +83,51 @@ public class ApexTest extends BaseHostJUnit4Test {
         "find " + dir + " -type f -name \"*.apex\" ! -name \"" +
         CTS_SHIM_APEX_NAME + ".apex\" | wc -l");
     return result.getExitCode() == 0 ? Integer.parseInt(result.getStdout().trim()) : 0;
+  }
+
+  /**
+   * Ensures that pre-apexd processes (e.g. vold) and post-apexd processes (e.g. init) are using
+   * different mount namespaces (in case of ro.apexd.updatable is true), or not.
+   */
+  @Test
+  public void testMountNamespaces() throws Exception {
+    final int rootMountIdOfInit = getMountEntry("1", "/").mountId;
+    final int rootMountIdOfVold = getMountEntry("$(pidof vold)", "/").mountId;
+    if (isApexUpdatable()) {
+      Assert.assertNotEquals("device supports updatable APEX, but is not using multiple mount namespaces",
+          rootMountIdOfInit, rootMountIdOfVold);
+    } else {
+      Assert.assertEquals("device doesn't support updatable APEX, but is using multiple mount namespaces",
+          rootMountIdOfInit, rootMountIdOfVold);
+    }
+  }
+
+  private static class MountEntry {
+    public final int mountId;
+    public final String mountPoint;
+
+    public MountEntry(String mountInfoLine) {
+      String[] tokens = mountInfoLine.split(" ");
+      if (tokens.length < 5) {
+        throw new RuntimeException(mountInfoLine + " doesn't seem to be from mountinfo");
+      }
+      mountId = Integer.parseInt(tokens[0]);
+      mountPoint = tokens[4];
+    }
+  }
+
+  private String[] readMountInfo(String pidExpression) throws Exception {
+    CommandResult result = getDevice().executeShellV2Command(
+        "cat /proc/" + pidExpression + "/mountinfo");
+    if (result.getExitCode() != 0) {
+      throw new RuntimeException("failed to read mountinfo for " + pidExpression);
+    }
+    return result.getStdout().trim().split("\n");
+  }
+
+  private MountEntry getMountEntry(String pidExpression, String mountPoint) throws Exception {
+    return Arrays.asList(readMountInfo(pidExpression)).stream()
+        .map(MountEntry::new)
+        .filter(entry -> mountPoint.equals(entry.mountPoint)).findAny().get();
   }
 }
