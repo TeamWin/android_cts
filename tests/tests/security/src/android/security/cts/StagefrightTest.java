@@ -817,6 +817,13 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.bug_36279112);
     }
 
+    @SecurityTest(minPatchLevel = "2017-06")
+    public void testStagefright_cve_2017_0640() throws Exception {
+        int[] frameSizes = {21, 4};
+        doStagefrightTestRawBlob(R.raw.cve_2017_0640_avc, "video/avc", 640, 480,
+                frameSizes);
+    }
+
     @SecurityTest(minPatchLevel = "2017-08")
     public void testBug_37203196() throws Exception {
         int[] frameSizes = getFrameSizes(R.raw.bug_37203196_framelen);
