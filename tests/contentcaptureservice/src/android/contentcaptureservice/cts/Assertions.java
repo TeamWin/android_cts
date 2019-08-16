@@ -311,12 +311,17 @@ final class Assertions {
             @NonNull List<ContentCaptureEvent> events, int minimumSize,
             @NonNull AutofillId... expectedIds) {
         final int actualSize = events.size();
+        final int disappearedEventIndex;
         if (actualSize == minimumSize) {
             // Activity stopped before TYPE_VIEW_DISAPPEARED were sent.
             return false;
+        } else if (actualSize == minimumSize + 1) {
+            // Activity did not receive TYPE_VIEW_TREE_APPEARING and TYPE_VIEW_TREE_APPEARED.
+            disappearedEventIndex = minimumSize;
+        } else {
+            disappearedEventIndex = minimumSize + 1;
         }
-        assertThat(events).hasSize(minimumSize + 1);
-        final ContentCaptureEvent batchDisappearEvent = events.get(minimumSize);
+        final ContentCaptureEvent batchDisappearEvent = events.get(disappearedEventIndex);
 
         if (expectedIds.length == 1) {
             assertWithMessage("Should have just one deleted id on %s", batchDisappearEvent)
