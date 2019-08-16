@@ -76,6 +76,14 @@ public class TestMediaCodec extends SecurityTestCase {
     below this comment, before any existing test methods
     ***********************************************************/
 
+    @SecurityTest(minPatchLevel = "2017-07")
+    public void testPocBug_36035683() throws Exception {
+        String inputFiles[] = {"bug_36035683.h264"};
+        runAvcDecodeMemTest(inputFiles,
+                "--input " + TMP_FILE_PATH + "bug_36035683.h264 --num_cores 2",
+                getDevice(), null);
+    }
+
     @SecurityTest(minPatchLevel = "2017-03")
     public void testPocBug_33552073() throws Exception {
         String inputFiles[] = {"bug_33552073.h264"};
