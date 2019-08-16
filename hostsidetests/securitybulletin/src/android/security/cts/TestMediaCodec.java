@@ -107,6 +107,14 @@ public class TestMediaCodec extends SecurityTestCase {
         runAvcDecodeMemTest(inputFiles,
                 "--input " + TMP_FILE_PATH
                         + "bug_33552073.h264 --output /dev/null",
+                 getDevice(), null);
+    }
+
+   @SecurityTest(minPatchLevel = "2018-03")
+    public void testPocCVE_2017_13264() throws Exception {
+        String inputFiles[] = {"cve_2017_13264.h264"};
+        runAvcDecodeTest(inputFiles, "--input " + TMP_FILE_PATH
+                        + "cve_2017_13264.h264 --share_display_buf 1",
                 getDevice(), null);
     }
 
