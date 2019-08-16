@@ -19,8 +19,11 @@ package android.server.wm;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_ASSISTANT;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
+import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
+import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP;
 import static android.server.wm.ActivityLauncher.KEY_LAUNCH_ACTIVITY;
 import static android.server.wm.ActivityLauncher.KEY_NEW_TASK;
 import static android.server.wm.ActivityManagerState.STATE_RESUMED;
@@ -891,6 +894,43 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
                     1 /* code */, null /* intent */, null /* onFinished */, null /* handler */,
                     null /* requiredPermission */, options.toBundle());
             waitAndAssertTopResumedActivity(TEST_ACTIVITY, activityDisplay.mId,
+                    "Activity launched on secondary display and on top");
+        }
+    }
+
+    @Test
+    public void testLaunchActivityClearTask() throws Exception {
+        assertBroughtExistingTaskToAnotherDisplay(FLAG_ACTIVITY_CLEAR_TASK, LAUNCHING_ACTIVITY);
+    }
+
+    @Test
+    public void testLaunchActivityClearTop() throws Exception {
+        assertBroughtExistingTaskToAnotherDisplay(FLAG_ACTIVITY_CLEAR_TOP, LAUNCHING_ACTIVITY);
+    }
+
+    @Test
+    public void testLaunchActivitySingleTop() throws Exception {
+        assertBroughtExistingTaskToAnotherDisplay(FLAG_ACTIVITY_SINGLE_TOP, TEST_ACTIVITY);
+    }
+
+    private void assertBroughtExistingTaskToAnotherDisplay(int flags, ComponentName topActivity)
+            throws Exception {
+        // Start TEST_ACTIVITY on top of LAUNCHING_ACTIVITY within the same task
+        getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY).execute();
+
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay =
+                    virtualDisplaySession.setSimulateDisplay(true).createDisplay();
+
+            // Start LAUNCHING_ACTIVITY on secondary display with target flags, verify the task
+            // be reparented to secondary display
+            getLaunchActivityBuilder()
+                    .setUseInstrumentation()
+                    .setTargetActivity(LAUNCHING_ACTIVITY)
+                    .setIntentFlags(flags)
+                    .allowMultipleInstances(false)
+                    .setDisplayId(newDisplay.mId).execute();
+            waitAndAssertTopResumedActivity(topActivity, newDisplay.mId,
                     "Activity launched on secondary display and on top");
         }
     }

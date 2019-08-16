@@ -1058,7 +1058,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
             // Bring the focus back
             final Intent sameInstanceIntent = new Intent(mContext, CallbackTrackingActivity.class);
             sameInstanceIntent.setFlags(FLAG_ACTIVITY_REORDER_TO_FRONT);
-            bottomActivity.startActivity(sameInstanceIntent, launchOptions.toBundle());
+            bottomActivity.startActivity(sameInstanceIntent, null);
             waitAndAssertActivityStates(
                     state(CallbackTrackingActivity.class, ON_TOP_POSITION_GAINED));
 

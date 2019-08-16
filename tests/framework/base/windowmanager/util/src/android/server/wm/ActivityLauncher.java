@@ -180,7 +180,7 @@ public class ActivityLauncher {
                 options = ActivityOptions.makeBasic();
             }
             options.setLaunchDisplayId(displayId);
-            if (extras.getBoolean(KEY_MULTIPLE_INSTANCES, true)) {
+            if (extras.getBoolean(KEY_MULTIPLE_INSTANCES)) {
                 newIntent.addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
             }
         }

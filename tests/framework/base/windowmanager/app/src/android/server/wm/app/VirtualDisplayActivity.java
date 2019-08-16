@@ -21,6 +21,7 @@ import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESE
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
 import static android.server.wm.ActivityLauncher.KEY_DISPLAY_ID;
 import static android.server.wm.ActivityLauncher.KEY_LAUNCH_ACTIVITY;
+import static android.server.wm.ActivityLauncher.KEY_NEW_TASK;
 import static android.server.wm.ActivityLauncher.KEY_TARGET_COMPONENT;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.app.Components.VirtualDisplayActivity.COMMAND_CREATE_DISPLAY;
@@ -255,6 +256,7 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
         extras.putBoolean(KEY_LAUNCH_ACTIVITY, true);
         extras.putString(KEY_TARGET_COMPONENT, getActivityName(activityName));
         extras.putInt(KEY_DISPLAY_ID, displayId);
+        extras.putBoolean(KEY_NEW_TASK, true);
         ActivityLauncher.launchActivityFromExtras(this, extras);
     }
 }
