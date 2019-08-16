@@ -67,28 +67,22 @@ public class DeviceAdminPasswordTest extends BaseDeviceAdminTest {
         }
     }
 
-    private boolean waitUntilPasswordState(boolean expected) throws InterruptedException {
+    private boolean getPasswordState() throws InterruptedException {
         final int currentQuality = dpm.getPasswordQuality(mAdminComponent);
         dpm.setPasswordQuality(mAdminComponent, DevicePolicyManager.PASSWORD_QUALITY_SOMETHING);
-
-        int numTries = 5;
-        boolean result = dpm.isActivePasswordSufficient();
-        while ((numTries > 0) && (result != expected)) {
-            numTries = numTries - 1;
-            Thread.sleep(100);
-            result = dpm.isActivePasswordSufficient();
+        try {
+            return dpm.isActivePasswordSufficient();
+        } finally {
+            dpm.setPasswordQuality(mAdminComponent, currentQuality);
         }
-
-        dpm.setPasswordQuality(mAdminComponent, currentQuality);
-        return expected == result;
     }
 
     private void assertHasPassword() throws InterruptedException {
-        assertTrue("No password set", waitUntilPasswordState(true));
+        assertTrue("No password set", getPasswordState());
     }
 
     private void assertNoPassword() throws InterruptedException {
-        assertTrue("Password is set", waitUntilPasswordState(false));
+        assertFalse("Password is set", getPasswordState());
     }
 
     /**
