@@ -41,4 +41,13 @@ public class Poc19_05 extends SecurityTestCase {
         int code = AdbUtils.runProxyAutoConfig("CVE-2019-2045", getDevice());
         assertTrue(code != 139); // 128 + signal 11
     }
+
+    /*
+     * b/129556718
+     */
+    @SecurityTest(minPatchLevel = "2019-05")
+    public void testPocCVE_2019_2047() throws Exception {
+        int code = AdbUtils.runProxyAutoConfig("CVE-2019-2047", getDevice());
+        assertTrue(code != 139); // 128 + signal 11
+    }
 }

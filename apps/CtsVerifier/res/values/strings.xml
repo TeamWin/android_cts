@@ -53,7 +53,9 @@
     <string name="test_results_clear_cancel">Cancel</string>
     <string name="test_results_cleared">Test results cleared.</string>
     <string name="view">View</string>
-    <string name="test_results_error">Couldn\'t create test results report.</string>
+    <string name="test_results_error">Couldn\'t create test results report. Try running the
+        following command if you haven\'t yet.\n\"adb shell appops set com.android.cts.verifier
+        android:read_device_identifiers allow\" </string>
     <string name="runtime_permissions_error">Please grant runtime permissions, otherwise, tests might fail.</string>
     <string name="export">Export</string>
     <string name="no_storage">Cannot save report to external storage, see log for details.</string>
@@ -3716,7 +3718,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Check that \'Dummy Input method\', along with all other non-system apps, are not enabled in Settings for the managed profile (they may be enabled for the primary profile). Then disallow \'Dummy Input method\' from permitted input methods by turning on the switch below.
     </string>
     <string name="set_permitted_input_methods_action">
-        Enabling \'Dummy Input method\' in the list of input methods
+        Enabling \'Dummy Input method\' in the list of input methods (make sure you are enabling it for the managed profile, not primary profile)
     </string>
     <string name="set_permitted_input_methods_widget_label">
         Allow only system input methods:
