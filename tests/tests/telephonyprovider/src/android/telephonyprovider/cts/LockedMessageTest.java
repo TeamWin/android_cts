@@ -31,6 +31,7 @@ import androidx.test.filters.SmallTest;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 @SmallTest
@@ -66,12 +67,13 @@ public class LockedMessageTest {
      * and SMS messages.
      */
     @Test
+    @Ignore
     public void testLockedMessage_atMostOneLockedMessage() {
         Uri mmsUri = insertMmsWithLockedMessage();
-        String mms_id = mmsUri.getLastPathSegment();
+        String mmsId = mmsUri.getLastPathSegment();
 
         Uri smsUri = insertSmsWithLockedMessage();
-        String sms_id = smsUri.getLastPathSegment();
+        String smsId = smsUri.getLastPathSegment();
 
         Cursor cursor = mContentResolver.query(Telephony.MmsSms.CONTENT_LOCKED_URI, null, null,
                 null);
@@ -80,9 +82,9 @@ public class LockedMessageTest {
         assertThat(cursor.getColumnCount()).isEqualTo(1);
         assertThat(cursor.getColumnNames()).isEqualTo(new String[]{Telephony.BaseMmsColumns._ID});
         assertThat(cursor.getInt(cursor.getColumnIndex(Telephony.BaseMmsColumns._ID)))
-                .isNotEqualTo(Integer.parseInt(mms_id));
+                .isNotEqualTo(Integer.parseInt(mmsId));
         assertThat(cursor.getInt(cursor.getColumnIndex(Telephony.BaseMmsColumns._ID)))
-                .isEqualTo(Integer.parseInt(sms_id));
+                .isEqualTo(Integer.parseInt(smsId));
     }
 
     /**
