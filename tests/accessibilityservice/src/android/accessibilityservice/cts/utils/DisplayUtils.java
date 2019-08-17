@@ -16,6 +16,7 @@ package android.accessibilityservice.cts.utils;
 
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
+import static android.view.Display.FLAG_PRIVATE;
 
 import android.app.Activity;
 import android.content.Context;
@@ -49,16 +50,18 @@ public class DisplayUtils {
         private VirtualDisplay mVirtualDisplay;
         private ImageReader mReader;
 
-        public Display createDisplay(Context context, int width, int height, int density) {
+        public Display createDisplay(Context context, int width, int height, int density,
+                boolean isPrivate) {
             if (mReader != null) {
                 throw new IllegalStateException(
                         "Only one display can be created during this session.");
             }
             mReader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888,
                     1 /* maxImages */);
+            int flags = isPrivate ? 0
+                    :(VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY | VIRTUAL_DISPLAY_FLAG_PUBLIC);
             mVirtualDisplay = context.getSystemService(DisplayManager.class).createVirtualDisplay(
-                    "A11yDisplay", width, height, density, mReader.getSurface(),
-                    VIRTUAL_DISPLAY_FLAG_PUBLIC | VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY);
+                    "A11yDisplay", width, height, density, mReader.getSurface(), flags);
             return mVirtualDisplay.getDisplay();
         }
 
@@ -75,11 +78,13 @@ public class DisplayUtils {
         /**
          * Creates a virtual display and waits until it's in display list.
          * @param context
+         * @param isPrivate if this display is a private display.
          * @return virtual display.
          *
          * @throws IllegalStateException if called from main thread.
          */
-        public Display createDisplayWithDefaultDisplayMetricsAndWait(Context context) {
+        public Display createDisplayWithDefaultDisplayMetricsAndWait(Context context,
+                boolean isPrivate) {
             if (Looper.myLooper() == Looper.getMainLooper()) {
                 throw new IllegalStateException("Should not call from main thread");
             }
@@ -110,8 +115,7 @@ public class DisplayUtils {
             final DisplayMetrics metrics = new DisplayMetrics();
             windowManager.getDefaultDisplay().getRealMetrics(metrics);
             final Display display = createDisplay(context, metrics.widthPixels,
-                    metrics.heightPixels,
-                    metrics.densityDpi);
+                    metrics.heightPixels, metrics.densityDpi, isPrivate);
 
             try {
                 TestUtils.waitOn(waitObject,

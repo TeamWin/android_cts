@@ -64,13 +64,13 @@ public class DelegatedCertInstallerHelper extends BaseDeviceAdminTest {
 
     public void testManualGenerateKeyAndGrantAccess() {
         KeyGenerationUtils.generateRsaKey(mDpm, ADMIN_RECEIVER_COMPONENT, PRE_SELECTED_ALIAS);
-        assertTrue(mDpm.setKeyGrantForApp(ADMIN_RECEIVER_COMPONENT, PRE_SELECTED_ALIAS,
-                    CERT_INSTALLER_PACKAGE, true));
+        assertTrue(mDpm.grantKeyPairToApp(ADMIN_RECEIVER_COMPONENT, PRE_SELECTED_ALIAS,
+                    CERT_INSTALLER_PACKAGE));
     }
 
     public void testManualRemoveKeyGrant() {
-        assertTrue(mDpm.setKeyGrantForApp(ADMIN_RECEIVER_COMPONENT, PRE_SELECTED_ALIAS,
-                CERT_INSTALLER_PACKAGE, false));
+        assertTrue(mDpm.revokeKeyPairFromApp(ADMIN_RECEIVER_COMPONENT, PRE_SELECTED_ALIAS,
+                CERT_INSTALLER_PACKAGE));
     }
 
     public void testManualClearGeneratedKey() {

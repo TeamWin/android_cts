@@ -18,8 +18,6 @@ package com.android.cts.rollback.lib;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assert.fail;
-
 import android.app.ActivityManager;
 import android.app.AlarmManager;
 import android.content.BroadcastReceiver;
@@ -40,8 +38,7 @@ import com.android.cts.install.lib.TestApp;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Utilities to facilitate testing rollbacks.
@@ -178,35 +175,11 @@ public class RollbackUtils {
      * Send broadcast to crash {@code packageName} {@code count} times. If {@code count} is at least
      * {@link PackageWatchdog#TRIGGER_FAILURE_COUNT}, watchdog crash detection will be triggered.
      */
-    public static BroadcastReceiver sendCrashBroadcast(Context context, String packageName,
+    public static void sendCrashBroadcast(String packageName,
             int count) throws InterruptedException, IOException {
-        BlockingQueue<Integer> crashQueue = new SynchronousQueue<>();
-        IntentFilter crashCountFilter = new IntentFilter();
-        crashCountFilter.addAction("com.android.tests.rollback.CRASH");
-        crashCountFilter.addCategory(Intent.CATEGORY_DEFAULT);
-
-        BroadcastReceiver crashCountReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                try {
-                    // Sleep long enough for packagewatchdog to be notified of crash
-                    Thread.sleep(1000);
-                    // Kill app and close AppErrorDialog
-                    ActivityManager am = context.getSystemService(ActivityManager.class);
-                    am.killBackgroundProcesses(packageName);
-                    // Allow another package launch
-                    crashQueue.put(intent.getIntExtra("count", 0));
-                } catch (InterruptedException e) {
-                    fail("Failed to communicate with test app");
-                }
-            }
-        };
-        context.registerReceiver(crashCountReceiver, crashCountFilter);
-
-        do {
-            launchPackage(packageName);
-        } while(crashQueue.take() < count);
-        return crashCountReceiver;
+        for (int i = 0; i < count; ++i) {
+            launchPackageForCrash(packageName);
+        }
     }
 
     private static void setTime(long millis) {
@@ -215,15 +188,50 @@ public class RollbackUtils {
         am.setTime(millis);
     }
 
-    /** Launches {@code packageName} with {@link Intent#ACTION_MAIN}. */
-    private static void launchPackage(String packageName)
+    /**
+     * Launches {@code packageName} with {@link Intent#ACTION_MAIN} and
+     * waits for a CRASH broadcast from the launched app.
+     */
+    private static void launchPackageForCrash(String packageName)
             throws InterruptedException, IOException {
+        // Force stop the package before launching it to make sure it isn't
+        // stuck in a non-launchable state. And wait a second afterwards to
+        // avoid interfering with when we launch the app.
+        Log.i(TAG, "Force stopping " + packageName);
         Context context = InstrumentationRegistry.getContext();
+        ActivityManager am = context.getSystemService(ActivityManager.class);
+        am.forceStopPackage(packageName);
+        Thread.sleep(1000);
+
+        // Register a receiver to listen for the CRASH broadcast.
+        CountDownLatch latch = new CountDownLatch(1);
+        IntentFilter crashFilter = new IntentFilter();
+        crashFilter.addAction("com.android.tests.rollback.CRASH");
+        crashFilter.addCategory(Intent.CATEGORY_DEFAULT);
+        BroadcastReceiver crashReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.i(TAG, "Received CRASH broadcast from " + packageName);
+                latch.countDown();
+            }
+        };
+        context.registerReceiver(crashReceiver, crashFilter);
+
+        // Launch the app.
         Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.setPackage(packageName);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.addCategory(Intent.CATEGORY_LAUNCHER);
+        Log.i(TAG, "Launching " + packageName + " with " + intent);
         context.startActivity(intent);
+
+        Log.i(TAG, "Waiting for CRASH broadcast from " + packageName);
+        latch.await();
+
+        context.unregisterReceiver(crashReceiver);
+
+        // Sleep long enough for packagewatchdog to be notified of crash
+        Thread.sleep(1000);
     }
 }
 

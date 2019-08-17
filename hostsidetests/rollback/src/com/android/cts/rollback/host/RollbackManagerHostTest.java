@@ -133,6 +133,20 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
     }
 
     /**
+     * Tests staged rollbacks to system version involving only apex.
+     */
+    @Test
+    public void testApexOnlySystemVersionStagedRollback() throws Exception {
+        assumeTrue("Device does not support updating APEX", isApexUpdateSupported());
+
+        run("testApexOnlySystemVersion_EnableRollback");
+        getDevice().reboot();
+        run("testApexOnlySystemVersion_CommitRollback");
+        getDevice().reboot();
+        run("testApexOnlySystemVersion_ConfirmRollback");
+    }
+
+    /**
      * Tests staged rollbacks involving only apex.
      */
     @Test

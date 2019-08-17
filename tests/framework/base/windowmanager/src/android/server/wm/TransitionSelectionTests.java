@@ -303,13 +303,15 @@ public class TransitionSelectionTests extends ActivityManagerTestBase {
         }
         executeShellCommand(topStartCmd);
 
-        SystemClock.sleep(5000);
-        if (testOpen) {
-            mAmWmState.computeState(topActivity);
-        } else {
-            mAmWmState.computeState(BOTTOM_ACTIVITY);
-        }
-
+        Condition.waitFor("Retrieving correct transition", () -> {
+            if (testOpen) {
+                mAmWmState.computeState(topActivity);
+            } else {
+                mAmWmState.computeState(BOTTOM_ACTIVITY);
+            }
+            return expectedTransit.equals(
+                    mAmWmState.getWmState().getDefaultDisplayLastTransition());
+        });
         assertEquals("Picked wrong transition", expectedTransit,
                 mAmWmState.getWmState().getDefaultDisplayLastTransition());
     }
