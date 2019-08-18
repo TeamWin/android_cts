@@ -16,6 +16,8 @@
 
 package com.android.compatibility.testtype;
 
+import static java.util.stream.Collectors.toList;
+
 import com.android.tradefed.config.Option;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
@@ -25,6 +27,8 @@ import com.android.tradefed.util.ArrayUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * A specialized test type for Libcore tests that provides the ability to specify a set of
@@ -41,13 +45,20 @@ public class LibcoreTest extends AndroidJUnitTest {
             + "expectation file")
     private List<String> mCoreExpectations = new ArrayList<>();
 
+    @Option(name = "virtual-device-core-expectation", description = "Provides failure expectations "
+            + "on virtual devices only for libcore tests via the specified file; the path must be "
+            + "absolute and will be resolved to matching bundled resource files; this parameter "
+            + "should be repeated for each expectation file")
+    private List<String> mVirtualDeviceCoreExpectations = new ArrayList<>();
+
     /**
      * {@inheritDoc}
      */
     @Override
     public void run(ITestInvocationListener listener) throws DeviceNotAvailableException {
-        if (!mCoreExpectations.isEmpty()) {
-            addInstrumentationArg(INSTRUMENTATION_ARG_NAME, ArrayUtil.join(",", mCoreExpectations));
+        List<String> coreExpectations = getCoreExpectations();
+        if (!coreExpectations.isEmpty()) {
+            addInstrumentationArg(INSTRUMENTATION_ARG_NAME, ArrayUtil.join(",", coreExpectations));
         }
 
         if (getTestPackageName() != null && getClassName() != null) {
@@ -60,5 +71,19 @@ public class LibcoreTest extends AndroidJUnitTest {
                             + "option.");
         }
         super.run(listener);
+    }
+
+    private List<String> getCoreExpectations() throws DeviceNotAvailableException {
+        if (isVirtualDevice()) {
+                return Stream.concat(
+                        mCoreExpectations.stream(), mVirtualDeviceCoreExpectations.stream())
+                    .collect(toList());
+        } else {
+            return mCoreExpectations;
+        }
+    }
+
+    private boolean isVirtualDevice() throws DeviceNotAvailableException {
+        return Objects.equals(getDevice().getProperty("ro.hardware.virtual_device"), "1");
     }
 }
