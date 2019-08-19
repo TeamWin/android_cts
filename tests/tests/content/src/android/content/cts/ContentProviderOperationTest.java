@@ -58,7 +58,7 @@ public class ContentProviderOperationTest {
 
     private static final Bundle TEST_EXTRAS_RESULT = new Bundle();
     static {
-        TEST_EXTRAS.putString("test_result", "42");
+        TEST_EXTRAS_RESULT.putString("test_result", "42");
     }
 
     private static final ContentProviderResult[] TEST_RESULTS = new ContentProviderResult[] {
@@ -144,15 +144,14 @@ public class ContentProviderOperationTest {
         cursor.addRow(new Object[] { "test_value" });
 
         when(provider.query(eq(TEST_URI), eq(new String[] { "test_key" }),
-              eq(TEST_SELECTION), eq(TEST_SELECTION_ARGS), null))
+              eq(TEST_SELECTION), eq(TEST_SELECTION_ARGS), eq(null)))
                         .thenReturn(cursor);
         op.apply(provider, null, 0);
     }
 
     @Test
     public void testCall() throws Exception {
-        op = ContentProviderOperation
-                .newCall(TEST_URI, TEST_METHOD, TEST_ARG)
+        op = ContentProviderOperation.newCall(TEST_URI, TEST_METHOD, TEST_ARG)
                 .withExtras(TEST_EXTRAS)
                 .build();
 
@@ -168,11 +167,11 @@ public class ContentProviderOperationTest {
 
     @Test
     public void testBackReferenceSelection() throws Exception {
-        op = ContentProviderOperation.newUpdate(TEST_URI)
+        op = ContentProviderOperation.newDelete(TEST_URI)
                 .withSelection(null, new String[] { "a", "b", "c", "d" })
                 .withSelectionBackReference(0, 0)
                 .withSelectionBackReference(1, 1)
-                .withSelectionBackReference(2, 2, "test_key")
+                .withSelectionBackReference(2, 2, "test_result")
                 .build();
 
         final String[] res = op.resolveSelectionArgsBackReferences(TEST_RESULTS,
@@ -195,13 +194,13 @@ public class ContentProviderOperationTest {
                 .withValues(values)
                 .withValueBackReference("a", 0)
                 .withValueBackReference("b", 1)
-                .withValueBackReference("c", 2, "test_key")
+                .withValueBackReference("c", 2, "test_result")
                 .build();
 
         final ContentValues res = op.resolveValueBackReferences(TEST_RESULTS,
                 TEST_RESULTS.length);
-        assertEquals(12, res.get("a"));
-        assertEquals(84, res.get("b"));
+        assertEquals(12L, (long) res.get("a"));
+        assertEquals(84L, (long) res.get("b"));
         assertEquals("42", res.get("c"));
         assertEquals("d", res.get("d"));
     }
@@ -214,25 +213,24 @@ public class ContentProviderOperationTest {
         extras.putString("c", "c");
         extras.putString("d", "d");
 
-        op = ContentProviderOperation.newUpdate(TEST_URI)
+        op = ContentProviderOperation.newCall(TEST_URI, TEST_METHOD, TEST_ARG)
                 .withExtras(extras)
                 .withExtraBackReference("a", 0)
                 .withExtraBackReference("b", 1)
-                .withExtraBackReference("c", 2, "test_key")
+                .withExtraBackReference("c", 2, "test_result")
                 .build();
 
         final Bundle res = op.resolveExtrasBackReferences(TEST_RESULTS,
                 TEST_RESULTS.length);
-        assertEquals(12, res.get("a"));
-        assertEquals(84, res.get("b"));
+        assertEquals(12L, (long) res.get("a"));
+        assertEquals(84L, (long) res.get("b"));
         assertEquals("42", res.get("c"));
         assertEquals("d", res.get("d"));
     }
 
     @Test
     public void testExceptionAllowed() throws Exception {
-        op = ContentProviderOperation
-                .newCall(TEST_URI, TEST_METHOD, TEST_ARG)
+        op = ContentProviderOperation.newCall(TEST_URI, TEST_METHOD, TEST_ARG)
                 .withExtras(TEST_EXTRAS)
                 .withExceptionAllowed(true)
                 .build();
