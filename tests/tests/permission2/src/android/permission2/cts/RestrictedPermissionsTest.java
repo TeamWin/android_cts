@@ -753,11 +753,10 @@ public class RestrictedPermissionsTest {
                     1, intent, PendingIntent.FLAG_ONE_SHOT).getIntentSender();
 
             // Commit as shell to avoid confirm UI
-            runWithShellPermissionIdentity(() ->
-                session.commit(intentSender)
-            );
-
-            installLatch.await(UI_TIMEOUT, TimeUnit.MILLISECONDS);
+            runWithShellPermissionIdentity(() -> {
+                session.commit(intentSender);
+                installLatch.await(UI_TIMEOUT, TimeUnit.MILLISECONDS);
+            });
         } finally {
             getContext().unregisterReceiver(installReceiver);
         }
