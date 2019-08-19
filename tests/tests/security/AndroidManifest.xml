@@ -58,6 +58,16 @@
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
             </intent-filter>
         </activity>
+
+        <receiver android:name="com.android.cts.install.lib.LocalIntentSender"
+                  android:exported="true" />
+        <receiver android:name="android.security.cts.PackageVerificationsBroadcastReceiver"
+                  android:permission="android.permission.BIND_PACKAGE_VERIFIER" >
+            <intent-filter>
+                <action android:name="android.intent.action.PACKAGE_NEEDS_VERIFICATION"/>
+                <data android:mimeType="application/vnd.android.package-archive" />
+            </intent-filter>
+        </receiver>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
