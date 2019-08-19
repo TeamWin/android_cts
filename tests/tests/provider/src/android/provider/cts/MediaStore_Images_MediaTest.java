@@ -219,18 +219,13 @@ public class MediaStore_Images_MediaTest {
 
     @Test
     public void testStoreImagesMediaExternal() throws Exception {
-        final String externalPath = new File(ProviderTestUtils.stageDir(mVolumeName),
-                "testimage.jpg").getAbsolutePath();
-        final String externalPath2 = new File(ProviderTestUtils.stageDir(mVolumeName),
-                "testimage1.jpg").getAbsolutePath();
+        final File dir = ProviderTestUtils.stageDir(mVolumeName);
+        final File file = ProviderTestUtils.stageFile(R.raw.scenery,
+                new File(dir, "cts" + System.nanoTime() + ".jpg"));
 
-        // clean up any potential left over entries from a previous aborted run
-        cleanExternalMediaFile(externalPath);
-        cleanExternalMediaFile(externalPath2);
+        final String externalPath = file.getAbsolutePath();
+        final long numBytes = file.length();
 
-        int numBytes = 1337;
-        File file = new File(externalPath);
-        FileUtils.createFile(file, numBytes);
         ProviderTestUtils.waitUntilExists(file);
 
         ContentValues values = new ContentValues();
@@ -242,7 +237,7 @@ public class MediaStore_Images_MediaTest {
         values.put(Media.IS_PRIVATE, 1);
         values.put(Media.MINI_THUMB_MAGIC, 0);
         values.put(Media.DATA, externalPath);
-        values.put(Media.DISPLAY_NAME, "testimage");
+        values.put(Media.DISPLAY_NAME, file.getName());
         values.put(Media.MIME_TYPE, "image/jpeg");
         values.put(Media.SIZE, numBytes);
         values.put(Media.TITLE, "testimage");
@@ -270,7 +265,7 @@ public class MediaStore_Images_MediaTest {
             assertEquals(1, c.getInt(c.getColumnIndex(Media.IS_PRIVATE)));
             assertEquals(0, c.getLong(c.getColumnIndex(Media.MINI_THUMB_MAGIC)));
             assertEquals(externalPath, c.getString(c.getColumnIndex(Media.DATA)));
-            assertEquals("testimage.jpg", c.getString(c.getColumnIndex(Media.DISPLAY_NAME)));
+            assertEquals(file.getName(), c.getString(c.getColumnIndex(Media.DISPLAY_NAME)));
             assertEquals("image/jpeg", c.getString(c.getColumnIndex(Media.MIME_TYPE)));
             assertEquals("testimage", c.getString(c.getColumnIndex(Media.TITLE)));
             assertEquals(numBytes, c.getInt(c.getColumnIndex(Media.SIZE)));
