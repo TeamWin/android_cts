@@ -146,7 +146,7 @@ public class ThemeHostTest extends DeviceTestCase {
     @CddTest(requirement="3.8.6/C-1-1,C-1-2")
     public void testThemes() throws Exception {
         if (checkHardwareTypeSkipTest(mDevice.executeShellCommand(HARDWARE_TYPE_CMD).trim())) {
-            Log.logAndDisplay(LogLevel.INFO, LOG_TAG, "Skipped themes test for watch / TV");
+            Log.logAndDisplay(LogLevel.INFO, LOG_TAG, "Skipped themes test for watch / TV / automotive");
             return;
         }
 
@@ -290,6 +290,7 @@ public class ThemeHostTest extends DeviceTestCase {
 
     private static boolean checkHardwareTypeSkipTest(String hardwareTypeString) {
         return hardwareTypeString.contains("android.hardware.type.watch")
-                || hardwareTypeString.contains("android.hardware.type.television");
+                || hardwareTypeString.contains("android.hardware.type.television")
+                || hardwareTypeString.contains("android.hardware.type.automotive");
     }
 }
