@@ -16,7 +16,6 @@
 
 package android.cts.backup;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.android.compatibility.common.util.BackupHostSideUtils;
@@ -40,30 +39,27 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Tradedfed target preparer for the backup tests. Enables backup before all the tests and selects
- * local transport. Reverts to the original state after all the tests are executed.
+ * Tradedfed target preparer for the backup tests.
+ * Enables backup before all the tests and selects local transport.
+ * Reverts to the original state after all the tests are executed.
  */
 @OptionClass(alias = "backup-preparer")
 public class BackupPreparer implements ITargetCleaner {
     private static final long TRANSPORT_AVAILABLE_TIMEOUT_SECONDS = TimeUnit.MINUTES.toSeconds(5);
-
-    @Option(
-            name = "enable-backup-if-needed",
-            description =
-                    "Enable backup before all the tests and return to the original state after.")
+    @Option(name="enable-backup-if-needed", description=
+            "Enable backup before all the tests and return to the original state after.")
     private boolean mEnableBackup = true;
 
-    @Option(
-            name = "select-local-transport",
-            description =
-                    "Select local transport before all the tests and return to the original"
-                        + " transport after.")
+    @Option(name="select-local-transport", description=
+            "Select local transport before all the tests and return to the original transport "
+                    + "after.")
     private boolean mSelectLocalTransport = true;
 
     /** Value of PackageManager.FEATURE_BACKUP */
     private static final String FEATURE_BACKUP = "android.software.backup";
 
-    private static final String LOCAL_TRANSPORT = "com.android.localtransport/.LocalTransport";
+    private static final String LOCAL_TRANSPORT =
+            "com.android.localtransport/.LocalTransport";
 
     private boolean mIsBackupSupported;
     private boolean mWasBackupEnabled;
@@ -113,8 +109,7 @@ public class BackupPreparer implements ITargetCleaner {
                 CLog.i("Returning backup to it's previous state on %s", mDevice.getSerialNumber());
                 enableBackup(mWasBackupEnabled);
                 if (mSelectLocalTransport) {
-                    CLog.i(
-                            "Returning selected transport to it's previous value on %s",
+                    CLog.i("Returning selected transport to it's previous value on %s",
                             mDevice.getSerialNumber());
                     setBackupTransport(mOldTransport);
                 }
@@ -130,13 +125,12 @@ public class BackupPreparer implements ITargetCleaner {
                     lastTry -> uncheck(() -> hasBackupTransport(transport, lastTry)));
         } catch (InterruptedException e) {
             throw new TargetSetupError(
-                    "Device should have Local available", e, mDevice.getDeviceDescriptor());
+                    "Device should have LocalTransport available", mDevice.getDeviceDescriptor());
         }
     }
 
-    // TODO(b/139652329): Use BackupUtils.userHasBackupTransport.
-    private boolean hasBackupTransport(String transport, boolean logIfFail)
-            throws DeviceNotAvailableException, TargetSetupError {
+    private boolean hasBackupTransport(
+            String transport, boolean logIfFail) throws DeviceNotAvailableException {
         String output = mDevice.executeShellCommand("bmgr list transports");
         for (String t : output.split(" ")) {
             if (transport.equals(t.trim())) {
@@ -144,13 +138,7 @@ public class BackupPreparer implements ITargetCleaner {
             }
         }
         if (logIfFail) {
-            throw new TargetSetupError(
-                    transport
-                            + " hasn't become available: "
-                            + output
-                            + "; Device state: "
-                            + mDevice.getDeviceState().name(),
-                    mDevice.getDeviceDescriptor());
+            CLog.d("bmgr list transports: " + output);
         }
         return false;
     }
@@ -161,7 +149,7 @@ public class BackupPreparer implements ITargetCleaner {
      * call {@code predicate} with {@code true} one last time, if that last call returns false we
      * fail with {@code message}.
      *
-     * <p>TODO: Move to CommonTestUtils
+     * TODO: Move to CommonTestUtils
      */
     private static void waitUntilWithLastTry(
             String message, long timeoutSeconds, Function<Boolean, Boolean> predicate)
@@ -191,13 +179,7 @@ public class BackupPreparer implements ITargetCleaner {
             throw new RuntimeException("non-parsable output setting bmgr enabled: " + output);
         }
 
-        output = mDevice.executeShellCommand("bmgr enable " + enable);
-        // TODO(b/139652329): Update BackupUtils.enableBackup with this check remove this
-        // duplication.
-        assertTrue(
-                "Failed to enable BackupManager: " + output,
-                output.contains("Backup Manager now enabled"));
-
+        mDevice.executeShellCommand("bmgr enable " + enable);
         return previouslyEnabled;
     }
 
@@ -226,8 +208,7 @@ public class BackupPreparer implements ITargetCleaner {
             CLog.d("Output from 'am wait-for-broadcast-idle': %s", output);
             if (!output.contains("All broadcast queues are idle!")) {
                 // the call most likely failed we should fail the test
-                throw new TargetSetupError(
-                        "'am wait-for-broadcase-idle' did not complete.",
+                throw new TargetSetupError("'am wait-for-broadcase-idle' did not complete.",
                         mDevice.getDeviceDescriptor());
                 // TODO: consider adding a reboot or recovery before failing if necessary
             }
