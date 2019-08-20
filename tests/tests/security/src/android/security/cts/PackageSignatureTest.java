@@ -52,9 +52,11 @@ public class PackageSignatureTest extends AndroidTestCase {
         PackageManager packageManager = mContext.getPackageManager();
         List<PackageInfo> allPackageInfos = packageManager.getInstalledPackages(
                 PackageManager.GET_UNINSTALLED_PACKAGES |
-                PackageManager.GET_SIGNATURES);
+                PackageManager.GET_SIGNATURES |
+                PackageManager.MATCH_APEX);
         for (PackageInfo packageInfo : allPackageInfos) {
             String packageName = packageInfo.packageName;
+            Log.v(TAG, "Scanning " + packageName);
             if (packageName != null && !isWhitelistedPackage(packageName)) {
                 for (Signature signature : packageInfo.signatures) {
                     if (wellKnownSignatures.contains(signature)) {
@@ -80,6 +82,20 @@ public class PackageSignatureTest extends AndroidTestCase {
         wellKnownSignatures.add(getSignature(R.raw.sig_devkeys_platform));
         wellKnownSignatures.add(getSignature(R.raw.sig_devkeys_shared));
         wellKnownSignatures.add(getSignature(R.raw.sig_devkeys_networkstack));
+        wellKnownSignatures.add(getSignature(R.raw.sig_com_android_conscrypt));
+        wellKnownSignatures.add(getSignature(R.raw.sig_com_android_media));
+        wellKnownSignatures.add(getSignature(R.raw.sig_com_android_media_swcodec));
+        wellKnownSignatures.add(getSignature(R.raw.sig_com_android_resolv));
+        wellKnownSignatures.add(getSignature(R.raw.sig_com_android_runtime_debug));
+        wellKnownSignatures.add(getSignature(R.raw.sig_com_android_runtime_release));
+        wellKnownSignatures.add(getSignature(R.raw.sig_com_android_tzdata));
+        wellKnownSignatures.add(getSignature(R.raw.sig_com_google_android_conscrypt));
+        wellKnownSignatures.add(getSignature(R.raw.sig_com_google_android_media));
+        wellKnownSignatures.add(getSignature(R.raw.sig_com_google_android_media_swcodec));
+        wellKnownSignatures.add(getSignature(R.raw.sig_com_google_android_resolv));
+        wellKnownSignatures.add(getSignature(R.raw.sig_com_google_android_runtime_debug));
+        wellKnownSignatures.add(getSignature(R.raw.sig_com_google_android_runtime_release));
+        wellKnownSignatures.add(getSignature(R.raw.sig_com_google_android_tzdata));
         return wellKnownSignatures;
     }
 
