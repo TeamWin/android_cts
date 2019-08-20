@@ -13,8 +13,92 @@
 // limitations under the License.
 
 android_test_helper_app {
-    name: "CtsAppEnumerationQueriesNothingApp",
+    name: "CtsAppEnumerationQueriesNothing",
     manifest: "AndroidManifest-queriesNothing.xml",
+    defaults: ["cts_support_defaults"],
+    srcs: ["src/**/*.java"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ],
+    sdk_version: "test_current",
+}
+
+android_test_helper_app {
+    name: "CtsAppEnumerationQueriesActivityViaAction",
+    manifest: "AndroidManifest-queriesActivityAction.xml",
+    defaults: ["cts_support_defaults"],
+    srcs: ["src/**/*.java"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ],
+    sdk_version: "test_current",
+}
+
+android_test_helper_app {
+    name: "CtsAppEnumerationQueriesServiceViaAction",
+    manifest: "AndroidManifest-queriesServiceAction.xml",
+    defaults: ["cts_support_defaults"],
+    srcs: ["src/**/*.java"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ],
+    sdk_version: "test_current",
+}
+
+android_test_helper_app {
+    name: "CtsAppEnumerationQueriesProviderViaAuthority",
+    manifest: "AndroidManifest-queriesProviderAuthority.xml",
+    defaults: ["cts_support_defaults"],
+    srcs: ["src/**/*.java"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ],
+    sdk_version: "test_current",
+}
+
+android_test_helper_app {
+    name: "CtsAppEnumerationQueriesPackage",
+    manifest: "AndroidManifest-queriesPackage.xml",
+    defaults: ["cts_support_defaults"],
+    srcs: ["src/**/*.java"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ],
+    sdk_version: "test_current",
+}
+
+android_test_helper_app {
+    name: "CtsAppEnumerationQueriesNothingTargetsQ",
+    manifest: "AndroidManifest-queriesNothing-targetsQ.xml",
+    defaults: ["cts_support_defaults"],
+    srcs: ["src/**/*.java"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ],
+    sdk_version: "test_current",
+}
+
+android_test_helper_app {
+    name: "CtsAppEnumerationQueriesNothingHasPermission",
+    manifest: "AndroidManifest-queriesNothing-hasPermission.xml",
     defaults: ["cts_support_defaults"],
     srcs: ["src/**/*.java"],
     // Tag this module as a cts test artifact

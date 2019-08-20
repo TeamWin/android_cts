@@ -30,7 +30,8 @@
             </intent-filter>
         </service>
         <provider android:name="android.appenumeration.testapp.DummyProvider"
-                  android:authorities="android.appenumeration.testapp" />
+                  android:authorities="android.appenumeration.testapp"
+                  android:exported="true" />
         <receiver android:name="android.appenumeration.testapp.DummyReceiver">
             <intent-filter>
                 <action android:name="android.appenumeration.action.BROADCAST" />
