@@ -18,6 +18,7 @@ package android.media.cts;
 import android.platform.test.annotations.AppModeFull;
 import com.android.compatibility.common.util.SystemUtil;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -270,6 +271,20 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
                 session.release();
             }
             removeHandler(handler);
+        }
+    }
+
+    public void testNotifySession2Created() throws Exception {
+        final Context context = getInstrumentation().getTargetContext();
+        Session2Token token = new Session2Token(context,
+                new ComponentName(context, this.getClass()));
+
+        try {
+            mSessionManager.notifySession2Created(token);
+            fail("Expected IllegalArgumentException for a call to notifySession2Created with " +
+                    "TYPE_SESSION_SERVICE token");
+        } catch (IllegalArgumentException e) {
+            // Expected
         }
     }
 
