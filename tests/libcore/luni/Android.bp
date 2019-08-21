@@ -51,9 +51,9 @@ android_test {
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
+        "mts",
         "vts",
         "general-tests",
-	"mts",
     ],
     java_resources: [
         ":libcore-expectations-knownfailures",
