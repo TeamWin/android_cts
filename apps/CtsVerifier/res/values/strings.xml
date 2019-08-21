@@ -5108,7 +5108,11 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="bubbles_notification_test_verify_9">Click the button below and verify that a bubble
         appears on screen, auto-expanded.</string>
     <string name="bubbles_notification_test_button_9">Send auto-expanded bubble notification</string>
-    <string name="bubbles_notification_no_bubbles_low_mem">No bubbles on low memory device; no tests to run</string>
+    <string name="bubbles_notification_test_title_10">No bubbles on low memory device</string>
+    <string name="bubbles_notification_test_verify_10">Click the button below and verify that a
+        bubble does NOT appear on screen. Verify that there is a notification in the notification
+        shade.</string>
+    <string name="bubbles_notification_test_button_10">Add bubble</string>
     <string name="bubbles_test_summary_title">Test Complete</string>
     <string name="bubbles_test_summary">%1$d out of %2$d tests passed</string>
     <string name="bubble_activity_title">Bubble Activity</string>

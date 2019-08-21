@@ -103,9 +103,14 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
             runNextTestOrShowSummary();
         });
 
+        // Make sure they're enabled
+        mTests.add(new EnableBubbleTest());
+
         ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-        if (!am.isLowRamDevice()) {
-            mTests.add(new EnableBubbleTest());
+        if (am.isLowRamDevice()) {
+            // Bubbles don't occur on low ram, instead they just show as notifs so test that
+            mTests.add(new LowRamBubbleTest());
+        } else {
             mTests.add(new SendBubbleTest());
             mTests.add(new SuppressNotifTest());
             mTests.add(new AddNotifTest());
@@ -115,10 +120,6 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
             mTests.add(new DismissBubbleTest());
             mTests.add(new DismissNotificationTest());
             mTests.add(new AutoExpandBubbleTest());
-        } else {
-            Toast.makeText(getApplicationContext(),
-                    getResources().getString(R.string.bubbles_notification_no_bubbles_low_mem),
-                    Toast.LENGTH_LONG).show();
         }
 
         setPassFailButtonClickListeners();
@@ -457,6 +458,32 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
             Notification.BubbleMetadata metadata =
                     getBasicBubbleBuilder().setAutoExpandBubble(true).build();
             builder.setBubbleMetadata(metadata);
+
+            mNotificationManager.notify(NOTIFICATION_ID, builder.build());
+        }
+    }
+
+    private class LowRamBubbleTest extends BubblesTestStep {
+        @Override
+        public int getButtonText() {
+            return R.string.bubbles_notification_test_button_10;
+        }
+
+        @Override
+        public int getTestTitle() {
+            return R.string.bubbles_notification_test_title_10;
+        }
+
+        @Override
+        public int getTestDescription() {
+            return R.string.bubbles_notification_test_verify_10;
+        }
+
+        @Override
+        public void performTestAction() {
+            Notification.Builder builder =
+                    getBasicNotifBuilder("Bubble notification", "Low ram test");
+            builder.setBubbleMetadata(getBasicBubbleBuilder().build());
 
             mNotificationManager.notify(NOTIFICATION_ID, builder.build());
         }
