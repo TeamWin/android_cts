@@ -67,6 +67,8 @@ public class JvmtiAttachingHostTest extends DeviceTestCase implements IBuildRece
 
     private final static String AGENT = "libctsjvmtiattachagent.so";
 
+    private final static String STARTUP_AGENT_DIR = "code_cache/startup_agents";
+
     @Override
     protected void setUp() throws Exception {
         mCurrentUser = getDevice().getCurrentUser();
@@ -109,6 +111,35 @@ public class JvmtiAttachingHostTest extends DeviceTestCase implements IBuildRece
         });
     }
 
+    public void testJvmtiAgentStartupAgents() throws Exception {
+        runJvmtiAgentLoadTest((ITestDevice device, String pkg, String apk, String abiName) -> {
+            String startup_dir = null;
+            try {
+                startup_dir = getPwd(device, pkg) + "/" + STARTUP_AGENT_DIR;
+                device.executeShellCommand(
+                        "run-as " + pkg + " --user " + mCurrentUser + " mkdir " + startup_dir);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to install startup-agents");
+            }
+            try {
+                installLibToDataData(device, pkg, abiName, apk, startup_dir, AGENT, AGENT);
+                // Run and check attach occurs.
+                runAttachTestCmd(device, pkg, "");
+                runAttachTestCmd(device, pkg, "");
+            } catch (Exception e) {
+                throw new RuntimeException("Failed startup_agents attaching", e);
+            } finally {
+                try {
+                    // Cleanup the startup-agents directory
+                    device.executeShellCommand(
+                            "run-as " + pkg + " --user " + mCurrentUser + " rm -rf " + startup_dir);
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to clean up " + startup_dir, e);
+                }
+            }
+        });
+    }
+
     public void testJvmtiAgentAppInternal() throws Exception {
         runJvmtiAgentLoadTest((ITestDevice device, String pkg, String apk, String abiName) -> {
             try {
@@ -132,16 +163,7 @@ public class JvmtiAttachingHostTest extends DeviceTestCase implements IBuildRece
     public void testJvmtiAgentAppExternal() throws Exception {
         runJvmtiAgentLoadTest((ITestDevice device, String pkg, String apk, String abiName) -> {
             try {
-                String pwd = device.executeShellCommand(
-                        "run-as " + pkg + " --user " + mCurrentUser + " pwd");
-                if (pwd == null) {
-                    throw new RuntimeException("pwd failed");
-                }
-                pwd = pwd.trim();
-                if (pwd.isEmpty()) {
-                    throw new RuntimeException("pwd failed");
-                }
-
+                String pwd = getPwd(device, pkg);
                 // Give it a different name, so we do not have "contamination" from
                 // the test APK.
                 String libInDataData = AGENT.substring(0, AGENT.length() - ".so".length())
@@ -165,6 +187,19 @@ public class JvmtiAttachingHostTest extends DeviceTestCase implements IBuildRece
                 throw new RuntimeException("Failed agent-app attaching", e);
             }
         });
+    }
+
+    private String getPwd(ITestDevice device, String pkg) throws Exception {
+        String pwd = device.executeShellCommand(
+                "run-as " + pkg + " --user " + mCurrentUser + " pwd");
+        if (pwd == null) {
+            throw new RuntimeException("pwd failed");
+        }
+        pwd = pwd.trim();
+        if (pwd.isEmpty()) {
+            throw new RuntimeException("pwd failed");
+        }
+        return pwd;
     }
 
     private void runJvmtiAgentLoadTest(TestRun runner) throws Exception {
