@@ -19,6 +19,7 @@ package android.server.wm.lifecycle;
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT;
 import static android.server.wm.UiDeviceUtils.pressHomeButton;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_ACTIVITY_RESULT;
@@ -54,6 +55,7 @@ import android.server.wm.ActivityManagerState.ActivityTask;
 import android.server.wm.lifecycle.LifecycleLog.ActivityCallback;
 import android.util.Pair;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 
 import org.junit.Test;
@@ -983,6 +985,93 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
                     "topStateLossTimeout");
             LifecycleVerifier.assertEmptySequence(secondActivityClass, getLifecycleLog(),
                     "topStateLossTimeout");
+        }
+    }
+
+    @FlakyTest(bugId=137329632)
+    @Test
+    public void testFinishOnDifferentDisplay_nonFocused() throws Exception {
+        assumeTrue(supportsMultiDisplay());
+
+        // Launch activity on some display.
+        final Activity callbackTrackingActivity =
+                mCallbackTrackingActivityTestRule.launchActivity(new Intent());
+
+        waitAndAssertTopResumedActivity(getComponentName(CallbackTrackingActivity.class),
+                DEFAULT_DISPLAY, "Activity launched on default display must be focused");
+
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Create new simulated display
+            final ActivityManagerState.ActivityDisplay newDisplay
+                    = virtualDisplaySession.setSimulateDisplay(true).createDisplay();
+
+            // Launch another activity on new secondary display.
+            getLifecycleLog().clear();
+            final ActivityOptions launchOptions = ActivityOptions.makeBasic();
+            launchOptions.setLaunchDisplayId(newDisplay.mId);
+            final Intent newDisplayIntent = new Intent(mContext, SingleTopActivity.class);
+            newDisplayIntent.setFlags(FLAG_ACTIVITY_NEW_TASK);
+            mTargetContext.startActivity(newDisplayIntent, launchOptions.toBundle());
+            waitAndAssertTopResumedActivity(getComponentName(SingleTopActivity.class),
+                    newDisplay.mId, "Activity launched on secondary display must be focused");
+
+            // Finish the activity on the default display
+            getLifecycleLog().clear();
+            callbackTrackingActivity.finish();
+
+            // Verify that activity was actually destroyed
+            waitAndAssertActivityStates(state(CallbackTrackingActivity.class, ON_DESTROY));
+            // Verify that the activity on a different display lost the top focused state
+            LifecycleVerifier.assertSequence(SingleTopActivity.class, getLifecycleLog(),
+                    Arrays.asList(ON_TOP_POSITION_LOST), "destructionOnDifferentDisplay");
+        }
+    }
+
+    @FlakyTest(bugId=137329632)
+    @Test
+    public void testFinishOnDifferentDisplay_focused() throws Exception {
+        assumeTrue(supportsMultiDisplay());
+
+        // Launch activity on some display.
+        final Activity bottomActivity = mSecondActivityTestRule.launchActivity(new Intent());
+        final Activity callbackTrackingActivity =
+                mCallbackTrackingActivityTestRule.launchActivity(new Intent());
+
+        waitAndAssertTopResumedActivity(getComponentName(CallbackTrackingActivity.class),
+                DEFAULT_DISPLAY, "Activity launched on default display must be focused");
+
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Create new simulated display
+            final ActivityManagerState.ActivityDisplay newDisplay
+                    = virtualDisplaySession.setSimulateDisplay(true).createDisplay();
+
+            // Launch another activity on new secondary display.
+            getLifecycleLog().clear();
+            final ActivityOptions launchOptions = ActivityOptions.makeBasic();
+            launchOptions.setLaunchDisplayId(newDisplay.mId);
+            final Intent newDisplayIntent = new Intent(mContext, SingleTopActivity.class);
+            newDisplayIntent.setFlags(FLAG_ACTIVITY_NEW_TASK);
+            mTargetContext.startActivity(newDisplayIntent, launchOptions.toBundle());
+            waitAndAssertTopResumedActivity(getComponentName(SingleTopActivity.class),
+                    newDisplay.mId, "Activity launched on secondary display must be focused");
+
+            // Bring the focus back
+            final Intent sameInstanceIntent = new Intent(mContext, CallbackTrackingActivity.class);
+            sameInstanceIntent.setFlags(FLAG_ACTIVITY_REORDER_TO_FRONT);
+            bottomActivity.startActivity(sameInstanceIntent, launchOptions.toBundle());
+            waitAndAssertActivityStates(
+                    state(CallbackTrackingActivity.class, ON_TOP_POSITION_GAINED));
+
+            // Finish the focused activity
+            getLifecycleLog().clear();
+            callbackTrackingActivity.finish();
+
+            // Verify that lifecycle of the activity on a different display did not change.
+            // Top resumed state will be given to home activity on that display.
+            waitAndAssertActivityStates(state(CallbackTrackingActivity.class, ON_DESTROY),
+                    state(SecondActivity.class, ON_RESUME));
+            LifecycleVerifier.assertEmptySequence(SingleTopActivity.class, getLifecycleLog(),
+                    "destructionOnDifferentDisplay");
         }
     }
 

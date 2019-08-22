@@ -16,6 +16,7 @@
 
 package android.server.wm.lifecycle;
 
+import static android.app.Activity.RESULT_OK;
 import static android.server.wm.StateLogger.log;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_ACTIVITY_RESULT;
@@ -339,11 +340,33 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
      * Test activity that launches {@link ResultActivity} for result.
      */
     public static class LaunchForResultActivity extends CallbackTrackingActivity {
+        public static String EXTRA_LAUNCH_ON_RESULT = "LAUNCH_ON_RESULT";
+        public static String EXTRA_LAUNCH_ON_RESUME_AFTER_RESULT = "LAUNCH_ON_RESUME_AFTER_RESULT";
+
+        boolean mReceivedResultOk;
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             startForResult();
+        }
+
+        @Override
+        protected void onResume() {
+            super.onResume();
+            if (mReceivedResultOk
+                    && getIntent().getBooleanExtra(EXTRA_LAUNCH_ON_RESUME_AFTER_RESULT, false)) {
+                startActivity(new Intent(this, CallbackTrackingActivity.class));
+            }
+        }
+
+        @Override
+        protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+            super.onActivityResult(requestCode, resultCode, data);
+            mReceivedResultOk = resultCode == RESULT_OK;
+            if (mReceivedResultOk && getIntent().getBooleanExtra(EXTRA_LAUNCH_ON_RESULT, false)) {
+                startActivity(new Intent(this, CallbackTrackingActivity.class));
+            }
         }
 
         private void startForResult() {

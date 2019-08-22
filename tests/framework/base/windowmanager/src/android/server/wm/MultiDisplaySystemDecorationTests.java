@@ -82,7 +82,7 @@ import java.util.function.Predicate;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:SystemDecorationMultiDisplayTests
+ *     atest CtsWindowManagerDeviceTestCases:MultiDisplaySystemDecorationTests
  *
  * This tests that verify the following should not be run for OEM device verification:
  * Wallpaper added if display supports system decorations (and not added otherwise)

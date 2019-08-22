@@ -70,6 +70,7 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
         assumeTrue(supportsSplitScreenMultiWindow());
     }
 
+    @FlakyTest(bugId = 137329632)
     @Test
     public void testResumedWhenRecreatedFromInNonFocusedStack() throws Exception {
         // Launch first activity
@@ -92,17 +93,22 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
         getLifecycleLog().clear();
 
         // Start an activity in separate task (will be placed in secondary stack)
-        getLaunchActivityBuilder().execute();
+        final Intent thirdIntent = new Intent();
+        thirdIntent.setFlags(FLAG_ACTIVITY_MULTIPLE_TASK | FLAG_ACTIVITY_NEW_TASK);
+        mThirdActivityTestRule.launchActivity(thirdIntent);
 
         // Finish top activity
         secondActivity.finish();
 
-        waitAndAssertActivityStates(state(secondActivity, ON_DESTROY));
-        waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
+        waitAndAssertActivityStates(state(secondActivity, ON_DESTROY),
+                state(firstActivity, ON_RESUME));
 
         // Verify that the first activity was recreated to resume as it was created before
         // windowing mode was switched
         LifecycleVerifier.assertRecreateAndResumeSequence(FirstActivity.class, getLifecycleLog());
+
+        // Verify that the lifecycle state did not change for activity in non-focused stack
+        LifecycleVerifier.assertLaunchSequence(ThirdActivity.class, getLifecycleLog());
     }
 
     @Test
