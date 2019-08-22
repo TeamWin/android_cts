@@ -148,6 +148,39 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
     }
 
     /**
+     * Test dynamic depth capture along with preview for each camera.
+     */
+    @Test
+    public void testDynamicDepthCapture() throws Exception {
+        for (int i = 0; i < mCameraIds.length; i++) {
+            try {
+                Log.i(TAG, "Testing dynamic depth for Camera " + mCameraIds[i]);
+                if (!mAllStaticInfo.get(mCameraIds[i]).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + mCameraIds[i] +
+                            " does not support color outputs, skipping");
+                    continue;
+                }
+                if (!mAllStaticInfo.get(mCameraIds[i]).isDepthJpegSupported()) {
+                    Log.i(TAG, "Camera " + mCameraIds[i] +
+                            " does not support dynamic depth, skipping");
+                    continue;
+                }
+
+                openDevice(mCameraIds[i]);
+
+                // Check the maximum supported size.
+                List<Size> orderedDepthJpegSizes = CameraTestUtils.getSortedSizesForFormat(
+                        mCameraIds[i], mCameraManager, ImageFormat.DEPTH_JPEG, null/*bound*/);
+                Size maxDepthJpegSize = orderedDepthJpegSizes.get(0);
+                stillDynamicDepthTestByCamera(ImageFormat.DEPTH_JPEG, maxDepthJpegSize);
+            } finally {
+                closeDevice();
+                closeImageReader();
+            }
+        }
+    }
+
+    /**
      * Test normal still capture sequence.
      * <p>
      * Preview and jpeg output streams are configured. Max still capture
@@ -1289,6 +1322,45 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
 
             verifyJpegKeys(image, stillResult, stillSize, testThumbnailSizes[i], EXIF_TEST_DATA[i],
                     mStaticInfo, mCollector, mDebugFileNameBase, format);
+
+            // Free image resources
+            image.close();
+        }
+    }
+
+    /**
+     * Issue a still capture and validate the dynamic depth output.
+     */
+    private void stillDynamicDepthTestByCamera(int format, Size stillSize) throws Exception {
+        assertTrue(format == ImageFormat.DEPTH_JPEG);
+
+        Size maxPreviewSz = mOrderedPreviewSizes.get(0);
+        if (VERBOSE) {
+            Log.v(TAG, "Testing dynamic depth with size " + stillSize.toString()
+                    + ", preview size " + maxPreviewSz);
+        }
+
+        // prepare capture and start preview.
+        CaptureRequest.Builder previewBuilder =
+                mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+        CaptureRequest.Builder stillBuilder =
+                mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+        SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
+        SimpleImageReaderListener imageListener = new SimpleImageReaderListener();
+        prepareCaptureAndStartPreview(previewBuilder, stillBuilder, maxPreviewSz, stillSize,
+                ImageFormat.DEPTH_JPEG, resultListener, /*sessionListener*/null,
+                MAX_READER_IMAGES, imageListener);
+
+        // Capture a few dynamic depth images and check whether they are valid jpegs.
+        for (int i = 0; i < MAX_READER_IMAGES; i++) {
+            CaptureRequest request = stillBuilder.build();
+            mSession.capture(request, resultListener, mHandler);
+            CaptureResult stillResult =
+                resultListener.getCaptureResultForRequest(request, NUM_RESULTS_WAIT_TIMEOUT);
+            Image image = imageListener.getImage(CAPTURE_IMAGE_TIMEOUT_MS);
+            assertNotNull("Unable to acquire next image", image);
+            CameraTestUtils.validateImage(image, stillSize.getWidth(), stillSize.getHeight(),
+                    format, null /*filePath*/);
 
             // Free image resources
             image.close();
