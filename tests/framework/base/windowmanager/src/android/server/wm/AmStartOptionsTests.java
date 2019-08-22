@@ -70,7 +70,6 @@ public class AmStartOptionsTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @FlakyTest
     public void testDashW_Indirect() throws Exception {
         testDashW(ENTRY_POINT_ALIAS_ACTIVITY, SINGLE_TASK_ACTIVITY);
     }
