@@ -488,6 +488,9 @@ public abstract class BasePermissionsTest {
     }
 
     private static AccessibilityNodeInfo findByText(AccessibilityNodeInfo root, String text) {
+        if (root == null) {
+            return null;
+        }
         List<AccessibilityNodeInfo> nodes = root.findAccessibilityNodeInfosByText(text);
         for (AccessibilityNodeInfo node : nodes) {
             if (node.getText().toString().equals(text)) {
