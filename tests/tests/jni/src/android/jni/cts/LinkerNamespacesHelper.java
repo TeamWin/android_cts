@@ -45,7 +45,6 @@ class LinkerNamespacesHelper {
     private final static Pattern EXTENSION_CONFIG_FILE_PATTERN = Pattern.compile(
             "public\\.libraries-([A-Za-z0-9\\-_.]+)\\.txt");
     private final static String VENDOR_CONFIG_FILE = "/vendor/etc/public.libraries.txt";
-    private final static String RUNTIME_APEX_DIR = "/apex/com.android.runtime";
     private final static String[] PUBLIC_SYSTEM_LIBRARIES = {
         "libaaudio.so",
         "libamidi.so",
@@ -73,8 +72,8 @@ class LinkerNamespacesHelper {
         "libz.so"
     };
 
-    // Libraries listed in public.libraries.android.txt, located in RUNTIME_APEX_DIR path
-    private final static String[] PUBLIC_RUNTIME_LIBRARIES = {
+    // Libraries listed in public.libraries.android.txt, located in ART_APEX_DIR path
+    private final static String[] PUBLIC_ART_LIBRARIES = {
         "libicui18n.so",
         "libicuuc.so",
     };
@@ -154,7 +153,7 @@ class LinkerNamespacesHelper {
 
     public static String runAccessibilityTest() throws IOException {
         List<String> systemLibs = new ArrayList<>();
-        List<String> runtimeApexLibs = new ArrayList<>();
+        List<String> artApexLibs = new ArrayList<>();
 
         Collections.addAll(systemLibs, PUBLIC_SYSTEM_LIBRARIES);
 
@@ -163,7 +162,7 @@ class LinkerNamespacesHelper {
             systemLibs.add(WEBVIEW_PLAT_SUPPORT_LIB);
         }
 
-        Collections.addAll(runtimeApexLibs, PUBLIC_RUNTIME_LIBRARIES);
+        Collections.addAll(artApexLibs, PUBLIC_ART_LIBRARIES);
 
         // Check if public.libraries.txt contains libs other than the
         // public system libs (NDK libs).
@@ -197,7 +196,7 @@ class LinkerNamespacesHelper {
         }
 
         return runAccessibilityTestImpl(systemLibs.toArray(new String[systemLibs.size()]),
-                                        runtimeApexLibs.toArray(new String[runtimeApexLibs.size()]),
+                                        artApexLibs.toArray(new String[artApexLibs.size()]),
                                         vendorLibs.toArray(new String[vendorLibs.size()]),
                                         productLibs.toArray(new String[productLibs.size()]));
     }
@@ -355,7 +354,7 @@ class LinkerNamespacesHelper {
         try {
             List<String> publicLibs = new ArrayList<>();
             Collections.addAll(publicLibs, PUBLIC_SYSTEM_LIBRARIES);
-            Collections.addAll(publicLibs, PUBLIC_RUNTIME_LIBRARIES);
+            Collections.addAll(publicLibs, PUBLIC_ART_LIBRARIES);
             error = readExtensionConfigFiles(PUBLIC_CONFIG_DIR, publicLibs);
             if (error != null) return error;
             error = readExtensionConfigFiles(PRODUCT_CONFIG_DIR, publicLibs);
