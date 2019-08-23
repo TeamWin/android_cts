@@ -38,7 +38,7 @@ DEVICE_INFO_ACTIVITIES := \
 LOCAL_PACKAGE_NAME := CtsDeviceInfo
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests sts cts_instant
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests sts cts_instant mts
 
 include $(BUILD_CTS_DEVICE_INFO_PACKAGE)
 
