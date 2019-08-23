@@ -15,9 +15,12 @@
  */
 package android.os.cts.deviceidle;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
+import android.os.PowerManager;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -34,4 +37,15 @@ public class DeviceIdleTest {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         assertNotNull(context.getSystemService(Context.DEVICE_IDLE_CONTROLLER));
     }
+
+    @Test
+    public void testPowerManagerIgnoringBatteryOptimizations() {
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+
+        assertTrue(context.getSystemService(PowerManager.class)
+                .isIgnoringBatteryOptimizations("com.android.shell"));
+        assertFalse(context.getSystemService(PowerManager.class)
+                .isIgnoringBatteryOptimizations("no.such.package.!!!"));
+    }
+
 }
