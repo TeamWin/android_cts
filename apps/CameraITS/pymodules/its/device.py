@@ -320,6 +320,23 @@ class ItsSession(object):
         if data['tag'] != 'vibrationStarted':
             raise its.error.Error('Invalid command response')
 
+    def set_audio_restriction(self, mode):
+        """Set the audio restriction mode for this camera device.
+
+        Args:
+            mode: the audio restriction mode. See CameraDevice.java for valid
+                  value.
+        Returns:
+            Nothing.
+        """
+        cmd = {}
+        cmd["cmdName"] = "setAudioRestriction"
+        cmd["mode"] = mode
+        self.sock.send(json.dumps(cmd) + "\n")
+        data,_ = self.__read_response_from_socket()
+        if data["tag"] != "audioRestrictionSet":
+            raise its.error.Error("Invalid command response")
+
     def get_sensors(self):
         """Get all sensors on the device.
 
