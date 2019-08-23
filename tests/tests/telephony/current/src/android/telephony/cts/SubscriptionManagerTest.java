@@ -392,12 +392,12 @@ public class SubscriptionManagerTest {
         }
 
         // Add into subscription group that doesn't exist. This should fail
-        // with IllegalArgumentException.
+        // because we don't have MODIFY_PHONE_STATE or carrier privilege permission.
         try {
             ParcelUuid groupUuid = new ParcelUuid(UUID.randomUUID());
             mSm.addSubscriptionsIntoGroup(subGroup, groupUuid);
             fail();
-        } catch (IllegalArgumentException expected) {
+        } catch (SecurityException expected) {
         }
 
         // Remove from subscription group with current sub Id. This should fail
@@ -442,6 +442,32 @@ public class SubscriptionManagerTest {
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
                     (sm) -> sm.removeSubscriptionsFromGroup(availableSubGroup, uuid));
         }
+
+        // Remove from subscription group with current sub Id.
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
+                (sm) -> sm.removeSubscriptionsFromGroup(subGroup, uuid));
+
+        infoList = mSm.getSubscriptionsInGroup(uuid);
+        assertNotNull(infoList);
+        assertTrue(infoList.isEmpty());
+    }
+
+    @Test
+    public void testAddSubscriptionIntoNewGroupWithPermission() throws Exception {
+        if (!isSupported()) return;
+
+        // Set subscription group with current sub Id.
+        List<Integer> subGroup = new ArrayList();
+        subGroup.add(mSubId);
+        ParcelUuid uuid = new ParcelUuid(UUID.randomUUID());
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
+                (sm) -> sm.addSubscriptionsIntoGroup(subGroup, uuid));
+
+        // Getting subscriptions in group.
+        List<SubscriptionInfo> infoList = mSm.getSubscriptionsInGroup(uuid);
+        assertNotNull(infoList);
+        assertEquals(1, infoList.size());
+        assertEquals(uuid, infoList.get(0).getGroupUuid());
 
         // Remove from subscription group with current sub Id.
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
