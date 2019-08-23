@@ -93,6 +93,27 @@ static void testNullBitmap(JNIEnv* env, jclass) {
     ASSERT_EQ(err, ANDROID_BITMAP_RESULT_BAD_PARAMETER);
 }
 
+static void testInfo(JNIEnv* env, jclass, jobject jbitmap, jint androidBitmapFormat,
+                     jint width, jint height, jboolean hasAlpha, jboolean premultiplied) {
+    AndroidBitmapInfo info;
+    int err = AndroidBitmap_getInfo(env, jbitmap, &info);
+    ASSERT_EQ(err, ANDROID_BITMAP_RESULT_SUCCESS);
+
+    ASSERT_EQ(androidBitmapFormat, info.format);
+    ASSERT_EQ(width, info.width);
+    ASSERT_EQ(height, info.height);
+
+    int ndkAlpha = (info.flags << ANDROID_BITMAP_FLAGS_ALPHA_SHIFT)
+            & ANDROID_BITMAP_FLAGS_ALPHA_MASK;
+    if (!hasAlpha) {
+        ASSERT_EQ(ndkAlpha, ANDROID_BITMAP_FLAGS_ALPHA_OPAQUE);
+    } else if (premultiplied) {
+        ASSERT_EQ(ndkAlpha, ANDROID_BITMAP_FLAGS_ALPHA_PREMUL);
+    } else {
+        ASSERT_EQ(ndkAlpha, ANDROID_BITMAP_FLAGS_ALPHA_UNPREMUL);
+    }
+}
+
 static JNINativeMethod gMethods[] = {
     { "nValidateBitmapInfo", "(Landroid/graphics/Bitmap;IIZ)V",
         (void*) validateBitmapInfo },
@@ -102,6 +123,7 @@ static JNINativeMethod gMethods[] = {
         (void*) fillRgbaHardwareBuffer },
     { "nGetFormat", "(Landroid/graphics/Bitmap;)I", (void*) getFormat },
     { "nTestNullBitmap", "()V", (void*) testNullBitmap },
+    { "nTestInfo", "(Landroid/graphics/Bitmap;IIIZZ)V", (void*) testInfo },
 };
 
 int register_android_graphics_cts_BitmapTest(JNIEnv* env) {
