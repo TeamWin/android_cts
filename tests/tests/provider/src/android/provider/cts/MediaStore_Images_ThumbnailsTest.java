@@ -125,6 +125,7 @@ public class MediaStore_Images_ThumbnailsTest {
         mBlue = ProviderTestUtils.stageMedia(R.raw.scenery, mExternalImages);
         mRowsAdded.add(mRed);
         mRowsAdded.add(mBlue);
+        MediaStore.waitForIdle(mContext);
     }
 
     public static void assertMostlyEquals(long expected, long actual, long delta) {
