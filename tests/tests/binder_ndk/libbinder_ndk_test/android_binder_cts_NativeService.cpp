@@ -28,6 +28,15 @@ Java_android_binder_cts_NativeService_getBinder_1native(JNIEnv* env) {
   // The ref owns the MyTest, and the binder owns the ref.
   SpAIBinder binder = SharedRefBase::make<MyTest>()->asBinder();
 
+  // adding an arbitrary class as the extension
+  std::shared_ptr<MyTest> ext = SharedRefBase::make<MyTest>();
+  SpAIBinder extBinder = ext->asBinder();
+
+  binder_status_t ret = AIBinder_setExtension(binder.get(), extBinder.get());
+  if (ret != STATUS_OK) {
+    std::cout << "Could not set local extension" << std::endl;
+  }
+
   // And the Java object owns the binder
   return AIBinder_toJavaBinder(env, binder.get());
 }
