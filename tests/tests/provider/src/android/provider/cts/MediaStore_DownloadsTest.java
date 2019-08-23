@@ -138,6 +138,9 @@ public class MediaStore_DownloadsTest {
         assertNotNull(c = mContentResolver.query(mExternalDownloads,
                 null, null, null, null));
         c.close();
+
+        assertEquals(ContentUris.withAppendedId(Downloads.getContentUri(mVolumeName), 42),
+                Downloads.getContentUri(mVolumeName, 42));
     }
 
     @Test

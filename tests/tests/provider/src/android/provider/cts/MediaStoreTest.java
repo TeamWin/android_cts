@@ -93,6 +93,18 @@ public class MediaStoreTest {
     }
 
     @Test
+    public void testIncludePending() {
+        assertFalse(MediaStore.getIncludePending(mExternalImages));
+        assertTrue(MediaStore.getIncludePending(MediaStore.setIncludePending(mExternalImages)));
+    }
+
+    @Test
+    public void testRequireOriginal() {
+        assertFalse(MediaStore.getRequireOriginal(mExternalImages));
+        assertTrue(MediaStore.getRequireOriginal(MediaStore.setRequireOriginal(mExternalImages)));
+    }
+
+    @Test
     public void testGetMediaScannerUri() {
         // query
         Cursor c = mContentResolver.query(MediaStore.getMediaScannerUri(), null,

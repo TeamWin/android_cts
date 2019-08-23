@@ -24,6 +24,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -78,6 +79,9 @@ public class MediaStore_Audio_MediaTest {
                 Media.getContentUri(mVolumeName), null, null,
                     null, null));
         c.close();
+
+        assertEquals(ContentUris.withAppendedId(Media.getContentUri(mVolumeName), 42),
+                Media.getContentUri(mVolumeName, 42));
     }
 
     @Test

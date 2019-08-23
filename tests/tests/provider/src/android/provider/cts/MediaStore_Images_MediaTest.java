@@ -26,6 +26,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -210,6 +211,9 @@ public class MediaStore_Images_MediaTest {
         assertNotNull(c = mContentResolver.query(Media.getContentUri(mVolumeName), null, null, null,
                 null));
         c.close();
+
+        assertEquals(ContentUris.withAppendedId(Media.getContentUri(mVolumeName), 42),
+                Media.getContentUri(mVolumeName, 42));
     }
 
     private void cleanExternalMediaFile(String path) {
