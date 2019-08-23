@@ -2652,6 +2652,46 @@ public class AudioTrackTest {
         }
     }
 
+    @Test
+    public void testMaxAudioTracks() throws Exception {
+        if (!hasAudioOutput()) {
+            return;
+        }
+
+        // The framework must not give more than MAX_TRACKS tracks per UID.
+        final int MAX_TRACKS = 512; // an arbitrary large number > 40
+        final int FRAMES = 1024;
+
+        final AudioTrack[] tracks = new AudioTrack[MAX_TRACKS];
+        final AudioTrack.Builder builder = new AudioTrack.Builder()
+            .setAudioFormat(new AudioFormat.Builder()
+                .setEncoding(AudioFormat.ENCODING_PCM_8BIT)
+                .setSampleRate(8000)
+                .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                .build())
+            .setBufferSizeInBytes(FRAMES)
+            .setTransferMode(AudioTrack.MODE_STATIC);
+
+        int n = 0;
+        try {
+            for (; n < MAX_TRACKS; ++n) {
+                tracks[n] = builder.build();
+            }
+        } catch (UnsupportedOperationException e) {
+            ; // we expect this when we hit the uid track limit.
+        }
+
+        // release all the tracks created.
+        for (int i = 0; i < n; ++i) {
+            tracks[i].release();
+            tracks[i] = null;
+        }
+        Log.d(TAG, "" + n + " tracks were created");
+        assertTrue("should be able to create at least one static track", n > 0);
+        assertTrue("was able to create " + MAX_TRACKS + " tracks - that's too many!",
+            n < MAX_TRACKS);
+    }
+
 /* Do not run in JB-MR1. will be re-opened in the next platform release.
     public void testResourceLeakage() throws Exception {
         final int BUFFER_SIZE = 600 * 1024;
