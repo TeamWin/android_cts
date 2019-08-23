@@ -492,6 +492,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
                         TRANSIT_WALLPAPER_OPEN, mAmWmState.getWmState().getLastTransition());
                 pressHomeButton();
                 mAmWmState.waitForHomeActivityVisible();
+                mAmWmState.waitForAppTransitionIdle();
 
                 assertEquals(TRANSIT_WALLPAPER_OPEN, mAmWmState.getWmState().getLastTransition());
             }
