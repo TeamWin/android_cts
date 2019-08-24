@@ -15,7 +15,6 @@
  */
 package android.app.cts;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -25,7 +24,6 @@ import static org.junit.Assert.fail;
 import android.app.DownloadManager;
 import android.app.DownloadManager.Query;
 import android.app.DownloadManager.Request;
-import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
@@ -41,7 +39,6 @@ import android.util.Log;
 import android.util.Pair;
 
 import androidx.test.filters.FlakyTest;
-import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
@@ -50,8 +47,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 
 @RunWith(AndroidJUnit4.class)
 public class DownloadManagerTest extends DownloadManagerTestBase {
@@ -538,23 +533,23 @@ public class DownloadManagerTest extends DownloadManagerTestBase {
         file = new File(
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
                 "colors.txt");
-        writeToFileFromShell(file, fileContents);
+        writeToFileWithDelegator(file, fileContents);
         try {
             mDownloadManager.addCompletedDownload("Test title", "Test desc", true,
                     "text/plain", file.getPath(), fileContents.getBytes().length, true);
             fail("addCompletedDownload should have failed for top-level download dir");
-        } catch (Exception e) {
+        } catch (SecurityException e) {
             // expected
         }
 
         // Try adding top-level sdcard path
         final String path = "/sdcard/test-download.txt";
-        writeToFileFromShell(new File(path), fileContents);
+        writeToFileWithDelegator(new File(path), fileContents);
         try {
             mDownloadManager.addCompletedDownload("Test title", "Test desc", true,
                     "text/plain", path, fileContents.getBytes().length, true);
             fail("addCompletedDownload should have failed for top-level sdcard path");
-        } catch (Exception e) {
+        } catch (SecurityException e) {
             // expected
         }
 
