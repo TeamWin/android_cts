@@ -83,6 +83,18 @@ TEST_P(NdkBinderTest_Aidl, UseBinder) {
   ASSERT_EQ(STATUS_OK, AIBinder_ping(iface->asBinder().get()));
 }
 
+TEST_P(NdkBinderTest_Aidl, GetExtension) {
+  SpAIBinder ext;
+  ASSERT_EQ(STATUS_OK, AIBinder_getExtension(iface->asBinder().get(), ext.getR()));
+
+  // TODO(b/139325468): add support in Java as well
+  if (GetParam().expectedName == "CPP") {
+    EXPECT_EQ(STATUS_OK, AIBinder_ping(ext.get()));
+  } else {
+    ASSERT_EQ(nullptr, ext.get());
+  }
+}
+
 bool ReadFdToString(int fd, std::string* content) {
   char buf[64];
   ssize_t n;
@@ -614,12 +626,23 @@ TEST_P(NdkBinderTest_Aidl, GetInterfaceVersion) {
 }
 
 std::shared_ptr<ITest> getProxyLocalService() {
+  std::shared_ptr<MyTest> test = SharedRefBase::make<MyTest>();
+  SpAIBinder binder = test->asBinder();
+
+  // adding an arbitrary class as the extension
+  std::shared_ptr<MyTest> ext = SharedRefBase::make<MyTest>();
+  SpAIBinder extBinder = ext->asBinder();
+
+  binder_status_t ret = AIBinder_setExtension(binder.get(), extBinder.get());
+  if (ret != STATUS_OK) {
+    std::cout << "Could not set local extension" << std::endl;
+  }
+
   // BpTest -> AIBinder -> test
   //
   // Warning: for testing purposes only. This parcels things within the same process for testing
   // purposes. In normal usage, this should just return SharedRefBase::make<MyTest> directly.
-  std::shared_ptr<MyTest> test = SharedRefBase::make<MyTest>();
-  return (new BpTest(test->asBinder()))->ref<ITest>();
+  return (new BpTest(binder))->ref<ITest>();
 }
 
 std::shared_ptr<ITest> getNdkBinderTestJavaService(const std::string& method) {
