@@ -15,10 +15,13 @@
  */
 package android.app.cts;
 
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
@@ -27,9 +30,11 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
+import android.os.RemoteCallback;
 import android.os.SystemClock;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
@@ -57,6 +62,8 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 public class DownloadManagerTestBase {
     protected static final String TAG = "DownloadManagerTest";
@@ -69,6 +76,13 @@ public class DownloadManagerTestBase {
 
     protected static final long SHORT_TIMEOUT = 5 * DateUtils.SECOND_IN_MILLIS;
     protected static final long LONG_TIMEOUT = 3 * DateUtils.MINUTE_IN_MILLIS;
+    private static final String ACTION_CREATE_FILE_WITH_CONTENT =
+            "com.android.cts.action.CREATE_FILE_WITH_CONTENT";
+    private static final String EXTRA_PATH = "path";
+    private static final String EXTRA_CONTENTS = "contents";
+    private static final String EXTRA_CALLBACK = "callback";
+    private static final String KEY_ERROR = "error";
+    private static final String STORAGE_DELEGATOR_PACKAGE = "com.android.test.storagedelegator";
 
     protected Context mContext;
     protected DownloadManager mDownloadManager;
@@ -198,26 +212,20 @@ public class DownloadManagerTestBase {
         assertEquals(contents, actual);
     }
 
-    protected static void writeToFileFromShell(File file, String contents) throws Exception {
-        runShellCommand("mkdir -p " + file.getParentFile());
-        runShellCommand("rm " + file);
+    protected void writeToFileWithDelegator(File file, String contents) throws Exception {
+        final CompletableFuture<Bundle> callbackResult = new CompletableFuture<>();
 
-        final String cmd = "dd of=" + file.getAbsolutePath();
-        final ParcelFileDescriptor[] pfds = InstrumentationRegistry.getInstrumentation()
-                .getUiAutomation().executeShellCommandRw(cmd);
-        try (final PrintWriter out =
-                     new PrintWriter(new ParcelFileDescriptor.AutoCloseOutputStream(pfds[1]))) {
-            out.print(contents);
+        mContext.startActivity(new Intent(ACTION_CREATE_FILE_WITH_CONTENT)
+                .setPackage(STORAGE_DELEGATOR_PACKAGE)
+                .putExtra(EXTRA_PATH, file.getAbsolutePath())
+                .putExtra(EXTRA_CONTENTS, contents)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK)
+                .putExtra(EXTRA_CALLBACK, new RemoteCallback(callbackResult::complete)));
+
+        final Bundle resultBundle = callbackResult.get(SHORT_TIMEOUT, TimeUnit.MILLISECONDS);
+        if (resultBundle.getString(KEY_ERROR) != null) {
+            fail("Failed to create the file " + file + ", error:" + resultBundle.getString(KEY_ERROR));
         }
-
-        final String res;
-        try (FileInputStream fis = new ParcelFileDescriptor.AutoCloseInputStream(pfds[0])) {
-            res = readFromInputStream(fis);
-        }
-        Log.d(TAG, "Output of '" + cmd + "': '" + res + "'");
-        runShellCommand("sync");
-
-        assertFileContents(file, contents);
     }
 
     private static String readFromInputStream(InputStream inputStream) throws Exception {
@@ -228,13 +236,6 @@ public class DownloadManagerTestBase {
             res.append(new String(buf, 0, bytesRead));
         }
         return res.toString();
-    }
-
-    protected static void assertFileContents(File file, String contents) {
-        final String cmd = "cat " + file.getAbsolutePath();
-        final String output = runShellCommand(cmd);
-        Log.d(TAG, "Output of '" + cmd + "': '" + output + "'");
-        assertEquals(contents, output);
     }
 
     protected void clearDownloads() {
