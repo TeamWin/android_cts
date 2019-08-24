@@ -3,3 +3,4 @@ moltmann@google.com
 per-file PowerManagerServicePermissionTest.java = dehboxturtle@google.com
 per-file RequestLocation.java = hallliu@google.com
 per-file MainlineNetworkStackPermissionTest.java = file: platform/frameworks/base:/services/net/OWNERS
+per-file Camera2PermissionTest.java = file: platform/frameworks/av:/camera/OWNERS
