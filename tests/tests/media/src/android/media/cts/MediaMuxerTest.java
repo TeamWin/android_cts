@@ -480,6 +480,12 @@ public class MediaMuxerTest extends AndroidTestCase {
         // parsing String location and recover the location information in floats
         // Make sure the tolerance is very small - due to rounding errors.
 
+        // Trim the trailing slash, if any.
+        int lastIndex = location.lastIndexOf('/');
+        if (lastIndex != -1) {
+            location = location.substring(0, lastIndex);
+        }
+
         // Get the position of the -/+ sign in location String, which indicates
         // the beginning of the longitude.
         int minusIndex = location.lastIndexOf('-');
@@ -489,12 +495,8 @@ public class MediaMuxerTest extends AndroidTestCase {
                 (minusIndex > 0 || plusIndex > 0));
         int index = Math.max(minusIndex, plusIndex);
 
-        float latitude = Float.parseFloat(location.substring(0, index - 1));
-        int lastIndex = location.lastIndexOf('/', index);
-        if (lastIndex == -1) {
-            lastIndex = location.length();
-        }
-        float longitude = Float.parseFloat(location.substring(index, lastIndex - 1));
+        float latitude = Float.parseFloat(location.substring(0, index));
+        float longitude = Float.parseFloat(location.substring(index));
         assertTrue("Incorrect latitude: " + latitude + " [" + location + "]",
                 Math.abs(latitude - LATITUDE) <= TOLERANCE);
         assertTrue("Incorrect longitude: " + longitude + " [" + location + "]",
