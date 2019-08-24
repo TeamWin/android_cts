@@ -1086,6 +1086,9 @@ public abstract class ActivityManagerTestBase {
         }
 
         LockScreenSession unlockDevice() {
+            // Make sure the unlock button event is send to the default display.
+            tapOnDisplay(10, 10, DEFAULT_DISPLAY);
+
             pressUnlockButton();
             return this;
         }
