@@ -32,6 +32,7 @@ import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.Surface;
 import android.view.TextureView;
@@ -92,7 +93,9 @@ public class CameraVideoActivity extends PassFailButtons.Activity
     private Size mNextPreviewSize;
     private Size mPreviewSize;
     private List<Integer> mVideoSizeIds;
+    private List<String> mVideoSizeNames;
     private int mCurrentVideoSizeId;
+    private String mCurrentVideoSizeName;
 
     private boolean isRecording = false;
     private boolean isPlayingBack = false;
@@ -321,7 +324,13 @@ public class CameraVideoActivity extends PassFailButtons.Activity
                     isPlayingBack = false;
                     mPlaybackView.stopPlayback();
                     captureButton.setEnabled(true);
-                    mStatusLabel.setText(getResources().getString(R.string.status_ready));
+
+                    mStatusLabel.setMovementMethod(new ScrollingMovementMethod());
+                    StringBuilder progress = new StringBuilder();
+                    progress.append(getResources().getString(R.string.status_ready));
+                    progress.append("\n---- Progress ----\n");
+                    progress.append(getTestDetails());
+                    mStatusLabel.setText(progress.toString());
                 }
 
     };
@@ -400,9 +409,10 @@ public class CameraVideoActivity extends PassFailButtons.Activity
                         View view, int position, long id) {
                     if (mVideoSizeIds.get(position) != mCurrentVideoSizeId) {
                         mCurrentVideoSizeId = mVideoSizeIds.get(position);
+                        mCurrentVideoSizeName = mVideoSizeNames.get(position);
                         if (VERBOSE) {
                             Log.v(TAG, "onItemSelected: mCurrentVideoSizeId = " +
-                                    mCurrentVideoSizeId);
+                                    mCurrentVideoSizeId + " " + mCurrentVideoSizeName);
                         }
                         mNextPreviewSize = matchPreviewRecordSize();
                         if (VERBOSE) {
@@ -459,7 +469,7 @@ public class CameraVideoActivity extends PassFailButtons.Activity
                                     mStatusLabel.setText(getResources()
                                             .getString(R.string.status_playback));
                                     String combination = "Camera " + mCurrentCameraId + ", " +
-                                            mCurrentVideoSizeId + "\n";
+                                            mCurrentVideoSizeName + "\n";
                                     mUntestedCombinations.remove(combination);
                                     mTestedCombinations.add(combination);
 
@@ -728,9 +738,11 @@ public class CameraVideoActivity extends PassFailButtons.Activity
         ArrayList<VideoSizeNamePair> availableVideoSizes = getVideoSizeNamePairs(id);
         String[] availableVideoSizeNames = new String[availableVideoSizes.size()];
         mVideoSizeIds = new ArrayList<Integer>();
+        mVideoSizeNames = new ArrayList<String>();
         for (int i = 0; i < availableVideoSizes.size(); i++) {
             availableVideoSizeNames[i] = availableVideoSizes.get(i).getSizeName();
             mVideoSizeIds.add(availableVideoSizes.get(i).getSizeId());
+            mVideoSizeNames.add(availableVideoSizeNames[i]);
         }
 
         mResolutionSpinner.setAdapter(
@@ -739,8 +751,8 @@ public class CameraVideoActivity extends PassFailButtons.Activity
 
         // Update untested
         mUntestedCombinations.remove("All combinations for Camera " + id + "\n");
-        for (int videoSizeId: mVideoSizeIds) {
-            String combination = "Camera " + id + ", " + videoSizeId + "\n";
+        for (String videoSizeName : mVideoSizeNames) {
+            String combination = "Camera " + id + ", " + videoSizeName + "\n";
             if (!mTestedCombinations.contains(combination)) {
                 mUntestedCombinations.add(combination);
             }
@@ -748,6 +760,7 @@ public class CameraVideoActivity extends PassFailButtons.Activity
 
         // Set initial values
         mCurrentVideoSizeId = mVideoSizeIds.get(0);
+        mCurrentVideoSizeName = mVideoSizeNames.get(0);
         mNextPreviewSize = matchPreviewRecordSize();
         mResolutionSpinner.setSelection(0);
 
