@@ -237,7 +237,7 @@ public class PermissionUtils {
      * @param packageName Package to clear
      */
     public static void clearAppState(@NonNull String packageName) {
-        runShellCommand("pm clear " + packageName);
+        runShellCommand("pm clear --user current " + packageName);
     }
 
     /**
