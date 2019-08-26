@@ -179,8 +179,16 @@ public class ByodHelperActivity extends LocationListenerActivity
                 .setContentText(getString(R.string.provisioning_byod_notification_title))
                 .setVisibility(visibility)
                 .setAutoCancel(true)
+                .setPublicVersion(createPublicVersionNotification())
                 .build();
         mNotificationManager.notify(NOTIFICATION_ID, notification);
+    }
+    private Notification createPublicVersionNotification() {
+        return new Notification.Builder(this)
+                .setSmallIcon(R.drawable.icon)
+                .setContentTitle(getString(R.string.provisioning_byod_notification_public_title))
+                .setAutoCancel(true)
+                .build();
     }
 
 
