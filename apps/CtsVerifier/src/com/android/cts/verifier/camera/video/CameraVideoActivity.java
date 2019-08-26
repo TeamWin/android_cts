@@ -56,6 +56,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.TreeSet;
 
 
@@ -105,10 +106,33 @@ public class CameraVideoActivity extends PassFailButtons.Activity
 
     private TextView mStatusLabel;
 
-    private TreeSet<String> mTestedCombinations = new TreeSet<String>();
-    private TreeSet<String> mUntestedCombinations = new TreeSet<String>();
+    private TreeSet<CameraCombination> mTestedCombinations = new TreeSet<>(COMPARATOR);
+    private TreeSet<CameraCombination> mUntestedCombinations = new TreeSet<>(COMPARATOR);
+    private TreeSet<String> mUntestedCameras = new TreeSet<>();
 
     private File outputVideoFile;
+
+    private class CameraCombination {
+        private final int mCameraIndex;
+        private final int mVideoSizeIdIndex;
+        private final String mVideoSizeName;
+
+        private CameraCombination(
+            int cameraIndex, int videoSizeIdIndex, String videoSizeName) {
+            this.mCameraIndex = cameraIndex;
+            this.mVideoSizeIdIndex = videoSizeIdIndex;
+            this.mVideoSizeName = videoSizeName;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("Camera %d, %s", mCameraIndex, mVideoSizeName);
+        }
+    }
+
+    private static final Comparator<CameraCombination> COMPARATOR =
+        Comparator.<CameraCombination, Integer>comparing(c -> c.mCameraIndex)
+            .thenComparing(c -> c.mVideoSizeIdIndex);
 
     /**
      * @see #MEDIA_TYPE_IMAGE
@@ -274,7 +298,7 @@ public class CameraVideoActivity extends PassFailButtons.Activity
         String[] cameraNames = new String[numCameras];
         for (int i = 0; i < numCameras; i++) {
             cameraNames[i] = "Camera " + i;
-            mUntestedCombinations.add("All combinations for Camera " + i + "\n");
+            mUntestedCameras.add("All combinations for Camera " + i + "\n");
         }
         if (VERBOSE) {
             Log.v(TAG, "onCreate: number of cameras=" + numCameras);
@@ -289,6 +313,45 @@ public class CameraVideoActivity extends PassFailButtons.Activity
         mResolutionSpinner.setOnItemSelectedListener(mResolutionSelectedListener);
 
         mStatusLabel = (TextView) findViewById(R.id.status_label);
+
+        Button mNextButton = (Button) findViewById(R.id.next_button);
+        mNextButton.setOnClickListener(v -> {
+            setUntestedCombination();
+            if (VERBOSE) {
+                Log.v(TAG, "onClick: mCurrentVideoSizeId = " +
+                    mCurrentVideoSizeId + " " + mCurrentVideoSizeName);
+                Log.v(TAG, "onClick: setting preview size "
+                    + mNextPreviewSize.width + "x" + mNextPreviewSize.height);
+            }
+
+            startPreview();
+            if (VERBOSE) {
+                Log.v(TAG, "onClick: started new preview");
+            }
+            captureButton.performClick();
+        });
+    }
+
+    /**
+     * Set an untested combination of the current camera and video size.
+     * Triggered by next button click.
+     */
+    private void setUntestedCombination() {
+        Optional<CameraCombination> combination = mUntestedCombinations.stream().filter(
+            c -> c.mCameraIndex == mCurrentCameraId).findFirst();
+        if (!combination.isPresent()) {
+            Toast.makeText(this, "All Camera " + mCurrentCameraId + " tests are done.",
+                Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // There is untested combination for the current camera, set the next untested combination.
+        int mNextVideoSizeIdIndex = combination.get().mVideoSizeIdIndex;
+
+        mCurrentVideoSizeId = mVideoSizeIds.get(mNextVideoSizeIdIndex);
+        mCurrentVideoSizeName = mVideoSizeNames.get(mNextVideoSizeIdIndex);
+        mNextPreviewSize = matchPreviewRecordSize();
+        mResolutionSpinner.setSelection(mNextVideoSizeIdIndex);
     }
 
     @Override
@@ -348,12 +411,17 @@ public class CameraVideoActivity extends PassFailButtons.Activity
     public String getTestDetails() {
         StringBuilder reportBuilder = new StringBuilder();
         reportBuilder.append("Tested combinations:\n");
-        for (String combination : mTestedCombinations) {
+        for (CameraCombination combination: mTestedCombinations) {
             reportBuilder.append(combination);
+            reportBuilder.append("\n");
         }
         reportBuilder.append("Untested combinations:\n");
-        for (String combination : mUntestedCombinations) {
+        for (String untestedCam : mUntestedCameras) {
+            reportBuilder.append(untestedCam);
+        }
+        for (CameraCombination combination: mUntestedCombinations) {
             reportBuilder.append(combination);
+            reportBuilder.append("\n");
         }
         return reportBuilder.toString();
     }
@@ -468,8 +536,12 @@ public class CameraVideoActivity extends PassFailButtons.Activity
                                     isPlayingBack = true;
                                     mStatusLabel.setText(getResources()
                                             .getString(R.string.status_playback));
-                                    String combination = "Camera " + mCurrentCameraId + ", " +
-                                            mCurrentVideoSizeName + "\n";
+
+                                    int resIdx = mResolutionSpinner.getSelectedItemPosition();
+                                    CameraCombination combination = new CameraCombination(
+                                            mCurrentCameraId, resIdx,
+                                            mVideoSizeNames.get(resIdx));
+
                                     mUntestedCombinations.remove(combination);
                                     mTestedCombinations.add(combination);
 
@@ -750,9 +822,13 @@ public class CameraVideoActivity extends PassFailButtons.Activity
                 this, R.layout.cf_format_list_item, availableVideoSizeNames));
 
         // Update untested
-        mUntestedCombinations.remove("All combinations for Camera " + id + "\n");
-        for (String videoSizeName : mVideoSizeNames) {
-            String combination = "Camera " + id + ", " + videoSizeName + "\n";
+        mUntestedCameras.remove("All combinations for Camera " + id + "\n");
+
+        for (int videoSizeIdIndex = 0;
+                videoSizeIdIndex < mVideoSizeIds.size(); videoSizeIdIndex++) {
+            CameraCombination combination = new CameraCombination(
+                id, videoSizeIdIndex, mVideoSizeNames.get(videoSizeIdIndex));
+
             if (!mTestedCombinations.contains(combination)) {
                 mUntestedCombinations.add(combination);
             }
