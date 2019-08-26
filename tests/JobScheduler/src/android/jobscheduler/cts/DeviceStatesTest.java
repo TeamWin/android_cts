@@ -18,6 +18,7 @@ package android.jobscheduler.cts;
 
 import android.annotation.TargetApi;
 import android.app.job.JobInfo;
+import android.content.pm.PackageManager;
 import android.os.SystemClock;
 import android.support.test.uiautomator.UiDevice;
 
@@ -148,9 +149,21 @@ public class DeviceStatesTest extends ConstraintTest {
     }
 
     /**
+     * Check if dock state is supported.
+     */
+    private boolean isDockStateSupported() {
+        // Car does not support dock state.
+        return !getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_AUTOMOTIVE);
+    }
+
+    /**
      * Ensure that device can switch state on dock normally.
      */
     public void testScreenOnDeviceOnDockChangeState() throws Exception {
+        if (!isDockStateSupported()) {
+            return;
+        }
         toggleScreenOn(true /* screen on */);
         verifyActiveState();
 
@@ -168,6 +181,9 @@ public class DeviceStatesTest extends ConstraintTest {
      *  Ensure that ignores this dock intent during screen off.
      */
     public void testScreenOffDeviceOnDockNoChangeState() throws Exception {
+        if (!isDockStateSupported()) {
+            return;
+        }
         toggleScreenOn(false /* screen off */);
         triggerIdleMaintenance();
         verifyIdleState();
