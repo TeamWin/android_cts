@@ -134,6 +134,8 @@
             <meta-data android:name="android.app.stubs.reference" android:resource="@xml/metadata" />
         </service>
 
+        <service android:name="android.app.stubs.LocalStoppedService" />
+
         <service android:name="android.app.stubs.LocalForegroundService">
             <intent-filter>
                 <action android:name="android.app.stubs.FOREGROUND_SERVICE" />
