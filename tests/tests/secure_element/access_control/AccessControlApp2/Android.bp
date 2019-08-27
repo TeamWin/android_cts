@@ -1,0 +1,19 @@
+//////////////////////////////////////////////////////////////////
+// Signed Package
+
+android_test_import {
+    name: "signed-CtsSecureElementAccessControlTestCases2",
+    apk: "apk/signed-CtsSecureElementAccessControlTestCases2.apk",
+
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+        "cts-instant",
+    ],
+    // Make sure the build system doesn't try to resign the APK
+    presigned: true,
+    dex_preopt: {
+        enabled: false,
+    },
+}
