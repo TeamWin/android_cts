@@ -394,15 +394,17 @@ public abstract class BasePermissionsTest {
             if (granted != wasGranted) {
                 // Toggle the permission
 
+                boolean willShowPopup = (wasGranted && legacyApp);
+
                 if (!itemView.getActionList().contains(AccessibilityAction.ACTION_CLICK)) {
-                    click(toggleView, false);
+                    click(toggleView, willShowPopup);
                 } else {
-                    click(itemView, false);
+                    click(itemView, willShowPopup);
                 }
 
                 waitForIdle();
 
-                if (wasGranted && legacyApp) {
+                if (willShowPopup) {
                     scrollToBottomIfWatch();
                     String packageName = getInstrumentation().getContext().getPackageManager()
                             .getPermissionControllerPackageName();
