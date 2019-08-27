@@ -1512,15 +1512,15 @@ public class BitmapTest {
         Debug.MemoryInfo meminfoStart = new Debug.MemoryInfo();
         Debug.MemoryInfo meminfoEnd = new Debug.MemoryInfo();
         int fdCount = -1;
+        // Do a warmup to reach steady-state memory usage
+        for (int i = 0; i < 50; i++) {
+            test.run();
+        }
+        runGcAndFinalizersSync();
+        Debug.getMemoryInfo(meminfoStart);
+        fdCount = getFdCount();
+        // Now run the test
         for (int i = 0; i < 2000; i++) {
-            if (i == 2) {
-                // Not really the "start" but by having done a couple
-                // we've fully initialized any state that may be required,
-                // so memory usage should be stable now
-                runGcAndFinalizersSync();
-                Debug.getMemoryInfo(meminfoStart);
-                fdCount = getFdCount();
-            }
             if (i % 100 == 5) {
                 assertNotLeaking(i, meminfoStart, meminfoEnd);
                 assertEquals(fdCount, getFdCount());
