@@ -99,7 +99,7 @@ public class UiAutomationTest {
         }
         try {
             packageManager.grantRuntimePermission(context.getPackageName(),
-                    Manifest.permission.CAMERA, Process.myUserHandle());
+                    Manifest.permission.RECORD_AUDIO, Process.myUserHandle());
             fail("Should not be able to access APIs protected by a permission apps cannot get");
         } catch (SecurityException e) {
             /* expected */
@@ -113,17 +113,17 @@ public class UiAutomationTest {
             activityManager.getPackageImportance("foo.bar.baz");
 
             // Grant ourselves a runtime permission (was granted at install)
-            assertSame(packageManager.checkPermission(Manifest.permission.CAMERA,
+            assertSame(packageManager.checkPermission(Manifest.permission.RECORD_AUDIO,
                     context.getPackageName()), PackageManager.PERMISSION_DENIED);
             packageManager.grantRuntimePermission(context.getPackageName(),
-                    Manifest.permission.CAMERA, Process.myUserHandle());
+                    Manifest.permission.RECORD_AUDIO, Process.myUserHandle());
         } catch (SecurityException e) {
             fail("Should be able to access APIs protected by a permission apps cannot get");
         } finally {
             getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
         }
         // Make sure the grant worked
-        assertSame(packageManager.checkPermission(Manifest.permission.CAMERA,
+        assertSame(packageManager.checkPermission(Manifest.permission.RECORD_AUDIO,
                 context.getPackageName()), PackageManager.PERMISSION_GRANTED);
 
 
@@ -136,7 +136,7 @@ public class UiAutomationTest {
         }
         try {
             packageManager.revokeRuntimePermission(context.getPackageName(),
-                    Manifest.permission.CAMERA, Process.myUserHandle());
+                    Manifest.permission.RECORD_AUDIO, Process.myUserHandle());
             fail("Should not be able to access APIs protected by a permission apps cannot get");
         } catch (SecurityException e) {
             /* expected */

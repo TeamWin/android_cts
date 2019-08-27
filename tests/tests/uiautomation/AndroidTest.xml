@@ -23,7 +23,7 @@
         <option name="test-file-name" value="CtsUiAutomationTestCases.apk" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
-        <option name="run-command" value="pm revoke android.app.uiautomation.cts android.permission.CAMERA" />
+        <option name="run-command" value="pm revoke android.app.uiautomation.cts android.permission.RECORD_AUDIO" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.app.uiautomation.cts" />

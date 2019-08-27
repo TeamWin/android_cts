@@ -37,6 +37,7 @@ public class EnvironmentTest extends TestCase {
 
     @AppModeFull(reason = "External directory not accessible by instant apps")
     public void testEnvironmentExternal() {
+        assertTrue(Environment.getStorageDirectory().isDirectory());
         assertTrue(Environment.getExternalStorageDirectory().isDirectory());
     }
 

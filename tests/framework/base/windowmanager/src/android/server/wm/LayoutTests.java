@@ -54,7 +54,6 @@ import org.junit.Test;
  * Build/Install/Run:
  *     atest CtsWindowManagerDeviceTestCases:LayoutTests
  */
-@FlakyTest(detail = "Can be promoted to pre-submit once confirmed stable.")
 @AppModeFull(reason = "Cannot write global settings as an instant app.")
 @Presubmit
 public class LayoutTests extends WindowManagerTestBase {

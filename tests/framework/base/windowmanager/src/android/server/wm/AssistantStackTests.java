@@ -98,7 +98,6 @@ public class AssistantStackTests extends ActivityManagerTestBase {
         }
     }
 
-    @FlakyTest(bugId = 69573940)
     @Test
     public void testAssistantStackZOrder() throws Exception {
         assumeTrue(assistantRunsOnPrimaryDisplay());
@@ -189,7 +188,6 @@ public class AssistantStackTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 71875631)
     public void testAssistantStackFinishToPreviousApp() throws Exception {
         // Launch an assistant activity on top of an existing fullscreen activity, and ensure that
         // the fullscreen activity is still visible and on top after the assistant activity finishes
@@ -214,7 +212,6 @@ public class AssistantStackTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 71875631)
     public void testDisallowEnterPiPFromAssistantStack() throws Exception {
         try (final AssistantSession assistantSession = new AssistantSession()) {
             assistantSession.setVoiceInteractionService(ASSISTANT_VOICE_INTERACTION_SERVICE);
@@ -300,7 +297,6 @@ public class AssistantStackTests extends ActivityManagerTestBase {
         }
     }
 
-    @FlakyTest(bugId = 69229402)
     @Test
     public void testLaunchIntoSameTask() throws Exception {
         try (final AssistantSession assistantSession = new AssistantSession()) {

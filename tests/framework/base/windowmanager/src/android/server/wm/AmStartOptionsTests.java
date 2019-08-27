@@ -70,7 +70,6 @@ public class AmStartOptionsTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @FlakyTest
     public void testDashW_Indirect() throws Exception {
         testDashW(ENTRY_POINT_ALIAS_ACTIVITY, SINGLE_TASK_ACTIVITY);
     }
@@ -108,6 +107,8 @@ public class AmStartOptionsTests extends ActivityManagerTestBase {
 
     private void startActivityAndVerifyResult(final ComponentName entryActivity,
             final ComponentName actualActivity, boolean shouldStart) {
+        mAmWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
+
         // Pass in different data only when cold starting. This is to make the intent
         // different in subsequent warm/hot launches, so that the entrypoint alias
         // activity is always started, but the actual activity is not started again

@@ -21,6 +21,7 @@ import android.graphics.ImageFormat;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
+import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.params.BlackLevelPattern;
@@ -401,16 +402,22 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         }
 
         TotalCaptureResult result = null;
+        // List of (frameNumber, physical camera Id) pairs
+        ArrayList<Pair<Long, String>> droppedPhysicalResults = new ArrayList<>();
         for (int i = 0; i < numFramesVerified; i++) {
             result = captureListener.getTotalCaptureResult(WAIT_FOR_RESULT_TIMEOUT_MS);
+
             Map<String, CaptureResult> physicalCaptureResults = result.getPhysicalCameraResults();
-            errorCollector.expectEquals("Number of physical result metadata doesn't match " +
-                    physicalCaptureResults.size() + " vs " + requestedPhysicalIds.size(),
-                    physicalCaptureResults.size(), requestedPhysicalIds.size());
+            ArrayList<String> droppedIds = new ArrayList<String>(requestedPhysicalIds);
+            droppedIds.removeAll(physicalCaptureResults.keySet());
+            for (String droppedId : droppedIds) {
+                droppedPhysicalResults.add(
+                        new Pair<Long, String>(result.getFrameNumber(), droppedId));
+            }
 
             validateOneCaptureResult(errorCollector, staticInfo, waiverKeys, allKeys,
                     requestBuilder, result, null/*cameraId*/, i);
-            for (String physicalId : requestedPhysicalIds) {
+            for (String physicalId : physicalCaptureResults.keySet()) {
                 StaticMetadata physicalStaticInfo = allStaticInfo.get(physicalId);
                 validateOneCaptureResult(errorCollector, physicalStaticInfo,
                         physicalWaiverKeys.get(physicalId),
@@ -418,6 +425,23 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
                         physicalId, i);
             }
         }
+
+        // Verify that all dropped physical camera results are notified via capture failure.
+        while (captureListener.hasMoreFailures()) {
+            ArrayList<CaptureFailure> failures =
+                    captureListener.getCaptureFailures(/*maxNumFailures*/ 1);
+            for (CaptureFailure failure : failures) {
+                String failedPhysicalId = failure.getPhysicalCameraId();
+                Long failedFrameNumber = failure.getFrameNumber();
+                if (failedPhysicalId != null) {
+                    droppedPhysicalResults.removeIf(
+                            n -> n.equals(
+                            new Pair<Long, String>(failedFrameNumber, failedPhysicalId)));
+                }
+            }
+        }
+        errorCollector.expectTrue("Not all dropped results for physical cameras are notified",
+                droppedPhysicalResults.isEmpty());
     }
 
     private static void validateOneCaptureResult(CameraErrorCollector errorCollector,

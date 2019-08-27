@@ -158,6 +158,9 @@ public class MediaStore_FilesTest {
         } finally {
             cursor.close();
         }
+
+        assertEquals(ContentUris.withAppendedId(MediaStore.Files.getContentUri(mVolumeName), 42),
+                MediaStore.Files.getContentUri(mVolumeName, 42));
     }
 
     @Test
