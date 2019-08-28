@@ -25,10 +25,6 @@ public class Poc16_06 extends SecurityTestCase {
      */
     @SecurityTest(minPatchLevel = "2016-06")
     public void testPocCVE_2016_2482() throws Exception {
-        AdbUtils.runCommandLine("logcat -c" , getDevice());
-        AdbUtils.runPoc("CVE-2016-2482", getDevice(), 60);
-        String logcat =  AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertNotMatchesMultiLine("Fatal signal[\\s\\S]*/system/bin/mediaserver",
-                         logcat);
+        AdbUtils.runPocAssertNoCrashes("CVE-2016-2482", getDevice(), "mediaserver");
     }
 }

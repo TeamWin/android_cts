@@ -93,11 +93,7 @@ public class Poc17_03 extends SecurityTestCase {
      */
     @SecurityTest(minPatchLevel = "2017-03")
     public void testPocCVE_2017_0479() throws Exception {
-        AdbUtils.runCommandLine("logcat -c" , getDevice());
-        AdbUtils.runPocNoOutput("CVE-2017-0479", getDevice(), 60);
-        String logcatOut = AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertNotMatchesMultiLine("Fatal signal 11 \\(SIGSEGV\\).*>>> /system/bin/" +
-                         "audioserver <<<", logcatOut);
+        AdbUtils.runPocAssertNoCrashes("CVE-2017-0479", getDevice(), "audioserver");
     }
 
     /*
