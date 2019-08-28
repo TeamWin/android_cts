@@ -40,6 +40,7 @@ public class Install {
     private boolean mIsDowngrade = false;
     private boolean mEnableRollback = false;
     private int mSessionMode = PackageInstaller.SessionParams.MODE_FULL_INSTALL;
+    private int mInstallFlags = 0;
 
     private Install(boolean isMultiPackage, TestApp... testApps) {
         mIsMultiPackage = isMultiPackage;
@@ -124,6 +125,14 @@ public class Install {
     }
 
     /**
+     * Sets the session params.
+     */
+    public Install addInstallFlags(int installFlags) {
+        mInstallFlags |= installFlags;
+        return this;
+    }
+
+    /**
      * Commits the install.
      *
      * @return the session id of the install session, if the session is successful.
@@ -193,6 +202,9 @@ public class Install {
         }
         params.setRequestDowngrade(mIsDowngrade);
         params.setEnableRollback(mEnableRollback);
+        if (mInstallFlags != 0) {
+            InstallUtils.mutateInstallFlags(params, mInstallFlags);
+        }
         return InstallUtils.getPackageInstaller().createSession(params);
     }
 
@@ -227,4 +239,5 @@ public class Install {
     private boolean isMultiPackage() {
         return mIsMultiPackage;
     }
+
 }

@@ -2721,10 +2721,12 @@ testCameraDevicePreviewWithSessionParametersNative(
             goto cleanup;
         }
 
+        StaticInfo staticInfo(chars);
         ACameraMetadata_const_entry sessionParamKeys{};
         ret = ACameraMetadata_getConstEntry(chars, ACAMERA_REQUEST_AVAILABLE_SESSION_KEYS,
                 &sessionParamKeys);
-        if ((ret != ACAMERA_OK) || (sessionParamKeys.count == 0)) {
+        if ((ret != ACAMERA_OK) || (sessionParamKeys.count == 0) ||
+                !staticInfo.isColorOutputSupported()) {
             ACameraMetadata_free(chars);
             chars = nullptr;
             continue;

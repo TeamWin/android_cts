@@ -22,6 +22,7 @@ android_test {
         "android-common",
         "ctstestserver",
         "ctstestrunner-axt",
+        "cts-install-lib",
         "compatibility-device-util-axt",
         "compatibility-common-util-devicesidelib",
         "guava",
@@ -31,6 +32,9 @@ android_test {
         "android.test.runner.stubs",
         "org.apache.http.legacy",
         "android.test.base.stubs",
+    ],
+    java_resources: [
+        ":PackageInstallerTestApp",
     ],
     jni_libs: [
         "libctssecurity_jni",
@@ -58,4 +62,16 @@ android_test {
         "general-tests",
         "sts",
     ],
+    certificate: ":security_cts_test_certificate",
+}
+
+android_test_helper_app {
+    name: "PackageInstallerTestApp",
+    srcs: ["testdata/src/**/*.java"],
+    manifest: "testdata/packageinstallertestapp.xml",
+}
+
+android_app_certificate {
+    name: "security_cts_test_certificate",
+    certificate: "security_cts_test_cert",
 }
