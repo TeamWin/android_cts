@@ -37,6 +37,7 @@ import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.PRE_ON_C
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import android.app.Activity;
+import android.app.ActivityOptions;
 import android.app.PictureInPictureParams;
 import android.content.ComponentName;
 import android.content.Context;
@@ -47,8 +48,13 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.server.wm.MultiDisplayTestBase;
 import android.server.wm.lifecycle.LifecycleLog.ActivityCallback;
+import android.transition.Transition;
+import android.transition.TransitionListenerAdapter;
 import android.util.Pair;
 
+import android.server.wm.cts.R;
+
+import androidx.annotation.Nullable;
 import androidx.test.rule.ActivityTestRule;
 
 import org.junit.Before;
@@ -147,9 +153,16 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
 
     /** Launch an activity given a class. */
     protected Activity launchActivity(Class<? extends Activity> activityClass) {
+        return launchActivity(activityClass, null /* options */);
+    }
+
+    /** Launch an activity given a class and options. */
+    protected Activity launchActivity(Class<? extends Activity> activityClass,
+            @Nullable ActivityOptions options) {
         final Intent intent = new Intent(mTargetContext, activityClass);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        return getInstrumentation().startActivitySync(intent);
+        return getInstrumentation().startActivitySync(intent,
+                options != null ? options.toBundle() : null);
     }
 
     /**
@@ -334,6 +347,10 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
         }
     }
 
+    // Just another callback tracking activity, nothing special.
+    public static class SecondCallbackTrackingActivity extends CallbackTrackingActivity {
+    }
+
     // Translucent callback tracking test activity
     public static class TranslucentCallbackTrackingActivity extends CallbackTrackingActivity {
     }
@@ -515,6 +532,41 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    public static class DifferentAffinityActivity extends LifecycleTrackingActivity {
+    }
+
+    public static class TransitionSourceActivity extends LifecycleTrackingActivity {
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            setContentView(R.layout.transition_source_layout);
+        }
+
+        void launchActivityWithTransition() {
+            final ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(this,
+                    findViewById(R.id.transitionView), "sharedTransition");
+            final Intent intent = new Intent(this, TransitionDestinationActivity.class);
+            startActivity(intent, options.toBundle());
+        }
+    }
+
+    public static class TransitionDestinationActivity extends LifecycleTrackingActivity {
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            setContentView(R.layout.transition_destination_layout);
+            final Transition sharedElementEnterTransition =
+                    getWindow().getSharedElementEnterTransition();
+            sharedElementEnterTransition.addListener(new TransitionListenerAdapter() {
+                @Override
+                public void onTransitionEnd(Transition transition) {
+                    super.onTransitionEnd(transition);
+                    finishAfterTransition();
+                }
+            });
         }
     }
 
