@@ -145,7 +145,9 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     /**
      * Test that the available stream configurations contain a few required formats and sizes.
      */
+    @CddTest(requirement="7.5.1/C-1-2")
     public void testAvailableStreamConfigs() throws Exception {
+        boolean firstBackFacingCamera = true;
         for (int i = 0; i < mAllCameraIds.length; i++) {
             CameraCharacteristics c = mCharacteristics.get(i);
             StreamConfigurationMap config =
@@ -216,10 +218,13 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                             sensorResolution >= MIN_FRONT_SENSOR_RESOLUTION);
                     break;
                 case CameraCharacteristics.LENS_FACING_BACK:
-                    assertTrue("Back Sensor resolution should be at least "
-                            + MIN_BACK_SENSOR_RESOLUTION +
-                            " pixels, is "+ sensorResolution,
-                            sensorResolution >= MIN_BACK_SENSOR_RESOLUTION);
+                    if (firstBackFacingCamera) {
+                        assertTrue("Back Sensor resolution should be at least "
+                                + MIN_BACK_SENSOR_RESOLUTION +
+                                " pixels, is "+ sensorResolution,
+                                sensorResolution >= MIN_BACK_SENSOR_RESOLUTION);
+                        firstBackFacingCamera = false;
+                    }
                     break;
                 default:
                     break;
