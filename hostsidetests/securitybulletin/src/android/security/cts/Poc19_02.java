@@ -26,10 +26,7 @@ public class Poc19_02 extends SecurityTestCase {
      */
     @SecurityTest(minPatchLevel = "2019-02")
     public void testPocCVE_2018_6367() throws Exception {
-        AdbUtils.runCommandLine("logcat -c" , getDevice());
-        AdbUtils.runPocNoOutput("CVE-2018-6267", getDevice(), 60);
-        String logcat = AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertNotMatchesMultiLine("Fatal signal 11.*?>>> /system/bin/mediaserver <<<", logcat);
+        AdbUtils.runPocAssertNoCrashes("CVE-2018-6267", getDevice(), "mediaserver");
     }
 
     /**
@@ -37,9 +34,6 @@ public class Poc19_02 extends SecurityTestCase {
      */
     @SecurityTest(minPatchLevel = "2019-02")
     public void testPocCVE_2018_6271() throws Exception {
-        AdbUtils.runCommandLine("logcat -c" , getDevice());
-        AdbUtils.runPocNoOutput("CVE-2018-6271", getDevice(), 60);
-        String logcat = AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertNotMatchesMultiLine("Fatal signal 11.*?>>> /system/bin/mediaserver <<<", logcat);
+        AdbUtils.runPocAssertNoCrashes("CVE-2018-6271", getDevice(), "mediaserver");
     }
 }

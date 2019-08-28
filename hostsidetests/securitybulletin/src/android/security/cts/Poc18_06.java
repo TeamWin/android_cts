@@ -46,28 +46,21 @@ public class Poc18_06 extends SecurityTestCase {
     assertFalse(result.contains("com.emoji.keyboard.touchpal"));
   }
 
-  /**
-   *  b/72510002
-   */
-  @SecurityTest
-  public void testPocCVE_2018_9349() throws Exception {
-      AdbUtils.runCommandLine("logcat -c", getDevice());
-      AdbUtils.pushResource("/CVE-2018-9349.yuv", "/data/local/tmp/CVE-2018-9349.yuv", getDevice());
-      String out = AdbUtils.runPoc("CVE-2018-9349",getDevice());
-      String logcat =  AdbUtils.runCommandLine("logcat -d", getDevice());
-      assertNotMatchesMultiLine(">>> /system/bin/mediaserver <<<[^\\n]*?\\n" +
-                                "[^\\n]*?signal 11 \\(SIGSEGV\\)", logcat);
-  }
+    /**
+     *  b/72510002
+     */
+    @SecurityTest
+    public void testPocCVE_2018_9349() throws Exception {
+        AdbUtils.pushResource("/CVE-2018-9349.yuv", "/data/local/tmp/CVE-2018-9349.yuv", getDevice());
+        AdbUtils.runPocAssertNoCrashes("CVE-2018-9349", getDevice(), "mediaserver");
+    }
 
     /**
      *  b/73172817
      */
     @SecurityTest
     public void testPocCVE_2018_9344() throws Exception {
-        AdbUtils.runCommandLine("logcat -c", getDevice());
-        AdbUtils.runPoc("CVE-2018-9344", getDevice(), 30);
-        String output = AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertNotMatchesMultiLine(">>> /vendor/bin/hw/android.hardware.cas@1.0-service <<<" +
-                ".*?signal 11 \\(SIGSEGV\\)", output);
+        AdbUtils.runPocAssertNoCrashes("CVE-2018-9344", getDevice(),
+                "android\\.hardware\\.cas@\\d+?\\.\\d+?-service");
     }
 }
