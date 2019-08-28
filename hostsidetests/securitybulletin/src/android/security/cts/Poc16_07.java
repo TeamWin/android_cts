@@ -32,11 +32,7 @@ public class Poc16_07 extends SecurityTestCase {
      */
     @SecurityTest(minPatchLevel = "2016-07")
     public void testPocCVE_2016_3746() throws Exception {
-        AdbUtils.runCommandLine("logcat -c" , getDevice());
-        AdbUtils.runPoc("CVE-2016-3746", getDevice(), 60);
-        String logcat = AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertNotMatchesMultiLine("Fatal signal 11.*?>>> /system/bin/mediaserver <<<",
-            logcat);
+        AdbUtils.runPocAssertNoCrashes("CVE-2016-3746", getDevice(), "mediaserver");
     }
 
     /**
