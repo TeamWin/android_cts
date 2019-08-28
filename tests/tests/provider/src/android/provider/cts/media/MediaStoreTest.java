@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.provider.cts;
+package android.provider.cts.media;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -32,9 +32,10 @@ import android.net.Uri;
 import android.os.SystemClock;
 import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
-import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
+import android.provider.cts.ProviderTestUtils;
+import android.provider.cts.R;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -53,7 +54,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-@Presubmit
 @RunWith(Parameterized.class)
 public class MediaStoreTest {
     static final String TAG = "MediaStoreTest";

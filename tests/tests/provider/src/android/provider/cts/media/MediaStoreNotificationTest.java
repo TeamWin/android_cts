@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package android.provider.cts;
+package android.provider.cts.media;
 
-import static android.provider.cts.MediaStoreTest.TAG;
+import static android.provider.cts.media.MediaStoreTest.TAG;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -27,7 +27,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.util.Log;
 
@@ -44,7 +43,6 @@ import org.junit.runners.Parameterized.Parameters;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-@Presubmit
 @RunWith(Parameterized.class)
 public class MediaStoreNotificationTest {
     private Context mContext;

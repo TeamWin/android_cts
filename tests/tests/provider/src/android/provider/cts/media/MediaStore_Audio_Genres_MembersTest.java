@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package android.provider.cts;
+package android.provider.cts.media;
 
-import static android.provider.cts.MediaStoreTest.TAG;
+import static android.provider.cts.media.MediaStoreTest.TAG;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -29,15 +28,14 @@ import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.SQLException;
 import android.net.Uri;
-import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Audio.Genres;
 import android.provider.MediaStore.Audio.Genres.Members;
 import android.provider.MediaStore.Audio.Media;
-import android.provider.cts.MediaStoreAudioTestHelper.Audio1;
-import android.provider.cts.MediaStoreAudioTestHelper.Audio2;
+import android.provider.cts.ProviderTestUtils;
+import android.provider.cts.media.MediaStoreAudioTestHelper.Audio1;
+import android.provider.cts.media.MediaStoreAudioTestHelper.Audio2;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -50,7 +48,6 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
-@Presubmit
 @RunWith(Parameterized.class)
 public class MediaStore_Audio_Genres_MembersTest {
     private Context mContext;

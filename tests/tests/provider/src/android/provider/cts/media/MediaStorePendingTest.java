@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package android.provider.cts;
+package android.provider.cts.media;
 
-import static android.provider.cts.MediaStoreTest.TAG;
 import static android.provider.cts.ProviderTestUtils.containsId;
 import static android.provider.cts.ProviderTestUtils.getRawFile;
 import static android.provider.cts.ProviderTestUtils.getRawFileHash;
 import static android.provider.cts.ProviderTestUtils.hash;
+import static android.provider.cts.media.MediaStoreTest.TAG;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -36,11 +36,12 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.FileUtils;
-import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
-import android.provider.cts.MediaStoreUtils.PendingParams;
-import android.provider.cts.MediaStoreUtils.PendingSession;
+import android.provider.cts.ProviderTestUtils;
+import android.provider.cts.R;
+import android.provider.cts.media.MediaStoreUtils.PendingParams;
+import android.provider.cts.media.MediaStoreUtils.PendingSession;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -62,7 +63,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-@Presubmit
 @RunWith(Parameterized.class)
 public class MediaStorePendingTest {
     private Context mContext;

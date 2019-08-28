@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package android.provider.cts;
+package android.provider.cts.media;
 
-import static android.provider.cts.MediaStoreTest.TAG;
 import static android.provider.cts.ProviderTestUtils.assertExists;
 import static android.provider.cts.ProviderTestUtils.assertNotExists;
+import static android.provider.cts.media.MediaStoreTest.TAG;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -32,22 +32,21 @@ import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.media.MediaExtractor;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
+import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 import android.os.storage.StorageManager;
-import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Video.Media;
 import android.provider.MediaStore.Video.VideoColumns;
-import android.provider.cts.MediaStoreUtils.PendingParams;
-import android.provider.cts.MediaStoreUtils.PendingSession;
+import android.provider.cts.ProviderTestUtils;
+import android.provider.cts.R;
+import android.provider.cts.media.MediaStoreUtils.PendingParams;
+import android.provider.cts.media.MediaStoreUtils.PendingSession;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
-
-import com.android.compatibility.common.util.FileUtils;
 
 import org.junit.Assume;
 import org.junit.Before;
@@ -64,7 +63,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 
-@Presubmit
 @RunWith(Parameterized.class)
 public class MediaStore_Video_MediaTest {
     private Context mContext;
@@ -110,18 +108,14 @@ public class MediaStore_Video_MediaTest {
 
     @Test
     public void testStoreVideoMediaExternal() throws Exception {
-        final String externalVideoPath = new File(ProviderTestUtils.stageDir(mVolumeName),
-                "testvideo.3gp").getAbsolutePath();
-        final String externalVideoPath2 = new File(ProviderTestUtils.stageDir(mVolumeName),
-                "testvideo1.3gp").getAbsolutePath();
+        final File dir = ProviderTestUtils.stageDir(mVolumeName);
+        final File videoFile = ProviderTestUtils.stageFile(R.raw.testvideo,
+                new File(dir, "cts" + System.nanoTime() + ".mp4"));
 
-        // clean up any potential left over entries from a previous aborted run
-        cleanExternalMediaFile(externalVideoPath);
-        cleanExternalMediaFile(externalVideoPath2);
+        final String externalVideoPath = videoFile.getAbsolutePath();
+        final long numBytes = videoFile.length();
 
-        int numBytes = 1337;
-        File videoFile = new File(externalVideoPath);
-        FileUtils.createFile(videoFile, numBytes);
+        ProviderTestUtils.waitUntilExists(videoFile);
 
         ContentValues values = new ContentValues();
         values.put(Media.ALBUM, "cts");
@@ -170,7 +164,7 @@ public class MediaStore_Video_MediaTest {
             assertEquals("176x144", c.getString(c.getColumnIndex(Media.RESOLUTION)));
             assertEquals("cts, test", c.getString(c.getColumnIndex(Media.TAGS)));
             assertEquals(externalVideoPath, c.getString(c.getColumnIndex(Media.DATA)));
-            assertEquals("testvideo.3gp", c.getString(c.getColumnIndex(Media.DISPLAY_NAME)));
+            assertEquals(videoFile.getName(), c.getString(c.getColumnIndex(Media.DISPLAY_NAME)));
             assertEquals("video/3gpp", c.getString(c.getColumnIndex(Media.MIME_TYPE)));
             assertEquals("testvideo", c.getString(c.getColumnIndex(Media.TITLE)));
             assertEquals(numBytes, c.getInt(c.getColumnIndex(Media.SIZE)));
@@ -225,7 +219,7 @@ public class MediaStore_Video_MediaTest {
         try (PendingSession session = MediaStoreUtils.openPending(mContext, pendingUri)) {
             try (InputStream in = mContext.getResources().openRawResource(R.raw.testvideo_meta);
                  OutputStream out = session.openOutputStream()) {
-                android.os.FileUtils.copy(in, out);
+                FileUtils.copy(in, out);
             }
             publishUri = session.publish();
         }
@@ -241,8 +235,10 @@ public class MediaStore_Video_MediaTest {
                     mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_LOCATION));
             assertEquals("2", mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_NUM_TRACKS));
         }
-        try (InputStream in = mContentResolver.openInputStream(publishUri)) {
-            byte[] bytes = FileUtils.readInputStreamFully(in);
+        try (InputStream in = mContentResolver.openInputStream(publishUri);
+                ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            FileUtils.copy(in, out);
+            byte[] bytes = out.toByteArray();
             byte[] xmpBytes = Arrays.copyOfRange(bytes, 3269, 3269 + 13197);
             String xmp = new String(xmpBytes);
             assertTrue("Failed to read XMP longitude", xmp.contains("10,41.751000E"));
@@ -265,8 +261,10 @@ public class MediaStore_Video_MediaTest {
                     mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_LOCATION));
             assertEquals("2", mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_NUM_TRACKS));
         }
-        try (InputStream in = mContentResolver.openInputStream(publishUri)) {
-            byte[] bytes = FileUtils.readInputStreamFully(in);
+        try (InputStream in = mContentResolver.openInputStream(publishUri);
+                ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            FileUtils.copy(in, out);
+            byte[] bytes = out.toByteArray();
             byte[] xmpBytes = Arrays.copyOfRange(bytes, 3269, 3269 + 13197);
             String xmp = new String(xmpBytes);
             assertFalse("Failed to redact XMP longitude", xmp.contains("10,41.751000E"));
@@ -291,7 +289,7 @@ public class MediaStore_Video_MediaTest {
         try (PendingSession session = MediaStoreUtils.openPending(mContext, pendingUri)) {
             try (InputStream in = mContext.getResources().openRawResource(R.raw.testvideo_meta);
                     OutputStream out = session.openOutputStream()) {
-                android.os.FileUtils.copy(in, out);
+                FileUtils.copy(in, out);
             }
             publishUri = session.publish();
         }

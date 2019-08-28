@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package android.provider.cts;
+package android.provider.cts.media;
 
-import static android.provider.cts.MediaStoreTest.TAG;
+import static android.provider.cts.media.MediaStoreTest.TAG;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -36,18 +36,17 @@ import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 import android.os.storage.StorageManager;
-import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Images.ImageColumns;
 import android.provider.MediaStore.Images.Media;
-import android.provider.cts.MediaStoreUtils.PendingParams;
-import android.provider.cts.MediaStoreUtils.PendingSession;
+import android.provider.cts.ProviderTestUtils;
+import android.provider.cts.R;
+import android.provider.cts.media.MediaStoreUtils.PendingParams;
+import android.provider.cts.media.MediaStoreUtils.PendingSession;
 import android.util.Log;
 import android.util.Size;
 
 import androidx.test.InstrumentationRegistry;
-
-import com.android.compatibility.common.util.FileUtils;
 
 import org.junit.Assume;
 import org.junit.Before;
@@ -63,7 +62,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-@Presubmit
 @RunWith(Parameterized.class)
 public class MediaStore_Images_MediaTest {
     private static final String MIME_TYPE_JPEG = "image/jpeg";
@@ -201,7 +199,6 @@ public class MediaStore_Images_MediaTest {
         assertEquals(src.getHeight(), result.getHeight());
     }
 
-    @Presubmit
     @Test
     public void testGetContentUri() {
         Cursor c = null;

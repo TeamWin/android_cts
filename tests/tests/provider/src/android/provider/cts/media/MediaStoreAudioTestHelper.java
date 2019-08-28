@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package android.provider.cts;
+package android.provider.cts.media;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Audio.Media;
+import android.provider.cts.ProviderTestUtils;
 
 import androidx.test.runner.AndroidJUnit4;
 

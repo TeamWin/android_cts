@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package android.provider.cts;
+package android.provider.cts.media;
 
-import static android.provider.cts.MediaStoreTest.TAG;
 import static android.provider.cts.ProviderTestUtils.assertExists;
 import static android.provider.cts.ProviderTestUtils.assertNotExists;
+import static android.provider.cts.media.MediaStoreTest.TAG;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -41,13 +41,14 @@ import android.graphics.Color;
 import android.graphics.ImageDecoder;
 import android.net.Uri;
 import android.os.Environment;
-import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Images.Media;
 import android.provider.MediaStore.Images.Thumbnails;
 import android.provider.MediaStore.MediaColumns;
-import android.provider.cts.MediaStoreUtils.PendingParams;
-import android.provider.cts.MediaStoreUtils.PendingSession;
+import android.provider.cts.ProviderTestUtils;
+import android.provider.cts.R;
+import android.provider.cts.media.MediaStoreUtils.PendingParams;
+import android.provider.cts.media.MediaStoreUtils.PendingSession;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Size;
@@ -69,7 +70,6 @@ import java.io.FileNotFoundException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 
-@Presubmit
 @RunWith(Parameterized.class)
 public class MediaStore_Images_ThumbnailsTest {
     private ArrayList<Uri> mRowsAdded;

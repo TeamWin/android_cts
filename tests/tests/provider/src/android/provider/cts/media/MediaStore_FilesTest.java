@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package android.provider.cts;
+package android.provider.cts.media;
 
-import static android.provider.cts.MediaStoreTest.TAG;
 import static android.provider.cts.ProviderTestUtils.containsId;
 import static android.provider.cts.ProviderTestUtils.resolveVolumeName;
+import static android.provider.cts.media.MediaStoreTest.TAG;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -35,10 +35,11 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
-import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Files.FileColumns;
 import android.provider.MediaStore.MediaColumns;
+import android.provider.cts.ProviderTestUtils;
+import android.provider.cts.R;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -53,7 +54,6 @@ import org.junit.runners.Parameterized.Parameters;
 import java.io.File;
 import java.io.IOException;
 
-@Presubmit
 @RunWith(Parameterized.class)
 public class MediaStore_FilesTest {
     private Context mContext;

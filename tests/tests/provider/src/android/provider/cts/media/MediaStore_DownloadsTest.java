@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.provider.cts;
+package android.provider.cts.media;
 
 import static android.provider.cts.ProviderTestUtils.hash;
 import static android.provider.cts.ProviderTestUtils.resolveVolumeName;
@@ -32,13 +32,14 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.FileUtils;
-import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Downloads;
 import android.provider.MediaStore.Files;
 import android.provider.MediaStore.Images;
-import android.provider.cts.MediaStoreUtils.PendingParams;
-import android.provider.cts.MediaStoreUtils.PendingSession;
+import android.provider.cts.ProviderTestUtils;
+import android.provider.cts.R;
+import android.provider.cts.media.MediaStoreUtils.PendingParams;
+import android.provider.cts.media.MediaStoreUtils.PendingSession;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -62,7 +63,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-@Presubmit
 @RunWith(Parameterized.class)
 public class MediaStore_DownloadsTest {
     private static final String TAG = MediaStore_DownloadsTest.class.getSimpleName();

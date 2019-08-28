@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package android.provider.cts;
+package android.provider.cts.media;
 
-import static android.provider.cts.MediaStoreTest.TAG;
+import static android.provider.cts.media.MediaStoreTest.TAG;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -26,10 +26,11 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Video;
 import android.provider.MediaStore.Video.VideoColumns;
+import android.provider.cts.ProviderTestUtils;
+import android.provider.cts.R;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -43,7 +44,6 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
 
-@Presubmit
 @RunWith(Parameterized.class)
 public class MediaStore_VideoTest {
     private Context mContext;
