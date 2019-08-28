@@ -549,10 +549,7 @@
     <string name="ble_scan_stop">Stop scan</string>
 
     <!-- BLE connection priority test strings -->
-    <string name="ble_client_connection_priority">Testing priority: </string>
-    <string name="ble_connection_priority_balanced">BALANCED</string>
-    <string name="ble_connection_priority_high">HIGH</string>
-    <string name="ble_connection_priority_low">LOW</string>
+    <string name="ble_client_connection_priority">Testing connection priority switching </string>
     <string name="ble_server_connection_priority_result_passed">All test passed</string>
     <string name="ble_server_connection_priority_result_failed">Test failed.</string>
     <string name="ble_server_connection_priority_result_intervals">
@@ -580,9 +577,7 @@
     <string name="ble_write_authenticated_characteristic_name">Bluetooth LE Write Encrypted Characteristic</string>
     <string name="ble_read_authenticated_descriptor_name">Bluetooth LE Read Encrypted Descriptor</string>
     <string name="ble_write_authenticated_descriptor_name">Bluetooth LE Write Encrypted Descriptor</string>
-    <string name="ble_connection_priority_client_high">Bluetooth LE Send With CONNECTION_PRIORITY_HIGH</string>
-    <string name="ble_connection_priority_client_low">Bluetooth LE Send With CONNECTION_PRIORITY_LOW_POWER</string>
-    <string name="ble_connection_priority_client_balanced">Bluetooth LE Send With CONNECTION_PRIORITY_BALANCED</string>
+    <string name="ble_connection_priority_client_description">Client Switching Connection Priority</string>
     <string name="ble_indicate_characteristic_name">Bluetooth LE Indicate Characteristic</string>
     <string name="ble_encrypted_client_name">03 Bluetooth LE Encrypted Client Test</string>
     <string name="ble_encrypted_client_info">Bluetooth LE Encrypted Client read/write on characteristic and descriptor need encrypted.</string>
