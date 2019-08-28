@@ -16,25 +16,32 @@
 
 package android.bootstats.cts;
 
-import com.android.tradefed.log.LogUtil.CLog;
 import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
-import com.android.tradefed.testtype.DeviceTestCase;
-import junit.framework.Assert;
+import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.IDeviceTest;
+
+import org.junit.Assert;
+import org.junit.Assume;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 
 /**
  * Set of tests that verify statistics collection during boot.
  */
-public class BootStatsHostTest extends DeviceTestCase {
-    private static final String TAG = "BootStatsHostTest";
+@RunWith(DeviceJUnit4ClassRunner.class)
+public class BootStatsHostTest implements IDeviceTest {
 
+    private ITestDevice mDevice;
+
+    @Test
     public void testBootStats() throws Exception {
         final int apiLevel = getDevice().getApiLevel();
-        if (apiLevel < 26 /* Build.VERSION_CODES.O */) {
-            CLog.i(TAG, "Skipping test because boot time metrics were introduced"
-                + " in Android 8.0. Current API Level " + apiLevel);
-            return;
-        }
+        Assume.assumeFalse("Skipping test because boot time metrics were introduced"
+                + " in Android 8.0. Current API Level " + apiLevel,
+                apiLevel < 26 /* Build.VERSION_CODES.O */);
 
         long startTime = System.currentTimeMillis();
         // Clear buffer to make it easier to find new logs
@@ -94,5 +101,15 @@ public class BootStatsHostTest extends DeviceTestCase {
             Thread.sleep(1000);
         }
         throw new AssertionError("System failed to become ready!");
+    }
+
+    @Override
+    public void setDevice(ITestDevice device) {
+        mDevice = device;
+    }
+
+    @Override
+    public ITestDevice getDevice() {
+        return mDevice;
     }
 }
