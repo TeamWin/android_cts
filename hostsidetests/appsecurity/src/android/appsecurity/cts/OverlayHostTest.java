@@ -146,7 +146,7 @@ public class OverlayHostTest extends BaseAppSecurityTest {
             getDevice().executeShellCommand("cmd overlay enable " + overlayPackage);
             waitForOverlayState(overlayPackage, STATE_ENABLED);
 
-            runDeviceTests(TEST_APP_PACKAGE, TEST_APP_CLASS, testMethod);
+            runDeviceTests(TEST_APP_PACKAGE, TEST_APP_CLASS, testMethod, false /* instant */);
         } finally {
             getDevice().uninstallPackage(TARGET_PACKAGE);
             getDevice().uninstallPackage(overlayPackage);
@@ -291,7 +291,7 @@ public class OverlayHostTest extends BaseAppSecurityTest {
     @Test
     public void testFrameworkDoesNotDefineOverlayable() throws Exception {
         String testMethod = "testFrameworkDoesNotDefineOverlayable";
-        runDeviceTests(TEST_APP_PACKAGE, TEST_APP_CLASS, testMethod);
+        runDeviceTests(TEST_APP_PACKAGE, TEST_APP_CLASS, testMethod, false /* instant */);
     }
 
     /** Overlays must not overlay assets. */
