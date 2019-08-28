@@ -3420,6 +3420,8 @@ testCameraDeviceCaptureFailureNative(JNIEnv* env) {
             goto exit;
         }
 
+        usleep(100000); // sleep to give some time for callbacks to happen
+
         if (testCase.isCameraAvailable(cameraId)) {
             LOG_ERROR(errorString, "Camera %s should be unavailable now", cameraId);
             goto exit;
