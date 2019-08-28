@@ -148,6 +148,7 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
     /** Launch an activity given a class. */
     protected Activity launchActivity(Class<? extends Activity> activityClass) {
         final Intent intent = new Intent(mTargetContext, activityClass);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         return getInstrumentation().startActivitySync(intent);
     }
 
