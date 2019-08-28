@@ -1,4 +1,4 @@
-// Copyright (C) 2008 The Android Open Source Project
+// Copyright (C) 2019 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ android_test {
     libs: ["android.test.runner.stubs"],
     static_libs: [
         "androidx.test.rules",
+        "compatibility-device-util-axt",
+        "ctsdeviceutillegacy-axt",
         "ctstestrunner-axt",
         "metrics-helper-lib",
         "mockito-target-inline-minus-junit4",
@@ -35,6 +37,6 @@ android_test {
         "libdexmakerjvmtiagent",
         "libmultiplejvmtiagentsinterferenceagent",
     ],
-    srcs: ["src/**/*.java"],
+    srcs: ["src/**/*.java", "src/**/*.kt"],
     platform_apis: true,
 }
