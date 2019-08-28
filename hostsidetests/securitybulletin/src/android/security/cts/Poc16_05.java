@@ -37,12 +37,7 @@ public class Poc16_05 extends SecurityTestCase {
      */
     @SecurityTest(minPatchLevel = "2016-05")
     public void testPocCVE_2016_2451() throws Exception {
-        AdbUtils.runCommandLine("logcat -c", getDevice());
-        AdbUtils.runPoc("CVE-2016-2451", getDevice(), 60);
-        String logcatOut = AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertNotMatchesMultiLine("Fatal signal 11 \\(SIGSEGV\\)" +
-                         "[\\s\\n\\S]*>>> /system/bin/" +
-                         "mediaserver <<<", logcatOut);
+        AdbUtils.runPocAssertNoCrashes("CVE-2016-2451", getDevice(), "mediaserver");
     }
 
     /**
