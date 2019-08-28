@@ -38,7 +38,10 @@ import com.android.cts.install.lib.TestApp;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * Utilities to facilitate testing rollbacks.
@@ -46,6 +49,17 @@ import java.util.concurrent.CountDownLatch;
 public class RollbackUtils {
 
     private static final String TAG = "RollbackTest";
+
+    /**
+     * Time between repeated checks in {@link #retry}.
+     */
+    private static final long RETRY_CHECK_INTERVAL_MILLIS = 500;
+
+    /**
+     * Maximum number of checks in {@link #retry} before a timeout occurs.
+     */
+    private static final long RETRY_MAX_INTERVALS = 20;
+
 
     /**
      * Gets the RollbackManager for the instrumentation context.
@@ -57,27 +71,6 @@ public class RollbackUtils {
             throw new AssertionError("Failed to get RollbackManager");
         }
         return rm;
-    }
-
-    /**
-     * Returns a rollback for the given package name in the list of
-     * rollbacks. Returns null if there are no available rollbacks, and throws
-     * an assertion if there is more than one.
-     */
-    private static RollbackInfo getRollback(List<RollbackInfo> rollbacks, String packageName) {
-        RollbackInfo found = null;
-        for (RollbackInfo rollback : rollbacks) {
-            for (PackageRollbackInfo info : rollback.getPackages()) {
-                if (packageName.equals(info.getPackageName())) {
-                    if (found != null) {
-                        throw new AssertionError("Multiple available matching rollbacks found");
-                    }
-                    found = rollback;
-                    break;
-                }
-            }
-        }
-        return found;
     }
 
     /**
@@ -99,7 +92,7 @@ public class RollbackUtils {
      */
     public static RollbackInfo getAvailableRollback(String packageName) {
         RollbackManager rm = getRollbackManager();
-        return getRollback(rm.getAvailableRollbacks(), packageName);
+        return getUniqueRollbackInfoForPackage(rm.getAvailableRollbacks(), packageName);
     }
 
     /**
@@ -109,7 +102,7 @@ public class RollbackUtils {
      */
     public static RollbackInfo getCommittedRollback(String packageName) {
         RollbackManager rm = getRollbackManager();
-        return getRollback(rm.getRecentlyCommittedRollbacks(), packageName);
+        return getUniqueRollbackInfoForPackage(rm.getRecentlyCommittedRollbacks(), packageName);
     }
 
     /**
@@ -169,6 +162,40 @@ public class RollbackUtils {
             }
         }
         return found;
+    }
+
+    /**
+     * Returns an available rollback matching the specified package name. If no such rollback is
+     * available, getAvailableRollbacks is called repeatedly until one becomes available. An
+     * assertion is raised if this does not occur after a certain number of checks.
+     */
+    public static RollbackInfo waitForAvailableRollback(String packageName)
+            throws InterruptedException {
+        return retry(() -> getAvailableRollback(packageName),
+                Objects::nonNull, "Rollback did not become available.");
+    }
+
+    /**
+     * If there is no available rollback matching the specified package name, this returns
+     * immediately. If such a rollback is available, getAvailableRollbacks is called repeatedly
+     * until it is no longer available. An assertion is raised if this does not occur after a
+     * certain number of checks.
+     */
+    public static void waitForUnavailableRollback(String packageName) throws InterruptedException {
+        retry(() -> getAvailableRollback(packageName), Objects::isNull,
+                "Rollback did not become unavailable");
+    }
+
+    private static <T> T retry(Supplier<T> supplier, Predicate<T> predicate, String message)
+            throws InterruptedException {
+        for (int i = 0; i < RETRY_MAX_INTERVALS; i++) {
+            T result = supplier.get();
+            if (predicate.test(result)) {
+                return result;
+            }
+            Thread.sleep(RETRY_CHECK_INTERVAL_MILLIS);
+        }
+        throw new AssertionError(message);
     }
 
     /**
