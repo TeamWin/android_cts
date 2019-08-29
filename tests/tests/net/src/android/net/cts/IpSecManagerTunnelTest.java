@@ -59,6 +59,7 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemProperties;
+import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.InstrumentationRegistry;
@@ -180,11 +181,23 @@ public class IpSecManagerTunnelTest extends IpSecBaseTest {
         for (String pkg : new String[] {"com.android.shell", sContext.getPackageName()}) {
             String cmd =
                     String.format(
-                            "appops set %s %s %s",
+                           "appops set --user %d %s %s %s",
+                            UserHandle.getCallingUserId(),
                             pkg, // Package name
                             opName, // Appop
                             (allow ? "allow" : "deny")); // Action
             SystemUtil.runShellCommand(cmd);
+            if (UserHandle.USER_SYSTEM != UserHandle.getCallingUserId()) {
+
+                cmd =
+                    String.format(
+                           "appops set --user %d %s %s %s",
+                            UserHandle.USER_SYSTEM,
+                            pkg, // Package name
+                            opName, // Appop
+                            (allow ? "allow" : "deny")); // Action
+                SystemUtil.runShellCommand(cmd);
+            }
         }
     }
 
