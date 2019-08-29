@@ -378,17 +378,6 @@ public class DeviceOwnerPasswordTest extends BaseDeviceAdminTest {
     }
 
     private void assertPasswordSufficiency(boolean expectPasswordSufficient) {
-        int retries = 15;
-        // isActivePasswordSufficient() gets the result asynchronously so let's retry a few times
-        while (retries >= 0 && dpm.isActivePasswordSufficient() != expectPasswordSufficient) {
-            retries--;
-            try {
-                Thread.sleep(200);
-            } catch (InterruptedException e) {
-                break;
-            }
-        }
         assertEquals(expectPasswordSufficient, dpm.isActivePasswordSufficient());
-
     }
 }
