@@ -59,8 +59,12 @@ import java.util.List;
 public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
 
     static final String EXTRA_RECREATE = "recreate";
+    static final String EXTRA_FINISH_IN_ON_CREATE = "finish_in_on_create";
+    static final String EXTRA_FINISH_IN_ON_START = "finish_in_on_start";
     static final String EXTRA_FINISH_IN_ON_RESUME = "finish_in_on_resume";
     static final String EXTRA_FINISH_AFTER_RESUME = "finish_after_resume";
+    static final String EXTRA_FINISH_IN_ON_PAUSE = "finish_in_on_pause";
+    static final String EXTRA_FINISH_IN_ON_STOP = "finish_in_on_stop";
 
     static final ComponentName CALLBACK_TRACKING_ACTIVITY =
             getComponentName(CallbackTrackingActivity.class);
@@ -116,6 +120,12 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
     final ActivityTestRule mSlowActivityTestRule = new ActivityTestRule<>(
             SlowActivity.class, true /* initialTouchMode */, false /* launchActivity */);
 
+    final ActivityTestRule mResultActivityTestRule = new ActivityTestRule(
+            ResultActivity.class, true /* initialTouchMode */, false /* launchActivity */);
+
+    final ActivityTestRule mNoDisplayActivityTestRule = new ActivityTestRule(
+            NoDisplayActivity.class, true /* initialTouchMode */, false /* launchActivity */);
+
     private static LifecycleLog mLifecycleLog;
 
     protected Context mTargetContext;
@@ -138,6 +148,7 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
     /** Launch an activity given a class. */
     protected Activity launchActivity(Class<? extends Activity> activityClass) {
         final Intent intent = new Intent(mTargetContext, activityClass);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         return getInstrumentation().startActivitySync(intent);
     }
 
@@ -376,12 +387,28 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
         }
     }
 
-    /** Test activity that is started for result and finishes itself in ON_RESUME. */
+    /** Test activity that is started for result and finishes itself. */
     public static class ResultActivity extends CallbackTrackingActivity {
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            setResult(RESULT_OK);
+            if (getIntent().getBooleanExtra(EXTRA_FINISH_IN_ON_CREATE, false)) {
+                finish();
+            }
+        }
+
+        @Override
+        protected void onStart() {
+            super.onStart();
+            if (getIntent().getBooleanExtra(EXTRA_FINISH_IN_ON_START, false)) {
+                finish();
+            }
+        }
+
         @Override
         protected void onResume() {
             super.onResume();
-            setResult(RESULT_OK);
             final Intent intent = getIntent();
             if (intent.getBooleanExtra(EXTRA_FINISH_IN_ON_RESUME, false)) {
                 finish();
@@ -389,6 +416,26 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
                 new Handler().postDelayed(() -> finish(), 2000);
             }
         }
+
+        @Override
+        protected void onPause() {
+            super.onPause();
+            if (getIntent().getBooleanExtra(EXTRA_FINISH_IN_ON_PAUSE, false)) {
+                finish();
+            }
+        }
+
+        @Override
+        protected void onStop() {
+            super.onStop();
+            if (getIntent().getBooleanExtra(EXTRA_FINISH_IN_ON_STOP, false)) {
+                finish();
+            }
+        }
+    }
+
+    /** Test activity with NoDisplay theme that can finish itself. */
+    public static class NoDisplayActivity extends ResultActivity {
     }
 
     /** Test activity that can call {@link Activity#recreate()} if requested in a new intent. */

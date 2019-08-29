@@ -26,9 +26,9 @@ import android.content.rollback.RollbackInfo;
 import androidx.test.InstrumentationRegistry;
 
 import com.android.cts.install.lib.Install;
+import com.android.cts.install.lib.InstallUtils;
 import com.android.cts.install.lib.TestApp;
 import com.android.cts.install.lib.Uninstall;
-import com.android.cts.install.lib.InstallUtils;
 import com.android.cts.rollback.lib.Rollback;
 import com.android.cts.rollback.lib.RollbackUtils;
 
@@ -85,8 +85,7 @@ public class RollbackManagerTest {
         Install.single(TestApp.A2).setEnableRollback().commit();
         assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
         InstallUtils.processUserData(TestApp.A);
-        RollbackInfo available = RollbackUtils.getAvailableRollback(TestApp.A);
-        assertThat(available).isNotNull();
+        RollbackInfo available = RollbackUtils.waitForAvailableRollback(TestApp.A);
         assertThat(available).isNotStaged();
         assertThat(available).packagesContainsExactly(
                 Rollback.from(TestApp.A2).to(TestApp.A1));
@@ -95,7 +94,7 @@ public class RollbackManagerTest {
         RollbackUtils.rollback(available.getRollbackId(), TestApp.A2);
         assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
         InstallUtils.processUserData(TestApp.A);
-        assertThat(RollbackUtils.getAvailableRollback(TestApp.A)).isNull();
+        RollbackUtils.waitForUnavailableRollback(TestApp.A);
         RollbackInfo committed = RollbackUtils.getCommittedRollback(TestApp.A);
         assertThat(committed).isNotNull();
         assertThat(committed).hasRollbackId(available.getRollbackId());

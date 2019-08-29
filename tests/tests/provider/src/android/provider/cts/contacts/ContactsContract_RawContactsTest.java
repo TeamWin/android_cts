@@ -141,6 +141,18 @@ public class ContactsContract_RawContactsTest extends AndroidTestCase {
         assertEquals("1", result[1]);
     }
 
+    public void testRawContactDelete_localDeleteRemovesRecord() {
+        long rawContactid = RawContactUtil.insertRawContact(mResolver, null);
+        assertTrue(RawContactUtil.rawContactExistsById(mResolver, rawContactid));
+
+        // Local raw contacts should be deleted immediately even if isSyncAdapter=false
+        RawContactUtil.delete(mResolver, rawContactid, false);
+
+        assertFalse(RawContactUtil.rawContactExistsById(mResolver, rawContactid));
+
+        // Nothing to clean up
+    }
+
     public void testRawContactDelete_removesRecord() {
         long rawContactid = RawContactUtil.insertRawContact(mResolver,
                 StaticAccountAuthenticator.ACCOUNT_1);
@@ -152,7 +164,6 @@ public class ContactsContract_RawContactsTest extends AndroidTestCase {
 
         // already clean
     }
-
 
     // This implicitly tests the Contact create case.
     public void testRawContactCreate_updatesContactUpdatedTimestamp() {

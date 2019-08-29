@@ -156,6 +156,93 @@ public class ContactsContract_ContactsTest extends AndroidTestCase {
         RawContactUtil.delete(mResolver, ids.mRawContactId, true);
     }
 
+    public void testContactDelete_localContactDeletedImmediately() {
+        // Create a raw contact in the local (null) account
+        DatabaseAsserts.ContactIdPair ids = DatabaseAsserts.assertAndCreateContact(
+                mResolver, null);
+
+        ContactUtil.delete(mResolver, ids.mContactId);
+
+        // Assert that the local raw contact is removed from the database and
+        // not merely marked DELETED=1.
+        assertNull(RawContactUtil.queryByRawContactId(mResolver, ids.mRawContactId, null));
+
+        // Nothing to clean up
+    }
+
+    public void testContactDelete_allLocalContactsDeletedImmediately() {
+        // Create two raw contacts in the local (null) account
+        DatabaseAsserts.ContactIdPair ids1 = DatabaseAsserts.assertAndCreateContactWithName(
+                mResolver, null, "John Smith");
+        DatabaseAsserts.ContactIdPair ids2 = DatabaseAsserts.assertAndCreateContactWithName(
+                mResolver, null, "John Smith");
+
+        // Aggregate the two raw contacts together
+        ContactUtil.setAggregationException(mResolver,
+                ContactsContract.AggregationExceptions.TYPE_KEEP_TOGETHER, ids1.mRawContactId,
+                ids2.mRawContactId);
+
+        // Assert that the contacts were aggregated together
+        long contactId1 = RawContactUtil.queryContactIdByRawContactId(mResolver,
+                ids1.mRawContactId);
+        long contactId2 = RawContactUtil.queryContactIdByRawContactId(mResolver,
+                ids2.mRawContactId);
+        assertEquals(contactId1, contactId2);
+
+        // Delete the contact
+        ContactUtil.delete(mResolver, contactId1);
+
+        // Assert that both of the local raw contacts were removed from the database and
+        // not merely marked DELETED=1.
+        assertNull(RawContactUtil.queryByRawContactId(mResolver, ids1.mRawContactId, null));
+        assertNull(RawContactUtil.queryByRawContactId(mResolver, ids2.mRawContactId, null));
+
+        // Nothing to clean up
+    }
+
+    public void testContactDelete_localContactDeletedImmediatelyWhenAggregatedWithNonLocal() {
+        // Create a raw contact in the local (null) account
+        DatabaseAsserts.ContactIdPair ids1 = DatabaseAsserts.assertAndCreateContactWithName(
+                mResolver, null, "John Smith");
+
+        // Create a raw contact in a non-local account with the same name
+        DatabaseAsserts.ContactIdPair ids2 = DatabaseAsserts.assertAndCreateContactWithName(
+                mResolver, StaticAccountAuthenticator.ACCOUNT_1, "John Smith");
+
+        // Aggregate the two raw contacts together
+        ContactUtil.setAggregationException(mResolver,
+                ContactsContract.AggregationExceptions.TYPE_KEEP_TOGETHER, ids1.mRawContactId,
+                ids2.mRawContactId);
+
+        // Assert that the contacts were aggregated together
+        long contactId1 = RawContactUtil.queryContactIdByRawContactId(mResolver,
+                ids1.mRawContactId);
+        long contactId2 = RawContactUtil.queryContactIdByRawContactId(mResolver,
+                ids2.mRawContactId);
+        assertEquals(contactId1, contactId2);
+
+        // Delete the contact
+        ContactUtil.delete(mResolver, contactId1);
+
+        // Assert that the local raw contact was removed from the database
+        assertNull(RawContactUtil.queryByRawContactId(mResolver, ids1.mRawContactId, null));
+
+        // Assert that the non-local raw contact was marked DELETED=1
+        String[] projection = new String[]{
+                ContactsContract.RawContacts.DIRTY,
+                ContactsContract.RawContacts.DELETED
+        };
+        List<String[]> records = RawContactUtil.queryByContactId(mResolver, ids2.mContactId,
+                projection);
+        for (String[] arr : records) {
+            assertEquals("1", arr[0]);
+            assertEquals("1", arr[1]);
+        }
+
+        // Clean up
+        RawContactUtil.delete(mResolver, ids2.mRawContactId, true);
+    }
+
     public void testContactUpdate_updatesContactUpdatedTimestamp() {
         DatabaseAsserts.ContactIdPair ids = DatabaseAsserts.assertAndCreateContact(mResolver);
 

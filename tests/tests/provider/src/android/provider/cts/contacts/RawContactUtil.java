@@ -55,8 +55,10 @@ public class RawContactUtil {
 
     public static long insertRawContact(ContentResolver resolver, Account account) {
         ContentValues values = new ContentValues();
-        values.put(ContactsContract.RawContacts.ACCOUNT_NAME, account.name);
-        values.put(ContactsContract.RawContacts.ACCOUNT_TYPE, account.type);
+        if (account != null) {
+            values.put(ContactsContract.RawContacts.ACCOUNT_NAME, account.name);
+            values.put(ContactsContract.RawContacts.ACCOUNT_TYPE, account.type);
+        }
         Uri uri = resolver.insert(URI, values);
         return ContentUris.parseId(uri);
     }
