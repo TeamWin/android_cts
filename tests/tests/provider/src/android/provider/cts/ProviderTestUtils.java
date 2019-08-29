@@ -16,8 +16,6 @@
 
 package android.provider.cts;
 
-import static android.provider.cts.MediaStoreTest.TAG;
-
 import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assert.fail;
 
@@ -33,8 +31,9 @@ import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
-import android.provider.cts.MediaStoreUtils.PendingParams;
-import android.provider.cts.MediaStoreUtils.PendingSession;
+import android.provider.cts.media.MediaStoreUtils;
+import android.provider.cts.media.MediaStoreUtils.PendingParams;
+import android.provider.cts.media.MediaStoreUtils.PendingSession;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.system.OsConstants;
@@ -65,6 +64,7 @@ import java.util.regex.Pattern;
  * Utility methods for provider cts tests.
  */
 public class ProviderTestUtils {
+    static final String TAG = "ProviderTestUtils";
 
     private static final int BACKUP_TIMEOUT_MILLIS = 4000;
     private static final Pattern BMGR_ENABLED_PATTERN = Pattern.compile(
@@ -75,7 +75,7 @@ public class ProviderTestUtils {
 
     private static final Timeout IO_TIMEOUT = new Timeout("IO_TIMEOUT", 2_000, 2, 2_000);
 
-    static Iterable<String> getSharedVolumeNames() {
+    public static Iterable<String> getSharedVolumeNames() {
         // We test both new and legacy volume names
         final HashSet<String> testVolumes = new HashSet<>();
         testVolumes.addAll(
@@ -84,7 +84,7 @@ public class ProviderTestUtils {
         return testVolumes;
     }
 
-    static String resolveVolumeName(String volumeName) {
+    public static String resolveVolumeName(String volumeName) {
         if (MediaStore.VOLUME_EXTERNAL.equals(volumeName)) {
             return MediaStore.VOLUME_EXTERNAL_PRIMARY;
         } else {
@@ -100,12 +100,12 @@ public class ProviderTestUtils {
         executeShellCommand(String.format(cmd, packageName, "READ_SMS", mode), uiAutomation);
     }
 
-    static String executeShellCommand(String command) throws IOException {
+    public static String executeShellCommand(String command) throws IOException {
         return executeShellCommand(command,
                 InstrumentationRegistry.getInstrumentation().getUiAutomation());
     }
 
-    static String executeShellCommand(String command, UiAutomation uiAutomation)
+    public static String executeShellCommand(String command, UiAutomation uiAutomation)
             throws IOException {
         Log.v(TAG, "$ " + command);
         ParcelFileDescriptor pfd = uiAutomation.executeShellCommand(command.toString());
@@ -197,7 +197,7 @@ public class ProviderTestUtils {
         }
     }
 
-    static File stageDir(String volumeName) throws IOException {
+    public static File stageDir(String volumeName) throws IOException {
         if (MediaStore.VOLUME_EXTERNAL.equals(volumeName)) {
             volumeName = MediaStore.VOLUME_EXTERNAL_PRIMARY;
         }
@@ -207,7 +207,7 @@ public class ProviderTestUtils {
         return dir;
     }
 
-    static File stageDownloadDir(String volumeName) throws IOException {
+    public static File stageDownloadDir(String volumeName) throws IOException {
         if (MediaStore.VOLUME_EXTERNAL.equals(volumeName)) {
             volumeName = MediaStore.VOLUME_EXTERNAL_PRIMARY;
         }
@@ -215,7 +215,7 @@ public class ProviderTestUtils {
                 Environment.DIRECTORY_DOWNLOADS, "android.provider.cts");
     }
 
-    static File stageFile(int resId, File file) throws IOException {
+    public static File stageFile(int resId, File file) throws IOException {
         // The caller may be trying to stage into a location only available to
         // the shell user, so we need to perform the entire copy as the shell
         final Context context = InstrumentationRegistry.getTargetContext();
@@ -248,11 +248,11 @@ public class ProviderTestUtils {
         return waitUntilExists(file);
     }
 
-    static Uri stageMedia(int resId, Uri collectionUri) throws IOException {
+    public static Uri stageMedia(int resId, Uri collectionUri) throws IOException {
         return stageMedia(resId, collectionUri, "image/png");
     }
 
-    static Uri stageMedia(int resId, Uri collectionUri, String mimeType) throws IOException {
+    public static Uri stageMedia(int resId, Uri collectionUri, String mimeType) throws IOException {
         final Context context = InstrumentationRegistry.getTargetContext();
         final String displayName = "cts" + System.nanoTime();
         final PendingParams params = new PendingParams(collectionUri, displayName, mimeType);
@@ -266,19 +266,19 @@ public class ProviderTestUtils {
         }
     }
 
-    static Uri scanFile(File file) throws Exception {
+    public static Uri scanFile(File file) throws Exception {
         Uri uri = MediaStore.scanFile(InstrumentationRegistry.getTargetContext(), file);
         assertWithMessage("no URI for '%s'", file).that(uri).isNotNull();
         return uri;
     }
 
-    static Uri scanFileFromShell(File file) throws Exception {
+    public static Uri scanFileFromShell(File file) throws Exception {
         Uri uri = MediaStore.scanFileFromShell(InstrumentationRegistry.getTargetContext(), file);
         assertWithMessage("no URI for '%s'", file).that(uri).isNotNull();
         return uri;
     }
 
-    static void scanVolume(File file) throws Exception {
+    public static void scanVolume(File file) throws Exception {
         MediaStore.scanVolume(InstrumentationRegistry.getTargetContext(), file);
     }
 

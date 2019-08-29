@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package android.provider.cts;
+package android.provider.cts.media;
 
-import static android.provider.cts.MediaStoreTest.TAG;
+import static android.provider.cts.media.MediaStoreTest.TAG;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -25,6 +25,7 @@ import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.provider.MediaStore;
+import android.provider.cts.ProviderTestUtils;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;

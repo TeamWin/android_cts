@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.provider.cts;
+package android.provider.cts.settings;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;

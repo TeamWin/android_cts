@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.provider.cts;
+package android.provider.cts.settings;
 
 import android.provider.Settings.SettingNotFoundException;
 

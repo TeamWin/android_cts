@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.provider.cts;
+package android.provider.cts.media;
 
 import static android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT;
 import static android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH;
@@ -36,12 +36,13 @@ import android.graphics.Bitmap;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.FileUtils;
-import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Files;
 import android.provider.MediaStore.Video.Media;
 import android.provider.MediaStore.Video.Thumbnails;
 import android.provider.MediaStore.Video.VideoColumns;
+import android.provider.cts.ProviderTestUtils;
+import android.provider.cts.R;
 import android.util.Log;
 import android.util.Size;
 
@@ -62,7 +63,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-@Presubmit
 @RunWith(Parameterized.class)
 public class MediaStore_Video_ThumbnailsTest {
     private static final String TAG = "MediaStore_Video_ThumbnailsTest";

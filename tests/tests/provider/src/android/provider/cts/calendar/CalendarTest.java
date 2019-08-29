@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.provider.cts;
+package android.provider.cts.calendar;
 
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;

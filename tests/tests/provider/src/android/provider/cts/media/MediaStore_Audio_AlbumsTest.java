@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package android.provider.cts;
+package android.provider.cts.media;
 
-import static android.provider.cts.MediaStoreTest.TAG;
+import static android.provider.cts.media.MediaStoreTest.TAG;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -32,12 +32,13 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Audio.Albums;
 import android.provider.MediaStore.Audio.Media;
-import android.provider.cts.MediaStoreAudioTestHelper.Audio1;
-import android.provider.cts.MediaStoreAudioTestHelper.Audio2;
+import android.provider.cts.ProviderTestUtils;
+import android.provider.cts.R;
+import android.provider.cts.media.MediaStoreAudioTestHelper.Audio1;
+import android.provider.cts.media.MediaStoreAudioTestHelper.Audio2;
 import android.util.Log;
 import android.util.Size;
 
@@ -53,7 +54,6 @@ import org.junit.runners.Parameterized.Parameters;
 import java.io.File;
 import java.io.IOException;
 
-@Presubmit
 @RunWith(Parameterized.class)
 public class MediaStore_Audio_AlbumsTest {
     private Context mContext;
