@@ -160,7 +160,7 @@ public class ZoomButtonTest {
             assertTrue("First callback should have happened sooner than "
                             + actualTimeUntilFirstInvocationNs / NANOS_IN_MILLI,
                     (callbackFirstInvocationTime - startTime)
-                            <= (minTimeUntilFirstInvocationMs + 100) * NANOS_IN_MILLI);
+                            <= (minTimeUntilFirstInvocationMs + 200) * NANOS_IN_MILLI);
         }
     }
 
