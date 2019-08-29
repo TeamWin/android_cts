@@ -195,7 +195,7 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
 
     }
 
-    public void testLargeAlbumArt() {
+    public void testGetEmbeddedPicture() {
         setDataSourceFd(R.raw.largealbumart);
 
         assertNotNull("couldn't retrieve album art", mRetriever.getEmbeddedPicture());
