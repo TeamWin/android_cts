@@ -138,9 +138,24 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
                 "Test album",
                 mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM));
 
+        assertNull("Album artist was unexpectedly present",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST));
+
+        assertNull("Author was unexpectedly present",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_AUTHOR));
+
+        assertNull("Composer was unexpectedly present",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_COMPOSER));
+
         assertEquals("Track number was other than expected",
                 "10",
                 mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER));
+
+        assertNull("Disc number was unexpectedly present",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DISC_NUMBER));
+
+        assertNull("Compilation was unexpectedly present",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_COMPILATION));
 
         assertEquals("Year was other than expected",
                 "2013", mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_YEAR));
@@ -149,7 +164,59 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
                 "19040101T000000.000Z",
                 mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DATE));
 
-        assertNull("Writer was unexpected present",
+        assertEquals("Bitrate was other than expected",
+                "365018",  // = 504045 (file size in byte) * 8e6 / 11047000 (duration in us)
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE));
+
+        assertNull("Capture frame rate was unexpectedly present",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CAPTURE_FRAMERATE));
+
+        assertEquals("Duration was other than expected",
+                "11047",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
+
+        assertEquals("Number of tracks was other than expected",
+                "4",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_NUM_TRACKS));
+
+        assertEquals("Has audio was other than expected",
+                "yes",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO));
+
+        assertEquals("Has video was other than expected",
+                "yes",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_VIDEO));
+
+        assertEquals("Video frame count was other than expected",
+                "172",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_FRAME_COUNT));
+
+        assertEquals("Video height was other than expected",
+                "288",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
+
+        assertEquals("Video width was other than expected",
+                "352",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
+
+        assertEquals("Video rotation was other than expected",
+                "0",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION));
+
+        assertEquals("Mime type was other than expected",
+                "video/mp4",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE));
+
+        assertNull("Location was unexpectedly present",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_LOCATION));
+
+        assertNull("EXIF length was unexpectedly present",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_EXIF_LENGTH));
+
+        assertNull("EXIF offset was unexpectedly present",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_EXIF_OFFSET));
+
+        assertNull("Writer was unexpectedly present",
                 mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_WRITER));
     }
 
@@ -167,9 +234,24 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
                 "Test album",
                 mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM));
 
+        assertNull("Album artist was unexpectedly present",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST));
+
+        assertNull("Author was unexpectedly present",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_AUTHOR));
+
+        assertNull("Composer was unexpectedly present",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_COMPOSER));
+
         assertEquals("Track number was other than expected",
                 "10",
                 mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER));
+
+        assertNull("Disc number was unexpectedly present",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DISC_NUMBER));
+
+        assertNull("Compilation was unexpectedly present",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_COMPILATION));
 
         assertEquals("Year was other than expected",
                 "2013", mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_YEAR));
@@ -177,6 +259,58 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
         assertEquals("Date was other than expected",
                 "19700101T000000.000Z",
                 mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DATE));
+
+        assertEquals("Bitrate was other than expected",
+                "499895",  // = 624869 (file size in byte) * 8e6 / 10000000 (duration in us)
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE));
+
+        assertNull("Capture frame rate was unexpectedly present",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CAPTURE_FRAMERATE));
+
+        assertEquals("Duration was other than expected",
+                "10000",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
+
+        assertEquals("Number of tracks was other than expected",
+                "2",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_NUM_TRACKS));
+
+        assertEquals("Has audio was other than expected",
+                "yes",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO));
+
+        assertEquals("Has video was other than expected",
+                "yes",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_VIDEO));
+
+        assertEquals("Video frame count was other than expected",
+                "240",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_FRAME_COUNT));
+
+        assertEquals("Video height was other than expected",
+                "360",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
+
+        assertEquals("Video width was other than expected",
+                "480",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
+
+        assertEquals("Video rotation was other than expected",
+                "0",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION));
+
+        assertEquals("Mime type was other than expected",
+                "video/mp4",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE));
+
+        assertNull("Location was unexpectedly present",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_LOCATION));
+
+        assertNull("EXIF length was unexpectedly present",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_EXIF_LENGTH));
+
+        assertNull("EXIF offset was unexpectedly present",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_EXIF_OFFSET));
 
         assertNull("Writer was unexpectedly present",
                 mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_WRITER));
