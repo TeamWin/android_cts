@@ -82,6 +82,13 @@
 
         <activity android:name="com.android.compatibility.common.util.devicepolicy.provisioning.StartProvisioningActivity"/>
 
+        <service android:name="com.android.cts.deviceowner.NotificationListener"
+                 android:label="Notification Listener"
+                 android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
