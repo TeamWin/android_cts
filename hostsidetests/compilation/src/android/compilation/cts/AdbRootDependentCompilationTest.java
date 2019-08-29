@@ -98,7 +98,8 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
             ByteStreams.copy(inputStream, outputStream);
         }
         mDevice.uninstallPackage(APPLICATION_PACKAGE); // in case it's still installed
-        mDevice.installPackage(apkFile, false);
+        String error = mDevice.installPackage(apkFile, false);
+        assertNull("Got install error: " + error, error);
 
         // Write the text profile to a temporary file so that we can run profman on it to create a
         // real profile.
