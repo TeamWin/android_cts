@@ -35,6 +35,7 @@ import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
 import android.media.MediaSyncEvent;
+import android.media.MicrophoneDirection;
 import android.media.MicrophoneInfo;
 import android.media.cts.AudioRecordingConfigurationTest.MyAudioRecordingCallback;
 import android.os.Handler;
@@ -1649,4 +1650,46 @@ public class AudioRecordTest {
     private static Context getContext() {
         return InstrumentationRegistry.getInstrumentation().getTargetContext();
     }
+
+    /*
+     * Microphone Direction API tests
+     */
+    public void testSetPreferredMicrophoneDirection() {
+        if (!hasMicrophone()) {
+            return;
+        }
+
+        try {
+            boolean success =
+                    mAudioRecord.setPreferredMicrophoneDirection(
+                            MicrophoneDirection.MIC_DIRECTION_TOWARDS_USER);
+
+            // Can't actually test this as HAL may not have implemented it
+            // Just verify that it doesn't crash or throw an exception
+            // assertTrue(success);
+        } catch (Exception ex) {
+            Log.e(TAG, "testSetPreferredMicrophoneDirection() exception:" + ex);
+            assertTrue(false);
+        }
+        return;
+    }
+
+    public void testSetPreferredMicrophoneFieldDimension() {
+        if (!hasMicrophone()) {
+            return;
+        }
+
+        try {
+            boolean success = mAudioRecord.setPreferredMicrophoneFieldDimension(1.0f);
+
+            // Can't actually test this as HAL may not have implemented it
+            // Just verify that it doesn't crash or throw an exception
+            // assertTrue(success);
+        } catch (Exception ex) {
+            Log.e(TAG, "testSetPreferredMicrophoneFieldDimension() exception:" + ex);
+            assertTrue(false);
+        }
+        return;
+    }
+
 }

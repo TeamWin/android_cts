@@ -37,6 +37,7 @@ import android.media.MediaMetadataRetriever;
 import android.media.MediaRecorder;
 import android.media.MediaRecorder.OnErrorListener;
 import android.media.MediaRecorder.OnInfoListener;
+import android.media.MicrophoneDirection;
 import android.media.MicrophoneInfo;
 import android.media.cts.AudioRecordingConfigurationTest.MyAudioRecordingCallback;
 import android.opengl.GLES20;
@@ -1703,5 +1704,45 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         config.isClientSilenced();
     }
 
+    /*
+     * Microphone Direction API tests
+     */
+    public void testSetPreferredMicrophoneDirection() {
+        if (!hasMicrophone()) {
+            return;
+        }
+
+        try {
+            boolean succecss =
+                    mMediaRecorder.setPreferredMicrophoneDirection(
+                            MicrophoneDirection.MIC_DIRECTION_TOWARDS_USER);
+
+            // Can't actually test this as HAL may not have implemented it
+            // Just verify that it doesn't crash or throw an exception
+            // assertTrue(succecss);
+        }  catch (Exception ex) {
+            Log.e(TAG, "testSetPreferredMicrophoneDirection() exception:" + ex);
+            assertTrue(false);
+        }
+        return;
+    }
+
+    public void testSetPreferredMicrophoneFieldDimension() {
+        if (!hasMicrophone()) {
+            return;
+        }
+
+        try {
+            boolean succecss = mMediaRecorder.setPreferredMicrophoneFieldDimension(1.0f);
+
+            // Can't actually test this as HAL may not have implemented it
+            // Just verify that it doesn't crash or throw an exception
+            // assertTrue(succecss);
+        }  catch (Exception ex) {
+            Log.e(TAG, "testSetPreferredMicrophoneFieldDimension() exception:" + ex);
+            assertTrue(false);
+        }
+        return;
+    }
 
 }
