@@ -27,6 +27,9 @@ android_test_helper_app {
         "vts",
         "general-tests",
     ],
+    static_libs: [
+        "compatibility-device-util-axt",
+    ],
 }
 
 android_test_helper_app {
