@@ -4524,9 +4524,9 @@ You should be prompted to select credentials; choose the ones you just installed
        Audio Peripheral device with standard MIDI 5-pin, DIN (round) connectors and a standard
        MIDI cable. The cable must be connected to the MIDI input and output plugs on the
        peripheral.
-       \nFor the USB Bluetooth test it is required that you connect a Yamaha MT-BT301 to the
-       correct MIDI plugs on the USB peripheral, the BT301 output jack to the USB interface
-       input jack and BT301 input plug to the USB interface output jack.
+       \nFor the USB Bluetooth test it is required that you connect a Yamaha MD-BT01 to the
+       correct MIDI plugs on the USB peripheral, the BT01 output jack to the USB interface
+       input jack and BT01 input plug to the USB interface output jack.
        \nThe Virtual MIDI test does not require any MIDI interface hardware.
     </string>
 
