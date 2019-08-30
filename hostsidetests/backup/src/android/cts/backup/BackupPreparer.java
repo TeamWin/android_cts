@@ -19,6 +19,7 @@ package android.cts.backup;
 import static org.junit.Assert.fail;
 
 import com.android.compatibility.common.util.BackupHostSideUtils;
+import com.android.compatibility.common.util.BackupUtils;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
@@ -31,6 +32,7 @@ import com.android.tradefed.targetprep.ITargetCleaner;
 import com.android.tradefed.targetprep.TargetSetupError;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
@@ -60,17 +62,20 @@ public class BackupPreparer implements ITargetCleaner {
 
     private static final String LOCAL_TRANSPORT =
             "com.android.localtransport/.LocalTransport";
+    private final int USER_SYSTEM = 0;
 
     private boolean mIsBackupSupported;
     private boolean mWasBackupEnabled;
+    private Optional<Boolean> mWasBackupActivated = Optional.empty();
     private String mOldTransport;
     private ITestDevice mDevice;
+    private BackupUtils mBackupUtils;
 
     @Override
     public void setUp(ITestDevice device, IBuildInfo buildInfo)
             throws TargetSetupError, BuildError, DeviceNotAvailableException {
         mDevice = device;
-
+        mBackupUtils = BackupHostSideUtils.createBackupUtils(mDevice);
         mIsBackupSupported = mDevice.hasFeature("feature:" + FEATURE_BACKUP);
 
         // In case the device was just rebooted, wait for the broadcast queue to get idle to avoid
@@ -78,6 +83,9 @@ public class BackupPreparer implements ITargetCleaner {
         waitForBroadcastIdle();
 
         if (mIsBackupSupported) {
+            CLog.i("Activating backup on %s", mDevice.getSerialNumber());
+            mWasBackupActivated = Optional.of(setBackupActive(true));
+
             // Enable backup and select local backup transport
             waitForTransport(LOCAL_TRANSPORT);
 
@@ -91,7 +99,7 @@ public class BackupPreparer implements ITargetCleaner {
                     CLog.d("Old transport : %s", mOldTransport);
                 }
                 try {
-                    BackupHostSideUtils.createBackupUtils(mDevice).waitForBackupInitialization();
+                    mBackupUtils.waitForBackupInitialization();
                 } catch (IOException e) {
                     throw new TargetSetupError("Backup not initialized", e);
                 }
@@ -105,13 +113,18 @@ public class BackupPreparer implements ITargetCleaner {
         mDevice = device;
 
         if (mIsBackupSupported) {
-            if (mEnableBackup) {
-                CLog.i("Returning backup to it's previous state on %s", mDevice.getSerialNumber());
-                enableBackup(mWasBackupEnabled);
-                if (mSelectLocalTransport) {
-                    CLog.i("Returning selected transport to it's previous value on %s",
+            if (mWasBackupActivated.isPresent()) {
+                setBackupActive(mWasBackupActivated.get());
+
+                if (mEnableBackup) {
+                    CLog.i("Returning backup to it's previous state on %s",
                             mDevice.getSerialNumber());
-                    setBackupTransport(mOldTransport);
+                    enableBackup(mWasBackupEnabled);
+                    if (mSelectLocalTransport) {
+                        CLog.i("Returning selected transport to it's previous value on %s",
+                                mDevice.getSerialNumber());
+                        setBackupTransport(mOldTransport);
+                    }
                 }
             }
         }
@@ -213,6 +226,18 @@ public class BackupPreparer implements ITargetCleaner {
                 // TODO: consider adding a reboot or recovery before failing if necessary
             }
         }
+    }
+
+    private boolean setBackupActive(boolean active) {
+        boolean wasBackupActive;
+        try {
+            wasBackupActive  = mBackupUtils.isBackupActivatedForUser(USER_SYSTEM);
+            mBackupUtils.activateBackupForUser(active, USER_SYSTEM);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed set backup active status");
+        }
+
+        return wasBackupActive;
     }
 
     private static <T> T uncheck(Callable<T> callable) {
