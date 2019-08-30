@@ -502,7 +502,11 @@ public class SplitScreenTests extends ActivityManagerTestBase {
 
     @Test
     public void testDockedStackToMinimizeWhenUnlocked() throws Exception {
-        launchActivityInSplitScreenWithRecents(TEST_ACTIVITY);
+        if (!mIsHomeRecentsComponent) {
+            launchActivityInDockStackAndMinimize(TEST_ACTIVITY);
+        } else {
+            launchActivityInSplitScreenWithRecents(TEST_ACTIVITY);
+        }
         mAmWmState.computeState(TEST_ACTIVITY);
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.sleepDevice()
