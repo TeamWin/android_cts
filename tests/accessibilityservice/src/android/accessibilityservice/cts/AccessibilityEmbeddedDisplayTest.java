@@ -16,7 +16,7 @@
 
 package android.accessibilityservice.cts;
 
-import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangedWithChangeTypes;
+import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangeTypesAndWindowTitle;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.findWindowByTitle;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
@@ -40,7 +40,6 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.view.ViewGroup;
-import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 
@@ -127,7 +126,7 @@ public class AccessibilityEmbeddedDisplayTest {
 
     @Presubmit
     @Test
-    public void testA11yWindowInfoHasCorrectLayer() throws Exception {
+    public void testA11yWindowInfoHasCorrectLayer() {
         final AccessibilityWindowInfo parentActivityWindow =
                 findWindowByTitle(sUiAutomation, mParentActivityTitle);
         final AccessibilityWindowInfo activityWindow =
@@ -140,7 +139,7 @@ public class AccessibilityEmbeddedDisplayTest {
 
     @Presubmit
     @Test
-    public void testA11yWindowInfoAndA11yNodeInfoHasCorrectBoundsInScreen() throws Exception {
+    public void testA11yWindowInfoAndA11yNodeInfoHasCorrectBoundsInScreen() {
         final AccessibilityWindowInfo parentActivityWindow =
                 findWindowByTitle(sUiAutomation, mParentActivityTitle);
         final AccessibilityWindowInfo activityWindow =
@@ -160,8 +159,12 @@ public class AccessibilityEmbeddedDisplayTest {
         activityWindow.getBoundsInScreen(activityBound);
         button.getBoundsInScreen(buttonBound);
 
-        assertTrue(parentActivityBound.contains(activityBound));
-        assertTrue(parentActivityBound.contains(buttonBound));
+        assertTrue("parentActivityBound" + parentActivityBound.toShortString()
+                        + " doesn't contain activityBound" + activityBound.toShortString(),
+                parentActivityBound.contains(activityBound));
+        assertTrue("parentActivityBound" + parentActivityBound.toShortString()
+                        + " doesn't contain buttonBound" + buttonBound.toShortString(),
+                parentActivityBound.contains(buttonBound));
     }
 
     @Test
@@ -177,7 +180,8 @@ public class AccessibilityEmbeddedDisplayTest {
         final int height = DEFAULT_ACTIVITYVIEW_WIDTH / 2;
         sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(
                 () -> mActivityView.layout(0, 0, width, height)),
-                filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_BOUNDS),
+                filterWindowsChangeTypesAndWindowTitle(sUiAutomation, WINDOWS_CHANGE_BOUNDS,
+                        mActivityTitle),
                 DEFAULT_TIMEOUT_MS);
 
         final AccessibilityWindowInfo newActivityWindow =
