@@ -587,6 +587,20 @@ public class UsageStatsTest {
         mUiDevice.pressBack();
     }
 
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @Test
+    public void testUserUnlockedEventExists() throws Exception {
+        final UsageEvents events = mUsageStatsManager.queryEvents(0, System.currentTimeMillis());
+        while (events.hasNextEvent()) {
+            final Event event = new Event();
+            events.getNextEvent(event);
+            if (event.mEventType == Event.USER_UNLOCKED) {
+                return;
+            }
+        }
+        fail("Couldn't find a user unlocked event.");
+    }
+
     static final int[] INTERACTIVE_EVENTS = new int[] {
             Event.SCREEN_INTERACTIVE,
             Event.SCREEN_NON_INTERACTIVE
