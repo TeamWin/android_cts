@@ -24,6 +24,7 @@ import android.media.AudioPresentation;
 import android.media.MediaCodec;
 import android.media.MediaCodec.BufferInfo;
 import android.media.MediaCodec.CodecException;
+import android.media.MediaCodec.CryptoException;
 import android.media.MediaCodec.CryptoInfo;
 import android.media.MediaCodec.CryptoInfo.Pattern;
 import android.media.MediaCodecInfo;
@@ -1815,6 +1816,18 @@ public class MediaCodecTest extends AndroidTestCase {
             crypto.release();
             drm.closeSession(sessionId);
         }
+    }
+
+    /**
+     * Tests MediaCodec.CryptoException
+     */
+    public void testCryptoException() {
+        int errorCode = CryptoException.ERROR_KEY_EXPIRED;
+        String errorMessage = "key_expired";
+        CryptoException exception = new CryptoException(errorCode, errorMessage);
+
+        assertEquals(errorCode, exception.getErrorCode());
+        assertEquals(errorMessage, exception.getMessage());
     }
 
     /**
