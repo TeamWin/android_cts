@@ -1517,6 +1517,11 @@ void AHardwareBufferGLTest::SetUpTexture(const AHardwareBuffer_Desc& desc, int u
                     format = GL_RGBA;
                     type = GL_UNSIGNED_BYTE;
                     break;
+                case GL_RGB565:
+                    internal_format = GL_RGB;
+                    format = GL_RGB;
+                    type = GL_UNSIGNED_SHORT_5_6_5;
+                    break;
                 case GL_DEPTH_COMPONENT16:
                     // Available through GL_OES_depth_texture.
                     // Note that these are treated as luminance textures, not as red textures.
