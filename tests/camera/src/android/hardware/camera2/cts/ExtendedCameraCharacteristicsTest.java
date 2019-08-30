@@ -2152,9 +2152,11 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                             focalLengths[j] < focalLengths[j+1]);
                 }
                 float[] apertures = c.get(CameraCharacteristics.LENS_INFO_AVAILABLE_APERTURES);
-                for (int j = 0; j < apertures.length-1; j++) {
-                    mCollector.expectTrue("Camera's available apertures must be ascending!",
-                            apertures[j] < apertures[j+1]);
+                if (apertures != null) {
+                    for (int j = 0; j < apertures.length-1; j++) {
+                        mCollector.expectTrue("Camera's available apertures must be ascending!",
+                                apertures[j] < apertures[j+1]);
+                    }
                 }
             }
         }
