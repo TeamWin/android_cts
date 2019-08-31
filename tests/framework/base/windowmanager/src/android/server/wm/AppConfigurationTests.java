@@ -410,6 +410,9 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
     /**
      * Test that device orientation is restored when an activity that requests it is no longer
      * visible.
+     *
+     * TODO(b/139936670, b/112688380): This test case fails on some vendor devices which has
+     * rotation sensing optimization. So this is listed in cts-known-failures.xml.
      */
     @Test
     public void testAppOrientationRequestConfigClears() {
@@ -515,6 +518,9 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
 
     /**
      * Test that device handles moving between two tasks with different orientations.
+     *
+     * TODO(b/139936670, b/112688380): This test case fails on some vendor devices which has
+     * rotation sensing optimization. So this is listed in cts-known-failures.xml.
      */
     @Test
     public void testTaskCloseRestoreFreeOrientation() {
