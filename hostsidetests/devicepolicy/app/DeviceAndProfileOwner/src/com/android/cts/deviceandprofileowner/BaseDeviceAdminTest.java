@@ -126,17 +126,6 @@ public class BaseDeviceAdminTest extends InstrumentationTestCase {
 
     protected void assertPasswordSufficiency(boolean expectPasswordSufficient) {
         waitUntilUserUnlocked();
-        int retries = 15;
-        // isActivePasswordSufficient() gets the result asynchronously so let's retry a few times
-        while (retries >= 0
-                && mDevicePolicyManager.isActivePasswordSufficient() != expectPasswordSufficient) {
-            retries--;
-            try {
-                Thread.sleep(200);
-            } catch (InterruptedException e) {
-                break;
-            }
-        }
         assertEquals(expectPasswordSufficient, mDevicePolicyManager.isActivePasswordSufficient());
     }
 

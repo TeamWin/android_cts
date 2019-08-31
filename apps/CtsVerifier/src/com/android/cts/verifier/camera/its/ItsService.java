@@ -42,6 +42,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.AudioAttributes;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.ImageWriter;
@@ -147,6 +148,7 @@ public class ItsService extends Service implements SensorEventListener {
     public static final String TRIGGER_AF_KEY = "af";
     public static final String VIB_PATTERN_KEY = "pattern";
     public static final String EVCOMP_KEY = "evComp";
+    public static final String AUDIO_RESTRICTION_MODE_KEY = "mode";
 
     private CameraManager mCameraManager = null;
     private HandlerThread mCameraThread = null;
@@ -264,7 +266,7 @@ public class ItsService extends Service implements SensorEventListener {
             mSensorThread.start();
             mSensorHandler = new Handler(mSensorThread.getLooper());
             mSensorManager.registerListener(this, mAccelSensor,
-                    SensorManager.SENSOR_DELAY_NORMAL, mSensorHandler);
+                    /*100hz*/ 10000, mSensorHandler);
             mSensorManager.registerListener(this, mMagSensor,
                     SensorManager.SENSOR_DELAY_NORMAL, mSensorHandler);
             mSensorManager.registerListener(this, mGyroSensor,
@@ -687,6 +689,8 @@ public class ItsService extends Service implements SensorEventListener {
                     doCapture(cmdObj);
                 } else if ("doVibrate".equals(cmdObj.getString("cmdName"))) {
                     doVibrate(cmdObj);
+                } else if ("setAudioRestriction".equals(cmdObj.getString("cmdName"))) {
+                    doSetAudioRestriction(cmdObj);
                 } else if ("getCameraIds".equals(cmdObj.getString("cmdName"))) {
                     doGetCameraIds();
                 } else if ("doReprocessCapture".equals(cmdObj.getString("cmdName"))) {
@@ -907,6 +911,7 @@ public class ItsService extends Service implements SensorEventListener {
             obj.put("accel", mAccelSensor != null);
             obj.put("mag", mMagSensor != null);
             obj.put("gyro", mGyroSensor != null);
+            obj.put("vibrator", mVibrator.hasVibrator());
             mSocketRunnableObj.sendResponse("sensorExistence", null, obj, null);
         } catch (org.json.JSONException e) {
             throw new ItsException("JSON error: ", e);
@@ -1305,10 +1310,32 @@ public class ItsService extends Service implements SensorEventListener {
                 pattern[i] = patternArray.getLong(i);
             }
             Logt.i(TAG, String.format("Starting vibrator, pattern length %d",len));
-            mVibrator.vibrate(pattern, -1);
+
+            // Mark the vibrator as alarm to test the audio restriction API
+            // TODO: consider making this configurable
+            AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ALARM).build();
+            mVibrator.vibrate(pattern, -1, audioAttributes);
             mSocketRunnableObj.sendResponse("vibrationStarted", "");
         } catch (org.json.JSONException e) {
             throw new ItsException("JSON error: ", e);
+        }
+    }
+
+    private void doSetAudioRestriction(JSONObject params) throws ItsException {
+        try {
+            if (mCamera == null) {
+                throw new ItsException("Camera is closed");
+            }
+            int mode = params.getInt(AUDIO_RESTRICTION_MODE_KEY);
+            mCamera.setCameraAudioRestriction(mode);
+            Logt.i(TAG, String.format("Set audio restriction mode to %d", mode));
+
+            mSocketRunnableObj.sendResponse("audioRestrictionSet", "");
+        } catch (org.json.JSONException e) {
+            throw new ItsException("JSON error: ", e);
+        } catch (android.hardware.camera2.CameraAccessException e) {
+            throw new ItsException("Access error: ", e);
         }
     }
 

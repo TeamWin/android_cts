@@ -2698,4 +2698,166 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
             }
         }
     }
+
+    /**
+     * Verify audio restrictions are set properly for single CameraDevice usage
+     */
+    public void testAudioRestrictionSingleDevice() throws Exception {
+        int[] testModes = {
+            CameraDevice.AUDIO_RESTRICTION_VIBRATION_SOUND,
+            CameraDevice.AUDIO_RESTRICTION_NONE,
+            CameraDevice.AUDIO_RESTRICTION_VIBRATION,
+        };
+        for (int i = 0; i < mCameraIds.length; i++) {
+            try {
+                openDevice(mCameraIds[i], mCameraMockListener);
+                waitForDeviceState(STATE_OPENED, CAMERA_OPEN_TIMEOUT_MS);
+
+                for (int mode : testModes) {
+                    int retMode = mCamera.setCameraAudioRestriction(mode);
+                    assertTrue("Audio restriction mode mismatch: input: " + mode +
+                            ", output:" + retMode, mode == retMode);
+                }
+
+                try {
+                    // Test invalid mode
+                    mCamera.setCameraAudioRestriction(42);
+                    fail("Should get IllegalArgumentException for invalid mode");
+                } catch (IllegalArgumentException e) {
+                    // expected
+                }
+            }
+            finally {
+                closeDevice(mCameraIds[i], mCameraMockListener);
+            }
+        }
+    }
+
+    private void testTwoCameraDevicesAudioRestriction(String id0, String id1) throws Exception {
+        BlockingStateCallback cam0Cb = new BlockingStateCallback();
+        BlockingStateCallback cam1Cb = new BlockingStateCallback();
+        CameraDevice cam0 = null;
+        CameraDevice cam1 = null;
+        try {
+            cam0 = CameraTestUtils.openCamera(mCameraManager, id0, cam0Cb, mHandler);
+            cam0Cb.waitForState(STATE_OPENED, CAMERA_OPEN_TIMEOUT_MS);
+
+            int mode0 = CameraDevice.AUDIO_RESTRICTION_VIBRATION_SOUND;
+            int retMode = cam0.setCameraAudioRestriction(mode0);
+            assertTrue("Audio restriction mode mismatch: input: " + mode0 + ", output:" + retMode,
+                    retMode == mode0);
+
+            cam1 = CameraTestUtils.openCamera(mCameraManager, id1, cam1Cb, mHandler);
+            cam1Cb.waitForState(STATE_OPENED, CAMERA_OPEN_TIMEOUT_MS);
+
+            // See if cam0 is evicted.
+            boolean cam0Evicted = true;
+            try {
+                final int cameraEvictedTimeoutMs = 1000;
+                cam0Cb.waitForState(STATE_DISCONNECTED, cameraEvictedTimeoutMs);
+            } catch (TimeoutRuntimeException e) {
+                // camera 0 is not evicted
+                cam0Evicted = false;
+            }
+
+            if (cam0Evicted) {
+                Log.i(TAG, "Camera " + id0 + " is evicted. Testing camera " + id1 + " alone.");
+                // cam0 is evicted
+                try {
+                    cam0.setCameraAudioRestriction(mode0);
+                    fail("Should get CameraAccessException for disconnected camera.");
+                } catch (CameraAccessException e) {
+                    // expected
+                }
+                // Test the behavior for single remaining client
+                int mode1 = CameraDevice.AUDIO_RESTRICTION_VIBRATION;
+                retMode = cam1.setCameraAudioRestriction(mode1);
+                assertTrue("Audio restriction mode mismatch: input: " + mode1 +
+                        ", output:" + retMode, retMode == mode1);
+                return;
+            }
+
+            // The output mode should be union of all CameraDevices
+            int mode1 = CameraDevice.AUDIO_RESTRICTION_VIBRATION;
+            int expectMode = mode0 | mode1;
+            retMode = cam1.setCameraAudioRestriction(mode1);
+            assertTrue("Audio restriction mode mismatch: expect: " + expectMode +
+                    ", output:" + retMode, retMode == expectMode);
+
+            // test turning off mute settings also
+            mode0 = CameraDevice.AUDIO_RESTRICTION_NONE;
+            expectMode = mode0 | mode1;
+            retMode = cam0.setCameraAudioRestriction(mode0);
+            assertTrue("Audio restriction mode mismatch: expect: " + expectMode +
+                    ", output:" + retMode, retMode == expectMode);
+
+            // mode should be NONE when both device set to NONE
+            mode1 = CameraDevice.AUDIO_RESTRICTION_NONE;
+            expectMode = mode0 | mode1;
+            retMode = cam1.setCameraAudioRestriction(mode1);
+            assertTrue("Audio restriction mode mismatch: expect: " + expectMode +
+                    ", output:" + retMode, retMode == expectMode);
+
+            // test removal of VIBRATE won't affect existing VIBRATE_SOUND state
+            mode0 = CameraDevice.AUDIO_RESTRICTION_VIBRATION_SOUND;
+            expectMode = mode0 | mode1;
+            retMode = cam0.setCameraAudioRestriction(mode0);
+            assertTrue("Audio restriction mode mismatch: expect: " + expectMode +
+                    ", output:" + retMode, retMode == expectMode);
+
+            mode1 = CameraDevice.AUDIO_RESTRICTION_VIBRATION;
+            expectMode = mode0 | mode1;
+            retMode = cam1.setCameraAudioRestriction(mode1);
+            assertTrue("Audio restriction mode mismatch: expect: " + expectMode +
+                    ", output:" + retMode, retMode == expectMode);
+
+            mode1 = CameraDevice.AUDIO_RESTRICTION_NONE;
+            expectMode = mode0 | mode1;
+            retMode = cam1.setCameraAudioRestriction(mode1);
+            assertTrue("Audio restriction mode mismatch: expect: " + expectMode +
+                    ", output:" + retMode, retMode == expectMode);
+
+            // Now test CameraDevice.close will remove setting and exception is thrown for closed
+            // camera.
+            cam0.close();
+            cam0Cb.waitForState(STATE_CLOSED, CAMERA_CLOSE_TIMEOUT_MS);
+            try {
+                cam0.setCameraAudioRestriction(mode0);
+                fail("Should get IllegalStateException for closed camera.");
+            } catch (IllegalStateException e) {
+                // expected;
+            }
+
+            cam0 = null;
+            cam0Cb = null;
+            expectMode = mode1;
+            retMode = cam1.setCameraAudioRestriction(mode1);
+            assertTrue("Audio restriction mode mismatch: expect: " + expectMode +
+                    ", output:" + retMode, retMode == expectMode);
+        } finally {
+            if (cam0 != null) {
+                cam0.close();
+                cam0Cb.waitForState(STATE_CLOSED, CAMERA_CLOSE_TIMEOUT_MS);
+                cam0Cb = null;
+            }
+            if (cam1 != null) {
+                cam1.close();
+                cam1Cb.waitForState(STATE_CLOSED, CAMERA_CLOSE_TIMEOUT_MS);
+                cam1Cb = null;
+            }
+        }
+    }
+
+    public void testAudioRestrictionMultipleDevices() throws Exception {
+        if (mCameraIds.length < 2) {
+            Log.i(TAG, "device doesn't have multiple cameras, skipping");
+            return;
+        }
+
+        for (int i = 0; i < mCameraIds.length; i++) {
+            for (int j = i+1; j < mCameraIds.length; j++) {
+                testTwoCameraDevicesAudioRestriction(mCameraIds[i], mCameraIds[j]);
+            }
+        }
+    }
 }

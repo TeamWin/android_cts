@@ -214,7 +214,6 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
         // Start side activity so callbackTrackingActivity won't be paused due to minimized dock.
         moveTaskToPrimarySplitScreen(callbackTrackingActivity.getTaskId(),
             true/* showSideActivity */);
-        waitAndAssertActivityStates(state(callbackTrackingActivity, ON_RESUME));
         getLifecycleLog().clear();
 
         // Launch second activity
