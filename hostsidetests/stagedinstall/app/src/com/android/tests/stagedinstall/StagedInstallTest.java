@@ -27,6 +27,7 @@ import static org.junit.Assert.fail;
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
@@ -764,6 +765,34 @@ public class StagedInstallTest {
                 SessionUpdateBroadcastReceiver.sessionBroadcasts.poll(60, TimeUnit.SECONDS);
         assertThat(info.getSessionId()).isEqualTo(sessionId);
         assertThat(info).isStagedSessionReady();
+    }
+
+    @Test
+    public void testSamegradeSystemApex_Commit() throws Exception {
+        final PackageInfo shim = InstrumentationRegistry.getInstrumentation().getContext()
+                .getPackageManager().getPackageInfo(SHIM_PACKAGE_NAME, PackageManager.MATCH_APEX);
+        assertThat(shim.getLongVersionCode()).isEqualTo(1);
+        assertThat(shim.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM).isEqualTo(
+                ApplicationInfo.FLAG_SYSTEM);
+        assertThat(shim.applicationInfo.flags & ApplicationInfo.FLAG_INSTALLED).isEqualTo(
+                ApplicationInfo.FLAG_INSTALLED);
+        int sessionId = stageDowngradeSingleApk(TestApp.Apex1).assertSuccessful().getSessionId();
+        waitForIsReadyBroadcast(sessionId);
+        assertSessionReady(sessionId);
+        storeSessionId(sessionId);
+    }
+
+    @Test
+    public void testSamegradeSystemApex_VerifyPostReboot() throws Exception {
+        int sessionId = retrieveLastSessionId();
+        assertSessionApplied(sessionId);
+        final PackageInfo shim = InstrumentationRegistry.getInstrumentation().getContext()
+                .getPackageManager().getPackageInfo(SHIM_PACKAGE_NAME, PackageManager.MATCH_APEX);
+        assertThat(shim.getLongVersionCode()).isEqualTo(1);
+        // Check that APEX on /data wins.
+        assertThat(shim.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM).isEqualTo(0);
+        assertThat(shim.applicationInfo.flags & ApplicationInfo.FLAG_INSTALLED).isEqualTo(
+                ApplicationInfo.FLAG_INSTALLED);
     }
 
     private static long getInstalledVersion(String packageName) {
