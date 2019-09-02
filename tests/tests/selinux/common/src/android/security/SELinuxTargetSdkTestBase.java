@@ -61,15 +61,15 @@ abstract class SELinuxTargetSdkTestBase extends AndroidTestCase
      * Check expectations of being able to read/execute dex2oat.
      */
     protected static void checkDex2oatAccess(boolean expectedAllowed) throws Exception {
-        // First check whether there is an Android Runtime APEX dex2oat binary.
-        File dex2oatRuntimeApexBinary = new File("/apex/com.android.runtime/bin/dex2oat");
-        if (dex2oatRuntimeApexBinary.exists()) {
-          checkDex2oatBinaryAccess(dex2oatRuntimeApexBinary, expectedAllowed);
-        }
-        // Also check whether there is a "legacy" system binary.
-        File dex2oatSystemBinary = new File("/system/bin/dex2oat");
-        if (dex2oatSystemBinary.exists()) {
-          checkDex2oatBinaryAccess(dex2oatSystemBinary, expectedAllowed);
+        // Check the dex2oat binary in its current and legacy locations.
+        String[] locations = {"/apex/com.android.art/bin",
+                              "/apex/com.android.runtime/bin",
+                              "/system/bin"};
+        for (String loc : locations) {
+            File dex2oatBinary = new File(loc + "/dex2oat");
+            if (dex2oatBinary.exists()) {
+                checkDex2oatBinaryAccess(dex2oatBinary, expectedAllowed);
+            }
         }
     }
 
