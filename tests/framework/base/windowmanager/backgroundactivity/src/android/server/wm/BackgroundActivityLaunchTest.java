@@ -134,16 +134,15 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         assertFalse("Should not able to launch background activity", result);
         assertTaskStack(null, APP_A_BACKGROUND_ACTIVITY);
 
-        // TODO(b/137134312): Bring this back once the stacks leakage issue is fixed
         // Make sure aborting activity starts won't have any empty task/stack leaks.
-        // List<ActivityManagerState.ActivityStack> stacks = mAmWmState.getAmState().getStacks();
-        // for (ActivityManagerState.ActivityStack stack : stacks) {
-        //     assertThat(stack.getTopTask()).isNotNull();
-        //     List<ActivityManagerState.ActivityTask> tasks = stack.getTasks();
-        //     for (ActivityManagerState.ActivityTask task : tasks) {
-        //         assertThat(task.getActivities().size()).isGreaterThan(0);
-        //     }
-        // }
+        List<ActivityManagerState.ActivityStack> stacks = mAmWmState.getAmState().getStacks();
+        for (ActivityManagerState.ActivityStack stack : stacks) {
+            assertThat(stack.getTopTask()).isNotNull();
+            List<ActivityManagerState.ActivityTask> tasks = stack.getTasks();
+            for (ActivityManagerState.ActivityTask task : tasks) {
+                assertThat(task.getActivities().size()).isGreaterThan(0);
+            }
+        }
     }
 
     @Test
