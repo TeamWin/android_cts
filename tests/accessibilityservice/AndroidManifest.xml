@@ -72,11 +72,13 @@
         <activity
             android:label="@string/accessibility_embedded_display_test_parent_activity"
             android:name=".AccessibilityEmbeddedDisplayTest$EmbeddedDisplayParentActivity"
-            android:theme="@android:style/Theme.Dialog" />
+            android:theme="@android:style/Theme.Dialog"
+            android:screenOrientation="locked" />
 
         <activity
             android:label="@string/accessibility_embedded_display_test_activity"
-            android:name=".AccessibilityEmbeddedDisplayTest$EmbeddedDisplayActivity" />
+            android:name=".AccessibilityEmbeddedDisplayTest$EmbeddedDisplayActivity"
+            android:screenOrientation="locked" />
 
         <service
                 android:name=".StubGestureAccessibilityService"
