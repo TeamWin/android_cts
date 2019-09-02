@@ -231,6 +231,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         int height;
         Camera camera = null;
         if (!hasCamera()) {
+            MediaUtils.skipTest("no camera");
             return;
         }
         // Try to get camera profile for QUALITY_LOW; if unavailable,
@@ -541,6 +542,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
 
     public void testRecorderVideo() throws Exception {
         if (!hasCamera()) {
+            MediaUtils.skipTest("no camera");
             return;
         }
         mCamera = Camera.open(0);
@@ -565,6 +567,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
 
     public void testSetOutputFile() throws Exception {
         if (!hasCamera()) {
+            MediaUtils.skipTest("no camera");
             return;
         }
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
@@ -848,22 +851,22 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         return startTimeOffset + frameIndex * 1000000 / frameRate;
     }
 
-    private void testLevel(String mediaType, int width, int height, int framerate,
-            int bitrate, int profile, int requestedLevel, int... expectedLevels) throws Exception {
+    private int testLevel(String mediaType, int width, int height, int framerate, int bitrate,
+            int profile, int requestedLevel, int... expectedLevels) throws Exception {
         CodecCapabilities cap = getCapsForPreferredCodecForMediaType(mediaType);
         if (cap == null) { // not supported
-            return;
+            return 0;
         }
         MediaCodecInfo.VideoCapabilities vCap = cap.getVideoCapabilities();
         if (!vCap.areSizeAndRateSupported(width, height, framerate)
             || !vCap.getBitrateRange().contains(bitrate * 1000)) {
             Log.i(TAG, "Skip the test");
-            return;
+            return 0;
         }
 
         Surface surface = MediaCodec.createPersistentInputSurface();
         if (surface == null) {
-            return;
+            return 0;
         }
         InputSurface encSurface = new InputSurface(surface);
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
@@ -948,9 +951,11 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
             encSurface.release();
             encSurface = null;
         }
+        return 1;
     }
 
     public void testProfileAvcBaselineLevel1() throws Exception {
+        int testsRun = 0;
         int profile = AVCProfileBaseline;
 
         if (!hasH264()) {
@@ -959,16 +964,18 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         }
 
         /*              W    H   fps kbps  profile  request level   expected levels */
-        testLevel(AVC, 176, 144, 15, 64,   profile,  AVCLevel1, AVCLevel1);
+        testsRun += testLevel(AVC, 176, 144, 15, 64, profile, AVCLevel1, AVCLevel1);
         // Enable them when vendor fixes the failure
         //testLevel(AVC, 178, 144, 15, 64,   profile,  AVCLevel1, AVCLevel11);
         //testLevel(AVC, 178, 146, 15, 64,   profile,  AVCLevel1, AVCLevel11);
         //testLevel(AVC, 176, 144, 16, 64,   profile,  AVCLevel1, AVCLevel11);
         //testLevel(AVC, 176, 144, 15, 65,   profile,  AVCLevel1, AVCLevel1b);
-        testLevel(AVC, 176, 144, 15, 64,   profile,  AVCLevel1b, AVCLevel1,
-                AVCLevel1b);
+        testsRun += testLevel(AVC, 176, 144, 15, 64, profile, AVCLevel1b, AVCLevel1, AVCLevel1b);
         // testLevel(AVC, 176, 144, 15, 65,   profile,  AVCLevel2, AVCLevel1b,
         //        AVCLevel11, AVCLevel12, AVCLevel13, AVCLevel2);
+        if (testsRun == 0) {
+            MediaUtils.skipTest("VideoCapabilities or surface not found");
+        }
     }
 
 
