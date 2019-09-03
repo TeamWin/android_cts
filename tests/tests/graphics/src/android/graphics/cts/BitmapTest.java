@@ -2181,9 +2181,9 @@ public class BitmapTest {
 
     private static native void nFillRgbaHwBuffer(HardwareBuffer hwBuffer);
 
-    private static final int ANDROID_BITMAP_FORMAT_RGBA_8888 = 1;
+    static final int ANDROID_BITMAP_FORMAT_RGBA_8888 = 1;
     private static final int ANDROID_BITMAP_FORMAT_RGB_565 = 4;
-    private static native int nGetFormat(Bitmap bitmap);
+    static native int nGetFormat(Bitmap bitmap);
 
     private static HardwareBuffer createTestBuffer(int width, int height, boolean cpuAccess) {
         long usage = HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE;
