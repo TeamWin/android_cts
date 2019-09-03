@@ -177,4 +177,18 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
         run("testApexRollbackExpirationConfirmExpiration");
     }
 
+    /**
+     * Tests staged rollbacks involving apex with rotated keys.
+     */
+    @Test
+    public void testApexKeyRotationStagedRollback() throws Exception {
+        assumeTrue("Device does not support updating APEX", isApexUpdateSupported());
+
+        run("testApexKeyRotation_EnableRollback");
+        getDevice().reboot();
+        run("testApexKeyRotation_CommitRollback");
+        getDevice().reboot();
+        run("testApexKeyRotation_CofirmRollback");
+    }
+
 }
