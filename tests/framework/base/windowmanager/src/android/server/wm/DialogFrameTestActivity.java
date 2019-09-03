@@ -25,6 +25,7 @@ import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.view.Gravity;
 import android.view.Window;
 import android.view.WindowManager.LayoutParams;
@@ -56,7 +57,7 @@ public class DialogFrameTestActivity extends Activity {
     static final String TEST_WITH_MARGINS = "WithMargins";
 
     private AlertDialog mDialog;
-    int mSize;
+    int mSize = 200;
 
     @Override
     protected void onStop() {
@@ -72,7 +73,9 @@ public class DialogFrameTestActivity extends Activity {
 
     private void setupTest(Intent intent) {
         final String testCase = intent.getStringExtra(EXTRA_TEST_CASE);
-        mSize = getSize();
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            mSize = getSize();
+        }
         switch (testCase) {
             case TEST_MATCH_PARENT:
                 testMatchParent();

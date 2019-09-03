@@ -35,6 +35,7 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.assertEquals;
 
 import android.content.ComponentName;
+import android.content.pm.PackageManager;
 import android.graphics.Rect;
 import android.platform.test.annotations.AppModeFull;
 import android.server.am.WaitForValidActivityState;
@@ -74,7 +75,10 @@ public class DialogFrameTests extends ParentChildTestBase<DialogFrameTestActivit
             super.setUp();
         } catch (Exception ex) {
         }
-        mSize = getSize();
+        PackageManager packageManager = InstrumentationRegistry.getContext().getPackageManager();
+        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            mSize = getSize();
+        }
     }
     
     @Override
