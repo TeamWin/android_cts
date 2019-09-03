@@ -1169,6 +1169,10 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
                 appInfo.uid, ActivityManager.RunningAppProcessInfo.IMPORTANCE_CANT_SAVE_STATE-1,
                 WAIT_TIME);
         uidBackgroundListener.register();
+        UidImportanceListener uidCachedListener = new UidImportanceListener(mContext,
+                appInfo.uid, ActivityManager.RunningAppProcessInfo.IMPORTANCE_CANT_SAVE_STATE + 1,
+                WAIT_TIME);
+        uidCachedListener.register();
 
         WatchUidRunner uidWatcher = new WatchUidRunner(getInstrumentation(), appInfo.uid,
                 WAIT_TIME);
@@ -1237,14 +1241,14 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
                     AccessibilityService.GLOBAL_ACTION_BACK);
 
             // Wait for process to become cached
-            uidBackgroundListener.waitForValue(
+            uidCachedListener.waitForValue(
                     IMPORTANCE_CACHED,
                     IMPORTANCE_CACHED);
             assertEquals(IMPORTANCE_CACHED,
                     am.getPackageImportance(CANT_SAVE_STATE_1_PACKAGE_NAME));
 
             uidWatcher.expect(WatchUidRunner.CMD_CACHED, null);
-            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_RECENT);
+            uidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_RECENT);
 
             // While in background, should go in to normal idle state.
             // Force app to go idle now
@@ -1256,6 +1260,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             uidWatcher.finish();
             uidForegroundListener.unregister();
             uidBackgroundListener.unregister();
+            uidCachedListener.unregister();
         }
     }
 
@@ -1400,7 +1405,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             getInstrumentation().getUiAutomation().performGlobalAction(
                     AccessibilityService.GLOBAL_ACTION_BACK);
             uid1Watcher.expect(WatchUidRunner.CMD_CACHED, null);
-            uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_RECENT);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_RECENT);
 
             // Make both apps idle for cleanliness.
             cmd = "am make-uid-idle " + CANT_SAVE_STATE_1_PACKAGE_NAME;
