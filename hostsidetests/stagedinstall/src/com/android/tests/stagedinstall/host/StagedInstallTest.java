@@ -384,6 +384,16 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testAfterRotationNewKeyCanUpdateFurtherWithoutLineage");
     }
 
+    @Test
+    @LargeTest
+    public void testSamegradeSystemApex() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
+        runPhase("testSamegradeSystemApex_Commit");
+        getDevice().reboot();
+        runPhase("testSamegradeSystemApex_VerifyPostReboot");
+    }
+
     private boolean isUpdatingApexSupported() throws Exception {
         final String updatable = getDevice().getProperty("ro.apex.updatable");
         return updatable != null && updatable.equals("true");
@@ -402,18 +412,18 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
             // Device doesn't support updating apex. Nothing to uninstall.
             return;
         }
-        final ITestDevice.ApexInfo shimApex = getShimApex();
-        if (shimApex.versionCode == 1) {
-            // System version is active, skipping uninstalling active apex and rebooting the device.
-            return;
-        }
         // Non system version is active, need to uninstall it and reboot the device.
         final String errorMessage = getDevice().uninstallPackage(SHIM_APEX_PACKAGE_NAME);
-        Log.i(TAG, "Uninstalling shim apex " + shimApex);
-        if (errorMessage != null) {
-            throw new AssertionError("Failed to uninstall " + shimApex);
+        if (errorMessage == null) {
+            Log.i(TAG, "Uninstalling shim apex");
+            getDevice().reboot();
+        } else {
+            // Most likely we tried to uninstall system version and failed. It should be fine to
+            // continue tests.
+            // TODO(ioffe): extend getDevice().getActiveApexes() to include isInstalled/isFactory
+            //  and remove this terrible hack.
+            Log.w(TAG, "Failed to uninstall shim APEX : " + errorMessage);
         }
-        getDevice().reboot();
         assertThat(getShimApex().versionCode).isEqualTo(1L);
     }
 
