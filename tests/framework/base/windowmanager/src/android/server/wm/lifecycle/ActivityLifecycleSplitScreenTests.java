@@ -359,8 +359,7 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
         waitForActivityTransitions(CallbackTrackingActivity.class, expectedEnterSequence);
         LifecycleVerifier.assertOrder(getLifecycleLog(), CallbackTrackingActivity.class,
                 Arrays.asList(ON_TOP_POSITION_LOST, ON_PAUSE, ON_STOP, ON_DESTROY, ON_CREATE,
-                        ON_RESUME, ON_TOP_POSITION_GAINED, ON_TOP_POSITION_LOST),
-                "moveToSplitScreen");
+                        ON_RESUME), "moveToSplitScreen");
         LifecycleVerifier.assertTransitionObserved(getLifecycleLog(),
                 transition(CallbackTrackingActivity.class, ON_MULTI_WINDOW_MODE_CHANGED),
                 "moveToSplitScreen");
@@ -401,9 +400,9 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
 
         // Wait for the activity to receive the change
         waitForActivityTransitions(ConfigChangeHandlingActivity.class,
-                Arrays.asList(ON_MULTI_WINDOW_MODE_CHANGED, ON_TOP_POSITION_LOST));
+                Arrays.asList(ON_TOP_POSITION_LOST, ON_MULTI_WINDOW_MODE_CHANGED));
         LifecycleVerifier.assertOrder(getLifecycleLog(), ConfigChangeHandlingActivity.class,
-                Arrays.asList(ON_MULTI_WINDOW_MODE_CHANGED, ON_TOP_POSITION_LOST),
+                Arrays.asList(ON_TOP_POSITION_LOST, ON_MULTI_WINDOW_MODE_CHANGED),
                 "moveToSplitScreen");
 
         // Exit split-screen
