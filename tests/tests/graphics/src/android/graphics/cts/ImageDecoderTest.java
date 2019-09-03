@@ -2190,14 +2190,47 @@ public class ImageDecoderTest {
             for (ColorSpace cs : BitmapTest.getRgbColorSpaces()) {
                 try {
                     Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
-                        if (record.isF16) {
-                            // CTS infrastructure fails to create F16 HARDWARE Bitmaps, so this
-                            // switches to using software.
+                        if (record.isF16 || isExtended(cs)) {
+                            // CTS infrastructure and some devices fail to create F16
+                            // HARDWARE Bitmaps, so this switches to using software.
                             decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
                         }
                         decoder.setTargetColorSpace(cs);
                     });
                     record.checkColorSpace(cs, bm.getColorSpace());
+                } catch (IOException e) {
+                    fail("Failed to decode asset " + record.name + " to " + cs + " with " + e);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testTargetColorSpaceNoF16HARDWARE() {
+        final ColorSpace EXTENDED_SRGB = ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB);
+        final ColorSpace LINEAR_EXTENDED_SRGB = ColorSpace.get(
+                ColorSpace.Named.LINEAR_EXTENDED_SRGB);
+        AssetManager assets = mRes.getAssets();
+        for (AssetRecord record : ASSETS) {
+            ImageDecoder.Source src = ImageDecoder.createSource(assets, record.name);
+            for (ColorSpace cs : new ColorSpace[] { EXTENDED_SRGB, LINEAR_EXTENDED_SRGB }) {
+                try {
+                    Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
+                        decoder.setTargetColorSpace(cs);
+                    });
+                    // If the ColorSpace does not match the request, it should be because
+                    // F16 + HARDWARE is not supported. In that case, it should match the non-
+                    // EXTENDED variant.
+                    ColorSpace actual = bm.getColorSpace();
+                    if (actual != cs) {
+                        assertEquals(BitmapTest.ANDROID_BITMAP_FORMAT_RGBA_8888,
+                                     BitmapTest.nGetFormat(bm));
+                        if (cs == EXTENDED_SRGB) {
+                            assertSame(ColorSpace.get(ColorSpace.Named.SRGB), actual);
+                        } else {
+                            assertSame(ColorSpace.get(ColorSpace.Named.LINEAR_SRGB), actual);
+                        }
+                    }
                 } catch (IOException e) {
                     fail("Failed to decode asset " + record.name + " to " + cs + " with " + e);
                 }
