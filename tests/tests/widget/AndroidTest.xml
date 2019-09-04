@@ -26,5 +26,6 @@
         <option name="package" value="android.widget.cts" />
         <option name="runtime-hint" value="11m55s" />
         <option name="hidden-api-checks" value="false" />
+        <option name="instrumentation-arg" key="thisisignored" value="thisisignored --no-window-animation" />
     </test>
 </configuration>
