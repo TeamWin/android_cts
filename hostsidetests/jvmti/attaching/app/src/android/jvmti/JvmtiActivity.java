@@ -64,7 +64,6 @@ public class JvmtiActivity extends Activity {
               DataOutputStream dos = new DataOutputStream(ls.getOutputStream());
               dos.writeUTF(s);
               dos.flush();
-              ls.shutdownOutput();
               // Wait for the other end to close the connection.
               while (-1 != ls.getInputStream().read()) {}
           } catch (IOException e) {
