@@ -42,6 +42,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.os.PersistableBundle;
+import android.os.Process;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.util.Log;
@@ -631,12 +632,14 @@ public class AudioRecordTest {
         }
 
         AudioRecord recorder = null;
+        String packageName = InstrumentationRegistry.getTargetContext().getPackageName();
+        int currentUserId = Process.myUserHandle().getIdentifier();
 
         // We will record audio for 20 sec from active and idle state expecting
         // the recording from active state to have data while from idle silence.
         try {
             // Ensure no race and UID active
-            makeMyUidStateActive();
+            makeMyUidStateActive(packageName, currentUserId);
 
             // Setup a recorder
             final AudioRecord candidateRecorder = new AudioRecord.Builder()
@@ -670,7 +673,7 @@ public class AudioRecordTest {
             // Start clean
             buffer.clear();
             // Force idle the package
-            makeMyUidStateIdle();
+            makeMyUidStateIdle(packageName, currentUserId);
             // Read five seconds of data
             readDataTimed(recorder, 5000, buffer);
             // Ensure we read empty bytes
@@ -679,7 +682,7 @@ public class AudioRecordTest {
             // Start clean
             buffer.clear();
             // Reset to active
-            makeMyUidStateActive();
+            makeMyUidStateActive(packageName, currentUserId);
             // Read five seconds of data
             readDataTimed(recorder, 5000, buffer);
             // Ensure we read non-empty bytes
@@ -689,7 +692,7 @@ public class AudioRecordTest {
                 recorder.stop();
                 recorder.release();
             }
-            resetMyUidState();
+            resetMyUidState(packageName, currentUserId);
         }
     }
 
@@ -1629,21 +1632,21 @@ public class AudioRecordTest {
         return totalSilenceCount > valueCount / 2;
     }
 
-    private static void makeMyUidStateActive() throws IOException {
-        final String command = "cmd media.audio_policy set-uid-state "
-                + InstrumentationRegistry.getTargetContext().getPackageName() + " active";
+    private static void makeMyUidStateActive(String packageName, int userId) throws IOException {
+        final String command = String.format(
+                "cmd media.audio_policy set-uid-state %s active --user %d", packageName, userId);
         SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(), command);
     }
 
-    private static void makeMyUidStateIdle() throws IOException {
-        final String command = "cmd media.audio_policy set-uid-state "
-                + InstrumentationRegistry.getTargetContext().getPackageName() + " idle";
+    private static void makeMyUidStateIdle(String packageName, int userId) throws IOException {
+        final String command = String.format(
+                "cmd media.audio_policy set-uid-state %s idle --user %d", packageName, userId);
         SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(), command);
     }
 
-    private static void resetMyUidState() throws IOException {
-        final String command = "cmd media.audio_policy reset-uid-state "
-                +  InstrumentationRegistry.getTargetContext().getPackageName();
+    private static void resetMyUidState(String packageName, int userId) throws IOException {
+        final String command = String.format(
+                "cmd media.audio_policy reset-uid-state %s --user %d", packageName, userId);
         SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(), command);
     }
 
