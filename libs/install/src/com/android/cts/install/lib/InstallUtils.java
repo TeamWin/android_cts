@@ -38,6 +38,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -45,6 +46,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * Utilities to facilitate installation in tests.
  */
 public class InstallUtils {
+
     /**
      * Adopts the given shell permissions.
      */
@@ -261,6 +263,34 @@ public class InstallUtils {
             return ((pi.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0)
                     && ((pi.applicationInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) == 0);
         }
+    }
+
+    /**
+     * Checks whether a given package is installed for only the given user, from a list of users.
+     * @param packageName the package to check
+     * @param userIdToCheck the user id of the user to check
+     * @param userIds a list of user ids to check
+     * @return {@code true} if the package is only installed for the given user,
+     *         {@code false} otherwise.
+     */
+    public static boolean isOnlyInstalledForUser(String packageName, int userIdToCheck,
+            List<Integer> userIds) {
+        Context context = InstrumentationRegistry.getContext();
+        PackageManager pm = context.getPackageManager();
+        for (int userId: userIds) {
+            List<PackageInfo> installedPackages;
+            if (userId != userIdToCheck) {
+                installedPackages = pm.getInstalledPackagesAsUser(PackageManager.MATCH_APEX,
+                        userId);
+                for (PackageInfo pi : installedPackages) {
+                    if (pi.packageName.equals(packageName)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+
     }
 
     /**
