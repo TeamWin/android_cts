@@ -47,6 +47,7 @@ class LinkerNamespacesHelper {
     private final static String VENDOR_CONFIG_FILE = "/vendor/etc/public.libraries.txt";
     private final static String[] PUBLIC_SYSTEM_LIBRARIES = {
         "libaaudio.so",
+        "libamidi.so",
         "libandroid.so",
         "libbinder_ndk.so",
         "libc.so",

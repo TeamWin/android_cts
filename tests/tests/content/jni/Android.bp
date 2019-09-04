@@ -14,12 +14,13 @@
 
 cc_test_library {
     name: "libnativecursorwindow_jni",
-    srcs: ["NativeCursorWindow.c"],
+    srcs: ["NativeCursorWindow.cpp"],
     cflags: [
         "-Wall",
         "-Werror",
         "-Wno-pointer-arith",
         "-Wno-unused-parameter",
+        "-Wno-unused-variable",
     ],
     shared_libs: [
         "libnativehelper_compat_libc++",

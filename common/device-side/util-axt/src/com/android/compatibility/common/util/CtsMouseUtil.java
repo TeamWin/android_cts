@@ -22,6 +22,8 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 
+import android.app.Instrumentation;
+import android.app.UiAutomation;
 import android.os.SystemClock;
 import android.view.InputDevice;
 import android.view.MotionEvent;
@@ -61,6 +63,36 @@ public final class CtsMouseUtil {
         MotionEvent event = MotionEvent.obtain(eventTime, eventTime, action, x, y, 0);
         event.setSource(InputDevice.SOURCE_MOUSE);
         return event;
+    }
+
+    /**
+     * Emulates a hover move on a point relative to the top-left corner of the passed {@link View}.
+     * Offset parameters are used to compute the final screen coordinates of the tap point.
+     *
+     * @param instrumentation the instrumentation used to run the test
+     * @param anchor the anchor view to determine the tap location on the screen
+     * @param offsetX extra X offset for the move
+     * @param offsetY extra Y offset for the move
+     */
+    public static void emulateHoverOnView(Instrumentation instrumentation, View anchor, int offsetX,
+            int offsetY) {
+        final long downTime = SystemClock.uptimeMillis();
+        final UiAutomation uiAutomation = instrumentation.getUiAutomation();
+        final int[] screenPos = new int[2];
+        anchor.getLocationOnScreen(screenPos);
+        final int x = screenPos[0] + offsetX;
+        final int y = screenPos[1] + offsetY;
+
+        injectHoverEvent(uiAutomation, downTime, x, y);
+    }
+
+    private static void injectHoverEvent(UiAutomation uiAutomation, long downTime, int xOnScreen,
+            int yOnScreen) {
+        MotionEvent event = MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_HOVER_MOVE,
+                xOnScreen, yOnScreen, 0);
+        event.setSource(InputDevice.SOURCE_MOUSE);
+        uiAutomation.injectInputEvent(event, true);
+        event.recycle();
     }
 
     public static class ActionMatcher implements ArgumentMatcher<MotionEvent> {

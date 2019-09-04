@@ -71,6 +71,20 @@ public class PackageUtil {
         }
     }
 
+    /**
+     * Returns true if the app for the given package name is a privileged system app for this
+     * device
+     */
+    public static boolean isPrivilegedSystemApp(String packageName) {
+        try {
+            ApplicationInfo ai = getPackageManager().getApplicationInfo(packageName,
+                    PackageManager.GET_META_DATA);
+            return ai != null && ((ai.flags & SYSTEM_APP_MASK) != 0) && ai.isPrivilegedApp();
+        } catch(PackageManager.NameNotFoundException e) {
+            return false;
+        }
+    }
+
     /** Returns the version string of the package name, or null if the package can't be found */
     public static String getVersionString(String packageName) {
         try {

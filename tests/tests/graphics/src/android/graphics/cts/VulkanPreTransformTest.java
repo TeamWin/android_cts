@@ -93,7 +93,7 @@ import org.junit.runner.RunWith;
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class VulkanPreTransformTest {
-    private static final String TAG = "vulkan";
+    private static final String TAG = VulkanPreTransformTest.class.getSimpleName();
     private static final boolean DEBUG = false;
     private static VulkanPreTransformCtsActivity sActivity = null;
     private Context mContext;

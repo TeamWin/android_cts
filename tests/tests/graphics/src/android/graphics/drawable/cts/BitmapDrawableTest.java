@@ -31,9 +31,11 @@ import android.content.res.XmlResourceParser;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
+import android.graphics.BlendMode;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
+import android.graphics.Insets;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.PorterDuff.Mode;
@@ -133,6 +135,23 @@ public class BitmapDrawableTest {
 
         bitmapDrawable.setGravity(Integer.MAX_VALUE);
         assertEquals(Integer.MAX_VALUE, bitmapDrawable.getGravity());
+    }
+
+    @Test
+    public void testBitmapDrawableOpticalInset() {
+        InputStream source = mContext.getResources().openRawResource(R.raw.testimage);
+        BitmapDrawable bitmapDrawable = new BitmapDrawable(source);
+
+        int intrinsicWidth = bitmapDrawable.getIntrinsicWidth();
+        int intrinsicHeight = bitmapDrawable.getIntrinsicHeight();
+
+        bitmapDrawable.setGravity(Gravity.CENTER);
+        bitmapDrawable.setBounds(0, 0, intrinsicWidth * 3, intrinsicHeight * 3);
+
+        Insets opticalInsets = bitmapDrawable.getOpticalInsets();
+        Insets expected = Insets.of(intrinsicWidth, intrinsicHeight, intrinsicWidth,
+                    intrinsicHeight);
+        assertEquals(expected, opticalInsets);
     }
 
     @Test
@@ -277,10 +296,12 @@ public class BitmapDrawableTest {
 
         // exceptional test
         bitmapDrawable.setAlpha(-1);
-        assertEquals(255, bitmapDrawable.getPaint().getAlpha());
+        assertTrue(0 <= bitmapDrawable.getPaint().getAlpha()
+                   && bitmapDrawable.getPaint().getAlpha() <= 255);
 
         bitmapDrawable.setAlpha(256);
-        assertEquals(0, bitmapDrawable.getPaint().getAlpha());
+        assertTrue(0 <= bitmapDrawable.getPaint().getAlpha()
+                   && bitmapDrawable.getPaint().getAlpha() <= 255);
     }
 
     @Test
@@ -307,8 +328,17 @@ public class BitmapDrawableTest {
         d.setTintMode(Mode.SRC_OVER);
         assertEquals("Nine-patch is tinted", Color.BLACK, DrawableTestUtils.getPixel(d, 0, 0));
 
-        d.setTintList(null);
-        d.setTintMode(null);
+    }
+
+    @Test
+    public void testSetBlendMode() {
+        final InputStream source = mContext.getResources().openRawResource(R.raw.testimage);
+        final BitmapDrawable d = new BitmapDrawable(source);
+
+        d.setTint(Color.BLACK);
+        d.setTintBlendMode(BlendMode.SRC_OVER);
+        assertEquals("Nine-patch is tinted", Color.BLACK, DrawableTestUtils.getPixel(d, 0, 0));
+
     }
 
     @Test

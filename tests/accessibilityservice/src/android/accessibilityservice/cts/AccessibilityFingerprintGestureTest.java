@@ -14,6 +14,7 @@
 
 package android.accessibilityservice.cts;
 
+import static android.accessibilityservice.cts.utils.CtsTestUtils.runIfNotNull;
 import static android.content.pm.PackageManager.FEATURE_FINGERPRINT;
 
 import static org.junit.Assert.assertFalse;
@@ -78,7 +79,8 @@ public class AccessibilityFingerprintGestureTest {
 
     @After
     public void tearDown() throws Exception {
-        mFingerprintGestureService.runOnServiceSync(() -> mFingerprintGestureService.disableSelf());
+        runIfNotNull(mFingerprintGestureService,
+                service -> service.runOnServiceSync(service::disableSelf));
     }
 
     @Test

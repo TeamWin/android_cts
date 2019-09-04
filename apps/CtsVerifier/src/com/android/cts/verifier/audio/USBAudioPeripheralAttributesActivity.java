@@ -32,6 +32,10 @@ public class USBAudioPeripheralAttributesActivity extends USBAudioPeripheralActi
 
     private TextView mTestStatusTx;
 
+    public USBAudioPeripheralAttributesActivity() {
+        super(true); // Mandated peripheral is required
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

@@ -262,7 +262,8 @@ public class UserRestrictions {
                 // This test should not run on watch
                 return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
             case UserManager.DISALLOW_OUTGOING_BEAM:
-                return pm.hasSystemFeature(PackageManager.FEATURE_NFC);
+                return pm.hasSystemFeature(PackageManager.FEATURE_NFC)
+                        && pm.hasSystemFeature(PackageManager.FEATURE_NFC_BEAM);
             case UserManager.DISALLOW_SHARE_LOCATION:
                 return pm.hasSystemFeature(PackageManager.FEATURE_LOCATION);
             case UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES:

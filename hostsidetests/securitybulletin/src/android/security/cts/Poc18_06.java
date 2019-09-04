@@ -45,4 +45,16 @@ public class Poc18_06 extends SecurityTestCase {
         "pm list package com.emoji.keyboard.touchpal", getDevice());
     assertFalse(result.contains("com.emoji.keyboard.touchpal"));
   }
+
+    /**
+     *  b/73172817
+     */
+    @SecurityTest
+    public void testPocCVE_2018_9344() throws Exception {
+        AdbUtils.runCommandLine("logcat -c", getDevice());
+        AdbUtils.runPoc("CVE-2018-9344", getDevice(), 30);
+        String output = AdbUtils.runCommandLine("logcat -d", getDevice());
+        assertNotMatchesMultiLine(">>> /vendor/bin/hw/android.hardware.cas@1.0-service <<<" +
+                ".*?signal 11 \\(SIGSEGV\\)", output);
+    }
 }

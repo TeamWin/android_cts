@@ -16,6 +16,8 @@
 
 package android.telecom.cts;
 
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
@@ -55,6 +57,42 @@ public class DefaultPhoneAccountTest extends BaseTelecomTestWithMockServices {
         PhoneAccountHandle defaultOutgoing = mTelecomManager.getDefaultOutgoingPhoneAccount(
                 PhoneAccount.SCHEME_TEL);
         assertEquals(TestUtils.TEST_PHONE_ACCOUNT_HANDLE, defaultOutgoing);
+    }
+
+    /**
+     * Verifies that {@link TelecomManager#getUserSelectedOutgoingPhoneAccount()} is able to
+     * retrieve the user-selected outgoing phone account.
+     * Given that there is a user-selected default, also verifies that
+     * {@link TelecomManager#getDefaultOutgoingPhoneAccount(String)} reports this value as well.
+     * @throws Exception
+     */
+    public void testSetUserSelectedOutgoingPhoneAccount() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        // Make sure to set the default outgoing phone account to the new connection service
+        setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
+
+        PhoneAccountHandle previousOutgoingPhoneAccount =
+                mTelecomManager.getUserSelectedOutgoingPhoneAccount();
+
+        try {
+            // Use TelecomManager API to set the outgoing phone account.
+            runWithShellPermissionIdentity(() ->
+                    mTelecomManager.setUserSelectedOutgoingPhoneAccount(
+                            TestUtils.TEST_PHONE_ACCOUNT_HANDLE));
+
+            PhoneAccountHandle handle = mTelecomManager.getUserSelectedOutgoingPhoneAccount();
+            assertEquals(TestUtils.TEST_PHONE_ACCOUNT_HANDLE, handle);
+
+            PhoneAccountHandle defaultOutgoing = mTelecomManager.getDefaultOutgoingPhoneAccount(
+                    PhoneAccount.SCHEME_TEL);
+            assertEquals(TestUtils.TEST_PHONE_ACCOUNT_HANDLE, defaultOutgoing);
+        } finally {
+            // Restore the default outgoing phone account.
+            TestUtils.setDefaultOutgoingPhoneAccount(getInstrumentation(),
+                    previousOutgoingPhoneAccount);
+        }
     }
 
     /**

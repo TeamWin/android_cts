@@ -34,6 +34,7 @@ import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.widget.ListView;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.PollingCheck;
@@ -204,6 +205,7 @@ public class AlertDialog_BuilderCursorTest
         verifyNoMoreInteractions(mOnClickListener);
     }
 
+    @FlakyTest(bugId = 133760851)
     public void testSetMultiChoiceItemsWithParamCursor() throws Throwable {
         mCursor = mDatabase.query("test", mProjectionWithChecked,
                 null, null, null, null, null);

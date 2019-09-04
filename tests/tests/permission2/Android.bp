@@ -29,6 +29,9 @@ android_test {
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "guava",
+        "androidx.test.ext.junit-nodeps",
+        "truth-prebuilt",
+        "permission-test-util-lib"
     ],
     srcs: ["src/**/*.java"],
     sdk_version: "test_current",

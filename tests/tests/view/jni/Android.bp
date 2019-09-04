@@ -22,6 +22,7 @@ cc_test_library {
 
     srcs: [
         "CtsViewJniOnLoad.cpp",
+        "android_view_cts_ASurfaceControlTest.cpp",
         "android_view_cts_ChoreographerNativeTest.cpp",
     ],
 
@@ -29,8 +30,11 @@ cc_test_library {
         "libandroid",
         "libnativehelper_compat_libc++",
         "liblog",
+        "libsync",
     ],
 
-    stl: "libc++_static",
+    stl: "c++_static",
+
+    sdk_version: "current",
 
 }

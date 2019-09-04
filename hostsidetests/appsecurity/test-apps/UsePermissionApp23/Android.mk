@@ -31,6 +31,8 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src) \
     ../ExternalStorageApp/src/com/android/cts/externalstorageapp/CommonExternalStorageTest.java
 
 LOCAL_PACKAGE_NAME := CtsUsePermissionApp23
+
+# For ACCESS_BACKGROUND_LOCATION
 LOCAL_PRIVATE_PLATFORM_APIS := true
 
 # tag this module as a cts test artifact

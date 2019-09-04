@@ -15,7 +15,8 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="android.acceleration.cts">
+          package="android.acceleration.cts"
+          android:targetSandboxVersion="2">
 
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
 

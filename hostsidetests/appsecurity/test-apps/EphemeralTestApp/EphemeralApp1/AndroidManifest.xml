@@ -15,8 +15,7 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.android.cts.ephemeralapp1"
-    android:targetSandboxVersion="2">
+  package="com.android.cts.ephemeralapp1" >
     <uses-sdk
         android:minSdkVersion="24" android:targetSdkVersion="26" />
 

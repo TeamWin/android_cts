@@ -50,8 +50,6 @@ public class LightBarTests extends LightBarTestBase {
 
     public static final String TAG = "LightStatusBarTests";
 
-    private static final int WAIT_TIME = 2000;
-
     /**
      * Color may be slightly off-spec when resources are resized for lower densities. Use this error
      * margin to accommodate for that when comparing colors.

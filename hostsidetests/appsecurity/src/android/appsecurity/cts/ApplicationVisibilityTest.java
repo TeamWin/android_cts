@@ -74,10 +74,6 @@ public class ApplicationVisibilityTest extends BaseAppSecurityTest {
         installTestAppForUser(TINY_APK, installUserId);
         installTestAppForUser(TEST_WITH_PERMISSION_APK, testUserId);
 
-        final String grantCmd = "pm grant"
-                + " com.android.cts.applicationvisibility"
-                + " android.permission.INTERACT_ACROSS_USERS";
-        getDevice().executeShellCommand(grantCmd);
         Utils.runDeviceTests(
                 getDevice(),
                 TEST_WITH_PERMISSION_PKG,
@@ -134,10 +130,6 @@ public class ApplicationVisibilityTest extends BaseAppSecurityTest {
         installTestAppForUser(TINY_APK, installUserId);
         installTestAppForUser(TEST_WITH_PERMISSION_APK, testUserId);
 
-        final String grantCmd = "pm grant"
-                + " com.android.cts.applicationvisibility"
-                + " android.permission.INTERACT_ACROSS_USERS";
-        getDevice().executeShellCommand(grantCmd);
         Utils.runDeviceTests(
                 getDevice(),
                 TEST_WITH_PERMISSION_PKG,
@@ -184,10 +176,6 @@ public class ApplicationVisibilityTest extends BaseAppSecurityTest {
         installTestAppForUser(TINY_APK, installUserId);
         installTestAppForUser(TEST_WITH_PERMISSION_APK, testUserId);
 
-        final String grantCmd = "pm grant"
-                + " com.android.cts.applicationvisibility"
-                + " android.permission.INTERACT_ACROSS_USERS";
-        getDevice().executeShellCommand(grantCmd);
         Utils.runDeviceTests(
                 getDevice(),
                 TEST_WITH_PERMISSION_PKG,
@@ -244,10 +232,6 @@ public class ApplicationVisibilityTest extends BaseAppSecurityTest {
         installTestAppForUser(TINY_APK, installUserId);
         installTestAppForUser(TEST_WITH_PERMISSION_APK, testUserId);
 
-        final String grantCmd = "pm grant"
-                + " com.android.cts.applicationvisibility"
-                + " android.permission.INTERACT_ACROSS_USERS";
-        getDevice().executeShellCommand(grantCmd);
         Utils.runDeviceTests(
                 getDevice(),
                 TEST_WITH_PERMISSION_PKG,

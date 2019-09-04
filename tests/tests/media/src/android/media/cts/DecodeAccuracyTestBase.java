@@ -1119,20 +1119,22 @@ class GLSurfaceViewFactory extends VideoViewFactory {
 
         public void release() {
             looper.quit();
-            if (eglDisplay != EGL10.EGL_NO_DISPLAY) {
-                egl10.eglMakeCurrent(eglDisplay,
-                        EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_CONTEXT);
-                egl10.eglDestroySurface(eglDisplay, eglSurface);
-                egl10.eglDestroyContext(eglDisplay, eglContext);
-                egl10.eglTerminate(eglDisplay);
-            }
-            eglDisplay = EGL10.EGL_NO_DISPLAY;
-            eglContext = EGL10.EGL_NO_CONTEXT;
-            eglSurface = EGL10.EGL_NO_SURFACE;
             surface.release();
             surfaceTexture.release();
             byteBufferIsReady = false;
             byteBuffer =  null;
+            if (eglDisplay != EGL10.EGL_NO_DISPLAY) {
+                egl10.eglMakeCurrent(eglDisplay,
+                    EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_CONTEXT);
+                egl10.eglDestroySurface(eglDisplay, eglSurface);
+                egl10.eglDestroyContext(eglDisplay, eglContext);
+                //TODO: uncomment following line after fixing crash in GL driver libGLESv2_adreno.so
+                //TODO: see b/123755902
+                //egl10.eglTerminate(eglDisplay);
+            }
+            eglDisplay = EGL10.EGL_NO_DISPLAY;
+            eglContext = EGL10.EGL_NO_CONTEXT;
+            eglSurface = EGL10.EGL_NO_SURFACE;
         }
 
         /* Makes our EGL context and surface current. */

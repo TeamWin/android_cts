@@ -16,9 +16,19 @@ android_test_helper_app {
     name: "CtsCertInstallerApp",
     defaults: ["cts_defaults"],
     srcs: ["src/**/*.java"],
-    libs: ["android.test.runner.stubs"],
-    sdk_version: "current",
+    libs: [
+        "android.test.runner.stubs",
+        "android.test.base.stubs",
+    ],
+    platform_apis: true,
     min_sdk_version: "22",
+    static_libs: [
+        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
+        "truth-prebuilt",
+        "testng",
+        "cts-security-test-support-library",
+    ],
     // tag this module as a cts test artifact
     test_suites: [
         "cts",

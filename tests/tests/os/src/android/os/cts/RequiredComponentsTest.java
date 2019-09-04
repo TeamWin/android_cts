@@ -29,6 +29,8 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeInstant;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -36,7 +38,6 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.File;
 import java.util.List;
 
 /**
@@ -47,11 +48,12 @@ import java.util.List;
 public class RequiredComponentsTest {
     private static final String PACKAGE_MIME_TYPE = "application/vnd.android.package-archive";
 
+    @AppModeFull
     @Test
     public void testPackageInstallerPresent() throws Exception {
         Intent installerIntent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
         installerIntent.addCategory(Intent.CATEGORY_DEFAULT);
-        installerIntent.setDataAndType(Uri.fromFile(new File("foo.apk")), PACKAGE_MIME_TYPE);
+        installerIntent.setDataAndType(Uri.parse("content://com.example/"), PACKAGE_MIME_TYPE);
         List<ResolveInfo> installers = InstrumentationRegistry.getContext()
                 .getPackageManager().queryIntentActivities(installerIntent, MATCH_SYSTEM_ONLY
                         | MATCH_DIRECT_BOOT_AWARE | MATCH_DIRECT_BOOT_UNAWARE);
@@ -65,6 +67,7 @@ public class RequiredComponentsTest {
         }
     }
 
+    @AppModeFull
     @Test
     public void testExtServicesPresent() throws Exception {
         enforceSharedLibPresentAndProperlyHosted(
@@ -73,11 +76,39 @@ public class RequiredComponentsTest {
                 ApplicationInfo.PRIVATE_FLAG_PRIVILEGED);
     }
 
+    @AppModeFull
     @Test
     public void testSharedServicesPresent() throws Exception {
         enforceSharedLibPresentAndProperlyHosted(
                 PackageManager.SYSTEM_SHARED_LIBRARY_SHARED,
                 ApplicationInfo.FLAG_SYSTEM, 0);
+    }
+
+    @AppModeInstant
+    @Test
+    public void testNoPackageInfoAccess() {
+        try {
+            final PackageManager pm = InstrumentationRegistry.getContext().getPackageManager();
+            final String packageName = pm.getServicesSystemSharedLibraryPackageName();
+            pm.getPackageInfo(packageName, 0);
+            fail("Instant app was able to fetch package info.");
+        } catch (PackageManager.NameNotFoundException ex) {
+            // Expected
+        }
+    }
+
+    @AppModeInstant
+    @Test
+    public void testNoPackageInstallerPresent() {
+        final Intent installerIntent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
+        installerIntent.addCategory(Intent.CATEGORY_DEFAULT);
+        installerIntent.setDataAndType(Uri.parse("content://com.example/"), PACKAGE_MIME_TYPE);
+        final List<ResolveInfo> installers = InstrumentationRegistry.getContext()
+                .getPackageManager().queryIntentActivities(installerIntent, MATCH_SYSTEM_ONLY
+                        | MATCH_DIRECT_BOOT_AWARE | MATCH_DIRECT_BOOT_UNAWARE);
+        if (installers.size() != 0) {
+            fail("Instant app was able to get installer.");
+        }
     }
 
     private void enforceSharedLibPresentAndProperlyHosted(String libName,

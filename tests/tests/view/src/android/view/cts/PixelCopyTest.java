@@ -25,10 +25,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import android.app.Instrumentation;
+import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Color;
+import android.graphics.ColorSpace;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.os.Debug;
@@ -39,6 +41,7 @@ import android.view.PixelCopy;
 import android.view.Surface;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowManager;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
@@ -273,7 +276,7 @@ public class PixelCopyTest {
     private Window waitForWindowProducerActivity() {
         PixelCopyViewProducerActivity activity =
                 mWindowSourceActivityRule.launchActivity(null);
-        activity.waitForFirstDrawCompleted(3, TimeUnit.SECONDS);
+        activity.waitForFirstDrawCompleted(10, TimeUnit.SECONDS);
         return activity.getWindow();
     }
 
@@ -383,7 +386,7 @@ public class PixelCopyTest {
     private Window waitForWideGamutWindowProducerActivity() {
         PixelCopyWideGamutViewProducerActivity activity =
                 mWideGamutWindowSourceActivityRule.launchActivity(null);
-        activity.waitForFirstDrawCompleted(3, TimeUnit.SECONDS);
+        activity.waitForFirstDrawCompleted(10, TimeUnit.SECONDS);
         return activity.getWindow();
     }
 
@@ -436,12 +439,37 @@ public class PixelCopyTest {
 
         PixelCopyWideGamutViewProducerActivity activity =
                 mWideGamutWindowSourceActivityRule.getActivity();
+        final WindowManager windowManager = (WindowManager) activity.getSystemService(
+                Context.WINDOW_SERVICE);
+        final ColorSpace colorSpace = windowManager.getDefaultDisplay()
+                .getPreferredWideGamutColorSpace();
+        final ColorSpace.Connector proPhotoToDisplayWideColorSpace = ColorSpace.connect(
+                ColorSpace.get(ColorSpace.Named.PRO_PHOTO_RGB), colorSpace);
+        final ColorSpace.Connector displayWideColorSpaceToExtendedSrgb = ColorSpace.connect(
+                colorSpace, ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB));
+
+        final float[] intermediateRed = proPhotoToDisplayWideColorSpace.transform(1.0f, 0.0f, 0.0f);
+        final float[] intermediateGreen = proPhotoToDisplayWideColorSpace
+                .transform(0.0f, 1.0f, 0.0f);
+        final float[] intermediateBlue = proPhotoToDisplayWideColorSpace
+                .transform(0.0f, 0.0f, 1.0f);
+        final float[] intermediateYellow = proPhotoToDisplayWideColorSpace
+                .transform(1.0f, 1.0f, 0.0f);
+
+        final float[] expectedRed = displayWideColorSpaceToExtendedSrgb.transform(intermediateRed);
+        final float[] expectedGreen = displayWideColorSpaceToExtendedSrgb
+                .transform(intermediateGreen);
+        final float[] expectedBlue = displayWideColorSpaceToExtendedSrgb
+                .transform(intermediateBlue);
+        final float[] expectedYellow = displayWideColorSpaceToExtendedSrgb
+                .transform(intermediateYellow);
 
         Bitmap bitmap;
         int i = 0;
         do {
             Rect src = makeWideGamutWindowRect(0, 0, 128, 128);
-            bitmap = Bitmap.createBitmap(src.width(), src.height(), Config.RGBA_F16);
+            bitmap = Bitmap.createBitmap(src.width(), src.height(), Config.RGBA_F16, true,
+                    ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB));
             int result = mCopyHelper.request(window, src, bitmap);
 
             assertEquals("Fullsize copy request failed", PixelCopy.SUCCESS, result);
@@ -453,20 +481,24 @@ public class PixelCopyTest {
             dst.order(ByteOrder.LITTLE_ENDIAN);
 
             // ProPhoto RGB red in scRGB-nl
-            assertEqualsRgba16f("Top left",     bitmap, 32, 32, dst,  1.36f, -0.52f, -0.09f, 1.0f);
+            assertEqualsRgba16f("Top left",     bitmap, 32, 32, dst, expectedRed[0],
+                    expectedRed[1], expectedRed[2], 1.0f);
             // ProPhoto RGB green in scRGB-nl
-            assertEqualsRgba16f("Top right",    bitmap, 96, 32, dst, -0.87f,  1.10f, -0.43f, 1.0f);
+            assertEqualsRgba16f("Top right",    bitmap, 96, 32, dst, expectedGreen[0],
+                    expectedGreen[1], expectedGreen[2], 1.0f);
             // ProPhoto RGB blue in scRGB-nl
-            assertEqualsRgba16f("Bottom left",  bitmap, 32, 96, dst, -0.59f, -0.04f,  1.07f, 1.0f);
+            assertEqualsRgba16f("Bottom left",  bitmap, 32, 96, dst, expectedBlue[0],
+                    expectedBlue[1], expectedBlue[2], 1.0f);
             // ProPhoto RGB yellow in scRGB-nl
-            assertEqualsRgba16f("Bottom right", bitmap, 96, 96, dst,  1.12f,  1.00f, -0.44f, 1.0f);
+            assertEqualsRgba16f("Bottom right", bitmap, 96, 96, dst, expectedYellow[0],
+                    expectedYellow[1], expectedYellow[2], 1.0f);
         } while (activity.rotate());
     }
 
     private Window waitForDialogProducerActivity() {
         PixelCopyViewProducerActivity activity =
                 mDialogSourceActivityRule.launchActivity(null);
-        activity.waitForFirstDrawCompleted(3, TimeUnit.SECONDS);
+        activity.waitForFirstDrawCompleted(10, TimeUnit.SECONDS);
         return activity.getWindow();
     }
 

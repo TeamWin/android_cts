@@ -141,9 +141,8 @@ public class ZoomButtonTest {
 
             final long startTime = System.nanoTime();
             // Emulate long click
-            long longPressWait = ViewConfiguration.getLongPressTimeout()
-                    + zoomSpeed + 100;
-            CtsTouchUtils.emulateLongPressOnViewCenter(mInstrumentation, mZoomButton,
+            long longPressWait = ViewConfiguration.getLongPressTimeout() + zoomSpeed + 200;
+            CtsTouchUtils.emulateLongPressOnViewCenter(mInstrumentation, mActivityRule, mZoomButton,
                     longPressWait);
 
             final Long callbackFirstInvocationTime = zoomClickListener.getTimeOfFirstClick();
@@ -155,12 +154,12 @@ public class ZoomButtonTest {
             assertTrue("First callback not during long press timeout was "
                             + actualTimeUntilFirstInvocationNs / NANOS_IN_MILLI
                             + " while long press timeout is " + minTimeUntilFirstInvocationMs,
-                    (callbackFirstInvocationTime - startTime)
+                    actualTimeUntilFirstInvocationNs
                             > minTimeUntilFirstInvocationMs * NANOS_IN_MILLI);
             assertTrue("First callback should have happened sooner than "
                             + actualTimeUntilFirstInvocationNs / NANOS_IN_MILLI,
-                    (callbackFirstInvocationTime - startTime)
-                            <= (minTimeUntilFirstInvocationMs + 100) * NANOS_IN_MILLI);
+                    actualTimeUntilFirstInvocationNs
+                            <= (minTimeUntilFirstInvocationMs + 200) * NANOS_IN_MILLI);
         }
     }
 

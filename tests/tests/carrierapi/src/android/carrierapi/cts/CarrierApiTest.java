@@ -37,11 +37,14 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.ParcelUuid;
 import android.os.PersistableBundle;
 import android.provider.Telephony;
 import android.provider.VoicemailContract;
+import android.telephony.AvailableNetworkInfo;
 import android.telephony.CarrierConfigManager;
 import android.telephony.IccOpenLogicalChannelResponse;
 import android.telephony.PhoneStateListener;
@@ -51,15 +54,21 @@ import android.telephony.TelephonyManager;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+import com.android.compatibility.common.util.ShellIdentityUtils;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 
@@ -122,6 +131,8 @@ public class CarrierApiTest extends AndroidTestCase {
     private static final String ALPHA_TAG_B = "tagB";
     private static final String NUMBER_A = "1234567890";
     private static final String NUMBER_B = "0987654321";
+
+    private static final int DSDS_PHONE_COUNT = 2;
 
     @Override
     protected void setUp() throws Exception {
@@ -226,6 +237,129 @@ public class CarrierApiTest extends AndroidTestCase {
         }
     }
 
+    private static void assertUpdateAvailableNetworkSuccess(int value) {
+        assertEquals(TelephonyManager.UPDATE_AVAILABLE_NETWORKS_SUCCESS, value);
+    }
+
+    private static void assertUpdateAvailableNetworkInvalidArguments(int value) {
+        assertEquals(TelephonyManager.UPDATE_AVAILABLE_NETWORKS_INVALID_ARGUMENTS, value);
+    }
+
+    private static void assertSetOpportunisticSubSuccess(int value) {
+        assertEquals(TelephonyManager.SET_OPPORTUNISTIC_SUB_SUCCESS, value);
+    }
+
+    private int getFirstActivateCarrierPrivilegedSubscriptionId() {
+        int subId = SubscriptionManager.INVALID_SUBSCRIPTION_ID;
+        List<SubscriptionInfo> subscriptionInfos =
+                mSubscriptionManager.getActiveSubscriptionInfoList();
+        if (subscriptionInfos != null) {
+            for (SubscriptionInfo info : subscriptionInfos) {
+                TelephonyManager telephonyManager = mTelephonyManager.createForSubscriptionId(
+                        info.getSubscriptionId());
+                if (telephonyManager.hasCarrierPrivileges()) {
+                    subId = info.getSubscriptionId();
+                    return subId;
+                }
+            }
+        }
+        return subId;
+    }
+
+    public void testUpdateAvailableNetworksWithCarrierPrivilege() {
+        if (!hasCellular) return;
+
+        int subIdWithCarrierPrivilege = getFirstActivateCarrierPrivilegedSubscriptionId();
+        int activeSubscriptionInfoCount = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mSubscriptionManager, (tm) -> tm.getActiveSubscriptionInfoCount());
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        if (mTelephonyManager.getPhoneCount() == 1) {
+            return;
+        }
+        if (mTelephonyManager.getPhoneCount() == 2 && activeSubscriptionInfoCount != 2) {
+            fail("This test requires two SIM cards.");
+        }
+        if (subIdWithCarrierPrivilege == SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
+            failMessage();
+        }
+
+        List<SubscriptionInfo> subscriptionInfoList =
+                mSubscriptionManager.getOpportunisticSubscriptions();
+        List<String> mccMncs = new ArrayList<String>();
+        List<Integer> bands = new ArrayList<Integer>();
+        List<AvailableNetworkInfo> availableNetworkInfos = new ArrayList<AvailableNetworkInfo>();
+        Consumer<Integer> callbackSuccess =
+                CarrierApiTest::assertUpdateAvailableNetworkSuccess;
+        Consumer<Integer> callbackFailure =
+                CarrierApiTest::assertUpdateAvailableNetworkInvalidArguments;
+        Consumer<Integer> setOpCallbackSuccess = CarrierApiTest::assertSetOpportunisticSubSuccess;
+        if (subscriptionInfoList == null || subscriptionInfoList.size() == 0
+                || !mSubscriptionManager.isActiveSubscriptionId(
+                        subscriptionInfoList.get(0).getSubscriptionId())) {
+            try {
+                AvailableNetworkInfo availableNetworkInfo = new AvailableNetworkInfo(
+                        subIdWithCarrierPrivilege, AvailableNetworkInfo.PRIORITY_HIGH, mccMncs,
+                        bands);
+                availableNetworkInfos.add(availableNetworkInfo);
+                // Call updateAvailableNetworks without opportunistic subscription.
+                // callbackFailure is expected to be triggered and the return value will be checked
+                // against UPDATE_AVAILABLE_NETWORKS_INVALID_ARGUMENTS
+                mTelephonyManager.updateAvailableNetworks(availableNetworkInfos,
+                        AsyncTask.SERIAL_EXECUTOR, callbackFailure);
+            } finally {
+                // clear all the operations at the end of test.
+                availableNetworkInfos.clear();
+                mTelephonyManager.updateAvailableNetworks(availableNetworkInfos,
+                        AsyncTask.SERIAL_EXECUTOR, callbackFailure);
+            }
+        } else {
+            // This is case of DSDS phone, one active opportunistic subscription and one
+            // active primary subscription.
+            int resultSubId;
+            try {
+                AvailableNetworkInfo availableNetworkInfo = new AvailableNetworkInfo(
+                        subscriptionInfoList.get(0).getSubscriptionId(),
+                        AvailableNetworkInfo.PRIORITY_HIGH, mccMncs, bands);
+                availableNetworkInfos.add(availableNetworkInfo);
+                mTelephonyManager.updateAvailableNetworks(availableNetworkInfos,
+                        AsyncTask.SERIAL_EXECUTOR, callbackSuccess);
+                // wait for the data change to take effect
+                waitForMs(500);
+                // Call setPreferredData and reconfirm with getPreferred data
+                // that the same is updated.
+                int preferSubId = subscriptionInfoList.get(0).getSubscriptionId();
+                mTelephonyManager.setPreferredOpportunisticDataSubscription(
+                        preferSubId, false, AsyncTask.SERIAL_EXECUTOR, setOpCallbackSuccess);
+                // wait for the data change to take effect
+                waitForMs(500);
+                resultSubId = mTelephonyManager.getPreferredOpportunisticDataSubscription();
+                assertEquals(preferSubId, resultSubId);
+            } finally {
+                // clear all the operations at the end of test.
+                availableNetworkInfos.clear();
+                mTelephonyManager.updateAvailableNetworks(availableNetworkInfos,
+                        AsyncTask.SERIAL_EXECUTOR, callbackSuccess);
+                waitForMs(500);
+                mTelephonyManager.setPreferredOpportunisticDataSubscription(
+                        SubscriptionManager.DEFAULT_SUBSCRIPTION_ID, false,
+                        AsyncTask.SERIAL_EXECUTOR, callbackSuccess);
+                waitForMs(500);
+                resultSubId = mTelephonyManager.getPreferredOpportunisticDataSubscription();
+                assertEquals(SubscriptionManager.DEFAULT_SUBSCRIPTION_ID, resultSubId);
+            }
+        }
+    }
+
+    public static void waitForMs(long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            Log.d(TAG, "InterruptedException while waiting: " + e);
+        }
+    }
+
     public void testGetIccAuthentication() {
         // EAP-SIM rand is 16 bytes.
         String base64Challenge = "ECcTqwuo6OfY8ddFRboD9WM=";
@@ -327,12 +461,14 @@ public class CarrierApiTest extends AndroidTestCase {
     public void testTelephonyApisAreAccessible() {
         if (!hasCellular) return;
         // The following methods may return any value depending on the state of the device. Simply
-        // call them to make sure they do not throw any exceptions.
+        // call them to make sure they do not throw any exceptions. Methods that return a device
+        // identifier will be accessible to apps with carrier privileges in Q, but this may change
+        // in a future release.
         try {
-            mTelephonyManager.getDeviceSoftwareVersion();
             mTelephonyManager.getDeviceId();
             mTelephonyManager.getImei();
             mTelephonyManager.getMeid();
+            mTelephonyManager.getDeviceSoftwareVersion();
             mTelephonyManager.getNai();
             mTelephonyManager.getDataNetworkType();
             mTelephonyManager.getVoiceNetworkType();
@@ -348,22 +484,6 @@ public class CarrierApiTest extends AndroidTestCase {
         } catch (SecurityException e) {
             failMessage();
         }
-        // For APIs which take a slot ID, we should be able to call them without getting a
-        // SecurityException for at last one valid slot ID.
-        // TODO(b/112441100): Simplify this test once slot ID APIs are cleaned up.
-        boolean hasReadableSlot = false;
-        for (int slotIndex = 0; slotIndex < mTelephonyManager.getPhoneCount(); slotIndex++) {
-            try {
-                mTelephonyManager.getDeviceId(slotIndex);
-                mTelephonyManager.getImei(slotIndex);
-                mTelephonyManager.getMeid(slotIndex);
-                hasReadableSlot = true;
-                break;
-            } catch (SecurityException e) {
-                // Move on to the next slot.
-            }
-        }
-        assertTrue("Unable to read device identifiers for any slot index", hasReadableSlot);
     }
 
     public void testVoicemailTableIsAccessible() throws Exception {
@@ -804,6 +924,129 @@ public class CarrierApiTest extends AndroidTestCase {
     }
 
     /**
+     * This test verifies that {@link SubscriptionManager#createSubscriptionGroup(List)} correctly
+     * create a group with the given subscription id.
+     *
+     * This also verifies that
+     * {@link SubscriptionManager#removeSubscriptionsFromGroup(List, ParcelUuid)} correctly remove
+     * the given subscription group.
+     */
+    public void testCreateAndRemoveSubscriptionGroup() {
+        if (!hasCellular) return;
+        // Set subscription group with current sub Id.
+        int subId = SubscriptionManager.getDefaultSubscriptionId();
+        List<Integer> subGroup = Arrays.asList(subId);
+        ParcelUuid uuid = mSubscriptionManager.createSubscriptionGroup(subGroup);
+
+        // Getting subscriptions in group.
+        List<SubscriptionInfo> infoList = mSubscriptionManager.getSubscriptionsInGroup(uuid);
+
+        try {
+            assertEquals(1, infoList.size());
+            assertEquals(uuid, infoList.get(0).getGroupUuid());
+            assertEquals(subId, infoList.get(0).getSubscriptionId());
+        } finally {
+            // Verify that the given subGroup has been removed.
+            mSubscriptionManager.removeSubscriptionsFromGroup(subGroup, uuid);
+            infoList = mSubscriptionManager.getSubscriptionsInGroup(uuid);
+            assertTrue(infoList.isEmpty());
+        }
+    }
+
+    public void testAddSubscriptionToExistingGroupForMultipleSims() {
+        if (!hasCellular || mTelephonyManager.getPhoneCount() < DSDS_PHONE_COUNT) return;
+
+        // Set subscription group with current sub Id.
+        int subId = SubscriptionManager.getDefaultDataSubscriptionId();
+        ParcelUuid uuid = mSubscriptionManager.createSubscriptionGroup(Arrays.asList(subId));
+
+        try {
+            // Get all active subscriptions.
+            List<SubscriptionInfo> activeSubInfos =
+                    mSubscriptionManager.getActiveSubscriptionInfoList();
+
+            // Verify that the device has at least two active subscriptions.
+            assertTrue(activeSubInfos.size() >= DSDS_PHONE_COUNT);
+
+            List<Integer> activeSubGroup = getSubscriptionIdList(activeSubInfos);
+            activeSubGroup.removeIf(id -> id == subId);
+
+            mSubscriptionManager.addSubscriptionsIntoGroup(activeSubGroup, uuid);
+
+            List<Integer> infoList =
+                    getSubscriptionIdList(mSubscriptionManager.getSubscriptionsInGroup(uuid));
+            activeSubGroup.add(subId);
+            assertEquals(activeSubGroup.size(), infoList.size());
+            assertTrue(activeSubGroup.containsAll(infoList));
+        } finally {
+            removeSubscriptionsFromGroup(uuid);
+        }
+    }
+
+    /**
+     * This test verifies that
+     * {@link SubscriptionManager#addSubscriptionsIntoGroup(List, ParcelUuid)}} correctly add some
+     * additional subscriptions to the existing group.
+     *
+     * This test required the device has more than one subscription.
+     */
+    public void testAddSubscriptionToExistingGroupForEsim() {
+        if (!hasCellular) return;
+
+        // Set subscription group with current sub Id.
+        int subId = SubscriptionManager.getDefaultDataSubscriptionId();
+        ParcelUuid uuid = mSubscriptionManager.createSubscriptionGroup(Arrays.asList(subId));
+
+        try {
+            // Get all accessible eSim subscription.
+            List<SubscriptionInfo> accessibleSubInfos =
+                    mSubscriptionManager.getAccessibleSubscriptionInfoList();
+            if (accessibleSubInfos != null && accessibleSubInfos.size() > 1) {
+                List<Integer> accessibleSubGroup = getSubscriptionIdList(accessibleSubInfos);
+                accessibleSubGroup.removeIf(id -> id == subId);
+
+                mSubscriptionManager.addSubscriptionsIntoGroup(accessibleSubGroup, uuid);
+
+                List<Integer> infoList =
+                        getSubscriptionIdList(mSubscriptionManager.getSubscriptionsInGroup(uuid));
+                accessibleSubGroup.add(subId);
+                assertEquals(accessibleSubGroup.size(), infoList.size());
+                assertTrue(accessibleSubGroup.containsAll(infoList));
+            }
+        } finally {
+            removeSubscriptionsFromGroup(uuid);
+        }
+    }
+
+    /**
+     * This test verifies that {@link SubscriptionManager#setOpportunistic(boolean, int)} correctly
+     * set the opportunistic property of the given subscription.
+     */
+    public void testOpportunistic() {
+        if (!hasCellular) return;
+
+        int subId = SubscriptionManager.getDefaultDataSubscriptionId();
+        SubscriptionInfo info = mSubscriptionManager.getActiveSubscriptionInfo(subId);
+        boolean oldOpportunistic = info.isOpportunistic();
+        boolean newOpportunistic = !oldOpportunistic;
+
+        try {
+            // Mark the given subscription as opportunistic subscription.
+            boolean successed = mSubscriptionManager.setOpportunistic(newOpportunistic, subId);
+            assertTrue(successed);
+
+            // Verify that the given subscription is opportunistic subscription.
+            info = mSubscriptionManager.getActiveSubscriptionInfo(subId);
+            assertEquals(newOpportunistic, info.isOpportunistic());
+        } finally {
+            // Set back to original opportunistic property.
+            mSubscriptionManager.setOpportunistic(oldOpportunistic, subId);
+            info = mSubscriptionManager.getActiveSubscriptionInfo(subId);
+            assertEquals(oldOpportunistic, info.isOpportunistic());
+        }
+    }
+
+    /**
      * This test verifies that {@link TelephonyManager#iccExchangeSimIO(int, int, int, int, int,
      * String)} correctly transmits iccIO commands to the UICC card. First, the MF is selected via a
      * SELECT apdu via the basic channel, then a STATUS AT-command is sent.
@@ -843,6 +1086,8 @@ public class CarrierApiTest extends AndroidTestCase {
      * {@link TelephonyManager#sendEnvelopeWithStatus(String)}.
      */
     public void testSendEnvelopeWithStatus() {
+        if (!hasCellular) return;
+
         // STATUS apdu as hex String
         String envelope =
                 CLA_STATUS_STRING
@@ -861,6 +1106,24 @@ public class CarrierApiTest extends AndroidTestCase {
         assertTrue(MIN_LOGICAL_CHANNEL <= channel && channel <= MAX_LOGICAL_CHANNEL);
         assertEquals(STATUS_NO_ERROR, response.getStatus());
         assertArrayEquals(STATUS_NORMAL, response.getSelectResponse());
+    }
+
+    private void removeSubscriptionsFromGroup(ParcelUuid uuid) {
+        List<SubscriptionInfo> infoList = mSubscriptionManager.getSubscriptionsInGroup(uuid);
+        if (!infoList.isEmpty()) {
+            mSubscriptionManager.removeSubscriptionsFromGroup(
+                    getSubscriptionIdList(infoList),
+                    uuid);
+        }
+        infoList = mSubscriptionManager.getSubscriptionsInGroup(uuid);
+        assertTrue(infoList.isEmpty());
+    }
+
+    private List<Integer> getSubscriptionIdList(List<SubscriptionInfo> subInfoList) {
+        if (subInfoList == null || subInfoList.isEmpty()) return Collections.EMPTY_LIST;
+        return subInfoList.stream()
+                .map(info -> info.getSubscriptionId())
+                .collect(Collectors.toList());
     }
 
     /**

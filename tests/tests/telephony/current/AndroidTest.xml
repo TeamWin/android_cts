@@ -17,6 +17,8 @@
     <option name="test-suite-tag" value="cts" />
     <option name="config-descriptor:metadata" key="component" value="telecom" />
     <option name="config-descriptor:metadata" key="token" value="SIM_CARD" />
+    <option name="config-descriptor:metadata" key="parameter" value="not_instant_app" />
+    <option name="config-descriptor:metadata" key="parameter" value="not_multi_abi" />
     <option name="not-shardable" value="true" />
     <target_preparer class="android.telephony.cts.preconditions.TelephonyPreparer">
         <option name="apk" value="CtsTelephonyPreparerApp.apk" />
@@ -26,6 +28,10 @@
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsTelephonyTestCases.apk" />
         <option name="test-file-name" value="EmbmsMiddlewareCtsTestApp.apk"/>
+        <option name="test-file-name" value="TestSmsApp22.apk"/>
+        <option name="test-file-name" value="TestSmsApp.apk"/>
+        <option name="test-file-name" value="TestSmsRetrieverApp.apk"/>
+        <option name="test-file-name" value="TestFinancialSmsApp.apk"/>
         <option name="test-file-name" value="LocationAccessingApp.apk"/>
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >

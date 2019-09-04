@@ -17,8 +17,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.android.cts.intent.sender">
 
-    <uses-sdk android:minSdkVersion="19" />
-
     <permission
         android:name="com.android.cts.intent.sender.permission.SAMPLE"
         android:label="Sample Permission" />

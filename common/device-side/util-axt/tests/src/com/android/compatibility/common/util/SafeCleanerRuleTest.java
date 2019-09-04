@@ -25,6 +25,7 @@ import com.android.compatibility.common.util.SafeCleanerRule.Dumper;
 
 import com.google.common.collect.ImmutableList;
 
+import org.junit.AssumptionViolatedException;
 import org.junit.Test;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
@@ -57,8 +58,8 @@ public class SafeCleanerRuleTest {
     @Mock private Dumper mDumper;
 
     // Use mocks for objects that don't throw any exception.
-    @Mock private Runnable mGoodGuyRunner1;
-    @Mock private Runnable mGoodGuyRunner2;
+    @Mock private ThrowingRunnable mGoodGuyRunner1;
+    @Mock private ThrowingRunnable mGoodGuyRunner2;
     @Mock private Callable<List<Throwable>> mGoodGuyExtraExceptions1;
     @Mock private Callable<List<Throwable>> mGoodGuyExtraExceptions2;
     @Mock private Statement mGoodGuyStatement;
@@ -147,6 +148,21 @@ public class SafeCleanerRuleTest {
     }
 
     @Test
+    public void testTestPass_oneExtraExceptionThrownAsCallable() throws Throwable {
+        final SafeCleanerRule rule = new SafeCleanerRule()
+                .run(mGoodGuyRunner1)
+                .add(mRuntimeException)
+                .add(mGoodGuyExtraExceptions1)
+                .run(mGoodGuyRunner2);
+        final Throwable actualException = expectThrows(RuntimeException.class,
+                () -> rule.apply(mGoodGuyStatement, mDescription).evaluate());
+        assertThat(actualException).isSameAs(mRuntimeException);
+        verify(mGoodGuyRunner1).run();
+        verify(mGoodGuyRunner2).run();
+        verify(mGoodGuyExtraExceptions1).call();
+    }
+
+    @Test
     public void testTestPass_oneExtraExceptionThrown() throws Throwable {
         final SafeCleanerRule rule = new SafeCleanerRule()
                 .run(mGoodGuyRunner1)
@@ -191,6 +207,7 @@ public class SafeCleanerRuleTest {
         final SafeCleanerRule rule = new SafeCleanerRule()
                 .run(mGoodGuyRunner1)
                 .add(mGoodGuyExtraExceptions1)
+                .add(mRuntimeException)
                 .add(() -> {
                     return ImmutableList.of(extra1, extra2);
                 })
@@ -210,7 +227,8 @@ public class SafeCleanerRuleTest {
                 SafeCleanerRule.MultipleExceptions.class,
                 () -> rule.apply(new FailureStatement(testException), mDescription).evaluate());
         assertThat(actualException.getThrowables())
-                .containsExactly(testException, error1, error2, extra1, extra2, extra3)
+                .containsExactly(testException, mRuntimeException, error1, error2, extra1, extra2,
+                        extra3)
                 .inOrder();
         verify(mGoodGuyRunner1).run();
         verify(mGoodGuyRunner2).run();
@@ -218,10 +236,32 @@ public class SafeCleanerRuleTest {
     }
 
     @Test
+    public void testIgnoreAssumptionViolatedException() throws Throwable {
+        final AssumptionViolatedException ave = new AssumptionViolatedException(
+                "tis an assumption violation");
+        final RuntimeException testException  = new RuntimeException("TEST, Y U NO PASS?");
+        final SafeCleanerRule rule = new SafeCleanerRule()
+                .run(mGoodGuyRunner1)
+                .add(mRuntimeException)
+                .run(() -> {
+                    throw ave;
+                });
+
+        final SafeCleanerRule.MultipleExceptions actualException = expectThrows(
+                SafeCleanerRule.MultipleExceptions.class,
+                () -> rule.apply(new FailureStatement(testException), mDescription).evaluate());
+        assertThat(actualException.getThrowables())
+                .containsExactly(testException, mRuntimeException)
+                .inOrder();
+        verify(mGoodGuyRunner1).run();
+    }
+
+    @Test
     public void testThrowTheKitchenSinkAKAEverybodyThrows_withDumper() throws Throwable {
         final Exception extra1 = new Exception("1");
         final Exception extra2 = new Exception("2");
         final Exception extra3 = new Exception("3");
+        final Exception extra4 = new Exception("4");
         final Error error1 = new Error("one");
         final Error error2 = new Error("two");
         final RuntimeException testException  = new RuntimeException("TEST, Y U NO PASS?");
@@ -238,13 +278,18 @@ public class SafeCleanerRuleTest {
                 .run(mGoodGuyRunner2)
                 .add(() -> { return ImmutableList.of(extra3); })
                 .add(mGoodGuyExtraExceptions2)
-                .run(() -> { throw error2; });
+                .run(() -> {
+                    throw error2;
+                })
+                .run(() -> {
+                    throw extra4;
+                });
 
         final SafeCleanerRule.MultipleExceptions actualException = expectThrows(
                 SafeCleanerRule.MultipleExceptions.class,
                 () -> rule.apply(new FailureStatement(testException), mDescription).evaluate());
         assertThat(actualException.getThrowables())
-                .containsExactly(testException, error1, error2, extra1, extra2, extra3)
+                .containsExactly(testException, error1, error2, extra4, extra1, extra2, extra3)
                 .inOrder();
         verify(mGoodGuyRunner1).run();
         verify(mGoodGuyRunner2).run();

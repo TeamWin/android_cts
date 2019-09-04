@@ -261,11 +261,23 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         }
     }
 
-    public void testPlayAudio() throws Exception {
-        final int resid = R.raw.testmp3_2;
-        final int mp3Duration = 34909;
-        final int tolerance = 70;
-        final int seekDuration = 100;
+    public void testPlayAudioMp3() throws Exception {
+        testPlayAudio(R.raw.testmp3_2,
+                34909 /* duration */, 70 /* tolerance */, 100 /* seekDuration */);
+    }
+
+    public void testPlayAudioOpus() throws Exception {
+        testPlayAudio(R.raw.testopus,
+                34909 /* duration */, 70 /* tolerance */, 100 /* seekDuration */);
+    }
+
+    public void testPlayAudioAmr() throws Exception {
+        testPlayAudio(R.raw.testamr,
+                34909 /* duration */, 70 /* tolerance */, 100 /* seekDuration */);
+    }
+
+    public void testPlayAudio(int resid,
+            int mp3Duration, int tolerance, int seekDuration) throws Exception {
 
         MediaPlayer mp = MediaPlayer.create(mContext, resid);
         try {
@@ -1243,6 +1255,49 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         mMediaPlayer.stop();
     }
 
+    public void testMkvWithoutCueSeek() throws Exception {
+        if (!checkLoadResource(
+                R.raw.video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz_withoutcues)) {
+            return; // skip
+        }
+
+        mMediaPlayer.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
+            @Override
+            public void onSeekComplete(MediaPlayer mp) {
+                mOnSeekCompleteCalled.signal();
+            }
+        });
+        mMediaPlayer.setDisplay(mActivity.getSurfaceHolder());
+        mMediaPlayer.prepare();
+        mOnSeekCompleteCalled.reset();
+        mMediaPlayer.start();
+
+        final int seekPosMs = 3000;
+        final int syncTime2Ms = 5960;
+
+        int cp = runSeekMode(MediaPlayer.SEEK_CLOSEST, seekPosMs);
+        Log.d(LOG_TAG, "runSeekMode SEEK_CLOSEST cp: " + cp);
+        assertTrue("MediaPlayer seek fail with SEEK_CLOSEST mode.",
+                  cp > seekPosMs && cp < syncTime2Ms);
+
+        cp = runSeekMode(MediaPlayer.SEEK_PREVIOUS_SYNC, seekPosMs);
+        Log.d(LOG_TAG, "runSeekMode SEEK_PREVIOUS_SYNC cp: " + cp);
+        assertTrue("MediaPlayer seek fail with SEEK_PREVIOUS_SYNC mode.",
+                cp >= syncTime2Ms);
+
+        cp = runSeekMode(MediaPlayer.SEEK_NEXT_SYNC, seekPosMs);
+        Log.d(LOG_TAG, "runSeekMode SEEK_NEXT_SYNC cp: " + cp);
+        assertTrue("MediaPlayer seek fail with SEEK_NEXT_SYNC mode.",
+                cp >= syncTime2Ms);
+
+        cp = runSeekMode(MediaPlayer.SEEK_CLOSEST_SYNC, seekPosMs);
+        Log.d(LOG_TAG, "runSeekMode SEEK_CLOSEST_SYNC cp: " + cp);
+        assertTrue("MediaPlayer seek fail with SEEK_CLOSEST_SYNC mode.",
+                cp >= syncTime2Ms);
+
+        mMediaPlayer.stop();
+    }
+
     public void testSeekModes() throws Exception {
         // This clip has 2 I frames at 66687us and 4299687us.
         if (!checkLoadResource(
@@ -1337,7 +1392,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         assertEquals("MediaPlayer had error in clockRate " + ts1.getMediaClockRate(),
                 playbackRate, ts1.getMediaClockRate(), 0.001f);
         assertTrue("The nanoTime of Media timestamp should be taken when getTimestamp is called.",
-                nt1 <= ts1.getAnchorSytemNanoTime() && ts1.getAnchorSytemNanoTime() <= nt2);
+                nt1 <= ts1.getAnchorSystemNanoTime() && ts1.getAnchorSystemNanoTime() <= nt2);
 
         mMediaPlayer.pause();
         ts1 = mMediaPlayer.getTimestamp();
@@ -1504,7 +1559,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     public void testLocalVideo_3gp_H263_176x144_56kbps_12fps_AAC_Stereo_24kbps_22050Hz()
             throws Exception {
         playVideoTest(
-                R.raw.video_176x144_3gp_h263_56kbps_12fps_aac_stereo_24kbps_11025hz, 176, 144);
+                R.raw.video_176x144_3gp_h263_56kbps_12fps_aac_stereo_24kbps_22050hz, 176, 144);
     }
 
     public void testLocalVideo_3gp_H263_176x144_56kbps_12fps_AAC_Stereo_128kbps_11025Hz()
@@ -1516,7 +1571,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     public void testLocalVideo_3gp_H263_176x144_56kbps_12fps_AAC_Stereo_128kbps_22050Hz()
             throws Exception {
         playVideoTest(
-                R.raw.video_176x144_3gp_h263_56kbps_12fps_aac_stereo_128kbps_11025hz, 176, 144);
+                R.raw.video_176x144_3gp_h263_56kbps_12fps_aac_stereo_128kbps_22050hz, 176, 144);
     }
 
     public void testLocalVideo_3gp_H263_176x144_56kbps_25fps_AAC_Mono_24kbps_11025Hz()
@@ -1540,7 +1595,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     public void testLocalVideo_3gp_H263_176x144_56kbps_25fps_AAC_Stereo_24kbps_22050Hz()
             throws Exception {
         playVideoTest(
-                R.raw.video_176x144_3gp_h263_56kbps_25fps_aac_stereo_24kbps_11025hz, 176, 144);
+                R.raw.video_176x144_3gp_h263_56kbps_25fps_aac_stereo_24kbps_22050hz, 176, 144);
     }
 
     public void testLocalVideo_3gp_H263_176x144_56kbps_25fps_AAC_Stereo_128kbps_11025Hz()
@@ -1552,7 +1607,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     public void testLocalVideo_3gp_H263_176x144_56kbps_25fps_AAC_Stereo_128kbps_22050Hz()
             throws Exception {
         playVideoTest(
-                R.raw.video_176x144_3gp_h263_56kbps_25fps_aac_stereo_128kbps_11025hz, 176, 144);
+                R.raw.video_176x144_3gp_h263_56kbps_25fps_aac_stereo_128kbps_22050hz, 176, 144);
     }
 
     public void testLocalVideo_3gp_H263_176x144_300kbps_12fps_AAC_Mono_24kbps_11025Hz()
@@ -1576,7 +1631,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     public void testLocalVideo_3gp_H263_176x144_300kbps_12fps_AAC_Stereo_24kbps_22050Hz()
             throws Exception {
         playVideoTest(
-                R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_stereo_24kbps_11025hz, 176, 144);
+                R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_stereo_24kbps_22050hz, 176, 144);
     }
 
     public void testLocalVideo_3gp_H263_176x144_300kbps_12fps_AAC_Stereo_128kbps_11025Hz()
@@ -1588,7 +1643,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     public void testLocalVideo_3gp_H263_176x144_300kbps_12fps_AAC_Stereo_128kbps_22050Hz()
             throws Exception {
         playVideoTest(
-                R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_stereo_128kbps_11025hz, 176, 144);
+                R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_stereo_128kbps_22050hz, 176, 144);
     }
 
     public void testLocalVideo_3gp_H263_176x144_300kbps_25fps_AAC_Mono_24kbps_11025Hz()
@@ -1612,7 +1667,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     public void testLocalVideo_3gp_H263_176x144_300kbps_25fps_AAC_Stereo_24kbps_22050Hz()
             throws Exception {
         playVideoTest(
-                R.raw.video_176x144_3gp_h263_300kbps_25fps_aac_stereo_24kbps_11025hz, 176, 144);
+                R.raw.video_176x144_3gp_h263_300kbps_25fps_aac_stereo_24kbps_22050hz, 176, 144);
     }
 
     public void testLocalVideo_3gp_H263_176x144_300kbps_25fps_AAC_Stereo_128kbps_11025Hz()
@@ -1625,6 +1680,29 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
             throws Exception {
         playVideoTest(
                 R.raw.video_176x144_3gp_h263_300kbps_25fps_aac_stereo_128kbps_22050hz, 176, 144);
+    }
+
+    public void testLocalVideo_cp1251_3_a_ms_acm_mp3() throws Exception {
+        playVideoTest(R.raw.cp1251_3_a_ms_acm_mp3, -1, -1);
+    }
+
+    public void testLocalVideo_mkv_audio_pcm_be() throws Exception {
+        playVideoTest(R.raw.mkv_audio_pcms16be, -1, -1);
+    }
+
+    public void testLocalVideo_mkv_audio_pcm_le() throws Exception {
+        playVideoTest(R.raw.mkv_audio_pcms16le, -1, -1);
+    }
+
+    public void testLocalVideo_segment000001_m2ts()
+            throws Exception {
+        if (checkLoadResource(R.raw.segment000001)) {
+            mMediaPlayer.stop();
+            assertTrue(checkLoadResource(R.raw.segment000001_m2ts));
+            playLoadedVideo(320, 240, 0);
+        } else {
+            MediaUtils.skipTest("no mp2 support, skipping m2ts");
+        }
     }
 
     private void readSubtitleTracks() throws Exception {

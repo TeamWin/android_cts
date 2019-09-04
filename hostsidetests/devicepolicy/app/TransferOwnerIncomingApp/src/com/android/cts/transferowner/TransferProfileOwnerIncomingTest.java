@@ -41,8 +41,10 @@ public class TransferProfileOwnerIncomingTest extends DeviceAndProfileOwnerTrans
 
         DevicePolicyManager targetParentProfileInstance =
                 mDevicePolicyManager.getParentProfileInstance(mIncomingComponentName);
-        assertEquals(
-                passwordExpirationTimeout,
-                targetParentProfileInstance.getPasswordExpirationTimeout(mIncomingComponentName));
+        if (mHasSecureLockScreen) {
+            assertEquals(
+                    passwordExpirationTimeout,
+                    targetParentProfileInstance.getPasswordExpirationTimeout(mIncomingComponentName));
+        }
     }
 }

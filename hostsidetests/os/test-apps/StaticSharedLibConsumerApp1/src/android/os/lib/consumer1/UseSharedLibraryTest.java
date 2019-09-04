@@ -22,10 +22,12 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.SharedLibraryInfo;
 import android.content.pm.VersionedPackage;
+import android.os.lib.provider.R;
 import android.os.lib.provider.StaticSharedLib;
 
 import androidx.test.InstrumentationRegistry;
@@ -51,7 +53,10 @@ public class UseSharedLibraryTest {
 
     @Test
     public void testLoadCodeAndResources() {
-        assertSame(1, StaticSharedLib.getVersion(InstrumentationRegistry.getContext()));
+        final Context context = InstrumentationRegistry.getContext();
+        assertSame(1, StaticSharedLib.getVersion(context));
+        assertSame(1, context.getResources().getInteger(android.os.lib.provider.R.integer.version));
+        assertSame(2, StaticSharedLib.getRecursiveVersion(context));
     }
 
     @Test

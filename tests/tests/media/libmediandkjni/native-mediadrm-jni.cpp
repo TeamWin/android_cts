@@ -208,6 +208,57 @@ extern "C" jboolean Java_android_media_cts_NativeMediaDrmClearkeyTest_testGetPro
     return JNI_TRUE;
 }
 
+extern "C" jboolean Java_android_media_cts_NativeMediaDrmClearkeyTest_testPropertyByteArrayNative(
+        JNIEnv* env, jclass /* clazz */, jbyteArray uuid) {
+
+    if (NULL == uuid) {
+        jniThrowException(env, "java/lang/NullPointerException",
+                "uuid is NULL");
+        return JNI_FALSE;
+    }
+
+    Uuid juuid = jbyteArrayToUuid(env, uuid);
+    if (!isUuidSizeValid(juuid)) {
+        jniThrowExceptionFmt(env, "java/lang/IllegalArgumentException",
+                "invalid UUID size, expected %u bytes", kUuidSize);
+        return JNI_FALSE;
+    }
+
+    AMediaDrm* drm = AMediaDrm_createByUUID(&juuid[0]);
+    const char *propertyName = "clientId";
+    const uint8_t value[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    media_status_t status = AMediaDrm_setPropertyByteArray(drm, propertyName, value, sizeof(value));
+    if (status != AMEDIA_OK) {
+        jniThrowException(env, "java/lang/RuntimeException", "setPropertyByteArray failed");
+        AMediaDrm_release(drm);
+        return JNI_FALSE;
+    }
+    AMediaDrmByteArray array;
+    status = AMediaDrm_getPropertyByteArray(drm, propertyName, &array);
+    if (status != AMEDIA_OK) {
+        jniThrowException(env, "java/lang/RuntimeException", "getPropertyByteArray failed");
+        AMediaDrm_release(drm);
+        return JNI_FALSE;
+    }
+    if (array.length != sizeof(value)) {
+        jniThrowException(env, "java/lang/RuntimeException", "byte array size differs");
+        AMediaDrm_release(drm);
+        return JNI_FALSE;
+    }
+    if (!array.ptr) {
+        jniThrowException(env, "java/lang/RuntimeException", "byte array pointer is null");
+        AMediaDrm_release(drm);
+        return JNI_FALSE;
+    }
+    if (memcmp(array.ptr, value, sizeof(value)) != 0) {
+        jniThrowException(env, "java/lang/RuntimeException", "byte array content differs");
+        AMediaDrm_release(drm);
+        return JNI_FALSE;
+    }
+    AMediaDrm_release(drm);
+    return JNI_TRUE;
+}
+
 extern "C" jboolean Java_android_media_cts_NativeMediaDrmClearkeyTest__testPsshNative(
     JNIEnv* env, jclass /*clazz*/, jbyteArray uuid, jstring videoUrl) {
 
@@ -519,8 +570,8 @@ static void onKeysChangeListener(
     const AMediaDrmKeyStatus* keysStatus, size_t numKeys, bool hasNewUsableKey) {
 
     gOnKeyChangeListenerOK = false;
-    if (numKeys != 2) {
-        ALOGE("Expects 2 keys, received %zd keys", numKeys);
+    if (numKeys != 3) {
+        ALOGE("Expects 3 keys, received %zd keys", numKeys);
         return;
     }
 
@@ -893,6 +944,10 @@ static JNINativeMethod gMethods[] = {
     { "testGetPropertyStringNative",
             "([BLjava/lang/String;Ljava/lang/StringBuffer;)Z",
             (void *)Java_android_media_cts_NativeMediaDrmClearkeyTest_testGetPropertyStringNative },
+
+    { "testPropertyByteArrayNative",
+            "([B)Z",
+            (void *)Java_android_media_cts_NativeMediaDrmClearkeyTest_testPropertyByteArrayNative },
 
     { "testPsshNative", "([BLjava/lang/String;)Z",
             (void *)Java_android_media_cts_NativeMediaDrmClearkeyTest__testPsshNative },

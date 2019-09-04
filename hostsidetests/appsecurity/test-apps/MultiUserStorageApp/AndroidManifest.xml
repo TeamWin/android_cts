@@ -16,7 +16,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
        package="com.android.cts.multiuserstorageapp">
 
-    <application>
+    <application android:requestLegacyExternalStorage="true">
         <uses-library android:name="android.test.runner" />
     </application>
 

@@ -27,6 +27,7 @@ import android.text.Spanned;
 import android.text.StaticLayout;
 import android.text.TextDirectionHeuristics;
 import android.text.TextPaint;
+import android.text.TextUtils;
 import android.text.style.MetricAffectingSpan;
 import android.util.Log;
 
@@ -456,5 +457,17 @@ public class StaticLayoutLineBreakingTest {
         layoutMaxLines("C C", new int[] {2}, 2);
         layoutMaxLines("CC", new int[] {1}, 1);
         layoutMaxLines("CC", new int[] {1}, 2);
+    }
+
+    // Test for b/114454225
+    @Test
+    public void test_staticlayout_doesNotAccessInvalidIndex() {
+        final String str = "IIIII\nIIIII\nIIIII\n";
+        // the following should not throw an exception.
+        StaticLayout.Builder.obtain(str, 0, str.length(), sTextPaint, 4 /* width */)
+            .setEllipsize(TextUtils.TruncateAt.END)
+            .setEllipsizedWidth(4)
+            .setMaxLines(3).build();
+
     }
 }

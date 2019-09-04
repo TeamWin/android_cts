@@ -53,10 +53,10 @@ public class OverrideApnTest extends BaseDeviceOwnerTest {
             .setApnName(TEST_APN_NAME)
             .setEntryName(TEST_ENTRY_NAME)
             .setOperatorNumeric(TEST_OPERATOR_NUMERIC)
-            .setProxyAddress(getProxyInetAddress(TEST_PROXY_ADDRESS))
+            .setProxyAddress(TEST_PROXY_ADDRESS)
             .setProxyPort(TEST_PROXY_PORT)
             .setMmsc(TEST_MMSC)
-            .setMmsProxyAddress(getProxyInetAddress(TEST_PROXY_ADDRESS))
+            .setMmsProxyAddress(TEST_PROXY_ADDRESS)
             .setMmsProxyPort(TEST_PROXY_PORT)
             .setUser(TEST_USER_NAME)
             .setPassword(TEST_PASSWORD)
@@ -100,9 +100,11 @@ public class OverrideApnTest extends BaseDeviceOwnerTest {
         assertEquals(TEST_ENTRY_NAME, apnList.get(0).getEntryName());
         assertEquals(TEST_APN_NAME, apnList.get(0).getApnName());
         assertEquals(getProxyInetAddress(TEST_PROXY_ADDRESS), apnList.get(0).getProxyAddress());
+        assertEquals(TEST_PROXY_ADDRESS, apnList.get(0).getProxyAddressAsString());
         assertEquals(TEST_PROXY_PORT, apnList.get(0).getProxyPort());
         assertEquals(TEST_MMSC, apnList.get(0).getMmsc());
         assertEquals(getProxyInetAddress(TEST_PROXY_ADDRESS), apnList.get(0).getMmsProxyAddress());
+        assertEquals(TEST_PROXY_ADDRESS, apnList.get(0).getMmsProxyAddressAsString());
         assertEquals(TEST_PROXY_PORT, apnList.get(0).getMmsProxyPort());
         assertEquals(TEST_USER_NAME, apnList.get(0).getUser());
         assertEquals(TEST_PASSWORD, apnList.get(0).getPassword());
@@ -152,10 +154,10 @@ public class OverrideApnTest extends BaseDeviceOwnerTest {
             .setApnName(UPDATE_APN_NAME)
             .setEntryName(UPDATE_ETNRY_NAME)
             .setOperatorNumeric(TEST_OPERATOR_NUMERIC)
-            .setProxyAddress(getProxyInetAddress(TEST_PROXY_ADDRESS))
+            .setProxyAddress(TEST_PROXY_ADDRESS)
             .setProxyPort(TEST_PROXY_PORT)
             .setMmsc(TEST_MMSC)
-            .setMmsProxyAddress(getProxyInetAddress(TEST_PROXY_ADDRESS))
+            .setMmsProxyAddress(TEST_PROXY_ADDRESS)
             .setMmsProxyPort(TEST_PROXY_PORT)
             .setUser(TEST_USER_NAME)
             .setPassword(TEST_PASSWORD)
@@ -177,9 +179,11 @@ public class OverrideApnTest extends BaseDeviceOwnerTest {
         assertEquals(UPDATE_ETNRY_NAME, apnList.get(0).getEntryName());
         assertEquals(UPDATE_APN_NAME, apnList.get(0).getApnName());
         assertEquals(getProxyInetAddress(TEST_PROXY_ADDRESS), apnList.get(0).getProxyAddress());
+        assertEquals(TEST_PROXY_ADDRESS, apnList.get(0).getProxyAddressAsString());
         assertEquals(TEST_PROXY_PORT, apnList.get(0).getProxyPort());
         assertEquals(TEST_MMSC, apnList.get(0).getMmsc());
         assertEquals(getProxyInetAddress(TEST_PROXY_ADDRESS), apnList.get(0).getMmsProxyAddress());
+        assertEquals(TEST_PROXY_ADDRESS, apnList.get(0).getMmsProxyAddressAsString());
         assertEquals(TEST_PROXY_PORT, apnList.get(0).getMmsProxyPort());
         assertEquals(TEST_USER_NAME, apnList.get(0).getUser());
         assertEquals(TEST_PASSWORD, apnList.get(0).getPassword());
@@ -210,9 +214,11 @@ public class OverrideApnTest extends BaseDeviceOwnerTest {
         assertEquals(TEST_ENTRY_NAME, apnList.get(0).getEntryName());
         assertEquals(TEST_APN_NAME, apnList.get(0).getApnName());
         assertEquals(null, apnList.get(0).getProxyAddress());
+        assertEquals("", apnList.get(0).getProxyAddressAsString());
         assertEquals(-1, apnList.get(0).getProxyPort());
         assertEquals(null, apnList.get(0).getMmsc());
         assertEquals(null, apnList.get(0).getMmsProxyAddress());
+        assertEquals("", apnList.get(0).getMmsProxyAddressAsString());
         assertEquals(-1, apnList.get(0).getMmsProxyPort());
         assertEquals("", apnList.get(0).getUser());
         assertEquals("", apnList.get(0).getPassword());
@@ -236,7 +242,7 @@ public class OverrideApnTest extends BaseDeviceOwnerTest {
         assertNull(new ApnSetting.Builder()
             .setEntryName(UPDATE_ETNRY_NAME)
             .setApnName(UPDATE_APN_NAME)
-            .setApnTypeBitmask(1 << 20)
+            .setApnTypeBitmask(1 << 30)
             .build());
 
         assertNull(new ApnSetting.Builder()

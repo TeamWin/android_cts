@@ -18,6 +18,7 @@ package android.media.cts;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.AssetFileDescriptor;
 
 import android.media.AudioAttributes;
 import android.media.AudioDeviceInfo;
@@ -29,11 +30,14 @@ import android.media.AudioTrack;
 import android.media.MediaPlayer;
 import android.media.MediaFormat;
 import android.media.MediaRecorder;
+import android.media.cts.TestUtils.Monitor;
 
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.os.ParcelFileDescriptor;
+import android.os.PowerManager;
 
 import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
@@ -47,8 +51,8 @@ import java.lang.Runnable;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * AudioTrack / AudioRecord / MediaPlayer / MediaRecorder preferred device
@@ -62,8 +66,7 @@ import java.util.concurrent.TimeUnit;
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 public class RoutingTest extends AndroidTestCase {
     private static final String TAG = "RoutingTest";
-    private static final int MAX_WAITING_ROUTING_CHANGED_COUNT = 3;
-    private static final long WAIT_ROUTING_CHANGE_TIME_MS = 1000;
+    private static final long WAIT_ROUTING_CHANGE_TIME_MS = 3000;
     private static final int AUDIO_BIT_RATE_IN_BPS = 12200;
     private static final int AUDIO_SAMPLE_RATE_HZ = 8000;
     private static final long MAX_FILE_SIZE_BYTE = 5000;
@@ -74,7 +77,6 @@ public class RoutingTest extends AndroidTestCase {
     private boolean mRoutingChanged;
     private boolean mRoutingChangedDetected;
     private AudioManager mAudioManager;
-    private CountDownLatch mRoutingChangedLatch;
     private File mOutFile;
     private Looper mRoutingChangedLooper;
     private Object mRoutingChangedLock = new Object();
@@ -557,9 +559,6 @@ public class RoutingTest extends AndroidTestCase {
     private class AudioRoutingListener implements AudioRouting.OnRoutingChangedListener
     {
         public void onRoutingChanged(AudioRouting audioRouting) {
-            if (mRoutingChangedLatch != null) {
-                mRoutingChangedLatch.countDown();
-            }
             synchronized (mRoutingChangedLock) {
                 mRoutingChanged = true;
                 mRoutingChangedLock.notify();
@@ -724,8 +723,7 @@ public class RoutingTest extends AndroidTestCase {
         };
         t.start();
         synchronized (mRoutingChangedLock) {
-            mRoutingChangedLock.wait(WAIT_ROUTING_CHANGE_TIME_MS
-                    * MAX_WAITING_ROUTING_CHANGED_COUNT);
+            mRoutingChangedLock.wait(WAIT_ROUTING_CHANGE_TIME_MS);
         }
         if (mRoutingChangedLooper != null) {
             mRoutingChangedLooper.quitSafely();

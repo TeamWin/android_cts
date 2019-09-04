@@ -18,4 +18,6 @@
     android:accessibilityFeedbackType="feedbackHaptic"
     android:accessibilityFlags="flagDefault|flagRequestTouchExplorationMode"
     android:canRetrieveWindowContent="true"
-    android:canRequestTouchExplorationMode="true" />
+    android:canRequestTouchExplorationMode="true"
+    android:nonInteractiveUiTimeout="2000"
+    android:interactiveUiTimeout="5000"/>

@@ -16,6 +16,7 @@
 
 package android.hardware.cts.helpers;
 
+import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.cts.helpers.sensoroperations.SensorOperation;
 import android.os.Environment;
@@ -39,7 +40,6 @@ import java.util.Set;
  * together so that they form a tree.
  */
 public class SensorStats {
-    private static final String TAG = "SensorStats";
     public static final String DELIMITER = "__";
 
     public static final String ERROR = "error";
@@ -146,23 +146,13 @@ public class SensorStats {
         }
     }
 
-    /* Checks if external storage is available for read and write */
-    private boolean isExternalStorageWritable() {
-        String state = Environment.getExternalStorageState();
-        return Environment.MEDIA_MOUNTED.equals(state);
-    }
-
     /**
      * Utility method to log the stats to a file. Will overwrite the file if it already exists.
      */
-    public void logToFile(String fileName) {
-        if (!isExternalStorageWritable()) {
-            Log.w(TAG,
-                "External storage unavailable, skipping log to file: " + fileName);
-            return;
-        }
-
-        try {
+    public void logToFile(Context context, String fileName) throws IOException {
+        // Only log to file if currently not an Instant App since Instant Apps do not have access to
+        // external storage.
+        if (!context.getPackageManager().isInstantApp()) {
             File statsDirectory = SensorCtsHelper.getSensorTestDataDirectory("stats/");
             File logFile = new File(statsDirectory, fileName);
             final Map<String, Object> flattened = flatten();
@@ -173,8 +163,6 @@ public class SensorStats {
                     writer.write(String.format("%s: %s\n", key, getValueString(value)));
                 }
             }
-        } catch(IOException e) {
-            Log.w(TAG, "Unable to write to file: " + fileName, e);
         }
     }
 

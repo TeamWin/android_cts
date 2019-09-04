@@ -233,6 +233,9 @@ public class ContactsContract_RawContactsTest extends AndroidTestCase {
     }
 
     public void testInsertUsageStat() throws Exception {
+        // Note we no longer support contact affinity as of Q, so times_contacted and
+        // last_time_contacted are always 0, and "frequent" is always empty.
+
         final long now = System.currentTimeMillis();
         {
             TestRawContact rawContact = mBuilder.newRawContact()
@@ -243,6 +246,8 @@ public class ContactsContract_RawContactsTest extends AndroidTestCase {
                     .insert();
 
             rawContact.load();
+            assertEquals(0, rawContact.getLong(RawContacts.TIMES_CONTACTED));
+            assertEquals(0, rawContact.getLong(RawContacts.LAST_TIME_CONTACTED));
         }
 
         {
@@ -253,6 +258,8 @@ public class ContactsContract_RawContactsTest extends AndroidTestCase {
                     .insert();
 
             rawContact.load();
+            assertEquals(0, rawContact.getLong(RawContacts.TIMES_CONTACTED));
+            assertEquals(0, rawContact.getLong(RawContacts.LAST_TIME_CONTACTED));
         }
         {
             TestRawContact rawContact = mBuilder.newRawContact()
@@ -262,6 +269,8 @@ public class ContactsContract_RawContactsTest extends AndroidTestCase {
                     .insert();
 
             rawContact.load();
+            assertEquals(0, rawContact.getLong(RawContacts.TIMES_CONTACTED));
+            assertEquals(0, rawContact.getLong(RawContacts.LAST_TIME_CONTACTED));
         }
     }
 
@@ -277,17 +286,23 @@ public class ContactsContract_RawContactsTest extends AndroidTestCase {
                 .insert();
 
         rawContact.load();
+        assertEquals(0, rawContact.getLong(RawContacts.TIMES_CONTACTED));
+        assertEquals(0, rawContact.getLong(RawContacts.LAST_TIME_CONTACTED));
 
         values.clear();
         values.put(RawContacts.TIMES_CONTACTED, 99999);
         RawContactUtil.update(mResolver, rawContact.getId(), values);
 
         rawContact.load();
+        assertEquals(0, rawContact.getLong(RawContacts.TIMES_CONTACTED));
+        assertEquals(0, rawContact.getLong(RawContacts.LAST_TIME_CONTACTED));
 
         values.clear();
         values.put(RawContacts.LAST_TIME_CONTACTED, now + 86400);
         RawContactUtil.update(mResolver, rawContact.getId(), values);
 
         rawContact.load();
+        assertEquals(0, rawContact.getLong(RawContacts.TIMES_CONTACTED));
+        assertEquals(0, rawContact.getLong(RawContacts.LAST_TIME_CONTACTED));
     }
 }

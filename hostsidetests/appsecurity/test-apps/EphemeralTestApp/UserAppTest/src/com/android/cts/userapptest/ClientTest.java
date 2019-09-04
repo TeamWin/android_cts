@@ -35,7 +35,7 @@ import java.util.List;
 public class ClientTest {
     /** Action to query for test activities */
     private static final String ACTION_QUERY_ACTIVITY =
-            "com.android.cts.ephemeraltest.QUERY";
+            "com.android.cts.instantappusertest.QUERY";
 
     @Test
     public void testQueryInstant() throws Exception {

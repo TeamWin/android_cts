@@ -19,9 +19,12 @@ package android.telephony.cts;
 import android.telephony.SmsMessage;
 import android.test.AndroidTestCase;
 
-public class SmsMessage_SubmitPduTest extends AndroidTestCase {
+import org.junit.Test;
+
+public class SmsMessage_SubmitPduTest {
 
     // SmsMessage.SubmitPdu constructor is not public, so no need to test its methods
+    @Test
     public void testToString() {
     }
 }

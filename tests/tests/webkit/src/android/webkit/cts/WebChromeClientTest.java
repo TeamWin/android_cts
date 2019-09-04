@@ -19,15 +19,18 @@ package android.webkit.cts;
 import android.graphics.Bitmap;
 import android.os.Message;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.test.ActivityInstrumentationTestCase2;
+import android.util.Base64;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
+import android.webkit.ConsoleMessage;
 import android.webkit.JsPromptResult;
 import android.webkit.JsResult;
 import android.webkit.WebIconDatabase;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
-import android.webkit.cts.WebViewOnUiThread.WaitForProgressClient;
+import android.webkit.cts.WebViewSyncLoader.WaitForProgressClient;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
@@ -39,6 +42,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+@AppModeFull
 public class WebChromeClientTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
     private static final long TEST_TIMEOUT = 5000L;
     private static final String JAVASCRIPT_UNLOAD = "javascript unload";
@@ -60,7 +64,7 @@ public class WebChromeClientTest extends ActivityInstrumentationTestCase2<WebVie
         super.setUp();
         WebView webview = getActivity().getWebView();
         if (webview != null) {
-            mOnUiThread = new WebViewOnUiThread(this, webview);
+            mOnUiThread = new WebViewOnUiThread(webview);
         }
         mWebServer = new CtsTestServer(getActivity());
     }
@@ -127,14 +131,11 @@ public class WebChromeClientTest extends ActivityInstrumentationTestCase2<WebVie
         final MockWebChromeClient webChromeClient = new MockWebChromeClient();
         mOnUiThread.setWebChromeClient(webChromeClient);
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                // getInstance must run on the UI thread
-                mIconDb = WebIconDatabase.getInstance();
-                String dbPath = getActivity().getFilesDir().toString() + "/icons";
-                mIconDb.open(dbPath);
-            }
+        WebkitUtils.onMainThreadSync(() -> {
+            // getInstance must run on the UI thread
+            mIconDb = WebIconDatabase.getInstance();
+            String dbPath = getActivity().getFilesDir().toString() + "/icons";
+            mIconDb.open(dbPath);
         });
         getInstrumentation().waitForIdleSync();
         Thread.sleep(100); // Wait for open to be received on the icon db thread.
@@ -243,17 +244,17 @@ public class WebChromeClientTest extends ActivityInstrumentationTestCase2<WebVie
         mOnUiThread.loadUrlAndWaitForCompletion(
             mWebServer.getAssetUrl(TestHtmlConstants.JS_UNLOAD_URL));
 
-        assertEquals(JAVASCRIPT_UNLOAD, pageTitleQueue.poll(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
-        assertEquals(LISTENER_ADDED, pageTitleQueue.poll(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
+        assertEquals(JAVASCRIPT_UNLOAD, WebkitUtils.waitForNextQueueElement(pageTitleQueue));
+        assertEquals(LISTENER_ADDED, WebkitUtils.waitForNextQueueElement(pageTitleQueue));
         // Send a user gesture, required for unload to execute since WebView version 60.
         tapWebView();
-        assertEquals(TOUCH_RECEIVED, pageTitleQueue.poll(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
+        assertEquals(TOUCH_RECEIVED, WebkitUtils.waitForNextQueueElement(pageTitleQueue));
 
         // unload should trigger when we try to navigate away
         mOnUiThread.loadUrlAndWaitForCompletion(
             mWebServer.getAssetUrl(TestHtmlConstants.HELLO_WORLD_URL));
 
-        waitForFuture(onJsBeforeUnloadFuture);
+        WebkitUtils.waitForFuture(onJsBeforeUnloadFuture);
     }
 
     public void testOnJsAlert() throws Exception {
@@ -340,6 +341,66 @@ public class WebChromeClientTest extends ActivityInstrumentationTestCase2<WebVie
         assertEquals(webChromeClient.getMessage(), "testOnJsPrompt");
     }
 
+    public void testOnConsoleMessage() throws Exception {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+        int numConsoleMessages = 4;
+        final BlockingQueue<ConsoleMessage> consoleMessageQueue =
+                new ArrayBlockingQueue<>(numConsoleMessages);
+        final MockWebChromeClient webChromeClient = new MockWebChromeClient() {
+            @Override
+            public boolean onConsoleMessage(ConsoleMessage message) {
+                consoleMessageQueue.add(message);
+                // return false for default handling; i.e. printing the message.
+                return false;
+            }
+        };
+        mOnUiThread.setWebChromeClient(webChromeClient);
+
+        mOnUiThread.getSettings().setJavaScriptEnabled(true);
+        // Note: we assert line numbers, which are relative to the line in the HTML file. So, "\n"
+        // is significant in this test, and make sure to update consoleLineNumberOffset when
+        // editing the HTML.
+        final int consoleLineNumberOffset = 3;
+        final String unencodedHtml = "<html>\n"
+                + "<script>\n"
+                + "  console.log('message0');\n"
+                + "  console.warn('message1');\n"
+                + "  console.error('message2');\n"
+                + "  console.info('message3');\n"
+                + "</script>\n"
+                + "</html>\n";
+        final String mimeType = null;
+        final String encoding = "base64";
+        String encodedHtml = Base64.encodeToString(unencodedHtml.getBytes(), Base64.NO_PADDING);
+        mOnUiThread.loadDataAndWaitForCompletion(encodedHtml, mimeType, encoding);
+
+        // Expected message levels correspond to the order of the console messages defined above.
+        ConsoleMessage.MessageLevel[] expectedMessageLevels = {
+            ConsoleMessage.MessageLevel.LOG,
+            ConsoleMessage.MessageLevel.WARNING,
+            ConsoleMessage.MessageLevel.ERROR,
+            ConsoleMessage.MessageLevel.LOG,
+        };
+        for (int k = 0; k < numConsoleMessages; k++) {
+            final ConsoleMessage consoleMessage =
+                    WebkitUtils.waitForNextQueueElement(consoleMessageQueue);
+            final ConsoleMessage.MessageLevel expectedMessageLevel = expectedMessageLevels[k];
+            assertEquals("message " + k + " had wrong level",
+                    expectedMessageLevel,
+                    consoleMessage.messageLevel());
+            final String expectedMessage = "message" + k;
+            assertEquals("message " + k + " had wrong message",
+                    expectedMessage,
+                    consoleMessage.message());
+            final int expectedLineNumber = k + consoleLineNumberOffset;
+            assertEquals("message " + k + " had wrong line number",
+                    expectedLineNumber,
+                    consoleMessage.lineNumber());
+        }
+    }
+
     /**
      * Taps in the the center of a webview.
      */
@@ -360,20 +421,6 @@ public class WebChromeClientTest extends ActivityInstrumentationTestCase2<WebVie
 
         // Wait for the system to process all events in the queue
         getInstrumentation().waitForIdleSync();
-    }
-
-    // TODO(ctzsm): Remove this method and replace its usage when we have it in a util class.
-    private static <T> T waitForFuture(Future<T> future) throws Exception {
-        try {
-            return future.get(TEST_TIMEOUT, TimeUnit.MILLISECONDS);
-        } catch (ExecutionException e) {
-            Throwable cause = e.getCause();
-            if (cause instanceof Error)
-                throw(Error) cause;
-            if (cause instanceof RuntimeException)
-                throw(RuntimeException) cause;
-            throw new RuntimeException(cause);
-        }
     }
 
     private class MockWebChromeClient extends WaitForProgressClient {

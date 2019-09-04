@@ -26,8 +26,9 @@ NAME = os.path.basename(__file__).split(".")[0]
 NUM_ISO_STEPS = 5
 SATURATION_TOL = 0.01
 BLK_LVL_TOL = 0.1
-# Test 3 steps per 2x exposure
-EXP_MULT = pow(2, 1.0/3)
+EXP_MULT_SHORT = pow(2, 1.0/3)  # Test 3 steps per 2x exposure
+EXP_MULT_LONG = pow(10, 1.0/3)  # Test 3 steps per 10x exposure
+EXP_LONG = 1E6  # 1ms
 INCREASING_THR = 0.99
 # slice captures into burst of SLICE_LEN requests
 SLICE_LEN = 10
@@ -40,9 +41,9 @@ def main():
     with its.device.ItsSession() as cam:
 
         props = cam.get_camera_properties()
+        props = cam.override_with_hidden_physical_camera_props(props)
         its.caps.skip_unless(its.caps.raw16(props) and
                              its.caps.manual_sensor(props) and
-                             its.caps.read_3a(props) and
                              its.caps.per_frame_control(props) and
                              not its.caps.mono_camera(props))
         debug = its.caps.debug_mode()
@@ -68,7 +69,10 @@ def main():
         mult = 1.0
         while exp_min*mult < exp_max:
             e_test.append(int(exp_min*mult))
-            mult *= EXP_MULT
+            if exp_min*mult < EXP_LONG:
+                mult *= EXP_MULT_SHORT
+            else:
+                mult *= EXP_MULT_LONG
         if e_test[-1] < exp_max * INCREASING_THR:
             e_test.append(int(exp_max))
         e_test_ms = [e / 1000000.0 for e in e_test]
@@ -79,18 +83,18 @@ def main():
             reqs = [its.objects.manual_capture_request(s, e, 0) for e in e_test]
             # Capture raw in debug mode, rawStats otherwise
             caps = []
-            for i in range(len(reqs) / SLICE_LEN):
+            slice_len = SLICE_LEN
+            # Eliminate cap burst of 1: returns [[]], not [{}, ...]
+            while len(reqs) % slice_len == 1:
+                slice_len -= 1
+            # Break caps into smaller bursts
+            for i in range(len(reqs) / slice_len):
                 if debug:
-                    caps += cam.do_capture(reqs[i*SLICE_LEN:(i+1)*SLICE_LEN], cam.CAP_RAW)
+                    caps += cam.do_capture(reqs[i*slice_len:(i+1)*slice_len], cam.CAP_RAW)
                 else:
-                    caps += cam.do_capture(reqs[i*SLICE_LEN:(i+1)*SLICE_LEN], raw_stat_fmt)
-            last_n = len(reqs) % SLICE_LEN
-            if last_n == 1:
-                if debug:
-                    caps += [cam.do_capture(reqs[-last_n:], cam.CAP_RAW)]
-                else:
-                    caps += [cam.do_capture(reqs[-last_n:], raw_stat_fmt)]
-            elif last_n > 0:
+                    caps += cam.do_capture(reqs[i*slice_len:(i+1)*slice_len], raw_stat_fmt)
+            last_n = len(reqs) % slice_len
+            if last_n:
                 if debug:
                     caps += cam.do_capture(reqs[-last_n:], cam.CAP_RAW)
                 else:
@@ -110,7 +114,6 @@ def main():
                 else:
                     mean_image, _ = its.image.unpack_rawstats_capture(cap)
                     mean = mean_image[IMG_STATS_GRID/2, IMG_STATS_GRID/2]
-
                 print "ISO=%d, exposure time=%.3fms, mean=%s" % (
                         s, e_test[i] / 1000000.0, str(mean))
                 means.append(mean)

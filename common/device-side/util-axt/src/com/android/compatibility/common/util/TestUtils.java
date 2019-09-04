@@ -20,6 +20,8 @@ import static junit.framework.Assert.fail;
 import android.os.SystemClock;
 import android.util.Log;
 
+import java.util.function.BooleanSupplier;
+
 public class TestUtils {
     private static final String TAG = "CtsTestUtils";
 
@@ -91,6 +93,37 @@ public class TestUtils {
             Log.e(TAG, "Caught exception: " + th, th);
             onFailure.run();
             throw th;
+        }
+    }
+
+    /**
+     * Synchronized wait for a specified condition.
+     *
+     * @param notifyLock Lock that will be notified when the condition might have changed
+     * @param condition The condition to check
+     * @param timeoutMs The timeout in millis
+     * @param conditionName The name to include in the assertion. If null, will be given a default.
+     */
+    public static void waitOn(Object notifyLock, BooleanSupplier condition,
+            long timeoutMs, String conditionName) {
+        if (conditionName == null) conditionName = "condition";
+        if (condition.getAsBoolean()) return;
+
+        synchronized (notifyLock) {
+            try {
+                long timeSlept = 0;
+                while (!condition.getAsBoolean() && timeSlept < timeoutMs) {
+                    long sleepStart = SystemClock.uptimeMillis();
+                    notifyLock.wait(timeoutMs - timeSlept);
+                    timeSlept += SystemClock.uptimeMillis() - sleepStart;
+                }
+                if (!condition.getAsBoolean()) {
+                    throw new AssertionError("Timed out after " + timeSlept
+                            + "ms waiting for: " + conditionName);
+                }
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 }

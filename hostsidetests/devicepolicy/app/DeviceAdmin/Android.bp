@@ -61,3 +61,27 @@ android_test_helper_app {
     ],
     manifest: "api24/AndroidManifest.xml",
 }
+
+android_test_helper_app {
+    name: "CtsDeviceAdminApp29",
+    defaults: ["cts_defaults"],
+    srcs: ["src/**/*.java"],
+    resource_dirs: ["res"],
+    static_libs: [
+        "ctstestrunner-axt",
+        "compatibility-device-util-axt",
+    ],
+    libs: [
+        "android.test.runner.stubs",
+        "android.test.base.stubs",
+    ],
+    sdk_version: "test_current",
+    // tag this module as a cts test artifact
+    test_suites: [
+        "arcts",
+        "cts",
+        "vts",
+        "general-tests",
+    ],
+    manifest: "api29/AndroidManifest.xml",
+}

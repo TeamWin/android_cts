@@ -270,6 +270,8 @@ public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
             }
             mDecodingSurface = new OutputSurface(w, h);
             mDecoder.configure(decoderFormat, mDecodingSurface.getSurface(), null, 0);
+            // only scale to fit scaling mode is supported
+            mDecoder.setVideoScalingMode(MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT);
             mDecoder.start();
             mDecoderInputBuffers = mDecoder.getInputBuffers();
 

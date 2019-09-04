@@ -18,6 +18,8 @@ android_test {
     static_libs: [
         "ctstestrunner-axt",
         "mockito-target-minus-junit4",
+        "truth-prebuilt",
+        "testng",
     ],
     libs: [
         "android.test.runner.stubs",

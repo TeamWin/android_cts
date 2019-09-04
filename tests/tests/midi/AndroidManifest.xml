@@ -25,7 +25,7 @@
     <application>
         <uses-library android:name="android.test.runner" />
 
-        <service android:name="MidiEchoTestService"
+        <service android:name="com.android.midi.MidiEchoTestService"
                 android:permission="android.permission.BIND_MIDI_DEVICE_SERVICE">
             <intent-filter>
                 <action android:name="android.media.midi.MidiDeviceService" />

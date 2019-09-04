@@ -84,6 +84,19 @@ public class ContextThemeWrapperTest {
     }
 
     @Test
+    public void testSetTheme() {
+        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(
+                mContext, SYSTEM_DEFAULT_THEME);
+        Theme theme = mContext.getResources().newTheme();
+        theme.applyStyle(R.style.TextAppearance, true);
+        contextThemeWrapper.setTheme(theme);
+
+        TypedArray ta =
+                contextThemeWrapper.getTheme().obtainStyledAttributes(R.styleable.TextAppearance);
+        verifyIdenticalTextAppearanceStyle(ta);
+    }
+
+    @Test
     public void testGetSystemService() {
         // Note that we can't use Mockito since ContextThemeWrapper.onApplyThemeResource is
         // protected

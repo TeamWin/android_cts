@@ -15,6 +15,7 @@ android_test_helper_app {
     sdk_version: "test_current",
     static_libs: [
         "androidx.test.rules",
+        "ub-uiautomator",
     ],
     libs: ["android.test.base.stubs"],
     srcs: ["src/**/*.java"],
@@ -32,6 +33,7 @@ android_test_helper_app {
     sdk_version: "test_current",
     static_libs: [
         "androidx.test.rules",
+        "ub-uiautomator",
     ],
     libs: ["android.test.base.stubs"],
     srcs: ["src/**/*.java"],

@@ -27,7 +27,6 @@ import static org.junit.Assert.fail;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Environment;
-import android.platform.test.annotations.AppModeFull;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.system.OsConstants;
@@ -37,6 +36,8 @@ import android.util.Pair;
 import androidx.test.filters.LargeTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.PropertyUtil;
 
 import org.junit.After;
 import org.junit.Before;
@@ -344,8 +345,10 @@ public class FileSystemPermissionTest {
     @MediumTest
     @Test
     public void testProcNetSane() throws Exception {
-        for (String file : procNetFiles) {
-            procNetSane("/proc/net/" + file);
+        if (PropertyUtil.isVendorApiLevelNewerThan(28)) {
+            for (String file : procNetFiles) {
+                procNetSane("/proc/net/" + file);
+            }
         }
     }
 
@@ -489,11 +492,10 @@ public class FileSystemPermissionTest {
     }
 
     @MediumTest
-    @AppModeFull(reason = "Instant Apps cannot access proc_net labeled files")
     @Test
     public void testTcpDefaultRwndSane() throws Exception {
         File f = new File("/proc/sys/net/ipv4/tcp_default_init_rwnd");
-        assertTrue(f.canRead());
+        assertFalse(f.canRead());
         assertFalse(f.canWrite());
         assertFalse(f.canExecute());
 

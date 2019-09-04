@@ -15,14 +15,21 @@
  */
 package android.webkit.cts;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.lessThan;
+
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.net.http.SslError;
 import android.os.Build;
 import android.os.Message;
+import android.platform.test.annotations.AppModeFull;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Base64;
 import android.util.Log;
+import android.view.ViewGroup;
 import android.webkit.ConsoleMessage;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebChromeClient;
@@ -34,24 +41,30 @@ import android.webkit.WebSettings.TextSize;
 import android.webkit.WebStorage;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.webkit.cts.WebViewOnUiThread.WaitForLoadedClient;
-import android.webkit.cts.WebViewOnUiThread.WaitForProgressClient;
+import android.webkit.cts.WebViewSyncLoader.WaitForLoadedClient;
+import android.webkit.cts.WebViewSyncLoader.WaitForProgressClient;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
+import com.google.common.util.concurrent.SettableFuture;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Tests for {@link android.webkit.WebSettings}
  */
+@AppModeFull
 public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
 
     private static final int WEBVIEW_TIMEOUT = 5000;
@@ -83,7 +96,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         super.setUp();
         WebView webview = getActivity().getWebView();
         if (webview != null) {
-            mOnUiThread = new WebViewOnUiThread(this, webview);
+            mOnUiThread = new WebViewOnUiThread(webview);
             mSettings = mOnUiThread.getSettings();
         }
         mContext = getInstrumentation().getTargetContext();
@@ -251,79 +264,97 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         assertEquals(TestHtmlConstants.WEBPAGE_NOT_AVAILABLE_TITLE, mOnUiThread.getTitle());
     }
 
-    public void testAccessCacheMode() throws Throwable {
+    public void testAccessCacheMode_defaultValue() throws Throwable {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
         }
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                // getInstance must run on the UI thread
-                WebIconDatabase iconDb = WebIconDatabase.getInstance();
-                String dbPath = getActivity().getFilesDir().toString() + "/icons";
-                iconDb.open(dbPath);
-            }
+        assertEquals(WebSettings.LOAD_DEFAULT, mSettings.getCacheMode());
+    }
+
+    private void openIconDatabase() throws InterruptedException {
+        WebkitUtils.onMainThreadSync(() -> {
+            // getInstance must run on the UI thread
+            WebIconDatabase iconDb = WebIconDatabase.getInstance();
+            String dbPath = getActivity().getFilesDir().toString() + "/icons";
+            iconDb.open(dbPath);
         });
         getInstrumentation().waitForIdleSync();
         Thread.sleep(100); // Wait for open to be received on the icon db thread.
-        assertEquals(WebSettings.LOAD_DEFAULT, mSettings.getCacheMode());
+    }
+
+    public void testAccessCacheMode_cacheElseNetwork() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+        openIconDatabase();
+        final IconListenerClient iconListener = new IconListenerClient();
+        mOnUiThread.setWebChromeClient(iconListener);
+        startWebServer();
 
         mSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
         assertEquals(WebSettings.LOAD_CACHE_ELSE_NETWORK, mSettings.getCacheMode());
+        int initialRequestCount = mWebServer.getRequestCount();
+        loadAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
+        iconListener.waitForNextIcon();
+        int requestCountAfterFirstLoad = mWebServer.getRequestCount();
+        assertTrue("Must fetch non-cached resource from server",
+                requestCountAfterFirstLoad > initialRequestCount);
+        iconListener.drainIconQueue();
+        loadAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
+        iconListener.waitForNextIcon();
+        int requestCountAfterSecondLoad = mWebServer.getRequestCount();
+        assertEquals("Expected to use cache instead of re-fetching resource",
+                requestCountAfterSecondLoad, requestCountAfterFirstLoad);
+    }
+
+    public void testAccessCacheMode_noCache() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+        openIconDatabase();
         final IconListenerClient iconListener = new IconListenerClient();
         mOnUiThread.setWebChromeClient(iconListener);
-        loadAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
-        new PollingCheck(WEBVIEW_TIMEOUT) {
-            @Override
-            protected boolean check() {
-                return iconListener.mReceivedIcon;
-            }
-        }.run();
-        int firstFetch = mWebServer.getRequestCount();
-        iconListener.mReceivedIcon = false;
-        loadAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
-        new PollingCheck(WEBVIEW_TIMEOUT) {
-            @Override
-            protected boolean check() {
-                return iconListener.mReceivedIcon;
-            }
-        }.run();
-        assertEquals(firstFetch, mWebServer.getRequestCount());
+        startWebServer();
 
         mSettings.setCacheMode(WebSettings.LOAD_NO_CACHE);
         assertEquals(WebSettings.LOAD_NO_CACHE, mSettings.getCacheMode());
-        iconListener.mReceivedIcon = false;
+        int initialRequestCount = mWebServer.getRequestCount();
         loadAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
-        new PollingCheck(WEBVIEW_TIMEOUT) {
-            @Override
-            protected boolean check() {
-                return iconListener.mReceivedIcon;
-            }
-        }.run();
-        int secondFetch = mWebServer.getRequestCount();
-        iconListener.mReceivedIcon = false;
+        iconListener.waitForNextIcon();
+        int requestCountAfterFirstLoad = mWebServer.getRequestCount();
+        assertTrue("Must fetch non-cached resource from server",
+                requestCountAfterFirstLoad > initialRequestCount);
+        iconListener.drainIconQueue();
         loadAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
-        new PollingCheck(WEBVIEW_TIMEOUT) {
-            @Override
-            protected boolean check() {
-                return iconListener.mReceivedIcon;
-            }
-        }.run();
-        int thirdFetch = mWebServer.getRequestCount();
-        assertTrue(firstFetch < secondFetch);
-        assertTrue(secondFetch < thirdFetch);
+        iconListener.waitForNextIcon();
+        int requestCountAfterSecondLoad = mWebServer.getRequestCount();
+        assertTrue("Expected to re-fetch resource instead of caching",
+                requestCountAfterSecondLoad > requestCountAfterFirstLoad);
+    }
+
+    public void testAccessCacheMode_cacheOnly() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+        openIconDatabase();
+        final IconListenerClient iconListener = new IconListenerClient();
+        mOnUiThread.setWebChromeClient(iconListener);
+        startWebServer();
+
+        // As a precondition, get the icon in the cache.
+        mSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        loadAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
+        iconListener.waitForNextIcon();
 
         mSettings.setCacheMode(WebSettings.LOAD_CACHE_ONLY);
         assertEquals(WebSettings.LOAD_CACHE_ONLY, mSettings.getCacheMode());
-        iconListener.mReceivedIcon = false;
+        iconListener.drainIconQueue();
+        int initialRequestCount = mWebServer.getRequestCount();
         loadAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
-        new PollingCheck(WEBVIEW_TIMEOUT) {
-            @Override
-            protected boolean check() {
-                return iconListener.mReceivedIcon;
-            }
-        }.run();
-        assertEquals(thirdFetch, mWebServer.getRequestCount());
+        iconListener.waitForNextIcon();
+        int requestCountAfterFirstLoad = mWebServer.getRequestCount();
+        assertEquals("Expected to use cache instead of fetching resource",
+                requestCountAfterFirstLoad, initialRequestCount);
     }
 
     public void testAccessCursiveFontFamily() throws Exception {
@@ -397,17 +428,19 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
             return;
         }
         int defaultSize = mSettings.getDefaultFontSize();
-        assertTrue(defaultSize > 0);
+        assertThat(defaultSize, greaterThan(0));
 
         mSettings.setDefaultFontSize(1000);
         int maxSize = mSettings.getDefaultFontSize();
         // cannot check exact size set, since the implementation caps it at an arbitrary limit
-        assertTrue(maxSize > defaultSize);
+        assertThat("max size should be greater than default size",
+                maxSize,
+                greaterThan(defaultSize));
 
         mSettings.setDefaultFontSize(-10);
         int minSize = mSettings.getDefaultFontSize();
-        assertTrue(minSize > 0);
-        assertTrue(minSize < maxSize);
+        assertThat(minSize, greaterThan(0));
+        assertThat(minSize, lessThan(maxSize));
 
         mSettings.setDefaultFontSize(10);
         assertEquals(10, mSettings.getDefaultFontSize());
@@ -418,17 +451,19 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
             return;
         }
         int defaultSize = mSettings.getDefaultFixedFontSize();
-        assertTrue(defaultSize > 0);
+        assertThat(defaultSize, greaterThan(0));
 
         mSettings.setDefaultFixedFontSize(1000);
         int maxSize = mSettings.getDefaultFixedFontSize();
-        // cannot check exact size, since the implementation caps it at an arbitrary limit
-        assertTrue(maxSize > defaultSize);
+        // cannot check exact size set, since the implementation caps it at an arbitrary limit
+        assertThat("max size should be greater than default size",
+                maxSize,
+                greaterThan(defaultSize));
 
         mSettings.setDefaultFixedFontSize(-10);
         int minSize = mSettings.getDefaultFixedFontSize();
-        assertTrue(minSize > 0);
-        assertTrue(minSize < maxSize);
+        assertThat(minSize, greaterThan(0));
+        assertThat(minSize, lessThan(maxSize));
 
         mSettings.setDefaultFixedFontSize(10);
         assertEquals(10, mSettings.getDefaultFixedFontSize());
@@ -454,15 +489,15 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         startWebServer();
 
         final WebView childWebView = mOnUiThread.createWebView();
-        final CountDownLatch latch = new CountDownLatch(1);
+        final SettableFuture<Void> createWindowFuture = SettableFuture.create();
         mOnUiThread.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onCreateWindow(
-                WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
+                    WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
                 WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
                 transport.setWebView(childWebView);
                 resultMsg.sendToTarget();
-                latch.countDown();
+                createWindowFuture.set(null);
                 return true;
             }
         });
@@ -476,12 +511,12 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
                 return "Popup blocked".equals(mOnUiThread.getTitle());
             }
         }.run();
-        assertEquals(1, latch.getCount());
+        assertFalse("onCreateWindow should not have been called yet", createWindowFuture.isDone());
 
         mSettings.setJavaScriptCanOpenWindowsAutomatically(true);
         assertTrue(mSettings.getJavaScriptCanOpenWindowsAutomatically());
         mOnUiThread.loadUrl(mWebServer.getAssetUrl(TestHtmlConstants.POPUP_URL));
-        assertTrue(latch.await(WEBVIEW_TIMEOUT, TimeUnit.MILLISECONDS));
+        WebkitUtils.waitForFuture(createWindowFuture);
     }
 
     public void testAccessJavaScriptEnabled() throws Exception {
@@ -565,6 +600,11 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         assertTrue(mSettings.getPluginsEnabled());
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.WebSettingsCompatTest#testOffscreenPreRaster. Modifications to this test
+     * should be reflected in that test as necessary. See http://go/modifying-webview-cts.
+     */
     public void testOffscreenPreRaster() {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
@@ -583,8 +623,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
 
         String pluginPath = "pluginPath";
         mSettings.setPluginsPath(pluginPath);
-        // plugin path always empty
-        assertEquals("", mSettings.getPluginsPath());
+        assertEquals("Plugin path always empty", "", mSettings.getPluginsPath());
     }
 
     public void testAccessTextSize() {
@@ -614,8 +653,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         assertFalse(mSettings.getUseDoubleTree());
 
         mSettings.setUseDoubleTree(true);
-        // setUseDoubleTree is a no-op
-        assertFalse(mSettings.getUseDoubleTree());
+        assertFalse("setUseDoubleTree should be a no-op", mSettings.getUseDoubleTree());
     }
 
     public void testAccessUseWideViewPort() {
@@ -664,12 +702,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         }
         assertTrue(mSettings.supportZoom());
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mSettings.setSupportZoom(false);
-            }
-        });
+        mSettings.setSupportZoom(false);
         assertFalse(mSettings.supportZoom());
     }
 
@@ -679,12 +712,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         }
         assertFalse(mSettings.getBuiltInZoomControls());
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mSettings.setBuiltInZoomControls(true);
-            }
-        });
+        mSettings.setBuiltInZoomControls(true);
         assertTrue(mSettings.getBuiltInZoomControls());
     }
 
@@ -765,7 +793,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         // Verify that websql database does not work when disabled.
         startWebServer();
 
-        mOnUiThread.setWebChromeClient(new ChromeClient(mOnUiThread) {
+        mOnUiThread.setWebChromeClient(new WebViewSyncLoader.WaitForProgressClient(mOnUiThread) {
             @Override
             public void onExceededDatabaseQuota(String url, String databaseId, long quota,
                 long estimatedSize, long total, WebStorage.QuotaUpdater updater) {
@@ -779,29 +807,85 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         assertEquals("No database", mOnUiThread.getTitle());
     }
 
-    public void testLoadsImagesAutomatically() throws Throwable {
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.WebSettingsCompatTest#testDisabledActionModeMenuItems. Modifications to this
+     * test should be reflected in that test as necessary. See http://go/modifying-webview-cts.
+     */
+    public void testDisabledActionModeMenuItems() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
+        assertEquals(WebSettings.MENU_ITEM_NONE, mSettings.getDisabledActionModeMenuItems());
+
+        int allDisabledFlags = WebSettings.MENU_ITEM_NONE | WebSettings.MENU_ITEM_SHARE |
+                WebSettings.MENU_ITEM_WEB_SEARCH | WebSettings.MENU_ITEM_PROCESS_TEXT;
+        for (int i = WebSettings.MENU_ITEM_NONE; i <= allDisabledFlags; i++) {
+            mSettings.setDisabledActionModeMenuItems(i);
+            assertEquals(i, mSettings.getDisabledActionModeMenuItems());
+        }
+    }
+
+    public void testLoadsImagesAutomatically_default() throws Throwable {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
         }
         assertTrue(mSettings.getLoadsImagesAutomatically());
+    }
 
+    public void testLoadsImagesAutomatically_httpImagesLoaded() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
         startWebServer();
         mSettings.setJavaScriptEnabled(true);
+        mSettings.setLoadsImagesAutomatically(true);
 
-        // Check that by default network and data url images are loaded.
         mOnUiThread.loadDataAndWaitForCompletion(getNetworkImageHtml(), "text/html", null);
         assertEquals(NETWORK_IMAGE_HEIGHT, mOnUiThread.getTitle());
+    }
+
+    public void testLoadsImagesAutomatically_dataUriImagesLoaded() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+        startWebServer();
+        mSettings.setJavaScriptEnabled(true);
+        mSettings.setLoadsImagesAutomatically(true);
+
         mOnUiThread.loadDataAndWaitForCompletion(DATA_URL_IMAGE_HTML, "text/html", null);
         assertEquals(DATA_URL_IMAGE_HEIGHT, mOnUiThread.getTitle());
+    }
 
-        // Check that with auto-loading turned off no images are loaded.
-        // Also check that images are loaded automatically once we enable the setting,
-        // without reloading the page.
+    public void testLoadsImagesAutomatically_blockLoadingImages() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+        startWebServer();
+        mSettings.setJavaScriptEnabled(true);
         mSettings.setLoadsImagesAutomatically(false);
-        mOnUiThread.clearCache(true);
+
+        mOnUiThread.clearCache(true); // in case of side-effects from other tests
         mOnUiThread.loadDataAndWaitForCompletion(getNetworkImageHtml(), "text/html", null);
         assertEquals(EMPTY_IMAGE_HEIGHT, mOnUiThread.getTitle());
-        mSettings.setLoadsImagesAutomatically(true);
+
+        mOnUiThread.loadDataAndWaitForCompletion(DATA_URL_IMAGE_HTML, "text/html", null);
+        assertEquals(EMPTY_IMAGE_HEIGHT, mOnUiThread.getTitle());
+    }
+
+    public void testLoadsImagesAutomatically_loadImagesWithoutReload() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+        startWebServer();
+        mSettings.setJavaScriptEnabled(true);
+        mSettings.setLoadsImagesAutomatically(false);
+
+        mOnUiThread.clearCache(true); // in case of side-effects from other tests
+        mOnUiThread.loadDataAndWaitForCompletion(getNetworkImageHtml(), "text/html", null);
+        assertEquals(EMPTY_IMAGE_HEIGHT, mOnUiThread.getTitle());
+        mSettings.setLoadsImagesAutomatically(true); // load images, without calling #reload()
         waitForNonEmptyImage();
         assertEquals(NETWORK_IMAGE_HEIGHT, mOnUiThread.getTitle());
 
@@ -809,7 +893,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         mOnUiThread.clearCache(true);
         mOnUiThread.loadDataAndWaitForCompletion(DATA_URL_IMAGE_HTML, "text/html", null);
         assertEquals(EMPTY_IMAGE_HEIGHT, mOnUiThread.getTitle());
-        mSettings.setLoadsImagesAutomatically(true);
+        mSettings.setLoadsImagesAutomatically(true); // load images, without calling #reload()
         waitForNonEmptyImage();
         assertEquals(DATA_URL_IMAGE_HEIGHT, mOnUiThread.getTitle());
     }
@@ -932,13 +1016,11 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         mSettings.setAllowFileAccessFromFileURLs(false);
 
         // when cross file scripting is disabled, make sure cross domain requests fail
-        final ChromeClient webChromeClient = new ChromeClient(mOnUiThread);
-        mOnUiThread.setWebChromeClient(webChromeClient);
         String url = TestHtmlConstants.getFileUrl(TestHtmlConstants.IFRAME_ACCESS_URL);
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         String iframeUrl = TestHtmlConstants.getFileUrl(TestHtmlConstants.HELLO_WORLD_URL);
-        assertFalse(iframeUrl.equals(mOnUiThread.getTitle()));
-        assertEquals(ConsoleMessage.MessageLevel.ERROR, webChromeClient.getMessageLevel(10000));
+        assertFalse("Title should not have changed, because file URL access is disabled",
+                iframeUrl.equals(mOnUiThread.getTitle()));
     }
 
     // Verify that enabling file access from file URLs enable XmlHttpRequest (XHR) across files
@@ -955,10 +1037,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
             return;
         }
 
-        final ChromeClient webChromeClient = new ChromeClient(mOnUiThread);
-        mOnUiThread.setWebChromeClient(webChromeClient);
         verifyFileXHR(false);
-        assertEquals(ConsoleMessage.MessageLevel.ERROR, webChromeClient.getMessageLevel(10000));
     }
 
     // verify XHR across files matches the allowFileAccessFromFileURLs setting
@@ -987,8 +1066,13 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         String localPath = mContext.getFileStreamPath("local.html").getAbsolutePath();
         // when cross file scripting is enabled, make sure cross domain requests succeed
         mOnUiThread.loadUrlAndWaitForCompletion("file://" + localPath);
-        if (enableXHR) assertEquals(target, mOnUiThread.getTitle());
-        else assertFalse(target.equals(mOnUiThread.getTitle()));
+        if (enableXHR) {
+            assertEquals("Expected title to change, because XHR should be enabled", target,
+                    mOnUiThread.getTitle());
+        } else {
+            assertFalse("Title should not have changed, because XHR should be disabled",
+                    target.equals(mOnUiThread.getTitle()));
+        }
     }
 
     // Create a private file on internal storage from the given string
@@ -1080,6 +1164,11 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         }
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.WebSettingsCompatTest#testEnableSafeBrowsing. Modifications to this test
+     * should be reflected in that test as necessary. See http://go/modifying-webview-cts.
+     */
     public void testEnableSafeBrowsing() throws Throwable {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
@@ -1088,6 +1177,75 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         assertFalse(mSettings.getSafeBrowsingEnabled());
     }
 
+    private  int[] getBitmapPixels(Bitmap bitmap, int x, int y, int width, int height) {
+        int[] pixels = new int[width * height];
+        bitmap.getPixels(pixels, 0, width, x, y, width, height);
+        return pixels;
+    }
+
+    private Map<Integer,Integer> getBitmapHistogram(Bitmap bitmap, int x, int y, int width, int height) {
+        HashMap<Integer, Integer> histogram = new HashMap();
+        for (int pixel : getBitmapPixels(bitmap, x, y, width, height)) {
+            histogram.put(pixel, histogram.getOrDefault(pixel, 0) + 1);
+        }
+        return histogram;
+    }
+
+    public void testForceDark_default() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
+        assertEquals("The default force dark state should be AUTO",
+                mSettings.getForceDark(), WebSettings.FORCE_DARK_AUTO);
+    }
+
+    private void setWebViewSize(int width, int height) {
+        // Set the webview size to 64x64
+        WebkitUtils.onMainThreadSync(() -> {
+            WebView webView = mOnUiThread.getWebView();
+            ViewGroup.LayoutParams params = webView.getLayoutParams();
+            params.height = height;
+            params.width = width;
+            webView.setLayoutParams(params);
+        });
+
+    }
+
+    public void testForceDark_rendersDark() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
+        setWebViewSize(64, 64);
+
+        Map<Integer, Integer> histogram;
+        Integer[] colourValues;
+
+        // Loading about:blank into a force-dark-on webview should result in a dark background
+        mSettings.setForceDark(WebSettings.FORCE_DARK_ON);
+        assertEquals("Force dark should have been set to ON",
+                mSettings.getForceDark(), WebSettings.FORCE_DARK_ON);
+
+        mOnUiThread.loadUrlAndWaitForCompletion("about:blank");
+        histogram = getBitmapHistogram(mOnUiThread.captureBitmap(), 0, 0, 64, 64);
+        assertEquals("Bitmap should have a single colour", histogram.size(), 1);
+        colourValues = histogram.keySet().toArray(new Integer[0]);
+        assertThat("Bitmap colour should be dark",
+                Color.luminance(colourValues[0]), lessThan(0.5f));
+
+        // Loading about:blank into a force-dark-off webview should result in a light background
+        mSettings.setForceDark(WebSettings.FORCE_DARK_OFF);
+        assertEquals("Force dark should have been set to OFF",
+                mSettings.getForceDark(), WebSettings.FORCE_DARK_OFF);
+
+        mOnUiThread.loadUrlAndWaitForCompletion("about:blank");
+        histogram = getBitmapHistogram(mOnUiThread.captureBitmap(), 0, 0, 64, 64);
+        assertEquals("Bitmap should have a single colour", histogram.size(), 1);
+        colourValues = histogram.keySet().toArray(new Integer[0]);
+        assertThat("Bitmap colour should be light",
+                Color.luminance(colourValues[0]), greaterThan(0.5f));
+    }
 
     /**
      * Starts the internal web server. The server will be shut down automatically
@@ -1135,7 +1293,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
     }
 
     private class IconListenerClient extends WaitForProgressClient {
-        public boolean mReceivedIcon;
+        private final BlockingQueue<Bitmap> mReceivedIconQueue = new LinkedBlockingQueue<>();
 
         public IconListenerClient() {
             super(mOnUiThread);
@@ -1143,7 +1301,20 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
 
         @Override
         public void onReceivedIcon(WebView view, Bitmap icon) {
-            mReceivedIcon = true;
+            mReceivedIconQueue.add(icon);
+        }
+
+        /**
+         * Exposed as a precaution, in case for some reason we get multiple calls to
+         * {@link #onReceivedIcon}.
+         */
+        public void drainIconQueue() {
+            while (mReceivedIconQueue.poll() != null) {}
+        }
+
+        public void waitForNextIcon() {
+            // TODO(ntfschr): consider exposing the Bitmap, if we want to make assertions.
+            WebkitUtils.waitForNextQueueElement(mReceivedIconQueue);
         }
     }
 }

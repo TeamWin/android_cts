@@ -15,17 +15,30 @@
 android_test {
     name: "CtsMidiTestCases",
     defaults: ["cts_defaults"],
+
+    // Don't include this package in any target.
+
+    // When built, explicitly put it in the data partition.
+
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
         "vts",
         "general-tests",
     ],
+
     static_libs: [
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
+        "cts-midi-lib",
     ],
+
     libs: ["android.test.base.stubs"],
+
     srcs: ["src/**/*.java"],
+
+    // Must match the package name in CtsTestCaseList.mk
+
     sdk_version: "test_current",
+
 }

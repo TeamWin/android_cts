@@ -70,8 +70,9 @@ public class TestUtils {
     public static final String SELF_MANAGED_COMPONENT =
             "android.telecom.cts.CtsSelfManagedConnectionService";
     public static final String REMOTE_COMPONENT = "android.telecom.cts.CtsRemoteConnectionService";
-    public static final String ACCOUNT_ID_1 = "xtstest_CALL_PROVIDER_ID";
-    public static final String ACCOUNT_ID_2 = "xtstest_CALL_PROVIDER_ID";
+    public static final String ACCOUNT_ID_1 = "xtstest_CALL_PROVIDER_ID_1";
+    public static final String ACCOUNT_ID_2 = "xtstest_CALL_PROVIDER_ID_2";
+    public static final String EXTRA_PHONE_NUMBER = "android.telecom.cts.extra.PHONE_NUMBER";
     public static final PhoneAccountHandle TEST_PHONE_ACCOUNT_HANDLE =
             new PhoneAccountHandle(new ComponentName(PACKAGE, COMPONENT), ACCOUNT_ID_1);
     public static final PhoneAccountHandle TEST_PHONE_ACCOUNT_HANDLE_2 =
@@ -189,6 +190,12 @@ public class TestUtils {
             .setShortDescription(SELF_MANAGED_ACCOUNT_LABEL)
             .addSupportedUriScheme(TEST_URI_SCHEME)
             .build();
+    public static final Bundle SELF_MANAGED_ACCOUNT_2_EXTRAS;
+    static {
+        SELF_MANAGED_ACCOUNT_2_EXTRAS = new Bundle();
+        SELF_MANAGED_ACCOUNT_2_EXTRAS.putBoolean(PhoneAccount.EXTRA_LOG_SELF_MANAGED_CALLS, true);
+    }
+
     public static final PhoneAccount TEST_SELF_MANAGED_PHONE_ACCOUNT_2 = PhoneAccount.builder(
             TEST_SELF_MANAGED_HANDLE_2, SELF_MANAGED_ACCOUNT_LABEL)
             .setAddress(Uri.parse("sip:test@test.com"))
@@ -200,6 +207,7 @@ public class TestUtils {
             .setShortDescription(SELF_MANAGED_ACCOUNT_LABEL)
             .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
             .addSupportedUriScheme(PhoneAccount.SCHEME_SIP)
+            .setExtras(SELF_MANAGED_ACCOUNT_2_EXTRAS)
             .build();
     public static final PhoneAccount TEST_SELF_MANAGED_PHONE_ACCOUNT_1 = PhoneAccount.builder(
             TEST_SELF_MANAGED_HANDLE_1, SELF_MANAGED_ACCOUNT_LABEL)

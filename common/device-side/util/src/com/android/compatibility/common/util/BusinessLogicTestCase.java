@@ -40,6 +40,7 @@ import java.util.Map;
  * Device-side base class for tests leveraging the Business Logic service.
  */
 public class BusinessLogicTestCase {
+    private static final String TAG = "BusinessLogicTestCase";
 
     /* String marking the beginning of the parameter in a test name */
     private static final String PARAM_START = "[";
@@ -69,7 +70,7 @@ public class BusinessLogicTestCase {
         }
         String testName = String.format("%s#%s", this.getClass().getName(), methodName);
         if (mBusinessLogic.hasLogicFor(testName)) {
-            Log.i("Finding business logic for test case: ", testName);
+            Log.i(TAG, "Finding business logic for test case: " + testName);
             BusinessLogicExecutor executor = new BusinessLogicDeviceExecutor(getContext(), this);
             mBusinessLogic.applyLogicFor(testName, executor);
         }
@@ -87,7 +88,7 @@ public class BusinessLogicTestCase {
             return;
         } catch (FileNotFoundException e) {
             // Log the error and use the fallback too
-            Log.e("BusinessLogicTestCase", "Error while using content provider for config", e);
+            Log.e(TAG, "Error while using content provider for config", e);
         }
         // Fallback to reading the business logic directly.
         File businessLogicFile = new File(BusinessLogic.DEVICE_FILE);

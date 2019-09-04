@@ -64,12 +64,10 @@ def main():
 
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
-        its.caps.skip_unless(its.caps.compute_target_exposure(props) and
-                             its.caps.per_frame_control(props))
-
-        process_raw = (its.caps.raw16(props) and
-                       its.caps.manual_sensor(props))
-
+        props = cam.override_with_hidden_physical_camera_props(props)
+        its.caps.skip_unless(its.caps.compute_target_exposure(props))
+        sync_latency = its.caps.sync_latency(props)
+        process_raw = its.caps.raw16(props) and its.caps.manual_sensor(props)
         debug = its.caps.debug_mode()
         largest_yuv = its.objects.get_largest_yuv_format(props)
         if debug:
@@ -91,7 +89,8 @@ def main():
             print 'Testing s:', s_test, 'e:', e_test
             req = its.objects.manual_capture_request(
                     s_test, e_test, 0.0, True, props)
-            cap = cam.do_capture(req, fmt)
+            cap = its.device.do_capture_with_latency(
+                    cam, req, sync_latency, fmt)
             s_res = cap['metadata']['android.sensor.sensitivity']
             e_res = cap['metadata']['android.sensor.exposureTime']
             # determine exposure tolerance based on exposure time
@@ -104,7 +103,7 @@ def main():
                         (THRESH_EXP_KNEE - e_test) / THRESH_EXP_KNEE)
             s_msg = 's_write: %d, s_read: %d, TOL=%.f%%' % (
                     s_test, s_res, THRESH_ROUND_DOWN_GAIN*100)
-            e_msg = 'e_write: %.2fms, e_read: %.2fms, TOL=%.f%%' % (
+            e_msg = 'e_write: %.3fms, e_read: %.3fms, TOL=%.f%%' % (
                     e_test/1.0E6, e_res/1.0E6, thresh_round_down_exp*100)
             assert 0 <= s_test - s_res < s_test * THRESH_ROUND_DOWN_GAIN, s_msg
             assert 0 <= e_test - e_res < e_test * thresh_round_down_exp, e_msg
@@ -122,12 +121,13 @@ def main():
             # do same in RAW space if possible
             if process_raw and debug:
                 aaw, aah = get_raw_active_array_size(props)
-                raw_cap = cam.do_capture(req,
-                                         {'format': 'rawStats',
-                                          'gridWidth': aaw/IMG_STATS_GRID,
-                                          'gridHeight': aah/IMG_STATS_GRID})
-                r, gr, gb, b = its.image.convert_capture_to_planes(raw_cap,
-                                                                   props)
+                fmt_raw = {'format': 'rawStats',
+                           'gridWidth': aaw/IMG_STATS_GRID,
+                           'gridHeight': aah/IMG_STATS_GRID}
+                raw_cap = its.device.do_capture_with_latency(
+                        cam, req, sync_latency, fmt_raw)
+                r, gr, gb, b = its.image.convert_capture_to_planes(
+                        raw_cap, props)
                 raw_r_means.append(r[IMG_STATS_GRID/2, IMG_STATS_GRID/2]
                                    * request_result_ratio)
                 raw_gr_means.append(gr[IMG_STATS_GRID/2, IMG_STATS_GRID/2]

@@ -24,11 +24,15 @@ android_test {
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "platform-test-annotations",
+        "truth-prebuilt",
     ],
 
     libs: ["android.test.runner.stubs"],
 
-    srcs: ["src/**/*.java"],
+    srcs: [
+        "src/**/*.java",
+        "src/**/*.kt",
+    ],
 
     // TODO: Move away from using hidden platform APIs b/72044662
     platform_apis: true,

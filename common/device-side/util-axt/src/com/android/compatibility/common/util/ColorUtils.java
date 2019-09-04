@@ -16,9 +16,15 @@
 
 package com.android.compatibility.common.util;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import android.graphics.Color;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import java.util.function.Function;
+import java.util.function.IntUnaryOperator;
 
 public class ColorUtils {
     public static void verifyColor(int expected, int observed) {
@@ -26,12 +32,86 @@ public class ColorUtils {
     }
 
     public static void verifyColor(int expected, int observed, int tolerance) {
-        String s = "expected " + Integer.toHexString(expected)
-                + ", observed " + Integer.toHexString(observed)
-                + ", tolerated channel error " + tolerance;
-        assertEquals(s, Color.red(expected), Color.red(observed), tolerance);
-        assertEquals(s, Color.green(expected), Color.green(observed), tolerance);
-        assertEquals(s, Color.blue(expected), Color.blue(observed), tolerance);
-        assertEquals(s, Color.alpha(expected), Color.alpha(observed), tolerance);
+        verifyColor("", expected, observed, tolerance);
+    }
+
+    /**
+     * Verify that two colors match within a per-channel tolerance.
+     *
+     * @param s String with extra information about the test with an error.
+     * @param expected Expected color.
+     * @param observed Observed color.
+     * @param tolerance Per-channel tolerance by which the color can mismatch.
+     */
+    public static void verifyColor(@NonNull String s, int expected, int observed, int tolerance) {
+        s += " expected 0x" + Integer.toHexString(expected)
+            + ", observed 0x" + Integer.toHexString(observed)
+            + ", tolerated channel error 0x" + tolerance;
+        String red = verifyChannel("red", expected, observed, tolerance, (i) -> Color.red(i));
+        String green = verifyChannel("green", expected, observed, tolerance, (i) -> Color.green(i));
+        String blue = verifyChannel("blue", expected, observed, tolerance, (i) -> Color.blue(i));
+        String alpha = verifyChannel("alpha", expected, observed, tolerance, (i) -> Color.alpha(i));
+
+        buildErrorString(s, red, green, blue, alpha);
+    }
+
+    private static void buildErrorString(@NonNull String s, @Nullable String red,
+            @Nullable String green, @Nullable String blue, @Nullable String alpha) {
+        String err = null;
+        for (String channel : new String[]{red, green, blue, alpha}) {
+            if (channel == null) continue;
+            if (err == null) err = s;
+            err += "\n\t\t" + channel;
+        }
+        if (err != null) {
+            fail(err);
+        }
+    }
+
+    private static String verifyChannel(String channelName, int expected, int observed,
+            int tolerance, IntUnaryOperator f) {
+        int e = f.applyAsInt(expected);
+        int o = f.applyAsInt(observed);
+        if (Math.abs(e - o) <= tolerance) {
+            return null;
+        }
+        return "Channel " + channelName + " mismatch: expected<0x" + Integer.toHexString(e)
+            + ">, observed: <0x" + Integer.toHexString(o) + ">";
+    }
+
+    /**
+     * Verify that two colors match within a per-channel tolerance.
+     *
+     * @param msg String with extra information about the test with an error.
+     * @param expected Expected color.
+     * @param observed Observed color.
+     * @param tolerance Per-channel tolerance by which the color can mismatch.
+     */
+    public static void verifyColor(@NonNull String msg, Color expected, Color observed,
+            float tolerance) {
+        if (!expected.getColorSpace().equals(observed.getColorSpace())) {
+            fail("Cannot compare Colors with different color spaces! expected: " + expected
+                    + "\tobserved: " + observed);
+        }
+        msg += " expected " + expected + ", observed " + observed + ", tolerated channel error "
+            + tolerance;
+        String red = verifyChannel("red", expected, observed, tolerance, (c) -> c.red());
+        String green = verifyChannel("green", expected, observed, tolerance, (c) -> c.green());
+        String blue = verifyChannel("blue", expected, observed, tolerance, (c) -> c.blue());
+        String alpha = verifyChannel("alpha", expected, observed, tolerance, (c) -> c.alpha());
+
+        buildErrorString(msg, red, green, blue, alpha);
+    }
+
+    private static String verifyChannel(String channelName, Color expected, Color observed,
+            float tolerance, Function<Color, Float> f) {
+        float e = f.apply(expected);
+        float o = f.apply(observed);
+        float diff = Math.abs(e - o);
+        if (diff <= tolerance) {
+            return null;
+        }
+        return "Channel " + channelName + " mismatch: expected<" + e + ">, observed: <" + o
+            + ">, difference: <" + diff + ">";
     }
 }

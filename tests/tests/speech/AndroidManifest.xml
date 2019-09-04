@@ -31,8 +31,6 @@
 
     </application>
 
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.speech.tts.cts"
                      android:label="CTS tests of android.speech">

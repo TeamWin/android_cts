@@ -22,7 +22,6 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
-import android.app.Instrumentation;
 import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.util.Xml;
@@ -30,7 +29,6 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.annotation.UiThreadTest;
 import androidx.test.filters.LargeTest;
 import androidx.test.filters.MediumTest;
@@ -49,7 +47,6 @@ import org.xmlpull.v1.XmlPullParser;
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class ViewFlipperTest {
-    private Instrumentation mInstrumentation;
     private Activity mActivity;
 
     @Rule
@@ -58,7 +55,6 @@ public class ViewFlipperTest {
 
     @Before
     public void setup() {
-        mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.getActivity();
     }
 
@@ -113,7 +109,6 @@ public class ViewFlipperTest {
 
         // wait for a longer time to make sure the view flipping is completed.
         SystemClock.sleep(flipInterval + 200);
-        mInstrumentation.waitForIdleSync();
         mActivityRule.runOnUiThread(() -> {
             ViewFlipper viewFlipper =
                     (ViewFlipper) mActivity.findViewById(R.id.viewflipper_test);
@@ -127,7 +122,6 @@ public class ViewFlipperTest {
         });
 
         SystemClock.sleep(flipInterval + 200);
-        mInstrumentation.waitForIdleSync();
         mActivityRule.runOnUiThread(() -> {
             ViewFlipper viewFlipper =
                     (ViewFlipper) mActivity.findViewById(R.id.viewflipper_test);

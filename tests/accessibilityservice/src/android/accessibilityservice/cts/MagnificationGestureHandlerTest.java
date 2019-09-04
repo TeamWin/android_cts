@@ -18,6 +18,7 @@ package android.accessibilityservice.cts;
 
 import static android.accessibilityservice.cts.utils.AsyncUtils.await;
 import static android.accessibilityservice.cts.utils.AsyncUtils.waitOn;
+import static android.accessibilityservice.cts.utils.CtsTestUtils.runIfNotNull;
 import static android.accessibilityservice.cts.utils.GestureUtils.add;
 import static android.accessibilityservice.cts.utils.GestureUtils.click;
 import static android.accessibilityservice.cts.utils.GestureUtils.dispatchGesture;
@@ -42,6 +43,9 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+
+import android.accessibility.cts.common.InstrumentedAccessibilityService;
 import android.accessibilityservice.GestureDescription;
 import android.accessibilityservice.GestureDescription.StrokeDescription;
 import android.accessibilityservice.cts.AccessibilityGestureDispatchTest.GestureDispatchActivity;
@@ -64,8 +68,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -139,10 +141,7 @@ public class MagnificationGestureHandlerTest {
 
         setMagnificationEnabled(mOriginalIsMagnificationEnabled);
 
-        if (mService != null) {
-            mService.runOnServiceSync(() -> mService.disableSelfAndRemove());
-            mService = null;
-        }
+        runIfNotNull(mService, service -> service.runOnServiceSync(service::disableSelfAndRemove));
     }
 
     @Test

@@ -11,7 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License
+ * limitations under the License.
  */
 
 package android.inputmethodservice.cts.devicetest;
@@ -20,22 +20,16 @@ import static android.inputmethodservice.cts.DeviceEvent.isFrom;
 import static android.inputmethodservice.cts.DeviceEvent.isNewerThan;
 import static android.inputmethodservice.cts.DeviceEvent.isType;
 import static android.inputmethodservice.cts.common.BusyWaitUtils.pollingCheck;
-import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType
-        .ON_BIND_INPUT;
+import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_BIND_INPUT;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_CREATE;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_DESTROY;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_START_INPUT;
-
-import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType
-        .ON_UNBIND_INPUT;
+import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_UNBIND_INPUT;
 import static android.inputmethodservice.cts.common.ImeCommandConstants.ACTION_IME_COMMAND;
-import static android.inputmethodservice.cts.common.ImeCommandConstants
-        .COMMAND_SWITCH_INPUT_METHOD_WITH_SUBTYPE;
 import static android.inputmethodservice.cts.common.ImeCommandConstants.COMMAND_SWITCH_INPUT_METHOD;
-import static android.inputmethodservice.cts.common.ImeCommandConstants
-        .COMMAND_SWITCH_TO_PREVIOUS_INPUT;
-import static android.inputmethodservice.cts.common.ImeCommandConstants
-        .COMMAND_SWITCH_TO_NEXT_INPUT;
+import static android.inputmethodservice.cts.common.ImeCommandConstants.COMMAND_SWITCH_INPUT_METHOD_WITH_SUBTYPE;
+import static android.inputmethodservice.cts.common.ImeCommandConstants.COMMAND_SWITCH_TO_NEXT_INPUT;
+import static android.inputmethodservice.cts.common.ImeCommandConstants.COMMAND_SWITCH_TO_PREVIOUS_INPUT;
 import static android.inputmethodservice.cts.common.ImeCommandConstants.EXTRA_ARG_STRING1;
 import static android.inputmethodservice.cts.common.ImeCommandConstants.EXTRA_COMMAND;
 import static android.inputmethodservice.cts.devicetest.MoreCollectors.startingFrom;
@@ -45,12 +39,13 @@ import android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventTyp
 import android.inputmethodservice.cts.common.EditTextAppConstants;
 import android.inputmethodservice.cts.common.Ime1Constants;
 import android.inputmethodservice.cts.common.Ime2Constants;
-import android.inputmethodservice.cts.common.test.DeviceTestConstants;
 import android.inputmethodservice.cts.common.test.ShellCommandUtils;
 import android.inputmethodservice.cts.devicetest.SequenceMatcher.MatchResult;
 import android.os.SystemClock;
-import androidx.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiObject2;
+import android.view.inputmethod.InputMethodSubtype;
+
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -61,6 +56,9 @@ import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collector;
 
+/**
+ * Test general lifecycle events around InputMethodService.
+ */
 @RunWith(AndroidJUnit4.class)
 public class InputMethodServiceDeviceTest {
 
@@ -69,7 +67,7 @@ public class InputMethodServiceDeviceTest {
     /** Test to check CtsInputMethod1 receives onCreate and onStartInput. */
     @Test
     public void testCreateIme1() throws Throwable {
-        final TestHelper helper = new TestHelper(getClass(), DeviceTestConstants.TEST_CREATE_IME1);
+        final TestHelper helper = new TestHelper();
 
         final long startActivityTime = SystemClock.uptimeMillis();
         helper.launchActivity(EditTextAppConstants.PACKAGE, EditTextAppConstants.CLASS,
@@ -88,8 +86,7 @@ public class InputMethodServiceDeviceTest {
     /** Test to check IME is switched from CtsInputMethod1 to CtsInputMethod2. */
     @Test
     public void testSwitchIme1ToIme2() throws Throwable {
-        final TestHelper helper = new TestHelper(
-                getClass(), DeviceTestConstants.TEST_SWITCH_IME1_TO_IME2);
+        final TestHelper helper = new TestHelper();
 
         final long startActivityTime = SystemClock.uptimeMillis();
         helper.launchActivity(EditTextAppConstants.PACKAGE, EditTextAppConstants.CLASS,
@@ -130,10 +127,13 @@ public class InputMethodServiceDeviceTest {
                         + " in sequence");
     }
 
+    /**
+     * Test {@link android.inputmethodservice.InputMethodService#switchInputMethod(String,
+     * InputMethodSubtype)}.
+     */
     @Test
     public void testSwitchInputMethod() throws Throwable {
-        final TestHelper helper = new TestHelper(
-                getClass(), DeviceTestConstants.TEST_SWITCH_INPUTMETHOD);
+        final TestHelper helper = new TestHelper();
         final long startActivityTime = SystemClock.uptimeMillis();
         helper.launchActivity(EditTextAppConstants.PACKAGE, EditTextAppConstants.CLASS,
                 EditTextAppConstants.URI);
@@ -158,10 +158,12 @@ public class InputMethodServiceDeviceTest {
                 TIMEOUT, "CtsInputMethod1.onDestroy is called");
     }
 
+    /**
+     * Test {@link android.inputmethodservice.InputMethodService#switchToNextInputMethod(boolean)}.
+     */
     @Test
     public void testSwitchToNextInputMethod() throws Throwable {
-        final TestHelper helper = new TestHelper(
-                getClass(), DeviceTestConstants.TEST_SWITCH_NEXT_INPUT);
+        final TestHelper helper = new TestHelper();
         final long startActivityTime = SystemClock.uptimeMillis();
         helper.launchActivity(EditTextAppConstants.PACKAGE, EditTextAppConstants.CLASS,
                 EditTextAppConstants.URI);
@@ -182,10 +184,12 @@ public class InputMethodServiceDeviceTest {
                 TIMEOUT, "CtsInputMethod1 shouldn't be current IME");
     }
 
+    /**
+     * Test {@link android.inputmethodservice.InputMethodService#switchToPreviousInputMethod()}.
+     */
     @Test
     public void switchToPreviousInputMethod() throws Throwable {
-        final TestHelper helper = new TestHelper(
-                getClass(), DeviceTestConstants.TEST_SWITCH_PREVIOUS_INPUT);
+        final TestHelper helper = new TestHelper();
         final long startActivityTime = SystemClock.uptimeMillis();
         helper.launchActivity(EditTextAppConstants.PACKAGE, EditTextAppConstants.CLASS,
                 EditTextAppConstants.URI);
@@ -205,10 +209,13 @@ public class InputMethodServiceDeviceTest {
                 TIMEOUT, initialIme + " is current IME");
     }
 
+    /**
+     * Test if uninstalling the currently selected IME then selecting another IME triggers standard
+     * startInput/bindInput sequence.
+     */
     @Test
     public void testInputUnbindsOnImeStopped() throws Throwable {
-        final TestHelper helper = new TestHelper(
-                getClass(), DeviceTestConstants.TEST_INPUT_UNBINDS_ON_IME_STOPPED);
+        final TestHelper helper = new TestHelper();
         final long startActivityTime = SystemClock.uptimeMillis();
         helper.launchActivity(EditTextAppConstants.PACKAGE, EditTextAppConstants.CLASS,
                 EditTextAppConstants.URI);
@@ -239,10 +246,13 @@ public class InputMethodServiceDeviceTest {
                 TIMEOUT, "CtsInputMethod2.onBindInput is called");
     }
 
+    /**
+     * Test if uninstalling the currently running IME client triggers
+     * {@link android.inputmethodservice.InputMethodService#onUnbindInput()}.
+     */
     @Test
     public void testInputUnbindsOnAppStopped() throws Throwable {
-        final TestHelper helper = new TestHelper(
-                getClass(), DeviceTestConstants.TEST_INPUT_UNBINDS_ON_APP_STOPPED);
+        final TestHelper helper = new TestHelper();
         final long startActivityTime = SystemClock.uptimeMillis();
         helper.launchActivity(EditTextAppConstants.PACKAGE, EditTextAppConstants.CLASS,
                 EditTextAppConstants.URI);

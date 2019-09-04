@@ -34,7 +34,7 @@ LOCAL_STATIC_JAVA_LIBRARIES = \
 	ShortcutManagerTestUtils \
 	testng
 
-LOCAL_SDK_VERSION := current
+LOCAL_SDK_VERSION := system_current
 LOCAL_MIN_SDK_VERSION := 21
 
 # tag this module as a cts test artifact

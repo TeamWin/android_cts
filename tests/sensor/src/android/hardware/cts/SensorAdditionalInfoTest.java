@@ -23,6 +23,7 @@ import android.hardware.SensorEventCallback;
 import android.hardware.SensorManager;
 import android.hardware.cts.helpers.SensorCtsHelper;
 import android.util.Log;
+import android.content.pm.PackageManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,14 +53,23 @@ public class SensorAdditionalInfoTest extends SensorTestCase {
         List<Sensor> list = mSensorManager.getSensorList(Sensor.TYPE_ALL);
         List<String> errors = new ArrayList<String>();
         for (Sensor s : list) {
-            // skip vendor sensor types and those that do not support additional info
-            // one-shot and on-change sensors are not supported as well
+            // skip vendor sensor types, one-shot and on-change sensors.
             if (s.getType() >= Sensor.TYPE_DEVICE_PRIVATE_BASE ||
-                    !s.isAdditionalInfoSupported() ||
                     s.getReportingMode() == Sensor.REPORTING_MODE_ONE_SHOT ||
                     s.getReportingMode() == Sensor.REPORTING_MODE_ON_CHANGE) {
                 continue;
             }
+
+            if (!s.isAdditionalInfoSupported()) {
+                // check SensorAdditionalInfo is supported for Automotive sensors.
+                if (getContext().getPackageManager().hasSystemFeature(
+                        PackageManager.FEATURE_AUTOMOTIVE)) {
+                    errors.add("Sensor: " + s.getName() +
+                        ", error: AdditionalSensorInfo not supported for Automotive sensor.");
+                }
+                continue;
+            }
+
             try {
                 runSensorAdditionalInfoTest(s);
             } catch (AssertionError e) {
@@ -90,6 +100,13 @@ public class SensorAdditionalInfoTest extends SensorTestCase {
             assertTrue("Missing additional info at registration: (" + verifier.getState() + ")",
                     verifier.verify());
 
+            // verify TYPE_SENSOR_PLACEMENT for Automotive.
+            if (getContext().getPackageManager().
+                hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+                    assertTrue("Missing TYPE_SENSOR_PLACEMENT at: (" + verifier.getState() + ")",
+                        verifier.sensorPlacement());
+            }
+
             verifier.reset(true /*flushPending*/);
             assertTrue("Flush sensor failed.", mSensorManager.flush(verifier));
             assertTrue("Missing additional info after flushing: (" + verifier.getState() + ")",
@@ -112,6 +129,7 @@ public class SensorAdditionalInfoTest extends SensorTestCase {
         private boolean mBeginFrame = false;
         private boolean mEndFrame = false;
         private boolean mFlushPending = false;
+        private boolean mSensorPlacement = false;
         private CountDownLatch mDone;
         private final Sensor mSensor;
 
@@ -131,6 +149,8 @@ public class SensorAdditionalInfoTest extends SensorTestCase {
             if (info.sensor == mSensor && !mFlushPending) {
                 if (info.type == SensorAdditionalInfo.TYPE_FRAME_BEGIN) {
                     mBeginFrame = true;
+                } else if (mBeginFrame && info.type == SensorAdditionalInfo.TYPE_SENSOR_PLACEMENT) {
+                    mSensorPlacement = true;
                 } else if (info.type == SensorAdditionalInfo.TYPE_FRAME_END && mBeginFrame) {
                     mEndFrame = true;
                     mDone.countDown();
@@ -142,6 +162,7 @@ public class SensorAdditionalInfoTest extends SensorTestCase {
             mFlushPending = flushPending;
             mBeginFrame = false;
             mEndFrame = false;
+            mSensorPlacement = false;
             mDone = new CountDownLatch(1);
         }
 
@@ -158,6 +179,9 @@ public class SensorAdditionalInfoTest extends SensorTestCase {
         public String getState() {
             return "fp=" + mFlushPending +", b=" + mBeginFrame + ", e=" + mEndFrame;
         }
+
+        public boolean sensorPlacement() {
+            return mSensorPlacement;
+        }
     }
 }
-

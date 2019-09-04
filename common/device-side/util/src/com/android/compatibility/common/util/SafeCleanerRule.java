@@ -16,9 +16,11 @@
 
 package com.android.compatibility.common.util;
 
-import androidx.annotation.NonNull;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
+import org.junit.AssumptionViolatedException;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -34,12 +36,11 @@ import java.util.concurrent.Callable;
  * Rule used to safely run clean up code after a test is finished, so that exceptions thrown by
  * the cleanup code don't hide exception thrown by the test body
  */
-// TODO: move to common CTS code
 public final class SafeCleanerRule implements TestRule {
 
     private static final String TAG = "SafeCleanerRule";
 
-    private final List<Runnable> mCleaners = new ArrayList<>();
+    private final List<ThrowingRunnable> mCleaners = new ArrayList<>();
     private final List<Callable<List<Throwable>>> mExtraThrowables = new ArrayList<>();
     private final List<Throwable> mThrowables = new ArrayList<>();
     private Dumper mDumper;
@@ -47,7 +48,7 @@ public final class SafeCleanerRule implements TestRule {
     /**
      * Runs {@code cleaner} after the test is finished, catching any {@link Throwable} thrown by it.
      */
-    public SafeCleanerRule run(@NonNull Runnable cleaner) {
+    public SafeCleanerRule run(@NonNull ThrowingRunnable cleaner) {
         mCleaners.add(cleaner);
         return this;
     }
@@ -55,10 +56,21 @@ public final class SafeCleanerRule implements TestRule {
     /**
      * Adds exceptions directly.
      *
-     * <p>Typically used when exceptions were caught asychronously during the test execution.
+     * <p>Typically used for exceptions caught asychronously during the test execution.
      */
     public SafeCleanerRule add(@NonNull Callable<List<Throwable>> exceptions) {
         mExtraThrowables.add(exceptions);
+        return this;
+    }
+
+    /**
+     * Adds exceptions directly.
+     *
+     * <p>Typically used for exceptions caught during {@code finally} blocks.
+     */
+    public SafeCleanerRule add(Throwable exception) {
+        Log.w(TAG, "Adding exception directly: " + exception);
+        mThrowables.add(exception);
         return this;
     }
 
@@ -79,12 +91,12 @@ public final class SafeCleanerRule implements TestRule {
                 try {
                     base.evaluate();
                 } catch (Throwable t) {
-                    Log.w(TAG, "Adding exception from main test");
-                    mThrowables.add(t);
+                    Log.w(TAG, "Adding exception from main test at index 0: " + t);
+                    mThrowables.add(0, t);
                 }
 
                 // Then the cleanup runners
-                for (Runnable runner : mCleaners) {
+                for (ThrowingRunnable runner : mCleaners) {
                     try {
                         runner.run();
                     } catch (Throwable t) {
@@ -96,11 +108,14 @@ public final class SafeCleanerRule implements TestRule {
                 // And finally add the extra exceptions
                 for (Callable<List<Throwable>> extraThrowablesCallable : mExtraThrowables) {
                     final List<Throwable> extraThrowables = extraThrowablesCallable.call();
-                    if (extraThrowables != null) {
+                    if (extraThrowables != null && !extraThrowables.isEmpty()) {
                         Log.w(TAG, "Adding " + extraThrowables.size() + " extra exceptions");
                         mThrowables.addAll(extraThrowables);
                     }
                 }
+
+                // Ignore all instances of AssumptionViolatedExceptions
+                mThrowables.removeIf(t -> t instanceof AssumptionViolatedException);
 
                 // Finally, throw up!
                 if (mThrowables.isEmpty()) return;

@@ -39,7 +39,6 @@ import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
-import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Handler;
@@ -52,15 +51,19 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 
-import androidx.test.InstrumentationRegistry;
+
 import androidx.test.annotation.UiThreadTest;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.FlakyTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
+
 
 import com.android.compatibility.common.util.PollingCheck;
 
@@ -126,6 +129,7 @@ public class DialogTest {
         assertTextAppearanceStyle(ta);
     }
 
+    @FlakyTest(bugId = 133760851)
     @Test
     public void testConstructor_protectedCancellable() {
         startDialogActivity(DialogStubActivity.TEST_PROTECTED_CANCELABLE);
@@ -150,6 +154,7 @@ public class DialogTest {
         assertTrue(mActivity.onCancelListenerCalled);
     }
 
+    @FlakyTest(bugId = 133760851)
     @Test
     public void testConstructor_protectedNotCancellableEsc() {
         startDialogActivity(DialogStubActivity.TEST_PROTECTED_NOT_CANCELABLE);
@@ -180,6 +185,7 @@ public class DialogTest {
                 ta.getInt(R.styleable.TextAppearance_textStyle, defValue));
     }
 
+    @FlakyTest(bugId = 133760851)
     @Test
     public void testOnStartCreateStop(){
         startDialogActivity(DialogStubActivity.TEST_ONSTART_AND_ONSTOP);
@@ -279,6 +285,7 @@ public class DialogTest {
         TestDialog.onRestoreInstanceStateObserver.await();
     }
 
+    @FlakyTest(bugId = 133760851)
     @Test
     public void testGetCurrentFocus() throws Throwable {
         startDialogActivity(DialogStubActivity.TEST_ONSTART_AND_ONSTOP);
@@ -473,27 +480,26 @@ public class DialogTest {
     public void testTouchEvent() {
         startDialogActivity(DialogStubActivity.TEST_ONSTART_AND_ONSTOP);
         final TestDialog d = (TestDialog) mActivity.getDialog();
-        final Rect containingRect = new Rect();
-        mActivity.getWindow().getDecorView().getWindowVisibleDisplayFrame(containingRect);
-        final int x = containingRect.left + 1;
-        final int y = containingRect.top + 1;
+
+        int dialogLocation[] = new int[2];
+        d.getWindow().getDecorView().getRootView().getLocationOnScreen(dialogLocation);
+
+        final int touchSlop = ViewConfiguration.get(mActivity).getScaledWindowTouchSlop();
+        final int x = dialogLocation[0] - (touchSlop + 1);
+        final int y = dialogLocation[1] - (touchSlop + 1);
 
         assertNull(d.onTouchEvent);
         assertNull(d.touchEvent);
         assertFalse(d.isOnTouchEventCalled);
 
-        // Send a touch event outside the dialog window.  Expect the event to be ignored
+        // Tap outside the dialog window.  Expect the event to be ignored
         // because closeOnTouchOutside is false.
         d.setCanceledOnTouchOutside(false);
 
-        long now = SystemClock.uptimeMillis();
-        MotionEvent touchMotionEvent = sendTouchEvent(now, MotionEvent.ACTION_DOWN, x, y);
+        long downTime = SystemClock.uptimeMillis();
 
-        new PollingCheck(TEST_TIMEOUT) {
-            protected boolean check() {
-                return !d.dispatchTouchEventResult;
-            }
-        }.run();
+        sendTouchEvent(downTime, MotionEvent.ACTION_DOWN, x, y).recycle();
+        MotionEvent touchMotionEvent = sendTouchEvent(downTime, MotionEvent.ACTION_UP, x, y);
 
         assertMotionEventEquals(touchMotionEvent, d.touchEvent);
         assertTrue(d.isOnTouchEventCalled);
@@ -501,8 +507,6 @@ public class DialogTest {
         d.isOnTouchEventCalled = false;
         assertTrue(d.isShowing());
         touchMotionEvent.recycle();
-        // Send ACTION_UP to keep the event stream consistent
-        sendTouchEvent(now, MotionEvent.ACTION_UP, x, y).recycle();
 
         if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
             // Watch activities cover the entire screen, so there is no way to touch outside.
@@ -511,23 +515,17 @@ public class DialogTest {
 
         // Send a touch event outside the dialog window. Expect the dialog to be dismissed
         // because closeOnTouchOutside is true.
-
         d.setCanceledOnTouchOutside(true);
-        now = SystemClock.uptimeMillis();
-        touchMotionEvent = sendTouchEvent(now, MotionEvent.ACTION_DOWN, x, y);
+        downTime = SystemClock.uptimeMillis();
 
-        new PollingCheck(TEST_TIMEOUT) {
-            protected boolean check() {
-                return d.dispatchTouchEventResult;
-            }
-        }.run();
+        sendTouchEvent(downTime, MotionEvent.ACTION_DOWN, x, y).recycle();
+        touchMotionEvent = sendTouchEvent(downTime, MotionEvent.ACTION_UP, x, y);
 
         assertMotionEventEquals(touchMotionEvent, d.touchEvent);
         assertTrue(d.isOnTouchEventCalled);
         assertMotionEventEquals(touchMotionEvent, d.onTouchEvent);
         assertFalse(d.isShowing());
         touchMotionEvent.recycle();
-        sendTouchEvent(now, MotionEvent.ACTION_UP, x, y).recycle();
     }
 
     @Test
@@ -600,6 +598,7 @@ public class DialogTest {
         assertTrue(d.isOnContentChangedCalled);
     }
 
+    @FlakyTest(bugId = 133760851)
     @Test
     public void testOnWindowFocusChanged() throws Throwable {
         startDialogActivity(DialogStubActivity.TEST_ONSTART_AND_ONSTOP);
@@ -623,6 +622,7 @@ public class DialogTest {
         }.run();
     }
 
+    @FlakyTest(bugId = 133760851)
     @Test
     public void testDispatchKeyEvent() {
         startDialogActivity(DialogStubActivity.TEST_ONSTART_AND_ONSTOP);
@@ -750,6 +750,7 @@ public class DialogTest {
     public void testOnSearchRequested() {
     }
 
+    @FlakyTest(bugId = 133760851)
     @Test
     public void testTakeKeyEvents() throws Throwable {
         startDialogActivity(DialogStubActivity.TEST_ONSTART_AND_ONSTOP);
@@ -839,6 +840,7 @@ public class DialogTest {
         assertEquals(d.getWindow().getLayoutInflater(), d.getLayoutInflater());
     }
 
+    @FlakyTest(bugId = 133760851)
     @Test
     public void testSetCancellable_true() {
         startDialogActivity(DialogStubActivity.TEST_DIALOG_WITHOUT_THEME);
@@ -872,6 +874,7 @@ public class DialogTest {
         assertFalse(d.isShowing());
     }
 
+    @FlakyTest(bugId = 133760851)
     @Test
     public void testSetCancellableEsc_false() {
         startDialogActivity(DialogStubActivity.TEST_DIALOG_WITHOUT_THEME);
@@ -921,6 +924,7 @@ public class DialogTest {
         assertFalse(mOnCancelListenerCalled);
     }
 
+    @FlakyTest(bugId = 133760851)
     @Test
     public void testSetCancelMessage() throws Exception {
         mCalledCallback = false;

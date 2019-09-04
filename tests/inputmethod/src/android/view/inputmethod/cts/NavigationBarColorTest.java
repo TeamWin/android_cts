@@ -45,7 +45,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
-import android.view.inputmethod.cts.util.ImeAwareEditText;
 import android.view.inputmethod.cts.util.NavigationBarInfo;
 import android.view.inputmethod.cts.util.TestActivity;
 import android.widget.LinearLayout;
@@ -57,6 +56,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ImeAwareEditText;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeLayoutInfo;
 import com.android.cts.mockime.ImeSettings;

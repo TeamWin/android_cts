@@ -35,6 +35,8 @@ import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.WidgetTestUtils;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -91,7 +93,7 @@ public class SeekBarTest {
         MotionEvent event = MotionEvent.obtain(downTime, eventTime, MotionEvent.ACTION_DOWN,
                 seekBarXY[0], seekBarXY[1], 0);
         mInstrumentation.sendPointerSync(event);
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mSeekBar, null);
         verify(mockChangeListener, times(1)).onStartTrackingTouch(mSeekBar);
         // while starting to track, the progress is changed also
         verify(mockChangeListener, atLeastOnce()).onProgressChanged(eq(mSeekBar), anyInt(),
@@ -103,7 +105,7 @@ public class SeekBarTest {
         event = MotionEvent.obtain(downTime, eventTime, MotionEvent.ACTION_MOVE,
                 seekBarXY[0] + (mSeekBar.getWidth() >> 1), seekBarXY[1], 0);
         mInstrumentation.sendPointerSync(event);
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mSeekBar, null);
         verify(mockChangeListener, atLeastOnce()).onProgressChanged(eq(mSeekBar), anyInt(),
                 eq(true));
 
@@ -113,7 +115,7 @@ public class SeekBarTest {
         event = MotionEvent.obtain(downTime, eventTime, MotionEvent.ACTION_UP,
                 seekBarXY[0] + (mSeekBar.getWidth() >> 1), seekBarXY[1], 0);
         mInstrumentation.sendPointerSync(event);
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mSeekBar, null);
         verify(mockChangeListener, times(1)).onStopTrackingTouch(mSeekBar);
     }
 }
