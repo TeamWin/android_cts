@@ -110,6 +110,9 @@ public class StagedInstallTest {
     private static final TestApp Apex2SignedBobRot = new TestApp(
             "Apex2SignedBobRot", SHIM_PACKAGE_NAME, 2, /*isApex*/true,
                     "com.android.apex.cts.shim.v2_signed_bob_rot.apex");
+    private static final TestApp Apex2SignedEve = new TestApp(
+            "Apex2SignedEve", SHIM_PACKAGE_NAME, 2, /*isApex*/true,
+            "com.android.apex.cts.shim.v2_signed_eve.apex");
     private static final TestApp Apex3SignedBob = new TestApp(
             "Apex3SignedBob", SHIM_PACKAGE_NAME, 3, /*isApex*/true,
                     "com.android.apex.cts.shim.v3_signed_bob.apex");
@@ -498,6 +501,21 @@ public class StagedInstallTest {
     }
 
     @Test
+    public void testInstallV3SignedBobApex_Commit() throws Exception {
+        int sessionId = stageSingleApk(Apex2SignedBobRot).assertSuccessful().getSessionId();
+        waitForIsReadyBroadcast(sessionId);
+        assertSessionReady(sessionId);
+        storeSessionId(sessionId);
+    }
+
+    @Test
+    public void testInstallV3SignedBobApex_VerifyPostReboot() throws Exception {
+        int sessionId = retrieveLastSessionId();
+        assertSessionApplied(sessionId);
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(2);
+    }
+
+    @Test
     public void testStagedInstallDowngradeApex_DowngradeNotRequested_Fails_Commit()
             throws Exception {
         assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(3);
@@ -728,7 +746,6 @@ public class StagedInstallTest {
     // Once updated with a new rotated key (bob), further updates with old key (alice) should fail
     @Test
     public void testAfterRotationOldKeyIsRejected() throws Exception {
-        // Assume updateWithDifferentKey_Commit has been run already
         assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(2);
         int sessionId = stageSingleApk(TestApp.Apex3).assertSuccessful().getSessionId();
         PackageInstaller.SessionInfo info =
@@ -740,7 +757,6 @@ public class StagedInstallTest {
     // Once updated with a new rotated key (bob), further updates with new key (bob) should pass
     @Test
     public void testAfterRotationNewKeyCanUpdateFurther_CommitPostReboot() throws Exception {
-        // Assume updateWithDifferentKey_Commit has been run already
         assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(2);
         int sessionId = stageSingleApk(Apex3SignedBobRot).assertSuccessful().getSessionId();
         PackageInstaller.SessionInfo info =
@@ -758,13 +774,26 @@ public class StagedInstallTest {
     @Test
     public void testAfterRotationNewKeyCanUpdateFurtherWithoutLineage()
             throws Exception {
-        // Assume updateWithDifferentKey_Commit has been run already
         assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(2);
         int sessionId = stageSingleApk(Apex3SignedBob).assertSuccessful().getSessionId();
         PackageInstaller.SessionInfo info =
                 SessionUpdateBroadcastReceiver.sessionBroadcasts.poll(60, TimeUnit.SECONDS);
         assertThat(info.getSessionId()).isEqualTo(sessionId);
         assertThat(info).isStagedSessionReady();
+    }
+
+    // Key downgrade should fail if new key is not ancestor of current key
+    @Test
+    public void testKeyDowngradeFailIfMismatch()
+            throws Exception {
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(2);
+        int sessionId = stageDowngradeSingleApk(Apex2SignedEve).assertSuccessful().getSessionId();
+        PackageInstaller.SessionInfo info =
+                SessionUpdateBroadcastReceiver.sessionBroadcasts.poll(60, TimeUnit.SECONDS);
+        assertThat(info.getSessionId()).isEqualTo(sessionId);
+        assertThat(info).isStagedSessionFailed();
+        assertThat(info.getStagedSessionErrorMessage()).contains("is not compatible with the one "
+                + "currently installed on device");
     }
 
     @Test

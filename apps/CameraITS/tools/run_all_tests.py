@@ -40,6 +40,7 @@ CHART_SCALE_START = 0.65
 CHART_SCALE_STOP = 1.35
 CHART_SCALE_STEP = 0.025
 FACING_EXTERNAL = 2
+NOT_YET_MANDATED_ALL = 100
 NUM_TRYS = 2
 PROC_TIMEOUT_CODE = -101  # terminated process return -process_id
 PROC_TIMEOUT_TIME = 900  # timeout in seconds for a process (15 minutes)
@@ -89,19 +90,20 @@ SCENE_EXTRA_ARGS = {
         'scene5': ['doAF=False']
 }
 
-# Not yet mandated tests
+# Not yet mandated tests ['test', first_api_level mandatory]
+# ie. ['test_test_patterns', 28] is MANDATED for first_api_level >= 28
 NOT_YET_MANDATED = {
         'scene0': [
-                'test_test_patterns',
-                'test_tonemap_curve'
+                ['test_test_patterns', 28],
+                ['test_tonemap_curve', 28]
         ],
         'scene1_1': [
-                'test_ae_precapture_trigger',
-                'test_channel_saturation'
+                ['test_ae_precapture_trigger', 28],
+                ['test_channel_saturation', 29]
         ],
         'scene1_2': [],
         'scene2_a': [
-                'test_auto_per_frame_control'
+                ['test_auto_per_frame_control', NOT_YET_MANDATED_ALL]
         ],
         'scene2_b': [],
         'scene2_c': [],
@@ -165,8 +167,34 @@ REPEATED_TESTS = {
 }
 
 
+def determine_not_yet_mandated_tests(device_id):
+    """Determine from NEW_YET_MANDATED & phone info not_yet_mandated tests.
+
+    Args:
+        device_id:      string of device id number
+
+    Returns:
+        dict of not yet mandated tests
+    """
+    # initialize not_yet_mandated
+    not_yet_mandated = {}
+    for scene in ALL_SCENES:
+        not_yet_mandated[scene] = []
+
+    # Determine first API level for device
+    first_api_level = its.device.get_first_api_level(device_id)
+
+    # Determine which scenes are not yet mandated for first api level
+    for scene, tests in NOT_YET_MANDATED.items():
+        for test in tests:
+            if test[1] >= first_api_level:
+                not_yet_mandated[scene].append(test[0])
+    return not_yet_mandated
+
+
 def expand_scene(scene, scenes):
     """Expand a grouped scene and append its sub_scenes to scenes.
+
     Args:
         scene:      scene in GROUPED_SCENES dict
         scenes:     list of scenes to append to
@@ -470,6 +498,7 @@ def main():
 
         tot_tests = []
         tot_pass = 0
+        not_yet_mandated = determine_not_yet_mandated_tests(device_id)
         for scene in scenes:
             skip_code = None
             tests = [(s[:-3], os.path.join('tests', scene, s))
@@ -595,7 +624,7 @@ def main():
                 elif test_code == SKIP_RET_CODE:
                     retstr = "SKIP "
                     numskip += 1
-                elif test_code != 0 and testname in NOT_YET_MANDATED[scene]:
+                elif test_code != 0 and testname in not_yet_mandated[scene]:
                     retstr = "FAIL*"
                     num_not_mandated_fail += 1
                 else:

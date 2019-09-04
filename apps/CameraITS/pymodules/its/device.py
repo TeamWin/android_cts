@@ -27,6 +27,7 @@ import numpy
 
 from collections import namedtuple
 
+
 class ItsSession(object):
     """Controls a device over adb to run ITS scripts.
 
@@ -1108,7 +1109,7 @@ def get_device_fingerprint(device_id):
     return device_bfp
 
 def parse_camera_ids(ids):
-    """ Parse the string of camera IDs into array of CameraIdCombo tuples.
+    """Parse the string of camera IDs into array of CameraIdCombo tuples.
     """
     CameraIdCombo = namedtuple('CameraIdCombo', ['id', 'sub_id'])
     id_combos = []
@@ -1121,6 +1122,35 @@ def parse_camera_ids(ids):
         else:
             assert(False), 'Camera id parameters must be either ID, or ID:SUB_ID'
     return id_combos
+
+
+def get_build_sdk_version(device_id=None):
+    """Get the build version of the device."""
+    if not device_id:
+        device_id = get_device_id()
+    cmd = 'adb -s %s shell getprop ro.build.version.sdk' % device_id
+    try:
+        build_sdk_version = int(subprocess.check_output(cmd.split()).rstrip())
+        print 'Build SDK version: %d' % build_sdk_version
+    except (subprocess.CalledProcessError, ValueError):
+        print 'No build_sdk_version.'
+        assert 0
+    return build_sdk_version
+
+
+def get_first_api_level(device_id=None):
+    """Get the first API level for device."""
+    if not device_id:
+        device_id = get_device_id()
+    cmd = 'adb -s %s shell getprop ro.product.first_api_level' % device_id
+    try:
+        first_api_level = int(subprocess.check_output(cmd.split()).rstrip())
+        print 'First API level: %d' % first_api_level
+    except (subprocess.CalledProcessError, ValueError):
+        print 'No first_api_level. Setting to build version.'
+        first_api_level = get_build_sdk_version(device_id)
+    return first_api_level
+
 
 def _run(cmd):
     """Replacement for os.system, with hiding of stdout+stderr messages.
