@@ -314,16 +314,16 @@ public class MediaUtils {
             return false;
         }
 
-	if (rate == 0.0) {
+        if (rate == 0.0) {
             return true;
-	}
+        }
 
         // before Q, we always said yes once we found a decoder for the format.
         if (ApiLevelUtil.isBefore(Build.VERSION_CODES.Q)) {
             return true;
-	}
+        }
 
-	// we care about speed of decoding
+        // we care about speed of decoding
         Log.d(TAG, "checking for decoding " + format + " at " +
                    rate + " fps with " + decoder);
 
@@ -353,7 +353,9 @@ public class MediaUtils {
             return false;
         }
 
-        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.Q) && mci.isHardwareAccelerated()) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.Q)
+                && PropertyUtil.isVendorApiLevelAtLeast(Build.VERSION_CODES.Q)
+                && mci.isHardwareAccelerated()) {
             MediaCodecInfo.VideoCapabilities caps =
                             mci.getCapabilitiesForType(mime).getVideoCapabilities();
             List<MediaCodecInfo.VideoCapabilities.PerformancePoint> pp =
@@ -369,7 +371,7 @@ public class MediaUtils {
             }
             Log.i(TAG, "NOT covered by any hardware performance point");
             return false;
-	} else {
+        } else {
             String verified = MediaPerfUtils.areAchievableFrameRates(
                               decoder, mime, width, height, rate);
             if (verified == null) {
@@ -378,7 +380,7 @@ public class MediaUtils {
             }
             Log.d(TAG, "achieveable framerates says: " + verified);
             return false;
-	}
+        }
     }
 
     public static boolean supports(String codecName, String mime, int w, int h) {
@@ -631,7 +633,7 @@ public class MediaUtils {
 
     // checks format, does not address actual speed of decoding
     public static boolean canDecodeVideo(String mime, int width, int height, float rate) {
-	return canDecodeVideo(mime, width, height, rate, (float)0.0);
+        return canDecodeVideo(mime, width, height, rate, (float)0.0);
     }
 
     // format + decode rate
