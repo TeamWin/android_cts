@@ -122,6 +122,46 @@ public class LoginActivityTest
     }
 
     @Test
+    public void testContentCaptureSessionCache() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher = startWatcher();
+
+        final ContentCaptureContext clientContext = newContentCaptureContext();
+
+        final AtomicReference<ContentCaptureSession> mainSessionRef = new AtomicReference<>();
+        final AtomicReference<ContentCaptureSession> childSessionRef = new AtomicReference<>();
+
+        LoginActivity.onRootView((activity, rootView) -> {
+            final ContentCaptureSession mainSession = rootView.getContentCaptureSession();
+            mainSessionRef.set(mainSession);
+            final ContentCaptureSession childSession = mainSession
+                    .createContentCaptureSession(clientContext);
+            childSessionRef.set(childSession);
+
+            rootView.setContentCaptureSession(childSession);
+            // Already called getContentCaptureSession() earlier, use cached session (main).
+            assertThat(rootView.getContentCaptureSession()).isEqualTo(childSession);
+
+            rootView.setContentCaptureSession(mainSession);
+            assertThat(rootView.getContentCaptureSession()).isEqualTo(mainSession);
+
+            rootView.setContentCaptureSession(childSession);
+            assertThat(rootView.getContentCaptureSession()).isEqualTo(childSession);
+        });
+
+        final LoginActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        final ContentCaptureSessionId childSessionId = childSessionRef.get()
+                .getContentCaptureSessionId();
+
+        assertSessionId(childSessionId, activity.getRootView());
+    }
+
+    @Test
     public void testSimpleLifecycle_rootViewSession() throws Exception {
         final CtsContentCaptureService service = enableService();
         final ActivityWatcher watcher = startWatcher();
