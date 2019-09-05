@@ -26,18 +26,26 @@ import static com.google.common.collect.Sets.difference;
 import static com.google.common.collect.Sets.intersection;
 import static com.google.common.collect.Sets.newHashSet;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
-import android.test.AndroidTestCase;
+import android.platform.test.annotations.AppModeFull;
 import android.text.TextUtils;
 import android.util.ArrayMap;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PropertyUtil;
 import com.android.compatibility.common.util.SystemUtil;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -59,18 +67,24 @@ import java.util.TreeSet;
  * &lt;privapp-permissions&gt;
  * </ul>
  */
-public class PrivappPermissionsTest extends AndroidTestCase {
+@AppModeFull(reason = "This test test platform properties, not capabilities of an apps")
+@RunWith(AndroidJUnit4.class)
+public class PrivappPermissionsTest {
 
     private static final String TAG = "PrivappPermissionsTest";
 
     private static final String PLATFORM_PACKAGE_NAME = "android";
 
-    public void testPrivappPermissionsEnforcement() throws Exception {
+    @Test
+    public void privappPermissionsMustBeEnforced() {
         assertEquals("ro.control_privapp_permissions is not set to enforce",
                 "enforce", PropertyUtil.getProperty("ro.control_privapp_permissions"));
+    }
 
+    @Test
+    public void privappPermissionsNeedToBeWhitelisted() throws Exception {
         Set<String> platformPrivPermissions = new HashSet<>();
-        PackageManager pm = getContext().getPackageManager();
+        PackageManager pm = InstrumentationRegistry.getContext().getPackageManager();
         PackageInfo platformPackage = pm.getPackageInfo(PLATFORM_PACKAGE_NAME,
                 PackageManager.GET_PERMISSIONS);
 

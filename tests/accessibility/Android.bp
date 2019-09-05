@@ -12,14 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+java_library_static {
+    name: "CtsAccessibilityCommon",
+    sdk_version: "test_current",
+    static_libs: [
+        "compatibility-device-util-axt",
+    ],
+    srcs: ["common/src/**/*.java"],
+}
+
 android_test {
     name: "CtsAccessibilityTestCases",
     defaults: ["cts_defaults"],
     srcs: ["src/**/*.java"],
     static_libs: [
-        "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "hamcrest-library",
+        "CtsAccessibilityCommon",
     ],
     libs: ["android.test.base.stubs"],
     // Tag this module as a cts test artifact

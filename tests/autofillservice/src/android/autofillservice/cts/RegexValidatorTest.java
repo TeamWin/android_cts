@@ -27,7 +27,7 @@ import android.service.autofill.RegexValidator;
 import android.service.autofill.ValueFinder;
 import android.view.autofill.AutofillId;
 
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,7 +35,7 @@ import org.junit.runner.RunWith;
 import java.util.regex.Pattern;
 
 @RunWith(AndroidJUnit4.class)
-@AppModeFull // Unit test
+@AppModeFull(reason = "Unit test")
 public class RegexValidatorTest {
 
     @Test

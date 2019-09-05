@@ -22,6 +22,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 
 public class DeviceInfoStore extends InfoStore {
@@ -53,7 +54,7 @@ public class DeviceInfoStore extends InfoStore {
      * Closes the writer.
      */
     @Override
-    public void close() throws IOException {
+    public void close() throws Exception {
         mJsonWriter.endObject();
         mJsonWriter.flush();
         mJsonWriter.close();

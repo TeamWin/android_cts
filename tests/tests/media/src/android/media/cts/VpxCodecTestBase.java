@@ -99,10 +99,6 @@ public class VpxCodecTestBase extends AndroidTestCase {
             this.codecName = codecName;
             this.colorFormat = colorFormat;
         }
-        public boolean  isGoogleCodec() {
-            return MediaUtils.isGoogle(codecName);
-        }
-
         public final String codecName; // OpenMax component name for VPx codec.
         public final int colorFormat;  // Color format supported by codec.
     }
@@ -128,7 +124,7 @@ public class VpxCodecTestBase extends AndroidTestCase {
         CodecProperties codecProperties = null;
         String mime = format.getString(MediaFormat.KEY_MIME);
 
-        // Loop through the list of omx components in case platform specific codec
+        // Loop through the list of codec components in case platform specific codec
         // is requested.
         MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         for (MediaCodecInfo codecInfo : mcl.getCodecInfos()) {
@@ -138,8 +134,7 @@ public class VpxCodecTestBase extends AndroidTestCase {
             Log.v(TAG, codecInfo.getName());
             // TODO: remove dependence of Google from the test
             // Check if this is Google codec - we should ignore it.
-            boolean isGoogleCodec = MediaUtils.isGoogle(codecInfo.getName());
-            if (!isGoogleCodec && forceGoogleCodec) {
+            if (codecInfo.isVendor() && forceGoogleCodec) {
                 continue;
             }
 
@@ -166,8 +161,8 @@ public class VpxCodecTestBase extends AndroidTestCase {
                                     codecColorFormat);
                             Log.v(TAG, "Found target codec " + codecProperties.codecName +
                                     ". Color: 0x" + Integer.toHexString(codecColorFormat));
-                            // return first HW codec found
-                            if (!isGoogleCodec) {
+                            // return first vendor codec (hopefully HW) found
+                            if (!codecInfo.isVendor()) {
                                 return codecProperties;
                             }
                         }

@@ -20,11 +20,11 @@ android_test_helper_app {
     static_libs: [
         "androidx.legacy_legacy-support-v4",
         "ctstestrunner-axt",
+        "compatibility-device-util-axt",
         "androidx.test.rules",
         "truth-prebuilt",
         "ub-uiautomator",
     ],
-    sdk_version: "current",
     min_sdk_version: "21",
     // tag this module as a cts test artifact
     test_suites: [

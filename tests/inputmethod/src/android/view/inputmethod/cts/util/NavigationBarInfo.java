@@ -137,7 +137,7 @@ public class NavigationBarInfo {
                 (color, lightNavigationBar) -> getBottomNavigationBarBitmapForActivity(
                         color, lightNavigationBar, actualBottomInset,
                         true /* showDimmingDialog */)).getResult()
-                == LightNavigationBarVerifier.ResultType.NOT_SUPPORTED;
+                == LightNavigationBarVerifier.ResultType.SUPPORTED;
 
         sInstance = new NavigationBarInfo(
                 true, actualBottomInset, colorSupported, lightModeSupported, dimmingSupported);

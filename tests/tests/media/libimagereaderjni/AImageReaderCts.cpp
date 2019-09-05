@@ -64,6 +64,7 @@ static constexpr FormatUsageCombination supportedFormatUsage[] = {
     {AIMAGE_FORMAT_RGBA_8888, AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN},
     {AIMAGE_FORMAT_RGBA_8888, AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE},
     {AIMAGE_FORMAT_RGBA_8888, AHARDWAREBUFFER_USAGE_VIDEO_ENCODE},
+    {AIMAGE_FORMAT_Y8, AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN},
 };
 
 class CameraHelper {
@@ -392,7 +393,8 @@ class ImageReaderTestCase {
             mFormat == AIMAGE_FORMAT_RGB_888 ||
             mFormat == AIMAGE_FORMAT_RGB_565 ||
             mFormat == AIMAGE_FORMAT_RGBA_FP16 ||
-            mFormat == AIMAGE_FORMAT_YUV_420_888) {
+            mFormat == AIMAGE_FORMAT_YUV_420_888 ||
+            mFormat == AIMAGE_FORMAT_Y8) {
             // Check output buffer dimension for certain formats. Don't do this for blob based
             // formats.
             if (bufferWidth != mWidth || bufferHeight != mHeight) {

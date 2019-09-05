@@ -16,28 +16,50 @@
 
 package android.telephony.cts;
 
+import static com.android.compatibility.common.util.BlockedNumberUtil.deleteBlockedNumber;
+import static com.android.compatibility.common.util.BlockedNumberUtil.insertBlockedNumber;
+
 import static androidx.test.InstrumentationRegistry.getContext;
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.emptyString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
+import static org.hamcrest.Matchers.startsWith;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertThat;
+
+import android.app.AppOpsManager;
 import android.app.PendingIntent;
+import android.app.UiAutomation;
+import android.app.role.RoleManager;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.database.CursorWindow;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
+import android.os.RemoteCallback;
 import android.os.SystemClock;
-import android.provider.BlockedNumberContract;
+import android.provider.Settings;
 import android.provider.Telephony;
+import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
@@ -50,7 +72,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.Before;
@@ -79,6 +106,11 @@ public class SmsManagerTest {
     private static final String SMS_DELIVERY_ACTION = "CTS_SMS_DELIVERY_ACTION";
     private static final String DATA_SMS_RECEIVED_ACTION = "android.intent.action.DATA_SMS_RECEIVED";
     public static final String SMS_DELIVER_DEFAULT_APP_ACTION = "CTS_SMS_DELIVERY_ACTION_DEFAULT_APP";
+    public static final String LEGACY_SMS_APP = "android.telephony.cts.sms23";
+    public static final String MODERN_SMS_APP = "android.telephony.cts.sms";
+    private static final String SMS_RETRIEVER_APP = "android.telephony.cts.smsretriever";
+    private static final String SMS_RETRIEVER_ACTION = "CTS_SMS_RETRIEVER_ACTION";
+    private static final String FINANCIAL_SMS_APP = "android.telephony.cts.financialsms";
 
     private TelephonyManager mTelephonyManager;
     private PackageManager mPackageManager;
@@ -89,6 +121,7 @@ public class SmsManagerTest {
     private SmsBroadcastReceiver mDataSmsReceiver;
     private SmsBroadcastReceiver mSmsDeliverReceiver;
     private SmsBroadcastReceiver mSmsReceivedReceiver;
+    private SmsBroadcastReceiver mSmsRetrieverReceiver;
     private PendingIntent mSentIntent;
     private PendingIntent mDeliveredIntent;
     private Intent mSendIntent;
@@ -99,8 +132,9 @@ public class SmsManagerTest {
     private boolean mDeliveryReportSupported;
     private static boolean mReceivedDataSms;
     private static String mReceivedText;
+    private static boolean sHasShellPermissionIdentity = false;
 
-    private static final int TIME_OUT = 1000 * 60 * 5;
+    private static final int TIME_OUT = 1000 * 60 * 4;
     private static final int NO_CALLS_TIMEOUT_MILLIS = 1000; // 1 second
 
     @Before
@@ -125,7 +159,7 @@ public class SmsManagerTest {
     @After
     public void tearDown() throws Exception {
         if (mBlockedNumberUri != null) {
-            mContext.getContentResolver().delete(mBlockedNumberUri, null, null);
+            unblockNumber(mBlockedNumberUri);
             mBlockedNumberUri = null;
         }
         if (mTestAppSetAsDefaultSmsApp) {
@@ -175,6 +209,40 @@ public class SmsManagerTest {
             actualMessage += dividedMessages.get(i);
         }
         return longText.equals(actualMessage);
+    }
+
+    @Test
+    public void testSmsRetriever() throws Exception {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        assertFalse("[RERUN] SIM card does not provide phone number. Use a suitable SIM Card.",
+                TextUtils.isEmpty(mDestAddr));
+
+        String mccmnc = mTelephonyManager.getSimOperator();
+        setupBroadcastReceivers();
+        init();
+
+        CompletableFuture<Bundle> callbackResult = new CompletableFuture<>();
+
+        mContext.startActivity(new Intent()
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .setComponent(new ComponentName(
+                        SMS_RETRIEVER_APP, SMS_RETRIEVER_APP + ".MainActivity"))
+                .putExtra("callback", new RemoteCallback(callbackResult::complete)));
+
+
+        Bundle bundle = callbackResult.get(200, TimeUnit.SECONDS);
+        String token = bundle.getString("token");
+        assertThat(bundle.getString("class"), startsWith(SMS_RETRIEVER_APP));
+        assertNotNull(token);
+
+        String composedText = "testprefix1" + mText + token;
+        sendTextMessage(mDestAddr, composedText, null, null);
+
+        assertTrue("[RERUN] SMS retriever message not received. Check signal.",
+                mSmsRetrieverReceiver.waitForCalls(1, TIME_OUT));
     }
 
     @Test
@@ -300,6 +368,60 @@ public class SmsManagerTest {
         }
     }
 
+    @Test
+    public void testGetSmsMessagesForFinancialAppPermissionNotRequested() throws Exception {
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        try {
+            getSmsManager().getSmsMessagesForFinancialApp(new Bundle(),
+                    getInstrumentation().getContext().getMainExecutor(),
+                    new SmsManager.FinancialSmsCallback() {
+                        public void onFinancialSmsMessages(CursorWindow msgs) {
+                            assertNull(msgs);
+                            latch.countDown();
+                    }});
+            assertTrue(latch.await(500, TimeUnit.MILLISECONDS));
+        } catch (Exception e) {
+            // do nothing
+        }
+    }
+
+    @Test
+    public void testGetSmsMessagesForFinancialAppPermissionRequestedNotGranted() throws Exception {
+        CompletableFuture<Bundle> callbackResult = new CompletableFuture<>();
+
+        mContext.startActivity(new Intent()
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .setComponent(new ComponentName(FINANCIAL_SMS_APP, FINANCIAL_SMS_APP + ".MainActivity"))
+                .putExtra("callback", new RemoteCallback(callbackResult::complete)));
+
+        Bundle bundle = callbackResult.get(500, TimeUnit.SECONDS);
+
+        assertThat(bundle.getString("class"), startsWith(FINANCIAL_SMS_APP));
+        assertThat(bundle.getInt("rowNum"), equalTo(-1));
+    }
+
+    @Test
+    public void testGetSmsMessagesForFinancialAppPermissionRequestedGranted() throws Exception {
+        CompletableFuture<Bundle> callbackResult = new CompletableFuture<>();
+        String ctsPackageName = getInstrumentation().getContext().getPackageName();
+
+        executeWithShellPermissionIdentity(() -> {
+            setModeForOps(FINANCIAL_SMS_APP,
+                    AppOpsManager.MODE_ALLOWED,
+                    AppOpsManager.OPSTR_SMS_FINANCIAL_TRANSACTIONS);
+            });
+        mContext.startActivity(new Intent()
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .setComponent(new ComponentName(FINANCIAL_SMS_APP, FINANCIAL_SMS_APP + ".MainActivity"))
+                .putExtra("callback", new RemoteCallback(callbackResult::complete)));
+
+
+        Bundle bundle = callbackResult.get(500, TimeUnit.SECONDS);
+
+        assertThat(bundle.getString("class"), startsWith(FINANCIAL_SMS_APP));
+        assertThat(bundle.getInt("rowNum"), equalTo(-1));
+    }
 
     @Test
     public void testSmsNotPersisted_failsWithoutCarrierPermissions() throws Exception {
@@ -319,12 +441,152 @@ public class SmsManagerTest {
         }
     }
 
+    @Test
+    public void testContentProviderAccessRestriction() throws Exception {
+        Uri dummySmsUri = null;
+        Context context = getInstrumentation().getContext();
+        ContentResolver contentResolver = context.getContentResolver();
+        int originalWriteSmsMode = -1;
+        String ctsPackageName = context.getPackageName();
+        try {
+            // Insert some dummy sms
+            originalWriteSmsMode = context.getSystemService(AppOpsManager.class)
+                    .unsafeCheckOpNoThrow(AppOpsManager.OPSTR_WRITE_SMS,
+                            getPackageUid(ctsPackageName), ctsPackageName);
+            dummySmsUri = executeWithShellPermissionIdentity(() -> {
+                setModeForOps(ctsPackageName,
+                        AppOpsManager.MODE_ALLOWED, AppOpsManager.OPSTR_WRITE_SMS);
+                ContentValues contentValues = new ContentValues();
+                contentValues.put(Telephony.TextBasedSmsColumns.ADDRESS, "addr");
+                contentValues.put(Telephony.TextBasedSmsColumns.READ, 1);
+                contentValues.put(Telephony.TextBasedSmsColumns.SUBJECT, "subj");
+                contentValues.put(Telephony.TextBasedSmsColumns.BODY, "created_at_" +
+                        new Date().toString().replace(" ", "_"));
+                return contentResolver.insert(Telephony.Sms.CONTENT_URI, contentValues);
+            });
+            assertNotNull("Failed to insert dummy sms", dummySmsUri);
+            assertNotEquals("Failed to insert dummy sms", dummySmsUri.getLastPathSegment(), "0");
+            testSmsAccessAboutDefaultApp(LEGACY_SMS_APP);
+            testSmsAccessAboutDefaultApp(MODERN_SMS_APP);
+        } finally {
+            if (dummySmsUri != null && !"/0".equals(dummySmsUri.getLastPathSegment())) {
+                final Uri finalDummySmsUri = dummySmsUri;
+                executeWithShellPermissionIdentity(() -> contentResolver.delete(finalDummySmsUri,
+                        null, null));
+            }
+            if (originalWriteSmsMode >= 0) {
+                int finalOriginalWriteSmsMode = originalWriteSmsMode;
+                executeWithShellPermissionIdentity(() ->
+                        setModeForOps(ctsPackageName,
+                                finalOriginalWriteSmsMode, AppOpsManager.OPSTR_WRITE_SMS));
+            }
+        }
+    }
+
+    private void testSmsAccessAboutDefaultApp(String pkg)
+            throws Exception {
+        String originalSmsApp = getSmsApp();
+        assertNotEquals(pkg, originalSmsApp);
+        assertCanAccessSms(pkg);
+        try {
+            setSmsApp(pkg);
+            assertCanAccessSms(pkg);
+        } finally {
+            resetReadWriteSmsAppOps(pkg);
+            setSmsApp(originalSmsApp);
+        }
+    }
+
+    private void resetReadWriteSmsAppOps(String pkg) throws Exception {
+        setModeForOps(pkg, AppOpsManager.MODE_DEFAULT,
+                AppOpsManager.OPSTR_READ_SMS, AppOpsManager.OPSTR_WRITE_SMS);
+    }
+
+    private void setModeForOps(String pkg, int mode, String... ops) throws Exception {
+        // We cannot reset these app ops to DEFAULT via current API, so we reset them manually here
+        // temporarily as we will rewrite how the default SMS app is setup later.
+        executeWithShellPermissionIdentity(() -> {
+            int uid = getPackageUid(pkg);
+            AppOpsManager appOpsManager =
+                    getInstrumentation().getContext().getSystemService(AppOpsManager.class);
+            for (String op : ops) {
+                appOpsManager.setUidMode(op, uid, mode);
+            }
+        });
+    }
+
+    private int getPackageUid(String pkg) throws PackageManager.NameNotFoundException {
+        return getInstrumentation().getContext().getPackageManager().getPackageUid(pkg, 0);
+    }
+
+    private String getSmsApp() throws Exception {
+        return executeWithShellPermissionIdentity(() -> getInstrumentation()
+                .getContext()
+                .getSystemService(RoleManager.class)
+                .getRoleHolders(RoleManager.ROLE_SMS)
+                .get(0));
+    }
+
+    private void setSmsApp(String pkg) throws Exception {
+        executeWithShellPermissionIdentity(() -> {
+            Context context = getInstrumentation().getContext();
+            CompletableFuture<Boolean> result = new CompletableFuture<>();
+            context.getSystemService(RoleManager.class).addRoleHolderAsUser(
+                    RoleManager.ROLE_SMS, pkg, RoleManager.MANAGE_HOLDERS_FLAG_DONT_KILL_APP,
+                    context.getUser(), AsyncTask.THREAD_POOL_EXECUTOR, result::complete);
+            assertTrue(result.get(5, TimeUnit.SECONDS));
+        });
+    }
+
+    private <T> T executeWithShellPermissionIdentity(Callable<T> callable) throws Exception {
+        if (sHasShellPermissionIdentity) {
+            return callable.call();
+        }
+        UiAutomation uiAutomation = getInstrumentation().getUiAutomation(
+                UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+        uiAutomation.adoptShellPermissionIdentity();
+        try {
+            sHasShellPermissionIdentity = true;
+            return callable.call();
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+            sHasShellPermissionIdentity = false;
+        }
+    }
+
+    private void executeWithShellPermissionIdentity(RunnableWithException runnable)
+            throws Exception {
+        executeWithShellPermissionIdentity(() -> {
+            runnable.run();
+            return null;
+        });
+    }
+
+    private interface RunnableWithException {
+        void run() throws Exception;
+    }
+
+    private void assertCanAccessSms(String pkg) throws Exception {
+        CompletableFuture<Bundle> callbackResult = new CompletableFuture<>();
+        mContext.startActivity(new Intent()
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .setComponent(new ComponentName(pkg, pkg + ".MainActivity"))
+                .putExtra("callback", new RemoteCallback(callbackResult::complete)));
+
+        Bundle bundle = callbackResult.get(20, TimeUnit.SECONDS);
+
+        assertThat(bundle.getString("class"), startsWith(pkg));
+        assertThat(bundle.getString("exceptionMessage"), anyOf(equalTo(null), emptyString()));
+        assertThat(bundle.getInt("queryCount"), greaterThan(0));
+    }
+
     private void init() {
         mSendReceiver.reset();
         mDeliveryReceiver.reset();
         mDataSmsReceiver.reset();
         mSmsDeliverReceiver.reset();
         mSmsReceivedReceiver.reset();
+        mSmsRetrieverReceiver.reset();
         mReceivedDataSms = false;
         mSentIntent = PendingIntent.getBroadcast(mContext, 0, mSendIntent,
                 PendingIntent.FLAG_ONE_SHOT);
@@ -342,6 +604,7 @@ public class SmsManagerTest {
         IntentFilter smsDeliverIntentFilter = new IntentFilter(SMS_DELIVER_DEFAULT_APP_ACTION);
         IntentFilter smsReceivedIntentFilter =
                 new IntentFilter(Telephony.Sms.Intents.SMS_RECEIVED_ACTION);
+        IntentFilter smsRetrieverIntentFilter = new IntentFilter(SMS_RETRIEVER_ACTION);
         dataSmsReceivedIntentFilter.addDataScheme("sms");
         dataSmsReceivedIntentFilter.addDataAuthority("localhost", "19989");
 
@@ -350,12 +613,14 @@ public class SmsManagerTest {
         mDataSmsReceiver = new SmsBroadcastReceiver(DATA_SMS_RECEIVED_ACTION);
         mSmsDeliverReceiver = new SmsBroadcastReceiver(SMS_DELIVER_DEFAULT_APP_ACTION);
         mSmsReceivedReceiver = new SmsBroadcastReceiver(Telephony.Sms.Intents.SMS_RECEIVED_ACTION);
+        mSmsRetrieverReceiver = new SmsBroadcastReceiver(SMS_RETRIEVER_ACTION);
 
         mContext.registerReceiver(mSendReceiver, sendIntentFilter);
         mContext.registerReceiver(mDeliveryReceiver, deliveryIntentFilter);
         mContext.registerReceiver(mDataSmsReceiver, dataSmsReceivedIntentFilter);
         mContext.registerReceiver(mSmsDeliverReceiver, smsDeliverIntentFilter);
         mContext.registerReceiver(mSmsReceivedReceiver, smsReceivedIntentFilter);
+        mContext.registerReceiver(mSmsRetrieverReceiver, smsRetrieverIntentFilter);
     }
 
     /**
@@ -417,17 +682,18 @@ public class SmsManagerTest {
         getSmsManager().sendTextMessage(destAddr, null, text, sentIntent, deliveredIntent);
     }
 
-    private void blockNumber(String phoneNumber) {
-        ContentValues cv = new ContentValues();
-        cv.put(BlockedNumberContract.BlockedNumbers.COLUMN_ORIGINAL_NUMBER, phoneNumber);
-        mBlockedNumberUri = mContext.getContentResolver().insert(
-                BlockedNumberContract.BlockedNumbers.CONTENT_URI, cv);
+    private void blockNumber(String number) {
+        mBlockedNumberUri = insertBlockedNumber(mContext, number);
+    }
+
+    private void unblockNumber(Uri uri) {
+        deleteBlockedNumber(mContext, uri);
     }
 
     private void setDefaultSmsApp(boolean setToSmsApp)
             throws Exception {
         String command = String.format(
-                "appops set %s WRITE_SMS %s",
+                "appops set --user 0 %s WRITE_SMS %s",
                 mContext.getPackageName(),
                 setToSmsApp ? "allow" : "default");
         assertTrue("Setting default SMS app failed : " + setToSmsApp,

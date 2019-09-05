@@ -33,7 +33,6 @@ GYRO_REFERENCE = 1
 NAME = os.path.basename(__file__).split('.')[0]
 TRANS_REF_MATRIX = np.array([0, 0, 0])
 
-
 def convert_to_world_coordinates(x, y, r, t, k, z_w):
     """Convert x,y coordinates to world coordinates.
 
@@ -177,7 +176,7 @@ def find_circle(gray, name):
         print 'More than one black circle was detected. Background of scene',
         print 'may be too complex.\n'
         assert num_circle == 1
-    return (circle_ctx, circle_cty, (circle_w+circle_h)/4.0)
+    return [circle_ctx, circle_cty, (circle_w+circle_h)/4.0]
 
 
 def component_shape(contour):
@@ -263,188 +262,223 @@ def main():
 
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
-        its.caps.skip_unless(its.caps.compute_target_exposure(props) and
+        its.caps.skip_unless(its.caps.read_3a(props) and
                              its.caps.per_frame_control(props) and
-                             its.caps.logical_multi_camera(props) and
-                             its.caps.raw16(props) and
-                             its.caps.manual_sensor(props))
+                             its.caps.logical_multi_camera(props))
+
+        # Find physical camera IDs that support raw, and skip if less than 2
+        ids = its.caps.logical_multi_camera_physical_ids(props)
+        props_physical = {}
+        physical_ids = []
+        for i in ids:
+            prop = cam.get_camera_properties_by_id(i)
+            if its.caps.raw16(prop) and len(physical_ids) < 2:
+                physical_ids.append(i)
+                props_physical[i] = cam.get_camera_properties_by_id(i)
+
         debug = its.caps.debug_mode()
         avail_fls = props['android.lens.info.availableFocalLengths']
         pose_reference = props['android.lens.poseReference']
 
-        max_raw_size = its.objects.get_available_output_sizes('raw', props)[0]
-        w, h = its.objects.get_available_output_sizes(
-                'yuv', props, match_ar_size=max_raw_size)[0]
-
-        # Do 3A and get the values
-        s, e, _, _, fd = cam.do_3a(get_results=True,
-                                   lock_ae=True, lock_awb=True)
-        e *= 2  # brighten RAW images
-        req = its.objects.manual_capture_request(s, e, fd, True, props)
-
-        # get physical camera properties
-        ids = its.caps.logical_multi_camera_physical_ids(props)
-        props_physical = {}
-        for i in ids:
-            props_physical[i] = cam.get_camera_properties_by_id(i)
-
-        # capture RAWs of 1st 2 cameras
-        cap_raw = {}
-        out_surfaces = [{'format': 'yuv', 'width': w, 'height': h},
-                        {'format': 'raw', 'physicalCamera': ids[0]},
-                        {'format': 'raw', 'physicalCamera': ids[1]}]
-        _, cap_raw[ids[0]], cap_raw[ids[1]] = cam.do_capture(req, out_surfaces)
-
-    size_raw = {}
-    k = {}
-    cam_reference = {}
-    r = {}
-    t = {}
-    circle = {}
-    fl = {}
-    sensor_diag = {}
-    for i in ids:
-        print 'Camera %s' % i
-        # process image
-        img_raw = its.image.convert_capture_to_rgb_image(
-                cap_raw[i], props=props)
-        size_raw[i] = (cap_raw[i]['width'], cap_raw[i]['height'])
-
-        # save images if debug
-        if debug:
-            its.image.write_image(img_raw, '%s_raw_%s.jpg' % (NAME, i))
-
-        # convert to [0, 255] images
-        img_raw *= 255
-
-        # scale to match calibration data
-        img = cv2.resize(img_raw.astype(np.uint8), None, fx=2, fy=2)
-
-        # load parameters for each physical camera
-        ical = props_physical[i]['android.lens.intrinsicCalibration']
-        assert len(ical) == 5, 'android.lens.instrisicCalibration incorrect.'
-        k[i] = np.array([[ical[0], ical[4], ical[2]],
-                         [0, ical[1], ical[3]],
-                         [0, 0, 1]])
-        print ' k:', k[i]
-
-        rotation = np.array(props_physical[i]['android.lens.poseRotation'])
-        print ' rotation:', rotation
-        assert len(rotation) == 4, 'poseRotation has wrong # of params.'
-        r[i] = rotation_matrix(rotation)
-
-        t[i] = np.array(props_physical[i]['android.lens.poseTranslation'])
-        print ' translation:', t[i]
-        assert len(t[i]) == 3, 'poseTranslation has wrong # of params.'
-        if (t[i] == TRANS_REF_MATRIX).all():
-            cam_reference[i] = True
+        # Find highest resolution image and determine formats
+        fmts = ['yuv']
+        if len(physical_ids) == 2:
+            fmts.insert(0, 'raw')  # insert in first location in list
         else:
-            cam_reference[i] = False
+            physical_ids = ids[0:1]
 
-        # API spec defines poseTranslation as the world coordinate p_w_cam of
-        # optics center. When applying [R|t] to go from world coordinates to
-        # camera coordinates, we need -R*p_w_cam of the coordinate reported in
-        # metadata.
-        # ie. for a camera with optical center at world coordinate (5, 4, 3)
-        # and identity rotation, to convert a world coordinate into the
-        # camera's coordinate, we need a translation vector of [-5, -4, -3]
-        # so that: [I|[-5, -4, -3]^T] * [5, 4, 3]^T = [0,0,0]^T
-        t[i] = -1.0 * np.dot(r[i], t[i])
-        if debug:
-            print 't:', t[i]
-            print 'r:', r[i]
+        w, h = its.objects.get_available_output_sizes('yuv', props)[0]
 
-        # Do operation on distorted image
-        print 'Detecting pre-correction circle'
-        circle_distorted = find_circle(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY),
-                                       '%s_gray_precorr_cam_%s.jpg' % (NAME, i))
-        print 'camera %s circle pre-distortion correction: x, y: %.2f, %.2f' % (
-                i, circle_distorted[0], circle_distorted[1])
+        # do captures on 2 cameras
+        caps = {}
+        for i, fmt in enumerate(fmts):
+            out_surfaces = [{'format': 'yuv', 'width': w, 'height': h},
+                            {'format': fmt, 'physicalCamera': physical_ids[0]},
+                            {'format': fmt, 'physicalCamera': physical_ids[1]}]
 
-        # Apply correction to image (if available)
-        if its.caps.distortion_correction(props):
-            distort = np.array(props_physical[i]['android.lens.distortion'])
-            assert len(distort) == 5, 'distortion has wrong # of params.'
-            cv2_distort = np.array([distort[0], distort[1],
-                                    distort[3], distort[4],
-                                    distort[2]])
-            print ' cv2 distortion params:', cv2_distort
-            its.image.write_image(img/255.0, '%s_raw_%s.jpg' % (
-                    NAME, i))
-            img = cv2.undistort(img, k[i], cv2_distort)
-            its.image.write_image(img/255.0, '%s_correct_%s.jpg' % (
-                    NAME, i))
+            out_surfaces_supported = cam.is_stream_combination_supported(out_surfaces)
+            its.caps.skip_unless(out_surfaces_supported)
 
-        # Find the circles in grayscale image
-        circle[i] = find_circle(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY),
-                                '%s_gray_%s.jpg' % (NAME, i))
+            # Do 3A and get the values
+            s, e, _, _, fd = cam.do_3a(get_results=True,
+                                       lock_ae=True, lock_awb=True)
+            if fmt == 'raw':
+                e_corrected = e * 2  # brighten RAW images
+            else:
+                e_corrected = e
+            print 'out_surfaces:', out_surfaces
+            req = its.objects.manual_capture_request(s, e_corrected, fd)
+            _, caps[(fmt, physical_ids[0])], caps[(fmt, physical_ids[1])] = cam.do_capture(
+                    req, out_surfaces);
 
-        # Find focal length & sensor size
-        fl[i] = props_physical[i]['android.lens.info.availableFocalLengths'][0]
-        sensor_diag[i] = math.sqrt(size_raw[i][0] ** 2 + size_raw[i][1] ** 2)
+    for j, fmt in enumerate(fmts):
+        size = {}
+        k = {}
+        cam_reference = {}
+        r = {}
+        t = {}
+        circle = {}
+        fl = {}
+        sensor_diag = {}
+        print '\nFormat:', fmt
+        for i in physical_ids:
+            # process image
+            img = its.image.convert_capture_to_rgb_image(
+                    caps[(fmt, i)], props=props_physical[i])
+            size[i] = (caps[fmt, i]['width'], caps[fmt, i]['height'])
 
-    i_ref, i_2nd = define_reference_camera(pose_reference, cam_reference)
-    print 'reference camera: %s, secondary camera: %s' % (i_ref, i_2nd)
+            # save images if debug
+            if debug:
+                its.image.write_image(img, '%s_%s_%s.jpg' % (NAME, fmt, i))
 
-    # Convert circle centers to real world coordinates
-    x_w = {}
-    y_w = {}
-    if props['android.lens.facing']:
-        print 'lens facing BACK'
-        chart_distance *= -1  # API spec defines +z i pointing out from screen
-    for i in [i_ref, i_2nd]:
-        x_w[i], y_w[i] = convert_to_world_coordinates(
-                circle[i][0], circle[i][1], r[i], t[i], k[i], chart_distance)
+            # convert to [0, 255] images
+            img *= 255
 
-    # Back convert to image coordinates for sanity check
-    x_p = {}
-    y_p = {}
-    x_p[i_2nd], y_p[i_2nd] = convert_to_image_coordinates(
-            [x_w[i_ref], y_w[i_ref], chart_distance],
-            r[i_2nd], t[i_2nd], k[i_2nd])
-    x_p[i_ref], y_p[i_ref] = convert_to_image_coordinates(
-            [x_w[i_2nd], y_w[i_2nd], chart_distance],
-            r[i_ref], t[i_ref], k[i_ref])
+            # scale to match calibration data if RAW
+            if fmt == 'raw':
+                img = cv2.resize(img.astype(np.uint8), None, fx=2, fy=2)
+            else:
+                img = img.astype(np.uint8)
 
-    # Summarize results
-    for i in [i_ref, i_2nd]:
-        print ' Camera: %s' % i
-        print ' x, y (pixels): %.1f, %.1f' % (circle[i][0], circle[i][1])
-        print ' x_w, y_w (mm): %.2f, %.2f' % (x_w[i]*1.0E3, y_w[i]*1.0E3)
-        print ' x_p, y_p (pixels): %.1f, %.1f' % (x_p[i], y_p[i])
+            # load parameters for each physical camera
+            ical = props_physical[i]['android.lens.intrinsicCalibration']
+            assert len(ical) == 5, 'android.lens.instrisicCalibration incorrect.'
+            k[i] = np.array([[ical[0], ical[4], ical[2]],
+                             [0, ical[1], ical[3]],
+                             [0, 0, 1]])
+            if j == 0:
+                print 'Camera %s' % i
+                print ' k:', k[i]
 
-    # Check center locations
-    err = np.linalg.norm(np.array([x_w[i_ref], y_w[i_ref]]) -
-                         np.array([x_w[i_2nd], y_w[i_2nd]]))
-    print '\nCenter location err (mm): %.2f' % (err*1E3)
-    msg = 'Center locations %s <-> %s too different!' % (i_ref, i_2nd)
-    msg += ' val=%.2fmm, THRESH=%.fmm' % (err*1E3, ALIGN_TOL_MM*1E3)
-    assert err < ALIGN_TOL, msg
+            rotation = np.array(props_physical[i]['android.lens.poseRotation'])
+            if j == 0:
+                print ' rotation:', rotation
+            assert len(rotation) == 4, 'poseRotation has wrong # of params.'
+            r[i] = rotation_matrix(rotation)
 
-    # Check projections back into pixel space
-    for i in [i_ref, i_2nd]:
-        err = np.linalg.norm(np.array([circle[i][0], circle[i][1]]) -
-                             np.array([x_p[i], y_p[i]]))
-        print 'Camera %s projection error (pixels): %.1f' % (i, err)
-        tol = ALIGN_TOL * sensor_diag[i]
-        msg = 'Camera %s project locations too different!' % i
-        msg += ' diff=%.2f, TOL=%.2f' % (err, tol)
-        assert err < tol, msg
+            t[i] = np.array(props_physical[i]['android.lens.poseTranslation'])
+            if j == 0:
+                print ' translation:', t[i]
+            assert len(t[i]) == 3, 'poseTranslation has wrong # of params.'
+            if (t[i] == TRANS_REF_MATRIX).all():
+                cam_reference[i] = True
+            else:
+                cam_reference[i] = False
 
-    # Check focal length and circle size if more than 1 focal length
-    if len(avail_fls) > 1:
-        print 'Circle radii (pixels); ref: %.1f, 2nd: %.1f' % (
-                circle[i_ref][2], circle[i_2nd][2])
-        print 'Focal lengths (diopters); ref: %.2f, 2nd: %.2f' % (
-                fl[i_ref], fl[i_2nd])
-        print 'Sensor diagonals (pixels); ref: %.2f, 2nd: %.2f' % (
-                sensor_diag[i_ref], sensor_diag[i_2nd])
-        msg = 'Circle size scales improperly! RTOL=%.1f' % CIRCLE_RTOL
-        msg += '\nMetric: radius/focal_length*sensor_diag should be equal.'
-        assert np.isclose(circle[i_ref][2]/fl[i_ref]*sensor_diag[i_ref],
-                          circle[i_2nd][2]/fl[i_2nd]*sensor_diag[i_2nd],
-                          rtol=CIRCLE_RTOL), msg
+            # API spec defines poseTranslation as the world coordinate p_w_cam of
+            # optics center. When applying [R|t] to go from world coordinates to
+            # camera coordinates, we need -R*p_w_cam of the coordinate reported in
+            # metadata.
+            # ie. for a camera with optical center at world coordinate (5, 4, 3)
+            # and identity rotation, to convert a world coordinate into the
+            # camera's coordinate, we need a translation vector of [-5, -4, -3]
+            # so that: [I|[-5, -4, -3]^T] * [5, 4, 3]^T = [0,0,0]^T
+            t[i] = -1.0 * np.dot(r[i], t[i])
+            if debug and j == 1:
+                print 't:', t[i]
+                print 'r:', r[i]
 
+            # Correct lens distortion to image (if available)
+            if its.caps.distortion_correction(props_physical[i]) and fmt == 'raw':
+                distort = np.array(props_physical[i]['android.lens.distortion'])
+                assert len(distort) == 5, 'distortion has wrong # of params.'
+                cv2_distort = np.array([distort[0], distort[1],
+                                        distort[3], distort[4],
+                                        distort[2]])
+                print ' cv2 distortion params:', cv2_distort
+                its.image.write_image(img/255.0, '%s_%s_%s.jpg' % (
+                        NAME, fmt, i))
+                img = cv2.undistort(img, k[i], cv2_distort)
+                its.image.write_image(img/255.0, '%s_%s_correct_%s.jpg' % (
+                        NAME, fmt, i))
+
+            # Find the circles in grayscale image
+            circle[i] = find_circle(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY),
+                                    '%s_%s_gray_%s.jpg' % (NAME, fmt, i))
+            print "Circle radius ", i, ": ", circle[i][2]
+
+            # Undo zoom to image (if applicable). Assume that the maximum
+            # physical YUV image size is close to active array size.
+            if fmt == 'yuv':
+                ar = props_physical[i]['android.sensor.info.activeArraySize']
+                arw = ar['right'] - ar['left']
+                arh = ar['bottom'] - ar['top']
+                cr = caps[(fmt, i)]['metadata']['android.scaler.cropRegion'];
+                crw = cr['right'] - cr['left']
+                crh = cr['bottom'] - cr['top']
+                # Assume pixels remain square after zoom, so use same zoom
+                # ratios for x and y.
+                zoom_ratio = min(1.0 * arw / crw, 1.0 * arh / crh);
+                circle[i][0] = cr['left'] + circle[i][0] / zoom_ratio
+                circle[i][1] = cr['top'] + circle[i][1] / zoom_ratio
+                circle[i][2] = circle[i][2] / zoom_ratio
+
+            # Find focal length & sensor size
+            fl[i] = props_physical[i]['android.lens.info.availableFocalLengths'][0]
+            sensor_diag[i] = math.sqrt(size[i][0] ** 2 + size[i][1] ** 2)
+
+        i_ref, i_2nd = define_reference_camera(pose_reference, cam_reference)
+        print 'reference camera: %s, secondary camera: %s' % (i_ref, i_2nd)
+
+        # Convert circle centers to real world coordinates
+        x_w = {}
+        y_w = {}
+        if props['android.lens.facing']:
+            # API spec defines +z is pointing out from screen
+            print 'lens facing BACK'
+            chart_distance *= -1
+        for i in [i_ref, i_2nd]:
+            x_w[i], y_w[i] = convert_to_world_coordinates(
+                    circle[i][0], circle[i][1], r[i], t[i], k[i], chart_distance)
+
+        # Back convert to image coordinates for sanity check
+        x_p = {}
+        y_p = {}
+        x_p[i_2nd], y_p[i_2nd] = convert_to_image_coordinates(
+                [x_w[i_ref], y_w[i_ref], chart_distance],
+                r[i_2nd], t[i_2nd], k[i_2nd])
+        x_p[i_ref], y_p[i_ref] = convert_to_image_coordinates(
+                [x_w[i_2nd], y_w[i_2nd], chart_distance],
+                r[i_ref], t[i_ref], k[i_ref])
+
+        # Summarize results
+        for i in [i_ref, i_2nd]:
+            print ' Camera: %s' % i
+            print ' x, y (pixels): %.1f, %.1f' % (circle[i][0], circle[i][1])
+            print ' x_w, y_w (mm): %.2f, %.2f' % (x_w[i]*1.0E3, y_w[i]*1.0E3)
+            print ' x_p, y_p (pixels): %.1f, %.1f' % (x_p[i], y_p[i])
+
+        # Check center locations
+        err = np.linalg.norm(np.array([x_w[i_ref], y_w[i_ref]]) -
+                             np.array([x_w[i_2nd], y_w[i_2nd]]))
+        print 'Center location err (mm): %.2f' % (err*1E3)
+        msg = 'Center locations %s <-> %s too different!' % (i_ref, i_2nd)
+        msg += ' val=%.2fmm, THRESH=%.fmm' % (err*1E3, ALIGN_TOL_MM*1E3)
+        assert err < ALIGN_TOL, msg
+
+        # Check projections back into pixel space
+        for i in [i_ref, i_2nd]:
+            err = np.linalg.norm(np.array([circle[i][0], circle[i][1]]) -
+                                 np.array([x_p[i], y_p[i]]))
+            print 'Camera %s projection error (pixels): %.1f' % (i, err)
+            tol = ALIGN_TOL * sensor_diag[i]
+            msg = 'Camera %s project locations too different!' % i
+            msg += ' diff=%.2f, TOL=%.2f' % (err, tol)
+            assert err < tol, msg
+
+        # Check focal length and circle size if more than 1 focal length
+        if len(avail_fls) > 1:
+            print 'Circle radii (pixels); ref: %.1f, 2nd: %.1f' % (
+                    circle[i_ref][2], circle[i_2nd][2])
+            print 'Focal lengths (diopters); ref: %.2f, 2nd: %.2f' % (
+                    fl[i_ref], fl[i_2nd])
+            print 'Sensor diagonals (pixels); ref: %.2f, 2nd: %.2f' % (
+                    sensor_diag[i_ref], sensor_diag[i_2nd])
+            msg = 'Circle size scales improperly! RTOL=%.1f' % CIRCLE_RTOL
+            msg += '\nMetric: radius/focal_length*sensor_diag should be equal.'
+            assert np.isclose(circle[i_ref][2]/fl[i_ref]*sensor_diag[i_ref],
+                              circle[i_2nd][2]/fl[i_2nd]*sensor_diag[i_2nd],
+                              rtol=CIRCLE_RTOL), msg
 
 if __name__ == '__main__':
     main()

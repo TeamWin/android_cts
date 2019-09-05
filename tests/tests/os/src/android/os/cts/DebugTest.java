@@ -17,20 +17,19 @@ package android.os.cts;
 
 import android.content.Context;
 import android.os.Debug;
+import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 
 import com.android.compatibility.common.util.TestThread;
-
-import dalvik.system.VMDebug;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.Map;
 
 public class DebugTest extends AndroidTestCase {
     private static final Logger Log = Logger.getLogger(DebugTest.class.getName());
@@ -56,11 +55,7 @@ public class DebugTest extends AndroidTestCase {
         final String traceName = getFileName();
 
         final int bufSize = 1024 * 1024 * 2;
-        final int debug_flag = VMDebug.TRACE_COUNT_ALLOCS;
-
-        Debug.startMethodTracing();
-        Thread.sleep(debugTime);
-        Debug.stopMethodTracing();
+        final int debug_flag = Debug.TRACE_COUNT_ALLOCS;
 
         Debug.startMethodTracing(traceName);
         Thread.sleep(debugTime);
@@ -71,6 +66,17 @@ public class DebugTest extends AndroidTestCase {
         Debug.stopMethodTracing();
 
         Debug.startMethodTracing(traceName, bufSize, debug_flag);
+        Thread.sleep(debugTime);
+        Debug.stopMethodTracing();
+    }
+
+    @AppModeFull(
+            reason = "Default trace in Context#getExternalFilesDir not accessible by instant apps"
+    )
+    public void testStartMethodTracingDefaultExternalStorage() throws InterruptedException {
+        final long debugTime = 3000;
+
+        Debug.startMethodTracing();
         Thread.sleep(debugTime);
         Debug.stopMethodTracing();
     }

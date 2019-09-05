@@ -439,6 +439,8 @@ public class ClientTest {
 
         final ContentResolver contentResolver =
                 InstrumentationRegistry.getContext().getContentResolver();
+	// TODO(b/120026065): Re-enable this when we fine a more reliable way to toggle the setting
+	/*
         final int originalSetting = Secure.getInt(contentResolver, Secure.INSTANT_APPS_ENABLED, 1);
         Secure.putInt(contentResolver, Secure.INSTANT_APPS_ENABLED, 0);
         try {
@@ -449,7 +451,7 @@ public class ClientTest {
                 startViewIntent.addCategory(Intent.CATEGORY_BROWSABLE);
                 startViewIntent.setData(Uri.parse("https://cts.google.com/ephemeral"));
                 InstrumentationRegistry.getContext().startActivity(
-                        startViewIntent, null /*options*/);
+                        startViewIntent, null);
                 final TestResult testResult = getResult();
                 fail();
             } catch (TestResultNotFoundException expected) {
@@ -462,7 +464,7 @@ public class ClientTest {
                         .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
                                 | Intent.FLAG_ACTIVITY_MATCH_EXTERNAL);
                 InstrumentationRegistry.getContext().startActivity(
-                        startEphemeralIntent, null /*options*/);
+                        startEphemeralIntent, null);
                 final TestResult testResult = getResult();
                 assertThat("com.android.cts.ephemeralapp1", is(testResult.getPackageName()));
                 assertThat(ACTION_START_EPHEMERAL_ACTIVITY, is(testResult.getIntent().getAction()));
@@ -471,6 +473,7 @@ public class ClientTest {
         } finally {
             Secure.putInt(contentResolver, Secure.INSTANT_APPS_ENABLED, originalSetting);
         }
+	*/
 
         // connect to the instant app provider
         {

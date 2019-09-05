@@ -33,6 +33,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsKeyEventUtil;
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -69,9 +70,12 @@ public class ExpandableListViewWithHeadersTest {
     public void testExpandOnFirstPosition() {
         // Should be a header, and hence the first group should NOT have expanded
         mListUtil.arrowScrollToSelectedPosition(0);
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mExpandableListView, null);
+
         CtsKeyEventUtil.sendKeys(mInstrumentation, mExpandableListView,
-                (KeyEvent.KEYCODE_DPAD_CENTER));
-        mInstrumentation.waitForIdleSync();
+                KeyEvent.KEYCODE_DPAD_CENTER);
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mExpandableListView, null);
+
         assertFalse(mExpandableListView.isGroupExpanded(0));
     }
 
@@ -79,28 +83,31 @@ public class ExpandableListViewWithHeadersTest {
     @Test
     public void testExpandOnFirstGroup() {
         mListUtil.arrowScrollToSelectedPosition(mActivity.getNumOfHeadersAndFooters());
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mExpandableListView, null);
+
         CtsKeyEventUtil.sendKeys(mInstrumentation, mExpandableListView,
-                (KeyEvent.KEYCODE_DPAD_CENTER));
-        mInstrumentation.waitForIdleSync();
+                KeyEvent.KEYCODE_DPAD_CENTER);
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mExpandableListView, null);
+
         assertTrue(mExpandableListView.isGroupExpanded(0));
     }
 
     @Test
     public void testContextMenus() {
-        ExpandableListTester tester = new ExpandableListTester(mExpandableListView);
+        ExpandableListTester tester = new ExpandableListTester(mActivityRule, mExpandableListView);
         tester.testContextMenus();
     }
 
     @Test
     public void testConvertionBetweenFlatAndPacked() {
-        ExpandableListTester tester = new ExpandableListTester(mExpandableListView);
+        ExpandableListTester tester = new ExpandableListTester(mActivityRule, mExpandableListView);
         tester.testConversionBetweenFlatAndPackedOnGroups();
         tester.testConversionBetweenFlatAndPackedOnChildren();
     }
 
     @Test
     public void testSelectedPosition() {
-        ExpandableListTester tester = new ExpandableListTester(mExpandableListView);
+        ExpandableListTester tester = new ExpandableListTester(mActivityRule, mExpandableListView);
         tester.testSelectedPositionOnGroups();
         tester.testSelectedPositionOnChildren();
     }

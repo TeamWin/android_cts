@@ -12,61 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH:= $(call my-dir)
-
-include $(CLEAR_VARS)
-
-# don't include this package in any target
-LOCAL_MODULE_TAGS := optional
-# and when built explicitly put it in the data partition
-LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
-
-# Include both the 32 and 64 bit versions
-LOCAL_MULTILIB := both
-
-LOCAL_STATIC_JAVA_LIBRARIES := \
-    android.hidl.manager-V1.0-java \
-    androidx.test.rules \
-    compatibility-device-util-axt \
-    ctstestrunner-axt \
-    truth-prebuilt \
-    guava \
-    junit
-
-LOCAL_JNI_SHARED_LIBRARIES := libcts_jni libctsos_jni libnativehelper_compat_libc++
-
-LOCAL_SRC_FILES := \
-    $(call all-java-files-under, src) \
-    src/android/os/cts/IParcelFileDescriptorPeer.aidl \
-    src/android/os/cts/IEmptyService.aidl \
-    src/android/os/cts/ISeccompIsolatedService.aidl \
-    src/android/os/cts/ISecondary.aidl \
-    src/android/os/cts/ISharedMemoryService.aidl \
-    src/android/os/cts/IParcelExceptionService.aidl \
-
-LOCAL_PACKAGE_NAME := CtsOsTestCases
-
-# Set its own test config to prevent sharing with cts-platform-version-check
-LOCAL_TEST_CONFIG := CtsOsTestCases.xml
-
-# Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
-
-# uncomment when b/13282254 is fixed
-#LOCAL_SDK_VERSION := current
-LOCAL_PRIVATE_PLATFORM_APIS := true
-LOCAL_JAVA_LIBRARIES += android.test.runner.stubs
-LOCAL_JAVA_LIBRARIES += android.test.base.stubs
-
-# Do not compress minijail policy files.
-LOCAL_AAPT_FLAGS := -0 .policy
-
-LOCAL_USE_AAPT2 := true
-
-include $(BUILD_CTS_PACKAGE)
-
-include $(call all-makefiles-under,$(LOCAL_PATH))
-
 # platform version check (b/32056228)
 # ============================================================
 include $(CLEAR_VARS)

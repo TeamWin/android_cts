@@ -81,6 +81,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     private File aospPcFile;
     private File aospSvcFile;
     private File devicePolicyFile;
+    private File deviceSystemPolicyFile;
     private File devicePlatSeappFile;
     private File deviceNonplatSeappFile;
     private File devicePlatFcFile;
@@ -163,6 +164,8 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
                 deviceNonplatFcFile = getDeviceFile(mDevice, cachedDeviceNonplatFcFiles,
                         "/vendor/etc/selinux/vendor_file_contexts", "vendor_file_contexts");
             }
+            deviceSystemPolicyFile =
+                    android.security.cts.SELinuxHostTest.getDeviceSystemPolicyFile(mDevice);
         } else {
             devicePlatFcFile = getDeviceFile(mDevice, cachedDevicePlatFcFiles,
                     "/plat_file_contexts", "plat_file_contexts");
@@ -817,17 +820,32 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         libcpp.deleteOnExit();
     }
 
-    private void assertSepolicyTests(String test, String testExecutable) throws Exception {
+    private void assertSepolicyTests(String test, String testExecutable,
+            boolean includeVendorSepolicy) throws Exception {
         setupLibraries();
         sepolicyTests = copyResourceToTempFile(testExecutable);
         sepolicyTests.setExecutable(true);
-        ProcessBuilder pb = new ProcessBuilder(
-                sepolicyTests.getAbsolutePath(),
-                "-l", libsepolwrap.getAbsolutePath(),
-                "-f", devicePlatFcFile.getAbsolutePath(),
-                "-f", deviceNonplatFcFile.getAbsolutePath(),
-                "-p", devicePolicyFile.getAbsolutePath(),
-                "--test", test);
+
+        List<String> args = new ArrayList<String>();
+        args.add(sepolicyTests.getAbsolutePath());
+        args.add("-l");
+        args.add(libsepolwrap.getAbsolutePath());
+        args.add("-f");
+        args.add(devicePlatFcFile.getAbsolutePath());
+        args.add("--test");
+        args.add(test);
+
+        if (includeVendorSepolicy) {
+            args.add("-f");
+            args.add(deviceNonplatFcFile.getAbsolutePath());
+            args.add("-p");
+            args.add(devicePolicyFile.getAbsolutePath());
+        } else {
+            args.add("-p");
+            args.add(deviceSystemPolicyFile.getAbsolutePath());
+        }
+
+        ProcessBuilder pb = new ProcessBuilder(args);
         Map<String, String> env = pb.environment();
         if (isMac()) {
             env.put("DYLD_LIBRARY_PATH", System.getProperty("java.io.tmpdir"));
@@ -854,7 +872,8 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * @throws Exception
      */
     public void testDataTypeViolators() throws Exception {
-        assertSepolicyTests("TestDataTypeViolations", "/sepolicy_tests");
+        assertSepolicyTests("TestDataTypeViolations", "/sepolicy_tests",
+                PropertyUtil.isVendorApiLevelNewerThan(mDevice, 27) /* includeVendorSepolicy */);
     }
 
     /**
@@ -863,7 +882,8 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * @throws Exception
      */
     public void testProcTypeViolators() throws Exception {
-        assertSepolicyTests("TestProcTypeViolations", "/sepolicy_tests");
+        assertSepolicyTests("TestProcTypeViolations", "/sepolicy_tests",
+                PropertyUtil.isVendorApiLevelNewerThan(mDevice, 27) /* includeVendorSepolicy */);
     }
 
     /**
@@ -872,7 +892,8 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * @throws Exception
      */
     public void testSysfsTypeViolators() throws Exception {
-        assertSepolicyTests("TestSysfsTypeViolations", "/sepolicy_tests");
+        assertSepolicyTests("TestSysfsTypeViolations", "/sepolicy_tests",
+                PropertyUtil.isVendorApiLevelNewerThan(mDevice, 27) /* includeVendorSepolicy */);
     }
 
     /**
@@ -881,7 +902,8 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * @throws Exception
      */
     public void testVendorTypeViolators() throws Exception {
-        assertSepolicyTests("TestVendorTypeViolations", "/sepolicy_tests");
+        assertSepolicyTests("TestVendorTypeViolations", "/sepolicy_tests",
+                PropertyUtil.isVendorApiLevelNewerThan(mDevice, 27) /* includeVendorSepolicy */);
     }
 
     /**
@@ -892,7 +914,8 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * @throws Exception
      */
     public void testCoredomainViolators() throws Exception {
-        assertSepolicyTests("CoredomainViolations", "/treble_sepolicy_tests");
+        assertSepolicyTests("CoredomainViolations", "/treble_sepolicy_tests",
+                PropertyUtil.isVendorApiLevelNewerThan(mDevice, 27) /* includeVendorSepolicy */);
     }
 
    /**
@@ -1160,7 +1183,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     /* Zygote is always running */
     @CddTest(requirement="9.7")
     public void testZygoteDomain() throws DeviceNotAvailableException {
-        assertDomainN("u:r:zygote:s0", "zygote", "zygote64");
+        assertDomainN("u:r:zygote:s0", "zygote", "zygote64", "usap32", "usap64");
     }
 
     /* Checks drmserver for devices that require it */

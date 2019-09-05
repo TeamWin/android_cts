@@ -36,6 +36,7 @@ import java.util.Arrays;
  * The stream is later decoded by vp8/vp9 decoder to verify frames are decodable and to
  * calculate PSNR values for various bitrates.
  */
+@MediaHeavyPresubmitTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 public class VpxEncoderTest extends VpxCodecTestBase {
 

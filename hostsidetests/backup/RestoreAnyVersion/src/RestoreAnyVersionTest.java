@@ -27,6 +27,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import androidx.test.runner.AndroidJUnit4;
@@ -41,6 +42,7 @@ import org.junit.runner.RunWith;
  * test.
  */
 @RunWith(AndroidJUnit4.class)
+@AppModeFull
 public class RestoreAnyVersionTest {
     private static final String TAG = "BackupTestRestoreAnyVer";
 

@@ -43,6 +43,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -131,6 +132,21 @@ public class ViewTreeObserverTest {
         verify(listener, times(1)).onDraw();
     }
 
+    @Test
+    public void testFrameCommitListener() throws Throwable {
+        mViewTreeObserver = mLinearLayout.getViewTreeObserver();
+
+        final Runnable activeListener = mock(Runnable.class);
+        final Runnable removedListener = mock(Runnable.class);
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mLinearLayout, () -> {
+            mViewTreeObserver.registerFrameCommitCallback(activeListener);
+            mViewTreeObserver.registerFrameCommitCallback(removedListener);
+            mViewTreeObserver.unregisterFrameCommitCallback(removedListener);
+        });
+        verify(activeListener, within(TIMEOUT_MS)).run();
+        verifyZeroInteractions(removedListener);
+    }
+
     @Test(expected=IllegalStateException.class)
     public void testRemoveOnDrawListenerInDispatch() {
         final View view = new View(mActivity);
@@ -150,7 +166,7 @@ public class ViewTreeObserverTest {
     @Test
     public void testAddOnTouchModeChangeListener() throws Throwable {
         // let the button be touch mode.
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mButton);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mButton);
 
         mViewTreeObserver = mButton.getViewTreeObserver();
 
@@ -260,7 +276,7 @@ public class ViewTreeObserverTest {
     @Test
     public void testRemoveOnTouchModeChangeListener() throws Throwable {
         // let the button be touch mode.
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mButton);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mButton);
 
         mViewTreeObserver = mButton.getViewTreeObserver();
 

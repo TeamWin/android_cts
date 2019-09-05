@@ -15,11 +15,7 @@
  *
  */
 
-#define LOG_TAG "vulkan"
-
-#ifndef VK_USE_PLATFORM_ANDROID_KHR
-#define VK_USE_PLATFORM_ANDROID_KHR
-#endif
+#define LOG_TAG "VulkanPreTransformCtsActivity"
 
 #include <android/log.h>
 #include <jni.h>
@@ -51,21 +47,28 @@ void createNativeTest(JNIEnv* env, jclass /*clazz*/, jobject jAssetManager, jobj
 
     DeviceInfo deviceInfo;
     int preTransformHint;
-    int ret = deviceInfo.init(env, jSurface);
-    ASSERT(ret >= 0, "Failed to initialize Vulkan device");
-    if (ret > 0) {
+    VkTestResult ret = deviceInfo.init(env, jSurface);
+    if (ret == VK_TEST_PHYSICAL_DEVICE_NOT_EXISTED) {
         ALOGD("Hardware not supported for this test");
         return;
     }
+    ASSERT(ret == VK_TEST_SUCCESS, "Failed to initialize Vulkan device");
 
     SwapchainInfo swapchainInfo(&deviceInfo);
-    ASSERT(!swapchainInfo.init(setPreTransform, &preTransformHint), "Failed to initialize Vulkan swapchain");
+    ASSERT(swapchainInfo.init(setPreTransform, &preTransformHint) == VK_TEST_SUCCESS,
+           "Failed to initialize Vulkan swapchain");
 
     Renderer renderer(&deviceInfo, &swapchainInfo);
-    ASSERT(!renderer.init(env, jAssetManager), "Failed to initialize Vulkan renderer");
+    ASSERT(renderer.init(env, jAssetManager) == VK_TEST_SUCCESS,
+           "Failed to initialize Vulkan renderer");
 
     for (uint32_t i = 0; i < 120; ++i) {
-        ASSERT(!renderer.drawFrame(), "Failed to draw frame");
+        ret = renderer.drawFrame();
+        if (setPreTransform || preTransformHint == 0x1 /*VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR*/) {
+            ASSERT(ret == VK_TEST_SUCCESS, "Failed to draw frame");
+        } else {
+            ASSERT(ret == VK_TEST_SUCCESS_SUBOPTIMAL, "Failed to draw suboptimal frame");
+        }
     }
 
     ASSERT(validatePixelValues(env, setPreTransform, preTransformHint), "Not properly rotated");

@@ -15,6 +15,9 @@
  */
 package android.carrierapi.cts;
 
+import static android.Manifest.permission.ACCESS_BACKGROUND_LOCATION;
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
@@ -111,9 +114,14 @@ public class NetworkScanApiTest {
 
     @Before
     public void setUp() throws Exception {
+        Context context = InstrumentationRegistry.getContext();
         mTelephonyManager = (TelephonyManager)
-                InstrumentationRegistry.getContext().getSystemService(Context.TELEPHONY_SERVICE);
-        mPackageManager = InstrumentationRegistry.getContext().getPackageManager();
+                context.getSystemService(Context.TELEPHONY_SERVICE);
+        mPackageManager = context.getPackageManager();
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
+                context.getPackageName(), ACCESS_FINE_LOCATION);
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
+                context.getPackageName(), ACCESS_BACKGROUND_LOCATION);
         mTestHandlerThread = new NetworkScanHandlerThread(TAG);
         mTestHandlerThread.start();
     }
@@ -158,8 +166,11 @@ public class NetworkScanApiTest {
                     switch (msg.what) {
                         case EVENT_NETWORK_SCAN_START:
                             Log.d(TAG, "request network scan");
-                            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                                    .adoptShellPermissionIdentity();
+                            boolean useShellIdentity = (Boolean) msg.obj;
+                            if (useShellIdentity) {
+                                InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                                        .adoptShellPermissionIdentity();
+                            }
                             try {
                                 mNetworkScan = mTelephonyManager.requestNetworkScan(
                                         mNetworkScanRequest,
@@ -173,8 +184,10 @@ public class NetworkScanApiTest {
                                 mNetworkScanStatus = EVENT_SCAN_DENIED;
                                 setReady(true);
                             } finally {
-                                InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                                        .dropShellPermissionIdentity();
+                                if (useShellIdentity) {
+                                    InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                                            .dropShellPermissionIdentity();
+                                }
                             }
                             break;
                         default:
@@ -277,30 +290,38 @@ public class NetworkScanApiTest {
         if (!mTelephonyManager.hasCarrierPrivileges()) {
             fail("This test requires a SIM card with carrier privilege rule on it.");
         }
-        mNetworkScanRequest = buildNetworkScanRequest(true);
-        mNetworkScanCallback = new NetworkScanCallbackImpl();
-        Message startNetworkScan = mHandler.obtainMessage(EVENT_NETWORK_SCAN_START);
-        setReady(false);
-        startNetworkScan.sendToTarget();
-        waitUntilReady();
+        boolean isLocationSwitchOn = getAndSetLocationSwitch(true);
+        try {
+            mNetworkScanRequest = buildNetworkScanRequest(true);
+            mNetworkScanCallback = new NetworkScanCallbackImpl();
+            Message startNetworkScan = mHandler.obtainMessage(EVENT_NETWORK_SCAN_START, false);
+            setReady(false);
+            startNetworkScan.sendToTarget();
+            waitUntilReady();
 
-        Log.d(TAG, "mNetworkScanStatus: " + mNetworkScanStatus);
-        assertTrue("The final scan status is not ScanCompleted or ScanError with an error "
-                        + "code ERROR_MODEM_UNAVAILABLE or ERROR_UNSUPPORTED",
-                isScanStatusValid());
+            Log.d(TAG, "mNetworkScanStatus: " + mNetworkScanStatus);
+            assertTrue("The final scan status is " + mNetworkScanStatus + " with error code "
+                            + mErrorCode + ", not ScanCompleted"
+                            + " or ScanError with an error code ERROR_MODEM_UNAVAILABLE or"
+                            + " ERROR_UNSUPPORTED",
+                    isScanStatusValid());
+        } finally {
+            getAndSetLocationSwitch(isLocationSwitchOn);
+        }
     }
 
     @Test
     public void testRequestNetworkScanLocationOffPass() {
-        requestNetworkScanLocationOffHelper(false);
+        requestNetworkScanLocationOffHelper(false, true);
     }
 
     @Test
     public void testRequestNetworkScanLocationOffFail() {
-        requestNetworkScanLocationOffHelper(true);
+        requestNetworkScanLocationOffHelper(true, true);
     }
 
-    public void requestNetworkScanLocationOffHelper(boolean includeBandsAndChannels) {
+    public void requestNetworkScanLocationOffHelper(boolean includeBandsAndChannels,
+            boolean useSpecialScanPermission) {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             // Checks whether the cellular stack should be running on this device.
             Log.e(TAG, "No cellular support, the test will be skipped.");
@@ -315,7 +336,8 @@ public class NetworkScanApiTest {
         boolean isLocationSwitchOn = getAndSetLocationSwitch(false);
         try {
             mNetworkScanCallback = new NetworkScanCallbackImpl();
-            Message startNetworkScan = mHandler.obtainMessage(EVENT_NETWORK_SCAN_START);
+            Message startNetworkScan = mHandler.obtainMessage(EVENT_NETWORK_SCAN_START,
+                    useSpecialScanPermission);
             setReady(false);
             startNetworkScan.sendToTarget();
             waitUntilReady();
@@ -327,8 +349,10 @@ public class NetworkScanApiTest {
             }
 
             Log.d(TAG, "mNetworkScanStatus: " + mNetworkScanStatus);
-            assertTrue("The final scan status is not ScanCompleted or ScanError with an error "
-                            + "code ERROR_MODEM_UNAVAILABLE or ERROR_UNSUPPORTED",
+            assertTrue("The final scan status is " + mNetworkScanStatus + " with error code "
+                            + mErrorCode + ", not ScanCompleted"
+                            + " or ScanError with an error code ERROR_MODEM_UNAVAILABLE or"
+                            + " ERROR_UNSUPPORTED",
                     isScanStatusValid());
         } finally {
             getAndSetLocationSwitch(isLocationSwitchOn);
@@ -352,14 +376,20 @@ public class NetworkScanApiTest {
 
         Log.d(TAG, "number of radioAccessSpecifier: " + radioAccessSpecifier.size());
         if (radioAccessSpecifier.isEmpty()) {
+            // Put in some arbitrary bands and channels so that we trip the location check if needed
+            int[] fakeBands = includeBandsAndChannels
+                    ? new int[] { AccessNetworkConstants.EutranBand.BAND_5 }
+                    : null;
+            int[] fakeChannels = includeBandsAndChannels ? new int[] { 2400 } : null;
+
             RadioAccessSpecifier gsm = new RadioAccessSpecifier(
                     AccessNetworkConstants.AccessNetworkType.GERAN,
                     null /* bands */,
                     null /* channels */);
             RadioAccessSpecifier lte = new RadioAccessSpecifier(
                     AccessNetworkConstants.AccessNetworkType.EUTRAN,
-                    null /* bands */,
-                    null /* channels */);
+                    fakeBands /* bands */,
+                    fakeChannels /* channels */);
             RadioAccessSpecifier wcdma = new RadioAccessSpecifier(
                     AccessNetworkConstants.AccessNetworkType.UTRAN,
                     null /* bands */,

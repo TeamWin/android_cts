@@ -243,7 +243,7 @@ public class HardwareBitmapTests extends ActivityTestBase {
         createTest().addCanvasClient((canvas, width, height) -> {
             Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot,
                     HARDWARE_OPTIONS);
-            Bitmap scaled = Bitmap.createScaledBitmap(hardwareBitmap, 24, 24, false);
+            Bitmap scaled = Bitmap.createScaledBitmap(hardwareBitmap, 24, 24, true);
             assertEquals(Bitmap.Config.HARDWARE, scaled.getConfig());
             canvas.drawBitmap(scaled, 0, 0, null);
         }, true).runWithVerifier(new GoldenImageVerifier(getActivity(),

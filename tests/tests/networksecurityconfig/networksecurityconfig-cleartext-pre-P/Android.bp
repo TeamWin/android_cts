@@ -19,10 +19,12 @@ android_test {
     static_libs: [
         "ctstestrunner-axt",
         "androidx.test.rules",
+        "compatibility-device-util-axt",
         "tests-tests-networksecurityconfig-lib",
     ],
     libs: [
         "org.apache.http.legacy",
+        "android.test.base.stubs",
     ],
     srcs: ["src/**/*.java"],
     resource_dirs: ["res/"],

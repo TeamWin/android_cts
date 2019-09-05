@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package android.view.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
@@ -49,6 +50,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
+import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
@@ -91,6 +93,8 @@ import android.view.ViewTreeObserver;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
+import android.view.cts.util.EventUtils;
+import android.view.cts.util.ScrollBarUtils;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
@@ -101,9 +105,9 @@ import android.widget.TextView;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.annotation.UiThreadTest;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsMouseUtil;
 import com.android.compatibility.common.util.CtsTouchUtils;
@@ -119,6 +123,8 @@ import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -406,12 +412,72 @@ public class ViewTest {
         view.setTouchDelegate(delegate);
         assertSame(delegate, view.getTouchDelegate());
         verify(delegate, never()).onTouchEvent(any());
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, view);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, view);
         assertTrue(view.hasCalledOnTouchEvent());
         verify(delegate, times(1)).onTouchEvent(any());
+        CtsMouseUtil.emulateHoverOnView(mInstrumentation, view, view.getWidth() / 2,
+                view.getHeight() / 2);
+        assertTrue(view.hasCalledOnHoverEvent());
+        verifyZeroInteractions(delegate);
 
         view.setTouchDelegate(null);
         assertNull(view.getTouchDelegate());
+    }
+
+    @Test
+    public void onHoverEvent_verticalCanScroll_awakenScrollBarsCalled() {
+        onHoverEvent_awakensScrollBars(true, true, true);
+    }
+
+    @Test
+    public void onHoverEvent_verticalCantScroll_awakenScrollBarsNotCalled() {
+        onHoverEvent_awakensScrollBars(true, false, false);
+    }
+
+    @Test
+    public void onHoverEvent_horizontalCanScroll_awakenScrollBarsCalled() {
+        onHoverEvent_awakensScrollBars(false, true, true);
+    }
+
+    @Test
+    public void onHoverEvent_horizontalCantScroll_awakenScrollBarsNotCalled() {
+        onHoverEvent_awakensScrollBars(false, false, false);
+    }
+
+    private void onHoverEvent_awakensScrollBars(boolean vertical, boolean canScroll,
+            boolean awakenScrollBarsCalled) {
+
+        // Arrange
+
+        final ScrollTestView view = spy(new ScrollTestView(mContext));
+        view.setVerticalScrollbarPosition(View.SCROLLBAR_POSITION_RIGHT);
+        view.setHorizontalScrollBarEnabled(true);
+        view.setVerticalScrollBarEnabled(true);
+        view.setScrollBarSize(10);
+        view.layout(0, 0, 100, 100);
+
+        when(view.computeVerticalScrollExtent()).thenReturn(100);
+        when(view.computeVerticalScrollRange()).thenReturn(canScroll ? 101 : 100);
+        when(view.computeHorizontalScrollExtent()).thenReturn(100);
+        when(view.computeHorizontalScrollRange()).thenReturn(canScroll ? 101 : 100);
+
+        int x = vertical ? 95 : 50;
+        int y = vertical ? 50 : 95;
+
+        MotionEvent event = EventUtils.generateMouseEvent(x, y, MotionEvent.ACTION_HOVER_ENTER, 0);
+
+        // Act
+
+        view.onHoverEvent(event);
+        event.recycle();
+
+        // Assert
+
+        if (awakenScrollBarsCalled) {
+            verify(view).awakenScrollBars();
+        } else {
+            verify(view, never()).awakenScrollBars();
+        }
     }
 
     @Test
@@ -510,6 +576,69 @@ public class ViewTest {
         assertEquals(iconParent, parent.onResolvePointerIcon(event, 0));
 
         event.recycle();
+    }
+
+    @Test
+    public void onResolvePointerIcon_verticalCanScroll_pointerIsArrow() {
+        onResolvePointerIcon_scrollabilityAffectsPointerIcon(true, true, true);
+    }
+
+    @Test
+    public void onResolvePointerIcon_verticalCantScroll_pointerIsProperty() {
+        onResolvePointerIcon_scrollabilityAffectsPointerIcon(true, false, false);
+    }
+
+    @Test
+    public void onResolvePointerIcon_horizontalCanScroll_pointerIsArrow() {
+        onResolvePointerIcon_scrollabilityAffectsPointerIcon(false, true, true);
+    }
+
+    @Test
+    public void onResolvePointerIcon_horizontalCantScroll_pointerIsProperty() {
+        onResolvePointerIcon_scrollabilityAffectsPointerIcon(false, false, false);
+    }
+
+    private void onResolvePointerIcon_scrollabilityAffectsPointerIcon(boolean vertical,
+            boolean canScroll, boolean pointerIsSystemArrow) {
+
+        // Arrange
+
+        int range = canScroll ? 101 : 100;
+        int thumbLength = ScrollBarUtils.getThumbLength(1, 10, 100, range);
+
+        PointerIcon expectedPointerIcon = PointerIcon.getSystemIcon(mContext,
+                PointerIcon.TYPE_HAND);
+
+        final ScrollTestView view = spy(new ScrollTestView(mContext));
+        view.setVerticalScrollbarPosition(View.SCROLLBAR_POSITION_RIGHT);
+        view.setHorizontalScrollBarEnabled(true);
+        view.setVerticalScrollBarEnabled(true);
+        view.setScrollBarSize(10);
+        view.setPointerIcon(expectedPointerIcon);
+        view.layout(0, 0, 100, 100);
+
+        when(view.computeVerticalScrollExtent()).thenReturn(100);
+        when(view.computeVerticalScrollRange()).thenReturn(range);
+        when(view.computeHorizontalScrollExtent()).thenReturn(100);
+        when(view.computeHorizontalScrollRange()).thenReturn(range);
+
+        int touchX = vertical ? 95 : thumbLength / 2;
+        int touchY = vertical ? thumbLength / 2 : 95;
+        MotionEvent event =
+                EventUtils.generateMouseEvent(touchX, touchY, MotionEvent.ACTION_HOVER_ENTER, 0);
+
+        // Act
+
+        PointerIcon actualResult = view.onResolvePointerIcon(event, 0);
+        event.recycle();
+
+        // Assert
+
+        if (pointerIsSystemArrow) {
+            assertEquals(PointerIcon.getSystemIcon(mContext, PointerIcon.TYPE_ARROW), actualResult);
+        } else {
+            assertEquals(expectedPointerIcon, actualResult);
+        }
     }
 
     @Test
@@ -1683,6 +1812,33 @@ public class ViewTest {
         view.setOnClickListener(mock(View.OnClickListener.class));
         assertTrue(view.performClick());
         assertTrue(view.isClickable());
+    }
+
+    @Test
+    public void testSetOnGenericMotionListener() {
+        View view = new View(mActivity);
+        MotionEvent event =
+                EventUtils.generateMouseEvent(0, 0, MotionEvent.ACTION_HOVER_ENTER, 0);
+
+        assertFalse(view.dispatchGenericMotionEvent(event));
+        event.recycle();
+
+        View.OnGenericMotionListener listener = mock(View.OnGenericMotionListener.class);
+        doReturn(true).when(listener).onGenericMotion(any(), any());
+        view.setOnGenericMotionListener(listener);
+
+        MotionEvent event2 =
+                EventUtils.generateMouseEvent(0, 0, MotionEvent.ACTION_HOVER_ENTER, 0);
+
+        assertTrue(view.dispatchGenericMotionEvent(event2));
+        event2.recycle();
+
+        view.setOnGenericMotionListener(null);
+        MotionEvent event3 =
+                EventUtils.generateMouseEvent(0, 0, MotionEvent.ACTION_HOVER_ENTER, 0);
+
+        assertFalse(view.dispatchGenericMotionEvent(event3));
+        event3.recycle();
     }
 
     @Test(expected=NullPointerException.class)
@@ -3394,15 +3550,21 @@ public class ViewTest {
     }
 
     @Test
-    public void testOnTouchEvent() throws Throwable {
-        final MockView view = (MockView) mActivity.findViewById(R.id.mock_view);
+    public void testOnTouchEventTap() {
+        final MockView view = mActivity.findViewById(R.id.mock_view);
 
         assertTrue(view.isEnabled());
         assertFalse(view.isClickable());
         assertFalse(view.isLongClickable());
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, view);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, view);
         assertTrue(view.hasCalledOnTouchEvent());
+    }
+
+
+    @Test
+    public void testOnTouchEventScroll() throws Throwable {
+        final MockView view = mActivity.findViewById(R.id.mock_view);
 
         mActivityRule.runOnUiThread(() -> {
             view.setEnabled(true);
@@ -3424,68 +3586,63 @@ public class ViewTest {
         float y = xy[1] + viewHeight / 2.0f;
 
         long downTime = SystemClock.uptimeMillis();
-        long eventTime = SystemClock.uptimeMillis();
-        MotionEvent event = MotionEvent.obtain(downTime, eventTime, MotionEvent.ACTION_DOWN,
+        MotionEvent event = MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_DOWN,
                 x, y, 0);
         assertFalse(view.isPressed());
         mInstrumentation.sendPointerSync(event);
         waitPrepressedTimeout();
-        assertTrue(view.hasCalledOnTouchEvent());
+        compareAndRecycleMotionEvents(event, view.pollTouchEvent());
         assertTrue(view.isPressed());
 
         // MotionEvent.ACTION_MOVE
         // move out of the bound.
         view.reset();
-        downTime = SystemClock.uptimeMillis();
-        eventTime = SystemClock.uptimeMillis();
-        int slop = ViewConfiguration.get(mActivity).getScaledTouchSlop();
+        long eventTime = SystemClock.uptimeMillis();
+        final int slop = ViewConfiguration.get(mActivity).getScaledTouchSlop();
         x = xy[0] + viewWidth + slop;
         y = xy[1] + viewHeight + slop;
         event = MotionEvent.obtain(downTime, eventTime, MotionEvent.ACTION_MOVE, x, y, 0);
         mInstrumentation.sendPointerSync(event);
-        assertTrue(view.hasCalledOnTouchEvent());
+        compareAndRecycleMotionEvents(event, view.pollTouchEvent());
         assertFalse(view.isPressed());
 
         // move into view
         view.reset();
-        downTime = SystemClock.uptimeMillis();
         eventTime = SystemClock.uptimeMillis();
         x = xy[0] + viewWidth - 1;
         y = xy[1] + viewHeight - 1;
         event = MotionEvent.obtain(downTime, eventTime, MotionEvent.ACTION_MOVE, x, y, 0);
+        SystemClock.sleep(20); // prevent event batching
         mInstrumentation.sendPointerSync(event);
         waitPrepressedTimeout();
-        assertTrue(view.hasCalledOnTouchEvent());
+        compareAndRecycleMotionEvents(event, view.pollTouchEvent());
         assertFalse(view.isPressed());
 
         // MotionEvent.ACTION_UP
         View.OnClickListener listener = mock(View.OnClickListener.class);
         view.setOnClickListener(listener);
         view.reset();
-        downTime = SystemClock.uptimeMillis();
         eventTime = SystemClock.uptimeMillis();
         event = MotionEvent.obtain(downTime, eventTime, MotionEvent.ACTION_UP, x, y, 0);
         mInstrumentation.sendPointerSync(event);
-        assertTrue(view.hasCalledOnTouchEvent());
+        compareAndRecycleMotionEvents(event, view.pollTouchEvent());
         verifyZeroInteractions(listener);
 
         view.reset();
         x = xy[0] + viewWidth / 2.0f;
         y = xy[1] + viewHeight / 2.0f;
         downTime = SystemClock.uptimeMillis();
-        eventTime = SystemClock.uptimeMillis();
-        event = MotionEvent.obtain(downTime, eventTime, MotionEvent.ACTION_DOWN, x, y, 0);
+        event = MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_DOWN, x, y, 0);
         mInstrumentation.sendPointerSync(event);
-        assertTrue(view.hasCalledOnTouchEvent());
+        compareAndRecycleMotionEvents(event, view.pollTouchEvent());
 
         // MotionEvent.ACTION_CANCEL
         view.reset();
         reset(listener);
-        downTime = SystemClock.uptimeMillis();
         eventTime = SystemClock.uptimeMillis();
         event = MotionEvent.obtain(downTime, eventTime, MotionEvent.ACTION_CANCEL, x, y, 0);
         mInstrumentation.sendPointerSync(event);
-        assertTrue(view.hasCalledOnTouchEvent());
+        compareAndRecycleMotionEvents(event, view.pollTouchEvent());
         assertFalse(view.isPressed());
         verifyZeroInteractions(listener);
     }
@@ -3743,7 +3900,7 @@ public class ViewTest {
         assertFalse(mockView.isInTouchMode());
         assertFalse(fitWindowsView.isInTouchMode());
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mockView);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mockView);
         assertFalse(fitWindowsView.isFocused());
         assertFalse(mockView.isFocused());
         mActivityRule.runOnUiThread(mockView::requestFocus);
@@ -3781,7 +3938,7 @@ public class ViewTest {
         mInstrumentation.sendPointerSync(event);
         assertFalse(fitWindowsView.isInTouchMode());
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mockView);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mockView);
         assertTrue(fitWindowsView.isInTouchMode());
 
         event.setSource(InputDevice.SOURCE_MOUSE);
@@ -4396,7 +4553,7 @@ public class ViewTest {
 
     private boolean startDragAndDrop(View view, View.DragShadowBuilder shadowBuilder) {
         final Point size = new Point();
-        mActivity.getDisplay().getSize(size);
+        mActivity.getWindowManager().getDefaultDisplay().getSize(size);
         final MotionEvent event = MotionEvent.obtain(
                 SystemClock.uptimeMillis(), SystemClock.uptimeMillis(),
                 MotionEvent.ACTION_DOWN, size.x / 2, size.y / 2, 1);
@@ -4679,6 +4836,16 @@ public class ViewTest {
     }
 
     @Test
+    public void testTransitionAlpha() {
+        View view = new View(mContext);
+        view.setAlpha(1f);
+        view.setTransitionAlpha(0.5f);
+
+        assertEquals(1f, view.getAlpha(), 0.0001f);
+        assertEquals(0.5f, view.getTransitionAlpha(), 0.0001f);
+    }
+
+    @Test
     public void testSetGetOutlineShadowColor() {
         ViewGroup group = (ViewGroup) LayoutInflater.from(mContext).inflate(
                 R.layout.view_outlineshadowcolor, null);
@@ -4701,6 +4868,60 @@ public class ViewTest {
         View greenShadow = group.findViewById(R.id.green_shadow);
         assertEquals(Color.GREEN, greenShadow.getOutlineSpotShadowColor());
         assertEquals(Color.GREEN, greenShadow.getOutlineAmbientShadowColor());
+    }
+
+    @Test
+    public void testTransformMatrixToGlobal() {
+        final View view = mActivity.findViewById(R.id.transform_matrix_view);
+        final Matrix initialMatrix = view.getMatrix();
+        assertNotNull(initialMatrix);
+
+        final Matrix newMatrix = new Matrix(initialMatrix);
+        float[] initialValues = new float[9];
+        newMatrix.getValues(initialValues);
+
+        view.transformMatrixToGlobal(newMatrix);
+        float[] newValues = new float[9];
+        newMatrix.getValues(newValues);
+        int[] location = new int[2];
+        view.getLocationInWindow(location);
+        boolean hasChanged = false;
+        for (int i = 0; i < 9; ++i) {
+            if (initialValues[i] != newValues[i]) {
+                hasChanged = true;
+            }
+        }
+        assertTrue("Matrix should be changed", hasChanged);
+        assertEquals("Matrix should reflect position in window",
+                location[1], newValues[5], 0.001);
+    }
+
+    @Test
+    public void testTransformMatrixToLocal() {
+        final View view1 = mActivity.findViewById(R.id.transform_matrix_view);
+        final View view2 = mActivity.findViewById(R.id.transform_matrix_view_2);
+        final Matrix initialMatrix = view1.getMatrix();
+        assertNotNull(initialMatrix);
+
+        final Matrix globalMatrix = new Matrix(initialMatrix);
+
+        view1.transformMatrixToGlobal(globalMatrix);
+        float[] globalValues = new float[9];
+        globalMatrix.getValues(globalValues);
+
+        view2.transformMatrixToLocal(globalMatrix);
+        float[] localValues = new float[9];
+        globalMatrix.getValues(localValues);
+
+        boolean hasChanged = false;
+        for (int i = 0; i < 9; ++i) {
+            if (globalValues[i] != localValues[i]) {
+                hasChanged = true;
+            }
+        }
+        assertTrue("Matrix should be changed", hasChanged);
+        assertEquals("The first view should be 10px above the second view",
+                -10, localValues[5], 0.001);
     }
 
     @Test
@@ -4734,6 +4955,105 @@ public class ViewTest {
         assertEquals(50, view.getPivotX(), 0.0f);
         assertEquals(100, view.getPivotY(), 0.0f);
         assertFalse(view.isPivotSet());
+    }
+
+    @Test
+    public void testSetLeftTopRightBottom() {
+        View view = new View(mContext);
+        view.setLeftTopRightBottom(1, 2, 3, 4);
+
+        assertEquals(1, view.getLeft());
+        assertEquals(2, view.getTop());
+        assertEquals(3, view.getRight());
+        assertEquals(4, view.getBottom());
+    }
+
+    @Test
+    public void testGetUniqueDrawingId() {
+        View view1 = new View(mContext);
+        View view2 = new View(mContext);
+        Set<Long> idSet = new HashSet<>(50);
+
+        assertNotEquals(view1.getUniqueDrawingId(), view2.getUniqueDrawingId());
+
+        for (int i = 0; i < 50; i++) {
+            assertTrue(idSet.add(new View(mContext).getUniqueDrawingId()));
+        }
+    }
+
+    @Test
+    public void testSetVerticalScrollbarTrack() {
+        View view = new View(mContext);
+
+        ColorDrawable colorDrawable = new ColorDrawable(Color.CYAN);
+        view.setVerticalScrollbarTrackDrawable(colorDrawable);
+
+        Drawable verticalTrackDrawable = view.getVerticalScrollbarTrackDrawable();
+        assertTrue(verticalTrackDrawable instanceof ColorDrawable);
+        assertEquals(Color.CYAN, ((ColorDrawable) verticalTrackDrawable).getColor());
+    }
+
+    @Test
+    public void testSetVerticalScrollbarThumb() {
+
+        View view = new View(mContext);
+
+        ColorDrawable colorDrawable = new ColorDrawable(Color.CYAN);
+        view.setVerticalScrollbarThumbDrawable(colorDrawable);
+
+        Drawable verticalThumbDrawable = view.getVerticalScrollbarThumbDrawable();
+        assertTrue(verticalThumbDrawable instanceof ColorDrawable);
+        assertEquals(Color.CYAN, ((ColorDrawable) verticalThumbDrawable).getColor());
+    }
+
+    @Test
+    public void testSetHorizontalScrollbarTrack() {
+
+        View view = new View(mContext);
+
+        ColorDrawable colorDrawable = new ColorDrawable(Color.CYAN);
+        view.setHorizontalScrollbarTrackDrawable(colorDrawable);
+
+        Drawable horizontalTrackDrawable = view.getHorizontalScrollbarTrackDrawable();
+        assertTrue(horizontalTrackDrawable instanceof ColorDrawable);
+        assertEquals(Color.CYAN, ((ColorDrawable) horizontalTrackDrawable).getColor());
+    }
+
+    @Test
+    public void testSetHorizontalScrollbarThumb() {
+
+        View view = new View(mContext);
+
+        ColorDrawable colorDrawable = new ColorDrawable(Color.CYAN);
+        view.setHorizontalScrollbarThumbDrawable(colorDrawable);
+
+        Drawable horizontalThumbDrawable = view.getHorizontalScrollbarThumbDrawable();
+        assertTrue(horizontalThumbDrawable instanceof ColorDrawable);
+        assertEquals(Color.CYAN, ((ColorDrawable) horizontalThumbDrawable).getColor());
+    }
+
+    @Test
+    public void testSetTransitionVisibility() {
+        MockView view = new MockView(mContext);
+        view.setVisibility(View.GONE);
+        view.setParent(mMockParent);
+        mMockParent.reset();
+
+        // setTransitionVisibility shouldn't trigger requestLayout() on the parent
+        view.setTransitionVisibility(View.VISIBLE);
+
+        assertEquals(View.VISIBLE, view.getVisibility());
+        assertFalse(mMockParent.hasRequestLayout());
+
+        // Reset state
+        view.setVisibility(View.GONE);
+        mMockParent.reset();
+
+        // setVisibility should trigger requestLayout() on the parent
+        view.setVisibility(View.VISIBLE);
+
+        assertEquals(View.VISIBLE, view.getVisibility());
+        assertTrue(mMockParent.hasRequestLayout());
     }
 
     private static class MockDrawable extends Drawable {
@@ -5107,6 +5427,42 @@ public class ViewTest {
         }
         public boolean fired() {
             return mLastView != null && mGotUp;
+        }
+    }
+
+    public static class ScrollTestView extends View {
+        public ScrollTestView(Context context) {
+            super(context);
+        }
+
+        @Override
+        public boolean awakenScrollBars() {
+            return super.awakenScrollBars();
+        }
+
+        @Override
+        public int computeHorizontalScrollRange() {
+            return super.computeHorizontalScrollRange();
+        }
+
+        @Override
+        public int computeHorizontalScrollExtent() {
+            return super.computeHorizontalScrollExtent();
+        }
+
+        @Override
+        public int computeVerticalScrollRange() {
+            return super.computeVerticalScrollRange();
+        }
+
+        @Override
+        public int computeVerticalScrollExtent() {
+            return super.computeVerticalScrollExtent();
+        }
+
+        @Override
+        protected int getHorizontalScrollbarHeight() {
+            return super.getHorizontalScrollbarHeight();
         }
     }
 

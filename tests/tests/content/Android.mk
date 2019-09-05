@@ -39,7 +39,9 @@ LOCAL_STATIC_JAVA_LIBRARIES :=  \
     services.core \
     junit \
     truth-prebuilt \
-    accountaccesslib
+    accountaccesslib \
+	ub-uiautomator \
+    testng # TODO: remove once Android migrates to JUnit 4.12, which provide assertThrows
 
 LOCAL_STATIC_ANDROID_LIBRARIES := androidx.legacy_legacy-support-v4
 
@@ -63,7 +65,8 @@ LOCAL_AAPT_FLAGS := \
 	-c tlh \
 	-c xx,xx-rYY
 
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_SRC_FILES := $(call all-java-files-under, src) \
+    $(call all-Iaidl-files-under, BinderPermissionTestService)
 LOCAL_MULTILIB := both
 LOCAL_PACKAGE_NAME := CtsContentTestCases
 LOCAL_PRIVATE_PLATFORM_APIS := true

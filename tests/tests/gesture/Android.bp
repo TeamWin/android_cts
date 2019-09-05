@@ -16,9 +16,7 @@ android_test {
     name: "CtsGestureTestCases",
     defaults: ["cts_defaults"],
     srcs: ["src/**/*.java"],
-
-    static_libs: ["androidx.test.rules"],
-
+    static_libs: ["androidx.test.runner"],
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",

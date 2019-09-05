@@ -70,7 +70,7 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
     private static boolean sIsDefaultPrinterSet;
 
     @Before
-    public void setDefaultPrinter() throws Exception {
+    public void setDefaultPrinter() throws Throwable {
         if (!sIsDefaultPrinterSet) {
             // Create a callback for the target print service.
             PrintServiceCallbacks firstServiceCallbacks = createMockPrintServiceCallbacks(

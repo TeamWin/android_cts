@@ -35,6 +35,7 @@ import static android.server.am.UiDeviceUtils.waitForDeviceIdle;
 
 import android.accessibilityservice.AccessibilityService;
 import android.app.ActivityManager;
+import android.app.ActivityTaskManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.os.SystemClock;
@@ -78,6 +79,7 @@ public abstract class ActivityManagerTestBase {
 
     protected Context mContext;
     protected ActivityManager mAm;
+    protected ActivityTaskManager mAtm;
 
     /**
      * @return the am command to start the given activity with the following extra key/value pairs.
@@ -118,11 +120,11 @@ public abstract class ActivityManagerTestBase {
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getContext();
         mAm = mContext.getSystemService(ActivityManager.class);
+        mAtm = mContext.getSystemService(ActivityTaskManager.class);
 
         pressWakeupButton();
         pressUnlockButton();
         pressHomeButton();
-        removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
     }
 
     @After
@@ -130,16 +132,10 @@ public abstract class ActivityManagerTestBase {
         // Synchronous execution of removeStacksWithActivityTypes() ensures that all activities but
         // home are cleaned up from the stack at the end of each test. Am force stop shell commands
         // might be asynchronous and could interrupt the stack cleanup process if executed first.
-        removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
         executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
         executeShellCommand(AM_FORCE_STOP_SECOND_TEST_PACKAGE);
         executeShellCommand(AM_FORCE_STOP_THIRD_TEST_PACKAGE);
         pressHomeButton();
-    }
-
-    protected void removeStacksWithActivityTypes(int... activityTypes) {
-        mAm.removeStacksWithActivityTypes(activityTypes);
-        waitForIdle();
     }
 
     public static String executeShellCommand(String command) {
@@ -179,7 +175,7 @@ public abstract class ActivityManagerTestBase {
 
     protected void setActivityTaskWindowingMode(ComponentName activityName, int windowingMode) {
         final int taskId = getActivityTaskId(activityName);
-        mAm.setTaskWindowingMode(taskId, windowingMode, true /* toTop */);
+        mAtm.setTaskWindowingMode(taskId, windowingMode, true /* toTop */);
         mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
                 .setActivityType(ACTIVITY_TYPE_STANDARD)
                 .setWindowingMode(windowingMode)
@@ -239,7 +235,7 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected boolean supportsSplitScreenMultiWindow() {
-        return ActivityManager.supportsSplitScreenMultiWindow(mContext);
+        return ActivityTaskManager.supportsSplitScreenMultiWindow(mContext);
     }
 
     protected boolean hasDeviceFeature(final String requiredFeature) {

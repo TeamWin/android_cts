@@ -35,6 +35,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.TestThread;
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -81,11 +82,12 @@ public class FilterTest {
 
     @Test
     public void testFilter1() throws Throwable {
-        mActivityRule.runOnUiThread(() -> {
-            mMockFilter = new MockFilter();
-            mMockFilter.filter(TEST_CONSTRAINT);
-        });
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule,
+                mActivityRule.getActivity().getWindow().getDecorView(),
+                () -> {
+                    mMockFilter = new MockFilter();
+                    mMockFilter.filter(TEST_CONSTRAINT);
+                });
 
         PollingCheck.waitFor(TIME_OUT, mMockFilter::hadPerformedFiltering);
         assertEquals(TEST_CONSTRAINT, mMockFilter.getPerformFilteringConstraint());
@@ -99,11 +101,12 @@ public class FilterTest {
     public void testFilter2() throws Throwable {
         final Filter.FilterListener mockFilterListener = mock(Filter.FilterListener.class);
 
-        mActivityRule.runOnUiThread(() -> {
-            mMockFilter = new MockFilter();
-            mMockFilter.filter(TEST_CONSTRAINT, mockFilterListener);
-        });
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule,
+                mActivityRule.getActivity().getWindow().getDecorView(),
+                () -> {
+                    mMockFilter = new MockFilter();
+                    mMockFilter.filter(TEST_CONSTRAINT, mockFilterListener);
+                });
 
         PollingCheck.waitFor(TIME_OUT, mMockFilter::hadPerformedFiltering);
         assertEquals(TEST_CONSTRAINT, mMockFilter.getPerformFilteringConstraint());

@@ -23,6 +23,7 @@ java_library {
         "ub-uiautomator",
         "compatibility-device-util-axt",
         "androidx.test.rules",
+        "platformprotosnano",
     ],
 
     sdk_version: "test_current",

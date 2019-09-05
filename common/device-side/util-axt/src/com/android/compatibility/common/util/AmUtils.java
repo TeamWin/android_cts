@@ -20,6 +20,8 @@ public class AmUtils {
 
     private static final String DUMPSYS_ACTIVITY_PROCESSES = "dumpsys activity --proto processes";
 
+    public static int STANDBY_BUCKET_DOES_NOT_EXIST = -1;
+
     private AmUtils() {
     }
 
@@ -59,6 +61,19 @@ public class AmUtils {
     public static void setStandbyBucket(String packageName, int value) {
         SystemUtil.runShellCommandForNoOutput("am set-standby-bucket " + packageName
                 + " " + value);
+    }
+
+    /**
+     * Run "adb shell am get-standby-bucket",
+     * return #STANDBY_BUCKET_DOES_NOT_EXIST for invalid packages
+     * */
+    public static int getStandbyBucket(String packageName) {
+        final String value = SystemUtil.runShellCommand("am get-standby-bucket " + packageName);
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException nfe) {
+            return STANDBY_BUCKET_DOES_NOT_EXIST;
+        }
     }
 
     /** Wait until all broad queues are idle. */

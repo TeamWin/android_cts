@@ -51,6 +51,8 @@ public class LightBarTestBase {
     public static final Path DUMP_PATH = FileSystems.getDefault()
             .getPath("/sdcard/LightBarTestBase/");
 
+    public static final int WAIT_TIME = 2000;
+
     private static final int COLOR_DIFF_THESHOLDS = 2;
 
     private ArrayList<Rect> mCutouts;
@@ -116,9 +118,11 @@ public class LightBarTestBase {
                 PackageManager.FEATURE_EMBEDDED));
 
         // No bars on TVs and watches.
+        // Automotive navigation bar is not transparent
         assumeFalse(pm.hasSystemFeature(PackageManager.FEATURE_WATCH)
                 || pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
-                || pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK));
+                || pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+                || pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
 
 
         // Non-highEndGfx devices don't do colored system bars.

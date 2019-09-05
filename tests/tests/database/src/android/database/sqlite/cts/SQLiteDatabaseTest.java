@@ -1606,18 +1606,6 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
                 "WAL".equalsIgnoreCase(defaultJournalMode));
     }
 
-    public void testCompatibilityWALIsDefaultWhenSupported() {
-        if (!SQLiteGlobal.isCompatibilityWalSupported()) {
-            Log.i(TAG, "Compatibility WAL not supported. "
-                    + "Skipping testCompatibilityWALIsDefaultWhenSupported");
-            return;
-        }
-
-        assertTrue("Journal mode should be WAL if compatibility WAL is supported",
-                DatabaseUtils.stringForQuery(mDatabase, "PRAGMA journal_mode", null)
-                        .equalsIgnoreCase("WAL"));
-    }
-
     /**
      * Test that app can specify journal mode/synchronous mode
      */

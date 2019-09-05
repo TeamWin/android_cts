@@ -91,6 +91,15 @@ public class ItsTestActivity extends DialogTestListActivity {
             add("scene5");
             add("sensor_fusion");
         } };
+    // This must match scenes of HIDDEN_PHYSICAL_CAMERA_TESTS in run_all_tests.py
+    private static final ArrayList<String> mHiddenPhysicalCameraSceneIds =
+            new ArrayList<String> () { {
+                    add("scene0");
+                    add("scene1");
+                    add("scene2");
+                    add("scene4");
+                    add("sensor_fusion");
+             }};
 
     // TODO: cache the following in saved bundle
     private Set<ResultKey> mAllScenes = null;
@@ -332,7 +341,8 @@ public class ItsTestActivity extends DialogTestListActivity {
         // Hide the test if all camera devices are legacy
         CameraManager manager = (CameraManager) this.getSystemService(Context.CAMERA_SERVICE);
         try {
-            mToBeTestedCameraIds = ItsUtils.getItsCompatibleCameraIds(manager);
+            ItsUtils.ItsCameraIdList cameraIdList = ItsUtils.getItsCompatibleCameraIds(manager);
+            mToBeTestedCameraIds = cameraIdList.mCameraIdCombos;
         } catch (ItsException e) {
             Toast.makeText(ItsTestActivity.this,
                     "Received error from camera service while checking device capabilities: "
@@ -366,7 +376,8 @@ public class ItsTestActivity extends DialogTestListActivity {
 
     protected void setupItsTests(ArrayTestListAdapter adapter) {
         for (String cam : mToBeTestedCameraIds) {
-            for (String scene : mSceneIds) {
+            List<String> scenes = cam.contains(":") ? mHiddenPhysicalCameraSceneIds : mSceneIds;
+            for (String scene : scenes) {
                 adapter.add(new DialogTestListItem(this,
                 testTitle(cam, scene),
                 testId(cam, scene)));

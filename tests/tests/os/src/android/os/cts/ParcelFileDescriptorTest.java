@@ -135,21 +135,6 @@ public class ParcelFileDescriptorTest {
         done.get(5, TimeUnit.SECONDS);
     }
 
-    @Test
-    public void testFromData() throws IOException {
-        assertNull(ParcelFileDescriptor.fromData(null, null));
-        byte[] data = new byte[] { 0 };
-        assertFileDescriptorContent(data, ParcelFileDescriptor.fromData(data, null));
-        data = new byte[] { 0, 1, 2, 3 };
-        assertFileDescriptorContent(data, ParcelFileDescriptor.fromData(data, null));
-
-        // Check that modifying the data does not modify the data in the FD
-        data = new byte[] { 0, 1, 2, 3 };
-        ParcelFileDescriptor pfd = ParcelFileDescriptor.fromData(data, null);
-        data[1] = 42;
-        assertFileDescriptorContent(new byte[] { 0, 1, 2, 3 }, pfd);
-    }
-
     private static void assertFileDescriptorContent(byte[] expected, ParcelFileDescriptor fd)
         throws IOException {
         assertInputStreamContent(expected, new ParcelFileDescriptor.AutoCloseInputStream(fd));
@@ -163,28 +148,6 @@ public class ParcelFileDescriptorTest {
             assertEquals(expected.length, count);
             assertEquals(-1, is.read());
             MoreAsserts.assertEquals(expected, observed);
-        } finally {
-            is.close();
-        }
-    }
-
-    @Test
-    public void testFromDataSkip() throws IOException {
-        byte[] data = new byte[] { 40, 41, 42, 43, 44, 45, 46 };
-        ParcelFileDescriptor pfd = ParcelFileDescriptor.fromData(data, null);
-        assertNotNull(pfd);
-        FileDescriptor fd = pfd.getFileDescriptor();
-        assertNotNull(fd);
-        assertTrue(fd.valid());
-        FileInputStream is = new FileInputStream(fd);
-        try {
-            assertEquals(1, is.skip(1));
-            assertEquals(41, is.read());
-            assertEquals(42, is.read());
-            assertEquals(2, is.skip(2));
-            assertEquals(45, is.read());
-            assertEquals(46, is.read());
-            assertEquals(-1, is.read());
         } finally {
             is.close();
         }

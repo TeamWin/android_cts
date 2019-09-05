@@ -81,6 +81,9 @@ def convert_capture_to_rgb_image(cap,
         assert(props is not None)
         r,gr,gb,b = convert_capture_to_planes(cap, props)
         return convert_raw_to_rgb_image(r,gr,gb,b, props, cap["metadata"])
+    elif cap["format"] == "y8":
+        y = cap["data"][0:w*h]
+        return convert_y8_to_rgb_image(y, w, h)
     else:
         raise its.error.Error('Invalid format %s' % (cap["format"]))
 
@@ -469,6 +472,21 @@ def convert_yuv420_planar_to_rgb_image(y_plane, u_plane, v_plane,
     rgb.reshape(w*h*3)[:] = flt.reshape(w*h*3)[:]
     return rgb.astype(numpy.float32) / 255.0
 
+def convert_y8_to_rgb_image(y_plane, w, h):
+    """Convert a Y 8-bit image to an RGB image.
+
+    Args:
+        y_plane: The packed 8-bit Y plane.
+        w: The width of the image.
+        h: The height of the image.
+
+    Returns:
+        RGB float-3 image array, with pixel values in [0.0, 1.0].
+    """
+    y3 = numpy.dstack([y_plane, y_plane, y_plane])
+    rgb = numpy.empty([h, w, 3], dtype=numpy.uint8)
+    rgb.reshape(w*h*3)[:] = y3.reshape(w*h*3)[:]
+    return rgb.astype(numpy.float32) / 255.0
 
 def load_rgb_image(fname):
     """Load a standard image file (JPG, PNG, etc.).

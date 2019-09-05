@@ -29,7 +29,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.app.Activity;
-import android.app.Instrumentation;
 import android.content.Context;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
@@ -41,7 +40,6 @@ import android.view.View.MeasureSpec;
 import android.widget.MediaController;
 import android.widget.VideoView;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.annotation.UiThreadTest;
 import androidx.test.filters.LargeTest;
 import androidx.test.rule.ActivityTestRule;
@@ -84,7 +82,6 @@ public class VideoViewTest {
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
             .build();
 
-    private Instrumentation mInstrumentation;
     private Activity mActivity;
     private VideoView mVideoView;
     private String mVideoPath;
@@ -95,7 +92,6 @@ public class VideoViewTest {
 
     @Before
     public void setup() throws Throwable {
-        mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.getActivity();
         mVideoView = (VideoView) mActivity.findViewById(R.id.videoview);
 
@@ -124,7 +120,6 @@ public class VideoViewTest {
             MediaController mediaController = new MediaController(mActivity);
             mVideoView.setMediaController(mediaController);
         });
-        mInstrumentation.waitForIdleSync();
     }
 
     @UiThreadTest
@@ -224,7 +219,6 @@ public class VideoViewTest {
             mVideoView.setVideoPath(path);
             mVideoView.start();
         });
-        mInstrumentation.waitForIdleSync();
 
         verify(mockErrorListener, within(TIME_OUT)).onError(
                 any(MediaPlayer.class), anyInt(), anyInt());
@@ -245,7 +239,6 @@ public class VideoViewTest {
         mVideoView.setOnPreparedListener(mockPreparedListener);
 
         mActivityRule.runOnUiThread(() -> mVideoView.setVideoPath(mVideoPath));
-        mInstrumentation.waitForIdleSync();
 
         verify(mockPreparedListener, within(TIME_OUT)).onPrepared(any(MediaPlayer.class));
         verify(mockPreparedListener, times(1)).onPrepared(any(MediaPlayer.class));

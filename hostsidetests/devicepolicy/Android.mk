@@ -39,7 +39,15 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_JAVA_LIBRARIES := tools-common-prebuilt cts-tradefed tradefed compatibility-host-util
+LOCAL_JAVA_RESOURCE_DIRS := res
+
+LOCAL_JAVA_LIBRARIES := \
+    tools-common-prebuilt \
+    cts-tradefed \
+    tradefed \
+    compatibility-host-util \
+    guava \
+    truth-prebuilt
 
 LOCAL_CTS_TEST_PACKAGE := android.adminhostside
 

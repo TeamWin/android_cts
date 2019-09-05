@@ -54,6 +54,8 @@ public class BroadcastTestBase extends ActivityInstrumentationTestCase2<
 
     @Override
     protected void tearDown() throws Exception {
+        Log.v(TAG, getClass().getSimpleName() + ".tearDown(): hasFeature=" + mHasFeature
+                + " receiver=" + mActivityDoneReceiver);
         if (mHasFeature && mActivityDoneReceiver != null) {
             try {
                 mContext.unregisterReceiver(mActivityDoneReceiver);

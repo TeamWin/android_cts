@@ -16,11 +16,7 @@ android_test {
     name: "CtsFragmentTestCasesSdk26",
     defaults: ["cts_defaults"],
 
-     dex_preopt: {
-        enabled: false,
-    },
-
-   optimize: {
+    optimize: {
         enabled: false,
     },
 

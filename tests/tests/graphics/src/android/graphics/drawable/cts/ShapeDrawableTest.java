@@ -204,7 +204,7 @@ public class ShapeDrawableTest {
     public void testGetPaint() {
         ShapeDrawable shapeDrawable = new ShapeDrawable();
         assertNotNull(shapeDrawable.getPaint());
-        assertEquals(Paint.ANTI_ALIAS_FLAG | Paint.DEV_KERN_TEXT_FLAG
+        assertEquals(Paint.ANTI_ALIAS_FLAG | Paint.DEV_KERN_TEXT_FLAG | Paint.FILTER_BITMAP_FLAG
                 | Paint.EMBEDDED_BITMAP_TEXT_FLAG, shapeDrawable.getPaint().getFlags());
     }
 
@@ -374,7 +374,7 @@ public class ShapeDrawableTest {
         a.setShape(new OvalShape());
 
         ShapeDrawable b = (ShapeDrawable) a.getConstantState().newDrawable();
-        assertSame(a.getShape(), b.getShape());
+        assertEquals(a.getShape(), b.getShape());
         a.mutate();
 
         assertNotNull(a.getShape());

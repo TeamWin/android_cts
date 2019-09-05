@@ -35,8 +35,8 @@ import android.view.View;
 import android.widget.ImageView;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.LargeTest;
-import androidx.test.filters.MediumTest;
 import androidx.test.filters.SmallTest;
 import androidx.test.rule.ActivityTestRule;
 
@@ -117,6 +117,7 @@ public class AnimatedVectorDrawableParameterizedTest {
     }
 
     @Test
+    @FlakyTest (bugId = 72737527)
     public void testAnimationOnLayer() throws Throwable {
         final Animatable2Callback callback = new Animatable2Callback();
         // Can't simply use final here, b/c it needs to be initialized and referred later in UI
@@ -226,7 +227,7 @@ public class AnimatedVectorDrawableParameterizedTest {
         });
     }
 
-    @MediumTest
+    @LargeTest
     @Test
     public void testEmptyAnimatorSet() throws Throwable {
         int resId = R.drawable.avd_empty_animator;
@@ -246,7 +247,7 @@ public class AnimatedVectorDrawableParameterizedTest {
         AnimatedVectorDrawableTest.waitForAVDStop(callback, MAX_TIMEOUT_MS);
         // Check that the AVD with empty AnimatorSet has finished
         callback.assertEnded(true);
-        callback.assertAVDRuntime(0, TimeUnit.MILLISECONDS.toNanos(64)); // 4 frames
+        callback.assertAVDRuntime(0, TimeUnit.MILLISECONDS.toNanos(300));
     }
 
     // Does a fuzzy comparison between two images.
@@ -281,6 +282,7 @@ public class AnimatedVectorDrawableParameterizedTest {
     }
 
     @Test
+    @FlakyTest (bugId = 72737527)
     public void testInfiniteAVD() throws Throwable {
         final Animatable2Callback callback = new Animatable2Callback();
         // Can't simply use final here, b/c it needs to be initialized and referred later in UI

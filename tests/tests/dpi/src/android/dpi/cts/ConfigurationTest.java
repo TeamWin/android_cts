@@ -68,8 +68,12 @@ public class ConfigurationTest extends AndroidTestCase {
 
         Set<Integer> allowedDensities = new HashSet<Integer>();
         allowedDensities.add(DisplayMetrics.DENSITY_LOW);
+        allowedDensities.add(DisplayMetrics.DENSITY_140);
         allowedDensities.add(DisplayMetrics.DENSITY_MEDIUM);
+        allowedDensities.add(DisplayMetrics.DENSITY_180);
+        allowedDensities.add(DisplayMetrics.DENSITY_200);
         allowedDensities.add(DisplayMetrics.DENSITY_TV);
+        allowedDensities.add(DisplayMetrics.DENSITY_220);
         allowedDensities.add(DisplayMetrics.DENSITY_HIGH);
         allowedDensities.add(DisplayMetrics.DENSITY_260);
         allowedDensities.add(DisplayMetrics.DENSITY_280);
@@ -80,8 +84,10 @@ public class ConfigurationTest extends AndroidTestCase {
         allowedDensities.add(DisplayMetrics.DENSITY_400);
         allowedDensities.add(DisplayMetrics.DENSITY_420);
         allowedDensities.add(DisplayMetrics.DENSITY_440);
+        allowedDensities.add(DisplayMetrics.DENSITY_450);
         allowedDensities.add(DisplayMetrics.DENSITY_XXHIGH);
         allowedDensities.add(DisplayMetrics.DENSITY_560);
+        allowedDensities.add(DisplayMetrics.DENSITY_600);
         allowedDensities.add(DisplayMetrics.DENSITY_XXXHIGH);
         assertTrue("DisplayMetrics.DENSITY_DEVICE_STABLE must be one of the DisplayMetrics.DENSITY_* values: "
                 + allowedDensities, allowedDensities.contains(DisplayMetrics.DENSITY_DEVICE_STABLE));

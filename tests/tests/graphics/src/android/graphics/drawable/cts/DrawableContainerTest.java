@@ -38,9 +38,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import android.content.res.ColorStateList;
+import android.graphics.BlendMode;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
+import android.graphics.Insets;
 import android.graphics.PixelFormat;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuff.Mode;
@@ -51,6 +53,7 @@ import android.graphics.drawable.DrawableContainer;
 import android.graphics.drawable.DrawableContainer.DrawableContainerState;
 import android.graphics.drawable.LevelListDrawable;
 
+import androidx.annotation.Nullable;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -326,11 +329,19 @@ public class DrawableContainerTest {
         Drawable dr = spy(new ColorDrawable(Color.GREEN));
         addAndSelectDrawable(dr);
 
-        verify(dr, times(1)).setTintMode(Mode.SRC_OVER);
+        verify(dr, times(1)).setTintBlendMode(BlendMode.SRC_OVER);
+    }
 
-        mDrawableContainer.setTintList(null);
-        mDrawableContainer.setTintMode(null);
-        verify(dr, times(1)).setTintMode(null);
+    @Test
+    public void testSetBlendMode() {
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
+        mDrawableContainer.setTint(Color.BLACK);
+        mDrawableContainer.setTintBlendMode(BlendMode.SRC_OVER);
+
+        Drawable dr = spy(new ColorDrawable(Color.GREEN));
+        addAndSelectDrawable(dr);
+
+        verify(dr, times(1)).setTintBlendMode(BlendMode.SRC_OVER);
     }
 
     @Test
@@ -826,6 +837,22 @@ public class DrawableContainerTest {
         assertEquals(true, mDrawableContainer.isStateful());
     }
 
+    @Test
+    public void testGetOpticalBoundsWithNoInternalDrawable() {
+        DrawableContainer container = new DrawableContainer();
+        assertEquals(Insets.NONE, container.getOpticalInsets());
+    }
+
+    @Test
+    public void testGetOpticalBoundsFromInternalDrawable() {
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
+        MockDrawable mockDrawable = new MockDrawable();
+        mockDrawable.setInsets(Insets.of(20, 40, 60, 100));
+
+        addAndSelectDrawable(mockDrawable);
+        assertEquals(Insets.of(20, 40, 60, 100), mDrawableContainer.getOpticalInsets());
+    }
+
     private void addAndSelectDrawable(Drawable drawable) {
         int pos = mDrawableContainerState.addChild(drawable);
         mDrawableContainer.selectDrawable(pos);
@@ -857,10 +884,15 @@ public class DrawableContainerTest {
     // Since Mockito can't mock or spy on protected methods, we have a custom extension
     // of Drawable to track calls to protected methods. This class also has empty implementations
     // of the base abstract methods.
-    private class MockDrawable extends Drawable {
+    public class MockDrawable extends Drawable {
         private boolean mHasCalledOnBoundsChanged;
         private boolean mHasCalledOnStateChanged;
         private boolean mHasCalledOnLevelChanged;
+        private boolean mHasOnApplyBlendModeChanged;
+
+        private BlendMode mBlendMode = null;
+
+        private Insets mInsets = null;
 
         @Override
         public int getOpacity() {
@@ -879,6 +911,15 @@ public class DrawableContainerTest {
         public void setColorFilter(ColorFilter colorFilter) {
         }
 
+        public void setInsets(@Nullable Insets insets) {
+            mInsets = insets;
+        }
+
+        @Override
+        public Insets getOpticalInsets() {
+            return mInsets != null ? mInsets : Insets.NONE;
+        }
+
         public boolean hasOnBoundsChangedCalled() {
             return mHasCalledOnBoundsChanged;
         }
@@ -891,10 +932,20 @@ public class DrawableContainerTest {
             return mHasCalledOnLevelChanged;
         }
 
+        public BlendMode getBlendMode() {
+            return mBlendMode;
+        }
+
         public void reset() {
             mHasCalledOnLevelChanged = false;
             mHasCalledOnStateChanged = false;
             mHasCalledOnBoundsChanged = false;
+        }
+
+        @Override
+        public void setTintBlendMode(BlendMode blendMode) {
+            mHasOnApplyBlendModeChanged = true;
+            mBlendMode = blendMode;
         }
 
         @Override

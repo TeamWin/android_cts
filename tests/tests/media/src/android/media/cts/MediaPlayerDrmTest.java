@@ -15,15 +15,51 @@
  */
 package android.media.cts;
 
+import android.media.cts.R;
+
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.content.res.AssetFileDescriptor;
+import android.graphics.Rect;
+import android.hardware.Camera;
+import android.media.AudioManager;
+import android.media.MediaCodec;
+import android.media.MediaDataSource;
+import android.media.MediaExtractor;
+import android.media.MediaFormat;
+import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnErrorListener;
+import android.media.MediaRecorder;
+import android.media.MediaTimestamp;
+import android.media.PlaybackParams;
+import android.media.SubtitleData;
+import android.media.SyncParams;
+import android.media.TimedText;
+import android.media.audiofx.AudioEffect;
+import android.media.audiofx.Visualizer;
 import android.net.Uri;
 import android.os.Environment;
+import android.os.IBinder;
+import android.os.PowerManager;
+import android.os.ServiceManager;
+import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.RequiresDevice;
+import android.util.Log;
 
-import androidx.test.filters.SmallTest;
+import com.android.compatibility.common.util.MediaUtils;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.List;
+import java.util.StringTokenizer;
+import java.util.UUID;
+import java.util.Vector;
+import java.util.concurrent.CountDownLatch;
+
+import junit.framework.AssertionFailedError;
 
 /**
  * Tests for the MediaPlayer API and local video/audio playback.
@@ -32,8 +68,6 @@ import java.io.File;
  * Blender Foundation / www.bigbuckbunny.org, and are licensed under the Creative Commons
  * Attribution 3.0 License at http://creativecommons.org/licenses/by/3.0/us/.
  */
-@SmallTest
-@RequiresDevice
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 public class MediaPlayerDrmTest extends MediaPlayerDrmTestBase {
 
@@ -84,57 +118,45 @@ public class MediaPlayerDrmTest extends MediaPlayerDrmTestBase {
 
     // Assets
 
-    private static final Uri CENC_AUDIO_URL = Uri.parse(
-            "https://storage.googleapis.com/wvmedia/cenc/clearkey/car_cenc-20120827-8c-pssh.mp4");
+    private static final String CENC_AUDIO_PATH = "/cenc/clearkey/car_cenc-20120827-8c-pssh.mp4";
     private static final Uri CENC_AUDIO_URL_DOWNLOADED = getUriFromFile("car_cenc-20120827-8c.mp4");
 
-    private static final Uri CENC_VIDEO_URL = Uri.parse(
-            "https://storage.googleapis.com/wvmedia/cenc/clearkey/car_cenc-20120827-88-pssh.mp4");
+    private static final String CENC_VIDEO_PATH = "/cenc/clearkey/car_cenc-20120827-88-pssh.mp4";
     private static final Uri CENC_VIDEO_URL_DOWNLOADED = getUriFromFile("car_cenc-20120827-88.mp4");
 
 
     // Tests
 
-    @SmallTest
-    @RequiresDevice
     public void testCAR_CLEARKEY_AUDIO_DOWNLOADED_V0_SYNC() throws Exception {
-        download(CENC_AUDIO_URL,
+        download(Uri.parse(Utils.getMediaPath() + CENC_AUDIO_PATH),
                 CENC_AUDIO_URL_DOWNLOADED,
                 RES_AUDIO,
                 ModularDrmTestType.V0_SYNC_TEST);
     }
 
-    @SmallTest
-    @RequiresDevice
     public void testCAR_CLEARKEY_AUDIO_DOWNLOADED_V1_ASYNC() throws Exception {
-        download(CENC_AUDIO_URL,
+        download(Uri.parse(Utils.getMediaPath() + CENC_AUDIO_PATH),
                 CENC_AUDIO_URL_DOWNLOADED,
                 RES_AUDIO,
                 ModularDrmTestType.V1_ASYNC_TEST);
     }
 
-    @SmallTest
-    @RequiresDevice
     public void testCAR_CLEARKEY_AUDIO_DOWNLOADED_V2_SYNC_CONFIG() throws Exception {
-        download(CENC_AUDIO_URL,
+        download(Uri.parse(Utils.getMediaPath() + CENC_AUDIO_PATH),
                 CENC_AUDIO_URL_DOWNLOADED,
                 RES_AUDIO,
                 ModularDrmTestType.V2_SYNC_CONFIG_TEST);
     }
 
-    @SmallTest
-    @RequiresDevice
     public void testCAR_CLEARKEY_AUDIO_DOWNLOADED_V3_ASYNC_DRMPREPARED() throws Exception {
-        download(CENC_AUDIO_URL,
+        download(Uri.parse(Utils.getMediaPath() + CENC_AUDIO_PATH),
                 CENC_AUDIO_URL_DOWNLOADED,
                 RES_AUDIO,
                 ModularDrmTestType.V3_ASYNC_DRMPREPARED_TEST);
     }
 
-    @SmallTest
-    @RequiresDevice
     public void testCAR_CLEARKEY_AUDIO_DOWNLOADED_V5_ASYNC_WITH_HANDLER() throws Exception {
-        download(CENC_AUDIO_URL,
+        download(Uri.parse(Utils.getMediaPath() + CENC_AUDIO_PATH),
                 CENC_AUDIO_URL_DOWNLOADED,
                 RES_AUDIO,
                 ModularDrmTestType.V5_ASYNC_DRMPREPARED_TEST_WITH_HANDLER);

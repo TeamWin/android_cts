@@ -75,6 +75,7 @@ lseek: 1
 # madvise: advice==MADV_DONTNEED
 madvise: arg2 == 4; return EPERM
 
+membarrier: 1
 memfd_create: return EPERM
 mkdirat: return EPERM
 mknodat: return EPERM

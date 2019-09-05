@@ -16,10 +16,9 @@
 
 package android.location.cts;
 
-import com.android.compatibility.common.util.ApiLevelUtil;
-
 import android.location.GnssClock;
 import android.location.GnssMeasurement;
+import android.location.GnssMeasurementsEvent;
 import android.location.GnssNavigationMessage;
 import android.location.GnssStatus;
 import android.location.LocationManager;
@@ -27,11 +26,16 @@ import android.os.Build;
 import android.os.SystemProperties;
 import android.util.Log;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
+
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Helper class for GnssMeasurement Tests.
@@ -53,9 +57,6 @@ public final class TestMeasurementUtil {
     public static final String REGISTRATION_ERROR_MESSAGE = "Registration of GnssMeasurements" +
             " listener has failed, this indicates a platform bug. Please report the issue with" +
             " a full bugreport.";
-
-    private static final int YEAR_2016 = 2016;
-    private static final int YEAR_2017 = 2017;
 
     private enum GnssBand {
         GNSS_L1,
@@ -88,9 +89,7 @@ public final class TestMeasurementUtil {
      *         device.
      */
     public static boolean canTestRunOnCurrentDevice(TestLocationManager testLocationManager,
-                                                    String testTag,
-                                                    int minHardwareYear,
-                                                    boolean isCtsVerifier) {
+            boolean isCtsVerifier) {
        if (ApiLevelUtil.isBefore(Build.VERSION_CODES.N)) {
             Log.i(TAG, "This test is designed to work on N or newer. " +
                     "Test is being skipped because the platform version is being run in " +
@@ -115,13 +114,6 @@ public final class TestMeasurementUtil {
         if (!isCtsVerifier && !gpsProviderEnabled) {
             return false;
         }
-
-        // TODO - add this to the test info page
-        int gnssYearOfHardware = testLocationManager.getLocationManager().getGnssYearOfHardware();
-        Log.i(testTag, "This device is reporting GNSS hardware from year "
-                + (gnssYearOfHardware == 0 ? "2015 or earlier" : gnssYearOfHardware) + ". "
-                + "Devices " + (gnssYearOfHardware >= minHardwareYear ? "like this one " : "")
-                + "from year " + minHardwareYear + " or newer provide GnssMeasurement support." );
 
         return true;
     }
@@ -166,7 +158,46 @@ public final class TestMeasurementUtil {
                     String.valueOf(gpsTimeInNs),
                     gpsTimeInNs >= GPS_TIME_YEAR_2016_IN_NSEC);
         }
+    }
 
+    /**
+     * Asserts the same FullBiasNanos of multiple GnssMeasurementEvents at the same time epoch.
+     *
+     * <p>FullBiasNanos denotes the receiver clock bias calculated by the GNSS chipset. If multiple
+     * GnssMeasurementEvents are tagged with the same time epoch, their FullBiasNanos should be the
+     * same.
+     *
+     * @param softAssert custom SoftAssert
+     * @param events     GnssMeasurementEvents. Each event includes one GnssClock with a
+     *                   fullBiasNanos.
+     */
+    public static void assertGnssClockHasConsistentFullBiasNanos(SoftAssert softAssert,
+            List<GnssMeasurementsEvent> events) {
+        Map<Long, List<Long>> timeToFullBiasList = new HashMap<>();
+        for (GnssMeasurementsEvent event : events) {
+            long timeNanos = event.getClock().getTimeNanos();
+            long fullBiasNanos = event.getClock().getFullBiasNanos();
+
+            timeToFullBiasList.putIfAbsent(timeNanos, new ArrayList<>());
+            List<Long> fullBiasNanosList = timeToFullBiasList.get(timeNanos);
+            fullBiasNanosList.add(fullBiasNanos);
+        }
+
+        for (Map.Entry<Long, List<Long>> entry : timeToFullBiasList.entrySet()) {
+            long timeNanos = entry.getKey();
+            List<Long> fullBiasNanosList = entry.getValue();
+            if (fullBiasNanosList.size() < 2) {
+                continue;
+            }
+            long fullBiasNanos = fullBiasNanosList.get(0);
+            for (int i = 1; i < fullBiasNanosList.size(); i++) {
+                softAssert.assertTrue("FullBiasNanos are the same at the same timeNanos",
+                        timeNanos,
+                        "fullBiasNanosList.get(i) - fullBiasNanosList.get(0) == 0",
+                        String.valueOf(fullBiasNanosList.get(i) - fullBiasNanos),
+                        fullBiasNanosList.get(i) - fullBiasNanos == 0);
+            }
+        }
     }
 
     /**
@@ -186,7 +217,6 @@ public final class TestMeasurementUtil {
         verifyReceivedSatelliteVehicleTimeInNs(measurement, softAssert, timeInNs);
         verifyAccumulatedDeltaRanges(measurement, softAssert, timeInNs);
 
-        int gnssYearOfHardware = testLocationManager.getLocationManager().getGnssYearOfHardware();
         int state = measurement.getState();
         softAssert.assertTrue("state: Satellite code sync state",
                 timeInNs,
@@ -266,15 +296,6 @@ public final class TestMeasurementUtil {
                     measurement.getSnrInDb() >= 0.0 && measurement.getSnrInDb() <= 63);
         }
 
-        // Check Automatic Gain Control level in dB.
-        // As per CDD 7.3.3 / C-3-3 Year 2107+ should have AGC level present
-        if (gnssYearOfHardware >= YEAR_2017) {
-            softAssert.assertTrue("AGC level in measurement",
-                    timeInNs,
-                    "X == true",
-                    String.valueOf(measurement.hasAutomaticGainControlLevelDb()),
-                    measurement.hasAutomaticGainControlLevelDb());
-        }
         if (measurement.hasAutomaticGainControlLevelDb()) {
             softAssert.assertTrue("Automatic Gain Control level in dB",
                 timeInNs,
@@ -770,18 +791,14 @@ public final class TestMeasurementUtil {
                 getGnssNavMessageTypes() + "] actual = " + type,
                     GNSS_NAVIGATION_MESSAGE_TYPE.contains(type));
 
-            int gnssYearOfHardware =
-                testLocationManager.getLocationManager().getGnssYearOfHardware();
             int messageType = message.getType();
-            if (gnssYearOfHardware >= YEAR_2016) {
-                softAssert.assertTrue("Message ID cannot be 0", message.getMessageId() != 0);
-                if (messageType == GnssNavigationMessage.TYPE_GAL_I) {
-                    softAssert.assertTrue("Sub Message ID can not be negative.",
-                        message.getSubmessageId() >= 0);
-                } else {
-                    softAssert.assertTrue("Sub Message ID has to be greater than 0.",
-                        message.getSubmessageId() > 0);
-                }
+            softAssert.assertTrue("Message ID cannot be 0", message.getMessageId() != 0);
+            if (messageType == GnssNavigationMessage.TYPE_GAL_I) {
+                softAssert.assertTrue("Sub Message ID can not be negative.",
+                    message.getSubmessageId() >= 0);
+            } else {
+                softAssert.assertTrue("Sub Message ID has to be greater than 0.",
+                    message.getSubmessageId() > 0);
             }
 
             // if message type == TYPE_L1CA, verify PRN & Data Size.

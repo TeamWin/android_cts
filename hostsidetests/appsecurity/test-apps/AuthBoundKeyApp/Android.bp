@@ -17,7 +17,7 @@ android_test_helper_app {
     defaults: ["cts_support_defaults"],
     srcs: ["src/**/*.java"],
     sdk_version: "current",
-    static_libs: ["android-support-test"],
+    static_libs: ["androidx.test.rules"],
     libs: [
         "android.test.runner.stubs",
         "android.test.base.stubs",

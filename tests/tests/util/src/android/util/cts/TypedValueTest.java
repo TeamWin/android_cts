@@ -17,8 +17,10 @@
 package android.util.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
@@ -245,5 +247,27 @@ public class TypedValueTest {
         assertEquals(TypedValue.COMPLEX_UNIT_FRACTION, tv.getComplexUnit());
         tv.data = 21474865;
         assertEquals(TypedValue.COMPLEX_UNIT_FRACTION_PARENT, tv.getComplexUnit());
+    }
+
+    @Test
+    public void testIsColorType() {
+        TypedValue tv = new TypedValue();
+        tv.type = TypedValue.TYPE_INT_COLOR_ARGB8;
+        assertTrue(tv.isColorType());
+        tv.type = TypedValue.TYPE_INT_COLOR_RGB8;
+        assertTrue(tv.isColorType());
+        tv.type = TypedValue.TYPE_INT_COLOR_ARGB4;
+        assertTrue(tv.isColorType());
+        tv.type = TypedValue.TYPE_INT_COLOR_RGB4;
+        assertTrue(tv.isColorType());
+
+        tv.type = TypedValue.TYPE_INT_HEX;
+        assertFalse(tv.isColorType());
+        tv.type = TypedValue.TYPE_FLOAT;
+        assertFalse(tv.isColorType());
+        tv.type = TypedValue.TYPE_ATTRIBUTE;
+        assertFalse(tv.isColorType());
+        tv.type = TypedValue.TYPE_NULL;
+        assertFalse(tv.isColorType());
     }
 }

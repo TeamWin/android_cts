@@ -54,7 +54,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     private static final long TIME_SPENT_IN_TOP = 2000;
     private static final long TIME_SPENT_IN_FOREGROUND = 2000;
     private static final long TIME_SPENT_IN_BACKGROUND = 2000;
-    private static final long TIME_SPENT_IN_CACHED = 2000;
+    private static final long TIME_SPENT_IN_CACHED = 4000;
     private static final long SCREEN_STATE_CHANGE_TIMEOUT = 4000;
     private static final long SCREEN_STATE_POLLING_INTERVAL = 500;
 
@@ -271,7 +271,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testBleScans() throws Exception {
-        if (isTV() || !hasFeature(FEATURE_BLUETOOTH_LE, true)) {
+        if (noBattery() || !hasFeature(FEATURE_BLUETOOTH_LE, true)) {
             return;
         }
 
@@ -295,7 +295,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
 
 
     public void testUnoptimizedBleScans() throws Exception {
-        if (isTV() || !hasFeature(FEATURE_BLUETOOTH_LE, true)) {
+        if (noBattery() || !hasFeature(FEATURE_BLUETOOTH_LE, true)) {
             return;
         }
         batteryOnScreenOff();
@@ -346,7 +346,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testGpsUpdates() throws Exception {
-        if (isTV() || !hasFeature(FEATURE_LOCATION_GPS, true)) {
+        if (noBattery() || !hasFeature(FEATURE_LOCATION_GPS, true)) {
             return;
         }
 
@@ -355,25 +355,37 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
         // Whitelist this app against background location request throttling
+        String origWhitelist = getDevice().executeShellCommand(
+                "settings get global location_background_throttle_package_whitelist").trim();
         getDevice().executeShellCommand(String.format(
                 "settings put global location_background_throttle_package_whitelist %s",
                 DEVICE_SIDE_TEST_PACKAGE));
 
-        // Background test.
-        executeBackground(ACTION_GPS, 60_000);
-        assertValueRange("sr", gpsSensorNumber, 6, 1, 1); // count
-        assertValueRange("sr", gpsSensorNumber, 7, 1, 1); // background_count
+        try {
+            // Background test.
+            executeBackground(ACTION_GPS, 60_000);
+            assertValueRange("sr", gpsSensorNumber, 6, 1, 1); // count
+            assertValueRange("sr", gpsSensorNumber, 7, 1, 1); // background_count
 
-        // Foreground test.
-        executeForeground(ACTION_GPS, 60_000);
-        assertValueRange("sr", gpsSensorNumber, 6, 2, 2); // count
-        assertValueRange("sr", gpsSensorNumber, 7, 1, 1); // background_count
-
-        batteryOffScreenOn();
+            // Foreground test.
+            executeForeground(ACTION_GPS, 60_000);
+            assertValueRange("sr", gpsSensorNumber, 6, 2, 2); // count
+            assertValueRange("sr", gpsSensorNumber, 7, 1, 1); // background_count
+        } finally {
+            if ("null".equals(origWhitelist) || "".equals(origWhitelist)) {
+                getDevice().executeShellCommand(
+                        "settings delete global location_background_throttle_package_whitelist");
+            } else {
+                getDevice().executeShellCommand(String.format(
+                        "settings put global location_background_throttle_package_whitelist %s",
+                        origWhitelist));
+            }
+            batteryOffScreenOn();
+        }
     }
 
     public void testJobBgVsFg() throws Exception {
-        if (isTV()) {
+        if (noBattery()) {
             return;
         }
         batteryOnScreenOff();
@@ -396,7 +408,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testSyncBgVsFg() throws Exception {
-        if (isTV()) {
+        if (noBattery()) {
             return;
         }
         batteryOnScreenOff();
@@ -624,9 +636,14 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         return String.format("Completed performing %s for request %s", actionValue, requestCode);
     }
 
-    /** Determine if device is just a TV and is not expected to have proper batterystats. */
-    private boolean isTV() throws Exception {
-        return hasFeature(FEATURE_LEANBACK_ONLY, false);
+    /** Determine if device has no battery and is not expected to have proper batterystats. */
+    private boolean noBattery() throws Exception {
+        final String batteryinfo = getDevice().executeShellCommand("dumpsys battery");
+        boolean hasBattery = batteryinfo.contains("present: true");
+        if (!hasBattery) {
+            LogUtil.CLog.w("Device does not have a battery");
+        }
+        return !hasBattery;
     }
 
     /**

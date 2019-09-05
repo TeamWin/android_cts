@@ -20,6 +20,8 @@ import static android.app.admin.DevicePolicyManager.ID_TYPE_IMEI;
 import static android.app.admin.DevicePolicyManager.ID_TYPE_MEID;
 import static android.app.admin.DevicePolicyManager.ID_TYPE_SERIAL;
 import static android.keystore.cts.CertificateUtils.createCertificate;
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -35,11 +37,10 @@ import android.security.KeyChainAliasCallback;
 import android.security.KeyChainException;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
+import android.security.keystore.StrongBoxUnavailableException;
 import android.support.test.uiautomator.UiDevice;
 import android.telephony.TelephonyManager;
-
 import com.android.compatibility.common.util.FakeKeys.FAKE_RSA_1;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -61,12 +62,10 @@ import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
 import javax.security.auth.x500.X500Principal;
 
 public class KeyManagementTest extends BaseDeviceAdminTest {
@@ -112,22 +111,22 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
 
     public void testCanInstallAndRemoveValidRsaKeypair() throws Exception {
         final String alias = "com.android.test.valid-rsa-key-1";
-        final PrivateKey privKey = getPrivateKey(FAKE_RSA_1.privateKey , "RSA");
+        final PrivateKey privKey = getPrivateKey(FAKE_RSA_1.privateKey, "RSA");
         final Certificate cert = getCertificate(FAKE_RSA_1.caCertificate);
 
         // Install keypair.
-        assertTrue(mDevicePolicyManager.installKeyPair(getWho(), privKey, cert, alias));
+        assertThat(mDevicePolicyManager.installKeyPair(getWho(), privKey, cert, alias)).isTrue();
         try {
             // Request and retrieve using the alias.
             assertGranted(alias, false);
-            assertEquals(alias, new KeyChainAliasFuture(alias).get());
+            assertThat(new KeyChainAliasFuture(alias).get()).isEqualTo(alias);
             assertGranted(alias, true);
 
             // Verify key is at least something like the one we put in.
-            assertEquals(KeyChain.getPrivateKey(mActivity, alias).getAlgorithm(), "RSA");
+            assertThat(KeyChain.getPrivateKey(mActivity, alias).getAlgorithm()).isEqualTo("RSA");
         } finally {
             // Delete regardless of whether the test succeeded.
-            assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
+            assertThat(mDevicePolicyManager.removeKeyPair(getWho(), alias)).isTrue();
         }
         // Verify alias is actually deleted.
         assertGranted(alias, false);
@@ -136,25 +135,29 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
     public void testCanInstallWithAutomaticAccess() throws Exception {
         final String grant = "com.android.test.autogrant-key-1";
         final String withhold = "com.android.test.nongrant-key-1";
-        final PrivateKey privKey = getPrivateKey(FAKE_RSA_1.privateKey , "RSA");
+        final PrivateKey privKey = getPrivateKey(FAKE_RSA_1.privateKey, "RSA");
         final Certificate cert = getCertificate(FAKE_RSA_1.caCertificate);
 
         // Install keypairs.
-        assertTrue(mDevicePolicyManager.installKeyPair(getWho(), privKey, new Certificate[] {cert},
-                grant, true));
-        assertTrue(mDevicePolicyManager.installKeyPair(getWho(), privKey, new Certificate[] {cert},
-                withhold, false));
+        assertThat(
+                mDevicePolicyManager.installKeyPair(
+                        getWho(), privKey, new Certificate[] {cert}, grant, true))
+                .isTrue();
+        assertThat(
+                mDevicePolicyManager.installKeyPair(
+                        getWho(), privKey, new Certificate[] {cert}, withhold, false))
+                .isTrue();
         try {
             // Verify only the requested key was actually granted.
             assertGranted(grant, true);
             assertGranted(withhold, false);
 
             // Verify the granted key is actually obtainable in PrivateKey form.
-            assertEquals(KeyChain.getPrivateKey(mActivity, grant).getAlgorithm(), "RSA");
+            assertThat(KeyChain.getPrivateKey(mActivity, grant).getAlgorithm()).isEqualTo("RSA");
         } finally {
             // Delete both keypairs.
-            assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), grant));
-            assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), withhold));
+            assertThat(mDevicePolicyManager.removeKeyPair(getWho(), grant)).isTrue();
+            assertThat(mDevicePolicyManager.removeKeyPair(getWho(), withhold)).isTrue();
         }
         // Verify they're actually gone.
         assertGranted(grant, false);
@@ -165,7 +168,7 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         final Collection<Certificate> certs = loadCertificatesFromAsset(assetName);
         final ArrayList<Certificate> certChain = new ArrayList(certs);
         // Some sanity check on the cert chain
-        assertTrue(certs.size() > 1);
+        assertThat(certs.size()).isGreaterThan(1);
         for (int i = 1; i < certChain.size(); i++) {
             certChain.get(i - 1).verify(certChain.get(i).getPublicKey());
         }
@@ -180,20 +183,20 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         final String alias = "com.android.test.clientkeychain";
 
         // Install keypairs.
-        assertTrue(mDevicePolicyManager.installKeyPair(getWho(), privKey, certChain, alias, true));
+        assertThat(mDevicePolicyManager.installKeyPair(getWho(), privKey, certChain, alias, true))
+                .isTrue();
         try {
             // Verify only the requested key was actually granted.
             assertGranted(alias, true);
 
             // Verify the granted key is actually obtainable in PrivateKey form.
-            assertEquals(KeyChain.getPrivateKey(mActivity, alias).getAlgorithm(), "RSA");
+            assertThat(KeyChain.getPrivateKey(mActivity, alias).getAlgorithm()).isEqualTo("RSA");
 
             // Verify the certificate chain is correct
-            X509Certificate[] returnedCerts = KeyChain.getCertificateChain(mActivity, alias);
-            assertTrue(Arrays.equals(certChain, returnedCerts));
+            assertThat(KeyChain.getCertificateChain(mActivity, alias)).isEqualTo(certChain);
         } finally {
             // Delete both keypairs.
-            assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
+            assertThat(mDevicePolicyManager.removeKeyPair(getWho(), alias)).isTrue();
         }
         // Verify they're actually gone.
         assertGranted(alias, false);
@@ -201,28 +204,32 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
 
     public void testGrantsDoNotPersistBetweenInstallations() throws Exception {
         final String alias = "com.android.test.persistent-key-1";
-        final PrivateKey privKey = getPrivateKey(FAKE_RSA_1.privateKey , "RSA");
+        final PrivateKey privKey = getPrivateKey(FAKE_RSA_1.privateKey, "RSA");
         final Certificate cert = getCertificate(FAKE_RSA_1.caCertificate);
 
         // Install keypair.
-        assertTrue(mDevicePolicyManager.installKeyPair(getWho(), privKey, new Certificate[] {cert},
-                alias, true));
+        assertThat(
+                mDevicePolicyManager.installKeyPair(
+                        getWho(), privKey, new Certificate[] {cert}, alias, true))
+                .isTrue();
         try {
             assertGranted(alias, true);
         } finally {
             // Delete and verify.
-            assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
+            assertThat(mDevicePolicyManager.removeKeyPair(getWho(), alias)).isTrue();
         }
         assertGranted(alias, false);
 
         // Install again.
-        assertTrue(mDevicePolicyManager.installKeyPair(getWho(), privKey, new Certificate[] {cert},
-                alias, false));
+        assertThat(
+                mDevicePolicyManager.installKeyPair(
+                        getWho(), privKey, new Certificate[] {cert}, alias, false))
+                .isTrue();
         try {
             assertGranted(alias, false);
         } finally {
             // Delete.
-            assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
+            assertThat(mDevicePolicyManager.removeKeyPair(getWho(), alias)).isTrue();
         }
     }
 
@@ -255,20 +262,22 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
 
     public void testNotUserSelectableAliasCanBeChosenViaPolicy() throws Exception {
         final String alias = "com.android.test.not-selectable-key-1";
-        final PrivateKey privKey = getPrivateKey(FAKE_RSA_1.privateKey , "RSA");
+        final PrivateKey privKey = getPrivateKey(FAKE_RSA_1.privateKey, "RSA");
         final Certificate cert = getCertificate(FAKE_RSA_1.caCertificate);
 
         // Install keypair.
-        assertTrue(mDevicePolicyManager.installKeyPair(
-            getWho(), privKey, new Certificate[] {cert}, alias, 0));
+        assertThat(
+                mDevicePolicyManager.installKeyPair(
+                        getWho(), privKey, new Certificate[] {cert}, alias, 0))
+                .isTrue();
         try {
             // Request and retrieve using the alias.
             assertGranted(alias, false);
-            assertEquals(alias, new KeyChainAliasFuture(alias).get());
+            assertThat(new KeyChainAliasFuture(alias).get()).isEqualTo(alias);
             assertGranted(alias, true);
         } finally {
             // Delete regardless of whether the test succeeded.
-            assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
+            assertThat(mDevicePolicyManager.removeKeyPair(getWho(), alias)).isTrue();
         }
     }
 
@@ -286,7 +295,7 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         Signature verify = Signature.getInstance(algoIdentifier);
         verify.initVerify(publicKey);
         verify.update(data);
-        assertTrue(verify.verify(signature));
+        assertThat(verify.verify(signature)).isTrue();
     }
 
     void verifySignatureOverData(String algoIdentifier, KeyPair keyPair) throws Exception {
@@ -310,26 +319,24 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         final String alias = "com.android.test.generated-rsa-1";
         try {
             AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
-                    getWho(), "RSA", buildRsaKeySpec(alias, false /* useStrongBox */),
-                    0 /* idAttestationFlags */);
-            assertNotNull(generated);
+                    getWho(), "RSA", buildRsaKeySpec(alias, false /* useStrongBox */), 0);
+            assertThat(generated).isNotNull();
             verifySignatureOverData("SHA256withRSA", generated.getKeyPair());
         } finally {
-            assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
+            assertThat(mDevicePolicyManager.removeKeyPair(getWho(), alias)).isTrue();
         }
     }
 
     public void testCanGenerateRSAKeyPairUsingStrongBox() throws Exception {
         final String alias = "com.android.test.generated-rsa-sb-1";
-        AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
-                getWho(), "RSA", buildRsaKeySpec(alias, true /* useStrongBox */),
-                0 /* idAttestationFlags */);
-        if (generated == null) {
-            assertFalse(hasStrongBox());
-            return;
+        try {
+            AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
+                    getWho(), "RSA", buildRsaKeySpec(alias, true /* useStrongBox */), 0);
+            verifySignatureOverData("SHA256withRSA", generated.getKeyPair());
+            assertThat(mDevicePolicyManager.removeKeyPair(getWho(), alias)).isTrue();
+        } catch (StrongBoxUnavailableException expected) {
+            assertThat(hasStrongBox()).isFalse();
         }
-        verifySignatureOverData("SHA256withRSA", generated.getKeyPair());
-        assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
     }
 
     private KeyGenParameterSpec buildEcKeySpec(String alias, boolean useStrongBox) {
@@ -345,25 +352,24 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         final String alias = "com.android.test.generated-ec-1";
         try {
             AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
-                    getWho(), "EC", buildEcKeySpec(alias, false /* useStrongBox */),
-                    0 /* idAttestationFlags */);
-            assertNotNull(generated);
+                    getWho(), "EC", buildEcKeySpec(alias, false /* useStrongBox */), 0);
+            assertThat(generated).isNotNull();
             verifySignatureOverData("SHA256withECDSA", generated.getKeyPair());
         } finally {
-            assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
+            assertThat(mDevicePolicyManager.removeKeyPair(getWho(), alias)).isTrue();
         }
     }
 
     public void testCanGenerateECKeyPairUsingStrongBox() throws Exception {
         final String alias = "com.android.test.generated-ec-sb-1";
-        AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
-                getWho(), "EC", buildEcKeySpec(alias, true /* useStrongBox */), 0);
-        if (generated == null) {
-            assertFalse(hasStrongBox());
-            return;
+        try {
+            AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
+                    getWho(), "EC", buildEcKeySpec(alias, true /* useStrongBox */), 0);
+            verifySignatureOverData("SHA256withECDSA", generated.getKeyPair());
+            assertThat(mDevicePolicyManager.removeKeyPair(getWho(), alias)).isTrue();
+        } catch (StrongBoxUnavailableException expected) {
+            assertThat(hasStrongBox()).isFalse();
         }
-        verifySignatureOverData("SHA256withECDSA", generated.getKeyPair());
-        assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
     }
 
     private void validateDeviceIdAttestationData(Certificate leaf,
@@ -371,42 +377,39 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
             throws CertificateParsingException {
         Attestation attestationRecord = new Attestation((X509Certificate) leaf);
         AuthorizationList teeAttestation = attestationRecord.getTeeEnforced();
-        assertNotNull(teeAttestation);
-
+        assertThat(teeAttestation).isNotNull();
         validateBrandAttestationRecord(teeAttestation);
-        assertEquals(Build.DEVICE, teeAttestation.getDevice());
-        assertEquals(Build.PRODUCT, teeAttestation.getProduct());
-        assertEquals(Build.MANUFACTURER, teeAttestation.getManufacturer());
-        assertEquals(Build.MODEL, teeAttestation.getModel());
-        assertEquals(expectedSerial, teeAttestation.getSerialNumber());
-        assertEquals(expectedImei, teeAttestation.getImei());
-        assertEquals(expectedMeid, teeAttestation.getMeid());
+        assertThat(teeAttestation.getDevice()).isEqualTo(Build.DEVICE);
+        assertThat(teeAttestation.getProduct()).isEqualTo(Build.PRODUCT);
+        assertThat(teeAttestation.getManufacturer()).isEqualTo(Build.MANUFACTURER);
+        assertThat(teeAttestation.getModel()).isEqualTo(Build.MODEL);
+        assertThat(teeAttestation.getSerialNumber()).isEqualTo(expectedSerial);
+        assertThat(teeAttestation.getImei()).isEqualTo(expectedImei);
+        assertThat(teeAttestation.getMeid()).isEqualTo(expectedMeid);
     }
 
     private void validateBrandAttestationRecord(AuthorizationList teeAttestation) {
         if (!Build.MODEL.equals("Pixel 2")) {
-            assertEquals(Build.BRAND, teeAttestation.getBrand());
+            assertThat(teeAttestation.getBrand()).isEqualTo(Build.BRAND);
         } else {
-            assertTrue(teeAttestation.getBrand().equals(Build.BRAND)
-                    || teeAttestation.getBrand().equals("htc"));
+            assertThat(teeAttestation.getBrand()).isAnyOf(Build.BRAND, "htc");
         }
     }
 
-    private void validateAttestationRecord(List<Certificate> attestation,
-            byte[] providedChallenge) throws CertificateParsingException {
-        assertNotNull(attestation);
-        assertTrue(attestation.size() >= 2);
+    private void validateAttestationRecord(List<Certificate> attestation, byte[] providedChallenge)
+            throws CertificateParsingException {
+        assertThat(attestation).isNotNull();
+        assertThat(attestation.size()).isGreaterThan(1);
         X509Certificate leaf = (X509Certificate) attestation.get(0);
         Attestation attestationRecord = new Attestation(leaf);
-        assertTrue(Arrays.equals(providedChallenge,
-                    attestationRecord.getAttestationChallenge()));
+        assertThat(attestationRecord.getAttestationChallenge()).isEqualTo(providedChallenge);
     }
 
     private void validateSignatureChain(List<Certificate> chain, PublicKey leafKey)
             throws GeneralSecurityException {
         X509Certificate leaf = (X509Certificate) chain.get(0);
         PublicKey keyFromCert = leaf.getPublicKey();
-        assertTrue(Arrays.equals(keyFromCert.getEncoded(), leafKey.getEncoded()));
+        assertThat(keyFromCert.getEncoded()).isEqualTo(leafKey.getEncoded());
         // Check that the certificate chain is valid.
         for (int i = 1; i < chain.size(); i++) {
             X509Certificate intermediate = (X509Certificate) chain.get(i);
@@ -455,37 +458,35 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
             KeyGenParameterSpec spec = specBuilder.build();
             AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
                     getWho(), keyAlgorithm, spec, deviceIdAttestationFlags);
-            // Bail out early if StrongBox was requested and generation failed.
-            // Note the underlying assumption that StrongBox supports key attestation _and_
-            // Device ID attestation (i.e. no StrongBox implementations that do not implement
-            // Device ID attestation).
-            // If generation has failed and StrongBox was requested, it is then a failure
-            // regardless of the kind of attestation requested.
-            if (useStrongBox && generated == null) {
-                assertFalse("StrongBox-backed key attestation must not fail if the device " +
-                        "declares support for StrongBox", hasStrongBox());
-                return null;
-            }
-
             // If Device ID attestation was requested, check it succeeded if and only if device ID
             // attestation is supported.
             if (isDeviceIdAttestationRequested(deviceIdAttestationFlags)) {
                 if (generated == null) {
-                    assertFalse(String.format("Failed getting Device ID attestation for key " +
-                                "algorithm %s, with flags %s, despite device declaring support.",
-                                keyAlgorithm, deviceIdAttestationFlags),
-                            isDeviceIdAttestationSupported());
+                    assertWithMessage(
+                            String.format(
+                                    "Failed getting Device ID attestation for key "
+                                    + "algorithm %s, with flags %s, despite device declaring support.",
+                                    keyAlgorithm, deviceIdAttestationFlags))
+                            .that(isDeviceIdAttestationSupported())
+                            .isFalse();
                     return null;
                 } else {
-                    assertTrue(String.format("Device ID attestation for key " +
-                                "algorithm %s, with flags %d should not have succeeded.",
-                                keyAlgorithm, deviceIdAttestationFlags),
-                            isDeviceIdAttestationSupported());
+                    assertWithMessage(
+                            String.format(
+                                    "Device ID attestation for key "
+                                    + "algorithm %s, with flags %d should not have succeeded.",
+                                    keyAlgorithm, deviceIdAttestationFlags))
+                            .that(isDeviceIdAttestationSupported())
+                            .isTrue();
                 }
             } else {
-                assertNotNull(
-                        String.format("Key generation (of type %s) must succeed when Device ID " +
-                            "attestation was not requested.", keyAlgorithm), generated);
+                assertWithMessage(
+                        String.format(
+                                "Key generation (of type %s) must succeed when Device ID "
+                                + "attestation was not requested.",
+                                keyAlgorithm))
+                        .that(generated)
+                        .isNotNull();
             }
             final KeyPair keyPair = generated.getKeyPair();
             verifySignatureOverData(signatureAlgorithm, keyPair);
@@ -494,13 +495,17 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
             validateSignatureChain(attestation, keyPair.getPublic());
             return attestation.get(0);
         } catch (UnsupportedOperationException ex) {
-            assertTrue(String.format("Unexpected failure while generating key %s with ID flags %d: %s",
-                        keyAlgorithm, deviceIdAttestationFlags, ex),
-                    isDeviceIdAttestationRequested(deviceIdAttestationFlags) &&
-                    !isDeviceIdAttestationSupported());
+            assertWithMessage(
+                    String.format(
+                            "Unexpected failure while generating key %s with ID flags %d: %s",
+                            keyAlgorithm, deviceIdAttestationFlags, ex))
+                    .that(
+                            isDeviceIdAttestationRequested(deviceIdAttestationFlags)
+                            && !isDeviceIdAttestationSupported())
+                    .isTrue();
             return null;
         } finally {
-            assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
+            assertThat(mDevicePolicyManager.removeKeyPair(getWho(), alias)).isTrue();
         }
     }
 
@@ -509,19 +514,32 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
      * algorithms.
      */
     public void testCanGenerateKeyPairWithKeyAttestation() throws Exception {
-        for (SupportedKeyAlgorithm supportedKey: SUPPORTED_KEY_ALGORITHMS) {
-            assertNotNull(generateKeyAndCheckAttestation(
-                    supportedKey.keyAlgorithm, supportedKey.signatureAlgorithm,
-                    supportedKey.signaturePaddingSchemes, false /* useStrongBox */, 0));
+        for (SupportedKeyAlgorithm supportedKey : SUPPORTED_KEY_ALGORITHMS) {
+            assertThat(
+                    generateKeyAndCheckAttestation(
+                            supportedKey.keyAlgorithm,
+                            supportedKey.signatureAlgorithm,
+                            supportedKey.signaturePaddingSchemes,
+                            false /* useStrongBox */,
+                            0))
+                    .isNotNull();
         }
     }
 
     public void testCanGenerateKeyPairWithKeyAttestationUsingStrongBox() throws Exception {
-        for (SupportedKeyAlgorithm supportedKey: SUPPORTED_KEY_ALGORITHMS) {
-            generateKeyAndCheckAttestation(
-                    supportedKey.keyAlgorithm, supportedKey.signatureAlgorithm,
-                    supportedKey.signaturePaddingSchemes, true /* useStrongBox */,
-                    0 /* idAttestationFlags */);
+        try {
+            for (SupportedKeyAlgorithm supportedKey : SUPPORTED_KEY_ALGORITHMS) {
+                assertThat(
+                        generateKeyAndCheckAttestation(
+                                supportedKey.keyAlgorithm,
+                                supportedKey.signatureAlgorithm,
+                                supportedKey.signaturePaddingSchemes,
+                                true /* useStrongBox */,
+                                0))
+                        .isNotNull();
+            }
+        } catch (StrongBoxUnavailableException expected) {
+            assertThat(hasStrongBox()).isFalse();
         }
     }
 
@@ -536,9 +554,11 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         if (isDeviceOwner()) {
             modesToTest.add(ID_TYPE_SERIAL);
             // Get IMEI and MEID of the device.
-            TelephonyManager telephonyService = (TelephonyManager) mActivity.getSystemService(
-                    Context.TELEPHONY_SERVICE);
-            assertNotNull("Need to be able to read device identifiers", telephonyService);
+            TelephonyManager telephonyService =
+                    (TelephonyManager) mActivity.getSystemService(Context.TELEPHONY_SERVICE);
+            assertWithMessage("Need to be able to read device identifiers")
+                    .that(telephonyService)
+                    .isNotNull();
             imei = telephonyService.getImei(0);
             meid = telephonyService.getMeid(0);
             // If the device has a valid IMEI it must support attestation for it.
@@ -571,15 +591,12 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
                     if (attestation == null && !isDeviceIdAttestationSupported()) {
                         continue;
                     }
-                    // The attestation must only be null if StrongBox attestation was requested,
-                    // but StrongBox is not available on the device.
-                    if (attestation == null && useStrongBox) {
-                        assertFalse(hasStrongBox());
-                        continue;
-                    }
-                    assertNotNull(String.format(
-                            "Attestation should be valid for key %s with attestation modes %s",
-                            supportedKey.keyAlgorithm, devIdOpt), attestation);
+                    assertWithMessage(
+                            String.format(
+                                    "Attestation should be valid for key %s with attestation modes %s",
+                                    supportedKey.keyAlgorithm, devIdOpt))
+                            .that(attestation)
+                            .isNotNull();
                     // Set the expected values for serial, IMEI and MEID depending on whether
                     // attestation for them was requested.
                     String expectedSerial = null;
@@ -600,7 +617,10 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
             } catch (UnsupportedOperationException expected) {
                 // Make sure the test only fails if the device is not meant to support Device
                 // ID attestation.
-                assertFalse(isDeviceIdAttestationSupported());
+                assertThat(isDeviceIdAttestationSupported()).isFalse();
+            } catch (StrongBoxUnavailableException expected) {
+                // This exception must only be thrown if StrongBox attestation was requested.
+                assertThat(useStrongBox && !hasStrongBox()).isTrue();
             }
         }
     }
@@ -620,8 +640,9 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         int[] forbiddenModes = new int[] {ID_TYPE_SERIAL, ID_TYPE_IMEI, ID_TYPE_MEID};
         for (int i = 0; i < forbiddenModes.length; i++) {
             try {
-                for (SupportedKeyAlgorithm supportedKey: SUPPORTED_KEY_ALGORITHMS) {
-                    generateKeyAndCheckAttestation(supportedKey.keyAlgorithm,
+                for (SupportedKeyAlgorithm supportedKey : SUPPORTED_KEY_ALGORITHMS) {
+                    generateKeyAndCheckAttestation(
+                            supportedKey.keyAlgorithm,
                             supportedKey.signatureAlgorithm,
                             supportedKey.signaturePaddingSchemes,
                             false /* useStrongBox */,
@@ -630,7 +651,8 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
                             + "possible from profile owner");
                 }
             } catch (SecurityException e) {
-                assertTrue(e.getMessage().contains("does not own the device"));
+                assertThat(e.getMessage()).contains(
+                        "Profile Owner is not allowed to access Device IDs.");
             }
         }
     }
@@ -644,9 +666,9 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
                     .setDigests(KeyProperties.DIGEST_SHA256)
                     .build();
 
-            AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
-                    getWho(), "EC", spec, 0);
-            assertNotNull(generated);
+            AttestedKeyPair generated =
+                    mDevicePolicyManager.generateKeyPair(getWho(), "EC", spec, 0);
+            assertThat(generated).isNotNull();
             // Create a self-signed cert to go with it.
             X500Principal issuer = new X500Principal("CN=SelfSigned, O=Android, C=US");
             X500Principal subject = new X500Principal("CN=Subject, O=Android, C=US");
@@ -656,13 +678,13 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
             certs.add(cert);
             mDevicePolicyManager.setKeyPairCertificate(getWho(), alias, certs, true);
             // Make sure that the alias can now be obtained.
-            assertEquals(alias, new KeyChainAliasFuture(alias).get());
+            assertThat(new KeyChainAliasFuture(alias).get()).isEqualTo(alias);
             // And can be retrieved from KeyChain
             X509Certificate[] fetchedCerts = KeyChain.getCertificateChain(mActivity, alias);
-            assertEquals(fetchedCerts.length, certs.size());
-            assertTrue(Arrays.equals(fetchedCerts[0].getEncoded(), certs.get(0).getEncoded()));
+            assertThat(fetchedCerts.length).isEqualTo(certs.size());
+            assertThat(fetchedCerts[0].getEncoded()).isEqualTo(certs.get(0).getEncoded());
         } finally {
-            assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
+            assertThat(mDevicePolicyManager.removeKeyPair(getWho(), alias)).isTrue();
         }
     }
 
@@ -675,34 +697,28 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
                     .setDigests(KeyProperties.DIGEST_SHA256)
                     .build();
 
-            AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
-                    getWho(), "EC", spec, 0);
-            assertNotNull(generated);
+            AttestedKeyPair generated =
+                    mDevicePolicyManager.generateKeyPair(getWho(), "EC", spec, 0);
+            assertThat(generated).isNotNull();
             List<Certificate> chain = loadCertificateChain("user-cert-chain.crt");
             mDevicePolicyManager.setKeyPairCertificate(getWho(), alias, chain, true);
             // Make sure that the alias can now be obtained.
-            assertEquals(alias, new KeyChainAliasFuture(alias).get());
+            assertThat(new KeyChainAliasFuture(alias).get()).isEqualTo(alias);
             // And can be retrieved from KeyChain
             X509Certificate[] fetchedCerts = KeyChain.getCertificateChain(mActivity, alias);
-            assertEquals(fetchedCerts.length, chain.size());
+            assertThat(fetchedCerts.length).isEqualTo(chain.size());
             for (int i = 0; i < chain.size(); i++) {
-                assertTrue(Arrays.equals(fetchedCerts[i].getEncoded(), chain.get(i).getEncoded()));
+                assertThat(fetchedCerts[i].getEncoded()).isEqualTo(chain.get(i).getEncoded());
             }
         } finally {
-            assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
+            assertThat(mDevicePolicyManager.removeKeyPair(getWho(), alias)).isTrue();
         }
     }
 
-    private void assertGranted(String alias, boolean expected) throws InterruptedException {
-        boolean granted = false;
-        try {
-            granted = (KeyChain.getPrivateKey(mActivity, alias) != null);
-        } catch (KeyChainException e) {
-            if (expected) {
-                e.printStackTrace();
-            }
-        }
-        assertEquals("Grant for alias: \"" + alias + "\"", expected, granted);
+    private void assertGranted(String alias, boolean expected)
+            throws InterruptedException, KeyChainException {
+        boolean granted = (KeyChain.getPrivateKey(mActivity, alias) != null);
+        assertWithMessage("Grant for alias: \"" + alias + "\"").that(granted).isEqualTo(expected);
     }
 
     private static PrivateKey getPrivateKey(final byte[] key, String type)
@@ -767,7 +783,9 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         }
 
         public String get() throws InterruptedException {
-            assertTrue("Chooser timeout", mLatch.await(KEYCHAIN_TIMEOUT_MINS, TimeUnit.MINUTES));
+            assertWithMessage("Chooser timeout")
+                    .that(mLatch.await(KEYCHAIN_TIMEOUT_MINS, TimeUnit.MINUTES))
+                    .isTrue();
             return mChosenAlias;
         }
     }

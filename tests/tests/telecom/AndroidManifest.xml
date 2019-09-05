@@ -80,6 +80,15 @@
             </intent-filter>
         </service>
 
+        <service android:name="com.android.compatibility.common.util.BlockedNumberService"
+            android:exported="true"
+            android:singleUser="true" >
+            <intent-filter>
+                <action android:name="android.telecom.cts.InsertBlockedNumber"/>
+                <action android:name="android.telecom.cts.DeleteBlockedNumber"/>
+            </intent-filter>
+        </service>
+
         <receiver android:name="android.telecom.cts.MockMissedCallNotificationReceiver">
             <intent-filter>
                 <action android:name="android.telecom.action.SHOW_MISSED_CALLS_NOTIFICATION" />

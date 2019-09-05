@@ -35,7 +35,7 @@ public class PathTests extends ActivityTestBase {
                     canvas.drawPath(path, paint);
                 })
                 .runWithVerifier(new GoldenImageVerifier(getActivity(),
-                        R.drawable.text_path_with_offset, new MSSIMComparer(0.92)));
+                        R.drawable.text_path_with_offset, new MSSIMComparer(0.89)));
     }
 
     @Test

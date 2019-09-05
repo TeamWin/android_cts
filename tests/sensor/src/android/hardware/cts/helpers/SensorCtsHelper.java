@@ -328,6 +328,50 @@ public class SensorCtsHelper {
         return "";
     }
 
+    public static boolean hasResolutionRequirement(Sensor sensor, boolean hasHifiSensors) {
+        switch (sensor.getType()) {
+            case Sensor.TYPE_ACCELEROMETER:
+            case Sensor.TYPE_ACCELEROMETER_UNCALIBRATED:
+            case Sensor.TYPE_GYROSCOPE:
+            case Sensor.TYPE_GYROSCOPE_UNCALIBRATED:
+            case Sensor.TYPE_MAGNETIC_FIELD:
+            case Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED:
+                return true;
+
+            case Sensor.TYPE_PRESSURE:
+                // Pressure sensor only has a resolution requirement when there are HiFi sensors
+                return hasHifiSensors;
+        }
+        return false;
+    }
+
+    public static float getRequiredResolutionForSensor(Sensor sensor) {
+        switch (sensor.getType()) {
+            case Sensor.TYPE_ACCELEROMETER:
+            case Sensor.TYPE_ACCELEROMETER_UNCALIBRATED:
+            case Sensor.TYPE_GYROSCOPE:
+            case Sensor.TYPE_GYROSCOPE_UNCALIBRATED:
+                // Accelerometer and gyroscope must have at least 12 bits
+                // of resolution. The maximum resolution calculation uses
+                // slightly more than twice the maximum range because
+                //   1) the sensor must be able to report values from
+                //      [-maxRange, maxRange] without saturating
+                //   2) to allow for slight rounding errors
+                return (float)(2.001f * sensor.getMaximumRange() / Math.pow(2, 12));
+            case Sensor.TYPE_MAGNETIC_FIELD:
+            case Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED:
+                // Magnetometer must have a resolution equal to or denser
+                // than 0.6 uT
+                return 0.6f;
+            case Sensor.TYPE_PRESSURE:
+                // Pressure sensor must have at least 80 LSB / hPa which is
+                // equivalent to 0.0125 hPa / LSB. Allow for a small margin of
+                // error due to rounding errors.
+                return 1.01f * (1.0f / 80.0f);
+        }
+        return 0.0f;
+    }
+
     public static String sensorTypeShortString(int type) {
         switch (type) {
             case Sensor.TYPE_ACCELEROMETER:

@@ -429,7 +429,8 @@ public class TimePickerTest {
 
         // Input valid hour.
         assertEquals(initialHour, mTimePicker.getHour());
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mTimePicker.getHourView());
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule,
+                mTimePicker.getHourView());
         CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_1);
         CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_0);
         assertEquals(10, mTimePicker.getHour());
@@ -507,7 +508,8 @@ public class TimePickerTest {
 
         // Input valid hour.
         assertEquals(initialHour, mTimePicker.getHour());
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mTimePicker.getHourView());
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule,
+                mTimePicker.getHourView());
         CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_1);
         CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_0);
         assertEquals(10, mTimePicker.getHour());

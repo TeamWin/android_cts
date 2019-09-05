@@ -89,12 +89,6 @@ public class AppWidgetTest extends AppWidgetTestCase {
                 .getTargetContext().getCacheDir().getPath());
     }
 
-    private static final String GRANT_BIND_APP_WIDGET_PERMISSION_COMMAND =
-            "appwidget grantbind --package android.appwidget.cts --user 0";
-
-    private static final String REVOKE_BIND_APP_WIDGET_PERMISSION_COMMAND =
-            "appwidget revokebind --package android.appwidget.cts --user 0";
-
     @AppModeInstant(reason = "Instant apps cannot provide or host app widgets")
     @Test
     public void testInstantAppsCannotProvideAppWidgets() {
@@ -1343,41 +1337,12 @@ public class AppWidgetTest extends AppWidgetTestCase {
         assertTrue(verifiedWidgets[1]);
     }
 
-    private void grantBindAppWidgetPermission() throws Exception {
-        runShellCommand(GRANT_BIND_APP_WIDGET_PERMISSION_COMMAND);
-    }
-
-    private void revokeBindAppWidgetPermission() throws Exception {
-        runShellCommand(REVOKE_BIND_APP_WIDGET_PERMISSION_COMMAND);
-    }
-
     private AppWidgetProviderInfo getFirstAppWidgetProviderInfo() {
         return getProviderInfo(getFirstWidgetComponent());
     }
 
     private AppWidgetProviderInfo getSecondAppWidgetProviderInfo() {
         return getProviderInfo(getSecondWidgetComponent());
-    }
-
-    private AppWidgetProviderInfo getProviderInfo(ComponentName componentName) {
-        List<AppWidgetProviderInfo> providers = getAppWidgetManager().getInstalledProviders();
-
-        final int providerCount = providers.size();
-        for (int i = 0; i < providerCount; i++) {
-            AppWidgetProviderInfo provider = providers.get(i);
-            if (componentName.equals(provider.provider)
-                    && Process.myUserHandle().equals(provider.getProfile())) {
-                return provider;
-
-            }
-        }
-
-        return null;
-    }
-
-    private AppWidgetManager getAppWidgetManager() {
-        return (AppWidgetManager) getInstrumentation().getTargetContext()
-                .getSystemService(Context.APPWIDGET_SERVICE);
     }
 
     private AppWidgetProviderCallbacks createAppWidgetProviderCallbacks(

@@ -78,6 +78,9 @@ public class LightBarThemeTest extends LightBarTestBase {
         // Wait until the activity is fully visible
         mDevice.waitForIdle();
 
+        // Wait until window animation is finished
+        Thread.sleep(WAIT_TIME);
+
         final Context instrumentationContext = getInstrumentation().getContext();
         checkNavigationBarDivider(mActivityRule.getActivity(),
                 instrumentationContext.getColor(R.color.navigationBarDividerColor),

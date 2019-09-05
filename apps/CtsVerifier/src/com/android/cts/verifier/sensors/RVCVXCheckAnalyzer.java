@@ -925,8 +925,7 @@ public class RVCVXCheckAnalyzer {
 
             if (OUTPUT_DEBUG_IMAGE) {
                 Calib3d.drawChessboardCorners(frame, patternSize, reprojCenters, true);
-                Imgcodecs.imwrite(Environment.getExternalStorageDirectory().getPath()
-                        + "/RVCVRecData/DebugCV/img" + i + ".png", frame);
+                Imgcodecs.imwrite(mPath + "/RVCVRecData/DebugCV/img" + i + ".png", frame);
             }
         }
 

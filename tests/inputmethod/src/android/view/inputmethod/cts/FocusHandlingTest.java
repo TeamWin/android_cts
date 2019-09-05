@@ -71,7 +71,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     static final long NOT_EXPECT_TIMEOUT = TimeUnit.SECONDS.toMillis(1);
 
     private static final String TEST_MARKER_PREFIX =
-        "android.view.inputmethod.cts.FocusHandlingTest";
+            "android.view.inputmethod.cts.FocusHandlingTest";
 
     public EditText launchTestActivity(String marker) {
         final AtomicReference<EditText> editTextRef = new AtomicReference<>();
@@ -111,7 +111,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
             // Emulate tap event
             CtsTouchUtils.emulateTapOnViewCenter(
-                    InstrumentationRegistry.getInstrumentation(), editText);
+                    InstrumentationRegistry.getInstrumentation(), null, editText);
 
             // Wait until "onStartInput" gets called for the EditText.
             final ImeEvent onStart =
@@ -157,7 +157,8 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
                 // Input shouldn't start
                 notExpectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
                 // There shouldn't be onStartInput because the focused view is not an editor.
-                notExpectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
+                notExpectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
+                        TIMEOUT);
             } else {
                 // Wait until the MockIme gets bound to the TestActivity.
                 expectBindInput(stream, Process.myPid(), TIMEOUT);
@@ -407,7 +408,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
             // Emulate tap event
             CtsTouchUtils.emulateTapOnViewCenter(
-                    InstrumentationRegistry.getInstrumentation(), editText);
+                    InstrumentationRegistry.getInstrumentation(), null, editText);
 
             // "showSoftInput" must not happen when setShowSoftInputOnFocus(false) is called.
             notExpectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),

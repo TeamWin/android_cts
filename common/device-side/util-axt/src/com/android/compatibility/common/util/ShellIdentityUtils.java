@@ -17,6 +17,7 @@
 package com.android.compatibility.common.util;
 
 import android.app.UiAutomation;
+
 import androidx.test.InstrumentationRegistry;
 
 /**

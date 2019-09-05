@@ -16,6 +16,7 @@ android_test {
     name: "CtsDatabaseTestCases",
     defaults: ["cts_defaults"],
     static_libs: [
+        "compatibility-device-util-axt",
         "android-common",
         "ctstestrunner-axt",
         "ctstestrunner-axt",

@@ -143,5 +143,18 @@ public class CrossProfileAppsTargetUserTest {
     public void testGetProfileSwitchingIconDrawable() throws Exception {
         assertNotNull(mCrossProfileApps.getProfileSwitchingIconDrawable(mTargetUser));
     }
+
+    // Designed to be called by host-side tests; not a real test.
+    @Test
+    public void testStartMainActivity_noAsserts() {
+        mCrossProfileApps.startMainActivity(
+                MainActivity.getComponentName(mContext), mTargetUser);
+    }
+
+    // Designed to be called by host-side tests; not a real test.
+    @Test
+    public void testGetTargetUserProfiles_noAsserts() {
+        mCrossProfileApps.getTargetUserProfiles();
+    }
 }
 
