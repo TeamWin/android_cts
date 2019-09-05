@@ -21,6 +21,9 @@ import static android.app.Notification.FLAG_BUBBLE;
 import static android.app.NotificationManager.IMPORTANCE_DEFAULT;
 import static android.app.NotificationManager.IMPORTANCE_HIGH;
 import static android.app.NotificationManager.INTERRUPTION_FILTER_ALL;
+import static android.app.NotificationManager.INTERRUPTION_FILTER_PRIORITY;
+import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS;
+import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_AMBIENT;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_FULL_SCREEN_INTENT;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_LIGHTS;
@@ -70,6 +73,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Icon;
 import android.media.AudioAttributes;
+import android.media.AudioManager;
 import android.media.session.MediaSession;
 import android.net.Uri;
 import android.os.Build;
@@ -125,6 +129,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     private static final int WAIT_TIME = 2000;
 
     private PackageManager mPackageManager;
+    private AudioManager mAudioManager;
     private NotificationManager mNotificationManager;
     private ActivityManager mActivityManager;
     private String mId;
@@ -148,6 +153,7 @@ public class NotificationManagerTest extends AndroidTestCase {
                 NOTIFICATION_CHANNEL_ID, "name", NotificationManager.IMPORTANCE_DEFAULT));
         mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
         mPackageManager = mContext.getPackageManager();
+        mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
         mRuleIds = new ArrayList<>();
 
         toggleNotificationPolicyAccess(mContext.getPackageName(),
@@ -571,13 +577,17 @@ public class NotificationManagerTest extends AndroidTestCase {
                 && Objects.equals(a.getConfigurationActivity(), b.getConfigurationActivity());
     }
 
-    private AutomaticZenRule createRule(String name) {
+    private AutomaticZenRule createRule(String name, int filter) {
         return new AutomaticZenRule(name, null,
                 new ComponentName(mContext, AutomaticZenRuleActivity.class),
                 new Uri.Builder().scheme("scheme")
                         .appendPath("path")
                         .appendQueryParameter("fake_rule", "fake_value")
-                        .build(), null, NotificationManager.INTERRUPTION_FILTER_PRIORITY, true);
+                        .build(), null, filter, true);
+    }
+
+    private AutomaticZenRule createRule(String name) {
+        return createRule(name, NotificationManager.INTERRUPTION_FILTER_PRIORITY);
     }
 
     private void assertExpectedDndState(int expectedState) {
@@ -1582,10 +1592,10 @@ public class NotificationManagerTest extends AndroidTestCase {
                                 Icon.createWithResource(getContext(), R.drawable.icon_blue),
                                 "a2", getPendingIntent()).build())
                         .setStyle(new Notification.BigPictureStyle()
-                        .setBigContentTitle("title")
-                        .bigPicture(Bitmap.createBitmap(100, 100, Bitmap.Config.RGB_565))
-                        .bigLargeIcon(Icon.createWithResource(getContext(), R.drawable.icon_blue))
-                        .setSummaryText("summary"))
+                                .setBigContentTitle("title")
+                                .bigPicture(Bitmap.createBitmap(100, 100, Bitmap.Config.RGB_565))
+                                .bigLargeIcon(Icon.createWithResource(getContext(), R.drawable.icon_blue))
+                                .setSummaryText("summary"))
                         .build();
         mNotificationManager.notify(id, notification);
 
@@ -1654,7 +1664,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testNewNotificationsAddedToAutogroup_ifOriginalNotificationsCanceled()
-        throws Exception {
+            throws Exception {
         String newGroup = "new!";
         sendNotification(910, R.drawable.black);
         sendNotification(920, R.drawable.blue);
@@ -1693,6 +1703,94 @@ public class NotificationManagerTest extends AndroidTestCase {
             // pass
         }
         assertOnlySomeNotificationsAutogrouped(postedIds);
+    }
+
+    public void testTotalSilenceOnlyMuteStreams() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
+
+        final int originalFilter = mNotificationManager.getCurrentInterruptionFilter();
+        try {
+            toggleNotificationPolicyAccess(mContext.getPackageName(),
+                    InstrumentationRegistry.getInstrumentation(), true);
+
+            // ensure volume is not muted/0 to start test
+            mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 1, 0);
+            mAudioManager.setStreamVolume(AudioManager.STREAM_ALARM, 1, 0);
+            mAudioManager.setStreamVolume(AudioManager.STREAM_SYSTEM, 1, 0);
+            mAudioManager.setStreamVolume(AudioManager.STREAM_RING, 1, 0);
+
+            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
+                    PRIORITY_CATEGORY_ALARMS | PRIORITY_CATEGORY_MEDIA, 0, 0));
+            AutomaticZenRule rule = createRule("test_total_silence",
+                    NotificationManager.INTERRUPTION_FILTER_NONE);
+            String id = mNotificationManager.addAutomaticZenRule(rule);
+            mRuleIds.add(id);
+            Condition condition =
+                    new Condition(rule.getConditionId(), "summary", Condition.STATE_TRUE);
+            mNotificationManager.setAutomaticZenRuleState(id, condition);
+            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
+
+            // delay for streams to get into correct mute states
+            Thread.sleep(50);
+            assertTrue("Music (media) stream should be muted",
+                    mAudioManager.isStreamMute(AudioManager.STREAM_MUSIC));
+            assertTrue("System stream should be muted",
+                    mAudioManager.isStreamMute(AudioManager.STREAM_SYSTEM));
+            assertTrue("Alarm stream should be muted",
+                    mAudioManager.isStreamMute(AudioManager.STREAM_ALARM));
+
+            // Test requires that the phone's default state has no channels that can bypass dnd
+            assertTrue("Ringer stream should be muted",
+                    mAudioManager.isStreamMute(AudioManager.STREAM_RING));
+        } finally {
+            mNotificationManager.setInterruptionFilter(originalFilter);
+        }
+    }
+
+    public void testAlarmsOnlyMuteStreams() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
+
+        final int originalFilter = mNotificationManager.getCurrentInterruptionFilter();
+        try {
+            toggleNotificationPolicyAccess(mContext.getPackageName(),
+                    InstrumentationRegistry.getInstrumentation(), true);
+
+            // ensure volume is not muted/0 to start test
+            mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 1, 0);
+            mAudioManager.setStreamVolume(AudioManager.STREAM_ALARM, 1, 0);
+            mAudioManager.setStreamVolume(AudioManager.STREAM_SYSTEM, 1, 0);
+            mAudioManager.setStreamVolume(AudioManager.STREAM_RING, 1, 0);
+
+            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
+                    PRIORITY_CATEGORY_ALARMS | PRIORITY_CATEGORY_MEDIA, 0, 0));
+            AutomaticZenRule rule = createRule("test_alarms",
+                    NotificationManager.INTERRUPTION_FILTER_ALARMS);
+            String id = mNotificationManager.addAutomaticZenRule(rule);
+            mRuleIds.add(id);
+            Condition condition =
+                    new Condition(rule.getConditionId(), "summary", Condition.STATE_TRUE);
+            mNotificationManager.setAutomaticZenRuleState(id, condition);
+            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
+
+            // delay for streams to get into correct mute states
+            Thread.sleep(50);
+            assertFalse("Music (media) stream should not be muted",
+                    mAudioManager.isStreamMute(AudioManager.STREAM_MUSIC));
+            assertTrue("System stream should be muted",
+                    mAudioManager.isStreamMute(AudioManager.STREAM_SYSTEM));
+            assertFalse("Alarm stream should not be muted",
+                    mAudioManager.isStreamMute(AudioManager.STREAM_ALARM));
+
+            // Test requires that the phone's default state has no channels that can bypass dnd
+            assertTrue("Ringer stream should be muted",
+                    mAudioManager.isStreamMute(AudioManager.STREAM_RING));
+        } finally {
+            mNotificationManager.setInterruptionFilter(originalFilter);
+        }
     }
 
     public void testAddAutomaticZenRule_configActivity() throws Exception {
@@ -2442,7 +2540,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             // Tested in LegacyNotificationManager20Test
             if (checkNotificationExistence(notificationId, /*shouldExist=*/ true)) {
                 fail("Notification should have been cancelled for targetSdk below L.  targetSdk="
-                    + mContext.getApplicationInfo().targetSdkVersion);
+                        + mContext.getApplicationInfo().targetSdkVersion);
             }
         }
 
