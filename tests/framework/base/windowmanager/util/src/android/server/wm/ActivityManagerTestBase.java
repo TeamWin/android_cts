@@ -782,10 +782,10 @@ public abstract class ActivityManagerTestBase {
                         new Rect(0, 0, taskWidth, taskHeight)));
     }
 
-    protected void resizeStack(int stackId, int stackLeft, int stackTop, int stackWidth,
-            int stackHeight) {
-        SystemUtil.runWithShellPermissionIdentity(() -> mAtm.resizeStack(stackId,
-                new Rect(stackLeft, stackTop, stackWidth, stackHeight)));
+    protected void resizePinnedStack(
+            int stackId, int stackLeft, int stackTop, int stackWidth, int stackHeight) {
+        SystemUtil.runWithShellPermissionIdentity(() -> mAtm.resizePinnedStack(stackId,
+                new Rect(stackLeft, stackTop, stackWidth, stackHeight), false /* animate */));
     }
 
     protected void pressAppSwitchButtonAndWaitForRecents() {
