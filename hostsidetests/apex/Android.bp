@@ -15,6 +15,6 @@
 java_test_host {
     name: "CtsApexTestCases",
     srcs: ["src/**/*.java"],
-    test_suites: ["cts", "general-tests"],
+    test_suites: ["cts", "general-tests", "mts"],
     libs: ["cts-tradefed", "tradefed"],
 }
