@@ -368,8 +368,6 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
                     "testPrimaryProfile_canAccessWorkInstancesSearchByDay", mParentUserId);
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
                     "testPrimaryProfile_getExceptionWhenQueryNonWhitelistedColumns", mParentUserId);
-            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
-                    "testViewEventCrossProfile_intentReceivedWhenWhitelisted", mParentUserId);
         } finally {
             // Cleanup.
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
@@ -411,8 +409,6 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
                     "testPrimaryProfile_canAccessWorkInstancesSearchByDay", mParentUserId);
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
                     "testPrimaryProfile_getExceptionWhenQueryNonWhitelistedColumns", mParentUserId);
-            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
-                    "testViewEventCrossProfile_intentReceivedWhenWhitelisted", mParentUserId);
         } finally {
             // Cleanup.
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
