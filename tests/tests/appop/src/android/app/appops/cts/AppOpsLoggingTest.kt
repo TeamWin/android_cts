@@ -47,12 +47,12 @@ import java.util.concurrent.TimeUnit.MILLISECONDS
 private const val TEST_SERVICE_PKG = "android.app.appops.cts.appthatusesappops"
 private const val TIMEOUT_MILLIS = 10000L
 
-private external fun nativeNoteOp(op: Int, uid: Int, packageName: String)
-private external fun nativeNoteOpWithMessage(
+private external fun nativeNoteOp(
     op: Int,
     uid: Int,
     packageName: String,
-    message: String
+    featureId: String? = null,
+    message: String? = null
 )
 
 @AppModeFull(reason = "Test relies on other app to connect to. Instant apps can't see other apps")
@@ -141,12 +141,20 @@ class AppOpsLoggingTest {
 
     @Test
     fun selfNoteAndCheckLog() {
-        appOpsManager.noteOpNoThrow(OPSTR_COARSE_LOCATION, myUid, myPackage)
+        appOpsManager.noteOpNoThrow(OPSTR_COARSE_LOCATION, myUid, myPackage, null, null)
 
         assertThat(noted).isEmpty()
         assertThat(asyncNoted).isEmpty()
 
-        assertThat(selfNoted.map { it.first.op }).containsExactly(OPSTR_COARSE_LOCATION)
+        assertThat(selfNoted.map { it.first.featureId to it.first.op })
+            .containsExactly(null to OPSTR_COARSE_LOCATION)
+    }
+
+    @Test
+    fun selfNoteAndCheckFeature() {
+        appOpsManager.noteOpNoThrow(OPSTR_COARSE_LOCATION, myUid, myPackage, TEST_FEATURE_ID, null)
+
+        assertThat(selfNoted.map { it.first.featureId }).containsExactly(TEST_FEATURE_ID)
     }
 
     @Test
@@ -158,7 +166,19 @@ class AppOpsLoggingTest {
 
         // All native notes will be reported as async notes
         eventually {
-            assertThat(asyncNoted.map { it.op }).containsExactly(OPSTR_COARSE_LOCATION)
+            assertThat(asyncNoted.map { it.featureId to it.op })
+                .containsExactly(null to OPSTR_COARSE_LOCATION)
+        }
+    }
+
+    @Test
+    fun nativeSelfNoteAndCheckFeature() {
+        nativeNoteOp(strOpToOp(OPSTR_COARSE_LOCATION), myUid, myPackage,
+            featureId = TEST_FEATURE_ID)
+
+        // All native notes will be reported as async notes
+        eventually {
+            assertThat(asyncNoted.map { it.featureId }).containsExactly(TEST_FEATURE_ID)
         }
     }
 
@@ -166,7 +186,8 @@ class AppOpsLoggingTest {
     fun selfNotesAreDeliveredAsAsyncOpsWhenCollectorIsRegistered() {
         appOpsManager.setNotedAppOpsCollector(null)
 
-        appOpsManager.noteOpNoThrow(OPSTR_COARSE_LOCATION, myUid, myPackage)
+        appOpsManager.noteOpNoThrow(OPSTR_COARSE_LOCATION, myUid, myPackage, TEST_FEATURE_ID, null)
+        appOpsManager.noteOpNoThrow(OPSTR_COARSE_LOCATION, myUid, myPackage, null, "test msg")
 
         assertThat(noted).isEmpty()
         assertThat(selfNoted).isEmpty()
@@ -176,7 +197,9 @@ class AppOpsLoggingTest {
 
         assertThat(noted).isEmpty()
         assertThat(selfNoted).isEmpty()
-        assertThat(asyncNoted.map { it.op }).containsExactly(OPSTR_COARSE_LOCATION)
+        assertThat(asyncNoted.map { it.featureId to it.op }).containsExactly(
+            null to OPSTR_COARSE_LOCATION, TEST_FEATURE_ID to OPSTR_COARSE_LOCATION)
+        assertThat(asyncNoted.map { it.message }).contains("test msg")
     }
 
     @Test
@@ -199,6 +222,13 @@ class AppOpsLoggingTest {
     fun noteSyncOpAndCheckLog() {
         rethrowThrowableFrom {
             testService.callApiThatNotesSyncOpAndCheckLog(AppOpsUserClient(context))
+        }
+    }
+
+    @Test
+    fun noteSyncWithFeatureOpAndCheckLog() {
+        rethrowThrowableFrom {
+            testService.callApiThatNotesSyncOpWithFeatureAndCheckLog(AppOpsUserClient(context))
         }
     }
 
@@ -305,6 +335,13 @@ class AppOpsLoggingTest {
     }
 
     @Test
+    fun noteAsyncOpWithFeatureAndCheckLog() {
+        rethrowThrowableFrom {
+            testService.callApiThatNotesAsyncOpWithFeatureAndCheckLog(AppOpsUserClient(context))
+        }
+    }
+
+    @Test
     fun noteAsyncOpAndCheckDefaultMessage() {
         rethrowThrowableFrom {
             testService.callApiThatNotesAsyncOpAndCheckDefaultMessage(AppOpsUserClient(context))
@@ -360,14 +397,21 @@ class AppOpsLoggingTest {
         override fun noteSyncOp() {
             runWithShellPermissionIdentity {
                 appOpsManager.noteOpNoThrow(OPSTR_COARSE_LOCATION, getCallingUid(),
-                        TEST_SERVICE_PKG)
+                        TEST_SERVICE_PKG, null, null)
+            }
+        }
+
+        override fun noteSyncOpWithFeature(featureId: String) {
+            runWithShellPermissionIdentity {
+                appOpsManager.noteOpNoThrow(OPSTR_COARSE_LOCATION, getCallingUid(),
+                    TEST_SERVICE_PKG, featureId, null)
             }
         }
 
         override fun callBackIntoService() {
             runWithShellPermissionIdentity {
                 appOpsManager.noteOpNoThrow(OPSTR_FINE_LOCATION, getCallingUid(),
-                    TEST_SERVICE_PKG)
+                    TEST_SERVICE_PKG, null, null)
             }
 
             testService?.callApiThatNotesSyncOpAndClearLog(this)
@@ -376,7 +420,7 @@ class AppOpsLoggingTest {
         override fun noteNonPermissionSyncOp() {
             runWithShellPermissionIdentity {
                 appOpsManager.noteOpNoThrow(OPSTR_ACCESS_ACCESSIBILITY, getCallingUid(),
-                        TEST_SERVICE_PKG)
+                        TEST_SERVICE_PKG, null, null)
             }
         }
 
@@ -388,9 +432,10 @@ class AppOpsLoggingTest {
         override fun noteTwoSyncOp() {
             runWithShellPermissionIdentity {
                 appOpsManager.noteOpNoThrow(OPSTR_COARSE_LOCATION, getCallingUid(),
-                        TEST_SERVICE_PKG)
+                        TEST_SERVICE_PKG, null, null)
 
-                appOpsManager.noteOpNoThrow(OPSTR_GET_ACCOUNTS, getCallingUid(), TEST_SERVICE_PKG)
+                appOpsManager.noteOpNoThrow(OPSTR_GET_ACCOUNTS, getCallingUid(), TEST_SERVICE_PKG,
+                    null, null)
             }
         }
 
@@ -410,7 +455,7 @@ class AppOpsLoggingTest {
         override fun noteSyncOpOneway() {
             runWithShellPermissionIdentity {
                 appOpsManager.noteOpNoThrow(OPSTR_COARSE_LOCATION, getCallingUid(),
-                        TEST_SERVICE_PKG)
+                        TEST_SERVICE_PKG, null, null)
             }
         }
 
@@ -421,7 +466,7 @@ class AppOpsLoggingTest {
         }
 
         override fun noteSyncOpOtherUid() {
-            appOpsManager.noteOpNoThrow(OPSTR_COARSE_LOCATION, myUid, myPackage)
+            appOpsManager.noteOpNoThrow(OPSTR_COARSE_LOCATION, myUid, myPackage, null, null)
         }
 
         override fun noteSyncOpOtherUidNative() {
@@ -433,7 +478,19 @@ class AppOpsLoggingTest {
 
             handler.post {
                 runWithShellPermissionIdentity {
-                    appOpsManager.noteOpNoThrow(OPSTR_COARSE_LOCATION, callingUid, TEST_SERVICE_PKG)
+                    appOpsManager.noteOpNoThrow(OPSTR_COARSE_LOCATION, callingUid, TEST_SERVICE_PKG,
+                        null, null)
+                }
+            }
+        }
+
+        override fun noteAsyncOpWithFeature(featureId: String) {
+            val callingUid = getCallingUid()
+
+            handler.post {
+                runWithShellPermissionIdentity {
+                    appOpsManager.noteOpNoThrow(OPSTR_COARSE_LOCATION, callingUid, TEST_SERVICE_PKG,
+                        featureId, null)
                 }
             }
         }
@@ -444,7 +501,7 @@ class AppOpsLoggingTest {
             handler.post {
                 runWithShellPermissionIdentity {
                     appOpsManager.noteOpNoThrow(OPSTR_COARSE_LOCATION, callingUid, TEST_SERVICE_PKG,
-                            "custom msg")
+                            null, "custom msg")
                 }
             }
         }
@@ -464,8 +521,8 @@ class AppOpsLoggingTest {
 
             handler.post {
                 runWithShellPermissionIdentity {
-                    nativeNoteOpWithMessage(strOpToOp(OPSTR_COARSE_LOCATION), callingUid,
-                            TEST_SERVICE_PKG, "native custom msg")
+                    nativeNoteOp(strOpToOp(OPSTR_COARSE_LOCATION), callingUid, TEST_SERVICE_PKG,
+                        message = "native custom msg")
                 }
             }
         }
