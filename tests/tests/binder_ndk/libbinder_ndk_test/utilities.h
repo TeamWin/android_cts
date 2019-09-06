@@ -85,6 +85,7 @@ struct ThisShouldBeDestroyed {
 struct SampleData : ThisShouldBeDestroyed {
   static const char* kDescriptor;
   static const AIBinder_Class* kClass;
+  static const AIBinder_Class* kAnotherClassWithSameDescriptor;
 
   static const char* kAnotherDescriptor;
   static const AIBinder_Class* kAnotherClass;
