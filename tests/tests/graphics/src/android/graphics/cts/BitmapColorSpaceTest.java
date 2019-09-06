@@ -39,7 +39,6 @@ import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.RequiresDevice;
 import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ColorUtils;
 
@@ -54,8 +53,11 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.Arrays;
 
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
+
 @SmallTest
-@RunWith(AndroidJUnit4.class)
+@RunWith(JUnitParamsRunner.class)
 public class BitmapColorSpaceTest {
     private static final String LOG_TAG = "BitmapColorSpaceTest";
 
@@ -1036,8 +1038,13 @@ public class BitmapColorSpaceTest {
         assertTrue(pass);
     }
 
+    private Object[] compressFormats() {
+        return Bitmap.CompressFormat.values();
+    }
+
     @Test
-    public void testEncodeP3() {
+    @Parameters(method = "compressFormats")
+    public void testEncodeP3(Bitmap.CompressFormat format) {
         Bitmap b = null;
         ImageDecoder.Source src = ImageDecoder.createSource(mResources.getAssets(),
                 "blue-16bit-srgb.png");
@@ -1051,24 +1058,18 @@ public class BitmapColorSpaceTest {
             fail("Failed with " + e);
         }
 
-        for (Bitmap.CompressFormat format : new Bitmap.CompressFormat[] {
-                Bitmap.CompressFormat.JPEG,
-                Bitmap.CompressFormat.WEBP,
-                Bitmap.CompressFormat.PNG,
-        }) {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            assertTrue("Failed to encode F16 to " + format, b.compress(format, 100, out));
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        assertTrue("Failed to encode F16 to " + format, b.compress(format, 100, out));
 
-            byte[] array = out.toByteArray();
-            src = ImageDecoder.createSource(ByteBuffer.wrap(array));
+        byte[] array = out.toByteArray();
+        src = ImageDecoder.createSource(ByteBuffer.wrap(array));
 
-            try {
-                Bitmap b2 = ImageDecoder.decodeBitmap(src);
-                assertEquals("Wrong color space for " + format,
-                        ColorSpace.get(ColorSpace.Named.DISPLAY_P3), b2.getColorSpace());
-            } catch (IOException e) {
-                fail("Failed with " + e);
-            }
+        try {
+            Bitmap b2 = ImageDecoder.decodeBitmap(src);
+            assertEquals("Wrong color space for " + format,
+                    ColorSpace.get(ColorSpace.Named.DISPLAY_P3), b2.getColorSpace());
+        } catch (IOException e) {
+            fail("Failed with " + e);
         }
     }
 
@@ -1088,11 +1089,7 @@ public class BitmapColorSpaceTest {
             fail("Failed with " + e);
         }
 
-        for (Bitmap.CompressFormat format : new Bitmap.CompressFormat[] {
-                Bitmap.CompressFormat.JPEG,
-                Bitmap.CompressFormat.WEBP,
-                Bitmap.CompressFormat.PNG,
-        }) {
+        for (Bitmap.CompressFormat format : Bitmap.CompressFormat.values()) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             assertTrue("Failed to encode 8888 to " + format, b.compress(format, 100, out));
 
