@@ -71,6 +71,18 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
         mBuildHelper = new CompatibilityBuildHelper(buildInfo);
     }
 
+    /**
+     * Approve the review permission prompt
+     */
+    private void approveReviewPermissionDialog() throws Exception {
+        assertNull(getDevice().installPackage(
+                mBuildHelper.getTestFile("ReviewPermissionHelper.apk"), true, true));
+
+        runDeviceTests("com.android.cts.reviewpermissionhelper",
+                "com.android.cts.reviewpermissionhelper.ReviewPermissionsTest",
+                "approveReviewPermissions");
+    }
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -139,12 +151,18 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
 
     public void testCompatDefault22() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22), false, false));
+
+        approveReviewPermissionDialog();
+
         runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest22",
                 "testCompatDefault");
     }
 
     public void testCompatRevoked22() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22), false, false));
+
+        approveReviewPermissionDialog();
+
         boolean didThrow = false;
         try {
             runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest22",
@@ -161,6 +179,9 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
 
     public void testNoRuntimePrompt22() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22), false, false));
+
+        approveReviewPermissionDialog();
+
         runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest22",
                 "testNoRuntimePrompt");
     }
@@ -284,6 +305,9 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
 
     public void testUpgradeKeepsPermissions() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22), false, false));
+
+        approveReviewPermissionDialog();
+
         runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest22",
                 "testAllPermissionsGrantedByDefault");
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_23), true, false));
@@ -316,6 +340,9 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
 
     public void testRevokePropagatedOnUpgradeOldToNewModel() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22), false, false));
+
+        approveReviewPermissionDialog();
+
         boolean didThrow = false;
         try {
             runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest22",
