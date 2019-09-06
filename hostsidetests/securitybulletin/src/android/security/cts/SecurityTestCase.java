@@ -36,6 +36,7 @@ public class SecurityTestCase extends DeviceTestCase {
     private long kernelStartTime;
 
     private HostsideOomCatcher oomCatcher = new HostsideOomCatcher(this);
+    private HostsideMainlineModuleDetector mainlineModuleDetector = new HostsideMainlineModuleDetector(this);
 
     /**
      * Waits for device to be online, marks the most recent boottime of the device
@@ -209,5 +210,22 @@ public class SecurityTestCase extends DeviceTestCase {
 
     public HostsideOomCatcher getOomCatcher() {
         return oomCatcher;
+    }
+
+    /**
+     * Return true if a module is play managed.
+     *
+     * Example of skipping a test based on mainline modules:
+     *  <pre>
+     *  @Test
+     *  public void testPocCVE_1234_5678() throws Exception {
+     *      // This will skip the test if MODULE_METADATA mainline module is play managed.
+     *      assumeFalse(moduleIsPlayManaged("com.google.android.captiveportallogin"));
+     *      // Do testing...
+     *  }
+     *  * </pre>
+     */
+    boolean moduleIsPlayManaged(String modulePackageName) throws Exception {
+        return mainlineModuleDetector.getPlayManagedModules().contains(modulePackageName);
     }
 }
