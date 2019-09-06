@@ -530,8 +530,9 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         int stride = format.getInteger(MediaFormat.KEY_STRIDE, width);
         int height = format.getInteger(MediaFormat.KEY_HEIGHT, 1);
         byte[] bb = new byte[width * height];
+        int offset = buf.position();
         for (int i = 0; i < height; i++) {
-            buf.position(i * stride);
+            buf.position(i * stride + offset);
             buf.get(bb, i * width, width);
         }
         // bb is filled with data

@@ -42,6 +42,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.os.Looper;
 import android.os.PersistableBundle;
@@ -63,6 +64,7 @@ public class CarrierConfigManagerTest {
     private static final String CARRIER_NAME_OVERRIDE = "carrier_a";
     private CarrierConfigManager mConfigManager;
     private TelephonyManager mTelephonyManager;
+    private PackageManager mPackageManager;
     private static final int TOLERANCE = 2000;
     private final Object mLock = new Object();
 
@@ -72,6 +74,7 @@ public class CarrierConfigManagerTest {
                 getContext().getSystemService(Context.TELEPHONY_SERVICE);
         mConfigManager = (CarrierConfigManager)
                 getContext().getSystemService(Context.CARRIER_CONFIG_SERVICE);
+        mPackageManager = getContext().getPackageManager();
     }
 
     @After
@@ -142,6 +145,9 @@ public class CarrierConfigManagerTest {
     @SecurityTest
     @Test
     public void testRevokePermission() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
         PersistableBundle config;
 
         try {

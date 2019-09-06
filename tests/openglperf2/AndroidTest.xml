@@ -26,5 +26,7 @@
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.opengl2.cts" />
         <option name="runtime-hint" value="4m" />
+        <!-- test-timeout unit is ms, value = 100 min -->
+        <option name="test-timeout" value="6000000" />
     </test>
 </configuration>

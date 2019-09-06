@@ -41,6 +41,7 @@ public class Attestation {
 
     public static final int KM_SECURITY_LEVEL_SOFTWARE = 0;
     public static final int KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT = 1;
+    public static final int KM_SECURITY_LEVEL_STRONG_BOX = 2;
 
     private final int attestationVersion;
     private final int attestationSecurityLevel;
@@ -82,6 +83,8 @@ public class Attestation {
                 return "Software";
             case KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT:
                 return "TEE";
+            case KM_SECURITY_LEVEL_STRONG_BOX:
+                return "StrongBox";
             default:
                 return "Unkown";
         }

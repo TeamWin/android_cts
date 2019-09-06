@@ -55,6 +55,11 @@ public class RequiredFeatureRule implements TestRule {
         };
     }
 
+    @Override
+    public String toString() {
+        return "RequiredFeatureRule[" + mFeature + "]";
+    }
+
     public static boolean hasFeature(String feature) {
         return InstrumentationRegistry.getContext().getPackageManager().hasSystemFeature(feature);
     }

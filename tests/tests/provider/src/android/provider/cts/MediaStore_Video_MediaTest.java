@@ -31,6 +31,7 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.media.MediaExtractor;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
@@ -234,6 +235,7 @@ public class MediaStore_Video_MediaTest {
             mmr.setDataSource(pfd.getFileDescriptor());
             assertEquals("+37.4217-122.0834/",
                     mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_LOCATION));
+            assertEquals("2", mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_NUM_TRACKS));
         }
         try (InputStream in = mContentResolver.openInputStream(publishUri)) {
             byte[] bytes = FileUtils.readInputStreamFully(in);
@@ -248,14 +250,16 @@ public class MediaStore_Video_MediaTest {
         }
 
         // Now remove ownership, which means that location should be redacted
-        ProviderTestUtils.executeShellCommand(
-                "content update --uri " + publishUri + " --bind owner_package_name:n:",
+        ProviderTestUtils.executeShellCommand("content update"
+                + " --user " + InstrumentationRegistry.getTargetContext().getUserId()
+                + " --uri " + publishUri + " --bind owner_package_name:n:",
                 InstrumentationRegistry.getInstrumentation().getUiAutomation());
         try (ParcelFileDescriptor pfd = mContentResolver.openFile(publishUri, "r", null);
                 MediaMetadataRetriever mmr = new MediaMetadataRetriever()) {
             mmr.setDataSource(pfd.getFileDescriptor());
             assertEquals(null,
                     mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_LOCATION));
+            assertEquals("2", mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_NUM_TRACKS));
         }
         try (InputStream in = mContentResolver.openInputStream(publishUri)) {
             byte[] bytes = FileUtils.readInputStreamFully(in);
@@ -313,8 +317,9 @@ public class MediaStore_Video_MediaTest {
     @Test
     public void testCanonicalize() throws Exception {
         // Remove all audio left over from other tests
-        ProviderTestUtils.executeShellCommand(
-                "content delete --uri " + mExternalVideo,
+        ProviderTestUtils.executeShellCommand("content delete"
+                + " --user " + InstrumentationRegistry.getTargetContext().getUserId()
+                + " --uri " + mExternalVideo,
                 InstrumentationRegistry.getInstrumentation().getUiAutomation());
 
         // Publish some content

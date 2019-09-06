@@ -16,6 +16,7 @@
 
 package android.permission2.cts;
 
+import static android.Manifest.permission.READ_SMS;
 import static android.permission.cts.PermissionUtils.eventually;
 import static android.permission.cts.PermissionUtils.isGranted;
 import static android.permission.cts.PermissionUtils.isPermissionGranted;
@@ -103,6 +104,18 @@ public class RestrictedPermissionsTest {
             "/data/local/tmp/cts/permissions2/CtsStoragePermissionsUserOptOutSdk29.apk";
 
     private static final String PKG = "android.permission2.cts.restrictedpermissionuser";
+
+    private static final String APK_USES_SMS_RESTRICTED_SHARED_UID =
+            "/data/local/tmp/cts/permissions2/CtsSMSRestrictedWithSharedUid.apk";
+
+    private static final String PKG_USES_SMS_RESTRICTED_SHARED_UID =
+            "android.permission2.cts.smswithshareduid.restricted";
+
+    private static final String APK_USES_SMS_NOT_RESTRICTED_SHARED_UID =
+            "/data/local/tmp/cts/permissions2/CtsSMSNotRestrictedWithSharedUid.apk";
+
+    private static final String PKG_USES_SMS_NOT_RESTRICTED_SHARED_UID =
+            "android.permission2.cts.smswithshareduid.notrestricted";
 
     private static final long UI_TIMEOUT = 5000L;
 
@@ -681,6 +694,19 @@ public class RestrictedPermissionsTest {
         assertNoRestrictedPermissionWhitelisted();
     }
 
+    @Test
+    @AppModeFull
+    public void shareUidBetweenRestrictedAndNotRestrictedApp() throws Exception {
+        runShellCommand(
+                "pm install -g --restrict-permissions " + APK_USES_SMS_RESTRICTED_SHARED_UID);
+        runShellCommand("pm install -g " + APK_USES_SMS_NOT_RESTRICTED_SHARED_UID);
+
+        eventually(
+                () -> assertThat(isGranted(PKG_USES_SMS_RESTRICTED_SHARED_UID, READ_SMS)).isTrue());
+        // The apps share a UID, hence the whitelisting is shared too
+        assertThat(isGranted(PKG_USES_SMS_NOT_RESTRICTED_SHARED_UID, READ_SMS)).isTrue();
+    }
+
     private static void installRestrictedPermissionUserApp(@NonNull SessionParams params)
             throws Exception {
         final CountDownLatch installLatch = new CountDownLatch(1);
@@ -727,11 +753,10 @@ public class RestrictedPermissionsTest {
                     1, intent, PendingIntent.FLAG_ONE_SHOT).getIntentSender();
 
             // Commit as shell to avoid confirm UI
-            runWithShellPermissionIdentity(() ->
-                session.commit(intentSender)
-            );
-
-            installLatch.await(UI_TIMEOUT, TimeUnit.MILLISECONDS);
+            runWithShellPermissionIdentity(() -> {
+                session.commit(intentSender);
+                installLatch.await(UI_TIMEOUT, TimeUnit.MILLISECONDS);
+            });
         } finally {
             getContext().unregisterReceiver(installReceiver);
         }
@@ -1113,6 +1138,8 @@ public class RestrictedPermissionsTest {
     @After
     public void uninstallApp() {
         runShellCommand("pm uninstall " + PKG);
+        runShellCommand("pm uninstall " + PKG_USES_SMS_NOT_RESTRICTED_SHARED_UID);
+        runShellCommand("pm uninstall " + PKG_USES_SMS_RESTRICTED_SHARED_UID);
     }
 
     private static @NonNull Context getContext() {

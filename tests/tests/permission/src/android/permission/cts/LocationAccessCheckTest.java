@@ -34,10 +34,12 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+import android.app.ActivityManager;
 import android.app.UiAutomation;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -108,6 +110,8 @@ public class LocationAccessCheckTest {
     private static final long BACKGROUND_ACCESS_SETTLE_TIME = 11000;
 
     private static final Context sContext = InstrumentationRegistry.getTargetContext();
+    private static final ActivityManager sActivityManager =
+            (ActivityManager) sContext.getSystemService(Context.ACTIVITY_SERVICE);
     private static final UiAutomation sUiAutomation = InstrumentationRegistry.getInstrumentation()
             .getUiAutomation();
 
@@ -244,7 +248,9 @@ public class LocationAccessCheckTest {
      * Force a run of the location check.
      */
     private static void runLocationCheck() {
-        runShellCommand("cmd jobscheduler run -f " + PERMISSION_CONTROLLER_PKG + " 0");
+        runShellCommand(
+                "cmd jobscheduler run -u " + android.os.Process.myUserHandle().getIdentifier()
+                        + " -f " + PERMISSION_CONTROLLER_PKG + " 0");
     }
 
     /**
@@ -361,6 +367,14 @@ public class LocationAccessCheckTest {
     }
 
     /**
+     * Skip each test for low ram device
+     */
+    @Before
+    public void assumeIsNotLowRamDevice() {
+        assumeFalse(sActivityManager.isLowRamDevice());
+    }
+
+    /**
      * Reset the permission controllers state before each test
      */
     @Before
@@ -424,12 +438,16 @@ public class LocationAccessCheckTest {
      */
     private static void resetPermissionController() throws Throwable {
         clearPackageData(PERMISSION_CONTROLLER_PKG);
+        int currentUserId = android.os.Process.myUserHandle().getIdentifier();
 
         // Wait until jobs are cleared
         eventually(() -> {
             JobSchedulerServiceDumpProto dump = getJobSchedulerDump();
+
             for (RegisteredJob job : dump.registeredJobs) {
-                assertNotEquals(job.dump.sourcePackageName, PERMISSION_CONTROLLER_PKG);
+                if (job.dump.sourceUserId == currentUserId) {
+                    assertNotEquals(job.dump.sourcePackageName, PERMISSION_CONTROLLER_PKG);
+                }
             }
         }, UNEXPECTED_TIMEOUT_MILLIS);
 
@@ -453,7 +471,8 @@ public class LocationAccessCheckTest {
         eventually(() -> {
             JobSchedulerServiceDumpProto dump = getJobSchedulerDump();
             for (RegisteredJob job : dump.registeredJobs) {
-                if (job.dump.sourcePackageName.equals(PERMISSION_CONTROLLER_PKG)) {
+                if (job.dump.sourceUserId == currentUserId
+                        && job.dump.sourcePackageName.equals(PERMISSION_CONTROLLER_PKG)) {
                     return;
                 }
             }

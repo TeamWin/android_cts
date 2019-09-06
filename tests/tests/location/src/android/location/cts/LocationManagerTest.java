@@ -856,9 +856,21 @@ public class LocationManagerTest extends BaseMockLocationTest {
         assertTrue(mManager.isProviderEnabled(TEST_MOCK_PROVIDER_NAME));
 
         mManager.clearTestProviderEnabled(TEST_MOCK_PROVIDER_NAME);
+        //onSetEnabled in LMS is handle in thread, it's not synchronized ,
+        //need add delay here or will cause check failed
+        try {
+            Thread.sleep(100);
+        } catch (Exception e) {
+            Log.e(TAG, "fail in testIsProviderEnabled");
+        }
         assertFalse(mManager.isProviderEnabled(TEST_MOCK_PROVIDER_NAME));
 
         mManager.setTestProviderEnabled(TEST_MOCK_PROVIDER_NAME, true);
+        try {
+            Thread.sleep(100);
+        } catch (Exception e) {
+            Log.e(TAG, "fail in testIsProviderEnabled");
+        }
         assertTrue(mManager.isProviderEnabled(TEST_MOCK_PROVIDER_NAME));
 
         try {

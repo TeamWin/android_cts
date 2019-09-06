@@ -86,6 +86,9 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     private static final int NUM_RESULTS_WAIT_TIMEOUT = 100;
     private static final int NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY = 8;
     private static final int NUM_FRAMES_WAITED_FOR_TORCH = 100;
+    private static final int NUM_PARTIAL_FRAMES_PFC = 2;
+    private static final int NUM_PARTIAL_FRAMES_NPFC = 6;
+
     private static final int NUM_TEST_FOCUS_DISTANCES = 10;
     private static final int NUM_FOCUS_DISTANCES_REPEAT = 3;
     // 5 percent error margin for calibrated device
@@ -525,7 +528,6 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                 flashTurnOffTest(listener,
                         /* initiaAeControl */CaptureRequest.CONTROL_AE_MODE_ON_ALWAYS_FLASH,
                         /* offAeControl */CaptureRequest.CONTROL_AE_MODE_ON_ALWAYS_FLASH);
-
                 flashTurnOffTest(listener,
                         /* initiaAeControl */CaptureRequest.CONTROL_AE_MODE_ON_ALWAYS_FLASH,
                         /* offAeControl */CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
@@ -1479,73 +1481,123 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
         // Test that the flash actually turned on continuously.
         mCollector.expectEquals("Flash state result must be FIRED", CaptureResult.FLASH_STATE_FIRED,
                 result.get(CaptureResult.FLASH_STATE));
-
+        mSession.stopRepeating();
         // Turn off the torch
         requestBuilder.set(CaptureRequest.CONTROL_AE_MODE, flashOffAeControl);
         // TODO: jchowdhary@, b/130323585, this line can be removed.
         requestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_OFF);
-        CaptureRequest flashOffRequest = requestBuilder.build();
-        int flashModeOffRequests = captureRequestsSynchronized(flashOffRequest, 2, listener,
-                mHandler);
-        // We check that the Nth frame's capture result has flash state as either PARTIAL / READY
-        // and the N+1th frame has its flash state as READY (to take into account flash off ramp
-        // time). For devices supporting per frame control, N is the 1st frame passed into
-        // captureRequestsSynchronized. No two frames can have their flash state as PARTIAL.
-        CaptureResult firstTorchOffResult = null;
-        CaptureResult secondTorchOffResult = null;
-        String torchOffDebugStr = "Timed out waiting for torch off result";
+        int numAllowedTransitionStates = NUM_PARTIAL_FRAMES_NPFC;
         if (mStaticInfo.isPerFrameControlSupported()) {
-            firstTorchOffResult =
-                    listener.getCaptureResultForRequest(flashOffRequest, NUM_RESULTS_WAIT_TIMEOUT);
-            secondTorchOffResult =
-                    listener.getCaptureResultForRequest(flashOffRequest, NUM_RESULTS_WAIT_TIMEOUT);
+           numAllowedTransitionStates = NUM_PARTIAL_FRAMES_PFC;
 
-        } else {
-            CaptureResult maybeFirstNonFiredResult;
-            int i = 0;
-            while (i < flashModeOffRequests - 1) {
-                maybeFirstNonFiredResult = listener.getCaptureResultForRequest(flashOffRequest,
-                        NUM_RESULTS_WAIT_TIMEOUT);
-                i++;
-                Integer flashState = maybeFirstNonFiredResult.get(CaptureResult.FLASH_STATE);
-                torchOffDebugStr = "Flash not turned off in time";
-                if (flashState != CaptureResult.FLASH_STATE_FIRED) {
-                    firstTorchOffResult = maybeFirstNonFiredResult;
-                    secondTorchOffResult = listener.getCaptureResultForRequest(flashOffRequest,
-                            NUM_RESULTS_WAIT_TIMEOUT);
-                    torchOffDebugStr = "Timed out waiting for torch off result";
-                    break;
-                }
-            }
-            // The next results should all have their flash state as READY
-            for(int j = i + 1 ; j < flashModeOffRequests; j++) {
-                CaptureResult expectedReadyResult =
-                        listener.getCaptureResultForRequest(flashOffRequest,
-                                NUM_RESULTS_WAIT_TIMEOUT);
-                mCollector.expectEquals("Flash state must remain READY after torch is turned off",
-                        CaptureResult.FLASH_STATE_READY,
-                        expectedReadyResult.get(CaptureResult.FLASH_STATE));
-            }
         }
-        mCollector.expectNotEquals("first torch off result: " + torchOffDebugStr, null,
-                firstTorchOffResult);
-        mCollector.expectNotEquals("second torch off result: " + torchOffDebugStr, null,
-                secondTorchOffResult);
-        check2TorchOffStates(firstTorchOffResult, secondTorchOffResult);
+        // We submit 2 * numAllowedTransitionStates + 1 requests since we have two torch mode
+        // transitions. The additional request is to check for at least 1 expected (FIRED / READY)
+        // state.
+        int numTorchTestSamples =  2 * numAllowedTransitionStates  + 1;
+        CaptureRequest flashOffRequest = requestBuilder.build();
+        int flashModeOffRequests = captureRequestsSynchronizedBurst(flashOffRequest,
+                numTorchTestSamples, listener, mHandler);
+        // Turn it on again.
+        requestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
+        // We need to have CONTROL_AE_MODE be either CONTROL_AE_MODE_ON or CONTROL_AE_MODE_OFF to
+        // turn the torch on again.
+        requestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+        CaptureRequest flashModeTorchRequest = requestBuilder.build();
+        int flashModeTorchRequests = captureRequestsSynchronizedBurst(flashModeTorchRequest,
+                numTorchTestSamples, listener, mHandler);
+
+        CaptureResult[] torchStateResults =
+                new CaptureResult[flashModeTorchRequests + flashModeOffRequests];
+        Arrays.fill(torchStateResults, null);
+        int i = 0;
+        for (; i < flashModeOffRequests; i++) {
+            torchStateResults[i] =
+                    listener.getCaptureResultForRequest(flashOffRequest, NUM_RESULTS_WAIT_TIMEOUT);
+            mCollector.expectNotEquals("Result for flashModeOff request null",
+                    torchStateResults[i], null);
+        }
+        for (int j = i; j < torchStateResults.length; j++) {
+            torchStateResults[j] =
+                    listener.getCaptureResultForRequest(flashModeTorchRequest,
+                            NUM_RESULTS_WAIT_TIMEOUT);
+            mCollector.expectNotEquals("Result for flashModeTorch request null",
+                    torchStateResults[j], null);
+        }
+        checkTorchStates(torchStateResults, numAllowedTransitionStates, flashModeOffRequests,
+                flashModeTorchRequests);
     }
 
-    private void check2TorchOffStates(CaptureResult first, CaptureResult second) {
-        Integer flashState = first.get(CaptureResult.FLASH_STATE);
-        // The first frame must have its flash state as FLASH_STATE_READY or
-        // FLASH_STATE_PARTIAL.
-        int [] validStates = new int[] { CaptureRequest.FLASH_STATE_READY,
-              CaptureRequest.FLASH_STATE_PARTIAL};
-        mCollector.expectContains("Flash state must be either PARTIAL or READY", validStates,
-                flashState);
-        // The next frame must have its flash state as FLASH_STATE_READY
-        flashState = second.get(CaptureResult.FLASH_STATE);
-        mCollector.expectEquals("Flash state result must be READY",
-                CaptureResult.FLASH_STATE_READY, flashState);
+    // We check that torch states appear in the order expected. We don't necessarily know how many
+    // times each state might appear, however we make sure that the states do not appear out of
+    // order.
+    private void checkTorchTransitionStates(CaptureResult []torchStateResults, int beg, int end,
+            List<Integer> stateOrder, boolean isTurningOff) {
+        Integer flashState;
+        Integer curIndex = 0;
+        for (int i = beg; i <= end; i++) {
+            flashState = torchStateResults[i].get(CaptureResult.FLASH_STATE);
+            int index = stateOrder.indexOf(flashState);
+            mCollector.expectNotEquals("Invalid state " + flashState + " not in expected list" +
+                    stateOrder, index, -1);
+            mCollector.expectGreaterOrEqual("state " + flashState  + " index " + index +
+                    " is expected to be >= " + curIndex,
+                    curIndex, index);
+            curIndex = index;
+        }
+    }
+
+    private void checkTorchStates(CaptureResult []torchResults, int numAllowedTransitionStates,
+            int numTorchOffSamples, int numTorchOnSamples) {
+        // We test for flash states from request:
+        // Request:       O(0) O(1) O(2) O(n)....O(nOFF) T(0) T(1) T(2) ....T(n) .... T(nON)
+        // Valid Result : P/R  P/R  P/R  R R R...P/R P/R   P/F  P/F  P/F      F         F
+        // For the FLASH_STATE_OFF requests, once FLASH_STATE READY has been seen, for the
+        // transition states while switching the torch off, it must not transition to
+        // FLASH_STATE_PARTIAL again till the next transition period which turns the torch on.
+        // P - FLASH_STATE_PARTIAL
+        // R - FLASH_STATE_READY
+        // F - FLASH_STATE_FIRED
+        // O(k) - kth FLASH_MODE_OFF request
+        // T(k) - kth FLASH_MODE_TORCH request
+        // nOFF - number of torch off samples
+        // nON - number of torch on samples
+        Integer flashState;
+        // Check on -> off transition states
+        List<Integer> onToOffStateOrderList = new ArrayList<Integer>();
+        onToOffStateOrderList.add(CaptureRequest.FLASH_STATE_PARTIAL);
+        onToOffStateOrderList.add(CaptureRequest.FLASH_STATE_READY);
+        checkTorchTransitionStates(torchResults, 0, numAllowedTransitionStates,
+                onToOffStateOrderList, true);
+        // The next frames (before transition) must have its flash state as FLASH_STATE_READY
+        for (int i = numAllowedTransitionStates + 1;
+                i < numTorchOffSamples - numAllowedTransitionStates; i++) {
+            flashState = torchResults[numAllowedTransitionStates].get(CaptureResult.FLASH_STATE);
+            mCollector.expectEquals("flash state result must be READY",
+                    CaptureResult.FLASH_STATE_READY, flashState);
+        }
+        // check off -> on transition states, before the FLASH_MODE_TORCH request was sent
+        List<Integer> offToOnPreStateOrderList = new ArrayList<Integer>();
+        offToOnPreStateOrderList.add(CaptureRequest.FLASH_STATE_READY);
+        offToOnPreStateOrderList.add(CaptureRequest.FLASH_STATE_PARTIAL);
+        checkTorchTransitionStates(torchResults,
+                numTorchOffSamples - numAllowedTransitionStates, numTorchOffSamples - 1,
+                offToOnPreStateOrderList, false);
+        // check off -> on transition states
+        List<Integer> offToOnPostStateOrderList = new ArrayList<Integer>();
+        offToOnPostStateOrderList.add(CaptureRequest.FLASH_STATE_PARTIAL);
+        offToOnPostStateOrderList.add(CaptureRequest.FLASH_STATE_FIRED);
+        checkTorchTransitionStates(torchResults,
+                numTorchOffSamples, numTorchOffSamples + numAllowedTransitionStates,
+                offToOnPostStateOrderList, false);
+        // check on states after off -> on transition
+        // The next frames must have its flash state as FLASH_STATE_FIRED
+        for (int i = numTorchOffSamples + numAllowedTransitionStates + 1;
+                i < torchResults.length - 1; i++) {
+            flashState = torchResults[i].get(CaptureResult.FLASH_STATE);
+            mCollector.expectEquals("flash state result must be FIRED for frame " + i,
+                    CaptureRequest.FLASH_STATE_FIRED, flashState);
+        }
     }
 
     /**

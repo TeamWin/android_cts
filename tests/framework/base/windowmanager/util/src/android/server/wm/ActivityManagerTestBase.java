@@ -659,7 +659,9 @@ public abstract class ActivityManagerTestBase {
      * Moves the device into split-screen with the specified task into the primary stack.
      * @param taskId             The id of the task to move into the primary stack.
      * @param showSideActivity   Whether to show the Recents activity (or a placeholder activity in
-     *                           place of the Recents activity if home is the recents component)
+     *                           place of the Recents activity if home is the recents component).
+     *                           If {@code true} it will also wait for activity in the primary
+     *                           split-screen stack to be resumed.
      */
     public void moveTaskToPrimarySplitScreen(int taskId, boolean showSideActivity) {
         final boolean isHomeRecentsComponent = mAmWmState.getAmState().isHomeRecentsComponent();
@@ -670,11 +672,29 @@ public abstract class ActivityManagerTestBase {
                     null /* initialBounds */, showSideActivity && !isHomeRecentsComponent);
             mAmWmState.waitForRecentsActivityVisible();
 
-            if (isHomeRecentsComponent && showSideActivity) {
-                // Launch Placeholder Side Activity
-                final Activity sideActivity = mSideActivityRule.launchActivity(
-                        new Intent());
-                mAmWmState.waitForActivityState(sideActivity.getComponentName(), STATE_RESUMED);
+            if (showSideActivity) {
+                if (isHomeRecentsComponent) {
+                    // Launch Placeholder Side Activity
+                    final Activity sideActivity = mSideActivityRule.launchActivity(
+                            new Intent());
+                    mAmWmState.waitForActivityState(sideActivity.getComponentName(), STATE_RESUMED);
+                }
+
+                // There are two cases when showSideActivity == true:
+                // Case 1: it's 3rd-party launcher and it should show recents, so the primary split
+                // screen won't enter minimized dock, but the activity on primary split screen
+                // should be relaunched.
+                // Case 2: It's not 3rd-party launcher but we launched side activity on secondary
+                // split screen, the activity on primary split screen should enter then leave
+                // minimized dock.
+                // In both cases, we shall wait for the state of the activity on primary split
+                // screen to resumed, so the LifecycleLog won't affect the following tests.
+                mAmWmState.waitForWithAmState(state -> {
+                    final ActivityManagerState.ActivityStack stack =
+                            state.getStandardStackByWindowingMode(
+                                    WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
+                    return stack != null && stack.getResumedActivity() != null;
+                }, "activity in the primary split-screen stack must be resumed");
             }
         });
     }
@@ -929,7 +949,10 @@ public abstract class ActivityManagerTestBase {
                 "doze_always_on",
                 "doze_pulse_on_pick_up",
                 "doze_pulse_on_long_press",
-                "doze_pulse_on_double_tap"
+                "doze_pulse_on_double_tap",
+                "doze_wake_screen_gesture",
+                "doze_wake_display_gesture",
+                "doze_tap_gesture"
         };
 
         private String get(String key) {
@@ -1083,6 +1106,9 @@ public abstract class ActivityManagerTestBase {
         }
 
         LockScreenSession unlockDevice() {
+            // Make sure the unlock button event is send to the default display.
+            tapOnDisplay(10, 10, DEFAULT_DISPLAY);
+
             pressUnlockButton();
             return this;
         }
@@ -1668,20 +1694,28 @@ public abstract class ActivityManagerTestBase {
     static class ActivityLifecycleCounts {
         final int[] mCounts = new int[ActivityCallback.SIZE];
         final int[] mLastIndexes = new int[ActivityCallback.SIZE];
-        final List<ActivityCallback> mCallbackHistory;
+        private ComponentName mActivityName;
 
         ActivityLifecycleCounts(ComponentName componentName) {
-            this(TestJournalContainer.get(componentName).callbacks);
+            mActivityName = componentName;
+            updateCount(TestJournalContainer.get(componentName).callbacks);
         }
 
         ActivityLifecycleCounts(List<ActivityCallback> callbacks) {
-            mCallbackHistory = callbacks;
-            for (int i = 0; i < callbacks.size(); i++) {
-                final ActivityCallback callback = callbacks.get(i);
-                final int ordinal = callback.ordinal();
-                mCounts[ordinal]++;
-                mLastIndexes[ordinal] = i;
-            }
+            updateCount(callbacks);
+        }
+
+        private void updateCount(List<ActivityCallback> callbacks) {
+            // The callback list could be from the reference of TestJournal. If we are counting for
+            // retrying, there may be new data added to the list from other threads.
+            TestJournalContainer.withThreadSafeAccess(() -> {
+                for (int i = 0; i < callbacks.size(); i++) {
+                    final ActivityCallback callback = callbacks.get(i);
+                    final int ordinal = callback.ordinal();
+                    mCounts[ordinal]++;
+                    mLastIndexes[ordinal] = i;
+                }
+            });
         }
 
         int getCount(ActivityCallback callback) {
@@ -1694,9 +1728,16 @@ public abstract class ActivityManagerTestBase {
 
         @SafeVarargs
         final void assertCountWithRetry(String message, CountSpec<ActivityCallback>... countSpecs) {
+            if (mActivityName == null) {
+                throw new IllegalStateException(
+                        "It is meaningless to retry without specified activity");
+            }
             new RetryValidator() {
                 @Override
                 protected String validate() {
+                    Arrays.fill(mCounts, 0);
+                    Arrays.fill(mLastIndexes, 0);
+                    updateCount(TestJournalContainer.get(mActivityName).callbacks);
                     return validateCount(countSpecs);
                 }
             }.assertValidator(message);

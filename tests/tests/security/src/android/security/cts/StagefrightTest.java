@@ -69,6 +69,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.regex.Pattern;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -76,6 +77,7 @@ import org.json.JSONObject;
 
 import android.security.cts.R;
 
+import android.security.NetworkSecurityPolicy;
 
 /**
  * Verify that the device is not vulnerable to any known Stagefright
@@ -556,6 +558,14 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.bug_32873375);
     }
 
+    @SecurityTest(minPatchLevel = "2018-02")
+    public void testStagefright_bug_63522067() throws Exception {
+        doStagefrightTestRawBlob(R.raw.bug_63522067_1_hevc, "video/hevc", 320, 420);
+        doStagefrightTestRawBlob(R.raw.bug_63522067_2_hevc, "video/hevc", 320, 420);
+        doStagefrightTestRawBlob(R.raw.bug_63522067_3_hevc, "video/hevc", 320, 420);
+        doStagefrightTestRawBlob(R.raw.bug_63522067_4_hevc, "video/hevc", 320, 420);
+    }
+
     @SecurityTest(minPatchLevel = "2016-03")
     public void testStagefright_bug_25765591() throws Exception {
         doStagefrightTest(R.raw.bug_25765591);
@@ -804,10 +814,45 @@ public class StagefrightTest extends InstrumentationTestCase {
      before any existing test methods
      ***********************************************************/
 
+    @SecurityTest(minPatchLevel = "2017-07")
+    public void testStagefright_bug_36279112() throws Exception {
+        doStagefrightTest(R.raw.bug_36279112);
+    }
+
+    @SecurityTest(minPatchLevel = "2017-06")
+    public void testStagefright_cve_2017_0640() throws Exception {
+        int[] frameSizes = {21, 4};
+        doStagefrightTestRawBlob(R.raw.cve_2017_0640_avc, "video/avc", 640, 480,
+                frameSizes);
+    }
+
+    @SecurityTest(minPatchLevel = "2017-08")
+    public void testBug_37203196() throws Exception {
+        int[] frameSizes = getFrameSizes(R.raw.bug_37203196_framelen);
+        doStagefrightTestRawBlob(R.raw.bug_37203196_mpeg2, "video/mpeg2", 48, 48, frameSizes);
+    }
+
     @SecurityTest(minPatchLevel = "2018-06")
     public void testBug_73552574() throws Exception {
         int[] frameSizes = getFrameSizes(R.raw.bug_73552574_framelen);
         doStagefrightTestRawBlob(R.raw.bug_73552574_avc, "video/avc", 320, 240, frameSizes);
+    }
+
+    @SecurityTest(minPatchLevel = "2015-09")
+    public void testStagefright_bug_23285192() throws Exception {
+        doStagefrightTest(R.raw.bug_23285192);
+    }
+
+    @SecurityTest(minPatchLevel = "2016-03")
+    public void testStagefright_bug_25928803() throws Exception {
+        doStagefrightTest(R.raw.bug_25928803);
+    }
+
+    @SecurityTest(minPatchLevel = "2016-04")
+    public void testBug_26399350() throws Exception {
+        int[] frameSizes = {657, 54930};
+        doStagefrightTestRawBlob(R.raw.bug_26399350_avc, "video/avc", 640, 480,
+                frameSizes);
     }
 
     @SecurityTest(minPatchLevel = "2018-12")
@@ -947,6 +992,11 @@ public class StagefrightTest extends InstrumentationTestCase {
      before any existing test methods
      ***********************************************************/
 
+    @SecurityTest(minPatchLevel = "2018-09")
+    public void testStagefright_cve_2018_11287() throws Exception {
+        doStagefrightTest(R.raw.cve_2018_11287, 180000);
+    }
+
     @SecurityTest(minPatchLevel = "2018-03")
     public void testStagefright_cve_2017_17773() throws Exception {
         doStagefrightTest(R.raw.cve_2017_17773);
@@ -1056,6 +1106,8 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     private void doStagefrightTest(final int rid) throws Exception {
+        NetworkSecurityPolicy policy = NetworkSecurityPolicy.getInstance();
+        policy.setCleartextTrafficPermitted(true);
         doStagefrightTestMediaPlayer(rid);
         doStagefrightTestMediaCodec(rid);
         doStagefrightTestMediaMetadataRetriever(rid);
@@ -1077,6 +1129,7 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTestMediaPlayer(url);
         doStagefrightTestMediaCodec(url);
         doStagefrightTestMediaMetadataRetriever(url);
+        policy.setCleartextTrafficPermitted(false);
         server.shutdown();
     }
 
@@ -1153,8 +1206,23 @@ public class StagefrightTest extends InstrumentationTestCase {
         MediaPlayer.OnPreparedListener,
         MediaPlayer.OnCompletionListener {
 
-        private final String[] validProcessNames = {
-            "mediaserver", "mediadrmserver", "media.extractor", "media.codec", "media.metrics"
+        private final Pattern[] validProcessPatterns = {
+            Pattern.compile("adsprpcd"),
+            Pattern.compile("android\\.hardware\\.cas@\\d+?\\.\\d+?-service"),
+            Pattern.compile("android\\.hardware\\.drm@\\d+?\\.\\d+?-service"),
+            Pattern.compile("android\\.hardware\\.drm@\\d+?\\.\\d+?-service\\.clearkey"),
+            Pattern.compile("android\\.hardware\\.drm@\\d+?\\.\\d+?-service\\.widevine"),
+            Pattern.compile("android\\.process\\.media"),
+            Pattern.compile("mediadrmserver"),
+            Pattern.compile("media\\.extractor"),
+            Pattern.compile("media\\.metrics"),
+            Pattern.compile("mediaserver"),
+            Pattern.compile("media\\.codec"),
+            Pattern.compile("media\\.swcodec"),
+            Pattern.compile("\\[?sdcard\\]?"), // name:/system/bin/sdcard, user:media_rw
+            // Match any vendor processes.
+            // It should only catch crashes that happen during the test.
+            Pattern.compile("vendor.*"),
         };
 
         @Override
@@ -1202,7 +1270,7 @@ public class StagefrightTest extends InstrumentationTestCase {
                 if (crashes == null) {
                     Log.e(TAG, "Crash results not found for test " + getName());
                     return what;
-                } else if (CrashUtils.detectCrash(validProcessNames, true, crashes)) {
+                } else if (CrashUtils.securityCrashDetected(crashes, true, validProcessPatterns)) {
                     return what;
                 } else {
                     Log.i(TAG, "Crash ignored due to no security crash found for test " +

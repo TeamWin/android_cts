@@ -2111,7 +2111,7 @@ public class BitmapTest {
     public void testWrapHardwareBufferHoldsReference() {
         Bitmap bitmap;
         // Create hardware-buffer and wrap it in a Bitmap
-        try (HardwareBuffer hwBuffer = createTestBuffer(128, 128, false)) {
+        try (HardwareBuffer hwBuffer = createTestBuffer(128, 128, true)) {
             // Fill buffer with colors (x, y, 42, 255)
             nFillRgbaHwBuffer(hwBuffer);
             bitmap = Bitmap.wrapHardwareBuffer(hwBuffer, ColorSpace.get(Named.SRGB));

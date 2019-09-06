@@ -58,6 +58,13 @@ def main():
         #      switching shading modes.
         cam.do_3a(mono_camera=mono_camera)
 
+        # Use smallest yuv size matching the aspect ratio of largest yuv size to
+        # reduce some USB bandwidth overhead since we are only looking at output
+        # metadata in this test.
+        largest_yuv_fmt = its.objects.get_largest_yuv_format(props)
+        largest_yuv_size = (largest_yuv_fmt['width'], largest_yuv_fmt['height'])
+        cap_fmt = its.objects.get_smallest_yuv_format(props, largest_yuv_size)
+
         # Get the reference lens shading maps for OFF, FAST, and HIGH_QUALITY
         # in different sessions.
         # reference_maps[mode]
@@ -68,7 +75,7 @@ def main():
             req = its.objects.auto_capture_request()
             req['android.statistics.lensShadingMapMode'] = 1
             req['android.shading.mode'] = mode
-            cap_res = cam.do_capture([req]*NUM_FRAMES)[NUM_FRAMES-1]['metadata']
+            cap_res = cam.do_capture([req]*NUM_FRAMES, cap_fmt)[NUM_FRAMES-1]['metadata']
             lsc_map = cap_res['android.statistics.lensShadingCorrectionMap']
             assert(lsc_map.has_key('width') and
                    lsc_map.has_key('height') and
@@ -89,7 +96,7 @@ def main():
                     req['android.shading.mode'] = mode
                     reqs.append(req)
 
-        caps = cam.do_capture(reqs)
+        caps = cam.do_capture(reqs, cap_fmt)
 
         # shading_maps[mode][loop]
         shading_maps = [[[] for loop in range(NUM_SHADING_MODE_SWITCH_LOOPS)]

@@ -592,7 +592,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
             final int userId = createManagedProfile(mPrimaryUserId);
             installAppAsUser(apkName, userId);
             setProfileOwnerOrFail(adminReceiverClassName, userId);
-            startUser(userId);
+            startUserAndWait(userId);
             runDeviceTestsAsUser(
                     packageName,
                     MANAGEMENT_TEST,
@@ -617,7 +617,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
         List<Integer> newUsers = getUsersCreatedByTests();
         assertEquals(1, newUsers.size());
         int secondaryUserId = newUsers.get(0);
-        getDevice().startUser(secondaryUserId);
+        getDevice().startUser(secondaryUserId, /* waitFlag= */ true);
         return secondaryUserId;
     }
 

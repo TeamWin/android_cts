@@ -2393,6 +2393,14 @@ public class StaticMetadata {
     }
 
     /**
+     * Check if Depth Jpeg format is supported
+     */
+    public boolean isDepthJpegSupported() {
+        int[] formats = getAvailableFormats(StaticMetadata.StreamDirection.Output);
+        return CameraTestUtils.contains(formats, ImageFormat.DEPTH_JPEG);
+    }
+
+    /**
      * Check if the dynamic black level is supported.
      *
      * <p>

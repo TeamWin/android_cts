@@ -52,6 +52,6 @@ $(foreach ver,$(PLATFORM_SYSTEMSDK_VERSIONS),\
 
 $(foreach ver,$(call int_range_list,28,$(PLATFORM_SDK_VERSION)),\
   $(foreach api_level,public system,\
-    $(foreach lib,$(filter-out android,$(filter-out %removed,\
-      $(basename $(notdir $(wildcard $(HISTORICAL_SDK_VERSIONS_ROOT)/$(ver)/$(api_level)/api/*.txt))))),\
+    $(foreach lib,$(filter-out android,$(filter-out %removed,$(filter-out incompatibilities,\
+      $(basename $(notdir $(wildcard $(HISTORICAL_SDK_VERSIONS_ROOT)/$(ver)/$(api_level)/api/*.txt)))))),\
         $(eval $(call build_xml_api_file,$(lib)-$(ver)-$(api_level).api,prebuilts/sdk/$(ver)/$(api_level)/api/$(lib).txt)))))

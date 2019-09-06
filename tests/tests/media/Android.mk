@@ -89,7 +89,7 @@ LOCAL_JAVA_LIBRARIES += \
     android.test.runner.stubs
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant mts
 
 LOCAL_HOST_REQUIRED_MODULES := cts-dynamic-config
 

@@ -100,8 +100,6 @@ public class DownloadManagerLegacyTest extends DownloadManagerTestBase {
                     true, "text/plain", downloadLocation, fileContents.getBytes().length, true);
             assertTrue(downloadId >= 0);
             final Uri downloadUri = mDownloadManager.getUriForDownloadedFile(downloadId);
-            mContext.grantUriPermission("com.android.shell", downloadUri,
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION);
             final Uri mediaStoreUri = getMediaStoreUri(downloadUri);
 
             assertEquals(fileContents, readContentsFromUri(mediaStoreUri));

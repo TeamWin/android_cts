@@ -195,14 +195,15 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
         dpm.addCrossProfileIntentFilter(getWho(context), filter,
                 DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED);
 
-        Intent intent = new Intent(context, ByodHelperActivity.class);
-        intent.setAction(ByodHelperActivity.ACTION_PROFILE_PROVISIONED);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(intent);
         // Disable the work profile instance of this activity, because it is a helper activity for
         // the work -> primary direction.
         context.getPackageManager().setComponentEnabledSetting(
                 new ComponentName(context, ByodPrimaryHelperActivity.class.getName()),
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
+
+        // Disable the work profile instance of ByodFlowTestActivity
+        context.getPackageManager().setComponentEnabledSetting(
+                new ComponentName(context, ByodFlowTestActivity.class),
                 PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
     }
 

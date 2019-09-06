@@ -219,17 +219,14 @@ public class MediaStore_Images_MediaTest {
 
     @Test
     public void testStoreImagesMediaExternal() throws Exception {
-        final String externalPath = new File(ProviderTestUtils.stageDir(mVolumeName),
-                "testimage.jpg").getAbsolutePath();
-        final String externalPath2 = new File(ProviderTestUtils.stageDir(mVolumeName),
-                "testimage1.jpg").getAbsolutePath();
+        final File dir = ProviderTestUtils.stageDir(mVolumeName);
+        final File file = ProviderTestUtils.stageFile(R.raw.scenery,
+                new File(dir, "cts" + System.nanoTime() + ".jpg"));
 
-        // clean up any potential left over entries from a previous aborted run
-        cleanExternalMediaFile(externalPath);
-        cleanExternalMediaFile(externalPath2);
+        final String externalPath = file.getAbsolutePath();
+        final long numBytes = file.length();
 
-        int numBytes = 1337;
-        FileUtils.createFile(new File(externalPath), numBytes);
+        ProviderTestUtils.waitUntilExists(file);
 
         ContentValues values = new ContentValues();
         values.put(Media.ORIENTATION, 0);
@@ -240,7 +237,7 @@ public class MediaStore_Images_MediaTest {
         values.put(Media.IS_PRIVATE, 1);
         values.put(Media.MINI_THUMB_MAGIC, 0);
         values.put(Media.DATA, externalPath);
-        values.put(Media.DISPLAY_NAME, "testimage");
+        values.put(Media.DISPLAY_NAME, file.getName());
         values.put(Media.MIME_TYPE, "image/jpeg");
         values.put(Media.SIZE, numBytes);
         values.put(Media.TITLE, "testimage");
@@ -268,7 +265,7 @@ public class MediaStore_Images_MediaTest {
             assertEquals(1, c.getInt(c.getColumnIndex(Media.IS_PRIVATE)));
             assertEquals(0, c.getLong(c.getColumnIndex(Media.MINI_THUMB_MAGIC)));
             assertEquals(externalPath, c.getString(c.getColumnIndex(Media.DATA)));
-            assertEquals("testimage.jpg", c.getString(c.getColumnIndex(Media.DISPLAY_NAME)));
+            assertEquals(file.getName(), c.getString(c.getColumnIndex(Media.DISPLAY_NAME)));
             assertEquals("image/jpeg", c.getString(c.getColumnIndex(Media.MIME_TYPE)));
             assertEquals("testimage", c.getString(c.getColumnIndex(Media.TITLE)));
             assertEquals(numBytes, c.getInt(c.getColumnIndex(Media.SIZE)));
@@ -281,7 +278,7 @@ public class MediaStore_Images_MediaTest {
         } finally {
             // delete
             assertEquals(1, mContentResolver.delete(uri, null, null));
-            new File(externalPath).delete();
+            file.delete();
         }
     }
 
@@ -342,8 +339,9 @@ public class MediaStore_Images_MediaTest {
         }
 
         // Now remove ownership, which means that Exif/XMP location data should be redacted
-        ProviderTestUtils.executeShellCommand(
-                "content update --uri " + publishUri + " --bind owner_package_name:n:",
+        ProviderTestUtils.executeShellCommand("content update"
+                + " --user " + InstrumentationRegistry.getTargetContext().getUserId()
+                + " --uri " + publishUri + " --bind owner_package_name:n:",
                 InstrumentationRegistry.getInstrumentation().getUiAutomation());
         try (InputStream is = mContentResolver.openInputStream(publishUri)) {
             final ExifInterface exif = new ExifInterface(is);
@@ -405,8 +403,9 @@ public class MediaStore_Images_MediaTest {
     @Test
     public void testCanonicalize() throws Exception {
         // Remove all audio left over from other tests
-        ProviderTestUtils.executeShellCommand(
-                "content delete --uri " + mExternalImages,
+        ProviderTestUtils.executeShellCommand("content delete"
+                + " --user " + InstrumentationRegistry.getTargetContext().getUserId()
+                + " --uri " + mExternalImages,
                 InstrumentationRegistry.getInstrumentation().getUiAutomation());
 
         // Publish some content

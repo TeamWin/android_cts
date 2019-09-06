@@ -55,7 +55,7 @@ public abstract class AbstractLoginActivityTestCase
         try {
             event = mUiBot.waitForWindowChange(() -> mActivity.onUsername(View::requestFocus),
                     Timeouts.WINDOW_CHANGE_NOT_GENERATED_NAPTIME_MS);
-        } catch (TimeoutException ex) {
+        } catch (WindowChangeTimeoutException ex) {
             // no window events! looking good
             return;
         }

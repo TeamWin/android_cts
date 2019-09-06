@@ -17,6 +17,7 @@
 package android.security.cts;
 
 import android.platform.test.annotations.SecurityTest;
+import java.util.concurrent.Callable;
 
 public class Poc17_03 extends SecurityTestCase {
 
@@ -65,9 +66,26 @@ public class Poc17_03 extends SecurityTestCase {
     @SecurityTest(minPatchLevel = "2017-03")
     public void testPocCVE_2017_0334() throws Exception {
         if (containsDriver(getDevice(), "/dev/dri/renderD129")) {
-           String out = AdbUtils.runPoc("CVE-2017-0334", getDevice());
-           assertNotMatchesMultiLine("Leaked ptr is (0x[fF]{6}[cC]0[a-fA-F0-9]{8}"
-               +"|0x[c-fC-F][a-fA-F0-9]{7})",out);
+            String out = AdbUtils.runPoc("CVE-2017-0334", getDevice());
+            // info leak sample
+            // "leaked ptr is 0xffffffc038ed1980"
+            String[] lines = out.split("\n");
+            String pattern = "Leaked ptr is 0x";
+            assertNotKernelPointer(new Callable<String>() {
+                int index = 0;
+                @Override
+                public String call() {
+                    for (; index < lines.length; index++) {
+                        String line = lines[index];
+                        int index = line.indexOf(pattern);
+                        if (index == -1) {
+                            continue;
+                        }
+                        return line.substring(index + pattern.length());
+                    }
+                    return null;
+                }
+            }, null);
         }
     }
 
@@ -76,11 +94,7 @@ public class Poc17_03 extends SecurityTestCase {
      */
     @SecurityTest(minPatchLevel = "2017-03")
     public void testPocCVE_2017_0479() throws Exception {
-        AdbUtils.runCommandLine("logcat -c" , getDevice());
-        AdbUtils.runPocNoOutput("CVE-2017-0479", getDevice(), 60);
-        String logcatOut = AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertNotMatchesMultiLine("Fatal signal 11 \\(SIGSEGV\\).*>>> /system/bin/" +
-                         "audioserver <<<", logcatOut);
+        AdbUtils.runPocAssertNoCrashes("CVE-2017-0479", getDevice(), "audioserver");
     }
 
     /*
