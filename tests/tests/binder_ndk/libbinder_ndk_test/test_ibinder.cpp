@@ -48,6 +48,12 @@ TEST_F(NdkBinderTest_AIBinder, AssociateClass) {
   AIBinder_decStrong(binder);
 }
 
+TEST_F(NdkBinderTest_AIBinder, AssociateUnrelatedClassWithSameDescriptorFails) {
+  AIBinder* binder = SampleData::newBinder();
+  EXPECT_FALSE(AIBinder_associateClass(binder, SampleData::kAnotherClassWithSameDescriptor));
+  AIBinder_decStrong(binder);
+}
+
 TEST_F(NdkBinderTest_AIBinder, AssociateWrongClassFails) {
   AIBinder* binder = SampleData::newBinder();
   EXPECT_FALSE(AIBinder_associateClass(binder, SampleData::kAnotherClass));
