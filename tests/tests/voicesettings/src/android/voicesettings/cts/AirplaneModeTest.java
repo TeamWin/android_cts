@@ -21,6 +21,12 @@ import static android.provider.Settings.ACTION_VOICE_CONTROL_AIRPLANE_MODE;
 import com.android.compatibility.common.util.BroadcastTestBase;
 import com.android.compatibility.common.util.BroadcastUtils;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
+import static com.google.common.truth.Truth.assertThat;
+
+import org.junit.Test;
+
 import android.provider.Settings;
 import android.provider.Settings.Global;
 import android.util.Log;
@@ -36,17 +42,13 @@ public class AirplaneModeTest extends BroadcastTestBase {
     private static final int AIRPLANE_MODE_IS_ON = 1;
 
     @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    protected void customSetup() throws Exception {
         mContext = getInstrumentation().getTargetContext();
         mHasFeature = mContext.getPackageManager().hasSystemFeature(FEATURE_VOICE_RECOGNIZERS);
         Log.v(TAG, "setUp(): mHasFeature=" + mHasFeature);
     }
 
-    public AirplaneModeTest() {
-        super();
-    }
-
+    @Test
     public void testAll() throws Exception {
         if (!mHasFeature) {
             Log.i(TAG, "The device doesn't support feature: " + FEATURE_VOICE_RECOGNIZERS);
@@ -96,7 +98,7 @@ public class AirplaneModeTest extends BroadcastTestBase {
         // verify the test results
         int mode = getMode();
         Log.i(TAG, "After testing, AIRPLANE_MODE is set to: " + mode);
-        assertEquals(expectedMode, mode);
+        assertThat(mode).isEqualTo(expectedMode);
         Log.i(TAG, "Successfully Tested: " + test);
         return true;
     }
