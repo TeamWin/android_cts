@@ -1,4 +1,4 @@
-# Copyright (C) 2017 The Android Open Source Project
+# Copyright (C) 2019 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,22 +14,4 @@
 
 LOCAL_PATH:= $(call my-dir)
 
-include $(CLEAR_VARS)
-
-LOCAL_MODULE_TAGS := optional
-
-LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
-
-LOCAL_SRC_FILES := $(call all-java-files-under, ../src)
-
-LOCAL_PACKAGE_NAME := CtsFullBackupApp
-LOCAL_SDK_VERSION := current
-
-# Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
-
-LOCAL_STATIC_JAVA_LIBRARIES := \
-    compatibility-device-util-axt \
-    ctstestrunner-axt
-
-include $(BUILD_CTS_SUPPORT_PACKAGE)
+include $(call all-makefiles-under,$(LOCAL_PATH))

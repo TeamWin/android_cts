@@ -15,6 +15,7 @@
  */
 package android.host.multiuser;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import java.util.concurrent.TimeUnit;
@@ -31,6 +32,7 @@ public class SecondaryUsersTest extends BaseMultiUserTest {
 
     private static final long POLL_INTERVAL_MS = 100;
 
+    @CddTest(requirement="9.5/A-1-2")
     @Test
     public void testSwitchToSecondaryUserBeforeBootComplete() throws Exception {
         if (!isAutomotiveDevice() || !mSupportsMultiUser) {

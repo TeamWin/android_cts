@@ -541,7 +541,7 @@ public class Camera2SurfaceViewTestCase {
         List<Integer> expectedAeStates = new ArrayList<Integer>();
         expectedAeStates.add(new Integer(CaptureResult.CONTROL_AE_STATE_LOCKED));
         CameraTestUtils.waitForAnyResultValue(resultListener, CaptureResult.CONTROL_AE_STATE,
-                expectedAeStates, WAIT_FOR_RESULT_TIMEOUT_MS, NUM_RESULTS_WAIT_TIMEOUT);
+                expectedAeStates, NUM_RESULTS_WAIT_TIMEOUT, WAIT_FOR_RESULT_TIMEOUT_MS);
     }
 
     /**

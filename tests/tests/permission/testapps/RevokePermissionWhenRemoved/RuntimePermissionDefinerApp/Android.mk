@@ -11,21 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+#
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_TAGS := tests
+LOCAL_SDK_VERSION := current
 
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
-LOCAL_SRC_FILES := $(call all-java-files-under, ../src)
-
-LOCAL_PACKAGE_NAME := CtsPermissionBackupApp22
-LOCAL_SDK_VERSION := current
-
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
 
-include $(BUILD_CTS_SUPPORT_PACKAGE)
+LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/cts-testkey1
+LOCAL_PACKAGE_NAME := CtsRuntimePermissionDefinerApp
+
+include $(BUILD_CTS_PACKAGE)
