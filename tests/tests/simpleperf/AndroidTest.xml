@@ -18,6 +18,9 @@
     <option name="config-descriptor:metadata" key="component" value="bionic" />
     <option name="config-descriptor:metadata" key="parameter" value="not_instant_app" />
     <option name="config-descriptor:metadata" key="parameter" value="multi_abi" />
+    <target_preparer class="com.android.tradefed.targetprep.SwitchUserTargetPreparer">
+        <option name="user-type" value="system" />
+    </target_preparer>
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="cleanup" value="true" />
         <option name="push" value="CtsSimpleperfTestCases->/data/local/tmp/CtsSimpleperfTestCases" />
