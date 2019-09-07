@@ -29,7 +29,6 @@ import android.net.Uri;
 import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
-import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
@@ -44,6 +43,9 @@ import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.Timeout;
 
+import com.google.common.io.BaseEncoding;
+
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -54,6 +56,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.util.HashSet;
@@ -362,13 +365,21 @@ public class ProviderTestUtils {
     }
 
     public static String getRawFileHash(File file) throws Exception {
-        final String res = ProviderTestUtils.executeShellCommand(
-                "sha1sum " + file.getAbsolutePath(),
-                InstrumentationRegistry.getInstrumentation().getUiAutomation());
-        if (Pattern.matches("[0-9a-fA-F]{40}.+", res)) {
+        MessageDigest digest = MessageDigest.getInstance("SHA-1");
+        try (InputStream in = new BufferedInputStream(Files.newInputStream(file.toPath()))) {
+            byte[] buf = new byte[4096];
+            int n;
+            while ((n = in.read(buf)) >= 0) {
+                digest.update(buf, 0, n);
+            }
+        }
+
+        byte[] hash = digest.digest();
+        String res = BaseEncoding.base16().encode(hash);
+        if (Pattern.matches("[0-9a-fA-F]{39}.+", res)) {
             return res.substring(0, 40);
         } else {
-            throw new FileNotFoundException("Failed to find hash for " + file + "; found " + res);
+            throw new RuntimeException("Invalid hash for " + file + "; found " + res);
         }
     }
 
