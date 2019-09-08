@@ -196,14 +196,14 @@ public final class AutoFillServiceTestCase {
         @ClassRule
         public static final MockImeSessionRule sMockImeSessionRule = new MockImeSessionRule();
 
+        protected static final RequiredFeatureRule sRequiredFeatureRule =
+                new RequiredFeatureRule(PackageManager.FEATURE_AUTOFILL);
+
         private final TestWatcher mTestWatcher = new AutofillTestWatcher();
 
         private final RetryRule mRetryRule = new RetryRule(getNumberRetries());
 
         private final AutofillLoggingTestRule mLoggingRule = new AutofillLoggingTestRule(TAG);
-
-        private final RequiredFeatureRule mRequiredFeatureRule =
-                new RequiredFeatureRule(PackageManager.FEATURE_AUTOFILL);
 
         protected final SafeCleanerRule mSafeCleanerRule = new SafeCleanerRule()
                 .setDumper(mLoggingRule)
@@ -214,8 +214,8 @@ public final class AutoFillServiceTestCase {
         @Rule
         public final RuleChain mLookAllTheseRules = RuleChain
                 //
-                // mRequiredFeatureRule should be first so the test can be skipped right away
-                .outerRule(mRequiredFeatureRule)
+                // requiredFeatureRule should be first so the test can be skipped right away
+                .outerRule(getRequiredFeaturesRule())
                 //
                 // mTestWatcher should always be one the first rules, as it defines the name of the
                 // test being ran and finishes dangling activities at the end
@@ -285,6 +285,17 @@ public final class AutoFillServiceTestCase {
                 }
             }
             return null;
+        }
+
+        /**
+         * Gets a rule that defines which features must be present for this test to run.
+         *
+         * <p>By default it returns a rule that requires {@link PackageManager#FEATURE_AUTOFILL},
+         * but subclass can override to be more specific.
+         */
+        @NonNull
+        protected TestRule getRequiredFeaturesRule() {
+            return sRequiredFeatureRule;
         }
 
         /**

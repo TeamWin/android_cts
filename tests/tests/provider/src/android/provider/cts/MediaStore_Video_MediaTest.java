@@ -250,8 +250,9 @@ public class MediaStore_Video_MediaTest {
         }
 
         // Now remove ownership, which means that location should be redacted
-        ProviderTestUtils.executeShellCommand(
-                "content update --uri " + publishUri + " --bind owner_package_name:n:",
+        ProviderTestUtils.executeShellCommand("content update"
+                + " --user " + InstrumentationRegistry.getTargetContext().getUserId()
+                + " --uri " + publishUri + " --bind owner_package_name:n:",
                 InstrumentationRegistry.getInstrumentation().getUiAutomation());
         try (ParcelFileDescriptor pfd = mContentResolver.openFile(publishUri, "r", null);
                 MediaMetadataRetriever mmr = new MediaMetadataRetriever()) {
@@ -316,8 +317,9 @@ public class MediaStore_Video_MediaTest {
     @Test
     public void testCanonicalize() throws Exception {
         // Remove all audio left over from other tests
-        ProviderTestUtils.executeShellCommand(
-                "content delete --uri " + mExternalVideo,
+        ProviderTestUtils.executeShellCommand("content delete"
+                + " --user " + InstrumentationRegistry.getTargetContext().getUserId()
+                + " --uri " + mExternalVideo,
                 InstrumentationRegistry.getInstrumentation().getUiAutomation());
 
         // Publish some content

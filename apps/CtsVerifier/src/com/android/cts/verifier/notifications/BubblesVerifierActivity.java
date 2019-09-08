@@ -20,6 +20,7 @@ import static android.view.View.INVISIBLE;
 import static android.view.View.VISIBLE;
 
 import android.annotation.NonNull;
+import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -33,6 +34,7 @@ import android.provider.Settings;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
@@ -101,16 +103,23 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
             runNextTestOrShowSummary();
         });
 
-        mTests.add(new EnableBubbleTest());
-        mTests.add(new SendBubbleTest());
-        mTests.add(new SuppressNotifTest());
-        mTests.add(new AddNotifTest());
-        mTests.add(new RemoveMetadataTest());
-        mTests.add(new AddMetadataTest());
-        mTests.add(new ExpandBubbleTest());
-        mTests.add(new DismissBubbleTest());
-        mTests.add(new DismissNotificationTest());
-        mTests.add(new AutoExpandBubbleTest());
+        ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        if (!am.isLowRamDevice()) {
+            mTests.add(new EnableBubbleTest());
+            mTests.add(new SendBubbleTest());
+            mTests.add(new SuppressNotifTest());
+            mTests.add(new AddNotifTest());
+            mTests.add(new RemoveMetadataTest());
+            mTests.add(new AddMetadataTest());
+            mTests.add(new ExpandBubbleTest());
+            mTests.add(new DismissBubbleTest());
+            mTests.add(new DismissNotificationTest());
+            mTests.add(new AutoExpandBubbleTest());
+        } else {
+            Toast.makeText(getApplicationContext(),
+                    getResources().getString(R.string.bubbles_notification_no_bubbles_low_mem),
+                    Toast.LENGTH_LONG).show();
+        }
 
         setPassFailButtonClickListeners();
 
@@ -452,7 +461,6 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
             mNotificationManager.notify(NOTIFICATION_ID, builder.build());
         }
     }
-
 
     /** Creates a minimally filled out {@link android.app.Notification.BubbleMetadata.Builder} */
     private Notification.BubbleMetadata.Builder getBasicBubbleBuilder() {

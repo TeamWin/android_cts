@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.deviceowner;
+package com.android.cts.deviceandprofileowner;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -28,11 +28,41 @@ public class LockTaskUtilityActivity extends Activity {
     public static final String START_ACTIVITY = "startActivity";
     public static final String FINISH = "finish";
 
-    public static final String CREATE_ACTION = "com.android.cts.deviceowner.LOCK_TASK_CREATE";
-    public static final String DESTROY_ACTION = "com.android.cts.deviceowner.LOCK_TASK_DESTROY";
-    public static final String PAUSE_ACTION = "com.android.cts.deviceowner.LOCK_TASK_PAUSE";
-    public static final String RESUME_ACTION = "com.android.cts.deviceowner.LOCK_TASK_RESUME";
-    public static final String INTENT_ACTION = "com.android.cts.deviceowner.LOCK_TASK_INTENT";
+    public static final String CREATE_ACTION = "com.android.cts.deviceandprofileowner.LOCK_TASK_CREATE";
+    public static final String DESTROY_ACTION = "com.android.cts.deviceandprofileowner.LOCK_TASK_DESTROY";
+    public static final String PAUSE_ACTION = "com.android.cts.deviceandprofileowner.LOCK_TASK_PAUSE";
+    public static final String RESUME_ACTION = "com.android.cts.deviceandprofileowner.LOCK_TASK_RESUME";
+    public static final String INTENT_ACTION = "com.android.cts.deviceandprofileowner.LOCK_TASK_INTENT";
+
+    private static volatile boolean isActivityResumed;
+    private static final Object ACTIVITY_RESUMED_LOCK = new Object();
+
+    private static void setIsActivityResumed(boolean newValue) {
+        synchronized (ACTIVITY_RESUMED_LOCK) {
+            isActivityResumed = newValue;
+            ACTIVITY_RESUMED_LOCK.notify();
+        }
+    }
+
+    /** Returns true if it's successful. */
+    public static boolean waitUntilActivityResumed(long timeoutMs) throws InterruptedException {
+        synchronized (ACTIVITY_RESUMED_LOCK) {
+            if (!isActivityResumed) {
+                ACTIVITY_RESUMED_LOCK.wait(timeoutMs);
+            }
+            return isActivityResumed;
+        }
+    }
+
+    /** Returns true if it's successful. */
+    public static boolean waitUntilActivityPaused(long timeoutMs) throws InterruptedException {
+        synchronized (ACTIVITY_RESUMED_LOCK) {
+            if (isActivityResumed) {
+                ACTIVITY_RESUMED_LOCK.wait(timeoutMs);
+            }
+            return !isActivityResumed;
+        }
+    }
 
     @Override
     protected void onNewIntent(Intent intent) {
@@ -55,12 +85,14 @@ public class LockTaskUtilityActivity extends Activity {
 
     @Override
     protected void onResume() {
+        setIsActivityResumed(true);
         sendLocalBroadcast(new Intent(RESUME_ACTION));
         super.onResume();
     }
 
     @Override
     protected void onPause() {
+        setIsActivityResumed(false);
         sendLocalBroadcast(new Intent(PAUSE_ACTION));
         super.onPause();
     }

@@ -231,6 +231,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
      * - The window which lost top-focus can be notified about pointer-capture lost.
      */
     @Test
+    @FlakyTest(bugId = 135574991)
     public void testPointerCapture() throws InterruptedException {
         final PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class,
                 DEFAULT_DISPLAY);

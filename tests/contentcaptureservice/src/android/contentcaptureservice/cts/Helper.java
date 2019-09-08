@@ -25,6 +25,7 @@ import android.content.res.Resources;
 import android.os.SystemClock;
 import android.util.ArraySet;
 import android.util.Log;
+import android.view.View;
 import android.view.contentcapture.ContentCaptureSession;
 import android.widget.TextView;
 
@@ -118,6 +119,7 @@ public final class Helper {
     public static TextView newImportantView(@NonNull Context context, @NonNull String text) {
         final TextView child = new TextView(context);
         child.setText(text);
+        child.setImportantForContentCapture(View.IMPORTANT_FOR_CONTENT_CAPTURE_YES);
         Log.v(TAG, "newImportantView(text=" + text + ", id=" + child.getAutofillId() + ")");
         return child;
     }
