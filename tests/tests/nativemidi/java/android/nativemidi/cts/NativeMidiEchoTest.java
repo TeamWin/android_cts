@@ -76,6 +76,16 @@ public class NativeMidiEchoTest {
         return pm.hasSystemFeature(PackageManager.FEATURE_MIDI);
     }
 
+    public static boolean hasLibAMidi() {
+        try {
+            System.loadLibrary("amidi");
+        } catch (UnsatisfiedLinkError ex) {
+            Log.e(TAG, "libamidi.so not found.");
+            return false;
+        }
+        return true;
+    }
+
     private byte[] generateRandomMessage(int len) {
         byte[] buffer = new byte[len];
         for(int index = 0; index < len; index++) {
@@ -131,7 +141,6 @@ public class NativeMidiEchoTest {
     }
 
      protected void setUpEchoServer() throws Exception {
-        Log.i(TAG, "++ setUpEchoServer()");
         MidiDeviceInfo echoInfo = MidiEchoTestService.findEchoDevice(mContext);
 
         // Open device.
@@ -161,7 +170,6 @@ public class NativeMidiEchoTest {
     }
 
     protected void tearDownEchoServer() throws IOException {
-        Log.i(TAG, "++ tearDownEchoServer()");
         // Query echo service directly to see if it is getting status updates.
         MidiEchoTestService echoService = MidiEchoTestService.getInstance();
 
@@ -209,10 +217,10 @@ public class NativeMidiEchoTest {
 //
     @Before
     public void setUp() throws Exception {
-        Log.i(TAG, "++ setUp() mContext:" + mContext);
         if (!hasMidiSupport()) {
             return; // Not supported so don't test it.
         }
+
         mMidiManager = (MidiManager)mContext.getSystemService(Context.MIDI_SERVICE);
         Assert.assertNotNull("Could not get the MidiManger.", mMidiManager);
 
@@ -227,14 +235,11 @@ public class NativeMidiEchoTest {
         }
         tearDownEchoServer();
 
-        Log.i(TAG, "++ tearDown()");
         mMidiManager = null;
     }
 
     @Test
     public void test_A_MidiManager() throws Exception {
-        Log.i(TAG, "++++ test_A_MidiManager() this:" + System.identityHashCode(this));
-
         if (!hasMidiSupport()) {
             return; // Nothing to test
         }
@@ -245,14 +250,16 @@ public class NativeMidiEchoTest {
         MidiDeviceInfo[] infos = mMidiManager.getDevices();
         Assert.assertNotNull("device list was null", infos);
         Assert.assertTrue("device list was empty", infos.length >= 1);
+    }
 
-        Log.i(TAG, "++++ test_A_MidiManager() - DONE");
+
+    @Test
+    public void test_AA_LibAMidiExists() throws Exception {
+        Assert.assertTrue("libamidi.so not found.", hasLibAMidi());
     }
 
     @Test
     public void test_B_SendData() throws Exception {
-        Log.i(TAG, "++++ test_B_SendData() this:" + System.identityHashCode(this));
-
         if (!hasMidiSupport()) {
             return; // Nothing to test
         }
@@ -269,13 +276,10 @@ public class NativeMidiEchoTest {
         Assert.assertTrue("Didn't get 1 send", getNumBytesSent(mTestContext) == buffer.length);
         Assert.assertEquals("Didn't get right number of bytes sent",
                 buffer.length, getNumBytesSent(mTestContext));
-
-        Log.i(TAG, "++++ test_B_SendData() - DONE");
     }
 
     @Test
     public void test_C_EchoSmallMessage() throws Exception {
-        Log.i(TAG, "++++ test_C_EchoSmallMessage() this:" + System.identityHashCode(this));
         if (!hasMidiSupport()) {
             return; // nothing to test
         }
@@ -298,13 +302,10 @@ public class NativeMidiEchoTest {
 
         NativeMidiMessage message = getReceivedMessageAt(mTestContext, 0);
         compareMessages(buffer, timestamp, message);
-
-        Log.i(TAG, "++++ test_C_EchoSmallMessage() - DONE");
     }
 
     @Test
     public void test_D_EchoNMessages() throws Exception {
-        Log.i(TAG, "++++ test_D_EchoNMessages() this:" + System.identityHashCode(this));
         if (!hasMidiSupport()) {
             return; // nothing to test
         }
@@ -332,13 +333,10 @@ public class NativeMidiEchoTest {
             NativeMidiMessage message = getReceivedMessageAt(mTestContext, msgIndex);
             compareMessages(buffers[msgIndex], timestamps[msgIndex], message);
         }
-
-        Log.i(TAG, "++++ test_D_EchoNMessages() - DONE");
     }
 
     @Test
     public void test_E_FlushMessages() throws Exception {
-        Log.i(TAG, "++++ test_E_FlushMessages() this:" + System.identityHashCode(this));
         if (!hasMidiSupport()) {
             return; // nothing to test
         }
@@ -369,13 +367,10 @@ public class NativeMidiEchoTest {
             NativeMidiMessage message = getReceivedMessageAt(mTestContext, msgIndex);
             compareMessages(buffers[msgIndex], timestamps[msgIndex], message);
         }
-
-        Log.i(TAG, "++++ test_E_FlushMessages() - DONE");
     }
 
     @Test
     public void test_F_HugeMessage() throws Exception {
-        Log.i(TAG, "++++ test_F_HugeMessage() this:" + System.identityHashCode(this));
         if (!hasMidiSupport()) {
             return; // nothing to test
         }
@@ -390,8 +385,6 @@ public class NativeMidiEchoTest {
         buffer = generateRandomMessage(kindaHugeMessageLen);
         result = writeMidi(mTestContext, buffer, 0, buffer.length);
         Assert.assertEquals("Kinda big write failed.", kindaHugeMessageLen, result);
-
-        Log.i(TAG, "++++ test_F_HugeMessage() - DONE");
     }
 
     /**
@@ -400,7 +393,6 @@ public class NativeMidiEchoTest {
      */
     @Test
     public void test_G_NativeEchoTime() throws Exception {
-        Log.i(TAG, "++++ test_G_NativeEchoTime() this:" + System.identityHashCode(this));
         if (!hasMidiSupport()) {
             return; // nothing to test
         }
@@ -433,13 +425,10 @@ public class NativeMidiEchoTest {
                     "timestamp:" + message.timestamp + " received:" + message.timeReceived,
                     (elapsedNanos < maxLatencyNanos));
         }
-
-        Log.i(TAG, "++++ test_G_NativeEchoTime() - DONE");
     }
 
     @Test
     public void test_H_EchoNMessages_PureNative() throws Exception {
-        Log.i(TAG, "++++ test_H_EchoNMessages_PureNative() this:" + System.identityHashCode(this));
         if (!hasMidiSupport()) {
             return; // nothing to test
         }
@@ -460,8 +449,6 @@ public class NativeMidiEchoTest {
 
         int result = matchNativeMessages(mTestContext);
         Assert.assertEquals("Native Compare Test Failed", result, 0);
-
-        Log.i(TAG, "++++ test_H_EchoNMessages_PureNative() - DONE");
     }
 
     /**
@@ -470,8 +457,6 @@ public class NativeMidiEchoTest {
      */
     @Test
     public void test_I_NativeEchoTime_PureNative() throws Exception {
-        Log.i(TAG, "++++ test_I_NativeEchoTime_PureNative() this:"
-                + System.identityHashCode(this));
         if (!hasMidiSupport()) {
             return; // nothing to test
         }
@@ -494,8 +479,6 @@ public class NativeMidiEchoTest {
 
         int result = checkNativeLatency(mTestContext, maxLatencyNanos);
         Assert.assertEquals("failed pure native latency test.", 0, result);
-
-        Log.i(TAG, "++++ test_I_NativeEchoTime_PureNative() - DONE");
     }
 
     // Native Routines
