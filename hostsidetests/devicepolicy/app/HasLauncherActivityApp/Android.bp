@@ -13,7 +13,7 @@
 // limitations under the License.
 
 android_test_helper_app {
-    name: "CtsNoLaunchableActivityApp",
+    name: "CtsHasLauncherActivityApp",
     // Don't include this package in any target
     // When built, explicitly put it in the data partition.
     dex_preopt: {
@@ -28,14 +28,13 @@ android_test_helper_app {
         "cts",
         "vts",
         "general-tests",
-        "cts_instant",
     ],
     sdk_version: "current",
 }
 
-// Build for no component app
+// Build for no launcher activity app
 android_test_helper_app {
-    name: "CtsNoComponentApp",
+    name: "CtsNoLauncherActivityApp",
     dex_preopt: {
         enabled: false,
     },
@@ -48,9 +47,8 @@ android_test_helper_app {
         "cts",
         "vts",
         "general-tests",
-        "cts_instant",
     ],
-    manifest: "no_component_AndroidManifest.xml",
+    manifest: "no_launcher_activity_AndroidManifest.xml",
     sdk_version: "current",
 }
 
@@ -69,7 +67,6 @@ android_test_helper_app {
         "cts",
         "vts",
         "general-tests",
-        "cts_instant",
     ],
     manifest: "no_permission_AndroidManifest.xml",
     sdk_version: "current",
