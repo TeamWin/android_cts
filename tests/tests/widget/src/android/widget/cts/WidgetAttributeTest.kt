@@ -114,14 +114,6 @@ class WidgetAttributeTest {
         assertEquals(R.style.ExplicitStyle1, stackTextView1textSize[1])
         assertEquals(R.style.ParentOfExplicitStyle1, stackTextView1textSize[2])
         assertEquals(R.style.TextViewWithoutColorAndAppearance, stackTextView1textSize[3])
-        val stackTextView1textColorHighlight =
-                textview1.getAttributeResolutionStack(android.R.attr.textColorHighlight)
-        assertEquals(5, stackTextView1textColorHighlight.size.toLong())
-        assertEquals(R.layout.widget_attribute_layout, stackTextView1textColorHighlight[0])
-        assertEquals(R.style.ExplicitStyle1, stackTextView1textColorHighlight[1])
-        assertEquals(R.style.ParentOfExplicitStyle1, stackTextView1textColorHighlight[2])
-        assertEquals(android.R.style.Widget_Material_TextView, stackTextView1textColorHighlight[3])
-        assertEquals(android.R.style.Widget_TextView, stackTextView1textColorHighlight[4])
 
         val viewAnimator = rootView.findViewById<ViewAnimator>(R.id.viewAnimator)
         val viewAnimatorOutAnimation =
