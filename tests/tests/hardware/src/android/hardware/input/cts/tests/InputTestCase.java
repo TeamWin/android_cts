@@ -25,6 +25,7 @@ import android.hardware.input.cts.InputCtsActivity;
 import android.view.InputEvent;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -46,11 +47,13 @@ import java.util.concurrent.TimeUnit;
 
 public abstract class InputTestCase {
     private static final float TOLERANCE = 0.005f;
+    private static final long TIMEOUT_DELTA = 10000;
 
     private final BlockingQueue<InputEvent> mEvents;
 
     private InputListener mInputListener;
     private Instrumentation mInstrumentation;
+    private View mDecorView;
     private HidDevice mHidDevice;
     private HidJsonParser mParser;
     // Stores the name of the currently running test
@@ -71,6 +74,7 @@ public abstract class InputTestCase {
     public void setUp() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivityRule.getActivity().setInputCallback(mInputListener);
+        mDecorView = mActivityRule.getActivity().getWindow().getDecorView();
         mParser = new HidJsonParser(mInstrumentation.getTargetContext());
         int hidDeviceId = mParser.readDeviceId(mRegisterResourceId);
         String registerCommand = mParser.readRegisterCommand(mRegisterResourceId);
@@ -89,7 +93,7 @@ public abstract class InputTestCase {
      *
      * If other KeyEvents are received by the application prior to the expected KeyEvent, or no
      * KeyEvents are received within a reasonable amount of time, then this will throw an
-     * AssertionFailedError.
+     * {@link AssertionError}.
      *
      * Only action and keyCode are being compared.
      */
@@ -98,8 +102,9 @@ public abstract class InputTestCase {
         if (receivedKeyEvent == null) {
             failWithMessage("Did not receive " + expectedKeyEvent);
         }
-        assertEquals(mCurrentTestCase, expectedKeyEvent.getAction(), receivedKeyEvent.getAction());
-        assertEquals(mCurrentTestCase,
+        assertEquals(mCurrentTestCase + " (action)",
+                expectedKeyEvent.getAction(), receivedKeyEvent.getAction());
+        assertEquals(mCurrentTestCase + " (keycode)",
                 expectedKeyEvent.getKeyCode(), receivedKeyEvent.getKeyCode());
     }
 
@@ -120,7 +125,12 @@ public abstract class InputTestCase {
         if (event.getHistorySize() > 0) {
             failWithMessage("expected each MotionEvent to only have a single entry");
         }
-        assertEquals(mCurrentTestCase, expectedEvent.getAction(), event.getAction());
+        assertEquals(mCurrentTestCase + " (action)",
+                expectedEvent.getAction(), event.getAction());
+        assertEquals(mCurrentTestCase + " (source)",
+                expectedEvent.getSource(), event.getSource());
+        assertEquals(mCurrentTestCase + " (button state)",
+                expectedEvent.getButtonState(), event.getButtonState());
         for (int axis = MotionEvent.AXIS_X; axis <= MotionEvent.AXIS_GENERIC_16; axis++) {
             assertEquals(mCurrentTestCase + " (" + MotionEvent.axisToString(axis) + ")",
                     expectedEvent.getAxisValue(axis), event.getAxisValue(axis), TOLERANCE);
@@ -156,13 +166,19 @@ public abstract class InputTestCase {
             // Make sure we received the expected input events
             for (int i = 0; i < testData.events.size(); i++) {
                 final InputEvent event = testData.events.get(i);
-                if (event instanceof MotionEvent) {
-                    assertReceivedMotionEvent((MotionEvent) event);
-                } else if (event instanceof KeyEvent) {
-                    assertReceivedKeyEvent((KeyEvent) event);
-                } else {
-                    fail("Entry " + i + " is neither a KeyEvent nor a MotionEvent: " + event);
+                try {
+                    if (event instanceof MotionEvent) {
+                        assertReceivedMotionEvent((MotionEvent) event);
+                        continue;
+                    }
+                    if (event instanceof KeyEvent) {
+                        assertReceivedKeyEvent((KeyEvent) event);
+                        continue;
+                    }
+                } catch (AssertionError error) {
+                    throw new AssertionError("Assertion on entry " + i + " failed.", error);
                 }
+                fail("Entry " + i + " is neither a KeyEvent nor a MotionEvent: " + event);
             }
         }
         assertNoMoreEvents();
@@ -275,6 +291,25 @@ public abstract class InputTestCase {
             } catch (InterruptedException ex) {
                 failWithMessage("interrupted while adding a MotionEvent to the queue");
             }
+        }
+    }
+
+    protected class PointerCaptureSession implements AutoCloseable {
+        protected PointerCaptureSession() {
+            requestPointerCaptureSync();
+        }
+
+        @Override
+        public void close() {
+            releasePointerCaptureSync();
+        }
+
+        private void requestPointerCaptureSync() {
+            mInstrumentation.runOnMainSync(mDecorView::requestPointerCapture);
+        }
+
+        private void releasePointerCaptureSync() {
+            mInstrumentation.runOnMainSync(mDecorView::releasePointerCapture);
         }
     }
 }
