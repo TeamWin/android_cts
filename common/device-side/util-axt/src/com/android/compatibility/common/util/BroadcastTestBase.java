@@ -16,6 +16,12 @@
 
 package com.android.compatibility.common.util;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
+import static com.google.common.truth.Truth.assertThat;
+
+import static org.junit.Assert.fail;
+
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -23,14 +29,22 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
+
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-public class BroadcastTestBase extends ActivityInstrumentationTestCase2<
-                                       BroadcastTestStartActivity> {
+@RunWith(AndroidJUnit4.class)
+public abstract class BroadcastTestBase {
+
     static final String TAG = "BroadcastTestBase";
     protected static final int TIMEOUT_MS = 20 * 1000;
 
@@ -42,18 +56,25 @@ public class BroadcastTestBase extends ActivityInstrumentationTestCase2<
     private BroadcastUtils.TestcaseType mTestCaseType;
     protected boolean mHasFeature;
 
-    public BroadcastTestBase() {
-        super(BroadcastTestStartActivity.class);
-    }
+    @Rule
+    public final ActivityTestRule<BroadcastTestStartActivity> mActivityTestRule =
+            new ActivityTestRule<>(BroadcastTestStartActivity.class, false, false);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         mHasFeature = false;
+
+        customSetup();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    /**
+     * Test-specific setup - doesn't need to call {@code super} neither use <code>@Before</code>.
+     */
+    protected void customSetup() throws Exception {
+    }
+
+    @After
+    public final void tearDown() throws Exception {
         Log.v(TAG, getClass().getSimpleName() + ".tearDown(): hasFeature=" + mHasFeature
                 + " receiver=" + mActivityDoneReceiver);
         if (mHasFeature && mActivityDoneReceiver != null) {
@@ -66,13 +87,12 @@ public class BroadcastTestBase extends ActivityInstrumentationTestCase2<
             }
             mActivityDoneReceiver = null;
         }
-        super.tearDown();
     }
 
     protected boolean isIntentSupported(String intentStr) {
         Intent intent = new Intent(intentStr);
         final PackageManager manager = mContext.getPackageManager();
-        assertNotNull(manager);
+        assertThat(manager).isNotNull();
         if (manager.resolveActivity(intent, 0) == null) {
             Log.i(TAG, "No Activity found for the intent: " + intentStr);
             return false;
@@ -83,13 +103,13 @@ public class BroadcastTestBase extends ActivityInstrumentationTestCase2<
     protected void startTestActivity(String intentSuffix) {
         Intent intent = new Intent();
         intent.setAction("android.intent.action.TEST_START_ACTIVITY_" + intentSuffix);
-        intent.setComponent(new ComponentName(getInstrumentation().getContext(),
+        intent.setComponent(new ComponentName(getInstrumentation().getTargetContext(),
                 BroadcastTestStartActivity.class));
-        setActivityIntent(intent);
-        mActivity = getActivity();
+        mActivity = mActivityTestRule.launchActivity(intent);
     }
 
-    protected void registerBroadcastReceiver(BroadcastUtils.TestcaseType testCaseType) throws Exception {
+    protected void registerBroadcastReceiver(BroadcastUtils.TestcaseType testCaseType)
+            throws Exception {
         mTestCaseType = testCaseType;
         mLatch = new CountDownLatch(1);
         mActivityDoneReceiver = new ActivityDoneReceiver();
@@ -98,7 +118,7 @@ public class BroadcastTestBase extends ActivityInstrumentationTestCase2<
     }
 
     protected boolean startTestAndWaitForBroadcast(BroadcastUtils.TestcaseType testCaseType,
-                                                   String pkg, String cls) throws Exception {
+            String pkg, String cls) throws Exception {
         Log.i(TAG, "Begin Testing: " + testCaseType);
         registerBroadcastReceiver(testCaseType);
         mActivity.startTest(testCaseType.toString(), pkg, cls);
@@ -114,7 +134,7 @@ public class BroadcastTestBase extends ActivityInstrumentationTestCase2<
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(
                     BroadcastUtils.BROADCAST_INTENT +
-                        BroadcastTestBase.this.mTestCaseType.toString())) {
+                            BroadcastTestBase.this.mTestCaseType.toString())) {
                 Bundle extras = intent.getExtras();
                 Log.i(TAG, "received_broadcast for " + BroadcastUtils.toBundleString(extras));
                 BroadcastTestBase.this.mResultExtras = extras;
