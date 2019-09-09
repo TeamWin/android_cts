@@ -2825,6 +2825,13 @@ public class TimeTest {
         Fields.verifyTimeEquals(expected, t);
     }
 
+    @Test
+    public void test_bug118835133() {
+        Time t = new Time("Asia/Singapore");
+        Fields.set(t, 2018, 9, 30, 12, 48, 32, 0 /* isDst */, 0, 0, 0);
+        // With http://b/118835133 toMillis() returns -1.
+        assertEquals(1540874912000L, t.toMillis(true /* ignoreDst */));
+    }
     private static void verifyNormalizeResult(boolean normalizeArgument, Time toNormalize,
             Time expectedTime, long expectedTimeMillis) {
         long actualTimeMillis = toNormalize.normalize(normalizeArgument /* ignore isDst */);
