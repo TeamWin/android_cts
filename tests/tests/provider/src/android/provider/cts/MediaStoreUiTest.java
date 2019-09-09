@@ -267,7 +267,8 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
 
     private boolean supportsHardware() {
         final PackageManager pm = getInstrumentation().getContext().getPackageManager();
-        return !pm.hasSystemFeature("android.hardware.type.television")
+        return !pm.hasSystemFeature("android.hardware.type.automotive")
+                && !pm.hasSystemFeature("android.hardware.type.television")
                 && !pm.hasSystemFeature("android.hardware.type.watch");
     }
 
