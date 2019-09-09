@@ -79,7 +79,10 @@ public class OverlayHostTest extends BaseAppSecurityTest {
 
     private String getStateForOverlay(String overlayPackage) throws Exception {
         String result = getDevice().executeShellCommand("cmd overlay dump");
-        int startIndex = result.indexOf(overlayPackage + ":");
+
+        String overlayPackageForCurrentUser = overlayPackage + ":" + getDevice().getCurrentUser();
+
+        int startIndex = result.indexOf(overlayPackageForCurrentUser);
         if (startIndex < 0) {
             return null;
         }
@@ -122,7 +125,7 @@ public class OverlayHostTest extends BaseAppSecurityTest {
             new InstallMultiple().addApk(overlayApk).run();
 
             waitForOverlayState(overlayPackage, STATE_NO_IDMAP);
-            getDevice().executeShellCommand("cmd overlay enable " + overlayPackage);
+            getDevice().executeShellCommand("cmd overlay enable  --user current " + overlayPackage);
             waitForOverlayState(overlayPackage, STATE_NO_IDMAP);
         } finally {
             getDevice().uninstallPackage(TARGET_PACKAGE);
@@ -143,7 +146,7 @@ public class OverlayHostTest extends BaseAppSecurityTest {
             new InstallMultiple().addApk(targetApk).run();
 
             waitForOverlayState(overlayPackage, STATE_DISABLED);
-            getDevice().executeShellCommand("cmd overlay enable " + overlayPackage);
+            getDevice().executeShellCommand("cmd overlay enable --user current " + overlayPackage);
             waitForOverlayState(overlayPackage, STATE_ENABLED);
 
             runDeviceTests(TEST_APP_PACKAGE, TEST_APP_CLASS, testMethod);
@@ -170,7 +173,7 @@ public class OverlayHostTest extends BaseAppSecurityTest {
             assertFalse(getDevice().getInstalledPackageNames().contains(OVERLAY_ANDROID_PACKAGE));
 
             // The package of the installed overlay should not appear in the overlay manager list.
-            assertFalse(getDevice().executeShellCommand("cmd overlay list")
+            assertFalse(getDevice().executeShellCommand("cmd overlay list --user current ")
                     .contains(" " + OVERLAY_ANDROID_PACKAGE + "\n"));
         } finally {
             getDevice().uninstallPackage(OVERLAY_ANDROID_PACKAGE);
@@ -222,7 +225,7 @@ public class OverlayHostTest extends BaseAppSecurityTest {
             assertFalse(getDevice().getInstalledPackageNames().contains(OVERLAY_ALL_PACKAGE));
 
             // The package of the installed overlay should not appear in the overlay manager list.
-            assertFalse(getDevice().executeShellCommand("cmd overlay list")
+            assertFalse(getDevice().executeShellCommand("cmd overlay list --user current")
                     .contains(" " + OVERLAY_ALL_PACKAGE + "\n"));
         } finally {
             getDevice().uninstallPackage(OVERLAY_ALL_PACKAGE);
