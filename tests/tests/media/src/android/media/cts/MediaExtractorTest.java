@@ -226,6 +226,50 @@ public class MediaExtractorTest extends AndroidTestCase {
 
     }
 
+    // DolbyVisionMediaExtractor for profile-level (Dvav1 10.0/Uhd30)
+    public void testDolbyVisionMediaExtractorProfileDvav1() throws Exception {
+        TestMediaDataSource dataSource = setDataSource(R.raw.video_dovi_3840x2160_30fps_dav1_10);
+
+        assertEquals(1, mExtractor.getTrackCount());
+
+        // Dvav1 10 exposes a single backward compatible track.
+        MediaFormat trackFormat = mExtractor.getTrackFormat(0);
+        final String mimeType = trackFormat.getString(MediaFormat.KEY_MIME);
+
+        assertEquals("video/dolby-vision", mimeType);
+
+        final int profile = trackFormat.getInteger(MediaFormat.KEY_PROFILE);;
+        final int level = trackFormat.getInteger(MediaFormat.KEY_LEVEL);;
+
+        assertEquals(MediaCodecInfo.CodecProfileLevel.DolbyVisionProfileDvav110, profile);
+        assertEquals(MediaCodecInfo.CodecProfileLevel.DolbyVisionLevelUhd30, level);
+    }
+
+    // DolbyVisionMediaExtractor for profile-level (Dvav1 10.1/Uhd30)
+    public void testDolbyVisionMediaExtractorProfileDvav1_2() throws Exception {
+        TestMediaDataSource dataSource = setDataSource(R.raw.video_dovi_3840x2160_30fps_dav1_10_2);
+
+        assertEquals(2, mExtractor.getTrackCount());
+
+        // First track should be a track with dolby-vision mime
+        MediaFormat trackFormat = mExtractor.getTrackFormat(0);
+        String mimeType = trackFormat.getString(MediaFormat.KEY_MIME);
+
+        assertEquals("video/dolby-vision", mimeType);
+
+        final int profile = trackFormat.getInteger(MediaFormat.KEY_PROFILE);;
+        final int level = trackFormat.getInteger(MediaFormat.KEY_LEVEL);;
+
+        assertEquals(MediaCodecInfo.CodecProfileLevel.DolbyVisionProfileDvav110, profile);
+        assertEquals(MediaCodecInfo.CodecProfileLevel.DolbyVisionLevelUhd30, level);
+
+        // The second track should be with the mime video/av01 for backward compatibility
+        trackFormat = mExtractor.getTrackFormat(1);
+        mimeType = trackFormat.getString(MediaFormat.KEY_MIME);
+
+        assertEquals("video/av01", mimeType);
+    }
+
     private void checkExtractorSamplesAndMetrics() {
         // 1MB is enough for any sample.
         final ByteBuffer buf = ByteBuffer.allocate(1024*1024);
