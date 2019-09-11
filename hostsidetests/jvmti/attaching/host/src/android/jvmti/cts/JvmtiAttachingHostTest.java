@@ -263,7 +263,6 @@ public class JvmtiAttachingHostTest extends DeviceTestCase implements IBuildRece
                 DataInputStream dis = new DataInputStream(s.getInputStream());
                 String res = dis.readUTF();
                 s.shutdownInput();
-                s.shutdownOutput();
                 if (!res.trim().equals("SUCCESS")) {
                     throw new RuntimeException("Failed test due to remote error: " + res);
                 }
