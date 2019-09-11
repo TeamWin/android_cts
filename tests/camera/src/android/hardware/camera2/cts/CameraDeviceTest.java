@@ -2714,7 +2714,8 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                 waitForDeviceState(STATE_OPENED, CAMERA_OPEN_TIMEOUT_MS);
 
                 for (int mode : testModes) {
-                    int retMode = mCamera.setCameraAudioRestriction(mode);
+                    mCamera.setCameraAudioRestriction(mode);
+                    int retMode = mCamera.getCameraAudioRestriction();
                     assertTrue("Audio restriction mode mismatch: input: " + mode +
                             ", output:" + retMode, mode == retMode);
                 }
@@ -2743,7 +2744,8 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
             cam0Cb.waitForState(STATE_OPENED, CAMERA_OPEN_TIMEOUT_MS);
 
             int mode0 = CameraDevice.AUDIO_RESTRICTION_VIBRATION_SOUND;
-            int retMode = cam0.setCameraAudioRestriction(mode0);
+            cam0.setCameraAudioRestriction(mode0);
+            int retMode = cam0.getCameraAudioRestriction();
             assertTrue("Audio restriction mode mismatch: input: " + mode0 + ", output:" + retMode,
                     retMode == mode0);
 
@@ -2771,7 +2773,8 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                 }
                 // Test the behavior for single remaining client
                 int mode1 = CameraDevice.AUDIO_RESTRICTION_VIBRATION;
-                retMode = cam1.setCameraAudioRestriction(mode1);
+                cam1.setCameraAudioRestriction(mode1);
+                retMode = cam1.getCameraAudioRestriction();
                 assertTrue("Audio restriction mode mismatch: input: " + mode1 +
                         ", output:" + retMode, retMode == mode1);
                 return;
@@ -2780,40 +2783,46 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
             // The output mode should be union of all CameraDevices
             int mode1 = CameraDevice.AUDIO_RESTRICTION_VIBRATION;
             int expectMode = mode0 | mode1;
-            retMode = cam1.setCameraAudioRestriction(mode1);
+            cam1.setCameraAudioRestriction(mode1);
+            retMode = cam1.getCameraAudioRestriction();
             assertTrue("Audio restriction mode mismatch: expect: " + expectMode +
                     ", output:" + retMode, retMode == expectMode);
 
             // test turning off mute settings also
             mode0 = CameraDevice.AUDIO_RESTRICTION_NONE;
             expectMode = mode0 | mode1;
-            retMode = cam0.setCameraAudioRestriction(mode0);
+            cam0.setCameraAudioRestriction(mode0);
+            retMode = cam0.getCameraAudioRestriction();
             assertTrue("Audio restriction mode mismatch: expect: " + expectMode +
                     ", output:" + retMode, retMode == expectMode);
 
             // mode should be NONE when both device set to NONE
             mode1 = CameraDevice.AUDIO_RESTRICTION_NONE;
             expectMode = mode0 | mode1;
-            retMode = cam1.setCameraAudioRestriction(mode1);
+            cam1.setCameraAudioRestriction(mode1);
+            retMode = cam1.getCameraAudioRestriction();
             assertTrue("Audio restriction mode mismatch: expect: " + expectMode +
                     ", output:" + retMode, retMode == expectMode);
 
             // test removal of VIBRATE won't affect existing VIBRATE_SOUND state
             mode0 = CameraDevice.AUDIO_RESTRICTION_VIBRATION_SOUND;
             expectMode = mode0 | mode1;
-            retMode = cam0.setCameraAudioRestriction(mode0);
+            cam0.setCameraAudioRestriction(mode0);
+            retMode = cam0.getCameraAudioRestriction();
             assertTrue("Audio restriction mode mismatch: expect: " + expectMode +
                     ", output:" + retMode, retMode == expectMode);
 
             mode1 = CameraDevice.AUDIO_RESTRICTION_VIBRATION;
             expectMode = mode0 | mode1;
-            retMode = cam1.setCameraAudioRestriction(mode1);
+            cam1.setCameraAudioRestriction(mode1);
+            retMode = cam1.getCameraAudioRestriction();
             assertTrue("Audio restriction mode mismatch: expect: " + expectMode +
                     ", output:" + retMode, retMode == expectMode);
 
             mode1 = CameraDevice.AUDIO_RESTRICTION_NONE;
             expectMode = mode0 | mode1;
-            retMode = cam1.setCameraAudioRestriction(mode1);
+            cam1.setCameraAudioRestriction(mode1);
+            retMode = cam1.getCameraAudioRestriction();
             assertTrue("Audio restriction mode mismatch: expect: " + expectMode +
                     ", output:" + retMode, retMode == expectMode);
 
@@ -2831,7 +2840,8 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
             cam0 = null;
             cam0Cb = null;
             expectMode = mode1;
-            retMode = cam1.setCameraAudioRestriction(mode1);
+            cam1.setCameraAudioRestriction(mode1);
+            retMode = cam1.getCameraAudioRestriction();
             assertTrue("Audio restriction mode mismatch: expect: " + expectMode +
                     ", output:" + retMode, retMode == expectMode);
         } finally {
