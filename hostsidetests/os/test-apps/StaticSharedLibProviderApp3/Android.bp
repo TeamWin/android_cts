@@ -22,7 +22,6 @@ android_test_helper_app {
         "cts",
         "vts",
         "general-tests",
-        "cts_instant",
     ],
     aaptflags: ["--shared-lib"],
     export_package_resources: true,
