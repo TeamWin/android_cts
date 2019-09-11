@@ -28,7 +28,6 @@ android_test_helper_app {
         "cts",
         "vts",
         "general-tests",
-        "cts_instant",
     ],
     sdk_version: "current",
 }
@@ -48,7 +47,6 @@ android_test_helper_app {
         "cts",
         "vts",
         "general-tests",
-        "cts_instant",
     ],
     manifest: "no_component_AndroidManifest.xml",
     sdk_version: "current",
@@ -69,7 +67,6 @@ android_test_helper_app {
         "cts",
         "vts",
         "general-tests",
-        "cts_instant",
     ],
     manifest: "no_permission_AndroidManifest.xml",
     sdk_version: "current",
