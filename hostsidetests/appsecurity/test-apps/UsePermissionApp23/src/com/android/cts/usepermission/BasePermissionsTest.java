@@ -389,6 +389,14 @@ public abstract class BasePermissionsTest {
 
         waitForIdle();
 
+        // Dismiss the DeprecatedTargetSdkVersionDialog if shown.
+        String okLabel = mContext.getResources().getString(android.R.string.ok);
+        UiObject2 button = getUiDevice().findObject(By.text(okLabel));
+        if (button != null) {
+            button.click();
+            waitForIdle();
+        }
+
         // Open the permissions UI
         String label = mContext.getResources().getString(R.string.Permissions);
         AccessibilityNodeInfo permLabelView = getNodeTimed(() -> findByText(label), true);
@@ -423,7 +431,8 @@ public abstract class BasePermissionsTest {
 
             final boolean wasGranted = !getUiDevice().wait(Until.findObject(By.text(denyLabel)),
                     GLOBAL_TIMEOUT_MILLIS).isChecked();
-            if (granted != wasGranted) {
+            // Automotive does not use checked state to represent granted state.
+            if (granted != wasGranted || isAutomotive()) {
                 // Toggle the permission
 
                 if (granted) {
@@ -434,7 +443,7 @@ public abstract class BasePermissionsTest {
                 }
                 waitForIdle();
 
-                if (wasGranted && legacyApp) {
+                if (!granted && legacyApp) {
                     scrollToBottomIfWatch();
                     Context context = getInstrumentation().getContext();
                     String packageName = context.getPackageManager()
@@ -643,5 +652,10 @@ public abstract class BasePermissionsTest {
     private static boolean isTv() {
         return getInstrumentation().getContext().getPackageManager()
                 .hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+    }
+
+    private static boolean isAutomotive() {
+        return getInstrumentation().getContext().getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
  }
