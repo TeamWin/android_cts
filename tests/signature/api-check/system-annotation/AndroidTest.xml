@@ -44,4 +44,8 @@
         <option name="instrumentation-arg" key="annotation-for-exact-match" value="android.annotation.SystemApi" />
         <option name="runtime-hint" value="30s" />
     </test>
+
+    <!-- Controller that will skip the module if a native bridge situation is detected -->
+    <!-- For example: module wants to run arm32 and device is x86 -->
+    <object type="module_controller" class="com.android.tradefed.testtype.suite.module.NativeBridgeModuleController" />
 </configuration>
