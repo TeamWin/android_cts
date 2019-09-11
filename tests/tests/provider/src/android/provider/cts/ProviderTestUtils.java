@@ -18,6 +18,7 @@ package android.provider.cts;
 
 import static android.provider.cts.MediaStoreTest.TAG;
 
+import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assert.fail;
 
 import android.app.UiAutomation;
@@ -28,6 +29,8 @@ import android.net.Uri;
 import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
+import android.os.UserHandle;
+import android.os.UserManager;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
 import android.provider.cts.MediaStoreUtils.PendingParams;
@@ -38,6 +41,8 @@ import android.system.OsConstants;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.Timeout;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -67,6 +72,8 @@ public class ProviderTestUtils {
 
     private static final Pattern PATTERN_STORAGE_PATH = Pattern.compile(
             "(?i)^/storage/[^/]+/(?:[0-9]+/)?");
+
+    private static final Timeout IO_TIMEOUT = new Timeout("IO_TIMEOUT", 2_000, 2, 2_000);
 
     static Iterable<String> getSharedVolumeNames() {
         // We test both new and legacy volume names
@@ -175,12 +182,29 @@ public class ProviderTestUtils {
         executeShellCommand("bmgr wipe " + backupTransport + " " + packageName, uiAutomation);
     }
 
+    /**
+     * Waits until a file exists, or fails.
+     *
+     * @return existing file.
+     */
+    public static File waitUntilExists(File file) throws IOException {
+        try {
+            return IO_TIMEOUT.run("file '" + file + "' doesn't exist yet", () -> {
+                return file.exists() ? file : null; // will retry if it returns null
+            });
+        } catch (Exception e) {
+            throw new IOException(e);
+        }
+    }
+
     static File stageDir(String volumeName) throws IOException {
         if (MediaStore.VOLUME_EXTERNAL.equals(volumeName)) {
             volumeName = MediaStore.VOLUME_EXTERNAL_PRIMARY;
         }
-        return Environment.buildPath(MediaStore.getVolumePath(volumeName), "Android", "media",
+        File dir = Environment.buildPath(MediaStore.getVolumePath(volumeName), "Android", "media",
                 "android.provider.cts");
+        Log.d(TAG, "stageDir(" + volumeName + "): returning " + dir);
+        return dir;
     }
 
     static File stageDownloadDir(String volumeName) throws IOException {
@@ -194,10 +218,11 @@ public class ProviderTestUtils {
     static File stageFile(int resId, File file) throws IOException {
         // The caller may be trying to stage into a location only available to
         // the shell user, so we need to perform the entire copy as the shell
-        if (FileUtils.contains(Environment.getStorageDirectory(), file)) {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        UserManager userManager = context.getSystemService(UserManager.class);
+        if (userManager.isSystemUser() &&
+                    FileUtils.contains(Environment.getStorageDirectory(), file)) {
             executeShellCommand("mkdir -p " + file.getParent());
-
-            final Context context = InstrumentationRegistry.getTargetContext();
             try (AssetFileDescriptor afd = context.getResources().openRawResourceFd(resId)) {
                 final File source = ParcelFileDescriptor.getFile(afd.getFileDescriptor());
                 final long skip = afd.getStartOffset();
@@ -215,13 +240,12 @@ public class ProviderTestUtils {
             if (!dir.exists()) {
                 throw new FileNotFoundException("Failed to create parent for " + file);
             }
-            final Context context = InstrumentationRegistry.getTargetContext();
             try (InputStream source = context.getResources().openRawResource(resId);
                     OutputStream target = new FileOutputStream(file)) {
                 FileUtils.copy(source, target);
             }
         }
-        return file;
+        return waitUntilExists(file);
     }
 
     static Uri stageMedia(int resId, Uri collectionUri) throws IOException {
@@ -243,11 +267,15 @@ public class ProviderTestUtils {
     }
 
     static Uri scanFile(File file) throws Exception {
-        return MediaStore.scanFile(InstrumentationRegistry.getTargetContext(), file);
+        Uri uri = MediaStore.scanFile(InstrumentationRegistry.getTargetContext(), file);
+        assertWithMessage("no URI for '%s'", file).that(uri).isNotNull();
+        return uri;
     }
 
     static Uri scanFileFromShell(File file) throws Exception {
-        return MediaStore.scanFileFromShell(InstrumentationRegistry.getTargetContext(), file);
+        Uri uri = MediaStore.scanFileFromShell(InstrumentationRegistry.getTargetContext(), file);
+        assertWithMessage("no URI for '%s'", file).that(uri).isNotNull();
+        return uri;
     }
 
     static void scanVolume(File file) throws Exception {
@@ -321,8 +349,9 @@ public class ProviderTestUtils {
     }
 
     public static File getRawFile(Uri uri) throws Exception {
-        final String res = ProviderTestUtils.executeShellCommand(
-                "content query --uri " + uri + " --projection _data",
+        final String res = ProviderTestUtils.executeShellCommand("content query --uri " + uri
+                + " --user " + InstrumentationRegistry.getTargetContext().getUserId()
+                + " --projection _data",
                 InstrumentationRegistry.getInstrumentation().getUiAutomation());
         final int i = res.indexOf("_data=");
         if (i >= 0) {

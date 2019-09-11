@@ -1161,8 +1161,8 @@ public class MediaUtils {
         int cropTop = crop.top;
         int cropBottom = crop.bottom;
 
-        int imageWidth = cropRight - cropLeft + 1;
-        int imageHeight = cropBottom - cropTop + 1;
+        int imageWidth = cropRight - cropLeft;
+        int imageHeight = cropBottom - cropTop;
 
         Image.Plane[] planes = image.getPlanes();
         for (int i = 0; i < planes.length; ++i) {

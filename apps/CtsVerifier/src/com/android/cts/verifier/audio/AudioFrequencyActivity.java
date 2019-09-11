@@ -66,7 +66,7 @@ public class AudioFrequencyActivity extends PassFailButtons.Activity {
 
     public void testMaxLevel() {
         AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        int currentLevel =  am.getStreamVolume(AudioManager.STREAM_MUSIC);
+        int currentLevel = am.getStreamVolume(AudioManager.STREAM_MUSIC);
         Log.i(TAG, String.format("Max level: %d curLevel: %d", mMaxLevel, currentLevel));
         if (currentLevel != mMaxLevel) {
             new AlertDialog.Builder(this)
@@ -74,6 +74,40 @@ public class AudioFrequencyActivity extends PassFailButtons.Activity {
                 .setMessage(R.string.audio_general_level_not_max)
                 .setPositiveButton(R.string.audio_general_ok, null)
                 .show();
+        }
+    }
+
+    public int getMaxLevelForStream(int streamType) {
+        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        if (am != null) {
+            return am.getStreamMaxVolume(streamType);
+        }
+        return -1;
+    }
+
+    public void setLevelForStream(int streamType, int level) {
+        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        if (am != null) {
+            try {
+                am.setStreamVolume(streamType, level, 0);
+            } catch (Exception e) {
+                Log.e(TAG, "Error setting stream volume: ", e);
+            }
+        }
+    }
+
+    public int getLevelForStream(int streamType) {
+        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        if (am != null) {
+            return am.getStreamVolume(streamType);
+        }
+        return -1;
+    }
+
+    public void enableUILayout(LinearLayout layout, boolean enable) {
+        for (int i = 0; i < layout.getChildCount(); i++) {
+            View view = layout.getChildAt(i);
+            view.setEnabled(enable);
         }
     }
 

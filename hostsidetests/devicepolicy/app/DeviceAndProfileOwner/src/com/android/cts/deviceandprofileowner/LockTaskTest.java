@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.cts.deviceowner;
+package com.android.cts.deviceandprofileowner;
 
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_GLOBAL_ACTIONS;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_HOME;
@@ -22,10 +22,6 @@ import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_NONE;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_NOTIFICATIONS;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_OVERVIEW;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_SYSTEM_INFO;
-
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.testng.Assert.assertThrows;
@@ -52,19 +48,18 @@ import org.junit.runner.RunWith;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
-public class LockTaskTest {
+public class LockTaskTest extends BaseDeviceAdminTest {
 
     private static final String TAG = "LockTaskTest";
 
     private static final String PACKAGE_NAME = LockTaskTest.class.getPackage().getName();
-    private static final ComponentName ADMIN_COMPONENT =
-            new ComponentName(PACKAGE_NAME, BasicAdminReceiver.class.getName());
+    private static final ComponentName ADMIN_COMPONENT = ADMIN_RECEIVER_COMPONENT;
     private static final String TEST_PACKAGE = "com.google.android.example.somepackage";
 
     private static final String UTILITY_ACTIVITY
-            = "com.android.cts.deviceowner.LockTaskUtilityActivity";
+            = "com.android.cts.deviceandprofileowner.LockTaskUtilityActivity";
     private static final String UTILITY_ACTIVITY_IF_WHITELISTED
-            = "com.android.cts.deviceowner.LockTaskUtilityActivityIfWhitelisted";
+            = "com.android.cts.deviceandprofileowner.LockTaskUtilityActivityIfWhitelisted";
 
     private static final String RECEIVER_ACTIVITY_PACKAGE_NAME =
             "com.android.cts.intent.receiver";

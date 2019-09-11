@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -31,6 +32,7 @@ import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.SystemClock;
+import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.util.Log;
@@ -107,20 +109,76 @@ public class DownloadManagerTestBase {
         }
     }
 
-    protected Uri getMediaStoreUri(Uri downloadUri) throws Exception {
+    protected static Uri getMediaStoreUri(Uri downloadUri) throws Exception {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        Cursor cursor = context.getContentResolver().query(downloadUri, null, null, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            // DownloadManager.COLUMN_MEDIASTORE_URI is not a column in the query result.
+            // COLUMN_MEDIAPROVIDER_URI value maybe the same as COLUMN_MEDIASTORE_URI but NOT
+            // guaranteed.
+            int index = cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_MEDIAPROVIDER_URI);
+            return Uri.parse(cursor.getString(index));
+        } else {
+            throw new FileNotFoundException("Failed to find entry for " + downloadUri);
+        }
+    }
+
+    protected String getMediaStoreColumnValue(Uri mediaStoreUri, String columnName)
+            throws Exception {
+        if (!MediaStore.Files.FileColumns.MEDIA_TYPE.equals(columnName)) {
+            final int mediaType = getMediaType(mediaStoreUri);
+            final String volumeName = MediaStore.getVolumeName(mediaStoreUri);
+            final long id = ContentUris.parseId(mediaStoreUri);
+            switch (mediaType) {
+                case MediaStore.Files.FileColumns.MEDIA_TYPE_AUDIO:
+                    mediaStoreUri = ContentUris.withAppendedId(
+                            MediaStore.Audio.Media.getContentUri(volumeName), id);
+                    break;
+                case MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE:
+                    mediaStoreUri = ContentUris.withAppendedId(
+                            MediaStore.Images.Media.getContentUri(volumeName), id);
+                    break;
+                case MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO:
+                    mediaStoreUri = ContentUris.withAppendedId(
+                            MediaStore.Video.Media.getContentUri(volumeName), id);
+                    break;
+            }
+        }
         // Need to pass in the user id to support multi-user scenarios.
         final int userId = getUserId();
         final String cmd = String.format("content query --uri %s --projection %s --user %s",
-                downloadUri, DownloadManager.COLUMN_MEDIASTORE_URI, userId);
+                mediaStoreUri, columnName, userId);
         final String res = runShellCommand(cmd).trim();
-        final String str = DownloadManager.COLUMN_MEDIASTORE_URI + "=";
+        final String str = columnName + "=";
         final int i = res.indexOf(str);
         if (i >= 0) {
-            return Uri.parse(res.substring(i + str.length()));
+            return res.substring(i + str.length());
         } else {
             throw new FileNotFoundException("Failed to find "
-                    + DownloadManager.COLUMN_MEDIASTORE_URI + " for "
-                    + downloadUri + "; found " + res);
+                    + columnName + " for "
+                    + mediaStoreUri + "; found " + res);
+        }
+    }
+
+    private int getMediaType(Uri mediaStoreUri) throws Exception {
+        final Uri filesUri = MediaStore.Files.getContentUri(
+                MediaStore.getVolumeName(mediaStoreUri),
+                ContentUris.parseId(mediaStoreUri));
+        return Integer.parseInt(getMediaStoreColumnValue(filesUri,
+                MediaStore.Files.FileColumns.MEDIA_TYPE));
+    }
+
+    protected int getTotalBytes(InputStream in) throws Exception {
+        try {
+            int total = 0;
+            final byte[] buf = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = in.read(buf)) != -1) {
+                total += bytesRead;
+            }
+            return total;
+        } finally {
+            FileUtils.closeQuietly(in);
         }
     }
 
@@ -154,7 +212,8 @@ public class DownloadManagerTestBase {
 
     protected static String readFromRawFile(String filePath) throws Exception {
         Log.d(TAG, "Reading form file: " + filePath);
-        return runShellCommand("cat " + filePath);
+        return readFromFile(
+            ParcelFileDescriptor.open(new File(filePath), ParcelFileDescriptor.MODE_READ_ONLY));
     }
 
     protected static String readFromFile(ParcelFileDescriptor pfd) throws Exception {

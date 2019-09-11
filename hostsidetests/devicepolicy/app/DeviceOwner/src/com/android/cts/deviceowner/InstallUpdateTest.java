@@ -16,6 +16,8 @@
 
 package com.android.cts.deviceowner;
 
+import static android.app.admin.DevicePolicyManager.InstallSystemUpdateCallback.UPDATE_ERROR_UPDATE_FILE_INVALID;
+
 import android.app.admin.DevicePolicyManager.InstallSystemUpdateCallback;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -54,38 +56,38 @@ public class InstallUpdateTest extends BaseDeviceOwnerTest {
     }
 
     public void testInstallUpdate_failNoZipOtaFile() throws InterruptedException {
-        assertUpdateError("notZip.zi",
-                isDeviceAB()
-                        ? InstallSystemUpdateCallback.UPDATE_ERROR_UPDATE_FILE_INVALID
-                        : InstallSystemUpdateCallback.UPDATE_ERROR_UNKNOWN);
+        if (!isDeviceAB()) {
+            return;
+        }
+        assertUpdateError("notZip.zi", UPDATE_ERROR_UPDATE_FILE_INVALID);
     }
 
     public void testInstallUpdate_failWrongPayloadFile() throws InterruptedException {
-        assertUpdateError("wrongPayload.zip",
-                isDeviceAB()
-                        ? InstallSystemUpdateCallback.UPDATE_ERROR_UPDATE_FILE_INVALID
-                        : InstallSystemUpdateCallback.UPDATE_ERROR_UNKNOWN);
+        if (!isDeviceAB()) {
+            return;
+        }
+        assertUpdateError("wrongPayload.zip", UPDATE_ERROR_UPDATE_FILE_INVALID);
     }
 
     public void testInstallUpdate_failEmptyOtaFile() throws InterruptedException {
-        assertUpdateError("empty.zip",
-                isDeviceAB()
-                        ? InstallSystemUpdateCallback.UPDATE_ERROR_UPDATE_FILE_INVALID
-                        : InstallSystemUpdateCallback.UPDATE_ERROR_UNKNOWN);
+        if (!isDeviceAB()) {
+            return;
+        }
+        assertUpdateError("empty.zip", UPDATE_ERROR_UPDATE_FILE_INVALID);
     }
 
     public void testInstallUpdate_failWrongHash() throws InterruptedException {
-        assertUpdateError("wrongHash.zip",
-                isDeviceAB()
-                        ? InstallSystemUpdateCallback.UPDATE_ERROR_UPDATE_FILE_INVALID
-                        : InstallSystemUpdateCallback.UPDATE_ERROR_UNKNOWN);
+        if (!isDeviceAB()) {
+            return;
+        }
+        assertUpdateError("wrongHash.zip", UPDATE_ERROR_UPDATE_FILE_INVALID);
     }
 
     public void testInstallUpdate_failWrongSize() throws InterruptedException {
-        assertUpdateError("wrongSize.zip",
-                isDeviceAB()
-                        ? InstallSystemUpdateCallback.UPDATE_ERROR_UPDATE_FILE_INVALID
-                        : InstallSystemUpdateCallback.UPDATE_ERROR_UNKNOWN);
+        if (!isDeviceAB()) {
+            return;
+        }
+        assertUpdateError("wrongSize.zip", UPDATE_ERROR_UPDATE_FILE_INVALID);
     }
 
     public void testInstallUpdate_notCharging_belowThreshold_failsBatteryCheck() throws Exception {
@@ -101,15 +103,15 @@ public class InstallUpdateTest extends BaseDeviceOwnerTest {
     }
 
     public void testInstallUpdate_notCharging_aboveThreshold_passesBatteryCheck() throws Exception {
+        if (!isDeviceAB()) {
+            return;
+        }
         try {
             setNonChargingBatteryThreshold(TEST_BATTERY_THRESHOLD);
             setNonChargingBatteryLevelAndWait(TEST_BATTERY_THRESHOLD);
             // Positive CTS tests aren't possible, so we verify that we get the file-related error
             // rather than the battery one.
-            assertUpdateError("wrongSize.zip",
-                    isDeviceAB()
-                            ? InstallSystemUpdateCallback.UPDATE_ERROR_UPDATE_FILE_INVALID
-                            : InstallSystemUpdateCallback.UPDATE_ERROR_UNKNOWN);
+            assertUpdateError("wrongSize.zip", UPDATE_ERROR_UPDATE_FILE_INVALID);
         } finally {
             resetBatteryState();
             resetDevicePolicyConstants();
@@ -129,15 +131,15 @@ public class InstallUpdateTest extends BaseDeviceOwnerTest {
     }
 
     public void testInstallUpdate_charging_aboveThreshold_passesBatteryCheck() throws Exception {
+        if (!isDeviceAB()) {
+            return;
+        }
         try {
             setChargingBatteryThreshold(TEST_BATTERY_THRESHOLD);
             setChargingBatteryLevelAndWait(TEST_BATTERY_THRESHOLD);
             // Positive CTS tests aren't possible, so we verify that we get the file-related error
             // rather than the battery one.
-            assertUpdateError("wrongSize.zip",
-                    isDeviceAB()
-                            ? InstallSystemUpdateCallback.UPDATE_ERROR_UPDATE_FILE_INVALID
-                            : InstallSystemUpdateCallback.UPDATE_ERROR_UNKNOWN);
+            assertUpdateError("wrongSize.zip", UPDATE_ERROR_UPDATE_FILE_INVALID);
         } finally {
             resetBatteryState();
             resetDevicePolicyConstants();

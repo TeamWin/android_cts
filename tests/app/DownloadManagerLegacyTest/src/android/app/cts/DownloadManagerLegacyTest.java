@@ -15,6 +15,7 @@
  */
 package android.app.cts;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -23,6 +24,8 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
+import android.os.FileUtils;
+import android.provider.MediaStore;
 
 import androidx.test.runner.AndroidJUnit4;
 
@@ -30,6 +33,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 @RunWith(AndroidJUnit4.class)
 public class DownloadManagerLegacyTest extends DownloadManagerTestBase {
@@ -84,27 +90,33 @@ public class DownloadManagerLegacyTest extends DownloadManagerTestBase {
      */
     @Test
     public void testAddCompletedDownload_mediaStoreEntry() throws Exception {
+        final String assetName = "testmp3.mp3";
         final String[] downloadPaths = {
                 new File(Environment.getExternalStoragePublicDirectory(
-                        Environment.DIRECTORY_DOWNLOADS), "file1.txt").getPath(),
-                "/sdcard/Download/file2.txt",
+                        Environment.DIRECTORY_DOWNLOADS), "file1.mp3").getPath(),
+                "/sdcard/Download/file2.mp3",
         };
         for (String downloadLocation : downloadPaths) {
-            final String fileContents =
-                    "Test content:" + downloadLocation + "_" + System.nanoTime();
             final File file = new File(downloadLocation);
-            writeToFile(file, fileContents);
+            try (InputStream in = mContext.getAssets().open(assetName);
+                 OutputStream out = new FileOutputStream(file)) {
+                FileUtils.copy(in, out);
+            }
 
             final long downloadId = mDownloadManager.addCompletedDownload(
                     file.getName(), "Test desc",
-                    true, "text/plain", downloadLocation, fileContents.getBytes().length, true);
+                    true, "audio/mp3", downloadLocation, 0, true);
             assertTrue(downloadId >= 0);
             final Uri downloadUri = mDownloadManager.getUriForDownloadedFile(downloadId);
-            mContext.grantUriPermission("com.android.shell", downloadUri,
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION);
             final Uri mediaStoreUri = getMediaStoreUri(downloadUri);
 
-            assertEquals(fileContents, readContentsFromUri(mediaStoreUri));
+            assertArrayEquals(hash(mContext.getAssets().open(assetName)),
+                    hash(mContext.getContentResolver().openInputStream(mediaStoreUri)));
+
+            assertEquals("1", getMediaStoreColumnValue(mediaStoreUri,
+                    MediaStore.Audio.AudioColumns.IS_MUSIC));
+            assertEquals(new File(downloadLocation).length(), Long.parseLong(
+                    getMediaStoreColumnValue(mediaStoreUri, MediaStore.Audio.AudioColumns.SIZE)));
 
             // Delete entry in DownloadProvider and verify it's deleted from MediaProvider as well.
             assertRemoveDownload(downloadId, 0);

@@ -46,11 +46,11 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     private void createManagedProfile() throws Exception {
         mUserId = createManagedProfile(mParentUserId);
         switchUser(mParentUserId);
-        startUser(mUserId);
+        startUserAndWait(mUserId);
 
         installAppAsUser(DEVICE_ADMIN_APK, mUserId);
         setProfileOwnerOrFail(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId);
-        startUser(mUserId);
+        startUserAndWait(mUserId);
     }
 
     @Override
@@ -220,4 +220,33 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
                 "testSucceedsWithProfileOwnerIdsGrant", mUserId);
     }
 
+    @Override
+    public void testLockTask() {
+        // Managed profiles are not allowed to use lock task
+    }
+
+    @Override
+    public void testLockTaskAfterReboot() {
+        // Managed profiles are not allowed to use lock task
+    }
+
+    @Override
+    public void testLockTaskAfterReboot_tryOpeningSettings() {
+        // Managed profiles are not allowed to use lock task
+    }
+
+    @Override
+    public void testLockTask_defaultDialer() {
+        // Managed profiles are not allowed to use lock task
+    }
+
+    @Override
+    public void testLockTask_emergencyDialer() {
+        // Managed profiles are not allowed to use lock task
+    }
+
+    @Override
+    public void testLockTask_exitIfNoLongerWhitelisted() {
+        // Managed profiles are not allowed to use lock task
+    }
 }

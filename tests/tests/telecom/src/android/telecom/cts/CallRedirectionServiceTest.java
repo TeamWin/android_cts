@@ -41,6 +41,8 @@ import android.telecom.cts.redirectiontestapp.CtsCallRedirectionServiceControlle
 import android.telecom.cts.redirectiontestapp.ICtsCallRedirectionServiceController;
 import android.text.TextUtils;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
@@ -194,6 +196,7 @@ public class CallRedirectionServiceTest extends BaseTelecomTestWithMockServices 
     /**
      * Use RoleManager to query the previous call redirection app so we can restore it later.
      */
+    @CddTest(requirement ="3.2.3.5/C-2-5")
     private void rememberPreviousCallRedirectionApp() {
         runWithShellPermissionIdentity(() -> {
             List<String> callRedirectionApps = mRoleManager.getRoleHolders(ROLE_CALL_REDIRECTION);
@@ -205,6 +208,7 @@ public class CallRedirectionServiceTest extends BaseTelecomTestWithMockServices 
         });
     }
 
+    @CddTest(requirement="3.2.3.5/C-2-4")
     private void addRoleHolder(String roleName, String packageName) throws Exception {
         UserHandle user = Process.myUserHandle();
         Executor executor = mContext.getMainExecutor();

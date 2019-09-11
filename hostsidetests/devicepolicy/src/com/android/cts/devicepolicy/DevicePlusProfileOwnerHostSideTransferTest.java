@@ -32,8 +32,7 @@ public class DevicePlusProfileOwnerHostSideTransferTest
                     TRANSFER_OWNER_OUTGOING_APK, TRANSFER_OWNER_OUTGOING_TEST_RECEIVER);
                 setSameAffiliationId(profileUserId, TRANSFER_PROFILE_OWNER_OUTGOING_TEST);
 
-                installAppAsUser(TRANSFER_OWNER_INCOMING_APK, mPrimaryUserId);
-                installAppAsUser(TRANSFER_OWNER_INCOMING_APK, profileUserId);
+                installAppAsUser(TRANSFER_OWNER_INCOMING_APK, USER_ALL);
                 mUserId = profileUserId;
             } else {
                 removeAdmin(TRANSFER_OWNER_OUTGOING_TEST_RECEIVER, mUserId);

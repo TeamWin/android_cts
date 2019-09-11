@@ -52,7 +52,7 @@ public class AuthBoundKeyTest extends BaseAppSecurityTest {
         new InstallMultiple().addApk(APK).run();
         getDevice().executeShellCommand("cmd lock_settings set-pin 1234");
         runDeviceTests(PKG, CLASS, "testGenerateAuthBoundKey");
-        getDevice().executeShellCommand("cmd lock_settings clear --old 1234 --user 0");
+        getDevice().executeShellCommand("cmd lock_settings clear --old 1234");
         runDeviceTests(PKG, CLASS, "testUseKey");
         getDevice().executeShellCommand("cmd lock_settings set-pin 12345");
         getDevice().executeShellCommand("input keyevent 26");  // Screen on
@@ -63,7 +63,7 @@ public class AuthBoundKeyTest extends BaseAppSecurityTest {
         try {
             runDeviceTests(PKG, CLASS, "testUseKey");
         } finally {
-            getDevice().executeShellCommand("cmd lock_settings clear --old 12345 --user 0");
+            getDevice().executeShellCommand("cmd lock_settings clear --old 12345");
         }
     }
 }

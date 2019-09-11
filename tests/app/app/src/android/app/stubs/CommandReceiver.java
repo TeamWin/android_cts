@@ -56,6 +56,8 @@ public class CommandReceiver extends BroadcastReceiver {
      */
     @Override
     public void onReceive(Context context, Intent intent) {
+        // Use the application context as the receiver context could be restricted.
+        context = context.getApplicationContext();
         int command = intent.getIntExtra(EXTRA_COMMAND, -1);
         Log.d(TAG + "_" + context.getPackageName(), "Got command " + command + ", intent="
                 + intent);
@@ -86,11 +88,6 @@ public class CommandReceiver extends BroadcastReceiver {
     }
 
     private void doBindService(Context context, Intent commandIntent) {
-        context = context.getApplicationContext();
-        if (LocalService.sServiceContext != null) {
-            context = LocalService.sServiceContext;
-        }
-
         String targetPackage = getTargetPackage(commandIntent);
         int flags = getFlags(commandIntent);
 
@@ -98,13 +95,13 @@ public class CommandReceiver extends BroadcastReceiver {
         bindIntent.setComponent(new ComponentName(targetPackage, SERVICE_NAME));
 
         ServiceConnection connection = addServiceConnection(targetPackage);
-
         context.bindService(bindIntent, connection, flags | Context.BIND_AUTO_CREATE);
     }
 
     private void doUnbindService(Context context, Intent commandIntent) {
         String targetPackage = getTargetPackage(commandIntent);
-        context.unbindService(sServiceMap.remove(targetPackage));
+        ServiceConnection connection = sServiceMap.remove(targetPackage);
+        context.unbindService(connection);
     }
 
     private void doStartForegroundService(Context context, Class cls) {

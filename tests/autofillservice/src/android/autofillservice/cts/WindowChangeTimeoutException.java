@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package android.autofillservice.cts;
 
-package android.app.role.cts.app;
+import androidx.annotation.NonNull;
 
-import android.app.Activity;
-import android.os.Bundle;
+import com.android.compatibility.common.util.RetryableException;
 
-/**
- * An empty activity that finishes immediately.
- */
-public class EmptyActivity extends Activity {
+public final class WindowChangeTimeoutException extends RetryableException {
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        finish();
+    public WindowChangeTimeoutException(@NonNull Throwable cause, long timeoutMillis) {
+        super(cause, "no window change event in %dms", timeoutMillis);
     }
 }

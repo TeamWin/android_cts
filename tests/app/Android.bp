@@ -43,7 +43,7 @@ android_test {
     min_sdk_version: "14",
 }
 
-android_test_helper_app {
+android_test {
     name: "CtsDownloadManagerApi28",
     defaults: ["cts_defaults"],
     libs: [
@@ -75,6 +75,7 @@ android_test_helper_app {
     sdk_version: "test_current",
     min_sdk_version: "14",
     manifest: "DownloadManagerApi28Test/AndroidManifest.xml",
+    test_config: "DownloadManagerApi28Test/AndroidTest.xml",
 }
 
 android_test {
@@ -109,4 +110,5 @@ android_test {
     sdk_version: "test_current",
     min_sdk_version: "14",
     manifest: "DownloadManagerLegacyTest/AndroidManifest.xml",
+    test_config: "DownloadManagerLegacyTest/AndroidTest.xml",
 }

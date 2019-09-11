@@ -20,6 +20,10 @@
     <option name="config-descriptor:metadata" key="parameter" value="multi_abi" />
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="cleanup" value="true" />
+        <!--__________________-->
+        <!--    Utilities     -->
+        <option name="push" value="pacrunner->/data/local/tmp/pacrunner" />
+
         <option name="push" value="CVE-2016-8460->/data/local/tmp/CVE-2016-8460" />
         <option name="push" value="CVE-2016-8482->/data/local/tmp/CVE-2016-8482" />
         <option name="push" value="CVE-2016-6730->/data/local/tmp/CVE-2016-6730" />

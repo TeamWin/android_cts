@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import math
 import os.path
 import its.caps
 import its.device
@@ -25,7 +26,7 @@ BAYER_LIST = ['R', 'GR', 'GB', 'B']
 DIFF_THRESH = 0.0012  # absolute variance delta threshold
 FRAC_THRESH = 0.2  # relative variance delta threshold
 NUM_STEPS = 4
-STATS_GRID = 49  # center 2.04% of image for calculations
+SENS_TOL = 0.97  # specification is <= 3%
 
 
 def main():
@@ -41,51 +42,42 @@ def main():
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
         props = cam.override_with_hidden_physical_camera_props(props)
-        its.caps.skip_unless(its.caps.raw(props) and
+        its.caps.skip_unless(
+                its.caps.raw(props) and
                 its.caps.raw16(props) and
                 its.caps.manual_sensor(props) and
                 its.caps.read_3a(props) and
                 its.caps.per_frame_control(props) and
                 not its.caps.mono_camera(props))
 
-        debug = its.caps.debug_mode()
-
         white_level = float(props['android.sensor.info.whiteLevel'])
         cfa_idxs = its.image.get_canonical_cfa_order(props)
-        aax = props['android.sensor.info.preCorrectionActiveArraySize']['left']
-        aay = props['android.sensor.info.preCorrectionActiveArraySize']['top']
-        aaw = props['android.sensor.info.preCorrectionActiveArraySize']['right']-aax
-        aah = props['android.sensor.info.preCorrectionActiveArraySize']['bottom']-aay
 
         # Expose for the scene with min sensitivity
-        sens_min, sens_max = props['android.sensor.info.sensitivityRange']
-        sens_step = (sens_max - sens_min) / NUM_STEPS
+        sens_min, _ = props['android.sensor.info.sensitivityRange']
+        sens_max_ana = props['android.sensor.maxAnalogSensitivity']
+        sens_step = (sens_max_ana - sens_min) / NUM_STEPS
         s_ae, e_ae, _, _, f_dist = cam.do_3a(get_results=True)
         s_e_prod = s_ae * e_ae
-        sensitivities = range(sens_min, sens_max, sens_step)
+        sensitivities = range(sens_min, sens_max_ana+1, sens_step)
 
         var_expected = [[], [], [], []]
         var_measured = [[], [], [], []]
-        x = STATS_GRID/2  # center in H of STATS_GRID
-        y = STATS_GRID/2  # center in W of STATS_GRID
+        sens_valid = []
         for sens in sensitivities:
-
             # Capture a raw frame with the desired sensitivity
             exp = int(s_e_prod / float(sens))
             req = its.objects.manual_capture_request(sens, exp, f_dist)
-            if debug:
-                cap = cam.do_capture(req, cam.CAP_RAW)
-                planes = its.image.convert_capture_to_planes(cap, props)
-            else:
-                cap = cam.do_capture(req, {'format': 'rawStats',
-                                           'gridWidth': aaw/STATS_GRID,
-                                           'gridHeight': aah/STATS_GRID})
-                mean_img, var_img = its.image.unpack_rawstats_capture(cap)
+            cap = cam.do_capture(req, cam.CAP_RAW)
+            planes = its.image.convert_capture_to_planes(cap, props)
+            s_read = cap['metadata']['android.sensor.sensitivity']
+            print 'iso_write: %d, iso_read: %d' % (sens, s_read)
 
             # Test each raw color channel (R, GR, GB, B)
             noise_profile = cap['metadata']['android.sensor.noiseProfile']
             assert len(noise_profile) == len(BAYER_LIST)
             for i in range(len(BAYER_LIST)):
+                print BAYER_LIST[i],
                 # Get the noise model parameters for this channel of this shot.
                 ch = cfa_idxs[i]
                 s, o = noise_profile[ch]
@@ -96,23 +88,43 @@ def main():
                 black_level = its.image.get_black_level(i, props,
                                                         cap['metadata'])
                 level_range = white_level - black_level
-                if debug:
-                    plane = ((planes[i] * white_level - black_level) /
-                             level_range)
-                    tile = its.image.get_image_patch(plane, 0.49, 0.49,
-                                                     0.02, 0.02)
-                    mean_img_ch = tile.mean()
-                    var_measured[i].append(
-                            its.image.compute_image_variances(tile)[0])
-                else:
-                    mean_img_ch = (mean_img[x, y, ch]-black_level)/level_range
-                    var_measured[i].append(var_img[x, y, ch]/level_range**2)
-                var_expected[i].append(s * mean_img_ch + o)
+                plane = its.image.get_image_patch(planes[i], 0.49, 0.49,
+                                                  0.02, 0.02)
+                tile_raw = plane * white_level
+                tile_norm = ((tile_raw - black_level) / level_range)
 
+                # exit if distribution is clipped at 0, otherwise continue
+                mean_img_ch = tile_norm.mean()
+                var_model = s * mean_img_ch + o
+                # This computation is a suspicious because if the data were
+                # clipped, the mean and standard deviation could be affected
+                # in a way that affects this check. However, empirically,
+                # the mean and standard deviation change more slowly than the
+                # clipping point itself does, so the check remains correct
+                # even after the signal starts to clip.
+                mean_minus_3sigma = mean_img_ch - math.sqrt(var_model) * 3
+                if mean_minus_3sigma < 0:
+                    e_msg = '\nPixel distribution crosses 0.\n'
+                    e_msg += 'Likely black level over-clips.\n'
+                    e_msg += 'Linear model is not valid.\n'
+                    e_msg += 'mean: %.3e, var: %.3e, u-3s: %.3e' % (
+                            mean_img_ch, var_model, mean_minus_3sigma)
+                    assert 0, e_msg
+                else:
+                    print 'mean:', mean_img_ch,
+                    var_measured[i].append(
+                            its.image.compute_image_variances(tile_norm)[0])
+                    print 'var:', var_measured[i][-1],
+                    var_expected[i].append(var_model)
+                    print 'var_model:', var_expected[i][-1]
+            print ''
+            sens_valid.append(sens)
+
+    # plot data and models
     for i, ch in enumerate(BAYER_LIST):
-        pylab.plot(sensitivities, var_expected[i], 'rgkb'[i],
+        pylab.plot(sens_valid, var_expected[i], 'rgkb'[i],
                    label=ch+' expected')
-        pylab.plot(sensitivities, var_measured[i], 'rgkb'[i]+'--',
+        pylab.plot(sens_valid, var_measured[i], 'rgkb'[i]+'.--',
                    label=ch+' measured')
     pylab.xlabel('Sensitivity')
     pylab.ylabel('Center patch variance')
@@ -122,7 +134,7 @@ def main():
     # PASS/FAIL check
     for i, ch in enumerate(BAYER_LIST):
         diffs = [abs(var_measured[i][j] - var_expected[i][j])
-                 for j in range(len(sensitivities))]
+                 for j in range(len(sens_valid))]
         print 'Diffs (%s):'%(ch), diffs
         for j, diff in enumerate(diffs):
             thresh = max(DIFF_THRESH, FRAC_THRESH*var_expected[i][j])
