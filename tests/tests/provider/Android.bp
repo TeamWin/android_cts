@@ -35,6 +35,7 @@ android_test {
 
     srcs: ["src/**/*.java"],
 
-    sdk_version: "test_current",
+    // uncomment when b/140885436 is fixed
+    // sdk_version: "test_current",
     min_sdk_version: "21",
 }
