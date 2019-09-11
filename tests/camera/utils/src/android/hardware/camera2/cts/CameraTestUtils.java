@@ -704,6 +704,38 @@ public class CameraTestUtils extends Assert {
         }
     }
 
+    public static boolean hasCapability(CameraCharacteristics characteristics, int capability) {
+        int [] capabilities =
+                characteristics.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+        for (int c : capabilities) {
+            if (c == capability) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean isSystemCamera(CameraManager manager, String cameraId)
+            throws CameraAccessException {
+        CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
+        return hasCapability(characteristics,
+                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_SYSTEM_CAMERA);
+    }
+
+    public static String[] getCameraIdListForTesting(CameraManager manager,
+            boolean getSystemCameras)
+            throws CameraAccessException {
+        String [] ids = manager.getCameraIdListNoLazy();
+        List<String> idsForTesting = new ArrayList<String>();
+        for (String id : ids) {
+            boolean isSystemCamera = isSystemCamera(manager, id);
+            if (getSystemCameras == isSystemCamera) {
+                idsForTesting.add(id);
+            }
+        }
+        return idsForTesting.toArray(new String[idsForTesting.size()]);
+    }
+
     /**
      * Block until the camera is opened.
      *

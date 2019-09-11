@@ -36,7 +36,7 @@ import android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
 import android.hardware.camera2.cts.CameraTestUtils.SimpleImageReaderListener;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.helpers.StaticMetadata.CheckLevel;
-import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
+import android.hardware.camera2.cts.testcases.Camera2AndroidBasicTestCase;
 import android.hardware.camera2.params.InputConfiguration;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
@@ -71,7 +71,7 @@ import java.util.concurrent.TimeUnit;
  * Test camera2 API use case performance KPIs, such as camera open time, session creation time,
  * shutter lag etc. The KPI data will be reported in cts results.
  */
-public class PerformanceTest extends Camera2AndroidTestCase {
+public class PerformanceTest extends Camera2AndroidBasicTestCase {
     private static final String TAG = "PerformanceTest";
     private static final String REPORT_LOG_NAME = "CtsCameraTestCases";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
@@ -133,10 +133,10 @@ public class PerformanceTest extends Camera2AndroidTestCase {
      * </p>
      */
     public void testCameraLaunch() throws Exception {
-        double[] avgCameraLaunchTimes = new double[mCameraIds.length];
+        double[] avgCameraLaunchTimes = new double[mCameraIdsUnderTest.length];
 
         int counter = 0;
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             // Do NOT move these variables to outer scope
             // They will be passed to DeviceReportLog and their references will be stored
             String streamName = "test_camera_launch";
@@ -259,7 +259,7 @@ public class PerformanceTest extends Camera2AndroidTestCase {
                         + ". Max(ms): " + Stat.getMax(cameraLaunchTimes));
             }
         }
-        if (mCameraIds.length != 0) {
+        if (mCameraIdsUnderTest.length != 0) {
             String streamName = "test_camera_launch_average";
             mReportLog = new DeviceReportLog(REPORT_LOG_NAME, streamName);
             mReportLog.setSummary("camera_launch_average_time_for_all_cameras",
@@ -309,10 +309,10 @@ public class PerformanceTest extends Camera2AndroidTestCase {
 
     private void testSingleCaptureForFormat(int[] formats, String formatDescription,
             boolean addPreviewDelay) throws Exception {
-        double[] avgResultTimes = new double[mCameraIds.length];
+        double[] avgResultTimes = new double[mCameraIdsUnderTest.length];
 
         int counter = 0;
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             // Do NOT move these variables to outer scope
             // They will be passed to DeviceReportLog and their references will be stored
             String streamName = appendFormatDescription("test_single_capture", formatDescription);
@@ -448,7 +448,7 @@ public class PerformanceTest extends Camera2AndroidTestCase {
         }
 
         // Result will not be reported in CTS report if no summary is printed.
-        if (mCameraIds.length != 0) {
+        if (mCameraIdsUnderTest.length != 0) {
             String streamName = appendFormatDescription("test_single_capture_average",
                     formatDescription);
             mReportLog = new DeviceReportLog(REPORT_LOG_NAME, streamName);
@@ -470,8 +470,8 @@ public class PerformanceTest extends Camera2AndroidTestCase {
      * </p>
      */
     public void testMultipleCapture() throws Exception {
-        double[] avgResultTimes = new double[mCameraIds.length];
-        double[] avgDurationMs = new double[mCameraIds.length];
+        double[] avgResultTimes = new double[mCameraIdsUnderTest.length];
+        double[] avgDurationMs = new double[mCameraIdsUnderTest.length];
 
         // A simple CaptureSession StateCallback to handle onCaptureQueueEmpty
         class MultipleCaptureStateCallback extends CameraCaptureSession.StateCallback {
@@ -520,7 +520,7 @@ public class PerformanceTest extends Camera2AndroidTestCase {
         final MultipleCaptureStateCallback sessionListener = new MultipleCaptureStateCallback();
 
         int counter = 0;
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             // Do NOT move these variables to outer scope
             // They will be passed to DeviceReportLog and their references will be stored
             String streamName = "test_multiple_capture";
@@ -657,7 +657,7 @@ public class PerformanceTest extends Camera2AndroidTestCase {
         }
 
         // Result will not be reported in CTS report if no summary is printed.
-        if (mCameraIds.length != 0) {
+        if (mCameraIdsUnderTest.length != 0) {
             String streamName = "test_multiple_capture_average";
             mReportLog = new DeviceReportLog(REPORT_LOG_NAME, streamName);
             mReportLog.setSummary("camera_multiple_capture_result_average_latency_for_all_cameras",
@@ -675,7 +675,7 @@ public class PerformanceTest extends Camera2AndroidTestCase {
      * a reprocess request is issued to the time the reprocess image is returned.
      */
     public void testReprocessingLatency() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             for (int format : REPROCESS_FORMATS) {
                 if (!isReprocessSupported(id, format)) {
                     continue;
@@ -705,7 +705,7 @@ public class PerformanceTest extends Camera2AndroidTestCase {
      *
      */
     public void testReprocessingThroughput() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             for (int format : REPROCESS_FORMATS) {
                 if (!isReprocessSupported(id, format)) {
                     continue;
@@ -734,7 +734,7 @@ public class PerformanceTest extends Camera2AndroidTestCase {
      * time a reprocess request is issued to the time the reprocess image is returned.
      */
     public void testHighQualityReprocessingLatency() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             for (int format : REPROCESS_FORMATS) {
                 if (!isReprocessSupported(id, format)) {
                     continue;
@@ -764,7 +764,7 @@ public class PerformanceTest extends Camera2AndroidTestCase {
      *
      */
     public void testHighQualityReprocessingThroughput() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             for (int format : REPROCESS_FORMATS) {
                 if (!isReprocessSupported(id, format)) {
                     continue;
@@ -792,7 +792,7 @@ public class PerformanceTest extends Camera2AndroidTestCase {
      * Testing reprocessing caused preview stall (frame drops)
      */
     public void testReprocessingCaptureStall() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             for (int format : REPROCESS_FORMATS) {
                 if (!isReprocessSupported(id, format)) {
                     continue;

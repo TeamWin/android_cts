@@ -19,9 +19,16 @@ package android.hardware.camera2.cts;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
 import android.util.Log;
 
+import org.junit.Test;
+
+import static junit.framework.Assert.*;
+
 /**
  * <p>Basic test for CameraManager class.</p>
  */
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+@RunWith(Parameterized.class)
 public class NativeImageReaderTest extends Camera2AndroidTestCase {
     private static final String TAG = "NativeImageReaderTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
@@ -33,26 +40,31 @@ public class NativeImageReaderTest extends Camera2AndroidTestCase {
         Log.i("NativeImageReaderTest", "after loadlibrary");
     }
 
+    @Test
     public void testJpeg() {
         assertTrue("testJpeg fail, see log for details",
                 testJpegNative(mDebugFileNameBase));
     }
 
+    @Test
     public void testY8() {
         assertTrue("testY8 fail, see log for details",
                 testY8Native(mDebugFileNameBase));
     }
 
+    @Test
     public void testHeic() {
         assertTrue("testHeic fail, see log for details",
                 testHeicNative(mDebugFileNameBase));
     }
 
+    @Test
     public void testDepthJpeg() {
         assertTrue("testDepthJpeg fail, see log for details",
                 testDepthJpegNative(mDebugFileNameBase));
     }
 
+    @Test
     public void testImageReaderCloseAcquiredImages() {
         assertTrue("testImageReaderClose fail, see log for details",
                 testImageReaderCloseAcquiredImagesNative());

@@ -21,7 +21,7 @@ import android.app.Instrumentation;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.hardware.camera2.cts.PerformanceTest;
-import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
+import android.hardware.camera2.cts.testcases.Camera2AndroidBasicTestCase;
 import android.hardware.cts.CameraTestCase;
 import android.hardware.cts.LegacyCameraPerformanceTest;
 import android.os.Bundle;
@@ -201,8 +201,8 @@ public class CameraPerformanceActivity extends DialogTestListActivity {
                 Enumeration<Test> tests = ((TestSuite) s).tests();
                 while (tests.hasMoreElements()) {
                     Test test = tests.nextElement();
-                    if (test instanceof Camera2AndroidTestCase) {
-                        Camera2AndroidTestCase testCase = (Camera2AndroidTestCase) test;
+                    if (test instanceof Camera2AndroidBasicTestCase) {
+                        Camera2AndroidBasicTestCase testCase = (Camera2AndroidBasicTestCase) test;
 
                         // The base case class has one internal test that can
                         // be ignored for the purpose of this test activity.

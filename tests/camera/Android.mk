@@ -28,7 +28,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_MODULE := CtsCameraUtils
 
-LOCAL_SDK_VERSION := current
+LOCAL_SDK_VERSION := test_current
 -include cts/error_prone_rules_tests.mk
 include $(BUILD_STATIC_JAVA_LIBRARY)
 
@@ -50,7 +50,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util-axt \
 	androidx.test.rules
 
 LOCAL_SRC_FILES := \
-	src/android/hardware/camera2/cts/testcases/Camera2AndroidTestCase.java \
+	src/android/hardware/camera2/cts/testcases/Camera2AndroidBasicTestCase.java \
 	src/android/hardware/camera2/cts/PerformanceTest.java \
 	src/android/hardware/cts/CameraTestCase.java \
 	src/android/hardware/cts/LegacyCameraPerformanceTest.java

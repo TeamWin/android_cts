@@ -22,14 +22,17 @@ import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
 
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
 
-
 /**
  * <p>Basic test for CameraManager class.</p>
  */
+
+@RunWith(Parameterized.class)
 public class NativeCameraDeviceTest extends Camera2SurfaceViewTestCase {
     private static final String TAG = "NativeCameraDeviceTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);

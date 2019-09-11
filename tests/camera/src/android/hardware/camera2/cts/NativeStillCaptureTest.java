@@ -21,6 +21,8 @@ import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
 
+import org.junit.runners.Parameterized;
+import org.junit.runner.RunWith;
 import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
@@ -28,6 +30,8 @@ import static org.junit.Assert.assertTrue;
 /**
  * <p>Basic test for CameraManager class.</p>
  */
+
+@RunWith(Parameterized.class)
 public class NativeStillCaptureTest extends Camera2SurfaceViewTestCase {
     private static final String TAG = "NativeStillCaptureTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
