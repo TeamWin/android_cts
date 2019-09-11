@@ -27,6 +27,5 @@ java_test_host {
         "cts",
         "vts",
         "general-tests",
-        "cts_instant",
     ],
 }
