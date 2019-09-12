@@ -108,10 +108,8 @@ public class CarrierApiTest extends AndroidTestCase {
      * Checks whether the cellular stack should be running on this device.
      */
     private boolean hasCellular() {
-        ConnectivityManager mgr =
-                (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-        return mgr.isNetworkSupported(ConnectivityManager.TYPE_MOBILE) &&
-               mTelephonyManager.isVoiceCapable();
+        return mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY) &&
+                mTelephonyManager.getPhoneCount() > 0;
     }
 
     private boolean isSimCardPresent() {
