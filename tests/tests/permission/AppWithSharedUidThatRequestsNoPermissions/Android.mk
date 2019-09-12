@@ -20,7 +20,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE_TAGS := tests
 LOCAL_SDK_VERSION := current
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 LOCAL_PACKAGE_NAME := CtsAppWithSharedUidThatRequestsNoPermissions
 
 include $(BUILD_CTS_PACKAGE)

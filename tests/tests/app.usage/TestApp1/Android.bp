@@ -34,6 +34,5 @@ android_test_helper_app {
         "cts",
         "vts",
         "general-tests",
-        "cts_instant",
     ],
 }
