@@ -164,6 +164,15 @@ public class TestMediaCodec extends SecurityTestCase {
                 getDevice(), null);
     }
 
+    @SecurityTest(minPatchLevel = "2018-10")
+    public void testPocCVE_2018_9497() throws Exception {
+        String inputFiles[] = {"cve_2018_9497.m2v"};
+        runMpeg2DecodeTest(inputFiles, "--input " + TMP_FILE_PATH
+                + "cve_2018_9497.m2v --save_output 0"
+                + " --num_frames -1 --loopback 0 --display 0 --save_chksum 0",
+                getDevice(), null);
+    }
+
     @SecurityTest
     public void testPocBug_34203195() throws Exception {
         String inputFiles[] = {"bug_34203195.m2v"};
