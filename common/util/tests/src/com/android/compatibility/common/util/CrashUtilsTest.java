@@ -25,8 +25,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
-import java.math.BigInteger;
 
 import junit.framework.TestCase;
 
@@ -62,67 +60,52 @@ public class CrashUtilsTest extends TestCase {
     @Test
     public void testGetAllCrashes() throws Exception {
         List<Crash> expectedResults = new ArrayList<>();
-        expectedResults.add(new Crash(11071, 11189, "AudioOut_D", "/system/bin/audioserver",
-                new BigInteger("e9380000", 16), "SIGSEGV"));
-        expectedResults.add(new Crash(12736, 12761, "Binder:12736_2", "/system/bin/audioserver",
-                new BigInteger("0", 16), "SIGSEGV"));
-        expectedResults.add(new Crash(26201, 26227, "Binder:26201_3", "/system/bin/audioserver",
-                new BigInteger("0", 16), "SIGSEGV"));
-        expectedResults.add(new Crash(26246, 26282, "Binder:26246_5", "/system/bin/audioserver",
-                new BigInteger("0", 16), "SIGSEGV"));
-        expectedResults.add(new Crash(245, 245, "installd", "/system/bin/installd",
-                null, "SIGABRT"));
-        expectedResults.add(new Crash(6371, 8072, "media.codec", "omx@1.0-service",
-                new BigInteger("ed000000", 16), "SIGSEGV"));
-        expectedResults.add(new Crash(8373, 8414, "loo", "com.android.bluetooth",
-                null, "SIGABRT"));
-        expectedResults.add(new Crash(11071, 11189, "synthetic_thread", "synthetic_process_0",
-                new BigInteger("e9380000", 16), "SIGSEGV"));
-        expectedResults.add(new Crash(12736, 12761, "synthetic_thread", "synthetic_process_1",
-                new BigInteger("0", 16), "SIGSEGV"));
+        expectedResults.add(new Crash(11071, 11189, "AudioOut_D", 3912761344L, "SIGSEGV"));
+        expectedResults.add(new Crash(12736, 12761, "Binder:12736_2", 0L, "SIGSEGV"));
+        expectedResults.add(new Crash(26201, 26227, "Binder:26201_3", 0L, "SIGSEGV"));
+        expectedResults.add(new Crash(26246, 26282, "Binder:26246_5", 0L, "SIGSEGV"));
+        expectedResults.add(new Crash(245, 245, "installd", null, "SIGABRT"));
+        expectedResults.add(new Crash(6371, 8072, "media.codec", 3976200192L, "SIGSEGV"));
+        expectedResults.add(new Crash(8373, 8414, "loo", null, "SIGABRT"));
 
         assertEquals(expectedResults, mCrashes);
     }
 
     @Test
     public void testValidCrash() throws Exception {
-        assertTrue(CrashUtils.securityCrashDetected(mCrashes, true,
-                Pattern.compile("synthetic_process_0")));
+        assertTrue(CrashUtils.detectCrash(new String[]{"AudioOut_D"}, true, mCrashes));
     }
 
     @Test
     public void testMissingName() throws Exception {
-        assertFalse(CrashUtils.securityCrashDetected(mCrashes, true,
-                Pattern.compile("")));
+        assertFalse(CrashUtils.detectCrash(new String[]{""}, true, mCrashes));
     }
 
     @Test
     public void testSIGABRT() throws Exception {
-        assertFalse(CrashUtils.securityCrashDetected(mCrashes, true,
-                Pattern.compile("installd")));
+        assertFalse(CrashUtils.detectCrash(new String[]{"installd"}, true, mCrashes));
     }
 
     @Test
     public void testFaultAddressBelowMin() throws Exception {
-        assertFalse(CrashUtils.securityCrashDetected(mCrashes, true,
-                Pattern.compile("synthetic_process_1")));
+        assertFalse(
+            CrashUtils.detectCrash(new String[]{"Binder:12736_2"}, true, mCrashes));
     }
 
     @Test
     public void testIgnoreMinAddressCheck() throws Exception {
-        assertTrue(CrashUtils.securityCrashDetected(mCrashes, false,
-                Pattern.compile("synthetic_process_1")));
+        assertTrue(
+            CrashUtils.detectCrash(new String[]{"Binder:12736_2"}, false, mCrashes));
     }
 
     @Test
     public void testBadAbortMessage() throws Exception {
-        assertFalse(CrashUtils.securityCrashDetected(mCrashes, true,
-                Pattern.compile("generic")));
+        assertFalse(CrashUtils.detectCrash(new String[]{"generic"}, true, mCrashes));
     }
 
     @Test
     public void testGoodAndBadCrashes() throws Exception {
-        assertTrue(CrashUtils.securityCrashDetected(mCrashes, true,
-                Pattern.compile("synthetic_process_0"), Pattern.compile("generic")));
+        assertTrue(
+            CrashUtils.detectCrash(new String[]{"AudioOut_D", "generic"}, true, mCrashes));
     }
 }

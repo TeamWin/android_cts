@@ -16,39 +16,28 @@
 
 package com.android.compatibility.common.util;
 
-import javax.annotation.Nullable;
-import java.io.Serializable;
 import java.util.Objects;
-import java.math.BigInteger;
+import java.io.Serializable;
+import javax.annotation.Nullable;
 
 public class Crash implements Serializable {
 
     public static final long serialVersionUID = 42L;
-
     public final int pid;
     public final int tid;
-    public final String threadName;
-    public final String process;
-    @Nullable // the fault address is not always present in the log
-    public final BigInteger faultAddress;
-    public final String signal;
     @Nullable
-    public final String crashString;
+    public final String name;
+    @Nullable
+    public final Long faultAddress;
+    @Nullable
+    public final String signal;
 
-    public Crash(int pid, int tid, String threadName, String process,
-            BigInteger faultAddress, String signal) {
-        this(pid, tid, threadName, process, faultAddress, signal, null);
-    }
-
-    public Crash(int pid, int tid, String threadName, String process,
-            BigInteger faultAddress, String signal, String crashString) {
+    public Crash(int pid, int tid, String name, Long faultAddress, String signal) {
         this.pid = pid;
         this.tid = tid;
-        this.threadName = threadName;
-        this.process = process;
+        this.name = name;
         this.faultAddress = faultAddress;
         this.signal = signal;
-        this.crashString = crashString;
     }
 
     @Override
@@ -56,10 +45,8 @@ public class Crash implements Serializable {
         return "Crash{" +
             "pid=" + pid +
             ", tid=" + tid +
-            ", threadName=" + threadName +
-            ", process=" + process +
-            ", faultAddress=" +
-                    (faultAddress == null ? "--------" : "0x" + faultAddress.toString(16)) +
+            ", name=" + name +
+            ", faultAddress=" + faultAddress +
             ", signal=" + signal +
             '}';
     }
@@ -75,14 +62,13 @@ public class Crash implements Serializable {
         Crash crash = (Crash) object;
         return pid == crash.pid &&
             tid == crash.tid &&
-            Objects.equals(threadName, crash.threadName) &&
-            Objects.equals(process, crash.process) &&
+            Objects.equals(name, crash.name) &&
             Objects.equals(faultAddress, crash.faultAddress) &&
             Objects.equals(signal, crash.signal);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(pid, tid, threadName, process, faultAddress, signal);
+        return Objects.hash(pid, tid, name, faultAddress, signal);
     }
 }

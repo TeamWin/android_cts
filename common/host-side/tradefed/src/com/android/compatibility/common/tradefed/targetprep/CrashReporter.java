@@ -34,7 +34,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.regex.Matcher;
-import java.util.List;
 import java.util.ArrayList;
 
 /**
@@ -46,7 +45,7 @@ public class CrashReporter implements ITargetCleaner {
     private BackgroundDeviceAction mBackgroundThread;
 
     /** Uploads the current buffer of Crashes to the phone under the current test name. */
-    private static void upload(ITestDevice device, String testname, List<Crash> crashes) {
+    private static void upload(ITestDevice device, String testname, ArrayList<Crash> crashes) {
         try {
             if (testname == null) {
                 CLog.logAndDisplay(LogLevel.ERROR, "Attempted upload with no test name");
@@ -114,7 +113,7 @@ public class CrashReporter implements ITargetCleaner {
     private class CrashReporterReceiver extends MultiLineReceiver {
 
         private String mTestName;
-        private List<Crash> mCrashes;
+        private ArrayList<Crash> mCrashes;
         private StringBuilder mLogcatChunk;
         private ITestDevice mDevice;
 
