@@ -29,6 +29,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Log;
 
 import androidx.test.rule.ActivityTestRule;
@@ -37,6 +38,7 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
@@ -48,7 +50,7 @@ public abstract class BroadcastTestBase {
     static final String TAG = "BroadcastTestBase";
     protected static final int TIMEOUT_MS = 20 * 1000;
 
-    protected Context mContext;
+    protected final Context mContext = getInstrumentation().getTargetContext();
     protected Bundle mResultExtras;
     private CountDownLatch mLatch;
     protected ActivityDoneReceiver mActivityDoneReceiver = null;
@@ -56,9 +58,16 @@ public abstract class BroadcastTestBase {
     private BroadcastUtils.TestcaseType mTestCaseType;
     protected boolean mHasFeature;
 
-    @Rule
-    public final ActivityTestRule<BroadcastTestStartActivity> mActivityTestRule =
+    private final SettingsStateChangerRule mServiceSetterRule = new SettingsStateChangerRule(
+            mContext, Settings.Secure.VOICE_INTERACTION_SERVICE,
+            "android.voicesettings.service/.MainInteractionService");
+    private final ActivityTestRule<BroadcastTestStartActivity> mActivityTestRule =
             new ActivityTestRule<>(BroadcastTestStartActivity.class, false, false);
+
+    @Rule
+    public final RuleChain mgRules = RuleChain
+            .outerRule(mServiceSetterRule)
+            .around(mActivityTestRule);
 
     @Before
     public void setUp() throws Exception {
@@ -103,8 +112,7 @@ public abstract class BroadcastTestBase {
     protected void startTestActivity(String intentSuffix) {
         Intent intent = new Intent();
         intent.setAction("android.intent.action.TEST_START_ACTIVITY_" + intentSuffix);
-        intent.setComponent(new ComponentName(getInstrumentation().getTargetContext(),
-                BroadcastTestStartActivity.class));
+        intent.setComponent(new ComponentName(mContext, BroadcastTestStartActivity.class));
         mActivity = mActivityTestRule.launchActivity(intent);
     }
 
