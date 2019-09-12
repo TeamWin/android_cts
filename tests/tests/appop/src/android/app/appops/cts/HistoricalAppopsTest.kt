@@ -21,6 +21,7 @@ import android.app.AppOpsManager.HistoricalOp
 import android.app.AppOpsManager.HistoricalOps
 import android.os.Process
 import android.os.SystemClock
+import android.provider.DeviceConfig
 import androidx.test.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
@@ -35,11 +36,15 @@ import androidx.test.rule.ActivityTestRule
 import androidx.test.uiautomator.UiDevice
 import org.junit.Rule
 
+const val PROPERTY_PERMISSIONS_HUB_ENABLED = "permissions_hub_enabled"
+
 @RunWith(AndroidJUnit4::class)
 class HistoricalAppopsTest {
     private val uid = Process.myUid()
     private lateinit var appOpsManager: AppOpsManager
     private lateinit var packageName: String
+
+    private var wasPermissionsHubEnabled = false
 
     // Start an activity to make sure this app counts as being in the foreground
     @Rule @JvmField
@@ -57,6 +62,10 @@ class HistoricalAppopsTest {
         appOpsManager = context.getSystemService(AppOpsManager::class.java)!!
         packageName = context.packageName!!
         uiAutomation.adoptShellPermissionIdentity()
+        wasPermissionsHubEnabled = DeviceConfig.getBoolean(DeviceConfig.NAMESPACE_PRIVACY,
+                PROPERTY_PERMISSIONS_HUB_ENABLED, false)
+        DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY, PROPERTY_PERMISSIONS_HUB_ENABLED,
+                true.toString(), false)
         appOpsManager.clearHistory()
         appOpsManager.resetHistoryParameters()
     }
@@ -65,6 +74,8 @@ class HistoricalAppopsTest {
     fun tearDownTest() {
         appOpsManager.clearHistory()
         appOpsManager.resetHistoryParameters()
+        DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY, PROPERTY_PERMISSIONS_HUB_ENABLED,
+                wasPermissionsHubEnabled.toString(), false)
         uiAutomation.dropShellPermissionIdentity()
     }
 

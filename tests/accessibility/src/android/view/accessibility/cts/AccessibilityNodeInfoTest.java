@@ -208,6 +208,7 @@ public class AccessibilityNodeInfoTest {
         info.setText(updatingString);
         info.setError(updatingString);
         info.setContentDescription(updatingString);
+        info.setStateDescription(updatingString);
 
         updatingString.delete(0, updatingString.length());
         updatingString.append(newText);
@@ -215,6 +216,7 @@ public class AccessibilityNodeInfoTest {
         assertTrue(TextUtils.equals(originalText, info.getText()));
         assertTrue(TextUtils.equals(originalText, info.getError()));
         assertTrue(TextUtils.equals(originalText, info.getContentDescription()));
+        assertTrue(TextUtils.equals(originalText, info.getStateDescription()));
     }
 
     @SmallTest
@@ -241,6 +243,7 @@ public class AccessibilityNodeInfoTest {
         info.setBoundsInScreen(new Rect(2,2,2,2));
         info.setClassName("foo.bar.baz.Class");
         info.setContentDescription("content description");
+        info.setStateDescription("state description");
         info.setTooltipText("tooltip");
         info.setPackageName("foo.bar.baz");
         info.setText("text");
@@ -374,6 +377,8 @@ public class AccessibilityNodeInfoTest {
                 receivedInfo.getClassName());
         assertEquals("contentDescription has incorrect value", expectedInfo.getContentDescription(),
                 receivedInfo.getContentDescription());
+        assertEquals("stateDescription has incorrect value", expectedInfo.getStateDescription(),
+                receivedInfo.getStateDescription());
         assertEquals("tooltip text has incorrect value", expectedInfo.getTooltipText(),
                 receivedInfo.getTooltipText());
         assertEquals("packageName has incorrect value", expectedInfo.getPackageName(),
@@ -556,6 +561,7 @@ public class AccessibilityNodeInfoTest {
         assertTrue("boundsInScreen not properly recycled", bounds.isEmpty());
         assertNull("className not properly recycled", info.getClassName());
         assertNull("contentDescription not properly recycled", info.getContentDescription());
+        assertNull("stateDescription not properly recycled", info.getStateDescription());
         assertNull("tooltiptext not properly recycled", info.getTooltipText());
         assertNull("packageName not properly recycled", info.getPackageName());
         assertNull("text not properly recycled", info.getText());
