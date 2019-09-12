@@ -27,7 +27,6 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestserver \
     ctstestrunner \
     compatibility-device-util \
-    compatibility-common-util-devicesidelib \
     guava \
     platform-test-annotations \
     legacy-android-test

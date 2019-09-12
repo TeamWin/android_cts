@@ -67,7 +67,6 @@ import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.regex.Pattern;
 
 import android.security.cts.R;
 
@@ -1201,23 +1200,8 @@ public class StagefrightTest extends InstrumentationTestCase {
         MediaPlayer.OnPreparedListener,
         MediaPlayer.OnCompletionListener {
 
-        private final Pattern[] validProcessPatterns = {
-            Pattern.compile("adsprpcd"),
-            Pattern.compile("android\\.hardware\\.cas@\\d+?\\.\\d+?-service"),
-            Pattern.compile("android\\.hardware\\.drm@\\d+?\\.\\d+?-service"),
-            Pattern.compile("android\\.hardware\\.drm@\\d+?\\.\\d+?-service\\.clearkey"),
-            Pattern.compile("android\\.hardware\\.drm@\\d+?\\.\\d+?-service\\.widevine"),
-            Pattern.compile("android\\.process\\.media"),
-            Pattern.compile("mediadrmserver"),
-            Pattern.compile("media\\.extractor"),
-            Pattern.compile("media\\.metrics"),
-            Pattern.compile("mediaserver"),
-            Pattern.compile("media\\.codec"),
-            Pattern.compile("media\\.swcodec"),
-            Pattern.compile("\\[?sdcard\\]?"), // name:/system/bin/sdcard, user:media_rw
-            // Match any vendor processes.
-            // It should only catch crashes that happen during the test.
-            Pattern.compile("vendor.*"),
+        private final String[] validProcessNames = {
+            "mediaserver", "mediadrmserver", "media.extractor", "media.codec", "media.metrics"
         };
 
         @Override
@@ -1265,7 +1249,7 @@ public class StagefrightTest extends InstrumentationTestCase {
                 if (crashes == null) {
                     Log.e(TAG, "Crash results not found for test " + getName());
                     return what;
-                } else if (CrashUtils.securityCrashDetected(crashes, true, validProcessPatterns)) {
+                } else if (CrashUtils.detectCrash(validProcessNames, true, crashes)) {
                     return what;
                 } else {
                     Log.i(TAG, "Crash ignored due to no security crash found for test " +
