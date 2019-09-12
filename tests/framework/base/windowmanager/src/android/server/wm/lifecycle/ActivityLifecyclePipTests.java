@@ -37,7 +37,6 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.platform.test.annotations.Presubmit;
 
-import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 
 import org.junit.Before;
@@ -248,7 +247,6 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 127741025)
     public void testPipAboveSplitScreen() throws Exception {
         // Launch first activity
         final Activity firstActivity =
