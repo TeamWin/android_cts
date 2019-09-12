@@ -20,14 +20,11 @@ import static android.provider.Settings.ACTION_VOICE_CONTROL_DO_NOT_DISTURB_MODE
 import static android.provider.Settings.EXTRA_DO_NOT_DISTURB_MODE_ENABLED;
 import static android.provider.Settings.EXTRA_DO_NOT_DISTURB_MODE_MINUTES;
 
-import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
-
 import static com.google.common.truth.Truth.assertThat;
 
 import android.provider.Settings;
 import android.util.Log;
 
-import com.android.compatibility.common.util.BroadcastTestBase;
 import com.android.compatibility.common.util.BroadcastUtils;
 
 import org.junit.Test;

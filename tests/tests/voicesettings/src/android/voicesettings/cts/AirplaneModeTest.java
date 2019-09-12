@@ -18,18 +18,14 @@ package android.voicesettings.cts;
 
 import static android.provider.Settings.ACTION_VOICE_CONTROL_AIRPLANE_MODE;
 
-import com.android.compatibility.common.util.BroadcastTestBase;
-import com.android.compatibility.common.util.BroadcastUtils;
-
-import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
-
 import static com.google.common.truth.Truth.assertThat;
 
-import org.junit.Test;
-
 import android.provider.Settings;
-import android.provider.Settings.Global;
 import android.util.Log;
+
+import com.android.compatibility.common.util.BroadcastUtils;
+
+import org.junit.Test;
 
 public class AirplaneModeTest extends BroadcastTestBase {
     static final String TAG = "AirplaneModeTest";
