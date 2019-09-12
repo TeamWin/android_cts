@@ -17,6 +17,7 @@
 package android.security.cts;
 
 import android.Manifest;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.SecurityTest;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -36,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 
 @RunWith(JUnit4.class)
 @SecurityTest
+@AppModeFull
 public class PackageInstallerTest {
 
     private static final String TEST_APP_NAME = "android.security.cts.packageinstallertestapp";
