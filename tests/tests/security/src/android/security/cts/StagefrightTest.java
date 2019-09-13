@@ -75,7 +75,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.security.cts.R;
-
+import android.media.TimedText;
 
 /**
  * Verify that the device is not vulnerable to any known Stagefright
@@ -1402,6 +1402,78 @@ public class StagefrightTest extends InstrumentationTestCase {
                 }
 
                 Looper.loop();
+                mp.release();
+            }
+        });
+
+        t.start();
+        String cve = name.replace("_", "-").toUpperCase();
+        assertFalse("Device *IS* vulnerable to " + cve,
+                    mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
+        t.stopLooper();
+        t.join(); // wait for thread to exit so we're sure the player was released
+    }
+
+    /*
+     * b/135207745
+     */
+    @SecurityTest(minPatchLevel = "2019-08")
+    public void testStagefright_cve_2019_2129() throws Exception {
+        final int rid = R.raw.cve_2019_2129;
+        String name = getInstrumentation().getContext().getResources().getResourceEntryName(rid);
+        Log.i(TAG, "start mediaplayer test for: " + name);
+
+        final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                super.onPrepared(mp);
+                mp.setLooping(true);
+            }
+        };
+
+        LooperThread t = new LooperThread(new Runnable() {
+            @Override
+            public void run() {
+                MediaPlayer mp = new MediaPlayer();
+                mp.setOnErrorListener(mpcl);
+                mp.setOnPreparedListener(mpcl);
+                mp.setOnCompletionListener(mpcl);
+                Surface surface = getDummySurface();
+                mp.setSurface(surface);
+                AssetFileDescriptor fd = null;
+                try {
+                    fd = getInstrumentation().getContext().getResources().openRawResourceFd(rid);
+                    mp.setOnTimedTextListener(new MediaPlayer.OnTimedTextListener() {
+                        @Override
+                        public void onTimedText(MediaPlayer p, TimedText text) {
+                            if (text != null) {
+                                Log.d(TAG, "text = " + text.getText());
+                            }
+                        }
+                    });
+                    mp.setDataSource(fd.getFileDescriptor(),
+                                     fd.getStartOffset(),
+                                     fd.getLength());
+                    //  keep the original as in poc by not using prepareAsync
+                    mp.prepare();
+                    mp.selectTrack(2);
+                } catch (Exception e) {
+                    Log.e(TAG, "Exception is caught " + e.getMessage());
+                    e.printStackTrace();
+                } finally {
+                    closeQuietly(fd);
+                }
+
+                try {
+                    //  here to catch & swallow the runtime crash in exception
+                    //  after the place where original poc failed in
+                    //  java.lang.IllegalArgumentException: parseParcel()
+                    //  which is beyond test control.
+                    Looper.loop();
+                } catch (RuntimeException e) {
+                    Log.e(TAG, "Exception is caught on Looper.loop() " + e.getMessage());
+                    e.printStackTrace();
+                }
                 mp.release();
             }
         });
