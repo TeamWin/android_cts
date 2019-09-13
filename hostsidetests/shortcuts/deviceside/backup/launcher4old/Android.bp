@@ -26,7 +26,7 @@ android_test_helper_app {
         "general-tests",
     ],
     static_libs: [
-        "CtsShortcutBackupPublisher4oldLib",
+        "CtsShortcutBackupLauncher4oldLib",
         "compatibility-device-util-axt",
     ],
 }
