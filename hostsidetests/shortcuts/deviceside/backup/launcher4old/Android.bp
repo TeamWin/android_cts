@@ -26,13 +26,14 @@ android_test_helper_app {
         "general-tests",
     ],
     static_libs: [
-        "CtsShortcutBackupPublisher4oldLib",
+        "CtsShortcutBackupLauncher4oldLib",
         "compatibility-device-util-axt",
     ],
 }
 
 android_library {
     name: "CtsShortcutBackupLauncher4oldLib",
+    manifest: "AndroidManifest-lib.xml",
     defaults: [
         "cts_defaults",
         "hostsidetests-shortcuts-deviceside-defaults",
