@@ -33,6 +33,7 @@ android_test_helper_app {
 
 android_library {
     name: "CtsShortcutBackupPublisher4oldLib",
+    manifest: "AndroidManifest-lib.xml",
     srcs: ["src/**/*.java"],
     defaults: [
         "cts_defaults",
