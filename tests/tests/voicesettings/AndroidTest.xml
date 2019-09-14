@@ -25,7 +25,6 @@
         <option name="test-file-name" value="CtsVoiceSettingsTestCases.apk" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
-        <option name="run-command" value="settings put secure voice_interaction_service android.voicesettings.service/.MainInteractionService" />
 
         <!-- Close the "turn on battery saver?" dialog, and wait for the broadcast queue to drain. -->
         <option name="teardown-command" value="am broadcast --receiver-foreground -a android.intent.action.CLOSE_SYSTEM_DIALOGS" />

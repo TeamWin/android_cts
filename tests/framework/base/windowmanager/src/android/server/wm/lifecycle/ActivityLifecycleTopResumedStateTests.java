@@ -16,6 +16,7 @@
 
 package android.server.wm.lifecycle;
 
+import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
@@ -1092,8 +1093,21 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         // Wait and assert lifecycle
         waitAndAssertActivityStates(state(pipActivity, ON_PAUSE));
-        // PipMenuActivity will start and briefly get the top position, so we ignore the rest
-        // of the possibilities.
+
+        // The PipMenuActivity could start anytime after moving pipActivity to pinned stack,
+        // however, we cannot control when would it start or finish, so this test could fail when
+        // PipMenuActivity just start and pipActivity call finish almost at the same time.
+        // So the strategy here is to wait the PipMenuActivity start and finish after pipActivity
+        // moved to pinned stack and paused, because pipActivity is not focusable but the
+        // PipMenuActivity is focusable, when the pinned stack gain top focus means the
+        // PipMenuActivity is launched and resumed, then when pinned stack lost top focus means the
+        // PipMenuActivity is finished.
+        mAmWmState.waitWindowingModeTopFocus(WINDOWING_MODE_PINNED, true /* topFocus */
+                , "wait PipMenuActivity get top focus");
+        mAmWmState.waitWindowingModeTopFocus(WINDOWING_MODE_PINNED, false /* topFocus */
+                , "wait PipMenuActivity lost top focus");
+        waitAndAssertActivityStates(state(activity, ON_TOP_POSITION_GAINED));
+
         LifecycleVerifier.assertOrder(getLifecycleLog(), Arrays.asList(
                 transition(CallbackTrackingActivity.class, ON_TOP_POSITION_LOST),
                 transition(CallbackTrackingActivity.class, ON_PAUSE),

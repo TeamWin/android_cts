@@ -41,7 +41,6 @@ public class ZenModeTest extends BroadcastTestBase {
 
     @Override
     protected void customSetup() throws Exception {
-        mContext = getInstrumentation().getTargetContext();
         mHasFeature = mContext.getPackageManager().hasSystemFeature(FEATURE_VOICE_RECOGNIZERS);
     }
 

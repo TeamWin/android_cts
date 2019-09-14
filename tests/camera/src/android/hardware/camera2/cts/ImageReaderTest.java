@@ -53,6 +53,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static android.hardware.camera2.cts.CameraTestUtils.CAPTURE_RESULT_TIMEOUT_MS;
+import static android.hardware.camera2.cts.CameraTestUtils.SESSION_READY_TIMEOUT_MS;
 import static android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
 import static android.hardware.camera2.cts.CameraTestUtils.SimpleImageReaderListener;
 import static android.hardware.camera2.cts.CameraTestUtils.dumpFile;
@@ -688,7 +689,7 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
     public void testDiscardFreeBuffers() throws Exception {
         for (String id : mCameraIds) {
             try {
-                Log.v(TAG, "Testing jpeg capture for Camera " + id);
+                Log.v(TAG, "Testing discardFreeBuffers for Camera " + id);
                 openDevice(id);
                 discardFreeBuffersTestByCamera();
             } finally {
@@ -964,13 +965,13 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
 
         final Size SIZE = mStaticInfo.getAvailableSizesForFormatChecked(FORMAT,
                 StaticMetadata.StreamDirection.Output)[0];
-        Image img = null;
         // Create ImageReader.
         mListener = new SimpleImageListener();
         createDefaultImageReader(SIZE, FORMAT, MAX_NUM_IMAGES, mListener);
 
         // Start capture.
         final boolean REPEATING = true;
+        final boolean SINGLE = false;
         CaptureRequest request = prepareCaptureRequest();
         SimpleCaptureCallback listener = new SimpleCaptureCallback();
         startCapture(request, REPEATING, listener, mHandler);
@@ -985,6 +986,23 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         // Validate images and capture resulst again.
         validateImage(SIZE, FORMAT, NUM_FRAME_VERIFIED, REPEATING);
         validateCaptureResult(FORMAT, SIZE, listener, NUM_FRAME_VERIFIED);
+
+        // Stop repeating request in preparation for discardFreeBuffers
+        mCameraSession.stopRepeating();
+        mCameraSessionListener.getStateWaiter().waitForState(
+                BlockingSessionCallback.SESSION_READY, SESSION_READY_TIMEOUT_MS);
+
+        // Drain the reader queue and discard free buffers from the reader.
+        Image img = mReader.acquireLatestImage();
+        if (img != null) {
+            img.close();
+        }
+        mReader.discardFreeBuffers();
+
+        // Do a single capture for camera device to reallocate buffers
+        mListener.reset();
+        startCapture(request, SINGLE, listener, mHandler);
+        validateImage(SIZE, FORMAT, /*captureCount*/1, SINGLE);
     }
 
     private void bufferFormatTestByCamera(int format, boolean repeating) throws Exception {
@@ -1211,6 +1229,10 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
             if (image != null) {
                 image.close();
             }
+        }
+
+        public void reset() {
+            imageAvailable.close();
         }
     }
 

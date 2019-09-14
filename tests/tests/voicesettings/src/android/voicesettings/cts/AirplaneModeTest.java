@@ -43,7 +43,6 @@ public class AirplaneModeTest extends BroadcastTestBase {
 
     @Override
     protected void customSetup() throws Exception {
-        mContext = getInstrumentation().getTargetContext();
         mHasFeature = mContext.getPackageManager().hasSystemFeature(FEATURE_VOICE_RECOGNIZERS);
         Log.v(TAG, "setUp(): mHasFeature=" + mHasFeature);
     }

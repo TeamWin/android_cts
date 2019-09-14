@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assume.assumeTrue;
 
+import com.android.ddmlib.Log;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -34,6 +35,8 @@ import org.junit.runner.RunWith;
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class RollbackManagerHostTest extends BaseHostJUnit4Test {
+
+    private static final String TAG = "RollbackManagerHostTest";
 
     private static final String SHIM_APEX_PACKAGE_NAME = "com.android.apex.cts.shim";
     private static final String TEST_APK_PACKAGE_NAME = "com.android.cts.install.lib.testapp.A";
@@ -68,17 +71,16 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
             // Device doesn't support updating apex. Nothing to uninstall.
             return;
         }
-        final ITestDevice.ApexInfo shimApex = getShimApex();
-        if (shimApex.versionCode == 1) {
-            // System version is active, skipping uninstalling active apex and rebooting the device.
-            return;
-        }
-        // Non system version is active, need to uninstall it and reboot the device.
         final String errorMessage = getDevice().uninstallPackage(SHIM_APEX_PACKAGE_NAME);
-        if (errorMessage != null) {
-            throw new AssertionError("Failed to uninstall " + shimApex);
+        if (errorMessage == null) {
+            Log.i(TAG, "Uninstalling shim apex");
+            getDevice().reboot();
+        } else {
+            // Most likely we tried to uninstall system version and failed. It should be fine to
+            // continue tests.
+            // TODO(b/140813980): use ApexInfo.sourceDir to decide whenever to issue an uninstall.
+            Log.w(TAG, "Failed to uninstall shim APEX : " + errorMessage);
         }
-        getDevice().reboot();
         assertThat(getShimApex().versionCode).isEqualTo(1L);
     }
 
