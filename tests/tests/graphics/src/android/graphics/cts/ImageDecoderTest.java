@@ -51,11 +51,9 @@ import android.util.TypedValue;
 import androidx.core.content.FileProvider;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.BitmapUtils;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -71,11 +69,11 @@ import java.util.function.IntFunction;
 import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
 
-@RunWith(AndroidJUnit4.class)
-public class ImageDecoderTest {
-    private Resources mRes;
-    private ContentResolver mContentResolver;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 
+@RunWith(JUnitParamsRunner.class)
+public class ImageDecoderTest {
     private static final class Record {
         public final int resId;
         public final int width;
@@ -94,17 +92,19 @@ public class ImageDecoderTest {
 
     private static final ColorSpace sSRGB = ColorSpace.get(ColorSpace.Named.SRGB);
 
-    private static final Record[] RECORDS = new Record[] {
-        new Record(R.drawable.baseline_jpeg, 1280, 960, "image/jpeg", sSRGB),
-        new Record(R.drawable.png_test, 640, 480, "image/png", sSRGB),
-        new Record(R.drawable.gif_test, 320, 240, "image/gif", sSRGB),
-        new Record(R.drawable.bmp_test, 320, 240, "image/bmp", sSRGB),
-        new Record(R.drawable.webp_test, 640, 480, "image/webp", sSRGB),
-        new Record(R.drawable.google_chrome, 256, 256, "image/x-ico", sSRGB),
-        new Record(R.drawable.color_wheel, 128, 128, "image/x-ico", sSRGB),
-        new Record(R.raw.sample_1mp, 600, 338, "image/x-adobe-dng", sSRGB),
-        new Record(R.raw.heifwriter_input, 1920, 1080, "image/heif", sSRGB),
-    };
+    private Object[] getRecords() {
+        return new Record[] {
+            new Record(R.drawable.baseline_jpeg, 1280, 960, "image/jpeg", sSRGB),
+            new Record(R.drawable.png_test, 640, 480, "image/png", sSRGB),
+            new Record(R.drawable.gif_test, 320, 240, "image/gif", sSRGB),
+            new Record(R.drawable.bmp_test, 320, 240, "image/bmp", sSRGB),
+            new Record(R.drawable.webp_test, 640, 480, "image/webp", sSRGB),
+            new Record(R.drawable.google_chrome, 256, 256, "image/x-ico", sSRGB),
+            new Record(R.drawable.color_wheel, 128, 128, "image/x-ico", sSRGB),
+            new Record(R.raw.sample_1mp, 600, 338, "image/x-adobe-dng", sSRGB),
+            new Record(R.raw.heifwriter_input, 1920, 1080, "image/heif", sSRGB),
+        };
+    }
 
     // offset is how many bytes to offset the beginning of the image.
     // extra is how many bytes to append at the end.
@@ -115,7 +115,7 @@ public class ImageDecoderTest {
     }
 
     private void writeToStream(OutputStream output, int resId, int offset, int extra) {
-        InputStream input = mRes.openRawResource(resId);
+        InputStream input = getResources().openRawResource(resId);
         byte[] buffer = new byte[4096];
         int bytesRead;
         try {
@@ -194,11 +194,12 @@ public class ImageDecoderTest {
     }
 
     private Uri getAsResourceUri(int resId) {
+        Resources res = getResources();
         return new Uri.Builder()
                 .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
-                .authority(mRes.getResourcePackageName(resId))
-                .appendPath(mRes.getResourceTypeName(resId))
-                .appendPath(mRes.getResourceEntryName(resId))
+                .authority(res.getResourcePackageName(resId))
+                .appendPath(res.getResourceTypeName(resId))
+                .appendPath(res.getResourceEntryName(resId))
                 .build();
     }
 
@@ -229,102 +230,105 @@ public class ImageDecoderTest {
     };
 
     @Test
-    public void testUris() {
-        for (Record record : RECORDS) {
-            int resId = record.resId;
-            String name = mRes.getResourceEntryName(resId);
-            for (UriCreator f : mUriCreators) {
-                ImageDecoder.Source src = null;
-                Uri uri = f.apply(resId);
-                String fullName = name + ": " + uri.toString();
-                src = ImageDecoder.createSource(mContentResolver, uri);
+    @Parameters(method = "getRecords")
+    public void testUris(Record record) {
+        int resId = record.resId;
+        String name = getResources().getResourceEntryName(resId);
+        for (UriCreator f : mUriCreators) {
+            ImageDecoder.Source src = null;
+            Uri uri = f.apply(resId);
+            String fullName = name + ": " + uri.toString();
+            src = ImageDecoder.createSource(getContentResolver(), uri);
 
-                assertNotNull("failed to create Source for " + fullName, src);
-                try {
-                    Drawable d = ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
-                        decoder.setOnPartialImageListener((e) -> {
-                            fail("error for image " + fullName + ":\n" + e);
-                            return false;
-                        });
+            assertNotNull("failed to create Source for " + fullName, src);
+            try {
+                Drawable d = ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                    decoder.setOnPartialImageListener((e) -> {
+                        fail("error for image " + fullName + ":\n" + e);
+                        return false;
                     });
-                    assertNotNull("failed to create drawable for " + fullName, d);
-                } catch (IOException e) {
-                    fail("exception for image " + fullName + ":\n" + e);
-                }
+                });
+                assertNotNull("failed to create drawable for " + fullName, d);
+            } catch (IOException e) {
+                fail("exception for image " + fullName + ":\n" + e);
             }
         }
     }
 
-    @Before
-    public void setup() {
-        mRes = InstrumentationRegistry.getTargetContext().getResources();
-        mContentResolver = InstrumentationRegistry.getTargetContext().getContentResolver();
+    private Resources getResources() {
+        return InstrumentationRegistry.getTargetContext().getResources();
+    }
+
+    private ContentResolver getContentResolver() {
+        return InstrumentationRegistry.getTargetContext().getContentResolver();
     }
 
     @Test
-    public void testInfo() {
-        for (Record record : RECORDS) {
-            for (SourceCreator f : mCreators) {
-                ImageDecoder.Source src = f.apply(record.resId);
-                assertNotNull(src);
-                try {
-                    ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
-                        assertEquals(record.width,  info.getSize().getWidth());
-                        assertEquals(record.height, info.getSize().getHeight());
-                        assertEquals(record.mimeType, info.getMimeType());
-                        assertSame(record.colorSpace, info.getColorSpace());
-                    });
-                } catch (IOException e) {
-                    fail("Failed " + getAsResourceUri(record.resId) + " with exception " + e);
-                }
-            }
-        }
-    }
-
-    @Test
-    public void testDecodeDrawable() {
-        for (Record record : RECORDS) {
-            for (SourceCreator f : mCreators) {
-                ImageDecoder.Source src = f.apply(record.resId);
-                assertNotNull(src);
-
-                try {
-                    Drawable drawable = ImageDecoder.decodeDrawable(src);
-                    assertNotNull(drawable);
-                    assertEquals(record.width,  drawable.getIntrinsicWidth());
-                    assertEquals(record.height, drawable.getIntrinsicHeight());
-                } catch (IOException e) {
-                    fail("Failed with exception " + e);
-                }
+    @Parameters(method = "getRecords")
+    public void testInfo(Record record) {
+        for (SourceCreator f : mCreators) {
+            ImageDecoder.Source src = f.apply(record.resId);
+            assertNotNull(src);
+            try {
+                ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                    assertEquals(record.width,  info.getSize().getWidth());
+                    assertEquals(record.height, info.getSize().getHeight());
+                    assertEquals(record.mimeType, info.getMimeType());
+                    assertSame(record.colorSpace, info.getColorSpace());
+                });
+            } catch (IOException e) {
+                fail("Failed " + getAsResourceUri(record.resId) + " with exception " + e);
             }
         }
     }
 
     @Test
-    public void testDecodeBitmap() {
-        for (Record record : RECORDS) {
-            for (SourceCreator f : mCreators) {
-                ImageDecoder.Source src = f.apply(record.resId);
-                assertNotNull(src);
+    @Parameters(method = "getRecords")
+    public void testDecodeDrawable(Record record) {
+        for (SourceCreator f : mCreators) {
+            ImageDecoder.Source src = f.apply(record.resId);
+            assertNotNull(src);
 
-                try {
-                    Bitmap bm = ImageDecoder.decodeBitmap(src);
-                    assertNotNull(bm);
-                    assertEquals(record.width, bm.getWidth());
-                    assertEquals(record.height, bm.getHeight());
-                    assertFalse(bm.isMutable());
-                    // FIXME: This may change for small resources, etc.
-                    assertEquals(Bitmap.Config.HARDWARE, bm.getConfig());
-                } catch (IOException e) {
-                    fail("Failed with exception " + e);
-                }
+            try {
+                Drawable drawable = ImageDecoder.decodeDrawable(src);
+                assertNotNull(drawable);
+                assertEquals(record.width,  drawable.getIntrinsicWidth());
+                assertEquals(record.height, drawable.getIntrinsicHeight());
+            } catch (IOException e) {
+                fail("Failed with exception " + e);
             }
         }
+    }
+
+    @Test
+    @Parameters(method = "getRecords")
+    public void testDecodeBitmap(Record record) {
+        for (SourceCreator f : mCreators) {
+            ImageDecoder.Source src = f.apply(record.resId);
+            assertNotNull(src);
+
+            try {
+                Bitmap bm = ImageDecoder.decodeBitmap(src);
+                assertNotNull(bm);
+                assertEquals(record.width, bm.getWidth());
+                assertEquals(record.height, bm.getHeight());
+                assertFalse(bm.isMutable());
+                // FIXME: This may change for small resources, etc.
+                assertEquals(Bitmap.Config.HARDWARE, bm.getConfig());
+            } catch (IOException e) {
+                fail("Failed with exception " + e);
+            }
+        }
+    }
+
+    // Return a single Record for simple tests.
+    private Record getRecord() {
+        return ((Record[]) getRecords())[0];
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testSetBogusAllocator() {
-        ImageDecoder.Source src = mCreators[0].apply(RECORDS[0].resId);
+        ImageDecoder.Source src = mCreators[0].apply(getRecord().resId);
         try {
             ImageDecoder.decodeBitmap(src, (decoder, info, s) -> decoder.setAllocator(15));
         } catch (IOException e) {
@@ -341,7 +345,7 @@ public class ImageDecoderTest {
 
     @Test
     public void testGetAllocator() {
-        final int resId = RECORDS[0].resId;
+        final int resId = getRecord().resId;
         ImageDecoder.Source src = mCreators[0].apply(resId);
         try {
             ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
@@ -357,7 +361,8 @@ public class ImageDecoderTest {
     }
 
     @Test
-    public void testSetAllocatorDecodeBitmap() {
+    @Parameters(method = "getRecords")
+    public void testSetAllocatorDecodeBitmap(Record record) {
         class Listener implements ImageDecoder.OnHeaderDecodedListener {
             public int allocator;
             public boolean doCrop;
@@ -378,46 +383,45 @@ public class ImageDecoderTest {
         Listener l = new Listener();
 
         boolean trueFalse[] = new boolean[] { true, false };
-        for (Record record : RECORDS) {
-            ImageDecoder.Source src = ImageDecoder.createSource(mRes, record.resId);
-            assertNotNull(src);
-            for (int allocator : ALLOCATORS) {
-                for (boolean doCrop : trueFalse) {
-                    for (boolean doScale : trueFalse) {
-                        l.doCrop = doCrop;
-                        l.doScale = doScale;
-                        l.allocator = allocator;
+        Resources res = getResources();
+        ImageDecoder.Source src = ImageDecoder.createSource(res, record.resId);
+        assertNotNull(src);
+        for (int allocator : ALLOCATORS) {
+            for (boolean doCrop : trueFalse) {
+                for (boolean doScale : trueFalse) {
+                    l.doCrop = doCrop;
+                    l.doScale = doScale;
+                    l.allocator = allocator;
 
-                        Bitmap bm = null;
-                        try {
-                            bm = ImageDecoder.decodeBitmap(src, l);
-                        } catch (IOException e) {
-                            fail("Failed " + getAsResourceUri(record.resId)
-                                    + " with exception " + e);
-                        }
-                        assertNotNull(bm);
+                    Bitmap bm = null;
+                    try {
+                        bm = ImageDecoder.decodeBitmap(src, l);
+                    } catch (IOException e) {
+                        fail("Failed " + getAsResourceUri(record.resId)
+                                + " with exception " + e);
+                    }
+                    assertNotNull(bm);
 
-                        switch (allocator) {
-                            case ImageDecoder.ALLOCATOR_SOFTWARE:
-                            // TODO: Once Bitmap provides access to its
-                            // SharedMemory, confirm that ALLOCATOR_SHARED_MEMORY
-                            // worked.
-                            case ImageDecoder.ALLOCATOR_SHARED_MEMORY:
-                                assertNotEquals(Bitmap.Config.HARDWARE, bm.getConfig());
+                    switch (allocator) {
+                        case ImageDecoder.ALLOCATOR_SOFTWARE:
+                        // TODO: Once Bitmap provides access to its
+                        // SharedMemory, confirm that ALLOCATOR_SHARED_MEMORY
+                        // worked.
+                        case ImageDecoder.ALLOCATOR_SHARED_MEMORY:
+                            assertNotEquals(Bitmap.Config.HARDWARE, bm.getConfig());
 
-                                if (!doScale && !doCrop) {
-                                    Bitmap reference = BitmapFactory.decodeResource(mRes,
-                                            record.resId, null);
-                                    assertNotNull(reference);
-                                    BitmapUtils.compareBitmaps(bm, reference);
-                                }
-                                break;
-                            default:
-                                String name = getAsResourceUri(record.resId).toString();
-                                assertEquals("image " + name + "; allocator: " + allocator,
-                                             Bitmap.Config.HARDWARE, bm.getConfig());
-                                break;
-                        }
+                            if (!doScale && !doCrop) {
+                                Bitmap reference = BitmapFactory.decodeResource(res,
+                                        record.resId, null);
+                                assertNotNull(reference);
+                                BitmapUtils.compareBitmaps(bm, reference);
+                            }
+                            break;
+                        default:
+                            String name = getAsResourceUri(record.resId).toString();
+                            assertEquals("image " + name + "; allocator: " + allocator,
+                                         Bitmap.Config.HARDWARE, bm.getConfig());
+                            break;
                     }
                 }
             }
@@ -426,7 +430,7 @@ public class ImageDecoderTest {
 
     @Test
     public void testGetUnpremul() {
-        final int resId = RECORDS[0].resId;
+        final int resId = getRecord().resId;
         ImageDecoder.Source src = mCreators[0].apply(resId);
         try {
             ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
@@ -482,7 +486,7 @@ public class ImageDecoderTest {
                 (canvas) -> PixelFormat.UNKNOWN,
                 null,
         };
-        final int resId = RECORDS[0].resId;
+        final int resId = getRecord().resId;
         ImageDecoder.Source src = mCreators[0].apply(resId);
         try {
             ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
@@ -499,7 +503,8 @@ public class ImageDecoderTest {
     }
 
     @Test
-    public void testPostProcessor() {
+    @Parameters(method = "getRecords")
+    public void testPostProcessor(Record record) {
         class Listener implements ImageDecoder.OnHeaderDecodedListener {
             public boolean requireSoftware;
             @Override
@@ -516,42 +521,41 @@ public class ImageDecoderTest {
         };
         Listener l = new Listener();
         boolean trueFalse[] = new boolean[] { true, false };
-        for (Record record : RECORDS) {
-            ImageDecoder.Source src = ImageDecoder.createSource(mRes, record.resId);
-            assertNotNull(src);
-            for (boolean requireSoftware : trueFalse) {
-                l.requireSoftware = requireSoftware;
+        ImageDecoder.Source src = ImageDecoder.createSource(getResources(), record.resId);
+        assertNotNull(src);
+        for (boolean requireSoftware : trueFalse) {
+            l.requireSoftware = requireSoftware;
 
-                Bitmap bitmap = null;
-                try {
-                    bitmap = ImageDecoder.decodeBitmap(src, l);
-                } catch (IOException e) {
-                    fail("Failed with exception " + e);
-                }
-                assertNotNull(bitmap);
-                assertFalse(bitmap.isMutable());
-                if (requireSoftware) {
-                    assertNotEquals(Bitmap.Config.HARDWARE, bitmap.getConfig());
-                    for (int x = 0; x < bitmap.getWidth(); ++x) {
-                        for (int y = 0; y < bitmap.getHeight(); ++y) {
-                            int color = bitmap.getPixel(x, y);
-                            assertEquals("pixel at (" + x + ", " + y + ") does not match!",
-                                    color, Color.BLACK);
-                        }
+            Bitmap bitmap = null;
+            try {
+                bitmap = ImageDecoder.decodeBitmap(src, l);
+            } catch (IOException e) {
+                fail("Failed with exception " + e);
+            }
+            assertNotNull(bitmap);
+            assertFalse(bitmap.isMutable());
+            if (requireSoftware) {
+                assertNotEquals(Bitmap.Config.HARDWARE, bitmap.getConfig());
+                for (int x = 0; x < bitmap.getWidth(); ++x) {
+                    for (int y = 0; y < bitmap.getHeight(); ++y) {
+                        int color = bitmap.getPixel(x, y);
+                        assertEquals("pixel at (" + x + ", " + y + ") does not match!",
+                                color, Color.BLACK);
                     }
-                } else {
-                    assertEquals(bitmap.getConfig(), Bitmap.Config.HARDWARE);
                 }
+            } else {
+                assertEquals(bitmap.getConfig(), Bitmap.Config.HARDWARE);
             }
         }
     }
 
     @Test
     public void testNinepatchWithDensityNone() {
+        Resources res = getResources();
         TypedValue value = new TypedValue();
-        InputStream is = mRes.openRawResource(R.drawable.ninepatch_nodpi, value);
+        InputStream is = res.openRawResource(R.drawable.ninepatch_nodpi, value);
         // This does not call ImageDecoder directly because this entry point is not public.
-        Drawable dr = Drawable.createFromResourceStream(mRes, value, is, null, null);
+        Drawable dr = Drawable.createFromResourceStream(res, value, is, null, null);
         assertNotNull(dr);
         assertEquals(5, dr.getIntrinsicWidth());
         assertEquals(5, dr.getIntrinsicHeight());
@@ -628,7 +632,8 @@ public class ImageDecoderTest {
     }
 
     @Test
-    public void testPostProcessorAndAddedTransparency() {
+    @Parameters(method = "getRecords")
+    public void testPostProcessorAndAddedTransparency(Record record) {
         class Listener implements ImageDecoder.OnHeaderDecodedListener {
             public boolean requireSoftware;
             @Override
@@ -642,18 +647,16 @@ public class ImageDecoderTest {
         };
         Listener l = new Listener();
         boolean trueFalse[] = new boolean[] { true, false };
-        for (Record record : RECORDS) {
-            for (SourceCreator f : mCreators) {
-                for (boolean requireSoftware : trueFalse) {
-                    l.requireSoftware = requireSoftware;
-                    ImageDecoder.Source src = f.apply(record.resId);
-                    try {
-                        Bitmap bm = ImageDecoder.decodeBitmap(src, l);
-                        assertTrue(bm.hasAlpha());
-                        assertTrue(bm.isPremultiplied());
-                    } catch (IOException e) {
-                        fail("Failed with exception " + e);
-                    }
+        for (SourceCreator f : mCreators) {
+            for (boolean requireSoftware : trueFalse) {
+                l.requireSoftware = requireSoftware;
+                ImageDecoder.Source src = f.apply(record.resId);
+                try {
+                    Bitmap bm = ImageDecoder.decodeBitmap(src, l);
+                    assertTrue(bm.hasAlpha());
+                    assertTrue(bm.isPremultiplied());
+                } catch (IOException e) {
+                    fail("Failed with exception " + e);
                 }
             }
         }
@@ -673,7 +676,7 @@ public class ImageDecoderTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testPostProcessorInvalidReturn() {
-        ImageDecoder.Source src = mCreators[0].apply(RECORDS[0].resId);
+        ImageDecoder.Source src = mCreators[0].apply(getRecord().resId);
         try {
             ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
                 decoder.setPostProcessor((c) -> 42);
@@ -685,7 +688,7 @@ public class ImageDecoderTest {
 
     @Test(expected = IllegalStateException.class)
     public void testPostProcessorAndUnpremul() {
-        ImageDecoder.Source src = mCreators[0].apply(RECORDS[0].resId);
+        ImageDecoder.Source src = mCreators[0].apply(getRecord().resId);
         try {
             ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
                 decoder.setUnpremultipliedRequired(true);
@@ -697,7 +700,8 @@ public class ImageDecoderTest {
     }
 
     @Test
-    public void testPostProcessorAndScale() {
+    @Parameters(method = "getRecords")
+    public void testPostProcessorAndScale(Record record) {
         class PostProcessorWithSize implements PostProcessor {
             public int width;
             public int height;
@@ -709,21 +713,19 @@ public class ImageDecoderTest {
             };
         };
         final PostProcessorWithSize pp = new PostProcessorWithSize();
-        for (Record record : RECORDS) {
-            pp.width =  record.width  / 2;
-            pp.height = record.height / 2;
-            for (SourceCreator f : mCreators) {
-                ImageDecoder.Source src = f.apply(record.resId);
-                try {
-                    Drawable drawable = ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
-                        decoder.setTargetSize(pp.width, pp.height);
-                        decoder.setPostProcessor(pp);
-                    });
-                    assertEquals(pp.width,  drawable.getIntrinsicWidth());
-                    assertEquals(pp.height, drawable.getIntrinsicHeight());
-                } catch (IOException e) {
-                    fail("Failed " + getAsResourceUri(record.resId) + " with exception " + e);
-                }
+        pp.width =  record.width  / 2;
+        pp.height = record.height / 2;
+        for (SourceCreator f : mCreators) {
+            ImageDecoder.Source src = f.apply(record.resId);
+            try {
+                Drawable drawable = ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                    decoder.setTargetSize(pp.width, pp.height);
+                    decoder.setPostProcessor(pp);
+                });
+                assertEquals(pp.width,  drawable.getIntrinsicWidth());
+                assertEquals(pp.height, drawable.getIntrinsicHeight());
+            } catch (IOException e) {
+                fail("Failed " + getAsResourceUri(record.resId) + " with exception " + e);
             }
         }
     }
@@ -744,21 +746,20 @@ public class ImageDecoderTest {
     }
 
     @Test
-    public void testSampleSize() {
-        for (Record record : RECORDS) {
-            final String name = getAsResourceUri(record.resId).toString();
-            for (int sampleSize : new int[] { 2, 3, 4, 8, 32 }) {
-                ImageDecoder.Source src = mCreators[0].apply(record.resId);
-                try {
-                    Drawable dr = ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
-                        decoder.setTargetSampleSize(sampleSize);
-                    });
+    @Parameters(method = "getRecords")
+    public void testSampleSize(Record record) {
+        final String name = getAsResourceUri(record.resId).toString();
+        for (int sampleSize : new int[] { 2, 3, 4, 8, 32 }) {
+            ImageDecoder.Source src = mCreators[0].apply(record.resId);
+            try {
+                Drawable dr = ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                    decoder.setTargetSampleSize(sampleSize);
+                });
 
-                    checkSampleSize(name, record.width, sampleSize, dr.getIntrinsicWidth());
-                    checkSampleSize(name, record.height, sampleSize, dr.getIntrinsicHeight());
-                } catch (IOException e) {
-                    fail("Failed " + name + " with exception " + e);
-                }
+                checkSampleSize(name, record.width, sampleSize, dr.getIntrinsicWidth());
+                checkSampleSize(name, record.height, sampleSize, dr.getIntrinsicHeight());
+            } catch (IOException e) {
+                fail("Failed " + name + " with exception " + e);
             }
         }
     }
@@ -766,25 +767,23 @@ public class ImageDecoderTest {
     private interface SampleSizeSupplier extends ToIntFunction<Size> {};
 
     @Test
-    public void testLargeSampleSize() {
-        for (Record record : RECORDS) {
-            for (SourceCreator f : mCreators) {
-                for (SampleSizeSupplier supplySampleSize : new SampleSizeSupplier[] {
-                        (size) -> size.getWidth(),
-                        (size) -> size.getWidth() + 5,
-                        (size) -> size.getWidth() * 5,
-                }) {
-                    ImageDecoder.Source src = f.apply(record.resId);
-                    try {
-                        Drawable dr = ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
-                            int sampleSize = supplySampleSize.applyAsInt(info.getSize());
-                            decoder.setTargetSampleSize(sampleSize);
-                        });
-                        assertEquals(1, dr.getIntrinsicWidth());
-                    } catch (IOException e) {
-                        fail("Failed with exception " + e);
-                    }
-                }
+    @Parameters(method = "getRecords")
+    public void testLargeSampleSize(Record record) {
+        ImageDecoder.Source src = mCreators[0].apply(record.resId);
+        for (SampleSizeSupplier supplySampleSize : new SampleSizeSupplier[] {
+                (size) -> size.getWidth(),
+                (size) -> size.getWidth() + 5,
+                (size) -> size.getWidth() * 5,
+        }) {
+            try {
+                Drawable dr = ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                    int sampleSize = supplySampleSize.applyAsInt(info.getSize());
+                    decoder.setTargetSampleSize(sampleSize);
+                });
+                assertEquals(1, dr.getIntrinsicWidth());
+            } catch (Exception e) {
+                String file = getAsResourceUri(record.resId).toString();
+                fail("Failed to decode " + file + " with exception " + e);
             }
         }
     }
@@ -847,7 +846,7 @@ public class ImageDecoderTest {
                 null,
         };
 
-        final int resId = RECORDS[0].resId;
+        final int resId = getRecord().resId;
         ImageDecoder.Source src = mCreators[0].apply(resId);
         try {
             ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
@@ -893,7 +892,7 @@ public class ImageDecoderTest {
         int mPosition;
 
         ExceptionStream(int resId, int exceptionPosition) {
-            mInputStream = mRes.openRawResource(resId);
+            mInputStream = getResources().openRawResource(resId);
             mExceptionPosition = exceptionPosition;
             mPosition = 0;
         }
@@ -926,7 +925,8 @@ public class ImageDecoderTest {
     @Test
     public void testExceptionInStream() throws Throwable {
         InputStream is = new ExceptionStream(R.drawable.animated, 27570);
-        ImageDecoder.Source src = ImageDecoder.createSource(mRes, is, Bitmap.DENSITY_NONE);
+        ImageDecoder.Source src = ImageDecoder.createSource(getResources(), is,
+                Bitmap.DENSITY_NONE);
         Drawable dr = null;
         try {
             dr = ImageDecoder.decodeDrawable(src);
@@ -943,7 +943,8 @@ public class ImageDecoderTest {
     }
 
     @Test
-    public void testOnPartialImage() {
+    @Parameters(method = "getRecords")
+    public void testOnPartialImage(Record record) {
         class PartialImageCallback implements OnPartialImageListener {
             public boolean wasCalled;
             public boolean returnDrawable;
@@ -958,46 +959,44 @@ public class ImageDecoderTest {
         };
         final PartialImageCallback callback = new PartialImageCallback();
         boolean abortDecode[] = new boolean[] { true, false };
-        for (Record record : RECORDS) {
-            byte[] bytes = getAsByteArray(record.resId);
-            int truncatedLength = bytes.length / 2;
-            if (record.mimeType.equals("image/x-ico")
-                    || record.mimeType.equals("image/x-adobe-dng")
-                    || record.mimeType.equals("image/heif")) {
-                // FIXME (scroggo): Some codecs currently do not support incomplete images.
-                continue;
-            }
-            for (boolean abort : abortDecode) {
-                ImageDecoder.Source src = ImageDecoder.createSource(
-                        ByteBuffer.wrap(bytes, 0, truncatedLength));
-                callback.wasCalled = false;
-                callback.returnDrawable = !abort;
-                callback.source = src;
-                try {
-                    Drawable drawable = ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
-                        decoder.setOnPartialImageListener(callback);
-                    });
-                    assertFalse(abort);
-                    assertNotNull(drawable);
-                    assertEquals(record.width,  drawable.getIntrinsicWidth());
-                    assertEquals(record.height, drawable.getIntrinsicHeight());
-                } catch (IOException e) {
-                    assertTrue(abort);
-                }
-                assertTrue(callback.wasCalled);
-            }
-
-            // null listener behaves as if onPartialImage returned false.
+        byte[] bytes = getAsByteArray(record.resId);
+        int truncatedLength = bytes.length / 2;
+        if (record.mimeType.equals("image/x-ico")
+                || record.mimeType.equals("image/x-adobe-dng")
+                || record.mimeType.equals("image/heif")) {
+            // FIXME (scroggo): Some codecs currently do not support incomplete images.
+            return;
+        }
+        for (boolean abort : abortDecode) {
             ImageDecoder.Source src = ImageDecoder.createSource(
                     ByteBuffer.wrap(bytes, 0, truncatedLength));
+            callback.wasCalled = false;
+            callback.returnDrawable = !abort;
+            callback.source = src;
             try {
-                ImageDecoder.decodeDrawable(src);
-                fail("Should have thrown an exception!");
-            } catch (DecodeException incomplete) {
-                // This is the correct behavior.
+                Drawable drawable = ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                    decoder.setOnPartialImageListener(callback);
+                });
+                assertFalse(abort);
+                assertNotNull(drawable);
+                assertEquals(record.width,  drawable.getIntrinsicWidth());
+                assertEquals(record.height, drawable.getIntrinsicHeight());
             } catch (IOException e) {
-                fail("Failed with exception " + e);
+                assertTrue(abort);
             }
+            assertTrue(callback.wasCalled);
+        }
+
+        // null listener behaves as if onPartialImage returned false.
+        ImageDecoder.Source src = ImageDecoder.createSource(
+                ByteBuffer.wrap(bytes, 0, truncatedLength));
+        try {
+            ImageDecoder.decodeDrawable(src);
+            fail("Should have thrown an exception!");
+        } catch (DecodeException incomplete) {
+            // This is the correct behavior.
+        } catch (IOException e) {
+            fail("Failed with exception " + e);
         }
     }
 
@@ -1057,7 +1056,7 @@ public class ImageDecoderTest {
 
     @Test
     public void testGetMutable() {
-        final int resId = RECORDS[0].resId;
+        final int resId = getRecord().resId;
         ImageDecoder.Source src = mCreators[0].apply(resId);
         try {
             ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
@@ -1075,7 +1074,8 @@ public class ImageDecoderTest {
     }
 
     @Test
-    public void testMutable() {
+    @Parameters(method = "getRecords")
+    public void testMutable(Record record) {
         int allocators[] = new int[] { ImageDecoder.ALLOCATOR_DEFAULT,
                                        ImageDecoder.ALLOCATOR_SOFTWARE,
                                        ImageDecoder.ALLOCATOR_SHARED_MEMORY };
@@ -1095,22 +1095,19 @@ public class ImageDecoderTest {
         };
         HeaderListener l = new HeaderListener();
         boolean trueFalse[] = new boolean[] { true, false };
-        for (Record record : RECORDS) {
-            for (SourceCreator f : mCreators) {
-                for (boolean postProcess : trueFalse) {
-                    for (int allocator : allocators) {
-                        l.allocator = allocator;
-                        l.postProcess = postProcess;
+        ImageDecoder.Source src = mCreators[0].apply(record.resId);
+        for (boolean postProcess : trueFalse) {
+            for (int allocator : allocators) {
+                l.allocator = allocator;
+                l.postProcess = postProcess;
 
-                        ImageDecoder.Source src = f.apply(record.resId);
-                        try {
-                            Bitmap bm = ImageDecoder.decodeBitmap(src, l);
-                            assertTrue(bm.isMutable());
-                            assertNotEquals(Bitmap.Config.HARDWARE, bm.getConfig());
-                        } catch (IOException e) {
-                            fail("Failed with exception " + e);
-                        }
-                    }
+                try {
+                    Bitmap bm = ImageDecoder.decodeBitmap(src, l);
+                    assertTrue(bm.isMutable());
+                    assertNotEquals(Bitmap.Config.HARDWARE, bm.getConfig());
+                } catch (Exception e) {
+                    String file = getAsResourceUri(record.resId).toString();
+                    fail("Failed to decode " + file + " with exception " + e);
                 }
             }
         }
@@ -1118,7 +1115,7 @@ public class ImageDecoderTest {
 
     @Test(expected = IllegalStateException.class)
     public void testMutableHardware() {
-        ImageDecoder.Source src = mCreators[0].apply(RECORDS[0].resId);
+        ImageDecoder.Source src = mCreators[0].apply(getRecord().resId);
         try {
             ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
                 decoder.setMutableRequired(true);
@@ -1131,7 +1128,7 @@ public class ImageDecoderTest {
 
     @Test(expected = IllegalStateException.class)
     public void testMutableDrawable() {
-        ImageDecoder.Source src = mCreators[0].apply(RECORDS[0].resId);
+        ImageDecoder.Source src = mCreators[0].apply(getRecord().resId);
         try {
             ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
                 decoder.setMutableRequired(true);
@@ -1201,7 +1198,8 @@ public class ImageDecoderTest {
     }
 
     @Test
-    public void testTargetSize() {
+    @Parameters(method = "getRecords")
+    public void testTargetSize(Record record) {
         class ResizeListener implements ImageDecoder.OnHeaderDecodedListener {
             public int width;
             public int height;
@@ -1214,42 +1212,40 @@ public class ImageDecoderTest {
         ResizeListener l = new ResizeListener();
 
         float[] scales = new float[] { .0625f, .125f, .25f, .5f, .75f, 1.1f, 2.0f };
-        for (Record record : RECORDS) {
-            ImageDecoder.Source src = mCreators[0].apply(record.resId);
-            for (int j = 0; j < scales.length; ++j) {
-                l.width  = (int) (scales[j] * record.width);
-                l.height = (int) (scales[j] * record.height);
-
-                try {
-                    Drawable drawable = ImageDecoder.decodeDrawable(src, l);
-                    assertEquals(l.width,  drawable.getIntrinsicWidth());
-                    assertEquals(l.height, drawable.getIntrinsicHeight());
-
-                    Bitmap bm = ImageDecoder.decodeBitmap(src, l);
-                    assertEquals(l.width,  bm.getWidth());
-                    assertEquals(l.height, bm.getHeight());
-                } catch (IOException e) {
-                    fail("Failed " + getAsResourceUri(record.resId) + " with exception " + e);
-                }
-            }
+        ImageDecoder.Source src = mCreators[0].apply(record.resId);
+        for (int j = 0; j < scales.length; ++j) {
+            l.width  = (int) (scales[j] * record.width);
+            l.height = (int) (scales[j] * record.height);
 
             try {
-                // Arbitrary square.
-                l.width  = 50;
-                l.height = 50;
                 Drawable drawable = ImageDecoder.decodeDrawable(src, l);
-                assertEquals(50,  drawable.getIntrinsicWidth());
-                assertEquals(50, drawable.getIntrinsicHeight());
+                assertEquals(l.width,  drawable.getIntrinsicWidth());
+                assertEquals(l.height, drawable.getIntrinsicHeight());
 
-                // Swap width and height, for different scales.
-                l.height = record.width;
-                l.width  = record.height;
-                drawable = ImageDecoder.decodeDrawable(src, l);
-                assertEquals(record.height, drawable.getIntrinsicWidth());
-                assertEquals(record.width,  drawable.getIntrinsicHeight());
+                Bitmap bm = ImageDecoder.decodeBitmap(src, l);
+                assertEquals(l.width,  bm.getWidth());
+                assertEquals(l.height, bm.getHeight());
             } catch (IOException e) {
-                fail("Failed with exception " + e);
+                fail("Failed " + getAsResourceUri(record.resId) + " with exception " + e);
             }
+        }
+
+        try {
+            // Arbitrary square.
+            l.width  = 50;
+            l.height = 50;
+            Drawable drawable = ImageDecoder.decodeDrawable(src, l);
+            assertEquals(50,  drawable.getIntrinsicWidth());
+            assertEquals(50, drawable.getIntrinsicHeight());
+
+            // Swap width and height, for different scales.
+            l.height = record.width;
+            l.width  = record.height;
+            drawable = ImageDecoder.decodeDrawable(src, l);
+            assertEquals(record.height, drawable.getIntrinsicWidth());
+            assertEquals(record.width,  drawable.getIntrinsicHeight());
+        } catch (IOException e) {
+            fail("Failed with exception " + e);
         }
     }
 
@@ -1322,7 +1318,7 @@ public class ImageDecoderTest {
 
     @Test
     public void testGetCrop() {
-        final int resId = RECORDS[0].resId;
+        final int resId = getRecord().resId;
         ImageDecoder.Source src = mCreators[0].apply(resId);
         try {
             ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
@@ -1342,7 +1338,8 @@ public class ImageDecoderTest {
     }
 
     @Test
-    public void testCrop() {
+    @Parameters(method = "getRecords")
+    public void testCrop(Record record) {
         class Listener implements ImageDecoder.OnHeaderDecodedListener {
             public boolean doScale;
             public boolean requireSoftware;
@@ -1371,22 +1368,20 @@ public class ImageDecoderTest {
         };
         Listener l = new Listener();
         boolean trueFalse[] = new boolean[] { true, false };
-        for (Record record : RECORDS) {
-            for (SourceCreator f : mCreators) {
-                for (boolean doScale : trueFalse) {
-                    l.doScale = doScale;
-                    for (boolean requireSoftware : trueFalse) {
-                        l.requireSoftware = requireSoftware;
-                        ImageDecoder.Source src = f.apply(record.resId);
+        for (SourceCreator f : mCreators) {
+            for (boolean doScale : trueFalse) {
+                l.doScale = doScale;
+                for (boolean requireSoftware : trueFalse) {
+                    l.requireSoftware = requireSoftware;
+                    ImageDecoder.Source src = f.apply(record.resId);
 
-                        try {
-                            Drawable drawable = ImageDecoder.decodeDrawable(src, l);
-                            assertEquals(l.cropRect.width(),  drawable.getIntrinsicWidth());
-                            assertEquals(l.cropRect.height(), drawable.getIntrinsicHeight());
-                        } catch (IOException e) {
-                            fail("Failed " + getAsResourceUri(record.resId) +
-                                    " with exception " + e);
-                        }
+                    try {
+                        Drawable drawable = ImageDecoder.decodeDrawable(src, l);
+                        assertEquals(l.cropRect.width(),  drawable.getIntrinsicWidth());
+                        assertEquals(l.cropRect.height(), drawable.getIntrinsicHeight());
+                    } catch (IOException e) {
+                        fail("Failed " + getAsResourceUri(record.resId)
+                                + " with exception " + e);
                     }
                 }
             }
@@ -1743,7 +1738,7 @@ public class ImageDecoderTest {
 
     @Test
     public void testGetConserveMemory() {
-        final int resId = RECORDS[0].resId;
+        final int resId = getRecord().resId;
         ImageDecoder.Source src = mCreators[0].apply(resId);
         try {
             ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
@@ -1904,7 +1899,7 @@ public class ImageDecoderTest {
                 reference = null;
             }
             Uri uri = getAsResourceUri(resId);
-            ImageDecoder.Source src = ImageDecoder.createSource(mContentResolver, uri);
+            ImageDecoder.Source src = ImageDecoder.createSource(getContentResolver(), uri);
             try {
                 Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
                     // Use software allocator so we can compare.
@@ -1935,107 +1930,105 @@ public class ImageDecoderTest {
     private interface ByteBufferSupplier extends Supplier<ByteBuffer> {};
 
     @Test
-    public void testOffsetByteArray() {
-        for (Record record : RECORDS) {
-            int offset = 10;
-            int extra = 15;
-            byte[] array = getAsByteArray(record.resId, offset, extra);
-            int length = array.length - extra - offset;
-            // Used for SourceCreators that set both a position and an offset.
-            int myOffset = 3;
-            int myPosition = 7;
-            assertEquals(offset, myOffset + myPosition);
+    @Parameters(method = "getRecords")
+    public void testOffsetByteArray(Record record) {
+        int offset = 10;
+        int extra = 15;
+        byte[] array = getAsByteArray(record.resId, offset, extra);
+        int length = array.length - extra - offset;
+        // Used for SourceCreators that set both a position and an offset.
+        int myOffset = 3;
+        int myPosition = 7;
+        assertEquals(offset, myOffset + myPosition);
 
-            ByteBufferSupplier[] suppliers = new ByteBufferSupplier[] {
-                    // Internally, this gives the buffer a position, but not an offset.
-                    () -> ByteBuffer.wrap(array, offset, length),
+        ByteBufferSupplier[] suppliers = new ByteBufferSupplier[] {
+                // Internally, this gives the buffer a position, but not an offset.
+                () -> ByteBuffer.wrap(array, offset, length),
+                // Same, but make it readOnly to ensure that we test the
+                // ByteBufferSource rather than the ByteArraySource.
+                () -> ByteBuffer.wrap(array, offset, length).asReadOnlyBuffer(),
+                () -> {
+                    // slice() to give the buffer an offset.
+                    ByteBuffer buf = ByteBuffer.wrap(array, 0, array.length - extra);
+                    buf.position(offset);
+                    return buf.slice();
+                },
+                () -> {
                     // Same, but make it readOnly to ensure that we test the
                     // ByteBufferSource rather than the ByteArraySource.
-                    () -> ByteBuffer.wrap(array, offset, length).asReadOnlyBuffer(),
-                    () -> {
-                        // slice() to give the buffer an offset.
-                        ByteBuffer buf = ByteBuffer.wrap(array, 0, array.length - extra);
-                        buf.position(offset);
-                        return buf.slice();
-                    },
-                    () -> {
-                        // Same, but make it readOnly to ensure that we test the
-                        // ByteBufferSource rather than the ByteArraySource.
-                        ByteBuffer buf = ByteBuffer.wrap(array, 0, array.length - extra);
-                        buf.position(offset);
-                        return buf.slice().asReadOnlyBuffer();
-                    },
-                    () -> {
-                        // Use both a position and an offset.
-                        ByteBuffer buf = ByteBuffer.wrap(array, myOffset,
+                    ByteBuffer buf = ByteBuffer.wrap(array, 0, array.length - extra);
+                    buf.position(offset);
+                    return buf.slice().asReadOnlyBuffer();
+                },
+                () -> {
+                    // Use both a position and an offset.
+                    ByteBuffer buf = ByteBuffer.wrap(array, myOffset,
                             array.length - extra - myOffset);
-                        buf = buf.slice();
-                        buf.position(myPosition);
-                        return buf;
-                    },
-                    () -> {
-                        // Same, as readOnly.
-                        ByteBuffer buf = ByteBuffer.wrap(array, myOffset,
-                                array.length - extra - myOffset);
-                        buf = buf.slice();
-                        buf.position(myPosition);
-                        return buf.asReadOnlyBuffer();
-                    },
-                    () -> {
-                        // Direct ByteBuffer with a position.
-                        ByteBuffer buf = ByteBuffer.allocateDirect(array.length);
-                        buf.put(array);
-                        buf.position(offset);
-                        return buf;
-                    },
-                    () -> {
-                        // Sliced direct ByteBuffer, for an offset.
-                        ByteBuffer buf = ByteBuffer.allocateDirect(array.length);
-                        buf.put(array);
-                        buf.position(offset);
-                        return buf.slice();
-                    },
-                    () -> {
-                        // Direct ByteBuffer with position and offset.
-                        ByteBuffer buf = ByteBuffer.allocateDirect(array.length);
-                        buf.put(array);
-                        buf.position(myOffset);
-                        buf = buf.slice();
-                        buf.position(myPosition);
-                        return buf;
-                    },
-            };
-            for (int i = 0; i < suppliers.length; ++i) {
-                ByteBuffer buffer = suppliers[i].get();
-                final int position = buffer.position();
-                ImageDecoder.Source src = ImageDecoder.createSource(buffer);
-                try {
-                    Drawable drawable = ImageDecoder.decodeDrawable(src);
-                    assertNotNull(drawable);
-                } catch (IOException e) {
-                    fail("Failed with exception " + e);
-                }
-                assertEquals("Mismatch for supplier " + i,
-                        position, buffer.position());
-            }
-        }
-    }
-
-    @Test
-    public void testResourceSource() {
-        for (Record record : RECORDS) {
-            ImageDecoder.Source src = ImageDecoder.createSource(mRes, record.resId);
+                    buf = buf.slice();
+                    buf.position(myPosition);
+                    return buf;
+                },
+                () -> {
+                    // Same, as readOnly.
+                    ByteBuffer buf = ByteBuffer.wrap(array, myOffset,
+                            array.length - extra - myOffset);
+                    buf = buf.slice();
+                    buf.position(myPosition);
+                    return buf.asReadOnlyBuffer();
+                },
+                () -> {
+                    // Direct ByteBuffer with a position.
+                    ByteBuffer buf = ByteBuffer.allocateDirect(array.length);
+                    buf.put(array);
+                    buf.position(offset);
+                    return buf;
+                },
+                () -> {
+                    // Sliced direct ByteBuffer, for an offset.
+                    ByteBuffer buf = ByteBuffer.allocateDirect(array.length);
+                    buf.put(array);
+                    buf.position(offset);
+                    return buf.slice();
+                },
+                () -> {
+                    // Direct ByteBuffer with position and offset.
+                    ByteBuffer buf = ByteBuffer.allocateDirect(array.length);
+                    buf.put(array);
+                    buf.position(myOffset);
+                    buf = buf.slice();
+                    buf.position(myPosition);
+                    return buf;
+                },
+        };
+        for (int i = 0; i < suppliers.length; ++i) {
+            ByteBuffer buffer = suppliers[i].get();
+            final int position = buffer.position();
+            ImageDecoder.Source src = ImageDecoder.createSource(buffer);
             try {
                 Drawable drawable = ImageDecoder.decodeDrawable(src);
                 assertNotNull(drawable);
             } catch (IOException e) {
-                fail("Failed " + getAsResourceUri(record.resId) + " with " + e);
+                fail("Failed with exception " + e);
             }
+            assertEquals("Mismatch for supplier " + i,
+                    position, buffer.position());
+        }
+    }
+
+    @Test
+    @Parameters(method = "getRecords")
+    public void testResourceSource(Record record) {
+        ImageDecoder.Source src = ImageDecoder.createSource(getResources(), record.resId);
+        try {
+            Drawable drawable = ImageDecoder.decodeDrawable(src);
+            assertNotNull(drawable);
+        } catch (IOException e) {
+            fail("Failed " + getAsResourceUri(record.resId) + " with " + e);
         }
     }
 
     private BitmapDrawable decodeBitmapDrawable(int resId) {
-        ImageDecoder.Source src = ImageDecoder.createSource(mRes, resId);
+        ImageDecoder.Source src = ImageDecoder.createSource(getResources(), resId);
         try {
             Drawable drawable = ImageDecoder.decodeDrawable(src);
             assertNotNull(drawable);
@@ -2048,54 +2041,54 @@ public class ImageDecoderTest {
     }
 
     @Test
-    public void testUpscale() {
-        final int originalDensity = mRes.getDisplayMetrics().densityDpi;
+    @Parameters(method = "getRecords")
+    public void testUpscale(Record record) {
+        Resources res = getResources();
+        final int originalDensity = res.getDisplayMetrics().densityDpi;
 
         try {
-            for (Record record : RECORDS) {
-                final int resId = record.resId;
+            final int resId = record.resId;
 
-                // Set a high density. This will result in a larger drawable, but
-                // not a larger Bitmap.
-                mRes.getDisplayMetrics().densityDpi = DisplayMetrics.DENSITY_XXXHIGH;
-                BitmapDrawable drawable = decodeBitmapDrawable(resId);
+            // Set a high density. This will result in a larger drawable, but
+            // not a larger Bitmap.
+            res.getDisplayMetrics().densityDpi = DisplayMetrics.DENSITY_XXXHIGH;
+            BitmapDrawable drawable = decodeBitmapDrawable(resId);
 
-                Bitmap bm = drawable.getBitmap();
-                assertEquals(record.width, bm.getWidth());
-                assertEquals(record.height, bm.getHeight());
+            Bitmap bm = drawable.getBitmap();
+            assertEquals(record.width, bm.getWidth());
+            assertEquals(record.height, bm.getHeight());
 
-                assertTrue(drawable.getIntrinsicWidth() > record.width);
-                assertTrue(drawable.getIntrinsicHeight() > record.height);
+            assertTrue(drawable.getIntrinsicWidth() > record.width);
+            assertTrue(drawable.getIntrinsicHeight() > record.height);
 
-                // Set a low density. This will result in a smaller drawable and
-                // Bitmap, unless the true density is DENSITY_MEDIUM, which matches
-                // the density of the asset.
-                mRes.getDisplayMetrics().densityDpi = DisplayMetrics.DENSITY_LOW;
-                drawable = decodeBitmapDrawable(resId);
-                bm = drawable.getBitmap();
+            // Set a low density. This will result in a smaller drawable and
+            // Bitmap, unless the true density is DENSITY_MEDIUM, which matches
+            // the density of the asset.
+            res.getDisplayMetrics().densityDpi = DisplayMetrics.DENSITY_LOW;
+            drawable = decodeBitmapDrawable(resId);
+            bm = drawable.getBitmap();
 
-                if (originalDensity == DisplayMetrics.DENSITY_MEDIUM) {
-                    // Although we've modified |densityDpi|, ImageDecoder knows the
-                    // true density matches the asset, so it will not downscale at
-                    // decode time.
-                    assertEquals(bm.getWidth(), record.width);
-                    assertEquals(bm.getHeight(), record.height);
+            if (originalDensity == DisplayMetrics.DENSITY_MEDIUM) {
+                // Although we've modified |densityDpi|, ImageDecoder knows the
+                // true density matches the asset, so it will not downscale at
+                // decode time.
+                assertEquals(bm.getWidth(), record.width);
+                assertEquals(bm.getHeight(), record.height);
 
-                    // The drawable should still be smaller.
-                    assertTrue(bm.getWidth() > drawable.getIntrinsicWidth());
-                    assertTrue(bm.getHeight() > drawable.getIntrinsicHeight());
-                } else {
-                    // The bitmap is scaled down at decode time, so it matches the
-                    // drawable size, and is smaller than the original.
-                    assertTrue(bm.getWidth() < record.width);
-                    assertTrue(bm.getHeight() < record.height);
+                // The drawable should still be smaller.
+                assertTrue(bm.getWidth() > drawable.getIntrinsicWidth());
+                assertTrue(bm.getHeight() > drawable.getIntrinsicHeight());
+            } else {
+                // The bitmap is scaled down at decode time, so it matches the
+                // drawable size, and is smaller than the original.
+                assertTrue(bm.getWidth() < record.width);
+                assertTrue(bm.getHeight() < record.height);
 
-                    assertEquals(bm.getWidth(), drawable.getIntrinsicWidth());
-                    assertEquals(bm.getHeight(), drawable.getIntrinsicHeight());
-                }
+                assertEquals(bm.getWidth(), drawable.getIntrinsicWidth());
+                assertEquals(bm.getHeight(), drawable.getIntrinsicHeight());
             }
         } finally {
-            mRes.getDisplayMetrics().densityDpi = originalDensity;
+            res.getDisplayMetrics().densityDpi = originalDensity;
         }
     }
 
@@ -2138,7 +2131,8 @@ public class ImageDecoderTest {
         }
     }
 
-    private static final AssetRecord[] ASSETS = new AssetRecord[] {
+    private Object [] getAssetRecords() {
+        return new Object [] {
             // A null ColorSpace means that the color space is "Unknown".
             new AssetRecord("almost-red-adobe.png", 1, 1, false, false, null),
             new AssetRecord("green-p3.png", 64, 64, false, false,
@@ -2156,84 +2150,82 @@ public class ImageDecoderTest {
                     ColorSpace.get(ColorSpace.Named.DISPLAY_P3)),
             new AssetRecord("grayscale-linearSrgb.png", 32, 32, false, true,
                     ColorSpace.get(ColorSpace.Named.LINEAR_SRGB)),
-    };
+        };
+    }
 
     @Test
-    public void testAssetSource() {
-        AssetManager assets = mRes.getAssets();
-        for (AssetRecord record : ASSETS) {
-            ImageDecoder.Source src = ImageDecoder.createSource(assets, record.name);
+    @Parameters(method = "getAssetRecords")
+    public void testAssetSource(AssetRecord record) {
+        AssetManager assets = getResources().getAssets();
+        ImageDecoder.Source src = ImageDecoder.createSource(assets, record.name);
+        try {
+            Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
+                if (record.isF16) {
+                    // CTS infrastructure fails to create F16 HARDWARE Bitmaps, so this
+                    // switches to using software.
+                    decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+                }
+
+                record.checkColorSpace(null, info.getColorSpace());
+            });
+            assertEquals(record.name, record.width, bm.getWidth());
+            assertEquals(record.name, record.height, bm.getHeight());
+            record.checkColorSpace(null, bm.getColorSpace());
+        } catch (IOException e) {
+            fail("Failed to decode asset " + record.name + " with " + e);
+        }
+    }
+
+    @Test
+    @Parameters(method = "getAssetRecords")
+    public void testTargetColorSpace(AssetRecord record) {
+        AssetManager assets = getResources().getAssets();
+        ImageDecoder.Source src = ImageDecoder.createSource(assets, record.name);
+        for (ColorSpace cs : BitmapTest.getRgbColorSpaces()) {
             try {
                 Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
-                    if (record.isF16) {
-                        // CTS infrastructure fails to create F16 HARDWARE Bitmaps, so this
-                        // switches to using software.
+                    if (record.isF16 || isExtended(cs)) {
+                        // CTS infrastructure and some devices fail to create F16
+                        // HARDWARE Bitmaps, so this switches to using software.
                         decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
                     }
-
-                    record.checkColorSpace(null, info.getColorSpace());
+                    decoder.setTargetColorSpace(cs);
                 });
-                assertEquals(record.name, record.width, bm.getWidth());
-                assertEquals(record.name, record.height, bm.getHeight());
-                record.checkColorSpace(null, bm.getColorSpace());
+                record.checkColorSpace(cs, bm.getColorSpace());
             } catch (IOException e) {
-                fail("Failed to decode asset " + record.name + " with " + e);
+                fail("Failed to decode asset " + record.name + " to " + cs + " with " + e);
             }
         }
     }
 
     @Test
-    public void testTargetColorSpace() {
-        AssetManager assets = mRes.getAssets();
-        for (AssetRecord record : ASSETS) {
-            ImageDecoder.Source src = ImageDecoder.createSource(assets, record.name);
-            for (ColorSpace cs : BitmapTest.getRgbColorSpaces()) {
-                try {
-                    Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
-                        if (record.isF16 || isExtended(cs)) {
-                            // CTS infrastructure and some devices fail to create F16
-                            // HARDWARE Bitmaps, so this switches to using software.
-                            decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
-                        }
-                        decoder.setTargetColorSpace(cs);
-                    });
-                    record.checkColorSpace(cs, bm.getColorSpace());
-                } catch (IOException e) {
-                    fail("Failed to decode asset " + record.name + " to " + cs + " with " + e);
-                }
-            }
-        }
-    }
-
-    @Test
-    public void testTargetColorSpaceNoF16HARDWARE() {
+    @Parameters(method = "getAssetRecords")
+    public void testTargetColorSpaceNoF16HARDWARE(AssetRecord record) {
         final ColorSpace EXTENDED_SRGB = ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB);
         final ColorSpace LINEAR_EXTENDED_SRGB = ColorSpace.get(
                 ColorSpace.Named.LINEAR_EXTENDED_SRGB);
-        AssetManager assets = mRes.getAssets();
-        for (AssetRecord record : ASSETS) {
-            ImageDecoder.Source src = ImageDecoder.createSource(assets, record.name);
-            for (ColorSpace cs : new ColorSpace[] { EXTENDED_SRGB, LINEAR_EXTENDED_SRGB }) {
-                try {
-                    Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
-                        decoder.setTargetColorSpace(cs);
-                    });
-                    // If the ColorSpace does not match the request, it should be because
-                    // F16 + HARDWARE is not supported. In that case, it should match the non-
-                    // EXTENDED variant.
-                    ColorSpace actual = bm.getColorSpace();
-                    if (actual != cs) {
-                        assertEquals(BitmapTest.ANDROID_BITMAP_FORMAT_RGBA_8888,
-                                     BitmapTest.nGetFormat(bm));
-                        if (cs == EXTENDED_SRGB) {
-                            assertSame(ColorSpace.get(ColorSpace.Named.SRGB), actual);
-                        } else {
-                            assertSame(ColorSpace.get(ColorSpace.Named.LINEAR_SRGB), actual);
-                        }
+        AssetManager assets = getResources().getAssets();
+        ImageDecoder.Source src = ImageDecoder.createSource(assets, record.name);
+        for (ColorSpace cs : new ColorSpace[] { EXTENDED_SRGB, LINEAR_EXTENDED_SRGB }) {
+            try {
+                Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
+                    decoder.setTargetColorSpace(cs);
+                });
+                // If the ColorSpace does not match the request, it should be because
+                // F16 + HARDWARE is not supported. In that case, it should match the non-
+                // EXTENDED variant.
+                ColorSpace actual = bm.getColorSpace();
+                if (actual != cs) {
+                    assertEquals(BitmapTest.ANDROID_BITMAP_FORMAT_RGBA_8888,
+                                 BitmapTest.nGetFormat(bm));
+                    if (cs == EXTENDED_SRGB) {
+                        assertSame(ColorSpace.get(ColorSpace.Named.SRGB), actual);
+                    } else {
+                        assertSame(ColorSpace.get(ColorSpace.Named.LINEAR_SRGB), actual);
                     }
-                } catch (IOException e) {
-                    fail("Failed to decode asset " + record.name + " to " + cs + " with " + e);
                 }
+            } catch (IOException e) {
+                fail("Failed to decode asset " + record.name + " to " + cs + " with " + e);
             }
         }
     }
@@ -2244,84 +2236,83 @@ public class ImageDecoderTest {
     }
 
     @Test
-    public void testTargetColorSpaceUpconvert() {
+    @Parameters(method = "getAssetRecords")
+    public void testTargetColorSpaceUpconvert(AssetRecord record) {
         // Verify that decoding an asset to EXTENDED upconverts to F16.
-        AssetManager assets = mRes.getAssets();
+        AssetManager assets = getResources().getAssets();
         boolean[] trueFalse = new boolean[] { true, false };
         final ColorSpace linearExtended = ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB);
         final ColorSpace linearSrgb = ColorSpace.get(ColorSpace.Named.LINEAR_SRGB);
 
-        for (AssetRecord record : ASSETS) {
-            if (record.isF16) {
-                // These assets decode to F16 by default.
-                continue;
-            }
-            ImageDecoder.Source src = ImageDecoder.createSource(assets, record.name);
-            for (ColorSpace cs : BitmapTest.getRgbColorSpaces()) {
-                for (boolean alphaMask : trueFalse) {
-                    try {
-                        Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
-                            // Force software so we can check the Config.
-                            decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
-                            decoder.setTargetColorSpace(cs);
-                            // This has no effect on non-gray assets.
-                            decoder.setDecodeAsAlphaMaskEnabled(alphaMask);
-                        });
+        if (record.isF16) {
+            // These assets decode to F16 by default.
+            return;
+        }
+        ImageDecoder.Source src = ImageDecoder.createSource(assets, record.name);
+        for (ColorSpace cs : BitmapTest.getRgbColorSpaces()) {
+            for (boolean alphaMask : trueFalse) {
+                try {
+                    Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
+                        // Force software so we can check the Config.
+                        decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+                        decoder.setTargetColorSpace(cs);
+                        // This has no effect on non-gray assets.
+                        decoder.setDecodeAsAlphaMaskEnabled(alphaMask);
+                    });
 
-                        if (record.isGray && alphaMask) {
-                            assertSame(Bitmap.Config.ALPHA_8, bm.getConfig());
-                            assertNull(bm.getColorSpace());
+                    if (record.isGray && alphaMask) {
+                        assertSame(Bitmap.Config.ALPHA_8, bm.getConfig());
+                        assertNull(bm.getColorSpace());
+                    } else {
+                        assertSame(cs, bm.getColorSpace());
+                        if (isExtended(cs)) {
+                            assertSame(Bitmap.Config.RGBA_F16, bm.getConfig());
                         } else {
-                            assertSame(cs, bm.getColorSpace());
-                            if (isExtended(cs)) {
-                                assertSame(Bitmap.Config.RGBA_F16, bm.getConfig());
+                            assertSame(Bitmap.Config.ARGB_8888, bm.getConfig());
+                        }
+                    }
+                } catch (IOException e) {
+                    fail("Failed to decode asset " + record.name + " to " + cs + " with " + e);
+                }
+
+                // Using MEMORY_POLICY_LOW_RAM prevents upconverting.
+                try {
+                    Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
+                        // Force software so we can check the Config.
+                        decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+                        decoder.setTargetColorSpace(cs);
+                        decoder.setMemorySizePolicy(ImageDecoder.MEMORY_POLICY_LOW_RAM);
+                        // This has no effect on non-gray assets.
+                        decoder.setDecodeAsAlphaMaskEnabled(alphaMask);
+                    });
+
+                    assertNotEquals(Bitmap.Config.RGBA_F16, bm.getConfig());
+
+                    if (record.isGray && alphaMask) {
+                        assertSame(Bitmap.Config.ALPHA_8, bm.getConfig());
+                        assertNull(bm.getColorSpace());
+                    } else {
+                        ColorSpace actual = bm.getColorSpace();
+                        if (isExtended(cs)) {
+                            if (cs == ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB)) {
+                                assertSame(ColorSpace.get(ColorSpace.Named.SRGB), actual);
+                            } else if (cs == linearExtended) {
+                                assertSame(linearSrgb, actual);
                             } else {
+                                fail("Test error: did isExtended() change?");
+                            }
+                        } else {
+                            assertSame(cs, actual);
+                            if (bm.hasAlpha()) {
                                 assertSame(Bitmap.Config.ARGB_8888, bm.getConfig());
-                            }
-                        }
-                    } catch (IOException e) {
-                        fail("Failed to decode asset " + record.name + " to " + cs + " with " + e);
-                    }
-
-                    // Using MEMORY_POLICY_LOW_RAM prevents upconverting.
-                    try {
-                        Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
-                            // Force software so we can check the Config.
-                            decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
-                            decoder.setTargetColorSpace(cs);
-                            decoder.setMemorySizePolicy(ImageDecoder.MEMORY_POLICY_LOW_RAM);
-                            // This has no effect on non-gray assets.
-                            decoder.setDecodeAsAlphaMaskEnabled(alphaMask);
-                        });
-
-                        assertNotEquals(Bitmap.Config.RGBA_F16, bm.getConfig());
-
-                        if (record.isGray && alphaMask) {
-                            assertSame(Bitmap.Config.ALPHA_8, bm.getConfig());
-                            assertNull(bm.getColorSpace());
-                        } else {
-                            ColorSpace actual = bm.getColorSpace();
-                            if (isExtended(cs)) {
-                                if (cs == ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB)) {
-                                    assertSame(ColorSpace.get(ColorSpace.Named.SRGB), actual);
-                                } else if (cs == linearExtended) {
-                                    assertSame(linearSrgb, actual);
-                                } else {
-                                    fail("Test error: did isExtended() change?");
-                                }
                             } else {
-                                assertSame(cs, actual);
-                                if (bm.hasAlpha()) {
-                                    assertSame(Bitmap.Config.ARGB_8888, bm.getConfig());
-                                } else {
-                                    assertSame(Bitmap.Config.RGB_565, bm.getConfig());
-                                }
+                                assertSame(Bitmap.Config.RGB_565, bm.getConfig());
                             }
                         }
-                    } catch (IOException e) {
-                        fail("Failed to decode asset " + record.name
-                                + " with MEMORY_POLICY_LOW_RAM to " + cs + " with " + e);
                     }
+                } catch (IOException e) {
+                    fail("Failed to decode asset " + record.name
+                            + " with MEMORY_POLICY_LOW_RAM to " + cs + " with " + e);
                 }
             }
         }
@@ -2403,52 +2394,92 @@ public class ImageDecoderTest {
         }
     }
 
+
+    private Object[] crossProduct(Object[] a, Object[] b) {
+        final int length = a.length * b.length;
+        Object[] ret = new Object[length];
+        for (int i = 0; i < a.length; i++) {
+            for (int j = 0; j < b.length; j++) {
+                int index = i * b.length + j;
+                assertNull(ret[index]);
+                ret[index] = new Object[] { a[i], b[j] };
+            }
+        }
+        return ret;
+    }
+
+    private Object[] getRecordsAsSources() {
+        return crossProduct(getRecords(), mCreators);
+    }
+
+
     @Test
     @LargeTest
-    public void testReuse() {
-        for (Record record : RECORDS) {
-            if (record.mimeType.equals("image/heif")) {
-                // This image takes too long for this test.
-                continue;
-            }
-
-            String name = getAsResourceUri(record.resId).toString();
-            for (SourceCreator f : mCreators) {
-                ImageDecoder.Source src = f.apply(record.resId);
-                testReuse(src, name);
-            }
-
-            {
-                ImageDecoder.Source src = ImageDecoder.createSource(mRes, record.resId);
-                testReuse(src, name);
-            }
-
-            for (UriCreator f : mUriCreators) {
-                Uri uri = f.apply(record.resId);
-                ImageDecoder.Source src = ImageDecoder.createSource(mContentResolver, uri);
-                testReuse(src, uri.toString());
-            }
-
-            {
-                ImageDecoder.Source src = ImageDecoder.createSource(getAsFile(record.resId));
-                testReuse(src, name);
-            }
+    @Parameters(method = "getRecordsAsSources")
+    public void testReuse(Record record, SourceCreator f) {
+        if (record.mimeType.equals("image/heif")) {
+            // This image takes too long for this test.
+            return;
         }
 
-        AssetManager assets = mRes.getAssets();
-        for (AssetRecord record : ASSETS) {
-            ImageDecoder.Source src = ImageDecoder.createSource(assets, record.name);
-            testReuse(src, record.name);
+        String name = getAsResourceUri(record.resId).toString();
+        ImageDecoder.Source src = f.apply(record.resId);
+        testReuse(src, name);
+    }
+
+    @Test
+    @Parameters(method = "getRecords")
+    public void testReuse2(Record record) {
+        if (record.mimeType.equals("image/heif")) {
+            // This image takes too long for this test.
+            return;
         }
 
+        String name = getAsResourceUri(record.resId).toString();
+        ImageDecoder.Source src = ImageDecoder.createSource(getResources(), record.resId);
+        testReuse(src, name);
 
+        src = ImageDecoder.createSource(getAsFile(record.resId));
+        testReuse(src, name);
+    }
+
+    private Object[] getRecordsAsUris() {
+        return crossProduct(getRecords(), mUriCreators);
+    }
+
+
+    @Test
+    @Parameters(method = "getRecordsAsUris")
+    public void testReuseUri(Record record, UriCreator f) {
+        if (record.mimeType.equals("image/heif")) {
+            // This image takes too long for this test.
+            return;
+        }
+
+        Uri uri = f.apply(record.resId);
+        ImageDecoder.Source src = ImageDecoder.createSource(getContentResolver(), uri);
+        testReuse(src, uri.toString());
+    }
+
+    @Test
+    @Parameters(method = "getAssetRecords")
+    public void testReuseAssetRecords(AssetRecord record) {
+        AssetManager assets = getResources().getAssets();
+        ImageDecoder.Source src = ImageDecoder.createSource(assets, record.name);
+        testReuse(src, record.name);
+    }
+
+
+    @Test
+    public void testReuseAnimated() {
         ImageDecoder.Source src = mCreators[0].apply(R.drawable.animated);
         testReuse(src, "animated.gif");
     }
 
     @Test
     public void testIsMimeTypeSupported() {
-        for (Record record : RECORDS) {
+        for (Object r : getRecords()) {
+            Record record = (Record) r;
             assertTrue(record.mimeType, ImageDecoder.isMimeTypeSupported(record.mimeType));
         }
 
