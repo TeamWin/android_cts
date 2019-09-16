@@ -123,7 +123,7 @@ public class NotificationIncidentTest extends ProtoDumpTestCase {
 
     private static void verifyRecordProto(RecordProto rp) throws Exception {
         assertTrue(!rp.getPackage().isEmpty());
-        assertTrue(rp.getUid() == -10000 || rp.getUid() >= 0);
+        assertTrue(rp.getUid() == -10000 || rp.getUid() >= 0 || rp.getUid() == -1);
         assertTrue("Record importance is an invalid value: " + rp.getImportance(),
                 rp.getImportance() == IMPORTANCE_UNSPECIFIED ||
                 (rp.getImportance() >= IMPORTANCE_NONE && rp.getImportance() <= IMPORTANCE_MAX));
