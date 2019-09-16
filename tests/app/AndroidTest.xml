@@ -31,6 +31,7 @@
         <option name="test-file-name" value="CtsCantSaveState1.apk" />
         <option name="test-file-name" value="CtsCantSaveState2.apk" />
         <option name="test-file-name" value="NotificationDelegator.apk" />
+        <option name="test-file-name" value="StorageDelegator.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="runner" value="androidx.test.runner.AndroidJUnitRunner" />

@@ -535,23 +535,23 @@ public class DownloadManagerTest extends DownloadManagerTestBase {
         file = new File(
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
                 "colors.txt");
-        writeToFileFromShell(file, fileContents);
+        writeToFileWithDelegator(file, fileContents);
         try {
             mDownloadManager.addCompletedDownload("Test title", "Test desc", true,
                     "text/plain", file.getPath(), fileContents.getBytes().length, true);
             fail("addCompletedDownload should have failed for top-level download dir");
-        } catch (Exception e) {
+        } catch (SecurityException e) {
             // expected
         }
 
         // Try adding top-level sdcard path
         final String path = "/sdcard/test-download.txt";
-        writeToFileFromShell(new File(path), fileContents);
+        writeToFileWithDelegator(new File(path), fileContents);
         try {
             mDownloadManager.addCompletedDownload("Test title", "Test desc", true,
                     "text/plain", path, fileContents.getBytes().length, true);
             fail("addCompletedDownload should have failed for top-level sdcard path");
-        } catch (Exception e) {
+        } catch (SecurityException e) {
             // expected
         }
 
