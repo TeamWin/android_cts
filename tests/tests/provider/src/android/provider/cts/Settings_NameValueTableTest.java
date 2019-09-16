@@ -40,7 +40,8 @@ public class Settings_NameValueTableTest {
     public static void setUp() throws Exception {
         final String packageName = InstrumentationRegistry.getTargetContext().getPackageName();
         InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(
-                "appops set " + packageName + " android:write_settings allow");
+                "appops set --user " + InstrumentationRegistry.getTargetContext().getUserId() + " "
+                        + packageName + " android:write_settings allow");
 
         // Wait a beat to persist the change
         SystemClock.sleep(500);
@@ -50,7 +51,8 @@ public class Settings_NameValueTableTest {
     public static void tearDown() throws Exception {
         final String packageName = InstrumentationRegistry.getTargetContext().getPackageName();
         InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(
-                "appops set " + packageName + " android:write_settings default");
+                "appops set --user " + InstrumentationRegistry.getTargetContext().getUserId() + " "
+                        + packageName + " android:write_settings default");
     }
 
     @Test
