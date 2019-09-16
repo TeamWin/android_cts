@@ -62,7 +62,7 @@ public class ShortcutManagerMultiuserTest extends BaseShortcutManagerHostTest {
         if (!mIsMultiuserSupported) {
             return;
         }
-        final int secondUserID = createUser();
+        final int secondUserID = getOrCreateSecondaryUser();
 
         getDevice().startUser(secondUserID);
         getDevice().switchUser(secondUserID);
