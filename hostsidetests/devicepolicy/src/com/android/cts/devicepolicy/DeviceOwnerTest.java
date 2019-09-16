@@ -74,8 +74,8 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     private static final String ARG_NETWORK_LOGGING_BATCH_COUNT = "batchCount";
     private static final String TEST_UPDATE_LOCATION = "/data/local/tmp/cts/deviceowner";
 
-    private static final String LAUNCHER_TESTS_NO_LAUNCHABLE_ACTIVITY_APK =
-            "CtsNoLaunchableActivityApp.apk";
+    private static final String LAUNCHER_TESTS_HAS_LAUNCHER_ACTIVITY_APK =
+            "CtsHasLauncherActivityApp.apk";
 
     /**
      * Copied from {@link android.app.admin.DevicePolicyManager
@@ -1018,7 +1018,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             // Install app to primary user
             installAppAsUser(BaseLauncherAppsTest.LAUNCHER_TESTS_APK, mPrimaryUserId);
             installAppAsUser(BaseLauncherAppsTest.LAUNCHER_TESTS_SUPPORT_APK, mPrimaryUserId);
-            installAppAsUser(LAUNCHER_TESTS_NO_LAUNCHABLE_ACTIVITY_APK, mPrimaryUserId);
+            installAppAsUser(LAUNCHER_TESTS_HAS_LAUNCHER_ACTIVITY_APK, mPrimaryUserId);
 
             // Run test to check if launcher api shows hidden app
             String mSerialNumber = Integer.toString(getUserSerialNumber(USER_SYSTEM));
@@ -1028,7 +1028,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                     mPrimaryUserId, Collections.singletonMap(BaseLauncherAppsTest.PARAM_TEST_USER,
                             mSerialNumber));
         } finally {
-            getDevice().uninstallPackage(LAUNCHER_TESTS_NO_LAUNCHABLE_ACTIVITY_APK);
+            getDevice().uninstallPackage(LAUNCHER_TESTS_HAS_LAUNCHER_ACTIVITY_APK);
             getDevice().uninstallPackage(BaseLauncherAppsTest.LAUNCHER_TESTS_SUPPORT_APK);
             getDevice().uninstallPackage(BaseLauncherAppsTest.LAUNCHER_TESTS_APK);
         }
