@@ -282,4 +282,7 @@
 
     <!-- b/69277153 -->
     <option name="compatibility:exclude-filter" value="CtsSecurityHostTestCases android.security.cts.SELinuxHostTest#testNoExemptionsForSocketsBetweenCoreAndVendorBan" />
+
+    <!-- b/121116786 -->
+    <option name="compatibility:exclude-filter" value="CtsAppSecurityHostTestCases android.appsecurity.cts.AppSecurityTests#testPermissionDiffCert" />
 </configuration>
