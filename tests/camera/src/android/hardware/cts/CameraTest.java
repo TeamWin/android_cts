@@ -121,6 +121,7 @@ public class CameraTest extends Assert {
     private AutoFocusMoveCallback mAutoFocusMoveCallback = new AutoFocusMoveCallback();
 
     private Looper mLooper = null;
+    private boolean mCameraOpenFailure = false;
     private final ConditionVariable mPreviewDone = new ConditionVariable();
     private final ConditionVariable mFocusDone = new ConditionVariable();
     private final ConditionVariable mSnapshotDone = new ConditionVariable();
@@ -149,6 +150,11 @@ public class CameraTest extends Assert {
      * receive the callback messages.
      */
     private void initializeMessageLooper(final int cameraId) throws IOException {
+        initializeMessageLooper(cameraId, /*allowOpenFailure*/false);
+    }
+
+    private void initializeMessageLooper(final int cameraId,
+            boolean allowOpenFailure) throws IOException {
         final ConditionVariable startDone = new ConditionVariable();
         final CameraCtsActivity activity = mActivityRule.getActivity();
         new Thread() {
@@ -167,11 +173,13 @@ public class CameraTest extends Assert {
                     Log.e(TAG, "Unable to query external camera!" + e);
                 }
 
+                mCameraOpenFailure = false;
                 try {
                     mCamera = Camera.open(cameraId);
                     mCamera.setErrorCallback(mErrorCallback);
                 } catch (RuntimeException e) {
                     Log.e(TAG, "Fail to open camera." + e);
+                    mCameraOpenFailure = true;
                 }
                 Log.v(TAG, "camera is opened");
                 startDone.open();
@@ -185,8 +193,13 @@ public class CameraTest extends Assert {
             Log.v(TAG, "initializeMessageLooper: start timeout");
             fail("initializeMessageLooper: start timeout");
         }
-        assertNotNull("Fail to open camera.", mCamera);
-        mCamera.setPreviewDisplay(activity.getSurfaceView().getHolder());
+
+        if (!allowOpenFailure) {
+            assertNotNull("Fail to open camera.", mCamera);
+        }
+        if (!mCameraOpenFailure) {
+            mCamera.setPreviewDisplay(activity.getSurfaceView().getHolder());
+        }
 
         File parent = activity.getPackageManager().isInstantApp()
                 ? activity.getFilesDir()
@@ -2587,7 +2600,14 @@ public class CameraTest extends Assert {
         // Start second camera without releasing the first one (will
         // set mCamera and mLooper to new objects)
         if (VERBOSE) Log.v(TAG, "testMultiCameraRelease: Opening camera 1");
-        initializeMessageLooper(1);
+        initializeMessageLooper(1, /*allowOpenFailure*/true);
+        if (mCameraOpenFailure) {
+            Log.i(TAG, "testMultiCameraRelease: Skipping test because 2nd camera cannot be " +
+                    "opened while 1 camera is already opened and configured.");
+            firstLooper.quit();
+            terminateMessageLooper(true/*allowEvict*/);
+            return;
+        }
         SimplePreviewStreamCb callback1 = new SimplePreviewStreamCb(1);
         mCamera.setPreviewCallback(callback1);
         if (VERBOSE) Log.v(TAG, "testMultiCameraRelease: Starting preview on camera 1");
