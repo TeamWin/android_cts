@@ -25,9 +25,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.pm.PackageInstaller;
-import android.content.pm.PackageManager;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -59,18 +57,6 @@ public class AtomicInstallTest {
                 .getUiAutomation()
                 .adoptShellPermissionIdentity(Manifest.permission.INSTALL_PACKAGES,
                     Manifest.permission.DELETE_PACKAGES);
-        assertPermissionsAcquired(Manifest.permission.INSTALL_PACKAGES,
-                Manifest.permission.DELETE_PACKAGES);
-    }
-
-    private void assertPermissionsAcquired(String... permissions) {
-        final Context context = InstrumentationRegistry
-                .getInstrumentation()
-                .getContext();
-        for (String permission : permissions) {
-            assertThat(context.checkSelfPermission(permission))
-                    .isEqualTo(PackageManager.PERMISSION_GRANTED);
-        }
     }
 
     @Before
