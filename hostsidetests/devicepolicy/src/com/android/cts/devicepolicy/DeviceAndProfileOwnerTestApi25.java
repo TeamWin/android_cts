@@ -16,6 +16,7 @@
 
 package com.android.cts.devicepolicy;
 
+import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.RequiresDevice;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
@@ -72,6 +73,7 @@ public abstract class DeviceAndProfileOwnerTestApi25 extends BaseDevicePolicyTes
     }
 
     /** Additional test for resetPassword for FBE-enabled devices. */
+    @FlakyTest(bugId = 141161690)
     public void testResetPasswordFbe() throws Exception {
         if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
             return;

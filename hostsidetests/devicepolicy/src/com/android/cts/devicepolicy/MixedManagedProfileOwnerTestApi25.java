@@ -16,6 +16,7 @@
 
 package com.android.cts.devicepolicy;
 
+import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
 
 import com.android.cts.devicepolicy.annotations.PermissionsTest;
@@ -79,6 +80,7 @@ public class MixedManagedProfileOwnerTestApi25 extends DeviceAndProfileOwnerTest
      */
     @Override
     @LargeTest
+    @FlakyTest(bugId = 141161690)
     public void testResetPasswordFbe() throws Exception {
         if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
             return;
