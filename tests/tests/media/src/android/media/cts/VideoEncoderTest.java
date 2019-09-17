@@ -75,6 +75,10 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
         private LinkedList<Pair<ByteBuffer, BufferInfo>> mStream;
         private MediaFormat mFormat;
         private int mInputBufferSize;
+        // Media buffers(no CSD, no EOS) enqueued.
+        private int mMediaBuffersEnqueuedCount;
+        // Media buffers decoded.
+        private int mMediaBuffersDecodedCount;
 
         public VideoStorage() {
             mStream = new LinkedList<Pair<ByteBuffer, BufferInfo>>();
@@ -93,6 +97,9 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
             BufferInfo savedInfo = new BufferInfo();
             savedInfo.set(0, savedBuffer.position(), info.presentationTimeUs, info.flags);
             mStream.addLast(Pair.create(savedBuffer, savedInfo));
+            if (info.size > 0 && (info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) {
+                ++mMediaBuffersEnqueuedCount;
+            }
         }
 
         private void play(MediaCodec decoder, Surface surface) {
@@ -101,6 +108,9 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
             final Iterator<Pair<ByteBuffer, BufferInfo>> it = mStream.iterator();
             decoder.setCallback(new MediaCodec.Callback() {
                 public void onOutputBufferAvailable(MediaCodec codec, int ix, BufferInfo info) {
+                    if (info.size > 0) {
+                        ++mMediaBuffersDecodedCount;
+                    }
                     codec.releaseOutputBuffer(ix, info.size > 0);
                     if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                         synchronized (condition) {
@@ -146,17 +156,25 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
                 }
             }
             decoder.stop();
+            // All enqueued media data buffers should have got decoded.
+            if (mMediaBuffersEnqueuedCount != mMediaBuffersDecodedCount) {
+                Log.i(TAG, "mMediaBuffersEnqueuedCount:" + mMediaBuffersEnqueuedCount);
+                Log.i(TAG, "mMediaBuffersDecodedCount:" + mMediaBuffersDecodedCount);
+                fail("not all enqueued encoded media buffers were decoded");
+            }
+            mMediaBuffersDecodedCount = 0;
         }
 
-        public void playAll(Surface surface) {
+        public boolean playAll(Surface surface) {
+            boolean skipped = true;
             if (mFormat == null) {
                 Log.i(TAG, "no stream to play");
-                return;
+                return !skipped;
             }
             String mime = mFormat.getString(MediaFormat.KEY_MIME);
             MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
             for (MediaCodecInfo info : mcl.getCodecInfos()) {
-                if (info.isEncoder()) {
+                if (info.isEncoder() || info.isAlias()) {
                     continue;
                 }
                 MediaCodec codec = null;
@@ -171,7 +189,9 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
                 }
                 play(codec, surface);
                 codec.release();
+                skipped = false;
             }
+            return !skipped;
         }
     }
 
@@ -405,9 +425,7 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
             }
         }
 
-        public void playBack(Surface surface) {
-            mEncodedStream.playAll(surface);
-        }
+        public boolean playBack(Surface surface) { return mEncodedStream.playAll(surface); }
 
         public void setFrameAndBitRates(int frameRate, int bitRate) {
             mFrameRate = frameRate;
@@ -1147,7 +1165,7 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
             boolean success = processor.processLoop(
                     SOURCE_URL, mMime, mName, width, height, optional);
             if (success) {
-                processor.playBack(getActivity().getSurfaceHolder().getSurface());
+                success = processor.playBack(getActivity().getSurfaceHolder().getSurface());
             }
             return success;
         }
@@ -1195,7 +1213,7 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
         ArrayList<Encoder> result = new ArrayList<Encoder>();
 
         for (MediaCodecInfo info : mcl.getCodecInfos()) {
-            if (!info.isEncoder() || !info.isVendor() != goog) {
+            if (!info.isEncoder() || !info.isVendor() != goog || info.isAlias()) {
                 continue;
             }
             CodecCapabilities caps = null;

@@ -24,10 +24,16 @@
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsAppEnumerationTestCases.apk" />
-        <option name="test-file-name" value="CtsAppEnumerationForceQueryableApp.apk" />
-        <option name="test-file-name" value="CtsAppEnumerationFiltersApp.apk" />
-        <option name="test-file-name" value="CtsAppEnumerationNoApiApp.apk" />
-        <option name="test-file-name" value="CtsAppEnumerationQueriesNothingApp.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationForceQueryable.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationFilters.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationNoApi.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationQueriesNothing.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationQueriesActivityViaAction.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationQueriesServiceViaAction.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationQueriesProviderViaAuthority.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationQueriesPackage.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationQueriesNothingTargetsQ.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationQueriesNothingHasPermission.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.appenumeration.cts" />

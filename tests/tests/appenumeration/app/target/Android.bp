@@ -13,7 +13,7 @@
 // limitations under the License.
 
 android_test_helper_app {
-    name: "CtsAppEnumerationForceQueryableApp",
+    name: "CtsAppEnumerationForceQueryable",
     manifest: "AndroidManifest-forceQueryable.xml",
     defaults: ["cts_support_defaults"],
     srcs: ["src/**/*.java"],
@@ -27,7 +27,7 @@ android_test_helper_app {
 }
 
 android_test_helper_app {
-    name: "CtsAppEnumerationFiltersApp",
+    name: "CtsAppEnumerationFilters",
     manifest: "AndroidManifest-filters.xml",
     defaults: ["cts_support_defaults"],
     srcs: ["src/**/*.java"],
@@ -41,7 +41,7 @@ android_test_helper_app {
 }
 
 android_test_helper_app {
-    name: "CtsAppEnumerationNoApiApp",
+    name: "CtsAppEnumerationNoApi",
     manifest: "AndroidManifest-noapi.xml",
     defaults: ["cts_support_defaults"],
     srcs: ["src/**/*.java"],
