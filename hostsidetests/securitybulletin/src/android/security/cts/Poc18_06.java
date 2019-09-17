@@ -51,7 +51,10 @@ public class Poc18_06 extends SecurityTestCase {
      */
     @SecurityTest
     public void testPocCVE_2018_9349() throws Exception {
-        AdbUtils.pushResource("/CVE-2018-9349.yuv", "/data/local/tmp/CVE-2018-9349.yuv", getDevice());
+        getOomCatcher().setHighMemoryTest();
+        AdbUtils.pushResource(
+                "/CVE-2018-9349.yuv", "/data/local/tmp/CVE-2018-9349.yuv", getDevice());
         AdbUtils.runPocAssertNoCrashes("CVE-2018-9349", getDevice(), "mediaserver");
+        AdbUtils.runCommandLine("rm /data/local/tmp/CVE-2018-9349.yuv", getDevice());
     }
 }
