@@ -1630,6 +1630,7 @@ void AHardwareBufferGLTest::SetUpFramebuffer(int width, int height, int layer,
                 if (isGlFormat) {
                     glRenderbufferStorage(GL_RENDERBUFFER, GetParam().format, width, height);
                 } else {
+                    ASSERT_FALSE(FormatIsYuv(GetParam().format)) << "YUV renderbuffers unsupported";
                     glEGLImageTargetRenderbufferStorageOES(GL_RENDERBUFFER,
                                                            static_cast<GLeglImageOES>(mEGLImage));
                 }
@@ -1872,8 +1873,17 @@ TEST_P(ColorTest, GpuColorOutputIsRenderable) {
 
     for (int i = 0; i < mContextCount; ++i) {
         MakeCurrent(i);
-        ASSERT_NO_FATAL_FAILURE(
-            SetUpFramebuffer(desc.width, desc.height, 0, kBufferAsRenderbuffer));
+
+        // YUV renderbuffers are unsupported, so we attach as a texture in this case.
+        AttachmentType attachmentType;
+        if (FormatIsYuv(desc.format)) {
+            ASSERT_NO_FATAL_FAILURE(SetUpTexture(desc, 1));
+            attachmentType = kBufferAsTexture;
+        } else {
+            attachmentType = kBufferAsRenderbuffer;
+        }
+
+        ASSERT_NO_FATAL_FAILURE(SetUpFramebuffer(desc.width, desc.height, 0, attachmentType));
     }
 
     // Draw a simple checkerboard pattern in the second context, which will
@@ -1906,8 +1916,18 @@ TEST_P(ColorTest, GpuColorOutputCpuRead) {
     if (!SetUpBuffer(desc)) return;
 
     MakeCurrent(1);
-    ASSERT_NO_FATAL_FAILURE(
-        SetUpFramebuffer(desc.width, desc.height, 0, kBufferAsRenderbuffer));
+
+    // YUV renderbuffers are unsupported, so we attach as a texture in this case.
+    AttachmentType attachmentType;
+    if (FormatIsYuv(desc.format)) {
+        ASSERT_NO_FATAL_FAILURE(SetUpTexture(desc, 1));
+        attachmentType = kBufferAsTexture;
+    } else {
+        attachmentType = kBufferAsRenderbuffer;
+    }
+
+    ASSERT_NO_FATAL_FAILURE(SetUpFramebuffer(desc.width, desc.height, 0, attachmentType));
+
     // Draw a simple checkerboard pattern in the second context, which will
     // be current after the loop above, then read it in the first.
     DrawCheckerboard(desc.width, desc.height, desc.format);
