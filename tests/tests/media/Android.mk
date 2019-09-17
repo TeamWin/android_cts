@@ -52,6 +52,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     hamcrest-library \
     ctstestserver \
     junit \
+    junit-params \
     ndkaudio \
     testng \
     truth-prebuilt \
