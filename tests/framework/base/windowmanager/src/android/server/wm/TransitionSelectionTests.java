@@ -39,8 +39,6 @@ import android.content.ComponentName;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 
-import androidx.test.filters.FlakyTest;
-
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -187,7 +185,6 @@ public class TransitionSelectionTests extends ActivityManagerTestBase {
                 true /*slowStop*/, TRANSIT_WALLPAPER_OPEN);
     }
 
-    @FlakyTest(bugId = 139111132)
     @Test
     public void testCloseTask_BothWallpaper_SlowStop() {
         testCloseTask(true /*bottomWallpaper*/, true /*topWallpaper*/,
