@@ -575,7 +575,7 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
     }
 
     private void checkDataConnection(String[] parts) {
-        assertEquals(26, parts.length);
+        assertEquals(27, parts.length);
         assertInteger(parts[4]);  // none
         assertInteger(parts[5]);  // gprs
         assertInteger(parts[6]);  // edge
@@ -597,7 +597,8 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
         assertInteger(parts[22]); // iwlan
         assertInteger(parts[23]); // lte_ca
         assertInteger(parts[24]); // nr
-        assertInteger(parts[25]); // other
+        assertInteger(parts[25]); // emngcy
+        assertInteger(parts[26]); // other
     }
 
     private void checkWifiState(String[] parts) {
