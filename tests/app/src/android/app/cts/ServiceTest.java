@@ -46,6 +46,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.RemoteException;
 import android.os.SystemClock;
+import android.os.UserHandle;
 import android.service.notification.StatusBarNotification;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.util.Log;
@@ -1452,6 +1453,22 @@ public class ServiceTest extends ActivityTestsBase {
             return mInfo != null ? mInfo.getConnection().getUid() : mUid;
         }
 
+        int getUserId() {
+            return UserHandle.getUserHandleForUid(getUid()).getIdentifier();
+        }
+
+        int getAppId() {
+            return UserHandle.getAppId(getUid());
+        }
+
+        boolean isEquivalentTo(ProcessRecordProto proc) {
+            int procAppId = proc.isolatedAppId != 0 ? proc.isolatedAppId : UserHandle.getAppId(
+                    proc.uid);
+
+            // Compare appid and userid separately because UserHandle.getUid is @hide.
+            return procAppId == getAppId() && proc.userId == getUserId();
+        }
+
         int getFlags() {
             return mFlags;
         }
@@ -1541,20 +1558,18 @@ public class ServiceTest extends ActivityTestsBase {
             logProc(i, proc);
             final LruOrderItem lru = orderItems[orderI];
             Log.i("XXXXXXXX", "Expecting uid: " + lru.getUid());
-            int procUid = proc.isolatedAppId != 0 ? proc.isolatedAppId : proc.uid;
-            if (procUid != lru.getUid()) {
+            if (!lru.isEquivalentTo(proc)) {
                 if ((lru.getFlags() & LruOrderItem.FLAG_SKIP_UNKNOWN) != 0) {
                     while (i > 0) {
                         i--;
                         proc = procs.get(i);
                         logProc(i, proc);
-                        procUid = proc.isolatedAppId != 0 ? proc.isolatedAppId : proc.uid;
-                        if (procUid == lru.getUid()) {
+                        if (lru.isEquivalentTo(proc)) {
                             break;
                         }
                     }
                 }
-                if (procUid != lru.getUid()) {
+                if (!lru.isEquivalentTo(proc)) {
                     if ((lru.getFlags() & LruOrderItem.FLAG_SKIP_UNKNOWN) != 0) {
                         fail("Didn't find expected LRU proc uid=" + lru.getUid());
                     }
