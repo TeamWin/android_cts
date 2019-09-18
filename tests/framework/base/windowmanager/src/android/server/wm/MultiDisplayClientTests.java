@@ -20,6 +20,7 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.CommandSession.ActivityCallback.ON_CONFIGURATION_CHANGED;
 import static android.server.wm.CommandSession.ActivityCallback.ON_RESUME;
 import static android.view.Display.DEFAULT_DISPLAY;
+import static android.view.Display.INVALID_DISPLAY;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
@@ -40,12 +41,14 @@ import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.view.Display;
+import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
 import androidx.test.filters.FlakyTest;
+import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.cts.mockime.ImeEventStream;
@@ -61,6 +64,7 @@ import java.util.concurrent.TimeUnit;
  *     atest CtsActivityManagerDeviceTestCases:MultiDisplayClientTests
  */
 @Presubmit
+@MediumTest
 public class MultiDisplayClientTests extends MultiDisplayTestBase {
 
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(10); // 10 seconds
@@ -73,11 +77,13 @@ public class MultiDisplayClientTests extends MultiDisplayTestBase {
         assumeTrue(supportsMultiDisplay());
     }
 
+    @FlakyTest(bugId = 140074846, detail = "Push to presubmit after proved stable")
     @Test
     public void testDisplayIdUpdateOnMove_RelaunchActivity() throws Exception {
         testDisplayIdUpdateOnMove(ClientTestActivity.class, false /* handlesConfigChange */);
     }
 
+    @FlakyTest(bugId = 140074846, detail = "Push to presubmit after proved stable")
     @Test
     public void testDisplayIdUpdateOnMove_NoRelaunchActivity() throws Exception {
         testDisplayIdUpdateOnMove(NoRelaunchActivity.class, true /* handlesConfigChange */);
@@ -102,12 +108,13 @@ public class MultiDisplayClientTests extends MultiDisplayTestBase {
             // Move the activity to the new secondary display.
             separateTestJournal();
             final ActivityOptions launchOptions = ActivityOptions.makeBasic();
-            launchOptions.setLaunchDisplayId(newDisplay.mId);
+            final int displayId = newDisplay.mId;
+            launchOptions.setLaunchDisplayId(displayId);
             final Intent newDisplayIntent = new Intent(mContext, activityClass);
             newDisplayIntent.setFlags(FLAG_ACTIVITY_NEW_TASK);
             getInstrumentation().getTargetContext().startActivity(newDisplayIntent,
                     launchOptions.toBundle());
-            waitAndAssertTopResumedActivity(activityName, newDisplay.mId,
+            waitAndAssertTopResumedActivity(activityName, displayId,
                     "Activity moved to secondary display must be focused");
 
             if (handlesConfigChange) {
@@ -118,46 +125,30 @@ public class MultiDisplayClientTests extends MultiDisplayTestBase {
                 waitAndAssertResume(activityName);
                 activity = activityTestRule.getActivity();
             }
-            final String message = "Display id must be updated";
-            assertEquals(message, newDisplay.mId, activity.getDisplayId());
-            assertEquals(message, newDisplay.mId, activity.getDisplay().getDisplayId());
+
+            final String suffix = " must be updated.";
+            assertEquals("Activity#getDisplayId()" + suffix, displayId, activity.getDisplayId());
+            assertEquals("Activity#getDisplay" + suffix,
+                    displayId, activity.getDisplay().getDisplayId());
+
             final WindowManager wm = activity.getWindowManager();
-            assertEquals(message, newDisplay.mId, wm.getDefaultDisplay().getDisplayId());
+            assertEquals("WM#getDefaultDisplay()" + suffix,
+                    displayId, wm.getDefaultDisplay().getDisplayId());
+
+            final View view = activity.getWindow().getDecorView();
+            assertEquals("View#getDisplay()" + suffix,
+                    displayId, view.getDisplay().getDisplayId());
         }
-    }
-
-    private void waitAndAssertConfigurationChange(ComponentName activityName) {
-        assertTrue("Must receive a single configuration change",
-                mAmWmState.waitForWithAmState(
-                        state -> getCallbackCount(activityName, ON_CONFIGURATION_CHANGED) == 1,
-                        activityName + " receives configuration change"));
-    }
-
-    private void waitAndAssertResume(ComponentName activityName) {
-        assertTrue("Must be resumed once",
-                mAmWmState.waitForWithAmState(
-                        state -> getCallbackCount(activityName, ON_RESUME) == 1,
-                        activityName + " performs resume"));
-    }
-
-    private int getCallbackCount(ComponentName activityName,
-            CommandSession.ActivityCallback callback) {
-        final ActivityLifecycleCounts lifecycles = new ActivityLifecycleCounts(activityName);
-        return lifecycles.getCount(callback);
     }
 
     @Test
     public void testDisplayIdUpdateWhenImeMove_RelaunchActivity() throws Exception {
-        try (final TestActivitySession<ClientTestActivity> session = new TestActivitySession<>()) {
-            testDisplayIdUpdateWhenImeMove(ClientTestActivity.class);
-        }
+        testDisplayIdUpdateWhenImeMove(ClientTestActivity.class);
     }
 
     @Test
     public void testDisplayIdUpdateWhenImeMove_NoRelaunchActivity() throws Exception {
-        try (final TestActivitySession<NoRelaunchActivity> session = new TestActivitySession<>()) {
-            testDisplayIdUpdateWhenImeMove(NoRelaunchActivity.class);
-        }
+        testDisplayIdUpdateWhenImeMove(NoRelaunchActivity.class);
     }
 
     private void testDisplayIdUpdateWhenImeMove(Class<? extends ImeTestActivity> activityClass)
@@ -193,9 +184,10 @@ public class MultiDisplayClientTests extends MultiDisplayTestBase {
         expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
         mAmWmState.waitAndAssertImeWindowShownOnDisplay(targetDisplayId);
 
-        final int displayId = expectCommand(stream, imeSession.callGetDisplayId(), TIMEOUT)
+        final int imeDisplayId = expectCommand(stream, imeSession.callGetDisplayId(), TIMEOUT)
                 .getReturnIntegerValue();
-        assertEquals("Display ID must match", targetDisplayId, displayId);
+        assertEquals("IME#getDisplayId() must match when IME move.",
+                targetDisplayId, imeDisplayId);
     }
 
     @Test
@@ -211,8 +203,93 @@ public class MultiDisplayClientTests extends MultiDisplayTestBase {
             final InputMethodManager imm =
                     newDisplayContext.getSystemService(InputMethodManager.class);
 
-            assertEquals(newDisplay.mId, imm.getDisplayId());
+            assertEquals("IMM#getDisplayId() must match.", newDisplay.mId, imm.getDisplayId());
         }
+    }
+
+    @FlakyTest(bugId = 140074846, detail = "Push to presubmit after proved stable")
+    @Test
+    public void testViewGetDisplayOnPrimaryDisplay() throws Exception {
+        testViewGetDisplay(true /* isPrimary */);
+    }
+
+    @FlakyTest(bugId = 140074846, detail = "Push to presubmit after proved stable")
+    @Test
+    public void testViewGetDisplayOnSecondaryDisplay() throws Exception {
+        testViewGetDisplay(false /* isPrimary */);
+    }
+
+    private void testViewGetDisplay(boolean isPrimary) throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession();
+             final TestActivitySession<ClientTestActivity> activitySession =
+                     new TestActivitySession<>()) {
+
+            final ActivityManagerState.ActivityDisplay newDisplay = virtualDisplaySession
+                    .setSimulateDisplay(true).createDisplay();
+            final int displayId = (isPrimary) ? DEFAULT_DISPLAY : newDisplay.mId;
+
+            separateTestJournal();
+            activitySession.launchTestActivityOnDisplaySync(
+                    ClientTestActivity.class, displayId);
+
+            final Activity activity = activitySession.getActivity();
+            final ComponentName activityName = activity.getComponentName();
+
+            waitAndAssertTopResumedActivity(activityName, displayId,
+                    "Activity launched on display:" + displayId + " must be focused");
+
+            // Test View#getdisplay() from activity
+            final View view = activity.getWindow().getDecorView();
+            assertEquals("View#getDisplay() must match.",
+                    displayId, view.getDisplay().getDisplayId());
+
+            final int[] resultDisplayId = new int[] { INVALID_DISPLAY };
+            activitySession.runOnMainAndAssertWithTimeout(
+                    () -> {
+                        // Test View#getdisplay() from WM#addView()
+                        final WindowManager wm = activity.getWindowManager();
+                        final View addedView = new View(activity);
+                        wm.addView(addedView, new WindowManager.LayoutParams());
+
+                        // Get display ID from callback in case the added view has not be attached.
+                        addedView.addOnAttachStateChangeListener(
+                                new View.OnAttachStateChangeListener() {
+                                    @Override
+                                    public void onViewAttachedToWindow(View view) {
+                                        resultDisplayId[0] = view.getDisplay().getDisplayId();
+                                    }
+
+                                    @Override
+                                    public void onViewDetachedFromWindow(View view) {}
+                                });
+
+                        return displayId == resultDisplayId[0];
+                    }, TIMEOUT, "Display from added view must match. "
+                            + "Should be display:" + displayId
+                            + ", but was display:" + resultDisplayId[0]
+            );
+
+        }
+    }
+
+    private void waitAndAssertConfigurationChange(ComponentName activityName) {
+        assertTrue("Must receive a single configuration change",
+                mAmWmState.waitForWithAmState(
+                        state -> getCallbackCount(activityName, ON_CONFIGURATION_CHANGED) == 1,
+                        activityName + " receives configuration change"));
+    }
+
+    private void waitAndAssertResume(ComponentName activityName) {
+        assertTrue("Must be resumed once",
+                mAmWmState.waitForWithAmState(
+                        state -> getCallbackCount(activityName, ON_RESUME) == 1,
+                        activityName + " performs resume"));
+    }
+
+    private static int getCallbackCount(ComponentName activityName,
+            CommandSession.ActivityCallback callback) {
+        final ActivityLifecycleCounts lifecycles = new ActivityLifecycleCounts(activityName);
+        return lifecycles.getCount(callback);
     }
 
     public static class ClientTestActivity extends ImeTestActivity { }
