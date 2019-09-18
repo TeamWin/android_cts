@@ -155,7 +155,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         "cmd netpolicy set restrict-background false";
 
     // The following constants were copied from DevicePolicyManager
-    private static final int PASSWORD_QUALITY_SOMETHING = 0x10000;
+    private static final int PASSWORD_QUALITY_COMPLEX = 0x60000;
     private static final int KEYGUARD_DISABLE_FEATURES_NONE = 0;
     private static final int KEYGUARD_DISABLE_FINGERPRINT = 1 << 5;
     private static final int KEYGUARD_DISABLE_TRUST_AGENTS = 1 << 4;
@@ -1363,6 +1363,19 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestClass(".PasswordSufficientInitiallyTest");
     }
 
+    public void testPasswordRequirementsApi() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        executeDeviceTestMethod(".PasswordRequirementsTest",
+                "testSettingConstraintsWithLowQualityThrowsOnRPlus");
+        executeDeviceTestMethod(".PasswordRequirementsTest",
+                "testSettingConstraintsWithNumericQualityOnlyLengthAllowedOnRPlus");
+        executeDeviceTestMethod(".PasswordRequirementsTest",
+                "testSettingConstraintsWithComplexQualityAndResetWithLowerQuality");
+    }
+
     public void testGetCurrentFailedPasswordAttempts() throws Exception {
         if (!mHasFeature || !mHasSecureLockScreen) {
             return;
@@ -1612,7 +1625,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             executeDeviceTestMethod(".DevicePolicyLoggingTest", "testPasswordMethodsLogged");
         }, new DevicePolicyEventWrapper.Builder(EventId.SET_PASSWORD_QUALITY_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setInt(PASSWORD_QUALITY_SOMETHING)
+                    .setInt(PASSWORD_QUALITY_COMPLEX)
                     .setBoolean(false)
                     .build(),
             new DevicePolicyEventWrapper.Builder(EventId.SET_PASSWORD_MINIMUM_LENGTH_VALUE)
