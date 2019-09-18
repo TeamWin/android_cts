@@ -15,6 +15,8 @@
  */
 package com.android.cts.devicepolicy;
 
+import android.platform.test.annotations.FlakyTest;
+
 public class ManagedProfileProvisioningTest extends BaseDevicePolicyTest {
     private static final String MANAGED_PROFILE_PKG = "com.android.cts.managedprofile";
     private static final String MANAGED_PROFILE_APK = "CtsManagedProfileApp.apk";
@@ -61,6 +63,7 @@ public class ManagedProfileProvisioningTest extends BaseDevicePolicyTest {
                 "testIsManagedProfile", mProfileUserId);
     }
 
+    @FlakyTest(bugId = 127275983)
     public void testEXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE() throws Exception {
         if (!mHasFeature) {
             return;

@@ -108,7 +108,7 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         super.testCaCertManagement();
     }
 
-    @FlakyTest
+    @FlakyTest(bugId = 141161038)
     @Override
     public void testCannotRemoveUserIfRestrictionSet() throws Exception {
         super.testCannotRemoveUserIfRestrictionSet();
