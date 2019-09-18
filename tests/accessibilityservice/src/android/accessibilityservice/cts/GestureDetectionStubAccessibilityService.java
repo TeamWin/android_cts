@@ -17,7 +17,7 @@ package android.accessibilityservice.cts;
 import static org.junit.Assert.fail;
 
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
-import android.accessibilityservice.AccessibilityGestureInfo;
+import android.accessibilityservice.AccessibilityGestureEvent;
 import android.view.accessibility.AccessibilityEvent;
 
 import java.util.ArrayList;
@@ -30,7 +30,7 @@ public class GestureDetectionStubAccessibilityService extends InstrumentedAccess
     // Member variables
     protected final Object mLock = new Object();
     private ArrayList<Integer> mCollectedGestures = new ArrayList();
-    private ArrayList<AccessibilityGestureInfo> mCollectedGestureInfos = new ArrayList();
+    private ArrayList<AccessibilityGestureEvent> mCollectedGestureEvents = new ArrayList();
     protected ArrayList<Integer> mCollectedEvents = new ArrayList();
 
     @Override
@@ -42,11 +42,11 @@ public class GestureDetectionStubAccessibilityService extends InstrumentedAccess
     }
 
     @Override
-    public boolean onGesture(AccessibilityGestureInfo gestureInfo) {
-        super.onGesture(gestureInfo);
-        synchronized (mCollectedGestureInfos) {
-            mCollectedGestureInfos.add(gestureInfo);
-            mCollectedGestureInfos.notifyAll(); // Stop waiting for gesture.
+    public boolean onGesture(AccessibilityGestureEvent gestureEvent) {
+        super.onGesture(gestureEvent);
+        synchronized (mCollectedGestureEvents) {
+            mCollectedGestureEvents.add(gestureEvent);
+            mCollectedGestureEvents.notifyAll(); // Stop waiting for gesture.
         }
         return true;
     }
@@ -55,8 +55,8 @@ public class GestureDetectionStubAccessibilityService extends InstrumentedAccess
         synchronized (mCollectedGestures) {
             mCollectedGestures.clear();
         }
-        synchronized (mCollectedGestureInfos) {
-            mCollectedGestureInfos.clear();
+        synchronized (mCollectedGestureEvents) {
+            mCollectedGestureEvents.clear();
         }
     }
 
@@ -72,15 +72,15 @@ public class GestureDetectionStubAccessibilityService extends InstrumentedAccess
         }
     }
 
-    /** Waits for {@link #onGesture(AccessibilityGestureInfo)} to collect next gesture. */
+    /** Waits for {@link #onGesture(AccessibilityGestureEvent)} to collect next gesture. */
     public void waitUntilGestureInfo() {
-        synchronized (mCollectedGestureInfos) {
-            //Assume the size of mCollectedGestures is changed before mCollectedGestureInfos.
-            if (mCollectedGestureInfos.size() > 0) {
+        synchronized (mCollectedGestureEvents) {
+            //Assume the size of mCollectedGestures is changed before mCollectedGestureEvents.
+            if (mCollectedGestureEvents.size() > 0) {
                 return;
             }
             try {
-                mCollectedGestureInfos.wait(GESTURE_RECOGNIZE_TIMEOUT_MS);
+                mCollectedGestureEvents.wait(GESTURE_RECOGNIZE_TIMEOUT_MS);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -88,14 +88,14 @@ public class GestureDetectionStubAccessibilityService extends InstrumentedAccess
     }
 
     public int getGestureInfoSize() {
-        synchronized (mCollectedGestureInfos) {
-            return mCollectedGestureInfos.size();
+        synchronized (mCollectedGestureEvents) {
+            return mCollectedGestureEvents.size();
         }
     }
 
-    public AccessibilityGestureInfo getGestureInfo(int index) {
-        synchronized (mCollectedGestureInfos) {
-            return mCollectedGestureInfos.get(index);
+    public AccessibilityGestureEvent getGestureInfo(int index) {
+        synchronized (mCollectedGestureEvents) {
+            return mCollectedGestureEvents.get(index);
         }
     }
 

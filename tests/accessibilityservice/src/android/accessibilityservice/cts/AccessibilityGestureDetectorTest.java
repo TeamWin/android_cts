@@ -27,11 +27,10 @@ import static org.mockito.Mockito.verify;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
-import android.accessibilityservice.AccessibilityGestureInfo;
+import android.accessibilityservice.AccessibilityGestureEvent;
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.GestureDescription;
 import android.accessibilityservice.GestureDescription.StrokeDescription;
-import android.accessibilityservice.cts.utils.DisplayUtils;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -253,10 +252,10 @@ public class AccessibilityGestureDetectorTest {
             assertEquals(gestureId, mService.getGesture(0));
         }
 
-        AccessibilityGestureInfo expectedGestureInfo = new AccessibilityGestureInfo(gestureId,
+        AccessibilityGestureEvent expectedGestureEvent = new AccessibilityGestureEvent(gestureId,
                 displayId);
         assertEquals(1, mService.getGestureInfoSize());
-        assertEquals(expectedGestureInfo.toString(), mService.getGestureInfo(0).toString());
+        assertEquals(expectedGestureEvent.toString(), mService.getGestureInfo(0).toString());
     }
 
     /** Create a path from startPoint, moving by delta1, then delta2. (delta2 may be null.) */
