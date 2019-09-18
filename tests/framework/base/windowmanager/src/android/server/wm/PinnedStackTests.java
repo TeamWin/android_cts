@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.app.ActivityManager.LOCK_TASK_MODE_NONE;
 import static android.app.ActivityTaskManager.INVALID_STACK_ID;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
@@ -790,7 +791,6 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackExists();
     }
 
-    @FlakyTest(bugId = 139111392)
     @Test
     public void testDisallowEnterPipActivityLocked() throws Exception {
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP_ON_PAUSE, "true");
@@ -802,6 +802,9 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         SystemUtil.runWithShellPermissionIdentity(() -> {
             try {
                 mAtm.startSystemLockTaskMode(task.mTaskId);
+                waitForOrFail("Task in lock mode", () -> {
+                    return mAm.getLockTaskModeState() != LOCK_TASK_MODE_NONE;
+                });
                 mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
                 waitForEnterPip(PIP_ACTIVITY);
                 assertPinnedStackDoesNotExist();
