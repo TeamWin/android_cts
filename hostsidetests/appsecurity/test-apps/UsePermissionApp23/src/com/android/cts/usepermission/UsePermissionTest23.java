@@ -656,8 +656,9 @@ public class UsePermissionTest23 extends BasePermissionsTest {
 
     private void assertPermissionsGrantState(String[] permissions, int grantState) {
         for (String permission : permissions) {
-            assertEquals(grantState, getInstrumentation().getContext()
-                    .checkSelfPermission(permission));
+            assertEquals(
+                "Permission [" + permission + "]", grantState,
+                getInstrumentation().getContext().checkSelfPermission(permission));
         }
     }
 

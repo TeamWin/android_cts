@@ -395,11 +395,18 @@ public abstract class BasePermissionsTest {
                 // Toggle the permission
 
                 boolean willShowPopup = (wasGranted && legacyApp);
-
-                if (!itemView.getActionList().contains(AccessibilityAction.ACTION_CLICK)) {
-                    click(toggleView, willShowPopup);
+                if (mWatch) {
+                  if (!itemView.getActionList().contains(AccessibilityAction.ACTION_CLICK)) {
+                    toggleView.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                  } else {
+                    itemView.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                  }
                 } else {
-                    click(itemView, willShowPopup);
+                  if (!itemView.getActionList().contains(AccessibilityAction.ACTION_CLICK)) {
+                      click(toggleView, willShowPopup);
+                  } else {
+                      click(itemView, willShowPopup);
+                  }
                 }
 
                 waitForIdle();
