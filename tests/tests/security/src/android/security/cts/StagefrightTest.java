@@ -377,7 +377,7 @@ public class StagefrightTest extends InstrumentationTestCase {
     @SecurityTest
     public void testBug_38014992() throws Exception {
         int[] frameSizes = getFrameSizes(R.raw.bug_38014992_framelen);
-        doStagefrightTestRawBlob(R.raw.bug_38014992_avc, "video/avc", 640, 480, frameSizes);
+        doStagefrightTestRawBlob(R.raw.bug_38014992_avc, "video/avc", 640, 480, frameSizes, false);
     }
 
     @SecurityTest
@@ -449,7 +449,7 @@ public class StagefrightTest extends InstrumentationTestCase {
     @SecurityTest
     public void testBug_33818500() throws Exception {
         int[] frameSizes = getFrameSizes(R.raw.bug_33818500_framelen);
-        doStagefrightTestRawBlob(R.raw.bug_33818500_avc, "video/avc", 64, 32, frameSizes);
+        doStagefrightTestRawBlob(R.raw.bug_33818500_avc, "video/avc", 64, 32, frameSizes, false);
     }
 
     @SecurityTest
@@ -1447,7 +1447,7 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     public void testBug36895511() throws Exception {
-        doStagefrightTestRawBlob(R.raw.bug_36895511, "video/hevc", 320, 240);
+        doStagefrightTestRawBlob(R.raw.bug_36895511, "video/hevc", 320, 240, false);
     }
 
     public void testBug64836894() throws Exception {
