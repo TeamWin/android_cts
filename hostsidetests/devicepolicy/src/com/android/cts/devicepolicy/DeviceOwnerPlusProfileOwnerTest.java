@@ -237,6 +237,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
         assertTrue(getDevice().removeUser(profileUserId));
     }
 
+    @FlakyTest(bugId = 141161038)
     public void testCannotRemoveUserIfRestrictionSet() throws Exception {
         if (!mHasFeature || !canCreateAdditionalUsers(1)) {
             return;

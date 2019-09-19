@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.compatibility.common.util;
+package android.voicesettings.cts;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
@@ -34,6 +34,9 @@ import android.util.Log;
 
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.BroadcastUtils;
+import com.android.compatibility.common.util.SettingsStateChangerRule;
 
 import org.junit.After;
 import org.junit.Before;
@@ -76,16 +79,11 @@ public abstract class BroadcastTestBase {
         customSetup();
     }
 
-    /**
-     * Test-specific setup - doesn't need to call {@code super} neither use <code>@Before</code>.
-     */
-    protected void customSetup() throws Exception {
-    }
-
     @After
     public final void tearDown() throws Exception {
         Log.v(TAG, getClass().getSimpleName() + ".tearDown(): hasFeature=" + mHasFeature
                 + " receiver=" + mActivityDoneReceiver);
+
         if (mHasFeature && mActivityDoneReceiver != null) {
             try {
                 mContext.unregisterReceiver(mActivityDoneReceiver);
@@ -96,6 +94,12 @@ public abstract class BroadcastTestBase {
             }
             mActivityDoneReceiver = null;
         }
+    }
+
+    /**
+     * Test-specific setup - doesn't need to call {@code super} neither use <code>@Before</code>.
+     */
+    protected void customSetup() throws Exception {
     }
 
     protected boolean isIntentSupported(String intentStr) {

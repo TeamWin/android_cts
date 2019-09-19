@@ -1268,6 +1268,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestClass(".TrustAgentInfoTest");
     }
 
+    @FlakyTest(bugId = 141161038)
     public void testCannotRemoveUserIfRestrictionSet() throws Exception {
         // Outside of the primary user, setting DISALLOW_REMOVE_USER would not work.
         if (!mHasFeature || !canCreateAdditionalUsers(1) || mUserId != getPrimaryUser()) {

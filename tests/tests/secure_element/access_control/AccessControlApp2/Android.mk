@@ -35,20 +35,3 @@ LOCAL_JAVA_LIBRARIES += android.test.base
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 include $(BUILD_CTS_PACKAGE)
-
-##################################################################
-# Signed Package
-
-include $(CLEAR_VARS)
-
-LOCAL_MODULE := signed-CtsSecureElementAccessControlTestCases2
-LOCAL_MODULE_TAGS := tests
-LOCAL_MODULE_CLASS := APPS
-LOCAL_BUILT_MODULE_STEM := package.apk
-# Make sure the build system doesn't try to resign the APK
-LOCAL_CERTIFICATE := PRESIGNED
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts-instant
-
-LOCAL_REPLACE_PREBUILT_APK_INSTALLED := $(LOCAL_PATH)/apk/signed-CtsSecureElementAccessControlTestCases2.apk
-
-include $(BUILD_PREBUILT)

@@ -105,7 +105,11 @@ public class AppEnumerationTests {
                         "device_config get package_manager_service "
                                 + "package_query_filtering_enabled")
                         .trim();
-        sGlobalFeatureEnabled = Boolean.parseBoolean(deviceConfigResponse);
+        if ("null".equalsIgnoreCase(deviceConfigResponse) || deviceConfigResponse.isEmpty()) {
+            sGlobalFeatureEnabled = true;
+        } else {
+            sGlobalFeatureEnabled = Boolean.parseBoolean(deviceConfigResponse);
+        }
         System.out.println("Feature enabled: " + sGlobalFeatureEnabled);
         if (!sGlobalFeatureEnabled) return;
 

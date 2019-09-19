@@ -20,7 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
-import android.accessibilityservice.AccessibilityGestureInfo;
+import android.accessibilityservice.AccessibilityGestureEvent;
 import android.accessibilityservice.AccessibilityService;
 import android.os.Parcel;
 import android.platform.test.annotations.Presubmit;
@@ -34,11 +34,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * Class for testing {@link android.accessibilityservice.AccessibilityGestureInfo}.
+ * Class for testing {@link android.accessibilityservice.AccessibilityGestureEvent}.
  */
 @Presubmit
 @RunWith(AndroidJUnit4.class)
-public class AccessibilityGestureInfoTest {
+public class AccessibilityGestureEventTest {
 
     @Rule
     public final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
@@ -52,18 +52,18 @@ public class AccessibilityGestureInfoTest {
     public void testMarshaling() {
 
         // Fully populate the gesture info to marshal.
-        AccessibilityGestureInfo sentGestureInfo = new AccessibilityGestureInfo(
+        AccessibilityGestureEvent sentGestureEvent = new AccessibilityGestureEvent(
                 SENT_GESTURE, TARGET_DISPLAY);
 
         // Marshal and unmarshal the gesture info.
         Parcel parcel = Parcel.obtain();
-        sentGestureInfo.writeToParcel(parcel, 0);
+        sentGestureEvent.writeToParcel(parcel, 0);
         parcel.setDataPosition(0);
-        AccessibilityGestureInfo receivedGestureInfo =
-                AccessibilityGestureInfo.CREATOR.createFromParcel(parcel);
+        AccessibilityGestureEvent receivedGestureEvent =
+                AccessibilityGestureEvent.CREATOR.createFromParcel(parcel);
 
         // Make sure all fields properly marshaled.
-        assertEqualsGestureInfo(sentGestureInfo, receivedGestureInfo);
+        assertEqualsGestureEvent(sentGestureEvent, receivedGestureEvent);
 
         parcel.recycle();
     }
@@ -75,7 +75,7 @@ public class AccessibilityGestureInfoTest {
     @SmallTest
     @Test
     public void testGetterMethods() {
-        AccessibilityGestureInfo actualGesture = new AccessibilityGestureInfo(SENT_GESTURE,
+        AccessibilityGestureEvent actualGesture = new AccessibilityGestureEvent(SENT_GESTURE,
                 TARGET_DISPLAY);
 
         assertEquals("getGestureId is different from parameter of constructor", SENT_GESTURE,
@@ -90,20 +90,20 @@ public class AccessibilityGestureInfoTest {
     @SmallTest
     @Test
     public void testDescribeContents() {
-        AccessibilityGestureInfo gesture1 = new AccessibilityGestureInfo(SENT_GESTURE,TARGET_DISPLAY);
+        AccessibilityGestureEvent event1 = new AccessibilityGestureEvent(SENT_GESTURE,TARGET_DISPLAY);
         assertSame("accessibility gesture infos always return 0 for this method.", 0,
-                gesture1.describeContents());
-        AccessibilityGestureInfo gesture2 = new AccessibilityGestureInfo(
+                event1.describeContents());
+        AccessibilityGestureEvent event2 = new AccessibilityGestureEvent(
                 AccessibilityService.GESTURE_SWIPE_LEFT, TARGET_DISPLAY);
         assertSame("accessibility gesture infos always return 0 for this method.", 0,
-                gesture2.describeContents());
+                event2.describeContents());
     }
 
-    private void assertEqualsGestureInfo(AccessibilityGestureInfo sentGestureInfo,
-            AccessibilityGestureInfo receivedGestureInfo) {
-        assertEquals("getDisplayId has incorrectValue", sentGestureInfo.getDisplayId(),
-                receivedGestureInfo.getDisplayId());
-        assertEquals("getGestureId has incorrectValue", sentGestureInfo.getGestureId(),
-                receivedGestureInfo.getGestureId());
+    private void assertEqualsGestureEvent(AccessibilityGestureEvent sentGestureEvent,
+            AccessibilityGestureEvent receivedGestureEvent) {
+        assertEquals("getDisplayId has incorrectValue", sentGestureEvent.getDisplayId(),
+                receivedGestureEvent.getDisplayId());
+        assertEquals("getGestureId has incorrectValue", sentGestureEvent.getGestureId(),
+                receivedGestureEvent.getGestureId());
     }
 }
