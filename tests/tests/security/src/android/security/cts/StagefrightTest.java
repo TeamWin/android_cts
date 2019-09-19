@@ -1058,7 +1058,7 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     public void testBug36895511() throws Exception {
-        doStagefrightTestRawBlob(R.raw.bug_36895511, "video/hevc", 320, 240);
+        doStagefrightTestRawBlob(R.raw.bug_36895511, "video/hevc", 320, 240, false);
     }
 
     public void testBug64836894() throws Exception {
