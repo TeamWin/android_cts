@@ -32,6 +32,7 @@ import android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
 import android.hardware.camera2.params.BlackLevelPattern;
+import android.hardware.camera2.params.CapabilityAndMaxSize;
 import android.hardware.camera2.params.ColorSpaceTransform;
 import android.hardware.camera2.params.Face;
 import android.hardware.camera2.params.LensShadingMap;
@@ -865,6 +866,26 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                 }
                 openDevice(id);
                 effectModeTestByCamera();
+            } finally {
+                closeDevice();
+            }
+        }
+    }
+
+    /**
+     * Test bokeh mode controls.
+     */
+    @Test
+    public void testBokehModes() throws Exception {
+        for (String id : mCameraIdsUnderTest) {
+            try {
+                if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
+                    continue;
+                }
+                openDevice(id);
+                List<Range<Integer>> fpsRanges = getTargetFpsRangesUpTo30(mStaticInfo);
+                bokehModeTestByCamera(fpsRanges);
             } finally {
                 closeDevice();
             }
@@ -2749,6 +2770,36 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
             // This also serves as purpose of showing preview for NUM_FRAMES_VERIFIED
             verifyCaptureResultForKey(CaptureResult.CONTROL_MODE,
                     CaptureRequest.CONTROL_MODE_AUTO, listener, NUM_FRAMES_VERIFIED);
+        }
+    }
+
+    private void bokehModeTestByCamera(List<Range<Integer>> fpsRanges) throws Exception {
+        CapabilityAndMaxSize[] bokehCaps = mStaticInfo.getAvailableBokehCapsChecked();
+        if (bokehCaps.length == 0) {
+            return;
+        }
+
+        Size maxPreviewSize = mOrderedPreviewSizes.get(0);
+        CaptureRequest.Builder requestBuilder =
+                mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+
+        for (CapabilityAndMaxSize bokehCap : bokehCaps) {
+            int mode = bokehCap.getMode();
+            requestBuilder.set(CaptureRequest.CONTROL_BOKEH_MODE, mode);
+
+            // Test that OFF and CONTINUOUS mode doesn't slow down the frame rate
+            if (mode == CaptureRequest.CONTROL_BOKEH_MODE_OFF ||
+                    mode == CaptureRequest.CONTROL_BOKEH_MODE_CONTINUOUS) {
+                verifyFpsNotSlowDown(requestBuilder, NUM_FRAMES_VERIFIED, fpsRanges);
+            }
+
+            SimpleCaptureCallback listener = new SimpleCaptureCallback();
+            startPreview(requestBuilder, maxPreviewSize, listener);
+            mSession.setRepeatingRequest(requestBuilder.build(), listener, mHandler);
+            waitForSettingsApplied(listener, NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY);
+
+            verifyCaptureResultForKey(CaptureResult.CONTROL_BOKEH_MODE,
+                    mode, listener, NUM_FRAMES_VERIFIED);
         }
     }
 
