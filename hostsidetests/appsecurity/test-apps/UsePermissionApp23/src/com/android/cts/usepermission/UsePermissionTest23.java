@@ -489,7 +489,20 @@ public class UsePermissionTest23 extends BasePermissionsTest {
     @Test
     public void testNoResidualPermissionsOnUninstall_part1() throws Exception {
         // Grant all permissions
-        grantPermissions(new String[] {
+        String[] permissions;
+        if (mWatch) {
+          // The permission labels of READ_SMS and CALL_PHONE are too long to display on watches,
+          // and thus they got truncated there and can't be matched by grantPermissions().
+          permissions = new String[] {
+                Manifest.permission.WRITE_CALENDAR,
+                Manifest.permission.WRITE_CONTACTS,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.RECORD_AUDIO,
+                Manifest.permission.BODY_SENSORS,
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.CAMERA};
+        } else {
+          permissions = new String[] {
                 Manifest.permission.WRITE_CALENDAR,
                 Manifest.permission.WRITE_CONTACTS,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -498,8 +511,9 @@ public class UsePermissionTest23 extends BasePermissionsTest {
                 Manifest.permission.RECORD_AUDIO,
                 Manifest.permission.BODY_SENSORS,
                 Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.CAMERA
-        });
+                Manifest.permission.CAMERA};
+        }
+        grantPermissions(permissions);
     }
 
     @Test
