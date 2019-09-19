@@ -13,20 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.cts.nolaunchableactivityapp;
+package com.android.cts.haslaunchableactivityapp;
 
-import android.app.Service;
-import android.content.Intent;
-import android.os.IBinder;
+import android.app.Activity;
 
-public class EmptyService extends Service {
-    public EmptyService() {
-    }
-
-    @Override
-    public IBinder onBind(Intent intent) {
-        // do nothing, just here for the app to have some code
-        throw new UnsupportedOperationException("Not yet implemented");
-    }
+public class MainActivity extends Activity {
 }
 
