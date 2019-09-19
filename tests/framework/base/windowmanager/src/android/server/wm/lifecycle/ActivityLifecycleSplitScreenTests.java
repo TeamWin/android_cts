@@ -131,20 +131,23 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
         LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
                 Arrays.asList(ON_RESUME), "launchToSide");
 
-        // Launch third activity on top of second
+        // Launch ConfigChangeHandlingActivity on top of second, use ConfigChangeHandlingActivity
+        // here to prevent it from relaunch when it is moved to primary split stack.
         getLifecycleLog().clear();
-        final Activity thirdActivity = mThirdActivityTestRule.launchActivity(
+        final Activity handleConfigChangesActivity =
+                mConfigChangeHandlingActivityTestRule.launchActivity(
                 new Intent().setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK));
-        waitAndAssertActivityStates(state(thirdActivity, ON_RESUME),
+        waitAndAssertActivityStates(state(handleConfigChangesActivity, ON_TOP_POSITION_GAINED),
                 state(secondActivity, ON_STOP));
 
-        // Move occluding third activity to side, it will occlude first now
+        // Move occluding ConfigChangeHandlingActivity to side, it will occlude first now
         getLifecycleLog().clear();
-        moveActivityToStack(getComponentName(ThirdActivity.class), primarySplitStack);
+        moveActivityToStack(CONFIG_CHANGE_HANDLING_ACTIVITY, primarySplitStack);
 
         waitAndAssertActivityStates(state(secondActivity, ON_RESUME),
                 state(firstActivity, ON_STOP));
-        LifecycleVerifier.assertEmptySequence(ThirdActivity.class, getLifecycleLog(), "moveToSide");
+        LifecycleVerifier.assertOrder(getLifecycleLog(), ConfigChangeHandlingActivity.class,
+                Arrays.asList(ON_TOP_POSITION_LOST, ON_TOP_POSITION_GAINED), "moveToSide");
         LifecycleVerifier.assertRestartAndResumeSequence(SecondActivity.class, getLifecycleLog());
         LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
                 Arrays.asList(ON_PAUSE, ON_STOP), "moveToSide");
