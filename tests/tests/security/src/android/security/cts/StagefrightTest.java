@@ -862,6 +862,8 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest(minPatchLevel = "2018-02")
     public void testStagefright_bug_68342866() throws Exception {
+        NetworkSecurityPolicy policy = NetworkSecurityPolicy.getInstance();
+        policy.setCleartextTrafficPermitted(true);
         Thread server = new Thread() {
             @Override
             public void run() {
@@ -923,6 +925,7 @@ public class StagefrightTest extends InstrumentationTestCase {
                 mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
         t.stopLooper();
         t.join();
+        policy.setCleartextTrafficPermitted(false);
         server.join();
     }
 
