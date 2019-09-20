@@ -24,9 +24,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import android.Manifest;
-import android.Manifest.permission;
-import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Parcel;
@@ -45,6 +42,7 @@ import android.telephony.CellInfoLte;
 import android.telephony.CellInfoNr;
 import android.telephony.CellInfoTdscdma;
 import android.telephony.CellInfoWcdma;
+import android.telephony.CellSignalStrength;
 import android.telephony.CellSignalStrengthCdma;
 import android.telephony.CellSignalStrengthGsm;
 import android.telephony.CellSignalStrengthLte;
@@ -56,8 +54,6 @@ import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.util.Pair;
-
-import androidx.test.InstrumentationRegistry;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -220,6 +216,29 @@ public class CellInfoTest {
         Pair<Integer, Integer> verPair = mTm.getRadioHalVersion();
         mRadioHalVersion = makeRadioVersion(verPair.first, verPair.second);
         TelephonyManagerTest.grantLocationPermissions();
+    }
+
+    /**
+     * Test to ensure that {@link CellInfo#getCellIdentity()} return a {@link CellIdentityNr}
+     * object.
+     */
+    @Test
+    public void testCellIdentityNr_Override() throws Throwable {
+        if (!mPm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) return;
+        android.telephony.cts.TestUtils.assertSyntheticMethodOverloadExists(CellInfoNr.class,
+                "getCellIdentity", null, CellIdentity.class, CellIdentityNr.class, true);
+    }
+
+    /**
+     * Test to ensure that {@link CellInfoNr#getCellSignalStrength()} return a
+     * {@link CellSignalStrengthNr} object.
+     */
+    @Test
+    public void testCellCellSignalStrength_Override() throws Throwable {
+        if (!mPm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) return;
+        android.telephony.cts.TestUtils.assertSyntheticMethodOverloadExists(CellInfoNr.class,
+                "getCellSignalStrength", null, CellSignalStrength.class,
+                CellSignalStrengthNr.class, true);
     }
 
     /**
