@@ -34,7 +34,10 @@
         <activity android:name=".NonLauncherActivity">
             android:exported="true">
         </activity>
-        <activity android:name=".SimpleActivityStartService" android:exported="true" />
+        <activity android:name=".SimpleActivityStartService"
+            android:turnScreenOn="true"
+            android:excludeFromRecents="true"
+            android:exported="true" />
         <activity android:name=".SimpleActivityImmediateExit" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

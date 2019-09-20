@@ -2132,6 +2132,8 @@ public class NotificationManagerTest extends AndroidTestCase {
 
         mNotificationManager.cancelAsPackage(DELEGATOR, "toBeCanceled", 10000);
 
+        Thread.sleep(1000);
+
         assertNull(findPostedNotification(10000, false));
 
         final Intent revokeIntent = new Intent();
@@ -2160,6 +2162,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
         mContext.startActivity(activityIntent);
+
+        Thread.sleep(1000);
 
         assertNotNull(findPostedNotification(9, true));
 
