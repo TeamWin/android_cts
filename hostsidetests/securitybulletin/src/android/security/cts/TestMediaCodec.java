@@ -187,6 +187,18 @@ public class TestMediaCodec extends SecurityTestCase {
                 getDevice());
     }
 
+    /**
+     * b/72459887
+     **/
+    @Test
+    @SecurityTest(minPatchLevel = "2017-05")
+    public void testPocCVE_2017_0589() throws Exception {
+        String inputFiles[] = {"cve_2017_0589.hevc"};
+        runHevcDecodeMemTest(inputFiles,
+                "--input " + AdbUtils.TMP_PATH + inputFiles[0] + " --save_output 0"
+                + " --num_frames -1", getDevice());
+    }
+
     /******************************************************************************
      * To prevent merge conflicts, add AVC decoder tests for N below this comment,
      * before any existing test methods
