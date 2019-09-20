@@ -30,6 +30,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.text.TextUtils;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.NumberPicker;
@@ -340,11 +341,15 @@ public class NumberPickerTest {
         final int[] numberPickerLocationOnScreen = new int[2];
         mNumberPicker.getLocationOnScreen(numberPickerLocationOnScreen);
 
+        int screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
+        int numberPickerMiddleX = numberPickerLocationOnScreen[0] + mNumberPicker.getWidth() / 2;
+        int numberPickerStartY = numberPickerLocationOnScreen[1] + 1;
+
         CtsTouchUtils.emulateDragGesture(mInstrumentation,
-                numberPickerLocationOnScreen[0] + mNumberPicker.getWidth() / 2,
-                numberPickerLocationOnScreen[1] + 1,
+                numberPickerMiddleX,
+                numberPickerStartY,
                 0,
-                mNumberPicker.getHeight() - 2);
+                screenHeight - numberPickerStartY); // drag down to the bottom of the screen.
 
         // At this point we expect that the drag-down gesture has selected the value
         // that was "above" the previously selected one, and that our value change listener
@@ -389,12 +394,15 @@ public class NumberPickerTest {
         final int[] numberPickerLocationOnScreen = new int[2];
         mNumberPicker.getLocationOnScreen(numberPickerLocationOnScreen);
 
+        int numberPickerMiddleX = numberPickerLocationOnScreen[0] + mNumberPicker.getWidth() / 2;
+        int numberPickerEndY = numberPickerLocationOnScreen[1] + mNumberPicker.getHeight() - 1;
+
         mUiAutomation.executeAndWaitForEvent(() ->
                         CtsTouchUtils.emulateDragGesture(mInstrumentation,
-                                numberPickerLocationOnScreen[0] + mNumberPicker.getWidth() / 2,
-                                numberPickerLocationOnScreen[1] + mNumberPicker.getHeight() - 1,
+                                numberPickerMiddleX,
+                                numberPickerEndY,
                                 0,
-                                -(mNumberPicker.getHeight() - 2)),
+                                -(numberPickerEndY)), // drag up to the top of the screen.
                 (AccessibilityEvent event) ->
                         event.getEventType() == AccessibilityEvent.TYPE_VIEW_SCROLLED,
                 TIMEOUT_ACCESSIBILITY_EVENT);
@@ -434,4 +442,5 @@ public class NumberPickerTest {
         mNumberPicker.setWrapSelectorWheel(true);
         assertTrue(mNumberPicker.getWrapSelectorWheel());
     }
+
 }
