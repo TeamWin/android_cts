@@ -609,7 +609,6 @@ public class WindowManagerState {
 
         int mStackId;
         ArrayList<WindowTask> mTasks = new ArrayList<>();
-        boolean mWindowAnimationBackgroundSurfaceShowing;
         boolean mAnimatingBounds;
 
         WindowStack(StackProto proto) {
@@ -623,7 +622,6 @@ public class WindowManagerState {
                 mTasks.add(task);
                 mSubWindows.addAll(task.getWindows());
             }
-            mWindowAnimationBackgroundSurfaceShowing = proto.animationBackgroundSurfaceIsDimming;
             mAnimatingBounds = proto.animatingBounds;
         }
 
@@ -634,10 +632,6 @@ public class WindowManagerState {
                 }
             }
             return null;
-        }
-
-        boolean isWindowAnimationBackgroundSurfaceShowing() {
-            return mWindowAnimationBackgroundSurfaceShowing;
         }
     }
 
