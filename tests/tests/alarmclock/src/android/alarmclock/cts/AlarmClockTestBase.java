@@ -79,8 +79,9 @@ public class AlarmClockTestBase extends ActivityInstrumentationTestCase2<TestSta
     private boolean isIntentSupported(TestcaseType testCaseType) {
         final PackageManager manager = mContext.getPackageManager();
         assertNotNull(manager);
-        // If TV then not supported.
-        if (manager.hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY)) {
+        // If TV or Automotive, then not supported.
+        if (manager.hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY) ||
+                manager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
             return false;
         }
         Intent intent;
