@@ -5171,4 +5171,34 @@ Follow the instructions on the screen to measure the frequency response for the 
     6. Verify there is an action allowing user to clear/delete app. \n\n
     7. Click Pass button if checks in step 5 and 6 passed, otherwise click Fail button.
     </string>
+
+    <!-- Strings for Mulituser.HeadlessSystemUser Test -->
+    <string name="multiuser_headless_sys_user_test">Headless System User Test</string>
+    <string name="multiuser_headless_sys_user_info">This test verifies that users cannot interact with the headless system user (user 0).</string>
+    <string name="multiuser_headless_sys_user_can_skip">Your device does not support multiuser. You can tap Pass.</string>
+    <string name="multiuser_headless_sys_user_next">Proceed</string>
+    <string name="multiuser_headless_sys_user_yes">Yes</string>
+    <string name="multiuser_headless_sys_user_no">No</string>
+    <string name="multiuser_headless_sys_user_switchable_instructions">
+        Tap Proceed if the system allows switching or selecting users. Otherwise, tap Pass at the bottom.
+    </string>
+    <string name="multiuser_headless_sys_user_adb_users_instructions">
+        Run the \'adb shell pm list users\' shell command and identify the name of User 0. Is User 0 name unique?
+    </string>
+    <string name="multiuser_headless_sys_user_unique_instructions">
+        You will need to test every screen that can switch or select users.\n\n
+        For each screen, verify User 0\'s name is not shown. Please do the following: \n\n
+        1. Navigate to a screen that can switch or select users. \n
+        2. Tap Fail at the bottom if User 0 name is shown in the user selection screen. \n
+        3. Repeat test at another switch or select user screen. Tap Pass when all screens are tested without fail.
+    </string>
+    <string name="multiuser_headless_sys_user_common_instructions">
+        You will need to test every screen that can switch or select users.\n\n
+        For each screen, switch into each user to verify they are not user 0. Please do the following: \n\n
+        1. Navigate to a screen to switch user. \n
+        2. Run the \'adb shell am get-current-user\' shell command. \n
+        3. If return is 0, click Fail button. Otherwise, continue to next step. \n
+        4. Switch to another user with User 0 name from the screen and repeat steps 2-4 until all users are verified. \n
+        5. Repeat test at another switch or select user screen. Tap Pass when all screens are tested without fail.
+    </string>
 </resources>
