@@ -1140,6 +1140,7 @@ public class ChildlessActivityTest
         watcher1.waitFor(DESTROYED);
 
         // Re-enable feature
+        CtsContentCaptureService.clearServiceWatcher();
         final ServiceWatcher reconnectionWatcher = CtsContentCaptureService.setServiceWatcher();
         reconnectionWatcher.whitelistSelf();
         setFeatureEnabled(service1, reason, /* enabled= */ true);
