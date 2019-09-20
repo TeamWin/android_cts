@@ -3422,6 +3422,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Return back to this page.
     </string>
     <string name="device_owner_user_restriction_set">Set restriction</string>
+    <string name="device_owner_user_restriction_unset">Unset restriction</string>
     <string name="device_owner_settings_go">Go</string>
 
     <string name="device_owner_vpn_connection">
@@ -3636,7 +3637,8 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="device_owner_disallow_remove_user_info">
         Please press \'Create uninitialized user\' to create a user that is not set up. Then press the
         \'Set restriction\' button to set the user restriction.
-        Then press \'Go\' to open \'Multiple users\' setting. \n
+        Then press \'Go\' to open \'Multiple users\' setting. \n\n
+        If the main switch is disabled, enable it.\n\n
         Click the Settings icon adjacent to the managed user.\n\n
 
         Mark this test as passed if:\n\n
@@ -4075,7 +4077,9 @@ You should be prompted to select credentials; choose the ones you just installed
         \n
         In additional, if quick settings is available, confirm that user switcher is hidden or
         disabled.
-        Use the Back button to return to this page.
+        Use the Back button to return to this page.\n
+        \n
+        Press \'Unset restriction\' to remove the restriction for use in later tests.
     </string>
     <string name="device_owner_disallow_user_switch_create_user">Create uninitialized user</string>
 
