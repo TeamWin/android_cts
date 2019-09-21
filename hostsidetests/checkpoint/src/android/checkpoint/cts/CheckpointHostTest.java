@@ -16,6 +16,7 @@
 
 package android.checkpoint.cts;
 
+import com.android.compatibility.common.util.CtsDownstreamingTest;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceTestCase;
 import junit.framework.Assert;
@@ -27,6 +28,7 @@ import junit.framework.Assert;
 public class CheckpointHostTest extends DeviceTestCase {
     private static final String TAG = "CheckpointHostTest";
 
+    @CtsDownstreamingTest
     public void testLogEntries() throws Exception {
         // Clear buffer to make it easier to find new logs
         getDevice().executeShellCommand("logcat --clear");
