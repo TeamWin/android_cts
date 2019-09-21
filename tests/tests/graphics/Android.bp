@@ -28,6 +28,7 @@ android_test {
         "ctstestrunner-axt",
         "androidx.annotation_annotation",
         "junit",
+        "junit-params",
         "testng",
         "androidx.core_core",
     ],

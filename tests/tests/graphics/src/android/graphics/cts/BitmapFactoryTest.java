@@ -36,6 +36,7 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
+import android.platform.test.annotations.LargeTest;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.util.DisplayMetrics;
@@ -43,7 +44,6 @@ import android.util.TypedValue;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
 
@@ -61,29 +61,36 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.util.concurrent.CountDownLatch;
 
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
+
 @SmallTest
-@RunWith(AndroidJUnit4.class)
+@RunWith(JUnitParamsRunner.class)
 public class BitmapFactoryTest {
     // height and width of start.jpg
     private static final int START_HEIGHT = 31;
     private static final int START_WIDTH = 31;
 
-    // The test images, including baseline JPEG, a PNG, a GIF, a BMP AND a WEBP.
-    private static final int[] RES_IDS = new int[] {
-            R.drawable.baseline_jpeg, R.drawable.png_test, R.drawable.gif_test,
-            R.drawable.bmp_test, R.drawable.webp_test
-    };
+    static class TestImage {
+        TestImage(int id, int width, int height) {
+            this.id = id;
+            this.width = width;
+            this.height = height;
+        }
+        public final int id;
+        public final int width;
+        public final int height;
+    }
 
-    // The width and height of the above image.
-    private static final int WIDTHS[] = new int[] { 1280, 640, 320, 320, 640 };
-    private static final int HEIGHTS[] = new int[] { 960, 480, 240, 240, 480 };
-
-    // Configurations for BitmapFactory.Options
-    private static final Config[] COLOR_CONFIGS = new Config[] {Config.ARGB_8888, Config.RGB_565};
-    private static final int[] COLOR_TOLS = new int[] {16, 49, 576};
-
-    private static final Config[] COLOR_CONFIGS_RGBA = new Config[] {Config.ARGB_8888};
-    private static final int[] COLOR_TOLS_RGBA = new int[] {72, 124};
+    private Object[] testImages() {
+        return new Object[] {
+                new TestImage(R.drawable.baseline_jpeg, 1280, 960),
+                new TestImage(R.drawable.png_test, 640, 480),
+                new TestImage(R.drawable.gif_test, 320, 240),
+                new TestImage(R.drawable.bmp_test, 320, 240),
+                new TestImage(R.drawable.webp_test, 640, 480),
+        };
+    }
 
     private static final int[] RAW_COLORS = new int[] {
         // raw data from R.drawable.premul_data
@@ -206,88 +213,102 @@ public class BitmapFactoryTest {
     }
 
     @Test
-    public void testDecodeStream3() {
-        for (int i = 0; i < RES_IDS.length; ++i) {
-            InputStream is = obtainInputStream(RES_IDS[i]);
-            Bitmap b = BitmapFactory.decodeStream(is);
-            assertNotNull(b);
-            // Test the bitmap size
-            assertEquals(WIDTHS[i], b.getWidth());
-            assertEquals(HEIGHTS[i], b.getHeight());
-        }
+    @Parameters(method = "testImages")
+    public void testDecodeStream3(TestImage testImage) {
+        InputStream is = obtainInputStream(testImage.id);
+        Bitmap b = BitmapFactory.decodeStream(is);
+        assertNotNull(b);
+        // Test the bitmap size
+        assertEquals(testImage.width, b.getWidth());
+        assertEquals(testImage.height, b.getHeight());
+    }
+
+    private Object[] paramsForWebpDecodeEncode() {
+        return new Object[] {
+                new Object[] {Config.ARGB_8888, 16},
+                new Object[] {Config.RGB_565, 49}
+        };
+    }
+
+    private Bitmap decodeOpaqueImage(int resId, BitmapFactory.Options options) {
+        return decodeOpaqueImage(obtainInputStream(resId), options);
+    }
+
+    private Bitmap decodeOpaqueImage(InputStream stream, BitmapFactory.Options options) {
+        Bitmap bitmap = BitmapFactory.decodeStream(stream, null, options);
+        assertNotNull(bitmap);
+        assertFalse(bitmap.isPremultiplied());
+        assertFalse(bitmap.hasAlpha());
+        return bitmap;
     }
 
     @Test
-    public void testDecodeStream4() {
+    @Parameters(method = "paramsForWebpDecodeEncode")
+    public void testWebpStreamDecode(Config config, int tolerance) {
         BitmapFactory.Options options = new BitmapFactory.Options();
-        for (int k = 0; k < COLOR_CONFIGS.length; ++k) {
-            options.inPreferredConfig = COLOR_CONFIGS[k];
+        options.inPreferredConfig = config;
 
-            // Decode the PNG & WebP test images. The WebP test image has been encoded from PNG test
-            // image and should have same similar (within some error-tolerance) Bitmap data.
-            InputStream iStreamPng = obtainInputStream(R.drawable.png_test);
-            Bitmap bPng = BitmapFactory.decodeStream(iStreamPng, null, options);
-            assertNotNull(bPng);
-            assertEquals(bPng.getConfig(), COLOR_CONFIGS[k]);
-            assertFalse(bPng.isPremultiplied());
-            assertFalse(bPng.hasAlpha());
+        // Decode the PNG & WebP test images. The WebP test image has been encoded from PNG test
+        // image and should have same similar (within some error-tolerance) Bitmap data.
+        Bitmap bPng = decodeOpaqueImage(R.drawable.png_test, options);
+        assertEquals(bPng.getConfig(), config);
+        Bitmap bWebp = decodeOpaqueImage(R.drawable.webp_test, options);
+        compareBitmaps(bPng, bWebp, tolerance, true, bPng.isPremultiplied());
+    }
 
-            InputStream iStreamWebp1 = obtainInputStream(R.drawable.webp_test);
-            Bitmap bWebp1 = BitmapFactory.decodeStream(iStreamWebp1, null, options);
-            assertNotNull(bWebp1);
-            assertFalse(bWebp1.isPremultiplied());
-            assertFalse(bWebp1.hasAlpha());
-            compareBitmaps(bPng, bWebp1, COLOR_TOLS[k], true, bPng.isPremultiplied());
+    @Test
+    @Parameters(method = "paramsForWebpDecodeEncode")
+    public void testWebpStreamEncode(Config config, int tolerance) {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inPreferredConfig = config;
 
-            // Compress the PNG image to WebP format (Quality=90) and decode it back.
-            // This will test end-to-end WebP encoding and decoding.
-            ByteArrayOutputStream oStreamWebp = new ByteArrayOutputStream();
-            assertTrue(bPng.compress(CompressFormat.WEBP, 90, oStreamWebp));
-            InputStream iStreamWebp2 = new ByteArrayInputStream(oStreamWebp.toByteArray());
-            Bitmap bWebp2 = BitmapFactory.decodeStream(iStreamWebp2, null, options);
-            assertNotNull(bWebp2);
-            assertFalse(bWebp2.isPremultiplied());
-            assertFalse(bWebp2.hasAlpha());
-            compareBitmaps(bPng, bWebp2, COLOR_TOLS[k], true, bPng.isPremultiplied());
-        }
+        Bitmap bPng = decodeOpaqueImage(R.drawable.png_test, options);
+        assertEquals(bPng.getConfig(), config);
+
+        // Compress the PNG image to WebP format (Quality=90) and decode it back.
+        // This will test end-to-end WebP encoding and decoding.
+        ByteArrayOutputStream oStreamWebp = new ByteArrayOutputStream();
+        assertTrue(bPng.compress(CompressFormat.WEBP, 90, oStreamWebp));
+        InputStream iStreamWebp = new ByteArrayInputStream(oStreamWebp.toByteArray());
+        Bitmap bWebp2 = decodeOpaqueImage(iStreamWebp, options);
+        compareBitmaps(bPng, bWebp2, tolerance, true, bPng.isPremultiplied());
     }
 
     @Test
     public void testDecodeStream5() {
+        final int tolerance = 72;
         BitmapFactory.Options options = new BitmapFactory.Options();
-        for (int k = 0; k < COLOR_CONFIGS_RGBA.length; ++k) {
-            options.inPreferredConfig = COLOR_CONFIGS_RGBA[k];
+        options.inPreferredConfig = Config.ARGB_8888;
 
-            // Decode the PNG & WebP (google_logo) images. The WebP image has
-            // been encoded from PNG image.
-            InputStream iStreamPng = obtainInputStream(R.drawable.google_logo_1);
-            Bitmap bPng = BitmapFactory.decodeStream(iStreamPng, null, options);
-            assertNotNull(bPng);
-            assertEquals(bPng.getConfig(), COLOR_CONFIGS_RGBA[k]);
-            assertTrue(bPng.isPremultiplied());
-            assertTrue(bPng.hasAlpha());
+        // Decode the PNG & WebP (google_logo) images. The WebP image has
+        // been encoded from PNG image.
+        InputStream iStreamPng = obtainInputStream(R.drawable.google_logo_1);
+        Bitmap bPng = BitmapFactory.decodeStream(iStreamPng, null, options);
+        assertNotNull(bPng);
+        assertEquals(bPng.getConfig(), Config.ARGB_8888);
+        assertTrue(bPng.isPremultiplied());
+        assertTrue(bPng.hasAlpha());
 
-            // Decode the corresponding WebP (transparent) image (google_logo_2.webp).
-            InputStream iStreamWebP1 = obtainInputStream(R.drawable.google_logo_2);
-            Bitmap bWebP1 = BitmapFactory.decodeStream(iStreamWebP1, null, options);
-            assertNotNull(bWebP1);
-            assertEquals(bWebP1.getConfig(), COLOR_CONFIGS_RGBA[k]);
-            assertTrue(bWebP1.isPremultiplied());
-            assertTrue(bWebP1.hasAlpha());
-            compareBitmaps(bPng, bWebP1, COLOR_TOLS_RGBA[k], true, bPng.isPremultiplied());
+        // Decode the corresponding WebP (transparent) image (google_logo_2.webp).
+        InputStream iStreamWebP1 = obtainInputStream(R.drawable.google_logo_2);
+        Bitmap bWebP1 = BitmapFactory.decodeStream(iStreamWebP1, null, options);
+        assertNotNull(bWebP1);
+        assertEquals(bWebP1.getConfig(), Config.ARGB_8888);
+        assertTrue(bWebP1.isPremultiplied());
+        assertTrue(bWebP1.hasAlpha());
+        compareBitmaps(bPng, bWebP1, tolerance, true, bPng.isPremultiplied());
 
-            // Compress the PNG image to WebP format (Quality=90) and decode it back.
-            // This will test end-to-end WebP encoding and decoding.
-            ByteArrayOutputStream oStreamWebp = new ByteArrayOutputStream();
-            assertTrue(bPng.compress(CompressFormat.WEBP, 90, oStreamWebp));
-            InputStream iStreamWebp2 = new ByteArrayInputStream(oStreamWebp.toByteArray());
-            Bitmap bWebP2 = BitmapFactory.decodeStream(iStreamWebp2, null, options);
-            assertNotNull(bWebP2);
-            assertEquals(bWebP2.getConfig(), COLOR_CONFIGS_RGBA[k]);
-            assertTrue(bWebP2.isPremultiplied());
-            assertTrue(bWebP2.hasAlpha());
-            compareBitmaps(bPng, bWebP2, COLOR_TOLS_RGBA[k], true, bPng.isPremultiplied());
-        }
+        // Compress the PNG image to WebP format (Quality=90) and decode it back.
+        // This will test end-to-end WebP encoding and decoding.
+        ByteArrayOutputStream oStreamWebp = new ByteArrayOutputStream();
+        assertTrue(bPng.compress(CompressFormat.WEBP, 90, oStreamWebp));
+        InputStream iStreamWebp2 = new ByteArrayInputStream(oStreamWebp.toByteArray());
+        Bitmap bWebP2 = BitmapFactory.decodeStream(iStreamWebp2, null, options);
+        assertNotNull(bWebP2);
+        assertEquals(bWebP2.getConfig(), Config.ARGB_8888);
+        assertTrue(bWebP2.isPremultiplied());
+        assertTrue(bWebP2.hasAlpha());
+        compareBitmaps(bPng, bWebP2, tolerance, true, bPng.isPremultiplied());
     }
 
     @Test
@@ -315,47 +336,48 @@ public class BitmapFactoryTest {
         assertEquals(START_WIDTH, b.getWidth());
     }
 
+
+    // TODO: Better parameterize this and split it up.
     @Test
-    public void testDecodeFileDescriptor3() throws IOException {
+    @Parameters(method = "testImages")
+    public void testDecodeFileDescriptor3(TestImage testImage) throws IOException {
         // Arbitrary offsets to use. If the offset of the FD matches the offset of the image,
         // decoding should succeed, but if they do not match, decoding should fail.
-        long ACTUAL_OFFSETS[] = new long[] { 0, 17 };
-        for (int RES_ID : RES_IDS) {
-            for (int j = 0; j < ACTUAL_OFFSETS.length; ++j) {
-                // FIXME: The purgeable test should attempt to purge the memory
-                // to force a re-decode.
-                for (boolean TEST_PURGEABLE : new boolean[] { false, true }) {
-                    BitmapFactory.Options opts = new BitmapFactory.Options();
-                    opts.inPurgeable = TEST_PURGEABLE;
-                    opts.inInputShareable = TEST_PURGEABLE;
+        final long[] actual_offsets = new long[] { 0, 17 };
+        for (int j = 0; j < actual_offsets.length; ++j) {
+            // FIXME: The purgeable test should attempt to purge the memory
+            // to force a re-decode.
+            for (boolean purgeable : new boolean[] { false, true }) {
+                BitmapFactory.Options opts = new BitmapFactory.Options();
+                opts.inPurgeable = purgeable;
+                opts.inInputShareable = purgeable;
 
-                    long actualOffset = ACTUAL_OFFSETS[j];
-                    String path = obtainPath(RES_ID, actualOffset);
-                    RandomAccessFile file = new RandomAccessFile(path, "r");
-                    FileDescriptor fd = file.getFD();
-                    assertTrue(fd.valid());
+                long actualOffset = actual_offsets[j];
+                String path = obtainPath(testImage.id, actualOffset);
+                RandomAccessFile file = new RandomAccessFile(path, "r");
+                FileDescriptor fd = file.getFD();
+                assertTrue(fd.valid());
 
-                    // Set the offset to ACTUAL_OFFSET
-                    file.seek(actualOffset);
-                    assertEquals(file.getFilePointer(), actualOffset);
+                // Set the offset to ACTUAL_OFFSET
+                file.seek(actualOffset);
+                assertEquals(file.getFilePointer(), actualOffset);
 
-                    // Now decode. This should be successful and leave the offset
-                    // unchanged.
-                    Bitmap b = BitmapFactory.decodeFileDescriptor(fd, null, opts);
-                    assertNotNull(b);
-                    assertEquals(file.getFilePointer(), actualOffset);
+                // Now decode. This should be successful and leave the offset
+                // unchanged.
+                Bitmap b = BitmapFactory.decodeFileDescriptor(fd, null, opts);
+                assertNotNull(b);
+                assertEquals(file.getFilePointer(), actualOffset);
 
-                    // Now use the other offset. It should fail to decode, and
-                    // the offset should remain unchanged.
-                    long otherOffset = ACTUAL_OFFSETS[(j + 1) % ACTUAL_OFFSETS.length];
-                    assertFalse(otherOffset == actualOffset);
-                    file.seek(otherOffset);
-                    assertEquals(file.getFilePointer(), otherOffset);
+                // Now use the other offset. It should fail to decode, and
+                // the offset should remain unchanged.
+                long otherOffset = actual_offsets[(j + 1) % actual_offsets.length];
+                assertFalse(otherOffset == actualOffset);
+                file.seek(otherOffset);
+                assertEquals(file.getFilePointer(), otherOffset);
 
-                    b = BitmapFactory.decodeFileDescriptor(fd, null, opts);
-                    assertNull(b);
-                    assertEquals(file.getFilePointer(), otherOffset);
-                }
+                b = BitmapFactory.decodeFileDescriptor(fd, null, opts);
+                assertNull(b);
+                assertEquals(file.getFilePointer(), otherOffset);
             }
         }
     }
@@ -493,18 +515,17 @@ public class BitmapFactoryTest {
     }
 
     @Test
-    public void testDecodeReuseFormats() {
+    @Parameters(method = "testImages")
+    public void testDecodeReuseFormats(TestImage testImage) {
         // reuse should support all image formats
-        for (int i = 0; i < RES_IDS.length; ++i) {
-            Bitmap reuseBuffer = Bitmap.createBitmap(1000000, 1, Bitmap.Config.ALPHA_8);
+        Bitmap reuseBuffer = Bitmap.createBitmap(1000000, 1, Bitmap.Config.ALPHA_8);
 
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inBitmap = reuseBuffer;
-            options.inSampleSize = 4;
-            options.inScaled = false;
-            Bitmap decoded = BitmapFactory.decodeResource(mRes, RES_IDS[i], options);
-            assertSame(reuseBuffer, decoded);
-        }
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inBitmap = reuseBuffer;
+        options.inSampleSize = 4;
+        options.inScaled = false;
+        Bitmap decoded = BitmapFactory.decodeResource(mRes, testImage.id, options);
+        assertSame(reuseBuffer, decoded);
     }
 
     @Test
@@ -792,27 +813,29 @@ public class BitmapFactoryTest {
 
     @Test
     @CddTest(requirement = "5.1.5/C-0-6")
-    public void testDng() {
-        DNG[] dngs = new DNG[]{
-            new DNG(R.raw.sample_1mp, 600, 338),
-            new DNG(R.raw.sample_arw, 1616, 1080),
-            new DNG(R.raw.sample_cr2, 2304, 1536),
-            new DNG(R.raw.sample_nef, 4608, 3072),
-            new DNG(R.raw.sample_nrw, 4000, 3000),
-            new DNG(R.raw.sample_orf, 3200, 2400),
-            new DNG(R.raw.sample_pef, 4928, 3264),
-            new DNG(R.raw.sample_raf, 2048, 1536),
-            new DNG(R.raw.sample_rw2, 1920, 1440),
-            new DNG(R.raw.sample_srw, 5472, 3648),
-        };
+    @Parameters(method = "parametersForTestDng")
+    @LargeTest
+    public void testDng(DNG dng) {
+        // No scaling
+        Bitmap bm = BitmapFactory.decodeResource(mRes, dng.resId, mOpt1);
+        assertNotNull(bm);
+        assertEquals(dng.width, bm.getWidth());
+        assertEquals(dng.height, bm.getHeight());
+    }
 
-        for (DNG dng : dngs) {
-            // No scaling
-            Bitmap bm = BitmapFactory.decodeResource(mRes, dng.resId, mOpt1);
-            assertNotNull(bm);
-            assertEquals(dng.width, bm.getWidth());
-            assertEquals(dng.height, bm.getHeight());
-        }
+    private Object[] parametersForTestDng() {
+        return new Object[]{
+                new DNG(R.raw.sample_1mp, 600, 338),
+                new DNG(R.raw.sample_arw, 1616, 1080),
+                new DNG(R.raw.sample_cr2, 2304, 1536),
+                new DNG(R.raw.sample_nef, 4608, 3072),
+                new DNG(R.raw.sample_nrw, 4000, 3000),
+                new DNG(R.raw.sample_orf, 3200, 2400),
+                new DNG(R.raw.sample_pef, 4928, 3264),
+                new DNG(R.raw.sample_raf, 2048, 1536),
+                new DNG(R.raw.sample_rw2, 1920, 1440),
+                new DNG(R.raw.sample_srw, 5472, 3648),
+        };
     }
 
     @Test

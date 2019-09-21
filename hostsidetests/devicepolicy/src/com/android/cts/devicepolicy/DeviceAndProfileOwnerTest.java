@@ -1216,6 +1216,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    @FlakyTest(bugId = 141314026)
     public void testSuspendPackage() throws Exception {
         if (!mHasFeature) {
             return;
@@ -1243,6 +1244,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestMethod(".SuspendPackageTest", "testSuspendNotSuspendablePackages");
     }
 
+    @FlakyTest(bugId = 141314026)
     public void testSuspendPackageWithPackageManager() throws Exception {
         if (!mHasFeature) {
             return;

@@ -17,7 +17,6 @@ import static android.view.accessibility.AccessibilityEvent.TYPE_GESTURE_DETECTI
 import static android.view.accessibility.AccessibilityEvent.TYPE_GESTURE_DETECTION_START;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_CLICKED;
-import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_FOCUSED;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_LONG_CLICKED;
 
 import android.view.accessibility.AccessibilityEvent;
@@ -34,7 +33,6 @@ public class TouchExplorationStubAccessibilityService
             switch (event.getEventType()) {
                 case TYPE_GESTURE_DETECTION_START:
                 case TYPE_GESTURE_DETECTION_END:
-                case TYPE_VIEW_FOCUSED:
                 case TYPE_VIEW_ACCESSIBILITY_FOCUSED:
                 case TYPE_VIEW_CLICKED:
                 case TYPE_VIEW_LONG_CLICKED:

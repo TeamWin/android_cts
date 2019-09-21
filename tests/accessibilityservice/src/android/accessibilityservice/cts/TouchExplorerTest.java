@@ -41,7 +41,6 @@ import static android.view.accessibility.AccessibilityEvent.TYPE_TOUCH_INTERACTI
 import static android.view.accessibility.AccessibilityEvent.TYPE_TOUCH_INTERACTION_START;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_CLICKED;
-import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_FOCUSED;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_LONG_CLICKED;
 
 import static org.hamcrest.CoreMatchers.both;
@@ -158,13 +157,12 @@ public class TouchExplorerTest {
     /** Test a slow swipe which should initiate touch exploration. */
     @Test
     @AppModeFull
-    public void testSlowSwipe() {
+    public void testSlowSwipe_initiatesTouchExploration() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
         dispatch(swipe(mTapLocation, add(mTapLocation, mSwipeDistance, 0), SWIPE_TIME_MILLIS));
         mHoverListener.assertPropagated(ACTION_HOVER_ENTER, ACTION_HOVER_MOVE, ACTION_HOVER_EXIT);
         mTouchListener.assertNonePropagated();
         mService.assertPropagated(
-                TYPE_VIEW_FOCUSED,
                 TYPE_TOUCH_INTERACTION_START,
                 TYPE_TOUCH_EXPLORATION_GESTURE_START,
                 TYPE_TOUCH_EXPLORATION_GESTURE_END,
@@ -174,13 +172,12 @@ public class TouchExplorerTest {
     /** Test a fast swipe which should not initiate touch exploration. */
     @Test
     @AppModeFull
-    public void testFastSwipe() {
+    public void testFastSwipe_doesNotInitiateTouchExploration() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
         dispatch(swipe(mTapLocation, add(mTapLocation, mSwipeDistance, 0)));
         mHoverListener.assertNonePropagated();
         mTouchListener.assertNonePropagated();
         mService.assertPropagated(
-                TYPE_VIEW_FOCUSED,
                 TYPE_TOUCH_INTERACTION_START,
                 TYPE_GESTURE_DETECTION_START,
                 TYPE_GESTURE_DETECTION_END,
@@ -193,7 +190,7 @@ public class TouchExplorerTest {
      */
     @Test
     @AppModeFull
-    public void testTwoFingerDrag() {
+    public void testTwoFingerDrag_dispatchesEventsBetweenFingers() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
         // A two point moving that are in the same direction can perform a drag gesture by
         // TouchExplorer while one point moving can not perform a drag gesture. We use two swipes
@@ -238,13 +235,12 @@ public class TouchExplorerTest {
     /** Test a basic single tap which should initiate touch exploration. */
     @Test
     @AppModeFull
-    public void testSingleTap() {
+    public void testSingleTap_initiatesTouchExploration() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
         dispatch(click(mTapLocation));
         mHoverListener.assertPropagated(ACTION_HOVER_ENTER, ACTION_HOVER_EXIT);
         mTouchListener.assertNonePropagated();
         mService.assertPropagated(
-                TYPE_VIEW_FOCUSED,
                 TYPE_TOUCH_INTERACTION_START,
                 TYPE_TOUCH_EXPLORATION_GESTURE_START,
                 TYPE_TOUCH_EXPLORATION_GESTURE_END,
@@ -257,7 +253,7 @@ public class TouchExplorerTest {
      */
     @Test
     @AppModeFull
-    public void testDoubleTapAccessibilityFocus() {
+    public void testDoubleTapAccessibilityFocus_performsClick() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
         syncAccessibilityFocusToInputFocus();
         dispatch(doubleTap(mTapLocation));
@@ -265,7 +261,6 @@ public class TouchExplorerTest {
         // The click should not be delivered via touch events in this case.
         mTouchListener.assertNonePropagated();
         mService.assertPropagated(
-                TYPE_VIEW_FOCUSED,
                 TYPE_VIEW_ACCESSIBILITY_FOCUSED,
                 TYPE_TOUCH_INTERACTION_START,
                 TYPE_TOUCH_INTERACTION_END,
@@ -279,13 +274,13 @@ public class TouchExplorerTest {
      */
     @Test
     @AppModeFull
-    public void testDoubleTapNoAccessibilityFocus() {
+    public void testDoubleTapNoAccessibilityFocus_doesNotPerformClick() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
         dispatch(doubleTap(mTapLocation));
         mHoverListener.assertNonePropagated();
         mTouchListener.assertNonePropagated();
         mService.assertPropagated(
-                TYPE_VIEW_FOCUSED, TYPE_TOUCH_INTERACTION_START, TYPE_TOUCH_INTERACTION_END);
+                 TYPE_TOUCH_INTERACTION_START, TYPE_TOUCH_INTERACTION_END);
         mService.clearEvents();
         mClickListener.assertNoneClicked();
     }
@@ -293,7 +288,7 @@ public class TouchExplorerTest {
     /** Test the case where we want to long click on the item that has accessibility focus. */
     @Test
     @AppModeFull
-    public void testDoubleTapAndHoldAccessibilityFocus() {
+    public void testDoubleTapAndHoldAccessibilityFocus_performsLongClick() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
         syncAccessibilityFocusToInputFocus();
         dispatch(doubleTapAndHold(mTapLocation));
@@ -301,7 +296,6 @@ public class TouchExplorerTest {
         // The click should not be delivered via touch events in this case.
         mTouchListener.assertNonePropagated();
         mService.assertPropagated(
-                TYPE_VIEW_FOCUSED,
                 TYPE_VIEW_ACCESSIBILITY_FOCUSED,
                 TYPE_TOUCH_INTERACTION_START,
                 TYPE_VIEW_LONG_CLICKED,
@@ -315,13 +309,13 @@ public class TouchExplorerTest {
      */
     @Test
     @AppModeFull
-    public void testDoubleTapAndHoldNoAccessibilityFocus() {
+    public void testDoubleTapAndHoldNoAccessibilityFocus_doesNotPerformLongClick() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
         dispatch(doubleTap(mTapLocation));
         mHoverListener.assertNonePropagated();
         mTouchListener.assertNonePropagated();
         mService.assertPropagated(
-                TYPE_VIEW_FOCUSED, TYPE_TOUCH_INTERACTION_START, TYPE_TOUCH_INTERACTION_END);
+                TYPE_TOUCH_INTERACTION_START, TYPE_TOUCH_INTERACTION_END);
         mService.clearEvents();
         mLongClickListener.assertNoneLongClicked();
     }
