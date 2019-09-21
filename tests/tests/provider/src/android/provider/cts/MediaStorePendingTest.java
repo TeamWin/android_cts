@@ -55,9 +55,9 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.NoSuchFileException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -186,7 +186,7 @@ public class MediaStorePendingTest {
         try {
             getRawFileHash(pendingFile);
             fail();
-        } catch (FileNotFoundException expected) {
+        } catch (NoSuchFileException expected) {
         }
     }
 
