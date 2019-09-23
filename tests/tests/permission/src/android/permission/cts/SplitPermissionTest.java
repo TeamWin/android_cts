@@ -18,8 +18,10 @@ package android.permission.cts;
 
 import static android.Manifest.permission.ACCESS_BACKGROUND_LOCATION;
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
+import static android.Manifest.permission.ACCESS_MEDIA_LOCATION;
 import static android.Manifest.permission.READ_CALL_LOG;
 import static android.Manifest.permission.READ_CONTACTS;
+import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 import static android.app.AppOpsManager.MODE_FOREGROUND;
 import static android.app.AppOpsManager.MODE_IGNORED;
 import static android.content.pm.PackageManager.FLAG_PERMISSION_REVIEW_REQUIRED;
@@ -71,6 +73,10 @@ public class SplitPermissionTest {
             TMP_DIR + "CtsAppThatRequestsContactsPermission15.apk";
     private static final String APK_CONTACTS_CALLLOG_16 =
             TMP_DIR + "CtsAppThatRequestsContactsAndCallLogPermission16.apk";
+    private static final String APK_STORAGE_29 =
+            TMP_DIR + "CtsAppThatRequestsStoragePermission29.apk";
+    private static final String APK_STORAGE_28 =
+            TMP_DIR + "CtsAppThatRequestsStoragePermission28.apk";
     private static final String APK_LOCATION_29 =
             TMP_DIR + "CtsAppThatRequestsLocationPermission29.apk";
     private static final String APK_LOCATION_28 =
@@ -254,6 +260,22 @@ public class SplitPermissionTest {
         install(APK_LOCATION_28);
 
         assertPermissionGranted(ACCESS_BACKGROUND_LOCATION);
+    }
+
+    /**
+     * If a permission was granted before the split happens, the new permission should inherit the
+     * granted state.
+     *
+     * This is a duplicate of {@link #inheritGrantedPermissionState} but for the storage permission
+     */
+    @Test
+    public void inheritGrantedPermissionStateStorage() throws Exception {
+        install(APK_STORAGE_29);
+        grantPermission(APP_PKG, READ_EXTERNAL_STORAGE);
+
+        install(APK_STORAGE_28);
+
+        assertPermissionGranted(ACCESS_MEDIA_LOCATION);
     }
 
     /**
