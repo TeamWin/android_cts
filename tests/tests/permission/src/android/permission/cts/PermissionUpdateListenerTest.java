@@ -92,6 +92,7 @@ public class PermissionUpdateListenerTest {
                 new LatchWithPermissionsChangedListener();
 
         runWithShellPermissionIdentity(() -> {
+            sPm.revokeRuntimePermission(PACKAGE_NAME, PERMISSION_NAME, sContext.getUser());
             sPm.addOnPermissionsChangeListener(listenerCalled);
             sPm.grantRuntimePermission(PACKAGE_NAME, PERMISSION_NAME, sContext.getUser());
         });
@@ -104,6 +105,7 @@ public class PermissionUpdateListenerTest {
                 new LatchWithPermissionsChangedListener();
 
         runWithShellPermissionIdentity(() -> {
+            sPm.grantRuntimePermission(PACKAGE_NAME, PERMISSION_NAME, sContext.getUser());
             sPm.addOnPermissionsChangeListener(listenerCalled);
             sPm.revokeRuntimePermission(PACKAGE_NAME, PERMISSION_NAME, sContext.getUser());
         });
