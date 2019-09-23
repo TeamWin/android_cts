@@ -41,6 +41,7 @@ import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit.MILLISECONDS
 
 private const val TEST_SERVICE_PKG = "android.app.appops.cts.appthatusesappops"
@@ -121,6 +122,11 @@ class AppOpsLoggingTest {
 
                     override fun onAsyncNoted(asyncOp: AsyncNotedAppOp) {
                         asyncNoted.add(asyncOp)
+                    }
+
+                    override fun getAsyncNotedExecutor(): Executor {
+                        // Execute callbacks immediately
+                        return Executor { it.run() }
                     }
                 })
     }
