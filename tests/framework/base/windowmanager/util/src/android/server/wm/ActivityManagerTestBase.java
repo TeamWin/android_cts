@@ -57,7 +57,6 @@ import static android.server.wm.ActivityLauncher.KEY_REORDER_TO_FRONT;
 import static android.server.wm.ActivityLauncher.KEY_SUPPRESS_EXCEPTIONS;
 import static android.server.wm.ActivityLauncher.KEY_TARGET_COMPONENT;
 import static android.server.wm.ActivityLauncher.KEY_USE_APPLICATION_CONTEXT;
-import static android.server.wm.ActivityLauncher.KEY_USE_INSTRUMENTATION;
 import static android.server.wm.ActivityLauncher.launchActivityFromExtras;
 import static android.server.wm.ActivityManagerState.STATE_RESUMED;
 import static android.server.wm.ComponentNameUtils.getActivityName;
@@ -156,7 +155,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -428,7 +426,7 @@ public abstract class ActivityManagerTestBase {
 
         pressWakeupButton();
         pressUnlockButton();
-        pressHomeButton();
+        launchHomeActivityNoWait();
         removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
 
         // Clear launch params for all test packages to make sure each test is run in a clean state.
@@ -444,8 +442,7 @@ public abstract class ActivityManagerTestBase {
         stopTestPackage(TEST_PACKAGE);
         stopTestPackage(SECOND_TEST_PACKAGE);
         stopTestPackage(THIRD_TEST_PACKAGE);
-        pressHomeButton();
-
+        launchHomeActivityNoWait();
     }
 
     /**
@@ -583,17 +580,6 @@ public abstract class ActivityManagerTestBase {
                 .setOnFailure(unusedResult -> fail("FAILED because unsatisfied: " + message)));
     }
 
-    /** Returns the set of stack ids. */
-    private HashSet<Integer> getStackIds() {
-        mAmWmState.computeState(true);
-        final List<ActivityManagerState.ActivityStack> stacks = mAmWmState.getAmState().getStacks();
-        final HashSet<Integer> stackIds = new HashSet<>();
-        for (ActivityManagerState.ActivityStack s : stacks) {
-            stackIds.add(s.mStackId);
-        }
-        return stackIds;
-    }
-
     /** Returns the stack that contains the provided task. */
     protected ActivityManagerState.ActivityStack getStackForTaskId(int taskId) {
         mAmWmState.computeState(true);
@@ -608,8 +594,17 @@ public abstract class ActivityManagerTestBase {
         return null;
     }
 
-    protected void launchHomeActivity() {
+    /**
+     * Launches the home activity directly. If there is no specific reason to simulate a home key
+     * (which will trigger stop-app-switches), it is the recommended method to go home.
+     */
+    protected static void launchHomeActivityNoWait() {
         executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
+    }
+
+    /** Launches the home activity directly with waiting for it to be visible. */
+    protected void launchHomeActivity() {
+        launchHomeActivityNoWait();
         mAmWmState.waitForHomeActivityVisible();
     }
 
@@ -1916,7 +1911,6 @@ public abstract class ActivityManagerTestBase {
         /** Launch an activity using instrumentation. */
         private void launchUsingInstrumentation() {
             final Bundle b = new Bundle();
-            b.putBoolean(KEY_USE_INSTRUMENTATION, true);
             b.putBoolean(KEY_LAUNCH_ACTIVITY, true);
             b.putBoolean(KEY_LAUNCH_TO_SIDE, mToSide);
             b.putBoolean(KEY_RANDOM_DATA, mRandomData);

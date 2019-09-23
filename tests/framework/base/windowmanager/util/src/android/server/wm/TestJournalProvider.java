@@ -274,9 +274,9 @@ public class TestJournalProvider extends ContentProvider {
          * Perform the action which may have thread safety concerns when accessing the fields of
          * {@link TestJournal}.
          */
-        public static void withThreadSafeAccess(Runnable aciton) {
+        public static void withThreadSafeAccess(Runnable action) {
             synchronized (getInstance()) {
-                aciton.run();
+                action.run();
             }
         }
 
