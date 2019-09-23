@@ -384,27 +384,12 @@ public class AdbUtils {
                     AdbUtils.runCommandLine("rm /data/local/tmp/" + tempFile, device);
                 }
             }
-            if (test_failed == true) {
+            if (test_failed) {
                 Assert.fail("PoC was interrupted");
             }
         }
         if (t.isAlive()) {
             Assert.fail("PoC not completed within timeout of " + timeout + " ms");
-        }
-    }
-
-    /**
-     * Raises assert exception upon crash/error occurence
-     *
-     * @param crashPatternList array of crash log patterns to be checked for
-     * @param logcat String to be parsed
-     */
-    public static void checkCrash(String crashPatternList[], String logcat)
-            throws Exception {
-        for (String crashPattern : crashPatternList) {
-            assertFalse("Crash log pattern found!",
-                    Pattern.compile(crashPattern, Pattern.MULTILINE)
-                            .matcher(logcat).find());
         }
     }
 }
