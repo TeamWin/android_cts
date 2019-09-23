@@ -16,9 +16,6 @@
 
 package android.keystore.cts;
 
-import android.os.SystemProperties;
-import android.platform.test.annotations.RestrictedBuildTest;
-
 import static android.keystore.cts.Attestation.KM_SECURITY_LEVEL_SOFTWARE;
 import static android.keystore.cts.Attestation.KM_SECURITY_LEVEL_STRONG_BOX;
 import static android.keystore.cts.Attestation.KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT;
@@ -48,17 +45,18 @@ import static android.security.keystore.KeyProperties.PURPOSE_SIGN;
 import static android.security.keystore.KeyProperties.PURPOSE_VERIFY;
 import static android.security.keystore.KeyProperties.SIGNATURE_PADDING_RSA_PKCS1;
 import static android.security.keystore.KeyProperties.SIGNATURE_PADDING_RSA_PSS;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.junit.Assert.assertThat;
-import static org.junit.matchers.JUnitMatchers.either;
-import static org.junit.matchers.JUnitMatchers.hasItems;
 
-import com.google.common.collect.ImmutableSet;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.either;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.hasItems;
+
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.content.Context;
 import android.os.Build;
 import android.os.SystemProperties;
+import android.platform.test.annotations.RestrictedBuildTest;
 import android.security.KeyStoreException;
 import android.security.keystore.AttestationUtils;
 import android.security.keystore.DeviceIdAttestationException;
@@ -66,6 +64,8 @@ import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.test.AndroidTestCase;
 import android.util.ArraySet;
+
+import com.google.common.collect.ImmutableSet;
 
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
@@ -590,6 +590,7 @@ public class KeyAttestationTest extends AndroidTestCase {
     private void checkKeyIndependentAttestationInfo(byte[] challenge, int purposes, Date startTime,
             boolean includesValidityDates, Attestation attestation)
             throws NoSuchAlgorithmException, NameNotFoundException {
+        checkUnexpectedOids(attestation);
         checkAttestationSecurityLevelDependentParams(attestation);
         assertNotNull(attestation.getAttestationChallenge());
         assertTrue(Arrays.equals(challenge, attestation.getAttestationChallenge()));
@@ -602,6 +603,11 @@ public class KeyAttestationTest extends AndroidTestCase {
         checkFlags(attestation);
         checkOrigin(attestation);
         checkAttestationApplicationId(attestation);
+    }
+
+    private void checkUnexpectedOids(Attestation attestation) {
+        assertThat("Attestations must not contain any extra data",
+                attestation.getUnexpectedExtensionOids(), is(empty()));
     }
 
     private int getSystemPatchLevel() {
