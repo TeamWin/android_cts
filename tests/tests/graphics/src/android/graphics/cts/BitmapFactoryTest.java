@@ -354,7 +354,7 @@ public class BitmapFactoryTest {
                 opts.inInputShareable = purgeable;
 
                 long actualOffset = actual_offsets[j];
-                String path = obtainPath(testImage.id, actualOffset);
+                String path = Utils.obtainPath(testImage.id, actualOffset);
                 RandomAccessFile file = new RandomAccessFile(path, "r");
                 FileDescriptor fd = file.getFD();
                 assertTrue(fd.valid());
@@ -1015,38 +1015,6 @@ public class BitmapFactoryTest {
     }
 
     private String obtainPath() throws IOException {
-        return obtainPath(R.drawable.start, 0);
-    }
-
-    /*
-     * Create a new file and return a path to it.
-     * @param resId Original file. It will be copied into the new file.
-     * @param offset Number of zeroes to write to the new file before the
-     *               copied file. This allows testing decodeFileDescriptor
-     *               with an offset. Must be less than or equal to 1024
-     */
-    private String obtainPath(int resId, long offset) throws IOException {
-        File dir = InstrumentationRegistry.getTargetContext().getFilesDir();
-        dir.mkdirs();
-        // The suffix does not necessarily represent theactual file type.
-        File file = new File(dir, "test.jpg");
-        if (!file.createNewFile()) {
-            if (!file.exists()) {
-                fail("Failed to create new File!");
-            }
-        }
-        InputStream is = obtainInputStream(resId);
-        FileOutputStream fOutput = new FileOutputStream(file);
-        byte[] dataBuffer = new byte[1024];
-        // Write a bunch of zeroes before the image.
-        assertTrue(offset <= 1024);
-        fOutput.write(dataBuffer, 0, (int) offset);
-        int readLength = 0;
-        while ((readLength = is.read(dataBuffer)) != -1) {
-            fOutput.write(dataBuffer, 0, readLength);
-        }
-        is.close();
-        fOutput.close();
-        return (file.getPath());
+        return Utils.obtainPath(R.drawable.start, 0);
     }
 }

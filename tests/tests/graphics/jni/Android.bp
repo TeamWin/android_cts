@@ -17,6 +17,7 @@ cc_test_library {
     gtest: false,
     srcs: [
         "CtsGraphicsJniOnLoad.cpp",
+        "android_graphics_cts_AImageDecoderTest.cpp",
         "android_graphics_cts_ANativeWindowTest.cpp",
         "android_graphics_cts_ASurfaceTextureTest.cpp",
         "android_graphics_cts_BasicVulkanGpuTest.cpp",
