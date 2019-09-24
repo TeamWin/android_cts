@@ -27,6 +27,7 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.SecurityTest;
 
 import androidx.test.InstrumentationRegistry;
@@ -36,6 +37,7 @@ import com.android.compatibility.common.util.SystemUtil;
 import org.junit.Before;
 import org.junit.Test;
 
+@AppModeFull(reason = "Instant apps cannot read state of other packages.")
 public class RemovePermissionTest {
     private static final String APP_PKG_NAME = "android.permission.cts.revokepermissionwhenremoved";
     private static final String USER_PKG_NAME =
