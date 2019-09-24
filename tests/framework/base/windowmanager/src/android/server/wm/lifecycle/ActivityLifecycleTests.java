@@ -23,6 +23,8 @@ import static android.server.wm.ActivityManagerState.STATE_STOPPED;
 import static android.server.wm.UiDeviceUtils.pressBackButton;
 import static android.server.wm.lifecycle.ActivityLifecycleClientTestBase.LaunchForResultActivity.EXTRA_LAUNCH_ON_RESULT;
 import static android.server.wm.lifecycle.ActivityLifecycleClientTestBase.LaunchForResultActivity.EXTRA_LAUNCH_ON_RESUME_AFTER_RESULT;
+import static android.server.wm.lifecycle.ActivityLifecycleClientTestBase.NoDisplayActivity.EXTRA_LAUNCH_ACTIVITY;
+import static android.server.wm.lifecycle.ActivityLifecycleClientTestBase.NoDisplayActivity.EXTRA_NEW_TASK;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_ACTIVITY_RESULT;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_CREATE;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_DESTROY;
@@ -57,6 +59,7 @@ import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.AmUtils;
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Test;
 
@@ -363,6 +366,53 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         waitAndAssertActivityStates(state(activity, ON_DESTROY));
 
         LifecycleVerifier.assertLaunchAndDestroySequence(FirstActivity.class, getLifecycleLog());
+    }
+
+    @FlakyTest(bugId = 139808754)
+    @Test
+    public void testTrampoline() throws Exception {
+        testTrampolineLifecycle(false /* newTask */);
+    }
+
+    @FlakyTest(bugId = 139808754)
+    @Test
+    public void testTrampolineNewTask() throws Exception {
+        testTrampolineLifecycle(true /* newTask */);
+    }
+
+    /**
+     * Verifies that activity start from a trampoline will have the correct lifecycle and complete
+     * in time. The expected lifecycle is that the trampoline will skip ON_START - ON_STOP part of
+     * the usual sequence, and will go straight to ON_DESTROY after creation.
+     */
+    private void testTrampolineLifecycle(boolean newTask) {
+        // Run activity start manually (without using instrumentation) to make it async and measure
+        // time from the request correctly.
+        final Intent newTaskIntent = new Intent(mTargetContext, NoDisplayActivity.class);
+        newTaskIntent.putExtra(EXTRA_LAUNCH_ACTIVITY, true);
+        newTaskIntent.putExtra(EXTRA_FINISH_IN_ON_CREATE, true);
+        if (newTask) {
+            newTaskIntent.putExtra(EXTRA_NEW_TASK, true);
+        }
+        newTaskIntent.addFlags(FLAG_ACTIVITY_NEW_TASK);
+        // Using Shell permission identity to allow task switching and avoid delay.
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mTargetContext.startActivity(newTaskIntent)
+        );
+        waitAndAssertActivityStates(state(NoDisplayActivity.class, ON_DESTROY),
+                state(CallbackTrackingActivity.class, ON_TOP_POSITION_GAINED));
+
+        LifecycleVerifier.assertEntireSequence(Arrays.asList(
+                transition(NoDisplayActivity.class, PRE_ON_CREATE),
+                transition(NoDisplayActivity.class, ON_CREATE),
+                transition(CallbackTrackingActivity.class, PRE_ON_CREATE),
+                transition(CallbackTrackingActivity.class, ON_CREATE),
+                transition(CallbackTrackingActivity.class, ON_START),
+                transition(CallbackTrackingActivity.class, ON_POST_CREATE),
+                transition(CallbackTrackingActivity.class, ON_RESUME),
+                transition(CallbackTrackingActivity.class, ON_TOP_POSITION_GAINED),
+                transition(NoDisplayActivity.class, ON_DESTROY)),
+                getLifecycleLog(), "trampolineLaunch");
     }
 
     @Test

@@ -17,6 +17,8 @@
 package android.server.wm.lifecycle;
 
 import static android.app.Activity.RESULT_OK;
+import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.StateLogger.log;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_ACTIVITY_RESULT;
@@ -453,6 +455,21 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
 
     /** Test activity with NoDisplay theme that can finish itself. */
     public static class NoDisplayActivity extends ResultActivity {
+        static final String EXTRA_LAUNCH_ACTIVITY = "extra_launch_activity";
+        static final String EXTRA_NEW_TASK = "extra_new_task";
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+
+            if (getIntent().getBooleanExtra(EXTRA_LAUNCH_ACTIVITY, false)) {
+                final Intent intent = new Intent(this, CallbackTrackingActivity.class);
+                if (getIntent().getBooleanExtra(EXTRA_NEW_TASK, false)) {
+                    intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
+                }
+                startActivity(intent);
+            }
+        }
     }
 
     /** Test activity that can call {@link Activity#recreate()} if requested in a new intent. */
