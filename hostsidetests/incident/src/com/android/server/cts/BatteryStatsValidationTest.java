@@ -42,7 +42,6 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
 
     // These constants are those in PackageManager.
     public static final String FEATURE_BLUETOOTH_LE = "android.hardware.bluetooth_le";
-    public static final String FEATURE_LEANBACK_ONLY = "android.software.leanback_only";
     public static final String FEATURE_LOCATION_GPS = "android.hardware.location.gps";
 
     private static final int STATE_TIME_TOP_INDEX = 4;
@@ -136,6 +135,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testAlarms() throws Exception {
+        if (noBattery()) {
+            return;
+        }
         batteryOnScreenOff();
 
         installPackage(DEVICE_SIDE_TEST_APK, /* grantPermissions= */ true);
@@ -149,6 +151,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testWakeLockDuration() throws Exception {
+        if (noBattery()) {
+            return;
+        }
         batteryOnScreenOff();
 
         installPackage(DEVICE_SIDE_TEST_APK, /* grantPermissions= */ true);
@@ -171,6 +176,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testServiceForegroundDuration() throws Exception {
+        if (noBattery()) {
+            return;
+        }
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
 
@@ -186,6 +194,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testUidForegroundDuration() throws Exception {
+        if (noBattery()) {
+            return;
+        }
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
         // No foreground time before test
@@ -199,6 +210,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testUidBackgroundDuration() throws Exception {
+        if (noBattery()) {
+            return;
+        }
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
         // No background time before test
@@ -209,6 +223,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testTopDuration() throws Exception {
+        if (noBattery()) {
+            return;
+        }
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
         // No top time before test
@@ -221,6 +238,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testCachedDuration() throws Exception {
+        if (noBattery()) {
+            return;
+        }
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
         // No cached time before test
@@ -436,6 +456,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
      * are properly updated in battery stats.
      */
     public void testRealtime() throws Exception {
+        if (noBattery()) {
+            return;
+        }
         batteryOnScreenOff();
         long startingValueRealtime = getLongValue(0, "bt", "", 7);
         long startingValueBatteryRealtime = getLongValue(0, "bt", "", 5);
@@ -461,6 +484,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
      * Tests the total duration reported for jobs run on the job scheduler.
      */
     public void testJobDuration() throws Exception {
+        if (noBattery()) {
+            return;
+        }
         batteryOnScreenOff();
 
         installPackage(DEVICE_SIDE_TEST_APK, true);
@@ -479,6 +505,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
      * Tests the total duration and # of syncs reported for sync activities.
      */
     public void testSyncs() throws Exception {
+        if (noBattery()) {
+            return;
+        }
         batteryOnScreenOff();
 
         installPackage(DEVICE_SIDE_TEST_APK, true);
