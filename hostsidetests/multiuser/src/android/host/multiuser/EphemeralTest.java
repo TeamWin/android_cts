@@ -75,7 +75,7 @@ public class EphemeralTest extends BaseMultiUserTest {
             return;
         }
         assertSwitchToNewUser(ephemeralUserId);
-        getDevice().rebootUntilOnline();
+        getDevice().reboot();
         assertUserNotPresent(ephemeralUserId);
     }
 }
