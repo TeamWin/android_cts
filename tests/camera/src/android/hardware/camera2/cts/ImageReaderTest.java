@@ -52,12 +52,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.Test;
+
 import static android.hardware.camera2.cts.CameraTestUtils.CAPTURE_RESULT_TIMEOUT_MS;
 import static android.hardware.camera2.cts.CameraTestUtils.SESSION_READY_TIMEOUT_MS;
 import static android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
 import static android.hardware.camera2.cts.CameraTestUtils.SimpleImageReaderListener;
 import static android.hardware.camera2.cts.CameraTestUtils.dumpFile;
 import static android.hardware.camera2.cts.CameraTestUtils.getValueNotNull;
+import static junit.framework.Assert.*;
 
 /**
  * <p>Basic test for ImageReader APIs. It uses CameraDevice as producer, camera
@@ -69,6 +74,7 @@ import static android.hardware.camera2.cts.CameraTestUtils.getValueNotNull;
  * <p>Some invalid access test. </p>
  * <p>TODO: Add more format tests? </p>
  */
+@RunWith(Parameterized.class)
 public class ImageReaderTest extends Camera2AndroidTestCase {
     private static final String TAG = "ImageReaderTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
@@ -93,22 +99,18 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
     private SimpleImageListener mListener;
 
     @Override
-    public void setContext(Context context) {
-        super.setContext(context);
-    }
-
-    @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
     }
 
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         super.tearDown();
     }
 
+    @Test
     public void testFlexibleYuv() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.i(TAG, "Testing Camera " + id);
                 openDevice(id);
@@ -119,8 +121,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         }
     }
 
+    @Test
     public void testDepth16() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.i(TAG, "Testing Camera " + id);
                 openDevice(id);
@@ -131,8 +134,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         }
     }
 
+    @Test
     public void testDepthPointCloud() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.i(TAG, "Testing Camera " + id);
                 openDevice(id);
@@ -143,8 +147,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         }
     }
 
+    @Test
     public void testDynamicDepth() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 openDevice(id);
                 bufferFormatTestByCamera(ImageFormat.DEPTH_JPEG, /*repeating*/true,
@@ -155,8 +160,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         }
     }
 
+    @Test
     public void testY8() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.i(TAG, "Testing Camera " + id);
                 openDevice(id);
@@ -167,8 +173,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         }
     }
 
+    @Test
     public void testJpeg() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.v(TAG, "Testing jpeg capture for Camera " + id);
                 openDevice(id);
@@ -179,8 +186,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         }
     }
 
+    @Test
     public void testRaw() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.v(TAG, "Testing raw capture for camera " + id);
                 openDevice(id);
@@ -192,8 +200,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         }
     }
 
+    @Test
     public void testRawPrivate() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.v(TAG, "Testing raw capture for camera " + id);
                 openDevice(id);
@@ -205,8 +214,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         }
     }
 
+    @Test
     public void testHeic() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.v(TAG, "Testing heic capture for Camera " + id);
                 openDevice(id);
@@ -217,8 +227,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         }
     }
 
+    @Test
     public void testRepeatingJpeg() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.v(TAG, "Testing repeating jpeg capture for Camera " + id);
                 openDevice(id);
@@ -229,8 +240,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         }
     }
 
+    @Test
     public void testRepeatingRaw() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.v(TAG, "Testing repeating raw capture for camera " + id);
                 openDevice(id);
@@ -242,8 +254,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         }
     }
 
+    @Test
     public void testRepeatingRawPrivate() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.v(TAG, "Testing repeating raw capture for camera " + id);
                 openDevice(id);
@@ -255,8 +268,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         }
     }
 
+    @Test
     public void testRepeatingHeic() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.v(TAG, "Testing repeating heic capture for Camera " + id);
                 openDevice(id);
@@ -267,8 +281,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         }
     }
 
+    @Test
     public void testLongProcessingRepeatingRaw() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.v(TAG, "Testing long processing on repeating raw for camera " + id);
 
@@ -285,8 +300,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         }
     }
 
+    @Test
     public void testLongProcessingRepeatingFlexibleYuv() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.v(TAG, "Testing long processing on repeating YUV for camera " + id);
 
@@ -310,9 +326,10 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
      * for camera case. For if the produced image byte buffer is not direct byte buffer, there
      * is no guarantee to get an ISE for this invalid access case.
      */
+    @Test
     public void testInvalidAccessTest() throws Exception {
         // Test byte buffer access after an image is released, it should throw ISE.
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.v(TAG, "Testing invalid image access for Camera " + id);
                 openDevice(id);
@@ -329,8 +346,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
      *
      * <p>Both stream formats are mandatory for Camera2 API</p>
      */
+    @Test
     public void testYuvAndJpeg() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.v(TAG, "YUV and JPEG testing for camera " + id);
                 if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
@@ -352,8 +370,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
      *
      * <p>Both stream formats are mandatory for Camera2 API</p>
      */
+    @Test
     public void testYuvAndJpegWithUsageFlag() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.v(TAG, "YUV and JPEG testing for camera " + id);
                 if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
@@ -373,8 +392,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
      * Test two image stream (YUV420_888 and RAW_SENSOR) capture by using ImageReader.
      *
      */
+    @Test
     public void testImageReaderYuvAndRaw() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.v(TAG, "YUV and RAW testing for camera " + id);
                 if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
@@ -395,8 +415,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
      * ImageFormat.PRIVATE + PROTECTED usage capture by using ImageReader with the
      * ImageReader factory method that has usage flag argument, and uses a custom usage flag.
      */
+    @Test
     public void testImageReaderPrivateWithProtectedUsageFlag() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.v(TAG, "Private format and protected usage testing for camera " + id);
                 if (!mAllStaticInfo.get(id).isCapabilitySupported(
@@ -421,8 +442,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
      * ImageReader factory method that has usage flag argument.
      *
      */
+    @Test
     public void testImageReaderYuvAndRawWithUsageFlag() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.v(TAG, "YUV and RAW testing for camera " + id);
                 if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
@@ -442,10 +464,11 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
      * Check that the center patches for YUV and JPEG outputs for the same frame match for each YUV
      * resolution and format supported.
      */
+    @Test
     public void testAllOutputYUVResolutions() throws Exception {
         Integer[] sessionStates = {BlockingSessionCallback.SESSION_READY,
                 BlockingSessionCallback.SESSION_CONFIGURE_FAILED};
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.v(TAG, "Testing all YUV image resolutions for camera " + id);
 
@@ -686,8 +709,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
     /**
      * Test that images captured after discarding free buffers are valid.
      */
+    @Test
     public void testDiscardFreeBuffers() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.v(TAG, "Testing discardFreeBuffers for Camera " + id);
                 openDevice(id);
@@ -699,6 +723,7 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
     }
 
     /** Tests that usage bits are preserved */
+    @Test
     public void testUsageRespected() throws Exception {
         ImageReader reader = ImageReader.newInstance(1, 1, PixelFormat.RGBA_8888, 1,
                 HardwareBuffer.USAGE_GPU_COLOR_OUTPUT | HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE);

@@ -59,14 +59,21 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.Set;
 
+import org.junit.runners.Parameterized;
+import org.junit.runner.RunWith;
+import org.junit.Test;
+
 import static android.hardware.camera2.cts.helpers.AssertHelpers.*;
 import static android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
+
+import static junit.framework.Assert.*;
 
 import static org.mockito.Mockito.*;
 
 /**
  * Extended tests for static camera characteristics.
  */
+@RunWith(Parameterized.class)
 public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     private static final String TAG = "ExChrsTest"; // must be short so next line doesn't throw
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
@@ -128,7 +135,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     private static final int HIGH_SPEED_FPS_UPPER_MIN = 120;
 
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
         mCharacteristics = new ArrayList<>();
         for (int i = 0; i < mAllCameraIds.length; i++) {
@@ -137,7 +144,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     }
 
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         super.tearDown();
         mCharacteristics = null;
     }
@@ -146,6 +153,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
      * Test that the available stream configurations contain a few required formats and sizes.
      */
     @CddTest(requirement="7.5.1/C-1-2")
+    @Test
     public void testAvailableStreamConfigs() throws Exception {
         boolean firstBackFacingCamera = true;
         for (int i = 0; i < mAllCameraIds.length; i++) {
@@ -169,7 +177,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
 
             boolean isMonochromeWithY8 = arrayContains(actualCapabilities, MONOCHROME)
                     && arrayContains(outputFormats, ImageFormat.Y8);
-            boolean isHiddenPhysicalCamera = !arrayContains(mCameraIds, mAllCameraIds[i]);
+            boolean isHiddenPhysicalCamera = !arrayContains(mCameraIdsUnderTest, mAllCameraIds[i]);
             boolean supportHeic = arrayContains(outputFormats, ImageFormat.HEIC);
 
             assertArrayContains(
@@ -769,6 +777,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
 
     }
 
+    @Test
     public void testRecommendedStreamConfigurations() throws Exception {
         for (int i = 0; i < mAllCameraIds.length; i++) {
             CameraCharacteristics c = mCharacteristics.get(i);
@@ -868,6 +877,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     /**
      * Test {@link CameraCharacteristics#getKeys}
      */
+    @Test
     public void testKeys() {
         for (int i = 0; i < mAllCameraIds.length; i++) {
             CameraCharacteristics c = mCharacteristics.get(i);
@@ -1036,6 +1046,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     /**
      * Test values for static metadata used by the RAW capability.
      */
+    @Test
     public void testStaticRawCharacteristics() {
         for (int i = 0; i < mAllCameraIds.length; i++) {
             CameraCharacteristics c = mCharacteristics.get(i);
@@ -1142,6 +1153,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     /**
      * Test values for the available session keys.
      */
+    @Test
     public void testStaticSessionKeys() throws Exception {
         for (CameraCharacteristics c : mCharacteristics) {
             List<CaptureRequest.Key<?>> availableSessionKeys = c.getAvailableSessionKeys();
@@ -1161,6 +1173,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     /**
      * Test values for static metadata used by the BURST capability.
      */
+    @Test
     public void testStaticBurstCharacteristics() throws Exception {
         for (int i = 0; i < mAllCameraIds.length; i++) {
             CameraCharacteristics c = mCharacteristics.get(i);
@@ -1325,6 +1338,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     /**
      * Check reprocessing capabilities.
      */
+    @Test
     public void testReprocessingCharacteristics() {
         for (int i = 0; i < mAllCameraIds.length; i++) {
             Log.i(TAG, "testReprocessingCharacteristics: Testing camera ID " + mAllCameraIds[i]);
@@ -1453,6 +1467,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     /**
      * Check depth output capability
      */
+    @Test
     public void testDepthOutputCharacteristics() {
         for (int i = 0; i < mAllCameraIds.length; i++) {
             Log.i(TAG, "testDepthOutputCharacteristics: Testing camera ID " + mAllCameraIds[i]);
@@ -1728,6 +1743,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     /**
      * Cross-check StreamConfigurationMap output
      */
+    @Test
     public void testStreamConfigurationMap() throws Exception {
         for (int i = 0; i < mAllCameraIds.length; i++) {
             Log.i(TAG, "testStreamConfigurationMap: Testing camera ID " + mAllCameraIds[i]);
@@ -1933,6 +1949,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
      * Test high speed capability and cross-check the high speed sizes and fps ranges from
      * the StreamConfigurationMap.
      */
+    @Test
     public void testConstrainedHighSpeedCapability() throws Exception {
         for (int i = 0; i < mAllCameraIds.length; i++) {
             CameraCharacteristics c = mCharacteristics.get(i);
@@ -2013,6 +2030,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     /**
      * Sanity check of optical black regions.
      */
+    @Test
     public void testOpticalBlackRegions() {
         for (int i = 0; i < mAllCameraIds.length; i++) {
             CameraCharacteristics c = mCharacteristics.get(i);
@@ -2089,6 +2107,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     /**
      * Check Logical camera capability
      */
+    @Test
     public void testLogicalCameraCharacteristics() throws Exception {
         for (int i = 0; i < mAllCameraIds.length; i++) {
             CameraCharacteristics c = mCharacteristics.get(i);
@@ -2163,6 +2182,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     /**
      * Check monochrome camera capability
      */
+    @Test
     public void testMonochromeCharacteristics() {
         for (int i = 0; i < mAllCameraIds.length; i++) {
             Log.i(TAG, "testMonochromeCharacteristics: Testing camera ID " + mAllCameraIds[i]);
@@ -2297,7 +2317,13 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
      * accessible via Camera2.
      */
     @CddTest(requirement="7.5.4/C-0-11")
+    @Test
     public void testLegacyCameraDeviceParity() {
+        if (mAdoptShellPerm) {
+            // There is no current way to determine in camera1 api if a device is a system camera
+            // Skip test, http://b/141496896
+            return;
+        }
         int legacyDeviceCount = Camera.getNumberOfCameras();
         assertTrue("More legacy devices: " + legacyDeviceCount + " compared to Camera2 devices: " +
                 mCharacteristics.size(), legacyDeviceCount <= mCharacteristics.size());
@@ -2339,6 +2365,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
      * Check camera orientation against device orientation
      */
     @CddTest(requirement="7.5.5/C-1-1")
+    @Test
     public void testCameraOrientationAlignedWithDevice() {
         WindowManager windowManager =
                 (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);

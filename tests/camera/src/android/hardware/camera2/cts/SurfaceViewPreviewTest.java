@@ -52,11 +52,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.runners.Parameterized;
+import org.junit.runner.RunWith;
 import org.junit.Test;
 
 /**
  * CameraDevice preview test by using SurfaceView.
  */
+
+@RunWith(Parameterized.class)
 public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
     private static final String TAG = "SurfaceViewPreviewTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
@@ -86,15 +90,15 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testCameraPreview() throws Exception {
-        for (int i = 0; i < mCameraIds.length; i++) {
+        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
             try {
-                Log.i(TAG, "Testing preview for Camera " + mCameraIds[i]);
-                if (!mAllStaticInfo.get(mCameraIds[i]).isColorOutputSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIds[i] +
+                Log.i(TAG, "Testing preview for Camera " + mCameraIdsUnderTest[i]);
+                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
                             " does not support color outputs, skipping");
                     continue;
                 }
-                openDevice(mCameraIds[i]);
+                openDevice(mCameraIdsUnderTest[i]);
                 previewTestByCamera();
             } finally {
                 closeDevice();
@@ -111,15 +115,15 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testBasicTestPatternPreview() throws Exception{
-        for (int i = 0; i < mCameraIds.length; i++) {
+        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
             try {
-                Log.i(TAG, "Testing preview for Camera " + mCameraIds[i]);
-                if (!mAllStaticInfo.get(mCameraIds[i]).isColorOutputSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIds[i] +
+                Log.i(TAG, "Testing preview for Camera " + mCameraIdsUnderTest[i]);
+                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
                             " does not support color outputs, skipping");
                     continue;
                 }
-                openDevice(mCameraIds[i]);
+                openDevice(mCameraIdsUnderTest[i]);
                 previewTestPatternTestByCamera();
             } finally {
                 closeDevice();
@@ -133,7 +137,7 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testPreviewFpsRange() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
@@ -159,7 +163,7 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testSurfaceSet() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
@@ -184,15 +188,15 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testPreparePerformance() throws Throwable {
-        for (int i = 0; i < mCameraIds.length; i++) {
+        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
             try {
-                if (!mAllStaticInfo.get(mCameraIds[i]).isColorOutputSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIds[i] +
+                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
                             " does not support color outputs, skipping");
                     continue;
                 }
-                openDevice(mCameraIds[i]);
-                preparePerformanceTestByCamera(mCameraIds[i]);
+                openDevice(mCameraIdsUnderTest[i]);
+                preparePerformanceTestByCamera(mCameraIdsUnderTest[i]);
             }
             finally {
                 closeDevice();
@@ -344,15 +348,15 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testSurfaceEquality() throws Exception {
-        for (int i = 0; i < mCameraIds.length; i++) {
+        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
             try {
-                if (!mAllStaticInfo.get(mCameraIds[i]).isColorOutputSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIds[i] +
+                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
                             " does not support color outputs, skipping");
                     continue;
                 }
-                openDevice(mCameraIds[i]);
-                surfaceEqualityTestByCamera(mCameraIds[i]);
+                openDevice(mCameraIdsUnderTest[i]);
+                surfaceEqualityTestByCamera(mCameraIdsUnderTest[i]);
             }
             finally {
                 closeDevice();
@@ -435,21 +439,21 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testDeferredSurfaces() throws Exception {
-        for (int i = 0; i < mCameraIds.length; i++) {
+        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
             try {
-                StaticMetadata staticInfo = mAllStaticInfo.get(mCameraIds[i]);
+                StaticMetadata staticInfo = mAllStaticInfo.get(mCameraIdsUnderTest[i]);
                 if (staticInfo.isHardwareLevelLegacy()) {
-                    Log.i(TAG, "Camera " + mCameraIds[i] + " is legacy, skipping");
+                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] + " is legacy, skipping");
                     continue;
                 }
                 if (!staticInfo.isColorOutputSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIds[i] +
+                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
                             " does not support color outputs, skipping");
                     continue;
                 }
 
-                openDevice(mCameraIds[i]);
-                testDeferredSurfacesByCamera(mCameraIds[i]);
+                openDevice(mCameraIdsUnderTest[i]);
+                testDeferredSurfacesByCamera(mCameraIdsUnderTest[i]);
             }
             finally {
                 closeDevice();
