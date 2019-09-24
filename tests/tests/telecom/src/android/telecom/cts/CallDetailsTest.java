@@ -22,10 +22,12 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertThat;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.graphics.drawable.Icon;
 import android.media.AudioManager;
 import android.os.Bundle;
 import android.net.Uri;
+import android.provider.CallLog;
 import android.telecom.Call;
 import android.telecom.Connection;
 import android.telecom.ConnectionRequest;
@@ -38,6 +40,8 @@ import android.telecom.TelecomManager;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Suites of tests that verifies the various Call details.
@@ -72,6 +76,7 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
     public static final int TEST_EXTRA_VALUE = 10;
     public static final String TEST_EVENT = "com.test.event.TEST";
     public static final Uri TEST_DEFLECT_URI = Uri.fromParts("tel", "+16505551212", null);
+    private static final int ASYNC_TIMEOUT = 10000;
     private StatusHints mStatusHints;
     private Bundle mExtras = new Bundle();
 
@@ -751,5 +756,30 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
                 TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
                 "Call should have extras key " + expectedKey
         );
+    }
+
+    /**
+     * Tests whether the CallLogManager logs the features of a call(HD call and Wifi call)
+     * correctly.
+     */
+    public void testLogHdAndWifi() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        // Register content observer on call log and get latch
+        CountDownLatch callLogEntryLatch = getCallLogEntryLatch();
+        mCall.disconnect();
+
+        // Wait on the call log latch.
+        callLogEntryLatch.await(ASYNC_TIMEOUT, TimeUnit.MILLISECONDS);
+
+        // Verify the contents of the call log
+        Cursor callsCursor = mContext.getContentResolver().query(CallLog.Calls.CONTENT_URI, null,
+                "features", null, null);
+        int features = callsCursor.getColumnIndex(CallLog.Calls.FEATURES);
+        assertEquals(CallLog.Calls.FEATURES_HD_CALL,
+                features & CallLog.Calls.FEATURES_HD_CALL);
+        assertEquals(CallLog.Calls.FEATURES_WIFI, features & CallLog.Calls.FEATURES_WIFI);
     }
 }
