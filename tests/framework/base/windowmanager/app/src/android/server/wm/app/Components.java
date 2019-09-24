@@ -395,6 +395,8 @@ public class Components extends ComponentsBase {
     public static class TopActivity {
         public static final String EXTRA_FINISH_DELAY = "FINISH_DELAY";
         public static final String EXTRA_TOP_WALLPAPER = "USE_WALLPAPER";
+        public static final String ACTION_CONVERT_TO_TRANSLUCENT = "convert_to_translucent";
+        public static final String ACTION_CONVERT_FROM_TRANSLUCENT = "convert_from_translucent";
     }
 
     /**

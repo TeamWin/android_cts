@@ -59,6 +59,7 @@ import static android.server.wm.ActivityLauncher.KEY_TARGET_COMPONENT;
 import static android.server.wm.ActivityLauncher.KEY_USE_APPLICATION_CONTEXT;
 import static android.server.wm.ActivityLauncher.launchActivityFromExtras;
 import static android.server.wm.ActivityManagerState.STATE_RESUMED;
+import static android.server.wm.CommandSession.KEY_FORWARD;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.ComponentNameUtils.getLogTag;
 import static android.server.wm.StateLogger.log;
@@ -1994,6 +1995,7 @@ public abstract class ActivityManagerTestBase {
             }
 
             if (mLaunchInjector != null) {
+                commandBuilder.append(" --ez " + KEY_FORWARD + " true");
                 mLaunchInjector.setupShellCommand(commandBuilder);
             }
             executeShellCommand(commandBuilder.toString());
