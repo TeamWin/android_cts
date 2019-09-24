@@ -44,6 +44,7 @@ import android.app.WallpaperManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ContextWrapper;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -488,7 +489,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
              final TestActivitySession<ImeTestActivity2> imeTestActivitySession2 = new
                      TestActivitySession<>();
              // Leverage MockImeSession to ensure at least an IME exists as default.
-             final MockImeSession mockImeSession1 = MockImeSession.create(
+             final MockImeSession mockImeSession = MockImeSession.create(
                      mContext, getInstrumentation().getUiAutomation(), new ImeSettings.Builder())) {
 
             // Create a virtual display and launch an activity on virtual & default display.
@@ -500,7 +501,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
                     newDisplay.mId);
 
             final Display defDisplay = mAmWmState.getWmState().getDisplay(DEFAULT_DISPLAY);
-            final ImeEventStream stream = mockImeSession1.openEventStream();
+            final ImeEventStream stream = mockImeSession.openEventStream();
 
             // Tap default display as top focused display & request focus on EditText to show
             // soft input.
@@ -584,6 +585,50 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
             final ImeCommand callCursorUpdates = mockImeSession.callRequestCursorUpdates(
                     InputConnection.CURSOR_UPDATE_IMMEDIATE);
             assertFalse(expectCommand(stream, callCursorUpdates, TIMEOUT).getReturnBooleanValue());
+        }
+    }
+
+    @Test
+    public void testImeWindowCanShownWhenActivityMovedToDisplay() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession();
+             final TestActivitySession<ImeTestActivity> imeTestActivitySession = new
+                     TestActivitySession<>();
+             // Leverage MockImeSession to ensure at least an IME exists as default.
+             final MockImeSession mockImeSession = MockImeSession.create(
+                     mContext, getInstrumentation().getUiAutomation(), new ImeSettings.Builder())) {
+
+            // Create a virtual display and launch an activity on virtual display.
+            final ActivityDisplay newDisplay = virtualDisplaySession.setSimulateDisplay(true)
+                    .createDisplay();
+            imeTestActivitySession.launchTestActivityOnDisplaySync(ImeTestActivity.class,
+                    newDisplay.mId);
+
+            // Tap default display, assume a pointer-out-side event will happened to change the top
+            // display.
+            final Display defDisplay = mAmWmState.getWmState().getDisplay(DEFAULT_DISPLAY);
+            tapOnDisplayCenter(defDisplay.getDisplayId());
+
+            // Reparent ImeTestActivity from virtual display to default display.
+            getLaunchActivityBuilder()
+                    .setUseInstrumentation()
+                    .setTargetActivity(imeTestActivitySession.getActivity().getComponentName())
+                    .setIntentFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    .allowMultipleInstances(false)
+                    .setDisplayId(DEFAULT_DISPLAY).execute();
+            waitAndAssertTopResumedActivity(imeTestActivitySession.getActivity().getComponentName(),
+                    DEFAULT_DISPLAY, "Activity launched on default display and on top");
+            assertEquals("No stacks on virtual display", 0,
+                    mAmWmState.getAmState().getDisplay(newDisplay.mId).mStacks.size());
+
+            // Verify if tapping default display to request focus on EditText can show soft input.
+            final ImeEventStream stream = mockImeSession.openEventStream();
+            tapOnDisplayCenter(defDisplay.getDisplayId());
+            imeTestActivitySession.runOnMainSyncAndWait(
+                    imeTestActivitySession.getActivity()::showSoftInput);
+            waitOrderedImeEventsThenAssertImeShown(stream, defDisplay.getDisplayId(),
+                    editorMatcher("onStartInput",
+                            imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()),
+                    event -> "showSoftInput".equals(event.getEventName()));
         }
     }
 
