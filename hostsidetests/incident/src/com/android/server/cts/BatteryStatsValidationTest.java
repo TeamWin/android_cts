@@ -42,7 +42,6 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
 
     // These constants are those in PackageManager.
     public static final String FEATURE_BLUETOOTH_LE = "android.hardware.bluetooth_le";
-    public static final String FEATURE_LEANBACK_ONLY = "android.software.leanback_only";
     public static final String FEATURE_LOCATION_GPS = "android.hardware.location.gps";
 
     private static final int STATE_TIME_TOP_INDEX = 4;
@@ -136,6 +135,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testAlarms() throws Exception {
+        if (noBattery()) {
+            return;
+        }
         batteryOnScreenOff();
 
         installPackage(DEVICE_SIDE_TEST_APK, /* grantPermissions= */ true);
@@ -149,6 +151,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testWakeLockDuration() throws Exception {
+        if (noBattery()) {
+            return;
+        }
         batteryOnScreenOff();
 
         installPackage(DEVICE_SIDE_TEST_APK, /* grantPermissions= */ true);
@@ -171,6 +176,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testServiceForegroundDuration() throws Exception {
+        if (noBattery()) {
+            return;
+        }
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
 
@@ -186,6 +194,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testUidForegroundDuration() throws Exception {
+        if (noBattery()) {
+            return;
+        }
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
         // No foreground time before test
@@ -199,6 +210,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testUidBackgroundDuration() throws Exception {
+        if (noBattery()) {
+            return;
+        }
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
         // No background time before test
@@ -209,6 +223,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testTopDuration() throws Exception {
+        if (noBattery()) {
+            return;
+        }
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
         // No top time before test
@@ -221,6 +238,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testCachedDuration() throws Exception {
+        if (noBattery()) {
+            return;
+        }
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
         // No cached time before test
@@ -271,7 +291,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testBleScans() throws Exception {
-        if (isTV() || !hasFeature(FEATURE_BLUETOOTH_LE, true)) {
+        if (noBattery() || !hasFeature(FEATURE_BLUETOOTH_LE, true)) {
             return;
         }
 
@@ -295,7 +315,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
 
 
     public void testUnoptimizedBleScans() throws Exception {
-        if (isTV() || !hasFeature(FEATURE_BLUETOOTH_LE, true)) {
+        if (noBattery() || !hasFeature(FEATURE_BLUETOOTH_LE, true)) {
             return;
         }
         batteryOnScreenOff();
@@ -346,7 +366,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testGpsUpdates() throws Exception {
-        if (isTV() || !hasFeature(FEATURE_LOCATION_GPS, true)) {
+        if (noBattery() || !hasFeature(FEATURE_LOCATION_GPS, true)) {
             return;
         }
 
@@ -373,7 +393,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testJobBgVsFg() throws Exception {
-        if (isTV()) {
+        if (noBattery()) {
             return;
         }
         batteryOnScreenOff();
@@ -396,7 +416,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testSyncBgVsFg() throws Exception {
-        if (isTV()) {
+        if (noBattery()) {
             return;
         }
         batteryOnScreenOff();
@@ -424,6 +444,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
      * are properly updated in battery stats.
      */
     public void testRealtime() throws Exception {
+        if (noBattery()) {
+            return;
+        }
         batteryOnScreenOff();
         long startingValueRealtime = getLongValue(0, "bt", "", 7);
         long startingValueBatteryRealtime = getLongValue(0, "bt", "", 5);
@@ -449,6 +472,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
      * Tests the total duration reported for jobs run on the job scheduler.
      */
     public void testJobDuration() throws Exception {
+        if (noBattery()) {
+            return;
+        }
         batteryOnScreenOff();
 
         installPackage(DEVICE_SIDE_TEST_APK, true);
@@ -467,6 +493,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
      * Tests the total duration and # of syncs reported for sync activities.
      */
     public void testSyncs() throws Exception {
+        if (noBattery()) {
+            return;
+        }
         batteryOnScreenOff();
 
         installPackage(DEVICE_SIDE_TEST_APK, true);
@@ -624,9 +653,14 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         return String.format("Completed performing %s for request %s", actionValue, requestCode);
     }
 
-    /** Determine if device is just a TV and is not expected to have proper batterystats. */
-    private boolean isTV() throws Exception {
-        return hasFeature(FEATURE_LEANBACK_ONLY, false);
+    /** Determine if device has no battery and is not expected to have proper batterystats. */
+    private boolean noBattery() throws Exception {
+        final String batteryinfo = getDevice().executeShellCommand("dumpsys battery");
+        boolean hasBattery = batteryinfo.contains("present: true");
+        if (!hasBattery) {
+            LogUtil.CLog.w("Device does not have a battery");
+        }
+        return !hasBattery;
     }
 
     /**
