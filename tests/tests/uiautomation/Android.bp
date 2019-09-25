@@ -20,7 +20,6 @@ android_test {
         "cts",
         "vts",
         "general-tests",
-        "cts_instant",
     ],
     static_libs: [
         "compatibility-device-util-axt",

@@ -20,7 +20,6 @@ android_test {
         "cts",
         "vts",
         "general-tests",
-        "cts_instant",
     ],
     compile_multilib: "both",
     libs: ["android.test.runner.stubs"],

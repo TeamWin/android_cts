@@ -30,7 +30,6 @@ android_test {
         "cts",
         "vts",
         "general-tests",
-        "cts_instant",
     ],
     platform_apis: true,
 }
