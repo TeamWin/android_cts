@@ -474,13 +474,36 @@ public abstract class BasePermissionsTest {
     }
 
     private static AccessibilityNodeInfo findByText(AccessibilityNodeInfo root, String text) {
+        if (root == null) {
+            return null;
+        }
         List<AccessibilityNodeInfo> nodes = root.findAccessibilityNodeInfosByText(text);
+        PackageManager packageManager = InstrumentationRegistry.getTargetContext().getPackageManager();
+        boolean isWatch = packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH);
+        if (isWatch) {
+            return findByTextForWatch(root, text);
+        }
         for (AccessibilityNodeInfo node : nodes) {
             if (node.getText().toString().equals(text)) {
                 return node;
             }
         }
         return null;
+    }
+
+    private static AccessibilityNodeInfo findByTextForWatch(AccessibilityNodeInfo root, String text) {
+        String trimmedText = trimText(text);
+        List<AccessibilityNodeInfo> nodes = root.findAccessibilityNodeInfosByText(trimmedText);
+        for (AccessibilityNodeInfo node : nodes) {
+            if (trimText(node.getText().toString()).equals(trimmedText)) {
+                return node;
+            }
+        }
+        return null;
+    }
+
+    private static String trimText(String text) {
+        return text != null ? text.substring(0, Math.min(text.length(), 20)) : null;
     }
 
     private static AccessibilityNodeInfo findByTextInCollection(AccessibilityNodeInfo root,
