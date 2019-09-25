@@ -32,16 +32,17 @@ import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_PEEK;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_SCREEN_OFF;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_SCREEN_ON;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_STATUS_BAR;
-import static android.app.stubs.BubblesTestActivity.BUBBLE_NOTIF_ID;
 import static android.app.stubs.BubblesTestService.EXTRA_TEST_CASE;
 import static android.app.stubs.BubblesTestService.TEST_NO_BUBBLE_METADATA;
 import static android.app.stubs.BubblesTestService.TEST_NO_CATEGORY;
 import static android.app.stubs.BubblesTestService.TEST_NO_PERSON;
 import static android.app.stubs.BubblesTestService.TEST_SUCCESS;
+import static android.app.stubs.SendBubbleActivity.BUBBLE_NOTIF_ID;
+import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_DOCUMENT;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.pm.PackageManager.FEATURE_WATCH;
 
-import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AutomaticZenRule;
 import android.app.Instrumentation;
@@ -55,11 +56,10 @@ import android.app.Person;
 import android.app.RemoteInput;
 import android.app.UiAutomation;
 import android.app.stubs.AutomaticZenRuleActivity;
-import android.app.stubs.BubblesTestActivity;
-import android.app.stubs.BubblesTestNotDocumentLaunchModeActivity;
-import android.app.stubs.BubblesTestNotEmbeddableActivity;
+import android.app.stubs.BubbledActivity;
 import android.app.stubs.BubblesTestService;
 import android.app.stubs.R;
+import android.app.stubs.SendBubbleActivity;
 import android.app.stubs.TestNotificationListener;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -97,6 +97,8 @@ import android.test.AndroidTestCase;
 import android.util.Log;
 import android.widget.RemoteViews;
 
+import androidx.test.InstrumentationRegistry;
+
 import com.android.compatibility.common.util.SystemUtil;
 
 import junit.framework.Assert;
@@ -113,8 +115,6 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import androidx.test.InstrumentationRegistry;
 
 /* This tests NotificationListenerService together with NotificationManager, as you need to have
  * notifications to manipulate in order to test the listener service. */
@@ -135,6 +135,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     private String mId;
     private TestNotificationListener mListener;
     private List<String> mRuleIds;
+    private BroadcastReceiver mBubbleBroadcastReceiver;
 
     @Override
     protected void setUp() throws Exception {
@@ -406,7 +407,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     private void sendAndVerifyBubble(final int id, Notification.Builder builder,
             Notification.BubbleMetadata data, boolean shouldBeBubble) {
-        final Intent intent = new Intent(mContext, BubblesTestActivity.class);
+        final Intent intent = new Intent(mContext, BubbledActivity.class);
 
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP
                 | Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -607,8 +608,26 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertEquals(expectedState, mNotificationManager.getCurrentInterruptionFilter());
     }
 
-    private Activity launchSendBubbleActivity() {
-        Class clazz = BubblesTestActivity.class;
+    /**
+     * Starts an activity that is able to send a bubble; also handles unlocking the device.
+     * Any tests that use this method should be sure to call {@link #cleanupSendBubbleActivity()}
+     * to unregister the related broadcast receiver.
+     *
+     * @return the SendBubbleActivity that was opened.
+     */
+    private SendBubbleActivity startSendBubbleActivity() {
+        final CountDownLatch latch = new CountDownLatch(2);
+        mBubbleBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                latch.countDown();
+            }
+        };
+        IntentFilter filter = new IntentFilter(SendBubbleActivity.BUBBLE_ACTIVITY_OPENED);
+        mContext.registerReceiver(mBubbleBroadcastReceiver, filter);
+
+        // Start & get the activity
+        Class clazz = SendBubbleActivity.class;
 
         Instrumentation.ActivityResult result =
                 new Instrumentation.ActivityResult(0, new Intent());
@@ -616,12 +635,32 @@ public class NotificationManagerTest extends AndroidTestCase {
                 new Instrumentation.ActivityMonitor(clazz.getName(), result, false);
         InstrumentationRegistry.getInstrumentation().addMonitor(monitor);
 
-        Intent i = new Intent(mContext, BubblesTestActivity.class);
+        Intent i = new Intent(mContext, SendBubbleActivity.class);
         i.setFlags(FLAG_ACTIVITY_NEW_TASK);
         InstrumentationRegistry.getInstrumentation().startActivitySync(i);
         InstrumentationRegistry.getInstrumentation().waitForIdleSync();
 
-        return monitor.waitForActivity();
+        SendBubbleActivity sendBubbleActivity = (SendBubbleActivity) monitor.waitForActivity();
+
+        // Make sure device is unlocked
+        KeyguardManager keyguardManager = mContext.getSystemService(KeyguardManager.class);
+        keyguardManager.requestDismissKeyguard(sendBubbleActivity,
+                new KeyguardManager.KeyguardDismissCallback() {
+            @Override
+            public void onDismissSucceeded() {
+                latch.countDown();
+            }
+        });
+        try {
+            latch.await(500, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return sendBubbleActivity;
+    }
+
+    private void cleanupSendBubbleActivity() {
+        mContext.unregisterReceiver(mBubbleBroadcastReceiver);
     }
 
     private class HomeHelper extends ActivityManagerTestBase implements AutoCloseable {
@@ -630,7 +669,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             setUp();
         }
 
-        public void goHome() {
+        void goHome() {
             launchHomeActivity();
         }
 
@@ -2786,36 +2825,11 @@ public class NotificationManagerTest extends AndroidTestCase {
             // turn on bubbles globally
             toggleBubbleSetting(true);
 
-            final CountDownLatch latch = new CountDownLatch(2);
-            BroadcastReceiver receiver = new BroadcastReceiver() {
-                @Override
-                public void onReceive(Context context, Intent intent) {
-                    latch.countDown();
-                }
-            };
-            IntentFilter filter = new IntentFilter(BubblesTestActivity.BUBBLE_ACTIVITY_OPENED);
-            mContext.registerReceiver(receiver, filter);
-
             // Start & get the activity
-            BubblesTestActivity a = (BubblesTestActivity) launchSendBubbleActivity();
+            SendBubbleActivity a = startSendBubbleActivity();
 
-            // Make sure device is unlocked
-            KeyguardManager keyguardManager =
-                    (KeyguardManager) mContext.getSystemService(Context.KEYGUARD_SERVICE);
-            keyguardManager.requestDismissKeyguard(a, new KeyguardManager.KeyguardDismissCallback() {
-                @Override
-                public void onDismissSucceeded() {
-                    latch.countDown();
-                }
-            });
-            try {
-                latch.await(100, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            // Should be foreground now
-            a.sendBubble(4000);
+            // Send a bubble from foreground
+            a.sendBubble(4000, false /* autoExpand */);
 
             boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
 
@@ -2829,7 +2843,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             homeHelper.goHome();
 
             // The notif should be allowed to update as a bubble
-            a.sendBubble(4001);
+            a.sendBubble(4001, false /* autoExpand */);
 
             if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
                     true /* shouldExist */, shouldBeBubble)) {
@@ -2840,14 +2854,14 @@ public class NotificationManagerTest extends AndroidTestCase {
             cancelAndPoll(BUBBLE_NOTIF_ID);
 
             // Send it again when not foreground, this should not be a bubble & just be a notif
-            a.sendBubble(4002);
+            a.sendBubble(4002, false /* autoExpand */);
             if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
                     true /* shouldExist */, false /* shouldBeBubble */)) {
                 fail("couldn't find posted notification with id=" + BUBBLE_NOTIF_ID
                         + " or it was a bubble when it shouldn't be");
             }
 
-            mContext.unregisterReceiver(receiver);
+            cleanupSendBubbleActivity();
             homeHelper.close();
         } finally {
             // turn off bubbles globally
@@ -2855,76 +2869,41 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testNotificationManagerBubblePolicy_noFlag_notEmbeddable() {
-        Person person = new Person.Builder()
-                .setName("bubblebot")
-                .build();
+    public void testNotificationManagerBubble_ensureFlaggedDocumentLaunchMode() throws Exception {
+        try {
+            // turn on bubbles globally
+            toggleBubbleSetting(true);
 
-        RemoteInput remoteInput = new RemoteInput.Builder("reply_key").setLabel("reply").build();
-        PendingIntent inputIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
-        Icon icon = Icon.createWithResource(mContext, android.R.drawable.sym_def_app_icon);
-        Notification.Action replyAction = new Notification.Action.Builder(icon, "Reply",
-                inputIntent).addRemoteInput(remoteInput)
-                .build();
+            // make ourselves foreground so we can auto-expand the bubble & check the intent flags
+            SendBubbleActivity a = startSendBubbleActivity();
 
-        Notification.Builder nb = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                .setContentTitle("foo")
-                .setStyle(new Notification.MessagingStyle(person)
-                        .setConversationTitle("Bubble Chat")
-                        .addMessage("Hello?",
-                                SystemClock.currentThreadTimeMillis() - 300000, person)
-                        .addMessage("Is it me you're looking for?",
-                                SystemClock.currentThreadTimeMillis(), person)
-                )
-                .setActions(replyAction)
-                .setSmallIcon(android.R.drawable.sym_def_app_icon);
+            // Prep to find bubbled activity
+            Class clazz = BubbledActivity.class;
+            Instrumentation.ActivityResult result =
+                    new Instrumentation.ActivityResult(0, new Intent());
+            Instrumentation.ActivityMonitor monitor =
+                    new Instrumentation.ActivityMonitor(clazz.getName(), result, false);
+            InstrumentationRegistry.getInstrumentation().addMonitor(monitor);
 
-        final Intent intent = new Intent(mContext, BubblesTestNotEmbeddableActivity.class);
-        final PendingIntent pendingIntent =
-                PendingIntent.getActivity(mContext, 0, intent, 0);
+            a.sendBubble(4003, true /* autoExpand */);
 
-        Notification.BubbleMetadata.Builder metadataBuilder =
-                new Notification.BubbleMetadata.Builder()
-                        .setIntent(pendingIntent)
-                        .setIcon(Icon.createWithResource(mContext, R.drawable.black));
+            boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
+            if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
+                    true /* shouldExist */, shouldBeBubble)) {
+                fail("couldn't find posted notification bubble with id=" + BUBBLE_NOTIF_ID);
+            }
 
-        sendAndVerifyBubble(1, nb, metadataBuilder.build(), false);
-    }
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
 
-    public void testNotificationManagerBubblePolicy_noFlag_notDocumentLaunchModeAlways() {
-        Person person = new Person.Builder()
-                .setName("bubblebot")
-                .build();
+            BubbledActivity activity = (BubbledActivity) monitor.waitForActivity();
+            assertTrue((activity.getIntent().getFlags() & FLAG_ACTIVITY_NEW_DOCUMENT) != 0);
+            assertTrue((activity.getIntent().getFlags() & FLAG_ACTIVITY_MULTIPLE_TASK) != 0);
 
-        RemoteInput remoteInput = new RemoteInput.Builder("reply_key").setLabel("reply").build();
-        PendingIntent inputIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
-        Icon icon = Icon.createWithResource(mContext, android.R.drawable.sym_def_app_icon);
-        Notification.Action replyAction = new Notification.Action.Builder(icon, "Reply",
-                inputIntent).addRemoteInput(remoteInput)
-                .build();
-
-        Notification.Builder nb = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                .setContentTitle("foo")
-                .setStyle(new Notification.MessagingStyle(person)
-                        .setConversationTitle("Bubble Chat")
-                        .addMessage("Hello?",
-                                SystemClock.currentThreadTimeMillis() - 300000, person)
-                        .addMessage("Is it me you're looking for?",
-                                SystemClock.currentThreadTimeMillis(), person)
-                )
-                .setActions(replyAction)
-                .setSmallIcon(android.R.drawable.sym_def_app_icon);
-
-        final Intent intent = new Intent(mContext, BubblesTestNotDocumentLaunchModeActivity.class);
-        final PendingIntent pendingIntent =
-                PendingIntent.getActivity(mContext, 0, intent, 0);
-
-        Notification.BubbleMetadata.Builder metadataBuilder =
-                new Notification.BubbleMetadata.Builder()
-                        .setIntent(pendingIntent)
-                        .setIcon(Icon.createWithResource(mContext, R.drawable.black));
-
-        sendAndVerifyBubble(1, nb, metadataBuilder.build(), false);
+            cleanupSendBubbleActivity();
+        } finally {
+            // turn off bubbles globally
+            toggleBubbleSetting(false);
+        }
     }
 
     public void testOriginalChannelImportance() {
