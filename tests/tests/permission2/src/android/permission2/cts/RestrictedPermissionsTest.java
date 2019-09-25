@@ -999,7 +999,7 @@ public class RestrictedPermissionsTest {
                             possibleModes.add(AppOpsManager.MODE_IGNORED);
                         }
                     } else {
-                        possibleModes.add(AppOpsManager.MODE_DEFAULT);
+                        possibleModes.add(AppOpsManager.MODE_IGNORED);
                     }
                 }
 
@@ -1120,6 +1120,8 @@ public class RestrictedPermissionsTest {
             for (String permission : adjustedGrantedPermissions) {
                 packageManager.grantRuntimePermission(PKG, permission,
                         getContext().getUser());
+                packageManager.updatePermissionFlags(permission, PKG,
+                        PackageManager.FLAG_PERMISSION_REVOKED_COMPAT, 0, getContext().getUser());
             }
         });
 
