@@ -34,8 +34,11 @@ import android.util.Size;
 import java.util.List;
 import java.util.ArrayList;
 
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.junit.Test;
 
+@RunWith(Parameterized.class)
 public class BurstCaptureTest extends Camera2SurfaceViewTestCase {
     private static final String TAG = "BurstCaptureTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
@@ -65,9 +68,9 @@ public class BurstCaptureTest extends Camera2SurfaceViewTestCase {
     }
 
     private void testBurst(int fmt, int burstSize, boolean checkFrameRate) throws Exception {
-        for (int i = 0; i < mCameraIds.length; i++) {
+        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
             try {
-                String id = mCameraIds[i];
+                String id = mCameraIdsUnderTest[i];
 
                 StaticMetadata staticInfo = mAllStaticInfo.get(id);
                 if (!staticInfo.isColorOutputSupported()) {

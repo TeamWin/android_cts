@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,8 @@ import static com.android.ex.camera2.blocking.BlockingStateCallback.*;
 import android.content.Context;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
-import android.hardware.cts.helpers.CameraParameterizedTestCase;
+
+import android.hardware.camera2.cts.CameraTestUtils;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCaptureSession.CaptureCallback;
 import android.hardware.camera2.CameraCharacteristics;
@@ -32,8 +33,6 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.camera2.params.SessionConfiguration;
 import android.util.Size;
-import android.hardware.camera2.cts.Camera2ParameterizedTestCase;
-import android.hardware.camera2.cts.CameraTestUtils;
 import android.hardware.camera2.cts.helpers.CameraErrorCollector;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.helpers.StaticMetadata.CheckLevel;
@@ -46,7 +45,6 @@ import android.test.AndroidTestCase;
 import android.util.Log;
 import android.view.Surface;
 import android.view.WindowManager;
-import androidx.test.InstrumentationRegistry;
 
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
 import com.android.ex.camera2.blocking.BlockingStateCallback;
@@ -58,22 +56,20 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import org.junit.Ignore;
-import org.junit.Test;
-
-// TODO: Can we de-duplicate this with Camera2AndroidBasicTestCase keeping in mind CtsVerifier ?
-public class Camera2AndroidTestCase extends Camera2ParameterizedTestCase {
-    private static final String TAG = "Camera2AndroidTestCase";
+public class Camera2AndroidBasicTestCase extends AndroidTestCase {
+    private static final String TAG = "Camera2AndroidBasicTestCase";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
 
     // Default capture size: VGA size is required by CDD.
     protected static final Size DEFAULT_CAPTURE_SIZE = new Size(640, 480);
     protected static final int CAPTURE_WAIT_TIMEOUT_MS = 5000;
 
+    protected CameraManager mCameraManager;
     protected CameraDevice mCamera;
     protected CameraCaptureSession mCameraSession;
     protected BlockingSessionCallback mCameraSessionListener;
     protected BlockingStateCallback mCameraListener;
+    protected String[] mCameraIdsUnderTest;
     // include both standalone camera IDs and "hidden" physical camera IDs
     protected String[] mAllCameraIds;
     protected HashMap<String, StaticMetadata> mAllStaticInfo;
@@ -90,15 +86,32 @@ public class Camera2AndroidTestCase extends Camera2ParameterizedTestCase {
 
     protected WindowManager mWindowManager;
 
+    @Override
+    public void setContext(Context context) {
+        super.setContext(context);
+        mCameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
+        assertNotNull("Can't connect to camera manager!", mCameraManager);
+        mWindowManager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
+    }
+
     /**
      * Set up the camera2 test case required environments, including CameraManager,
      * HandlerThread, Camera IDs, and CameraStateCallback etc.
      */
     @Override
-    public void setUp() throws Exception {
+    protected void setUp() throws Exception {
         super.setUp();
-        mWindowManager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
 
+        /**
+         * Workaround for mockito and JB-MR2 incompatibility
+         *
+         * Avoid java.lang.IllegalArgumentException: dexcache == null
+         * https://code.google.com/p/dexmaker/issues/detail?id=2
+         */
+        System.setProperty("dexmaker.dexcache", getContext().getCacheDir().toString());
+
+        mCameraIdsUnderTest = mCameraManager.getCameraIdListNoLazy();
+        assertNotNull("Camera ids shouldn't be null", mCameraIdsUnderTest);
         mHandlerThread = new HandlerThread(TAG);
         mHandlerThread.start();
         mHandler = new Handler(mHandlerThread.getLooper());
@@ -139,7 +152,16 @@ public class Camera2AndroidTestCase extends Camera2ParameterizedTestCase {
     }
 
     @Override
-    public void tearDown() throws Exception {
+    protected void tearDown() throws Exception {
+        String[] cameraIdsPostTest =
+                mCameraManager.getCameraIdListNoLazy();
+        assertNotNull("Camera ids shouldn't be null", cameraIdsPostTest);
+        Log.i(TAG, "Camera ids in setup:" + Arrays.toString(mCameraIdsUnderTest));
+        Log.i(TAG, "Camera ids in tearDown:" + Arrays.toString(cameraIdsPostTest));
+        assertTrue(
+                "Number of cameras changed from " + mCameraIdsUnderTest.length + " to " +
+                cameraIdsPostTest.length,
+                mCameraIdsUnderTest.length == cameraIdsPostTest.length);
         mHandlerThread.quitSafely();
         mHandler = null;
         closeDefaultImageReader();

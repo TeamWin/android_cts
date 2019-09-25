@@ -63,7 +63,7 @@ public class Camera2Activity extends Activity {
                         " could not connect camera service");
                 return;
             }
-            String[] cameraIds = manager.getCameraIdList();
+            String[] cameraIds = manager.getCameraIdListNoLazy();
 
             if (cameraIds == null || cameraIds.length == 0) {
                 mErrorServiceConnection.logAsync(TestConstants.EVENT_CAMERA_ERROR, TAG +

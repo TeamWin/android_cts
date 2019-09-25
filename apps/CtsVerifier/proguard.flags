@@ -19,7 +19,7 @@
 }
 
 # ensure we keep public camera test methods, these are needed at runtime
--keepclassmembers class * extends android.hardware.camera2.cts.testcases.Camera2AndroidTestCase {
+-keepclassmembers class * extends android.hardware.camera2.cts.testcases.Camera2AndroidBasicTestCase {
     public <methods>;
 }
 

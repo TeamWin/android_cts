@@ -54,12 +54,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.junit.runners.Parameterized;
+import org.junit.runner.RunWith;
+import org.junit.Test;
+
 import static junit.framework.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
 /**
  * Tests exercising edge cases in camera setup, configuration, and usage.
  */
+
+@RunWith(Parameterized.class)
 public class RobustnessTest extends Camera2AndroidTestCase {
     private static final String TAG = "RobustnessTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
@@ -79,8 +85,9 @@ public class RobustnessTest extends Camera2AndroidTestCase {
      * this surface are expected have the dimensions of the closest possible buffer size in the
      * available stream configurations for a surface with this format.
      */
+    @Test
     public void testBadSurfaceDimensions() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.i(TAG, "Testing Camera " + id);
                 openDevice(id);
@@ -160,8 +167,9 @@ public class RobustnessTest extends Camera2AndroidTestCase {
     /**
      * Test for making sure the mandatory stream combinations work as expected.
      */
+    @Test
     public void testMandatoryOutputCombinations() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             openDevice(id);
             MandatoryStreamCombination[] combinations =
                     mStaticInfo.getCharacteristics().get(
@@ -186,7 +194,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                     Set<String> physicalCameraIds =
                             mStaticInfo.getCharacteristics().getPhysicalCameraIds();
                     for (String physicalId : physicalCameraIds) {
-                        if (Arrays.asList(mCameraIds).contains(physicalId)) {
+                        if (Arrays.asList(mCameraIdsUnderTest).contains(physicalId)) {
                             // If physicalId is advertised in camera ID list, do not need to test
                             // its stream combination through logical camera.
                             continue;
@@ -480,8 +488,9 @@ public class RobustnessTest extends Camera2AndroidTestCase {
      * Test for making sure the required reprocess input/output combinations for each hardware
      * level and capability work as expected.
      */
+    @Test
     public void testMandatoryReprocessConfigurations() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             openDevice(id);
             MandatoryStreamCombination[] combinations =
                     mStaticInfo.getCharacteristics().get(
@@ -716,9 +725,10 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         }
     }
 
+    @Test
     public void testBasicTriggerSequence() throws Exception {
 
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             Log.i(TAG, String.format("Testing Camera %s", id));
 
             try {
@@ -856,8 +866,9 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
     }
 
+    @Test
     public void testSimultaneousTriggers() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             Log.i(TAG, String.format("Testing Camera %s", id));
 
             try {
@@ -958,8 +969,9 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         }
     }
 
+    @Test
     public void testAfThenAeTrigger() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             Log.i(TAG, String.format("Testing Camera %s", id));
 
             try {
@@ -1074,8 +1086,9 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         }
     }
 
+    @Test
     public void testAeThenAfTrigger() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             Log.i(TAG, String.format("Testing Camera %s", id));
 
             try {
@@ -1190,9 +1203,10 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         }
     }
 
+    @Test
     public void testAeAndAfCausality() throws Exception {
 
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             Log.i(TAG, String.format("Testing Camera %s", id));
 
             try {
@@ -1372,8 +1386,9 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
     }
 
+    @Test
     public void testAbandonRepeatingRequestSurface() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             Log.i(TAG, String.format(
                     "Testing Camera %s for abandoning surface of a repeating request", id));
 
@@ -1441,8 +1456,9 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         }
     }
 
+    @Test
     public void testConfigureAbandonedSurface() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             Log.i(TAG, String.format(
                     "Testing Camera %s for configuring abandoned surface", id));
 
@@ -1498,10 +1514,11 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         }
     }
 
+    @Test
     public void testAfSceneChange() throws Exception {
         final int NUM_FRAMES_VERIFIED = 3;
 
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             Log.i(TAG, String.format("Testing Camera %s for AF scene change", id));
 
             StaticMetadata staticInfo =
@@ -1548,10 +1565,11 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         }
     }
 
+    @Test
     public void testOisDataMode() throws Exception {
         final int NUM_FRAMES_VERIFIED = 3;
 
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             Log.i(TAG, String.format("Testing Camera %s for OIS mode", id));
 
             StaticMetadata staticInfo =

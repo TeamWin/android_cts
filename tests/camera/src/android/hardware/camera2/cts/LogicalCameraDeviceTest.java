@@ -66,6 +66,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.junit.runners.Parameterized;
+import org.junit.runner.RunWith;
 import org.junit.Test;
 
 import static org.mockito.Mockito.*;
@@ -73,6 +75,7 @@ import static org.mockito.Mockito.*;
 /**
  * Tests exercising logical camera setup, configuration, and usage.
  */
+@RunWith(Parameterized.class)
 public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
     private static final String TAG = "LogicalCameraDeviceTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
@@ -107,7 +110,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testInvalidPhysicalCameraIdInOutputConfiguration() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.i(TAG, "Testing Camera " + id);
                 if (mAllStaticInfo.get(id).isHardwareLevelLegacy()) {
@@ -167,7 +170,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
     @Test
     public void testBasicPhysicalStreaming() throws Exception {
 
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.i(TAG, "Testing Camera " + id);
 
@@ -209,7 +212,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
     @Test
     public void testBasicLogicalPhysicalStreamCombination() throws Exception {
 
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.i(TAG, "Testing Camera " + id);
 
@@ -331,7 +334,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
     @Test
     public void testBasicPhysicalRequests() throws Exception {
 
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.i(TAG, "Testing Camera " + id);
 
@@ -462,7 +465,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
     @Test
     public void testInvalidPhysicalCameraRequests() throws Exception {
 
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.i(TAG, "Testing Camera " + id);
 
@@ -569,7 +572,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
     @Test
     public void testLogicalCameraZoomSwitch() throws Exception {
 
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.i(TAG, "Testing Camera " + id);
 
@@ -708,7 +711,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testActivePhysicalId() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.i(TAG, "Testing Camera " + id);
 
@@ -792,7 +795,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
         if (!isHandheldDevice()) {
             return;
         }
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 Log.i(TAG, "Testing Camera " + id);
 

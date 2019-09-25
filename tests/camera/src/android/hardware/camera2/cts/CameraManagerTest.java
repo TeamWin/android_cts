@@ -19,6 +19,7 @@ package android.hardware.camera2.cts;
 import static org.mockito.Mockito.*;
 import static org.mockito.AdditionalMatchers.not;
 import static org.mockito.AdditionalMatchers.and;
+import static junit.framework.Assert.*;
 
 import android.app.ActivityManager;
 import android.app.Instrumentation;
@@ -31,6 +32,7 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraDevice.StateCallback;
 import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.cts.Camera2ParameterizedTestCase;
 import android.hardware.camera2.cts.CameraTestUtils.HandlerExecutor;
 import android.hardware.camera2.cts.CameraTestUtils.MockStateCallback;
 import android.hardware.camera2.cts.helpers.CameraErrorCollector;
@@ -45,6 +47,9 @@ import androidx.test.InstrumentationRegistry;
 import com.android.compatibility.common.util.PropertyUtil;
 import com.android.ex.camera2.blocking.BlockingStateCallback;
 
+import org.junit.runners.Parameterized;
+import org.junit.runner.RunWith;
+import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 
@@ -61,13 +66,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 /**
  * <p>Basic test for CameraManager class.</p>
  */
-public class CameraManagerTest extends AndroidTestCase {
+
+@RunWith(Parameterized.class)
+public class CameraManagerTest extends Camera2ParameterizedTestCase {
     private static final String TAG = "CameraManagerTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
     private static final int NUM_CAMERA_REOPENS = 10;
 
     private PackageManager mPackageManager;
-    private CameraManager mCameraManager;
     private NoopCameraListener mListener;
     private HandlerThread mHandlerThread;
     private Handler mHandler;
@@ -75,18 +81,11 @@ public class CameraManagerTest extends AndroidTestCase {
     private CameraErrorCollector mCollector;
 
     @Override
-    public void setContext(Context context) {
-        super.setContext(context);
-        mCameraManager = (CameraManager)context.getSystemService(Context.CAMERA_SERVICE);
-        assertNotNull("Can't connect to camera manager", mCameraManager);
-        mPackageManager = context.getPackageManager();
+    public void setUp() throws Exception {
+        super.setUp();
+        mPackageManager = mContext.getPackageManager();
         assertNotNull("Can't get package manager", mPackageManager);
         mListener = new NoopCameraListener();
-    }
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
 
         /**
          * Workaround for mockito and JB-MR2 incompatibility
@@ -94,7 +93,7 @@ public class CameraManagerTest extends AndroidTestCase {
          * Avoid java.lang.IllegalArgumentException: dexcache == null
          * https://code.google.com/p/dexmaker/issues/detail?id=2
          */
-        System.setProperty("dexmaker.dexcache", getContext().getCacheDir().toString());
+        System.setProperty("dexmaker.dexcache", mContext.getCacheDir().toString());
 
         mCameraListener = spy(new BlockingStateCallback());
 
@@ -105,7 +104,7 @@ public class CameraManagerTest extends AndroidTestCase {
     }
 
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         mHandlerThread.quitSafely();
         mHandler = null;
 
@@ -137,10 +136,10 @@ public class CameraManagerTest extends AndroidTestCase {
         return -1; // unreachable
     }
 
+    @Test
     public void testCameraManagerGetDeviceIdList() throws Exception {
 
-        // Test: that the getCameraIdList method runs without exceptions.
-        String[] ids = mCameraManager.getCameraIdList();
+        String[] ids = mCameraIdsUnderTest;
         if (VERBOSE) Log.v(TAG, "CameraManager ids: " + Arrays.toString(ids));
 
         /**
@@ -197,8 +196,9 @@ public class CameraManagerTest extends AndroidTestCase {
     }
 
     // Test: that properties can be queried from each device, without exceptions.
+    @Test
     public void testCameraManagerGetCameraCharacteristics() throws Exception {
-        String[] ids = mCameraManager.getCameraIdList();
+        String[] ids = mCameraIdsUnderTest;
         for (int i = 0; i < ids.length; i++) {
             CameraCharacteristics props = mCameraManager.getCameraCharacteristics(ids[i]);
             assertNotNull(
@@ -207,8 +207,9 @@ public class CameraManagerTest extends AndroidTestCase {
     }
 
     // Test: that an exception is thrown if an invalid device id is passed down.
+    @Test
     public void testCameraManagerInvalidDevice() throws Exception {
-        String[] ids = mCameraManager.getCameraIdList();
+        String[] ids = mCameraIdsUnderTest;
         // Create an invalid id by concatenating all the valid ids together.
         StringBuilder invalidId = new StringBuilder();
         invalidId.append("INVALID");
@@ -226,6 +227,7 @@ public class CameraManagerTest extends AndroidTestCase {
     }
 
     // Test: that each camera device can be opened one at a time, several times.
+    @Test
     public void testCameraManagerOpenCamerasSerially() throws Exception {
         testCameraManagerOpenCamerasSerially(/*useExecutor*/ false);
         testCameraManagerOpenCamerasSerially(/*useExecutor*/ true);
@@ -233,7 +235,7 @@ public class CameraManagerTest extends AndroidTestCase {
 
     private void testCameraManagerOpenCamerasSerially(boolean useExecutor) throws Exception {
         final Executor executor = useExecutor ? new HandlerExecutor(mHandler) : null;
-        String[] ids = mCameraManager.getCameraIdList();
+        String[] ids = mCameraIdsUnderTest;
         for (int i = 0; i < ids.length; i++) {
             for (int j = 0; j < NUM_CAMERA_REOPENS; j++) {
                 CameraDevice camera = null;
@@ -268,13 +270,14 @@ public class CameraManagerTest extends AndroidTestCase {
      * Test: one or more camera devices can be open at the same time, or the right error state
      * is set if this can't be done.
      */
+    @Test
     public void testCameraManagerOpenAllCameras() throws Exception {
         testCameraManagerOpenAllCameras(/*useExecutor*/ false);
         testCameraManagerOpenAllCameras(/*useExecutor*/ true);
     }
 
     private void testCameraManagerOpenAllCameras(boolean useExecutor) throws Exception {
-        String[] ids = mCameraManager.getCameraIdList();
+        String[] ids = mCameraIdsUnderTest;
         assertNotNull("Camera ids shouldn't be null", ids);
 
         // Skip test if the device doesn't have multiple cameras.
@@ -451,13 +454,14 @@ public class CameraManagerTest extends AndroidTestCase {
      * Test: that opening the same device multiple times and make sure the right
      * error state is set.
      */
+    @Test
     public void testCameraManagerOpenCameraTwice() throws Exception {
         testCameraManagerOpenCameraTwice(/*useExecutor*/ false);
         testCameraManagerOpenCameraTwice(/*useExecutor*/ true);
     }
 
     private void testCameraManagerOpenCameraTwice(boolean useExecutor) throws Exception {
-        String[] ids = mCameraManager.getCameraIdList();
+        String[] ids = mCameraIdsUnderTest;
         final Executor executor = useExecutor ? new HandlerExecutor(mHandler) : null;
 
         // Test across every camera device.
@@ -523,6 +527,7 @@ public class CameraManagerTest extends AndroidTestCase {
      * Registering a listener multiple times should have no effect, and unregistering
      * a listener that isn't registered should have no effect.
      */
+    @Test
     public void testCameraManagerListener() throws Exception {
         mCameraManager.unregisterAvailabilityCallback(mListener);
         // Test Handler API
@@ -541,6 +546,7 @@ public class CameraManagerTest extends AndroidTestCase {
     /**
      * Test that the availability callbacks fire when expected
      */
+    @Test
     public void testCameraManagerListenerCallbacks() throws Exception {
         testCameraManagerListenerCallbacks(/*useExecutor*/ false);
         testCameraManagerListenerCallbacks(/*useExecutor*/ true);
@@ -556,6 +562,17 @@ public class CameraManagerTest extends AndroidTestCase {
         CameraManager.AvailabilityCallback ac = new CameraManager.AvailabilityCallback() {
             @Override
             public void onCameraAvailable(String cameraId) {
+                try {
+                    // When we're testing system cameras, we don't list non system cameras in the
+                    // camera id list as mentioned in Camera2ParameterizedTest.java
+                    if (mAdoptShellPerm &&
+                            !CameraTestUtils.isSystemCamera(mCameraManager, cameraId)) {
+                        return;
+                    }
+                } catch (CameraAccessException e) {
+                    fail("CameraAccessException thrown when attempting to access camera" +
+                         "characteristics" + cameraId);
+                }
                 availableEventQueue.offer(cameraId);
             }
 
@@ -570,7 +587,7 @@ public class CameraManagerTest extends AndroidTestCase {
         } else {
             mCameraManager.registerAvailabilityCallback(ac, mHandler);
         }
-        String[] cameras = mCameraManager.getCameraIdList();
+        String[] cameras = mCameraIdsUnderTest;
 
         if (cameras.length == 0) {
             Log.i(TAG, "No cameras present, skipping test");
@@ -683,12 +700,13 @@ public class CameraManagerTest extends AndroidTestCase {
     } // testCameraManagerListenerCallbacks
 
     // Verify no LEGACY-level devices appear on devices first launched in the Q release or newer
+    @Test
     public void testNoLegacyOnQ() throws Exception {
         if(PropertyUtil.getFirstApiLevel() < Build.VERSION_CODES.Q){
             // LEGACY still allowed for devices upgrading to Q
             return;
         }
-        String[] ids = mCameraManager.getCameraIdList();
+        String[] ids = mCameraIdsUnderTest;
         for (int i = 0; i < ids.length; i++) {
             CameraCharacteristics props = mCameraManager.getCameraCharacteristics(ids[i]);
             assertNotNull(
@@ -703,14 +721,15 @@ public class CameraManagerTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testCameraManagerWithDnD() throws Exception {
-        String[] cameras = mCameraManager.getCameraIdList();
+        String[] cameras = mCameraIdsUnderTest;
         if (cameras.length == 0) {
             Log.i(TAG, "No cameras present, skipping test");
             return;
         }
 
-        ActivityManager am = getContext().getSystemService(ActivityManager.class);
+        ActivityManager am = mContext.getSystemService(ActivityManager.class);
 
         // Go devices do not support all interrupt filtering functionality
         if (am.isLowRamDevice()) {
@@ -718,12 +737,12 @@ public class CameraManagerTest extends AndroidTestCase {
         }
 
         // Allow the test package to adjust notification policy
-        toggleNotificationPolicyAccess(getContext().getPackageName(),
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
 
         // Enable DnD filtering
 
-        NotificationManager nm = getContext().getSystemService(NotificationManager.class);
+        NotificationManager nm = mContext.getSystemService(NotificationManager.class);
         try {
             nm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
 
@@ -755,7 +774,7 @@ public class CameraManagerTest extends AndroidTestCase {
 
         runCommand(command, instrumentation);
 
-        NotificationManager nm = getContext().getSystemService(NotificationManager.class);
+        NotificationManager nm = mContext.getSystemService(NotificationManager.class);
         assertEquals("Notification Policy Access Grant is " +
                 nm.isNotificationPolicyAccessGranted() + " not " + on, on,
                 nm.isNotificationPolicyAccessGranted());
@@ -764,17 +783,14 @@ public class CameraManagerTest extends AndroidTestCase {
     private void runCommand(String command, Instrumentation instrumentation) throws IOException {
         UiAutomation uiAutomation = instrumentation.getUiAutomation();
         // Execute command
-        try (ParcelFileDescriptor fd = uiAutomation.executeShellCommand(command)) {
-            assertNotNull("Failed to execute shell command: " + command, fd);
-            // Wait for the command to finish by reading until EOF
-            try (InputStream in = new FileInputStream(fd.getFileDescriptor())) {
-                byte[] buffer = new byte[4096];
-                while (in.read(buffer) > 0) {}
-            } catch (IOException e) {
-                throw new IOException("Could not read stdout of command: " + command, e);
-            }
-        } finally {
-            uiAutomation.destroy();
+        ParcelFileDescriptor fd = mUiAutomation.executeShellCommand(command);
+        assertNotNull("Failed to execute shell command: " + command, fd);
+        // Wait for the command to finish by reading until EOF
+        try (InputStream in = new FileInputStream(fd.getFileDescriptor())) {
+            byte[] buffer = new byte[4096];
+            while (in.read(buffer) > 0) {}
+        } catch (IOException e) {
+            throw new IOException("Could not read stdout of command: " + command, e);
         }
     }
 

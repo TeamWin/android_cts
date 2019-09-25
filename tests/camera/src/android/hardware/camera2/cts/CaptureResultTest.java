@@ -38,6 +38,7 @@ import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
 
 import static android.hardware.camera2.cts.CameraTestUtils.*;
 import static android.hardware.camera2.cts.helpers.CameraSessionUtils.*;
+import static junit.framework.Assert.*;
 
 import android.util.Log;
 import android.view.Surface;
@@ -52,6 +53,11 @@ import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.runners.Parameterized;
+import org.junit.runner.RunWith;
+import org.junit.Test;
+
+@RunWith(Parameterized.class)
 public class CaptureResultTest extends Camera2AndroidTestCase {
     private static final String TAG = "CaptureResultTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
@@ -59,29 +65,15 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
     private static final int NUM_FRAMES_VERIFIED = 30;
     private static final long WAIT_FOR_RESULT_TIMEOUT_MS = 3000;
 
-
     // List tracking the failed test keys.
 
     @Override
-    public void setContext(Context context) {
-        super.setContext(context);
-
-        /**
-         * Workaround for mockito and JB-MR2 incompatibility
-         *
-         * Avoid java.lang.IllegalArgumentException: dexcache == null
-         * https://code.google.com/p/dexmaker/issues/detail?id=2
-         */
-        System.setProperty("dexmaker.dexcache", getContext().getCacheDir().toString());
-    }
-
-    @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
     }
 
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         super.tearDown();
     }
 
@@ -96,8 +88,9 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
      * a capture result.
      * </p>
      */
+    @Test
     public void testCameraCaptureResultAllKeys() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 openDevice(id);
                 if (mStaticInfo.isColorOutputSupported()) {
@@ -150,10 +143,11 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
      * onCaptureProgressed callbacks.
      * </ul></p>
      */
+    @Test
     public void testPartialResult() throws Exception {
         final int NUM_FRAMES_TESTED = 30;
         final int WAIT_FOR_RESULT_TIMOUT_MS = 2000;
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 // Skip the test if partial result is not supported
                 int partialResultCount = mAllStaticInfo.get(id).getPartialResultCount();
@@ -265,8 +259,9 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
      * Check that the timestamps passed in the results, buffers, and capture callbacks match for
      * a single request, and increase monotonically
      */
+    @Test
     public void testResultTimestamps() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             ImageReader previewReader = null;
             ImageReader jpegReader = null;
 

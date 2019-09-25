@@ -38,7 +38,7 @@ public class CameraUtils {
      */
     public static boolean isLegacyHAL(Context context, int cameraId) throws Exception {
         CameraManager manager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
-        String cameraIdStr = manager.getCameraIdList()[cameraId];
+        String cameraIdStr = manager.getCameraIdListNoLazy()[cameraId];
         CameraCharacteristics characteristics =
                 manager.getCameraCharacteristics(cameraIdStr);
 
@@ -56,7 +56,7 @@ public class CameraUtils {
      */
     public static boolean isExternal(Context context, int cameraId) throws Exception {
         CameraManager manager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
-        String cameraIdStr = manager.getCameraIdList()[cameraId];
+        String cameraIdStr = manager.getCameraIdListNoLazy()[cameraId];
         CameraCharacteristics characteristics =
                 manager.getCameraCharacteristics(cameraIdStr);
 

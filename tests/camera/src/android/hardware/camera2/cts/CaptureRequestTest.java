@@ -52,6 +52,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.runners.Parameterized;
+import org.junit.runner.RunWith;
 import org.junit.Test;
 
 /**
@@ -63,6 +65,8 @@ import org.junit.Test;
  * manual ISP control and other per-frame control and synchronization.
  * </p>
  */
+
+@RunWith(Parameterized.class)
 public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     private static final String TAG = "CaptureRequestTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
@@ -147,9 +151,9 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
         SurfaceTexture outputTexture = new SurfaceTexture(/* random texture ID */ 5);
         Surface surface = new Surface(outputTexture);
 
-        for (int i = 0; i < mCameraIds.length; i++) {
+        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
             try {
-                openDevice(mCameraIds[i]);
+                openDevice(mCameraIdsUnderTest[i]);
                 CaptureRequest.Builder requestBuilder =
                         mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
                 requestBuilder.addTarget(surface);
@@ -236,14 +240,14 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testBlackLevelLock() throws Exception {
-        for (int i = 0; i < mCameraIds.length; i++) {
+        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
             try {
-                if (!mAllStaticInfo.get(mCameraIds[i]).isCapabilitySupported(
+                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isCapabilitySupported(
                         CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR)) {
                     continue;
                 }
 
-                openDevice(mCameraIds[i]);
+                openDevice(mCameraIdsUnderTest[i]);
                 SimpleCaptureCallback listener = new SimpleCaptureCallback();
                 CaptureRequest.Builder requestBuilder =
                         mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
@@ -290,7 +294,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testDynamicBlackWhiteLevel() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 if (!mAllStaticInfo.get(id).isDynamicBlackLevelSupported()) {
                     continue;
@@ -318,11 +322,11 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testLensShadingMap() throws Exception {
-        for (int i = 0; i < mCameraIds.length; i++) {
+        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
             try {
-                StaticMetadata staticInfo = mAllStaticInfo.get(mCameraIds[i]);
+                StaticMetadata staticInfo = mAllStaticInfo.get(mCameraIdsUnderTest[i]);
                 if (!staticInfo.isManualLensShadingMapSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIds[i] +
+                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
                             " doesn't support lens shading controls, skipping test");
                     continue;
                 }
@@ -334,7 +338,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                     continue;
                 }
 
-                openDevice(mCameraIds[i]);
+                openDevice(mCameraIdsUnderTest[i]);
                 SimpleCaptureCallback listener = new SimpleCaptureCallback();
                 CaptureRequest.Builder requestBuilder =
                         mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
@@ -396,15 +400,15 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testAntiBandingModes() throws Exception {
-        for (int i = 0; i < mCameraIds.length; i++) {
+        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
             try {
                 // Without manual sensor control, exposure time cannot be verified
-                if (!mAllStaticInfo.get(mCameraIds[i]).isCapabilitySupported(
+                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isCapabilitySupported(
                         CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR)) {
                     continue;
                 }
 
-                openDevice(mCameraIds[i]);
+                openDevice(mCameraIdsUnderTest[i]);
                 int[] modes = mStaticInfo.getAeAvailableAntiBandingModesChecked();
 
                 Size previewSz =
@@ -432,15 +436,15 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      */
     @Test(timeout=60*60*1000) // timeout = 60 mins for long running tests
     public void testAeModeAndLock() throws Exception {
-        for (int i = 0; i < mCameraIds.length; i++) {
+        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
             try {
-                if (!mAllStaticInfo.get(mCameraIds[i]).isColorOutputSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIds[i] +
+                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
                             " does not support color outputs, skipping");
                     continue;
                 }
 
-                openDevice(mCameraIds[i]);
+                openDevice(mCameraIdsUnderTest[i]);
                 Size maxPreviewSz = mOrderedPreviewSizes.get(0); // Max preview size.
 
                 // Update preview surface with given size for all sub-tests.
@@ -465,15 +469,15 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testFlashControl() throws Exception {
-        for (int i = 0; i < mCameraIds.length; i++) {
+        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
             try {
-                if (!mAllStaticInfo.get(mCameraIds[i]).isColorOutputSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIds[i] +
+                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
                             " does not support color outputs, skipping");
                     continue;
                 }
 
-                openDevice(mCameraIds[i]);
+                openDevice(mCameraIdsUnderTest[i]);
                 SimpleCaptureCallback listener = new SimpleCaptureCallback();
                 CaptureRequest.Builder requestBuilder =
                         mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
@@ -509,15 +513,15 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testFlashTurnOff() throws Exception {
-        for (int i = 0; i < mCameraIds.length; i++) {
+        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
             try {
-                if (!mAllStaticInfo.get(mCameraIds[i]).isColorOutputSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIds[i] +
+                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
                             " does not support color outputs, skipping");
                     continue;
                 }
 
-                openDevice(mCameraIds[i]);
+                openDevice(mCameraIdsUnderTest[i]);
                 SimpleCaptureCallback listener = new SimpleCaptureCallback();
                 CaptureRequest.Builder requestBuilder =
                         mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
@@ -550,14 +554,14 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testFaceDetection() throws Exception {
-        for (int i = 0; i < mCameraIds.length; i++) {
+        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
             try {
-                if (!mAllStaticInfo.get(mCameraIds[i]).isColorOutputSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIds[i] +
+                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
                             " does not support color outputs, skipping");
                     continue;
                 }
-                openDevice(mCameraIds[i]);
+                openDevice(mCameraIdsUnderTest[i]);
                 faceDetectionTestByCamera();
             } finally {
                 closeDevice();
@@ -570,7 +574,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testToneMapControl() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 if (!mAllStaticInfo.get(id).isManualToneMapSupported()) {
                     Log.i(TAG, "Camera " + id +
@@ -590,7 +594,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testColorCorrectionControl() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 if (!mAllStaticInfo.get(id).isColorCorrectionSupported()) {
                     Log.i(TAG, "Camera " + id +
@@ -610,7 +614,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testEdgeModeControl() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 if (!mAllStaticInfo.get(id).isEdgeModeControlSupported()) {
                     Log.i(TAG, "Camera " + id +
@@ -632,7 +636,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testEdgeModeControlFastFps() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 if (!mAllStaticInfo.get(id).isEdgeModeControlSupported()) {
                     Log.i(TAG, "Camera " + id +
@@ -655,7 +659,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testFocusDistanceControl() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 StaticMetadata staticInfo = mAllStaticInfo.get(id);
                 if (!staticInfo.hasFocuser()) {
@@ -683,7 +687,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testNoiseReductionModeControl() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 if (!mAllStaticInfo.get(id).isNoiseReductionModeControlSupported()) {
                     Log.i(TAG, "Camera " + id +
@@ -705,7 +709,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testNoiseReductionModeControlFastFps() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 if (!mAllStaticInfo.get(id).isNoiseReductionModeControlSupported()) {
                     Log.i(TAG, "Camera " + id +
@@ -729,7 +733,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testAwbModeAndLock() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
@@ -748,7 +752,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testAfModes() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
@@ -767,7 +771,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testCameraStabilizations() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 StaticMetadata staticInfo = mAllStaticInfo.get(id);
                 List<Key<?>> keys = staticInfo.getCharacteristics().getKeys();
@@ -796,7 +800,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testDigitalZoom() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
@@ -817,7 +821,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testDigitalZoomPreviewCombinations() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
@@ -836,7 +840,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testSceneModes() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 if (mAllStaticInfo.get(id).isSceneModeSupported()) {
                     openDevice(id);
@@ -853,7 +857,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testEffectModes() throws Exception {
-        for (String id : mCameraIds) {
+        for (String id : mCameraIdsUnderTest) {
             try {
                 if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");

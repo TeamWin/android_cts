@@ -730,11 +730,19 @@ public class TelephonyManagerTest {
 
     @Test
     public void testGetNetworkCountryIso() {
-        String countryCode = mTelephonyManager.getNetworkCountryIso();
         if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            String countryCode = mTelephonyManager.getNetworkCountryIso();
             assertTrue("Country code '" + countryCode + "' did not match "
                     + ISO_COUNTRY_CODE_PATTERN,
                     Pattern.matches(ISO_COUNTRY_CODE_PATTERN, countryCode));
+
+            for (int i = 0; i < mTelephonyManager.getPhoneCount(); i++) {
+                countryCode = mTelephonyManager.getNetworkCountryIso(i);
+
+                assertTrue("Country code '" + countryCode + "' did not match "
+                                + ISO_COUNTRY_CODE_PATTERN + " for slot " + i,
+                        Pattern.matches(ISO_COUNTRY_CODE_PATTERN, countryCode));
+            }
         } else {
             // Non-telephony may still have the property defined if it has a SIM.
         }
