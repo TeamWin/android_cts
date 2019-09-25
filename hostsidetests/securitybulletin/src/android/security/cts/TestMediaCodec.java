@@ -70,7 +70,10 @@ public class TestMediaCodec extends SecurityTestCase {
     To prevent merge conflicts, add HEVC decoder tests for O
     below this comment, before any existing test methods
     ***********************************************************/
-
+    @SecurityTest(minPatchLevel = "2018-01")
+    public void testPocCVE_2017_13190() throws Exception {
+        runDecodeTest("CVE-2017-13190", null, null, getDevice(), null);
+    }
 
     /***********************************************************
     To prevent merge conflicts, add AVC decoder tests for N
