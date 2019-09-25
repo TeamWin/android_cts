@@ -77,13 +77,11 @@ public class MultiDisplayClientTests extends MultiDisplayTestBase {
         assumeTrue(supportsMultiDisplay());
     }
 
-    @FlakyTest(bugId = 140074846, detail = "Push to presubmit after proved stable")
     @Test
     public void testDisplayIdUpdateOnMove_RelaunchActivity() throws Exception {
         testDisplayIdUpdateOnMove(ClientTestActivity.class, false /* handlesConfigChange */);
     }
 
-    @FlakyTest(bugId = 140074846, detail = "Push to presubmit after proved stable")
     @Test
     public void testDisplayIdUpdateOnMove_NoRelaunchActivity() throws Exception {
         testDisplayIdUpdateOnMove(NoRelaunchActivity.class, true /* handlesConfigChange */);
@@ -207,13 +205,11 @@ public class MultiDisplayClientTests extends MultiDisplayTestBase {
         }
     }
 
-    @FlakyTest(bugId = 140074846, detail = "Push to presubmit after proved stable")
     @Test
     public void testViewGetDisplayOnPrimaryDisplay() throws Exception {
         testViewGetDisplay(true /* isPrimary */);
     }
 
-    @FlakyTest(bugId = 140074846, detail = "Push to presubmit after proved stable")
     @Test
     public void testViewGetDisplayOnSecondaryDisplay() throws Exception {
         testViewGetDisplay(false /* isPrimary */);
