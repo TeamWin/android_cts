@@ -24,6 +24,11 @@ import java.util.Map;
 class CtsAngleCommon {
     private static final int TEST_WAIT_TIME_MS = 1000;
 
+    // General
+    static final int NUM_ATTEMPTS = 5;
+    static final int APPLY_SLEEP_MSEC = 500;
+    static final int REATTEMPT_SLEEP_MSEC = 5000;
+
     // Settings.Global
     static final String SETTINGS_GLOBAL_ALL_USE_ANGLE = "angle_gl_driver_all_angle";
     static final String SETTINGS_GLOBAL_DRIVER_PKGS = "angle_gl_driver_selection_pkgs";
