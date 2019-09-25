@@ -19,7 +19,6 @@ android_test {
         "cts",
         "vts",
         "general-tests",
-        "cts_instant",
     ],
     libs: ["android.test.runner.stubs"],
     static_libs: [
