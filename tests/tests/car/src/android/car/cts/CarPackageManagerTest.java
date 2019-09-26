@@ -22,6 +22,7 @@ import static org.junit.Assert.fail;
 import android.car.Car;
 import android.car.CarNotConnectedException;
 import android.car.content.pm.CarPackageManager;
+import android.os.Build;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.suitebuilder.annotation.SmallTest;
 
@@ -77,6 +78,10 @@ public class CarPackageManagerTest extends CarApiTestBase {
     @Test
     public void testDistractionOptimizedActivityIsAllowed() throws CarNotConnectedException {
         // This test relies on test activity in installed apk, and AndroidManifest declaration.
+        if (Build.TYPE.equalsIgnoreCase("user")) {
+            // Skip this test on user build, which checks the install source for DO activity list.
+            return;
+        }
         assertTrue(mCarPm.isActivityDistractionOptimized("android.car.cts",
                 "android.car.cts.drivingstate.DistractionOptimizedActivity"));
     }
@@ -84,6 +89,10 @@ public class CarPackageManagerTest extends CarApiTestBase {
     @Test
     public void testNonDistractionOptimizedActivityNotAllowed() throws CarNotConnectedException {
         // This test relies on test activity in installed apk, and AndroidManifest declaration.
+        if (Build.TYPE.equalsIgnoreCase("user")) {
+            // Skip this test on user build, which checks the install source for DO activity list.
+            return;
+        }
         assertFalse(mCarPm.isActivityDistractionOptimized("android.car.cts",
                 "android.car.cts.drivingstate.NonDistractionOptimizedActivity"));
     }
