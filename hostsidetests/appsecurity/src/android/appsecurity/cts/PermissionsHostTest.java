@@ -127,7 +127,10 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     public void testFail() throws Exception {
         // Sanity check that remote failure is host failure
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_23), false, false));
-        runThrowingTest("com.android.cts.usepermission.UsePermissionTest23", "testFail");
+        assertThrows(
+                instanceOf(AssertionError.class, hasMessageThat(containsString("Expected"))),
+                () -> runDeviceTests(USES_PERMISSION_PKG,
+                        "com.android.cts.usepermission.UsePermissionTest23", "testFail"));
     }
 
     public void testKill() throws Exception {
