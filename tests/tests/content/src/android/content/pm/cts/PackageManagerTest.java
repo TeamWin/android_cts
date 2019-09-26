@@ -871,7 +871,7 @@ public class PackageManagerTest {
             return;
         }
         PackageInfo packageInfo = mPackageManager.getPackageInfo(SHIM_APEX_PACKAGE_NAME,
-                PackageManager.MATCH_APEX);
+                PackageManager.MATCH_APEX | PackageManager.MATCH_FACTORY_ONLY);
         assertShimApexInfoIsCorrect(packageInfo);
     }
 
@@ -924,7 +924,7 @@ public class PackageManagerTest {
             return;
         }
         List<PackageInfo> installedPackages = mPackageManager.getInstalledPackages(
-                PackageManager.MATCH_APEX);
+                PackageManager.MATCH_APEX | PackageManager.MATCH_FACTORY_ONLY);
         List<PackageInfo> shimApex = installedPackages.stream().filter(
                 packageInfo -> packageInfo.packageName.equals(SHIM_APEX_PACKAGE_NAME)).collect(
                 Collectors.toList());

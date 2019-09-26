@@ -254,9 +254,10 @@ public class JvmtiAttachingHostTest extends DeviceTestCase implements IBuildRece
                     + "/android.jvmti.JvmtiActivity";
 
             // Don't try to parse the output. We'll get data from the socket or a timeout if it
-            // didn't start.
+            // didn't start. For some reason this command sometimes fails. Retry up to ten times to
+            // make the test less flaky.
             device.executeShellCommand(attachCmd, NullOutputReceiver.getReceiver(), 10,
-                  TimeUnit.SECONDS, 1);
+                  TimeUnit.SECONDS, 10);
             // Wait for startup up to 30 seconds.
             ss.setSoTimeout(30000);
             try (Socket s = ss.accept()) {

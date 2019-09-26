@@ -45,11 +45,37 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implemen
         setGlobalSetting(getDevice(), SETTINGS_GLOBAL_DRIVER_PKGS, pkgName);
         setGlobalSetting(getDevice(), SETTINGS_GLOBAL_DRIVER_VALUES, driverValue);
 
+        // SETTINGS_GLOBAL_DRIVER_PKGS
+        for (int i = 0; i < NUM_ATTEMPTS; i++)
+        {
+            setGlobalSetting(getDevice(), SETTINGS_GLOBAL_DRIVER_PKGS, pkgName);
+            Thread.sleep(APPLY_SLEEP_MSEC);
+            String devOption = getGlobalSetting(getDevice(), SETTINGS_GLOBAL_DRIVER_PKGS);
+            if (devOption.equals(pkgName))
+            {
+                break;
+            }
+            Thread.sleep(REATTEMPT_SLEEP_MSEC);
+        }
+
         String devOption = getGlobalSetting(getDevice(), SETTINGS_GLOBAL_DRIVER_PKGS);
         Assert.assertEquals(
                 "Developer option '" + SETTINGS_GLOBAL_DRIVER_PKGS +
                         "' was not set correctly: '" + devOption + "'",
                 pkgName, devOption);
+
+        // SETTINGS_GLOBAL_DRIVER_VALUES
+        for (int i = 0; i < NUM_ATTEMPTS; i++)
+        {
+            setGlobalSetting(getDevice(), SETTINGS_GLOBAL_DRIVER_VALUES, driverValue);
+            Thread.sleep(APPLY_SLEEP_MSEC);
+            devOption = getGlobalSetting(getDevice(), SETTINGS_GLOBAL_DRIVER_VALUES);
+            if (devOption.equals(driverValue))
+            {
+                break;
+            }
+            Thread.sleep(REATTEMPT_SLEEP_MSEC);
+        }
 
         devOption = getGlobalSetting(getDevice(), SETTINGS_GLOBAL_DRIVER_VALUES);
         Assert.assertEquals(
@@ -72,6 +98,18 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implemen
                 sDriverTestMethodMap.get(driver));
     }
 
+    private void installApp(String appName) throws Exception {
+        for (int i = 0; i < NUM_ATTEMPTS; i++)
+        {
+            try {
+                installPackage(appName);
+                return;
+            } catch(Exception e) {
+                Thread.sleep(REATTEMPT_SLEEP_MSEC);
+            }
+        }
+    }
+
     @Before
     public void setUp() throws Exception {
         clearSettings(getDevice());
@@ -92,8 +130,8 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implemen
     public void testEnableAngleForAll() throws Exception {
         Assume.assumeTrue(isAngleLoadable(getDevice()));
 
-        installPackage(ANGLE_DRIVER_TEST_APP);
-        installPackage(ANGLE_DRIVER_TEST_SEC_APP);
+        installApp(ANGLE_DRIVER_TEST_APP);
+        installApp(ANGLE_DRIVER_TEST_SEC_APP);
 
         setAndValidateAngleDevOptionPkgDriver(ANGLE_DRIVER_TEST_PKG,
                 sDriverGlobalSettingMap.get(OpenGlDriverChoice.DEFAULT));
@@ -117,7 +155,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implemen
     public void testUseDefaultDriver() throws Exception {
         Assume.assumeTrue(isAngleLoadable(getDevice()));
 
-        installPackage(ANGLE_DRIVER_TEST_APP);
+        installApp(ANGLE_DRIVER_TEST_APP);
 
         setAndValidateAngleDevOptionPkgDriver(ANGLE_DRIVER_TEST_PKG,
                 sDriverGlobalSettingMap.get(OpenGlDriverChoice.DEFAULT));
@@ -134,7 +172,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implemen
     public void testUseAngleDriver() throws Exception {
         Assume.assumeTrue(isAngleLoadable(getDevice()));
 
-        installPackage(ANGLE_DRIVER_TEST_APP);
+        installApp(ANGLE_DRIVER_TEST_APP);
 
         setAndValidateAngleDevOptionPkgDriver(ANGLE_DRIVER_TEST_PKG,
                 sDriverGlobalSettingMap.get(OpenGlDriverChoice.ANGLE));
@@ -151,7 +189,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implemen
     public void testUseNativeDriver() throws Exception {
         Assume.assumeTrue(isAngleLoadable(getDevice()));
 
-        installPackage(ANGLE_DRIVER_TEST_APP);
+        installApp(ANGLE_DRIVER_TEST_APP);
 
         setAndValidateAngleDevOptionPkgDriver(ANGLE_DRIVER_TEST_PKG,
                 sDriverGlobalSettingMap.get(OpenGlDriverChoice.NATIVE));
@@ -168,8 +206,8 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implemen
     public void testSettingsLengthMismatch() throws Exception {
         Assume.assumeTrue(isAngleLoadable(getDevice()));
 
-        installPackage(ANGLE_DRIVER_TEST_APP);
-        installPackage(ANGLE_DRIVER_TEST_SEC_APP);
+        installApp(ANGLE_DRIVER_TEST_APP);
+        installApp(ANGLE_DRIVER_TEST_SEC_APP);
 
         setAndValidateAngleDevOptionPkgDriver(ANGLE_DRIVER_TEST_PKG + "," +
                         ANGLE_DRIVER_TEST_SEC_PKG,
@@ -191,7 +229,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implemen
     public void testUseInvalidDriver() throws Exception {
         Assume.assumeTrue(isAngleLoadable(getDevice()));
 
-        installPackage(ANGLE_DRIVER_TEST_APP);
+        installApp(ANGLE_DRIVER_TEST_APP);
 
         setAndValidateAngleDevOptionPkgDriver(ANGLE_DRIVER_TEST_PKG, "timtim");
 
@@ -207,7 +245,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implemen
     public void testUpdateDriverValues() throws Exception {
         Assume.assumeTrue(isAngleLoadable(getDevice()));
 
-        installPackage(ANGLE_DRIVER_TEST_APP);
+        installApp(ANGLE_DRIVER_TEST_APP);
 
         for (OpenGlDriverChoice firstDriver : OpenGlDriverChoice.values()) {
             for (OpenGlDriverChoice secondDriver : OpenGlDriverChoice.values()) {
@@ -229,8 +267,8 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implemen
     public void testMultipleDevOptionsAngleNative() throws Exception {
         Assume.assumeTrue(isAngleLoadable(getDevice()));
 
-        installPackage(ANGLE_DRIVER_TEST_APP);
-        installPackage(ANGLE_DRIVER_TEST_SEC_APP);
+        installApp(ANGLE_DRIVER_TEST_APP);
+        installApp(ANGLE_DRIVER_TEST_SEC_APP);
 
         setAndValidateAngleDevOptionPkgDriver(ANGLE_DRIVER_TEST_PKG + "," +
                         ANGLE_DRIVER_TEST_SEC_PKG,
@@ -253,8 +291,8 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implemen
     public void testMultipleUpdateDriverValues() throws Exception {
         Assume.assumeTrue(isAngleLoadable(getDevice()));
 
-        installPackage(ANGLE_DRIVER_TEST_APP);
-        installPackage(ANGLE_DRIVER_TEST_SEC_APP);
+        installApp(ANGLE_DRIVER_TEST_APP);
+        installApp(ANGLE_DRIVER_TEST_SEC_APP);
 
         // Set the first PKG to always use ANGLE
         setAndValidatePkgDriver(ANGLE_DRIVER_TEST_PKG, OpenGlDriverChoice.ANGLE);
@@ -316,7 +354,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implemen
         Assume.assumeTrue(isAngleLoadable(getDevice()));
 
         // Install the package so the setting isn't removed because the package isn't present.
-        installPackage(ANGLE_DRIVER_TEST_APP);
+        installApp(ANGLE_DRIVER_TEST_APP);
 
         setAndValidateAngleDevOptionPkgDriver(ANGLE_DRIVER_TEST_PKG,
                 sDriverGlobalSettingMap.get(OpenGlDriverChoice.DEFAULT));
@@ -376,8 +414,8 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implemen
     public void testMultipleDevOptionsAngleDefault() throws Exception {
         Assume.assumeTrue(isAngleLoadable(getDevice()));
 
-        installPackage(ANGLE_DRIVER_TEST_APP);
-        installPackage(ANGLE_DRIVER_TEST_SEC_APP);
+        installApp(ANGLE_DRIVER_TEST_APP);
+        installApp(ANGLE_DRIVER_TEST_SEC_APP);
 
         setAndValidateAngleDevOptionPkgDriver(ANGLE_DRIVER_TEST_PKG + "," + ANGLE_DRIVER_TEST_SEC_PKG,
                 sDriverGlobalSettingMap.get(OpenGlDriverChoice.ANGLE) + "," +
@@ -408,7 +446,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implemen
     public void testMultipleDevOptionsAngleNativeUninstall() throws Exception {
         Assume.assumeTrue(isAngleLoadable(getDevice()));
 
-        installPackage(ANGLE_DRIVER_TEST_SEC_APP);
+        installApp(ANGLE_DRIVER_TEST_SEC_APP);
 
         setAndValidateAngleDevOptionPkgDriver(ANGLE_DRIVER_TEST_PKG + "," + ANGLE_DRIVER_TEST_SEC_PKG,
                 sDriverGlobalSettingMap.get(OpenGlDriverChoice.ANGLE) + "," +

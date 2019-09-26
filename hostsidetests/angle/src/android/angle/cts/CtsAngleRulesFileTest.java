@@ -61,22 +61,42 @@ public class CtsAngleRulesFileTest extends BaseHostJUnit4Test {
         setProperty(getDevice(), PROPERTY_TEMP_RULES_FILE, DEVICE_TEMP_RULES_FILE_PATH);
     }
 
+    private void setAndValidateAngleDevOptionWhitelist(String whiteList) throws Exception {
+        // SETTINGS_GLOBAL_WHITELIST
+        for (int i = 0; i < NUM_ATTEMPTS; i++)
+        {
+            setGlobalSetting(getDevice(), SETTINGS_GLOBAL_WHITELIST, whiteList);
+            Thread.sleep(APPLY_SLEEP_MSEC);
+            String devOption = getGlobalSetting(getDevice(), SETTINGS_GLOBAL_WHITELIST);
+            if (devOption.equals(whiteList))
+            {
+                break;
+            }
+            Thread.sleep(REATTEMPT_SLEEP_MSEC);
+        }
+
+        String devOption = getGlobalSetting(getDevice(), SETTINGS_GLOBAL_WHITELIST);
+        Assert.assertEquals(
+            "Developer option '" + SETTINGS_GLOBAL_WHITELIST +
+                "' was not set correctly: '" + devOption + "'",
+            whiteList, devOption);
+    }
+
     @Before
     public void setUp() throws Exception {
         clearSettings(getDevice());
 
         mWhiteList = getGlobalSetting(getDevice(), SETTINGS_GLOBAL_WHITELIST);
 
-        // Application must be whitelisted to load temp rules
-        setGlobalSetting(getDevice(), SETTINGS_GLOBAL_WHITELIST,
-                ANGLE_DRIVER_TEST_PKG + "," + ANGLE_DRIVER_TEST_SEC_PKG);
+        final String whitelist = ANGLE_DRIVER_TEST_PKG + "," + ANGLE_DRIVER_TEST_SEC_PKG;
+        setAndValidateAngleDevOptionWhitelist(whitelist);
     }
 
     @After
     public void tearDown() throws Exception {
         clearSettings(getDevice());
 
-        setGlobalSetting(getDevice(), SETTINGS_GLOBAL_WHITELIST, mWhiteList);
+        setAndValidateAngleDevOptionWhitelist(mWhiteList);
 
         FileUtil.deleteFile(mRulesFile);
     }

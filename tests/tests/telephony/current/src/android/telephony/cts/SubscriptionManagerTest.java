@@ -548,10 +548,6 @@ public class SubscriptionManagerTest {
             changeAndVerifySubscriptionEnabledValue(mSubId, !enabled);
             // Reset it back to original
             changeAndVerifySubscriptionEnabledValue(mSubId, enabled);
-        } else {
-            boolean changeSuccessfully = executeWithShellPermissionAndDefault(false, mSm,
-                    (sm) -> sm.setSubscriptionEnabled(mSubId, !enabled));
-            assertFalse(changeSuccessfully);
         }
     }
 
