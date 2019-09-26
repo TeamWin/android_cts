@@ -50,7 +50,7 @@ public class DevicePolicyLoggingTest extends BaseDeviceAdminTest {
 
     public void testPasswordMethodsLogged() {
         mDevicePolicyManager.setPasswordQuality(ADMIN_RECEIVER_COMPONENT,
-                DevicePolicyManager.PASSWORD_QUALITY_SOMETHING);
+                DevicePolicyManager.PASSWORD_QUALITY_COMPLEX);
         mDevicePolicyManager.setPasswordMinimumLength(ADMIN_RECEIVER_COMPONENT, 13);
         mDevicePolicyManager.setPasswordMinimumNumeric(ADMIN_RECEIVER_COMPONENT, 14);
         mDevicePolicyManager.setPasswordMinimumNonLetter(ADMIN_RECEIVER_COMPONENT, 15);
