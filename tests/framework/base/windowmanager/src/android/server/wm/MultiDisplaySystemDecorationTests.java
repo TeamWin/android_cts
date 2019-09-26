@@ -214,8 +214,8 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     @Test
     public void testNavBarNotShowingOnDisplayWithoutDecor() throws Exception {
         try (final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
-            // Wait navigation bar show on default display and record the states.
-            mAmWmState.waitAndAssertNavBarShownOnDisplay(DEFAULT_DISPLAY);
+            // Wait for system decoration showing and record current nav states.
+            mAmWmState.waitForHomeActivityVisible();
             final List<WindowState> expected = mAmWmState.getWmState().getAllNavigationBarStates();
 
             externalDisplaySession.setPublicDisplay(true)
@@ -232,8 +232,8 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     @Test
     public void testNavBarNotShowingOnPrivateDisplay() throws Exception {
         try (final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
-            // Wait navigation bar show on default display and record the states.
-            mAmWmState.waitAndAssertNavBarShownOnDisplay(DEFAULT_DISPLAY);
+            // Wait for system decoration showing and record current nav states.
+            mAmWmState.waitForHomeActivityVisible();
             final List<WindowState> expected = mAmWmState.getWmState().getAllNavigationBarStates();
 
             externalDisplaySession.setPublicDisplay(false)
