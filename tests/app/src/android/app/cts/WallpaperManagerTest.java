@@ -21,7 +21,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -47,6 +46,9 @@ import android.view.WindowManager;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.SystemUtil;
+
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -67,6 +69,8 @@ public class WallpaperManagerTest {
     private WallpaperManager mWallpaperManager;
     private Context mContext;
     private Handler mHandler;
+    private BroadcastReceiver mBroadcastReceiver;
+    private CountDownLatch mCountDownLatch;
 
     @Before
     public void setUp() throws Exception {
@@ -77,6 +81,24 @@ public class WallpaperManagerTest {
         final HandlerThread handlerThread = new HandlerThread("TestCallbacks");
         handlerThread.start();
         mHandler = new Handler(handlerThread.getLooper());
+        mCountDownLatch = new CountDownLatch(1);
+        mBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                mCountDownLatch.countDown();
+                if (DEBUG) {
+                    Log.d(TAG, "broadcast state count down: " + mCountDownLatch.getCount());
+                }
+            }
+        };
+        mContext.registerReceiver(mBroadcastReceiver,
+                new IntentFilter(Intent.ACTION_WALLPAPER_CHANGED));
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        mWallpaperManager.clear();
+        mContext.unregisterReceiver(mBroadcastReceiver);
     }
 
     @Test
@@ -119,22 +141,12 @@ public class WallpaperManagerTest {
         Canvas canvas = new Canvas(tmpWallpaper);
         canvas.drawColor(Color.BLACK);
 
-        CountDownLatch latch = new CountDownLatch(1);
-        mContext.registerReceiver(new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                latch.countDown();
-            }
-        }, new IntentFilter(Intent.ACTION_WALLPAPER_CHANGED));
-
         try {
             mWallpaperManager.setBitmap(tmpWallpaper);
 
             // Wait for up to 5 sec since this is an async call.
             // Should fail if Intent.ACTION_WALLPAPER_CHANGED isn't delivered.
-            if (!latch.await(5, TimeUnit.SECONDS)) {
-                throw new AssertionError("Intent.ACTION_WALLPAPER_CHANGED not received.");
-            }
+            Assert.assertTrue(mCountDownLatch.await(5, TimeUnit.SECONDS));
         } catch (InterruptedException | IOException e) {
             throw new AssertionError("Intent.ACTION_WALLPAPER_CHANGED not received.");
         } finally {
@@ -144,22 +156,12 @@ public class WallpaperManagerTest {
 
     @Test
     public void wallpaperClearBroadcastTest() {
-        CountDownLatch latch = new CountDownLatch(1);
-        mContext.registerReceiver(new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                latch.countDown();
-            }
-        }, new IntentFilter(Intent.ACTION_WALLPAPER_CHANGED));
-
         try {
             mWallpaperManager.clear(WallpaperManager.FLAG_LOCK | WallpaperManager.FLAG_SYSTEM);
 
             // Wait for 5 sec since this is an async call.
             // Should fail if Intent.ACTION_WALLPAPER_CHANGED isn't delivered.
-            if (!latch.await(5, TimeUnit.SECONDS)) {
-                throw new AssertionError("Intent.ACTION_WALLPAPER_CHANGED not received.");
-            }
+            Assert.assertTrue(mCountDownLatch.await(5, TimeUnit.SECONDS));
         } catch (InterruptedException | IOException e) {
             throw new AssertionError(e);
         }
@@ -301,6 +303,63 @@ public class WallpaperManagerTest {
         }
     }
 
+    @Test
+    public void highRatioWallpaper_largeWidth() throws Exception {
+        final String sysuiPid = getSysuiPid();
+        Bitmap highRatioWallpaper = Bitmap.createBitmap(800, 8000, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(highRatioWallpaper);
+        canvas.drawColor(Color.RED);
+
+        try {
+            mWallpaperManager.setBitmap(highRatioWallpaper);
+
+            Assert.assertTrue(mCountDownLatch.await(5, TimeUnit.SECONDS));
+            Assert.assertTrue(sysuiPid.contentEquals(getSysuiPid()));
+        } finally {
+            highRatioWallpaper.recycle();
+        }
+    }
+
+    @Test
+    public void highRatioWallpaper_largeHeight() throws Exception {
+        final String sysuiPid = getSysuiPid();
+        Bitmap highRatioWallpaper = Bitmap.createBitmap(8000, 800, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(highRatioWallpaper);
+        canvas.drawColor(Color.RED);
+
+        try {
+            mWallpaperManager.setBitmap(highRatioWallpaper);
+
+            Assert.assertTrue(mCountDownLatch.await(5, TimeUnit.SECONDS));
+            Assert.assertTrue(sysuiPid.contentEquals(getSysuiPid()));
+        } finally {
+            highRatioWallpaper.recycle();
+        }
+    }
+
+    @Test
+    public void highResolutionWallpaper() throws Exception {
+        final String sysuiPid = getSysuiPid();
+        Bitmap highResolutionWallpaper = Bitmap.createBitmap(10000, 10000, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(highResolutionWallpaper);
+        canvas.drawColor(Color.BLUE);
+
+        try {
+            mWallpaperManager.setBitmap(highResolutionWallpaper);
+
+            Assert.assertTrue(mCountDownLatch.await(5, TimeUnit.SECONDS));
+            Assert.assertTrue(sysuiPid.contentEquals(getSysuiPid()));
+        } finally {
+            highResolutionWallpaper.recycle();
+        }
+    }
+
+    private static String getSysuiPid() {
+        final String sysuiPkgName = "com.android.systemui";
+        final String sysuiPid = "pidof " + sysuiPkgName;
+        return SystemUtil.runShellCommand(sysuiPid);
+    }
+
     private void assertDesiredDimension(Point suggestedSize, Point expectedSize) {
         mWallpaperManager.suggestDesiredDimensions(suggestedSize.x, suggestedSize.y);
         Point actualSize = new Point(mWallpaperManager.getDesiredMinimumWidth(),
@@ -424,31 +483,22 @@ public class WallpaperManagerTest {
         // • System colors are known
         // • Lock colors are known
         final int expectedEvents = 5;
-        CountDownLatch latch = new CountDownLatch(expectedEvents);
+        mCountDownLatch = new CountDownLatch(expectedEvents);
         if (DEBUG) {
-            Log.d("WP", "Started latch expecting: " + latch.getCount());
+            Log.d(TAG, "Started latch expecting: " + mCountDownLatch.getCount());
         }
-        BroadcastReceiver receiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                latch.countDown();
-                if (DEBUG) {
-                    Log.d("WP", "broadcast state count down: " + latch.getCount());
-                }
-            }
-        };
+
         WallpaperManager.OnColorsChangedListener callback = (colors, which) -> {
             if ((which & WallpaperManager.FLAG_LOCK) != 0) {
-                latch.countDown();
+                mCountDownLatch.countDown();
             }
             if ((which & WallpaperManager.FLAG_SYSTEM) != 0) {
-                latch.countDown();
+                mCountDownLatch.countDown();
             }
             if (DEBUG) {
-                Log.d("WP", "color state count down: " + which + " - " + colors);
+                Log.d(TAG, "color state count down: " + which + " - " + colors);
             }
         };
-        mContext.registerReceiver(receiver, new IntentFilter(Intent.ACTION_WALLPAPER_CHANGED));
         mWallpaperManager.addOnColorsChangedListener(callback, mHandler);
 
         try {
@@ -456,14 +506,11 @@ public class WallpaperManagerTest {
 
             // Wait for up to 10 sec since this is an async call.
             // Will pass as soon as the expected callbacks are executed.
-            latch.await(10, TimeUnit.SECONDS);
-            if (latch.getCount() != 0) {
-                Log.w(TAG, "Did not receive all events! This is probably a bug.");
-            }
+            Assert.assertTrue(mCountDownLatch.await(10, TimeUnit.SECONDS));
+            Assert.assertEquals(0, mCountDownLatch.getCount());
         } catch (InterruptedException | IOException e) {
             throw new RuntimeException("Can't ensure a clean state.");
         } finally {
-            mContext.unregisterReceiver(receiver);
             mWallpaperManager.removeOnColorsChangedListener(callback);
             bmp.recycle();
         }
