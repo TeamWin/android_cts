@@ -116,6 +116,9 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     @Presubmit
     @Test
     public void testForceDisplayMetrics() throws Exception {
+        if (!supportsSecureLock()) {
+            return;
+        }
         launchHomeActivity();
 
         try (final DisplayMetricsSession displayMetricsSession = new DisplayMetricsSession();
