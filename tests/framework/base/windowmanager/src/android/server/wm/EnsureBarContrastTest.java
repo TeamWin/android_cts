@@ -123,12 +123,13 @@ public class EnsureBarContrastTest {
     }
 
     public void runTestDontEnsureContrast(boolean lightBars) {
-        assumeFalse(
-                "Skipping test: automotive may not have transparent background for the status bar",
-                getInstrumentation().getContext().getPackageManager().hasSystemFeature(
-                        FEATURE_AUTOMOTIVE));
+        assumeHasColoredBars();
         TestActivity activity = launchAndWait(mTestActivity, lightBars, false /* ensureContrast */);
         for (Bar bar : Bar.BARS) {
+            if (isAssumptionViolated(() -> bar.checkAssumptions(mTestActivity))) {
+                continue;
+            }
+
             Bitmap bitmap = getOnMainSync(() -> activity.screenshotBar(bar, mDumper));
 
             assertThat(bar.name + "Bar: contrast NOT requested, therefore must NOT be scrimmed.",
