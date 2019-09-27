@@ -51,7 +51,7 @@ public class ManagedProfileProvisioningTest extends BaseDevicePolicyTest {
         }
         super.tearDown();
     }
-
+    @FlakyTest(bugId = 141747631)
     public void testManagedProfileProvisioning() throws Exception {
         if (!mHasFeature) {
             return;
@@ -75,6 +75,7 @@ public class ManagedProfileProvisioningTest extends BaseDevicePolicyTest {
                 "testVerifyAdminExtraBundle", mProfileUserId);
     }
 
+    @FlakyTest(bugId = 141747631)
     public void testVerifySuccessfulIntentWasReceived() throws Exception {
         if (!mHasFeature) {
             return;
@@ -86,6 +87,7 @@ public class ManagedProfileProvisioningTest extends BaseDevicePolicyTest {
                 "testVerifySuccessfulIntentWasReceived", mProfileUserId);
     }
 
+    @FlakyTest(bugId = 141747631)
     public void testAccountMigration() throws Exception {
         if (!mHasFeature) {
             return;
@@ -100,6 +102,7 @@ public class ManagedProfileProvisioningTest extends BaseDevicePolicyTest {
                 "testAccountNotExist", mParentUserId);
     }
 
+    @FlakyTest(bugId = 141747631)
     public void testAccountCopy() throws Exception {
         if (!mHasFeature) {
             return;
@@ -114,6 +117,7 @@ public class ManagedProfileProvisioningTest extends BaseDevicePolicyTest {
                 "testAccountExist", mParentUserId);
     }
 
+    @FlakyTest(bugId = 141747631)
     public void testWebview() throws Exception {
         if (!mHasFeature) {
             return;
