@@ -12,28 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH := $(call my-dir)
+LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE_TAGS := tests optional
+# Don't include this package in any target.
+LOCAL_MODULE_TAGS := tests
 
-# TODO(b/129909356): Consolidate this to CtsWindowManagerDeviceTestCases.apk
-LOCAL_PACKAGE_NAME := CtsActivityManagerBackgroundActivityTestCases
+LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_SRC_FILES := $(call all-java-files-under, src) \
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    androidx.annotation_annotation \
+    guava
 
 LOCAL_SDK_VERSION := test_current
 
-LOCAL_STATIC_JAVA_LIBRARIES := \
-    androidx.test.rules \
-    cts-wm-util \
-    cts-wm-app-base \
-    cts-core-test-runner-axt \
-    cts-background-activity-common
+LOCAL_MODULE := cts-background-activity-common
 
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
-
-include $(BUILD_CTS_PACKAGE)
-
-include $(call all-makefiles-under,$(LOCAL_PATH))
+include $(BUILD_STATIC_JAVA_LIBRARY)
