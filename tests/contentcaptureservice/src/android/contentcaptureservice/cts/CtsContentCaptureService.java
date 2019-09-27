@@ -149,6 +149,16 @@ public class CtsContentCaptureService extends ContentCaptureService {
         }
     }
 
+    public static void clearServiceWatcher() {
+        if (sServiceWatcher != null) {
+            if (sServiceWatcher.mReadyToClear) {
+                sServiceWatcher.mService = null;
+                sServiceWatcher = null;
+            } else {
+                sServiceWatcher.mReadyToClear = true;
+            }
+        }
+    }
 
     /**
      * When set, doesn't throw exceptions when it receives an event from a session that doesn't
@@ -170,13 +180,14 @@ public class CtsContentCaptureService extends ContentCaptureService {
             return;
         }
 
-        if (sServiceWatcher.mService != null) {
+        if (!sServiceWatcher.mReadyToClear && sServiceWatcher.mService != null) {
             addException("onConnected(): already created: %s", sServiceWatcher);
             return;
         }
 
         sServiceWatcher.mService = this;
         sServiceWatcher.mCreated.countDown();
+        sServiceWatcher.mReadyToClear = false;
 
         if (mConnectedLatch.getCount() == 0) {
             addException("already connected: %s", mConnectedLatch);
@@ -208,8 +219,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
             latch.countDown();
         }
         sServiceWatcher.mDestroyed.countDown();
-        sServiceWatcher.mService = null;
-        sServiceWatcher = null;
+        clearServiceWatcher();
     }
 
     /**
@@ -479,6 +489,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
 
         private final CountDownLatch mCreated = new CountDownLatch(1);
         private final CountDownLatch mDestroyed = new CountDownLatch(1);
+        private boolean mReadyToClear = true;
         private Pair<Set<String>, Set<ComponentName>> mWhitelist;
 
         private CtsContentCaptureService mService;
