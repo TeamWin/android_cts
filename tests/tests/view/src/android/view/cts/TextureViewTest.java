@@ -384,14 +384,18 @@ public class TextureViewTest {
                     }
                 }
             } else {
-                // Check there are no black nor white pixels, because bilerp sampling changed
-                // pure black/white to a variety of gray intermediates.
+                // Check that a third of pixels are not black nor white, because bilerp sampling
+                // changed pure black/white to a variety of gray intermediates.
+                int nonBlackWhitePixels = 0;
                 for (int j = 0; j < pixels.length; j++) {
-                    if (pixels[j] == Color.BLACK || pixels[j] == Color.WHITE) {
-                        success = false;
+                    if (pixels[j] != Color.BLACK && pixels[j] != Color.WHITE) {
+                        nonBlackWhitePixels++;
+                    } else {
                         failPosition = j;
-                        break;
                     }
+                }
+                if (nonBlackWhitePixels < pixels.length / 3) {
+                    success = false;
                 }
             }
             assertTrue("Unexpected color at position " + failPosition + " = "
