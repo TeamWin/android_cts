@@ -66,7 +66,7 @@ public class BusinessLogicDeviceExecutor extends BusinessLogicExecutor {
      */
     @Override
     protected String formatExecutionString(String method, String... args) {
-        return String.format("%s(%s)", method, TextUtils.join(", ", args));
+        return String.format("%s(%s)", method, TextUtils.join(", ", formatArgs(args)));
     }
 
     /**
