@@ -75,4 +75,22 @@ public class MixedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     public void testLockTask_defaultDialer() throws Exception {
         super.testLockTask_defaultDialer();
     }
+
+    @Override
+    @FlakyTest(bugId = 140932104)
+    public void testLockTaskAfterReboot() throws Exception {
+        super.testLockTaskAfterReboot();
+    }
+
+    @Override
+    @FlakyTest(bugId = 140932104)
+    public void testLockTaskAfterReboot_tryOpeningSettings() throws Exception {
+        super.testLockTaskAfterReboot_tryOpeningSettings();
+    }
+
+    @Override
+    @FlakyTest(bugId = 140932104)
+    public void testLockTask_exitIfNoLongerWhitelisted() throws Exception {
+        super.testLockTask_exitIfNoLongerWhitelisted();
+    }
 }

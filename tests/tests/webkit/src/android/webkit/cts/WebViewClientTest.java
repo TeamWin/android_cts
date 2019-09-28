@@ -902,8 +902,11 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
         @Override
         public void onPageFinished(WebView view, String url) {
             super.onPageFinished(view, url);
-            assertTrue(mOnPageStartedCalled);
-            assertTrue(mOnLoadResourceCalled);
+            // TODO(ntfschr): propagate these exceptions to the instrumentation thread.
+            assertTrue("Expected onPageStarted to be called before onPageFinished",
+                    mOnPageStartedCalled);
+            assertTrue("Expected onLoadResource to be called before onPageFinished",
+                    mOnLoadResourceCalled);
             mOnPageFinishedCalled = true;
         }
 

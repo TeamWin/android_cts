@@ -46,7 +46,6 @@ import android.view.Surface;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
 import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ColorUtils;
 import com.android.compatibility.common.util.WidgetTestUtils;
@@ -66,8 +65,11 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
+
 @SmallTest
-@RunWith(AndroidJUnit4.class)
+@RunWith(JUnitParamsRunner.class)
 public class BitmapTest {
     // small alpha values cause color values to be pre-multiplied down, losing accuracy
     private static final int PREMUL_COLOR = Color.argb(2, 255, 254, 253);
@@ -2203,6 +2205,41 @@ public class BitmapTest {
         nTestNullBitmap();
     }
 
+    private Object[] parametersForTestNdkInfo() {
+        return new Object[] {
+            new Object[] { Config.ALPHA_8,   8 /* ANDROID_BITMAP_FORMAT_A_8 */ },
+            new Object[] { Config.ARGB_8888, 1 /* ANDROID_BITMAP_FORMAT_RGBA_8888 */ },
+            new Object[] { Config.RGB_565,   4 /* ANDROID_BITMAP_FORMAT_RGB_565 */ },
+            new Object[] { Config.RGBA_F16,  9 /* ANDROID_BITMAP_FORMAT_RGBA_F16*/ },
+        };
+    }
+
+    @Test
+    @Parameters(method = "parametersForTestNdkInfo")
+    public void testNdkInfo(Config config, int androidBitmapFormat) {
+        // Arbitrary width and height.
+        final int width = 13;
+        final int height = 7;
+        boolean[] trueFalse = new boolean[] { true, false };
+        for (boolean hasAlpha : trueFalse) {
+            for (boolean premultiplied : trueFalse) {
+                Bitmap bm = Bitmap.createBitmap(width, height, config, hasAlpha);
+                bm.setPremultiplied(premultiplied);
+                nTestInfo(bm, androidBitmapFormat, width, height, bm.hasAlpha(),
+                        bm.isPremultiplied());
+                bm = bm.copy(Bitmap.Config.HARDWARE, false);
+                if (config == Bitmap.Config.ALPHA_8) {
+                    // ALPHA_8 is not supported in HARDWARE. b/141480329
+                    assertNull(bm);
+                } else {
+                    assertNotNull(bm);
+                    nTestInfo(bm, androidBitmapFormat, width, height, bm.hasAlpha(),
+                            bm.isPremultiplied());
+                }
+            }
+        }
+    }
+
     private void strictModeTest(Runnable runnable) {
         StrictMode.ThreadPolicy originalPolicy = StrictMode.getThreadPolicy();
         StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
@@ -2249,6 +2286,9 @@ public class BitmapTest {
     };
 
     static native int nGetFormat(Bitmap bitmap);
+
+    private static native void nTestInfo(Bitmap bm, int androidBitmapFormat, int width, int height,
+            boolean hasAlpha, boolean premultiplied);
 
     private static HardwareBuffer createTestBuffer(int width, int height, boolean cpuAccess) {
         long usage = HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE;
