@@ -24,12 +24,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.Uri;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.Looper;
-import android.telecom.TelecomManager;
 import android.telephony.CellInfo;
 import android.telephony.CellLocation;
 import android.telephony.PhoneStateListener;
@@ -38,9 +33,8 @@ import android.telephony.PreciseDataConnectionState;
 import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
-import android.telephony.emergency.EmergencyNumber;
+import android.net.ConnectivityManager;
 import android.telephony.ims.ImsReasonInfo;
-import android.test.InstrumentationTestCase;
 import android.util.Log;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
@@ -48,15 +42,13 @@ import com.android.compatibility.common.util.TestThread;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class PhoneStateListenerTest extends InstrumentationTestCase {
+public class PhoneStateListenerTest {
 
     public static final long WAIT_TIME = 1000;
 
@@ -75,20 +67,15 @@ public class PhoneStateListenerTest extends InstrumentationTestCase {
     private boolean mOnPreciseCallStateChangedCalled;
     private boolean mOnCallDisconnectCauseChangedCalled;
     private boolean mOnImsCallDisconnectCauseChangedCalled;
-    private EmergencyNumber mOnOutgoingCallEmergencyNumberChanged;
-    private EmergencyNumber mOnOutgoingSmsEmergencyNumberChanged;
     private boolean mOnPreciseDataConnectionStateChanged;
     private boolean mOnRadioPowerStateChangedCalled;
     private boolean mVoiceActivationStateChangedCalled;
     private boolean mSrvccStateChangedCalled;
-    private String mTestEmergencyNumber = "998877665544332211";
-
     @TelephonyManager.RadioPowerState private int mRadioPowerState;
     @TelephonyManager.SimActivationState private int mVoiceActivationState;
     private PreciseDataConnectionState mPreciseDataConnectionState;
     private PreciseCallState mPreciseCallState;
     private SignalStrength mSignalStrength;
-    private TelecomManager mTelecomManager;
     private TelephonyManager mTelephonyManager;
     private PhoneStateListener mListener;
     private final Object mLock = new Object();
@@ -124,7 +111,6 @@ public class PhoneStateListenerTest extends InstrumentationTestCase {
     public void setUp() throws Exception {
         mTelephonyManager =
                 (TelephonyManager)getContext().getSystemService(Context.TELEPHONY_SERVICE);
-        mTelecomManager = (TelecomManager) getContext().getSystemService(Context.TELECOM_SERVICE);
         mCm = (ConnectivityManager)getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
     }
 
@@ -977,61 +963,6 @@ public class PhoneStateListenerTest extends InstrumentationTestCase {
         }
         t.checkException();
         assertTrue(mOnUserMobileDataStateChanged);
-    }
-
-    @Test
-    public void testOnOutgoingCallEmergencyNumberChanged() throws Throwable {
-        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
-            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
-            return;
-        }
-        TelephonyUtils.executeEmergencyNumberTestMode(
-                getInstrumentation(), "-a " + mTestEmergencyNumber);
-        TelephonyUtils.setSystemDialer(getInstrumentation(), TelephonyUtils.PACKAGE);
-        HandlerThread mPhoneStateListenerThread = new HandlerThread("PhoneStateListenerThread");
-        mPhoneStateListenerThread.start();
-        Handler mPhoneStateListenerHandler = new Handler(mPhoneStateListenerThread.getLooper());
-        final CountDownLatch latch = new CountDownLatch(1);
-
-        mPhoneStateListenerHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                mListener = new PhoneStateListener() {
-                    @Override
-                    public void onOutgoingEmergencyCall(EmergencyNumber emergencyNumber) {
-                        Log.i(TAG, "onOutgoingEmergencyCall: emergencyNumber=" + emergencyNumber);
-                        mOnOutgoingCallEmergencyNumberChanged = emergencyNumber;
-                        latch.countDown();
-                    }
-                };
-                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                        (tm) -> tm.listen(mListener,
-                            PhoneStateListener.LISTEN_CALL_STATE | PhoneStateListener
-                                .LISTEN_OUTGOING_CALL_EMERGENCY_NUMBER));
-            }
-        });
-        assertNull(mOnOutgoingCallEmergencyNumberChanged);
-        mTelecomManager.placeCall(Uri.fromParts("tel", mTestEmergencyNumber, null), null);
-
-        try {
-            latch.await(5000, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            System.err.println("Operation interrupted.");
-        } finally {
-            mPhoneStateListenerHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_NONE);
-                }
-            });
-            mPhoneStateListenerThread.quitSafely();
-            TelephonyUtils.setSystemDialer(getInstrumentation(), "default");
-            TelephonyUtils.executeEmergencyNumberTestMode(
-                    getInstrumentation(), "-r " + mTestEmergencyNumber);
-        }
-
-        assertNotNull(mOnOutgoingCallEmergencyNumberChanged);
-        assertEquals(mOnOutgoingCallEmergencyNumberChanged.getNumber(), mTestEmergencyNumber);
     }
 
     @Test
