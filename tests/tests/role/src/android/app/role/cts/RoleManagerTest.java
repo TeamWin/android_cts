@@ -25,6 +25,7 @@ import static com.android.compatibility.common.util.UiAutomatorUtils.waitFindObj
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.app.AppOpsManager;
@@ -390,6 +391,7 @@ public class RoleManagerTest {
 
     @Test
     public void targetSdk28AndChangeDefaultDialerAndAllowThenIsDefaultDialer() throws Exception {
+        assumeTrue(sRoleManager.isRoleAvailable(RoleManager.ROLE_DIALER));
         sContext.startActivity(new Intent()
                 .setComponent(new ComponentName(APP_28_PACKAGE_NAME,
                         APP_28_CHANGE_DEFAULT_DIALER_ACTIVITY_NAME))
