@@ -36,9 +36,12 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import test_package.Bar;
+import test_package.ByteEnum;
 import test_package.Foo;
 import test_package.IEmpty;
 import test_package.ITest;
+import test_package.IntEnum;
+import test_package.LongEnum;
 import test_package.RegularPolygon;
 
 import java.io.FileInputStream;
@@ -151,6 +154,9 @@ public class JavaClientTest {
         assertEquals(true, mInterface.RepeatBoolean(true));
         assertEquals('a', mInterface.RepeatChar('a'));
         assertEquals((byte)3, mInterface.RepeatByte((byte)3));
+        assertEquals(ByteEnum.FOO, mInterface.RepeatByteEnum(ByteEnum.FOO));
+        assertEquals(IntEnum.FOO, mInterface.RepeatIntEnum(IntEnum.FOO));
+        assertEquals(LongEnum.FOO, mInterface.RepeatLongEnum(LongEnum.FOO));
     }
 
     @Test
@@ -454,12 +460,19 @@ public class JavaClientTest {
         foo.e = new Bar();
         foo.e.d = 99;
 
+        foo.shouldBeByteBar = ByteEnum.BAR;
+        foo.shouldBeIntBar = IntEnum.BAR;
+        foo.shouldBeLongBar = LongEnum.BAR;
+
         Foo repeatedFoo = mInterface.repeatFoo(foo);
 
         assertEquals(foo.a, repeatedFoo.a);
         assertEquals(foo.b, repeatedFoo.b);
         assertEquals(foo.d.b, repeatedFoo.d.b);
         assertEquals(foo.e.d, repeatedFoo.e.d);
+        assertEquals(foo.shouldBeByteBar, repeatedFoo.shouldBeByteBar);
+        assertEquals(foo.shouldBeIntBar, repeatedFoo.shouldBeIntBar);
+        assertEquals(foo.shouldBeLongBar, repeatedFoo.shouldBeLongBar);
     }
 
     @Test
