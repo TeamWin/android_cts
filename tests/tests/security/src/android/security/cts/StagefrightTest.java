@@ -1070,6 +1070,11 @@ public class StagefrightTest extends InstrumentationTestCase {
      ***********************************************************/
 
     @SecurityTest(minPatchLevel = "2019-09")
+    public void testStagefright_cve_2019_10534() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_10534);
+    }
+
+    @SecurityTest(minPatchLevel = "2019-09")
     public void testStagefright_cve_2019_10533() throws Exception {
         doStagefrightTest(R.raw.cve_2019_10533);
     }
