@@ -22,12 +22,15 @@ import android.app.AppOpsManager.OPSTR_ACCESS_ACCESSIBILITY
 import android.app.AppOpsManager.OPSTR_COARSE_LOCATION
 import android.app.AppOpsManager.OPSTR_FINE_LOCATION
 import android.app.AppOpsManager.OPSTR_GET_ACCOUNTS
+import android.app.AppOpsManager.OPSTR_READ_CONTACTS
+import android.app.AppOpsManager.OPSTR_WRITE_CONTACTS
 import android.app.AppOpsManager.strOpToOp
 import android.app.AsyncNotedAppOp
 import android.app.PendingIntent
 import android.app.SyncNotedAppOp
 import android.content.BroadcastReceiver
 import android.content.ComponentName
+import android.content.ContentValues
 import android.content.Context
 import android.content.Context.BIND_AUTO_CREATE
 import android.content.Intent
@@ -41,6 +44,7 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.platform.test.annotations.AppModeFull
+import android.provider.ContactsContract
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
@@ -477,6 +481,32 @@ class AppOpsLoggingTest {
         } finally {
             context.unregisterReceiver(proximityAlertReceiver)
         }
+    }
+
+    /**
+     * Realistic end-to-end test for reading all contacts
+     */
+    @Test
+    fun readFromContactsProvider() {
+        context.createFeatureContext("test").contentResolver
+            .query(ContactsContract.Contacts.CONTENT_URI, null, null, null, null)
+
+        assertThat(noted.map { it.first.op }).containsExactly(OPSTR_READ_CONTACTS)
+        assertThat(noted[0].first.featureId).isEqualTo("test")
+        assertThat(noted[0].second.map { it.methodName }).contains("readFromContactsProvider")
+    }
+
+    /**
+     * Realistic end-to-end test for adding a new contact
+     */
+    @Test
+    fun writeToContactsProvider() {
+        context.createFeatureContext("test").contentResolver
+            .insert(ContactsContract.RawContacts.CONTENT_URI, ContentValues())
+
+        assertThat(noted.map { it.first.op }).containsExactly(OPSTR_WRITE_CONTACTS)
+        assertThat(noted[0].first.featureId).isEqualTo("test")
+        assertThat(noted[0].second.map { it.methodName }).contains("writeToContactsProvider")
     }
 
     @After
