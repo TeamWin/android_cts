@@ -36,6 +36,7 @@ import android.media.cts.R;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
+import android.util.Log;
 
 import androidx.test.filters.SmallTest;
 
@@ -385,6 +386,8 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
     }
 
     private void testThumbnail(int resId, String outPath) {
+        Stopwatch timer = new Stopwatch();
+
         if (!MediaUtils.hasCodecForResourceAndDomain(getContext(), resId, "video/")) {
             MediaUtils.skipTest("no video codecs for resource");
             return;
@@ -392,7 +395,10 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
 
         setDataSourceFd(resId);
 
+        timer.start();
         Bitmap thumbnail = mRetriever.getFrameAtTime(-1 /* timeUs (any) */);
+        timer.end();
+        timer.printDuration("getFrameAtTime");
 
         assertNotNull(thumbnail);
 
@@ -825,6 +831,7 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
             int resId, int width, int height, int rotation,
             int imageCount, int primary, boolean useGrid, boolean checkColor)
                     throws Exception {
+        Stopwatch timer = new Stopwatch();
         MediaExtractor extractor = null;
         AssetFileDescriptor afd = null;
         InputStream inputStream = null;
@@ -858,7 +865,10 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
                 // Also check the position of the color block, which should move left-to-right
                 // with the index.
                 for (int imageIndex = 0; imageIndex < imageCount; imageIndex++) {
+                    timer.start();
                     bitmap = mRetriever.getImageAtIndex(imageIndex);
+                    timer.end();
+                    timer.printDuration("getImageAtIndex");
 
                     for (int barIndex = 0; barIndex < COLOR_BARS.length; barIndex++) {
                         Rect r = getColorBarRect(barIndex, width, height);
@@ -877,7 +887,12 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
 
                 // Check the color block position on the primary image.
                 Rect r = getColorBlockRect(primary, width, height);
+
+                timer.start();
                 bitmap = mRetriever.getPrimaryImage();
+                timer.end();
+                timer.printDuration("getPrimaryImage");
+
                 assertTrue("Color block for primary image doesn't match",
                         approxEquals(COLOR_BLOCK, Color.valueOf(
                                 bitmap.getPixel(r.centerX(), height - r.centerY()))));
@@ -922,6 +937,36 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
             if (inputStream != null) {
                 inputStream.close();
             }
+        }
+    }
+
+    private class Stopwatch {
+        private long startTimeMs;
+        private long endTimeMs;
+        private boolean isStartCalled;
+
+        public Stopwatch() {
+            startTimeMs = endTimeMs = 0;
+            isStartCalled = false;
+        }
+
+        public void start() {
+            startTimeMs = System.currentTimeMillis();
+            isStartCalled = true;
+        }
+
+        public void end() {
+            endTimeMs = System.currentTimeMillis();
+            if (!isStartCalled) {
+                Log.e(TAG, "Error: end() must be called after start()!");
+                return;
+            }
+            isStartCalled = false;
+        }
+
+        public void printDuration(String functionName) {
+            long duration = endTimeMs - startTimeMs;
+            Log.i(TAG, String.format("%s() took %d ms.", functionName, duration));
         }
     }
 }
