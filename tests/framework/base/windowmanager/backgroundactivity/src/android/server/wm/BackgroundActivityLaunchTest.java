@@ -40,6 +40,7 @@ import static android.server.wm.backgroundactivity.appa.Components.ForegroundAct
 import static android.server.wm.backgroundactivity.appa.Components.SendPendingIntentReceiver.IS_BROADCAST_EXTRA;
 import static android.server.wm.backgroundactivity.appa.Components.StartBackgroundActivityReceiver.START_ACTIVITY_DELAY_MS_EXTRA;
 import static android.server.wm.backgroundactivity.appb.Components.APP_B_FOREGROUND_ACTIVITY;
+import static android.server.wm.backgroundactivity.common.CommonComponents.EVENT_NOTIFIER_EXTRA;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
@@ -56,9 +57,13 @@ import android.app.ActivityTaskManager;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.ResultReceiver;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.backgroundactivity.common.CommonComponents.Event;
+import android.server.wm.backgroundactivity.common.EventReceiver;
 
+import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.FlakyTest;
 
@@ -69,6 +74,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 /**
  * This class covers all test cases for starting/blocking background activities.
@@ -86,6 +92,12 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
 
     private static final String TEST_PACKAGE_APP_A = "android.server.wm.backgroundactivity.appa";
     private static final String TEST_PACKAGE_APP_B = "android.server.wm.backgroundactivity.appb";
+
+    /**
+     * Tests can be executed as soon as the device has booted. When that happens the broadcast queue
+     * is long and it takes some time to process the broadcast we just sent.
+     */
+    private static final int BROADCAST_DELIVERY_TIMEOUT_MS = 25000;
 
     @Before
     public void setUp() throws Exception {
@@ -400,9 +412,16 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
 
     @Test
     public void testPendingIntentBroadcast_appBIsBackground() throws Exception {
+        EventReceiver receiver = new EventReceiver(
+                Event.APP_A_START_BACKGROUND_ACTIVITY_BROADCAST_RECEIVED);
+
         // Send pendingIntent from AppA to AppB, and the AppB launch the pending intent to start
         // activity in App A
-        sendPendingIntentBroadcast(0);
+        sendPendingIntentBroadcast(0, receiver.getNotifier());
+
+        // Waits for final hoop in AppA to start looking for activity, otherwise it could succeed
+        // if the broadcast took long time to get executed (which may happen after boot).
+        receiver.waitForEventOrThrow(BROADCAST_DELIVERY_TIMEOUT_MS);
         boolean result = waitForActivityFocused(APP_A_BACKGROUND_ACTIVITY);
         assertFalse("Should not able to launch background activity", result);
         assertTaskStack(null, APP_A_BACKGROUND_ACTIVITY);
@@ -419,9 +438,16 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         String cmdResult = runShellCommand("dpm set-device-owner --user cur "
                 + APP_A_SIMPLE_ADMIN_RECEIVER.flattenToString());
         assertThat(cmdResult).contains("Success");
+        EventReceiver receiver = new EventReceiver(
+                Event.APP_A_START_BACKGROUND_ACTIVITY_BROADCAST_RECEIVED);
         Intent intent = new Intent();
         intent.setComponent(APP_A_START_ACTIVITY_RECEIVER);
+        intent.putExtra(EVENT_NOTIFIER_EXTRA, receiver.getNotifier());
+
         mContext.sendBroadcast(intent);
+
+        // Waits for final hoop in AppA to start looking for activity
+        receiver.waitForEventOrThrow(BROADCAST_DELIVERY_TIMEOUT_MS);
         boolean result = waitForActivityFocused(APP_A_BACKGROUND_ACTIVITY);
         assertTrue("Not able to launch background activity", result);
         assertTaskStack(new ComponentName[]{APP_A_BACKGROUND_ACTIVITY}, APP_A_BACKGROUND_ACTIVITY);
@@ -447,7 +473,8 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         }
     }
 
-    private void assertPendingIntentBroadcastTimeoutTest(int delayMs, boolean expectedResult) {
+    private void assertPendingIntentBroadcastTimeoutTest(int delayMs, boolean expectedResult)
+            throws TimeoutException {
         // Start AppB foreground activity
         Intent intent = new Intent();
         intent.setComponent(APP_B_FOREGROUND_ACTIVITY);
@@ -456,10 +483,15 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         boolean result = waitForActivityFocused(APP_B_FOREGROUND_ACTIVITY);
         assertTrue("Not able to start foreground Activity", result);
         assertTaskStack(new ComponentName[]{APP_B_FOREGROUND_ACTIVITY}, APP_B_FOREGROUND_ACTIVITY);
+        EventReceiver receiver = new EventReceiver(
+                Event.APP_A_START_BACKGROUND_ACTIVITY_BROADCAST_RECEIVED);
 
         // Send pendingIntent from AppA to AppB, and the AppB launch the pending intent to start
         // activity in App A
-        sendPendingIntentBroadcast(delayMs);
+        sendPendingIntentBroadcast(delayMs, receiver.getNotifier());
+
+        // Waits for final hoop in AppA to start looking for activity
+        receiver.waitForEventOrThrow(BROADCAST_DELIVERY_TIMEOUT_MS);
         result = waitForActivityFocused(ACTIVITY_FOCUS_TIMEOUT_MS + delayMs,
                 APP_A_BACKGROUND_ACTIVITY);
         assertEquals(expectedResult, result);
@@ -501,13 +533,14 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         mContext.sendBroadcast(intent);
     }
 
-    private void sendPendingIntentBroadcast(int delayMs) {
+    private void sendPendingIntentBroadcast(int delayMs, @Nullable ResultReceiver eventNotifier) {
         Intent intent = new Intent();
         intent.setComponent(APP_A_SEND_PENDING_INTENT_RECEIVER);
         intent.putExtra(IS_BROADCAST_EXTRA, true);
         if (delayMs > 0) {
             intent.putExtra(START_ACTIVITY_DELAY_MS_EXTRA, delayMs);
         }
+        intent.putExtra(EVENT_NOTIFIER_EXTRA, eventNotifier);
         mContext.sendBroadcast(intent);
     }
 }

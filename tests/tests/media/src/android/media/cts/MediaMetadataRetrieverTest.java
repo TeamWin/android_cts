@@ -36,6 +36,7 @@ import android.media.cts.R;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
+import android.util.Log;
 
 import androidx.test.filters.SmallTest;
 
@@ -385,25 +386,19 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
     }
 
     private void testThumbnail(int resId, String outPath) {
+        Stopwatch timer = new Stopwatch();
+
         if (!MediaUtils.hasCodecForResourceAndDomain(getContext(), resId, "video/")) {
             MediaUtils.skipTest("no video codecs for resource");
             return;
         }
 
-        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-        Resources resources = getContext().getResources();
-        AssetFileDescriptor afd = resources.openRawResourceFd(resId);
+        setDataSourceFd(resId);
 
-        retriever.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
-
-        try {
-            afd.close();
-        } catch (IOException e) {
-            fail("Unable to open file");
-        }
-
-        Bitmap thumbnail = retriever.getFrameAtTime(-1 /* timeUs (any) */);
-        retriever.release();
+        timer.start();
+        Bitmap thumbnail = mRetriever.getFrameAtTime(-1 /* timeUs (any) */);
+        timer.end();
+        timer.printDuration("getFrameAtTime");
 
         assertNotNull(thumbnail);
 
@@ -601,23 +596,13 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
             return;
         }
 
-        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-        Resources resources = getContext().getResources();
-        AssetFileDescriptor afd = resources.openRawResourceFd(resId);
+        setDataSourceFd(resId);
 
-        retriever.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
-        try {
-            afd.close();
-        } catch (IOException e) {
-            fail("Unable to close file");
-        }
-
-        List<Bitmap> bitmaps = bitmapRetriever.apply(retriever);
+        List<Bitmap> bitmaps = bitmapRetriever.apply(mRetriever);
 
         for (int i = 0; i < testCases.length; i++) {
             verifyVideoFrame(bitmaps.get(i), testCases[i]);
         }
-        retriever.release();
     }
 
     private void testGetFrameAtEditList(int[][] testCases,
@@ -629,21 +614,12 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
             return;
         }
 
-        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-        Resources resources = getContext().getResources();
-        AssetFileDescriptor afd = resources.openRawResourceFd(resId);
-        retriever.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
-        try {
-            afd.close();
-        } catch (IOException e) {
-            fail("Unable to close file");
-        }
+        setDataSourceFd(resId);
 
-        List<Bitmap> bitmaps = bitmapRetriever.apply(retriever);
+        List<Bitmap> bitmaps = bitmapRetriever.apply(mRetriever);
         for (int i = 0; i < testCases.length; i++) {
             verifyVideoFrame(bitmaps.get(i), testCases[i]);
         }
-        retriever.release();
     }
 
     private void verifyVideoFrame(Bitmap bitmap, int[] testCase) {
@@ -660,9 +636,6 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
         }
     }
 
-    /**
-     * The following tests verifies MediaMetadataRetriever.getScaledFrameAtTime behavior.
-     */
     public void testGetScaledFrameAtTime() {
         int resId = R.raw.binary_counter_320x240_30fps_600frames;
         if (!MediaUtils.hasCodecForResourceAndDomain(getContext(), resId, "video/")
@@ -671,19 +644,10 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
             return;
         }
 
-        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-        Resources resources = getContext().getResources();
-        AssetFileDescriptor afd = resources.openRawResourceFd(resId);
-
-        retriever.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
-        try {
-            afd.close();
-        } catch (IOException e) {
-            fail("Unable to close file");
-        }
+        setDataSourceFd(resId);
 
         try {
-            Bitmap bitmap = retriever.getScaledFrameAtTime(
+            Bitmap bitmap = mRetriever.getScaledFrameAtTime(
                     2066666 /*timeUs*/ , OPTION_CLOSEST, 0 /*width*/, 120 /*height*/);
             fail("Failed to receive exception");
         } catch (IllegalArgumentException e) {
@@ -691,7 +655,7 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
         }
 
         try {
-            Bitmap bitmap = retriever.getScaledFrameAtTime(
+            Bitmap bitmap = mRetriever.getScaledFrameAtTime(
                     2066666 /*timeUs*/ , OPTION_CLOSEST, -1 /*width*/, 0 /*height*/);
             fail("Failed to receive exception");
         } catch (IllegalArgumentException e) {
@@ -699,7 +663,7 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
         }
 
         try {
-            Bitmap bitmap = retriever.getScaledFrameAtTime(
+            Bitmap bitmap = mRetriever.getScaledFrameAtTime(
                     2066666 /*timeUs*/ , OPTION_CLOSEST, -1 /*width*/, 120 /*height*/);
             fail("Failed to receive exception");
         } catch (IllegalArgumentException e) {
@@ -707,7 +671,7 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
         }
 
         try {
-            Bitmap bitmap = retriever.getScaledFrameAtTime(
+            Bitmap bitmap = mRetriever.getScaledFrameAtTime(
                 2066666 /*timeUs */, OPTION_CLOSEST, 140 /*width*/, -1 /*height*/);
             fail("Failed to receive exception");
         } catch (IllegalArgumentException e) {
@@ -715,7 +679,7 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
         }
 
         try {
-            Bitmap bitmap = retriever.getScaledFrameAtTime(
+            Bitmap bitmap = mRetriever.getScaledFrameAtTime(
                 2066666 /*timeUs */, OPTION_CLOSEST, -1 /*width*/, -1 /*height*/);
             fail("Failed to receive exception");
         } catch (IllegalArgumentException e) {
@@ -724,7 +688,7 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
 
         // Test desided size of 160 x 120. Return should be 160 x 120
         try {
-            Bitmap bitmap = retriever.getScaledFrameAtTime(
+            Bitmap bitmap = mRetriever.getScaledFrameAtTime(
                 2066666 /*timeUs */, OPTION_CLOSEST, 160 /*width*/, 120 /*height*/);
             if (bitmap == null) {
                 fail("Failed to get scaled bitmap");
@@ -746,7 +710,7 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
 
         // Test scaled up bitmap to 640 x 480. Return should be 640 x 480
         try {
-            Bitmap bitmap = retriever.getScaledFrameAtTime(
+            Bitmap bitmap = mRetriever.getScaledFrameAtTime(
                 2066666 /*timeUs */, OPTION_CLOSEST, 640 /*width*/, 480 /*height*/);
             if (bitmap == null) {
                 fail("Failed to get scaled bitmap");
@@ -768,7 +732,7 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
 
         // Test scaled up bitmap to 320 x 120. Return should be 160 x 120
         try {
-            Bitmap bitmap = retriever.getScaledFrameAtTime(
+            Bitmap bitmap = mRetriever.getScaledFrameAtTime(
                 2066666 /*timeUs */, OPTION_CLOSEST, 320 /*width*/, 120 /*height*/);
             if (bitmap == null) {
                 fail("Failed to get scaled bitmap");
@@ -790,7 +754,7 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
 
         // Test scaled up bitmap to 160 x 240. Return should be 160 x 120
         try {
-            Bitmap bitmap = retriever.getScaledFrameAtTime(
+            Bitmap bitmap = mRetriever.getScaledFrameAtTime(
                 2066666 /*timeUs */, OPTION_CLOSEST, 160 /*width*/, 240 /*height*/);
             if (bitmap == null) {
                 fail("Failed to get scaled bitmap");
@@ -812,16 +776,10 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
 
         // Test scaled the video with aspect ratio
         resId = R.raw.binary_counter_320x240_720x240_30fps_600frames;
-        afd = resources.openRawResourceFd(resId);
+        setDataSourceFd(resId);
 
-        retriever.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
         try {
-            afd.close();
-        } catch (IOException e) {
-            fail("Unable to close file");
-        }
-        try {
-            Bitmap bitmap = retriever.getScaledFrameAtTime(
+            Bitmap bitmap = mRetriever.getScaledFrameAtTime(
                 2066666 /*timeUs */, OPTION_CLOSEST, 330 /*width*/, 240 /*height*/);
             if (bitmap == null) {
                 fail("Failed to get scaled bitmap");
@@ -873,37 +831,32 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
             int resId, int width, int height, int rotation,
             int imageCount, int primary, boolean useGrid, boolean checkColor)
                     throws Exception {
-        MediaMetadataRetriever retriever = null;
+        Stopwatch timer = new Stopwatch();
         MediaExtractor extractor = null;
         AssetFileDescriptor afd = null;
         InputStream inputStream = null;
 
         try {
-            retriever = new MediaMetadataRetriever();
-
-            Resources resources = getContext().getResources();
-            afd = resources.openRawResourceFd(resId);
-
-            retriever.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+            setDataSourceFd(resId);
 
             // Verify image related meta keys.
-            String hasImage = retriever.extractMetadata(
+            String hasImage = mRetriever.extractMetadata(
                     MediaMetadataRetriever.METADATA_KEY_HAS_IMAGE);
             assertTrue("No images found in resId " + resId, "yes".equals(hasImage));
             assertEquals("Wrong width", width,
-                    Integer.parseInt(retriever.extractMetadata(
+                    Integer.parseInt(mRetriever.extractMetadata(
                             MediaMetadataRetriever.METADATA_KEY_IMAGE_WIDTH)));
             assertEquals("Wrong height", height,
-                    Integer.parseInt(retriever.extractMetadata(
+                    Integer.parseInt(mRetriever.extractMetadata(
                             MediaMetadataRetriever.METADATA_KEY_IMAGE_HEIGHT)));
             assertEquals("Wrong rotation", rotation,
-                    Integer.parseInt(retriever.extractMetadata(
+                    Integer.parseInt(mRetriever.extractMetadata(
                             MediaMetadataRetriever.METADATA_KEY_IMAGE_ROTATION)));
             assertEquals("Wrong image count", imageCount,
-                    Integer.parseInt(retriever.extractMetadata(
+                    Integer.parseInt(mRetriever.extractMetadata(
                             MediaMetadataRetriever.METADATA_KEY_IMAGE_COUNT)));
             assertEquals("Wrong primary index", primary,
-                    Integer.parseInt(retriever.extractMetadata(
+                    Integer.parseInt(mRetriever.extractMetadata(
                             MediaMetadataRetriever.METADATA_KEY_IMAGE_PRIMARY)));
 
             if (checkColor) {
@@ -912,7 +865,10 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
                 // Also check the position of the color block, which should move left-to-right
                 // with the index.
                 for (int imageIndex = 0; imageIndex < imageCount; imageIndex++) {
-                    bitmap = retriever.getImageAtIndex(imageIndex);
+                    timer.start();
+                    bitmap = mRetriever.getImageAtIndex(imageIndex);
+                    timer.end();
+                    timer.printDuration("getImageAtIndex");
 
                     for (int barIndex = 0; barIndex < COLOR_BARS.length; barIndex++) {
                         Rect r = getColorBarRect(barIndex, width, height);
@@ -931,7 +887,12 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
 
                 // Check the color block position on the primary image.
                 Rect r = getColorBlockRect(primary, width, height);
-                bitmap = retriever.getPrimaryImage();
+
+                timer.start();
+                bitmap = mRetriever.getPrimaryImage();
+                timer.end();
+                timer.printDuration("getPrimaryImage");
+
                 assertTrue("Color block for primary image doesn't match",
                         approxEquals(COLOR_BLOCK, Color.valueOf(
                                 bitmap.getPixel(r.centerX(), height - r.centerY()))));
@@ -950,6 +911,8 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
             // Check the grid configuration related keys.
             if (useGrid) {
                 extractor = new MediaExtractor();
+                Resources resources = getContext().getResources();
+                afd = resources.openRawResourceFd(resId);
                 extractor.setDataSource(
                         afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
                 MediaFormat format = extractor.getTrackFormat(0);
@@ -965,9 +928,6 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
         } catch (IOException e) {
             fail("Unable to open file");
         } finally {
-            if (retriever != null) {
-                retriever.release();
-            }
             if (extractor != null) {
                 extractor.release();
             }
@@ -977,6 +937,36 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
             if (inputStream != null) {
                 inputStream.close();
             }
+        }
+    }
+
+    private class Stopwatch {
+        private long startTimeMs;
+        private long endTimeMs;
+        private boolean isStartCalled;
+
+        public Stopwatch() {
+            startTimeMs = endTimeMs = 0;
+            isStartCalled = false;
+        }
+
+        public void start() {
+            startTimeMs = System.currentTimeMillis();
+            isStartCalled = true;
+        }
+
+        public void end() {
+            endTimeMs = System.currentTimeMillis();
+            if (!isStartCalled) {
+                Log.e(TAG, "Error: end() must be called after start()!");
+                return;
+            }
+            isStartCalled = false;
+        }
+
+        public void printDuration(String functionName) {
+            long duration = endTimeMs - startTimeMs;
+            Log.i(TAG, String.format("%s() took %d ms.", functionName, duration));
         }
     }
 }
