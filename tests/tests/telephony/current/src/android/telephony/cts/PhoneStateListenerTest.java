@@ -25,6 +25,8 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.os.Looper;
+import android.telephony.Annotation.RadioPowerState;
+import android.telephony.Annotation.SimActivationState;
 import android.telephony.CellInfo;
 import android.telephony.CellLocation;
 import android.telephony.PhoneStateListener;
@@ -71,8 +73,8 @@ public class PhoneStateListenerTest {
     private boolean mOnRadioPowerStateChangedCalled;
     private boolean mVoiceActivationStateChangedCalled;
     private boolean mSrvccStateChangedCalled;
-    @TelephonyManager.RadioPowerState private int mRadioPowerState;
-    @TelephonyManager.SimActivationState private int mVoiceActivationState;
+    @RadioPowerState private int mRadioPowerState;
+    @SimActivationState private int mVoiceActivationState;
     private PreciseDataConnectionState mPreciseDataConnectionState;
     private PreciseCallState mPreciseCallState;
     private SignalStrength mSignalStrength;
