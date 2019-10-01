@@ -133,6 +133,21 @@ public class TestImpl extends ITest.Stub {
   }
 
   @Override
+  public byte RepeatByteEnum(byte in_value) {
+    return in_value;
+  }
+
+  @Override
+  public int RepeatIntEnum(int in_value) {
+    return in_value;
+  }
+
+  @Override
+  public long RepeatLongEnum(long in_value) {
+    return in_value;
+  }
+
+  @Override
   public IBinder RepeatBinder(IBinder in_value) {
     return in_value;
   }

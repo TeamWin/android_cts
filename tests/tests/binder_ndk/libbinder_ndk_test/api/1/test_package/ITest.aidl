@@ -15,6 +15,9 @@ interface ITest {
   boolean RepeatBoolean(boolean value);
   char RepeatChar(char value);
   byte RepeatByte(byte value);
+  test_package.ByteEnum RepeatByteEnum(test_package.ByteEnum value);
+  test_package.IntEnum RepeatIntEnum(test_package.IntEnum value);
+  test_package.LongEnum RepeatLongEnum(test_package.LongEnum value);
   IBinder RepeatBinder(IBinder value);
   @nullable IBinder RepeatNullableBinder(@nullable IBinder value);
   test_package.IEmpty RepeatInterface(test_package.IEmpty value);
