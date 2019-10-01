@@ -111,10 +111,10 @@ public class CustomViewActivityTest extends
     }
 
     /**
-     * Test for notifySessionLifecycle().
+     * Test for session lifecycle events.
      */
     @Test
-    public void testNotifySessionLifecycle() throws Exception {
+    public void testSessionLifecycleEvents() throws Exception {
         final CtsContentCaptureService service = enableService();
         final ActivityWatcher watcher = startWatcher();
         final AtomicReference<CustomView> customViewRef = new AtomicReference<>();
@@ -122,8 +122,8 @@ public class CustomViewActivityTest extends
         CustomViewActivity.setCustomViewDelegate((customView, structure) -> {
             customViewRef.set(customView);
             final ContentCaptureSession session = customView.getContentCaptureSession();
-            session.notifySessionLifecycle(true);
-            session.notifySessionLifecycle(false);
+            session.notifySessionResumed();
+            session.notifySessionPaused();
         });
 
         final CustomViewActivity activity = launchActivity();
@@ -158,7 +158,7 @@ public class CustomViewActivityTest extends
         assertViewAppeared(events, 3, grandpa2, decorView.getAutofillId());
         assertViewAppeared(events, 4, grandpa1, grandpa2.getAutofillId());
 
-        // Assert for notifySessionLifecycle
+        // Assert for session lifecycle events.
         assertSessionResumed(events, 5);
         assertSessionPaused(events, 6);
 
