@@ -99,6 +99,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     PhoneAccountHandle mPreviousDefaultOutgoingAccount = null;
     boolean mShouldRestoreDefaultOutgoingAccount = false;
     MockConnectionService connectionService = null;
+    boolean mIsEmergencyCallingSetup = false;
 
     HandlerThread mPhoneStateListenerThread;
     Handler mPhoneStateListenerHandler;
@@ -181,6 +182,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
             TestUtils.setDefaultDialer(getInstrumentation(), mPreviousDefaultDialer);
         }
         tearDownConnectionService(TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
+        tearDownEmergencyCalling();
         assertMockInCallServiceUnbound();
     }
 
@@ -229,6 +231,26 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         this.connectionService = null;
         mPreviousDefaultOutgoingAccount = null;
         mShouldRestoreDefaultOutgoingAccount = false;
+    }
+
+    protected void setupForEmergencyCalling(String testNumber) throws Exception {
+        TestUtils.setSystemDialerOverride(getInstrumentation());
+        TestUtils.addTestEmergencyNumber(getInstrumentation(), testNumber);
+        TestUtils.setTestEmergencyPhoneAccountPackageFilter(getInstrumentation(), mContext);
+        // Emergency calls require special capabilities.
+        TestUtils.registerEmergencyPhoneAccount(getInstrumentation(),
+                TestUtils.TEST_EMERGENCY_PHONE_ACCOUNT_HANDLE,
+                TestUtils.ACCOUNT_LABEL + "E", "tel:555-EMER");
+        mIsEmergencyCallingSetup = true;
+    }
+
+    protected void tearDownEmergencyCalling() throws Exception {
+        if (!mIsEmergencyCallingSetup) return;
+
+        TestUtils.clearSystemDialerOverride(getInstrumentation());
+        TestUtils.clearTestEmergencyNumbers(getInstrumentation());
+        TestUtils.clearTestEmergencyPhoneAccountPackageFilter(getInstrumentation());
+        mTelecomManager.unregisterPhoneAccount(TestUtils.TEST_EMERGENCY_PHONE_ACCOUNT_HANDLE);
     }
 
     protected void startCallTo(Uri address, PhoneAccountHandle accountHandle) {
