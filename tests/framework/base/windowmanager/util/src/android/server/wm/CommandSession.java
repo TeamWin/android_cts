@@ -16,7 +16,7 @@
 
 package android.server.wm;
 
-import static androidx.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -371,8 +371,12 @@ public final class CommandSession {
         private final ArrayMap<String, ActivitySession> mSessions = new ArrayMap<>();
         private boolean mClosed;
 
-        public ActivitySessionClient() {
-            this(getInstrumentation().getContext());
+        /**
+         * Creates a {#link ActivitySessionClient} instance with instrumentation context. It is used
+         * when the caller doen't need try-with-resource.
+         */
+        public static ActivitySessionClient create() {
+            return new ActivitySessionClient(getInstrumentation().getContext());
         }
 
         public ActivitySessionClient(Context context) {
