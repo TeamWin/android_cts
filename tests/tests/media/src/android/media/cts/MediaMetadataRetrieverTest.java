@@ -636,6 +636,50 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
         }
     }
 
+    /**
+     * The following tests verifies MediaMetadataRetriever.getScaledFrameAtTime behavior.
+     */
+    public void testGetScaledFrameAtTimeWithInvalidResolutions() {
+        int[] resIds = {R.raw.binary_counter_320x240_30fps_600frames,
+                R.raw.binary_counter_320x240_30fps_600frames_editlist,
+                R.raw.bbb_s4_1280x720_mp4_h264_mp31_8mbps_30fps_aac_he_mono_40kbps_44100hz,
+                R.raw.video_176x144_3gp_h263_56kbps_12fps_aac_mono_24kbps_11025hz,
+                R.raw.video_1280x720_mp4_mpeg4_1000kbps_25fps_aac_stereo_128kbps_44100hz,
+                R.raw.bbb_s1_640x360_webm_vp8_2mbps_30fps_vorbis_5ch_320kbps_48000hz,
+                R.raw.bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz,
+                R.raw.bbb_s1_720x480_mp4_hevc_mp3_1600kbps_30fps_aac_he_6ch_240kbps_48000hz,
+                R.raw.video_1280x720_vp9_hdr_static_3mbps,
+                R.raw.video_1280x720_av1_hdr_static_3mbps,
+                R.raw.video_1280x720_hevc_hdr10_static_3mbps};
+        int[][] resolutions = {{0, 120}, {-1, 0}, {-1, 120}, {140, -1}, {-1, -1}};
+        int[] options =
+                {OPTION_CLOSEST, OPTION_CLOSEST_SYNC, OPTION_NEXT_SYNC, OPTION_PREVIOUS_SYNC};
+
+        for (int resId : resIds) {
+            if (!MediaUtils.hasCodecForResourceAndDomain(getContext(), resId, "video/")
+                    && mPackageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+                MediaUtils.skipTest("no video codecs for resource on watch");
+                continue;
+            }
+
+            setDataSourceFd(resId);
+
+            for (int i = 0; i < resolutions.length; i++) {
+                int width = resolutions[i][0];
+                int height = resolutions[i][1];
+                for (int option : options) {
+                    try {
+                        Bitmap bitmap = mRetriever.getScaledFrameAtTime(
+                                2066666 /*timeUs*/, option, width, height);
+                        fail("Failed to receive exception");
+                    } catch (IllegalArgumentException e) {
+                        // Expect exception
+                    }
+                }
+            }
+        }
+    }
+
     public void testGetScaledFrameAtTime() {
         int resId = R.raw.binary_counter_320x240_30fps_600frames;
         if (!MediaUtils.hasCodecForResourceAndDomain(getContext(), resId, "video/")
@@ -645,46 +689,6 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
         }
 
         setDataSourceFd(resId);
-
-        try {
-            Bitmap bitmap = mRetriever.getScaledFrameAtTime(
-                    2066666 /*timeUs*/ , OPTION_CLOSEST, 0 /*width*/, 120 /*height*/);
-            fail("Failed to receive exception");
-        } catch (IllegalArgumentException e) {
-            // Expect exception
-        }
-
-        try {
-            Bitmap bitmap = mRetriever.getScaledFrameAtTime(
-                    2066666 /*timeUs*/ , OPTION_CLOSEST, -1 /*width*/, 0 /*height*/);
-            fail("Failed to receive exception");
-        } catch (IllegalArgumentException e) {
-            // Expect exception
-        }
-
-        try {
-            Bitmap bitmap = mRetriever.getScaledFrameAtTime(
-                    2066666 /*timeUs*/ , OPTION_CLOSEST, -1 /*width*/, 120 /*height*/);
-            fail("Failed to receive exception");
-        } catch (IllegalArgumentException e) {
-            // Expect exception
-        }
-
-        try {
-            Bitmap bitmap = mRetriever.getScaledFrameAtTime(
-                2066666 /*timeUs */, OPTION_CLOSEST, 140 /*width*/, -1 /*height*/);
-            fail("Failed to receive exception");
-        } catch (IllegalArgumentException e) {
-            // Expect exception
-        }
-
-        try {
-            Bitmap bitmap = mRetriever.getScaledFrameAtTime(
-                2066666 /*timeUs */, OPTION_CLOSEST, -1 /*width*/, -1 /*height*/);
-            fail("Failed to receive exception");
-        } catch (IllegalArgumentException e) {
-            // Expect exception
-        }
 
         // Test desided size of 160 x 120. Return should be 160 x 120
         try {
