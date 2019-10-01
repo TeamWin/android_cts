@@ -6,4 +6,7 @@ parcelable Foo {
   test_package.Bar d;
   test_package.Bar e;
   int f = 3;
+  test_package.ByteEnum shouldBeByteBar;
+  test_package.IntEnum shouldBeIntBar;
+  test_package.LongEnum shouldBeLongBar;
 }

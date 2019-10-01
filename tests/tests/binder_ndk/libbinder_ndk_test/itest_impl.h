@@ -23,10 +23,13 @@
 
 #include "utilities.h"
 
-using IEmpty = ::aidl::test_package::IEmpty;
-using RegularPolygon = ::aidl::test_package::RegularPolygon;
-using Foo = ::aidl::test_package::Foo;
 using Bar = ::aidl::test_package::Bar;
+using ByteEnum = ::aidl::test_package::ByteEnum;
+using Foo = ::aidl::test_package::Foo;
+using IEmpty = ::aidl::test_package::IEmpty;
+using IntEnum = ::aidl::test_package::IntEnum;
+using LongEnum = ::aidl::test_package::LongEnum;
+using RegularPolygon = ::aidl::test_package::RegularPolygon;
 
 class MyTest : public ::aidl::test_package::BnTest,
                public ThisShouldBeDestroyed {
@@ -125,6 +128,18 @@ class MyTest : public ::aidl::test_package::BnTest,
   }
   ::ndk::ScopedAStatus RepeatByte(int8_t in_value,
                                   int8_t* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatByteEnum(ByteEnum in_value, ByteEnum* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatIntEnum(IntEnum in_value, IntEnum* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatLongEnum(LongEnum in_value, LongEnum* _aidl_return) override {
     *_aidl_return = in_value;
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }

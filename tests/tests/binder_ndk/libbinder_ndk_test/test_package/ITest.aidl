@@ -16,9 +16,12 @@
 
 package test_package;
 
-import test_package.IEmpty;
-import test_package.RegularPolygon;
+import test_package.ByteEnum;
 import test_package.Foo;
+import test_package.IEmpty;
+import test_package.IntEnum;
+import test_package.LongEnum;
+import test_package.RegularPolygon;
 
 // This test interface is used in order to test the all of the things that AIDL can generate which
 // build on top of the NDK.
@@ -52,6 +55,9 @@ interface ITest {
     boolean RepeatBoolean(boolean value);
     char RepeatChar(char value);
     byte RepeatByte(byte value);
+    ByteEnum RepeatByteEnum(ByteEnum value);
+    IntEnum RepeatIntEnum(IntEnum value);
+    LongEnum RepeatLongEnum(LongEnum value);
 
     IBinder RepeatBinder(IBinder value);
     @nullable IBinder RepeatNullableBinder(@nullable IBinder value);
