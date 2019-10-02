@@ -1359,6 +1359,9 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
                 resultListener.getCaptureResultForRequest(request, NUM_RESULTS_WAIT_TIMEOUT);
             Image image = imageListener.getImage(CAPTURE_IMAGE_TIMEOUT_MS);
             assertNotNull("Unable to acquire next image", image);
+            long resultTs = stillResult.get(CaptureResult.SENSOR_TIMESTAMP);
+            assertTrue("Image timestamp and result timestamp must match!",
+                    (resultTs == image.getTimestamp()));
             CameraTestUtils.validateImage(image, stillSize.getWidth(), stillSize.getHeight(),
                     format, null /*filePath*/);
 
