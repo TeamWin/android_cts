@@ -253,7 +253,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
         SystemUtil.runShellCommand("am start -S -W " + TEST_ACTIVITY.flattenToShortString());
 
         // Test hot launch
-        pressHomeButton();
+        launchHomeActivityNoWait();
         waitForDeviceIdle(1000);
         mMetricsReader.checkpoint(); // clear out old logs
 

@@ -479,8 +479,7 @@ public class SplitScreenTests extends ActivityManagerTestBase {
                 // Go home and check the app transition
                 assertNotEquals(TRANSIT_WALLPAPER_OPEN,
                         mAmWmState.getWmState().getDefaultDisplayLastTransition());
-                pressHomeButton();
-                mAmWmState.waitForHomeActivityVisible();
+                launchHomeActivity();
                 mAmWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
 
                 assertEquals(TRANSIT_WALLPAPER_OPEN,
@@ -673,7 +672,7 @@ public class SplitScreenTests extends ActivityManagerTestBase {
     private void launchActivityInDockStackAndMinimize(ComponentName activityName, int createMode)
             throws Exception {
         launchActivityInSplitScreenWithRecents(activityName, createMode);
-        pressHomeButton();
+        launchHomeActivityNoWait();
         waitForAndAssertDockMinimized();
     }
 

@@ -107,7 +107,7 @@ public class AmProfileTests extends ActivityManagerTestBase {
         executeShellCommand(
                 getStartCmd(PROFILEABLE_APP_ACTIVITY, startActivityFirst, sampling, streaming));
         // Go to home screen and then warm start the activity to generate some interesting trace.
-        pressHomeButton();
+        launchHomeActivity();
         launchActivity(PROFILEABLE_APP_ACTIVITY);
 
         executeShellCommand(getStopProfileCmd(PROFILEABLE_APP_ACTIVITY));

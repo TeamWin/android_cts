@@ -17,12 +17,12 @@
 package android.server.wm;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-import static android.server.wm.UiDeviceUtils.pressHomeButton;
+import static android.server.wm.ActivityManagerTestBase.launchHomeActivityNoWait;
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 import static android.view.Display.DEFAULT_DISPLAY;
 
-import static androidx.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
 
@@ -42,7 +42,7 @@ public class WindowManagerTestBase {
     public void setupBase() {
         pressWakeupButton();
         pressUnlockButton();
-        pressHomeButton();
+        launchHomeActivityNoWait();
     }
 
     static <T extends FocusableActivity> T startActivity(Class<T> cls) throws InterruptedException {

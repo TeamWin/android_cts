@@ -16,9 +16,11 @@
 
 package android.server.wm;
 
-import static android.server.wm.UiDeviceUtils.pressHomeButton;
+import static android.server.wm.ActivityManagerTestBase.launchHomeActivityNoWait;
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
+
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
 
@@ -31,7 +33,6 @@ import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowManager;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
@@ -62,9 +63,9 @@ public class WindowInputTests {
     public void setUp() {
         pressWakeupButton();
         pressUnlockButton();
-        pressHomeButton();
+        launchHomeActivityNoWait();
 
-        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mInstrumentation = getInstrumentation();
         mActivity = mActivityRule.launchActivity(null);
         mInstrumentation.waitForIdleSync();
         mClickCount = 0;

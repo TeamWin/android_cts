@@ -23,7 +23,6 @@ import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.ComponentNameUtils.getWindowName;
 import static android.server.wm.UiDeviceUtils.pressBackButton;
-import static android.server.wm.UiDeviceUtils.pressHomeButton;
 import static android.server.wm.app.Components.BROADCAST_RECEIVER_ACTIVITY;
 import static android.server.wm.app.Components.DISMISS_KEYGUARD_ACTIVITY;
 import static android.server.wm.app.Components.DISMISS_KEYGUARD_METHOD_ACTIVITY;
@@ -533,7 +532,7 @@ public class KeyguardTests extends KeyguardTestBase {
     public void testUnoccludeRotationChange() throws Exception {
 
         // Go home now to make sure Home is behind Keyguard.
-        pressHomeButton();
+        launchHomeActivity();
         try (final LockScreenSession lockScreenSession = new LockScreenSession();
              final RotationSession rotationSession = new RotationSession()) {
             lockScreenSession.gotoKeyguard();
