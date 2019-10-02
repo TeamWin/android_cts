@@ -56,7 +56,10 @@ import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.function.BiFunction;
 
 @RunWith(AndroidJUnit4.class)
@@ -669,5 +672,92 @@ public class AnimatedImageDrawableTest {
 
         aid = (AnimatedImageDrawable) drawable;
         assertEquals(AnimatedImageDrawable.REPEAT_INFINITE, aid.getRepeatCount());
+    }
+
+    // Verify that decoding on the AnimatedImageThread works.
+    private void decodeInBackground(AnimatedImageDrawable drawable) throws Throwable {
+        final Callback cb = new Callback(drawable);
+        mActivityRule.runOnUiThread(() -> {
+            setContentView(drawable);
+            drawable.registerAnimationCallback(cb);
+            drawable.start();
+        });
+
+        // The first frame was decoded in the thread that created the
+        // AnimatedImageDrawable. Wait long enough to decode further threads on
+        // the AnimatedImageThread, which was not created with a JNI interface
+        // pointer.
+        cb.waitForStart();
+        cb.waitForEnd(DURATION * 2);
+    }
+
+    @Test
+    public void testInputStream() throws Throwable {
+        try (InputStream in = mRes.openRawResource(R.drawable.animated)) {
+            ImageDecoder.Source src =
+                    ImageDecoder.createSource(mRes, in, Bitmap.DENSITY_NONE);
+            AnimatedImageDrawable drawable =
+                    (AnimatedImageDrawable) ImageDecoder.decodeDrawable(src);
+            decodeInBackground(drawable);
+        }
+
+    }
+
+    private byte[] getAsByteArray() {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        try (InputStream in = mRes.openRawResource(RES_ID)) {
+            byte[] buf = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = in.read(buf)) != -1) {
+                outputStream.write(buf, 0, bytesRead);
+            }
+        } catch (IOException e) {
+            fail("Failed to read resource: " + e);
+        }
+
+        return outputStream.toByteArray();
+    }
+
+    private ByteBuffer getAsDirectByteBuffer() {
+        byte[] array = getAsByteArray();
+        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(array.length);
+        byteBuffer.put(array);
+        byteBuffer.position(0);
+        return byteBuffer;
+    }
+
+    private AnimatedImageDrawable createFromByteBuffer(ByteBuffer byteBuffer) {
+        ImageDecoder.Source src = ImageDecoder.createSource(byteBuffer);
+        try {
+            return (AnimatedImageDrawable) ImageDecoder.decodeDrawable(src);
+        } catch (IOException e) {
+            fail("Failed to create decoder: " + e);
+            return null;
+        }
+    }
+
+    @Test
+    public void testByteBuffer() throws Throwable {
+        // Natively, this tests ByteArrayStream.
+        byte[] array = getAsByteArray();
+        ByteBuffer byteBuffer = ByteBuffer.wrap(array);
+        final AnimatedImageDrawable drawable = createFromByteBuffer(byteBuffer);
+        decodeInBackground(drawable);
+    }
+
+    @Test
+    public void testReadOnlyByteBuffer() throws Throwable {
+        // Natively, this tests ByteBufferStream.
+        byte[] array = getAsByteArray();
+        ByteBuffer byteBuffer = ByteBuffer.wrap(array).asReadOnlyBuffer();
+        final AnimatedImageDrawable drawable = createFromByteBuffer(byteBuffer);
+        decodeInBackground(drawable);
+    }
+
+    @Test
+    public void testDirectByteBuffer() throws Throwable {
+        ByteBuffer byteBuffer = getAsDirectByteBuffer();
+        final AnimatedImageDrawable drawable = createFromByteBuffer(byteBuffer);
+        decodeInBackground(drawable);
     }
 }
