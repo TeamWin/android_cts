@@ -608,23 +608,19 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
     }
 
     /**
-     * Disabled for now; there is not a reliable means of setting a phone number as a test emergency
-     * number.
-     * @throws Exception
+     * Start a managed emergency call and then ensure that a subsequent self-managed call fails to
+     * be created.
      */
-    public void DONOTtestEmergencyCallOngoing() throws Exception {
+    public void testEmergencyCallOngoing() throws Exception {
         if (!mShouldTestTelecom) {
             return;
         }
 
-        // TODO: Need to find a reliable way to set a test emergency number.
-        // Set 555-1212 as a test emergency number.
-        TestUtils.executeShellCommand(getInstrumentation(), "setprop ril.ecclist 5551212");
-
+        final String testNumber = "5551212";
+        setupForEmergencyCalling(testNumber);
         Bundle extras = new Bundle();
-        extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE,
-                TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
-        mTelecomManager.placeCall(Uri.fromParts(PhoneAccount.SCHEME_TEL, "5551212", null), extras);
+        extras.putParcelable(TestUtils.EXTRA_PHONE_NUMBER, Uri.fromParts("tel", testNumber, null));
+        placeAndVerifyCall(extras);
         assertIsInCall(true);
         assertIsInManagedCall(true);
         try {

@@ -32,24 +32,8 @@ public class EmergencyCallTests extends BaseTelecomTestWithMockServices {
         super.setUp();
         NewOutgoingCallBroadcastReceiver.reset();
         if (!mShouldTestTelecom) return;
-        // Investigate why we can not register a ConnectionManager, this should still work.
         setupConnectionService(null, 0);
-        TestUtils.setSystemDialer(getInstrumentation(), TestUtils.INCALL_COMPONENT);
-        TestUtils.addTestEmergencyNumber(getInstrumentation(), TEST_EMERGENCY_NUMBER);
-        TestUtils.setTestEmergencyPhoneAccountPackageFilter(getInstrumentation(), mContext);
-        // Emergency calls require special capabilities.
-        TestUtils.registerEmergencyPhoneAccount(getInstrumentation(),
-                TestUtils.TEST_EMERGENCY_PHONE_ACCOUNT_HANDLE,
-                TestUtils.ACCOUNT_LABEL + "E", "tel:555-EMER");
-    }
-
-    @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
-        TestUtils.setSystemDialer(getInstrumentation(), "default");
-        TestUtils.clearTestEmergencyNumbers(getInstrumentation());
-        TestUtils.clearTestEmergencyPhoneAccountPackageFilter(getInstrumentation());
-        mTelecomManager.unregisterPhoneAccount(TestUtils.TEST_EMERGENCY_PHONE_ACCOUNT_HANDLE);
+        setupForEmergencyCalling(TEST_EMERGENCY_NUMBER);
     }
 
     /**
