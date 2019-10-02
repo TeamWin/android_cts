@@ -39,8 +39,7 @@ import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.PRE_ON_C
 import static android.server.wm.lifecycle.LifecycleVerifier.transition;
 import static android.view.Display.DEFAULT_DISPLAY;
 
-import static androidx.test.InstrumentationRegistry.getInstrumentation;
-import static androidx.test.InstrumentationRegistry.getTargetContext;
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
@@ -53,6 +52,7 @@ import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityManagerState;
 import android.server.wm.ActivityManagerState.ActivityStack;
 import android.server.wm.ActivityManagerState.ActivityTask;
+import android.server.wm.lifecycle.ActivityLifecycleClientTestBase.LaunchForResultActivity;
 import android.server.wm.lifecycle.LifecycleLog.ActivityCallback;
 import android.util.Pair;
 
@@ -231,7 +231,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         getLifecycleLog().clear();
         final Activity launchForResultActivity = new Launcher(LaunchForResultActivity.class)
-                .setExtraFlags(EXTRA_FINISH_IN_ON_RESUME)
+                .customizeIntent(LaunchForResultActivity.forwardFlag(EXTRA_FINISH_IN_ON_RESUME))
                 .launch();
 
         waitAndAssertActivityStates(occludedActivityState(baseActivity, launchForResultActivity));
@@ -844,7 +844,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
             final Class<? extends Activity> secondActivityClass =
                     SecondProcessCallbackTrackingActivity.class;
             final ComponentName secondActivityComponent =
-                    new ComponentName(getTargetContext(), secondActivityClass);
+                    new ComponentName(mTargetContext, secondActivityClass);
 
             getLaunchActivityBuilder()
                     .setTargetActivity(secondActivityComponent)
@@ -914,7 +914,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
             final Class<? extends Activity> secondActivityClass =
                     SecondProcessCallbackTrackingActivity.class;
             final ComponentName secondActivityComponent =
-                    new ComponentName(getTargetContext(), secondActivityClass);
+                    new ComponentName(mTargetContext, secondActivityClass);
 
             getLaunchActivityBuilder()
                     .setTargetActivity(secondActivityComponent)
@@ -996,6 +996,10 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
                     .launch();
             waitAndAssertTopResumedActivity(getComponentName(SingleTopActivity.class),
                     newDisplay.mId, "Activity launched on secondary display must be focused");
+            // An activity is launched on the new display, so the activity on default display should
+            // lose the top state.
+            LifecycleVerifier.assertSequence(CallbackTrackingActivity.class, getLifecycleLog(),
+                    Arrays.asList(ON_TOP_POSITION_LOST), "launchFocusSwitch");
 
             // Finish the activity on the default display
             getLifecycleLog().clear();
@@ -1003,9 +1007,10 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
             // Verify that activity was actually destroyed
             waitAndAssertActivityStates(state(CallbackTrackingActivity.class, ON_DESTROY));
-            // Verify that the activity on a different display lost the top focused state
-            LifecycleVerifier.assertSequence(SingleTopActivity.class, getLifecycleLog(),
-                    Arrays.asList(ON_TOP_POSITION_LOST), "destructionOnDifferentDisplay");
+            // Verify that the original focused display is not affected by the finished activity on
+            // non-focused display.
+            LifecycleVerifier.assertEmptySequence(SingleTopActivity.class, getLifecycleLog(),
+                    "destructionOnDifferentDisplay");
         }
     }
 
