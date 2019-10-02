@@ -275,9 +275,13 @@ public class TestUtils {
         return executeShellCommand(instrumentation, COMMAND_SET_DEFAULT_DIALER + packageName);
     }
 
-    public static String setSystemDialer(Instrumentation instrumentation,
-            String dialerPackage) throws Exception {
-        return executeShellCommand(instrumentation, COMMAND_SET_SYSTEM_DIALER + dialerPackage);
+    public static String setSystemDialerOverride(Instrumentation instrumentation) throws Exception {
+        return executeShellCommand(instrumentation, COMMAND_SET_SYSTEM_DIALER + INCALL_COMPONENT);
+    }
+
+    public static String clearSystemDialerOverride(
+            Instrumentation instrumentation) throws Exception {
+        return executeShellCommand(instrumentation, COMMAND_SET_SYSTEM_DIALER + "default");
     }
 
     public static String setCtsPhoneAccountSuggestionService(Instrumentation instrumentation,
