@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2016 The Android Open Source Project
+// Copyright (C) 2015 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,20 +15,42 @@
 //
 
 android_test_helper_app {
-    name: "CtsEscalateToRuntimePermissions",
+    name: "CtsUsePermissionApp23",
     defaults: ["cts_support_defaults"],
-    static_libs: ["androidx.test.rules"],
-    srcs: ["src/**/*.java"],
-    sdk_version: "current",
+    static_libs: [
+        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
+    ],
+    libs: [
+        "android.test.base.stubs",
+        "CtsExternalStorageTestLib",
+    ],
+    srcs: [
+        "src/com/android/cts/usepermission/UsePermissionTest23.java",
+        ":CtsAppSecurityBasePermissionSrc",
+    ],
+    // For ACCESS_BACKGROUND_LOCATION
+    platform_apis: true,
+    // tag this module as a cts test artifact
     test_suites: [
         "cts",
         "vts",
         "general-tests",
     ],
+    certificate: ":cts-testkey2",
     optimize: {
         enabled: false,
     },
     dex_preopt: {
         enabled: false,
     },
+    min_sdk_version: "23",
+}
+
+filegroup {
+    name: "CtsAppSecurityBasePermissionSrc",
+    srcs: [
+        "src/com/android/cts/usepermission/BasePermissionActivity.java",
+        "src/com/android/cts/usepermission/BasePermissionsTest.java",
+    ],
 }
