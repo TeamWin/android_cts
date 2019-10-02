@@ -29,6 +29,8 @@ import static org.junit.Assume.assumeTrue;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityManagerState.ActivityDisplay;
 
+import androidx.test.filters.FlakyTest;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -134,6 +136,7 @@ public class MultiDisplayLockedKeyguardTests extends MultiDisplayTestBase {
         }
     }
 
+    @FlakyTest(bugId = 141674516)
     @Test
     public void testDismissKeyguard_whileOccluded_secondaryDisplay() throws Exception {
         try (final LockScreenSession lockScreenSession =
