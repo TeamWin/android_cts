@@ -61,6 +61,7 @@ import android.view.accessibility.AccessibilityEvent;
 
 import androidx.test.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CommonTestUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
 public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
@@ -158,6 +159,17 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
     private void turnScreenOn() throws Exception {
         executeShellCmd("input keyevent KEYCODE_WAKEUP");
         executeShellCmd("wm dismiss-keyguard");
+        /*
+           Wait until the screen becomes interactive to start the test cases.
+           Otherwise the procstat may start in TOP_SLEEPING state, and this
+           causes test case testBackgroundCheckActivityService to fail.
+           Note: There could still a small chance the procstat is TOP_SLEEPING
+           when the predicate returns true.
+         */
+        CommonTestUtils.waitUntil("Device does not wake up after 5 seconds", 5,
+                () ->  {
+                    return isScreenInteractive() && !isKeyguardLocked();
+                });
     }
 
     private void removeTestAppFromWhitelists() throws Exception {
@@ -899,7 +911,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             waiter.prepare(ACTION_SIMPLE_ACTIVITY_START_SERVICE_RESULT);
             activityIntent.putExtra("service", mServiceIntent);
             mContext.startActivity(activityIntent);
-            Intent resultIntent = waiter.doWait(WAIT_TIME);
+            Intent resultIntent = waiter.doWait(WAIT_TIME * 2);
             int brCode = resultIntent.getIntExtra("result", Activity.RESULT_CANCELED);
             if (brCode != Activity.RESULT_FIRST_USER) {
                 fail("Failed starting service, result=" + brCode);
