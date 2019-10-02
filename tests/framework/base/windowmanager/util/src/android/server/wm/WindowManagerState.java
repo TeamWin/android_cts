@@ -799,6 +799,10 @@ public class WindowManagerState {
             return mAppRect;
         }
 
+        Rect getStableBounds() {
+            return mStableBounds;
+        }
+
         String getName() {
             return mName;
         }
