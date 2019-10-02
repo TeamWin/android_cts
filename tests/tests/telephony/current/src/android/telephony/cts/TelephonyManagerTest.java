@@ -1003,7 +1003,7 @@ public class TelephonyManagerTest {
         synchronized (mLock) {
             t.start();
             if (!mServiceStateChangedCalled) {
-                mLock.wait(10000);
+                mLock.wait(60000);
             }
         }
         assertThat(mTelephonyManager.getServiceState().getState()).isEqualTo(
