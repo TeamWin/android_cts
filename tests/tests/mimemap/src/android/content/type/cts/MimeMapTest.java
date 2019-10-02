@@ -16,11 +16,16 @@
 
 package android.content.type.cts;
 
+import android.content.type.cts.StockAndroidMimeMapFactory;
+
 import org.junit.Before;
 import org.junit.Test;
 
+import java.net.FileNameMap;
+import java.net.URLConnection;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.TreeMap;
 import libcore.net.MimeMap;
 
 import static org.junit.Assert.assertEquals;
@@ -35,10 +40,19 @@ import static org.junit.Assert.fail;
  */
 public class MimeMapTest {
 
+    /** Stock Android's default MimeMap. */
+    private MimeMap stockAndroidMimeMap;
+
+    /** The platform's actual default MimeMap. */
     private MimeMap defaultMimeMap;
 
     @Before public void setUp() {
         defaultMimeMap = MimeMap.getDefault();
+        // A copy of stock Android's MimeMap.getDefault() from when this test was built,
+        // useful for comparing the platform's behavior vs. stock Android's.
+        // The resources are placed into the testres/ path by the "mimemap-testing-res.jar" genrule.
+        stockAndroidMimeMap = StockAndroidMimeMapFactory.create(
+                s -> MimeMapTest.class.getResourceAsStream("/testres/" + s));
     }
 
     @Test
@@ -202,6 +216,62 @@ public class MimeMapTest {
         checkInvalidExtension("invalid extension");
     }
 
+    @Test public void defaultMap_containsAllStockAndroidMappings_mimeToExt() {
+        // The minimum expected mimeType -> extension mappings that should be present.
+        TreeMap<String, String> expected = new TreeMap<>();
+        // The extensions that these mimeTypes are actually mapped to.
+        TreeMap<String, String> actual = new TreeMap<>();
+        for (String mimeType : stockAndroidMimeMap.mimeTypes()) {
+            expected.put(mimeType, stockAndroidMimeMap.guessExtensionFromMimeType(mimeType));
+            actual.put(mimeType, defaultMimeMap.guessExtensionFromMimeType(mimeType));
+        }
+        assertEquals(expected, actual);
+    }
+
+    @Test public void defaultMap_containsAllExpectedMappings_extToMime() {
+        // The minimum expected extension -> mimeType mappings that should be present.
+        TreeMap<String, String> expected = new TreeMap<>();
+        // The mimeTypes that these extensions are actually mapped to.
+        TreeMap<String, String> actual = new TreeMap<>();
+        for (String extension : stockAndroidMimeMap.extensions()) {
+            expected.put(extension, stockAndroidMimeMap.guessMimeTypeFromExtension(extension));
+            actual.put(extension, defaultMimeMap.guessMimeTypeFromExtension(extension));
+        }
+        assertEquals(expected, actual);
+    }
+
+    /**
+     * Checks that MimeTypeMap and URLConnection.getFileNameMap()'s behavior is
+     * consistent with MimeMap.getDefault(), i.e. that they are implemented on
+     * top of MimeMap.getDefault().
+     */
+    @Test public void defaultMap_agreesWithPublicApi() {
+        android.webkit.MimeTypeMap webkitMap = android.webkit.MimeTypeMap.getSingleton();
+        FileNameMap urlConnectionMap = URLConnection.getFileNameMap();
+
+        for (String extension : defaultMimeMap.extensions()) {
+            String mimeType = defaultMimeMap.guessMimeTypeFromExtension(extension);
+            Objects.requireNonNull(mimeType);
+            assertEquals(mimeType, webkitMap.getMimeTypeFromExtension(extension));
+            assertTrue(webkitMap.hasExtension(extension));
+
+            // Extensions should never start with '.', make sure this is not the case ahead
+            // of the subsequent check.
+            assertFalse(extension.startsWith("."));
+            // Relax this check for extensions that contain "." because of http://b/141880067
+            if (!extension.contains(".")) {
+                assertEquals(mimeType, urlConnectionMap.getContentTypeFor("filename." + extension));
+            }
+        }
+
+        for (String mimeType : defaultMimeMap.mimeTypes()) {
+            String extension = defaultMimeMap.guessExtensionFromMimeType(mimeType);
+            Objects.requireNonNull(extension);
+            assertEquals(extension, webkitMap.getExtensionFromMimeType(mimeType));
+            assertTrue(webkitMap.hasMimeType(mimeType));
+        }
+    }
+
     private void checkInvalidExtension(String s) {
         assertFalse(defaultMimeMap.hasExtension(s));
         assertNull(defaultMimeMap.guessMimeTypeFromExtension(s));
@@ -230,5 +300,4 @@ public class MimeMapTest {
         assertMimeTypeFromExtension(mimeType, extension);
         assertExtensionFromMimeType(extension, mimeType);
     }
-
 }
