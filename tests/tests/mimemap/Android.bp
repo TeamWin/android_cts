@@ -18,9 +18,11 @@ android_test {
     defaults: ["cts_defaults"],
     libs: ["android.test.base.stubs"],
     platform_apis: true,
+
     srcs: ["src/**/*.java"],
     static_libs: [
         "ctstestrunner-axt",
+        "mimemap-testing",
     ],
     test_suites: [
         "cts",
