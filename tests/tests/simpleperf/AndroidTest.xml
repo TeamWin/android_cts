@@ -33,6 +33,8 @@
         <option name="test-file-name" value="CtsSimpleperfProfileableApp.apk" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <option name="run-command" value="input keyevent KEYCODE_WAKEUP" />
+        <option name="run-command" value="wm dismiss-keyguard" />
         <option name="run-command" value="am start com.android.simpleperf.debuggable/.MainActivity" />
         <option name="run-command" value="am start com.android.simpleperf.profileable/.MainActivity" />
     </target_preparer>
