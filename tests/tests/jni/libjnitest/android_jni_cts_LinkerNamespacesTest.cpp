@@ -168,6 +168,12 @@ static std::string load_library(JNIEnv* env, jclass clazz, const std::string& pa
   return error;
 }
 
+static bool skip_subdir_load_check(const std::string& path) {
+  static bool vndk_lite = android::base::GetBoolProperty("ro.vndk.lite", false);
+  static const std::string system_vndk_dir = kSystemLibraryPath + "/vndk-sp-";
+  return vndk_lite && android::base::StartsWith(path, system_vndk_dir);
+}
+
 static bool check_lib(JNIEnv* env,
                       jclass clazz,
                       const std::string& path,
@@ -196,7 +202,7 @@ static bool check_lib(JNIEnv* env,
         return false;
       }
     } else {  // !is_in_search_path
-      if (loaded) {
+      if (loaded && !skip_subdir_load_check(path)) {
         errors->push_back("The library \"" + path +
                           "\" is a public library that was loaded from a subdirectory.");
         return false;
