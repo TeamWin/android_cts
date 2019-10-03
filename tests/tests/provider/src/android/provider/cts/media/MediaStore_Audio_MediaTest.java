@@ -29,8 +29,10 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.provider.MediaStore.Audio;
 import android.provider.MediaStore.Audio.Media;
 import android.provider.cts.ProviderTestUtils;
 import android.provider.cts.R;
@@ -203,5 +205,23 @@ public class MediaStore_Audio_MediaTest {
         final Uri d = ProviderTestUtils.scanFileFromShell(
                 ProviderTestUtils.stageFile(R.raw.testmp3, new File(dir, "d.mp3")));
         assertEquals(d, mContentResolver.uncanonicalize(canonicalized));
+    }
+
+    @Test
+    public void testSortLocale() {
+        final Bundle queryArgs = new Bundle();
+        queryArgs.putStringArray(ContentResolver.QUERY_ARG_SORT_COLUMNS,
+                new String[] { Audio.Media.TITLE });
+
+        for (String locale : new String[] {
+                "zh",
+                "zh@collation=pinyin",
+                "zh@collation=stroke",
+                "zh@collation=zhuyin",
+        }) {
+            queryArgs.putString(ContentResolver.QUERY_ARG_SORT_LOCALE, locale);
+            try (Cursor c = mContentResolver.query(mExternalAudio, null, queryArgs, null)) {
+            }
+        }
     }
 }
