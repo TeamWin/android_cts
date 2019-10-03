@@ -401,6 +401,7 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 141344170)
     public void testPendingIntentBroadcastTimeout_delay1s() throws Exception {
         assertPendingIntentBroadcastTimeoutTest(1000, true);
     }
