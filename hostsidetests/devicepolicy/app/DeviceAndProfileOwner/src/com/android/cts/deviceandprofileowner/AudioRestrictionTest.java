@@ -25,12 +25,13 @@ import android.net.Uri;
 import android.provider.Settings;
 import android.os.SystemClock;
 import android.os.UserManager;
+import android.util.Log;
 
 import java.util.Objects;
 import java.util.concurrent.Callable;
 
 public class AudioRestrictionTest extends BaseDeviceAdminTest {
-
+    private static final String TAG = AudioRestrictionTest.class.getSimpleName();
     private AudioManager mAudioManager;
     private PackageManager mPackageManager;
     private boolean mUseFixedVolume;
@@ -142,7 +143,10 @@ public class AudioRestrictionTest extends BaseDeviceAdminTest {
 
         try {
             mAudioManager.setMicrophoneMute(false);
-            assertFalse(mAudioManager.isMicrophoneMute());
+            if (mAudioManager.isMicrophoneMute()) {
+                Log.w(TAG, "Mic seems muted by hardware! Please unmute and rerrun the test.");
+                return;
+            }
 
             // Disallow the microphone to be unmuted.
             mDevicePolicyManager.addUserRestriction(
