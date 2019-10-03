@@ -1,3 +1,4 @@
+//
 // Copyright (C) 2019 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,23 +12,23 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
 
-// Verifies the default MIME mapping as exposed by @CorePlatformApi libcore.net.MimeMap.getDefault()
-android_test {
-    name: "CtsMimeMapTestCases",
-    defaults: ["cts_defaults"],
-    libs: ["android.test.base.stubs"],
-    platform_apis: true,
-
+android_test_helper_app {
+    name: "CtsBadProviderStubs",
+    defaults: ["cts_support_defaults"],
+    static_libs: ["android-support-annotations"],
     srcs: ["src/**/*.java"],
-    static_libs: [
-        "ctstestrunner-axt",
-        "mimemap-testing",
-    ],
+    sdk_version: "current",
     test_suites: [
         "cts",
-        "mts",
         "vts",
         "general-tests",
     ],
+    optimize: {
+        enabled: false,
+    },
+    dex_preopt: {
+        enabled: false,
+    },
 }

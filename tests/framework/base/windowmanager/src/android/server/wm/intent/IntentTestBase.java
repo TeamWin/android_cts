@@ -37,7 +37,7 @@ public abstract class IntentTestBase extends ActivityManagerTestBase {
      */
     public void cleanUp(List<ComponentName> activitiesInUsedInTest) throws Exception {
         super.tearDown();
-        UiDeviceUtils.pressHomeButton();
+        launchHomeActivityNoWait();
         removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
 
         this.getAmWmState().waitForWithAmState(

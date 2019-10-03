@@ -127,15 +127,12 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
     public void tearDown() throws Exception {
         stopTestPackage(TEST_PACKAGE_APP_A);
         stopTestPackage(TEST_PACKAGE_APP_B);
-        pressHomeButton();
+        launchHomeActivity();
         AppOpsUtils.reset(APP_A_PACKAGE_NAME);
-        mAmWmState.waitForHomeActivityVisible();
         runWithShellPermissionIdentity(() -> {
             runShellCommand("dpm remove-active-admin --user current "
                     + APP_A_SIMPLE_ADMIN_RECEIVER.flattenToString());
         });
-        // TODO(b/130169434): Remove it when app switch protection bug is fixed
-        SystemClock.sleep(5000);
     }
 
     @Test
@@ -218,7 +215,7 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         intent.setComponent(APP_A_FOREGROUND_ACTIVITY);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra(LAUNCH_BACKGROUND_ACTIVITY_EXTRA, true);
-        intent.putExtra(START_ACTIVITY_FROM_FG_ACTIVITY_DELAY_MS_EXTRA, 7000);
+        intent.putExtra(START_ACTIVITY_FROM_FG_ACTIVITY_DELAY_MS_EXTRA, 2000);
         mContext.startActivity(intent);
         boolean result = waitForActivityFocused(ACTIVITY_FOCUS_TIMEOUT_MS,
                 APP_A_FOREGROUND_ACTIVITY);
@@ -226,10 +223,8 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         assertTaskStack(new ComponentName[]{APP_A_FOREGROUND_ACTIVITY}, APP_A_FOREGROUND_ACTIVITY);
 
         // The foreground activity will be paused but will attempt to restart itself in onPause()
-        pressHomeButton();
-        mAmWmState.waitForHomeActivityVisible();
+        pressHomeAndResumeAppSwitch();
 
-        waitToPreventAppSwitchProtection();
         result = waitForActivityFocused(APP_A_FOREGROUND_ACTIVITY);
         assertFalse("Previously foreground Activity should not be able to relaunch itself", result);
         result = waitForActivityFocused(APP_A_BACKGROUND_ACTIVITY);
@@ -247,7 +242,7 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         intent.setComponent(APP_A_FOREGROUND_ACTIVITY);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra(LAUNCH_BACKGROUND_ACTIVITY_EXTRA, true);
-        intent.putExtra(START_ACTIVITY_FROM_FG_ACTIVITY_DELAY_MS_EXTRA, 7000);
+        intent.putExtra(START_ACTIVITY_FROM_FG_ACTIVITY_DELAY_MS_EXTRA, 2000);
         intent.putExtra(START_ACTIVITY_FROM_FG_ACTIVITY_NEW_TASK_EXTRA, true);
         mContext.startActivity(intent);
         boolean result = waitForActivityFocused(ACTIVITY_FOCUS_TIMEOUT_MS,
@@ -256,10 +251,8 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         assertTaskStack(new ComponentName[]{APP_A_FOREGROUND_ACTIVITY}, APP_A_FOREGROUND_ACTIVITY);
 
         // The foreground activity will be paused but will attempt to restart itself in onPause()
-        pressHomeButton();
-        mAmWmState.waitForHomeActivityVisible();
+        pressHomeAndResumeAppSwitch();
 
-        waitToPreventAppSwitchProtection();
         result = waitForActivityFocused(APP_A_FOREGROUND_ACTIVITY);
         assertFalse("Previously foreground Activity should not be able to relaunch itself", result);
         result = waitForActivityFocused(APP_A_BACKGROUND_ACTIVITY);
@@ -282,10 +275,8 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         assertTaskStack(new ComponentName[]{APP_A_FOREGROUND_ACTIVITY}, APP_A_FOREGROUND_ACTIVITY);
 
         // The foreground activity will be paused but will attempt to restart itself in onPause()
-        pressHomeButton();
-        mAmWmState.waitForHomeActivityVisible();
+        pressHomeAndResumeAppSwitch();
 
-        waitToPreventAppSwitchProtection();
         result = waitForActivityFocused(APP_A_FOREGROUND_ACTIVITY);
         assertFalse("Previously foreground Activity should not be able to relaunch itself", result);
         assertTaskStack(new ComponentName[]{APP_A_FOREGROUND_ACTIVITY}, APP_A_FOREGROUND_ACTIVITY);
@@ -321,9 +312,7 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         boolean result = waitForActivityFocused(APP_A_FOREGROUND_ACTIVITY);
         assertTrue("Not able to start foreground activity", result);
         assertTaskStack(new ComponentName[]{APP_A_FOREGROUND_ACTIVITY}, APP_A_FOREGROUND_ACTIVITY);
-        pressHomeButton();
-        mAmWmState.waitForHomeActivityVisible();
-        waitToPreventAppSwitchProtection();
+        pressHomeAndResumeAppSwitch();
 
         // The activity, now in the background, will attempt to start 2 activities in quick
         // succession
@@ -453,9 +442,14 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         assertTaskStack(new ComponentName[]{APP_A_BACKGROUND_ACTIVITY}, APP_A_BACKGROUND_ACTIVITY);
     }
 
-    private void waitToPreventAppSwitchProtection() {
-        // Any activity launch will be blocked for 5s because of app switching protection.
-        SystemClock.sleep(7000);
+    private void pressHomeAndResumeAppSwitch() {
+        // Press home key to ensure stopAppSwitches is called because the last-stop-app-switch-time
+        // is a criteria of allowing background start.
+        pressHomeButton();
+        // Resume the stopped state (it won't affect last-stop-app-switch-time) so we don't need to
+        // wait extra time to prevent the next launch from being delayed.
+        resumeAppSwitches();
+        mAmWmState.waitForHomeActivityVisible();
     }
 
     private void assertTaskStack(ComponentName[] expectedComponents,

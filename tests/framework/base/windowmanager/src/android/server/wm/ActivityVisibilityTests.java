@@ -511,7 +511,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
             waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
                     "Activity launched on default display must be focused");
 
-            // Press home button
+            // Start home activity directly
             launchHomeActivity();
 
             mAmWmState.assertHomeActivityVisible(true);

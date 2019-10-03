@@ -24,7 +24,6 @@ import static android.server.wm.app.Components.TEST_ACTIVITY;
 
 import android.app.ActivityManager;
 import android.app.ActivityOptions;
-import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -86,12 +85,6 @@ public class ActivityLauncher {
      * passed in {@link #launchActivityFromExtras(Context, Bundle)}.
      */
     public static final String KEY_USE_APPLICATION_CONTEXT = "use_application_context";
-    /**
-     * Key for boolean extra, indicates if instrumentation context will be used for launch. This
-     * means that {@link PendingIntent} should be used instead of a regular one, because application
-     * switch will not be allowed otherwise.
-     */
-    public static final String KEY_USE_INSTRUMENTATION = "use_instrumentation";
     /**
      * Key for boolean extra, indicates if any exceptions thrown during launch other then
      * {@link SecurityException} should be suppressed. A {@link SecurityException} is never thrown,
@@ -204,29 +197,8 @@ public class ActivityLauncher {
                 context.getApplicationContext() : context;
 
         try {
-            if (extras.getBoolean(KEY_USE_INSTRUMENTATION)) {
-                // Using PendingIntent for Instrumentation launches, because otherwise we won't
-                // be allowed to switch the current activity with ours with different uid.
-                // android.permission.STOP_APP_SWITCHES is needed to do this directly.
-                // PendingIntent.FLAG_CANCEL_CURRENT is needed here, or we may get an existing
-                // PendingIntent if it is same kind of PendingIntent request to previous one.
-                // Note: optionsBundle is not taking into account for PendingIntentRecord.Key
-                // hashcode calculation.
-                final PendingIntent pendingIntent = PendingIntent.getActivity(launchContext, 0,
-                        newIntent, PendingIntent.FLAG_CANCEL_CURRENT, optionsBundle);
-                pendingIntent.send();
-            } else {
-                launchContext.startActivity(newIntent, optionsBundle);
-            }
+            launchContext.startActivity(newIntent, optionsBundle);
         } catch (SecurityException e) {
-            handleSecurityException(context, e);
-        } catch (PendingIntent.CanceledException e) {
-            if (extras.getBoolean(KEY_SUPPRESS_EXCEPTIONS)) {
-                Log.e(TAG, "Exception launching activity with pending intent");
-            } else {
-                throw new RuntimeException(e);
-            }
-            // Bypass the exception although it is not SecurityException.
             handleSecurityException(context, e);
         } catch (Exception e) {
             if (extras.getBoolean(KEY_SUPPRESS_EXCEPTIONS)) {

@@ -29,6 +29,7 @@ import static android.server.wm.ActivityLauncher.KEY_NEW_TASK;
 import static android.server.wm.ActivityManagerState.STATE_RESUMED;
 import static android.server.wm.ActivityManagerState.STATE_STOPPED;
 import static android.server.wm.ComponentNameUtils.getActivityName;
+import static android.server.wm.UiDeviceUtils.pressHomeButton;
 import static android.server.wm.app.Components.ALT_LAUNCHING_ACTIVITY;
 import static android.server.wm.app.Components.BROADCAST_RECEIVER_ACTIVITY;
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
@@ -500,6 +501,7 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
     @Test
     public void testLaunchPendingActivityOnSecondaryDisplay() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            pressHomeButton();
             // Create new simulated display.
             final ActivityDisplay newDisplay = virtualDisplaySession.setSimulateDisplay(true)
                     .createDisplay();
@@ -512,8 +514,7 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
                     .putExtra(KEY_NEW_TASK, true);
             mContext.startActivity(intent, bundle);
 
-            // ActivityManagerTestBase.setup would press home key event, which would cause
-            // PhoneWindowManager.startDockOrHome to call AMS.stopAppSwitches.
+            // If home key was pressed, stopAppSwitches will be called.
             // Since this test case is not start activity from shell, it won't grant
             // STOP_APP_SWITCHES and this activity should be put into pending activity queue
             // and this activity should been launched after
@@ -859,8 +860,6 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
 
     @Test
     public void testLaunchPendingIntentActivity() throws Exception {
-        // Prevent the launch of pure PendingIntent from being delayed after home key is pressed.
-        resumeAppSwitches();
         final DisplayManager displayManager =
                 getInstrumentation().getContext().getSystemService(DisplayManager.class);
 

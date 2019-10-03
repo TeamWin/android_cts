@@ -20,7 +20,6 @@ import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP;
 import static android.server.wm.ComponentNameUtils.getActivityName;
-import static android.server.wm.UiDeviceUtils.pressHomeButton;
 import static android.server.wm.app.Components.ENTRY_POINT_ALIAS_ACTIVITY;
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
 import static android.server.wm.app.Components.SINGLE_TASK_ACTIVITY;
@@ -33,8 +32,6 @@ import static org.junit.Assert.assertNotEquals;
 
 import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
-
-import androidx.test.filters.FlakyTest;
 
 import org.junit.Test;
 
@@ -81,7 +78,7 @@ public class AmStartOptionsTests extends ActivityManagerTestBase {
                 .setTargetActivity(TEST_ACTIVITY).execute();
 
         // Return to home
-        pressHomeButton();
+        launchHomeActivity();
 
         // Start LaunchingActivity again and finish TestActivity
         final int flags =
@@ -98,7 +95,7 @@ public class AmStartOptionsTests extends ActivityManagerTestBase {
         startActivityAndVerifyResult(entryActivity, actualActivity, true);
 
         // Test warm start
-        pressHomeButton();
+        launchHomeActivity();
         startActivityAndVerifyResult(entryActivity, actualActivity, false);
 
         // Test "hot" start (app already in front)
