@@ -798,8 +798,8 @@ public class WindowManagerState {
             return mDisplayRect;
         }
 
-        Rect getAppRect() {
-            return mAppRect;
+        Rect getStableBounds() {
+            return mStableBounds;
         }
 
         String getName() {
