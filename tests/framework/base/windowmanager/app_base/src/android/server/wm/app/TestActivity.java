@@ -18,7 +18,9 @@ package android.server.wm.app;
 
 import static android.server.wm.app.Components.TestActivity.EXTRA_CONFIG_ASSETS_SEQ;
 import static android.server.wm.app.Components.TestActivity.EXTRA_FIXED_ORIENTATION;
+import static android.server.wm.app.Components.TestActivity.EXTRA_INTENTS;
 import static android.server.wm.app.Components.TestActivity.TEST_ACTIVITY_ACTION_FINISH_SELF;
+import static android.server.wm.app.Components.TestActivity.COMMAND_START_ACTIVITIES;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -26,6 +28,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.os.Bundle;
+import android.os.Parcelable;
+
+import java.util.Arrays;
 
 public class TestActivity extends AbstractLifecycleLogActivity {
 
@@ -68,6 +73,18 @@ public class TestActivity extends AbstractLifecycleLogActivity {
     protected void onStop() {
         super.onStop();
         unregisterReceiver(mReceiver);
+    }
+
+    @Override
+    public void handleCommand(String command, Bundle data) {
+        switch (command) {
+            case COMMAND_START_ACTIVITIES:
+                final Parcelable[] intents = data.getParcelableArray(EXTRA_INTENTS);
+                startActivities(Arrays.copyOf(intents, intents.length, Intent[].class));
+                break;
+            default:
+                super.handleCommand(command, data);
+        }
     }
 
     @Override
