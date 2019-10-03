@@ -4216,6 +4216,18 @@
         android:description="@string/permdesc_bindCarrierServices"
         android:protectionLevel="signature|privileged" />
 
+    <!-- @SystemApi @TestApi Allows an application to forward cell broadcast messages to the cell
+         broadcast module. This is required in order to bind to the cell broadcast service, and
+         ensures that only the system can forward messages to it.
+
+         <p>Protection level: signature|privileged
+
+         @hide -->
+    <permission android:name="android.permission.BIND_CELL_BROADCAST_SERVICE"
+        android:label="@string/permlab_bindCellBroadcastService"
+        android:description="@string/permdesc_bindCellBroadcastService"
+        android:protectionLevel="signature" />
+
     <!--
         Allows the holder to start the permission usage screen for an app.
         <p>Protection level: signature|installer
