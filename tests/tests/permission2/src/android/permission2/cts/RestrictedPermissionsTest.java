@@ -16,6 +16,8 @@
 
 package android.permission2.cts;
 
+import static android.Manifest.permission.ACCESS_BACKGROUND_LOCATION;
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.Manifest.permission.READ_SMS;
 import static android.permission.cts.PermissionUtils.eventually;
 import static android.permission.cts.PermissionUtils.isGranted;
@@ -59,6 +61,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -221,28 +224,32 @@ public class RestrictedPermissionsTest {
     @Test
     @AppModeFull
     public void testLocationBackgroundPermissionWhitelistedAtInstall29() throws Exception {
-        installApp(APK_USES_LOCATION_29, null, null);
+        installApp(APK_USES_LOCATION_29, null, new ArraySet<>(Arrays.asList(ACCESS_FINE_LOCATION,
+                ACCESS_BACKGROUND_LOCATION)));
         assertAllRestrictedPermissionWhitelisted();
     }
 
     @Test
     @AppModeFull
     public void testLocationBackgroundPermissionNotWhitelistedAtInstall29() throws Exception {
-        installApp(APK_USES_LOCATION_29, Collections.EMPTY_SET, null);
+        installApp(APK_USES_LOCATION_29, Collections.emptySet(),
+                Collections.singleton(ACCESS_FINE_LOCATION));
         assertNoRestrictedPermissionWhitelisted();
     }
 
     @Test
     @AppModeFull
     public void testLocationBackgroundPermissionWhitelistedAtInstall22() throws Exception {
-        installApp(APK_USES_LOCATION_22, null, null);
+        installApp(APK_USES_LOCATION_22, null, new ArraySet<>(Arrays.asList(ACCESS_FINE_LOCATION,
+                ACCESS_BACKGROUND_LOCATION)));
         assertAllRestrictedPermissionWhitelisted();
     }
 
     @Test
     @AppModeFull
     public void testLocationBackgroundPermissionNotWhitelistedAtInstall22() throws Exception {
-        installApp(APK_USES_LOCATION_22, Collections.EMPTY_SET, null);
+        installApp(APK_USES_LOCATION_22, Collections.emptySet(),
+                Collections.singleton(ACCESS_FINE_LOCATION));
         assertNoRestrictedPermissionWhitelisted();
     }
 
@@ -914,25 +921,27 @@ public class RestrictedPermissionsTest {
 
     private @NonNull Set<String> getPermissionsOfAppWithAnyOfFlags(int flags) throws Exception {
         final PackageManager packageManager = getContext().getPackageManager();
-
-        final PackageInfo packageInfo = packageManager.getPackageInfo(PKG,
-                PackageManager.GET_PERMISSIONS);
-
-        final Set<String> hardRestrictedPermissions = new ArraySet<>();
-        for (String permission : packageInfo.requestedPermissions) {
+        final Set<String> restrictedPermissions = new ArraySet<>();
+        for (String permission : getRequestedPermissionsOfApp()) {
             PermissionInfo permInfo = packageManager.getPermissionInfo(permission, 0);
 
             if ((permInfo.flags & flags) != 0) {
-                hardRestrictedPermissions.add(permission);
+                restrictedPermissions.add(permission);
             }
         }
-
-        return hardRestrictedPermissions;
+        return restrictedPermissions;
     }
 
     private @NonNull Set<String> getRestrictedPermissionsOfApp() throws Exception {
         return getPermissionsOfAppWithAnyOfFlags(
                 PermissionInfo.FLAG_HARD_RESTRICTED | PermissionInfo.FLAG_SOFT_RESTRICTED);
+    }
+
+    private @NonNull String[] getRequestedPermissionsOfApp() throws Exception {
+        final PackageManager packageManager = getContext().getPackageManager();
+        final PackageInfo packageInfo = packageManager.getPackageInfo(PKG,
+                PackageManager.GET_PERMISSIONS);
+        return packageInfo.requestedPermissions;
     }
 
     private void assertAllRestrictedPermissionWhitelisted() throws Exception {
@@ -1129,7 +1138,7 @@ public class RestrictedPermissionsTest {
         // applied until reviewed
         runWithShellPermissionIdentity(() -> {
             final PackageManager packageManager = getContext().getPackageManager();
-            for (String permission : getRestrictedPermissionsOfApp()) {
+            for (String permission : getRequestedPermissionsOfApp()) {
                 packageManager.updatePermissionFlags(permission, PKG,
                         PackageManager.FLAG_PERMISSION_REVIEW_REQUIRED, 0,
                         getContext().getUser());
