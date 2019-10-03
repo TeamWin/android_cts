@@ -22,8 +22,7 @@ LOCAL_MODULE_TAGS := tests
 LOCAL_USE_AAPT2 := true
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    cts-wm-app-base \
-    cts-background-activity-common
+    cts-wm-app-base
 
 LOCAL_STATIC_ANDROID_LIBRARIES := \
     androidx.legacy_legacy-support-v4
