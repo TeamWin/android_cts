@@ -93,6 +93,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     private Map<Integer, Integer> mOriginalStreamVolumes = new HashMap<>();
     private NotificationManager.Policy mOriginalNotificationPolicy;
     private int mOriginalZen;
+    private boolean mDoNotCheckUnmute;
 
     @Override
     protected void setUp() throws Exception {
@@ -143,6 +144,16 @@ public class AudioManagerTest extends InstrumentationTestCase {
                         mContext.getPackageName(), getInstrumentation(), false);
             }
         }
+
+        // Check original mirchrophone mute/unmute status
+        mDoNotCheckUnmute = false;
+        if (mAudioManager.isMicrophoneMute()) {
+            mAudioManager.setMicrophoneMute(false);
+            if (mAudioManager.isMicrophoneMute()) {
+                Log.w(TAG, "Mic seems muted by hardware! Please unmute and rerrun the test.");
+                mDoNotCheckUnmute = true;
+            }
+        }
     }
 
     @Override
@@ -173,7 +184,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         mAudioManager.setMicrophoneMute(true);
         assertTrue(mAudioManager.isMicrophoneMute());
         mAudioManager.setMicrophoneMute(false);
-        assertFalse(mAudioManager.isMicrophoneMute());
+        assertFalse(mAudioManager.isMicrophoneMute() && !mDoNotCheckUnmute);
     }
 
     @AppModeFull(reason = "Instant apps cannot hold android.permission.MODIFY_AUDIO_SETTINGS")
@@ -185,24 +196,26 @@ public class AudioManagerTest extends InstrumentationTestCase {
             return;
         }
 
-        final MyBlockingIntentReceiver receiver = new MyBlockingIntentReceiver(
-                AudioManager.ACTION_MICROPHONE_MUTE_CHANGED);
-        final boolean initialMicMute = mAudioManager.isMicrophoneMute();
-        try {
-            mContext.registerReceiver(receiver,
-                    new IntentFilter(AudioManager.ACTION_MICROPHONE_MUTE_CHANGED));
-            // change the mic mute state
-            mAudioManager.setMicrophoneMute(!initialMicMute);
-            // verify a change was reported
-            final boolean intentFired = receiver.waitForExpectedAction(500/*ms*/);
-            assertTrue("ACTION_MICROPHONE_MUTE_CHANGED wasn't fired", intentFired);
-            // verify the mic mute state is expected
-            final boolean newMicMute = mAudioManager.isMicrophoneMute();
-            assertTrue("new mic mute state not as expected (" + !initialMicMute + ")",
-                    newMicMute == !initialMicMute);
-        } finally {
-            mContext.unregisterReceiver(receiver);
-            mAudioManager.setMicrophoneMute(initialMicMute);
+        if (!mDoNotCheckUnmute) {
+            final MyBlockingIntentReceiver receiver = new MyBlockingIntentReceiver(
+                    AudioManager.ACTION_MICROPHONE_MUTE_CHANGED);
+            final boolean initialMicMute = mAudioManager.isMicrophoneMute();
+            try {
+                mContext.registerReceiver(receiver,
+                        new IntentFilter(AudioManager.ACTION_MICROPHONE_MUTE_CHANGED));
+                // change the mic mute state
+                mAudioManager.setMicrophoneMute(!initialMicMute);
+                // verify a change was reported
+                final boolean intentFired = receiver.waitForExpectedAction(500/*ms*/);
+                assertTrue("ACTION_MICROPHONE_MUTE_CHANGED wasn't fired", intentFired);
+                // verify the mic mute state is expected
+                final boolean newMicMute = mAudioManager.isMicrophoneMute();
+                assertTrue("new mic mute state not as expected (" + !initialMicMute + ")",
+                        (newMicMute == !initialMicMute));
+            } finally {
+                mContext.unregisterReceiver(receiver);
+                mAudioManager.setMicrophoneMute(initialMicMute);
+            }
         }
     }
 
