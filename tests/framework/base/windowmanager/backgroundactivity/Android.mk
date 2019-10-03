@@ -29,8 +29,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     androidx.test.rules \
     cts-wm-util \
     cts-wm-app-base \
-    cts-core-test-runner-axt \
-    cts-background-activity-common
+    cts-core-test-runner-axt
 
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
