@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2010 The Android Open Source Project
+// Copyright (C) 2018 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,19 +14,14 @@
 // limitations under the License.
 //
 
-cc_test_library {
-    name: "libctsverifier_jni",
-    srcs: [
-        "CtsVerifierJniOnLoad.cpp",
-        "com_android_cts_verifier_camera_StatsImage.cpp",
-    ],
+android_test_helper_app {
+    name: "OomCatcher",
+    defaults: ["cts_defaults"],
+    srcs: ["src/**/*.java"],
     sdk_version: "current",
-    stl: "system",
-    shared_libs: ["liblog"],
-    cflags: [
-        "-Wall",
-        "-Werror",
-        "-Wno-unused-parameter",
-        "-Wno-unused-variable",
+    test_suites: [
+        "cts",
+        "sts",
+        "vts",
     ],
 }
