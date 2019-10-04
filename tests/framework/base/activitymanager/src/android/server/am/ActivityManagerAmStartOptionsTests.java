@@ -89,6 +89,8 @@ public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase 
         // See TODO below
         // final LogSeparator logSeparator = separateLogs();
 
+        mAmWmState.waitForAppTransitionIdle();
+
         // Pass in different data only when cold starting. This is to make the intent
         // different in subsequent warm/hot launches, so that the entrypoint alias
         // activity is always started, but the actual activity is not started again
