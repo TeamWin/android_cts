@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (C) 2019 The Android Open Source Project
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~      http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License
+  -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              style="@style/RootLayoutPadding"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical">
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dip"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/multiuser_headless_sys_user_can_skip_txt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/js_padding"
+                android:scrollbars="vertical"
+                android:gravity="bottom"
+                android:text="@string/multiuser_headless_sys_user_can_skip"
+                android:visibility="gone" />
+
+            <!-- Does System UI allow switching or selecting users? -->
+            <LinearLayout
+                android:id="@+id/multiuser_headless_sys_user_allow_switching_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="@dimen/js_padding"
+                    android:scrollbars="vertical"
+                    android:gravity="bottom"
+                    android:id="@+id/multiuser_headless_sys_user_switchable_txt"
+                    android:text="@string/multiuser_headless_sys_user_switchable_instructions" />
+                <Button android:id="@+id/multiuser_headless_sys_user_switchable_next_btn"
+                        android:text="@string/multiuser_headless_sys_user_next"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="@dimen/js_padding" />
+            </LinearLayout>
+
+            <!-- Is User 0 name unique? -->
+            <LinearLayout
+                android:id="@+id/multiuser_headless_sys_user_adb_users_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="@dimen/js_padding"
+                    android:scrollbars="vertical"
+                    android:gravity="bottom"
+                    android:id="@+id/multiuser_headless_sys_user_adb_users_txt"
+                    android:text="@string/multiuser_headless_sys_user_adb_users_instructions" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <Button android:id="@+id/multiuser_headless_sys_user_adb_users_yes_btn"
+                            android:text="@string/multiuser_headless_sys_user_yes"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_margin="@dimen/js_padding" />
+                    <Button android:id="@+id/multiuser_headless_sys_user_adb_users_no_btn"
+                            android:text="@string/multiuser_headless_sys_user_no"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_margin="@dimen/js_padding" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Instructions for unique user 0 name -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/js_padding"
+                android:scrollbars="vertical"
+                android:gravity="bottom"
+                android:id="@+id/multiuser_headless_sys_user_unique_txt"
+                android:text="@string/multiuser_headless_sys_user_unique_instructions"
+                android:visibility="gone"/>
+
+            <!-- Instructions for common user 0 name -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/js_padding"
+                android:scrollbars="vertical"
+                android:gravity="bottom"
+                android:id="@+id/multiuser_headless_sys_user_common_txt"
+                android:text="@string/multiuser_headless_sys_user_common_instructions"
+                android:visibility="gone"/>
+        </LinearLayout>
+    </ScrollView>
+
+    <include layout="@layout/pass_fail_buttons" />
+
+</LinearLayout>
