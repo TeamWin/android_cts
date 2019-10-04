@@ -26,7 +26,7 @@ import java.net.URLConnection;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.TreeMap;
-import libcore.net.MimeMap;
+import libcore.content.type.MimeMap;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
