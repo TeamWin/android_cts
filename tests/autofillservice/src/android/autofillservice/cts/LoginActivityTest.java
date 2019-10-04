@@ -2210,6 +2210,9 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
                 assertTextAndValue(passwordNode, password);
 
                 waitUntilDisconnected();
+
+                // Wait and check if the save window is correctly hidden.
+                mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
             } catch (RetryableException e) {
                 throw new RetryableException(e, "on step %d", i);
             } catch (Throwable t) {
