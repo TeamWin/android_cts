@@ -21,9 +21,14 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.Looper;
 import android.telephony.Annotation.RadioPowerState;
 import android.telephony.Annotation.SimActivationState;
@@ -34,17 +39,22 @@ import android.telephony.PreciseCallState;
 import android.telephony.PreciseDataConnectionState;
 import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
+import android.telephony.SmsManager;
 import android.telephony.TelephonyManager;
-import android.net.ConnectivityManager;
+import android.telephony.emergency.EmergencyNumber;
 import android.telephony.ims.ImsReasonInfo;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.TestThread;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.Before;
@@ -53,6 +63,8 @@ import org.junit.Test;
 public class PhoneStateListenerTest {
 
     public static final long WAIT_TIME = 1000;
+
+    private static final String TEST_EMERGENCY_NUMBER = "998877665544332211";
 
     private boolean mOnActiveDataSubscriptionIdChanged;
     private boolean mOnCallForwardingIndicatorChangedCalled;
@@ -69,6 +81,7 @@ public class PhoneStateListenerTest {
     private boolean mOnPreciseCallStateChangedCalled;
     private boolean mOnCallDisconnectCauseChangedCalled;
     private boolean mOnImsCallDisconnectCauseChangedCalled;
+    private EmergencyNumber mOnOutgoingSmsEmergencyNumberChanged;
     private boolean mOnPreciseDataConnectionStateChanged;
     private boolean mOnRadioPowerStateChangedCalled;
     private boolean mVoiceActivationStateChangedCalled;
@@ -965,6 +978,59 @@ public class PhoneStateListenerTest {
         }
         t.checkException();
         assertTrue(mOnUserMobileDataStateChanged);
+    }
+
+    @Test
+    public void testOnOutgoingSmsEmergencyNumberChanged() throws Throwable {
+        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
+            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
+            return;
+        }
+        TelephonyUtils.addTestEmergencyNumber(
+                InstrumentationRegistry.getInstrumentation(), TEST_EMERGENCY_NUMBER);
+        HandlerThread mPhoneStateListenerThread = new HandlerThread("PhoneStateListenerThread");
+        mPhoneStateListenerThread.start();
+        Handler mPhoneStateListenerHandler = new Handler(mPhoneStateListenerThread.getLooper());
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        mPhoneStateListenerHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                mListener = new PhoneStateListener() {
+                    @Override
+                    public void onOutgoingEmergencySms(EmergencyNumber emergencyNumber) {
+                        Log.i(TAG, "onOutgoingEmergencySms: emergencyNumber=" + emergencyNumber);
+                        mOnOutgoingSmsEmergencyNumberChanged = emergencyNumber;
+                        latch.countDown();
+                    }
+                };
+                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                        (tm) -> tm.listen(mListener,
+                                PhoneStateListener.LISTEN_OUTGOING_SMS_EMERGENCY_NUMBER));
+            }
+        });
+        assertNull(mOnOutgoingSmsEmergencyNumberChanged);
+        SmsManager.getDefault().sendTextMessage(
+                TEST_EMERGENCY_NUMBER, null, "testOutgoingSmsListenerCts", null, null);
+
+        try {
+            latch.await(5000, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Log.e(TAG, "Operation interrupted.");
+        } finally {
+            mPhoneStateListenerHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_NONE);
+                }
+            });
+            mPhoneStateListenerThread.quitSafely();
+            TelephonyUtils.removeTestEmergencyNumber(
+                    InstrumentationRegistry.getInstrumentation(), TEST_EMERGENCY_NUMBER);
+        }
+
+        assertNotNull(mOnOutgoingSmsEmergencyNumberChanged);
+        assertEquals(mOnOutgoingSmsEmergencyNumberChanged.getNumber(), TEST_EMERGENCY_NUMBER);
     }
 
     @Test
