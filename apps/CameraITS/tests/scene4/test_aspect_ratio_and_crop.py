@@ -84,7 +84,7 @@ def aspect_ratio_scale_factors(ref_ar_string, props):
     for ar_string in AR_CHECKED:
         match_ar = [float(x) for x in ar_string.split(":")]
         try:
-            f = its.objects.get_largest_yuv_format(props, match_ar=match_ar)
+            f = its.objects.get_largest_jpeg_format(props, match_ar=match_ar)
             if f["height"] > height_max:
                 height_max = f["height"]
             if f["width"] > width_max:
@@ -113,8 +113,8 @@ def aspect_ratio_scale_factors(ref_ar_string, props):
     return ar_scaling
 
 
-def find_yuv_fov_reference(cam, req, props):
-    """Determine the circle coverage of the image in YUV reference image.
+def find_jpeg_fov_reference(cam, req, props):
+    """Determine the circle coverage of the image in JPEG reference image.
 
     Args:
         cam:        camera object
@@ -131,7 +131,7 @@ def find_yuv_fov_reference(cam, req, props):
     for ar in AR_CHECKED:
         match_ar = [float(x) for x in ar.split(":")]
         try:
-            f = its.objects.get_largest_yuv_format(props, match_ar=match_ar)
+            f = its.objects.get_largest_jpeg_format(props, match_ar=match_ar)
             fmt_dict[f["height"]*f["width"]] = {"fmt": f, "ar": ar}
         except IndexError:
             continue
@@ -143,16 +143,18 @@ def find_yuv_fov_reference(cam, req, props):
     cap = cam.do_capture(req, fmt_dict[ar_max_pixels]["fmt"])
     w = cap["width"]
     h = cap["height"]
+    fmt = cap["format"]
+
     img = its.image.convert_capture_to_rgb_image(cap, props=props)
-    print "Captured %s %dx%d" % ("yuv", w, h)
-    img_name = "%s_%s_w%d_h%d.png" % (NAME, "yuv", w, h)
+    print "Captured %s %dx%d" % (fmt, w, h)
+    img_name = "%s_%s_w%d_h%d.png" % (NAME, fmt, w, h)
     _, _, circle_size = measure_aspect_ratio(img, False, img_name, True)
     fov_percent = calc_circle_image_ratio(circle_size[1], circle_size[0], w, h)
     ref_fov["fmt"] = fmt_dict[ar_max_pixels]["ar"]
     ref_fov["percent"] = fov_percent
     ref_fov["w"] = w
     ref_fov["h"] = h
-    print "Using YUV reference:", ref_fov
+    print "Using JPEG reference:", ref_fov
     return ref_fov
 
 
@@ -235,7 +237,7 @@ def main():
         # If raw capture is available, use it as ground truth.
         if raw_avlb:
             # Capture full-frame raw. Use its aspect ratio and circle center
-            # location as ground truth for the other jepg or yuv images.
+            # location as ground truth for the other jpeg or yuv images.
             print "Creating references for fov_coverage from RAW"
             out_surface = {"format": "raw"}
             cap_raw = cam.do_capture(req, out_surface)
@@ -309,9 +311,9 @@ def main():
                 ref_fov["h"] = h_raw
                 print "Using RAW reference:", ref_fov
             else:
-                ref_fov = find_yuv_fov_reference(cam, req, props)
+                ref_fov = find_jpeg_fov_reference(cam, req, props)
         else:
-            ref_fov = find_yuv_fov_reference(cam, req, props)
+            ref_fov = find_jpeg_fov_reference(cam, req, props)
 
         # Determine scaling factors for AR calculations
         ar_scaling = aspect_ratio_scale_factors(ref_fov["fmt"], props)
