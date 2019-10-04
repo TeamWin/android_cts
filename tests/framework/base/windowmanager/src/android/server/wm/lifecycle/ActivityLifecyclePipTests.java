@@ -212,6 +212,8 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
 
     @Test
     public void testSplitScreenBelowPip() throws Exception {
+        assumeTrue(supportsSplitScreenMultiWindow());
+
         // Launch Pip-capable activity and enter Pip immediately
         final Activity pipActivity = mPipActivityTestRule.launchActivity(
                 new Intent().putExtra(EXTRA_ENTER_PIP, true));
@@ -250,6 +252,8 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
 
     @Test
     public void testPipAboveSplitScreen() throws Exception {
+        assumeTrue(supportsSplitScreenMultiWindow());
+
         // Launch first activity
         final Activity firstActivity =
                 mFirstActivityTestRule.launchActivity(new Intent());
