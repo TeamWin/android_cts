@@ -41,7 +41,9 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.os.PersistableBundle;
+import android.os.Process;
 import android.os.SystemClock;
+import android.os.UserManager;
 import android.platform.test.annotations.Presubmit;
 import android.util.Log;
 
@@ -1629,24 +1631,55 @@ public class AudioRecordTest {
     }
 
     private static void makeMyUidStateActive() throws IOException {
-        final String command = "cmd media.audio_policy set-uid-state "
-                + InstrumentationRegistry.getTargetContext().getPackageName() + " active";
+        String command = String.format("cmd media.audio_policy set-uid-state %s active",
+                getContext().getPackageName());
+
+        if (!isSystemUser()) {
+            // --user parameter is not supported on all devices - only those that will run CTS in
+            // secondary users.
+            // For System User - Command defaults to system user, no need to explicitly specify.
+            // For Secondary User - Have to specify the user explicitly, otherwise the test fails.
+            command += " --user " + Process.myUserHandle().getIdentifier();
+        }
+
         SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(), command);
     }
 
     private static void makeMyUidStateIdle() throws IOException {
-        final String command = "cmd media.audio_policy set-uid-state "
-                + InstrumentationRegistry.getTargetContext().getPackageName() + " idle";
+        String command = String.format("cmd media.audio_policy set-uid-state %s idle",
+                getContext().getPackageName());
+
+        if (!isSystemUser()) {
+            // --user parameter is not supported on all devices - only those that will run CTS in
+            // secondary users.
+            // For System User - Command defaults to system user, no need to explicitly specify.
+            // For Secondary User - Have to specify the user explicitly, otherwise the test fails.
+            command += " --user " + Process.myUserHandle().getIdentifier();
+        }
+
         SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(), command);
     }
 
     private static void resetMyUidState() throws IOException {
-        final String command = "cmd media.audio_policy reset-uid-state "
-                +  InstrumentationRegistry.getTargetContext().getPackageName();
+        String command = "cmd media.audio_policy reset-uid-state "
+                + getContext().getPackageName();
+
+        if (!isSystemUser()) {
+            // --user parameter is not supported on all devices - only those that will run CTS in
+            // secondary users.
+            // For System User - Command defaults to system user, no need to explicitly specify.
+            // For Secondary User - Have to specify the user explicitly, otherwise the test fails.
+            command += " --user " + Process.myUserHandle().getIdentifier();
+        }
+
         SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(), command);
     }
 
     private static Context getContext() {
         return InstrumentationRegistry.getInstrumentation().getTargetContext();
+    }
+
+    private static boolean isSystemUser() {
+        return getContext().getSystemService(UserManager.class).isSystemUser();
     }
 }
