@@ -164,7 +164,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
                 ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                     (tm) -> tm.listen(mPhoneStateListener,
                         PhoneStateListener.LISTEN_CALL_STATE | PhoneStateListener
-                            .LISTEN_OUTGOING_CALL_EMERGENCY_NUMBER));
+                            .LISTEN_OUTGOING_EMERGENCY_CALL));
                 registeredLatch.countDown();
             }
         });
