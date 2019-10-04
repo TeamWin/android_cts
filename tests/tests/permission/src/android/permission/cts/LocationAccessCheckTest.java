@@ -40,6 +40,7 @@ import static org.junit.Assume.assumeTrue;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import android.app.ActivityManager;
+import android.app.AppOpsManager;
 import android.app.UiAutomation;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -52,6 +53,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Debug;
 import android.os.IBinder;
 import android.os.Looper;
 import android.platform.test.annotations.AppModeFull;
@@ -373,6 +375,15 @@ public class LocationAccessCheckTest {
     }
 
     /**
+     * Disable location access check
+     */
+    private void disableLocationAccessCheck() {
+        runWithShellPermissionIdentity(() -> DeviceConfig.setProperty(
+                DeviceConfig.NAMESPACE_PRIVACY,
+                PROPERTY_LOCATION_ACCESS_CHECK_ENABLED, "false", false));
+    }
+
+    /**
      * Make sure fine location can be accessed at all.
      */
     @Before
@@ -506,7 +517,7 @@ public class LocationAccessCheckTest {
         accessLocation();
         getNotification(true);
 
-        assertNull(getNotification(false));
+        assertNull(getNotification(true));
     }
 
     @Test
@@ -524,7 +535,7 @@ public class LocationAccessCheckTest {
         grantPermissionToTestApp(ACCESS_BACKGROUND_LOCATION);
 
         accessLocation();
-        assertNotNull(getNotification(false));
+        assertNotNull(getNotification(true));
     }
 
     @Test
@@ -556,6 +567,7 @@ public class LocationAccessCheckTest {
             eventually(() -> assertNull(getNotification(false)), UNEXPECTED_TIMEOUT_MILLIS);
         } finally {
             installBackgroundAccessApp();
+            getNotification(true);
         }
     }
 
@@ -581,5 +593,47 @@ public class LocationAccessCheckTest {
         } finally {
             installBackgroundAccessApp();
         }
+    }
+
+    @Test
+    public void noNotificationIfFeatureDisabled() throws Throwable {
+        disableLocationAccessCheck();
+        accessLocation();
+        assertNull(getNotification(true));
+    }
+
+    @Test
+    public void notificationOnlyForAccessesSinceFeatureWasEnabled() throws Throwable {
+        // Disable the feature and access location in disabled state
+        disableLocationAccessCheck();
+        accessLocation();
+        assertNull(getNotification(true));
+
+        // No notification expected for accesses before enabling the feature
+        enableLocationAccessCheck();
+        assertNull(getNotification(true));
+
+        // Notification expected for access after enabling the feature
+        accessLocation();
+        assertNotNull(getNotification(true));
+    }
+
+    @Test
+    public void noNotificationIfBlamerNotSystemOrLocationProvider() throws Throwable {
+        // Blame the app for access from an untrusted for notification purposes package.
+        runWithShellPermissionIdentity(() -> {
+            AppOpsManager appOpsManager = sContext.getSystemService(AppOpsManager.class);
+            appOpsManager.noteProxyOpNoThrow(AppOpsManager.OPSTR_FINE_LOCATION, TEST_APP_PKG,
+                    sContext.getPackageManager().getPackageUid(TEST_APP_PKG, 0));
+        });
+        assertNull(getNotification(true));
+    }
+
+    @Test
+    public void testOpeningLocationSettingsDoesNotTriggerAccess() throws Throwable {
+        Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        sContext.startActivity(intent);
+        assertNull(getNotification(true));
     }
 }
