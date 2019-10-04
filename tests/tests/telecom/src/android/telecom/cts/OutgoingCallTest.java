@@ -18,15 +18,19 @@ package android.telecom.cts;
 
 import android.content.Context;
 import android.media.AudioManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.telecom.CallAudioState;
 import android.telecom.TelecomManager;
+import android.telecom.VideoProfile;
 import android.telephony.TelephonyManager;
 
 /**
  * Verifies the behavior of Telecom during various outgoing call flows.
  */
 public class OutgoingCallTest extends BaseTelecomTestWithMockServices {
+
+    private static final String TEST_EMERGENCY_NUMBER = "9998887776655443210";
 
     @Override
     protected void setUp() throws Exception {
@@ -35,6 +39,13 @@ public class OutgoingCallTest extends BaseTelecomTestWithMockServices {
         if (mShouldTestTelecom) {
             setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
         }
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
+        TestUtils.clearSystemDialerOverride(getInstrumentation());
+        TestUtils.removeTestEmergencyNumber(getInstrumentation(), TEST_EMERGENCY_NUMBER);
     }
 
     /* TODO: Need to send some commands to the UserManager via adb to do setup
@@ -93,6 +104,16 @@ public class OutgoingCallTest extends BaseTelecomTestWithMockServices {
             return; // Do not verify if the only available route is speaker.
         }
         assertNotAudioRoute(mInCallCallbacks.getService(), CallAudioState.ROUTE_SPEAKER);
+    }
+
+    public void testPhoneStateListenerInvokedOnOutgoingEmergencyCall() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        TestUtils.setSystemDialerOverride(getInstrumentation());
+        TestUtils.addTestEmergencyNumber(getInstrumentation(), TEST_EMERGENCY_NUMBER);
+        mTelecomManager.placeCall(Uri.fromParts("tel", TEST_EMERGENCY_NUMBER, null), null);
+        verifyPhoneStateListenerCallbacksForEmergencyCall(TEST_EMERGENCY_NUMBER);
     }
 
     public void testPhoneStateListenerInvokedOnOutgoingCall() throws Exception {
