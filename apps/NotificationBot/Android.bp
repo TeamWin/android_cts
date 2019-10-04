@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2010 The Android Open Source Project
+// Copyright (C) 2014 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,19 +14,18 @@
 // limitations under the License.
 //
 
-cc_test_library {
-    name: "libctsverifier_jni",
+android_test_helper_app {
+    name: "NotificationBot",
     srcs: [
-        "CtsVerifierJniOnLoad.cpp",
-        "com_android_cts_verifier_camera_StatsImage.cpp",
+        "src/**/*.java",
+        "src/**/I*.aidl",
     ],
+    optimize: {
+        proguard_flags_files: ["proguard.flags"],
+    },
     sdk_version: "current",
-    stl: "system",
-    shared_libs: ["liblog"],
-    cflags: [
-        "-Wall",
-        "-Werror",
-        "-Wno-unused-parameter",
-        "-Wno-unused-variable",
-    ],
+    min_sdk_version: "19",
+    dex_preopt: {
+        enabled: false,
+    },
 }
