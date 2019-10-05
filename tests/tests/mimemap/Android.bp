@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Verifies the default MIME mapping as exposed by @CorePlatformApi libcore.net.MimeMap.getDefault()
+// Verifies the default MIME mapping as exposed by
+// @CorePlatformApi libcore.content.type.MimeMap.getDefault()
 android_test {
     name: "CtsMimeMapTestCases",
     defaults: ["cts_defaults"],

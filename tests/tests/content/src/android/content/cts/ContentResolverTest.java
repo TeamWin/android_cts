@@ -25,6 +25,8 @@ import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.database.ContentObserver;
 import android.database.Cursor;
+import android.icu.text.Collator;
+import android.icu.util.ULocale;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.CancellationSignal;
@@ -46,6 +48,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -425,6 +430,47 @@ public class ContentResolverTest extends AndroidTestCase {
         assertEquals("abc", mCursor.getString(col));
 
         mCursor.close();
+    }
+
+    public void testQuery_SqlSortingFromBundleArgs_Locale() {
+        mContentResolver.delete(TABLE1_URI, null, null);
+
+        final List<String> data = Arrays.asList(
+                "ABC", "abc", "pinyin", "가나다", "바사", "테스트", "马",
+                "嘛", "妈", "骂", "吗", "码", "玛", "麻", "中", "梵", "苹果", "久了", "伺候");
+
+        for (String s : data) {
+            final ContentValues values = new ContentValues();
+            values.put(COLUMN_KEY_NAME, s.hashCode());
+            values.put(COLUMN_VALUE_NAME, s);
+            mContentResolver.insert(TABLE1_URI, values);
+        }
+
+        String[] sortCols = new String[] { COLUMN_VALUE_NAME };
+        Bundle queryArgs = new Bundle();
+        queryArgs.putStringArray(ContentResolver.QUERY_ARG_SORT_COLUMNS, sortCols);
+
+        for (String locale : new String[] {
+                "zh",
+                "zh@collation=pinyin",
+                "zh@collation=stroke",
+                "zh@collation=zhuyin",
+        }) {
+            // Assert that sorting is identical between SQLite and ICU4J
+            queryArgs.putString(ContentResolver.QUERY_ARG_SORT_LOCALE, locale);
+            try (Cursor c = mContentResolver.query(TABLE1_URI, sortCols, queryArgs, null)) {
+                data.sort(Collator.getInstance(new ULocale(locale)));
+                assertEquals(data, collect(c));
+            }
+        }
+    }
+
+    private static List<String> collect(Cursor c) {
+        List<String> res = new ArrayList<>();
+        while (c.moveToNext()) {
+            res.add(c.getString(0));
+        }
+        return res;
     }
 
     /**

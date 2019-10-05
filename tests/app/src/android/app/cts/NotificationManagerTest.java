@@ -201,8 +201,8 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     private void toggleBubbleSetting(boolean enabled) throws InterruptedException {
         SystemUtil.runWithShellPermissionIdentity(() ->
-                Settings.Secure.putInt(mContext.getContentResolver(),
-                        Settings.Secure.NOTIFICATION_BUBBLES, enabled ? 1 : 0));
+                Settings.Global.putInt(mContext.getContentResolver(),
+                        Settings.Global.NOTIFICATION_BUBBLES, enabled ? 1 : 0));
         Thread.sleep(500); // wait for ranking update
 
     }
@@ -1117,8 +1117,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         // turn on bubbles globally
         toggleBubbleSetting(true);
 
-        assertEquals(1, Settings.Secure.getInt(
-                mContext.getContentResolver(), Settings.Secure.NOTIFICATION_BUBBLES));
+        assertEquals(1, Settings.Global.getInt(
+                mContext.getContentResolver(), Settings.Global.NOTIFICATION_BUBBLES));
 
         toggleListenerAccess(TestNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), true);
@@ -2132,8 +2132,8 @@ public class NotificationManagerTest extends AndroidTestCase {
 
         mNotificationManager.cancelAsPackage(DELEGATOR, "toBeCanceled", 10000);
 
-        Thread.sleep(1000);
-
+        Thread.sleep(100);
+        
         assertNull(findPostedNotification(10000, false));
 
         final Intent revokeIntent = new Intent();

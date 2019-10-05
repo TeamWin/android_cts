@@ -48,10 +48,13 @@ import android.telecom.VideoProfile;
 import android.telecom.cts.MockInCallService.InCallServiceCallbacks;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
+import android.telephony.emergency.EmergencyNumber;
 import android.test.InstrumentationTestCase;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
+
+import com.android.compatibility.common.util.ShellIdentityUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -111,11 +114,19 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         public Semaphore mCallbackSemaphore = new Semaphore(0);
 
         List<Pair<Integer, String>> mCallStates = new ArrayList<>();
+        EmergencyNumber mLastOutgoingEmergencyNumber;
 
         @Override
         public void onCallStateChanged(int state, String number) {
             Log.i(TAG, "onCallStateChanged: state=" + state + ", number=" + number);
             mCallStates.add(Pair.create(state, number));
+            mCallbackSemaphore.release();
+        }
+
+        @Override
+        public void onOutgoingEmergencyCall(EmergencyNumber emergencyNumber) {
+            Log.i(TAG, "onOutgoingEmergencyCall: emergencyNumber=" + emergencyNumber);
+            mLastOutgoingEmergencyNumber = emergencyNumber;
             mCallbackSemaphore.release();
         }
     }
@@ -150,7 +161,10 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
             @Override
             public void run() {
                 mPhoneStateListener = new TestPhoneStateListener();
-                mTelephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_CALL_STATE);
+                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.listen(mPhoneStateListener,
+                        PhoneStateListener.LISTEN_CALL_STATE | PhoneStateListener
+                            .LISTEN_OUTGOING_EMERGENCY_CALL));
                 registeredLatch.countDown();
             }
         });
@@ -700,6 +714,34 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         // broadcast is sent, the caller may receive multiple broadcasts, and the number will be
         // present in one or the other.  We waited for a full matching broadcast above so we can
         // be sure the number was reported as expected.
+    }
+
+    void verifyPhoneStateListenerCallbacksForEmergencyCall(String expectedNumber)
+        throws Exception {
+        assertTrue(mPhoneStateListener.mCallbackSemaphore.tryAcquire(
+            TestUtils.WAIT_FOR_PHONE_STATE_LISTENER_CALLBACK_TIMEOUT_S, TimeUnit.SECONDS));
+        // At this point we can only be sure that we got AN update, but not necessarily the one we
+        // are looking for; wait until we see the state we want before verifying further.
+        waitUntilConditionIsTrueOrTimeout(new Condition() {
+                                              @Override
+                                              public Object expected() {
+                                                  return true;
+                                              }
+
+                                              @Override
+                                              public Object actual() {
+                                                  return mPhoneStateListener
+                                                      .mLastOutgoingEmergencyNumber != null
+                                                      && mPhoneStateListener
+                                                      .mLastOutgoingEmergencyNumber.getNumber()
+                                                      .equals(expectedNumber);
+                                              }
+                                          },
+            WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+            "Expected emergency number: " + expectedNumber);
+
+        assertEquals(mPhoneStateListener.mLastOutgoingEmergencyNumber.getNumber(),
+            expectedNumber);
     }
 
     /**

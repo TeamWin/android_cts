@@ -250,7 +250,7 @@ public class JvmtiAttachingHostTest extends DeviceTestCase implements IBuildRece
         try (final ServerSocket ss = new ServerSocket(0)) {
             device.executeAdbCommand(
                     "reverse", "localabstract:" + REMOTE_SOCKET_NAME, "tcp:" + ss.getLocalPort());
-            String attachCmd = "cmd activity start -S -W " + agentParams + " -n " + pkg
+            String attachCmd = "cmd activity start -S " + agentParams + " -n " + pkg
                     + "/android.jvmti.JvmtiActivity";
 
             // Don't try to parse the output. We'll get data from the socket or a timeout if it

@@ -457,7 +457,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
 
     // TODO(b/112837428): Merge into VirtualDisplaySession when all usages are migrated.
     protected class VirtualDisplayLauncher extends VirtualDisplaySession {
-        private final ActivitySessionClient mActivitySessionClient = new ActivitySessionClient();
+        private final ActivitySessionClient mActivitySessionClient = ActivitySessionClient.create();
 
         ActivitySession launchActivityOnDisplay(ComponentName activityName,
                 ActivityDisplay display) {

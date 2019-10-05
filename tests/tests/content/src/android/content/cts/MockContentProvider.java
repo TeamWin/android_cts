@@ -22,6 +22,7 @@ import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.content.ContentProvider;
 import android.content.ContentProvider.PipeDataWriter;
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
@@ -250,6 +251,33 @@ public class MockContentProvider extends ContentProvider implements PipeDataWrit
         }
 
         throw new SQLException("Failed to insert row into " + uri);
+    }
+
+    @Override
+    public @Nullable Cursor query(@NonNull Uri uri, @Nullable String[] projection,
+            @Nullable Bundle queryArgs, @Nullable CancellationSignal cancellationSignal) {
+        if (queryArgs != null && queryArgs.containsKey(ContentResolver.QUERY_ARG_SORT_LOCALE)) {
+            final SQLiteDatabase db = mOpenHelper.getReadableDatabase();
+            final String locale = queryArgs.getString(ContentResolver.QUERY_ARG_SORT_LOCALE);
+            final String safeLocale = locale.replaceAll("[^a-zA-Z]", "");
+            try (Cursor c = db.rawQuery("SELECT icu_load_collation(?, ?);",
+                    new String[] { locale, safeLocale }, cancellationSignal)) {
+                while (c.moveToNext()) {
+                }
+            }
+
+            final SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
+            qb.setTables("TestTable1");
+            qb.setProjectionMap(CTSDBTABLE1_LIST_PROJECTION_MAP);
+
+            final String sortOrder = TextUtils.join(", ",
+                    queryArgs.getStringArray(ContentResolver.QUERY_ARG_SORT_COLUMNS));
+            return qb.query(db, projection, null, null, null, null,
+                    sortOrder + " COLLATE " + safeLocale,
+                    null, cancellationSignal);
+        } else {
+            return super.query(uri, projection, queryArgs, cancellationSignal);
+        }
     }
 
     @Override

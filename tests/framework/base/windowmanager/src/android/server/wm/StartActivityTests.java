@@ -18,14 +18,24 @@ package android.server.wm;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_DOCUMENT;
 import static android.server.wm.ActivityManagerState.STATE_STOPPED;
+import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
+import static android.server.wm.app.Components.NO_RELAUNCH_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.app.Components.TRANSLUCENT_ACTIVITY;
+import static android.server.wm.app.Components.TestActivity.EXTRA_INTENTS;
+import static android.server.wm.app.Components.TestActivity.COMMAND_START_ACTIVITIES;
 import static android.server.wm.app27.Components.SDK_27_LAUNCHING_ACTIVITY;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.CommandSession.ActivitySession;
+import android.server.wm.CommandSession.ActivitySessionClient;
 
 import androidx.test.rule.ActivityTestRule;
 
@@ -41,7 +51,8 @@ public class StartActivityTests extends ActivityManagerTestBase {
 
     @Rule
     public final ActivityTestRule<TestActivity2> mTestActivity2Rule =
-            new ActivityTestRule<>(TestActivity2.class);
+            new ActivityTestRule<>(TestActivity2.class, false /* initialTouchMode */,
+                    false /* launchActivity */);
 
     /**
      * Ensures {@link Activity} can only be launched from an {@link Activity}
@@ -126,6 +137,46 @@ public class StartActivityTests extends ActivityManagerTestBase {
         mAmWmState.computeState(TEST_ACTIVITY);
         mAmWmState.assertResumedActivity("Test Activity should be resumed without older sdk",
                 TEST_ACTIVITY);
+    }
+
+    /**
+     * <pre>
+     * Assume there are 3 activities (X, Y, Z) have different task affinities:
+     * 1. Activity X started.
+     * 2. X launches 2 activities (Y with NEW_TASK, Z) by {@link Activity#startActivities}.
+     * Expect the result should be 2 tasks: [X] and [Y, Z].
+     * </pre>
+     */
+    @Test
+    public void testStartActivitiesInNewAndSameTask() {
+        final ActivitySession activity = ActivitySessionClient.create().startActivity(
+                getLaunchActivityBuilder().setUseInstrumentation()
+                        .setTargetActivity(TEST_ACTIVITY));
+
+        final Intent[] intents = {
+                new Intent().setComponent(NO_RELAUNCH_ACTIVITY)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                new Intent().setComponent(LAUNCHING_ACTIVITY)
+        };
+
+        final Bundle intentBundle = new Bundle();
+        intentBundle.putParcelableArray(EXTRA_INTENTS, intents);
+        // The {@link Activity#startActivities} cannot be called from the instrumentation
+        // package because the implementation (given by test runner) may be overridden.
+        activity.sendCommand(COMMAND_START_ACTIVITIES, intentBundle);
+
+        // The {@code intents} are started, wait for the last (top) activity to be ready and then
+        // verify their task ids.
+        mAmWmState.computeState(intents[1].getComponent());
+        final ActivityManagerState amState = mAmWmState.getAmState();
+        final int callerTaskId = amState.getTaskByActivity(TEST_ACTIVITY).getTaskId();
+        final int i0TaskId = amState.getTaskByActivity(intents[0].getComponent()).getTaskId();
+        final int i1TaskId = amState.getTaskByActivity(intents[1].getComponent()).getTaskId();
+
+        assertNotEquals("The activities started by startActivities() should have a different task"
+                + " from their caller activity", callerTaskId, i0TaskId);
+        assertEquals("The activities started by startActivities() should be put in the same task",
+                i0TaskId, i1TaskId);
     }
 
     public static class TestActivity2 extends Activity {

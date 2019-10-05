@@ -25,16 +25,19 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.app.AppOpsManager;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
+import android.os.Process;
 import android.os.storage.StorageManager;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Images.ImageColumns;
@@ -337,6 +340,26 @@ public class MediaStore_Images_MediaTest {
         }
         // As owner, we should be able to request the original bytes
         try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(originalUri, "r")) {
+        }
+
+        // Remove ACCESS_MEDIA_LOCATION permission
+        try {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation().
+                    adoptShellPermissionIdentity("android.permission.MANAGE_APP_OPS_MODES");
+
+            // Revoking ACCESS_MEDIA_LOCATION permission will kill the test app.
+            // Deny access_media_permission App op to revoke this permission.
+            if (mContext.getPackageManager().checkPermission(
+                    android.Manifest.permission.ACCESS_MEDIA_LOCATION, mContext.getPackageName())
+                    == PackageManager.PERMISSION_GRANTED) {
+
+                mContext.getSystemService(AppOpsManager.class).setUidMode(
+                        "android:access_media_location", Process.myUid(),
+                        AppOpsManager.MODE_IGNORED);
+            }
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation().
+                    dropShellPermissionIdentity();
         }
 
         // Now remove ownership, which means that Exif/XMP location data should be redacted
