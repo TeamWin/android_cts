@@ -575,30 +575,13 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
     }
 
     private void checkDataConnection(String[] parts) {
-        assertEquals(27, parts.length);
-        assertInteger(parts[4]);  // none
-        assertInteger(parts[5]);  // gprs
-        assertInteger(parts[6]);  // edge
-        assertInteger(parts[7]);  // umts
-        assertInteger(parts[8]);  // cdma
-        assertInteger(parts[9]);  // evdo_0
-        assertInteger(parts[10]); // evdo_A
-        assertInteger(parts[11]); // 1xrtt
-        assertInteger(parts[12]); // hsdpa
-        assertInteger(parts[13]); // hsupa
-        assertInteger(parts[14]); // hspa
-        assertInteger(parts[15]); // iden
-        assertInteger(parts[16]); // evdo_b
-        assertInteger(parts[17]); // lte
-        assertInteger(parts[18]); // ehrpd
-        assertInteger(parts[19]); // hspap
-        assertInteger(parts[20]); // gsm
-        assertInteger(parts[21]); // td_scdma
-        assertInteger(parts[22]); // iwlan
-        assertInteger(parts[23]); // lte_ca
-        assertInteger(parts[24]); // nr
-        assertInteger(parts[25]); // emngcy
-        assertInteger(parts[26]); // other
+        // we expect 26 in qt-release and 27 in qt-QPR1
+        assertTrue(parts.length >= 26);
+        assertTrue(parts.length <= 27);
+
+        for (int i = 4; i < parts.length; i++) {
+            assertInteger(parts[i]);
+        }
     }
 
     private void checkWifiState(String[] parts) {
