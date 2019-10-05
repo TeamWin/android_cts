@@ -1006,7 +1006,7 @@ public class PhoneStateListenerTest {
                 };
                 ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                         (tm) -> tm.listen(mListener,
-                                PhoneStateListener.LISTEN_OUTGOING_SMS_EMERGENCY_NUMBER));
+                                PhoneStateListener.LISTEN_OUTGOING_EMERGENCY_SMS));
             }
         });
         assertNull(mOnOutgoingSmsEmergencyNumberChanged);
