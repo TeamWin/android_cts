@@ -343,8 +343,9 @@ public class PermissionsTest extends BaseDeviceAdminTest {
         PackageInfo packageInfo = mContext.getPackageManager().getPackageInfo(
                 SIMPLE_PRE_M_APP_PACKAGE_NAME, 0);
         assertEquals(PackageManager.PERMISSION_GRANTED,
-                PermissionChecker.checkPermission(mContext, PERMISSION_NAME, -1,
-                        packageInfo.applicationInfo.uid, SIMPLE_PRE_M_APP_PACKAGE_NAME));
+                PermissionChecker.checkPermissionForDataDelivery(mContext, PERMISSION_NAME,
+                        PermissionChecker.PID_UNKNOWN, packageInfo.applicationInfo.uid,
+                        SIMPLE_PRE_M_APP_PACKAGE_NAME));
     }
 
     private void assertCanSetPermissionGrantStateAppPreM(int value) throws Exception {
@@ -365,7 +366,8 @@ public class PermissionsTest extends BaseDeviceAdminTest {
 
         // For pre-M apps the access to the data might be prevented via app-ops. Hence check that
         // they are correctly set
-        boolean isGranted = (PermissionChecker.checkPermission(mContext, PERMISSION_NAME, -1,
+        boolean isGranted = (PermissionChecker.checkPermissionForDataDelivery(mContext,
+                PERMISSION_NAME, PermissionChecker.PID_UNKNOWN,
                 packageInfo.applicationInfo.uid, SIMPLE_PRE_M_APP_PACKAGE_NAME)
                 == PackageManager.PERMISSION_GRANTED);
         switch (value) {
