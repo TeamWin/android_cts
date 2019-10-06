@@ -341,7 +341,7 @@ public class ActivityManagerState {
         int procId = -1;
 
         Activity(ActivityRecordProto proto) {
-            super(proto.configurationContainer);
+            super(proto.appWindowToken.windowToken.windowContainer.configurationContainer);
             name = proto.identifier.title;
             state = proto.state;
             visible = proto.visible;

@@ -807,7 +807,7 @@ public class ActivityManagerState {
         public boolean translucent;
 
         Activity(ActivityRecordProto proto) {
-            super(proto.configurationContainer);
+            super(proto.appWindowToken.windowToken.windowContainer.configurationContainer);
             name = proto.identifier.title;
             state = proto.state;
             visible = proto.visible;
@@ -827,6 +827,7 @@ public class ActivityManagerState {
         }
     }
 
+    // TODO: Switch to extending WindowContainer once unification is done.
     static abstract class ActivityContainer extends WindowManagerState.ConfigurationContainer {
         protected boolean mFullscreen;
         protected Rect mBounds;
