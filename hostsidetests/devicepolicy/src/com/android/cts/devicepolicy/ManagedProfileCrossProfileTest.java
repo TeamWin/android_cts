@@ -17,6 +17,7 @@
 package com.android.cts.devicepolicy;
 
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
+import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
 
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
@@ -47,15 +48,17 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG,
                 MANAGED_PROFILE_PKG + ".ManagedProfileTest", mProfileUserId);
 
-        assertMetricsLogged(getDevice(), () -> {
-            runDeviceTestsAsUser(
-                    MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".ManagedProfileTest",
-                    "testAddCrossProfileIntentFilter_all", mProfileUserId);
-        }, new DevicePolicyEventWrapper.Builder(EventId.ADD_CROSS_PROFILE_INTENT_FILTER_VALUE)
-                .setAdminPackageName(MANAGED_PROFILE_PKG)
-                .setInt(1)
-                .setStrings("com.android.cts.managedprofile.ACTION_TEST_ALL_ACTIVITY")
-                .build());
+        if (isStatsdEnabled(getDevice())) {
+            assertMetricsLogged(getDevice(), () -> {
+                runDeviceTestsAsUser(
+                        MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".ManagedProfileTest",
+                        "testAddCrossProfileIntentFilter_all", mProfileUserId);
+            }, new DevicePolicyEventWrapper.Builder(EventId.ADD_CROSS_PROFILE_INTENT_FILTER_VALUE)
+                    .setAdminPackageName(MANAGED_PROFILE_PKG)
+                    .setInt(1)
+                    .setStrings("com.android.cts.managedprofile.ACTION_TEST_ALL_ACTIVITY")
+                    .build());
+        }
 
         // Set up filters from primary to managed profile
         String command = "am start -W --user " + mProfileUserId + " " + MANAGED_PROFILE_PKG
@@ -247,7 +250,7 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
 
     @FlakyTest
     public void testCrossProfileWidgetsLogged() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
             return;
         }
 

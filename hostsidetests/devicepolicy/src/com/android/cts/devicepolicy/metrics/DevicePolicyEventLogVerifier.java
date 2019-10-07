@@ -19,6 +19,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.android.os.AtomsProto.Atom;
 import com.android.os.StatsLog.EventMetricData;
+import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,12 +38,14 @@ public final class DevicePolicyEventLogVerifier {
 
     /**
      * Asserts that <code>expectedLogs</code> were logged as a result of executing
-     * <code>action</code>, in the same order.
+     * <code>action</code>, in the same order. Note that {@link Action#apply() } is always
+     * invoked on the <code>action</code> parameter, even if statsd logs are disabled.
      */
     public static void assertMetricsLogged(ITestDevice device, Action action,
             DevicePolicyEventWrapper... expectedLogs) throws Exception {
         final AtomMetricTester logVerifier = new AtomMetricTester(device);
         if (logVerifier.isStatsdDisabled()) {
+            action.apply();
             return;
         }
         try {
@@ -59,6 +62,11 @@ public final class DevicePolicyEventLogVerifier {
         } finally {
             logVerifier.cleanLogs();
         }
+    }
+
+    public static boolean isStatsdEnabled(ITestDevice device) throws DeviceNotAvailableException {
+        final AtomMetricTester logVerifier = new AtomMetricTester(device);
+        return !logVerifier.isStatsdDisabled();
     }
 
     private static void assertExpectedMetricLogged(List<EventMetricData> data,
