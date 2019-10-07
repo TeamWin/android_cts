@@ -134,7 +134,7 @@ public class PackageSignatureTest extends AndroidTestCase {
             "com.android.cts.priv.ctsshim",
             "com.android.cts.ctsshim",
             // Test APEX used in CTS tests.
-            "com.android.apex.cts.shim,",
+            "com.android.apex.cts.shim",
 
             // Oom Catcher package to prevent tests from ooming device.
             "com.android.cts.oomcatcher"
