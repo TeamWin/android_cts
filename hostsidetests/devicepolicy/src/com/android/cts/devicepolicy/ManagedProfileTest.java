@@ -17,6 +17,7 @@
 package com.android.cts.devicepolicy;
 
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
+import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
 
 
 import android.stats.devicepolicy.EventId;
@@ -190,7 +191,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     }
 
     public void testWipeDataLogged() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
             return;
         }
         assertTrue(listUsers().contains(mProfileUserId));
@@ -426,15 +427,17 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG,
                 MANAGED_PROFILE_PKG + ".ManagedProfileTest", mProfileUserId);
 
-        assertMetricsLogged(getDevice(), () -> {
-            runDeviceTestsAsUser(
-                    MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".ManagedProfileTest",
-                    "testAddCrossProfileIntentFilter_all", mProfileUserId);
-        }, new DevicePolicyEventWrapper.Builder(EventId.ADD_CROSS_PROFILE_INTENT_FILTER_VALUE)
-                .setAdminPackageName(MANAGED_PROFILE_PKG)
-                .setInt(1)
-                .setStrings("com.android.cts.managedprofile.ACTION_TEST_ALL_ACTIVITY")
-                .build());
+        if (isStatsdEnabled(getDevice())) {
+            assertMetricsLogged(getDevice(), () -> {
+                runDeviceTestsAsUser(
+                        MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".ManagedProfileTest",
+                        "testAddCrossProfileIntentFilter_all", mProfileUserId);
+            }, new DevicePolicyEventWrapper.Builder(EventId.ADD_CROSS_PROFILE_INTENT_FILTER_VALUE)
+                    .setAdminPackageName(MANAGED_PROFILE_PKG)
+                    .setInt(1)
+                    .setStrings("com.android.cts.managedprofile.ACTION_TEST_ALL_ACTIVITY")
+                    .build());
+        }
 
         // Set up filters from primary to managed profile
         String command = "am start -W --user " + mProfileUserId + " " + MANAGED_PROFILE_PKG
@@ -845,10 +848,11 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                     contactsTestSet.checkIfCanFilterEnterpriseContacts(false);
                     contactsTestSet.checkIfCanFilterSelfContacts();
                     contactsTestSet.checkIfNoEnterpriseDirectoryFound();
-                    assertMetricsLogged(getDevice(), () -> {
-                        contactsTestSet.setCallerIdEnabled(true);
-                        contactsTestSet.setCallerIdEnabled(false);
-                    }, new DevicePolicyEventWrapper
+                    if (isStatsdEnabled(getDevice())) {
+                        assertMetricsLogged(getDevice(), () -> {
+                            contactsTestSet.setCallerIdEnabled(true);
+                            contactsTestSet.setCallerIdEnabled(false);
+                        }, new DevicePolicyEventWrapper
                                 .Builder(EventId.SET_CROSS_PROFILE_CALLER_ID_DISABLED_VALUE)
                                 .setAdminPackageName(MANAGED_PROFILE_PKG)
                                 .setBoolean(false)
@@ -858,19 +862,21 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                                 .setAdminPackageName(MANAGED_PROFILE_PKG)
                                 .setBoolean(true)
                                 .build());
-                    assertMetricsLogged(getDevice(), () -> {
-                        contactsTestSet.setContactsSearchEnabled(true);
-                        contactsTestSet.setContactsSearchEnabled(false);
-                    }, new DevicePolicyEventWrapper
+                        assertMetricsLogged(getDevice(), () -> {
+                            contactsTestSet.setContactsSearchEnabled(true);
+                            contactsTestSet.setContactsSearchEnabled(false);
+                        }, new DevicePolicyEventWrapper
                                 .Builder(EventId.SET_CROSS_PROFILE_CONTACTS_SEARCH_DISABLED_VALUE)
                                 .setAdminPackageName(MANAGED_PROFILE_PKG)
                                 .setBoolean(false)
                                 .build(),
                         new DevicePolicyEventWrapper
-                                .Builder(EventId.SET_CROSS_PROFILE_CONTACTS_SEARCH_DISABLED_VALUE)
+                                .Builder(
+                                EventId.SET_CROSS_PROFILE_CONTACTS_SEARCH_DISABLED_VALUE)
                                 .setAdminPackageName(MANAGED_PROFILE_PKG)
                                 .setBoolean(true)
                                 .build());
+                    }
                     return null;
                 } finally {
                     // reset policies
@@ -891,13 +897,15 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 "testDefaultOrganizationNameIsNull", mProfileUserId);
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".OrganizationInfoTest",
                 mProfileUserId);
-        assertMetricsLogged(getDevice(), () -> {
-            runDeviceTestsAsUser(
-                    MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".OrganizationInfoTest",
-                    "testSetOrganizationColor", mProfileUserId);
-        }, new DevicePolicyEventWrapper.Builder(EventId.SET_ORGANIZATION_COLOR_VALUE)
-                .setAdminPackageName(MANAGED_PROFILE_PKG)
-                .build());
+        if (isStatsdEnabled(getDevice())) {
+            assertMetricsLogged(getDevice(), () -> {
+                runDeviceTestsAsUser(
+                        MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".OrganizationInfoTest",
+                        "testSetOrganizationColor", mProfileUserId);
+            }, new DevicePolicyEventWrapper.Builder(EventId.SET_ORGANIZATION_COLOR_VALUE)
+                    .setAdminPackageName(MANAGED_PROFILE_PKG)
+                    .build());
+        }
     }
 
     public void testPasswordMinimumRestrictions() throws Exception {
@@ -1032,7 +1040,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     }
 
     public void testCrossProfileWidgetsLogged() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
             return;
         }
 
@@ -1611,7 +1619,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     }
 
     public void testCreateSeparateChallengeChangedLogged() throws Exception {
-        if (!mHasFeature || !mHasSecureLockScreen) {
+        if (!mHasFeature || !mHasSecureLockScreen || !isStatsdEnabled(getDevice())) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {
@@ -1623,7 +1631,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     }
 
     public void testSetProfileNameLogged() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {

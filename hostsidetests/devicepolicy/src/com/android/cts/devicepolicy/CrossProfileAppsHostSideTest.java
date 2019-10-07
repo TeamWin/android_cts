@@ -1,6 +1,7 @@
 package com.android.cts.devicepolicy;
 
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
+import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
 
 import android.stats.devicepolicy.EventId;
 
@@ -105,7 +106,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
     }
 
     public void testStartMainActivity_logged() throws Exception {
-        if (!mHasManagedUserFeature) {
+        if (!mHasManagedUserFeature || !isStatsdEnabled(getDevice())) {
             return;
         }
         assertMetricsLogged(
@@ -124,7 +125,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
     }
 
     public void testGetTargetUserProfiles_logged() throws Exception {
-        if (!mHasManagedUserFeature) {
+        if (!mHasManagedUserFeature || !isStatsdEnabled(getDevice())) {
             return;
         }
         assertMetricsLogged(
