@@ -222,6 +222,9 @@ public class NativeMidiEchoTest {
 
     @After
     public void tearDown() throws Exception {
+        if (!hasMidiSupport()) {
+            return; // Not supported so don't need to tear down.
+        }
         tearDownEchoServer();
 
         Log.i(TAG, "++ tearDown()");
