@@ -93,7 +93,8 @@ public class SensorTest extends SensorTestCase {
 
         mAndroidSensorList = new ArrayList<>();
         for (Sensor s : mSensorList) {
-            if (s.getType() < Sensor.TYPE_DEVICE_PRIVATE_BASE) {
+            if (s.getType() < Sensor.TYPE_DEVICE_PRIVATE_BASE &&
+                    (!context.getPackageManager().isInstantApp() || s.getType() != Sensor.TYPE_HEART_RATE)) {
                 mAndroidSensorList.add(s);
             }
         }
