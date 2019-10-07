@@ -19,6 +19,7 @@ package android.permission.cts;
 import static android.Manifest.permission.ACCESS_BACKGROUND_LOCATION;
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static android.Manifest.permission.ACCESS_MEDIA_LOCATION;
 import static android.Manifest.permission.READ_CALL_LOG;
 import static android.Manifest.permission.READ_CONTACTS;
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
@@ -103,6 +104,13 @@ public class SplitPermissionsSystemTest {
                     break;
                 case ACCESS_COARSE_LOCATION:
                     assertSplit(split, ACCESS_BACKGROUND_LOCATION, Build.VERSION_CODES.Q);
+                    break;
+                case READ_EXTERNAL_STORAGE:
+                    assertSplit(split, ACCESS_MEDIA_LOCATION, Build.VERSION_CODES.Q);
+                    // Remove this split permission from seenSplits, ACCESS_MEDIA_LOCATION is not
+                    // always available hence removing this permission from seenSplits will
+                    // avoid seenSplits size check fail.
+                    seenSplits.remove(split);
                     break;
             }
         }
