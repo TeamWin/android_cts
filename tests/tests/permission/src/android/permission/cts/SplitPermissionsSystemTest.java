@@ -107,15 +107,11 @@ public class SplitPermissionsSystemTest {
                     break;
                 case READ_EXTERNAL_STORAGE:
                     assertSplit(split, ACCESS_MEDIA_LOCATION, Build.VERSION_CODES.Q);
-                    // Remove this split permission from seenSplits, ACCESS_MEDIA_LOCATION is not
-                    // always available hence removing this permission from seenSplits will
-                    // avoid seenSplits size check fail.
-                    seenSplits.remove(split);
                     break;
             }
         }
 
-        assertEquals(6, seenSplits.size());
+        assertEquals(7, seenSplits.size());
     }
 
     private void assertSplit(SplitPermissionInfo split, String permission, int targetSdk) {
