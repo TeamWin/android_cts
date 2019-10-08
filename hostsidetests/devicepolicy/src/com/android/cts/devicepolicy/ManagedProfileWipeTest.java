@@ -17,6 +17,7 @@
 package com.android.cts.devicepolicy;
 
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
+import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
 
 import android.platform.test.annotations.FlakyTest;
 import android.stats.devicepolicy.EventId;
@@ -47,7 +48,7 @@ public class ManagedProfileWipeTest extends BaseManagedProfileTest {
 
     @FlakyTest
     public void testWipeDataLogged() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
             return;
         }
         assertTrue(listUsers().contains(mProfileUserId));
