@@ -650,8 +650,8 @@ TEST_P(NdkBinderTest_Aidl, GetInterfaceVersion) {
   if (GetParam().shouldBeOld) {
     EXPECT_EQ(1, res);
   } else {
-    // 10000 is the not-yet-frozen version
-    EXPECT_EQ(10000, res);
+    // 3 is the not-yet-frozen version
+    EXPECT_EQ(3, res);
   }
 }
 
