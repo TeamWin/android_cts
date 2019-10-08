@@ -67,7 +67,8 @@ public class MediaStore_AudioTest {
         assertTrue(Audio.keyFor("coldplay").compareTo(mKeyForBeatles) > 0);
 
         // test accented characters
-        assertTrue(Audio.keyFor("¿Cómo esto funciona?").compareTo(mKeyForBeatles) < 0);
+        assertTrue(Audio.keyFor("¿Aómo esto funciona?").compareTo(mKeyForBeatles) < 0);
+        assertTrue(Audio.keyFor("¿Cómo esto funciona?").compareTo(mKeyForBeatles) > 0);
         assertTrue(Audio.keyFor("Le passé composé").compareTo(mKeyForBeatles) > 0);
     }
 }

@@ -42,6 +42,7 @@ import androidx.test.InstrumentationRegistry;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -105,6 +106,7 @@ public class MediaStore_Audio_Genres_MembersTest {
     }
 
     @Test
+    @Ignore("Genres cannot be directly modified")
     public void testStoreAudioGenresMembersExternal() {
         ContentValues values = new ContentValues();
         values.put(Genres.NAME, Audio1.GENRE);
