@@ -72,7 +72,7 @@ class LinkerNamespacesHelper {
         "libz.so"
     };
 
-    // Libraries listed in public.libraries.android.txt, located in ART_APEX_DIR path
+    // Libraries listed in public.libraries.android.txt, located in /apex/com.android.art/${LIB}
     private final static String[] PUBLIC_ART_LIBRARIES = {
         "libicui18n.so",
         "libicuuc.so",
