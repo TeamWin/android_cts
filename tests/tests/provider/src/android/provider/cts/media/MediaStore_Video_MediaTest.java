@@ -254,15 +254,20 @@ public class MediaStore_Video_MediaTest {
 
         // Remove ACCESS_MEDIA_LOCATION permission
         try {
-            InstrumentationRegistry.getInstrumentation().getUiAutomation().
-                    adoptShellPermissionIdentity("android.permission.MANAGE_APP_OPS_MODES");
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .adoptShellPermissionIdentity("android.permission.MANAGE_APP_OPS_MODES",
+                            "android.permission.REVOKE_RUNTIME_PERMISSIONS");
 
             // Revoking ACCESS_MEDIA_LOCATION permission will kill the test app.
             // Deny access_media_permission App op to revoke this permission.
-            if (mContext.getPackageManager().checkPermission(
-                    android.Manifest.permission.ACCESS_MEDIA_LOCATION, mContext.getPackageName())
-                    == PackageManager.PERMISSION_GRANTED) {
-
+            PackageManager packageManager = mContext.getPackageManager();
+            String packageName = mContext.getPackageName();
+            if (packageManager.checkPermission(android.Manifest.permission.ACCESS_MEDIA_LOCATION,
+                    packageName) == PackageManager.PERMISSION_GRANTED) {
+                mContext.getPackageManager().updatePermissionFlags(
+                        android.Manifest.permission.ACCESS_MEDIA_LOCATION, packageName,
+                        PackageManager.FLAG_PERMISSION_REVOKED_COMPAT,
+                        PackageManager.FLAG_PERMISSION_REVOKED_COMPAT, mContext.getUser());
                 mContext.getSystemService(AppOpsManager.class).setUidMode(
                         "android:access_media_location", Process.myUid(),
                         AppOpsManager.MODE_IGNORED);
