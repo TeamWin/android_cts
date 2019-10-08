@@ -38,6 +38,7 @@
             android:turnScreenOn="true"
             android:excludeFromRecents="true"
             android:exported="true" />
+        <activity android:name=".SimpleActivityStartFgService" android:exported="true" />
         <activity android:name=".SimpleActivityImmediateExit" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -50,10 +51,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <service android:name=".SimpleService" android:exported="true">
         </service>
         <service android:name=".SimpleService2" android:exported="true" android:process=":other">
         </service>
+        <service android:name=".SimpleService3" android:exported="true" />
+
         <receiver android:name=".SimpleReceiverStartService" android:exported="true">
         </receiver>
         <receiver android:name=".SimpleReceiver" android:exported="true">

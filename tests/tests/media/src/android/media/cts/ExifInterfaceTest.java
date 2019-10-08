@@ -33,6 +33,7 @@ import libcore.io.IoUtils;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
@@ -359,6 +360,30 @@ public class ExifInterfaceTest extends AndroidTestCase {
         }
     }
 
+    private void testExifInterfaceForStandalone(String fileName, int typedArrayResourceId)
+            throws IOException {
+        ExpectedValue expectedValue = new ExpectedValue(
+                getContext().getResources().obtainTypedArray(typedArrayResourceId));
+
+        // Test for reading from external data storage.
+        fileName = EXTERNAL_BASE_DIRECTORY + fileName;
+
+        File imageFile = new File(Environment.getExternalStorageDirectory(), fileName);
+        String verboseTag = imageFile.getName();
+
+        FileInputStream fis = new FileInputStream(imageFile);
+        // Skip the following marker bytes (0xff, 0xd8, 0xff, 0xe1)
+        fis.skip(4);
+        // Read the value of the length of the exif data
+        short length = readShort(fis);
+        byte[] exifBytes = new byte[length];
+        fis.read(exifBytes);
+
+        ByteArrayInputStream bin = new ByteArrayInputStream(exifBytes);
+        ExifInterface exifInterface = ExifInterface.fromStandalone(bin);
+        compareWithExpectedValue(exifInterface, expectedValue, verboseTag, true);
+    }
+
     private void testExifInterfaceCommon(String fileName, ExpectedValue expectedValue)
             throws IOException {
         File imageFile = new File(Environment.getExternalStorageDirectory(), fileName);
@@ -563,6 +588,11 @@ public class ExifInterfaceTest extends AndroidTestCase {
         testExifInterfaceForRaw(SAMSUNG_NX3000_SRW, R.array.samsung_nx3000_srw);
     }
 
+    public void testReadExifDataFromStandaloneData() throws Throwable {
+        testExifInterfaceForStandalone(EXIF_BYTE_ORDER_II_JPEG, R.array.exifbyteorderii_standalone);
+        testExifInterfaceForStandalone(EXIF_BYTE_ORDER_MM_JPEG, R.array.exifbyteordermm_standalone);
+    }
+
     public void testSetDateTime() throws IOException {
         final String dateTimeValue = "2017:02:02 22:22:22";
         final String dateTimeOriginalValue = "2017:01:01 11:11:11";
@@ -604,5 +634,14 @@ public class ExifInterfaceTest extends AndroidTestCase {
                 "cts_" + System.nanoTime() + "_" + original.getName());
         FileUtils.copyFileOrThrow(original, cloned);
         return cloned;
+    }
+
+    private short readShort(InputStream is) throws IOException {
+        int ch1 = is.read();
+        int ch2 = is.read();
+        if ((ch1 | ch2) < 0) {
+            throw new EOFException();
+        }
+        return (short) ((ch1 << 8) + (ch2));
     }
 }

@@ -82,10 +82,18 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
     static final String SIMPLE_PACKAGE_NAME = "com.android.cts.launcherapps.simpleapp";
     static final String SIMPLE_SERVICE = ".SimpleService";
     static final String SIMPLE_SERVICE2 = ".SimpleService2";
+    static final String SIMPLE_SERVICE3 = ".SimpleService3";
     static final String SIMPLE_RECEIVER_START_SERVICE = ".SimpleReceiverStartService";
     static final String SIMPLE_ACTIVITY_START_SERVICE = ".SimpleActivityStartService";
+    static final String SIMPLE_ACTIVITY_START_FG_SERVICE = ".SimpleActivityStartFgService";
     public static String ACTION_SIMPLE_ACTIVITY_START_SERVICE_RESULT =
             "com.android.cts.launcherapps.simpleapp.SimpleActivityStartService.RESULT";
+    static final String ACTION_SIMPLE_ACTIVITY_START_FG =
+            "com.android.cts.launcherapps.simpleapp.SimpleActivityStartFgService.START_THEN_FG";
+    public static String ACTION_SIMPLE_ACTIVITY_START_FG_SERVICE_RESULT =
+            "com.android.cts.launcherapps.simpleapp.SimpleActivityStartFgService.NOW_FOREGROUND";
+    public static String ACTION_FINISH_EVERYTHING =
+            "com.android.cts.launcherapps.simpleapp.SimpleActivityStartFgService.FINISH_ALL";
 
     // APKs for testing heavy weight app interactions.
     static final String CANT_SAVE_STATE_1_PACKAGE_NAME = "com.android.test.cantsavestate1";
@@ -94,6 +102,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
     // Actions
     static final String ACTION_START_FOREGROUND = "com.android.test.action.START_FOREGROUND";
     static final String ACTION_STOP_FOREGROUND = "com.android.test.action.STOP_FOREGROUND";
+    static final String ACTION_START_THEN_FG = "com.android.test.action.START_THEN_FG";
+    static final String ACTION_STOP_SERVICE = "com.android.test.action.STOP";
 
     private static final int TEMP_WHITELIST_DURATION_MS = 2000;
 
@@ -103,6 +113,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
     private Intent mServiceStartForegroundIntent;
     private Intent mServiceStopForegroundIntent;
     private Intent mService2Intent;
+    private Intent mService3Intent;
+    private Intent mServiceStartForeground3Intent;
     private Intent mMainProcess[];
     private Intent mAllProcesses[];
 
@@ -122,8 +134,10 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         mServiceStartForegroundIntent.setAction(ACTION_START_FOREGROUND);
         mServiceStopForegroundIntent = new Intent(mServiceIntent);
         mServiceStopForegroundIntent.setAction(ACTION_STOP_FOREGROUND);
-        mService2Intent = new Intent();
-        mService2Intent.setClassName(SIMPLE_PACKAGE_NAME, SIMPLE_PACKAGE_NAME + SIMPLE_SERVICE2);
+        mService2Intent = new Intent()
+                .setClassName(SIMPLE_PACKAGE_NAME, SIMPLE_PACKAGE_NAME + SIMPLE_SERVICE2);
+        mService3Intent = new Intent()
+                .setClassName(SIMPLE_PACKAGE_NAME, SIMPLE_PACKAGE_NAME + SIMPLE_SERVICE3);
         mMainProcess = new Intent[1];
         mMainProcess[0] = mServiceIntent;
         mAllProcesses = new Intent[2];
@@ -131,6 +145,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         mAllProcesses[1] = mService2Intent;
         mContext.stopService(mServiceIntent);
         mContext.stopService(mService2Intent);
+        mContext.stopService(mService3Intent);
         turnScreenOn();
         removeTestAppFromWhitelists();
         mAppCount = 0;
@@ -1119,6 +1134,78 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             controller.setAppOpMode(AppOpsManager.OPSTR_START_FOREGROUND, "allow");
             controller.removeFromWhitelist();
         }
+    }
+
+    /**
+     * Verify that an app under background restrictions has its foreground services
+     * demoted to ordinary service state when it is no longer the top app.
+     */
+    public void testBgRestrictedForegroundService() throws Exception {
+        final Intent activityIntent = new Intent()
+                .setClassName(SIMPLE_PACKAGE_NAME,
+                        SIMPLE_PACKAGE_NAME + SIMPLE_ACTIVITY_START_FG_SERVICE)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        final ServiceProcessController controller = new ServiceProcessController(mContext,
+                getInstrumentation(), STUB_PACKAGE_NAME, mAllProcesses, WAIT_TIME);
+        final WatchUidRunner uidWatcher = controller.getUidWatcher();
+
+        final Intent homeIntent = new Intent()
+                .setAction(Intent.ACTION_MAIN)
+                .addCategory(Intent.CATEGORY_HOME)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                        | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+
+        final Intent serviceStartIntent = new Intent(mService3Intent)
+                .setAction(ACTION_START_THEN_FG);
+        activityIntent.putExtra("service", serviceStartIntent);
+        boolean activityStarted = false;
+
+        try {
+            // First kill the process to start out in a stable state.
+            controller.ensureProcessGone();
+
+            // Do initial setup.
+            controller.denyAnyInBackgroundOp();
+            controller.makeUidIdle();
+            controller.removeFromWhitelist();
+            controller.setAppOpMode(AppOpsManager.OPSTR_START_FOREGROUND, "allow");
+
+            // Start the activity, which will start the fg service as well, and wait
+            // for the report that it's all up and running.
+            WaitForBroadcast waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
+            waiter.prepare(ACTION_SIMPLE_ACTIVITY_START_FG_SERVICE_RESULT);
+
+            activityIntent.setAction(ACTION_SIMPLE_ACTIVITY_START_FG);
+            mContext.startActivity(activityIntent);
+            activityStarted = true;
+
+            Intent resultIntent = waiter.doWait(WAIT_TIME);
+            int brCode = resultIntent.getIntExtra("result", Activity.RESULT_CANCELED);
+            if (brCode != Activity.RESULT_FIRST_USER) {
+                fail("Failed starting service, result=" + brCode);
+            }
+
+            // activity is in front, fg service is running.  make sure that we see
+            // the expected state at this point.
+            uidWatcher.waitFor(WatchUidRunner.CMD_ACTIVE, null);
+            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP);
+
+            // Switch to the home app; make sure the test app drops all the way
+            // down to SERVICE, not FG_SERVICE
+            mContext.startActivity(homeIntent);
+            uidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_SERVICE);
+        } finally {
+            // tear down everything and we're done
+            if (activityStarted) {
+                activityIntent.setAction(ACTION_FINISH_EVERYTHING);
+                mContext.startActivity(activityIntent);
+            }
+
+            controller.cleanup();
+        }
+
     }
 
     private boolean supportsCantSaveState() {
