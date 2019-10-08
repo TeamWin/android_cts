@@ -532,10 +532,15 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
     }
 
     private void testGetFrameAtTimeEditList(int option, int[][] testCases) {
+        MediaMetadataRetriever.BitmapParams params = new MediaMetadataRetriever.BitmapParams();
+        params.setPreferredConfig(Bitmap.Config.ARGB_8888);
+
         testGetFrameAtEditList(testCases, (r) -> {
             List<Bitmap> bitmaps = new ArrayList<>();
             for (int i = 0; i < testCases.length; i++) {
-                bitmaps.add(r.getFrameAtTime(testCases[i][0], option));
+                Bitmap bitmap = r.getFrameAtTime(testCases[i][0], option, params);
+                assertEquals(Bitmap.Config.ARGB_8888, params.getActualConfig());
+                bitmaps.add(bitmap);
             }
             return bitmaps;
         });
@@ -589,25 +594,18 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
 
     private void testGetFrameAt(int[][] testCases,
             Function<MediaMetadataRetriever, List<Bitmap> > bitmapRetriever) {
-        int resId = R.raw.binary_counter_320x240_30fps_600frames;
-        if (!MediaUtils.hasCodecForResourceAndDomain(getContext(), resId, "video/")
-            && mPackageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
-            MediaUtils.skipTest("no video codecs for resource on watch");
-            return;
-        }
-
-        setDataSourceFd(resId);
-
-        List<Bitmap> bitmaps = bitmapRetriever.apply(mRetriever);
-
-        for (int i = 0; i < testCases.length; i++) {
-            verifyVideoFrame(bitmaps.get(i), testCases[i]);
-        }
+        testGetFrameAt(R.raw.binary_counter_320x240_30fps_600frames,
+                testCases, bitmapRetriever);
     }
 
     private void testGetFrameAtEditList(int[][] testCases,
             Function<MediaMetadataRetriever, List<Bitmap> > bitmapRetriever) {
-        int resId = R.raw.binary_counter_320x240_30fps_600frames_editlist;
+        testGetFrameAt(R.raw.binary_counter_320x240_30fps_600frames_editlist,
+                testCases, bitmapRetriever);
+    }
+
+    private void testGetFrameAt(int resId, int[][] testCases,
+            Function<MediaMetadataRetriever, List<Bitmap> > bitmapRetriever) {
         if (!MediaUtils.hasCodecForResourceAndDomain(getContext(), resId, "video/")
             && mPackageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
             MediaUtils.skipTest("no video codecs for resource on watch");
@@ -680,6 +678,33 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
         }
     }
 
+    private void testGetScaledFrameAtTime(int scaleToWidth, int scaleToHeight,
+            int expectedWidth, int expectedHeight, Bitmap.Config config) {
+        MediaMetadataRetriever.BitmapParams params = null;
+        Bitmap bitmap = null;
+        if (config != null) {
+            params = new MediaMetadataRetriever.BitmapParams();
+            params.setPreferredConfig(config);
+            bitmap = mRetriever.getScaledFrameAtTime(
+                    2066666 /*timeUs */, OPTION_CLOSEST, scaleToWidth, scaleToHeight, params);
+        } else {
+            bitmap = mRetriever.getScaledFrameAtTime(
+                    2066666 /*timeUs */, OPTION_CLOSEST, scaleToWidth, scaleToHeight);
+        }
+        if (bitmap == null) {
+            fail("Failed to get scaled bitmap");
+        }
+        if (SAVE_BITMAP_OUTPUT) {
+            CodecUtils.saveBitmapToFile(bitmap, String.format("test_%dx%d.jpg",
+                    expectedWidth, expectedHeight));
+        }
+        if (config != null) {
+            assertEquals("Actual config is wrong", config, params.getActualConfig());
+        }
+        assertEquals("Bitmap width is wrong", expectedWidth, bitmap.getWidth());
+        assertEquals("Bitmap height is wrong", expectedHeight, bitmap.getHeight());
+    }
+
     public void testGetScaledFrameAtTime() {
         int resId = R.raw.binary_counter_320x240_30fps_600frames;
         if (!MediaUtils.hasCodecForResourceAndDomain(getContext(), resId, "video/")
@@ -689,119 +714,25 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
         }
 
         setDataSourceFd(resId);
+        MediaMetadataRetriever.BitmapParams params = new MediaMetadataRetriever.BitmapParams();
 
         // Test desided size of 160 x 120. Return should be 160 x 120
-        try {
-            Bitmap bitmap = mRetriever.getScaledFrameAtTime(
-                2066666 /*timeUs */, OPTION_CLOSEST, 160 /*width*/, 120 /*height*/);
-            if (bitmap == null) {
-                fail("Failed to get scaled bitmap");
-            }
-            if (SAVE_BITMAP_OUTPUT) {
-                CodecUtils.saveBitmapToFile(bitmap, "test_160x120" + ".jpg");
-            }
-
-            if (bitmap.getWidth() != 160 /* width */) {
-                fail("Bitmap width is " + bitmap.getWidth() + "Expect: 160");
-            }
-            if (bitmap.getHeight() != 120 /* height */) {
-                fail("Bitmap height is " + bitmap.getHeight() + "Expect: 120");
-            }
-
-        } catch (Exception e) {
-            fail("Exception getting bitmap: " + e);
-        }
+        testGetScaledFrameAtTime(160, 120, 160, 120, Bitmap.Config.ARGB_8888);
 
         // Test scaled up bitmap to 640 x 480. Return should be 640 x 480
-        try {
-            Bitmap bitmap = mRetriever.getScaledFrameAtTime(
-                2066666 /*timeUs */, OPTION_CLOSEST, 640 /*width*/, 480 /*height*/);
-            if (bitmap == null) {
-                fail("Failed to get scaled bitmap");
-            }
-            if (SAVE_BITMAP_OUTPUT) {
-                CodecUtils.saveBitmapToFile(bitmap, "test_640x480" + ".jpg");
-            }
-
-            if (bitmap.getWidth() != 640 /* width */) {
-                fail("Bitmap width is " + bitmap.getWidth() + "Expect: 640");
-            }
-            if (bitmap.getHeight() != 480 /* height */) {
-                fail("Bitmap height is " + bitmap.getHeight() + "Expect: 480");
-            }
-
-        } catch (Exception e) {
-            fail("Exception getting bitmap: " + e);
-        }
+        testGetScaledFrameAtTime(640, 480, 640, 480, Bitmap.Config.ARGB_8888);
 
         // Test scaled up bitmap to 320 x 120. Return should be 160 x 120
-        try {
-            Bitmap bitmap = mRetriever.getScaledFrameAtTime(
-                2066666 /*timeUs */, OPTION_CLOSEST, 320 /*width*/, 120 /*height*/);
-            if (bitmap == null) {
-                fail("Failed to get scaled bitmap");
-            }
-            if (SAVE_BITMAP_OUTPUT) {
-                CodecUtils.saveBitmapToFile(bitmap, "test_320x120" + ".jpg");
-            }
-
-            if (bitmap.getWidth() != 160 /* width */) {
-                fail("Bitmap width is " + bitmap.getWidth() + "Expect: 160");
-            }
-            if (bitmap.getHeight() != 120 /* height */) {
-                fail("Bitmap height is " + bitmap.getHeight() + "Expect: 120");
-            }
-
-        } catch (Exception e) {
-            fail("Exception getting bitmap: " + e);
-        }
+        testGetScaledFrameAtTime(320, 120, 160, 120, Bitmap.Config.RGB_565);
 
         // Test scaled up bitmap to 160 x 240. Return should be 160 x 120
-        try {
-            Bitmap bitmap = mRetriever.getScaledFrameAtTime(
-                2066666 /*timeUs */, OPTION_CLOSEST, 160 /*width*/, 240 /*height*/);
-            if (bitmap == null) {
-                fail("Failed to get scaled bitmap");
-            }
-            if (SAVE_BITMAP_OUTPUT) {
-                CodecUtils.saveBitmapToFile(bitmap, "test_160x240" + ".jpg");
-            }
-
-            if (bitmap.getWidth() != 160 /* width */) {
-                fail("Bitmap width is " + bitmap.getWidth() + "Expect: 160");
-            }
-            if (bitmap.getHeight() != 120 /* height */) {
-                fail("Bitmap height is " + bitmap.getHeight() + "Expect: 120");
-            }
-
-        } catch (Exception e) {
-            fail("Exception getting bitmap: " + e);
-        }
+        testGetScaledFrameAtTime(160, 240, 160, 120, Bitmap.Config.RGB_565);
 
         // Test scaled the video with aspect ratio
         resId = R.raw.binary_counter_320x240_720x240_30fps_600frames;
         setDataSourceFd(resId);
 
-        try {
-            Bitmap bitmap = mRetriever.getScaledFrameAtTime(
-                2066666 /*timeUs */, OPTION_CLOSEST, 330 /*width*/, 240 /*height*/);
-            if (bitmap == null) {
-                fail("Failed to get scaled bitmap");
-            }
-            if (SAVE_BITMAP_OUTPUT) {
-                CodecUtils.saveBitmapToFile(bitmap, "test_330x240" + ".jpg");
-            }
-
-            if (bitmap.getWidth() != 330 /* width */) {
-                fail("Bitmap width is " + bitmap.getWidth() + "Expect: 330");
-            }
-            if (bitmap.getHeight() != 110 /* height */) {
-                fail("Bitmap height is " + bitmap.getHeight() + "Expect: 110");
-            }
-
-        } catch (Exception e) {
-            fail("Exception getting bitmap: " + e);
-        }
+        testGetScaledFrameAtTime(330, 240, 330, 110, null);
     }
 
     public void testGetImageAtIndex() throws Exception {
