@@ -25,13 +25,17 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
+import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.graphics.Region;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.platform.test.annotations.Presubmit;
 import android.text.InputType;
+import android.text.Spannable;
+import android.text.SpannableString;
 import android.text.TextUtils;
+import android.text.style.ImageSpan;
 import android.util.ArrayMap;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
@@ -217,6 +221,26 @@ public class AccessibilityNodeInfoTest {
         assertTrue(TextUtils.equals(originalText, info.getError()));
         assertTrue(TextUtils.equals(originalText, info.getContentDescription()));
         assertTrue(TextUtils.equals(originalText, info.getStateDescription()));
+    }
+
+    @SmallTest
+    @Test
+    public void testSetTextWithImageSpan_shouldTextSetToInfo() {
+        final Bitmap bitmap = Bitmap.createBitmap(/* width= */10, /* height= */10,
+                Bitmap.Config.ARGB_8888);
+        final ImageSpan imageSpan = new ImageSpan(getContext(), bitmap);
+        final String testString = "test string";
+        final String replacementString = " ";
+        final SpannableString textWithImageSpan = new SpannableString(testString);
+        final int indexIconStart = testString.indexOf(replacementString);
+        final int indexIconEnd = indexIconStart + replacementString.length();
+        textWithImageSpan.setSpan(imageSpan, /* start= */indexIconStart,/* end= */indexIconEnd,
+                /* flags= */Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        AccessibilityNodeInfo info = AccessibilityNodeInfo.obtain();
+        info.setText(textWithImageSpan);
+
+        assertEquals(testString, info.getText().toString());
     }
 
     @SmallTest
