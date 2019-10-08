@@ -54,6 +54,16 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
     }
 
     /**
+     * Runs the helper app test method on device targeted for
+     * com.android.cts.rollback.host.app2.HostTestHelper.
+     */
+    private void run2(String method) throws Exception {
+        assertThat(runDeviceTests("com.android.cts.rollback.host.app2",
+                "com.android.cts.rollback.host.app2.HostTestHelper",
+                method)).isTrue();
+    }
+
+    /**
      * Return {@code true} if and only if device supports updating apex.
      */
     private boolean isApexUpdateSupported() throws Exception {
@@ -191,6 +201,15 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
         run("testApexKeyRotation_CommitRollback");
         getDevice().reboot();
         run("testApexKeyRotation_CofirmRollback");
+    }
+
+    /**
+     * Tests installer B can't rollback a package installed by A.
+     */
+    @Test
+    public void testApkRollbackByAnotherInstaller() throws Exception {
+        run("testInstallTestAppA_EnableRollback");
+        run2("testRollbackTestAppA");
     }
 
 }
