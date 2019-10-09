@@ -33,6 +33,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
+
 /**
  * Test the non-location-related functionality of TelephonyManager.
  */
@@ -297,6 +299,27 @@ public class TelephonyManagerPermissionTest {
         try {
             mTelephonyManager.getDataNetworkType();
             fail("getDataNetworkType did not throw a SecurityException");
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
+
+    /**
+     * Verify that setForbiddenPlmns requires Permission.
+     * <p>
+     * Requires Permission:
+     * {@link android.Manifest.permission#READ_PHONE_STATE READ_PHONE_STATE}
+     * or that the calling app has carrier privileges (see {@link #hasCarrierPrivileges}).
+     */
+    @Test
+    public void testSetForbiddenPlmns() {
+        if (!mHasTelephony) {
+            return;
+        }
+
+        try {
+            mTelephonyManager.setForbiddenPlmns(new ArrayList<String>());
+            fail("SetForbiddenPlmns did not throw a SecurityException");
         } catch (SecurityException e) {
             // expected
         }
