@@ -47,7 +47,8 @@ def main():
         ts_sensor_first = {}
         ts_sensor_last = {}
         for sensor, existing in sensors.iteritems():
-            if existing:
+            # Vibrator doesn't generate outputs: b/142653973
+            if existing and sensor != 'vibrator':
                 assert events[sensor], '%s sensor has no events!' % sensor
                 ts_sensor_first[sensor] = events[sensor][0]['time']
                 ts_sensor_last[sensor] = events[sensor][-1]['time']
@@ -60,7 +61,7 @@ def main():
 
         # The motion timestamps must be between the two image timestamps.
         for sensor, existing in sensors.iteritems():
-            if existing:
+            if existing and sensor != 'vibrator':
                 print '%s timestamps: %d %d' % (sensor, ts_sensor_first[sensor],
                                                 ts_sensor_last[sensor])
                 assert ts_image0 < ts_sensor_first[sensor] < ts_image1
