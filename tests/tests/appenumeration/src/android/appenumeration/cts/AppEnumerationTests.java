@@ -76,6 +76,15 @@ public class AppEnumerationTests {
     private static final String QUERIES_SERVICE_ACTION = PKG_BASE + "queries.service.action";
     /** A package that queries for the authority in {@link #TARGET_FILTERS} provider */
     private static final String QUERIES_PROVIDER_AUTH = PKG_BASE + "queries.provider.authority";
+    /** Queries for the unexported action in {@link #TARGET_FILTERS} activity filter */
+    private static final String QUERIES_UNEXPORTED_ACTIVITY_ACTION =
+            PKG_BASE + "queries.activity.action.unexported";
+    /** Queries for the unexported action in {@link #TARGET_FILTERS} service filter */
+    private static final String QUERIES_UNEXPORTED_SERVICE_ACTION =
+            PKG_BASE + "queries.service.action.unexported";
+    /** Queries for the unexported authority in {@link #TARGET_FILTERS} provider */
+    private static final String QUERIES_UNEXPORTED_PROVIDER_AUTH =
+            PKG_BASE + "queries.provider.authority.unexported";
     /** A package that queries for {@link #TARGET_NO_API} package */
     private static final String QUERIES_PACKAGE = PKG_BASE + "queries.pkg";
 
@@ -86,6 +95,9 @@ public class AppEnumerationTests {
             QUERIES_ACTIVITY_ACTION,
             QUERIES_SERVICE_ACTION,
             QUERIES_PROVIDER_AUTH,
+            QUERIES_UNEXPORTED_ACTIVITY_ACTION,
+            QUERIES_UNEXPORTED_SERVICE_ACTION,
+            QUERIES_UNEXPORTED_PROVIDER_AUTH,
             QUERIES_PACKAGE,
     };
 
@@ -191,9 +203,23 @@ public class AppEnumerationTests {
     }
 
     @Test
+    public void queriesActivityAction_cannotSeeUnexportedTarget() throws Exception {
+        assertNotVisible(QUERIES_UNEXPORTED_ACTIVITY_ACTION, TARGET_FILTERS);
+    }
+
+    @Test
+    public void queriesServiceAction_cannotSeeUnexportedTarget() throws Exception {
+        assertNotVisible(QUERIES_UNEXPORTED_SERVICE_ACTION, TARGET_FILTERS);
+    }
+
+    @Test
+    public void queriesProviderAuthority_cannotSeeUnexportedTarget() throws Exception {
+        assertNotVisible(QUERIES_UNEXPORTED_PROVIDER_AUTH, TARGET_FILTERS);
+    }
+
+    @Test
     public void queriesPackage_canSeeTarget() throws Exception {
         assertVisible(QUERIES_PACKAGE, TARGET_NO_API);
-
     }
     @Test
     public void whenStarted_canSeeCaller() throws Exception {
