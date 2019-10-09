@@ -25,6 +25,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     androidx.annotation_annotation \
     guava
 
+LOCAL_SDK_VERSION := test_current
+
 LOCAL_MODULE := cts-background-activity-common
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
