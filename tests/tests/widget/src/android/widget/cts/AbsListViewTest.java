@@ -45,6 +45,7 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Insets;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.text.Editable;
@@ -58,6 +59,7 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowInsets;
 import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
 import android.widget.AdapterView;
@@ -128,7 +130,7 @@ public class AbsListViewTest {
     private static final float DELTA = 0.001f;
 
     @Before
-    public void setup() throws Exception {
+    public void setup() throws Throwable {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         final Activity activity = mActivityRule.getActivity();
         // Always use the activity context
@@ -146,6 +148,17 @@ public class AbsListViewTest {
                 android.R.layout.simple_list_item_1, COUNTRY_LIST);
 
         mListView = (ListView) activity.findViewById(R.id.listview_default);
+
+        // Full-height drag gestures clash with system navigation gestures (such as
+        // swipe up from the bottom of the screen to go home). Get the system
+        // gesture insets and apply bottom padding on the entire content so
+        // that our own drag gestures are processed within the activity.
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView, () -> {
+            ViewGroup content = activity.findViewById(R.id.content);
+            WindowInsets rootWindowInsets = content.getRootWindowInsets();
+            Insets systemGestureInsets = rootWindowInsets.getSystemGestureInsets();
+            content.setPadding(0, 0, 0, systemGestureInsets.bottom);
+        });
     }
 
     private boolean isWatch() {
