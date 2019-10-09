@@ -12,17 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test {
+android_test_helper_app {
     name: "ReviewPermissionHelper",
-
     srcs: ["src/**/*.kt"],
-
     static_libs: [
         "ub-uiautomator",
         "androidx.test.rules",
         "compatibility-device-util-axt",
     ],
-
     test_suites: [
         "cts",
         "vts",
