@@ -409,4 +409,10 @@ public class HostTestHelper {
     public void testApexKeyRotation_CofirmRollback() throws Exception {
         assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(1);
     }
+
+    @Test
+    public void testInstallTestAppA_EnableRollback() throws Exception {
+        Install.single(TestApp.A1).commit();
+        Install.single(TestApp.A2).setEnableRollback().commit();
+    }
 }

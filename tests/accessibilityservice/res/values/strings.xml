@@ -139,6 +139,8 @@
 
     <string name="a_b">A B</string>
 
+    <string name="testContentDescription">testContentDescription</string>
+
     <string name="german_text_with_strong_s">ß</string>
 
     <string name="android_wiki_search">Android is a Linux-based</string>

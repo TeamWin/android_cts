@@ -34,6 +34,7 @@ import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibilityservice.cts.activities.AccessibilityTextTraversalActivity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
+import android.graphics.Bitmap;
 import android.graphics.RectF;
 import android.os.Bundle;
 import android.os.Message;
@@ -42,6 +43,8 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.ClickableSpan;
+import android.text.style.ImageSpan;
+import android.text.style.ReplacementSpan;
 import android.text.style.URLSpan;
 import android.view.View;
 import android.view.accessibility.AccessibilityManager;
@@ -77,7 +80,6 @@ public class AccessibilityTextActionTest {
     private static UiAutomation sUiAutomation;
     final Object mClickableSpanCallbackLock = new Object();
     final AtomicBoolean mClickableSpanCalled = new AtomicBoolean(false);
-    
 
     private AccessibilityTextTraversalActivity mActivity;
 
@@ -233,6 +235,25 @@ public class AccessibilityTextActionTest {
         urlSpanFromA11y.onClick(null);
 
         assertOnClickCalled();
+    }
+
+    @Test
+    public void testImageSpan_accessibilityServiceShouldSeeContentDescription() {
+        final TextView textView = (TextView) mActivity.findViewById(R.id.text);
+        final Bitmap bitmap = Bitmap.createBitmap(/* width= */10, /* height= */10,
+                Bitmap.Config.ARGB_8888);
+        final ImageSpan imageSpan = new ImageSpan(mActivity, bitmap);
+        final String contentDescription = mActivity.getString(R.string.contentDescription);
+        imageSpan.setContentDescription(contentDescription);
+        final SpannableString textWithImageSpan =
+                new SpannableString(mActivity.getString(R.string.a_b));
+        textWithImageSpan.setSpan(imageSpan, /* start= */0, /* end= */1, /* flags= */0);
+        makeTextViewVisibleAndSetText(textView, textWithImageSpan);
+
+        ReplacementSpan replacementSpanFromA11y = findSingleSpanInViewWithText(R.string.a_b,
+                ReplacementSpan.class);
+        
+        assertEquals(contentDescription, replacementSpanFromA11y.getContentDescription());
     }
 
     @Test

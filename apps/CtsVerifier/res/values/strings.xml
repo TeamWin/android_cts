@@ -335,13 +335,13 @@
     <string name="ble_coc_secure_client_test_list_name">Bluetooth LE CoC Secure Client Test</string>
     <string name="ble_coc_secure_client_test_list_info">
         The Bluetooth LE CoC test must be done simultaneously on two devices. This device is the client.
-        All tests listed here must be done without pairing. Tap \"Bluetooth LE CoC Secure Server Test\" on the other device.
+        All tests listed here must be done with pairing. Tap \"Bluetooth LE CoC Secure Server Test\" on the other device.
         \n\nTap \"01 Bluetooth LE CoC Client Test\" on this device, then tap \"01 Bluetooth LE CoC Server Test\" on the other device.
         \nWhen the test is complete, move to the next item. You must complete all tests.
     </string>
     <string name="ble_coc_secure_client_test_info">
         The Bluetooth LE CoC test must be done simultaneously on two devices. This device is the client.
-        All tests listed here must be done without pairing.
+        All tests listed here must be done with pairing.
     </string>
     <string name="ble_coc_secure_server_test_list_name">Bluetooth LE CoC Secure Server Test</string>
     <string name="ble_coc_secure_server_test_list_info">

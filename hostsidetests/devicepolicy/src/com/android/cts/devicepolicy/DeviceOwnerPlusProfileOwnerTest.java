@@ -17,6 +17,7 @@
 package com.android.cts.devicepolicy;
 
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
+import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
 
 import android.platform.test.annotations.FlakyTest;
 import android.stats.devicepolicy.EventId;
@@ -335,7 +336,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testWipeData_managedProfileLogged() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
             return;
         }
         int profileUserId = setupManagedProfile(COMP_DPC_APK, COMP_DPC_PKG, COMP_DPC_ADMIN);
@@ -362,7 +363,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testWipeData_secondaryUserLogged() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
+        if (!mHasFeature || !canCreateAdditionalUsers(1) || !isStatsdEnabled(getDevice())) {
             return;
         }
         int secondaryUserId = setupManagedSecondaryUser();

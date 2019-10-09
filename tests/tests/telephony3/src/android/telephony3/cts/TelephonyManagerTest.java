@@ -23,7 +23,6 @@ import static org.junit.Assert.fail;
 import android.content.Context;
 import android.os.Build;
 import android.telephony.TelephonyManager;
-import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -76,6 +75,10 @@ public class TelephonyManagerTest {
                     "An app targeting pre-Q with the READ_PHONE_STATE permission granted must "
                             + "receive null when invoking getSimSerialNumber",
                     mTelephonyManager.getSimSerialNumber());
+            assertNull(
+                    "An app targeting pre-Q with the READ_PHONE_STATE permission granted must "
+                            + "receive null when invoking getNai",
+                    mTelephonyManager.getNai());
             // Since Build.getSerial is not documented to return null in previous releases this test
             // verifies that the Build.UNKNOWN value is returned when the caller does not have
             // permission to access the device identifier.

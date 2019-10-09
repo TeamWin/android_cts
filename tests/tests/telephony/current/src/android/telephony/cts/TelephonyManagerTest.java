@@ -67,6 +67,7 @@ import android.telephony.UiccCardInfo;
 import android.telephony.UiccSlotInfo;
 import android.telephony.cts.locationaccessingapp.CtsLocationAccessService;
 import android.telephony.cts.locationaccessingapp.ICtsLocationAccessControl;
+import android.telephony.data.ApnSetting;
 import android.telephony.emergency.EmergencyNumber;
 import android.text.TextUtils;
 import android.util.Log;
@@ -449,7 +450,7 @@ public class TelephonyManagerTest {
         mTelephonyManager.getPhoneCount();
         mTelephonyManager.getDataEnabled();
         mTelephonyManager.getNetworkSpecifier();
-        mTelephonyManager.getNai();
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager, (tm) -> tm.getNai());
         TelecomManager telecomManager = getContext().getSystemService(TelecomManager.class);
         PhoneAccountHandle defaultAccount = telecomManager
                 .getDefaultOutgoingPhoneAccount(PhoneAccount.SCHEME_TEL);
@@ -1858,6 +1859,28 @@ public class TelephonyManagerTest {
                             null /* data */));
         } catch (IllegalArgumentException e ) {
             // IllegalArgumentException is okay, just not SecurityException
+        }
+    }
+
+    @Test
+    public void testIsDataEnabledForApn() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        // verify SecurityException
+        try {
+            mTelephonyManager.isDataEnabledForApn(ApnSetting.TYPE_MMS);
+            fail("testIsDataEnabledForApn: Expected SecurityException on isDataEnabledForApn");
+        } catch (SecurityException se) {
+            // expected
+        }
+
+        // test with permission
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> tm.isDataEnabledForApn(ApnSetting.TYPE_MMS));
+        } catch (SecurityException se) {
+            fail("testIsDataEnabledForApn: SecurityException not expected");
         }
     }
 

@@ -17,7 +17,7 @@ java_test_host {
     defaults: ["cts_defaults"],
     srcs: ["src/**/*.java"],
     libs: ["cts-tradefed", "tradefed", "truth-prebuilt"],
-    data: [":CtsRollbackManagerHostTestHelperApp"],
+    data: [":CtsRollbackManagerHostTestHelperApp", ":CtsRollbackManagerHostTestHelperApp2"],
     test_suites: ["cts", "general-tests"],
 }
 
@@ -31,6 +31,15 @@ android_test_helper_app {
         ":StagedInstallTestApexV2",
         ":StagedInstallTestApexV3",
     ],
+    sdk_version: "test_current",
+    test_suites: ["device-tests"],
+}
+
+android_test_helper_app {
+    name: "CtsRollbackManagerHostTestHelperApp2",
+    srcs:  ["app2/src/**/*.java"],
+    static_libs: ["androidx.test.rules", "cts-rollback-lib", "cts-install-lib"],
+    manifest : "app2/AndroidManifest.xml",
     sdk_version: "test_current",
     test_suites: ["device-tests"],
 }

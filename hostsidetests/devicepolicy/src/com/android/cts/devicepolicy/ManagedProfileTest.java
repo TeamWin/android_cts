@@ -16,6 +16,7 @@
 package com.android.cts.devicepolicy;
 
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
+import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
 
 import android.platform.test.annotations.LargeTest;
 import android.stats.devicepolicy.EventId;
@@ -295,13 +296,15 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
                 "testDefaultOrganizationNameIsNull", mProfileUserId);
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".OrganizationInfoTest",
                 mProfileUserId);
-        assertMetricsLogged(getDevice(), () -> {
-            runDeviceTestsAsUser(
-                    MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".OrganizationInfoTest",
-                    "testSetOrganizationColor", mProfileUserId);
-        }, new DevicePolicyEventWrapper.Builder(EventId.SET_ORGANIZATION_COLOR_VALUE)
-                .setAdminPackageName(MANAGED_PROFILE_PKG)
-                .build());
+        if (isStatsdEnabled(getDevice())) {
+            assertMetricsLogged(getDevice(), () -> {
+                runDeviceTestsAsUser(
+                        MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".OrganizationInfoTest",
+                        "testSetOrganizationColor", mProfileUserId);
+            }, new DevicePolicyEventWrapper.Builder(EventId.SET_ORGANIZATION_COLOR_VALUE)
+                    .setAdminPackageName(MANAGED_PROFILE_PKG)
+                    .build());
+        }
     }
 
     public void testDevicePolicyManagerParentSupport() throws Exception {
@@ -563,7 +566,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     }
 
     public void testSetProfileNameLogged() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {
