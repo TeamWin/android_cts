@@ -70,6 +70,7 @@ import android.util.ArraySet;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 
+import java.lang.Math;
 import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -874,10 +875,85 @@ public class KeyAttestationTest extends AndroidTestCase {
         assertNotNull(rootOfTrust);
         assertNotNull(rootOfTrust.getVerifiedBootKey());
         assertTrue(rootOfTrust.getVerifiedBootKey().length >= 32);
+        checkEntropy(rootOfTrust.getVerifiedBootKey());
         if (requireLocked) {
             assertTrue(rootOfTrust.isDeviceLocked());
             assertEquals(KM_VERIFIED_BOOT_VERIFIED, rootOfTrust.getVerifiedBootState());
         }
+    }
+
+    private void checkEntropy(byte[] verifiedBootKey) {
+        assertTrue(checkShannonEntropy(verifiedBootKey));
+        assertTrue(checkTresBiEntropy(verifiedBootKey));
+    }
+
+    private boolean checkShannonEntropy(byte[] verifiedBootKey) {
+        double probabilityOfSetBit = countSetBits(verifiedBootKey) / (double)(verifiedBootKey.length * 8);
+        return calculateShannonEntropy(probabilityOfSetBit) > 0.8;
+    }
+
+    private double calculateShannonEntropy(double probabilityOfSetBit) {
+        if (probabilityOfSetBit <= 0.001 || probabilityOfSetBit >= .999) return 0;
+        return (-probabilityOfSetBit * logTwo(probabilityOfSetBit)) -
+               ((1 - probabilityOfSetBit) * logTwo(1 - probabilityOfSetBit));
+    }
+
+    private boolean checkTresBiEntropy(byte[] verifiedBootKey) {
+        double weightingFactor = 0;
+        double weightedEntropy = 0;
+        double probabilityOfSetBit = 0;
+        int length = verifiedBootKey.length * 8;
+        for(int i = 0; i < (verifiedBootKey.length * 8) - 2; i++) {
+            probabilityOfSetBit = countSetBits(verifiedBootKey) / (double)length;
+            weightingFactor += logTwo(i+2);
+            weightedEntropy += calculateShannonEntropy(probabilityOfSetBit) * logTwo(i+2);
+            deriveBitString(verifiedBootKey, length);
+            length -= 1;
+        }
+        double tresBiEntropy = (1 / weightingFactor) * weightedEntropy;
+        return tresBiEntropy > 0.9;
+    }
+
+    private void deriveBitString(byte[] bitString, int activeLength) {
+        int length = activeLength / 8;
+        if (activeLength % 8 != 0) {
+            length += 1;
+        }
+
+        byte mask = (byte)((byte)0x80 >>> ((activeLength + 6) % 8));
+        if (activeLength % 8 == 1) {
+            mask = (byte)~mask;
+        }
+
+        for(int i = 0; i < length; i++) {
+            if (i == length - 1) {
+                bitString[i] ^= ((bitString[i] & 0xFF) << 1);
+                bitString[i] &= mask;
+            } else {
+                bitString[i] ^= ((bitString[i] & 0xFF) << 1) | ((bitString[i+1] & 0xFF) >>> 7);
+            }
+        }
+    }
+
+    private double logTwo(double value) {
+        return Math.log(value) / Math.log(2);
+    }
+
+    private int countSetBits(byte[] toCount) {
+        int setBitCount = 0;
+        for(int i = 0; i < toCount.length; i++) {
+            setBitCount += countSetBits(toCount[i]);
+        }
+        return setBitCount;
+    }
+
+    private int countSetBits(byte toCount) {
+        int setBitCounter = 0;
+        while(toCount != 0) {
+            toCount &= (toCount - 1);
+            setBitCounter++;
+        }
+        return setBitCounter;
     }
 
     private void checkRsaKeyDetails(Attestation attestation, int keySize, int purposes,
