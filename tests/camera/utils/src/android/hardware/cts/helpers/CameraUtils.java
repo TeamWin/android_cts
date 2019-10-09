@@ -39,6 +39,18 @@ public class CameraUtils {
     public static boolean isLegacyHAL(Context context, int cameraId) throws Exception {
         CameraManager manager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
         String cameraIdStr = manager.getCameraIdList()[cameraId];
+        return isLegacyHAL(manager, cameraIdStr);
+    }
+
+    /**
+     * Returns {@code true} if this device only supports {@code LEGACY} mode operation in the
+     * Camera2 API for the given camera ID.
+     *
+     * @param manager The {@link CameraManager} used to retrieve camera characteristics.
+     * @param cameraId the ID of the camera device to check.
+     * @return {@code true} if this device only supports {@code LEGACY} mode.
+     */
+    public static boolean isLegacyHAL(CameraManager manager, String cameraIdStr) throws Exception {
         CameraCharacteristics characteristics =
                 manager.getCameraCharacteristics(cameraIdStr);
 
