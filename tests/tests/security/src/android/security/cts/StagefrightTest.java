@@ -866,8 +866,11 @@ public class StagefrightTest extends InstrumentationTestCase {
         Thread server = new Thread() {
             @Override
             public void run() {
-                try (ServerSocket serverSocket = new ServerSocket(8080);
-                        Socket conn = serverSocket.accept()) {
+                try (ServerSocket serverSocket = new ServerSocket(8080) {
+                        {setSoTimeout(10_000);} // time out after 10 seconds
+                    };
+                    Socket conn = serverSocket.accept();
+                ) {
                     OutputStream outputstream = conn.getOutputStream();
                     InputStream inputStream = conn.getInputStream();
                     byte input[] = new byte[65536];
