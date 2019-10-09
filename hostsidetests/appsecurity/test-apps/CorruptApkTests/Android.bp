@@ -1,5 +1,4 @@
-//
-// Copyright (C) 2019 The Android Open Source Project
+// Copyright (C) 2018 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,16 +11,36 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
-android_test_helper_app {
-    name: "CtsOverlayPolicyProduct",
-    defaults: ["cts_support_defaults"],
-    sdk_version: "current",
-    certificate: ":cts-testkey1",
+android_test_import {
+    name: "CtsCorruptApkTests_b71360999",
+    apk: "b71360999.apk",
+    presigned: true,
     test_suites: [
         "cts",
         "vts",
         "general-tests",
-    ],
+    ]
+}
+
+android_test_import {
+    name: "CtsCorruptApkTests_b71361168",
+    apk: "b71361168.apk",
+    presigned: true,
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ]
+}
+
+android_test_import {
+    name: "CtsCorruptApkTests_b79488511",
+    apk: "b79488511.apk",
+    presigned: true,
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ]
 }

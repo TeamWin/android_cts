@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-android_test {
+android_test_helper_app {
     name: "CtsEphemeralTestsUserApp",
     defaults: ["cts_support_defaults"],
     static_libs: [

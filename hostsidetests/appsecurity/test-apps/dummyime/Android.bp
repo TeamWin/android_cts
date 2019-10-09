@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-android_test {
+android_test_helper_app {
     name: "CtsDummyIme",
     defaults: ["cts_support_defaults"],
     sdk_version: "test_current",
