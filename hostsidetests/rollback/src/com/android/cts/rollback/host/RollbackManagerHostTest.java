@@ -131,6 +131,30 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
     }
 
     /**
+     * Tests multiple staged rollbacks involving only apks.
+     */
+    @Test
+    public void testApkOnlyMultipleStagedRollback() throws Exception {
+        run("testApkOnlyMultipleStagedRollback_Phase1");
+        getDevice().reboot();
+        run("testApkOnlyMultipleStagedRollback_Phase2");
+        getDevice().reboot();
+        run("testApkOnlyMultipleStagedRollback_Phase3");
+    }
+
+    /**
+     * Tests multiple staged partial rollbacks involving only apks.
+     */
+    @Test
+    public void testApkOnlyMultipleStagedPartialRollback() throws Exception {
+        run("testApkOnlyMultipleStagedPartialRollback_Phase1");
+        getDevice().reboot();
+        run("testApkOnlyMultipleStagedPartialRollback_Phase2");
+        getDevice().reboot();
+        run("testApkOnlyMultipleStagedPartialRollback_Phase3");
+    }
+
+    /**
      * Tests staged rollbacks involving only apex.
      */
     @Test

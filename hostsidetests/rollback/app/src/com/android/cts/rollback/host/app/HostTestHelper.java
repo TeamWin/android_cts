@@ -92,6 +92,7 @@ public class HostTestHelper {
         });
 
         Uninstall.packages(TestApp.A);
+        Uninstall.packages(TestApp.B);
     }
 
     /**
@@ -152,6 +153,160 @@ public class HostTestHelper {
                 Rollback.from(TestApp.A2).to(TestApp.A1));
         assertThat(committed).causePackagesContainsExactly(TestApp.A2);
         assertThat(committed.getCommittedSessionId()).isNotEqualTo(-1);
+    }
+
+    /**
+     * Test rollbacks of multiple staged installs involving only apks.
+     * Commits TestApp.A2 and TestApp.B2 as a staged install with rollback enabled.
+     */
+    @Test
+    public void testApkOnlyMultipleStagedRollback_Phase1() throws Exception {
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(-1);
+        assertThat(InstallUtils.getInstalledVersion(TestApp.B)).isEqualTo(-1);
+
+        Install.single(TestApp.A1).commit();
+        Install.single(TestApp.A2).setStaged().setEnableRollback().commit();
+
+        Install.single(TestApp.B1).commit();
+        Install.single(TestApp.B2).setStaged().setEnableRollback().commit();
+    }
+
+    /**
+     * Test rollbacks of multiple staged installs involving only apks.
+     * Confirms staged rollbacks are available for TestApp.A2 and TestApp.b2, and commits the
+     * rollback.
+     */
+    @Test
+    public void testApkOnlyMultipleStagedRollback_Phase2() throws Exception {
+        // Process TestApp.A
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+        InstallUtils.processUserData(TestApp.A);
+        RollbackInfo available = RollbackUtils.getAvailableRollback(TestApp.A);
+        assertThat(available).isStaged();
+        assertThat(available).packagesContainsExactly(
+                Rollback.from(TestApp.A2).to(TestApp.A1));
+        assertThat(RollbackUtils.getCommittedRollback(TestApp.A)).isNull();
+
+        RollbackUtils.rollback(available.getRollbackId(), TestApp.A2);
+        RollbackInfo committed = RollbackUtils.getCommittedRollback(TestApp.A);
+        assertThat(committed).hasRollbackId(available.getRollbackId());
+        assertThat(committed).isStaged();
+        assertThat(committed).packagesContainsExactly(
+                Rollback.from(TestApp.A2).to(TestApp.A1));
+        assertThat(committed).causePackagesContainsExactly(TestApp.A2);
+        assertThat(committed.getCommittedSessionId()).isNotEqualTo(-1);
+        InstallUtils.waitForSessionReady(committed.getCommittedSessionId());
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+
+        // Process TestApp.B
+        assertThat(InstallUtils.getInstalledVersion(TestApp.B)).isEqualTo(2);
+        InstallUtils.processUserData(TestApp.B);
+        available = RollbackUtils.getAvailableRollback(TestApp.B);
+        assertThat(available).isStaged();
+        assertThat(available).packagesContainsExactly(
+                Rollback.from(TestApp.B2).to(TestApp.B1));
+        assertThat(RollbackUtils.getCommittedRollback(TestApp.B)).isNull();
+
+        RollbackUtils.rollback(available.getRollbackId(), TestApp.B2);
+        committed = RollbackUtils.getCommittedRollback(TestApp.B);
+        assertThat(committed).hasRollbackId(available.getRollbackId());
+        assertThat(committed).isStaged();
+        assertThat(committed).packagesContainsExactly(
+                Rollback.from(TestApp.B2).to(TestApp.B1));
+        assertThat(committed).causePackagesContainsExactly(TestApp.B2);
+        assertThat(committed.getCommittedSessionId()).isNotEqualTo(-1);
+        InstallUtils.waitForSessionReady(committed.getCommittedSessionId());
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+    }
+
+    /**
+     * Test rollbacks of staged installs involving only apks.
+     * Confirms TestApp.A2 and TestApp.B2 was rolled back.
+     */
+    @Test
+    public void testApkOnlyMultipleStagedRollback_Phase3() throws Exception {
+        // Process TestApp.A
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
+        InstallUtils.processUserData(TestApp.A);
+        RollbackInfo committed = RollbackUtils.getCommittedRollback(TestApp.A);
+        assertThat(committed).isStaged();
+        assertThat(committed).packagesContainsExactly(
+                Rollback.from(TestApp.A2).to(TestApp.A1));
+        assertThat(committed).causePackagesContainsExactly(TestApp.A2);
+        assertThat(committed.getCommittedSessionId()).isNotEqualTo(-1);
+
+        // Process TestApp.B
+        assertThat(InstallUtils.getInstalledVersion(TestApp.B)).isEqualTo(1);
+        InstallUtils.processUserData(TestApp.B);
+        committed = RollbackUtils.getCommittedRollback(TestApp.B);
+        assertThat(committed).isStaged();
+        assertThat(committed).packagesContainsExactly(
+                Rollback.from(TestApp.B2).to(TestApp.B1));
+        assertThat(committed).causePackagesContainsExactly(TestApp.B2);
+        assertThat(committed.getCommittedSessionId()).isNotEqualTo(-1);
+    }
+
+    /**
+     * Test partial rollbacks of multiple staged installs involving only apks.
+     * Commits TestApp.A2 and TestApp.B2 as a staged install with rollback enabled.
+     */
+    @Test
+    public void testApkOnlyMultipleStagedPartialRollback_Phase1() throws Exception {
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(-1);
+        assertThat(InstallUtils.getInstalledVersion(TestApp.B)).isEqualTo(-1);
+
+        Install.single(TestApp.A1).commit();
+        Install.single(TestApp.A2).setStaged().setEnableRollback().commit();
+
+        Install.single(TestApp.B1).commit();
+        Install.single(TestApp.B2).setStaged().commit();
+    }
+
+    /**
+     * Test partial rollbacks of multiple staged installs involving only apks.
+     * Confirms staged rollbacks are available for TestApp.A2, and commits the
+     * rollback.
+     */
+    @Test
+    public void testApkOnlyMultipleStagedPartialRollback_Phase2() throws Exception {
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+        InstallUtils.processUserData(TestApp.A);
+        RollbackInfo available = RollbackUtils.getAvailableRollback(TestApp.A);
+        assertThat(available).isStaged();
+        assertThat(available).packagesContainsExactly(
+                Rollback.from(TestApp.A2).to(TestApp.A1));
+        assertThat(RollbackUtils.getCommittedRollback(TestApp.A)).isNull();
+
+        RollbackUtils.rollback(available.getRollbackId(), TestApp.A2);
+        RollbackInfo committed = RollbackUtils.getCommittedRollback(TestApp.A);
+        assertThat(committed).hasRollbackId(available.getRollbackId());
+        assertThat(committed).isStaged();
+        assertThat(committed).packagesContainsExactly(
+                Rollback.from(TestApp.A2).to(TestApp.A1));
+        assertThat(committed).causePackagesContainsExactly(TestApp.A2);
+        assertThat(committed.getCommittedSessionId()).isNotEqualTo(-1);
+        InstallUtils.waitForSessionReady(committed.getCommittedSessionId());
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+    }
+
+    /**
+     * Test partial rollbacks of staged installs involving only apks.
+     * Confirms TestApp.A2 was rolled back.
+     */
+    @Test
+    public void testApkOnlyMultipleStagedPartialRollback_Phase3() throws Exception {
+        // Process TestApp.A
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
+        InstallUtils.processUserData(TestApp.A);
+        RollbackInfo committed = RollbackUtils.getCommittedRollback(TestApp.A);
+        assertThat(committed).isStaged();
+        assertThat(committed).packagesContainsExactly(
+                Rollback.from(TestApp.A2).to(TestApp.A1));
+        assertThat(committed).causePackagesContainsExactly(TestApp.A2);
+        assertThat(committed.getCommittedSessionId()).isNotEqualTo(-1);
+
+        // Process TestApp.B
+        assertThat(InstallUtils.getInstalledVersion(TestApp.B)).isEqualTo(2);
     }
 
     /**
