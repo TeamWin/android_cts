@@ -445,15 +445,13 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         waitAndAssertActivityStates(state(singleTopActivity, ON_TOP_POSITION_GAINED),
                 state(topActivity, ON_DESTROY));
 
-        LifecycleVerifier.assertEntireSequence(Arrays.asList(
+        LifecycleVerifier.assertOrder(getLifecycleLog(), Arrays.asList(
                 transition(TranslucentCallbackTrackingActivity.class, ON_TOP_POSITION_LOST),
                 transition(TranslucentCallbackTrackingActivity.class, ON_PAUSE),
                 transition(SingleTopActivity.class, ON_NEW_INTENT),
                 transition(SingleTopActivity.class, ON_RESUME),
-                transition(SingleTopActivity.class, ON_TOP_POSITION_GAINED),
-                transition(TranslucentCallbackTrackingActivity.class, ON_STOP),
-                transition(TranslucentCallbackTrackingActivity.class, ON_DESTROY)),
-                getLifecycleLog(), "Single top resolution sequence must match");
+                transition(SingleTopActivity.class, ON_TOP_POSITION_GAINED)),
+                "Single top resolution sequence must match");
     }
 
     @Test
