@@ -203,6 +203,7 @@ public abstract class ActivityManagerTestBase {
     private static Boolean sHasHomeScreen = null;
     private static Boolean sSupportsSystemDecorsOnSecondaryDisplays = null;
     private static Boolean sSupportsInsecureLockScreen = null;
+    private static boolean sStackTaskLeakFound;
 
     protected static final int INVALID_DEVICE_ROTATION = -1;
 
@@ -435,6 +436,17 @@ public abstract class ActivityManagerTestBase {
 
     @After
     public void tearDown() throws Exception {
+        try {
+            // Skip empty stack/task check if a leakage was already found in previous test, or
+            // all tests afterward would also fail (since the leakage is always there) and fire
+            // unnecessary false alarms.
+            if (!sStackTaskLeakFound) {
+                mAmWmState.assertEmptyStackOrTask();
+            }
+        } catch (Throwable t) {
+            sStackTaskLeakFound = true;
+            throw t;
+        }
         // Synchronous execution of removeStacksWithActivityTypes() ensures that all activities but
         // home are cleaned up from the stack at the end of each test. Am force stop shell commands
         // might be asynchronous and could interrupt the stack cleanup process if executed first.
