@@ -45,41 +45,6 @@ public class TestMedia extends SecurityTestCase {
      * before any existing test methods
      ****************************************************************/
 
-
-    /**
-     * Checks for linker errors
-     *
-     * @param binaryName name of the binary
-     * @param logcat String to be parsed
-     */
-    public static boolean isLinkerErrorPresent(String binaryName, String logcat)
-            throws Exception {
-        return Pattern
-                .compile("CANNOT LINK EXECUTABLE \"" + TMP_FILE_PATH
-                        + binaryName + "\"", Pattern.MULTILINE)
-                .matcher(logcat).find();
-    }
-
-    /**
-     * Checks for crash
-     *
-     * @param binaryName Name of the binary
-     * @param errPattern error patterns to be checked for
-     * @param logcat String to be parsed
-     */
-    public static void checkCrash(String binaryName, String errPattern[],
-            String logcat) throws Exception {
-        String genericCrashPattern[] = {
-                "name: " + binaryName + "  >>> " + TMP_FILE_PATH + binaryName
-                        + " <<<\n.*?SIGABRT",
-                "name: " + binaryName + "  >>> " + TMP_FILE_PATH + binaryName
-                        + " <<<\n.*?SIGSEGV"};
-        AdbUtils.checkCrash(genericCrashPattern, logcat);
-        if (errPattern != null) {
-            AdbUtils.checkCrash(errPattern, logcat);
-        }
-    }
-
     /**
      * Pushes input files, runs the PoC and checks for crash and hang
      *
@@ -110,10 +75,7 @@ public class TestMedia extends SecurityTestCase {
                 }
             }
         }, TIMEOUT_SEC * 1000, device, inputFiles);
-        String logcatOut = AdbUtils.runCommandLine("logcat -d", device);
-        boolean linkerErrorFound = isLinkerErrorPresent(binaryName, logcatOut);
-        if (!linkerErrorFound) {
-            checkCrash(binaryName, errPattern, logcatOut);
-        }
+
+        AdbUtils.assertNoCrashes(device, binaryName);
     }
 }
