@@ -64,6 +64,22 @@ public class HalfTest {
         // Denormals (flushed to +/-0)
         assertShortEquals(POSITIVE_ZERO, toHalf(5.96046e-9f));
         assertShortEquals(NEGATIVE_ZERO, toHalf(-5.96046e-9f));
+        // Test for values that overflow the mantissa bits into exp bits
+        assertShortEquals(0x1000, toHalf(Float.intBitsToFloat(0x39fff000)));
+        assertShortEquals(0x0400, toHalf(Float.intBitsToFloat(0x387fe000)));
+        // Floats with absolute value above +/-65519 are rounded to +/-inf
+        // when using round-to-even
+        assertShortEquals(0x7bff, toHalf(65519.0f));
+        assertShortEquals(0x7bff, toHalf(65519.9f));
+        assertShortEquals(POSITIVE_INFINITY, toHalf(65520.0f));
+        assertShortEquals(NEGATIVE_INFINITY, toHalf(-65520.0f));
+        // Check if numbers are rounded to nearest even when they
+        // cannot be accurately represented by Half
+        assertShortEquals(0x6800, toHalf(2049.0f));
+        assertShortEquals(0x6c00, toHalf(4098.0f));
+        assertShortEquals(0x7000, toHalf(8196.0f));
+        assertShortEquals(0x7400, toHalf(16392.0f));
+        assertShortEquals(0x7800, toHalf(32784.0f));
     }
 
     @Test
