@@ -304,8 +304,7 @@ public class AdbUtils {
     public static void runPocAssertNoCrashes(String pocName, ITestDevice device,
             String... processPatternStrings) throws Exception {
         AdbUtils.runCommandLine("logcat -c", device);
-        // account for the poc timer of 5 minutes (+15 seconds for safety)
-        AdbUtils.runPocNoOutput(pocName, device, 315);
+        AdbUtils.runPocNoOutput(pocName, device, SecurityTestCase.TIMEOUT_NONDETERMINISTIC);
         assertNoCrashes(device, processPatternStrings);
     }
 
