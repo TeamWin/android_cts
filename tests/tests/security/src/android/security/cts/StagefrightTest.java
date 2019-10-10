@@ -111,17 +111,17 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest(minPatchLevel = "2016-08")
     public void testStagefright_cve_2016_3829() throws Exception {
-        doStagefrightTest(R.raw.cve_2016_3829);
+        doStagefrightTest(R.raw.cve_2016_3829, false);
     }
 
     @SecurityTest(minPatchLevel = "2017-06")
     public void testStagefright_cve_2017_0643() throws Exception {
-        doStagefrightTest(R.raw.cve_2017_0643);
+        doStagefrightTest(R.raw.cve_2017_0643, false);
     }
 
     @SecurityTest(minPatchLevel = "2017-08")
     public void testStagefright_cve_2017_0728() throws Exception {
-        doStagefrightTest(R.raw.cve_2017_0728);
+        doStagefrightTest(R.raw.cve_2017_0728, false);
     }
 
     @SecurityTest(minPatchLevel = "2017-10")
@@ -161,7 +161,7 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest(minPatchLevel = "2017-06")
     public void testStagefright_bug_35763994() throws Exception {
-        doStagefrightTest(R.raw.bug_35763994);
+        doStagefrightTest(R.raw.bug_35763994, false);
     }
 
     @SecurityTest(minPatchLevel = "2017-03")
@@ -171,7 +171,7 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest(minPatchLevel = "2017-07")
     public void testStagefright_cve_2016_2507() throws Exception {
-        doStagefrightTest(R.raw.cve_2016_2507);
+        doStagefrightTest(R.raw.cve_2016_2507, false);
     }
 
     @SecurityTest(minPatchLevel = "2017-03")
@@ -266,13 +266,13 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest(minPatchLevel = "2017-02")
     public void testStagefright_cve_2016_2429_b_27211885() throws Exception {
-        doStagefrightTest(R.raw.cve_2016_2429_b_27211885);
+        doStagefrightTest(R.raw.cve_2016_2429_b_27211885, false);
     }
 
     @SecurityTest(minPatchLevel = "2017-08")
     public void testStagefright_bug_34031018() throws Exception {
-        doStagefrightTest(R.raw.bug_34031018_32bit);
-        doStagefrightTest(R.raw.bug_34031018_64bit);
+        doStagefrightTest(R.raw.bug_34031018_32bit, false);
+        doStagefrightTest(R.raw.bug_34031018_64bit, false);
     }
 
     /***********************************************************
@@ -297,7 +297,7 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest(minPatchLevel = "2018-01")
     public void testStagefright_cve_2017_0852_b_62815506() throws Exception {
-        doStagefrightTest(R.raw.cve_2017_0852_b_62815506);
+        doStagefrightTest(R.raw.cve_2017_0852_b_62815506, false);
     }
 
     @SecurityTest(minPatchLevel = "2018-02")
@@ -323,7 +323,7 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest(minPatchLevel = "2016-10")
     public void testStagefright_cve_2016_3920() throws Exception {
-        doStagefrightTest(R.raw.cve_2016_3920);
+        doStagefrightTest(R.raw.cve_2016_3920, false);
     }
 
     @SecurityTest(minPatchLevel = "2018-06")
@@ -338,7 +338,7 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest(minPatchLevel = "2016-08")
     public void testStagefright_cve_2016_3821() throws Exception {
-        doStagefrightTest(R.raw.cve_2016_3821);
+        doStagefrightTest(R.raw.cve_2016_3821, false);
     }
 
     @SecurityTest(minPatchLevel = "2018-04")
@@ -358,12 +358,12 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest(minPatchLevel = "2017-09")
     public void testStagefright_bug_38115076() throws Exception {
-        doStagefrightTest(R.raw.bug_38115076);
+        doStagefrightTest(R.raw.bug_38115076, false);
     }
 
     @SecurityTest(minPatchLevel = "2017-05")
     public void testStagefright_bug_34618607() throws Exception {
-        doStagefrightTest(R.raw.bug_34618607);
+        doStagefrightTest(R.raw.bug_34618607, false);
     }
 
     @SecurityTest(minPatchLevel = "2018-02")
@@ -388,7 +388,7 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest(minPatchLevel = "2017-05")
     public void testStagefright_cve_2017_0600() throws Exception {
-        doStagefrightTest(R.raw.cve_2017_0600);
+        doStagefrightTest(R.raw.cve_2017_0600, false);
     }
 
     @SecurityTest(minPatchLevel = "2017-08")
@@ -424,7 +424,7 @@ public class StagefrightTest extends InstrumentationTestCase {
     @SecurityTest(minPatchLevel = "2017-03")
     public void testBug_33387820() throws Exception {
         int[] frameSizes = {45, 3202, 430, 2526};
-        doStagefrightTestRawBlob(R.raw.bug_33387820_avc, "video/avc", 320, 240, frameSizes);
+        doStagefrightTestRawBlob(R.raw.bug_33387820_avc, "video/avc", 320, 240, frameSizes, false);
     }
 
     @SecurityTest(minPatchLevel = "2017-07")
@@ -460,7 +460,8 @@ public class StagefrightTest extends InstrumentationTestCase {
     @SecurityTest(minPatchLevel = "2016-08")
     public void testBug_28816956() throws Exception {
         int[] frameSizes = getFrameSizes(R.raw.bug_28816956_framelen);
-        doStagefrightTestRawBlob(R.raw.bug_28816956_hevc, "video/hevc", 352, 288, frameSizes);
+        doStagefrightTestRawBlob(
+                R.raw.bug_28816956_hevc, "video/hevc", 352, 288, frameSizes, false);
     }
 
     @SecurityTest(minPatchLevel = "2017-03")
@@ -495,7 +496,7 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest(minPatchLevel = "2017-05")
     public void testStagefright_cve_2017_0599() throws Exception {
-        doStagefrightTest(R.raw.cve_2017_0599);
+        doStagefrightTest(R.raw.cve_2017_0599, false);
     }
 
     @SecurityTest(minPatchLevel = "2017-09")
@@ -525,7 +526,7 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest(minPatchLevel = "2017-09")
     public void testStagefright_cve_2016_6712() throws Exception {
-        doStagefrightTest(R.raw.cve_2016_6712);
+        doStagefrightTest(R.raw.cve_2016_6712, false);
     }
 
     @SecurityTest(minPatchLevel = "2017-04")
@@ -551,12 +552,12 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest(minPatchLevel = "2017-06")
     public void testStagefright_bug_33818508() throws Exception {
-        doStagefrightTest(R.raw.bug_33818508);
+        doStagefrightTest(R.raw.bug_33818508, false);
     }
 
     @SecurityTest(minPatchLevel = "2017-08")
     public void testStagefright_bug_32873375() throws Exception {
-        doStagefrightTest(R.raw.bug_32873375);
+        doStagefrightTest(R.raw.bug_32873375, false);
     }
 
     @SecurityTest(minPatchLevel = "2018-02")
@@ -619,7 +620,7 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest(minPatchLevel = "2016-06")
     public void testStagefright_cve_2016_2428() throws Exception {
-        doStagefrightTest(R.raw.cve_2016_2428);
+        doStagefrightTest(R.raw.cve_2016_2428, false);
     }
 
     @SecurityTest(minPatchLevel = "2016-07")
@@ -657,7 +658,7 @@ public class StagefrightTest extends InstrumentationTestCase {
                 @Override
                 public void run() {
                     try {
-                        doStagefrightTestMediaCodec(tempFile.getAbsolutePath());
+                        doStagefrightTestMediaCodec(tempFile.getAbsolutePath(), false);
                     } catch (Exception | AssertionError e) {
                         if (!tempFile.delete()) {
                             Log.e(TAG, "Failed to delete temporary PoC file");
@@ -682,7 +683,7 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest(minPatchLevel = "2017-06")
     public void testStagefright_bug_32322258() throws Exception {
-        doStagefrightTest(R.raw.bug_32322258);
+        doStagefrightTest(R.raw.bug_32322258, false);
     }
 
     @SecurityTest(minPatchLevel = "2015-10")
@@ -712,7 +713,7 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest(minPatchLevel = "2015-10")
     public void testStagefright_cve_2015_3862_b_22954006() throws Exception {
-        doStagefrightTest(R.raw.cve_2015_3862_b_22954006);
+        doStagefrightTest(R.raw.cve_2015_3862_b_22954006, false);
     }
 
     @SecurityTest(minPatchLevel = "2015-10")
@@ -777,12 +778,12 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest(minPatchLevel = "2016-07")
     public void testStagefright_cve_2016_3755() throws Exception {
-        doStagefrightTest(R.raw.cve_2016_3755);
+        doStagefrightTest(R.raw.cve_2016_3755, false);
     }
 
     @SecurityTest(minPatchLevel = "2016-09")
     public void testStagefright_cve_2016_3878_b_29493002() throws Exception {
-        doStagefrightTest(R.raw.cve_2016_3878_b_29493002);
+        doStagefrightTest(R.raw.cve_2016_3878_b_29493002, false);
     }
 
     @SecurityTest(minPatchLevel = "2017-08")
@@ -802,12 +803,12 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest(minPatchLevel = "2016-06")
     public void testStagefright_bug_27855419_CVE_2016_2463() throws Exception {
-        doStagefrightTest(R.raw.bug_27855419);
+        doStagefrightTest(R.raw.bug_27855419, false);
     }
 
     @SecurityTest(minPatchLevel = "2015-11")
     public void testStagefright_bug_19779574() throws Exception {
-        doStagefrightTest(R.raw.bug_19779574);
+        doStagefrightTest(R.raw.bug_19779574, false);
     }
 
     /***********************************************************
@@ -978,7 +979,7 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest(minPatchLevel = "2016-12")
     public void testStagefright_cve_2016_6764() throws Exception {
-        doStagefrightTest(R.raw.cve_2016_6764);
+        doStagefrightTest(R.raw.cve_2016_6764, false);
     }
 
     @SecurityTest(minPatchLevel = "2018-01")
@@ -988,7 +989,7 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest(minPatchLevel = "2017-06")
     public void testStagefright_bug_35467107() throws Exception {
-        doStagefrightTest(R.raw.bug_35467107);
+        doStagefrightTest(R.raw.bug_35467107, false);
     }
 
     /***********************************************************
@@ -1086,12 +1087,12 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest(minPatchLevel = "2016-12")
     public void testStagefright_cve_2016_6765() throws Exception {
-        doStagefrightTest(R.raw.cve_2016_6765);
+        doStagefrightTest(R.raw.cve_2016_6765, false);
     }
 
     @SecurityTest(minPatchLevel = "2016-07")
     public void testStagefright_cve_2016_2508() throws Exception {
-        doStagefrightTest(R.raw.cve_2016_2508);
+        doStagefrightTest(R.raw.cve_2016_2508, false);
     }
 
     @SecurityTest(minPatchLevel = "2016-11")
@@ -1111,7 +1112,7 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest(minPatchLevel = "2016-09")
     public void testStagefright_cve_2016_3879() throws Exception {
-        doStagefrightTest(R.raw.cve_2016_3879);
+        doStagefrightTest(R.raw.cve_2016_3879, false);
     }
 
     private void doStagefrightTest(final int rid) throws Exception {
@@ -1792,7 +1793,7 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest(minPatchLevel = "2017-08")
     public void testBug36816007() throws Exception {
-        doStagefrightTestRawBlob(R.raw.bug_36816007, "video/avc", 320, 240);
+        doStagefrightTestRawBlob(R.raw.bug_36816007, "video/avc", 320, 240, false);
     }
 
     @SecurityTest(minPatchLevel = "2017-05")
