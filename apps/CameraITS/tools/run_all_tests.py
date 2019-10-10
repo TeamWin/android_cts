@@ -90,11 +90,11 @@ SCENE_EXTRA_ARGS = {
 }
 
 # Not yet mandated tests ['test', first_api_level mandatory]
-# ie. ['test_test_patterns', 28] is MANDATED for first_api_level >= 28
+# ie. ['test_test_patterns', 30] is MANDATED for first_api_level >= 30
 NOT_YET_MANDATED = {
         'scene0': [
-                ['test_test_patterns', 28],
-                ['test_tonemap_curve', 28]
+                ['test_test_patterns', 30],
+                ['test_tonemap_curve', 30]
         ],
         'scene1_1': [
                 ['test_ae_precapture_trigger', 28],

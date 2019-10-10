@@ -21,7 +21,7 @@ import its.objects
 import numpy as np
 
 NAME = os.path.basename(__file__).split('.')[0]
-PATTERNS = [1, 2]
+CHECKED_PATTERNS = [1, 2]  # [SOLID_COLOR, COLOR_BARS]
 COLOR_BAR_ORDER = ['WHITE', 'YELLOW', 'CYAN', 'GREEN', 'MAGENTA', 'RED',
                    'BLUE', 'BLACK']
 COLOR_CHECKER = {'BLACK': [0, 0, 0], 'RED': [1, 0, 0], 'GREEN': [0, 1, 0],
@@ -29,6 +29,7 @@ COLOR_CHECKER = {'BLACK': [0, 0, 0], 'RED': [1, 0, 0], 'GREEN': [0, 1, 0],
                  'YELLOW': [1, 1, 0], 'WHITE': [1, 1, 1]}
 CH_TOL = 2E-3  # 1/2 DN in [0:1]
 LSFR_COEFFS = 0b100010000  # PN9
+REQUIRED_PATTERNS = [2]  # [COLOR_BARS]
 
 
 def check_solid_color(cap, props):
@@ -127,7 +128,7 @@ def test_test_patterns(cam, props, af_fd):
     sens_min, _ = props['android.sensor.info.sensitivityRange']
     exposure = min(props['android.sensor.info.exposureTimeRange'])
 
-    for pattern in PATTERNS:
+    for pattern in CHECKED_PATTERNS:
         if pattern in avail_patterns:
             req = its.objects.manual_capture_request(int(sens_min),
                                                      exposure)
@@ -143,7 +144,11 @@ def test_test_patterns(cam, props, af_fd):
             # Check pattern for correctness
             assert check_pattern(cap, props, pattern)
         else:
-            print 'Pattern not in android.sensor.availableTestPatternModes.'
+            print '%d not in android.sensor.availableTestPatternModes.' % (
+                    pattern)
+    msg = 'avail_patterns: %s, REQUIRED_PATTERNS: %s' % (
+            str(avail_patterns), str(REQUIRED_PATTERNS))
+    assert set(REQUIRED_PATTERNS).issubset(avail_patterns), msg
 
 
 def main():
