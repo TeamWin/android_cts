@@ -45,6 +45,6 @@ public class Poc16_05 extends SecurityTestCase {
      */
     @SecurityTest(minPatchLevel = "2016-05")
     public void testPocCVE_2015_1805() throws Exception {
-      AdbUtils.runPoc("CVE-2015-1805", getDevice(), 300);
+      AdbUtils.runPoc("CVE-2015-1805", getDevice(), TIMEOUT_NONDETERMINISTIC);
     }
 }

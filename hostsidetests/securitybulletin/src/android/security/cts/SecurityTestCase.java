@@ -33,6 +33,10 @@ public class SecurityTestCase extends DeviceTestCase {
     private static final String LOG_TAG = "SecurityTestCase";
     private static final int RADIX_HEX = 16;
 
+    protected static final int TIMEOUT_DEFAULT = 60;
+    // account for the poc timer of 5 minutes (+15 seconds for safety)
+    protected static final int TIMEOUT_NONDETERMINISTIC = 315;
+
     private long kernelStartTime;
 
     private HostsideOomCatcher oomCatcher = new HostsideOomCatcher(this);
