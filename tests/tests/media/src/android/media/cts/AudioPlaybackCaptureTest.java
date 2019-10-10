@@ -448,6 +448,8 @@ public class AudioPlaybackCaptureTest {
     public void testPlaybackCaptureDoS() throws Exception {
         final int UPPER_BOUND_TO_CONCURENT_PLAYBACK_CAPTURE = 1000;
         final int MIN_NB_OF_CONCURENT_PLAYBACK_CAPTURE = 5;
+        final int UNREGISTER_POLICY_MS = 100;
+        final int UNREGISTER_POLICY_RETRY = 10;
 
         mAPCTestConfig.matchingUsages = new int[]{ AudioAttributes.USAGE_MEDIA };
 
@@ -488,7 +490,18 @@ public class AudioPlaybackCaptureTest {
             // Stopping one AR must allow creating a new one
             audioRecords.peek().stop();
             audioRecords.pop().release();
-            audioRecords.push(createDefaultPlaybackCaptureRecord());
+            int retry = 0;
+            while (true) {
+                try {
+                    audioRecords.push(createDefaultPlaybackCaptureRecord());
+                    break;
+                } catch (UnsupportedOperationException e) {
+                    if (retry++ == UNREGISTER_POLICY_RETRY) {
+                        throw e;
+                    }
+                    Thread.sleep(UNREGISTER_POLICY_MS);
+                }
+            }
 
             // That new one must still be able to capture
             audioRecords.peek().startRecording();
