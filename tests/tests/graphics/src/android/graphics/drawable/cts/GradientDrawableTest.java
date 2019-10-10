@@ -745,12 +745,31 @@ public class GradientDrawableTest {
 
     @Test
     public void testGradientNegativeAngle() {
-        final Context context = InstrumentationRegistry.getTargetContext();
-        GradientDrawable drawable = (GradientDrawable)
-                context.getDrawable(R.drawable.gradientdrawable_negative_angle);
-        assertEquals(Orientation.TOP_BOTTOM, drawable.getOrientation());
+        verifyGradientOrientation(R.drawable.gradientdrawable_negative_angle,
+                Orientation.TOP_BOTTOM);
+        verifyGradientOrientation(R.drawable.gradientdrawable_negative_angle_45,
+                Orientation.TL_BR);
+        verifyGradientOrientation(R.drawable.gradientdrawable_negative_angle_90,
+                Orientation.TOP_BOTTOM);
+        verifyGradientOrientation(R.drawable.gradientdrawable_negative_angle_135,
+                Orientation.TR_BL);
+        verifyGradientOrientation(R.drawable.gradientdrawable_negative_angle_180,
+                Orientation.RIGHT_LEFT);
+        verifyGradientOrientation(R.drawable.gradientdrawable_negative_angle_225,
+                Orientation.BR_TL);
+        verifyGradientOrientation(R.drawable.gradientdrawable_negative_angle_270,
+                Orientation.BOTTOM_TOP);
+        verifyGradientOrientation(R.drawable.gradientdrawable_negative_angle_315,
+                Orientation.BL_TR);
+        verifyGradientOrientation(R.drawable.gradientdrawable_negative_angle_360,
+                Orientation.LEFT_RIGHT);
     }
 
+    private void verifyGradientOrientation(int resId, Orientation expected) {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        assertEquals(expected,
+                ((GradientDrawable) context.getDrawable(resId)).getOrientation());
+    }
 
     @Ignore("Disabling temporarily while actual fix to maintain behavioral differences of "
             + "orientation xml and programmatically defined GradientDrawables")
