@@ -24,9 +24,11 @@ import android.media.MediaFormat;
 import android.media.cts.TestUtils.Monitor;
 import android.net.Uri;
 import android.os.Looper;
+import android.platform.test.annotations.Presubmit;
 import android.util.Base64;
 import android.util.Log;
 import android.view.Surface;
+
 import com.android.compatibility.common.util.ApiLevelUtil;
 
 import org.json.JSONArray;
@@ -415,6 +417,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
     /**
      * Tests KEY_TYPE_RELEASE for offline license.
      */
+    @Presubmit
     public void testReleaseOfflineLicense() throws Exception {
         if (isWatchDevice()) {
             return;
@@ -499,6 +502,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
         return true;
     }
 
+    @Presubmit
     public void testQueryKeyStatus() throws Exception {
         if (isWatchDevice()) {
             // skip this test on watch because it calls
@@ -547,6 +551,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
         }
     }
 
+    @Presubmit
     public void testOfflineKeyManagement() throws Exception {
         if (isWatchDevice()) {
             // skip this test on watch because it calls
@@ -634,6 +639,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
         }
     }
 
+    @Presubmit
     public void testClearKeyPlaybackCenc() throws Exception {
         testClearKeyPlayback(
             COMMON_PSSH_SCHEME_UUID,
@@ -646,6 +652,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
             MediaDrm.KEY_TYPE_STREAMING);
     }
 
+    @Presubmit
     public void testClearKeyPlaybackCenc2() throws Exception {
         testClearKeyPlayback(
             CLEARKEY_SCHEME_UUID,
@@ -658,6 +665,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
             MediaDrm.KEY_TYPE_STREAMING);
     }
 
+    @Presubmit
     public void testClearKeyPlaybackOfflineCenc() throws Exception {
         testClearKeyPlayback(
                 CLEARKEY_SCHEME_UUID,
@@ -751,6 +759,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
         }
     }
 
+    @Presubmit
     public void testGetProperties() throws Exception {
         if (watchHasNoClearkeySupport()) {
             return;
@@ -796,6 +805,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
         }
     }
 
+    @Presubmit
     public void testSetProperties() throws Exception {
         if (watchHasNoClearkeySupport()) {
             return;
@@ -876,6 +886,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
 
     private final static int CLEARKEY_MAX_SESSIONS = 10;
 
+    @Presubmit
     public void testGetNumberOfSessions() {
         if (watchHasNoClearkeySupport()) {
             return;
@@ -912,6 +923,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
         }
     }
 
+    @Presubmit
     public void testHdcpLevels() {
         if (watchHasNoClearkeySupport()) {
             return;
@@ -942,6 +954,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
         }
     }
 
+    @Presubmit
     public void testSecurityLevels() {
         if (watchHasNoClearkeySupport()) {
             return;
@@ -996,6 +1009,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
         }
      }
 
+    @Presubmit
     public void testSecureStop() {
         if (watchHasNoClearkeySupport()) {
             return;
@@ -1120,6 +1134,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
      * Expected behavior: throws MediaDrm.SessionException with
      * errorCode ERROR_RESOURCE_CONTENTION
      */
+    @Presubmit
     public void testResourceContentionError() {
 
         if (watchHasNoClearkeySupport()) {
@@ -1161,6 +1176,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
      * Expected behavior: OnSessionLostState is called with
      * the sessionId
      */
+    @Presubmit
     public void testSessionLostStateError() {
 
         if (watchHasNoClearkeySupport()) {
@@ -1204,6 +1220,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
         }
     }
 
+    @Presubmit
     public void testIsCryptoSchemeSupportedWithSecurityLevel() {
         if (watchHasNoClearkeySupport()) {
             return;
