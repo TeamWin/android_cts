@@ -2145,8 +2145,6 @@
 
         <activity android:name=".notifications.BubbleActivity"
                   android:label="@string/bubble_activity_title"
-                  android:allowEmbedded="true"
-                  android:documentLaunchMode="always"
                   android:resizeableActivity="true">
         </activity>
 
