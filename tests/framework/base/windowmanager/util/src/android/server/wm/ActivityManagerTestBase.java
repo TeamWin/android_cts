@@ -577,6 +577,7 @@ public abstract class ActivityManagerTestBase {
     static void waitForOrFail(String message, BooleanSupplier condition) {
         Condition.waitFor(new Condition<>(message, condition)
                 .setRetryIntervalMs(500)
+                .setRetryLimit(20)
                 .setOnFailure(unusedResult -> fail("FAILED because unsatisfied: " + message)));
     }
 
