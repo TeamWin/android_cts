@@ -360,10 +360,10 @@ public class AvailableIntentsTest extends AndroidTestCase {
     }
 
     public void testUsageAccessSettings() {
-        PackageManager packageManager = mContext.getPackageManager();
-        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
-            assertCanBeHandled(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
+        if (!isHandheld()) {
+            return;
         }
+        assertCanBeHandled(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
     }
 
     public void testPictureInPictureSettings() {
@@ -421,6 +421,9 @@ public class AvailableIntentsTest extends AndroidTestCase {
 
     @CddTest(requirement = "7.4.2.6/C-1-1")
     public void testEasyConnectIntent() {
+        if (!isHandheld()) {
+            return;
+        }
         WifiManager manager = mContext.getSystemService(WifiManager.class);
 
         if (manager.isEasyConnectSupported()) {
@@ -454,6 +457,9 @@ public class AvailableIntentsTest extends AndroidTestCase {
     }
 
     public void testVoiceInputSettingsIntent() {
+        if (!isHandheld()) {
+            return;
+        }
         Intent intent = new Intent(Settings.ACTION_VOICE_INPUT_SETTINGS);
         assertCanBeHandled(intent);
     }
