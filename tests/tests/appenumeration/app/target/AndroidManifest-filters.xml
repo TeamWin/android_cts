@@ -37,5 +37,27 @@
                 <action android:name="android.appenumeration.action.BROADCAST" />
             </intent-filter>
         </receiver>
+
+        <activity android:name="android.appenumeration.testapp.DummyActivity"
+                  android:exported="false">
+            <intent-filter>
+                <action android:name="android.appenumeration.action.ACTIVITY_UNEXPORTED" />
+            </intent-filter>
+        </activity>
+        <service android:name="android.appenumeration.testapp.DummyService"
+                 android:exported="false">
+            <intent-filter>
+                <action android:name="android.appenumeration.action.SERVICE_UNEXPORTED" />
+            </intent-filter>
+        </service>
+        <provider android:name="android.appenumeration.testapp.DummyProvider"
+                  android:authorities="android.appenumeration.testapp.unexported"
+                  android:exported="false" />
+        <receiver android:name="android.appenumeration.testapp.DummyReceiver"
+                  android:exported="false">
+            <intent-filter>
+                <action android:name="android.appenumeration.action.BROADCAST_UNEXPORTED" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>
