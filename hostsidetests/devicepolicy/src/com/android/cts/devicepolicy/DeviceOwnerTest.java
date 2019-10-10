@@ -17,6 +17,7 @@
 package com.android.cts.devicepolicy;
 
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
+import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
 
 import android.stats.devicepolicy.EventId;
 
@@ -143,11 +144,13 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         executeDeviceOwnerTest("LockScreenInfoTest");
-        assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".LockScreenInfoTest", "testSetAndGetLockInfo");
-        }, new DevicePolicyEventWrapper.Builder(EventId.SET_DEVICE_OWNER_LOCK_SCREEN_INFO_VALUE)
-                .setAdminPackageName(DEVICE_OWNER_PKG)
-                .build());
+        if (isStatsdEnabled(getDevice())) {
+            assertMetricsLogged(getDevice(), () -> {
+                executeDeviceTestMethod(".LockScreenInfoTest", "testSetAndGetLockInfo");
+            }, new DevicePolicyEventWrapper.Builder(EventId.SET_DEVICE_OWNER_LOCK_SCREEN_INFO_VALUE)
+                    .setAdminPackageName(DEVICE_OWNER_PKG)
+                    .build());
+        }
     }
 
     public void testWifi() throws Exception {
@@ -155,11 +158,13 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         executeDeviceOwnerTest("WifiTest");
-        assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".WifiTest", "testGetWifiMacAddress");
-        }, new DevicePolicyEventWrapper.Builder(EventId.GET_WIFI_MAC_ADDRESS_VALUE)
-                .setAdminPackageName(DEVICE_OWNER_PKG)
-                .build());
+        if (isStatsdEnabled(getDevice())) {
+            assertMetricsLogged(getDevice(), () -> {
+                executeDeviceTestMethod(".WifiTest", "testGetWifiMacAddress");
+            }, new DevicePolicyEventWrapper.Builder(EventId.GET_WIFI_MAC_ADDRESS_VALUE)
+                    .setAdminPackageName(DEVICE_OWNER_PKG)
+                    .build());
+        }
     }
 
     public void testRemoteBugreportWithTwoUsers() throws Exception {
@@ -491,7 +496,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testSecurityLoggingEnabledLogged() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {
@@ -581,7 +586,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testSetSystemUpdatePolicyLogged() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {
@@ -703,19 +708,22 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         executeDeviceOwnerTest("AdminActionBookkeepingTest");
-        assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".AdminActionBookkeepingTest", "testRetrieveSecurityLogs");
-        }, new DevicePolicyEventWrapper.Builder(EventId.RETRIEVE_SECURITY_LOGS_VALUE)
+        if (isStatsdEnabled(getDevice())) {
+            assertMetricsLogged(getDevice(), () -> {
+                executeDeviceTestMethod(".AdminActionBookkeepingTest", "testRetrieveSecurityLogs");
+            }, new DevicePolicyEventWrapper.Builder(EventId.RETRIEVE_SECURITY_LOGS_VALUE)
                     .setAdminPackageName(DEVICE_OWNER_PKG)
                     .build(),
-            new DevicePolicyEventWrapper.Builder(EventId.RETRIEVE_PRE_REBOOT_SECURITY_LOGS_VALUE)
+            new DevicePolicyEventWrapper.Builder(
+                    EventId.RETRIEVE_PRE_REBOOT_SECURITY_LOGS_VALUE)
                     .setAdminPackageName(DEVICE_OWNER_PKG)
                     .build());
-        assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".AdminActionBookkeepingTest", "testRequestBugreport");
-        }, new DevicePolicyEventWrapper.Builder(EventId.REQUEST_BUGREPORT_VALUE)
-                .setAdminPackageName(DEVICE_OWNER_PKG)
-                .build());
+            assertMetricsLogged(getDevice(), () -> {
+                executeDeviceTestMethod(".AdminActionBookkeepingTest", "testRequestBugreport");
+            }, new DevicePolicyEventWrapper.Builder(EventId.REQUEST_BUGREPORT_VALUE)
+                    .setAdminPackageName(DEVICE_OWNER_PKG)
+                    .build());
+        }
     }
 
     public void testBluetoothRestriction() throws Exception {
@@ -927,7 +935,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testInstallUpdateLogged() throws Exception {
-        if (!mHasFeature || !isDeviceAb()) {
+        if (!mHasFeature || !isDeviceAb() || !isStatsdEnabled(getDevice())) {
             return;
         }
         pushUpdateFileToDevice("wrongHash.zip");
@@ -961,7 +969,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testSetKeyguardDisabledLogged() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {
@@ -972,7 +980,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testSetStatusBarDisabledLogged() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {
