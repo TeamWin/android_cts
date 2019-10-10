@@ -141,22 +141,23 @@ public class ManifestLayoutTests extends ActivityManagerTestBase {
         getDisplayAndWindowState(activityName, true);
 
         final Rect containingRect = mWindowState.getContainingFrame();
-        final Rect appRect = mDisplay.getAppRect();
+        final Rect displayRect = new Rect(mDisplay.getDisplayRect());
         final int expectedWidthPx, expectedHeightPx;
         // Evaluate the expected window size in px. If we're using fraction dimensions,
         // calculate the size based on the app rect size. Otherwise, convert the expected
         // size in dp to px.
         if (fraction) {
-            expectedWidthPx = (int) (appRect.width() * DEFAULT_WIDTH_FRACTION);
-            expectedHeightPx = (int) (appRect.height() * DEFAULT_HEIGHT_FRACTION);
+            expectedWidthPx = (int) (displayRect.width() * DEFAULT_WIDTH_FRACTION);
+            expectedHeightPx = (int) (displayRect.height() * DEFAULT_HEIGHT_FRACTION);
         } else {
             final int densityDpi = mDisplay.getDpi();
             expectedWidthPx = dpToPx(DEFAULT_WIDTH_DP, densityDpi);
             expectedHeightPx = dpToPx(DEFAULT_HEIGHT_DP, densityDpi);
         }
 
+        displayRect.top = mDisplay.getStableBounds().top;
         verifyFrameSizeAndPosition(
-                vGravity, hGravity, expectedWidthPx, expectedHeightPx, containingRect, appRect);
+                vGravity, hGravity, expectedWidthPx, expectedHeightPx, containingRect, displayRect);
     }
 
     private void getDisplayAndWindowState(ComponentName activityName, boolean checkFocus)
