@@ -781,6 +781,15 @@ public class ContextTest extends AndroidTestCase {
         }
     }
 
+    public void testCreateContextAsUser() throws Exception {
+        for (UserHandle user : new UserHandle[] {
+                android.os.Process.myUserHandle(),
+                UserHandle.ALL, UserHandle.CURRENT, UserHandle.SYSTEM
+        }) {
+            assertEquals(user, mContext.createContextAsUser(user).getUser());
+        }
+    }
+
     /**
      * Helper method to retrieve a valid application package name to use for tests.
      */
@@ -1377,5 +1386,4 @@ public class ContextTest extends AndroidTestCase {
         } catch (IllegalArgumentException expected) {
         }
     }
-
 }
