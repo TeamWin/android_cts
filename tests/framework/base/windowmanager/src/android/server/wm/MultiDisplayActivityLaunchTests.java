@@ -60,11 +60,13 @@ import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityManagerState.ActivityDisplay;
 import android.server.wm.ActivityManagerState.ActivityStack;
+import android.server.wm.ActivityManagerState.ActivityTask;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.SizeInfo;
 import android.util.SparseArray;
@@ -227,7 +229,7 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
 
     /**
      * Tests launching a non-resizeable activity on virtual display. It should land on the
-     * virtual display.
+     * virtual display with correct configuration.
      */
     @Test
     public void testLaunchNonResizeableActivityOnSecondaryDisplay() throws Exception {
@@ -240,6 +242,19 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
 
             waitAndAssertTopResumedActivity(NON_RESIZEABLE_ACTIVITY, newDisplay.mId,
                     "Activity requested to launch on secondary display must be focused");
+
+            final Configuration taskConfig = mAmWmState.getAmState()
+                    .getTaskByActivity(NON_RESIZEABLE_ACTIVITY).mFullConfiguration;
+            final Configuration displayConfig = mAmWmState.getWmState()
+                    .getDisplay(newDisplay.mId).mFullConfiguration;
+
+            // Check that activity config corresponds to display config.
+            assertEquals("Activity launched on secondary display must have proper configuration",
+                    taskConfig.densityDpi, displayConfig.densityDpi);
+
+            assertEquals("Activity launched on secondary display must have proper configuration",
+                    taskConfig.windowConfiguration.getBounds(),
+                    displayConfig.windowConfiguration.getBounds());
         }
     }
 
