@@ -1,5 +1,4 @@
-//
-// Copyright (C) 2019 The Android Open Source Project
+// Copyright (C) 2008 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,16 +11,21 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 android_test_helper_app {
-    name: "CtsOverlayPolicyProduct",
+    name: "TestDeviceSetup",
     defaults: ["cts_support_defaults"],
-    sdk_version: "current",
-    certificate: ":cts-testkey1",
-    test_suites: [
-        "cts",
-        "vts",
-        "general-tests",
-    ],
+    srcs: ["**/*.java"],
+
+    // because it is in data, do not strip classes.dex
+    dex_preopt: {
+        enabled: false,
+    },
+    optimize: {
+        enabled: false,
+    },
+    static_libs: ["compatibility-device-util-axt"],
+    // uncomment when b/13282254 is fixed
+    //version: "current",
+    sdk_version: "test_current",
 }
