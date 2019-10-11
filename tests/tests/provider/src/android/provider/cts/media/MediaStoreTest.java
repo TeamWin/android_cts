@@ -92,6 +92,30 @@ public class MediaStoreTest {
                 .dropShellPermissionIdentity();
     }
 
+    /**
+     * Sure this is pointless, but czars demand test coverage.
+     */
+    @Test
+    public void testConstructors() {
+        new MediaStore();
+        new MediaStore.Audio();
+        new MediaStore.Audio.Albums();
+        new MediaStore.Audio.Artists();
+        new MediaStore.Audio.Artists.Albums();
+        new MediaStore.Audio.Genres();
+        new MediaStore.Audio.Genres.Members();
+        new MediaStore.Audio.Media();
+        new MediaStore.Audio.Playlists();
+        new MediaStore.Audio.Playlists.Members();
+        new MediaStore.Files();
+        new MediaStore.Images();
+        new MediaStore.Images.Media();
+        new MediaStore.Images.Thumbnails();
+        new MediaStore.Video();
+        new MediaStore.Video.Media();
+        new MediaStore.Video.Thumbnails();
+    }
+
     @Test
     public void testIncludePending() {
         assertFalse(MediaStore.getIncludePending(mExternalImages));
@@ -116,6 +140,7 @@ public class MediaStoreTest {
     @Test
     public void testGetVersion() {
         // We should have valid versions to help detect data wipes
+        assertNotNull(MediaStore.getVersion(getContext()));
         assertNotNull(MediaStore.getVersion(getContext(), MediaStore.VOLUME_INTERNAL));
         assertNotNull(MediaStore.getVersion(getContext(), MediaStore.VOLUME_EXTERNAL));
         assertNotNull(MediaStore.getVersion(getContext(), MediaStore.VOLUME_EXTERNAL_PRIMARY));
