@@ -26,6 +26,7 @@ android_test {
         "ctstestrunner-axt",
         "ctstestserver",
         "mockito-target-minus-junit4",
+        "permission-test-util-lib",
         "testng",
     ],
     host_required: ["CtsBackupHostTestCases"],
