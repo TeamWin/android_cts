@@ -1821,14 +1821,14 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTestRawBlob(R.raw.bug_37930177_hevc, "video/hevc", 320, 240);
     }
 
-    @SecurityTest(minPatchLevel = "2018-04")
-    public void testBug_70897394() throws Exception {
-        doStagefrightTestRawBlob(R.raw.bug_70897394_avc, "video/avc", 320, 240, false);
-    }
-
     @SecurityTest(minPatchLevel = "2017-08")
     public void testBug_37712181() throws Exception {
         doStagefrightTestRawBlob(R.raw.bug_37712181_hevc, "video/hevc", 320, 240);
+    }
+
+    @SecurityTest(minPatchLevel = "2018-04")
+    public void testBug_70897394() throws Exception {
+        doStagefrightTestRawBlob(R.raw.bug_70897394_avc, "video/avc", 320, 240, false);
     }
 
     private int[] getFrameSizes(int rid) throws IOException {
