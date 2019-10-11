@@ -33,7 +33,7 @@ public class ZenModeTest extends BroadcastTestBase {
     static final String TAG = "ZenModeTest";
     private static final String VOICE_SETTINGS_PACKAGE = "android.voicesettings.service";
     private static final String VOICE_INTERACTION_CLASS =
-        "android.voicesettings.service.VoiceInteractionMain";
+            "android.voicesettings.service.VoiceInteractionMain";
     protected static final String FEATURE_VOICE_RECOGNIZERS = "android.software.voice_recognizers";
 
     @Override
