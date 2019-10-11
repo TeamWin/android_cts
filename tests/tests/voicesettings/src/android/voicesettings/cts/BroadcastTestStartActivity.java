@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-package com.android.compatibility.common.util;
+package android.voicesettings.cts;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.content.ComponentName;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+
+import com.android.compatibility.common.util.BroadcastUtils;
 
 public class BroadcastTestStartActivity extends Activity {
     static final String TAG = "BroadcastTestStartActivity";
