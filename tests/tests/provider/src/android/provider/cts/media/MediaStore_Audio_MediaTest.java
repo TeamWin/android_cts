@@ -224,4 +224,17 @@ public class MediaStore_Audio_MediaTest {
             }
         }
     }
+
+    @Test
+    public void testTrack() throws Exception {
+        final Uri uri = ProviderTestUtils.stageMedia(R.raw.iso88591_11,
+                mExternalAudio, "audio/mpeg");
+        try (Cursor c = mContentResolver.query(uri, null, null, null)) {
+            assertTrue(c.moveToFirst());
+
+            // The media file is technically disc "1/2" and track "2/10", but we
+            // parse it into a funky format that has been around for years.
+            assertEquals(1002, c.getInt(c.getColumnIndex(MediaStore.Audio.Media.TRACK)));
+        }
+    }
 }
