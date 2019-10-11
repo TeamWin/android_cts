@@ -20,10 +20,21 @@ import static android.app.Notification.CATEGORY_CALL;
 import static android.app.Notification.FLAG_BUBBLE;
 import static android.app.NotificationManager.IMPORTANCE_DEFAULT;
 import static android.app.NotificationManager.IMPORTANCE_HIGH;
+import static android.app.NotificationManager.IMPORTANCE_LOW;
+import static android.app.NotificationManager.IMPORTANCE_MIN;
+import static android.app.NotificationManager.IMPORTANCE_NONE;
+import static android.app.NotificationManager.IMPORTANCE_UNSPECIFIED;
+import static android.app.NotificationManager.INTERRUPTION_FILTER_ALARMS;
 import static android.app.NotificationManager.INTERRUPTION_FILTER_ALL;
+import static android.app.NotificationManager.INTERRUPTION_FILTER_NONE;
 import static android.app.NotificationManager.INTERRUPTION_FILTER_PRIORITY;
 import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS;
+import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_CALLS;
+import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_EVENTS;
 import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA;
+import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_MESSAGES;
+import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_REMINDERS;
+import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_SYSTEM;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_AMBIENT;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_FULL_SCREEN_INTENT;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_LIGHTS;
@@ -93,9 +104,12 @@ import android.server.wm.ActivityManagerTestBase;
 import android.service.notification.Condition;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
+import android.service.notification.ZenPolicy;
 import android.test.AndroidTestCase;
 import android.util.Log;
 import android.widget.RemoteViews;
+
+import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -113,8 +127,6 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import androidx.test.InstrumentationRegistry;
 
 /* This tests NotificationListenerService together with NotificationManager, as you need to have
  * notifications to manipulate in order to test the listener service. */
@@ -150,7 +162,7 @@ public class NotificationManagerTest extends AndroidTestCase {
                 0, mNotificationManager.getActiveNotifications().length);
 
         mNotificationManager.createNotificationChannel(new NotificationChannel(
-                NOTIFICATION_CHANNEL_ID, "name", NotificationManager.IMPORTANCE_DEFAULT));
+                NOTIFICATION_CHANNEL_ID, "name", IMPORTANCE_DEFAULT));
         mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
         mPackageManager = mContext.getPackageManager();
         mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
@@ -587,7 +599,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     private AutomaticZenRule createRule(String name) {
-        return createRule(name, NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+        return createRule(name, INTERRUPTION_FILTER_PRIORITY);
     }
 
     private void assertExpectedDndState(int expectedState) {
@@ -640,6 +652,130 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
+    public void testConsolidatedNotificationPolicy() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
+
+        final int originalFilter = mNotificationManager.getCurrentInterruptionFilter();
+        try {
+            toggleNotificationPolicyAccess(mContext.getPackageName(),
+                    InstrumentationRegistry.getInstrumentation(), true);
+
+            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
+                    PRIORITY_CATEGORY_ALARMS | PRIORITY_CATEGORY_MEDIA,
+                    0, 0));
+            // turn on manual DND
+            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
+            assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
+
+            // no custom ZenPolicy, so consolidatedPolicy should equal the default notif policy
+            assertEquals(mNotificationManager.getConsolidatedNotificationPolicy(),
+                    mNotificationManager.getNotificationPolicy());
+
+            // turn off manual DND
+            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
+            assertExpectedDndState(INTERRUPTION_FILTER_ALL);
+
+            // setup custom ZenPolicy for an automatic rule
+            AutomaticZenRule rule = createRule("test_consolidated_policy",
+                    INTERRUPTION_FILTER_PRIORITY);
+            rule.setZenPolicy(new ZenPolicy.Builder()
+                    .allowReminders(true)
+                    .build());
+            String id = mNotificationManager.addAutomaticZenRule(rule);
+            mRuleIds.add(id);
+            // set condition of the automatic rule to TRUE
+            Condition condition = new Condition(rule.getConditionId(), "summary",
+                    Condition.STATE_TRUE);
+            mNotificationManager.setAutomaticZenRuleState(id, condition);
+            assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
+
+            NotificationManager.Policy consolidatedPolicy =
+                    mNotificationManager.getConsolidatedNotificationPolicy();
+
+            // alarms and media are allowed from default notification policy
+            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_ALARMS) != 0);
+            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_MEDIA) != 0);
+
+            // reminders is allowed from the automatic rule's custom ZenPolicy
+            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_REMINDERS) != 0);
+
+            // other sounds aren't allowed
+            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_CALLS) == 0);
+            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_MESSAGES) == 0);
+            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_SYSTEM) == 0);
+            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_EVENTS) == 0);
+        } finally {
+            mNotificationManager.setInterruptionFilter(originalFilter);
+        }
+    }
+
+    public void testConsolidatedNotificationPolicyMultiRules() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
+
+        final int originalFilter = mNotificationManager.getCurrentInterruptionFilter();
+        try {
+            toggleNotificationPolicyAccess(mContext.getPackageName(),
+                    InstrumentationRegistry.getInstrumentation(), true);
+
+            // default allows no sounds
+            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
+                    PRIORITY_CATEGORY_ALARMS, 0, 0));
+
+            // setup custom ZenPolicy for two automatic rules
+            AutomaticZenRule rule1 = createRule("test_consolidated_policyq",
+                    INTERRUPTION_FILTER_PRIORITY);
+            rule1.setZenPolicy(new ZenPolicy.Builder()
+                    .allowReminders(false)
+                    .allowAlarms(false)
+                    .allowSystem(true)
+                    .build());
+            AutomaticZenRule rule2 = createRule("test_consolidated_policy2",
+                    INTERRUPTION_FILTER_PRIORITY);
+            rule2.setZenPolicy(new ZenPolicy.Builder()
+                    .allowReminders(true)
+                    .allowMedia(true)
+                    .build());
+            String id1 = mNotificationManager.addAutomaticZenRule(rule1);
+            String id2 = mNotificationManager.addAutomaticZenRule(rule2);
+            Condition onCondition1 = new Condition(rule1.getConditionId(), "summary",
+                    Condition.STATE_TRUE);
+            Condition onCondition2 = new Condition(rule2.getConditionId(), "summary",
+                    Condition.STATE_TRUE);
+            mNotificationManager.setAutomaticZenRuleState(id1, onCondition1);
+            mNotificationManager.setAutomaticZenRuleState(id2, onCondition2);
+
+            mRuleIds.add(id1);
+            mRuleIds.add(id2);
+            assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
+
+            NotificationManager.Policy consolidatedPolicy =
+                    mNotificationManager.getConsolidatedNotificationPolicy();
+
+            // reminders aren't allowed from rule1 overriding rule2
+            // (not allowed takes precedence over allowed)
+            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_REMINDERS) == 0);
+
+            // alarms aren't allowed from rule1
+            // (rule's custom zenPolicy overrides default policy)
+            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_ALARMS) == 0);
+
+            // system is allowed from rule1, media is allowed from rule2
+            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_SYSTEM) != 0);
+            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_MEDIA) != 0);
+
+            // other sounds aren't allowed (from default policy)
+            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_CALLS) == 0);
+            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_MESSAGES) == 0);
+            assertTrue((consolidatedPolicy.priorityCategories & PRIORITY_CATEGORY_EVENTS) == 0);
+        } finally {
+            mNotificationManager.setInterruptionFilter(originalFilter);
+        }
+    }
+
     public void testPostPCanToggleAlarmsMediaSystemTest() throws Exception {
         if (mActivityManager.isLowRamDevice()) {
             return;
@@ -652,37 +788,31 @@ public class NotificationManagerTest extends AndroidTestCase {
             // Post-P can toggle alarms, media, system
             // toggle on alarms, media, system:
             mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
-                    NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS
-                            | NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA
-                            | NotificationManager.Policy.PRIORITY_CATEGORY_SYSTEM, 0, 0));
+                    PRIORITY_CATEGORY_ALARMS
+                            | PRIORITY_CATEGORY_MEDIA
+                            | PRIORITY_CATEGORY_SYSTEM, 0, 0));
             NotificationManager.Policy policy = mNotificationManager.getNotificationPolicy();
-            assertTrue((policy.priorityCategories
-                    & NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS) != 0);
-            assertTrue((policy.priorityCategories
-                    & NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA) != 0);
-            assertTrue((policy.priorityCategories
-                    & NotificationManager.Policy.PRIORITY_CATEGORY_SYSTEM) != 0);
+            assertTrue((policy.priorityCategories & PRIORITY_CATEGORY_ALARMS) != 0);
+            assertTrue((policy.priorityCategories & PRIORITY_CATEGORY_MEDIA) != 0);
+            assertTrue((policy.priorityCategories & PRIORITY_CATEGORY_SYSTEM) != 0);
 
             // toggle off alarms, media, system
             mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(0, 0, 0));
             policy = mNotificationManager.getNotificationPolicy();
-            assertTrue((policy.priorityCategories
-                    & NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS) == 0);
-            assertTrue((policy.priorityCategories &
-                    NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA) == 0);
-            assertTrue((policy.priorityCategories &
-                    NotificationManager.Policy.PRIORITY_CATEGORY_SYSTEM) == 0);
+            assertTrue((policy.priorityCategories & PRIORITY_CATEGORY_ALARMS) == 0);
+            assertTrue((policy.priorityCategories & PRIORITY_CATEGORY_MEDIA) == 0);
+            assertTrue((policy.priorityCategories & PRIORITY_CATEGORY_SYSTEM) == 0);
         }
     }
 
     public void testCreateChannelGroup() throws Exception {
         final NotificationChannelGroup ncg = new NotificationChannelGroup("a group", "a label");
         final NotificationChannel channel =
-                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
+                new NotificationChannel(mId, "name", IMPORTANCE_DEFAULT);
         channel.setGroup(ncg.getId());
         mNotificationManager.createNotificationChannelGroup(ncg);
         final NotificationChannel ungrouped =
-                new NotificationChannel(mId + "!", "name", NotificationManager.IMPORTANCE_DEFAULT);
+                new NotificationChannel(mId + "!", "name", IMPORTANCE_DEFAULT);
         try {
             mNotificationManager.createNotificationChannel(channel);
             mNotificationManager.createNotificationChannel(ungrouped);
@@ -703,7 +833,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         ncg.setDescription("bananas");
         final NotificationChannelGroup ncg2 = new NotificationChannelGroup("group 2", "label 2");
         final NotificationChannel channel =
-                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
+                new NotificationChannel(mId, "name", IMPORTANCE_DEFAULT);
         channel.setGroup(ncg.getId());
 
         mNotificationManager.createNotificationChannelGroup(ncg);
@@ -723,7 +853,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         ncg.setDescription("bananas");
         final NotificationChannelGroup ncg2 = new NotificationChannelGroup("group 2", "label 2");
         final NotificationChannel channel =
-                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
+                new NotificationChannel(mId, "name", IMPORTANCE_DEFAULT);
         channel.setGroup(ncg2.getId());
 
         mNotificationManager.createNotificationChannelGroup(ncg);
@@ -752,7 +882,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     public void testDeleteChannelGroup() throws Exception {
         final NotificationChannelGroup ncg = new NotificationChannelGroup("a group", "a label");
         final NotificationChannel channel =
-                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
+                new NotificationChannel(mId, "name", IMPORTANCE_DEFAULT);
         channel.setGroup(ncg.getId());
         mNotificationManager.createNotificationChannelGroup(ncg);
         mNotificationManager.createNotificationChannel(channel);
@@ -765,7 +895,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testCreateChannel() throws Exception {
         final NotificationChannel channel =
-                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
+                new NotificationChannel(mId, "name", IMPORTANCE_DEFAULT);
         channel.setDescription("bananas");
         channel.enableVibration(true);
         channel.setVibrationPattern(new long[] {5, 8, 2, 1});
@@ -786,7 +916,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testCreateChannel_rename() throws Exception {
         NotificationChannel channel =
-                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
+                new NotificationChannel(mId, "name", IMPORTANCE_DEFAULT);
         mNotificationManager.createNotificationChannel(channel);
         channel.setName("new name");
         mNotificationManager.createNotificationChannel(channel);
@@ -807,7 +937,7 @@ public class NotificationManagerTest extends AndroidTestCase {
                 new NotificationChannelGroup(newGroup, newGroup));
 
         NotificationChannel channel =
-                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
+                new NotificationChannel(mId, "name", IMPORTANCE_DEFAULT);
         channel.setGroup(oldGroup);
         mNotificationManager.createNotificationChannel(channel);
 
@@ -829,7 +959,7 @@ public class NotificationManagerTest extends AndroidTestCase {
                 new NotificationChannelGroup(newGroup, newGroup));
 
         NotificationChannel channel =
-                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
+                new NotificationChannel(mId, "name", IMPORTANCE_DEFAULT);
         channel.setGroup(oldGroup);
         mNotificationManager.createNotificationChannel(channel);
         channel.setGroup(newGroup);
@@ -842,10 +972,10 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testCreateSameChannelDoesNotUpdate() throws Exception {
         final NotificationChannel channel =
-                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
+                new NotificationChannel(mId, "name", IMPORTANCE_DEFAULT);
         mNotificationManager.createNotificationChannel(channel);
         final NotificationChannel channelDupe =
-                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_HIGH);
+                new NotificationChannel(mId, "name", IMPORTANCE_HIGH);
         mNotificationManager.createNotificationChannel(channelDupe);
         final NotificationChannel createdChannel =
                 mNotificationManager.getNotificationChannel(mId);
@@ -854,10 +984,10 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testCreateChannelAlreadyExistsNoOp() throws Exception {
         NotificationChannel channel =
-                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
+                new NotificationChannel(mId, "name", IMPORTANCE_DEFAULT);
         mNotificationManager.createNotificationChannel(channel);
         NotificationChannel channelDupe =
-                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_HIGH);
+                new NotificationChannel(mId, "name", IMPORTANCE_HIGH);
         mNotificationManager.createNotificationChannel(channelDupe);
         compareChannels(channel, mNotificationManager.getNotificationChannel(channel.getId()));
     }
@@ -867,7 +997,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         mNotificationManager.createNotificationChannelGroup(ncg);
         try {
             NotificationChannel channel =
-                    new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
+                    new NotificationChannel(mId, "name", IMPORTANCE_DEFAULT);
             channel.setGroup(ncg.getId());
             mNotificationManager.createNotificationChannel(channel);
             compareChannels(channel, mNotificationManager.getNotificationChannel(channel.getId()));
@@ -878,7 +1008,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testCreateChannelWithBadGroup() throws Exception {
         NotificationChannel channel =
-                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
+                new NotificationChannel(mId, "name", IMPORTANCE_DEFAULT);
         channel.setGroup("garbage");
         try {
             mNotificationManager.createNotificationChannel(channel);
@@ -888,7 +1018,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testCreateChannelInvalidImportance() throws Exception {
         NotificationChannel channel =
-                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_UNSPECIFIED);
+                new NotificationChannel(mId, "name", IMPORTANCE_UNSPECIFIED);
         try {
             mNotificationManager.createNotificationChannel(channel);
         } catch (IllegalArgumentException e) {
@@ -898,7 +1028,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testDeleteChannel() throws Exception {
         NotificationChannel channel =
-                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_LOW);
+                new NotificationChannel(mId, "name", IMPORTANCE_LOW);
         mNotificationManager.createNotificationChannel(channel);
         compareChannels(channel, mNotificationManager.getNotificationChannel(channel.getId()));
         mNotificationManager.deleteNotificationChannel(channel.getId());
@@ -916,16 +1046,16 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testGetChannel() throws Exception {
         NotificationChannel channel1 =
-                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
+                new NotificationChannel(mId, "name", IMPORTANCE_DEFAULT);
         NotificationChannel channel2 =
                 new NotificationChannel(
-                        UUID.randomUUID().toString(), "name2", NotificationManager.IMPORTANCE_HIGH);
+                        UUID.randomUUID().toString(), "name2", IMPORTANCE_HIGH);
         NotificationChannel channel3 =
                 new NotificationChannel(
-                        UUID.randomUUID().toString(), "name3", NotificationManager.IMPORTANCE_LOW);
+                        UUID.randomUUID().toString(), "name3", IMPORTANCE_LOW);
         NotificationChannel channel4 =
                 new NotificationChannel(
-                        UUID.randomUUID().toString(), "name4", NotificationManager.IMPORTANCE_MIN);
+                        UUID.randomUUID().toString(), "name4", IMPORTANCE_MIN);
         mNotificationManager.createNotificationChannel(channel1);
         mNotificationManager.createNotificationChannel(channel2);
         mNotificationManager.createNotificationChannel(channel3);
@@ -943,16 +1073,16 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testGetChannels() throws Exception {
         NotificationChannel channel1 =
-                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
+                new NotificationChannel(mId, "name", IMPORTANCE_DEFAULT);
         NotificationChannel channel2 =
                 new NotificationChannel(
-                        UUID.randomUUID().toString(), "name2", NotificationManager.IMPORTANCE_HIGH);
+                        UUID.randomUUID().toString(), "name2", IMPORTANCE_HIGH);
         NotificationChannel channel3 =
                 new NotificationChannel(
-                        UUID.randomUUID().toString(), "name3", NotificationManager.IMPORTANCE_LOW);
+                        UUID.randomUUID().toString(), "name3", IMPORTANCE_LOW);
         NotificationChannel channel4 =
                 new NotificationChannel(
-                        UUID.randomUUID().toString(), "name4", NotificationManager.IMPORTANCE_MIN);
+                        UUID.randomUUID().toString(), "name4", IMPORTANCE_MIN);
 
         Map<String, NotificationChannel> channelMap = new HashMap<>();
         channelMap.put(channel1.getId(), channel1);
@@ -985,10 +1115,10 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testRecreateDeletedChannel() throws Exception {
         NotificationChannel channel =
-                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
+                new NotificationChannel(mId, "name", IMPORTANCE_DEFAULT);
         channel.setShowBadge(true);
         NotificationChannel newChannel = new NotificationChannel(
-                channel.getId(), channel.getName(), NotificationManager.IMPORTANCE_HIGH);
+                channel.getId(), channel.getName(), IMPORTANCE_HIGH);
         mNotificationManager.createNotificationChannel(channel);
         mNotificationManager.deleteNotificationChannel(channel.getId());
 
@@ -1268,8 +1398,7 @@ public class NotificationManagerTest extends AndroidTestCase {
                 mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(0, 0, 0,
                         SUPPRESSED_EFFECT_SCREEN_ON));
             }
-            mNotificationManager.setInterruptionFilter(
-                    NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
 
             final int notificationId = 1;
             // update notification
@@ -1346,7 +1475,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         mNotificationManager.cancelAll();
 
         NotificationChannel channel =
-                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_NONE);
+                new NotificationChannel(mId, "name", IMPORTANCE_NONE);
         mNotificationManager.createNotificationChannel(channel);
 
         int id = 1;
@@ -1371,7 +1500,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         group.setBlocked(true);
         mNotificationManager.createNotificationChannelGroup(group);
         NotificationChannel channel =
-                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
+                new NotificationChannel(mId, "name", IMPORTANCE_DEFAULT);
         channel.setGroup(mId);
         mNotificationManager.createNotificationChannel(channel);
 
@@ -1723,8 +1852,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
             mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
                     PRIORITY_CATEGORY_ALARMS | PRIORITY_CATEGORY_MEDIA, 0, 0));
-            AutomaticZenRule rule = createRule("test_total_silence",
-                    NotificationManager.INTERRUPTION_FILTER_NONE);
+            AutomaticZenRule rule = createRule("test_total_silence", INTERRUPTION_FILTER_NONE);
             String id = mNotificationManager.addAutomaticZenRule(rule);
             mRuleIds.add(id);
             Condition condition =
@@ -1767,8 +1895,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
             mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
                     PRIORITY_CATEGORY_ALARMS | PRIORITY_CATEGORY_MEDIA, 0, 0));
-            AutomaticZenRule rule = createRule("test_alarms",
-                    NotificationManager.INTERRUPTION_FILTER_ALARMS);
+            AutomaticZenRule rule = createRule("test_alarms", INTERRUPTION_FILTER_ALARMS);
             String id = mNotificationManager.addAutomaticZenRule(rule);
             mRuleIds.add(id);
             Condition condition =
@@ -1942,7 +2069,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         mRuleIds.add(id);
 
         AutomaticZenRule secondRuleToCreate = createRule("Rule 2");
-        secondRuleToCreate.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
+        secondRuleToCreate.setInterruptionFilter(INTERRUPTION_FILTER_NONE);
         String secondId = mNotificationManager.addAutomaticZenRule(secondRuleToCreate);
         mRuleIds.add(secondId);
 
@@ -2455,7 +2582,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertNotNull(mListener);
 
         NotificationChannel channel = new NotificationChannel(
-                NOTIFICATION_CHANNEL_ID, "name", NotificationManager.IMPORTANCE_DEFAULT);
+                NOTIFICATION_CHANNEL_ID, "name", IMPORTANCE_DEFAULT);
         try {
             mListener.updateNotificationChannel(mContext.getPackageName(), UserHandle.CURRENT,
                     channel);
