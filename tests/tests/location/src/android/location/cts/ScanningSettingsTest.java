@@ -24,6 +24,7 @@ import android.content.res.Resources;
 import android.database.ContentObserver;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
@@ -41,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Tests if system settings app provides scanning settings.
  */
+@AppModeFull(reason = "Test cases don't apply for Instant apps")
 public class ScanningSettingsTest extends AndroidTestCase {
     private static final String TAG = "ScanningSettingsTest";
 
