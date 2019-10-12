@@ -20,9 +20,11 @@ import android.app.Activity;
 import android.os.Bundle;
 
 /**
- * Used by NotificationManagerTest for testing policy around bubbles.
+ * Used by NotificationManagerTest for testing policy around bubbles, this activity is shown
+ * within the bubble.
  */
-public class BubblesTestNotDocumentLaunchModeActivity extends Activity {
+public class BubbledActivity extends Activity {
+    final String TAG = BubbledActivity.class.getSimpleName();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {

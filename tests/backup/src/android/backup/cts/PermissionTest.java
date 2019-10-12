@@ -218,7 +218,7 @@ public class PermissionTest extends BaseBackupCtsTest {
      */
     public void testGrantForegroundAndBackgroundRuntimePermission22() throws Exception {
         // Set a marker
-        setAppOp(APP, WRITE_CONTACTS, MODE_IGNORED);
+        setAppOp(APP22, WRITE_CONTACTS, MODE_IGNORED);
 
         mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
         resetApp(APP22);
@@ -226,9 +226,9 @@ public class PermissionTest extends BaseBackupCtsTest {
 
         eventually(() -> {
             // Wait for marker
-            assertEquals(MODE_IGNORED, getAppOp(APP, WRITE_CONTACTS));
+            assertEquals(MODE_IGNORED, getAppOp(APP22, WRITE_CONTACTS));
 
-            assertEquals(MODE_ALLOWED, getAppOp(APP, ACCESS_FINE_LOCATION));
+            assertEquals(MODE_ALLOWED, getAppOp(APP22, ACCESS_FINE_LOCATION));
         });
     }
 

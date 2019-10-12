@@ -59,6 +59,7 @@ import org.junit.runner.RunWith;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -2501,5 +2502,34 @@ public class ImageDecoderTest {
         }
 
         assertFalse(ImageDecoder.isMimeTypeSupported("image/x-does-not-exist"));
+    }
+
+    @Test(expected = FileNotFoundException.class)
+    public void testBadUri() throws IOException {
+        Uri uri = new Uri.Builder()
+                .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
+                .authority("authority")
+                .appendPath("drawable")
+                .appendPath("bad")
+                .build();
+        ImageDecoder.Source src = ImageDecoder.createSource(getContentResolver(), uri);
+        ImageDecoder.decodeDrawable(src);
+    }
+
+    @Test(expected = FileNotFoundException.class)
+    public void testBadUri2() throws IOException {
+        // This URI will attempt to open a file from EmptyProvider, which always
+        // returns null. This test ensures that we throw FileNotFoundException,
+        // instead of a NullPointerException when attempting to dereference null.
+        Uri uri = Uri.parse(ContentResolver.SCHEME_CONTENT + "://"
+                + "android.graphics.cts.assets/bad");
+        ImageDecoder.Source src = ImageDecoder.createSource(getContentResolver(), uri);
+        ImageDecoder.decodeDrawable(src);
+    }
+
+    @Test(expected = FileNotFoundException.class)
+    public void testBadCallable() throws IOException {
+        ImageDecoder.Source src = ImageDecoder.createSource(() -> null);
+        ImageDecoder.decodeDrawable(src);
     }
 }

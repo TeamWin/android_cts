@@ -174,6 +174,9 @@ public class MediaStore_Video_MediaTest {
             long realDateAdded = c.getLong(c.getColumnIndex(Media.DATE_ADDED));
             assertTrue(realDateAdded >= dateAdded);
             assertEquals(dateModified, c.getLong(c.getColumnIndex(Media.DATE_MODIFIED)));
+            assertTrue(c.isNull(c.getColumnIndex(Media.COLOR_STANDARD)));
+            assertTrue(c.isNull(c.getColumnIndex(Media.COLOR_TRANSFER)));
+            assertTrue(c.isNull(c.getColumnIndex(Media.COLOR_RANGE)));
             c.close();
         } finally {
             // delete

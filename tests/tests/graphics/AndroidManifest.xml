@@ -44,7 +44,11 @@
 
         <activity android:name="android.graphics.drawable.cts.DrawableStubActivity"
                   android:theme="@style/WhiteBackgroundNoWindowAnimation"
-                  android:screenOrientation="locked"/>
+          android:screenOrientation="locked"/>
+        <provider
+            android:name=".EmptyProvider"
+            android:exported="true"
+            android:authorities="android.graphics.cts.assets"/>
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="android.graphics.cts.fileprovider"

@@ -17,24 +17,28 @@
 package com.android.compatibility.common.util;
 
 import android.app.Instrumentation;
-import android.util.Log;
+import android.location.Location;
+import android.os.SystemClock;
 
 import java.io.IOException;
 
 public class LocationUtils {
-    private static String TAG = "LocationUtils";
 
     public static void registerMockLocationProvider(Instrumentation instrumentation,
-            boolean enable) {
-        StringBuilder command = new StringBuilder();
-        command.append("appops set ");
-        command.append(instrumentation.getContext().getPackageName());
-        command.append(" android:mock_location ");
-        command.append(enable ? "allow" : "deny");
-        try {
-            SystemUtil.runShellCommand(instrumentation, command.toString());
-        } catch (IOException e) {
-            Log.e(TAG, "Error managing mock location app. Command: " + command, e);
-        }
+            boolean enable) throws IOException {
+        SystemUtil.runShellCommand(instrumentation, "appops set "
+                + instrumentation.getContext().getPackageName()
+                + " android:mock_location "
+                + (enable ? "allow" : "deny"));
+    }
+
+    public static Location createLocation(String provider, double latitude, double longitude) {
+        Location location = new Location(provider);
+        location.setLatitude(latitude);
+        location.setLongitude(longitude);
+        location.setAccuracy(10.0f);
+        location.setTime(System.currentTimeMillis());
+        location.setElapsedRealtimeNanos(SystemClock.elapsedRealtimeNanos());
+        return location;
     }
 }

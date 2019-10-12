@@ -20,7 +20,8 @@
 
     <queries>
         <intent>
-            <data android:scheme="content" android:host="android.appenumeration.testapp" />
+            <data android:scheme="content"
+                  android:host="android.appenumeration.testapp" />
         </intent>
     </queries>
 

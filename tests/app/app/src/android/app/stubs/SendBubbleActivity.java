@@ -24,14 +24,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Icon;
 import android.os.Bundle;
-import android.provider.Telephony;
 import android.util.Log;
+import android.view.WindowManager;
 
 /**
- * Used by NotificationManagerTest for testing policy around bubbles.
+ * Used by NotificationManagerTest for testing policy around bubbles, this activity is able to
+ * send a bubble.
  */
-public class BubblesTestActivity extends Activity {
-    final String TAG = BubblesTestActivity.class.getSimpleName();
+public class SendBubbleActivity extends Activity {
+    final String TAG = SendBubbleActivity.class.getSimpleName();
 
     // Should be same as wht NotificationManagerTest is using
     private static final String NOTIFICATION_CHANNEL_ID = "NotificationManagerTest";
@@ -53,10 +54,10 @@ public class BubblesTestActivity extends Activity {
      * Sends a bubble notification that would only be allowed to bubble when the app is
      * foreground.
      */
-    public void sendBubble(int i) {
+    public void sendBubble(int i, boolean autoExpand) {
         Context context = getApplicationContext();
 
-        final Intent intent = new Intent(context, BubblesTestActivity.class);
+        final Intent intent = new Intent(context, BubbledActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP
                 | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         intent.setAction(Intent.ACTION_MAIN);
@@ -66,6 +67,7 @@ public class BubblesTestActivity extends Activity {
         Notification.BubbleMetadata data = new Notification.BubbleMetadata.Builder()
                 .setIcon(Icon.createWithResource(context, R.drawable.black))
                 .setIntent(pendingIntent)
+                .setAutoExpandBubble(autoExpand)
                 .build();
         Notification n = new Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.black)

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,22 @@
  * limitations under the License.
  -->
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.location2.cts"
-    android:targetSandboxVersion="2">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="android.location.cts.coarse">
 
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
-    <application>
-        <uses-library android:name="android.test.runner" />
-    </application>
-
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_LOCATION_EXTRA_COMMANDS"/>
 
+    <application>
+        <uses-library android:name="android.test.runner" />
+    </application>
+
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="android.location2.cts"
-                     android:label="CTS tests of android.location">
+                     android:label="CTS tests for android.location"
+                     android:targetPackage="android.location.cts" >
         <meta-data android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
+                   android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 </manifest>
 
