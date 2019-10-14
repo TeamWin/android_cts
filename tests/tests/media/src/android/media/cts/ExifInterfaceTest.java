@@ -69,6 +69,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
     private static final String PENTAX_K5_PEF = "pentax_k5.pef";
     private static final String SAMSUNG_NX3000_SRW = "samsung_nx3000.srw";
     private static final String VOLANTIS_JPEG = "volantis.jpg";
+    private static final String EXIF_BYTE_ORDER_II_PNG = "image_exif_byte_order_ii_png.png";
 
     private static final String[] EXIF_TAGS = {
             ExifInterface.TAG_MAKE,
@@ -494,7 +495,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
         testSaveAttributes_withFileDescriptor(fileName, expectedValue);
     }
 
-    private void testExifInterfaceForRaw(String fileName, int typedArrayResourceId)
+    private void testExifInterface(String fileName, int typedArrayResourceId)
             throws IOException {
         ExpectedValue expectedValue = new ExpectedValue(
                 getContext().getResources().obtainTypedArray(typedArrayResourceId));
@@ -526,7 +527,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
     }
 
     public void testReadExifDataFromLgG4Iso800Dng() throws Throwable {
-        testExifInterfaceForRaw(LG_G4_ISO_800_DNG, R.array.lg_g4_iso_800_dng);
+        testExifInterface(LG_G4_ISO_800_DNG, R.array.lg_g4_iso_800_dng);
     }
 
     public void testReadExifDataFromLgG4Iso800Jpg() throws Throwable {
@@ -553,44 +554,50 @@ public class ExifInterfaceTest extends AndroidTestCase {
     }
 
     public void testReadExifDataFromSonyRX100Arw() throws Throwable {
-        testExifInterfaceForRaw(SONY_RX_100_ARW, R.array.sony_rx_100_arw);
+        testExifInterface(SONY_RX_100_ARW, R.array.sony_rx_100_arw);
     }
 
     public void testReadExifDataFromCanonG7XCr2() throws Throwable {
-        testExifInterfaceForRaw(CANON_G7X_CR2, R.array.canon_g7x_cr2);
+        testExifInterface(CANON_G7X_CR2, R.array.canon_g7x_cr2);
     }
 
     public void testReadExifDataFromFujiX20Raf() throws Throwable {
-        testExifInterfaceForRaw(FUJI_X20_RAF, R.array.fuji_x20_raf);
+        testExifInterface(FUJI_X20_RAF, R.array.fuji_x20_raf);
     }
 
     public void testReadExifDataFromNikon1AW1Nef() throws Throwable {
-        testExifInterfaceForRaw(NIKON_1AW1_NEF, R.array.nikon_1aw1_nef);
+        testExifInterface(NIKON_1AW1_NEF, R.array.nikon_1aw1_nef);
     }
 
     public void testReadExifDataFromNikonP330Nrw() throws Throwable {
-        testExifInterfaceForRaw(NIKON_P330_NRW, R.array.nikon_p330_nrw);
+        testExifInterface(NIKON_P330_NRW, R.array.nikon_p330_nrw);
     }
 
     public void testReadExifDataFromOlympusEPL3Orf() throws Throwable {
-        testExifInterfaceForRaw(OLYMPUS_E_PL3_ORF, R.array.olympus_e_pl3_orf);
+        testExifInterface(OLYMPUS_E_PL3_ORF, R.array.olympus_e_pl3_orf);
     }
 
     public void testReadExifDataFromPanasonicGM5Rw2() throws Throwable {
-        testExifInterfaceForRaw(PANASONIC_GM5_RW2, R.array.panasonic_gm5_rw2);
+        testExifInterface(PANASONIC_GM5_RW2, R.array.panasonic_gm5_rw2);
     }
 
     public void testReadExifDataFromPentaxK5Pef() throws Throwable {
-        testExifInterfaceForRaw(PENTAX_K5_PEF, R.array.pentax_k5_pef);
+        testExifInterface(PENTAX_K5_PEF, R.array.pentax_k5_pef);
     }
 
     public void testReadExifDataFromSamsungNX3000Srw() throws Throwable {
-        testExifInterfaceForRaw(SAMSUNG_NX3000_SRW, R.array.samsung_nx3000_srw);
+        testExifInterface(SAMSUNG_NX3000_SRW, R.array.samsung_nx3000_srw);
     }
 
     public void testReadExifDataFromStandaloneData() throws Throwable {
         testExifInterfaceForStandalone(EXIF_BYTE_ORDER_II_JPEG, R.array.exifbyteorderii_standalone);
         testExifInterfaceForStandalone(EXIF_BYTE_ORDER_MM_JPEG, R.array.exifbyteordermm_standalone);
+    }
+
+    public void testReadExifDataFromExifByteOrderIIPng() throws Throwable {
+        stageFile(R.raw.image_exif_byte_order_ii_png, new File(Environment.getExternalStorageDirectory(),
+                EXTERNAL_BASE_DIRECTORY + EXIF_BYTE_ORDER_II_PNG));
+        testExifInterface(EXIF_BYTE_ORDER_II_PNG, R.array.exifbyteorderii_png);
     }
 
     public void testSetDateTime() throws IOException {
