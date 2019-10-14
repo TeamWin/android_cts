@@ -324,6 +324,49 @@ public class SubscriptionManagerTest {
     }
 
     @Test
+    public void testSubscriptionPlansUnmetered() throws Exception {
+        if (!isSupported()) return;
+
+        final ConnectivityManager cm = InstrumentationRegistry.getContext()
+                .getSystemService(ConnectivityManager.class);
+        final Network net = findCellularNetwork();
+        assertNotNull("Active cellular network required", net);
+
+        // Make ourselves the owner and define some plans
+        setSubPlanOwner(mSubId, mPackageName);
+        mSm.setSubscriptionPlans(mSubId, Arrays.asList(buildValidSubscriptionPlan()));
+
+        // Cellular is metered by default
+        assertFalse(cm.getNetworkCapabilities(net).hasCapability(NET_CAPABILITY_NOT_METERED));
+
+        SubscriptionPlan unmeteredPlan = SubscriptionPlan.Builder
+                .createRecurring(ZonedDateTime.parse("2007-03-14T00:00:00.000Z"),
+                        Period.ofMonths(1))
+                .setTitle("CTS")
+                .setDataLimit(SubscriptionPlan.BYTES_UNLIMITED,
+                        SubscriptionPlan.LIMIT_BEHAVIOR_THROTTLED)
+                .build();
+
+        // Unmetered plan should make it go unmetered
+        {
+            final CountDownLatch latch = waitForNetworkCapabilities(net, caps -> {
+                return caps.hasCapability(NET_CAPABILITY_NOT_METERED);
+            });
+            mSm.setSubscriptionPlans(mSubId, Arrays.asList(unmeteredPlan));
+            assertTrue(latch.await(10, TimeUnit.SECONDS));
+        }
+
+        // Metered plan should make it go metered
+        {
+            final CountDownLatch latch = waitForNetworkCapabilities(net, caps -> {
+                return !caps.hasCapability(NET_CAPABILITY_NOT_METERED);
+            });
+            mSm.setSubscriptionPlans(mSubId, Arrays.asList(buildValidSubscriptionPlan()));
+            assertTrue(latch.await(10, TimeUnit.SECONDS));
+        }
+    }
+
+    @Test
     public void testSubscriptionPlansInvalid() throws Exception {
         if (!isSupported()) return;
 
@@ -362,6 +405,49 @@ public class SubscriptionManagerTest {
                 .setDataLimit(1_000_000_000, SubscriptionPlan.LIMIT_BEHAVIOR_DISABLED)
                 .build();
         assertOverrideSuccess(older, newer);
+    }
+
+    @Test
+    public void testSubscriptionPlansNetworkTypeValidation() throws Exception {
+        if (!isSupported()) return;
+
+        // Make ourselves the owner
+        setSubPlanOwner(mSubId, mPackageName);
+
+        // Error when adding 2 plans with the same network type
+        List<SubscriptionPlan> plans = new ArrayList<>();
+        plans.add(buildValidSubscriptionPlan());
+        plans.add(SubscriptionPlan.Builder
+                .createRecurring(ZonedDateTime.parse("2007-03-14T00:00:00.000Z"),
+                        Period.ofMonths(1))
+                .setTitle("CTS")
+                .setNetworkTypes(new int[] {TelephonyManager.NETWORK_TYPE_LTE})
+                .build());
+        plans.add(SubscriptionPlan.Builder
+                .createRecurring(ZonedDateTime.parse("2007-03-14T00:00:00.000Z"),
+                        Period.ofMonths(1))
+                .setTitle("CTS")
+                .setNetworkTypes(new int[] {TelephonyManager.NETWORK_TYPE_LTE})
+                .build());
+        try {
+            mSm.setSubscriptionPlans(mSubId, plans);
+            fail();
+        } catch (IllegalArgumentException expected) {
+        }
+
+        // Error when there is no general plan
+        plans.clear();
+        plans.add(SubscriptionPlan.Builder
+                .createRecurring(ZonedDateTime.parse("2007-03-14T00:00:00.000Z"),
+                        Period.ofMonths(1))
+                .setTitle("CTS")
+                .setNetworkTypes(new int[] {TelephonyManager.NETWORK_TYPE_LTE})
+                .build());
+        try {
+            mSm.setSubscriptionPlans(mSubId, plans);
+            fail();
+        } catch (IllegalArgumentException expected) {
+        }
     }
 
     @Test
