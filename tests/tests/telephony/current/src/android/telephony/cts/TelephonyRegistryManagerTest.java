@@ -3,7 +3,7 @@ package android.telephony.cts;
 import static org.junit.Assert.fail;
 
 import android.content.Context;
-import android.os.telephony.TelephonyRegistryManager;
+import android.telephony.TelephonyRegistryManager;
 import androidx.test.InstrumentationRegistry;
 import org.junit.Before;
 import org.junit.Test;
