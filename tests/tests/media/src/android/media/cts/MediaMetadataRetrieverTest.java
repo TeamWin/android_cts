@@ -381,11 +381,11 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
         }
     }
 
-    private void testThumbnail(int resId) {
-        testThumbnail(resId, null /*outPath*/);
+    private void testThumbnail(int resId, int targetWdith, int targetHeight) {
+        testThumbnail(resId, null /*outPath*/, targetWdith, targetHeight);
     }
 
-    private void testThumbnail(int resId, String outPath) {
+    private void testThumbnail(int resId, String outPath, int targetWidth, int targetHeight) {
         Stopwatch timer = new Stopwatch();
 
         if (!MediaUtils.hasCodecForResourceAndDomain(getContext(), resId, "video/")) {
@@ -401,6 +401,12 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
         timer.printDuration("getFrameAtTime");
 
         assertNotNull(thumbnail);
+
+        // Verifies bitmap width and height.
+        assertEquals("Video width was other than expected", Integer.toString(targetWidth),
+            mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
+        assertEquals("Video height was other than expected", Integer.toString(targetHeight),
+            mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
 
         // save output file if needed
         if (outPath != null) {
@@ -423,39 +429,84 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
     }
 
     public void testThumbnailH264() {
-        testThumbnail(R.raw.bbb_s4_1280x720_mp4_h264_mp31_8mbps_30fps_aac_he_mono_40kbps_44100hz);
+        testThumbnail(
+                R.raw.bbb_s4_1280x720_mp4_h264_mp31_8mbps_30fps_aac_he_mono_40kbps_44100hz,
+                1280,
+                720);
     }
 
     public void testThumbnailH263() {
-        testThumbnail(R.raw.video_176x144_3gp_h263_56kbps_12fps_aac_mono_24kbps_11025hz);
+        testThumbnail(R.raw.video_176x144_3gp_h263_56kbps_12fps_aac_mono_24kbps_11025hz, 176, 144);
     }
 
     public void testThumbnailMPEG4() {
-        testThumbnail(R.raw.video_1280x720_mp4_mpeg4_1000kbps_25fps_aac_stereo_128kbps_44100hz);
+        testThumbnail(
+                R.raw.video_1280x720_mp4_mpeg4_1000kbps_25fps_aac_stereo_128kbps_44100hz,
+                1280,
+                720);
     }
 
     public void testThumbnailVP8() {
-        testThumbnail(R.raw.bbb_s1_640x360_webm_vp8_2mbps_30fps_vorbis_5ch_320kbps_48000hz);
+        testThumbnail(
+                R.raw.bbb_s1_640x360_webm_vp8_2mbps_30fps_vorbis_5ch_320kbps_48000hz,
+                640,
+                360);
     }
 
     public void testThumbnailVP9() {
-        testThumbnail(R.raw.bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz);
+        testThumbnail(
+                R.raw.bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz,
+                640,
+                360);
     }
 
     public void testThumbnailHEVC() {
-        testThumbnail(R.raw.bbb_s1_720x480_mp4_hevc_mp3_1600kbps_30fps_aac_he_6ch_240kbps_48000hz);
+        testThumbnail(
+                R.raw.bbb_s1_720x480_mp4_hevc_mp3_1600kbps_30fps_aac_he_6ch_240kbps_48000hz,
+                720,
+                480);
     }
 
     public void testThumbnailVP9Hdr() {
-        testThumbnail(R.raw.video_1280x720_vp9_hdr_static_3mbps);
+        testThumbnail(R.raw.video_1280x720_vp9_hdr_static_3mbps, 1280, 720);
     }
 
     public void testThumbnailAV1Hdr() {
-        testThumbnail(R.raw.video_1280x720_av1_hdr_static_3mbps);
+        testThumbnail(R.raw.video_1280x720_av1_hdr_static_3mbps, 1280, 720);
     }
 
     public void testThumbnailHDR10() {
-        testThumbnail(R.raw.video_1280x720_hevc_hdr10_static_3mbps);
+        testThumbnail(R.raw.video_1280x720_hevc_hdr10_static_3mbps, 1280, 720);
+    }
+
+    private void testThumbnailWithRotation(int resId, int targetRotation) {
+        Stopwatch timer = new Stopwatch();
+
+        if (!MediaUtils.hasCodecForResourceAndDomain(getContext(), resId, "video/")) {
+            MediaUtils.skipTest("no video codecs for resource");
+            return;
+        }
+
+        setDataSourceFd(resId);
+
+        assertEquals("Video rotation was other than expected", Integer.toString(targetRotation),
+            mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION));
+
+        timer.start();
+        Bitmap thumbnail = mRetriever.getFrameAtTime(-1 /* timeUs (any) */);
+        timer.end();
+        timer.printDuration("getFrameAtTime");
+
+        verifyVideoFrameRotation(thumbnail, targetRotation);
+    }
+
+    public void testThumbnailWithRotation() {
+        int[] resIds = {R.raw.video_h264_mpeg4_rotate_0, R.raw.video_h264_mpeg4_rotate_90,
+                R.raw.video_h264_mpeg4_rotate_180, R.raw.video_h264_mpeg4_rotate_270};
+        int[] targetRotations = {0, 90, 180, 270};
+        for (int i = 0; i < resIds.length; i++) {
+            testThumbnailWithRotation(resIds[i], targetRotations[i]);
+        }
     }
 
     /**
@@ -628,6 +679,20 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
 
             if (SAVE_BITMAP_OUTPUT) {
                 CodecUtils.saveBitmapToFile(bitmap, "test_" + testCase[0] + ".jpg");
+            }
+        } catch (Exception e) {
+            fail("Exception getting bitmap: " + e);
+        }
+    }
+
+    private void verifyVideoFrameRotation(Bitmap bitmap, int targetRotation) {
+        try {
+            assertTrue("Failed to get bitmap for " + targetRotation + " degrees", bitmap != null);
+            assertTrue("Frame incorrect for " + targetRotation + " degrees",
+                CodecUtils.VerifyFrameRotationFromBitmap(bitmap, targetRotation));
+
+            if (SAVE_BITMAP_OUTPUT) {
+                CodecUtils.saveBitmapToFile(bitmap, "test_rotation_" + targetRotation + ".jpg");
             }
         } catch (Exception e) {
             fail("Exception getting bitmap: " + e);
