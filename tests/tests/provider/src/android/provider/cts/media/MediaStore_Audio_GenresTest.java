@@ -38,6 +38,7 @@ import android.util.Log;
 import androidx.test.InstrumentationRegistry;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -75,6 +76,7 @@ public class MediaStore_Audio_GenresTest {
     }
 
     @Test
+    @Ignore("Genres cannot be directly modified")
     public void testStoreAudioGenresExternal() {
         // insert
         ContentValues values = new ContentValues();
@@ -96,6 +98,7 @@ public class MediaStore_Audio_GenresTest {
     }
 
     @Test
+    @Ignore("Genres cannot be directly modified")
     public void testGetContentUriForAudioId() {
         // Insert an audio file into the content provider.
         Uri audioUri = Audio1.getInstance().insert(mContentResolver, mVolumeName);
