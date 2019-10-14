@@ -21,13 +21,14 @@ import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP;
+import static android.content.Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED;
 import static android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP;
 import static android.server.wm.ActivityManagerState.STATE_DESTROYED;
 import static android.server.wm.ActivityManagerState.STATE_RESUMED;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.app.Components.ALIAS_TEST_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_RESUME;
+import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -78,19 +79,22 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
      * - {@code FLAG_ACTIVITY_NEW_TASK}
      */
     @Test
+    @FlakyTest(bugId=137329632)
     public void testClearTopNewTaskResetTask() throws Exception {
         // Start activity normally
-        final Activity initialActivity = mFirstActivityTestRule.launchActivity(new Intent());
-        waitAndAssertActivityStates(state(initialActivity, ON_RESUME));
+        launchActivityAndWait(FirstActivity.class);
 
         // Navigate home
         launchHomeActivity();
+        waitAndAssertActivityStates(state(FirstActivity.class, ON_STOP));
+        getLifecycleLog().clear();
 
         // Start activity again with flags in question. Verify activity is resumed.
-        final Intent intent = new Intent().addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
-                | Intent.FLAG_ACTIVITY_NEW_TASK
-                | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-        final Activity secondLaunchActivity = mFirstActivityTestRule.launchActivity(intent);
+        // A new instance of activity will be created, and the old one destroyed.
+        final Activity secondLaunchActivity = new Launcher(FirstActivity.class)
+                .setFlags(FLAG_ACTIVITY_CLEAR_TOP | FLAG_ACTIVITY_NEW_TASK
+                        | FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
+                .launch();
         mAmWmState.waitForActivityState(secondLaunchActivity.getComponentName(), STATE_RESUMED);
         assertEquals("The activity should be started and be resumed",
                 getActivityName(secondLaunchActivity.getComponentName()),

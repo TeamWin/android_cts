@@ -72,20 +72,19 @@ import java.util.List;
  */
 @MediumTest
 @Presubmit
+@FlakyTest(bugId=137329632)
 public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClientTestBase {
 
     @Test
     public void testTopPositionAfterLaunch() throws Exception {
-        final Activity activity = mCallbackTrackingActivityTestRule.launchActivity(new Intent());
-        waitAndAssertActivityStates(state(activity, ON_TOP_POSITION_GAINED));
+        launchActivityAndWait(CallbackTrackingActivity.class);
 
         LifecycleVerifier.assertLaunchSequence(CallbackTrackingActivity.class, getLifecycleLog());
     }
 
     @Test
     public void testTopPositionLostOnFinish() throws Exception {
-        final Activity activity = mCallbackTrackingActivityTestRule.launchActivity(new Intent());
-        waitAndAssertActivityStates(state(activity, ON_TOP_POSITION_GAINED));
+        final Activity activity = launchActivityAndWait(CallbackTrackingActivity.class);
 
         getLifecycleLog().clear();
         activity.finish();
@@ -97,13 +96,11 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
     @Test
     public void testTopPositionSwitchToActivityOnTop() throws Exception {
-        final Activity activity = mCallbackTrackingActivityTestRule.launchActivity(new Intent());
-        waitAndAssertActivityStates(state(activity, ON_TOP_POSITION_GAINED));
+        final Activity activity = launchActivityAndWait(CallbackTrackingActivity.class);
 
         getLifecycleLog().clear();
-        final Activity topActivity = mSingleTopActivityTestRule.launchActivity(new Intent());
-        waitAndAssertActivityStates(state(topActivity, ON_TOP_POSITION_GAINED),
-                state(activity, ON_STOP));
+        final Activity topActivity = launchActivityAndWait(SingleTopActivity.class);
+        waitAndAssertActivityStates(occludedActivityState(activity, topActivity));
 
         LifecycleVerifier.assertLaunchSequence(SingleTopActivity.class,
                 CallbackTrackingActivity.class, getLifecycleLog(),
@@ -174,14 +171,12 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
     @Test
     public void testTopPositionSwitchToTranslucentActivityOnTop() throws Exception {
-        final Activity activity = mCallbackTrackingActivityTestRule.launchActivity(new Intent());
-        waitAndAssertActivityStates(state(activity, ON_TOP_POSITION_GAINED));
+        final Activity activity = launchActivityAndWait(CallbackTrackingActivity.class);
 
         getLifecycleLog().clear();
-        final Activity topActivity = mTranslucentCallbackTrackingActivityTestRule.launchActivity(
-                new Intent());
-        waitAndAssertActivityStates(state(topActivity, ON_TOP_POSITION_GAINED),
-                state(activity, ON_PAUSE));
+        final Activity topActivity = launchActivityAndWait(
+                TranslucentCallbackTrackingActivity.class);
+        waitAndAssertActivityStates(occludedActivityState(activity, topActivity));
 
         LifecycleVerifier.assertLaunchSequence(TranslucentCallbackTrackingActivity.class,
                 CallbackTrackingActivity.class, getLifecycleLog(),
@@ -190,16 +185,15 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
     @Test
     public void testTopPositionSwitchOnDoubleLaunch() throws Exception {
-        final Activity baseActivity =
-                mCallbackTrackingActivityTestRule.launchActivity(new Intent());
-        waitAndAssertActivityStates(state(baseActivity, ON_TOP_POSITION_GAINED));
+        final Activity baseActivity = launchActivityAndWait(CallbackTrackingActivity.class);
 
         getLifecycleLog().clear();
-        final Activity launchForResultActivity = mLaunchForResultActivityTestRule.launchActivity(
-                new Intent());
+        new Launcher(LaunchForResultActivity.class)
+                .setExpectedState(ON_STOP)
+                .setNoInstance()
+                .launch();
 
-        waitAndAssertActivityStates(state(launchForResultActivity, ON_STOP),
-                state(baseActivity, ON_STOP));
+        waitAndAssertActivityStates(state(baseActivity, ON_STOP));
 
         final List<ActivityCallback> expectedTopActivitySequence =
                 Arrays.asList(
@@ -233,16 +227,14 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
     @Test
     public void testTopPositionSwitchOnDoubleLaunchAndTopFinish() throws Exception {
-        final Activity baseActivity = mCallbackTrackingActivityTestRule.launchActivity(
-                new Intent());
-        waitAndAssertActivityStates(state(baseActivity, ON_TOP_POSITION_GAINED));
+        final Activity baseActivity = launchActivityAndWait(CallbackTrackingActivity.class);
 
         getLifecycleLog().clear();
-        final Intent launchAndFinishIntent = new Intent();
-        launchAndFinishIntent.putExtra(EXTRA_FINISH_IN_ON_RESUME, true);
-        mLaunchForResultActivityTestRule.launchActivity(launchAndFinishIntent);
+        final Activity launchForResultActivity = new Launcher(LaunchForResultActivity.class)
+                .setExtraFlags(EXTRA_FINISH_IN_ON_RESUME)
+                .launch();
 
-        waitAndAssertActivityStates(state(baseActivity, ON_STOP));
+        waitAndAssertActivityStates(occludedActivityState(baseActivity, launchForResultActivity));
         final List<ActivityCallback> expectedLaunchingSequence =
                 Arrays.asList(
                         PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
@@ -289,9 +281,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         assumeTrue(supportsSplitScreenMultiWindow());
 
         // Launch first activity
-        final Activity firstActivity =
-                mCallbackTrackingActivityTestRule.launchActivity(new Intent());
-        waitAndAssertActivityStates(state(firstActivity, ON_TOP_POSITION_GAINED));
+        final Activity firstActivity = launchActivityAndWait(CallbackTrackingActivity.class);
 
         // Enter split screen
         moveTaskToPrimarySplitScreenAndVerify(firstActivity);
@@ -302,21 +292,19 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         assumeTrue(supportsSplitScreenMultiWindow());
 
         // Launch first activity
-        final Activity firstActivity =
-                mCallbackTrackingActivityTestRule.launchActivity(new Intent());
-        waitAndAssertActivityStates(state(firstActivity, ON_TOP_POSITION_GAINED));
+        final Activity firstActivity = launchActivityAndWait(CallbackTrackingActivity.class);
 
         // Enter split screen
         moveTaskToPrimarySplitScreenAndVerify(firstActivity);
 
         // Launch second activity to side
         getLifecycleLog().clear();
-        final Activity secondActivity = mSingleTopActivityTestRule.launchActivity(
-                new Intent().setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK));
+        new Launcher(SingleTopActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
+                .launch();
 
-        // Wait for second activity to become top.
-        waitAndAssertActivityStates(state(secondActivity, ON_TOP_POSITION_GAINED),
-                state(firstActivity, ON_RESUME));
+        // Wait for first activity to resume after moving to primary split-screen
+        waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
         // First activity must be resumed, but not gain the top position
         LifecycleVerifier.assertSequence(CallbackTrackingActivity.class, getLifecycleLog(),
                 Arrays.asList(ON_RESUME), "unminimizeDockedStack");
@@ -329,27 +317,26 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         assumeTrue(supportsSplitScreenMultiWindow());
 
         // Launch first activity
-        final Activity firstActivity =
-                mCallbackTrackingActivityTestRule.launchActivity(new Intent());
-        waitAndAssertActivityStates(state(firstActivity, ON_TOP_POSITION_GAINED));
+        final Activity firstActivity = launchActivityAndWait(CallbackTrackingActivity.class);
 
         // Enter split screen
         moveTaskToPrimarySplitScreenAndVerify(firstActivity);
 
         // Launch second activity to side
         getLifecycleLog().clear();
-        final Activity secondActivity = mSingleTopActivityTestRule.launchActivity(
-                new Intent().setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK));
+        final Activity secondActivity = new Launcher(SingleTopActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
+                .launch();
 
-        // Wait for second activity to become top.
-        waitAndAssertActivityStates(state(secondActivity, ON_TOP_POSITION_GAINED),
-                state(firstActivity, ON_RESUME));
+        // Wait for first activity to resume after moving to primary split-screen
+        waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
 
         // Switch top between two activities
         getLifecycleLog().clear();
-        final Intent switchToFirstIntent = new Intent(mContext, CallbackTrackingActivity.class);
-        switchToFirstIntent.addFlags(FLAG_ACTIVITY_NEW_TASK);
-        mTargetContext.startActivity(switchToFirstIntent);
+        new Launcher(CallbackTrackingActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK)
+                .setNoInstance()
+                .launch();
 
         waitAndAssertActivityStates(state(firstActivity, ON_TOP_POSITION_GAINED),
                 state(secondActivity, ON_TOP_POSITION_LOST));
@@ -360,9 +347,10 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         // Switch top again
         getLifecycleLog().clear();
-        final Intent switchToSecondIntent = new Intent(mContext, SingleTopActivity.class);
-        switchToSecondIntent.addFlags(FLAG_ACTIVITY_NEW_TASK);
-        mTargetContext.startActivity(switchToSecondIntent);
+        new Launcher(SingleTopActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK)
+                .setNoInstance()
+                .launch();
 
         waitAndAssertActivityStates(state(firstActivity, ON_TOP_POSITION_LOST),
                 state(secondActivity, ON_TOP_POSITION_GAINED));
@@ -376,14 +364,14 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
     @Test
     public void testTopPositionNewIntent() throws Exception {
         // Launch single top activity
-        final Activity firstActivity = mSingleTopActivityTestRule.launchActivity(new Intent());
-        waitAndAssertActivityStates(state(firstActivity, ON_TOP_POSITION_GAINED));
+        launchActivityAndWait(SingleTopActivity.class);
 
         // Launch the activity again to observe new intent
         getLifecycleLog().clear();
-        final Intent newIntent = new Intent(mContext, SingleTopActivity.class);
-        newIntent.addFlags(FLAG_ACTIVITY_NEW_TASK);
-        mTargetContext.startActivity(newIntent);
+        new Launcher(SingleTopActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK)
+                .setNoInstance()
+                .launch();
 
         waitAndAssertActivityTransitions(SingleTopActivity.class,
                 Arrays.asList(
@@ -394,22 +382,20 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
     @Test
     public void testTopPositionNewIntentForStopped() throws Exception {
         // Launch single top activity
-        final Activity singleTopActivity = mSingleTopActivityTestRule.launchActivity(new Intent());
-        waitAndAssertActivityStates(state(singleTopActivity, ON_TOP_POSITION_GAINED));
+        final Activity singleTopActivity = launchActivityAndWait(SingleTopActivity.class);
 
         // Launch another activity on top
-        final Activity topActivity = mCallbackTrackingActivityTestRule.launchActivity(new Intent());
-        waitAndAssertActivityStates(state(singleTopActivity, ON_STOP),
-                state(topActivity, ON_TOP_POSITION_GAINED));
+        final Activity topActivity = launchActivityAndWait(CallbackTrackingActivity.class);
+        waitAndAssertActivityStates(occludedActivityState(singleTopActivity, topActivity));
 
         // Launch the single top activity again to observe new intent
         getLifecycleLog().clear();
-        final Intent newIntent = new Intent(mContext, SingleTopActivity.class);
-        newIntent.addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TOP);
-        mTargetContext.startActivity(newIntent);
+        new Launcher(SingleTopActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TOP)
+                .setNoInstance()
+                .launch();
 
-        waitAndAssertActivityStates(state(singleTopActivity, ON_TOP_POSITION_GAINED),
-                state(topActivity, ON_DESTROY));
+        waitAndAssertActivityStates(state(topActivity, ON_DESTROY));
 
         LifecycleVerifier.assertEntireSequence(Arrays.asList(
                 transition(CallbackTrackingActivity.class, ON_TOP_POSITION_LOST),
@@ -427,23 +413,21 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
     @Test
     public void testTopPositionNewIntentForPaused() throws Exception {
         // Launch single top activity
-        final Activity singleTopActivity = mSingleTopActivityTestRule.launchActivity(new Intent());
-        waitAndAssertActivityStates(state(singleTopActivity, ON_TOP_POSITION_GAINED));
+        final Activity singleTopActivity = launchActivityAndWait(SingleTopActivity.class);
 
         // Launch a translucent activity on top
-        final Activity topActivity = mTranslucentCallbackTrackingActivityTestRule.launchActivity(
-                new Intent());
-        waitAndAssertActivityStates(state(singleTopActivity, ON_PAUSE),
-                state(topActivity, ON_TOP_POSITION_GAINED));
+        final Activity topActivity =
+                launchActivityAndWait(TranslucentCallbackTrackingActivity.class);
+        waitAndAssertActivityStates(occludedActivityState(singleTopActivity, topActivity));
 
         // Launch the single top activity again to observe new intent
         getLifecycleLog().clear();
-        final Intent newIntent = new Intent(mContext, SingleTopActivity.class);
-        newIntent.addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TOP);
-        mTargetContext.startActivity(newIntent);
+        new Launcher(SingleTopActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TOP)
+                .setNoInstance()
+                .launch();
 
-        waitAndAssertActivityStates(state(singleTopActivity, ON_TOP_POSITION_GAINED),
-                state(topActivity, ON_DESTROY));
+        waitAndAssertActivityStates(state(topActivity, ON_DESTROY));
 
         LifecycleVerifier.assertOrder(getLifecycleLog(), Arrays.asList(
                 transition(TranslucentCallbackTrackingActivity.class, ON_TOP_POSITION_LOST),
@@ -456,8 +440,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
     @Test
     public void testTopPositionSwitchWhenGoingHome() throws Exception {
-        final Activity topActivity = mCallbackTrackingActivityTestRule.launchActivity(new Intent());
-        waitAndAssertActivityStates(state(topActivity, ON_TOP_POSITION_GAINED));
+        final Activity topActivity = launchActivityAndWait(CallbackTrackingActivity.class);
 
         // Press HOME and verify the lifecycle
         getLifecycleLog().clear();
@@ -473,21 +456,19 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         assumeTrue(supportsSplitScreenMultiWindow());
 
         // Launch first activity
-        final Activity firstActivity =
-                mCallbackTrackingActivityTestRule.launchActivity(new Intent());
-        waitAndAssertActivityStates(state(firstActivity, ON_TOP_POSITION_GAINED));
+        final Activity firstActivity = launchActivityAndWait(CallbackTrackingActivity.class);
 
         // Enter split screen
         moveTaskToPrimarySplitScreenAndVerify(firstActivity);
 
         // Launch second activity to side
         getLifecycleLog().clear();
-        final Activity secondActivity = mSingleTopActivityTestRule.launchActivity(
-                new Intent().setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK));
+        final Activity secondActivity = new Launcher(SingleTopActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
+                .launch();
 
-        // Wait for second activity to become top.
-        waitAndAssertActivityStates(state(secondActivity, ON_TOP_POSITION_GAINED),
-                state(firstActivity, ON_RESUME));
+        // Wait for first activity to resume after moving to primary split-screen
+        waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
 
         // Tap on first activity to switch the focus
         getLifecycleLog().clear();
@@ -650,8 +631,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
     @Test
     public void testTopPositionPreservedOnLocalRelaunch() throws Exception {
-        final Activity activity = mCallbackTrackingActivityTestRule.launchActivity(new Intent());
-        waitAndAssertActivityStates(state(activity, ON_TOP_POSITION_GAINED));
+        final Activity activity = launchActivityAndWait(CallbackTrackingActivity.class);
 
         getLifecycleLog().clear();
         getInstrumentation().runOnMainSync(activity::recreate);
@@ -665,13 +645,13 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
     public void testTopPositionLaunchedBehindLockScreen() throws Exception {
         assumeTrue(supportsSecureLock());
 
-        final Activity activity;
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.setLockCredential().gotoKeyguard();
 
-            activity = mCallbackTrackingActivityTestRule.launchActivity(
-                    new Intent());
-            waitAndAssertActivityStates(state(activity, ON_STOP));
+            new Launcher(CallbackTrackingActivity.class)
+                    .setExpectedState(ON_STOP)
+                    .setNoInstance()
+                    .launch();
             LifecycleVerifier.assertLaunchAndStopSequence(CallbackTrackingActivity.class,
                     getLifecycleLog(), true /* onTop */);
 
@@ -679,7 +659,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         }
 
         // Lock screen removed - activity should be on top now
-        waitAndAssertActivityStates(state(activity, ON_TOP_POSITION_GAINED));
+        waitAndAssertActivityStates(state(CallbackTrackingActivity.class, ON_TOP_POSITION_GAINED));
         LifecycleVerifier.assertStopToResumeSequence(CallbackTrackingActivity.class,
                 getLifecycleLog());
     }
@@ -688,8 +668,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
     public void testTopPositionRemovedBehindLockScreen() throws Exception {
         assumeTrue(supportsSecureLock());
 
-        final Activity activity = mCallbackTrackingActivityTestRule.launchActivity(new Intent());
-        waitAndAssertActivityStates(state(activity, ON_TOP_POSITION_GAINED));
+        final Activity activity = launchActivityAndWait(CallbackTrackingActivity.class);
 
         getLifecycleLog().clear();
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
@@ -716,9 +695,8 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.setLockCredential().gotoKeyguard();
 
-            showWhenLockedActivity = mShowWhenLockedCallbackTrackingActivityTestRule.launchActivity(
-                    new Intent());
-            waitAndAssertActivityStates(state(showWhenLockedActivity, ON_TOP_POSITION_GAINED));
+            showWhenLockedActivity =
+                    launchActivityAndWait(ShowWhenLockedCallbackTrackingActivity.class);
 
             // TODO(b/123432490): Fix extra pause/resume
             LifecycleVerifier.assertSequence(ShowWhenLockedCallbackTrackingActivity.class,
@@ -746,9 +724,10 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         // Launch activity on default display.
         final ActivityOptions launchOptions = ActivityOptions.makeBasic();
         launchOptions.setLaunchDisplayId(DEFAULT_DISPLAY);
-        final Intent defaultDisplayIntent = new Intent(mContext, CallbackTrackingActivity.class);
-        defaultDisplayIntent.setFlags(FLAG_ACTIVITY_NEW_TASK);
-        mTargetContext.startActivity(defaultDisplayIntent, launchOptions.toBundle());
+        new Launcher(CallbackTrackingActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK)
+                .setOptions(launchOptions)
+                .launch();
 
         waitAndAssertTopResumedActivity(getComponentName(CallbackTrackingActivity.class),
                 DEFAULT_DISPLAY, "Activity launched on default display must be focused");
@@ -763,9 +742,10 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
             // Launch another activity on new secondary display.
             getLifecycleLog().clear();
             launchOptions.setLaunchDisplayId(newDisplay.mId);
-            final Intent newDisplayIntent = new Intent(mContext, SingleTopActivity.class);
-            newDisplayIntent.setFlags(FLAG_ACTIVITY_NEW_TASK);
-            mTargetContext.startActivity(newDisplayIntent, launchOptions.toBundle());
+            new Launcher(SingleTopActivity.class)
+                    .setFlags(FLAG_ACTIVITY_NEW_TASK)
+                    .setOptions(launchOptions)
+                    .launch();
             waitAndAssertTopResumedActivity(getComponentName(SingleTopActivity.class),
                     newDisplay.mId, "Activity launched on secondary display must be focused");
 
@@ -796,9 +776,10 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         // Launch activity on default display.
         final ActivityOptions launchOptions = ActivityOptions.makeBasic();
         launchOptions.setLaunchDisplayId(DEFAULT_DISPLAY);
-        final Intent defaultDisplayIntent = new Intent(mContext, CallbackTrackingActivity.class);
-        defaultDisplayIntent.setFlags(FLAG_ACTIVITY_NEW_TASK);
-        mTargetContext.startActivity(defaultDisplayIntent, launchOptions.toBundle());
+        new Launcher(CallbackTrackingActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK)
+                .setOptions(launchOptions)
+                .launch();
 
         waitAndAssertTopResumedActivity(getComponentName(CallbackTrackingActivity.class),
                 DEFAULT_DISPLAY, "Activity launched on default display must be focused");
@@ -811,9 +792,10 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
             // Launch another activity on new secondary display.
             getLifecycleLog().clear();
             launchOptions.setLaunchDisplayId(newDisplay.mId);
-            final Intent newDisplayIntent = new Intent(mContext, SingleTopActivity.class);
-            newDisplayIntent.setFlags(FLAG_ACTIVITY_NEW_TASK);
-            mTargetContext.startActivity(newDisplayIntent, launchOptions.toBundle());
+            new Launcher(SingleTopActivity.class)
+                    .setFlags(FLAG_ACTIVITY_NEW_TASK)
+                    .setOptions(launchOptions)
+                    .launch();
             waitAndAssertTopResumedActivity(getComponentName(SingleTopActivity.class),
                     newDisplay.mId, "Activity launched on secondary display must be focused");
 
@@ -994,7 +976,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         // Launch activity on some display.
         final Activity callbackTrackingActivity =
-                mCallbackTrackingActivityTestRule.launchActivity(new Intent());
+                launchActivityAndWait(CallbackTrackingActivity.class);
 
         waitAndAssertTopResumedActivity(getComponentName(CallbackTrackingActivity.class),
                 DEFAULT_DISPLAY, "Activity launched on default display must be focused");
@@ -1008,9 +990,10 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
             getLifecycleLog().clear();
             final ActivityOptions launchOptions = ActivityOptions.makeBasic();
             launchOptions.setLaunchDisplayId(newDisplay.mId);
-            final Intent newDisplayIntent = new Intent(mContext, SingleTopActivity.class);
-            newDisplayIntent.setFlags(FLAG_ACTIVITY_NEW_TASK);
-            mTargetContext.startActivity(newDisplayIntent, launchOptions.toBundle());
+            new Launcher(SingleTopActivity.class)
+                    .setFlags(FLAG_ACTIVITY_NEW_TASK)
+                    .setOptions(launchOptions)
+                    .launch();
             waitAndAssertTopResumedActivity(getComponentName(SingleTopActivity.class),
                     newDisplay.mId, "Activity launched on secondary display must be focused");
 
@@ -1032,9 +1015,9 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         assumeTrue(supportsMultiDisplay());
 
         // Launch activity on some display.
-        final Activity bottomActivity = mSecondActivityTestRule.launchActivity(new Intent());
+        final Activity bottomActivity = launchActivityAndWait(SecondActivity.class);
         final Activity callbackTrackingActivity =
-                mCallbackTrackingActivityTestRule.launchActivity(new Intent());
+                launchActivityAndWait(CallbackTrackingActivity.class);
 
         waitAndAssertTopResumedActivity(getComponentName(CallbackTrackingActivity.class),
                 DEFAULT_DISPLAY, "Activity launched on default display must be focused");
@@ -1048,9 +1031,10 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
             getLifecycleLog().clear();
             final ActivityOptions launchOptions = ActivityOptions.makeBasic();
             launchOptions.setLaunchDisplayId(newDisplay.mId);
-            final Intent newDisplayIntent = new Intent(mContext, SingleTopActivity.class);
-            newDisplayIntent.setFlags(FLAG_ACTIVITY_NEW_TASK);
-            mTargetContext.startActivity(newDisplayIntent, launchOptions.toBundle());
+            new Launcher(SingleTopActivity.class)
+                    .setFlags(FLAG_ACTIVITY_NEW_TASK)
+                    .setOptions(launchOptions)
+                    .launch();
             waitAndAssertTopResumedActivity(getComponentName(SingleTopActivity.class),
                     newDisplay.mId, "Activity launched on secondary display must be focused");
 
@@ -1079,18 +1063,16 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         assumeTrue(supportsPip());
 
         // Launch first activity
-        final Activity activity = mCallbackTrackingActivityTestRule.launchActivity(new Intent());
+        final Activity activity = launchActivityAndWait(CallbackTrackingActivity.class);
 
         // Clear the log before launching to Pip
-        waitAndAssertActivityStates(state(activity, ON_TOP_POSITION_GAINED));
         getLifecycleLog().clear();
 
         // Launch Pip-capable activity and enter Pip immediately
-        final Activity pipActivity = mPipActivityTestRule.launchActivity(
-                new Intent().putExtra(EXTRA_ENTER_PIP, true));
-
-        // Wait and assert lifecycle
-        waitAndAssertActivityStates(state(pipActivity, ON_PAUSE));
+        final Activity pipActivity = new Launcher(PipActivity.class)
+                .setExtraFlags(EXTRA_ENTER_PIP)
+                .setExpectedState(ON_PAUSE)
+                .launch();
 
         // The PipMenuActivity could start anytime after moving pipActivity to pinned stack,
         // however, we cannot control when would it start or finish, so this test could fail when
@@ -1129,27 +1111,24 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         assumeTrue(supportsPip());
 
         // Launch first activity
-        final Activity activity = mCallbackTrackingActivityTestRule.launchActivity(new Intent());
+        final Activity activity = launchActivityAndWait(CallbackTrackingActivity.class);
 
         // Clear the log before launching to Pip
-        waitAndAssertActivityStates(state(activity, ON_TOP_POSITION_GAINED));
         getLifecycleLog().clear();
 
         // Launch Pip-capable activity and enter Pip immediately
-        final Activity pipActivity = mPipActivityTestRule.launchActivity(
-                new Intent().putExtra(EXTRA_ENTER_PIP, true));
-
-        // Wait and assert lifecycle
-        waitAndAssertActivityStates(state(pipActivity, ON_PAUSE));
+        final Activity pipActivity = new Launcher(PipActivity.class)
+                .setExtraFlags(EXTRA_ENTER_PIP)
+                .setExpectedState(ON_PAUSE)
+                .launch();
 
         // Launch always focusable activity into PiP
 
         // Notice that do not clear the lifecycle log here, because it may clear the event
         // ON_TOP_POSITION_LOST of CallbackTrackingActivity if PipMenuActivity is started earlier.
-        final Activity alwaysFocusableActivity = mAlwaysFocusableActivityTestRule.launchActivity(
-                new Intent());
+        final Activity alwaysFocusableActivity =
+                launchActivityAndWait(AlwaysFocusablePipActivity.class);
         waitAndAssertActivityStates(state(pipActivity, ON_STOP),
-                state(alwaysFocusableActivity, ON_TOP_POSITION_GAINED),
                 state(activity, ON_TOP_POSITION_LOST));
         LifecycleVerifier.assertOrder(getLifecycleLog(), Arrays.asList(
                 transition(CallbackTrackingActivity.class, ON_TOP_POSITION_LOST),

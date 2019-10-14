@@ -34,9 +34,9 @@ import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.content.ComponentName;
-import android.content.Intent;
 import android.platform.test.annotations.Presubmit;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 
 import org.junit.Before;
@@ -51,6 +51,7 @@ import java.util.List;
  */
 @MediumTest
 @Presubmit
+@FlakyTest(bugId=137329632)
 public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
 
     @Before
@@ -62,12 +63,12 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
     @Test
     public void testGoToPip() throws Exception {
         // Launch first activity
-        final Activity firstActivity = mFirstActivityTestRule.launchActivity(new Intent());
+        final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
 
         // Launch Pip-capable activity
-        final Activity pipActivity = mPipActivityTestRule.launchActivity(new Intent());
+        final Activity pipActivity = launchActivityAndWait(PipActivity.class);
 
-        waitAndAssertActivityStates(state(firstActivity, ON_STOP), state(pipActivity, ON_RESUME));
+        waitAndAssertActivityStates(state(firstActivity, ON_STOP));
 
         // Move activity to Picture-In-Picture
         getLifecycleLog().clear();
@@ -87,18 +88,19 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
     @Test
     public void testPipOnLaunch() throws Exception {
         // Launch first activity
-        final Activity firstActivity = mFirstActivityTestRule.launchActivity(new Intent());
+        final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
 
         // Clear the log before launching to Pip
-        waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
         getLifecycleLog().clear();
 
         // Launch Pip-capable activity and enter Pip immediately
-        final Activity pipActivity = mPipActivityTestRule.launchActivity(
-                new Intent().putExtra(EXTRA_ENTER_PIP, true));
+        new Launcher(PipActivity.class)
+                .setExpectedState(ON_PAUSE)
+                .setExtraFlags(EXTRA_ENTER_PIP)
+                .launch();
 
         // Wait and assert lifecycle
-        waitAndAssertActivityStates(state(firstActivity, ON_RESUME), state(pipActivity, ON_PAUSE));
+        waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
 
         final List<LifecycleLog.ActivityCallback> expectedSequence =
                 Arrays.asList(ON_PAUSE, ON_RESUME);
@@ -115,18 +117,19 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
     @Test
     public void testDestroyPip() throws Exception {
         // Launch first activity
-        final Activity firstActivity = mFirstActivityTestRule.launchActivity(new Intent());
+        final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
 
         // Clear the log before launching to Pip
-        waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
         getLifecycleLog().clear();
 
         // Launch Pip-capable activity and enter Pip immediately
-        final Activity pipActivity = mPipActivityTestRule.launchActivity(
-                new Intent().putExtra(EXTRA_ENTER_PIP, true));
+        final Activity pipActivity = new Launcher(PipActivity.class)
+                .setExpectedState(ON_PAUSE)
+                .setExtraFlags(EXTRA_ENTER_PIP)
+                .launch();
 
         // Wait and assert lifecycle
-        waitAndAssertActivityStates(state(firstActivity, ON_RESUME), state(pipActivity, ON_PAUSE));
+        waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
 
         // Exit PiP
         getLifecycleLog().clear();
@@ -141,18 +144,18 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
     @Test
     public void testLaunchBelowPip() throws Exception {
         // Launch Pip-capable activity and enter Pip immediately
-        final Activity pipActivity = mPipActivityTestRule.launchActivity(
-                new Intent().putExtra(EXTRA_ENTER_PIP, true));
-
-        waitAndAssertActivityStates(state(pipActivity, ON_PAUSE));
+        new Launcher(PipActivity.class)
+                .setExpectedState(ON_PAUSE)
+                .setExtraFlags(EXTRA_ENTER_PIP)
+                .launch();
 
         // Launch a regular activity below
         getLifecycleLog().clear();
-        final Activity firstActivity = mFirstActivityTestRule.launchActivity(new Intent()
-                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK));
+        new Launcher(FirstActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
+                .launch();
 
         // Wait and verify the sequence
-        waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
         LifecycleVerifier.assertLaunchSequence(FirstActivity.class, getLifecycleLog());
         LifecycleVerifier.assertEmptySequence(PipActivity.class, getLifecycleLog(),
                 "launchBelowPip");
@@ -161,17 +164,21 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
     @Test
     public void testIntoPipSameTask() throws Exception {
         // Launch Pip-capable activity and enter Pip immediately
-        final Activity pipActivity = mPipActivityTestRule.launchActivity(
-                new Intent().putExtra(EXTRA_ENTER_PIP, true));
-
-        waitAndAssertActivityStates(state(pipActivity, ON_PAUSE));
+        new Launcher(PipActivity.class)
+                .setExpectedState(ON_PAUSE)
+                .setExtraFlags(EXTRA_ENTER_PIP)
+                .launch();
 
         // Launch a regular activity into same task
         getLifecycleLog().clear();
-        final Activity firstActivity = mFirstActivityTestRule.launchActivity(new Intent());
+        new Launcher(FirstActivity.class)
+                .setExpectedState(ON_PAUSE)
+                // Skip launch time verification - it can be affected by PiP menu activity
+                .setSkipLaunchTimeCheck()
+                .launch();
 
         // Wait and verify the sequence
-        waitAndAssertActivityStates(state(pipActivity, ON_STOP), state(firstActivity, ON_PAUSE));
+        waitAndAssertActivityStates(state(PipActivity.class, ON_STOP));
 
         // TODO(b/123013403): sometimes extra one or even more relaunches happen
         //final List<LifecycleLog.ActivityCallback> extraDestroySequence =
@@ -191,13 +198,15 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
     @Test
     public void testDestroyBelowPip() throws Exception {
         // Launch a regular activity
-        final Activity firstActivity = mFirstActivityTestRule.launchActivity(new Intent());
+        final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
 
         // Launch Pip-capable activity and enter Pip immediately
-        final Activity pipActivity = mPipActivityTestRule.launchActivity(
-                new Intent().putExtra(EXTRA_ENTER_PIP, true));
+        new Launcher(PipActivity.class)
+                .setExpectedState(ON_PAUSE)
+                .setExtraFlags(EXTRA_ENTER_PIP)
+                .launch();
 
-        waitAndAssertActivityStates(state(pipActivity, ON_PAUSE), state(firstActivity, ON_RESUME));
+        waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
 
         // Destroy the activity below
         getLifecycleLog().clear();
@@ -211,18 +220,16 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
     @Test
     public void testSplitScreenBelowPip() throws Exception {
         // Launch Pip-capable activity and enter Pip immediately
-        final Activity pipActivity = mPipActivityTestRule.launchActivity(
-                new Intent().putExtra(EXTRA_ENTER_PIP, true));
-
-        waitAndAssertActivityStates(state(pipActivity, ON_PAUSE));
+        new Launcher(PipActivity.class)
+                .setExpectedState(ON_PAUSE)
+                .setExtraFlags(EXTRA_ENTER_PIP)
+                .launch();
 
         // Launch first activity
         getLifecycleLog().clear();
-        final Activity firstActivity =
-                mFirstActivityTestRule.launchActivity(new Intent()
-                        .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK));
-
-        waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
+        final Activity firstActivity = new Launcher(FirstActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
+                .launch();
         LifecycleVerifier.assertLaunchSequence(FirstActivity.class, getLifecycleLog());
 
         // Enter split screen
@@ -234,11 +241,10 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
 
         // Launch second activity to side
         getLifecycleLog().clear();
-        final Activity secondActivity = mSecondActivityTestRule.launchActivity(
-                new Intent().setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK));
+        new Launcher(SecondActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
+                .launch();
 
-        // Wait for activities to resume and verify lifecycle
-        waitAndAssertActivityStates(state(secondActivity, ON_RESUME));
         LifecycleVerifier.assertLaunchSequence(SecondActivity.class, getLifecycleLog());
         LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
                 Arrays.asList(ON_RESUME), "launchToSide");
@@ -249,27 +255,25 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
     @Test
     public void testPipAboveSplitScreen() throws Exception {
         // Launch first activity
-        final Activity firstActivity =
-                mFirstActivityTestRule.launchActivity(new Intent());
+        final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
 
         // Enter split screen
         moveTaskToPrimarySplitScreenAndVerify(firstActivity);
 
         // Launch second activity to side
-        final Activity secondActivity = mSecondActivityTestRule.launchActivity(
-                new Intent().setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK));
-
-        // Wait for activities to resume
-        waitAndAssertActivityStates(state(secondActivity, ON_RESUME),
-                state(firstActivity, ON_RESUME));
+        final Activity secondActivity = new Launcher(SecondActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
+                .launch();
 
         // Launch Pip-capable activity and enter Pip immediately
         getLifecycleLog().clear();
-        final Activity pipActivity = mPipActivityTestRule.launchActivity(
-                new Intent().putExtra(EXTRA_ENTER_PIP, true));
+        new Launcher(PipActivity.class)
+                .setExpectedState(ON_PAUSE)
+                .setExtraFlags(EXTRA_ENTER_PIP)
+                .launch();
 
         // Wait for it to launch and pause. Other activities should not be affected.
-        waitAndAssertActivityStates(state(pipActivity, ON_PAUSE), state(secondActivity, ON_RESUME));
+        waitAndAssertActivityStates(state(secondActivity, ON_RESUME));
         LifecycleVerifier.assertSequence(PipActivity.class, getLifecycleLog(),
                 Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME, ON_PAUSE),
                 "launchAndEnterPip");
