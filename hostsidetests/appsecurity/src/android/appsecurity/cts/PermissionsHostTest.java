@@ -23,6 +23,7 @@ import static android.appsecurity.cts.MatcherUtils.instanceOf;
 import static org.hamcrest.CoreMatchers.containsString;
 
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
@@ -207,6 +208,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
                 "testRuntimeGroupGrantExpansion");
     }
 
+    @FlakyTest
     public void testRuntimeGroupGrantExpansion26() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_26), false, false));
         runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest26",
@@ -290,6 +292,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
                 getDevice().installPackage(mBuildHelper.getTestFile(APK_22), true, false));
     }
 
+    @FlakyTest
     public void testNoResidualPermissionsOnUninstall() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_23), false, false));
         runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
@@ -300,6 +303,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
                 "testNoResidualPermissionsOnUninstall_part2");
     }
 
+    @FlakyTest
     public void testRevokePropagatedOnUpgradeOldToNewModel() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22), false, false));
 
