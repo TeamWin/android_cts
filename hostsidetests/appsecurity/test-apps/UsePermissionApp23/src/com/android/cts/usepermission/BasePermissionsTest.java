@@ -22,6 +22,7 @@ import static com.android.compatibility.common.util.UiAutomatorUtils.getUiDevice
 import static junit.framework.Assert.assertEquals;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -656,5 +657,22 @@ public abstract class BasePermissionsTest {
     private static boolean isTv() {
         return getInstrumentation().getContext().getPackageManager()
                 .hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+    }
+
+    protected static void assertPermissionState(String perm, int expectedState) {
+        Context context = getInstrumentation().getTargetContext();
+        int permState = context.checkSelfPermission(perm);
+        assertEquals("Package " + context.getPackageName() + " has " + perm + " "
+                        + permissionGrantStateToString(permState) + " but expected "
+                        + permissionGrantStateToString(expectedState),
+                expectedState, permState);
+    }
+
+    protected static String permissionGrantStateToString(int state) {
+        switch (state) {
+            case PackageManager.PERMISSION_GRANTED: return "GRANTED";
+            case PackageManager.PERMISSION_DENIED: return "DENIED";
+            default: throw new IllegalArgumentException("Unknown permission state: " + state);
+        }
     }
  }

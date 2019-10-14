@@ -17,7 +17,6 @@
 package com.android.cts.usepermission;
 
 import static com.android.compatibility.common.util.UiAutomatorUtils.getUiDevice;
-import static junit.framework.Assert.assertEquals;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -33,10 +32,8 @@ public class UsePermissionTest26 extends BasePermissionsTest {
     @Test
     public void testRuntimeGroupGrantNoExpansion() throws Exception {
         // Start out without permission
-        assertEquals(PackageManager.PERMISSION_DENIED, getInstrumentation().getContext()
-                .checkSelfPermission(Manifest.permission.RECEIVE_SMS));
-        assertEquals(PackageManager.PERMISSION_DENIED, getInstrumentation().getContext()
-                .checkSelfPermission(Manifest.permission.SEND_SMS));
+        assertPermissionState(Manifest.permission.RECEIVE_SMS, PackageManager.PERMISSION_DENIED);
+        assertPermissionState(Manifest.permission.SEND_SMS, PackageManager.PERMISSION_DENIED);
 
         String[] permissions = new String[]{Manifest.permission.RECEIVE_SMS};
 
@@ -55,7 +52,6 @@ public class UsePermissionTest26 extends BasePermissionsTest {
         // Expect the permission is granted
         assertPermissionRequestResult(result, permissions, new boolean[]{true});
 
-        assertEquals(PackageManager.PERMISSION_DENIED, getInstrumentation().getTargetContext()
-                .checkSelfPermission(Manifest.permission.SEND_SMS));
+        assertPermissionState(Manifest.permission.SEND_SMS, PackageManager.PERMISSION_DENIED);
     }
 }
