@@ -121,11 +121,11 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testApkOnlyStagedRollback() throws Exception {
-        run("testApkOnlyEnableRollback");
+        run("testApkOnlyStagedRollback_Phase1");
         getDevice().reboot();
-        run("testApkOnlyCommitRollback");
+        run("testApkOnlyStagedRollback_Phase2");
         getDevice().reboot();
-        run("testApkOnlyConfirmRollback");
+        run("testApkOnlyStagedRollback_Phase3");
     }
 
     /**
@@ -135,13 +135,13 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
     public void testApexOnlyStagedRollback() throws Exception {
         assumeTrue("Device does not support updating APEX", isApexUpdateSupported());
 
-        run("testApexOnlyInstallFirstVersion");
+        run("testApexOnlyStagedRollback_Phase1");
         getDevice().reboot();
-        run("testApexOnlyEnableRollback");
+        run("testApexOnlyStagedRollback_Phase2");
         getDevice().reboot();
-        run("testApexOnlyCommitRollback");
+        run("testApexOnlyStagedRollback_Phase3");
         getDevice().reboot();
-        run("testApexOnlyConfirmRollback");
+        run("testApexOnlyStagedRollback_Phase4");
     }
 
     /**
@@ -151,27 +151,27 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
     public void testApexOnlySystemVersionStagedRollback() throws Exception {
         assumeTrue("Device does not support updating APEX", isApexUpdateSupported());
 
-        run("testApexOnlySystemVersion_EnableRollback");
+        run("testApexOnlySystemVersionStagedRollback_Phase1");
         getDevice().reboot();
-        run("testApexOnlySystemVersion_CommitRollback");
+        run("testApexOnlySystemVersionStagedRollback_Phase2");
         getDevice().reboot();
-        run("testApexOnlySystemVersion_ConfirmRollback");
+        run("testApexOnlySystemVersionStagedRollback_Phase3");
     }
 
     /**
-     * Tests staged rollbacks involving only apex.
+     * Tests staged rollbacks involving apex and apk.
      */
     @Test
     public void testApexAndApkStagedRollback() throws Exception {
         assumeTrue("Device does not support updating APEX", isApexUpdateSupported());
 
-        run("testApexAndApkInstallFirstVersion");
+        run("testApexAndApkStagedRollback_Phase1");
         getDevice().reboot();
-        run("testApexAndApkEnableRollback");
+        run("testApexAndApkStagedRollback_Phase2");
         getDevice().reboot();
-        run("testApexAndApkCommitRollback");
+        run("testApexAndApkStagedRollback_Phase3");
         getDevice().reboot();
-        run("testApexAndApkConfirmRollback");
+        run("testApexAndApkStagedRollback_Phase4");
     }
 
     /**
@@ -182,11 +182,11 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
         assumeTrue("Device does not support updating APEX", isApexUpdateSupported());
 
         uninstallShimApexIfNecessary();
-        run("testApexRollbackExpirationEnableRollback");
+        run("testApexRollbackExpiration_Phase1");
         getDevice().reboot();
-        run("testApexRollbackExpirationUpdateApex");
+        run("testApexRollbackExpiration_Phase2");
         getDevice().reboot();
-        run("testApexRollbackExpirationConfirmExpiration");
+        run("testApexRollbackExpiration_Phase3");
     }
 
     /**
@@ -196,11 +196,11 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
     public void testApexKeyRotationStagedRollback() throws Exception {
         assumeTrue("Device does not support updating APEX", isApexUpdateSupported());
 
-        run("testApexKeyRotation_EnableRollback");
+        run("testApexKeyRotationStagedRollback_Phase1");
         getDevice().reboot();
-        run("testApexKeyRotation_CommitRollback");
+        run("testApexKeyRotationStagedRollback_Phase2");
         getDevice().reboot();
-        run("testApexKeyRotation_CofirmRollback");
+        run("testApexKeyRotationStagedRollback_Phase3");
     }
 
     /**
@@ -208,8 +208,8 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testApkRollbackByAnotherInstaller() throws Exception {
-        run("testInstallTestAppA_EnableRollback");
-        run2("testRollbackTestAppA");
+        run("testApkRollbackByAnotherInstaller_Phase1");
+        run2("testApkRollbackByAnotherInstaller_Phase2");
     }
 
 }
