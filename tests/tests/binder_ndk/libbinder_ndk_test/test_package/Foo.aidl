@@ -15,6 +15,9 @@ parcelable Foo {
     ByteEnum shouldBeByteBar;
     IntEnum shouldBeIntBar;
     LongEnum shouldBeLongBar;
+    ByteEnum[] shouldContainTwoByteFoos;
+    IntEnum[] shouldContainTwoIntFoos;
+    LongEnum[] shouldContainTwoLongFoos;
     // This field doesn't exist in version 1.
     @nullable String[] g;
 }
