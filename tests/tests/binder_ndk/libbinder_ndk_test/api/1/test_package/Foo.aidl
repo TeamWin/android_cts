@@ -9,4 +9,7 @@ parcelable Foo {
   test_package.ByteEnum shouldBeByteBar;
   test_package.IntEnum shouldBeIntBar;
   test_package.LongEnum shouldBeLongBar;
+  test_package.ByteEnum[] shouldContainTwoByteFoos;
+  test_package.IntEnum[] shouldContainTwoIntFoos;
+  test_package.LongEnum[] shouldContainTwoLongFoos;
 }
