@@ -249,6 +249,27 @@ class MyTest : public ::aidl::test_package::BnTest,
     *_aidl_return = in_value;
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
+  ::ndk::ScopedAStatus RepeatByteEnumArray(const std::vector<ByteEnum>& in_value,
+                                           std::vector<ByteEnum>* out_repeated,
+                                           std::vector<ByteEnum>* _aidl_return) override {
+    *out_repeated = in_value;
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatIntEnumArray(const std::vector<IntEnum>& in_value,
+                                          std::vector<IntEnum>* out_repeated,
+                                          std::vector<IntEnum>* _aidl_return) override {
+    *out_repeated = in_value;
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatLongEnumArray(const std::vector<LongEnum>& in_value,
+                                           std::vector<LongEnum>* out_repeated,
+                                           std::vector<LongEnum>* _aidl_return) override {
+    *out_repeated = in_value;
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
   ::ndk::ScopedAStatus RepeatStringArray(
       const std::vector<std::string>& in_value,
       std::vector<std::string>* out_repeated,
@@ -303,6 +324,24 @@ class MyTest : public ::aidl::test_package::BnTest,
   ::ndk::ScopedAStatus RepeatNullableDoubleArray(
       const std::optional<std::vector<double>>& in_value,
       std::optional<std::vector<double>>* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatNullableByteEnumArray(
+      const std::optional<std::vector<ByteEnum>>& in_value,
+      std::optional<std::vector<ByteEnum>>* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatNullableIntEnumArray(
+      const std::optional<std::vector<IntEnum>>& in_value,
+      std::optional<std::vector<IntEnum>>* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatNullableLongEnumArray(
+      const std::optional<std::vector<LongEnum>>& in_value,
+      std::optional<std::vector<LongEnum>>* _aidl_return) override {
     *_aidl_return = in_value;
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
