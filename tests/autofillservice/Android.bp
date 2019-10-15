@@ -1,4 +1,4 @@
-// Copyright (C) 2019 The Android Open Source Project
+// Copyright (C) 2017 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,24 +13,23 @@
 // limitations under the License.
 
 android_test {
-    name: "CtsBackupTestCases",
+    name: "CtsAutoFillServiceTestCases",
     defaults: ["cts_defaults"],
-    compile_multilib: "both",
-    libs: [
-        "android.test.runner.stubs",
-        "org.apache.http.legacy",
-        "android.test.base.stubs",
-    ],
     static_libs: [
+        "androidx.annotation_annotation",
+        "androidx.test.ext.junit",
         "compatibility-device-util-axt",
+        "ctsdeviceutillegacy-axt",
         "ctstestrunner-axt",
-        "ctstestserver",
-        "mockito-target-minus-junit4",
-        "permission-test-util-lib",
+        "truth-prebuilt",
+        "ub-uiautomator",
+        "CtsMockInputMethodLib",
+        // TODO: remove once Android migrates to JUnit 4.12,
+        // which provides assertThrows
         "testng",
     ],
-    host_required: ["CtsBackupHostTestCases"],
     srcs: ["src/**/*.java"],
+    // Tag this module as a cts test artifact
     test_suites: [
         "cts",
         "vts",

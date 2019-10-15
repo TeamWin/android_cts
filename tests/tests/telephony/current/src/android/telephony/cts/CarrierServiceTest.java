@@ -16,22 +16,16 @@
 
 package android.telephony.cts;
 
-import static org.junit.Assert.fail;
-
+import android.content.Intent;
 import android.os.PersistableBundle;
 import android.service.carrier.CarrierIdentifier;
 import android.service.carrier.CarrierService;
+import android.test.ServiceTestCase;
 
-import org.junit.Before;
 import org.junit.Test;
 
-public class CarrierServiceTest {
-    private CarrierService mCarrierService;
-
-    @Before
-    public void setUp() {
-        mCarrierService = new TestCarrierService();
-    }
+public class CarrierServiceTest extends ServiceTestCase<CarrierServiceTest.TestCarrierService> {
+    public CarrierServiceTest() { super(TestCarrierService.class); }
 
     @Test
     public void testNotifyCarrierNetworkChange_true() {
@@ -44,8 +38,11 @@ public class CarrierServiceTest {
     }
 
     private void notifyCarrierNetworkChange(boolean active) {
+        Intent intent = new Intent(getContext(), TestCarrierService.class);
+        startService(intent);
+
         try {
-            mCarrierService.notifyCarrierNetworkChange(active);
+            getService().notifyCarrierNetworkChange(active);
             fail("Expected SecurityException for notifyCarrierNetworkChange(" + active + ")");
         } catch (SecurityException e) { /* Expected */ }
     }

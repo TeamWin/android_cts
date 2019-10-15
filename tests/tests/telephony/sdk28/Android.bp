@@ -1,4 +1,4 @@
-// Copyright (C) 2019 The Android Open Source Project
+// Copyright (C) 2015 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,28 +13,24 @@
 // limitations under the License.
 
 android_test {
-    name: "CtsBackupTestCases",
+    name: "CtsTelephonySdk28TestCases",
     defaults: ["cts_defaults"],
-    compile_multilib: "both",
-    libs: [
-        "android.test.runner.stubs",
-        "org.apache.http.legacy",
-        "android.test.base.stubs",
-    ],
     static_libs: [
-        "compatibility-device-util-axt",
         "ctstestrunner-axt",
-        "ctstestserver",
-        "mockito-target-minus-junit4",
-        "permission-test-util-lib",
-        "testng",
+        "compatibility-device-util-axt",
     ],
-    host_required: ["CtsBackupHostTestCases"],
     srcs: ["src/**/*.java"],
+    // TODO: what can be done here? it used to be
+    // sdk_version: "28", but this is not compatible with compatibility-device-util-axt
+    sdk_version: "test_current",
+    // Tag this module as a cts test artifact
     test_suites: [
         "cts",
         "vts",
         "general-tests",
     ],
-    sdk_version: "test_current",
+    libs: [
+        "android.test.runner.stubs",
+        "android.test.base.stubs",
+    ],
 }

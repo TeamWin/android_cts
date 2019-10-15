@@ -1,4 +1,4 @@
-// Copyright (C) 2014 The Android Open Source Project
+// Copyright (C) 2010 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,28 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-java_test_host {
-    name: "CtsStatsdHostTestCases",
-
-    srcs: ["src/**/*.java"],
-
-    // tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "vts",
-        "general-tests",
+cc_test_library {
+    name: "libctspermission_jni",
+    sdk_version: "current",
+    srcs: [
+        "CtsPermissionsJniOnLoad.cpp",
+        "android_permission_cts_FileUtils.cpp",
     ],
-
-    libs: [
-        "cts-tradefed",
-        "tradefed",
-        "compatibility-host-util",
-        "host-libprotobuf-java-full",
-        "platformprotos",
-	"truth-prebuilt",
+    shared_libs: [
+        "libnativehelper_compat_libc++",
+        "liblog",
     ],
-    data: [
-        "**/*.pbtxt",
-        ":CtsStatsdApp",
+    stl: "c++_static",
+    cflags: [
+        "-Wno-unused-parameter",
     ],
+    gtest: false,
 }

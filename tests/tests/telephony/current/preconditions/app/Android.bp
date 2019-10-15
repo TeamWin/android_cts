@@ -1,4 +1,4 @@
-// Copyright (C) 2019 The Android Open Source Project
+// Copyright (C) 2016 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,25 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test {
-    name: "CtsBackupTestCases",
+android_test_helper_app {
+    name: "CtsTelephonyPreparerApp",
     defaults: ["cts_defaults"],
-    compile_multilib: "both",
-    libs: [
-        "android.test.runner.stubs",
-        "org.apache.http.legacy",
-        "android.test.base.stubs",
-    ],
-    static_libs: [
-        "compatibility-device-util-axt",
-        "ctstestrunner-axt",
-        "ctstestserver",
-        "mockito-target-minus-junit4",
-        "permission-test-util-lib",
-        "testng",
-    ],
-    host_required: ["CtsBackupHostTestCases"],
     srcs: ["src/**/*.java"],
+    static_libs: [
+        "androidx.test.rules",
+        "ctstestrunner-axt",
+        "compatibility-device-util-axt",
+        "compatibility-device-preconditions",
+    ],
+    libs: ["android.test.base.stubs"],
+    // tag this module as a cts test artifact
     test_suites: [
         "cts",
         "vts",

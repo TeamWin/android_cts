@@ -13,24 +13,16 @@
 // limitations under the License.
 
 android_test {
-    name: "CtsBackupTestCases",
+    name: "CtsAppPredictionServiceTestCases",
     defaults: ["cts_defaults"],
-    compile_multilib: "both",
-    libs: [
-        "android.test.runner.stubs",
-        "org.apache.http.legacy",
-        "android.test.base.stubs",
-    ],
     static_libs: [
+        "androidx.annotation_annotation",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
-        "ctstestserver",
-        "mockito-target-minus-junit4",
-        "permission-test-util-lib",
-        "testng",
+        "truth-prebuilt",
     ],
-    host_required: ["CtsBackupHostTestCases"],
     srcs: ["src/**/*.java"],
+    // Tag this module as a cts test artifact
     test_suites: [
         "cts",
         "vts",
