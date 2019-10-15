@@ -72,6 +72,11 @@ class LinkerNamespacesHelper {
         "libz.so"
     };
 
+    // System libraries that may exist in some types of builds.
+    private final static String[] OPTIONAL_SYSTEM_LIBRARIES = {
+      "libclang_rt.hwasan-aarch64-android.so"
+    };
+
     // Libraries listed in public.libraries.android.txt, located in /apex/com.android.art/${LIB}
     private final static String[] PUBLIC_ART_LIBRARIES = {
         "libicui18n.so",
@@ -156,6 +161,7 @@ class LinkerNamespacesHelper {
         List<String> artApexLibs = new ArrayList<>();
 
         Collections.addAll(systemLibs, PUBLIC_SYSTEM_LIBRARIES);
+        Collections.addAll(systemLibs, OPTIONAL_SYSTEM_LIBRARIES);
 
         if (InstrumentationRegistry.getContext().getPackageManager().
                 hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) {
