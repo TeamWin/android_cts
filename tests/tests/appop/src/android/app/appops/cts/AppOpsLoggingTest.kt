@@ -24,12 +24,19 @@ import android.app.AppOpsManager.OPSTR_FINE_LOCATION
 import android.app.AppOpsManager.OPSTR_GET_ACCOUNTS
 import android.app.AppOpsManager.strOpToOp
 import android.app.AsyncNotedAppOp
+import android.app.PendingIntent
 import android.app.SyncNotedAppOp
+import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Context.BIND_AUTO_CREATE
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.ServiceConnection
+import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
+import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
@@ -38,11 +45,13 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Assert.fail
+import org.junit.Assume
 import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit.MILLISECONDS
+import java.util.concurrent.TimeoutException
 
 private const val TEST_SERVICE_PKG = "android.app.appops.cts.appthatusesappops"
 private const val TIMEOUT_MILLIS = 10000L
@@ -330,6 +339,106 @@ class AppOpsLoggingTest {
     fun noteAsyncOpNativeAndCheckLog() {
         rethrowThrowableFrom {
             testService.callApiThatNotesAsyncOpNativelyAndCheckLog(AppOpsUserClient(context))
+        }
+    }
+
+    /**
+     * Realistic end-to-end test for getting last location
+     */
+    @Test
+    fun getLastKnownLocation() {
+        val location = context.getSystemService(LocationManager::class.java)
+            .getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+
+        Assume.assumeTrue("Could not get last known location", location != null)
+
+        assertThat(noted.map { it.first.op }).containsAnyOf(OPSTR_COARSE_LOCATION,
+            OPSTR_FINE_LOCATION)
+        assertThat(noted[0].second.map { it.methodName }).contains("getLastKnownLocation")
+    }
+
+    /**
+     * Realistic end-to-end test for getting an async location
+     */
+    @Test
+    fun getAsyncLocation() {
+        val gotLocationChangeCallback = CompletableFuture<Unit>()
+
+        val locationListener = object : LocationListener {
+            override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
+            override fun onProviderEnabled(provider: String?) {}
+            override fun onProviderDisabled(provider: String?) {}
+
+            override fun onLocationChanged(location: Location?) {
+                gotLocationChangeCallback.complete(Unit)
+            }
+        }
+
+        context.getSystemService(LocationManager::class.java).requestSingleUpdate(
+            LocationManager.NETWORK_PROVIDER, locationListener, Looper.getMainLooper())
+
+        try {
+            gotLocationChangeCallback.get(TIMEOUT_MILLIS, MILLISECONDS)
+        } catch (e: TimeoutException) {
+            Assume.assumeTrue("Could not get location", false)
+        }
+
+        eventually {
+            assertThat(asyncNoted.map { it.op }).containsAnyOf(OPSTR_COARSE_LOCATION,
+                OPSTR_FINE_LOCATION)
+            assertThat(asyncNoted[0].message).contains(locationListener::class.java.name)
+            assertThat(asyncNoted[0].message).contains(
+                Integer.toHexString(System.identityHashCode(locationListener)))
+        }
+    }
+
+    /**
+     * Realistic end-to-end test for getting called back for a proximity alert
+     */
+    @Test
+    fun triggerProximityAlert() {
+        val PROXIMITY_ALERT_ACTION = "proxAlert"
+
+        val gotProximityAlert = CompletableFuture<Unit>()
+
+        val locationManager = context.getSystemService(LocationManager::class.java)!!
+
+        val proximityAlertReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                gotProximityAlert.complete(Unit)
+            }
+        }
+
+        context.registerReceiver(proximityAlertReceiver, IntentFilter(PROXIMITY_ALERT_ACTION))
+        try {
+            val proximityAlertReceiverPendingIntent = PendingIntent.getBroadcast(context, 0,
+                Intent(PROXIMITY_ALERT_ACTION).setPackage(myPackage)
+                    .setFlags(Intent.FLAG_RECEIVER_FOREGROUND),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_ONE_SHOT)
+
+            locationManager.addProximityAlert(0.0, 0.0, Float.MAX_VALUE, TIMEOUT_MILLIS,
+                proximityAlertReceiverPendingIntent)
+            try {
+                try {
+                    gotProximityAlert.get(TIMEOUT_MILLIS, MILLISECONDS)
+                } catch (e: TimeoutException) {
+                    Assume.assumeTrue("Could not get proximity alert", false)
+                }
+
+                eventually {
+                    assertThat(asyncNoted.map { it.op }).contains(OPSTR_FINE_LOCATION)
+
+                    assertThat(asyncNoted[0].message).contains(
+                        proximityAlertReceiverPendingIntent::class.java.name)
+                    assertThat(asyncNoted[0].message).contains(
+                        Integer.toHexString(
+                            System.identityHashCode(proximityAlertReceiverPendingIntent)))
+                }
+            } finally {
+                locationManager.removeProximityAlert(proximityAlertReceiverPendingIntent)
+            }
+        } finally {
+            context.unregisterReceiver(proximityAlertReceiver)
         }
     }
 
