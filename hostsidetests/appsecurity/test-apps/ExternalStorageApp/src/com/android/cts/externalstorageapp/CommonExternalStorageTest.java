@@ -169,13 +169,11 @@ public class CommonExternalStorageTest extends AndroidTestCase {
 
     public static List<File> getAllPackageSpecificObbGiftPaths(Context context,
             String targetPackageName) {
-        final File[] files = context.getObbDirs();
         final List<File> targetFiles = new ArrayList<>();
-        for (File file : files) {
-            final File targetFile = new File(
-                    file.getAbsolutePath().replace(context.getPackageName(), targetPackageName));
-            targetFiles.add(new File(targetFile, targetPackageName + ".gift"));
-        }
+        final File obbDir = context.getObbDir();
+        final File targetObbDir = new File(
+                obbDir.getAbsolutePath().replace(context.getPackageName(), targetPackageName));
+        targetFiles.add(new File(targetObbDir, targetPackageName + ".gift"));
         return targetFiles;
     }
 
