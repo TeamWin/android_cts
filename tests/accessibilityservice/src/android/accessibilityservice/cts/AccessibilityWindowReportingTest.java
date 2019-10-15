@@ -19,8 +19,11 @@ package android.accessibilityservice.cts;
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangeTypesAndWindowTitle;
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangedWithChangeTypes;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.findWindowByTitle;
+import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.findWindowByTitleAndDisplay;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.getActivityTitle;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
+import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen;
+import static android.accessibilityservice.cts.utils.DisplayUtils.VirtualDisplaySession;
 import static android.accessibilityservice.cts.utils.DisplayUtils.getStatusBarHeight;
 import static android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE;
 import static android.view.accessibility.AccessibilityEvent.TYPE_WINDOWS_CHANGED;
@@ -42,9 +45,11 @@ import static org.junit.Assert.assertNotNull;
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.cts.activities.AccessibilityWindowReportingActivity;
+import android.accessibilityservice.cts.utils.DisplayUtils;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
+import android.view.Display;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
@@ -229,6 +234,54 @@ public class AccessibilityWindowReportingTest {
                 },
                 filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_FOCUSED | WINDOWS_CHANGE_ACTIVE),
                 TIMEOUT_ASYNC_PROCESSING);
+    }
+
+    @Test
+    public void moveFocusToAnotherDisplay_movesActiveAndFocusWindow() throws Exception {
+        // Makes sure activityWindow on default display is focused
+        AccessibilityWindowInfo activityWindow = findWindowByTitle(sUiAutomation, mActivityTitle);
+        assertTrue(activityWindow.isActive());
+        assertTrue(activityWindow.isFocused());
+
+        // Creates a virtual display.
+        try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
+            final int virtualDisplayId =
+                displaySession.createDisplayWithDefaultDisplayMetricsAndWait(
+                    sInstrumentation.getContext(), false).getDisplayId();
+            // Launchs an activity on virtual display.
+            final Activity activityOnVirtualDisplay =
+                    launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen(sInstrumentation,
+                            sUiAutomation,
+                            AccessibilityEmbeddedDisplayTest.EmbeddedDisplayActivity.class,
+                            virtualDisplayId);
+            final CharSequence activityTitle = getActivityTitle(sInstrumentation,
+                    activityOnVirtualDisplay);
+            // Make sure activityWindow on virtual display is focused.
+            AccessibilityWindowInfo activityWindowOnVirtualDisplay =
+                findWindowByTitleAndDisplay(sUiAutomation, activityTitle, virtualDisplayId);
+            // Windows may have changed - refresh.
+            activityWindow = findWindowByTitle(sUiAutomation, mActivityTitle);
+            try {
+                assertFalse(activityWindow.isActive());
+                assertFalse(activityWindow.isFocused());
+                assertTrue(activityWindowOnVirtualDisplay.isActive());
+                assertTrue(activityWindowOnVirtualDisplay.isFocused());
+            } finally {
+                sUiAutomation.executeAndWaitForEvent(
+                        () -> {
+                            sInstrumentation.runOnMainSync(
+                                    () -> activityOnVirtualDisplay.finish());
+                        },
+                        filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_FOCUSED |
+                                WINDOWS_CHANGE_ACTIVE),
+                        TIMEOUT_ASYNC_PROCESSING);
+            }
+        }
+        // The focused window should be returned to activity at default display after
+        // the activity at virtual display is destroyed.
+        activityWindow = findWindowByTitle(sUiAutomation, mActivityTitle);
+        assertTrue(activityWindow.isActive());
+        assertTrue(activityWindow.isFocused());
     }
 
     @Test
