@@ -1,2 +1,3 @@
 # Bug component: 532296
 mwachens@google.com
+per-file NetworkUsageStatsTest.java = file:/tests/tests/net/OWNERS
