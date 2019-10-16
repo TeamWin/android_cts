@@ -339,8 +339,12 @@ public class TestUtils {
         }
     }
 
-    public static void waitOnAllHandlers(Instrumentation instrumentation) throws Exception {
-        executeShellCommand(instrumentation, COMMAND_WAIT_ON_HANDLERS);
+    public static void waitOnAllHandlers(Instrumentation instrumentation) {
+        try {
+            executeShellCommand(instrumentation, COMMAND_WAIT_ON_HANDLERS);
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     public static void waitOnLocalMainLooper(long timeoutMs) {
