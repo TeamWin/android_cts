@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.provider.cts.contacts.account;
+package android.provider.cts.contacts;
 
 import android.content.ContentProviderClient;
 import android.content.ContentResolver;

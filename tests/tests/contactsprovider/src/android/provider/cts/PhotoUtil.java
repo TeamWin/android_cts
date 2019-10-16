@@ -16,7 +16,7 @@
 
 package android.provider.cts;
 
-import android.provider.cts.R;
+import android.provider.cts.contacts.R;
 
 import android.content.Context;
 import com.android.compatibility.common.util.FileUtils;
