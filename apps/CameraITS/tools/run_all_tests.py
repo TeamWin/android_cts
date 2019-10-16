@@ -119,7 +119,8 @@ HIDDEN_PHYSICAL_CAMERA_TESTS = {
                 'test_burst_capture',
                 'test_metadata',
                 'test_read_write',
-                'test_sensor_events'
+                'test_sensor_events',
+                'test_unified_timestamps'
         ],
         'scene1_1': [
                 'test_exposure',
