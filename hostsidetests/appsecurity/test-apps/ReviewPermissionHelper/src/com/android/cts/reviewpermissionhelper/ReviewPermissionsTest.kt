@@ -30,9 +30,10 @@ import androidx.test.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
 import androidx.test.runner.AndroidJUnit4
 import android.support.test.uiautomator.By
+import android.support.test.uiautomator.BySelector
 import android.support.test.uiautomator.UiDevice
-import android.support.test.uiautomator.Until
 import com.android.compatibility.common.util.FutureResultActivity
+import com.android.compatibility.common.util.UiAutomatorUtils.waitFindObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
@@ -68,8 +69,7 @@ class ReviewPermissionsTest {
     }
 
     fun clickContinue() {
-        uiDevice.wait(Until.findObject(
-                By.res("com.android.permissioncontroller:id/continue_button")), UI_TIMEOUT).click()
+        click(By.res("com.android.permissioncontroller:id/continue_button"))
     }
 
     @Test
@@ -82,9 +82,7 @@ class ReviewPermissionsTest {
     @Test
     fun cancelReviewPermissions() {
         startActivityInReviewedAp(expectedResult = RESULT_CANCELED) {
-            uiDevice.wait(Until.findObject(
-                    By.res("com.android.permissioncontroller:id/cancel_button")), UI_TIMEOUT)
-                    .click()
+            click(By.res("com.android.permissioncontroller:id/cancel_button"))
         }
     }
 
@@ -98,17 +96,17 @@ class ReviewPermissionsTest {
         startActivityInReviewedAp()
 
         // Deny
-        uiDevice.wait(Until.findObject(By.text("Calendar")), UI_TIMEOUT).click()
+        click(By.text("Calendar"))
         // Confirm deny
-        uiDevice.wait(Until.findObject(By.res("android:id/button1")), UI_TIMEOUT).click()
+        click(By.res("android:id/button1"))
 
         // Grant
         uiDevice.waitForIdle()
-        uiDevice.wait(Until.findObject(By.text("Calendar")), UI_TIMEOUT).click()
+        click(By.text("Calendar"))
 
         // Deny
         uiDevice.waitForIdle()
-        uiDevice.wait(Until.findObject(By.text("Calendar")), UI_TIMEOUT).click()
+        click(By.text("Calendar"))
 
         uiDevice.waitForIdle()
         clickContinue()
@@ -119,13 +117,13 @@ class ReviewPermissionsTest {
         startActivityInReviewedAp()
 
         // Deny
-        uiDevice.wait(Until.findObject(By.text("Calendar")), UI_TIMEOUT).click()
+        click(By.text("Calendar"))
         // Confirm deny
-        uiDevice.wait(Until.findObject(By.res("android:id/button1")), UI_TIMEOUT).click()
+        click(By.res("android:id/button1"))
 
         // Grant
         uiDevice.waitForIdle()
-        uiDevice.wait(Until.findObject(By.text("Calendar")), UI_TIMEOUT).click()
+        click(By.text("Calendar"))
 
         uiDevice.waitForIdle()
         clickContinue()
@@ -136,12 +134,16 @@ class ReviewPermissionsTest {
         startActivityInReviewedAp()
 
         // Deny
-        uiDevice.wait(Until.findObject(By.text("Calendar")), UI_TIMEOUT).click()
+        click(By.text("Calendar"))
         // Confirm deny
-        uiDevice.wait(Until.findObject(By.res("android:id/button1")), UI_TIMEOUT).click()
+        click(By.res("android:id/button1"))
 
         uiDevice.waitForIdle()
         clickContinue()
+    }
+
+    private fun click(selector: BySelector) {
+        waitFindObject(selector, UI_TIMEOUT).click()
     }
 
     @Test

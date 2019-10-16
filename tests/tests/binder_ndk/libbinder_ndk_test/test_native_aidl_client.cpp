@@ -417,6 +417,9 @@ TEST_P(NdkBinderTest_Aidl, RepeatFoo) {
   foo.shouldBeByteBar = ByteEnum::BAR;
   foo.shouldBeIntBar = IntEnum::BAR;
   foo.shouldBeLongBar = LongEnum::BAR;
+  foo.shouldContainTwoByteFoos = {ByteEnum::FOO, ByteEnum::FOO};
+  foo.shouldContainTwoIntFoos = {IntEnum::FOO, IntEnum::FOO};
+  foo.shouldContainTwoLongFoos = {LongEnum::FOO, LongEnum::FOO};
   Foo retFoo;
 
   ASSERT_OK(iface->repeatFoo(foo, &retFoo));
@@ -428,6 +431,9 @@ TEST_P(NdkBinderTest_Aidl, RepeatFoo) {
   EXPECT_EQ(foo.shouldBeByteBar, retFoo.shouldBeByteBar);
   EXPECT_EQ(foo.shouldBeIntBar, retFoo.shouldBeIntBar);
   EXPECT_EQ(foo.shouldBeLongBar, retFoo.shouldBeLongBar);
+  EXPECT_EQ(foo.shouldContainTwoByteFoos, retFoo.shouldContainTwoByteFoos);
+  EXPECT_EQ(foo.shouldContainTwoIntFoos, retFoo.shouldContainTwoIntFoos);
+  EXPECT_EQ(foo.shouldContainTwoLongFoos, retFoo.shouldContainTwoLongFoos);
 }
 
 template <typename T>
@@ -507,6 +513,24 @@ TEST_P(NdkBinderTest_Aidl, Arrays) {
                          {1.0},
                          {1.0, 2.0, 3.0},
                      });
+  testRepeat<ByteEnum>(iface, &ITest::RepeatByteEnumArray,
+                       {
+                           {},
+                           {ByteEnum::FOO},
+                           {ByteEnum::FOO, ByteEnum::BAR},
+                       });
+  testRepeat<IntEnum>(iface, &ITest::RepeatIntEnumArray,
+                      {
+                          {},
+                          {IntEnum::FOO},
+                          {IntEnum::FOO, IntEnum::BAR},
+                      });
+  testRepeat<LongEnum>(iface, &ITest::RepeatLongEnumArray,
+                       {
+                           {},
+                           {LongEnum::FOO},
+                           {LongEnum::FOO, LongEnum::BAR},
+                       });
   testRepeat<std::string>(iface, &ITest::RepeatStringArray,
                           {
                               {},
@@ -612,6 +636,27 @@ TEST_P(NdkBinderTest_Aidl, NullableArrays) {
                          {{1.0}},
                          {{1.0, 2.0, 3.0}},
                      });
+  testRepeat<ByteEnum>(iface, &ITest::RepeatNullableByteEnumArray,
+                       {
+                           std::nullopt,
+                           {{}},
+                           {{ByteEnum::FOO}},
+                           {{ByteEnum::FOO, ByteEnum::BAR}},
+                       });
+  testRepeat<IntEnum>(iface, &ITest::RepeatNullableIntEnumArray,
+                      {
+                          std::nullopt,
+                          {{}},
+                          {{IntEnum::FOO}},
+                          {{IntEnum::FOO, IntEnum::BAR}},
+                      });
+  testRepeat<LongEnum>(iface, &ITest::RepeatNullableLongEnumArray,
+                       {
+                           std::nullopt,
+                           {{}},
+                           {{LongEnum::FOO}},
+                           {{LongEnum::FOO, LongEnum::BAR}},
+                       });
   testRepeat<std::optional<std::string>>(
       iface, &ITest::RepeatNullableStringArray,
       {

@@ -810,6 +810,10 @@ public class CellInfoTest {
         if (mRadioHalVersion >= RADIO_HAL_VERSION_1_2) {
             assertTrue("RSCP Must be valid for WCDMA", wcdma.getRscp() != CellInfo.UNAVAILABLE);
         }
+
+        int ecNo = wcdma.getEcNo();
+        assertTrue("getEcNo() out of range [-24,1], EcNo=" + ecNo,
+                (ecNo >= -24 && ecNo <= 1) || ecNo == CellInfo.UNAVAILABLE);
     }
 
     private void verifyCellSignalStrengthWcdmaParcel(CellSignalStrengthWcdma wcdma) {

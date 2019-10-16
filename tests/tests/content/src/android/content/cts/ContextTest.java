@@ -786,7 +786,7 @@ public class ContextTest extends AndroidTestCase {
                 android.os.Process.myUserHandle(),
                 UserHandle.ALL, UserHandle.CURRENT, UserHandle.SYSTEM
         }) {
-            assertEquals(user, mContext.createContextAsUser(user).getUser());
+            assertEquals(user, mContext.createContextAsUser(user, 0).getUser());
         }
     }
 
