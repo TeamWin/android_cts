@@ -58,11 +58,13 @@ public class JavaClientTest {
     private ITest mInterface;
     private String mExpectedName;
     private boolean mShouldBeRemote;
+    private boolean mShouldBeOld;
 
-    public JavaClientTest(Class serviceClass, String expectedName, boolean shouldBeRemote) {
+    public JavaClientTest(Class serviceClass, String expectedName, boolean shouldBeRemote, boolean shouldBeOld) {
         mServiceClass = serviceClass;
         mExpectedName = expectedName;
         mShouldBeRemote = shouldBeRemote;
+        mShouldBeOld = shouldBeOld;
     }
 
     @Parameterized.Parameters( name = "{0}" )
@@ -71,10 +73,11 @@ public class JavaClientTest {
         // Whenever possible, the desired service should be accessed directly
         // in order to avoid this additional overhead.
         return Arrays.asList(new Object[][] {
-                {NativeService.Local.class, "CPP", false /*shouldBeRemote*/},
-                {JavaService.Local.class, "JAVA", false /*shouldBeRemote*/},
-                {NativeService.Remote.class, "CPP", true /*shouldBeRemote*/},
-                {JavaService.Remote.class, "JAVA", true /*shouldBeRemote*/},
+                {NativeService.Local.class, "CPP", false /*shouldBeRemote*/, false /*shouldBeOld*/},
+                {JavaService.Local.class, "JAVA", false /*shouldBeRemote*/, false /*shouldBeOld*/},
+                {NativeService.Remote.class, "CPP", true /*shouldBeRemote*/, false /*shouldBeOld*/},
+                {NativeService.RemoteOld.class, "CPP", true /*shouldBeRemote*/, true /*shouldBeOld*/},
+                {JavaService.Remote.class, "JAVA", true /*shouldBeRemote*/, false /*shouldBeOld*/},
             });
     }
 
@@ -530,6 +533,22 @@ public class JavaClientTest {
         Assert.assertArrayEquals(foo.shouldContainTwoLongFoos, repeatedFoo.shouldContainTwoLongFoos);
     }
 
+    @Test
+    public void testNewField() throws RemoteException {
+        Foo foo = new Foo();
+        foo.d = new Bar();
+        foo.e = new Bar();
+        foo.shouldContainTwoByteFoos = new byte[]{};
+        foo.shouldContainTwoIntFoos = new int[]{};
+        foo.shouldContainTwoLongFoos = new long[]{};
+        foo.g = new String[]{"a", "b", "c"};
+        Foo newFoo = mInterface.repeatFoo(foo);
+        if (mShouldBeOld) {
+            assertEquals(null, newFoo.g);
+        } else {
+            Assert.assertArrayEquals(foo.g, newFoo.g);
+        }
+    }
     @Test
     public void testRenameFoo() throws RemoteException {
         Foo foo = new Foo();
