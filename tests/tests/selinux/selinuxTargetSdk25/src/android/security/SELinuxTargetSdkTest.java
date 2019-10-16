@@ -29,6 +29,13 @@ public class SELinuxTargetSdkTest extends SELinuxTargetSdkTestBase
     }
 
     /**
+     * Verify that net.dns properties may not be read
+     */
+    public void testNoDns() throws IOException {
+        noDns();
+    }
+
+    /**
      * Verify that selinux context is the expected domain based on
      * targetSdkVersion = 25
      */
