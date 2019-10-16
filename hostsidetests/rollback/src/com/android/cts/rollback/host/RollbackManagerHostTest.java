@@ -81,15 +81,15 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
             // Device doesn't support updating apex. Nothing to uninstall.
             return;
         }
-        final String errorMessage = getDevice().uninstallPackage(SHIM_APEX_PACKAGE_NAME);
-        if (errorMessage == null) {
-            Log.i(TAG, "Uninstalling shim apex");
-            getDevice().reboot();
-        } else {
-            // Most likely we tried to uninstall system version and failed. It should be fine to
-            // continue tests.
-            // TODO(b/140813980): use ApexInfo.sourceDir to decide whenever to issue an uninstall.
-            Log.w(TAG, "Failed to uninstall shim APEX : " + errorMessage);
+
+        if (getShimApex().sourceDir.startsWith("/data")) {
+            final String errorMessage = getDevice().uninstallPackage(SHIM_APEX_PACKAGE_NAME);
+            if (errorMessage == null) {
+                Log.i(TAG, "Uninstalling shim apex");
+                getDevice().reboot();
+            } else {
+                Log.e(TAG, "Failed to uninstall shim APEX : " + errorMessage);
+            }
         }
         assertThat(getShimApex().versionCode).isEqualTo(1L);
     }
@@ -181,7 +181,6 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
     public void testApexRollbackExpiration() throws Exception {
         assumeTrue("Device does not support updating APEX", isApexUpdateSupported());
 
-        uninstallShimApexIfNecessary();
         run("testApexRollbackExpiration_Phase1");
         getDevice().reboot();
         run("testApexRollbackExpiration_Phase2");
