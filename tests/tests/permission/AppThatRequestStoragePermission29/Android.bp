@@ -15,17 +15,13 @@
 //
 
 android_test_helper_app {
-    name: "CtsAppThatRunsRationaleTests",
+    name: "CtsAppThatRequestsStoragePermission29",
     defaults: ["cts_defaults"],
-
-    sdk_version: "test_current",
-
+    sdk_version: "current",
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
         "vts",
         "general-tests",
     ],
-
-    srcs: ["src/**/*.java"],
 }
