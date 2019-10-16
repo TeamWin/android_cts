@@ -517,7 +517,11 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                             " does not support color outputs, skipping");
                     continue;
                 }
-
+                if (!mAllStaticInfo.get(mCameraIds[i]).hasFlash()) {
+                    Log.i(TAG, "Camera " + mCameraIds[i] +
+                            " does not support flash, skipping");
+                    continue;
+                }
                 openDevice(mCameraIds[i]);
                 SimpleCaptureCallback listener = new SimpleCaptureCallback();
                 CaptureRequest.Builder requestBuilder =
@@ -1460,18 +1464,6 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
 
         mSession.setRepeatingRequest(requestBuilder.build(), listener, mHandler);
         waitForSettingsApplied(listener, NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY);
-
-        // For camera that doesn't have flash unit, flash state should always be UNAVAILABLE.
-        if (mStaticInfo.getFlashInfoChecked() == false) {
-            for (int i = 0; i < NUM_FLASH_REQUESTS_TESTED; i++) {
-                result = listener.getCaptureResult(CAPTURE_RESULT_TIMEOUT_MS);
-                mCollector.expectEquals("No flash unit available, flash state must be UNAVAILABLE"
-                        + "for AE mode " + initialAeControl,
-                        CaptureResult.FLASH_STATE_UNAVAILABLE,
-                        result.get(CaptureResult.FLASH_STATE));
-            }
-            return;
-        }
 
         // Turn on torch using FLASH_MODE_TORCH
         requestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
