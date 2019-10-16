@@ -23,6 +23,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 
 import android.car.Car;
+import android.car.VehicleAreaSeat;
 import android.car.VehicleAreaType;
 import android.car.VehiclePropertyIds;
 import android.car.hardware.CarPropertyConfig;
@@ -110,15 +111,61 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         mPropertyIds.add(VehiclePropertyIds.PERF_VEHICLE_SPEED);
         mPropertyIds.add(VehiclePropertyIds.GEAR_SELECTION);
         mPropertyIds.add(VehiclePropertyIds.NIGHT_MODE);
+        mPropertyIds.add(VehiclePropertyIds.PARKING_BRAKE_ON);
     }
 
+    /**
+     * Test for {@link CarPropertyManager#getPropertyList()}
+     */
     @Test
     public void testGetPropertyList() {
         List<CarPropertyConfig> allConfigs = mCarPropertyManager.getPropertyList();
         assertNotNull(allConfigs);
+    }
+
+    /**
+     * Test for {@link CarPropertyManager#getPropertyList(ArraySet)}
+     */
+    @Test
+    public void testGetPropertyListWithArraySet() {
         List<CarPropertyConfig> requiredConfigs = mCarPropertyManager.getPropertyList(mPropertyIds);
         // Vehicles need to implement all of those properties
         assertEquals(mPropertyIds.size(), requiredConfigs.size());
+    }
+
+    /**
+     * Test for {@link CarPropertyManager#getCarPropertyConfig(int)}
+     */
+    @Test
+    public void testGetPropertyConfig() {
+        List<CarPropertyConfig> allConfigs = mCarPropertyManager.getPropertyList();
+        for (CarPropertyConfig cfg : allConfigs) {
+            assertNotNull(mCarPropertyManager.getCarPropertyConfig(cfg.getPropertyId()));
+        }
+    }
+
+    /**
+     * Test for {@link CarPropertyManager#getAreaId(int, int)}
+     */
+    @Test
+    public void testGetAreaId() {
+        // For global properties, getAreaId should always return 0.
+        List<CarPropertyConfig> allConfigs = mCarPropertyManager.getPropertyList();
+        for (CarPropertyConfig cfg : allConfigs) {
+            if (cfg.isGlobalProperty()) {
+                assertEquals(0, mCarPropertyManager.getAreaId(cfg.getPropertyId(),
+                        VehicleAreaSeat.SEAT_ROW_1_LEFT));
+            } else {
+                int[] areaIds = cfg.getAreaIds();
+                // Because areaId in propConfig must not be overlapped with each other.
+                // The result should be itself.
+                for (int areaIdInConfig : areaIds) {
+                    int areaIdByCarPropertyManager =
+                            mCarPropertyManager.getAreaId(cfg.getPropertyId(), areaIdInConfig);
+                    assertEquals(areaIdInConfig, areaIdByCarPropertyManager);
+                }
+            }
+        }
     }
 
     @CddTest(requirement="2.5.1")
