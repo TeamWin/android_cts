@@ -525,7 +525,7 @@ public class AnimatedImageDrawableTest {
             testDrawable.draw(canvas);
         }
 
-        BitmapUtils.compareBitmaps(expected, actual);
+        assertTrue(BitmapUtils.compareBitmaps(expected, actual));
     }
 
     @Test
@@ -604,7 +604,7 @@ public class AnimatedImageDrawableTest {
                 drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(test);
         drawable.draw(canvas);
-        BitmapUtils.compareBitmaps(expected, test);
+        assertTrue(BitmapUtils.compareBitmaps(expected, test));
     }
 
     @Test
