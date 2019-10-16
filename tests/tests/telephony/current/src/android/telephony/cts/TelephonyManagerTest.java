@@ -449,6 +449,8 @@ public class TelephonyManagerTest {
                 (tm) -> tm.getDeviceId(mTelephonyManager.getSlotIndex()));
         mTelephonyManager.getDeviceSoftwareVersion();
         ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getDeviceSoftwareVersion(mTelephonyManager.getSlotIndex()));
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.getImei());
         ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.getImei(mTelephonyManager.getSlotIndex()));
