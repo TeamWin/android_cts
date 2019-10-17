@@ -412,10 +412,12 @@ public class ImageDecoderTest {
                             assertNotEquals(Bitmap.Config.HARDWARE, bm.getConfig());
 
                             if (!doScale && !doCrop) {
+                                BitmapFactory.Options options = new BitmapFactory.Options();
+                                options.inScaled = false;
                                 Bitmap reference = BitmapFactory.decodeResource(res,
-                                        record.resId, null);
+                                        record.resId, options);
                                 assertNotNull(reference);
-                                BitmapUtils.compareBitmaps(bm, reference);
+                                assertTrue(BitmapUtils.compareBitmaps(bm, reference));
                             }
                             break;
                         default:
@@ -2447,7 +2449,7 @@ public class ImageDecoderTest {
 
         Bitmap bm1 = drawToBitmap(first);
         Bitmap bm2 = drawToBitmap(second);
-        BitmapUtils.compareBitmaps(bm1, bm2);
+        assertTrue(BitmapUtils.compareBitmaps(bm1, bm2));
     }
 
     @Test
