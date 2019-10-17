@@ -133,11 +133,6 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
             return;
         }
 
-        if (true) {
-            // TODO: enable test
-            return;
-        }
-
         placeAndVerifyCall();
         final MockConnection connection = verifyConnectionForOutgoingCall();
 
@@ -150,6 +145,7 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
         call.enterBackgroundAudioProcessing();
         assertCallState(call, Call.STATE_AUDIO_PROCESSING);
 
+        waitOnAllHandlers(getInstrumentation());
         AudioManager audioManager = mContext.getSystemService(AudioManager.class);
         assertEquals(0 /* TODO: put new mode here */, audioManager.getMode());
         assertConnectionState(connection, Connection.STATE_ACTIVE);
@@ -162,11 +158,6 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
             return;
         }
 
-        if (true) {
-            // TODO: enable test
-            return;
-        }
-
         placeAndVerifyCall();
         final MockConnection connection = verifyConnectionForOutgoingCall();
 
@@ -180,6 +171,7 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
         assertCallState(call, Call.STATE_AUDIO_PROCESSING);
         assertConnectionState(connection, Connection.STATE_ACTIVE);
 
+        waitOnAllHandlers(getInstrumentation());
         AudioManager audioManager = mContext.getSystemService(AudioManager.class);
         assertEquals(0 /* TODO: put new mode here */, audioManager.getMode());
 
@@ -191,11 +183,6 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
             return;
         }
 
-        if (true) {
-            // TODO: enable test
-            return;
-        }
-
         placeAndVerifyCall();
         final MockConnection connection = verifyConnectionForOutgoingCall();
 
@@ -209,21 +196,18 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
         assertCallState(call, Call.STATE_AUDIO_PROCESSING);
         assertConnectionState(connection, Connection.STATE_ACTIVE);
 
+        waitOnAllHandlers(getInstrumentation());
         AudioManager audioManager = mContext.getSystemService(AudioManager.class);
         assertEquals(0 /* TODO: put new mode here */, audioManager.getMode());
 
         connection.setDisconnected(new DisconnectCause(DisconnectCause.REMOTE));
         assertCallState(call, Call.STATE_DISCONNECTED);
         assertEquals(DisconnectCause.REMOTE, call.getDetails().getDisconnectCause().getCode());
+        connection.destroy();
     }
 
     public void testManualAudioCallScreenAccept() {
         if (!mShouldTestTelecom) {
-            return;
-        }
-
-        if (true) {
-            // TODO: enable test
             return;
         }
 
@@ -237,11 +221,13 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
         assertCallState(call, Call.STATE_AUDIO_PROCESSING);
         assertConnectionState(connection, Connection.STATE_ACTIVE);
 
+        waitOnAllHandlers(getInstrumentation());
         AudioManager audioManager = mContext.getSystemService(AudioManager.class);
         assertEquals(0 /* TODO: put new mode here */, audioManager.getMode());
 
         call.exitBackgroundAudioProcessing(false);
         assertCallState(call, Call.STATE_ACTIVE);
+        waitOnAllHandlers(getInstrumentation());
         assertEquals(AudioManager.MODE_IN_CALL, audioManager.getMode());
     }
 
@@ -250,11 +236,6 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
             return;
         }
 
-        if (true) {
-            // TODO: enable test
-            return;
-        }
-
         addAndVerifyNewIncomingCall(createTestNumber(), null);
         final MockConnection connection = verifyConnectionForIncomingCall();
 
@@ -265,6 +246,7 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
         assertCallState(call, Call.STATE_AUDIO_PROCESSING);
         assertConnectionState(connection, Connection.STATE_ACTIVE);
 
+        waitOnAllHandlers(getInstrumentation());
         AudioManager audioManager = mContext.getSystemService(AudioManager.class);
         assertEquals(0 /* TODO: put new mode here */, audioManager.getMode());
 
