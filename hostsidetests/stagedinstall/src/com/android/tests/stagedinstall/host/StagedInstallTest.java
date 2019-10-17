@@ -408,6 +408,20 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testSamegradeSystemApex_VerifyPostReboot");
     }
 
+    @Test
+    public void testInstallApkChangingFingerprint() throws Exception {
+        assumeThat(getDevice().getBuildFlavor(), not(endsWith("-user")));
+
+        try {
+            getDevice().executeShellCommand("setprop persist.pm.mock-upgrade true");
+            runPhase("testInstallApkChangingFingerprint");
+            getDevice().reboot();
+            runPhase("testInstallApkChangingFingerprint_VerifyAborted");
+        } finally {
+            getDevice().executeShellCommand("setprop persist.pm.mock-upgrade false");
+        }
+    }
+
     private boolean isUpdatingApexSupported() throws Exception {
         final String updatable = getDevice().getProperty("ro.apex.updatable");
         return updatable != null && updatable.equals("true");

@@ -15,8 +15,10 @@
  */
 package android.contentcaptureservice.cts;
 
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.contentcaptureservice.cts.CtsContentCaptureService.CONTENT_CAPTURE_SERVICE_COMPONENT_NAME;
 import static android.contentcaptureservice.cts.Helper.resetService;
+import static android.contentcaptureservice.cts.Helper.sContext;
 
 import static com.android.compatibility.common.util.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
 import static com.android.compatibility.common.util.ActivitiesWatcher.ActivityLifecycle.RESUMED;
@@ -24,6 +26,7 @@ import static com.android.compatibility.common.util.ActivitiesWatcher.ActivityLi
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.ComponentName;
+import android.content.Intent;
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
@@ -160,5 +163,20 @@ public class BlankActivityTest
 
         resetService();
         service.waitUntilDisconnected();
+    }
+
+    @Test
+    public void testOutsideOfPackageActivity_noSessionCreated() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher = startWatcher();
+
+        Intent outsideActivity = new Intent();
+        outsideActivity.setComponent(new ComponentName("android.contentcaptureservice.cts2",
+                "android.contentcaptureservice.cts2.OutsideOfPackageActivity"));
+        outsideActivity.setFlags(FLAG_ACTIVITY_NEW_TASK);
+
+        sContext.startActivity(outsideActivity);
+
+        assertThat(service.getAllSessionIds()).isEmpty();
     }
 }

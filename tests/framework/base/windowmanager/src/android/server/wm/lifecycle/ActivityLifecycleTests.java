@@ -929,6 +929,14 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 EXTRA_FINISH_IN_ON_STOP, "onStop", mFirstActivityTestRule);
     }
 
+    @FlakyTest(bugId=142125019) // Add to presubmit when proven stable
+    @Test
+    public void testFinishBelowDialogActivity() throws Exception {
+        verifyFinishAtStage(mResultActivityTestRule, ResultActivity.class,
+                EXTRA_FINISH_IN_ON_PAUSE, "onPause",
+                mTranslucentCallbackTrackingActivityTestRule);
+    }
+
     private void verifyFinishAtStage(ActivityTestRule rule, Class<? extends Activity> activityClass,
             String finishStageExtra, String stageName, ActivityTestRule launchOnTopRule) {
         final Intent intent = new Intent();
@@ -947,6 +955,46 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         final List<LifecycleLog.ActivityCallback> expectedSequence =
                 LifecycleVerifier.getLaunchAndDestroySequence(activityClass);
         waitAndAssertActivityTransitions(activityClass, expectedSequence, "finish in " + stageName);
+    }
 
+    @FlakyTest(bugId=142125019) // Add to presubmit when proven stable
+    @Test
+    public void testFinishBelowTranslucentActivityAfterDelay() throws Exception {
+        final Activity testActivity =
+                mCallbackTrackingActivityTestRule.launchActivity(new Intent());
+        // Wait for the activity to resume and gain top position
+        waitAndAssertActivityStates(state(testActivity, ON_TOP_POSITION_GAINED));
+
+        final Activity translucentActivity =
+                mTranslucentCallbackTrackingActivityTestRule.launchActivity(new Intent());
+        waitAndAssertActivityStates(state(translucentActivity, ON_TOP_POSITION_GAINED),
+                state(testActivity, ON_PAUSE));
+        getLifecycleLog().clear();
+
+        waitForIdle();
+        testActivity.finish();
+        waitAndAssertActivityStates(state(testActivity, ON_DESTROY));
+        LifecycleVerifier.assertEmptySequence(TranslucentCallbackTrackingActivity.class,
+                getLifecycleLog(), "finishBelow");
+    }
+
+    @FlakyTest(bugId=142125019) // Add to presubmit when proven stable
+    @Test
+    public void testFinishBelowFullscreenActivityAfterDelay() throws Exception {
+        final Activity testActivity =
+                mCallbackTrackingActivityTestRule.launchActivity(new Intent());
+        // Wait for the activity to resume and gain top position
+        waitAndAssertActivityStates(state(testActivity, ON_TOP_POSITION_GAINED));
+
+        final Activity topActivity = mFirstActivityTestRule.launchActivity(new Intent());
+        waitAndAssertActivityStates(state(topActivity, ON_RESUME),
+                state(testActivity, ON_STOP));
+        getLifecycleLog().clear();
+
+        waitForIdle();
+        testActivity.finish();
+        waitAndAssertActivityStates(state(testActivity, ON_DESTROY));
+        LifecycleVerifier.assertEmptySequence(FirstActivity.class, getLifecycleLog(),
+                "finishBelow");
     }
 }

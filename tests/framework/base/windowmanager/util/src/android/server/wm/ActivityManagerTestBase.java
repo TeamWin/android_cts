@@ -570,7 +570,7 @@ public abstract class ActivityManagerTestBase {
         mAmWmState.waitForValidState(activityName);
     }
 
-    private static void waitForIdle() {
+    protected static void waitForIdle() {
         getInstrumentation().waitForIdleSync();
     }
 

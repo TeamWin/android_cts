@@ -29,7 +29,7 @@ public class TestTileService extends TileService {
     public static final String PKG = "android.app.stubs";
     public static final int ICON_ID = R.drawable.robot;
 
-    private static TestTileService sTestTileService = null;
+    protected static TestTileService sTestTileService = null;
     AtomicBoolean isConnected = new AtomicBoolean(false);
     AtomicBoolean isListening = new AtomicBoolean(false);
     AtomicBoolean hasBeenClicked = new AtomicBoolean(false);

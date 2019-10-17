@@ -39,10 +39,10 @@ import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 public class Settings_SystemTest {
-    private static final String INT_FIELD = Settings.System.SCREEN_BRIGHTNESS;
-    private static final String LONG_FIELD = Settings.System.SCREEN_OFF_TIMEOUT;
-    private static final String FLOAT_FIELD = Settings.System.FONT_SCALE;
-    private static final String STRING_FIELD = Settings.System.NEXT_ALARM_FORMATTED;
+    private static final String INT_FIELD = System.END_BUTTON_BEHAVIOR;
+    private static final String LONG_FIELD = System.SCREEN_OFF_TIMEOUT;
+    private static final String FLOAT_FIELD = System.FONT_SCALE;
+    private static final String STRING_FIELD = System.NEXT_ALARM_FORMATTED;
 
     @BeforeClass
     public static void setUp() throws Exception {
@@ -79,6 +79,12 @@ public class Settings_SystemTest {
         System.getConfiguration(cr, cfg);
         float store = cfg.fontScale;
 
+        //store all original values
+        final Float originalFloatValue = System.getFloat(cr, FLOAT_FIELD);
+        final Integer originalIntValue = System.getInt(cr, INT_FIELD);
+        final Long originalLongValue = System.getLong(cr, LONG_FIELD);
+        final String originalStringValue = System.getString(cr, STRING_FIELD);
+
         try {
             assertNotNull(c);
             c.close();
@@ -86,7 +92,7 @@ public class Settings_SystemTest {
             String stringValue = "cts";
 
             // insert 4 rows, and update 1 rows
-            assertTrue(System.putInt(cr, INT_FIELD, 10));
+            assertTrue(System.putInt(cr, INT_FIELD, 2));
             assertTrue(System.putLong(cr, LONG_FIELD, 20l));
             assertTrue(System.putFloat(cr, FLOAT_FIELD, 30.0f));
             assertTrue(System.putString(cr, STRING_FIELD, stringValue));
@@ -96,7 +102,7 @@ public class Settings_SystemTest {
             c.close();
 
             // get these rows to assert
-            assertEquals(10, System.getInt(cr, INT_FIELD));
+            assertEquals(2, System.getInt(cr, INT_FIELD));
             assertEquals(20l, System.getLong(cr, LONG_FIELD));
             assertEquals(30.0f, System.getFloat(cr, FLOAT_FIELD), 0.001);
 
@@ -115,6 +121,12 @@ public class Settings_SystemTest {
         } finally {
             // TODO should clean up more better
             c.close();
+
+            //Restore all original values into system
+            assertTrue(System.putInt(cr, INT_FIELD, originalIntValue));
+            assertTrue(System.putString(cr, STRING_FIELD, originalStringValue));
+            assertTrue(System.putLong(cr, LONG_FIELD, originalLongValue));
+            assertTrue(System.putFloat(cr, FLOAT_FIELD, originalFloatValue));
 
             // restore the fontScale
             try {

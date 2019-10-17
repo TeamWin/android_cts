@@ -824,6 +824,18 @@ public class StagedInstallTest {
                 ApplicationInfo.FLAG_INSTALLED);
     }
 
+    @Test
+    public void testInstallApkChangingFingerprint() throws Exception {
+        int sessionId = Install.single(TestApp.A1).setStaged().commit();
+        storeSessionId(sessionId);
+    }
+
+    @Test
+    public void testInstallApkChangingFingerprint_VerifyAborted() throws Exception {
+        int sessionId = retrieveLastSessionId();
+        assertSessionFailed(sessionId);
+    }
+
     private static long getInstalledVersion(String packageName) {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         PackageManager pm = context.getPackageManager();
