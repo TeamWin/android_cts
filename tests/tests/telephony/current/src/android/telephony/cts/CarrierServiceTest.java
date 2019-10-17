@@ -21,22 +21,24 @@ import static androidx.test.InstrumentationRegistry.getInstrumentation;
 import static org.junit.Assert.fail;
 
 import android.content.pm.PackageManager;
+import android.content.Intent;
 import android.os.PersistableBundle;
 import android.service.carrier.CarrierIdentifier;
 import android.service.carrier.CarrierService;
 import android.telephony.TelephonyManager;
+import android.test.ServiceTestCase;
 import android.util.Log;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class CarrierServiceTest {
+public class CarrierServiceTest extends ServiceTestCase<CarrierServiceTest.TestCarrierService> {
+
+    public CarrierServiceTest() { super(TestCarrierService.class); }
     private static final String TAG = CarrierServiceTest.class.getSimpleName();
 
     private static boolean sHasCellular;
-
-    private CarrierService mCarrierService;
 
     @BeforeClass
     public static void setUpTests() {
@@ -54,11 +56,6 @@ public class CarrierServiceTest {
                 && telephonyManager.getPhoneCount() > 0;
     }
 
-    @Before
-    public void setUp() {
-        mCarrierService = new TestCarrierService();
-    }
-
     @Test
     public void testNotifyCarrierNetworkChange_true() {
         if (!sHasCellular) return;
@@ -74,8 +71,11 @@ public class CarrierServiceTest {
     }
 
     private void notifyCarrierNetworkChange(boolean active) {
+        Intent intent = new Intent(getContext(), TestCarrierService.class);
+        startService(intent);
+
         try {
-            mCarrierService.notifyCarrierNetworkChange(active);
+            getService().notifyCarrierNetworkChange(active);
             fail("Expected SecurityException for notifyCarrierNetworkChange(" + active + ")");
         } catch (SecurityException e) { /* Expected */ }
     }
