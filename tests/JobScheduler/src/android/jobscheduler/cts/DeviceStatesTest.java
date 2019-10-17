@@ -18,7 +18,9 @@ package android.jobscheduler.cts;
 
 import android.annotation.TargetApi;
 import android.app.job.JobInfo;
+import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.PowerManager;
 import android.os.SystemClock;
 import android.support.test.uiautomator.UiDevice;
 
@@ -31,7 +33,9 @@ import androidx.test.InstrumentationRegistry;
 public class DeviceStatesTest extends ConstraintTest {
     /** Unique identifier for the job scheduled by this suite of tests. */
     public static final int STATE_JOB_ID = DeviceStatesTest.class.hashCode();
+    private static final String TAG = "DeviceStatesTest";
 
+    private PowerManager.WakeLock mWakeLock;
     private JobInfo.Builder mBuilder;
     private UiDevice mUiDevice;
 
@@ -40,6 +44,9 @@ public class DeviceStatesTest extends ConstraintTest {
         super.setUp();
         mBuilder = new JobInfo.Builder(STATE_JOB_ID, kJobServiceComponent);
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+        mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
+        mWakeLock.acquire();
     }
 
     @Override
@@ -47,6 +54,9 @@ public class DeviceStatesTest extends ConstraintTest {
         mJobScheduler.cancel(STATE_JOB_ID);
         // Put device back in to normal operation.
         toggleScreenOn(true /* screen on */);
+        if (mWakeLock != null && mWakeLock.isHeld()) {
+            mWakeLock.release();
+        }
     }
 
     void assertJobReady() throws Exception {
