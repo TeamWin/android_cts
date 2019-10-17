@@ -26,9 +26,9 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-public class SonyDualshock4TestCase extends InputTestCase {
+public class SonyDualshock4Test extends InputTestCase {
 
-    public SonyDualshock4TestCase() {
+    public SonyDualshock4Test() {
         super(R.raw.sony_dualshock4_register);
     }
 
