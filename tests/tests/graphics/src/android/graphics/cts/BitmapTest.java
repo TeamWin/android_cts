@@ -184,7 +184,7 @@ public class BitmapTest {
             if (last != null) {
                 // Higher quality will generally result in a larger file.
                 assertTrue(webpCompressed.length > last.length);
-                if (!BitmapUtils.compareBitmaps(lastBitmap, result, MSE_MARGIN, true)) {
+                if (!BitmapUtils.compareBitmapsMse(lastBitmap, result, MSE_MARGIN, true, false)) {
                     fail("Bad comparison for quality " + quality);
                 }
             }
