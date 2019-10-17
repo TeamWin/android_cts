@@ -260,7 +260,7 @@ public class YuvImageTest {
         Rect expectedRect = sameRect ? actualRect : rect1;
         expected = Bitmap.createBitmap(testBitmap, expectedRect.left, expectedRect.top,
                 expectedRect.width(), expectedRect.height());
-        assertTrue(BitmapUtils.compareBitmaps(expected, actual, MSE_MARGIN, sameRect));
+        BitmapUtils.assertBitmapsMse(expected, actual, MSE_MARGIN, sameRect, false);
     }
 
     // Compress rect in image.
@@ -276,7 +276,7 @@ public class YuvImageTest {
         expected = Bitmap.createBitmap(testBitmap, newRect.left, newRect.top,
               newRect.width(), newRect.height());
 
-        assertTrue(BitmapUtils.compareBitmaps(expected, actual, MSE_MARGIN, true));
+        BitmapUtils.assertBitmapsMse(expected, actual, MSE_MARGIN, true, false);
     }
 
     // Compress rect in image to a jpeg and then decode the jpeg to a bitmap.

@@ -1873,6 +1873,7 @@ public class ImageDecoderTest {
 
     @Test
     public void testRespectOrientation() {
+        boolean isWebp = false;
         // These 8 images test the 8 EXIF orientations. If the orientation is
         // respected, they all have the same dimensions: 100 x 80.
         // They are also identical (after adjusting), so compare them.
@@ -1898,6 +1899,7 @@ public class ImageDecoderTest {
                 // The webp files may not look exactly the same as the jpegs.
                 // Recreate the reference.
                 reference = null;
+                isWebp = true;
             }
             Uri uri = getAsResourceUri(resId);
             ImageDecoder.Source src = ImageDecoder.createSource(getContentResolver(), uri);
@@ -1913,7 +1915,8 @@ public class ImageDecoderTest {
                 if (reference == null) {
                     reference = bm;
                 } else {
-                    BitmapUtils.compareBitmaps(bm, reference);
+                    int mse = isWebp ? 70 : 1;
+                    BitmapUtils.assertBitmapsMse(bm, reference, mse, true, false);
                 }
             } catch (IOException e) {
                 fail("Decoding " + uri.toString() + " yielded " + e);
