@@ -33,6 +33,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorSpace;
 import android.graphics.ColorSpace.Named;
+import android.graphics.ImageDecoder;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Picture;
@@ -47,6 +48,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
 import androidx.test.filters.SmallTest;
 
+import com.android.compatibility.common.util.BitmapUtils;
 import com.android.compatibility.common.util.ColorUtils;
 import com.android.compatibility.common.util.WidgetTestUtils;
 
@@ -56,11 +58,13 @@ import org.junit.runner.RunWith;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -131,9 +135,84 @@ public class BitmapTest {
         mBitmap.compress(CompressFormat.JPEG, 101, new ByteArrayOutputStream());
     }
 
+    private static Object[] compressFormats() {
+        return CompressFormat.values();
+    }
+
     @Test
-    public void testCompress() {
-        assertTrue(mBitmap.compress(CompressFormat.JPEG, 50, new ByteArrayOutputStream()));
+    @Parameters(method = "compressFormats")
+    public void testCompress(CompressFormat format) {
+        assertTrue(mBitmap.compress(format, 50, new ByteArrayOutputStream()));
+    }
+
+    private Bitmap decodeBytes(byte[] bytes) {
+        ByteBuffer buffer = ByteBuffer.wrap(bytes);
+        ImageDecoder.Source src = ImageDecoder.createSource(buffer);
+        try {
+            return ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
+                decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+            });
+        } catch (IOException e) {
+            fail("Failed to decode with " + e);
+            return null;
+        }
+    }
+
+    // There are three color components and
+    // each should be within a square difference of 15 * 15.
+    private static final int MSE_MARGIN = 3 * (15 * 15);
+
+    @Test
+    public void testCompressWebpLossy() {
+        // For qualities < 100, WEBP performs a lossy decode.
+        byte[] last = null;
+        Bitmap lastBitmap = null;
+        for (int quality : new int[] { 25, 50, 80, 99 }) {
+            ByteArrayOutputStream webp = new ByteArrayOutputStream();
+            assertTrue(mBitmap.compress(CompressFormat.WEBP, quality, webp));
+            byte[] webpCompressed = webp.toByteArray();
+
+
+            ByteArrayOutputStream webpLossy = new ByteArrayOutputStream();
+            assertTrue(mBitmap.compress(CompressFormat.WEBP_LOSSY, quality, webpLossy));
+            byte[] webpLossyCompressed = webpLossy.toByteArray();
+
+            assertTrue("Compression did not match at quality " + quality,
+                    Arrays.equals(webpCompressed, webpLossyCompressed));
+
+            Bitmap result = decodeBytes(webpCompressed);
+            if (last != null) {
+                // Higher quality will generally result in a larger file.
+                assertTrue(webpCompressed.length > last.length);
+                if (!BitmapUtils.compareBitmaps(lastBitmap, result, MSE_MARGIN, true)) {
+                    fail("Bad comparison for quality " + quality);
+                }
+            }
+            last = webpCompressed;
+            lastBitmap = result;
+        }
+    }
+
+    @Test
+    @Parameters({ "0", "50", "80", "99", "100" })
+    public void testCompressWebpLossless(int quality) {
+        ByteArrayOutputStream webp = new ByteArrayOutputStream();
+        assertTrue(mBitmap.compress(CompressFormat.WEBP_LOSSLESS, quality, webp));
+        byte[] webpCompressed = webp.toByteArray();
+        Bitmap result = decodeBytes(webpCompressed);
+
+        assertTrue("WEBP_LOSSLESS did not losslessly compress at quality " + quality,
+                BitmapUtils.compareBitmaps(mBitmap, result));
+    }
+
+    @Test
+    public void testCompressWebp100MeansLossless() {
+        ByteArrayOutputStream webp = new ByteArrayOutputStream();
+        assertTrue(mBitmap.compress(CompressFormat.WEBP, 100, webp));
+        byte[] webpCompressed = webp.toByteArray();
+        Bitmap result = decodeBytes(webpCompressed);
+        assertTrue("WEBP_LOSSLESS did not losslessly compress at quality 100",
+                BitmapUtils.compareBitmaps(mBitmap, result));
     }
 
     @Test(expected=IllegalStateException.class)

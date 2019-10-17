@@ -177,4 +177,52 @@ public class BitmapUtils {
             e.printStackTrace();
         }
     }
+
+    // Compare expected to actual to see if their diff is less than mseMargin.
+    // lessThanMargin is to indicate whether we expect the diff to be
+    // "less than" or "no less than".
+    public static boolean compareBitmaps(Bitmap expected, Bitmap actual,
+            int mseMargin, boolean lessThanMargin) {
+        final Boolean basicComparison = compareBasicBitmapsInfo(expected, actual);
+        if (basicComparison != null) return basicComparison.booleanValue();
+
+        double mse = 0;
+        int width = expected.getWidth();
+        int height = expected.getHeight();
+        int[] expColors = new int [width * height];
+        expected.getPixels(expColors, 0, width, 0, 0, width, height);
+
+        int[] actualColors = new int [width * height];
+        actual.getPixels(actualColors, 0, width, 0, 0, width, height);
+
+        for (int row = 0; row < height; ++row) {
+            for (int col = 0; col < width; ++col) {
+                int idx = row * width + col;
+                mse += distance(expColors[idx], actualColors[idx]);
+            }
+        }
+        mse /= width * height;
+
+        Log.i(TAG, "MSE: " + mse);
+        if (lessThanMargin) {
+            if (mse > mseMargin) {
+                Log.d(TAG, "MSE too large for normal case: " + mse);
+                return false;
+            }
+            return true;
+        } else {
+            if (mse <= mseMargin) {
+                Log.d(TAG, "MSE too small for abnormal case: " + mse);
+                return false;
+            }
+            return true;
+        }
+    }
+
+    private static double distance(int exp, int actual) {
+        int r = Color.red(actual) - Color.red(exp);
+        int g = Color.green(actual) - Color.green(exp);
+        int b = Color.blue(actual) - Color.blue(exp);
+        return r * r + g * g + b * b;
+    }
 }
