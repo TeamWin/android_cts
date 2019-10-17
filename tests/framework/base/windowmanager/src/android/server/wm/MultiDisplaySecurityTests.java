@@ -16,7 +16,10 @@
 
 package android.server.wm;
 
+import static android.server.wm.ActivityManagerState.STATE_RESUMED;
 import static android.server.wm.ComponentNameUtils.getActivityName;
+import static android.server.wm.MockImeHelper.createManagedMockImeSession;
+import static android.server.wm.MultiDisplaySystemDecorationTests.ImeTestActivity;
 import static android.server.wm.app.Components.DISPLAY_ACCESS_CHECK_EMBEDDING_ACTIVITY;
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
 import static android.server.wm.app.Components.LAUNCH_BROADCAST_RECEIVER;
@@ -41,8 +44,12 @@ import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
+import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -52,6 +59,7 @@ import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
@@ -63,12 +71,17 @@ import android.view.Display;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.EditText;
 
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestUtils;
+import com.android.cts.mockime.ImeEventStream;
+import com.android.cts.mockime.MockImeSession;
 
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Build/Install/Run:
@@ -105,16 +118,14 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
 
         mAmWmState.waitForValidState(TEST_ACTIVITY);
 
-        final int externalFocusedStackId = mAmWmState.getAmState().getFocusedStackId();
-        final ActivityStack focusedStack =
-                mAmWmState.getAmState().getStackById(externalFocusedStackId);
-        assertEquals("Focused stack must be on secondary display", newDisplay.mId,
-                focusedStack.mDisplayId);
+        waitAndAssertActivityStateOnDisplay(TEST_ACTIVITY, STATE_RESUMED, newDisplay.mId,
+                "The Activity should be able to launch by virtual display owner");
 
-        mAmWmState.assertFocusedActivity("Focus must be on newly launched app",
-                TEST_ACTIVITY);
-        assertEquals("Activity launched by owner must be on external display",
-                externalFocusedStackId, mAmWmState.getAmState().getFocusedStackId());
+        final int focusedStackId = mAmWmState.getAmState().getFocusedStackId();
+        final ActivityStack focusedStack =
+                mAmWmState.getAmState().getStackById(focusedStackId);
+        assertEquals("Focused stack must be on default display",DEFAULT_DISPLAY,
+                focusedStack.mDisplayId);
     }
 
     /**
@@ -155,7 +166,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
         // Launch activity on new secondary display.
         launchActivityOnDisplay(LAUNCHING_ACTIVITY, newDisplay.mId);
 
-        waitAndAssertTopResumedActivity(LAUNCHING_ACTIVITY, newDisplay.mId,
+        waitAndAssertActivityStateOnDisplay(LAUNCHING_ACTIVITY, STATE_RESUMED, newDisplay.mId,
                 "Activity launched on secondary display must be resumed");
 
         separateTestJournal();
@@ -475,8 +486,8 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
         // Launch activity on new secondary display.
         launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
 
-        waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
-                "Front activity must be on secondary display");
+        waitAndAssertActivityStateOnDisplay(TEST_ACTIVITY, STATE_RESUMED, newDisplay.mId,
+                "Test activity must be on secondary display");
         assertBothDisplaysHaveResumedActivities(pair(DEFAULT_DISPLAY, VIRTUAL_DISPLAY_ACTIVITY),
                 pair(newDisplay.mId, TEST_ACTIVITY));
 
@@ -486,8 +497,8 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
                 + " --display " + newDisplay.mId;
         executeShellCommand(startCmd);
 
-        waitAndAssertTopResumedActivity(SECOND_ACTIVITY, newDisplay.mId,
-                "Focus must be on newly launched app");
+        waitAndAssertActivityStateOnDisplay(SECOND_ACTIVITY, STATE_RESUMED, newDisplay.mId,
+                "Second activity must be on newly launched app");
         assertBothDisplaysHaveResumedActivities(pair(DEFAULT_DISPLAY, VIRTUAL_DISPLAY_ACTIVITY),
                 pair(newDisplay.mId, SECOND_ACTIVITY));
     }
@@ -569,8 +580,8 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
                 + " --display " + newDisplay.mId;
         executeShellCommand(startCmd);
 
-        waitAndAssertTopResumedActivity(SECOND_ACTIVITY, newDisplay.mId,
-                "Top activity must be the newly launched one");
+        waitAndAssertActivityStateOnDisplay(SECOND_ACTIVITY, STATE_RESUMED, newDisplay.mId,
+                "Second activity must be the newly launched one");
 
         // Check that owner uid can launch its own activity on secondary display.
         getLaunchActivityBuilder()
@@ -580,7 +591,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
                 .setDisplayId(newDisplay.mId)
                 .execute();
 
-        waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
+        waitAndAssertActivityStateOnDisplay(TEST_ACTIVITY, STATE_RESUMED, newDisplay.mId,
                 "Top activity must be the newly launched one");
     }
 
@@ -603,8 +614,8 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
 
         // Launch activity on new secondary display.
         launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
-        waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
-                "Top activity must be the newly launched one");
+        waitAndAssertActivityStateOnDisplay(TEST_ACTIVITY, STATE_RESUMED, newDisplay.mId,
+                "Test activity must be the newly launched one");
 
         separateTestJournal();
 
@@ -617,10 +628,6 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
                 .execute();
 
         assertSecurityExceptionFromActivityLauncher();
-
-        mAmWmState.waitForValidState(TEST_ACTIVITY);
-        mAmWmState.assertFocusedActivity("Top activity must be the first one launched",
-                TEST_ACTIVITY);
     }
 
     /**
@@ -826,5 +833,55 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
                         () -> !wm.shouldShowIme(trustedDisplay.mId));
             }
         });
+    }
+
+    @Test
+    public void testNoInputConnectionForUntrustedVirtualDisplay() throws Exception {
+        final long NOT_EXPECT_TIMEOUT = TimeUnit.SECONDS.toMillis(2);
+
+        final MockImeSession mockImeSession = createManagedMockImeSession(this);
+        final TestActivitySession<ImeTestActivity> imeTestActivitySession =
+                createManagedTestActivitySession();
+         // Create a untrusted virtual display and assume the display should not show IME window.
+        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+                .setPublicDisplay(true).createDisplay();
+
+        // Launch Ime test activity in virtual display.
+        imeTestActivitySession.launchTestActivityOnDisplay(ImeTestActivity.class,
+                newDisplay.mId);
+        // Verify that activity which lives in untrusted display should not be focused.
+        assertNotEquals("ImeTestActivity should not be focused",
+                mAmWmState.getAmState().getFocusedActivity(),
+                imeTestActivitySession.getActivity().getComponentName().toString());
+
+        // Expect onStartInput won't executed in the IME client.
+        final ImeEventStream stream = mockImeSession.openEventStream();
+        final EditText editText = imeTestActivitySession.getActivity().mEditText;
+        imeTestActivitySession.runOnMainSyncAndWait(
+                imeTestActivitySession.getActivity()::showSoftInput);
+        notExpectEvent(stream, editorMatcher("onStartInput",
+                editText.getPrivateImeOptions()), NOT_EXPECT_TIMEOUT);
+
+        // Expect onStartInput / showSoftInput would be executed when user tapping on the
+        // untrusted display intentionally.
+        final Rect drawRect = new Rect();
+        editText.getDrawingRect(drawRect);
+        tapOnDisplaySync(drawRect.left, drawRect.top, newDisplay.mId);
+        imeTestActivitySession.runOnMainSyncAndWait(
+                imeTestActivitySession.getActivity()::showSoftInput);
+        waitOrderedImeEventsThenAssertImeShown(stream, DEFAULT_DISPLAY,
+                editorMatcher("onStartInput", editText.getPrivateImeOptions()),
+                event -> "showSoftInput".equals(event.getEventName()));
+
+        // Switch focus to top focused display as default display, verify onStartInput won't
+        // be called since the untrusted display should no longer get focus.
+        tapOnDisplayCenter(DEFAULT_DISPLAY);
+        mAmWmState.computeState(true);
+        assertEquals(DEFAULT_DISPLAY, mAmWmState.getWmState().getFocusedDisplayId());
+        imeTestActivitySession.getActivity().resetPrivateImeOptionsIdentifier();
+        imeTestActivitySession.runOnMainSyncAndWait(
+                imeTestActivitySession.getActivity()::showSoftInput);
+        notExpectEvent(stream, editorMatcher("onStartInput",
+                editText.getPrivateImeOptions()), NOT_EXPECT_TIMEOUT);
     }
 }

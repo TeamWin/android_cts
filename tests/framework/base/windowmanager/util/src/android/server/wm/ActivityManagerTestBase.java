@@ -384,20 +384,33 @@ public abstract class ActivityManagerTestBase {
 
         void launchTestActivityOnDisplaySync(Intent intent, int displayId) {
             SystemUtil.runWithShellPermissionIdentity(() -> {
-                final Bundle bundle = ActivityOptions.makeBasic()
-                        .setLaunchDisplayId(displayId).toBundle();
-                final ActivityMonitor monitor = getInstrumentation()
-                        .addMonitor((String) null, null, false);
-                mContext.startActivity(intent.addFlags(FLAG_ACTIVITY_NEW_TASK), bundle);
-                // Wait for activity launch with timeout.
-                mTestActivity = (T) getInstrumentation().waitForMonitorWithTimeout(monitor,
-                        ACTIVITY_LAUNCH_TIMEOUT);
-                assertNotNull(mTestActivity);
+                mTestActivity = launchActivityOnDisplay(intent, displayId);
                 // Check activity is launched and resumed.
                 final ComponentName testActivityName = mTestActivity.getComponentName();
                 waitAndAssertTopResumedActivity(testActivityName, displayId,
                         "Activity must be resumed");
             });
+        }
+
+        void launchTestActivityOnDisplay(Class<T> activityClass, int displayId) {
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                mTestActivity = launchActivityOnDisplay(new Intent(mContext, activityClass)
+                        .addFlags(FLAG_ACTIVITY_NEW_TASK), displayId);
+                assertNotNull(mTestActivity);
+            });
+        }
+
+        private T launchActivityOnDisplay(Intent intent, int displayId) {
+            final Bundle bundle = ActivityOptions.makeBasic()
+                    .setLaunchDisplayId(displayId).toBundle();
+            final ActivityMonitor monitor = getInstrumentation()
+                    .addMonitor((String) null, null, false);
+            mContext.startActivity(intent.addFlags(FLAG_ACTIVITY_NEW_TASK), bundle);
+            // Wait for activity launch with timeout.
+            mTestActivity = (T) getInstrumentation().waitForMonitorWithTimeout(monitor,
+                    ACTIVITY_LAUNCH_TIMEOUT);
+            assertNotNull(mTestActivity);
+            return mTestActivity;
         }
 
         void finishCurrentActivityNoWait() {
@@ -907,6 +920,13 @@ public abstract class ActivityManagerTestBase {
         mAmWmState.waitForActivityState(activityName, state);
 
         assertTrue(message, mAmWmState.getAmState().hasActivityState(activityName, state));
+    }
+
+    protected void waitAndAssertActivityStateOnDisplay(ComponentName activityName, String state,
+            int displayId, String message) {
+        waitAndAssertActivityState(activityName, state, message);
+        assertEquals(message, mAmWmState.getAmState().getDisplayByActivity(activityName),
+                displayId);
     }
 
     public void waitAndAssertTopResumedActivity(ComponentName activityName, int displayId,
