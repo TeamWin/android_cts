@@ -14,11 +14,13 @@
 
 package android.accessibilityservice.cts;
 
+import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.GestureUtils.click;
 import static android.accessibilityservice.cts.utils.GestureUtils.endTimeOf;
 import static android.accessibilityservice.cts.utils.GestureUtils.longClick;
 import static android.accessibilityservice.cts.utils.GestureUtils.startingAt;
 import static android.accessibilityservice.cts.utils.DisplayUtils.VirtualDisplaySession;
+import static android.app.UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.any;
@@ -31,7 +33,10 @@ import android.accessibilityservice.AccessibilityGestureEvent;
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.GestureDescription;
 import android.accessibilityservice.GestureDescription.StrokeDescription;
+import android.accessibilityservice.cts.activities.AccessibilityWindowQueryActivity;
+import android.app.Activity;
 import android.app.Instrumentation;
+import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Path;
@@ -46,7 +51,9 @@ import android.view.accessibility.AccessibilityEvent;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
@@ -63,6 +70,9 @@ public class AccessibilityGestureDetectorTest {
     private static final long STROKE_MS = 400;
     private static final long GESTURE_DISPATCH_TIMEOUT_MS = 3000;
     private static final long EVENT_DISPATCH_TIMEOUT_MS = 3000;
+
+    private static Instrumentation sInstrumentation;
+    private static UiAutomation sUiAutomation;
 
     private InstrumentedAccessibilityServiceTestRule<GestureDetectionStubAccessibilityService>
             mServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
@@ -86,13 +96,23 @@ public class AccessibilityGestureDetectorTest {
     PointF mTapLocation;
     @Mock AccessibilityService.GestureResultCallback mGestureDispatchCallback;
 
+    @BeforeClass
+    public static void oneTimeSetup() {
+        sInstrumentation = InstrumentationRegistry.getInstrumentation();
+        sUiAutomation = sInstrumentation.getUiAutomation(FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+    }
+
+    @AfterClass
+    public static void finalTearDown() {
+        sUiAutomation.destroy();
+    }
+
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
         // Check that device has a touch screen.
-        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        PackageManager pm = instrumentation.getContext().getPackageManager();
+        PackageManager pm = sInstrumentation.getContext().getPackageManager();
         mHasTouchScreen = pm.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)
                 || pm.hasSystemFeature(PackageManager.FEATURE_FAKETOUCH);
         if (!mHasTouchScreen) {
@@ -101,7 +121,7 @@ public class AccessibilityGestureDetectorTest {
 
         // Find screen size, check that it is big enough for gestures.
         // Gestures will start in the center of the screen, so we need enough horiz/vert space.
-        WindowManager windowManager = (WindowManager) instrumentation.getContext()
+        WindowManager windowManager = (WindowManager) sInstrumentation.getContext()
                 .getSystemService(Context.WINDOW_SERVICE);
         final DisplayMetrics metrics = new DisplayMetrics();
         windowManager.getDefaultDisplay().getRealMetrics(metrics);
@@ -153,52 +173,62 @@ public class AccessibilityGestureDetectorTest {
 
     @Test
     @AppModeFull
-    public void testRecognizeGesturePathOnVirtualDisplay() {
+    public void testRecognizeGesturePathOnVirtualDisplay() throws Exception {
         if (!mHasTouchScreen || !mScreenBigEnough) {
             return;
         }
 
         try (final VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
             final int displayId = displaySession.createDisplayWithDefaultDisplayMetricsAndWait(
-                    InstrumentationRegistry.getInstrumentation().getTargetContext(),
-                            false).getDisplayId();
+                    sInstrumentation.getTargetContext(), false).getDisplayId();
+            // Launches an activity on virtual display to meet a real situation.
+            final Activity activity = launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen(
+                    sInstrumentation, sUiAutomation, AccessibilityWindowQueryActivity.class,
+                    displayId);
             // Compute gesture stroke lengths, in pixels.
             final int dx = mStrokeLenPxX;
             final int dy = mStrokeLenPxY;
 
-            // Test recognizing various gestures.
-            testPath(p(-dx, +0), AccessibilityService.GESTURE_SWIPE_LEFT, displayId);
-            testPath(p(+dx, +0), AccessibilityService.GESTURE_SWIPE_RIGHT, displayId);
-            testPath(p(+0, -dy), AccessibilityService.GESTURE_SWIPE_UP, displayId);
-            testPath(p(+0, +dy), AccessibilityService.GESTURE_SWIPE_DOWN, displayId);
+            try {
+                // Test recognizing various gestures.
+                testPath(p(-dx, +0), AccessibilityService.GESTURE_SWIPE_LEFT, displayId);
+                testPath(p(+dx, +0), AccessibilityService.GESTURE_SWIPE_RIGHT, displayId);
+                testPath(p(+0, -dy), AccessibilityService.GESTURE_SWIPE_UP, displayId);
+                testPath(p(+0, +dy), AccessibilityService.GESTURE_SWIPE_DOWN, displayId);
 
-            testPath(p(-dx, +0), p(+0, +0), AccessibilityService.GESTURE_SWIPE_LEFT_AND_RIGHT,
-                    displayId);
-            testPath(p(-dx, +0), p(-dx, -dy), AccessibilityService.GESTURE_SWIPE_LEFT_AND_UP,
-                    displayId);
-            testPath(p(-dx, +0), p(-dx, +dy), AccessibilityService.GESTURE_SWIPE_LEFT_AND_DOWN,
-                    displayId);
+                testPath(p(-dx, +0), p(+0, +0), AccessibilityService.GESTURE_SWIPE_LEFT_AND_RIGHT,
+                        displayId);
+                testPath(p(-dx, +0), p(-dx, -dy), AccessibilityService.GESTURE_SWIPE_LEFT_AND_UP,
+                        displayId);
+                testPath(p(-dx, +0), p(-dx, +dy), AccessibilityService.GESTURE_SWIPE_LEFT_AND_DOWN,
+                        displayId);
 
-            testPath(p(+dx, +0), p(+0, +0), AccessibilityService.GESTURE_SWIPE_RIGHT_AND_LEFT,
-                    displayId);
-            testPath(p(+dx, +0), p(+dx, -dy), AccessibilityService.GESTURE_SWIPE_RIGHT_AND_UP,
-                    displayId);
-            testPath(p(+dx, +0), p(+dx, +dy), AccessibilityService.GESTURE_SWIPE_RIGHT_AND_DOWN,
-                    displayId);
+                testPath(p(+dx, +0), p(+0, +0), AccessibilityService.GESTURE_SWIPE_RIGHT_AND_LEFT,
+                        displayId);
+                testPath(p(+dx, +0), p(+dx, -dy), AccessibilityService.GESTURE_SWIPE_RIGHT_AND_UP,
+                        displayId);
+                testPath(p(+dx, +0), p(+dx, +dy), AccessibilityService.GESTURE_SWIPE_RIGHT_AND_DOWN,
+                        displayId);
 
-            testPath(p(+0, -dy), p(-dx, -dy), AccessibilityService.GESTURE_SWIPE_UP_AND_LEFT,
-                    displayId);
-            testPath(p(+0, -dy), p(+dx, -dy), AccessibilityService.GESTURE_SWIPE_UP_AND_RIGHT,
-                    displayId);
-            testPath(p(+0, -dy), p(+0, +0), AccessibilityService.GESTURE_SWIPE_UP_AND_DOWN,
-                    displayId);
+                testPath(p(+0, -dy), p(-dx, -dy), AccessibilityService.GESTURE_SWIPE_UP_AND_LEFT,
+                        displayId);
+                testPath(p(+0, -dy), p(+dx, -dy), AccessibilityService.GESTURE_SWIPE_UP_AND_RIGHT,
+                        displayId);
+                testPath(p(+0, -dy), p(+0, +0), AccessibilityService.GESTURE_SWIPE_UP_AND_DOWN,
+                        displayId);
 
-            testPath(p(+0, +dy), p(-dx, +dy), AccessibilityService.GESTURE_SWIPE_DOWN_AND_LEFT,
-                    displayId);
-            testPath(p(+0, +dy), p(+dx, +dy), AccessibilityService.GESTURE_SWIPE_DOWN_AND_RIGHT,
-                    displayId);
-            testPath(p(+0, +dy), p(+0, +0), AccessibilityService.GESTURE_SWIPE_DOWN_AND_UP,
-                    displayId);
+                testPath(p(+0, +dy), p(-dx, +dy), AccessibilityService.GESTURE_SWIPE_DOWN_AND_LEFT,
+                        displayId);
+                testPath(p(+0, +dy), p(+dx, +dy), AccessibilityService.GESTURE_SWIPE_DOWN_AND_RIGHT,
+                        displayId);
+                testPath(p(+0, +dy), p(+0, +0), AccessibilityService.GESTURE_SWIPE_DOWN_AND_UP,
+                        displayId);
+            } finally {
+                sInstrumentation.runOnMainSync(() -> {
+                    activity.finish();
+                });
+                sInstrumentation.waitForIdleSync();
+            }
         }
     }
 
@@ -297,48 +327,58 @@ public class AccessibilityGestureDetectorTest {
 
     @Test
     @AppModeFull
-    public void testVerifyGestureTouchEventOnVirtualDisplay() {
+    public void testVerifyGestureTouchEventOnVirtualDisplay() throws Exception {
         if (!mHasTouchScreen || !mScreenBigEnough) {
             return;
         }
 
         try (final VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
             final int displayId = displaySession.createDisplayWithDefaultDisplayMetricsAndWait(
-                    InstrumentationRegistry.getInstrumentation().getTargetContext(),
+                    sInstrumentation.getTargetContext(),
                     false).getDisplayId();
 
-            assertEventAfterGesture(swipe(displayId),
-                    AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
-                    AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
+            // Launches an activity on virtual display to meet a real situation.
+            final Activity activity = launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen(
+                    sInstrumentation, sUiAutomation, AccessibilityWindowQueryActivity.class,
+                    displayId);
+            try {
+                assertEventAfterGesture(swipe(displayId),
+                        AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
+                        AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
 
-            assertEventAfterGesture(tap(displayId),
-                    AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
-                    AccessibilityEvent.TYPE_TOUCH_EXPLORATION_GESTURE_START,
-                    AccessibilityEvent.TYPE_TOUCH_EXPLORATION_GESTURE_END,
-                    AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
+                assertEventAfterGesture(tap(displayId),
+                        AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
+                        AccessibilityEvent.TYPE_TOUCH_EXPLORATION_GESTURE_START,
+                        AccessibilityEvent.TYPE_TOUCH_EXPLORATION_GESTURE_END,
+                        AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
 
-            assertEventAfterGesture(doubleTap(displayId),
-                    AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
-                    AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
+                assertEventAfterGesture(doubleTap(displayId),
+                        AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
+                        AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
 
-            assertEventAfterGesture(doubleTapAndHold(displayId),
-                    AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
-                    AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
+                assertEventAfterGesture(doubleTapAndHold(displayId),
+                        AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
+                        AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
+            } finally {
+                sInstrumentation.runOnMainSync(() -> {
+                    activity.finish();
+                });
+                sInstrumentation.waitForIdleSync();
+            }
         }
     }
 
     @Test
     @AppModeFull
-    public void testDispatchGesture_privateDisplay_gestureCancelled() {
+    public void testDispatchGesture_privateDisplay_gestureCancelled() throws Exception{
         try (final VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
             final int displayId = displaySession.createDisplayWithDefaultDisplayMetricsAndWait
-                    (InstrumentationRegistry.getInstrumentation().getTargetContext(),
+                    (sInstrumentation.getTargetContext(),
                             true).getDisplayId();
             GestureDescription gesture = swipe(displayId);
             mService.clearGestures();
             mService.runOnServiceSync(() ->
                     mService.dispatchGesture(gesture, mGestureDispatchCallback, null));
-
             verify(mGestureDispatchCallback, timeout(GESTURE_DISPATCH_TIMEOUT_MS).atLeastOnce())
                     .onCancelled(any());
         }
@@ -355,7 +395,8 @@ public class AccessibilityGestureDetectorTest {
         mService.waitUntilEvent(events.length);
         assertEquals(events.length, mService.getEventsSize());
         for (int i = 0; i < events.length; i++) {
-            assertEquals(events[i], mService.getEvent(i));
+            assertEquals(AccessibilityEvent.eventTypeToString(events[i]),
+                    AccessibilityEvent.eventTypeToString(mService.getEvent(i)));
         }
     }
 
