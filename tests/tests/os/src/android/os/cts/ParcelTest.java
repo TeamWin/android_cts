@@ -3428,4 +3428,34 @@ public class ParcelTest extends AndroidTestCase {
 
         assertNotNull("Service should have started without crashing.", connection.get());
     }
+
+    public void testObjectResize() throws Exception {
+        Parcel p;
+        IBinder b1 = new Binder();
+        IBinder b2 = new Binder();
+
+        p = Parcel.obtain();
+        p.writeStrongBinder(b1);
+        p.setDataSize(0);
+        p.writeStrongBinder(b2);
+
+        p.setDataPosition(0);
+        assertEquals("Object in parcel should match the binder written after the resize", b2,
+                p.readStrongBinder());
+        p.recycle();
+
+        p = Parcel.obtain();
+        p.writeStrongBinder(b1);
+        final int secondBinderPos = p.dataPosition();
+        p.writeStrongBinder(b1);
+        p.setDataSize(secondBinderPos);
+        p.writeStrongBinder(b2);
+
+        p.setDataPosition(0);
+        assertEquals("Object at the start of the parcel parcel should match the first binder", b1,
+                p.readStrongBinder());
+        assertEquals("Object in parcel should match the binder written after the resize", b2,
+                p.readStrongBinder());
+        p.recycle();
+    }
 }
