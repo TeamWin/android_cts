@@ -26,8 +26,6 @@
     <uses-permission android:name="android.permission.USE_CREDENTIALS" />
     <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
     <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
-    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
-    <uses-permission android:name="android.permission.READ_CALENDAR" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
@@ -143,10 +141,5 @@
         <meta-data android:name="listener"
             android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
-
-    <instrumentation android:name="android.provider.cts.CalendarTest$CalendarEmmaTestRunner"
-                     android:targetPackage="android.provider.cts"
-                     android:label="Augmented CTS tests of Calendar provider"/>
-
 </manifest>
 

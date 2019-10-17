@@ -3280,7 +3280,7 @@ public class CalendarTest extends InstrumentationTestCase {
     @MediumTest
     public void testMutatorSetCorrectly() {
         String account = "ec_account";
-        String packageName = "android.provider.cts";
+        String packageName = "android.provider.cts.calendar";
         int seed = 0;
 
         // Clean up just in case
@@ -3761,38 +3761,6 @@ public class CalendarTest extends InstrumentationTestCase {
             if (c != null) {
                 c.close();
             }
-        }
-    }
-
-
-    /**
-     * Special version of the test runner that does some remote Emma coverage housekeeping.
-     */
-    // TODO: find if this is still used and if so convert to AndroidJUnitRunner framework
-    public static class CalendarEmmaTestRunner extends android.test.InstrumentationTestRunner {
-        private static final Uri EMMA_CONTENT_URI =
-            Uri.parse("content://" + CalendarContract.AUTHORITY + "/emma");
-        private ContentResolver mContentResolver;
-
-        @Override
-        public void onStart() {
-            mContentResolver = getTargetContext().getContentResolver();
-
-            ContentValues values = new ContentValues();
-            values.put("cmd", "start");
-            mContentResolver.insert(EMMA_CONTENT_URI, values);
-
-            super.onStart();
-        }
-
-        @Override
-        public void finish(int resultCode, Bundle results) {
-            ContentValues values = new ContentValues();
-            values.put("cmd", "stop");
-            values.put("outputFileName",
-                    Environment.getExternalStorageDirectory() + "/calendar-provider.ec");
-            mContentResolver.insert(EMMA_CONTENT_URI, values);
-            super.finish(resultCode, results);
         }
     }
 }
