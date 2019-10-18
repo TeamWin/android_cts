@@ -66,12 +66,13 @@ public class Settings_SystemTest {
         final ContentResolver cr = InstrumentationRegistry.getTargetContext().getContentResolver();
 
         /**
-         * first query the exist settings in System table, and then insert five
-         * rows: an int, a long, a float, a String, and a ShowGTalkServiceStatus.
-         * Get these six rows to check whether insert succeeded and then delete them.
+         * first query the existing settings in System table, and then insert four
+         * rows: an int, a long, a float, a String.
+         * Get these four rows to check whether insert succeeded and then restore the original
+         * values.
          */
 
-        // first query exist rows
+        // first query existing rows
         Cursor c = cr.query(System.CONTENT_URI, null, null, null, null);
 
         // backup fontScale
@@ -80,9 +81,8 @@ public class Settings_SystemTest {
         float store = cfg.fontScale;
 
         //store all original values
-        final Float originalFloatValue = System.getFloat(cr, FLOAT_FIELD);
-        final Integer originalIntValue = System.getInt(cr, INT_FIELD);
-        final Long originalLongValue = System.getLong(cr, LONG_FIELD);
+        final String originalIntValue = System.getString(cr, INT_FIELD);
+        final String originalLongValue = System.getString(cr, LONG_FIELD);
         final String originalStringValue = System.getString(cr, STRING_FIELD);
 
         try {
@@ -105,7 +105,6 @@ public class Settings_SystemTest {
             assertEquals(2, System.getInt(cr, INT_FIELD));
             assertEquals(20l, System.getLong(cr, LONG_FIELD));
             assertEquals(30.0f, System.getFloat(cr, FLOAT_FIELD), 0.001);
-
             assertEquals(stringValue, System.getString(cr, STRING_FIELD));
 
             c = cr.query(System.CONTENT_URI, null, null, null, null);
@@ -123,10 +122,9 @@ public class Settings_SystemTest {
             c.close();
 
             //Restore all original values into system
-            assertTrue(System.putInt(cr, INT_FIELD, originalIntValue));
+            assertTrue(System.putString(cr, INT_FIELD, originalIntValue));
+            assertTrue(System.putString(cr, LONG_FIELD, originalLongValue));
             assertTrue(System.putString(cr, STRING_FIELD, originalStringValue));
-            assertTrue(System.putLong(cr, LONG_FIELD, originalLongValue));
-            assertTrue(System.putFloat(cr, FLOAT_FIELD, originalFloatValue));
 
             // restore the fontScale
             try {
