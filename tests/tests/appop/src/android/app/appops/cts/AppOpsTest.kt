@@ -51,15 +51,19 @@ import org.mockito.Mockito
 
 import java.util.HashMap
 import java.util.HashSet
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
 class AppOpsTest {
     // Notifying OnOpChangedListener callbacks is an async operation, so we define a timeout.
-    private val MODE_WATCHER_TIMEOUT_MS = 5000L
+    private val TIMEOUT_MS = 5000L
 
     private lateinit var mAppOps: AppOpsManager
     private lateinit var mContext: Context
     private lateinit var mOpPackageName: String
+    private val mMyUid = Process.myUid()
 
     companion object {
         // These permissions and opStrs must map to the same op codes.
@@ -218,6 +222,56 @@ class AppOpsTest {
     }
 
     @Test
+    fun overlappingActiveFeatureOps() {
+        runWithShellPermissionIdentity {
+            val gotActive = CompletableFuture<Unit>()
+            val gotInActive = CompletableFuture<Unit>()
+
+            val activeWatcher =
+                AppOpsManager.OnOpActiveChangedListener { _, _, packageName, active ->
+                    if (packageName == mOpPackageName) {
+                        if (active) {
+                            assertFalse(gotActive.isDone)
+                            gotActive.complete(Unit)
+                        } else {
+                            assertFalse(gotInActive.isDone)
+                            gotInActive.complete(Unit)
+                        }
+                    }
+                }
+
+            mAppOps.startWatchingActive(arrayOf(OPSTR_WRITE_CALENDAR), Executor { it.run() },
+                activeWatcher)
+            try {
+                mAppOps.startOp(OPSTR_WRITE_CALENDAR, mMyUid, mOpPackageName, "feature1", null)
+                assertTrue(mAppOps.isOpActive(OPSTR_WRITE_CALENDAR, mMyUid, mOpPackageName))
+                gotActive.get(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+
+                mAppOps.startOp(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName,
+                    "feature2", null)
+                assertTrue(mAppOps.isOpActive(OPSTR_WRITE_CALENDAR, mMyUid, mOpPackageName))
+                assertFalse(gotInActive.isDone)
+
+                mAppOps.finishOp(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName,
+                    "feature1")
+
+                // Allow some time for premature "watchingActive" callbacks to arrive
+                Thread.sleep(500)
+
+                assertTrue(mAppOps.isOpActive(OPSTR_WRITE_CALENDAR, mMyUid, mOpPackageName))
+                assertFalse(gotInActive.isDone)
+
+                mAppOps.finishOp(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName,
+                    "feature2")
+                assertFalse(mAppOps.isOpActive(OPSTR_WRITE_CALENDAR, mMyUid, mOpPackageName))
+                gotInActive.get(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+            } finally {
+                mAppOps.stopWatchingActive(activeWatcher)
+            }
+        }
+    }
+
+    @Test
     fun testCheckPackagePassesCheck() {
         mAppOps.checkPackage(Process.myUid(), mOpPackageName)
         mAppOps.checkPackage(Process.SYSTEM_UID, "android")
@@ -258,13 +312,13 @@ class AppOpsTest {
             // Make a change to the app op's mode.
             Mockito.reset(watcher)
             setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ERRORED)
-            verify(watcher, timeout(MODE_WATCHER_TIMEOUT_MS))
+            verify(watcher, timeout(TIMEOUT_MS))
                     .onOpChanged(OPSTR_WRITE_CALENDAR, mOpPackageName)
 
             // Make another change to the app op's mode.
             Mockito.reset(watcher)
             setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ALLOWED)
-            verify(watcher, timeout(MODE_WATCHER_TIMEOUT_MS))
+            verify(watcher, timeout(TIMEOUT_MS))
                     .onOpChanged(OPSTR_WRITE_CALENDAR, mOpPackageName)
 
             // Set mode to the same value as before - expect no call to the listener.

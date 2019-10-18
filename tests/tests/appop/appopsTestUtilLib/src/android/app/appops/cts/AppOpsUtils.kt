@@ -27,6 +27,8 @@ import com.android.compatibility.common.util.SystemUtil
 private const val LOG_TAG = "AppOpsUtils"
 private const val TIMEOUT_MILLIS = 10000L
 
+const val TEST_FEATURE_ID = "testFeature"
+
 /**
  * Resets a package's app ops configuration to the device default. See AppOpsManager for the
  * default op settings.

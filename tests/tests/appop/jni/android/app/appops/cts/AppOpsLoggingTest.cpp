@@ -26,30 +26,44 @@ using namespace android;
 #endif
 #define LOG_TAG "AppOpsLoggingTest"
 
-// Note op from native code without supplying a message
-extern "C" JNIEXPORT void JNICALL
-Java_android_app_appops_cts_AppOpsLoggingTestKt_nativeNoteOp(JNIEnv* env, jobject obj,
-        jint op, jint uid, jstring callingPackageName) {
-    AppOpsManager appOpsManager;
-
-    const char *nativeCallingPackageName = env->GetStringUTFChars(callingPackageName, 0);
-
-    appOpsManager.noteOp(op, uid, String16(nativeCallingPackageName));
-
-    env->ReleaseStringUTFChars(callingPackageName, nativeCallingPackageName);
-}
-
 // Note op from native code
 extern "C" JNIEXPORT void JNICALL
-Java_android_app_appops_cts_AppOpsLoggingTestKt_nativeNoteOpWithMessage(JNIEnv* env, jobject obj,
-        jint op, jint uid, jstring callingPackageName, jstring message) {
+Java_android_app_appops_cts_AppOpsLoggingTestKt_nativeNoteOp(JNIEnv* env, jobject obj,
+        jint op, jint uid, jstring jCallingPackageName, jstring jFeatureId, jstring jMessage) {
     AppOpsManager appOpsManager;
 
-    const char *nativeCallingPackageName = env->GetStringUTFChars(callingPackageName, 0);
-    const char *nativeMessage = env->GetStringUTFChars(message, 0);
+    const char *nativeCallingPackageName = env->GetStringUTFChars(jCallingPackageName, 0);
+    String16 callingPackageName(nativeCallingPackageName);
 
-    appOpsManager.noteOp(op, uid, String16(nativeCallingPackageName), String16(nativeMessage));
+    const char *nativeFeatureId;
+    String16 *featureId;
+    if (jFeatureId != nullptr) {
+        nativeFeatureId = env->GetStringUTFChars(jFeatureId, 0);
+        featureId = new String16(nativeFeatureId);
+    } else {
+        featureId = new String16();
+    }
 
-    env->ReleaseStringUTFChars(callingPackageName, nativeCallingPackageName);
-    env->ReleaseStringUTFChars(message, nativeMessage);
+    const char *nativeMessage;
+    String16 *message;
+    if (jMessage != nullptr) {
+        nativeMessage = env->GetStringUTFChars(jMessage, 0);
+        message = new String16(nativeMessage);
+    } else {
+        message = new String16();
+    }
+
+    appOpsManager.noteOp(op, uid, callingPackageName, *featureId, *message);
+
+    env->ReleaseStringUTFChars(jCallingPackageName, nativeCallingPackageName);
+
+    if (jFeatureId != nullptr) {
+        env->ReleaseStringUTFChars(jFeatureId, nativeFeatureId);
+    }
+    delete featureId;
+
+    if (jMessage != nullptr) {
+        env->ReleaseStringUTFChars(jMessage, nativeMessage);
+    }
+    delete message;
 }

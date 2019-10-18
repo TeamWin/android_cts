@@ -25,6 +25,7 @@ import android.app.Service
 import android.app.SyncNotedAppOp
 import android.app.appops.cts.IAppOpsUserClient
 import android.app.appops.cts.IAppOpsUserService
+import android.app.appops.cts.TEST_FEATURE_ID
 import android.app.appops.cts.eventually
 import android.content.Intent
 import android.os.IBinder
@@ -129,7 +130,8 @@ class AppOpsUserService : Service() {
                 forwardThrowableFrom {
                     client.noteSyncOp()
 
-                    assertThat(noted.map { it.first.op }).containsExactly(OPSTR_COARSE_LOCATION)
+                    assertThat(noted.map { it.first.featureId to it.first.op })
+                        .containsExactly(null to OPSTR_COARSE_LOCATION)
                     assertThat(noted[0].second.map { it.methodName })
                         .contains("callApiThatNotesSyncOpAndCheckLog")
                     assertThat(selfNoted).isEmpty()
@@ -148,6 +150,14 @@ class AppOpsUserService : Service() {
                     assertThat(asyncNoted).isEmpty()
 
                     noted.clear()
+                }
+            }
+
+            override fun callApiThatNotesSyncOpWithFeatureAndCheckLog(client: IAppOpsUserClient) {
+                forwardThrowableFrom {
+                    client.noteSyncOpWithFeature(TEST_FEATURE_ID)
+
+                    assertThat(noted.map { it.first.featureId }).containsExactly(TEST_FEATURE_ID)
                 }
             }
 
@@ -326,10 +336,24 @@ class AppOpsUserService : Service() {
                     client.noteAsyncOp()
 
                     eventually {
-                        assertThat(asyncNoted.map { it.op }).containsExactly(OPSTR_COARSE_LOCATION)
+                        assertThat(asyncNoted.map { it.featureId to it.op })
+                            .containsExactly(null to OPSTR_COARSE_LOCATION)
                     }
                     assertThat(noted).isEmpty()
                     assertThat(selfNoted).isEmpty()
+                }
+            }
+
+            override fun callApiThatNotesAsyncOpWithFeatureAndCheckLog(
+                client: IAppOpsUserClient
+            ) {
+                forwardThrowableFrom {
+                    client.noteAsyncOpWithFeature(TEST_FEATURE_ID)
+
+                    eventually {
+                        assertThat(asyncNoted.map { it.featureId })
+                            .containsExactly(TEST_FEATURE_ID)
+                    }
                 }
             }
 
