@@ -18,7 +18,7 @@ package android.provider.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assume.assumeTrue;
-
+import static org.junit.Assume.assumeFalse;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -260,20 +260,31 @@ public class SettingsPanelTest {
     }
 
     private void launchVolumePanel() {
+        assumeFalse("Skipping test: TV does not support handle ACTION_VOLUME", isTv());
         launchPanel(Settings.Panel.ACTION_VOLUME);
     }
 
     private void launchInternetPanel() {
+        assumeFalse("Skipping test: TV does not support handle ACTION_INTERNET_CONNECTIVITY",
+                isTv());
         launchPanel(Settings.Panel.ACTION_INTERNET_CONNECTIVITY);
     }
 
     private void launchNfcPanel() {
+        assumeFalse("Skipping test: TV does not support handle ACTION_NFC", isTv());
         assumeTrue("device does not support NFC", RequiredServiceRule.hasService("nfc"));
         launchPanel(Settings.Panel.ACTION_NFC);
     }
 
     private void launchWifiPanel() {
+        assumeFalse("Skipping test: TV does not support handle ACTION_WIFI", isTv());
         launchPanel(Settings.Panel.ACTION_WIFI);
+    }
+
+    private boolean isTv() {
+        PackageManager packageManager = mContext.getPackageManager();
+        return packageManager.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
+                && packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK);
     }
 
     private void launchPanel(String action) {
