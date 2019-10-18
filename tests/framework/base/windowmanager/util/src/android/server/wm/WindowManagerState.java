@@ -18,6 +18,9 @@ package android.server.wm;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
+import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.wm.ProtoExtractors.extract;
 import static android.server.wm.StateLogger.log;
@@ -683,6 +686,18 @@ public class WindowManagerState {
             mOverrideConfiguration.setTo(extract(proto.overrideConfiguration));
             mFullConfiguration.setTo(extract(proto.fullConfiguration));
             mMergedOverrideConfiguration.setTo(extract(proto.mergedOverrideConfiguration));
+        }
+
+        boolean isWindowingModeCompatible(int requestedWindowingMode) {
+            if (requestedWindowingMode == WINDOWING_MODE_UNDEFINED) {
+                return true;
+            }
+            final int windowingMode = getWindowingMode();
+            if (requestedWindowingMode == WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY) {
+                return windowingMode == WINDOWING_MODE_FULLSCREEN
+                        || windowingMode == WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
+            }
+            return windowingMode == requestedWindowingMode;
         }
 
         int getWindowingMode() {

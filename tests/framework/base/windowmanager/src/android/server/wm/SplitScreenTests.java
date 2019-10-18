@@ -399,7 +399,8 @@ public class SplitScreenTests extends ActivityManagerTestBase {
              final LockScreenSession lockScreenSession = new LockScreenSession()) {
             for (int i = 0; i < 4; i++) {
                 lockScreenSession.sleepDevice();
-                rotationSession.set(i);
+                // The display may not be rotated while device is locked.
+                rotationSession.set(i, false /* waitDeviceRotation */);
                 lockScreenSession.wakeUpDevice()
                         .unlockDevice();
                 mAmWmState.computeState(LAUNCHING_ACTIVITY, TEST_ACTIVITY);
@@ -458,8 +459,10 @@ public class SplitScreenTests extends ActivityManagerTestBase {
         // going home has the correct app transition
         try (final RotationSession rotationSession = new RotationSession()) {
             for (int rotation = ROTATION_0; rotation <= ROTATION_270; rotation++) {
-                rotationSession.set(rotation);
                 launchActivityInDockStackAndMinimize(DOCKED_ACTIVITY);
+                // Set rotation after docked stack exists so the display can be rotated (home may
+                // be fixed-orientation if it is fullscreen).
+                rotationSession.set(rotation);
 
                 if (mIsHomeRecentsComponent) {
                     launchActivity(TEST_ACTIVITY,
@@ -665,25 +668,24 @@ public class SplitScreenTests extends ActivityManagerTestBase {
                 expectedHomeStackIndex, homeStackIndex);
     }
 
-    private void launchActivityInDockStackAndMinimize(ComponentName activityName) throws Exception {
+    private void launchActivityInDockStackAndMinimize(ComponentName activityName) {
         launchActivityInDockStackAndMinimize(activityName, SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT);
     }
 
-    private void launchActivityInDockStackAndMinimize(ComponentName activityName, int createMode)
-            throws Exception {
+    private void launchActivityInDockStackAndMinimize(ComponentName activityName, int createMode) {
         launchActivityInSplitScreenWithRecents(activityName, createMode);
         launchHomeActivityNoWait();
-        waitForAndAssertDockMinimized();
+        waitForAndAssertDockMinimized(activityName);
     }
 
     private void assertDockMinimized() {
         assertTrue(mAmWmState.getWmState().isDockedStackMinimized());
     }
 
-    private void waitForAndAssertDockMinimized() throws Exception {
+    private void waitForAndAssertDockMinimized(ComponentName activityName)  {
         waitForDockMinimized();
         assertDockMinimized();
-        mAmWmState.computeState(TEST_ACTIVITY);
+        mAmWmState.computeState(activityName);
         mAmWmState.assertContainsStack("Must contain docked stack.",
                 WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
         mAmWmState.assertFocusedStack("Home activity should be focused in minimized mode",
@@ -694,12 +696,12 @@ public class SplitScreenTests extends ActivityManagerTestBase {
         assertFalse(mAmWmState.getWmState().isDockedStackMinimized());
     }
 
-    private void waitForDockMinimized() throws Exception {
+    private void waitForDockMinimized() {
         mAmWmState.waitForWithWmState(state -> state.isDockedStackMinimized(),
                 "Dock stack to be minimized");
     }
 
-    private void waitForDockNotMinimized() throws Exception {
+    private void waitForDockNotMinimized() {
         mAmWmState.waitForWithWmState(state -> !state.isDockedStackMinimized(),
                 "Dock stack to not be minimized");
     }
