@@ -42,15 +42,20 @@ import static android.server.wm.app.Components.MoveTaskToBackActivity.EXTRA_FINI
 import static android.server.wm.app.Components.MoveTaskToBackActivity.FINISH_POINT_ON_PAUSE;
 import static android.server.wm.app.Components.MoveTaskToBackActivity.FINISH_POINT_ON_STOP;
 import static android.server.wm.app.Components.NO_HISTORY_ACTIVITY;
+import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_DIALOG_ACTIVITY;
 import static android.server.wm.app.Components.SWIPE_REFRESH_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
+import static android.server.wm.app.Components.TOP_ACTIVITY;
 import static android.server.wm.app.Components.TRANSLUCENT_ACTIVITY;
+import static android.server.wm.app.Components.TRANSLUCENT_TOP_ACTIVITY;
 import static android.server.wm.app.Components.TURN_SCREEN_ON_ACTIVITY;
 import static android.server.wm.app.Components.TURN_SCREEN_ON_ATTR_ACTIVITY;
 import static android.server.wm.app.Components.TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY;
 import static android.server.wm.app.Components.TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY;
 import static android.server.wm.app.Components.TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY;
 import static android.server.wm.app.Components.TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY;
+import static android.server.wm.app.Components.TopActivity.ACTION_CONVERT_FROM_TRANSLUCENT;
+import static android.server.wm.app.Components.TopActivity.ACTION_CONVERT_TO_TRANSLUCENT;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.assertFalse;
@@ -58,6 +63,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
+import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.ActivitySessionClient;
@@ -555,5 +561,87 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED,
                 "Activity should become STOPPED");
         mAmWmState.assertVisibility(TEST_ACTIVITY, false);
+    }
+
+    @Test
+    public void testConvertTranslucentOnTranslucentActivity() {
+        try (final ActivitySessionClient activityClient = new ActivitySessionClient(mContext)) {
+            // Start CONVERT_TRANSLUCENT_DIALOG_ACTIVITY on top of LAUNCHING_ACTIVITY
+            final ActivitySession activity = activityClient.startActivity(
+                    getLaunchActivityBuilder().setTargetActivity(TRANSLUCENT_TOP_ACTIVITY));
+            verifyActivityVisibilities(TRANSLUCENT_TOP_ACTIVITY, false);
+            verifyActivityVisibilities(LAUNCHING_ACTIVITY, false);
+
+            activity.sendCommand(ACTION_CONVERT_FROM_TRANSLUCENT);
+            verifyActivityVisibilities(LAUNCHING_ACTIVITY, true);
+
+            activity.sendCommand(ACTION_CONVERT_TO_TRANSLUCENT);
+            verifyActivityVisibilities(LAUNCHING_ACTIVITY, false);
+        }
+    }
+
+    @Test
+    public void testConvertTranslucentOnNonTopTranslucentActivity() {
+        try (final ActivitySessionClient activityClient = new ActivitySessionClient(mContext)) {
+            final ActivitySession activity = activityClient.startActivity(
+                    getLaunchActivityBuilder().setTargetActivity(TRANSLUCENT_TOP_ACTIVITY));
+            getLaunchActivityBuilder().setTargetActivity(SHOW_WHEN_LOCKED_DIALOG_ACTIVITY)
+                    .setUseInstrumentation().execute();
+            verifyActivityVisibilities(SHOW_WHEN_LOCKED_DIALOG_ACTIVITY, false);
+            verifyActivityVisibilities(TRANSLUCENT_TOP_ACTIVITY, false);
+            verifyActivityVisibilities(LAUNCHING_ACTIVITY, false);
+
+            activity.sendCommand(ACTION_CONVERT_FROM_TRANSLUCENT);
+            verifyActivityVisibilities(LAUNCHING_ACTIVITY, true);
+
+            activity.sendCommand(ACTION_CONVERT_TO_TRANSLUCENT);
+            verifyActivityVisibilities(LAUNCHING_ACTIVITY, false);
+        }
+    }
+
+    @Test
+    public void testConvertTranslucentOnOpaqueActivity() {
+        try (final ActivitySessionClient activityClient = new ActivitySessionClient(mContext)) {
+            final ActivitySession activity = activityClient.startActivity(
+                    getLaunchActivityBuilder().setTargetActivity(TOP_ACTIVITY));
+            verifyActivityVisibilities(TOP_ACTIVITY, false);
+            verifyActivityVisibilities(LAUNCHING_ACTIVITY, true);
+
+            activity.sendCommand(ACTION_CONVERT_TO_TRANSLUCENT);
+            verifyActivityVisibilities(LAUNCHING_ACTIVITY, false);
+
+            activity.sendCommand(ACTION_CONVERT_FROM_TRANSLUCENT);
+            verifyActivityVisibilities(LAUNCHING_ACTIVITY, true);
+        }
+    }
+
+    @Test
+    public void testConvertTranslucentOnNonTopOpaqueActivity() {
+        try (final ActivitySessionClient activityClient = new ActivitySessionClient(mContext)) {
+            final ActivitySession activity = activityClient.startActivity(
+                    getLaunchActivityBuilder().setTargetActivity(TOP_ACTIVITY));
+            getLaunchActivityBuilder().setTargetActivity(SHOW_WHEN_LOCKED_DIALOG_ACTIVITY)
+                    .setUseInstrumentation().execute();
+            verifyActivityVisibilities(SHOW_WHEN_LOCKED_DIALOG_ACTIVITY, false);
+            verifyActivityVisibilities(TOP_ACTIVITY, false);
+            verifyActivityVisibilities(LAUNCHING_ACTIVITY, true);
+
+            activity.sendCommand(ACTION_CONVERT_TO_TRANSLUCENT);
+            verifyActivityVisibilities(LAUNCHING_ACTIVITY, false);
+
+            activity.sendCommand(ACTION_CONVERT_FROM_TRANSLUCENT);
+            verifyActivityVisibilities(LAUNCHING_ACTIVITY, true);
+        }
+    }
+
+    private void verifyActivityVisibilities(ComponentName activityBehind,
+            boolean behindFullScreen) {
+        if (behindFullScreen) {
+            mAmWmState.waitForActivityState(activityBehind, STATE_STOPPED);
+            mAmWmState.assertVisibility(activityBehind, false);
+        } else {
+            mAmWmState.waitForValidState(activityBehind);
+            mAmWmState.assertVisibility(activityBehind, true);
+        }
     }
 }
