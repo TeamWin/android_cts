@@ -103,7 +103,7 @@ public class WifiSliceTest {
 
     final ResolveInfo info = pm.resolveActivity(requestDefaultAssistant, 0);
 
-    if (info != null) {
+    if (info != null && info.isDefault) {
       final int testPid = Process.myPid();
       final int testUid = pm.getPackageUid(info.activityInfo.packageName,  0);
 
