@@ -419,8 +419,7 @@ public class ActivityAndWindowManagersState {
                     if (stackId != INVALID_STACK_ID && ws.getStackId() != stackId) {
                         continue;
                     }
-                    if (windowingMode != WINDOWING_MODE_UNDEFINED
-                            && ws.getWindowingMode() != windowingMode) {
+                    if (!ws.isWindowingModeCompatible(windowingMode)) {
                         continue;
                     }
                     if (activityType != ACTIVITY_TYPE_UNDEFINED

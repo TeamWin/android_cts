@@ -1216,12 +1216,26 @@ public abstract class ActivityManagerTestBase {
 
         @Override
         public void set(@NonNull Integer value) {
+            set(value, true /* waitDeviceRotation */);
+        }
+
+        /**
+         * Sets the rotation preference.
+         *
+         * @param value The rotation between {@link android.view.Surface#ROTATION_0} ~
+         *              {@link android.view.Surface#ROTATION_270}
+         * @param waitDeviceRotation If {@code true}, it will wait until the display has applied the
+         *                           rotation. Otherwise it only waits for the settings value has
+         *                           been changed.
+         */
+        public void set(@NonNull Integer value, boolean waitDeviceRotation) {
             // When the rotation is locked and the SystemUI receives the rotation becoming 0deg, it
             // will call freezeRotation to WMS, which will cause USER_ROTATION be set to zero again.
             // In order to prevent our test target from being overwritten by SystemUI during
             // rotation test, wait for the USER_ROTATION changed then continue testing.
             final boolean waitSystemUI = value == ROTATION_0 && mPreviousDegree != ROTATION_0;
-            if (waitSystemUI) {
+            final boolean observeRotationSettings = waitSystemUI || !waitDeviceRotation;
+            if (observeRotationSettings) {
                 mRotationObserver.observe();
             }
             mUserRotation.set(value);
@@ -1233,10 +1247,17 @@ public abstract class ActivityManagerTestBase {
                         // rotates to 0deg, RotationContextButton will also set ROTATION_0 again.
                         () -> mRotationObserver.count == 2).setRetryIntervalMs(500));
             }
-            // Wait for settling rotation.
-            mAmWmState.waitForRotation(value);
 
-            if (waitSystemUI) {
+            if (waitDeviceRotation) {
+                // Wait for the display to apply the rotation.
+                mAmWmState.waitForRotation(value);
+            } else {
+                // Wait for the settings have been changed.
+                Condition.waitFor(new Condition<>("rotation setting changed",
+                        () -> mRotationObserver.count > 0).setRetryIntervalMs(100));
+            }
+
+            if (observeRotationSettings) {
                 mRotationObserver.stopObserver();
             }
         }

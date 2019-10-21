@@ -248,16 +248,14 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
         // Make sure docked stack is focused. This way when we dismiss it later fullscreen stack
         // will come up.
         launchActivity(activityName, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
-        mAmWmState.computeState(false /* compareTaskAndStackBounds */,
-                new WaitForValidActivityState.Builder(activityName).build());
-        final ActivityManagerState.ActivityStack stack = mAmWmState.getAmState()
-                .getStandardStackByWindowingMode(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
 
         // Resize docked stack to fullscreen size. This will trigger activity relaunch with
         // non-empty override configuration corresponding to fullscreen size.
         separateTestJournal();
-        resizeDockedStack(displayRect.left, displayRect.top, displayRect.width(),
-                displayRect.height());
+        final int width = displayRect.width();
+        final int height = displayRect.height();
+        resizeDockedStack(width /* stackWidth */, height /* stackHeight */,
+                width /* taskWidth */, height /* taskHeight */);
 
         // Move activity back to fullscreen stack.
         setActivityTaskWindowingMode(activityName,
