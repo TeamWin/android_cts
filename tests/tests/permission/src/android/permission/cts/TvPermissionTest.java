@@ -20,6 +20,7 @@ import android.content.ContentValues;
 import android.content.pm.PackageManager;
 import android.media.tv.TvContract;
 import android.net.Uri;
+import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 
 /**
@@ -71,31 +72,37 @@ public class TvPermissionTest extends AndroidTestCase {
         }
     }
 
+    @AppModeFull
     public void testInsertChannels() throws Exception {
         if (!mHasTvInputFramework) return;
         verifyInsert(TvContract.Channels.CONTENT_URI, "channels");
     }
 
+    @AppModeFull
     public void testUpdateChannels() throws Exception {
         if (!mHasTvInputFramework) return;
         verifyUpdate(TvContract.Channels.CONTENT_URI, "channels");
     }
 
+    @AppModeFull
     public void testDeleteChannels() throws Exception {
         if (!mHasTvInputFramework) return;
         verifyDelete(TvContract.Channels.CONTENT_URI, "channels");
     }
 
+    @AppModeFull
     public void testInsertPrograms() throws Exception {
         if (!mHasTvInputFramework) return;
         verifyInsert(TvContract.Programs.CONTENT_URI, "programs");
     }
 
+    @AppModeFull
     public void testUpdatePrograms() throws Exception {
         if (!mHasTvInputFramework) return;
         verifyUpdate(TvContract.Programs.CONTENT_URI, "programs");
     }
 
+    @AppModeFull
     public void testDeletePrograms() throws Exception {
         if (!mHasTvInputFramework) return;
         verifyDelete(TvContract.Programs.CONTENT_URI, "programs");
