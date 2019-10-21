@@ -24,8 +24,7 @@ import com.android.tradefed.testtype.DeviceTestCase;
 public final class HdmiCecLogicalAddressTest extends DeviceTestCase {
     private static final int REBOOT_TIMEOUT = 60000;
 
-    public static final String PHY_ADDRESS = "1000";
-    public static final String LOGICAL_ADDRESS = "4";
+    private static final CecDevice PLAYBACK_DEVICE = CecDevice.PLAYBACK_1;
 
     /**
      * Test 10.2.3-1
@@ -46,9 +45,8 @@ public final class HdmiCecLogicalAddressTest extends DeviceTestCase {
             hdmiCecUtils.init();
             device.executeShellCommand("reboot");
             device.waitForBootComplete(REBOOT_TIMEOUT);
-            String message = hdmiCecUtils.checkExpectedOutput
-                (CecMessage.REPORT_PHYSICAL_ADDRESS);
-            assertEquals(LOGICAL_ADDRESS, hdmiCecUtils.getSourceFromMessage(message));
+            String message = hdmiCecUtils.checkExpectedOutput(CecMessage.REPORT_PHYSICAL_ADDRESS);
+            assertEquals(PLAYBACK_DEVICE, hdmiCecUtils.getSourceFromMessage(message));
         } finally {
             hdmiCecUtils.killCecProcess();
         }

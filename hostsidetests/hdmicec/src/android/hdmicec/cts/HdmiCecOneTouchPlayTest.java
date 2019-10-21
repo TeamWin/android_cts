@@ -23,7 +23,7 @@ import com.android.tradefed.testtype.DeviceTestCase;
 /** HDMI CEC tests for One Touch Play (Section 11.2.1) */
 public final class HdmiCecOneTouchPlayTest extends DeviceTestCase {
 
-    private static final String PHYSICAL_ADDRESS = "1000";
+    private static final int PHYSICAL_ADDRESS = 0x1000;
 
     /**
      * Test 11.2.1-1

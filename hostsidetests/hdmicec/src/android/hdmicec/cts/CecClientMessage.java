@@ -16,36 +16,19 @@
 
 package android.hdmicec.cts;
 
-import java.util.HashMap;
-import java.util.Map;
+public enum CecClientMessage {
+    CLIENT_CONSOLE_READY("waiting for input"),
+    QUIT_CLIENT("q"),
+    POLL("poll");
 
-public enum CecDevice {
-    TV(0x0),
-    PLAYBACK_1(0x4),
-    PLAYBACK_2(0x8),
-    PLAYBACK_3(0x9),
-    PLAYBACK_4(0xb),
-    BROADCAST(0xf);
-
-    private final int playerId;
-    private static Map deviceMap = new HashMap<>();
+    private final String message;
 
     @Override
     public String toString() {
-        return Integer.toHexString(this.playerId);
+        return this.message;
     }
 
-    static {
-        for (CecDevice device : CecDevice.values()) {
-            deviceMap.put(device.playerId, device);
-        }
-    }
-
-    public static CecDevice getDevice(int playerId) {
-        return (CecDevice) deviceMap.get(playerId);
-    }
-
-    private CecDevice(int playerId) {
-        this.playerId = playerId;
+    private CecClientMessage(String message) {
+        this.message = message;
     }
 }
