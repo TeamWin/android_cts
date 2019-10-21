@@ -1087,6 +1087,8 @@ void AHardwareBufferGLTest::SetUpFramebuffer(int width, int height, int layer,
                 glRenderbufferStorage(GL_RENDERBUFFER, default_formats[i], width, height);
                 glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment_points[i],
                                           GL_RENDERBUFFER, renderbuffer);
+                glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
                 break;
             }
             default: FAIL() << "Unrecognized binding type";
