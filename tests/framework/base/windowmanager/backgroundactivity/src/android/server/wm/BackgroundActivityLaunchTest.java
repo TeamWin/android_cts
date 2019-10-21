@@ -125,6 +125,7 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
 
     @After
     public void tearDown() throws Exception {
+        super.tearDown();
         stopTestPackage(TEST_PACKAGE_APP_A);
         stopTestPackage(TEST_PACKAGE_APP_B);
         launchHomeActivity();
@@ -144,16 +145,6 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         boolean result = waitForActivityFocused(APP_A_BACKGROUND_ACTIVITY);
         assertFalse("Should not able to launch background activity", result);
         assertTaskStack(null, APP_A_BACKGROUND_ACTIVITY);
-
-        // Make sure aborting activity starts won't have any empty task/stack leaks.
-        List<ActivityManagerState.ActivityStack> stacks = mAmWmState.getAmState().getStacks();
-        for (ActivityManagerState.ActivityStack stack : stacks) {
-            assertThat(stack.getTopTask()).isNotNull();
-            List<ActivityManagerState.ActivityTask> tasks = stack.getTasks();
-            for (ActivityManagerState.ActivityTask task : tasks) {
-                assertThat(task.getActivities().size()).isGreaterThan(0);
-            }
-        }
     }
 
     @Test

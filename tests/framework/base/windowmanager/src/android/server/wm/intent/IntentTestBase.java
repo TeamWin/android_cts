@@ -36,7 +36,6 @@ public abstract class IntentTestBase extends ActivityManagerTestBase {
      * @param activitiesInUsedInTest activities that should be gone after tearDown
      */
     public void cleanUp(List<ComponentName> activitiesInUsedInTest) throws Exception {
-        super.tearDown();
         launchHomeActivityNoWait();
         removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
 
@@ -48,6 +47,7 @@ public abstract class IntentTestBase extends ActivityManagerTestBase {
     @After
     @Override
     public void tearDown() throws Exception {
+        super.tearDown();
         cleanUp(activitiesUsedInTest());
     }
 
