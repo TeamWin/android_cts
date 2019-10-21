@@ -45,6 +45,7 @@ import android.util.TypedValue;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 
+import com.android.compatibility.common.util.BitmapUtils;
 import com.android.compatibility.common.util.CddTest;
 
 import org.junit.Before;
@@ -253,7 +254,7 @@ public class BitmapFactoryTest {
         Bitmap bPng = decodeOpaqueImage(R.drawable.png_test, options);
         assertEquals(bPng.getConfig(), config);
         Bitmap bWebp = decodeOpaqueImage(R.drawable.webp_test, options);
-        compareBitmaps(bPng, bWebp, tolerance, true, bPng.isPremultiplied());
+        BitmapUtils.assertBitmapsMse(bPng, bWebp, tolerance, true, bPng.isPremultiplied());
     }
 
     @Test
@@ -271,7 +272,7 @@ public class BitmapFactoryTest {
         assertTrue(bPng.compress(CompressFormat.WEBP, 90, oStreamWebp));
         InputStream iStreamWebp = new ByteArrayInputStream(oStreamWebp.toByteArray());
         Bitmap bWebp2 = decodeOpaqueImage(iStreamWebp, options);
-        compareBitmaps(bPng, bWebp2, tolerance, true, bPng.isPremultiplied());
+        BitmapUtils.assertBitmapsMse(bPng, bWebp2, tolerance, true, bPng.isPremultiplied());
     }
 
     @Test
@@ -296,7 +297,7 @@ public class BitmapFactoryTest {
         assertEquals(bWebP1.getConfig(), Config.ARGB_8888);
         assertTrue(bWebP1.isPremultiplied());
         assertTrue(bWebP1.hasAlpha());
-        compareBitmaps(bPng, bWebP1, tolerance, true, bPng.isPremultiplied());
+        BitmapUtils.assertBitmapsMse(bPng, bWebP1, tolerance, true, bPng.isPremultiplied());
 
         // Compress the PNG image to WebP format (Quality=90) and decode it back.
         // This will test end-to-end WebP encoding and decoding.
@@ -308,7 +309,7 @@ public class BitmapFactoryTest {
         assertEquals(bWebP2.getConfig(), Config.ARGB_8888);
         assertTrue(bWebP2.isPremultiplied());
         assertTrue(bWebP2.hasAlpha());
-        compareBitmaps(bPng, bWebP2, tolerance, true, bPng.isPremultiplied());
+        BitmapUtils.assertBitmapsMse(bPng, bWebP2, tolerance, true, bPng.isPremultiplied());
     }
 
     @Test
@@ -698,7 +699,7 @@ public class BitmapFactoryTest {
 
         p.setDataPosition(0);
         Bitmap b2 = Bitmap.CREATOR.createFromParcel(p);
-        compareBitmaps(b, b2, 0, true, true);
+        assertTrue(BitmapUtils.compareBitmaps(b, b2));
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         assertTrue(b2.compress(Bitmap.CompressFormat.JPEG, 50, baos));
@@ -937,7 +938,7 @@ public class BitmapFactoryTest {
         assertEquals(height, argb4444.getHeight());
         // ARGB_4444 is deprecated and we should decode to ARGB_8888.
         assertEquals(Config.ARGB_8888, argb4444.getConfig());
-        compareBitmaps(reference, argb4444, 0, true, true);
+        assertTrue(BitmapUtils.compareBitmaps(reference, argb4444));
 
         opts.inPreferredConfig = Config.RGB_565;
         Bitmap rgb565 = BitmapFactory.decodeResource(mRes, id, opts);
@@ -950,7 +951,8 @@ public class BitmapFactoryTest {
             // the reference.  We lose information when decoding to 565, so there must
             // be some tolerance.  The tolerance is intentionally loose to allow us some
             // flexibility regarding if we dither and how we color convert.
-            compareBitmaps(reference, rgb565.copy(Config.ARGB_8888, false), 30, true, true);
+            BitmapUtils.assertBitmapsMse(reference, rgb565.copy(Config.ARGB_8888, false), 30, true,
+                    true);
         }
 
         opts.inPreferredConfig = Config.ALPHA_8;
@@ -963,7 +965,7 @@ public class BitmapFactoryTest {
             // Convert the ALPHA_8 bitmap to ARGB_8888 and test that it is identical to
             // the reference.  We must do this manually because we are abusing ALPHA_8
             // in order to represent grayscale.
-            compareBitmaps(reference, grayToARGB(alpha8), 0, true, true);
+            assertTrue(BitmapUtils.compareBitmaps(reference, grayToARGB(alpha8)));
             assertNull(alpha8.getColorSpace());
         }
 
@@ -975,7 +977,7 @@ public class BitmapFactoryTest {
         assertEquals(width, defaultBitmap.getWidth());
         assertEquals(height, defaultBitmap.getHeight());
         assertEquals(Config.ARGB_8888, defaultBitmap.getConfig());
-        compareBitmaps(reference, defaultBitmap, 0, true, true);
+        assertTrue(BitmapUtils.compareBitmaps(reference, defaultBitmap));
     }
 
     private static Bitmap grayToARGB(Bitmap gray) {
@@ -1045,68 +1047,5 @@ public class BitmapFactoryTest {
         is.close();
         fOutput.close();
         return (file.getPath());
-    }
-
-    // Compare expected to actual to see if their diff is less then mseMargin.
-    // lessThanMargin is to indicate whether we expect the mean square error
-    // to be "less than" or "no less than".
-    private static void compareBitmaps(Bitmap expected, Bitmap actual,
-            int mseMargin, boolean lessThanMargin, boolean isPremultiplied) {
-        final int width = expected.getWidth();
-        final int height = expected.getHeight();
-
-        assertEquals("mismatching widths", width, actual.getWidth());
-        assertEquals("mismatching heights", height, actual.getHeight());
-        assertEquals("mismatching configs", expected.getConfig(),
-                actual.getConfig());
-
-        double mse = 0;
-        int[] expectedColors = new int [width * height];
-        int[] actualColors = new int [width * height];
-
-        // Bitmap.getPixels() returns colors with non-premultiplied ARGB values.
-        expected.getPixels(expectedColors, 0, width, 0, 0, width, height);
-        actual.getPixels(actualColors, 0, width, 0, 0, width, height);
-
-        for (int row = 0; row < height; ++row) {
-            for (int col = 0; col < width; ++col) {
-                int idx = row * width + col;
-                mse += distance(expectedColors[idx], actualColors[idx], isPremultiplied);
-            }
-        }
-        mse /= width * height;
-
-        if (lessThanMargin) {
-            assertTrue("MSE " + mse +  "larger than the threshold: " + mseMargin,
-                    mse <= mseMargin);
-        } else {
-            assertFalse("MSE " + mse +  "smaller than the threshold: " + mseMargin,
-                    mse <= mseMargin);
-        }
-    }
-
-    private static int multiplyAlpha(int color, int alpha) {
-        return (color * alpha + 127) / 255;
-    }
-
-    // For the Bitmap with Alpha, multiply the Alpha values to get the effective
-    // RGB colors and then compute the color-distance.
-    private static double distance(int expect, int actual, boolean isPremultiplied) {
-        if (isPremultiplied) {
-            final int a1 = Color.alpha(actual);
-            final int a2 = Color.alpha(expect);
-            final int r = multiplyAlpha(Color.red(actual), a1) -
-                    multiplyAlpha(Color.red(expect), a2);
-            final int g = multiplyAlpha(Color.green(actual), a1) -
-                    multiplyAlpha(Color.green(expect), a2);
-            final int b = multiplyAlpha(Color.blue(actual), a1) -
-                    multiplyAlpha(Color.blue(expect), a2);
-            return r * r + g * g + b * b;
-        } else {
-            final int r = Color.red(actual) - Color.red(expect);
-            final int g = Color.green(actual) - Color.green(expect);
-            final int b = Color.blue(actual) - Color.blue(expect);
-            return r * r + g * g + b * b;
-        }
     }
 }

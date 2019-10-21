@@ -60,6 +60,9 @@ public abstract class InputTestCase {
     private String mCurrentTestCase;
     private int mRegisterResourceId; // raw resource that contains json for registering a hid device
 
+    // State used for motion events
+    private int mLastButtonState;
+
     InputTestCase(int registerResourceId) {
         mEvents = new LinkedBlockingQueue<>();
         mInputListener = new InputListener();
@@ -131,6 +134,15 @@ public abstract class InputTestCase {
                 expectedEvent.getSource(), event.getSource());
         assertEquals(mCurrentTestCase + " (button state)",
                 expectedEvent.getButtonState(), event.getButtonState());
+        if (event.getActionMasked() == MotionEvent.ACTION_BUTTON_PRESS
+                || event.getActionMasked() == MotionEvent.ACTION_BUTTON_RELEASE) {
+            // Only checking getActionButton() for ACTION_BUTTON_PRESS or ACTION_BUTTON_RELEASE
+            // because for actions other than ACTION_BUTTON_PRESS and ACTION_BUTTON_RELEASE the
+            // returned value of getActionButton() is undefined.
+            assertEquals(mCurrentTestCase + " (action button)",
+                    mLastButtonState ^ event.getButtonState(), event.getActionButton());
+            mLastButtonState = event.getButtonState();
+        }
         for (int axis = MotionEvent.AXIS_X; axis <= MotionEvent.AXIS_GENERIC_16; axis++) {
             assertEquals(mCurrentTestCase + " (" + MotionEvent.axisToString(axis) + ")",
                     expectedEvent.getAxisValue(axis), event.getAxisValue(axis), TOLERANCE);
@@ -251,6 +263,7 @@ public abstract class InputTestCase {
                             event.getXPrecision(), event.getYPrecision(),
                             event.getDeviceId(), event.getEdgeFlags(),
                             event.getSource(), event.getFlags());
+            singleEvent.setActionButton(event.getActionButton());
             events.add(singleEvent);
         }
 
@@ -261,6 +274,7 @@ public abstract class InputTestCase {
                         event.getXPrecision(), event.getYPrecision(),
                         event.getDeviceId(), event.getEdgeFlags(),
                         event.getSource(), event.getFlags());
+        singleEvent.setActionButton(event.getActionButton());
         events.add(singleEvent);
         return events;
     }

@@ -76,12 +76,12 @@ public final class CommandSession {
 
     private static final String EXTRA_PREFIX = "s_";
 
+    static final String KEY_FORWARD = EXTRA_PREFIX + "key_forward";
+
     private static final String KEY_CALLBACK_HISTORY = EXTRA_PREFIX + "key_callback_history";
     private static final String KEY_CLIENT_ID = EXTRA_PREFIX + "key_client_id";
     private static final String KEY_COMMAND = EXTRA_PREFIX + "key_command";
     private static final String KEY_CONFIG_INFO = EXTRA_PREFIX + "key_config_info";
-    // TODO(b/112837428): Used for LaunchActivityBuilder#launchUsingShellCommand
-    private static final String KEY_FORWARD = EXTRA_PREFIX + "key_forward";
     private static final String KEY_HOST_ID = EXTRA_PREFIX + "key_host_id";
     private static final String KEY_ORIENTATION = EXTRA_PREFIX + "key_orientation";
     private static final String KEY_REQUEST_TOKEN = EXTRA_PREFIX + "key_request_id";
@@ -122,7 +122,7 @@ public final class CommandSession {
         final Bundle sessionInfo = new Bundle(data);
         sessionInfo.remove(KEY_FORWARD);
         for (String key : sessionInfo.keySet()) {
-            if (!key.startsWith(EXTRA_PREFIX)) {
+            if (key != null && !key.startsWith(EXTRA_PREFIX)) {
                 sessionInfo.remove(key);
             }
         }

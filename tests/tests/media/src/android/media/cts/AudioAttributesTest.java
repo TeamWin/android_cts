@@ -16,6 +16,8 @@
 
 package android.media.cts;
 
+import static org.testng.Assert.assertThrows;
+
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.os.Parcel;
@@ -80,6 +82,38 @@ public class AudioAttributesTest extends CtsAndroidTestCase {
         }
     }
 
+    // -----------------------------------------------------------------
+    // Builder tests
+    // ----------------------------------
+    public void testInvalidUsage() {
+        assertThrows(IllegalArgumentException.class,
+                () -> { new AudioAttributes.Builder()
+                        .setUsage(Integer.MIN_VALUE / 2) // some invalid value
+                        .build();
+                });
+    }
+
+    public void testInvalidContentType() {
+        assertThrows(IllegalArgumentException.class,
+                () -> {
+                    new AudioAttributes.Builder()
+                            .setContentType(Integer.MIN_VALUE / 2) // some invalid value
+                            .build();
+                } );
+    }
+
+    public void testDefaultUnknown() {
+        final AudioAttributes aa = new AudioAttributes.Builder()
+                .setFlags(AudioAttributes.ALLOW_CAPTURE_BY_ALL)
+                .build();
+        assertEquals("Unexpected default usage", AudioAttributes.USAGE_UNKNOWN, aa.getUsage());
+        assertEquals("Unexpected default content type",
+                AudioAttributes.CONTENT_TYPE_UNKNOWN, aa.getContentType());
+    }
+
+    // -----------------------------------------------------------------
+    // Capture policy tests
+    // ----------------------------------
     public void testAllowedCapturePolicy() throws Exception {
         for (int setPolicy : new int[] { AudioAttributes.ALLOW_CAPTURE_BY_ALL,
                                       AudioAttributes.ALLOW_CAPTURE_BY_SYSTEM,

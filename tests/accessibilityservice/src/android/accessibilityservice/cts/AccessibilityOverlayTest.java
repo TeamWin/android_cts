@@ -19,12 +19,16 @@ package android.accessibilityservice.cts;
 import static org.junit.Assert.assertTrue;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
-import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
+import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.cts.utils.AsyncUtils;
+import android.accessibilityservice.cts.utils.DisplayUtils;
 import android.app.UiAutomation;
+import android.content.Context;
 import android.text.TextUtils;
+import android.util.SparseArray;
+import android.view.Display;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.Button;
@@ -76,30 +80,56 @@ public class AccessibilityOverlayTest {
 
     @Test
     public void testA11yServiceShowsOverlay_shouldAppear() throws Exception {
-        final Button button = new Button(mService);
-        button.setText("Button");
         final String overlayTitle = "Overlay title";
 
         sUiAutomation.executeAndWaitForEvent(() -> mService.runOnServiceSync(() -> {
-            final WindowManager.LayoutParams params = new WindowManager.LayoutParams();
-            params.width = WindowManager.LayoutParams.MATCH_PARENT;
-            params.height = WindowManager.LayoutParams.MATCH_PARENT;
-            params.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
-                    | WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR;
-            params.type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY;
-            params.setTitle(overlayTitle);
-            mService.getSystemService(WindowManager.class).addView(button, params);
-        }), (event) -> findOverlayWindow() != null, AsyncUtils.DEFAULT_TIMEOUT_MS);
+            addOverlayWindow(mService, overlayTitle);
+        }), (event) -> findOverlayWindow(Display.DEFAULT_DISPLAY) != null, AsyncUtils.DEFAULT_TIMEOUT_MS);
 
-        assertTrue(TextUtils.equals(findOverlayWindow().getTitle(), overlayTitle));
+        assertTrue(TextUtils.equals(findOverlayWindow(Display.DEFAULT_DISPLAY).getTitle(), overlayTitle));
     }
 
-    private AccessibilityWindowInfo findOverlayWindow() {
-        List<AccessibilityWindowInfo> windows = sUiAutomation.getWindows();
-        for (int i = 0; i < windows.size(); i++) {
-            AccessibilityWindowInfo window = windows.get(i);
-            if (window.getType() == AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY) {
-                return window;
+    @Test
+    public void testA11yServiceShowsOverlayOnVirtualDisplay_shouldAppear() throws Exception {
+        try (DisplayUtils.VirtualDisplaySession displaySession =
+                     new DisplayUtils.VirtualDisplaySession()) {
+            Display newDisplay = displaySession.createDisplayWithDefaultDisplayMetricsAndWait(
+                    mService, false);
+            final int displayId = newDisplay.getDisplayId();
+            final Context newDisplayContext = mService.createDisplayContext(newDisplay);
+            final String overlayTitle = "Overlay title on virtualDisplay";
+
+            sUiAutomation.executeAndWaitForEvent(() -> mService.runOnServiceSync(() -> {
+                addOverlayWindow(newDisplayContext, overlayTitle);
+            }), (event) -> findOverlayWindow(displayId) != null, AsyncUtils.DEFAULT_TIMEOUT_MS);
+
+            assertTrue(TextUtils.equals(findOverlayWindow(displayId).getTitle(), overlayTitle));
+        }
+    }
+
+    private void addOverlayWindow(Context context, String overlayTitle) {
+        final Button button = new Button(context);
+        button.setText("Button");
+        final WindowManager.LayoutParams params = new WindowManager.LayoutParams();
+        params.width = WindowManager.LayoutParams.MATCH_PARENT;
+        params.height = WindowManager.LayoutParams.MATCH_PARENT;
+        params.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                | WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR;
+        params.type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY;
+        params.setTitle(overlayTitle);
+        context.getSystemService(WindowManager.class).addView(button, params);
+    }
+
+    private AccessibilityWindowInfo findOverlayWindow(int displayId) {
+        final SparseArray<List<AccessibilityWindowInfo>> allWindows =
+                sUiAutomation.getWindowsOnAllDisplays();
+        final int index = allWindows.indexOfKey(displayId);
+        final List<AccessibilityWindowInfo> windows = allWindows.valueAt(index);
+        if (windows != null) {
+            for (AccessibilityWindowInfo window : windows) {
+                if (window.getType() == AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY) {
+                    return window;
+                }
             }
         }
         return null;

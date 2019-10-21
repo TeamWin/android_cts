@@ -412,10 +412,12 @@ public class ImageDecoderTest {
                             assertNotEquals(Bitmap.Config.HARDWARE, bm.getConfig());
 
                             if (!doScale && !doCrop) {
+                                BitmapFactory.Options options = new BitmapFactory.Options();
+                                options.inScaled = false;
                                 Bitmap reference = BitmapFactory.decodeResource(res,
-                                        record.resId, null);
+                                        record.resId, options);
                                 assertNotNull(reference);
-                                BitmapUtils.compareBitmaps(bm, reference);
+                                assertTrue(BitmapUtils.compareBitmaps(bm, reference));
                             }
                             break;
                         default:
@@ -1389,6 +1391,73 @@ public class ImageDecoderTest {
         }
     }
 
+    @Test
+    public void testScaleAndCrop() {
+        class CropListener implements ImageDecoder.OnHeaderDecodedListener {
+            public boolean doCrop = true;
+            public Rect outScaledRect = null;
+            public Rect outCropRect = null;
+
+            @Override
+            public void onHeaderDecoded(ImageDecoder decoder, ImageDecoder.ImageInfo info,
+                                        ImageDecoder.Source src) {
+                // Use software for pixel comparison.
+                decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+
+                // Scale to a size that is not directly supported by sampling.
+                Size originalSize = info.getSize();
+                int scaledWidth = originalSize.getWidth() * 2 / 3;
+                int scaledHeight = originalSize.getHeight() * 2 / 3;
+                decoder.setTargetSize(scaledWidth, scaledHeight);
+
+                outScaledRect = new Rect(0, 0, scaledWidth, scaledHeight);
+
+                if (doCrop) {
+                    outCropRect = new Rect(scaledWidth / 2, scaledHeight / 2,
+                            scaledWidth, scaledHeight);
+                    decoder.setCrop(outCropRect);
+                }
+            }
+        }
+        CropListener l = new CropListener();
+        ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
+
+        // Scale and crop in a single step.
+        Bitmap oneStepBm = null;
+        try {
+            oneStepBm = ImageDecoder.decodeBitmap(src, l);
+        } catch (IOException e) {
+            fail("Failed with exception " + e);
+        }
+        assertNotNull(oneStepBm);
+        assertNotNull(l.outCropRect);
+        assertEquals(l.outCropRect.width(), oneStepBm.getWidth());
+        assertEquals(l.outCropRect.height(), oneStepBm.getHeight());
+        Rect cropRect = new Rect(l.outCropRect);
+
+        assertNotNull(l.outScaledRect);
+        Rect scaledRect = new Rect(l.outScaledRect);
+
+        // Now just scale with ImageDecoder, and crop afterwards.
+        l.doCrop = false;
+        Bitmap twoStepBm = null;
+        try {
+            twoStepBm = ImageDecoder.decodeBitmap(src, l);
+        } catch (IOException e) {
+            fail("Failed with exception " + e);
+        }
+        assertNotNull(twoStepBm);
+        assertEquals(scaledRect.width(), twoStepBm.getWidth());
+        assertEquals(scaledRect.height(), twoStepBm.getHeight());
+
+        Bitmap cropped = Bitmap.createBitmap(twoStepBm, cropRect.left, cropRect.top,
+                cropRect.width(), cropRect.height());
+        assertNotNull(cropped);
+
+        // The two should look the same.
+        assertTrue(BitmapUtils.compareBitmaps(cropped, oneStepBm, .99));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testResizeZeroX() {
         ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
@@ -1873,6 +1942,7 @@ public class ImageDecoderTest {
 
     @Test
     public void testRespectOrientation() {
+        boolean isWebp = false;
         // These 8 images test the 8 EXIF orientations. If the orientation is
         // respected, they all have the same dimensions: 100 x 80.
         // They are also identical (after adjusting), so compare them.
@@ -1898,6 +1968,7 @@ public class ImageDecoderTest {
                 // The webp files may not look exactly the same as the jpegs.
                 // Recreate the reference.
                 reference = null;
+                isWebp = true;
             }
             Uri uri = getAsResourceUri(resId);
             ImageDecoder.Source src = ImageDecoder.createSource(getContentResolver(), uri);
@@ -1913,7 +1984,8 @@ public class ImageDecoderTest {
                 if (reference == null) {
                     reference = bm;
                 } else {
-                    BitmapUtils.compareBitmaps(bm, reference);
+                    int mse = isWebp ? 70 : 1;
+                    BitmapUtils.assertBitmapsMse(bm, reference, mse, true, false);
                 }
             } catch (IOException e) {
                 fail("Decoding " + uri.toString() + " yielded " + e);
@@ -2380,7 +2452,7 @@ public class ImageDecoderTest {
 
         Bitmap bm1 = drawToBitmap(first);
         Bitmap bm2 = drawToBitmap(second);
-        BitmapUtils.compareBitmaps(bm1, bm2);
+        assertTrue(BitmapUtils.compareBitmaps(bm1, bm2));
     }
 
     @Test
