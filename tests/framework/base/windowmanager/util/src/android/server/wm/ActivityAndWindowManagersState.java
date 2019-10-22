@@ -31,6 +31,8 @@ import static android.server.wm.StateLogger.logE;
 import static android.util.DisplayMetrics.DENSITY_DEFAULT;
 import static android.view.Display.DEFAULT_DISPLAY;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.lessThan;
@@ -419,8 +421,7 @@ public class ActivityAndWindowManagersState {
                     if (stackId != INVALID_STACK_ID && ws.getStackId() != stackId) {
                         continue;
                     }
-                    if (windowingMode != WINDOWING_MODE_UNDEFINED
-                            && ws.getWindowingMode() != windowingMode) {
+                    if (!ws.isWindowingModeCompatible(windowingMode)) {
                         continue;
                     }
                     if (activityType != ACTIVITY_TYPE_UNDEFINED
@@ -679,6 +680,18 @@ public class ActivityAndWindowManagersState {
     public void assertAodNotShowing() {
         assertFalse("AOD is not showing",
                 getAmState().getKeyguardControllerState().aodShowing);
+    }
+
+    public void assertEmptyStackOrTask() {
+        getAmState().computeState();
+        final List<ActivityManagerState.ActivityStack> stacks = getAmState().getStacks();
+        for (ActivityManagerState.ActivityStack stack : stacks) {
+            assertThat(stack.getTopTask()).isNotNull();
+            final List<ActivityManagerState.ActivityTask> tasks = stack.getTasks();
+            for (ActivityManagerState.ActivityTask task : tasks) {
+                assertThat(task.getActivities().size()).isGreaterThan(0);
+            }
+        }
     }
 
     public void assumePendingActivityContain(ComponentName activity) {
