@@ -50,7 +50,7 @@ public class NoLocationPermissionTest {
     private LocationManager mLocationManager;
 
     @Before
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         mContext = ApplicationProvider.getApplicationContext();
         mLocationManager = mContext.getSystemService(LocationManager.class);
 
