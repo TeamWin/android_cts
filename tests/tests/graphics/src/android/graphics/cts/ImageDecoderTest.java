@@ -109,13 +109,13 @@ public class ImageDecoderTest {
 
     // offset is how many bytes to offset the beginning of the image.
     // extra is how many bytes to append at the end.
-    private byte[] getAsByteArray(int resId, int offset, int extra) {
+    private static byte[] getAsByteArray(int resId, int offset, int extra) {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         writeToStream(output, resId, offset, extra);
         return output.toByteArray();
     }
 
-    private void writeToStream(OutputStream output, int resId, int offset, int extra) {
+    private static void writeToStream(OutputStream output, int resId, int offset, int extra) {
         InputStream input = getResources().openRawResource(resId);
         byte[] buffer = new byte[4096];
         int bytesRead;
@@ -138,7 +138,7 @@ public class ImageDecoderTest {
         }
     }
 
-    private byte[] getAsByteArray(int resId) {
+    static byte[] getAsByteArray(int resId) {
         return getAsByteArray(resId, 0, 0);
     }
 
@@ -256,7 +256,7 @@ public class ImageDecoderTest {
         }
     }
 
-    private Resources getResources() {
+    private static Resources getResources() {
         return InstrumentationRegistry.getTargetContext().getResources();
     }
 
