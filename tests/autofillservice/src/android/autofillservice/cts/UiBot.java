@@ -24,9 +24,12 @@ import static android.autofillservice.cts.Timeouts.UI_SCREEN_ORIENTATION_TIMEOUT
 import static android.autofillservice.cts.Timeouts.UI_TIMEOUT;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_DEBIT_CARD;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_EMAIL_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC_CARD;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PAYMENT_CARD;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_USERNAME;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
@@ -99,10 +102,17 @@ public final class UiBot {
     private static final String RESOURCE_STRING_SAVE_TYPE_USERNAME = "autofill_save_type_username";
     private static final String RESOURCE_STRING_SAVE_TYPE_EMAIL_ADDRESS =
             "autofill_save_type_email_address";
+    private static final String RESOURCE_STRING_SAVE_TYPE_DEBIT_CARD =
+            "autofill_save_type_debit_card";
+    private static final String RESOURCE_STRING_SAVE_TYPE_PAYMENT_CARD =
+            "autofill_save_type_payment_card";
+    private static final String RESOURCE_STRING_SAVE_TYPE_GENERIC_CARD =
+            "autofill_save_type_generic_card";
     private static final String RESOURCE_STRING_SAVE_BUTTON_NOT_NOW = "save_password_notnow";
     private static final String RESOURCE_STRING_SAVE_BUTTON_NO_THANKS = "autofill_save_no";
     private static final String RESOURCE_STRING_SAVE_BUTTON_YES = "autofill_save_yes";
     private static final String RESOURCE_STRING_UPDATE_BUTTON_YES = "autofill_update_yes";
+    private static final String RESOURCE_STRING_CONTINUE_BUTTON_YES = "autofill_continue_yes";
     private static final String RESOURCE_STRING_UPDATE_TITLE = "autofill_update_title";
     private static final String RESOURCE_STRING_UPDATE_TITLE_WITH_TYPE =
             "autofill_update_title_with_type";
@@ -618,6 +628,15 @@ public final class UiBot {
             case SAVE_DATA_TYPE_EMAIL_ADDRESS:
                 typeResourceName = RESOURCE_STRING_SAVE_TYPE_EMAIL_ADDRESS;
                 break;
+            case SAVE_DATA_TYPE_DEBIT_CARD:
+                typeResourceName = RESOURCE_STRING_SAVE_TYPE_DEBIT_CARD;
+                break;
+            case SAVE_DATA_TYPE_PAYMENT_CARD:
+                typeResourceName = RESOURCE_STRING_SAVE_TYPE_PAYMENT_CARD;
+                break;
+            case SAVE_DATA_TYPE_GENERIC_CARD:
+                typeResourceName = RESOURCE_STRING_SAVE_TYPE_GENERIC_CARD;
+                break;
             default:
                 throw new IllegalArgumentException("Unsupported type: " + type);
         }
@@ -641,9 +660,21 @@ public final class UiBot {
                 SAVE_TIMEOUT, types);
     }
 
+    public UiObject2 assertSaveShowing(int positiveButtonStyle, int... types) throws Exception {
+        return assertSaveOrUpdateShowing(/* update= */ false, SaveInfo.NEGATIVE_BUTTON_STYLE_CANCEL,
+                positiveButtonStyle, /* description= */ null, SAVE_TIMEOUT, types);
+    }
 
     public UiObject2 assertSaveOrUpdateShowing(boolean update, int negativeButtonStyle,
             String description, Timeout timeout, int... types) throws Exception {
+        return assertSaveOrUpdateShowing(update, negativeButtonStyle,
+                SaveInfo.POSITIVE_BUTTON_STYLE_SAVE, description, timeout, types);
+    }
+
+    public UiObject2 assertSaveOrUpdateShowing(boolean update, int negativeButtonStyle,
+            int positiveButtonStyle, String description, Timeout timeout, int... types)
+            throws Exception {
+
         final UiObject2 snackbar = waitForObject(SAVE_UI_SELECTOR, timeout);
 
         final UiObject2 titleView =
@@ -697,8 +728,15 @@ public final class UiBot {
             assertWithMessage("save subtitle(%s)", description).that(saveSubTitle).isNotNull();
         }
 
-        final String positiveButtonStringId = update ? RESOURCE_STRING_UPDATE_BUTTON_YES
-                : RESOURCE_STRING_SAVE_BUTTON_YES;
+        final String positiveButtonStringId;
+        switch (positiveButtonStyle) {
+            case SaveInfo.POSITIVE_BUTTON_STYLE_CONTINUE:
+                positiveButtonStringId = RESOURCE_STRING_CONTINUE_BUTTON_YES;
+                break;
+            default:
+                positiveButtonStringId = update ? RESOURCE_STRING_UPDATE_BUTTON_YES
+                        : RESOURCE_STRING_SAVE_BUTTON_YES;
+        }
         final String expectedPositiveButtonText = getString(positiveButtonStringId).toUpperCase();
         final UiObject2 positiveButton = waitForObject(snackbar,
                 By.res("android", RESOURCE_ID_SAVE_BUTTON_YES), timeout);
@@ -747,8 +785,18 @@ public final class UiBot {
      */
     public void saveForAutofill(int negativeButtonStyle, boolean yesDoIt, int... types)
             throws Exception {
-        final UiObject2 saveSnackBar = assertSaveShowing(negativeButtonStyle,null, types);
+        final UiObject2 saveSnackBar = assertSaveShowing(negativeButtonStyle, null, types);
         saveForAutofill(saveSnackBar, yesDoIt);
+    }
+
+    /**
+     * Taps the positive button in the save snackbar.
+     *
+     * @param types expected types of save info.
+     */
+    public void saveForAutofill(int positiveButtonStyle, int... types) throws Exception {
+        final UiObject2 saveSnackBar = assertSaveShowing(positiveButtonStyle, types);
+        saveForAutofill(saveSnackBar, /* yesDoIt= */ true);
     }
 
     /**
