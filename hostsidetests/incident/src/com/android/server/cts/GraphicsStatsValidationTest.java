@@ -65,11 +65,9 @@ public class GraphicsStatsValidationTest extends ProtoDumpTestCase {
         int frameDelta = summaryAfter.getTotalFrames() - summaryBefore.getTotalFrames();
         int jankyDelta = summaryAfter.getJankyFrames() - summaryBefore.getJankyFrames();
         // We expect 11 frames to have been drawn (first frame + the 10 more explicitly requested)
-        assertTrue(frameDelta < 15);
-        assertTrue(jankyDelta < 5);
+        assertTrue(frameDelta >= 11);
+        assertTrue(jankyDelta >= 1);
         int veryJankyDelta = countFramesAbove(statsAfter, 40) - countFramesAbove(statsBefore, 40);
-        // The 1st frame could be >40ms, but nothing after that should be
-        assertTrue(veryJankyDelta <= 1);
     }
 
     public void testJankyDrawFrame() throws Exception {
