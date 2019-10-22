@@ -61,12 +61,10 @@
       "name": "CtsHiddenApiBlacklistCurrentApiTestCases"
     },
     {
+      "name": "CtsHiddenApiBlacklistTestApiTestCases"
+    },
+    {
       "name": "CtsHiddenApiBlacklistDebugClassTestCases"
     }
   ]
 }
-
-
-
-
-
