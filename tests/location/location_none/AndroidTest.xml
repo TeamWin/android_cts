@@ -25,7 +25,6 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.location.cts.none" />
-        <option name="runtime-hint" value="10m30s" />
     </test>
 
 </configuration>

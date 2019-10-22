@@ -407,8 +407,8 @@ public class LocationManagerTest extends BaseMockLocationTest {
     }
 
     public void testRequestLocationUpdates_Criteria() throws Exception {
-        // make the test provider the "perfect" provider
-        mManager.addTestProvider(TEST_PROVIDER,
+        // criteria API will always use the fused provider...
+        mManager.addTestProvider(FUSED_PROVIDER,
                 false,
                 false,
                 false,
@@ -418,33 +418,34 @@ public class LocationManagerTest extends BaseMockLocationTest {
                 true,
                 Criteria.POWER_LOW,
                 Criteria.ACCURACY_FINE);
+        mManager.setTestProviderEnabled(FUSED_PROVIDER, true);
 
         Criteria criteria = new Criteria();
         criteria.setAccuracy(Criteria.ACCURACY_FINE);
         criteria.setPowerRequirement(Criteria.POWER_LOW);
 
-        Location loc1 = createLocation(TEST_PROVIDER, 1, 4);
-        Location loc2 = createLocation(TEST_PROVIDER, 2, 5);
+        Location loc1 = createLocation(FUSED_PROVIDER, 1, 4);
+        Location loc2 = createLocation(FUSED_PROVIDER, 2, 5);
 
         try (LocationListenerCapture capture = new LocationListenerCapture(mManager)) {
             mManager.requestLocationUpdates(0, 0, criteria, directExecutor(), capture);
 
-            mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
+            mManager.setTestProviderLocation(FUSED_PROVIDER, loc1);
             assertLocationEquals(loc1, capture.getNextLocation(TIMEOUT_MS));
-            mManager.setTestProviderLocation(TEST_PROVIDER, loc2);
+            mManager.setTestProviderLocation(FUSED_PROVIDER, loc2);
             assertLocationEquals(loc2, capture.getNextLocation(TIMEOUT_MS));
-            mManager.setTestProviderEnabled(TEST_PROVIDER, false);
+            mManager.setTestProviderEnabled(FUSED_PROVIDER, false);
             assertEquals(Boolean.FALSE, capture.getNextProviderChange(TIMEOUT_MS));
-            mManager.setTestProviderEnabled(TEST_PROVIDER, true);
+            mManager.setTestProviderEnabled(FUSED_PROVIDER, true);
             assertEquals(Boolean.TRUE, capture.getNextProviderChange(TIMEOUT_MS));
 
             mManager.removeUpdates(capture);
 
-            mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
+            mManager.setTestProviderLocation(FUSED_PROVIDER, loc1);
             assertNull(capture.getNextLocation(FAILURE_TIMEOUT_MS));
-            mManager.setTestProviderEnabled(TEST_PROVIDER, false);
+            mManager.setTestProviderEnabled(FUSED_PROVIDER, false);
             assertNull(capture.getNextProviderChange(FAILURE_TIMEOUT_MS));
-            mManager.setTestProviderEnabled(TEST_PROVIDER, true);
+            mManager.setTestProviderEnabled(FUSED_PROVIDER, true);
             assertNull(capture.getNextProviderChange(FAILURE_TIMEOUT_MS));
         }
 
@@ -526,7 +527,7 @@ public class LocationManagerTest extends BaseMockLocationTest {
         Location loc2 = createLocation(TEST_PROVIDER, 0, 1);
 
         LocationRequest request = LocationRequest.createFromDeprecatedProvider(TEST_PROVIDER, 0,
-                10000, false);
+                200000, false);
 
         try (LocationListenerCapture capture = new LocationListenerCapture(mManager)) {
             mManager.requestLocationUpdates(request, directExecutor(), capture);
