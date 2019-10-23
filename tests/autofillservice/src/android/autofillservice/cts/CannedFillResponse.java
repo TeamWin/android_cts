@@ -82,6 +82,7 @@ public final class CannedFillResponse {
     private final String[] mIgnoredIds;
     private final int mNegativeActionStyle;
     private final IntentSender mNegativeActionListener;
+    private final int mPositiveActionStyle;
     private final int mSaveInfoFlags;
     private final int mFillResponseFlags;
     private final AutofillId mSaveTriggerId;
@@ -111,6 +112,7 @@ public final class CannedFillResponse {
         mIgnoredIds = builder.mIgnoredIds;
         mNegativeActionStyle = builder.mNegativeActionStyle;
         mNegativeActionListener = builder.mNegativeActionListener;
+        mPositiveActionStyle = builder.mPositiveActionStyle;
         mSaveInfoFlags = builder.mSaveInfoFlags;
         mFillResponseFlags = builder.mFillResponseFlags;
         mSaveTriggerId = builder.mSaveTriggerId;
@@ -194,6 +196,9 @@ public final class CannedFillResponse {
             if (mNegativeActionListener != null) {
                 saveInfoBuilder.setNegativeAction(mNegativeActionStyle, mNegativeActionListener);
             }
+
+            saveInfoBuilder.setPositiveAction(mPositiveActionStyle);
+
             if (mSaveTriggerId != null) {
                 saveInfoBuilder.setTriggerId(mSaveTriggerId);
             }
@@ -312,6 +317,7 @@ public final class CannedFillResponse {
         private String[] mIgnoredIds;
         private int mNegativeActionStyle;
         private IntentSender mNegativeActionListener;
+        private int mPositiveActionStyle;
         private int mSaveInfoFlags;
         private int mFillResponseFlags;
         private AutofillId mSaveTriggerId;
@@ -412,6 +418,14 @@ public final class CannedFillResponse {
         public Builder setNegativeAction(int style, IntentSender listener) {
             mNegativeActionStyle = style;
             mNegativeActionListener = listener;
+            return this;
+        }
+
+        /**
+         * Sets the positive action spec.
+         */
+        public Builder setPositiveAction(int style) {
+            mPositiveActionStyle = style;
             return this;
         }
 

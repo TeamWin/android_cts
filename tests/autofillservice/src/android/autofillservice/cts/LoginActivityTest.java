@@ -52,9 +52,12 @@ import static android.content.Context.CLIPBOARD_SERVICE;
 import static android.service.autofill.FillRequest.FLAG_MANUAL_REQUEST;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_DEBIT_CARD;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_EMAIL_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC_CARD;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PAYMENT_CARD;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_USERNAME;
 import static android.text.InputType.TYPE_NULL;
 import static android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD;
@@ -1811,7 +1814,43 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         customizedSaveTest(SAVE_DATA_TYPE_EMAIL_ADDRESS);
     }
 
+    @Test
+    @AppModeFull(reason = "testAutoFillOneDatasetAndSave() is enough")
+    public void testCustomizedSaveDebitCard() throws Exception {
+        customizedSaveTest(SAVE_DATA_TYPE_DEBIT_CARD);
+    }
+
+    @Test
+    @AppModeFull(reason = "testAutoFillOneDatasetAndSave() is enough")
+    public void testCustomizedSavePaymentCard() throws Exception {
+        customizedSaveTest(SAVE_DATA_TYPE_PAYMENT_CARD);
+    }
+
+    @Test
+    @AppModeFull(reason = "testAutoFillOneDatasetAndSave() is enough")
+    public void testCustomizedSaveGenericCard() throws Exception {
+        customizedSaveTest(SAVE_DATA_TYPE_GENERIC_CARD);
+    }
+
+    @Test
+    @AppModeFull(reason = "testAutoFillOneDatasetAndSave() is enough")
+    public void testCustomizedSaveTwoCardTypes() throws Exception {
+        customizedSaveTest(SAVE_DATA_TYPE_CREDIT_CARD | SAVE_DATA_TYPE_DEBIT_CARD,
+                SAVE_DATA_TYPE_GENERIC_CARD);
+    }
+
+    @Test
+    @AppModeFull(reason = "testAutoFillOneDatasetAndSave() is enough")
+    public void testCustomizedSaveThreeCardTypes() throws Exception {
+        customizedSaveTest(SAVE_DATA_TYPE_CREDIT_CARD | SAVE_DATA_TYPE_DEBIT_CARD
+                | SAVE_DATA_TYPE_PAYMENT_CARD, SAVE_DATA_TYPE_GENERIC_CARD);
+    }
+
     private void customizedSaveTest(int type) throws Exception {
+        customizedSaveTest(type, type);
+    }
+
+    private void customizedSaveTest(int type, int expectedType) throws Exception {
         // Set service.
         enableService();
 
@@ -1842,7 +1881,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
 
         // Assert the snack bar is shown and tap "Save".
-        final UiObject2 saveSnackBar = mUiBot.assertSaveShowing(saveDescription, type);
+        final UiObject2 saveSnackBar = mUiBot.assertSaveShowing(saveDescription, expectedType);
         mUiBot.saveForAutofill(saveSnackBar, true);
 
         // Assert save was called.
@@ -1999,6 +2038,36 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
 
         // Wait for the custom action.
         assertThat(latch.await(500, TimeUnit.SECONDS)).isTrue();
+    }
+
+
+    @Test
+    public void testContinueStylePositiveSaveButton() throws Exception {
+        enableService();
+
+        // Set service behavior.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
+                .setPositiveAction(SaveInfo.POSITIVE_BUTTON_STYLE_CONTINUE)
+                .build());
+
+        // Trigger auto-fill.
+        mActivity.onUsername(View::requestFocus);
+
+        // Wait for onFill() before proceeding.
+        sReplier.getNextFillRequest();
+
+        // Trigger save.
+        mActivity.onUsername((v) -> v.setText("foo"));
+        mActivity.onPassword((v) -> v.setText("foo"));
+        mActivity.tapLogin();
+
+        // Start watching for the negative intent
+        // Trigger the negative button.
+        mUiBot.saveForAutofill(SaveInfo.POSITIVE_BUTTON_STYLE_CONTINUE, SAVE_DATA_TYPE_PASSWORD);
+
+        // Assert save was called.
+        sReplier.getNextSaveRequest();
     }
 
     @Test

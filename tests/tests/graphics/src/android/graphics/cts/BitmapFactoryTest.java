@@ -817,8 +817,9 @@ public class BitmapFactoryTest {
     @Parameters(method = "parametersForTestDng")
     @LargeTest
     public void testDng(DNG dng) {
+        byte[] bytes = ImageDecoderTest.getAsByteArray(dng.resId);
         // No scaling
-        Bitmap bm = BitmapFactory.decodeResource(mRes, dng.resId, mOpt1);
+        Bitmap bm = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, mOpt1);
         assertNotNull(bm);
         assertEquals(dng.width, bm.getWidth());
         assertEquals(dng.height, bm.getHeight());

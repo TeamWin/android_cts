@@ -142,8 +142,8 @@ public class BackupPreparer implements ITargetCleaner {
         }
     }
 
-    private boolean hasBackupTransport(
-            String transport, boolean logIfFail) throws DeviceNotAvailableException {
+    private boolean hasBackupTransport(String transport, boolean logIfFail)
+            throws DeviceNotAvailableException, TargetSetupError {
         String output = mDevice.executeShellCommand("bmgr list transports");
         for (String t : output.split(" ")) {
             if (transport.equals(t.trim())) {
@@ -151,7 +151,9 @@ public class BackupPreparer implements ITargetCleaner {
             }
         }
         if (logIfFail) {
-            CLog.d("bmgr list transports: " + output);
+            throw new TargetSetupError(
+                    transport + " not available. bmgr list transports: " + output,
+                    mDevice.getDeviceDescriptor());
         }
         return false;
     }

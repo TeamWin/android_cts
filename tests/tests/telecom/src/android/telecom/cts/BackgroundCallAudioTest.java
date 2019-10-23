@@ -128,6 +128,32 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
         verifySimulateRingAndUserMissed(call, connection);
     }
 
+    public void testAudioProcessingFromCallScreeningRemoteHangupDuringRing() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        setupIncomingCallWithCallScreening();
+
+        final MockConnection connection = verifyConnectionForIncomingCall();
+
+        Call call = mInCallCallbacks.getService().getLastCall();
+        assertCallState(call, Call.STATE_AUDIO_PROCESSING);
+        assertConnectionState(connection, Connection.STATE_ACTIVE);
+
+        AudioManager audioManager = mContext.getSystemService(AudioManager.class);
+        assertEquals(0 /* TODO: put new mode here */, audioManager.getMode());
+
+        call.exitBackgroundAudioProcessing(true);
+        assertCallState(call, Call.STATE_SIMULATED_RINGING);
+        assertEquals(AudioManager.MODE_RINGTONE, audioManager.getMode());
+        assertConnectionState(connection, Connection.STATE_ACTIVE);
+
+        connection.setDisconnected(new DisconnectCause(DisconnectCause.REMOTE));
+        assertCallState(call, Call.STATE_DISCONNECTED);
+        assertEquals(DisconnectCause.MISSED, call.getDetails().getDisconnectCause().getCode());
+    }
+
     public void testAudioProcessActiveCall() {
         if (!mShouldTestTelecom) {
             return;
