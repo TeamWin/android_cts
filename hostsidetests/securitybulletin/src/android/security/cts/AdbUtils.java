@@ -340,27 +340,23 @@ public class AdbUtils {
      */
     public static void assertNoCrashes(ITestDevice device, String... processPatternStrings)
             throws Exception {
-        assertNoCrashes(device, true, processPatternStrings);
+        assertNoCrashes(device, new CrashUtils.Config()
+                .checkMinAddress(true)
+                .setProcessPatterns(processPatternStrings));
     }
 
     /**
      * Dumps logcat and asserts that there are no security crashes that match the expected process
      * pattern. Ensure that adb logcat -c is called beforehand.
      * @param device device to be ran on
-     * @param checkMinAddress if the minimum fault address should be respected
-     * @param processPatternStrings a Pattern string to match the crash tombstone process
+     * @param config crash detection configuration object
      */
-    public static void assertNoCrashes(ITestDevice device, boolean checkMinAddress,
-            String... processPatternStrings) throws Exception {
+    public static void assertNoCrashes(ITestDevice device, CrashUtils.Config config)
+            throws Exception {
         String logcat = AdbUtils.runCommandLine("logcat -d *:S DEBUG:V", device);
 
-        Pattern[] processPatterns = new Pattern[processPatternStrings.length];
-        for (int i = 0; i < processPatternStrings.length; i++) {
-            processPatterns[i] = Pattern.compile(processPatternStrings[i]);
-        }
         JSONArray crashes = CrashUtils.addAllCrashes(logcat, new JSONArray());
-        JSONArray securityCrashes =
-                CrashUtils.matchSecurityCrashes(crashes, checkMinAddress, processPatterns);
+        JSONArray securityCrashes = CrashUtils.matchSecurityCrashes(crashes, config);
 
         if (securityCrashes.length() == 0) {
             return; // no security crashes detected
@@ -369,8 +365,8 @@ public class AdbUtils {
         StringBuilder error = new StringBuilder();
         error.append("Security crash detected:\n");
         error.append("Process patterns:");
-        for (String pattern : processPatternStrings) {
-            error.append(String.format(" '%s'", pattern));
+        for (Pattern pattern : config.getProcessPatterns()) {
+            error.append(String.format(" '%s'", pattern.toString()));
         }
         error.append("\nCrashes:\n");
         for (int i = 0; i < crashes.length(); i++) {
