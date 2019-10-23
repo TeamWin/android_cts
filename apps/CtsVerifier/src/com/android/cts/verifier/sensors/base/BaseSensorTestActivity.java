@@ -140,7 +140,6 @@ public abstract class BaseSensorTestActivity
         mRetryButton = (Button) findViewById(R.id.retry_button);
         mRetryButton.setOnClickListener(new retryButtonListener());
 
-        mRetryButton.setVisibility(View.GONE);
         updateNextButton(false /*enabled*/);
         mExecutorService.execute(this);
     }
