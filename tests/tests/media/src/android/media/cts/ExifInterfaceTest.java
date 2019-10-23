@@ -70,6 +70,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
     private static final String SAMSUNG_NX3000_SRW = "samsung_nx3000.srw";
     private static final String VOLANTIS_JPEG = "volantis.jpg";
     private static final String EXIF_BYTE_ORDER_II_PNG = "image_exif_byte_order_ii_png.png";
+    private static final String EXIF_BYTE_ORDER_II_WEBP = "image_exif_byte_order_ii_webp.webp";
 
     private static final String[] EXIF_TAGS = {
             ExifInterface.TAG_MAKE,
@@ -598,6 +599,12 @@ public class ExifInterfaceTest extends AndroidTestCase {
         stageFile(R.raw.image_exif_byte_order_ii_png, new File(Environment.getExternalStorageDirectory(),
                 EXTERNAL_BASE_DIRECTORY + EXIF_BYTE_ORDER_II_PNG));
         testExifInterface(EXIF_BYTE_ORDER_II_PNG, R.array.exifbyteorderii_png);
+    }
+
+    public void testReadExifDataFromExifByteOrderIIWebp() throws Throwable {
+        stageFile(R.raw.image_exif_byte_order_ii_webp, new File(Environment.getExternalStorageDirectory(),
+                EXTERNAL_BASE_DIRECTORY + EXIF_BYTE_ORDER_II_WEBP));
+        testExifInterface(EXIF_BYTE_ORDER_II_WEBP, R.array.exifbyteorderii_webp);
     }
 
     public void testSetDateTime() throws IOException {
