@@ -19,12 +19,11 @@ package android.hdmicec.cts;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
 
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
-
 /** HDMI CEC test to verify physical address after device reboot (Section 10.1.2) */
 public final class HdmiCecPhysicalAddressTest extends DeviceTestCase {
     private static final int REBOOT_TIMEOUT = 60000;
+
+    public static final String PHY_ADDRESS = "1000";
 
     /**
      * Test 10.1.2-1
@@ -32,26 +31,18 @@ public final class HdmiCecPhysicalAddressTest extends DeviceTestCase {
      * device has taken the physical address 1.0.0.0.
      */
     public void testRebootPhysicalAddress() throws Exception {
-
         HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, "1.0.0.0");
 
         if (hdmiCecUtils.init()) {
-            ITestDevice device = getDevice();
-            assertNotNull("Device not set", device);
-            device.executeShellCommand("reboot");
-            device.waitForBootComplete(REBOOT_TIMEOUT);
             try {
+                ITestDevice device = getDevice();
+                assertNotNull("Device not set", device);
+                device.executeShellCommand("reboot");
+                device.waitForBootComplete(REBOOT_TIMEOUT);
                 String message = hdmiCecUtils.checkExpectedOutput
                     (CecMessage.REPORT_PHYSICAL_ADDRESS);
-                Pattern p = Pattern.compile("(?<deviceMessage>\\p{XDigit}{2}:\\p{XDigit}{2}):" +
-                                            "(?<address>\\p{XDigit}{2}:\\p{XDigit}{2}):" +
-                                            "(.*)");
-                Matcher m = p.matcher(message);
-                if (m.find()) {
-                    assertEquals("10:00", m.group("address"));
-                } else {
-                    throw new Exception("Could not find physical address");
-                }
+                assertEquals(PHY_ADDRESS,
+                             hdmiCecUtils.getParamsFromMessage(message, PHY_ADDRESS.length()));
             } finally {
                 hdmiCecUtils.killCecProcess();
             }
