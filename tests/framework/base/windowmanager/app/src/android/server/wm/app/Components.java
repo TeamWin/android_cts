@@ -168,6 +168,9 @@ public class Components extends ComponentsBase {
     public static final ComponentName LAUNCH_BROADCAST_RECEIVER =
             component("LaunchBroadcastReceiver");
 
+    public static final ComponentName TOAST_RECEIVER =
+            component("ToastReceiver");
+
     public static class LaunchBroadcastReceiver {
         public static final String LAUNCH_BROADCAST_ACTION =
                 "android.server.wm.app.LAUNCH_BROADCAST_ACTION";
@@ -413,11 +416,16 @@ public class Components extends ComponentsBase {
         public static final String COMMAND_RESIZE_DISPLAY = "resize_display";
     }
 
+    public static class ToastReceiver {
+        public static final String ACTION_TOAST_DISPLAYED = "toast_displayed";
+        public static final String ACTION_TOAST_TAP_DETECTED = "toast_tap_detected";
+    }
+
     private static ComponentName component(String className) {
         return component(Components.class, className);
     }
 
-    private static String getPackageName() {
+    public static String getPackageName() {
         return getPackageName(Components.class);
     }
 }
