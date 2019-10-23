@@ -59,7 +59,7 @@ android_test_helper_app {
         "UsePermissionApp26/src/**/*.java",
         ":CtsAppSecurityBasePermissionSrc",
     ],
-    manifest: "UsePermissionApp25/AndroidManifest.xml",
+    manifest: "UsePermissionApp26/AndroidManifest.xml",
     resource_dirs: ["UsePermissionApp23/res"],
     sdk_version: "test_current",
     min_sdk_version: "26",
