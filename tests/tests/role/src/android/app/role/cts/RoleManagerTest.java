@@ -19,6 +19,8 @@ package android.app.role.cts;
 import static com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+import static com.android.compatibility.common.util.UiAutomatorUtils.waitFindObject;
+import static com.android.compatibility.common.util.UiAutomatorUtils.waitFindObjectOrNull;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.fail;
@@ -38,8 +40,10 @@ import android.os.Process;
 import android.os.UserHandle;
 import android.provider.Telephony;
 import android.support.test.uiautomator.By;
+import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
+import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.support.test.uiautomator.Until;
 import android.telecom.TelecomManager;
 import android.util.Log;
@@ -312,7 +316,8 @@ public class RoleManagerTest {
         mActivityRule.getActivity().startActivityToWaitForResult(intent);
     }
 
-    private void respondToRoleRequest(boolean allow) throws InterruptedException, IOException {
+    private void respondToRoleRequest(boolean allow)
+            throws InterruptedException, IOException, UiObjectNotFoundException {
         if (allow) {
             UiObject2 item = sUiDevice.wait(Until.findObject(By.text(APP_PACKAGE_NAME)),
                     TIMEOUT_MILLIS);
@@ -329,26 +334,22 @@ public class RoleManagerTest {
     }
 
     @Nullable
-    private UiObject2 findDontAskAgainCheck(boolean expected) {
-        return sUiDevice.wait(Until.findObject(By.text("Don\u2019t ask again")), expected
-                ? TIMEOUT_MILLIS : UNEXPECTED_TIMEOUT_MILLIS);
+    private UiObject2 findDontAskAgainCheck(boolean expected) throws UiObjectNotFoundException {
+        BySelector selector = By.text("Don\u2019t ask again");
+        return expected
+                ? waitFindObject(selector, TIMEOUT_MILLIS)
+                : waitFindObjectOrNull(selector, UNEXPECTED_TIMEOUT_MILLIS);
     }
 
     @Nullable
-    private UiObject2 findDontAskAgainCheck() {
+    private UiObject2 findDontAskAgainCheck() throws UiObjectNotFoundException {
         return findDontAskAgainCheck(true);
     }
 
     @NonNull
     private Pair<Integer, Intent> clickButtonAndWaitForResult(boolean positive) throws IOException,
-            InterruptedException {
-        String buttonId = positive ? "android:id/button1" : "android:id/button2";
-        UiObject2 button = sUiDevice.wait(Until.findObject(By.res(buttonId)), TIMEOUT_MILLIS);
-        if (button == null) {
-            dumpWindowHierarchy();
-            fail("Cannot find button to click");
-        }
-        button.click();
+            InterruptedException, UiObjectNotFoundException {
+        waitFindObject(By.res(positive ? "android:id/button1" : "android:id/button2")).click();
         return waitForResult();
     }
 
