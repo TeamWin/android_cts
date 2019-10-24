@@ -50,7 +50,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
 /**
  * TODO: Make sure DO APIs are not called by PO.
  * Test that exercises {@link DevicePolicyManager}. The test requires that the
@@ -1001,7 +1000,7 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
                     (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
 
             assertTrue("Notification policy access was not granted ",
-            mNotificationManager.isNotificationPolicyAccessGranted());
+                    mNotificationManager.isNotificationPolicyAccessGranted());
 
             // Clear out the old policy
             mNotificationManager.setNotificationPolicy(new Policy(0, 0, 0, -1));
@@ -1014,10 +1013,19 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
             assertNotEquals(mNotificationManager.getNotificationPolicy(), expected);
 
             mNotificationManager.setNotificationPolicy(expected);
-            assertEquals(mNotificationManager.getNotificationPolicy(), expected);
+            assertNotificationPolicyEquals(mNotificationManager.getNotificationPolicy(), expected);
         } catch (SecurityException e) {
             assertProfileOwnerMessage(e.getMessage());
         }
+    }
+
+    private void assertNotificationPolicyEquals(NotificationManager.Policy actual,
+            NotificationManager.Policy expected) {
+        assertEquals(actual.priorityCategories, expected.priorityCategories);
+        assertEquals(actual.priorityCallSenders, expected.priorityCallSenders);
+        assertEquals(actual.priorityMessageSenders, expected.priorityMessageSenders);
+        assertEquals(actual.suppressedVisualEffects, expected.suppressedVisualEffects);
+        // NOTE: we cannot set the NotificationPolicy's state
     }
 
     private void setInterruptionFilter(int interruptionFilter) throws Exception {
