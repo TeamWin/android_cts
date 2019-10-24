@@ -17,6 +17,7 @@
 package android.hdmicec.cts;
 
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceTestCase;
 
 /** HDMI CEC tests for One Touch Play (Section 11.2.1) */
@@ -31,18 +32,22 @@ public final class HdmiCecOneTouchPlayTest extends DeviceTestCase {
      */
     public void testOneTouchPlay() throws Exception {
         HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, "1.0.0.0");
+        ITestDevice device = getDevice();
+        assertNotNull("Device not set", device);
 
-        if (hdmiCecUtils.init()) {
-            try {
-                ITestDevice device = getDevice();
-                assertNotNull("Device not set", device);
-                device.executeShellCommand("input keyevent KEYCODE_HOME");
-                hdmiCecUtils.checkExpectedOutput(CecDevice.TV, CecMessage.TEXT_VIEW_ON);
-                String message = hdmiCecUtils.checkExpectedOutput(CecMessage.ACTIVE_SOURCE);
-                assertEquals(PHYSICAL_ADDRESS, hdmiCecUtils.getParamsFromMessage(message));
-            } finally {
-                hdmiCecUtils.killCecProcess();
-            }
+        if (!HdmiCecUtils.isHdmiCecFeatureSupported(device)) {
+            CLog.v("No HDMI CEC feature running, should skip test.");
+            return;
+        }
+
+        try {
+            hdmiCecUtils.init();
+            device.executeShellCommand("input keyevent KEYCODE_HOME");
+            hdmiCecUtils.checkExpectedOutput(CecDevice.TV, CecMessage.TEXT_VIEW_ON);
+            String message = hdmiCecUtils.checkExpectedOutput(CecMessage.ACTIVE_SOURCE);
+            assertEquals(PHYSICAL_ADDRESS, hdmiCecUtils.getParamsFromMessage(message));
+        } finally {
+            hdmiCecUtils.killCecProcess();
         }
     }
 }
