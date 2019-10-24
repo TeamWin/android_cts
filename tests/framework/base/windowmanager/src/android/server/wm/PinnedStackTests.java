@@ -1025,6 +1025,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 139111392)
     public void testPinnedStackWithDockedStack() throws Exception {
         assumeTrue(supportsSplitScreenMultiWindow());
 
