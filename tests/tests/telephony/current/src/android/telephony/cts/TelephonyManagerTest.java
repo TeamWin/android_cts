@@ -138,6 +138,13 @@ public class TelephonyManagerTest {
 
     private static final int EMERGENCY_NUMBER_SOURCE_RIL_ECCLIST = 0;
     private static final Set<Integer> EMERGENCY_NUMBER_SOURCE_SET;
+
+    private static final String PLMN_A = "123456";
+    private static final String PLMN_B = "78901";
+    private static final List<String> FPLMN_TEST = Arrays.asList(PLMN_A, PLMN_B);
+    private static final int MAX_FPLMN_NUM = 100;
+    private static final int MIN_FPLMN_NUM = 3;
+
     static {
         EMERGENCY_NUMBER_SOURCE_SET = new HashSet<Integer>();
         EMERGENCY_NUMBER_SOURCE_SET.add(EmergencyNumber.EMERGENCY_NUMBER_SOURCE_NETWORK_SIGNALING);
@@ -1215,6 +1222,110 @@ public class TelephonyManagerTest {
     }
 
     /**
+     * Tests that the device properly sets and pads the contents of EF_FPLMN
+     */
+    @Test
+    public void testSetForbiddenPlmns() {
+        if (!supportSetFplmn()) {
+            return;
+        }
+        String[] originalFplmns = mTelephonyManager.getForbiddenPlmns();
+        try {
+            int numFplmnsSet = mTelephonyManager.setForbiddenPlmns(FPLMN_TEST);
+            String[] writtenFplmns = mTelephonyManager.getForbiddenPlmns();
+            assertEquals("Wrong return value for setFplmns with less than required fplmns: "
+                    + numFplmnsSet, FPLMN_TEST.size(), numFplmnsSet);
+            assertEquals("Wrong Fplmns content written", FPLMN_TEST, Arrays.asList(writtenFplmns));
+        } finally {
+            // Restore
+            mTelephonyManager.setForbiddenPlmns(Arrays.asList(originalFplmns));
+        }
+    }
+
+    /**
+     * Tests that the device properly truncates the contents of EF_FPLMN when provided size
+     * is too big.
+     */
+    @Test
+    public void testSetForbiddenPlmnsTruncate() {
+        if (!supportSetFplmn()) {
+            return;
+        }
+        String[] originalFplmns = mTelephonyManager.getForbiddenPlmns();
+        try {
+            List<String> targetFplmns = new ArrayList<>();
+            for (int i = 0; i < MIN_FPLMN_NUM; i++) {
+                targetFplmns.add(PLMN_A);
+            }
+            for (int i = MIN_FPLMN_NUM; i < MAX_FPLMN_NUM; i++) {
+                targetFplmns.add(PLMN_B);
+            }
+            int numFplmnsSet = mTelephonyManager.setForbiddenPlmns(targetFplmns);
+            String[] writtenFplmns = mTelephonyManager.getForbiddenPlmns();
+            assertTrue("Wrong return value for setFplmns with overflowing fplmns: " + numFplmnsSet,
+                    numFplmnsSet < MAX_FPLMN_NUM);
+            assertEquals("Number of Fplmns set does not equal number of Fplmns available",
+                    numFplmnsSet, writtenFplmns.length);
+            assertEquals("Wrong Fplmns content written", targetFplmns.subList(0, numFplmnsSet),
+                    Arrays.asList(writtenFplmns));
+        } finally {
+            // Restore
+            mTelephonyManager.setForbiddenPlmns(Arrays.asList(originalFplmns));
+        }
+    }
+
+    /**
+     * Tests that the device properly deletes the contents of EF_FPLMN
+     */
+    @Test
+    public void testSetForbiddenPlmnsDelete() {
+        if (!supportSetFplmn()) {
+            return;
+        }
+        String[] originalFplmns = mTelephonyManager.getForbiddenPlmns();
+        try {
+            // Support test for empty SIM
+            List<String> targetDummyFplmns = new ArrayList<>();
+            for (int i = 0; i < MIN_FPLMN_NUM; i++) {
+                targetDummyFplmns.add(PLMN_A);
+            }
+            mTelephonyManager.setForbiddenPlmns(targetDummyFplmns);
+            String[] writtenDummyFplmns = mTelephonyManager.getForbiddenPlmns();
+            assertEquals(targetDummyFplmns, Arrays.asList(writtenDummyFplmns));
+
+            List<String> targetFplmns = new ArrayList<>();
+            int numFplmnsSet = mTelephonyManager.setForbiddenPlmns(targetFplmns);
+            String[] writtenFplmns = mTelephonyManager.getForbiddenPlmns();
+            assertEquals("Wrong return value for setFplmns with empty list", 0, numFplmnsSet);
+            assertEquals("Wrong number of Fplmns written", 0, writtenFplmns.length);
+            // TODO wait for 10 minutes or so for the FPLMNS list to grow back
+        } finally {
+            // Restore
+            mTelephonyManager.setForbiddenPlmns(Arrays.asList(originalFplmns));
+        }
+    }
+
+
+    /**
+     * Tests that setForbiddenPlmns properly handles null input
+     */
+    @Test
+    public void testSetForbiddenPlmnsVoid() {
+        if (!supportSetFplmn()) {
+            return;
+        }
+        String[] originalFplmns = mTelephonyManager.getForbiddenPlmns();
+        try {
+            mTelephonyManager.setForbiddenPlmns(null);
+            fail("Expected IllegalArgumentException. Null input is not allowed");
+        } catch (IllegalArgumentException expected) {
+        } finally {
+            // Restore
+            mTelephonyManager.setForbiddenPlmns(Arrays.asList(originalFplmns));
+        }
+    }
+
+    /**
      * Verify that TelephonyManager.getCardIdForDefaultEuicc returns a positive value or either
      * UNINITIALIZED_CARD_ID or UNSUPPORTED_CARD_ID.
      */
@@ -1929,4 +2040,17 @@ public class TelephonyManagerTest {
             Log.d(TAG, "InterruptedException while waiting: " + e);
         }
     }
+
+    /**
+     * Verify that the phone is supporting the action of setForbiddenPlmn.
+     *
+     * @return whether to proceed the test
+     */
+    private boolean supportSetFplmn() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return false;
+        }
+        return mTelephonyManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM;
+    }
 }
+
