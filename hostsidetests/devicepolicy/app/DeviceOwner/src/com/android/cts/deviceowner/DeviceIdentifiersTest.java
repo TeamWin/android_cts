@@ -16,6 +16,7 @@
 package com.android.cts.deviceowner;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.telephony.TelephonyManager;
 
@@ -68,38 +69,41 @@ public class DeviceIdentifiersTest extends BaseDeviceOwnerTest {
     }
 
     public void testDeviceOwnerCannotGetDeviceIdentifiersWithoutPermission() throws Exception {
-        // The device owner without the READ_PHONE_STATE permission should still receive a
-        // SecurityException when querying for device identifiers.
-        TelephonyManager telephonyManager = (TelephonyManager) mContext.getSystemService(
+        PackageManager packageManager = mContext.getPackageManager();
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            // The device owner without the READ_PHONE_STATE permission should still receive a
+            // SecurityException when querying for device identifiers.
+            TelephonyManager telephonyManager = (TelephonyManager) mContext.getSystemService(
                 Context.TELEPHONY_SERVICE);
-        try {
-            telephonyManager.getDeviceId();
-            fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getDeviceId"));
-        } catch (SecurityException expected) {
-        }
+            try {
+                telephonyManager.getDeviceId();
+                fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getDeviceId"));
+            } catch (SecurityException expected) {
+            }
 
-        try {
-            telephonyManager.getImei();
-            fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getImei"));
-        } catch (SecurityException expected) {
-        }
+            try {
+                telephonyManager.getImei();
+                fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getImei"));
+            } catch (SecurityException expected) {
+            }
 
-        try {
-            telephonyManager.getMeid();
-            fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getMeid"));
-        } catch (SecurityException expected) {
-        }
+            try {
+                telephonyManager.getMeid();
+                fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getMeid"));
+            } catch (SecurityException expected) {
+            }
 
-        try {
-            telephonyManager.getSubscriberId();
-            fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getSubscriberId"));
-        } catch (SecurityException expected) {
-        }
+            try {
+                telephonyManager.getSubscriberId();
+                fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getSubscriberId"));
+            } catch (SecurityException expected) {
+            }
 
-        try {
-            telephonyManager.getSimSerialNumber();
-            fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getSimSerialNumber"));
-        } catch (SecurityException expected) {
+            try {
+                telephonyManager.getSimSerialNumber();
+                fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getSimSerialNumber"));
+            } catch (SecurityException expected) {
+            }
         }
 
         try {
