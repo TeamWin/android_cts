@@ -38,6 +38,9 @@ import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.PRE_ON_C
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
+import static org.hamcrest.Matchers.lessThan;
+import static org.junit.Assert.fail;
+
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.app.PictureInPictureParams;
@@ -56,15 +59,26 @@ import android.util.Pair;
 
 import android.server.wm.cts.R;
 
-import androidx.annotation.Nullable;
+import androidx.annotation.NonNull;
 import androidx.test.rule.ActivityTestRule;
 
+import com.android.compatibility.common.util.SystemUtil;
+
+import org.junit.Assert;
 import org.junit.Before;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /** Base class for device-side tests that verify correct activity lifecycle transitions. */
 public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
+
+    /**
+     * Activity launch time is evaluated. It is expected to be less than 5 seconds. Otherwise, it's
+     * likely there is a timeout.
+     */
+    private static final long ACTIVITY_LAUNCH_TIMEOUT = 5 * 1000;
 
     static final String EXTRA_RECREATE = "recreate";
     static final String EXTRA_FINISH_IN_ON_CREATE = "finish_in_on_create";
@@ -80,59 +94,8 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
     static final ComponentName CONFIG_CHANGE_HANDLING_ACTIVITY =
             getComponentName(ConfigChangeHandlingActivity.class);
 
-    final ActivityTestRule mFirstActivityTestRule = new ActivityTestRule<>(FirstActivity.class,
-            true /* initialTouchMode */, false /* launchActivity */);
-
-    final ActivityTestRule mSecondActivityTestRule = new ActivityTestRule<>(SecondActivity.class,
-            true /* initialTouchMode */, false /* launchActivity */);
-
-    final ActivityTestRule mThirdActivityTestRule = new ActivityTestRule<>(ThirdActivity.class,
-            true /* initialTouchMode */, false /* launchActivity */);
-
-    final ActivityTestRule mTranslucentActivityTestRule = new ActivityTestRule<>(
-            TranslucentActivity.class, true /* initialTouchMode */, false /* launchActivity */);
-
-    final ActivityTestRule mSecondTranslucentActivityTestRule = new ActivityTestRule<>(
-            SecondTranslucentActivity.class, true /* initialTouchMode */,
-            false /* launchActivity */);
-
-    final ActivityTestRule mLaunchForResultActivityTestRule = new ActivityTestRule<>(
-             LaunchForResultActivity.class, true /* initialTouchMode */, false /* launchActivity */);
-
-    final ActivityTestRule mCallbackTrackingActivityTestRule = new ActivityTestRule<>(
-            CallbackTrackingActivity.class, true /* initialTouchMode */,
-            false /* launchActivity */);
-
-    final ActivityTestRule mTranslucentCallbackTrackingActivityTestRule = new ActivityTestRule<>(
-            TranslucentCallbackTrackingActivity.class, true /* initialTouchMode */,
-            false /* launchActivity */);
-
-    final ActivityTestRule mShowWhenLockedCallbackTrackingActivityTestRule = new ActivityTestRule<>(
-            ShowWhenLockedCallbackTrackingActivity.class, true /* initialTouchMode */,
-            false /* launchActivity */);
-
-    final ActivityTestRule mSingleTopActivityTestRule = new ActivityTestRule<>(
-            SingleTopActivity.class, true /* initialTouchMode */, false /* launchActivity */);
-
-    final ActivityTestRule mConfigChangeHandlingActivityTestRule = new ActivityTestRule<>(
-            ConfigChangeHandlingActivity.class, true /* initialTouchMode */,
-            false /* launchActivity */);
-
-    final ActivityTestRule mPipActivityTestRule = new ActivityTestRule<>(
-            PipActivity.class, true /* initialTouchMode */, false /* launchActivity */);
-
-    final ActivityTestRule mAlwaysFocusableActivityTestRule = new ActivityTestRule<>(
-            AlwaysFocusablePipActivity.class, true /* initialTouchMode */,
-            false /* launchActivity */);
-
     final ActivityTestRule mSlowActivityTestRule = new ActivityTestRule<>(
             SlowActivity.class, true /* initialTouchMode */, false /* launchActivity */);
-
-    final ActivityTestRule mResultActivityTestRule = new ActivityTestRule(
-            ResultActivity.class, true /* initialTouchMode */, false /* launchActivity */);
-
-    final ActivityTestRule mNoDisplayActivityTestRule = new ActivityTestRule(
-            NoDisplayActivity.class, true /* initialTouchMode */, false /* launchActivity */);
 
     private static LifecycleLog mLifecycleLog;
 
@@ -153,18 +116,129 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
         mLifecycleTracker = new LifecycleTracker(mLifecycleLog);
     }
 
-    /** Launch an activity given a class. */
-    protected Activity launchActivity(Class<? extends Activity> activityClass) {
-        return launchActivity(activityClass, null /* options */);
+    /** Activity launch builder for lifecycle tests. */
+    class Launcher {
+        private int mFlags;
+        private ActivityCallback mExpectedState;
+        private List<String> mExtraFlags = new ArrayList<>();
+        private ActivityOptions mOptions;
+        private boolean mNoInstance;
+        private final Class<? extends Activity> mActivityClass;
+        private boolean mSkipLaunchTimeCheck;
+
+        private boolean mLaunchCalled = false;
+
+        /**
+         * @param activityClass Class of the activity to launch.
+         */
+        Launcher(@NonNull Class<? extends Activity> activityClass) {
+            mActivityClass = activityClass;
+        }
+
+        /**
+         * Perform the activity launch. Will wait for an instance of the activity if needed and will
+         * verify the launch time.
+         */
+        Activity launch() throws Exception {
+            mLaunchCalled = true;
+
+            // Prepare the intent
+            final Intent intent = new Intent(mTargetContext, mActivityClass);
+            if (mFlags != 0) {
+                intent.setFlags(mFlags);
+            } else {
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            }
+            for (String flag : mExtraFlags) {
+                intent.putExtra(flag, true);
+            }
+            final Bundle optionsBundle = mOptions != null ? mOptions.toBundle() : null;
+
+            // Start measuring time spent on starting the activity
+            final long startTime = System.currentTimeMillis();
+            final Activity activity = SystemUtil.callWithShellPermissionIdentity(() -> {
+                if (mNoInstance) {
+                    mTargetContext.startActivity(intent, optionsBundle);
+                    return null;
+                }
+                return getInstrumentation().startActivitySync(
+                        intent, optionsBundle);
+            });
+            if (!mNoInstance && activity == null) {
+                fail("Must have returned an instance of Activity after launch.");
+            }
+            // Wait for activity to reach the desired state and verify launch time.
+            if (mExpectedState == null) {
+                mExpectedState = CallbackTrackingActivity.class.isAssignableFrom(mActivityClass)
+                        ? ON_TOP_POSITION_GAINED : ON_RESUME;
+            }
+            waitAndAssertActivityStates(state(mActivityClass, mExpectedState));
+            if (!mSkipLaunchTimeCheck) {
+                Assert.assertThat(System.currentTimeMillis() - startTime,
+                        lessThan(ACTIVITY_LAUNCH_TIMEOUT));
+            }
+
+            return activity;
+        }
+
+        /** Set intent flags for launch. */
+        public Launcher setFlags(int flags) {
+            mFlags = flags;
+            return this;
+        }
+
+        /**
+         * Set the expected lifecycle state to verify. Will be inferred automatically if not set.
+         */
+        public Launcher setExpectedState(ActivityCallback expectedState) {
+            mExpectedState = expectedState;
+            return this;
+        }
+
+        /** Set extra flags to pass as boolean values through the intent. */
+        public Launcher setExtraFlags(String... extraFlags) {
+            mExtraFlags.addAll(Arrays.asList(extraFlags));
+            return this;
+        }
+
+        /** Set the activity options to use for the launch. */
+        public Launcher setOptions(ActivityOptions options) {
+            mOptions = options;
+            return this;
+        }
+
+        /**
+         * Indicate that no instance should be returned. Usually used for activity launches that are
+         * expected to end up in not-active state and when the synchronous instrumentation launch
+         * can timeout.
+         */
+        Launcher setNoInstance() {
+            mNoInstance = true;
+            return this;
+        }
+
+        /** Indicate that launch time verification should not be performed. */
+        Launcher setSkipLaunchTimeCheck() {
+            mSkipLaunchTimeCheck = true;
+            return this;
+        }
+
+        @Override
+        protected void finalize() throws Throwable {
+            super.finalize();
+            if (!mLaunchCalled) {
+                throw new IllegalStateException("Activity launch builder created but not used!");
+            }
+        }
     }
 
-    /** Launch an activity given a class and options. */
-    protected Activity launchActivity(Class<? extends Activity> activityClass,
-            @Nullable ActivityOptions options) {
-        final Intent intent = new Intent(mTargetContext, activityClass);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        return getInstrumentation().startActivitySync(intent,
-                options != null ? options.toBundle() : null);
+    /**
+     * Launch an activity given a class. Will wait for the launch to finish and verify the launch
+     * time.
+     * @return The launched Activity instance.
+     */
+    Activity launchActivityAndWait(Class<? extends Activity> activityClass) throws Exception {
+        return new Launcher(activityClass).launch();
     }
 
     /**

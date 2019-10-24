@@ -32,15 +32,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
-import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.content.Intent;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 
-import androidx.test.filters.MediumTest;
 
-import com.android.compatibility.common.util.SystemUtil;
+import androidx.test.filters.FlakyTest;
+import androidx.test.filters.MediumTest;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -53,6 +52,7 @@ import java.util.Arrays;
  */
 @MediumTest
 @Presubmit
+@FlakyTest(bugId=137329632)
 public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestBase {
 
     @Before
@@ -64,16 +64,15 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
     @Test
     public void testLaunchInFreeform() throws Exception {
         // Launch a fullscreen activity, mainly to prevent setting pending due to task switching.
-        mCallbackTrackingActivityTestRule.launchActivity(new Intent());
-
-        final ActivityOptions launchOptions = ActivityOptions.makeBasic();
-        launchOptions.setLaunchWindowingMode(WINDOWING_MODE_FREEFORM);
-        final Bundle bundle = launchOptions.toBundle();
+        launchActivityAndWait(CallbackTrackingActivity.class);
 
         // Launch an activity in freeform
-        final Intent firstIntent = new Intent(mContext, FirstActivity.class)
-                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
-        mTargetContext.startActivity(firstIntent, bundle);
+        final ActivityOptions launchOptions = ActivityOptions.makeBasic();
+        launchOptions.setLaunchWindowingMode(WINDOWING_MODE_FREEFORM);
+        new Launcher(FirstActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
+                .setOptions(launchOptions)
+                .launch();
 
         // Wait and assert resume
         waitAndAssertActivityState(getComponentName(FirstActivity.class), STATE_RESUMED,
@@ -86,24 +85,26 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
     @Test
     public void testMultiLaunchInFreeform() throws Exception {
         // Launch a fullscreen activity, mainly to prevent setting pending due to task switching.
-        mCallbackTrackingActivityTestRule.launchActivity(new Intent());
+        launchActivityAndWait(CallbackTrackingActivity.class);
 
         final ActivityOptions launchOptions = ActivityOptions.makeBasic();
         launchOptions.setLaunchWindowingMode(WINDOWING_MODE_FREEFORM);
-        final Bundle bundle = launchOptions.toBundle();
 
         // Launch three activities in freeform
-        final Intent firstIntent = new Intent(mContext, FirstActivity.class)
-                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
-        mTargetContext.startActivity(firstIntent, bundle);
+        new Launcher(FirstActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
+                .setOptions(launchOptions)
+                .launch();
 
-        final Intent secondIntent = new Intent(mContext, SecondActivity.class)
-                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
-        mTargetContext.startActivity(secondIntent, bundle);
+        new Launcher(SecondActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
+                .setOptions(launchOptions)
+                .launch();
 
-        final Intent thirdIntent = new Intent(mContext, ThirdActivity.class)
-                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
-        mTargetContext.startActivity(thirdIntent, bundle);
+        new Launcher(ThirdActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
+                .setOptions(launchOptions)
+                .launch();
 
         // Wait for resume
         final String message = "Activity should be resumed after launch";
@@ -122,22 +123,23 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
     @Test
     public void testLaunchOccludingInFreeform() throws Exception {
         // Launch a fullscreen activity, mainly to prevent setting pending due to task switching.
-        mCallbackTrackingActivityTestRule.launchActivity(new Intent());
+        launchActivityAndWait(CallbackTrackingActivity.class);
 
         final ActivityOptions launchOptions = ActivityOptions.makeBasic();
         launchOptions.setLaunchWindowingMode(WINDOWING_MODE_FREEFORM);
-        final Bundle bundle = launchOptions.toBundle();
 
         // Launch two activities in freeform in the same task
-        final Intent firstIntent = new Intent(mContext, FirstActivity.class)
-                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
-        mTargetContext.startActivity(firstIntent, bundle);
+        new Launcher(FirstActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
+                .setOptions(launchOptions)
+                .launch();
 
-        final Activity secondActivity = mSecondActivityTestRule.launchActivity(new Intent());
+        final Activity secondActivity = launchActivityAndWait(SecondActivity.class);
 
-        final Intent thirdIntent = new Intent(mContext, ThirdActivity.class)
-                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
-        mTargetContext.startActivity(thirdIntent, bundle);
+        new Launcher(ThirdActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
+                .setOptions(launchOptions)
+                .launch();
 
         // Wait for valid states
         final String stopMessage = "Activity should be stopped after being covered above";
@@ -179,23 +181,23 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
     @Test
     public void testLaunchTranslucentInFreeform() throws Exception {
         // Launch a fullscreen activity, mainly to prevent setting pending due to task switching.
-        mCallbackTrackingActivityTestRule.launchActivity(new Intent());
+        launchActivityAndWait(CallbackTrackingActivity.class);
 
         final ActivityOptions launchOptions = ActivityOptions.makeBasic();
         launchOptions.setLaunchWindowingMode(WINDOWING_MODE_FREEFORM);
-        final Bundle bundle = launchOptions.toBundle();
 
         // Launch two activities in freeform in the same task
-        final Intent firstIntent = new Intent(mContext, FirstActivity.class)
-                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
-        mTargetContext.startActivity(firstIntent, bundle);
+        new Launcher(FirstActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
+                .setOptions(launchOptions)
+                .launch();
 
-        final Activity transparentActivity = mTranslucentActivityTestRule
-                .launchActivity(new Intent());
+        final Activity transparentActivity = launchActivityAndWait(TranslucentActivity.class);
 
-        final Intent thirdIntent = new Intent(mContext, ThirdActivity.class)
-                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
-        mTargetContext.startActivity(thirdIntent, bundle);
+        new Launcher(ThirdActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
+                .setOptions(launchOptions)
+                .launch();
 
         // Wait for valid states
         final String pauseMessage = "Activity should be stopped after transparent launch above";
