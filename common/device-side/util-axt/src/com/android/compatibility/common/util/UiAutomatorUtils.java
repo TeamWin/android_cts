@@ -18,11 +18,12 @@ package com.android.compatibility.common.util;
 
 import static org.junit.Assert.assertNotNull;
 
-import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
-import android.support.test.uiautomator.Direction;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
+import android.support.test.uiautomator.UiObjectNotFoundException;
+import android.support.test.uiautomator.UiScrollable;
+import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
 
 import androidx.test.InstrumentationRegistry;
@@ -34,11 +35,12 @@ public class UiAutomatorUtils {
         return UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
     }
 
-    public static UiObject2 waitFindObject(BySelector selector) {
+    public static UiObject2 waitFindObject(BySelector selector) throws UiObjectNotFoundException {
         return waitFindObject(selector, 100_000);
     }
 
-    public static UiObject2 waitFindObject(BySelector selector, long timeoutMs) {
+    public static UiObject2 waitFindObject(BySelector selector, long timeoutMs)
+            throws UiObjectNotFoundException {
         final UiObject2 view = waitFindObjectOrNull(selector, timeoutMs);
         ExceptionUtils.wrappingExceptions(UiDumpUtils::wrapWithUiDump, () -> {
             assertNotNull("View not found after waiting for " + timeoutMs + "ms: " + selector,
@@ -47,16 +49,18 @@ public class UiAutomatorUtils {
         return view;
     }
 
-    public static UiObject2 waitFindObjectOrNull(BySelector selector, long timeoutMs) {
+    public static UiObject2 waitFindObjectOrNull(BySelector selector, long timeoutMs)
+            throws UiObjectNotFoundException {
         UiObject2 view = null;
         long start = System.currentTimeMillis();
         while (view == null && start + timeoutMs > System.currentTimeMillis()) {
             view = getUiDevice().wait(Until.findObject(selector), timeoutMs / 10);
 
             if (view == null) {
-                UiObject2 scrollable = getUiDevice().findObject(By.scrollable(true));
-                if (scrollable != null) {
-                    scrollable.scroll(Direction.DOWN, 1);
+                UiScrollable scrollable = new UiScrollable(new UiSelector().scrollable(true));
+                scrollable.setSwipeDeadZonePercentage(0.25);
+                if (scrollable.exists()) {
+                    scrollable.scrollForward();
                 }
             }
         }
