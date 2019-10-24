@@ -384,13 +384,15 @@ class AppOpsLoggingTest {
      */
     @Test
     fun getLastKnownLocation() {
-        val location = context.getSystemService(LocationManager::class.java)
+        val location = context.createFeatureContext(TEST_FEATURE_ID)
+            .getSystemService(LocationManager::class.java)
             .getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
 
         Assume.assumeTrue("Could not get last known location", location != null)
 
         assertThat(noted.map { it.first.op }).containsAnyOf(OPSTR_COARSE_LOCATION,
             OPSTR_FINE_LOCATION)
+        assertThat(noted[0].first.featureId).isEqualTo(TEST_FEATURE_ID)
         assertThat(noted[0].second.map { it.methodName }).contains("getLastKnownLocation")
     }
 
@@ -411,8 +413,9 @@ class AppOpsLoggingTest {
             }
         }
 
-        context.getSystemService(LocationManager::class.java).requestSingleUpdate(
-            LocationManager.NETWORK_PROVIDER, locationListener, Looper.getMainLooper())
+        context.createFeatureContext(TEST_FEATURE_ID).getSystemService(LocationManager::class.java)
+            .requestSingleUpdate(LocationManager.NETWORK_PROVIDER, locationListener,
+                Looper.getMainLooper())
 
         try {
             gotLocationChangeCallback.get(TIMEOUT_MILLIS, MILLISECONDS)
@@ -423,6 +426,8 @@ class AppOpsLoggingTest {
         eventually {
             assertThat(asyncNoted.map { it.op }).containsAnyOf(OPSTR_COARSE_LOCATION,
                 OPSTR_FINE_LOCATION)
+            assertThat(asyncNoted[0].featureId).isEqualTo(TEST_FEATURE_ID)
+
             assertThat(asyncNoted[0].message).contains(locationListener::class.java.name)
             assertThat(asyncNoted[0].message).contains(
                 Integer.toHexString(System.identityHashCode(locationListener)))
@@ -438,7 +443,8 @@ class AppOpsLoggingTest {
 
         val gotProximityAlert = CompletableFuture<Unit>()
 
-        val locationManager = context.getSystemService(LocationManager::class.java)!!
+        val locationManager = context.createFeatureContext(TEST_FEATURE_ID)
+            .getSystemService(LocationManager::class.java)!!
 
         val proximityAlertReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
@@ -464,6 +470,7 @@ class AppOpsLoggingTest {
 
                 eventually {
                     assertThat(asyncNoted.map { it.op }).contains(OPSTR_FINE_LOCATION)
+                    assertThat(asyncNoted[0].featureId).isEqualTo(TEST_FEATURE_ID)
 
                     assertThat(asyncNoted[0].message).contains(
                         proximityAlertReceiverPendingIntent::class.java.name)
