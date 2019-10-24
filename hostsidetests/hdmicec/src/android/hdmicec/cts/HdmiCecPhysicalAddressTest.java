@@ -17,6 +17,7 @@
 package android.hdmicec.cts;
 
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceTestCase;
 
 /** HDMI CEC test to verify physical address after device reboot (Section 10.1.2) */
@@ -32,20 +33,24 @@ public final class HdmiCecPhysicalAddressTest extends DeviceTestCase {
      */
     public void testRebootPhysicalAddress() throws Exception {
         HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, "1.0.0.0");
+        ITestDevice device = getDevice();
+        assertNotNull("Device not set", device);
 
-        if (hdmiCecUtils.init()) {
-            try {
-                ITestDevice device = getDevice();
-                assertNotNull("Device not set", device);
-                device.executeShellCommand("reboot");
-                device.waitForBootComplete(REBOOT_TIMEOUT);
-                String message = hdmiCecUtils.checkExpectedOutput
-                    (CecMessage.REPORT_PHYSICAL_ADDRESS);
-                assertEquals(PHY_ADDRESS,
-                             hdmiCecUtils.getParamsFromMessage(message, PHY_ADDRESS.length()));
-            } finally {
-                hdmiCecUtils.killCecProcess();
-            }
+        if (!HdmiCecUtils.isHdmiCecFeatureSupported(device)) {
+            CLog.v("No HDMI CEC feature running, should skip test.");
+            return;
+        }
+
+        try {
+            hdmiCecUtils.init();
+            device.executeShellCommand("reboot");
+            device.waitForBootComplete(REBOOT_TIMEOUT);
+            String message = hdmiCecUtils.checkExpectedOutput
+                (CecMessage.REPORT_PHYSICAL_ADDRESS);
+            assertEquals(PHY_ADDRESS,
+                            hdmiCecUtils.getParamsFromMessage(message, PHY_ADDRESS.length()));
+        } finally {
+            hdmiCecUtils.killCecProcess();
         }
     }
 }

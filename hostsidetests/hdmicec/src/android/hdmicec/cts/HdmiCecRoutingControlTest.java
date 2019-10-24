@@ -17,6 +17,7 @@
 package android.hdmicec.cts;
 
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceTestCase;
 
 /** HDMI CEC test to test routing control (Section 11.2.2) */
@@ -30,20 +31,25 @@ public final class HdmiCecRoutingControlTest extends DeviceTestCase {
      * This test depends on One Touch Play, and will pass only if One Touch Play passes.
      */
     public void testRequestActiveSource() throws Exception {
+        ITestDevice device = getDevice();
+        assertNotNull("Device not set", device);
+
+        if (!HdmiCecUtils.isHdmiCecFeatureSupported(device)) {
+            CLog.v("No HDMI CEC feature running, should skip test.");
+            return;
+        }
+
         HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, "1.0.0.0");
 
-        if (hdmiCecUtils.init()) {
-            try {
-                ITestDevice device = getDevice();
-                assertNotNull("Device not set", device);
-                device.executeShellCommand("input keyevent KEYCODE_HOME");
-                hdmiCecUtils.sendCecMessage(CecDevice.TV, CecDevice.BROADCAST,
-                    CecMessage.REQUEST_ACTIVE_SOURCE);
-                String message = hdmiCecUtils.checkExpectedOutput(CecMessage.ACTIVE_SOURCE);
-                assertEquals(PHYSICAL_ADDRESS, hdmiCecUtils.getParamsFromMessage(message));
-            } finally {
-                hdmiCecUtils.killCecProcess();
-            }
+        try {
+            hdmiCecUtils.init();
+            device.executeShellCommand("input keyevent KEYCODE_HOME");
+            hdmiCecUtils.sendCecMessage(CecDevice.TV, CecDevice.BROADCAST,
+                CecMessage.REQUEST_ACTIVE_SOURCE);
+            String message = hdmiCecUtils.checkExpectedOutput(CecMessage.ACTIVE_SOURCE);
+            assertEquals(PHYSICAL_ADDRESS, hdmiCecUtils.getParamsFromMessage(message));
+        } finally {
+            hdmiCecUtils.killCecProcess();
         }
     }
 
@@ -54,22 +60,23 @@ public final class HdmiCecRoutingControlTest extends DeviceTestCase {
      */
     public void testInactiveSourceOnStandby() throws Exception {
         HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, "1.0.0.0");
+        ITestDevice device = getDevice();
+        assertNotNull("Device not set", device);
 
-        if (hdmiCecUtils.init()) {
-            ITestDevice device = null;
-            try {
-                device = getDevice();
-                assertNotNull("Device not set", device);
-                device.executeShellCommand("input keyevent KEYCODE_HOME");
-                device.executeShellCommand("input keyevent KEYCODE_POWER");
-                hdmiCecUtils.checkExpectedOutput(CecMessage.INACTIVE_SOURCE);
-            } finally {
-                /* Wake up the device again */
-                if (device != null) {
-                    device.executeShellCommand("input keyevent KEYCODE_POWER");
-                }
-                hdmiCecUtils.killCecProcess();
-            }
+        if (!HdmiCecUtils.isHdmiCecFeatureSupported(device)) {
+            CLog.v("No HDMI CEC feature running, should skip test.");
+            return;
+        }
+
+        try {
+            hdmiCecUtils.init();
+            device.executeShellCommand("input keyevent KEYCODE_HOME");
+            device.executeShellCommand("input keyevent KEYCODE_POWER");
+            hdmiCecUtils.checkExpectedOutput(CecMessage.INACTIVE_SOURCE);
+        } finally {
+            /* Wake up the device again */
+            device.executeShellCommand("input keyevent KEYCODE_POWER");
+            hdmiCecUtils.killCecProcess();
         }
     }
 }
