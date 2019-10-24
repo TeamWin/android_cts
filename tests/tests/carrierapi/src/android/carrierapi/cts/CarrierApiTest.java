@@ -481,6 +481,7 @@ public class CarrierApiTest extends AndroidTestCase {
             mTelephonyManager.getVoiceMailAlphaTag();
             mTelephonyManager.getForbiddenPlmns();
             mTelephonyManager.getServiceState();
+            mTelephonyManager.setForbiddenPlmns(new ArrayList<String>());
         } catch (SecurityException e) {
             failMessage();
         }
