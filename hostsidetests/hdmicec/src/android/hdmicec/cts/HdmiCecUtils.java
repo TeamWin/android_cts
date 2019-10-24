@@ -16,6 +16,7 @@
 
 package android.hdmicec.cts;
 
+import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.util.RunUtil;
 
@@ -34,6 +35,7 @@ public final class HdmiCecUtils {
     private static final String CEC_CONSOLE_READY = "waiting for input";
     private static final int MILLISECONDS_TO_READY = 5000;
     private static final int DEFAULT_TIMEOUT = 20000;
+    private static final String HDMI_CEC_FEATURE = "feature:android.hardware.hdmi.cec";
 
     private Process mCecClient;
     private BufferedWriter mOutputConsole;
@@ -48,8 +50,17 @@ public final class HdmiCecUtils {
         this.physicalAddress = physicalAddress;
     }
 
+    /**
+     * Checks if the HDMI CEC feature is running on the device. Call this function before running
+     * any HDMI CEC tests.
+     * This could throw a DeviceNotAvailableException.
+     */
+    public static boolean isHdmiCecFeatureSupported(ITestDevice device) throws Exception {
+        return device.hasFeature(HDMI_CEC_FEATURE);
+    }
+
     /** Initialise the client */
-    public boolean init() throws Exception {
+    public void init() throws Exception {
         boolean gotExpectedOut = false;
         List<String> commands = new ArrayList();
         int seconds = 0;
@@ -63,7 +74,7 @@ public final class HdmiCecUtils {
         if (checkConsoleOutput(CecMessage.CLIENT_CONSOLE_READY + "", MILLISECONDS_TO_READY)) {
             mOutputConsole = new BufferedWriter(
                                 new OutputStreamWriter(mCecClient.getOutputStream()));
-            return mCecClientInitialised;
+            return;
         }
 
         mCecClientInitialised = false;
@@ -273,11 +284,16 @@ public final class HdmiCecUtils {
     /**
      * Kills the cec-client process that was created in init().
      */
-    public void killCecProcess() throws Exception {
-        checkCecClient();
-        sendConsoleMessage(CecMessage.QUIT_CLIENT.toString());
-        mOutputConsole.close();
-        mInputConsole.close();
-        mCecClientInitialised = false;
+    public void killCecProcess() {
+        try {
+            checkCecClient();
+            sendConsoleMessage(CecMessage.QUIT_CLIENT.toString());
+            mOutputConsole.close();
+            mInputConsole.close();
+            mCecClientInitialised = false;
+        } catch (Exception e) {
+            /* If cec-client is not running, do not throw an exception, just return. */
+            return;
+        }
     }
 }
