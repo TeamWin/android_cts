@@ -17,6 +17,7 @@
 package android.location.cts.coarse;
 
 import static android.location.LocationManager.GPS_PROVIDER;
+import static android.location.LocationManager.NETWORK_PROVIDER;
 import static android.location.LocationManager.PASSIVE_PROVIDER;
 
 import static androidx.test.ext.truth.location.LocationSubject.assertThat;
@@ -179,7 +180,21 @@ public class LocationManagerCoarseTest {
 
     @Test
     public void testGetBestProvider() {
+        // prevent network provider from matching
+        mManager.addTestProvider(NETWORK_PROVIDER,
+                true,
+                false,
+                true,
+                false,
+                false,
+                false,
+                false,
+                Criteria.POWER_HIGH,
+                Criteria.ACCURACY_COARSE);
+
         Criteria criteria = new Criteria();
+        criteria.setAccuracy(Criteria.ACCURACY_COARSE);
+        criteria.setPowerRequirement(Criteria.POWER_MEDIUM);
 
         String bestProvider = mManager.getBestProvider(criteria, false);
         assertEquals(COARSE_TEST_PROVIDER, bestProvider);

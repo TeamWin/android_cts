@@ -102,7 +102,7 @@ public class NoLocationPermissionTest {
         assertNotNull(telephonyManager);
 
         try {
-            telephonyManager.listen(new PhoneStateListener(),
+            telephonyManager.listen(new PhoneStateListener(Runnable::run),
                     PhoneStateListener.LISTEN_CELL_LOCATION);
             fail("Should throw SecurityException");
         } catch (SecurityException e) {
