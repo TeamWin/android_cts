@@ -22,6 +22,7 @@ import com.android.ddmlib.NullOutputReceiver;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.device.NativeDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 
 import java.io.BufferedOutputStream;
@@ -29,6 +30,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.concurrent.TimeoutException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.Scanner;
@@ -233,9 +235,17 @@ public class AdbUtils {
      * Utility function to help check the exit code of a shell command
      */
     public static int runCommandGetExitCode(String cmd, ITestDevice device) throws Exception {
-      return Integer.parseInt(
-          AdbUtils.runCommandLine( "(" + cmd + ") > /dev/null 2>&1; echo $?",
-            device).replaceAll("[^0-9]", ""));
+        long time = System.currentTimeMillis();
+        String exitStatus = runCommandLine(
+                "(" + cmd + ") > /dev/null 2>&1; echo $?", device).trim();
+        time = System.currentTimeMillis() - time;
+        try {
+            return Integer.parseInt(exitStatus);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(String.format(
+                    "Could not get the exit status (%s) for '%s' (%d ms).",
+                    exitStatus, cmd, time));
+        }
     }
 
     /**
@@ -265,11 +275,18 @@ public class AdbUtils {
             throws Exception {
         device.executeShellCommand("chmod +x /data/local/tmp/" + pocName);
         CollectingOutputReceiver receiver = new CollectingOutputReceiver();
-        device.executeShellCommand("/data/local/tmp/" + pocName + " > /dev/null 2>&1; echo $?",
-                                   receiver, timeout, TimeUnit.SECONDS, 0);
-
-        String exitStatus = receiver.getOutput().replaceAll("[^0-9]", "");
-        return Integer.parseInt(exitStatus);
+        String cmd = "/data/local/tmp/" + pocName + " > /dev/null 2>&1; echo $?";
+        long time = System.currentTimeMillis();
+        device.executeShellCommand(cmd, receiver, timeout, TimeUnit.SECONDS, 0);
+        time = System.currentTimeMillis() - time;
+        String exitStatus = receiver.getOutput().trim();
+        try {
+            return Integer.parseInt(exitStatus);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(String.format(
+                    "Could not get the exit status (%s) for '%s' (%d ms).",
+                    exitStatus, cmd, time));
+        }
     }
 
     /**
