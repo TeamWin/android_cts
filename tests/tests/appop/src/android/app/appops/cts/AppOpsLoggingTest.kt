@@ -384,10 +384,13 @@ class AppOpsLoggingTest {
      */
     @Test
     fun getLastKnownLocation() {
-        val location = context.createFeatureContext(TEST_FEATURE_ID)
+        val locationManager = context.createFeatureContext(TEST_FEATURE_ID)
             .getSystemService(LocationManager::class.java)
-            .getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
 
+        Assume.assumeTrue("Device does not have a network provider",
+            locationManager.getProviders(true).contains(LocationManager.NETWORK_PROVIDER))
+
+        val location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
         Assume.assumeTrue("Could not get last known location", location != null)
 
         assertThat(noted.map { it.first.op }).containsAnyOf(OPSTR_COARSE_LOCATION,
@@ -401,6 +404,12 @@ class AppOpsLoggingTest {
      */
     @Test
     fun getAsyncLocation() {
+        val locationManager = context.createFeatureContext(TEST_FEATURE_ID)
+            .getSystemService(LocationManager::class.java)
+
+        Assume.assumeTrue("Device does not have a network provider",
+            locationManager.getProviders(true).contains(LocationManager.NETWORK_PROVIDER))
+
         val gotLocationChangeCallback = CompletableFuture<Unit>()
 
         val locationListener = object : LocationListener {
@@ -413,8 +422,7 @@ class AppOpsLoggingTest {
             }
         }
 
-        context.createFeatureContext(TEST_FEATURE_ID).getSystemService(LocationManager::class.java)
-            .requestSingleUpdate(LocationManager.NETWORK_PROVIDER, locationListener,
+        locationManager.requestSingleUpdate(LocationManager.NETWORK_PROVIDER, locationListener,
                 Looper.getMainLooper())
 
         try {
