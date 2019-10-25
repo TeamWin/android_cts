@@ -94,4 +94,12 @@ public class Poc16_12 extends SecurityTestCase {
             "Fatal signal 11 \\(SIGSEGV\\).*?>>> /system/bin/mediaserver <<<",
             logcat);
     }
+
+    /**
+     *  b/32141528
+     */
+    @SecurityTest(minPatchLevel = "2016-12")
+    public void testPocCVE_2016_5195() throws Exception {
+        AdbUtils.runPocAssertExitStatusNotVulnerable("CVE-2016-5195", getDevice(), 300);
+    }
 }
