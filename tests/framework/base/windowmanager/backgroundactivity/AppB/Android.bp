@@ -19,7 +19,6 @@ android_test {
     static_libs: [
         "cts-wm-app-base",
         "cts-background-activity-common",
-        "androidx.legacy_legacy-support-v4",
     ],
 
     srcs: ["src/**/*.java"],
