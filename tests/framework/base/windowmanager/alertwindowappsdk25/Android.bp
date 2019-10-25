@@ -1,4 +1,4 @@
-// Copyright (C) 2018 The Android Open Source Project
+// Copyright (C) 2017 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,11 +13,23 @@
 // limitations under the License.
 
 filegroup {
-    name: "cts-wm-components",
-    srcs: ["**/Components.java"],
+    name: "cts-wm-alertwindow-test-base",
+    srcs: ["src/android/server/wm/alertwindowappsdk25/AlertWindowTestBaseActivity.java"],
 }
 
-filegroup {
-    name: "cts-wm-aspect-ratio-test-base",
-    srcs: ["src/android/server/wm/AspectRatioTestsBase.java"],
+android_test {
+    name: "CtsDeviceAlertWindowTestAppSdk25",
+    defaults: ["cts_support_defaults"],
+
+    static_libs: ["cts-wm-app-base"],
+
+    srcs: ["src/**/*.java"],
+
+    sdk_version: "25",
+
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ],
 }
