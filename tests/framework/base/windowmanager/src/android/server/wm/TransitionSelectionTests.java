@@ -58,17 +58,6 @@ import org.junit.Test;
 @Presubmit
 public class TransitionSelectionTests extends ActivityManagerTestBase {
 
-    @Override
-    @Before
-    public void setUp() throws Exception {
-        super.setUp();
-
-        // Transition selection tests are currently disabled on Wear because
-        // config_windowSwipeToDismiss is set to true, which breaks all kinds of assumptions in the
-        // transition selection logic.
-        Assume.assumeTrue(!isWatch());
-    }
-
     // Test activity open/close under normal timing
     @Test
     public void testOpenActivity_NeitherWallpaper() {

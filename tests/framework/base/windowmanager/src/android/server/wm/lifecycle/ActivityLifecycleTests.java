@@ -85,11 +85,10 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
 
         getLifecycleLog().clear();
-        final Activity secondActivity = launchActivityAndWait(SecondActivity.class);
-        waitAndAssertActivityStates(occludedActivityState(firstActivity, secondActivity));
+        waitAndAssertActivityStates(state(firstActivity, ON_STOP));
 
         LifecycleVerifier.assertLaunchSequence(SecondActivity.class, FirstActivity.class,
-                getLifecycleLog(), isTranslucent(secondActivity));
+                getLifecycleLog(), false /* launchIsTranslucent */);
     }
 
     @Test
@@ -148,7 +147,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         final Activity firstActivity = new Launcher(FirstActivity.class)
                 .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
                 .launch();
-        waitAndAssertActivityStates(occludedActivityState(translucentActivity, firstActivity));
+        waitAndAssertActivityStates(state(translucentActivity, ON_STOP));
 
         final ComponentName firstActivityName = getComponentName(FirstActivity.class);
         mAmWmState.computeState(firstActivityName);
@@ -198,8 +197,8 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         final Activity secondActivity = launchActivityAndWait(SecondActivity.class);
 
         // Wait for top activity to resume
-        waitAndAssertActivityStates(occludedActivityState(translucentActivity, secondActivity),
-                occludedActivityState(firstActivity, secondActivity));
+        waitAndAssertActivityStates(state(translucentActivity, ON_STOP),
+                state(firstActivity, ON_STOP));
 
         getLifecycleLog().clear();
 
@@ -264,7 +263,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     public void testFinishBottom() throws Exception {
         final Activity bottomActivity = launchActivityAndWait(FirstActivity.class);
         final Activity topActivity = launchActivityAndWait(SecondActivity.class);
-        waitAndAssertActivityStates(occludedActivityState(bottomActivity, topActivity));
+        waitAndAssertActivityStates(state(bottomActivity, ON_STOP));
 
         // Finish the activity on the bottom
         getLifecycleLog().clear();
@@ -420,16 +419,15 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     @Test
     public void testRelaunchStopped() throws Exception {
         final Activity stoppedActivity = launchActivityAndWait(FirstActivity.class);
-        final Activity topActivity = launchActivityAndWait(SecondActivity.class);
 
-        waitAndAssertActivityStates(occludedActivityState(stoppedActivity, topActivity));
+        waitAndAssertActivityStates(state(stoppedActivity, ON_STOP));
 
         getLifecycleLog().clear();
         getInstrumentation().runOnMainSync(stoppedActivity::recreate);
-        waitAndAssertActivityStates(occludedActivityState(stoppedActivity, topActivity));
+        waitAndAssertActivityStates(state(stoppedActivity, ON_STOP));
 
         LifecycleVerifier.assertRelaunchSequence(FirstActivity.class, getLifecycleLog(),
-                occludedActivityState(isTranslucent(topActivity)));
+                ON_STOP);
     }
 
     @Test
@@ -444,8 +442,8 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         final Activity topOpaqueActivity = launchActivityAndWait(SecondActivity.class);
 
         waitAndAssertActivityStates(
-                occludedActivityState(becomingVisibleActivity, topOpaqueActivity),
-                occludedActivityState(translucentActivity, topOpaqueActivity));
+                state(becomingVisibleActivity, ON_STOP),
+                state(translucentActivity, ON_STOP));
 
         try (final RotationSession rotationSession = new RotationSession()) {
             if (!supportsLockedUserRotation(
@@ -605,12 +603,12 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         // Launch second activity to cover and stop first
         final Activity secondActivity = launchActivityAndWait(SecondActivity.class);
         // Wait for first activity to become stopped
-        waitAndAssertActivityStates(occludedActivityState(trackingActivity, secondActivity));
+        waitAndAssertActivityStates(state(trackingActivity, ON_STOP));
 
         // Call "recreate" and assert sequence
         getLifecycleLog().clear();
         getInstrumentation().runOnMainSync(trackingActivity::recreate);
-        waitAndAssertActivityStates(occludedActivityState(trackingActivity, secondActivity));
+        waitAndAssertActivityStates(state(trackingActivity, ON_STOP));
 
         final List<LifecycleLog.ActivityCallback> callbacks;
         if (isTranslucent(secondActivity)) {
@@ -674,7 +672,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 .launch();
 
         // Wait for first activity to become occluded
-        waitAndAssertActivityStates(occludedActivityState(recreatingActivity, secondActivity));
+        waitAndAssertActivityStates(state(recreatingActivity, ON_STOP));
 
         // Launch the activity again to recreate
         getLifecycleLog().clear();
@@ -733,7 +731,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
                 .launch();
 
-        waitAndAssertActivityStates(occludedActivityState(singleTopActivity, secondActivity));
+        waitAndAssertActivityStates(state(singleTopActivity, ON_STOP));
 
         // Try to launch again
         getLifecycleLog().clear();
