@@ -24,7 +24,6 @@ import static android.server.wm.DialogFrameTestActivity.TEST_EXPLICIT_SIZE;
 import static android.server.wm.DialogFrameTestActivity.TEST_EXPLICIT_SIZE_BOTTOM_RIGHT_GRAVITY;
 import static android.server.wm.DialogFrameTestActivity.TEST_EXPLICIT_SIZE_TOP_LEFT_GRAVITY;
 import static android.server.wm.DialogFrameTestActivity.TEST_MATCH_PARENT;
-import static android.server.wm.DialogFrameTestActivity.TEST_MATCH_PARENT_LAYOUT_IN_OVERSCAN;
 import static android.server.wm.DialogFrameTestActivity.TEST_NO_FOCUS;
 import static android.server.wm.DialogFrameTestActivity.TEST_OVER_SIZED_DIMENSIONS;
 import static android.server.wm.DialogFrameTestActivity.TEST_OVER_SIZED_DIMENSIONS_NO_LIMITS;
@@ -100,20 +99,6 @@ public class DialogFrameTests extends ParentChildTestBase<DialogFrameTestActivit
     public void testMatchParentDialog() throws Exception {
         doParentChildTest(TEST_MATCH_PARENT, (parent, dialog) ->
                 assertEquals(parent.getContentFrame(), dialog.getFrame())
-        );
-    }
-
-    // If we have LAYOUT_IN_SCREEN and LAYOUT_IN_OVERSCAN with MATCH_PARENT,
-    // we will not be constrained to the insets and so we will be the same size
-    // as the main window main frame.
-    // TODO: b/80262496
-    // LAYOUT_IN_OVERSCAN isn't allowing windows to extend in to cutouts. We will have
-    // to revisit whether to modify the behavior, or this test.
-    @Ignore
-    @Test
-    public void testMatchParentDialogLayoutInOverscan() throws Exception {
-        doParentChildTest(TEST_MATCH_PARENT_LAYOUT_IN_OVERSCAN, (parent, dialog) ->
-                assertEquals(parent.getFrame(), dialog.getFrame())
         );
     }
 
