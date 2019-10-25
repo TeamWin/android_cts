@@ -55,9 +55,9 @@ class ReportExporter extends AsyncTask<Void, Void, String> {
     private static final String SUITE_NAME_METADATA_KEY = "SuiteName";
     private static final String SUITE_PLAN = "verifier";
     private static final String SUITE_BUILD = "0";
-    private static final long START_MS = System.currentTimeMillis();
-    private static final long END_MS = START_MS;
     private static final String ZIP_EXTENSION = ".zip";
+    private final long START_MS = System.currentTimeMillis();
+    private final long END_MS = START_MS;
     private final Context mContext;
     private final TestListAdapter mAdapter;
 
