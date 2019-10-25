@@ -34,6 +34,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -111,6 +112,8 @@ public class LocationAccessCheckTest {
     private static final long BACKGROUND_ACCESS_SETTLE_TIME = 11000;
 
     private static final Context sContext = InstrumentationRegistry.getTargetContext();
+    private static final ActivityManager sActivityManager =
+            (ActivityManager) sContext.getSystemService(Context.ACTIVITY_SERVICE);
     private static final UiAutomation sUiAutomation = InstrumentationRegistry.getInstrumentation()
             .getUiAutomation();
 
@@ -361,6 +364,14 @@ public class LocationAccessCheckTest {
 
     private static void installForegroundAccessApp() {
         runShellCommand("pm install -r -g " + TEST_APP_LOCATION_FG_ACCESS_APK);
+    }
+
+    /**
+     * Skip each test for low ram device
+     */
+    @Before
+    public void assumeIsNotLowRamDevice() {
+        assumeFalse(sActivityManager.isLowRamDevice());
     }
 
     /**

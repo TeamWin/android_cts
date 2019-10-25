@@ -53,11 +53,10 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
                     mProfileUserId);
             mProfileSerialNumber = Integer.toString(getUserSerialNumber(mProfileUserId));
             mMainUserSerialNumber = Integer.toString(getUserSerialNumber(mParentUserId));
-            startUser(mProfileUserId);
+            startUserAndWait(mProfileUserId);
 
             // Install test APK on primary user and the managed profile.
-            installTestApps(mPrimaryUserId);
-            installTestApps(mProfileUserId);
+            installTestApps(USER_ALL);
         }
     }
 
@@ -166,7 +165,8 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
         }
         installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
         startCallbackService(mPrimaryUserId);
-        installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
+        installAppAsUser(SIMPLE_APP_APK, /* grantPermissions */ true, /* dontKillApp */ true,
+                mProfileUserId);
         runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
                 LAUNCHER_TESTS_CLASS,
                 "testPackageChangedCallbackForUser",

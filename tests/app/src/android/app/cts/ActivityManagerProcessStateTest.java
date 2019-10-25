@@ -164,7 +164,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         Otherwise the procstat may start in TOP_SLEEPING state, and this
         causes test case testBackgroundCheckActivityService to fail.
         Note: There could still a small chance the procstat is TOP_SLEEPING
-        when the predicate returns true.
+        when the predicate returns true. 
         */
         CommonTestUtils.waitUntil("Device does not wake up after 5 seconds",
             5,

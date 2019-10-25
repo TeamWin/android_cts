@@ -385,6 +385,31 @@ public class Camera2SurfaceViewTestCase {
     }
 
     /**
+     * Submit a burst of the same capture request, then submit additional captures in order to
+     * ensure that the camera will be synchronized.
+     *
+     * <p>
+     * The additional capture count is determined by android.sync.maxLatency (or
+     * a fixed {@value #NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY}) captures if maxLatency is unknown).
+     * </p>
+     *
+     * <p>Returns the number of captures that were submitted (at least 1), which is useful
+     * with {@link #waitForNumResults}.</p>
+     *
+     * @param request capture request to forward to {@link CameraDevice#capture}
+     * @param listener request listener to forward to {@link CameraDevice#capture}
+     * @param handler handler to forward to {@link CameraDevice#capture}
+     *
+     * @return the number of captures that were submitted
+     *
+     * @throws CameraAccessException if capturing failed
+     */
+    protected int captureRequestsSynchronizedBurst(
+            CaptureRequest request, int count, CaptureCallback listener, Handler handler)
+                    throws CameraAccessException {
+        return captureRequestsSynchronizedImpl(request, count, listener, handler, true);
+    }
+    /**
      * Submit a capture once, then submit additional captures in order to ensure that
      * the camera will be synchronized.
      *
@@ -407,7 +432,7 @@ public class Camera2SurfaceViewTestCase {
     protected int captureRequestsSynchronized(
             CaptureRequest request, CaptureCallback listener, Handler handler)
                     throws CameraAccessException {
-        return captureRequestsSynchronized(request, /*count*/1, listener, handler);
+        return captureRequestsSynchronizedImpl(request, /*count*/1, listener, handler, false);
     }
 
     /**
@@ -435,24 +460,7 @@ public class Camera2SurfaceViewTestCase {
     protected int captureRequestsSynchronized(
             CaptureRequest request, int count, CaptureCallback listener, Handler handler)
                     throws CameraAccessException {
-        if (count < 1) {
-            throw new IllegalArgumentException("count must be positive");
-        }
-
-        int maxLatency = mStaticInfo.getSyncMaxLatency();
-        if (maxLatency == CameraMetadata.SYNC_MAX_LATENCY_UNKNOWN) {
-            maxLatency = NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY;
-        }
-
-        assertTrue("maxLatency is non-negative", maxLatency >= 0);
-
-        int numCaptures = maxLatency + count;
-
-        for (int i = 0; i < numCaptures; ++i) {
-            mSession.capture(request, listener, handler);
-        }
-
-        return numCaptures;
+        return captureRequestsSynchronizedImpl(request, count, listener, handler, false);
     }
 
     /**
@@ -877,5 +885,35 @@ public class Camera2SurfaceViewTestCase {
 
     protected Range<Integer> getSuitableFpsRangeForDuration(String cameraId, long frameDuration) {
         return CameraTestUtils.getSuitableFpsRangeForDuration(cameraId, frameDuration, mStaticInfo);
+    }
+
+    private int captureRequestsSynchronizedImpl(
+            CaptureRequest request, int count, CaptureCallback listener, Handler handler,
+            boolean isBurst) throws CameraAccessException {
+        if (count < 1) {
+            throw new IllegalArgumentException("count must be positive");
+        }
+
+        int maxLatency = mStaticInfo.getSyncMaxLatency();
+        if (maxLatency == CameraMetadata.SYNC_MAX_LATENCY_UNKNOWN) {
+            maxLatency = NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY;
+        }
+
+        assertTrue("maxLatency is non-negative", maxLatency >= 0);
+
+        int numCaptures = maxLatency + count;
+        ArrayList<CaptureRequest> burstCaptureRequests = new ArrayList<>();
+        for (int i = 0; i < numCaptures; ++i) {
+            if (isBurst) {
+                burstCaptureRequests.add(request);
+            } else {
+                mSession.capture(request, listener, handler);
+            }
+        }
+        if (isBurst) {
+            mSession.captureBurst(burstCaptureRequests, listener, handler);
+        }
+
+        return numCaptures;
     }
 }

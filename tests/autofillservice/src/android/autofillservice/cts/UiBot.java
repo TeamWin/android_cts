@@ -760,9 +760,8 @@ public final class UiBot {
      * faster.
      *
      * @param id resource id of the field.
-     * @param expectOverflow whether overflow menu should be shown (when clipboard contains text)
      */
-    public UiObject2 getAutofillMenuOption(String id, boolean expectOverflow) throws Exception {
+    public UiObject2 getAutofillMenuOption(String id) throws Exception {
         final UiObject2 field = waitForObject(By.res(mPackageName, id));
         // TODO: figure out why obj.longClick() doesn't always work
         field.click(3000);
@@ -771,31 +770,36 @@ public final class UiBot {
                 By.res("android", RESOURCE_ID_CONTEXT_MENUITEM), mDefaultTimeout);
         final String expectedText = getAutofillContextualMenuTitle();
 
-        if (expectOverflow) {
-            // Check first menu does not have AUTOFILL
-            for (UiObject2 menuItem : menuItems) {
-                final String menuName = menuItem.getText();
-                if (menuName.equalsIgnoreCase(expectedText)) {
-                    throw new IllegalStateException(expectedText + " in context menu");
-                }
-            }
-
-            final BySelector overflowSelector = By.res("android", RESOURCE_ID_OVERFLOW);
-
-            // Click overflow menu button.
-            final UiObject2 overflowMenu = waitForObject(overflowSelector, mDefaultTimeout);
-            overflowMenu.click();
-
-            // Wait for overflow menu to show.
-            mDevice.wait(Until.gone(overflowSelector), 1000);
-        }
-
-        menuItems = waitForObjects(
-                By.res("android", RESOURCE_ID_CONTEXT_MENUITEM), mDefaultTimeout);
         final StringBuffer menuNames = new StringBuffer();
+
+        // Check first menu for AUTOFILL
         for (UiObject2 menuItem : menuItems) {
             final String menuName = menuItem.getText();
             if (menuName.equalsIgnoreCase(expectedText)) {
+                Log.v(TAG, "AUTOFILL found in first menu");
+                return menuItem;
+            }
+            menuNames.append("'").append(menuName).append("' ");
+        }
+
+        menuNames.append(";");
+
+        // First menu does not have AUTOFILL, check overflow
+        final BySelector overflowSelector = By.res("android", RESOURCE_ID_OVERFLOW);
+
+        // Click overflow menu button.
+        final UiObject2 overflowMenu = waitForObject(overflowSelector, mDefaultTimeout);
+        overflowMenu.click();
+
+        // Wait for overflow menu to show.
+        mDevice.wait(Until.gone(overflowSelector), 1000);
+
+        menuItems = waitForObjects(
+                By.res("android", RESOURCE_ID_CONTEXT_MENUITEM), mDefaultTimeout);
+        for (UiObject2 menuItem : menuItems) {
+            final String menuName = menuItem.getText();
+            if (menuName.equalsIgnoreCase(expectedText)) {
+                Log.v(TAG, "AUTOFILL found in overflow menu");
                 return menuItem;
             }
             menuNames.append("'").append(menuName).append("' ");
@@ -894,19 +898,24 @@ public final class UiBot {
      * Execute a Runnable and wait for {@link AccessibilityEvent#TYPE_WINDOWS_CHANGED} or
      * {@link AccessibilityEvent#TYPE_WINDOW_STATE_CHANGED}.
      */
-    public AccessibilityEvent waitForWindowChange(Runnable runnable, long timeoutMillis)
-            throws TimeoutException {
-        return mAutoman.executeAndWaitForEvent(runnable, (AccessibilityEvent event) -> {
-            switch (event.getEventType()) {
-                case AccessibilityEvent.TYPE_WINDOWS_CHANGED:
-                case AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED:
-                    return true;
-            }
-            return false;
-        }, timeoutMillis);
+    public AccessibilityEvent waitForWindowChange(Runnable runnable, long timeoutMillis) {
+        try {
+            return mAutoman.executeAndWaitForEvent(runnable, (AccessibilityEvent event) -> {
+                switch (event.getEventType()) {
+                    case AccessibilityEvent.TYPE_WINDOWS_CHANGED:
+                    case AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED:
+                        return true;
+                    default:
+                        Log.v(TAG, "waitForWindowChange(): ignoring event " + event);
+                }
+                return false;
+            }, timeoutMillis);
+        } catch (TimeoutException e) {
+            throw new WindowChangeTimeoutException(e, timeoutMillis);
+        }
     }
 
-    public AccessibilityEvent waitForWindowChange(Runnable runnable) throws TimeoutException {
+    public AccessibilityEvent waitForWindowChange(Runnable runnable) {
         return waitForWindowChange(runnable, Timeouts.WINDOW_CHANGE_TIMEOUT_MS);
     }
 

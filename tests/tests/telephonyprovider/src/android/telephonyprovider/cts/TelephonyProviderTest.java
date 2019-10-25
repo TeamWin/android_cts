@@ -59,7 +59,36 @@ public class TelephonyProviderTest extends InstrumentationTestCase {
             String[] selectionArgs = null;
             Cursor cursor = mContentResolver.query(Carriers.CONTENT_URI,
                     APN_PROJECTION, selection, selectionArgs, null);
-            fail("Expected SecurityExceptio");
+            fail("Expected SecurityException");
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
+
+    public void testNoAccessToPasswordThruSort() {
+        try {
+            String selection = Carriers.CURRENT + " IS NOT NULL";
+            String[] selectionArgs = null;
+            String sort = "LIMIT CASE WHEN ((SELECT COUNT(*) FROM carriers WHERE"
+                    + " password LIKE 'a%') > 0) THEN 1 ELSE 0 END";
+            Cursor cursor = mContentResolver.query(Carriers.CONTENT_URI,
+                    APN_PROJECTION, selection, selectionArgs, sort);
+            fail("Expected SecurityException");
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
+
+    public void testNoAccessToUser() {
+        try {
+            String selection = Carriers.CURRENT + " IS NOT NULL AND "
+                    + Carriers.USER + " IS NOT NULL";
+            String[] selectionArgs = null;
+            String sort = "LIMIT CASE WHEN ((SELECT COUNT(*) FROM carriers WHERE"
+                    + " user LIKE 'a%') > 0) THEN 1 ELSE 0 END";
+            Cursor cursor = mContentResolver.query(Carriers.CONTENT_URI,
+                    APN_PROJECTION, selection, selectionArgs, sort);
+            fail("Expected SecurityException");
         } catch (SecurityException e) {
             // expected
         }

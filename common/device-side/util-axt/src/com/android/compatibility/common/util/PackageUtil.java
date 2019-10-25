@@ -97,6 +97,18 @@ public class PackageUtil {
         }
     }
 
+    /** Returns the version code for the package name, or null if the package can't be found */
+    public static Long getLongVersionCode(String packageName) {
+        try {
+            PackageInfo info = getPackageManager().getPackageInfo(packageName,
+                    PackageManager.GET_META_DATA);
+            return info.getLongVersionCode();
+        } catch (PackageManager.NameNotFoundException | NullPointerException e) {
+            Log.w(TAG, "Could not find version string for package " + packageName);
+            return null;
+        }
+    }
+
     /**
      * Compute the signature SHA digest for a package.
      * @param package the name of the package for which the signature SHA digest is requested

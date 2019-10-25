@@ -41,11 +41,11 @@ public class MixedManagedProfileOwnerTestApi25 extends DeviceAndProfileOwnerTest
     private void createManagedProfile() throws Exception {
         mUserId = createManagedProfile(mParentUserId);
         switchUser(mParentUserId);
-        startUser(mUserId);
+        startUserAndWait(mUserId);
 
         installAppAsUser(DEVICE_ADMIN_APK, mUserId);
         setProfileOwnerOrFail(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId);
-        startUser(mUserId);
+        startUserAndWait(mUserId);
     }
 
     @Override

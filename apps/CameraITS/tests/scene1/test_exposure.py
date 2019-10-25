@@ -108,7 +108,7 @@ def main():
             assert 0 <= s_test - s_res < s_test * THRESH_ROUND_DOWN_GAIN, s_msg
             assert 0 <= e_test - e_res < e_test * thresh_round_down_exp, e_msg
             s_e_product_res = s_res * e_res
-            request_result_ratio = s_e_product / s_e_product_res
+            request_result_ratio = float(s_e_product) / s_e_product_res
             print 'Capture result s:', s_res, 'e:', e_res
             img = its.image.convert_capture_to_rgb_image(cap)
             its.image.write_image(img, '%s_mult=%3.2f.jpg' % (NAME, m))

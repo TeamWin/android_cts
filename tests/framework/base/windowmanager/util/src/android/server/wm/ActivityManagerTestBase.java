@@ -929,7 +929,10 @@ public abstract class ActivityManagerTestBase {
                 "doze_always_on",
                 "doze_pulse_on_pick_up",
                 "doze_pulse_on_long_press",
-                "doze_pulse_on_double_tap"
+                "doze_pulse_on_double_tap",
+                "doze_wake_screen_gesture",
+                "doze_wake_display_gesture",
+                "doze_tap_gesture"
         };
 
         private String get(String key) {
@@ -1668,20 +1671,28 @@ public abstract class ActivityManagerTestBase {
     static class ActivityLifecycleCounts {
         final int[] mCounts = new int[ActivityCallback.SIZE];
         final int[] mLastIndexes = new int[ActivityCallback.SIZE];
-        final List<ActivityCallback> mCallbackHistory;
+        private ComponentName mActivityName;
 
         ActivityLifecycleCounts(ComponentName componentName) {
-            this(TestJournalContainer.get(componentName).callbacks);
+            mActivityName = componentName;
+            updateCount(TestJournalContainer.get(componentName).callbacks);
         }
 
         ActivityLifecycleCounts(List<ActivityCallback> callbacks) {
-            mCallbackHistory = callbacks;
-            for (int i = 0; i < callbacks.size(); i++) {
-                final ActivityCallback callback = callbacks.get(i);
-                final int ordinal = callback.ordinal();
-                mCounts[ordinal]++;
-                mLastIndexes[ordinal] = i;
-            }
+            updateCount(callbacks);
+        }
+
+        private void updateCount(List<ActivityCallback> callbacks) {
+            // The callback list could be from the reference of TestJournal. If we are counting for
+            // retrying, there may be new data added to the list from other threads.
+            TestJournalContainer.withThreadSafeAccess(() -> {
+                for (int i = 0; i < callbacks.size(); i++) {
+                    final ActivityCallback callback = callbacks.get(i);
+                    final int ordinal = callback.ordinal();
+                    mCounts[ordinal]++;
+                    mLastIndexes[ordinal] = i;
+                }
+            });
         }
 
         int getCount(ActivityCallback callback) {
@@ -1694,9 +1705,16 @@ public abstract class ActivityManagerTestBase {
 
         @SafeVarargs
         final void assertCountWithRetry(String message, CountSpec<ActivityCallback>... countSpecs) {
+            if (mActivityName == null) {
+                throw new IllegalStateException(
+                        "It is meaningless to retry without specified activity");
+            }
             new RetryValidator() {
                 @Override
                 protected String validate() {
+                    Arrays.fill(mCounts, 0);
+                    Arrays.fill(mLastIndexes, 0);
+                    updateCount(TestJournalContainer.get(mActivityName).callbacks);
                     return validateCount(countSpecs);
                 }
             }.assertValidator(message);

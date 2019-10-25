@@ -149,13 +149,28 @@ public class CaCertManagementTest extends BaseDeviceAdminTest {
         tmf.init((KeyStore) null);
         X509TrustManager tm = getFirstX509TrustManager(tmf);
         boolean trusted = Arrays.asList(tm.getAcceptedIssuers()).contains(caCert);
-        X509TrustManagerExtensions xtm = new X509TrustManagerExtensions(tm);
-        boolean userAddedCertificate = xtm.isUserAddedCertificate((X509Certificate) caCert);
+
+        // Maximal time to wait until the certificate is found to be in the accepted
+        // issuers list before declaring test failure.
+        final int maxWaitForCertificateTrustedSec = 15;
 
         // All three responses should match - if an installed certificate isn't trusted or (worse)
         // a trusted certificate isn't even installed we should fail now, loudly.
         assertEquals(installed, listed);
+        int numTries = 0;
+        while (numTries < (maxWaitForCertificateTrustedSec * 10) && (installed != trusted)) {
+            try {
+                Thread.sleep(100);
+                trusted = Arrays.asList(tm.getAcceptedIssuers()).contains(caCert);
+                numTries++;
+            } catch (InterruptedException e) {
+                break;
+            }
+        }
         assertEquals(installed, trusted);
+
+        X509TrustManagerExtensions xtm = new X509TrustManagerExtensions(tm);
+        boolean userAddedCertificate = xtm.isUserAddedCertificate((X509Certificate) caCert);
         assertEquals(installed, userAddedCertificate);
         return installed;
     }

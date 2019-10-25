@@ -784,7 +784,10 @@ class StaticInfo {
                 break;
         }
 
-        ACameraMetadata_getConstEntry(mChars, streamConfigTag, &entry);
+        auto ret = ACameraMetadata_getConstEntry(mChars, streamConfigTag, &entry);
+        if (ret != ACAMERA_OK) {
+            return false;
+        }
         for (uint32_t i = 0; i < entry.count; i += 4) {
             if (entry.data.i32[i] == format &&
                     entry.data.i32[i+3] == streamConfigOutputTag &&

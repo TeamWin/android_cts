@@ -16,6 +16,8 @@
 
 package android.server.wm;
 
+import static android.app.AppOpsManager.MODE_ALLOWED;
+import static android.app.AppOpsManager.MODE_ERRORED;
 import static android.server.wm.ActivityManagerState.STATE_INITIALIZING;
 import static android.server.wm.ActivityManagerState.STATE_RESUMED;
 import static android.server.wm.ComponentNameUtils.getActivityName;
@@ -58,9 +60,10 @@ import android.platform.test.annotations.Presubmit;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.FlakyTest;
 
+import com.android.compatibility.common.util.AppOpsUtils;
+
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -77,6 +80,7 @@ import java.util.List;
 public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
 
     private static final int ACTIVITY_FOCUS_TIMEOUT_MS = 3000;
+    private static final String APP_A_PACKAGE_NAME = APP_A_FOREGROUND_ACTIVITY.getPackageName();
 
     private static final String TEST_PACKAGE_APP_A = "android.server.wm.backgroundactivity.appa";
     private static final String TEST_PACKAGE_APP_B = "android.server.wm.backgroundactivity.appb";
@@ -86,6 +90,11 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         mContext = InstrumentationRegistry.getContext();
         mAm = mContext.getSystemService(ActivityManager.class);
         mAtm = mContext.getSystemService(ActivityTaskManager.class);
+
+        // disable SAW appopp for AppA (it's granted autonatically when installed in CTS)
+        AppOpsUtils.setOpMode(APP_A_PACKAGE_NAME, "android:system_alert_window", MODE_ERRORED);
+        assertEquals(AppOpsUtils.getOpMode(APP_A_PACKAGE_NAME, "android:system_alert_window"),
+                MODE_ERRORED);
 
         pressWakeupButton();
         pressUnlockButton();
@@ -105,6 +114,7 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         stopTestPackage(TEST_PACKAGE_APP_A);
         stopTestPackage(TEST_PACKAGE_APP_B);
         pressHomeButton();
+        AppOpsUtils.reset(APP_A_PACKAGE_NAME);
         mAmWmState.waitForHomeActivityVisible();
         runWithShellPermissionIdentity(() -> {
             runShellCommand("dpm remove-active-admin --user current "
@@ -134,6 +144,21 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         //         assertThat(task.getActivities().size()).isGreaterThan(0);
         //     }
         // }
+    }
+
+    @Test
+    public void testBackgroundActivityNotBlockedWhenSystemAlertWindowGranted() throws Exception {
+        // enable appopp for SAW for this test
+        AppOpsUtils.setOpMode(APP_A_PACKAGE_NAME, "android:system_alert_window", MODE_ALLOWED);
+        assertEquals(AppOpsUtils.getOpMode(APP_A_PACKAGE_NAME, "android:system_alert_window"),
+                MODE_ALLOWED);
+
+        // Start AppA background activity successfully as the package has SAW
+        Intent intent = new Intent();
+        intent.setComponent(APP_A_START_ACTIVITY_RECEIVER);
+        mContext.sendBroadcast(intent);
+        boolean result = waitForActivityFocused(APP_A_BACKGROUND_ACTIVITY);
+        assertTrue("Not able to start foreground activity", result);
     }
 
     @Test
@@ -172,7 +197,6 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
                 APP_A_FOREGROUND_ACTIVITY);
     }
 
-    @Ignore // test temporarily disabled due to bg activity start grace period introduction
     @Test
     public void testActivityNotBlockedwhenForegroundActivityLaunchInSameTask() throws Exception {
         // Start foreground activity, and foreground activity able to launch background activity
@@ -203,7 +227,6 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
                 APP_A_FOREGROUND_ACTIVITY);
     }
 
-    @Ignore // test temporarily disabled due to bg activity start grace period introduction
     @Test
     public void testActivityNotBlockedWhenForegroundActivityLaunchInDifferentTask()
             throws Exception {
@@ -236,7 +259,6 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         assertTaskStack(null, APP_A_BACKGROUND_ACTIVITY);
     }
 
-    @Ignore // test temporarily disabled due to bg activity start grace period introduction
     @Test
     @FlakyTest(bugId = 130800326)
     public void testActivityBlockedWhenForegroundActivityRestartsItself() throws Exception {

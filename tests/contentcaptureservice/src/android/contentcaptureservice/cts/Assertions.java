@@ -226,6 +226,22 @@ final class Assertions {
         assertSessionId(expectedSessionId, expectedView);
     }
 
+    /**
+     * Asserts the contents of a {@link #TYPE_VIEW_TREE_APPEARING} event.
+     */
+    public static void assertViewTreeStarted(@NonNull List<ContentCaptureEvent> events,
+            int index) {
+        assertSessionLevelEvent(events, index, TYPE_VIEW_TREE_APPEARING);
+    }
+
+    /**
+     * Asserts the contents of a {@link #TYPE_VIEW_TREE_APPEARED} event.
+     */
+    public static void assertViewTreeFinished(@NonNull List<ContentCaptureEvent> events,
+            int index) {
+        assertSessionLevelEvent(events, index, TYPE_VIEW_TREE_APPEARED);
+    }
+
     private static void assertSessionLevelEvent(@NonNull List<ContentCaptureEvent> events,
             int index, int expectedType) {
         final ContentCaptureEvent event = getEvent(events, index, expectedType);
