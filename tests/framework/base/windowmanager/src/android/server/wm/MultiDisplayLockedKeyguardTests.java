@@ -75,7 +75,6 @@ public class MultiDisplayLockedKeyguardTests extends MultiDisplayTestBase {
             lockScreenSession.gotoKeyguard();
             waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED,
                     "Expected stopped activity on secondary display ");
-            mAmWmState.assertVisibility(TEST_ACTIVITY, false /* visible */);
 
             // Unlock and check if visibility is back.
             lockScreenSession.unlockDevice();
@@ -106,7 +105,6 @@ public class MultiDisplayLockedKeyguardTests extends MultiDisplayTestBase {
 
             waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED,
                     "Expected stopped activity on private display");
-            mAmWmState.assertVisibility(TEST_ACTIVITY, false /* visible */);
         }
     }
 

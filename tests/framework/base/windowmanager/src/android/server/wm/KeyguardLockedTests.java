@@ -18,6 +18,7 @@ package android.server.wm;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
+import static android.server.wm.ActivityManagerState.STATE_STOPPED;
 import static android.server.wm.UiDeviceUtils.pressBackButton;
 import static android.server.wm.app.Components.DISMISS_KEYGUARD_ACTIVITY;
 import static android.server.wm.app.Components.DISMISS_KEYGUARD_METHOD_ACTIVITY;
@@ -184,7 +185,8 @@ public class KeyguardLockedTests extends KeyguardTestBase {
             pressBackButton();
             assertOnDismissCancelled(DISMISS_KEYGUARD_METHOD_ACTIVITY);
             mAmWmState.computeState(true);
-            mAmWmState.assertVisibility(DISMISS_KEYGUARD_METHOD_ACTIVITY, false);
+            waitAndAssertActivityState(DISMISS_KEYGUARD_METHOD_ACTIVITY, STATE_STOPPED,
+                    "Expected stopped activity ");
             assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
         }
     }
@@ -199,7 +201,8 @@ public class KeyguardLockedTests extends KeyguardTestBase {
             assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
             launchActivity(TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY);
             mAmWmState.waitForKeyguardShowingAndNotOccluded();
-            mAmWmState.assertVisibility(TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY, false);
+            waitAndAssertActivityState(TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY, STATE_STOPPED,
+                    "Expected stopped activity ");
             assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
             assertTrue(isDisplayOn(DEFAULT_DISPLAY));
         }
@@ -262,7 +265,8 @@ public class KeyguardLockedTests extends KeyguardTestBase {
             mAmWmState.computeState(true);
             mAmWmState.assertKeyguardShowingAndOccluded();
             mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
-            mAmWmState.assertVisibility(PIP_ACTIVITY, false);
+            waitAndAssertActivityState(PIP_ACTIVITY, STATE_STOPPED,
+                    "Expected stopped activity ");
         }
     }
 
@@ -285,7 +289,8 @@ public class KeyguardLockedTests extends KeyguardTestBase {
             // though it's marked as showing over the lockscreen itself
             lockScreenSession.gotoKeyguard();
             mAmWmState.assertKeyguardShowingAndNotOccluded();
-            mAmWmState.assertVisibility(PIP_ACTIVITY, false);
+            waitAndAssertActivityState(PIP_ACTIVITY, STATE_STOPPED,
+                    "Expected stopped activity ");
         }
     }
 
@@ -306,7 +311,8 @@ public class KeyguardLockedTests extends KeyguardTestBase {
             lockScreenSession.gotoKeyguard();
             mAmWmState.computeState(true);
             mAmWmState.assertKeyguardShowingAndNotOccluded();
-            mAmWmState.assertVisibility(PIP_ACTIVITY, false);
+            waitAndAssertActivityState(PIP_ACTIVITY, STATE_STOPPED,
+                    "Expected stopped activity ");
         }
     }
 
