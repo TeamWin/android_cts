@@ -35,6 +35,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
 public class SystemUtil {
@@ -166,6 +167,16 @@ public class SystemUtil {
             String extractionEndRegex, boolean endInclusive) {
         return TextUtils.extractSection(runShellCommand(cmd), extractionStartRegex, startInclusive,
                 extractionEndRegex, endInclusive);
+    }
+
+    /**
+     * Runs a {@link ThrowingSupplier} adopting Shell's permissions, and returning the result.
+     */
+    public static <T> T runWithShellPermissionIdentity(@NonNull ThrowingSupplier<T> supplier) {
+        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        AtomicReference<T> result = new AtomicReference<>();
+        runWithShellPermissionIdentity(automan, () -> result.set(supplier.get()));
+        return result.get();
     }
 
     /**
