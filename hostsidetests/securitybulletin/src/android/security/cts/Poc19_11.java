@@ -34,15 +34,6 @@ public class Poc19_11 extends SecurityTestCase {
     }
 
     /**
-     * b/138442295
-     */
-    @SecurityTest(minPatchLevel = "2019-11")
-    public void testPocBug_138442295() throws Exception {
-        int code = AdbUtils.runProxyAutoConfig("bug_138442295", getDevice());
-        assertTrue(code != 139); // 128 + signal 11
-    }
-
-    /**
      * b/139806216
      */
     @SecurityTest(minPatchLevel = "2019-11")
