@@ -1,4 +1,4 @@
-// Copyright (C) 2018 The Android Open Source Project
+// Copyright (C) 2017 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,11 +13,23 @@
 // limitations under the License.
 
 filegroup {
-    name: "cts-wm-components",
-    srcs: ["**/Components.java"],
+    name: "cts-wm-translucent-app",
+    srcs: ["src/**/*.java"],
 }
 
-filegroup {
-    name: "cts-wm-aspect-ratio-test-base",
-    srcs: ["src/android/server/wm/AspectRatioTestsBase.java"],
+android_test {
+    name: "CtsDeviceTranslucentTestApp",
+    defaults: ["cts_support_defaults"],
+
+    static_libs: ["cts-wm-app-base"],
+
+    srcs: [":cts-wm-translucent-app"],
+
+    sdk_version: "test_current",
+
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ],
 }
