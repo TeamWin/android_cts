@@ -33,10 +33,10 @@ public class AdbProvisioningTests extends BaseDevicePolicyTest {
 
     @Override
     public void setUp() throws Exception {
-        super.setUp();
         if (!mHasFeature) {
             return;
         }
+        super.setUp();
         installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
     }
 
