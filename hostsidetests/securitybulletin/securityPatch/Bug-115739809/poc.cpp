@@ -46,7 +46,7 @@ static void sanitizeMessage(const InputMessage& msg, InputMessage* outMsg) {
 
     // Write the body
     switch(msg.header.type) {
-        case InputMessage::TYPE_KEY: {
+        case InputMessage::Type::KEY: {
             // uint32_t seq
             outMsg->body.key.seq = msg.body.key.seq;
             // nsecs_t eventTime
@@ -73,7 +73,7 @@ static void sanitizeMessage(const InputMessage& msg, InputMessage* outMsg) {
             outMsg->body.key.downTime = msg.body.key.downTime;
             break;
         }
-        case InputMessage::TYPE_MOTION: {
+        case InputMessage::Type::MOTION: {
             // uint32_t seq
             outMsg->body.motion.seq = msg.body.motion.seq;
             // nsecs_t eventTime
@@ -131,7 +131,7 @@ static void sanitizeMessage(const InputMessage& msg, InputMessage* outMsg) {
             }
             break;
         }
-        case InputMessage::TYPE_FINISHED: {
+        case InputMessage::Type::FINISHED: {
             outMsg->body.finished.seq = msg.body.finished.seq;
             outMsg->body.finished.handled = msg.body.finished.handled;
             break;
@@ -142,13 +142,13 @@ static void sanitizeMessage(const InputMessage& msg, InputMessage* outMsg) {
 /**
  * Return false if vulnerability is found for a given message type
  */
-static bool checkMessage(sp<InputChannel> server, sp<InputChannel> client, int type) {
+static bool checkMessage(sp<InputChannel> server, sp<InputChannel> client, InputMessage::Type type) {
     InputMessage serverMsg;
     // Set all potentially uninitialized bytes to 1, for easier comparison
 
     memset(&serverMsg, 1, sizeof(serverMsg));
     serverMsg.header.type = type;
-    if (type == InputMessage::TYPE_MOTION) {
+    if (type == InputMessage::Type::MOTION) {
         serverMsg.body.motion.pointerCount = MAX_POINTERS;
     }
     status_t result = server->sendMessage(&serverMsg);
@@ -202,8 +202,12 @@ int main() {
         return 0;
     }
 
-    int types[] = {InputMessage::TYPE_KEY, InputMessage::TYPE_MOTION, InputMessage::TYPE_FINISHED};
-    for (int type : types) {
+    InputMessage::Type types[] = {
+        InputMessage::Type::KEY,
+        InputMessage::Type::MOTION,
+        InputMessage::Type::FINISHED
+    };
+    for (InputMessage::Type type : types) {
         bool success = checkMessage(server, client, type);
         if (!success) {
             ALOGE("Check message failed for type %i", type);

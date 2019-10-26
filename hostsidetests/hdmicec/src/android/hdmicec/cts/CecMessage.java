@@ -17,10 +17,18 @@
 package android.hdmicec.cts;
 
 public enum CecMessage {
+    FEATURE_ABORT("00"),
     TEXT_VIEW_ON("0d"),
+    STANDBY("36"),
     ACTIVE_SOURCE("82"),
     GIVE_PHYSICAL_ADDRESS("83"),
     REPORT_PHYSICAL_ADDRESS("84"),
+    REQUEST_ACTIVE_SOURCE("85"),
+    GET_MENU_LANGUAGE("91"),
+    INACTIVE_SOURCE("9d"),
+    CEC_VERSION("9e"),
+    GET_CEC_VERSION("9f"),
+    ABORT("ff"),
     CLIENT_CONSOLE_READY("waiting for input"),
     QUIT_CLIENT("q"),
     POLL("poll");

@@ -16,26 +16,9 @@
 package android.contentcaptureservice.cts2;
 
 import android.app.Activity;
-import android.util.Log;
-import android.widget.EditText;
-import android.widget.TextView;
 
-public class OutsideOfPackageActivity extends Activity {
-
-    private static final String TAG = OutsideOfPackageActivity.class.getSimpleName();
-
-    TextView mUsernameLabel;
-    EditText mUsername;
-    TextView mPasswordLabel;
-    EditText mPassword;
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-        Log.d(TAG, "AutofillIds: " + "usernameLabel=" + mUsernameLabel.getAutofillId()
-                + ", username=" + mUsername.getAutofillId()
-                + ", passwordLabel=" + mPasswordLabel.getAutofillId()
-                + ", password=" + mPassword.getAutofillId());
-    }
-}
+/**
+ * This activity is used to test temporary Content Capture Service interactions with activities
+ * outside of its own package. It is intentionally empty.
+ */
+public class OutsideOfPackageActivity extends Activity { }

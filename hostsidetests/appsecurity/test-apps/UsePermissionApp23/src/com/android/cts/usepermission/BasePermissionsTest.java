@@ -45,6 +45,7 @@ import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.Direction;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
+import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.support.test.uiautomator.UiScrollable;
 import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
@@ -336,7 +337,7 @@ public abstract class BasePermissionsTest {
         click("com.android.permissioncontroller:id/permission_deny_dont_ask_again_button");
     }
 
-    private void click(String resourceName) throws TimeoutException {
+    private void click(String resourceName) throws TimeoutException, UiObjectNotFoundException {
         waitForIdle();
         waitFindObject(By.res(resourceName)).click();
     }
@@ -361,6 +362,7 @@ public abstract class BasePermissionsTest {
         waitFindObject(By.clazz(ScrollView.class));
         UiScrollable scrollable =
                 new UiScrollable(new UiSelector().className(ScrollView.class));
+        scrollable.setSwipeDeadZonePercentage(0.25);
         if (scrollable.exists()) {
             scrollable.flingToEnd(10);
         }

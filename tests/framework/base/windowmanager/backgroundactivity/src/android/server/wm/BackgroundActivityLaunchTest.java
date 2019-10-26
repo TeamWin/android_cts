@@ -97,7 +97,7 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
      * Tests can be executed as soon as the device has booted. When that happens the broadcast queue
      * is long and it takes some time to process the broadcast we just sent.
      */
-    private static final int BROADCAST_DELIVERY_TIMEOUT_MS = 25000;
+    private static final int BROADCAST_DELIVERY_TIMEOUT_MS = 60000;
 
     @Before
     public void setUp() throws Exception {

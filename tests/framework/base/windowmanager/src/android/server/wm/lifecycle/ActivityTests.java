@@ -55,8 +55,8 @@ import java.util.Arrays;
 @FlakyTest(bugId=137329632)
 public class ActivityTests extends ActivityLifecycleClientTestBase {
     @Test
-    public void testReleaseActivityInstance_visible() {
-        final Activity activity = launchActivity(FirstActivity.class);
+    public void testReleaseActivityInstance_visible() throws Exception {
+        final Activity activity = launchActivityAndWait(FirstActivity.class);
         waitAndAssertActivityStates(state(activity, ON_RESUME));
 
         getLifecycleLog().clear();
@@ -66,10 +66,10 @@ public class ActivityTests extends ActivityLifecycleClientTestBase {
     }
 
     @Test
-    public void testReleaseActivityInstance_invisible() {
+    public void testReleaseActivityInstance_invisible() throws Exception {
         // Launch two activities - second one to cover the first one and make it invisible.
-        final Activity firstActivity = launchActivity(FirstActivity.class);
-        final Activity secondActivity = launchActivity(SecondActivity.class);
+        final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
+        final Activity secondActivity = launchActivityAndWait(SecondActivity.class);
         waitAndAssertActivityStates(state(secondActivity, ON_RESUME),
                 state(firstActivity, ON_STOP));
         // Wait for activity to report saved state to the server.
@@ -98,9 +98,9 @@ public class ActivityTests extends ActivityLifecycleClientTestBase {
     @Test
     public void testFinishTask_FromRoot() throws Exception {
         final Class<? extends Activity> rootActivityClass = CallbackTrackingActivity.class;
-        final Activity rootActivity = launchActivity(rootActivityClass);
+        final Activity rootActivity = launchActivityAndWait(rootActivityClass);
         final Class<? extends Activity> topActivityClass = SecondCallbackTrackingActivity.class;
-        final Activity topActivity = launchActivity(topActivityClass);
+        final Activity topActivity = launchActivityAndWait(topActivityClass);
         waitAndAssertActivityStates(state(rootActivity, ON_STOP),
                 state(topActivity, ON_TOP_POSITION_GAINED));
 
@@ -126,10 +126,10 @@ public class ActivityTests extends ActivityLifecycleClientTestBase {
     @Test
     public void testFinishTask_FromRoot_TranslucentOnTop() throws Exception {
         final Class<? extends Activity> rootActivityClass = CallbackTrackingActivity.class;
-        final Activity rootActivity = launchActivity(rootActivityClass);
+        final Activity rootActivity = launchActivityAndWait(rootActivityClass);
         final Class<? extends Activity> topActivityClass =
                 TranslucentCallbackTrackingActivity.class;
-        final Activity topActivity = launchActivity(topActivityClass);
+        final Activity topActivity = launchActivityAndWait(topActivityClass);
         waitAndAssertActivityStates(state(rootActivity, ON_PAUSE),
                 state(topActivity, ON_TOP_POSITION_GAINED));
 
@@ -155,11 +155,11 @@ public class ActivityTests extends ActivityLifecycleClientTestBase {
     @Test
     public void testFinishTask_NotFromRoot() throws Exception {
         final Class<? extends Activity> rootActivityClass = CallbackTrackingActivity.class;
-        final Activity rootActivity = launchActivity(rootActivityClass);
+        final Activity rootActivity = launchActivityAndWait(rootActivityClass);
         final Class<? extends Activity> midActivityClass = SecondActivity.class;
-        final Activity midActivity = launchActivity(midActivityClass);
+        final Activity midActivity = launchActivityAndWait(midActivityClass);
         final Class<? extends Activity> topActivityClass = SecondCallbackTrackingActivity.class;
-        final Activity topActivity = launchActivity(topActivityClass);
+        final Activity topActivity = launchActivityAndWait(topActivityClass);
         waitAndAssertActivityStates(state(rootActivity, ON_STOP), state(midActivity, ON_STOP),
                 state(topActivity, ON_TOP_POSITION_GAINED));
 
@@ -180,7 +180,7 @@ public class ActivityTests extends ActivityLifecycleClientTestBase {
     @Test
     public void testFinishAfterTransition() throws Exception {
         final TransitionSourceActivity rootActivity =
-                (TransitionSourceActivity) launchActivity(TransitionSourceActivity.class);
+                (TransitionSourceActivity) launchActivityAndWait(TransitionSourceActivity.class);
         waitAndAssertActivityStates(state(rootActivity, ON_RESUME));
 
         // Launch activity with configured shared element transition. It will call
@@ -199,7 +199,7 @@ public class ActivityTests extends ActivityLifecycleClientTestBase {
     @FlakyTest(bugId=137329632)
     @Test
     public void testFinishAfterTransition_noTransition_rootOfTask() throws Exception {
-        final Activity activity = launchActivity(FirstActivity.class);
+        final Activity activity = launchActivityAndWait(FirstActivity.class);
         waitAndAssertActivityStates(state(activity, ON_RESUME));
 
         getLifecycleLog().clear();
@@ -216,8 +216,8 @@ public class ActivityTests extends ActivityLifecycleClientTestBase {
     @FlakyTest(bugId=137329632)
     @Test
     public void testFinishAfterTransition_noTransition() throws Exception {
-        final Activity rootActivity = launchActivity(FirstActivity.class);
-        final Activity topActivity = launchActivity(SecondActivity.class);
+        final Activity rootActivity = launchActivityAndWait(FirstActivity.class);
+        final Activity topActivity = launchActivityAndWait(SecondActivity.class);
         waitAndAssertActivityStates(state(topActivity, ON_RESUME), state(rootActivity, ON_STOP));
 
         getLifecycleLog().clear();
@@ -234,9 +234,9 @@ public class ActivityTests extends ActivityLifecycleClientTestBase {
     @FlakyTest(bugId=137329632)
     @Test
     public void testFinishAffinity() throws Exception {
-        final Activity firstActivity = launchActivity(FirstActivity.class);
-        final Activity secondActivity = launchActivity(SecondActivity.class);
-        final Activity thirdActivity = launchActivity(ThirdActivity.class);
+        final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
+        final Activity secondActivity = launchActivityAndWait(SecondActivity.class);
+        final Activity thirdActivity = launchActivityAndWait(ThirdActivity.class);
         waitAndAssertActivityStates(state(thirdActivity, ON_RESUME), state(secondActivity, ON_STOP),
                 state(firstActivity, ON_STOP));
 
@@ -255,8 +255,9 @@ public class ActivityTests extends ActivityLifecycleClientTestBase {
     @FlakyTest(bugId=137329632)
     @Test
     public void testFinishAffinity_differentAffinity() throws Exception {
-        final Activity firstActivity = launchActivity(FirstActivity.class);
-        final Activity differentAffinityActivity = launchActivity(DifferentAffinityActivity.class);
+        final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
+        final Activity differentAffinityActivity =
+                launchActivityAndWait(DifferentAffinityActivity.class);
         waitAndAssertActivityStates(state(differentAffinityActivity, ON_RESUME),
                 state(firstActivity, ON_STOP));
 
@@ -274,10 +275,11 @@ public class ActivityTests extends ActivityLifecycleClientTestBase {
     @FlakyTest(bugId=137329632)
     @Test
     public void testFinishAffinity_multiTask() throws Exception {
-        final Activity firstActivity = launchActivity(FirstActivity.class);
-        final Intent newTaskIntent = new Intent();
-        newTaskIntent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
-        final Activity secondActivity = mSecondActivityTestRule.launchActivity(newTaskIntent);
+        final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
+        // Launch activity in a new task
+        final Activity secondActivity = new Launcher(SecondActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
+                .launch();
         waitAndAssertActivityStates(state(secondActivity, ON_RESUME),
                 state(firstActivity, ON_STOP));
 

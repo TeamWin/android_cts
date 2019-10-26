@@ -23,8 +23,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     androidx.test.rules \
     compatibility-device-util-axt \
     ctstestrunner-axt \
-    ub-uiautomator \
-    compatibility-device-util-axt \
+    ub-uiautomator
 
 LOCAL_SRC_FILES := $(call all-java-files-under, ../UsePermissionApp26/src)  \
     $(call all-java-files-under, ../UsePermissionApp29/src)  \

@@ -41,8 +41,8 @@ import android.os.UserHandle;
 import android.provider.Telephony;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
-import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
+import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.telecom.TelecomManager;
 import android.util.Pair;
 
@@ -315,7 +315,8 @@ public class RoleManagerTest {
         mActivityRule.getActivity().startActivityToWaitForResult(intent);
     }
 
-    private void respondToRoleRequest(boolean allow) throws InterruptedException, IOException {
+    private void respondToRoleRequest(boolean allow)
+            throws InterruptedException, IOException, UiObjectNotFoundException {
         if (allow) {
             waitFindObject(By.text(APP_PACKAGE_NAME)).click();
         }
@@ -326,7 +327,7 @@ public class RoleManagerTest {
     }
 
     @Nullable
-    private UiObject2 findDontAskAgainCheck(boolean expected) {
+    private UiObject2 findDontAskAgainCheck(boolean expected) throws UiObjectNotFoundException {
         BySelector selector = By.text("Don\u2019t ask again");
         return expected
                 ? waitFindObject(selector, TIMEOUT_MILLIS)
@@ -334,13 +335,13 @@ public class RoleManagerTest {
     }
 
     @Nullable
-    private UiObject2 findDontAskAgainCheck() {
+    private UiObject2 findDontAskAgainCheck() throws UiObjectNotFoundException {
         return findDontAskAgainCheck(true);
     }
 
     @NonNull
     private Pair<Integer, Intent> clickButtonAndWaitForResult(boolean positive) throws IOException,
-            InterruptedException {
+            InterruptedException, UiObjectNotFoundException {
         waitFindObject(By.res(positive ? "android:id/button1" : "android:id/button2")).click();
         return waitForResult();
     }

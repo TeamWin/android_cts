@@ -17,6 +17,7 @@
 package android.location.cts.coarse;
 
 import static android.location.LocationManager.GPS_PROVIDER;
+import static android.location.LocationManager.NETWORK_PROVIDER;
 import static android.location.LocationManager.PASSIVE_PROVIDER;
 
 import static androidx.test.ext.truth.location.LocationSubject.assertThat;
@@ -37,6 +38,7 @@ import android.location.LocationManager;
 import android.location.cts.common.LocationListenerCapture;
 import android.location.cts.common.LocationPendingIntentCapture;
 import android.os.SystemClock;
+import android.util.Log;
 
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -50,18 +52,23 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.Executor;
 
 @RunWith(AndroidJUnit4.class)
 public class LocationManagerCoarseTest {
 
-    public static final String TAG = "LocationManagerCoarseTest";
+    private static final String TAG = "LocationManagerCoarseTest";
 
     private static final long TIMEOUT_MS = 5000;
+
+    // 2000m is the default grid size used by location fudger
+    private static final float MAX_COARSE_FUDGE_DISTANCE_M = 2000f;
 
     private static final String COARSE_TEST_PROVIDER = "coarse_test_provider";
     private static final String FINE_TEST_PROVIDER = "fine_test_provider";
 
+    private Random mRandom;
     private Context mContext;
     private LocationManager mManager;
 
@@ -70,6 +77,10 @@ public class LocationManagerCoarseTest {
         LocationUtils.registerMockLocationProvider(InstrumentationRegistry.getInstrumentation(),
                 true);
 
+        long seed = System.currentTimeMillis();
+        Log.i(TAG, "location random seed: " + seed);
+
+        mRandom = new Random(seed);
         mContext = ApplicationProvider.getApplicationContext();
         mManager = mContext.getSystemService(LocationManager.class);
 
@@ -116,11 +127,11 @@ public class LocationManagerCoarseTest {
 
     @Test
     public void testGetLastKnownLocation() {
-        Location loc = createLocation(COARSE_TEST_PROVIDER, 4, 5);
+        Location loc = createLocation(COARSE_TEST_PROVIDER, mRandom);
         loc.setExtraLocation(Location.EXTRA_NO_GPS_LOCATION, new Location(loc));
 
         mManager.setTestProviderLocation(COARSE_TEST_PROVIDER, loc);
-        assertThat(mManager.getLastKnownLocation(COARSE_TEST_PROVIDER)).isNearby(loc, 1000);
+        assertThat(mManager.getLastKnownLocation(COARSE_TEST_PROVIDER)).isNearby(loc, MAX_COARSE_FUDGE_DISTANCE_M);
 
         try {
             mManager.getLastKnownLocation(FINE_TEST_PROVIDER);
@@ -132,13 +143,13 @@ public class LocationManagerCoarseTest {
 
     @Test
     public void testRequestLocationUpdates() throws Exception {
-        Location loc = createLocation(COARSE_TEST_PROVIDER, 6, 2);
+        Location loc = createLocation(COARSE_TEST_PROVIDER, mRandom);
         loc.setExtraLocation(Location.EXTRA_NO_GPS_LOCATION, new Location(loc));
 
         try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
             mManager.requestLocationUpdates(COARSE_TEST_PROVIDER, 0, 0, directExecutor(), capture);
             mManager.setTestProviderLocation(COARSE_TEST_PROVIDER, loc);
-            assertThat(capture.getNextLocation(TIMEOUT_MS)).isNearby(loc, 1000);
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isNearby(loc, MAX_COARSE_FUDGE_DISTANCE_M);
         }
 
         try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
@@ -151,13 +162,13 @@ public class LocationManagerCoarseTest {
 
     @Test
     public void testRequestLocationUpdates_PendingIntent() throws Exception {
-        Location loc = createLocation(COARSE_TEST_PROVIDER, 6, 4);
+        Location loc = createLocation(COARSE_TEST_PROVIDER, mRandom);
         loc.setExtraLocation(Location.EXTRA_NO_GPS_LOCATION, new Location(loc));
 
         try (LocationPendingIntentCapture capture = new LocationPendingIntentCapture(mContext)) {
             mManager.requestLocationUpdates(COARSE_TEST_PROVIDER, 0, 0, capture.getPendingIntent());
             mManager.setTestProviderLocation(COARSE_TEST_PROVIDER, loc);
-            assertThat(capture.getNextLocation(TIMEOUT_MS)).isNearby(loc, 1000);
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isNearby(loc, MAX_COARSE_FUDGE_DISTANCE_M);
         }
 
         try (LocationPendingIntentCapture capture = new LocationPendingIntentCapture(mContext)) {
@@ -179,7 +190,21 @@ public class LocationManagerCoarseTest {
 
     @Test
     public void testGetBestProvider() {
+        // prevent network provider from matching
+        mManager.addTestProvider(NETWORK_PROVIDER,
+                true,
+                false,
+                true,
+                false,
+                false,
+                false,
+                false,
+                Criteria.POWER_HIGH,
+                Criteria.ACCURACY_COARSE);
+
         Criteria criteria = new Criteria();
+        criteria.setAccuracy(Criteria.ACCURACY_COARSE);
+        criteria.setPowerRequirement(Criteria.POWER_MEDIUM);
 
         String bestProvider = mManager.getBestProvider(criteria, false);
         assertEquals(COARSE_TEST_PROVIDER, bestProvider);
