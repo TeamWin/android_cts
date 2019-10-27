@@ -53,7 +53,9 @@
     <string name="test_results_clear_cancel">Cancel</string>
     <string name="test_results_cleared">Test results cleared.</string>
     <string name="view">View</string>
-    <string name="test_results_error">Couldn\'t create test results report.</string>
+    <string name="test_results_error">Couldn\'t create test results report. Try running the
+        following command if you haven\'t yet.\n\"adb shell appops set com.android.cts.verifier
+        android:read_device_identifiers allow\" </string>
     <string name="runtime_permissions_error">Please grant runtime permissions, otherwise, tests might fail.</string>
     <string name="export">Export</string>
     <string name="no_storage">Cannot save report to external storage, see log for details.</string>
@@ -2798,7 +2800,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Please press the Go button to open the Settings page.
         (If this device has a separate app for work settings, ignore the Go button and navigate to that app manually).\n
         \n
-        Navigate to \"Data usage\" page and then into the \"Wi-Fi data usage\" category.\n
+        Navigate to the \"Network &amp; Internet\" page and then click on \"Wi-Fi\" and then \"Wi-Fi data usage\".\n
         Confirm that \"All work apps\" section is present and that it is possible to see the data usage for work (badged) apps.\n
         (If the section is not present, this might be because work apps have not used Wi-Fi data yet. Ensure that you have used Wi-Fi data on a work app, then repeat these instructions.)\n
         \n
@@ -2814,7 +2816,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Please press the Go button to open the Settings page.
         (If this device has a separate app for work settings, ignore the Go button and navigate to that app manually).\n
         \n
-        Navigate to \"Data usage\" page and then into the \"Mobile data usage\" category.\n
+        Navigate to the \"Network &amp; Internet\" page and then click on \"Mobile network\" and then \"App data usage\".\n
         Confirm that \"All work apps\" section is present and that it is possible to see the data usage for work (badged) apps.\n
         \n
         Then use the Back button (or navigate back to this app using Recents) to return to this test and mark accordingly.
@@ -3711,7 +3713,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Check that \'Dummy Input method\', along with all other non-system apps, are not enabled in Settings for the managed profile (they may be enabled for the primary profile). Then disallow \'Dummy Input method\' from permitted input methods by turning on the switch below.
     </string>
     <string name="set_permitted_input_methods_action">
-        Enabling \'Dummy Input method\' in the list of input methods
+        Enabling \'Dummy Input method\' in the list of input methods (make sure you are enabling it for the managed profile, not primary profile)
     </string>
     <string name="set_permitted_input_methods_widget_label">
         Allow only system input methods:
@@ -4422,6 +4424,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <!--  Pro Audio Tests -->
     <string name="pro_audio_latency_test">Pro Audio Test</string>
 
+    <string name="proAudioHasProAudiolbl">Has Pro Audio</string>
     <string name="proAudioHasLLAlbl">Has Low-Latency Audio</string>
     <string name="proAudioInputLbl">Audio Input:</string>
     <string name="proAudioOutputLbl">Audio Output:</string>
@@ -4441,6 +4444,10 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_proaudio_roundtrip">Round-Trip Test</string>
     <string name="audio_proaudio_NA">N/A</string>
     <string name="audio_proaudio_pending">pending...</string>
+
+    <string name="audio_proaudio_nopa_title">Pro Audio Test</string>
+    <string name="audio_proaudio_nopa_message">This device does not set the FEATURE_AUDIO_PRO
+        flag and therefore does not need to run this test.</string>
 
     <!--  MIDI Test -->
     <string name="midi_test">MIDI Test</string>
@@ -4617,6 +4624,46 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="unprocessed_test_usb_noise_result">Results...</string>
 
     <string name="unprocessed_test_global_result">Global Results...</string>
+
+    <!-- Audio Frequency Voice_Recognition Test -->
+    <string name="audio_frequency_voice_recognition_test">Audio Frequency Voice Recognition Test</string>
+    <string name="audio_frequency_voice_recognition_info">
+        This test requires an external USB reference microphone, external speakers and a Sound Pressure Level meter.
+        You can play the test signals from the device under test or from a secondary device.
+        Follow the instructions on the screen to measure the frequency response for the built in microphone
+        using VOICE_RECOGNITION audio source.
+    </string>
+    <string name="vr_test_tone_instructions">TEST TONE: Press [PLAY] to play tone at 1 Khz. Measure sound to be 90 dB SPL right next to microphone under test. Press [TEST]</string>
+    <string name="vr_test_noise_instructions">TEST NOISE: Position speakers 40 cms from device under test.
+        Press [PLAY] to play broadband white noise. Press [TEST]</string>
+    <string name="vr_test_usb_background_instructions">TEST USB BACKGROUND: Connect USB microphone and position it right next to microphone under test.
+        No source of noise should be active during this test. Press [TEST]</string>
+    <string name="vr_test_usb_noise_instructions">TEST USB NOISE: Connect USB microphone and position it right next to microphone under test.
+        Position speakers 40 cms from device under test. Press [PLAY] to play broadband white noise. Press [TEST]</string>
+
+
+    <!-- Audio AEC Test -->
+    <string name="audio_aec_test">Audio Acoustic Echo Cancellation (AEC) Test</string>
+    <string name="audio_aec_info">
+        The recording source VOICE_COMMUNICATION will be tested with/without the Acoustic Echo Canceller effect engaged.
+        The Acoustic Coupling Factor (ACF) will be computed for each case. A successful test expects ACF less than 0.4 for AEC ON,
+        and ACF greater than 0.6 for AEC OFF.
+        This test requires a quiet environment, and no headphones or similar connected.
+        This test must pass in devices where AEC functionality is mandatory or any device which implements AEC.
+    </string>
+    <string name="audio_aec_instructions">Press [TEST] to play a voice recording twice with different parameters.</string>
+    <string name="audio_aec_mandatory_test">Is AEC mandatory in this device?</string>
+
+    <!--Audio Frequency Global strings -->
+    <string name="af_button_play">Play</string>
+    <string name="af_button_stop">Stop</string>
+
+    <string name="af_button_test">Test</string>
+    <string name="af_test_results">Results...</string>
+    <string name="af_global_test_results">Global Results...</string>
+    <string name="af_no">No</string>
+    <string name="af_yes">Yes</string>
+
 
     <!-- Strings for 6DoF test -->
     <string name="six_dof_test">6DoF Test</string>
@@ -5056,10 +5103,10 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="bubbles_notification_test_verify_9">Click the button below and verify that a bubble
         appears on screen, auto-expanded.</string>
     <string name="bubbles_notification_test_button_9">Send auto-expanded bubble notification</string>
+    <string name="bubbles_notification_no_bubbles_low_mem">No bubbles on low memory device; no tests to run</string>
     <string name="bubbles_test_summary_title">Test Complete</string>
     <string name="bubbles_test_summary">%1$d out of %2$d tests passed</string>
     <string name="bubble_activity_title">Bubble Activity</string>
-
     <!-- Strings for Instant Apps -->
     <string name="ia_instruction_heading_label">Instructions:</string>
     <string name="ia_instruction_text_photo_label">READ BEFORE STARTING TEST</string>
@@ -5080,9 +5127,16 @@ Follow the instructions on the screen to measure the frequency response for the 
     1. Click Start Test. \n\n
     2. An alert dialog with install instruction will be shown if the sample Instant App has not been installed, otherwise, the sample Instant App will be opened automatically. \n\n
     3. Drag down the notification bar when the sample Instant App is at foreground. \n\n
+    4. Skip this step in china version. \n\n
+    5. Click Pass button if all checks in step 4 passed, otherwise click Fail button.
+    </string>
+    <string name="ia_notification_instruction_label_no_app_market_version">\n
+    1. Click Start Test. \n\n
+    2. An alert dialog with install instruction will be shown if the sample Instant App has not been installed, otherwise, the sample Instant App will be opened automatically. \n\n
+    3. Drag down the notification bar when the sample Instant App is at foreground. \n\n
     4. Check if Instant App is shown in notification area with the following (Please expand the notification if it is collapsed): \n
     \u0020\u0020\u0020a. It provides information about Instant Apps not requiring installation and an action that provides more information about the Instant App. \n
-    \u0020\u0020\u0020b. It provides an action allowing the user to launch the associated link with web browser. \n\n
+    \u0020\u0020\u0020b. Skip this step in china version.Can not launch the associated link with web browser. \n\n
     5. Click Pass button if all checks in step 4 passed, otherwise click Fail button.
     </string>
     <string name="ia_recents">Instant Apps Recents Test</string>

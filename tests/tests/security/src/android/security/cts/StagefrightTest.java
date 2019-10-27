@@ -558,6 +558,14 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.bug_32873375);
     }
 
+    @SecurityTest(minPatchLevel = "2018-02")
+    public void testStagefright_bug_63522067() throws Exception {
+        doStagefrightTestRawBlob(R.raw.bug_63522067_1_hevc, "video/hevc", 320, 420);
+        doStagefrightTestRawBlob(R.raw.bug_63522067_2_hevc, "video/hevc", 320, 420);
+        doStagefrightTestRawBlob(R.raw.bug_63522067_3_hevc, "video/hevc", 320, 420);
+        doStagefrightTestRawBlob(R.raw.bug_63522067_4_hevc, "video/hevc", 320, 420);
+    }
+
     @SecurityTest(minPatchLevel = "2016-03")
     public void testStagefright_bug_25765591() throws Exception {
         doStagefrightTest(R.raw.bug_25765591);
@@ -806,10 +814,50 @@ public class StagefrightTest extends InstrumentationTestCase {
      before any existing test methods
      ***********************************************************/
 
+    @SecurityTest(minPatchLevel = "2017-07")
+    public void testStagefright_bug_36279112() throws Exception {
+        doStagefrightTest(R.raw.bug_36279112);
+    }
+
+    @SecurityTest(minPatchLevel = "2017-06")
+    public void testStagefright_cve_2017_0640() throws Exception {
+        int[] frameSizes = {21, 4};
+        doStagefrightTestRawBlob(R.raw.cve_2017_0640_avc, "video/avc", 640, 480,
+                frameSizes);
+    }
+
+    @SecurityTest(minPatchLevel = "2017-08")
+    public void testBug_37203196() throws Exception {
+        int[] frameSizes = getFrameSizes(R.raw.bug_37203196_framelen);
+        doStagefrightTestRawBlob(R.raw.bug_37203196_mpeg2, "video/mpeg2", 48, 48, frameSizes);
+    }
+
     @SecurityTest(minPatchLevel = "2018-06")
     public void testBug_73552574() throws Exception {
         int[] frameSizes = getFrameSizes(R.raw.bug_73552574_framelen);
         doStagefrightTestRawBlob(R.raw.bug_73552574_avc, "video/avc", 320, 240, frameSizes);
+    }
+
+    @SecurityTest(minPatchLevel = "2015-09")
+    public void testStagefright_bug_23285192() throws Exception {
+        doStagefrightTest(R.raw.bug_23285192);
+    }
+
+    @SecurityTest(minPatchLevel = "2016-03")
+    public void testStagefright_bug_25928803() throws Exception {
+        doStagefrightTest(R.raw.bug_25928803);
+    }
+
+    @SecurityTest(minPatchLevel = "2016-04")
+    public void testBug_26399350() throws Exception {
+        int[] frameSizes = {657, 54930};
+        doStagefrightTestRawBlob(R.raw.bug_26399350_avc, "video/avc", 640, 480,
+                frameSizes);
+    }
+
+    @SecurityTest(minPatchLevel = "2018-12")
+    public void testBug_113260892() throws Exception {
+        doStagefrightTestRawBlob(R.raw.bug_113260892_hevc, "video/hevc", 320, 240);
     }
 
     @SecurityTest(minPatchLevel = "2018-02")
@@ -946,6 +994,11 @@ public class StagefrightTest extends InstrumentationTestCase {
      to prevent merge conflicts, add O tests below this comment,
      before any existing test methods
      ***********************************************************/
+
+    @SecurityTest(minPatchLevel = "2018-09")
+    public void testStagefright_cve_2018_11287() throws Exception {
+        doStagefrightTest(R.raw.cve_2018_11287, 180000);
+    }
 
     @SecurityTest(minPatchLevel = "2018-03")
     public void testStagefright_cve_2017_17773() throws Exception {

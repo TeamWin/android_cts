@@ -191,6 +191,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                 Size previewSize= findCommonPreviewSize(id, dualPhysicalCameraIds);
                 if (previewSize == null) {
                     Log.i(TAG, "Camera " + id + ": No matching physical preview streams, skipping");
+                    continue;
                 }
 
                 testBasicPhysicalStreamingForCamera(

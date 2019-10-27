@@ -50,14 +50,16 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     public static final String DEVICE_ADMIN_PKG = "com.android.cts.deviceandprofileowner";
     public static final String DEVICE_ADMIN_APK = "CtsDeviceAndProfileOwnerApp.apk";
-    public static final String ADMIN_RECEIVER_TEST_CLASS
+    protected static final String ADMIN_RECEIVER_TEST_CLASS
             = ".BaseDeviceAdminTest$BasicAdminReceiver";
+    protected static final String DEVICE_ADMIN_COMPONENT_FLATTENED =
+            DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS;
 
     private static final String STORAGE_ENCRYPTION_TEST_CLASS = ".StorageEncryptionTest";
     private static final String IS_PRIMARY_USER_PARAM = "isPrimaryUser";
 
-    private static final String INTENT_RECEIVER_PKG = "com.android.cts.intent.receiver";
-    private static final String INTENT_RECEIVER_APK = "CtsIntentReceiverApp.apk";
+    protected static final String INTENT_RECEIVER_PKG = "com.android.cts.intent.receiver";
+    protected static final String INTENT_RECEIVER_APK = "CtsIntentReceiverApp.apk";
 
     private static final String INTENT_SENDER_PKG = "com.android.cts.intent.sender";
     private static final String INTENT_SENDER_APK = "CtsIntentSenderApp.apk";
@@ -1054,6 +1056,111 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
                     .setBoolean(false)
                     .build());
+    }
+
+    public void testLockTask() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        try {
+            installAppAsUser(INTENT_RECEIVER_APK, mUserId);
+            executeDeviceTestClass(".LockTaskTest");
+            assertMetricsLogged(
+                    getDevice(),
+                    () -> executeDeviceTestMethod(".LockTaskTest", "testStartLockTask"),
+                    new DevicePolicyEventWrapper.Builder(EventId.SET_LOCKTASK_MODE_ENABLED_VALUE)
+                            .setAdminPackageName(DEVICE_ADMIN_PKG)
+                            .setBoolean(true)
+                            .setStrings(DEVICE_ADMIN_PKG)
+                            .build());
+        } catch (AssertionError ex) {
+            // STOPSHIP(b/32771855), remove this once we fixed the bug.
+            executeShellCommand("dumpsys activity activities");
+            executeShellCommand("dumpsys window -a");
+            executeShellCommand("dumpsys activity service com.android.systemui");
+            throw ex;
+        } finally {
+            getDevice().uninstallPackage(INTENT_RECEIVER_PKG);
+        }
+    }
+
+    public void testLockTaskAfterReboot() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        try {
+            // Just start kiosk mode
+            executeDeviceTestMethod(".LockTaskHostDrivenTest", "startLockTask");
+
+            // Reboot while in kiosk mode and then unlock the device
+            rebootAndWaitUntilReady();
+
+            // Check that kiosk mode is working and can't be interrupted
+            executeDeviceTestMethod(".LockTaskHostDrivenTest",
+                    "testLockTaskIsActiveAndCantBeInterrupted");
+        } finally {
+            executeDeviceTestMethod(".LockTaskHostDrivenTest", "cleanupLockTask");
+        }
+    }
+
+    public void testLockTaskAfterReboot_tryOpeningSettings() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        try {
+            // Just start kiosk mode
+            executeDeviceTestMethod(".LockTaskHostDrivenTest", "startLockTask");
+
+            // Reboot while in kiosk mode and then unlock the device
+            rebootAndWaitUntilReady();
+
+            // Try to open settings via adb
+            executeShellCommand("am start -a android.settings.SETTINGS");
+
+            // Check again
+            executeDeviceTestMethod(".LockTaskHostDrivenTest",
+                    "testLockTaskIsActiveAndCantBeInterrupted");
+        } finally {
+            executeDeviceTestMethod(".LockTaskHostDrivenTest", "cleanupLockTask");
+        }
+    }
+
+    public void testLockTask_defaultDialer() throws Exception {
+        if (!mHasFeature || !mHasTelephony) {
+            return;
+        }
+        try {
+            executeDeviceTestMethod(".LockTaskHostDrivenTest",
+                    "testLockTaskCanLaunchDefaultDialer");
+        } finally {
+            executeDeviceTestMethod(".LockTaskHostDrivenTest", "cleanupLockTask");
+        }
+    }
+
+    public void testLockTask_emergencyDialer() throws Exception {
+        if (!mHasFeature || !mHasTelephony) {
+            return;
+        }
+        try {
+            executeDeviceTestMethod(".LockTaskHostDrivenTest",
+                    "testLockTaskCanLaunchEmergencyDialer");
+        } finally {
+            executeDeviceTestMethod(".LockTaskHostDrivenTest", "cleanupLockTask");
+        }
+    }
+
+    public void testLockTask_exitIfNoLongerWhitelisted() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        try {
+            executeDeviceTestMethod(".LockTaskHostDrivenTest",
+                    "testLockTaskIsExitedIfNotWhitelisted");
+        } finally {
+            executeDeviceTestMethod(".LockTaskHostDrivenTest", "cleanupLockTask");
+        }
     }
 
     public void testSuspendPackage() throws Exception {

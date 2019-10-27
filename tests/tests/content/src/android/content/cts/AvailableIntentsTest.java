@@ -37,6 +37,7 @@ import android.provider.Telephony;
 import android.telecom.TelecomManager;
 import android.test.AndroidTestCase;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.FeatureUtil;
 
 import java.util.List;
@@ -418,6 +419,7 @@ public class AvailableIntentsTest extends AndroidTestCase {
         }
     }
 
+    @CddTest(requirement = "7.4.2.6/C-1-1")
     public void testEasyConnectIntent() {
         WifiManager manager = mContext.getSystemService(WifiManager.class);
 

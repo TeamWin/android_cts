@@ -22,7 +22,6 @@ java_library_static {
     ],
 
     static_libs: [
-        "androidx.test.rules",
         "compatibility-common-util-devicesidelib",
         "android-support-test",
         "ub-uiautomator",

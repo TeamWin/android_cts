@@ -229,7 +229,9 @@ public class MediaStore_Images_MediaTest {
         cleanExternalMediaFile(externalPath2);
 
         int numBytes = 1337;
-        FileUtils.createFile(new File(externalPath), numBytes);
+        File file = new File(externalPath);
+        FileUtils.createFile(file, numBytes);
+        ProviderTestUtils.waitUntilExists(file);
 
         ContentValues values = new ContentValues();
         values.put(Media.ORIENTATION, 0);
@@ -281,7 +283,7 @@ public class MediaStore_Images_MediaTest {
         } finally {
             // delete
             assertEquals(1, mContentResolver.delete(uri, null, null));
-            new File(externalPath).delete();
+            file.delete();
         }
     }
 
@@ -342,8 +344,9 @@ public class MediaStore_Images_MediaTest {
         }
 
         // Now remove ownership, which means that Exif/XMP location data should be redacted
-        ProviderTestUtils.executeShellCommand(
-                "content update --uri " + publishUri + " --bind owner_package_name:n:",
+        ProviderTestUtils.executeShellCommand("content update"
+                + " --user " + InstrumentationRegistry.getTargetContext().getUserId()
+                + " --uri " + publishUri + " --bind owner_package_name:n:",
                 InstrumentationRegistry.getInstrumentation().getUiAutomation());
         try (InputStream is = mContentResolver.openInputStream(publishUri)) {
             final ExifInterface exif = new ExifInterface(is);
@@ -405,8 +408,9 @@ public class MediaStore_Images_MediaTest {
     @Test
     public void testCanonicalize() throws Exception {
         // Remove all audio left over from other tests
-        ProviderTestUtils.executeShellCommand(
-                "content delete --uri " + mExternalImages,
+        ProviderTestUtils.executeShellCommand("content delete"
+                + " --user " + InstrumentationRegistry.getTargetContext().getUserId()
+                + " --uri " + mExternalImages,
                 InstrumentationRegistry.getInstrumentation().getUiAutomation());
 
         // Publish some content

@@ -46,6 +46,7 @@ public class ProAudioActivity
     private static final boolean DEBUG = false;
 
     // Flags
+    private boolean mClaimsProAudio;
     private boolean mClaimsLowLatencyAudio;    // CDD ProAudio section C-1-1
     private boolean mClaimsMIDI;               // CDD ProAudio section C-1-4
     private boolean mClaimsUSBHostMode;        // CDD ProAudio section C-1-3
@@ -75,8 +76,17 @@ public class ProAudioActivity
 
     CheckBox mClaimsHDMICheckBox;
 
+    // Borrowed from PassFailButtons.java
+    private static final int INFO_DIALOG_ID = 1337;
+    private static final String INFO_DIALOG_TITLE_ID = "infoDialogTitleId";
+    private static final String INFO_DIALOG_MESSAGE_ID = "infoDialogMessageId";
+
     public ProAudioActivity() {
         super();
+    }
+
+    private boolean claimsProAudio() {
+        return getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUDIO_PRO);
     }
 
     private boolean claimsLowLatencyAudio() {
@@ -158,13 +168,13 @@ public class ProAudioActivity
     }
 
     private void calculatePass() {
-        boolean hasPassed =
-                mClaimsLowLatencyAudio && mClaimsMIDI &&
+        boolean hasPassed = !mClaimsProAudio ||
+                (mClaimsLowLatencyAudio && mClaimsMIDI &&
                 mClaimsUSBHostMode && mClaimsUSBPeripheralMode &&
                 (!mClaimsHDMI || isHDMIValid()) &&
                 mOutputDevInfo != null && mInputDevInfo != null &&
                 mRoundTripLatency != 0.0 && mRoundTripLatency <= LATENCY_MS_LIMIT &&
-                mRoundTripConfidence >= CONFIDENCE_LIMIT;
+                mRoundTripConfidence >= CONFIDENCE_LIMIT);
         getPassButton().setEnabled(hasPassed);
     }
 
@@ -260,6 +270,16 @@ public class ProAudioActivity
 
         setPassFailButtonClickListeners();
         setInfoResources(R.string.proaudio_test, R.string.proaudio_info, -1);
+
+        mClaimsProAudio = claimsProAudio();
+        ((TextView)findViewById(R.id.proAudioHasProAudioLbl)).setText("" + mClaimsProAudio);
+
+        if (!mClaimsProAudio) {
+            Bundle args = new Bundle();
+            args.putInt(INFO_DIALOG_TITLE_ID, R.string.pro_audio_latency_test);
+            args.putInt(INFO_DIALOG_MESSAGE_ID, R.string.audio_proaudio_nopa_message);
+            showDialog(INFO_DIALOG_ID, args);
+        }
 
         mClaimsLowLatencyAudio = claimsLowLatencyAudio();
         ((TextView)findViewById(R.id.proAudioHasLLALbl)).setText("" + mClaimsLowLatencyAudio);

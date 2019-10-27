@@ -29,6 +29,7 @@ import static com.android.cts.verifier.net.MultiNetworkConnectivityTestActivity.
 import static com.android.cts.verifier.net.MultiNetworkConnectivityTestActivity.ValidatorState
         .WAITING_FOR_USER_INPUT;
 
+import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -64,6 +65,8 @@ import android.widget.TextView;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -136,8 +139,8 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
 
                 @Override
                 public void testCompleted(MultiNetworkValidator validator) {
-                    if (validator == mMultiNetworkValidators[mMultiNetworkValidators.length
-                            - 1]) {
+                    if (validator == mMultiNetworkValidators.get(mMultiNetworkValidators.size()
+                            - 1)) {
                         // Done all tests.
                         boolean passed = true;
                         for (MultiNetworkValidator multiNetworkValidator :
@@ -148,9 +151,9 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
                     } else if (!validator.mTestResult) {
                         setTestResultAndFinish(false);
                     } else {
-                        for (int i = 0; i < mMultiNetworkValidators.length; i++) {
-                            if (mMultiNetworkValidators[i] == validator) {
-                                mCurrentValidator = mMultiNetworkValidators[i + 1];
+                        for (int i = 0; i < mMultiNetworkValidators.size(); i++) {
+                            if (mMultiNetworkValidators.get(i) == validator) {
+                                mCurrentValidator = mMultiNetworkValidators.get(i + 1);
                                 mTestNameView.setText(mCurrentValidator.mTestDescription);
                                 mCurrentValidator.startTest();
                                 break;
@@ -159,14 +162,7 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
                     }
                 }
             };
-    private final MultiNetworkValidator[] mMultiNetworkValidators = {
-            new ConnectToWifiWithNoInternetValidator(
-                    R.string.multinetwork_connectivity_test_1_desc),
-            new LegacyConnectToWifiWithNoInternetValidator(
-                    R.string.multinetwork_connectivity_test_2_desc),
-            new LegacyConnectToWifiWithIntermittentInternetValidator(
-                    R.string.multinetwork_connectivity_test_3_desc)
-    };
+    private List<MultiNetworkValidator> mMultiNetworkValidators = Collections.emptyList();
     private final Runnable mTimeToCompletionRunnable = new Runnable() {
         @Override
         public void run() {
@@ -200,6 +196,8 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
         super.onCreate(savedInstanceState);
         mConnectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        mMultiNetworkValidators = createMultiNetworkValidators();
+
         recordCurrentWifiState();
         setupUserInterface();
         setupBroadcastReceivers();
@@ -228,6 +226,26 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
         }
     }
 
+    private List<MultiNetworkValidator> createMultiNetworkValidators() {
+        MultiNetworkValidator[] allValidators = {
+            new ConnectToWifiWithNoInternetValidator(
+                    R.string.multinetwork_connectivity_test_1_desc),
+            new LegacyConnectToWifiWithNoInternetValidator(
+                    R.string.multinetwork_connectivity_test_2_desc),
+            new LegacyConnectToWifiWithIntermittentInternetValidator(
+                    R.string.multinetwork_connectivity_test_3_desc)
+        };
+
+        List<MultiNetworkValidator> result = new ArrayList<>();
+        boolean isLowRamDevice = isLowRamDevice();
+        for (MultiNetworkValidator validator : allValidators) {
+          if (!isLowRamDevice || validator.shouldRunOnLowRamDevice()) {
+            result.add(validator);
+          }
+        }
+        return result;
+    }
+
     private void restoreOriginalWifiState() {
         if (mRecordedWifiConfiguration >= 0) {
             mWifiManager.enableNetwork(mRecordedWifiConfiguration, true);
@@ -235,6 +253,11 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
     }
 
     private boolean requestSystemAlertWindowPerimissionIfRequired() {
+        if (isLowRamDevice()) {
+          // For low ram devices, we won't run tests that depend on this permission.
+          return true;
+        }
+
         boolean hadPermission = false;
         if (!Settings.canDrawOverlays(this)) {
             AlertDialog alertDialog = new AlertDialog.Builder(this)
@@ -360,11 +383,11 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
             return;
         }
 
-        for (int i = 0; i < mMultiNetworkValidators.length; i++) {
-            if (mMultiNetworkValidators[i].mValidatorState != COMPLETED) {
-                mCurrentValidator = mMultiNetworkValidators[i];
-                break;
-            }
+        for (MultiNetworkValidator multiNetworkValidator : mMultiNetworkValidators) {
+          if (multiNetworkValidator.mValidatorState != COMPLETED) {
+            mCurrentValidator = multiNetworkValidator;
+            break;
+          }
         }
         if (mCurrentValidator != null) {
             mTestNameView.setText(mCurrentValidator.mTestDescription);
@@ -393,7 +416,7 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
             mStartButton.setText(R.string.multinetwork_connectivity_test_rerun);
             mStartButton.setEnabled(true);
             rerunMultinetworkTests();
-            mCurrentValidator = mMultiNetworkValidators[0];
+            mCurrentValidator = mMultiNetworkValidators.get(0);
         }
     }
 
@@ -477,6 +500,12 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
     private void stopTimerCountdownDisplay() {
         mMainHandler.removeCallbacks(mTimeToCompletionRunnable);
         mStartButton.setText("--");
+    }
+
+    private boolean isLowRamDevice() {
+        ActivityManager activityManager =
+            (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        return activityManager.isLowRamDevice();
     }
 
     /**
@@ -613,6 +642,7 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
         final String mTestName;
         final MultinetworkTestCallback mTestCallback;
         final TestConnectivityState mConnectivityState;
+        final boolean mRunTestOnLowMemoryDevices;
 
         int mTestDescription;
         boolean mTestResult = false;
@@ -621,12 +651,15 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
         int mTestProgressMessage;
 
         MultiNetworkValidator(MultinetworkTestCallback testCallback,
-                String testName, int testDescription) {
+                String testName,
+                int testDescription,
+                boolean runTestOnLowMemoryDevices) {
             mTestCallback = testCallback;
             mTestName = testName;
             mTestDescription = testDescription;
             mConnectivityState = new TestConnectivityState(this);
             mValidatorState = NOT_STARTED;
+            mRunTestOnLowMemoryDevices = runTestOnLowMemoryDevices;
         }
 
         /** Start test if not started. */
@@ -717,6 +750,10 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
         void onWifiNetworkUnavailable() {
             endTest(false, R.string.multinetwork_status_wifi_connect_timed_out);
         }
+
+        boolean shouldRunOnLowRamDevice() {
+          return mRunTestOnLowMemoryDevices;
+        }
     }
 
     /**
@@ -726,7 +763,10 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
     private class LegacyConnectToWifiWithNoInternetValidator extends MultiNetworkValidator {
 
         LegacyConnectToWifiWithNoInternetValidator(int description) {
-            super(mMultinetworkTestCallback, "legacy_no_internet_test", description);
+            super(mMultinetworkTestCallback,
+                "legacy_no_internet_test",
+                description,
+                /* runTestOnLowMemoryDevices = */ false);
         }
 
 
@@ -788,7 +828,10 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
         Network mWifiNetwork;
 
         LegacyConnectToWifiWithIntermittentInternetValidator(int description) {
-            super(mMultinetworkTestCallback, "legcay_no_internet_test", description);
+            super(mMultinetworkTestCallback,
+                "legacy_no_internet_test",
+                description,
+                /* runTestOnLowMemoryDevices = */ false);
         }
 
         @Override
@@ -900,7 +943,10 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
     private class ConnectToWifiWithNoInternetValidator extends MultiNetworkValidator {
 
         ConnectToWifiWithNoInternetValidator(int description) {
-            super(mMultinetworkTestCallback, "no_internet_test", description);
+            super(mMultinetworkTestCallback,
+                "no_internet_test",
+                description,
+                /* runTestOnLowMemoryDevices = */ true);
         }
 
 

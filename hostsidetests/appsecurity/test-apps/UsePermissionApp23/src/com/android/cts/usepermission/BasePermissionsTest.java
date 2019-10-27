@@ -408,10 +408,10 @@ public abstract class BasePermissionsTest {
             long start = System.currentTimeMillis();
             while (permissionView == null && start + RETRY_TIMEOUT > System.currentTimeMillis()) {
                 permissionView = getUiDevice().wait(Until.findObject(By.text(permissionLabel)),
-                        GLOBAL_TIMEOUT_MILLIS);
+                        IDLE_TIMEOUT_MILLIS);
 
                 if (permissionView == null) {
-                    getUiDevice().findObject(By.res("android:id/list_container"))
+                    getUiDevice().findObject(By.scrollable(true))
                             .scroll(Direction.DOWN, 1);
                 }
             }

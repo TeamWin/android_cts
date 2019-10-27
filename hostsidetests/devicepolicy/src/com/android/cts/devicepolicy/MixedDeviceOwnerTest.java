@@ -16,16 +16,11 @@
 
 package com.android.cts.devicepolicy;
 
-import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
-
 import android.stats.devicepolicy.EventId;
 
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 
-import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,10 +41,9 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
             mUserId = mPrimaryUserId;
 
             installAppAsUser(DEVICE_ADMIN_APK, mUserId);
-            if (!setDeviceOwner(
-                    DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId,
-                    /*expectFailure*/ false)) {
-                removeAdmin(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId);
+            if (!setDeviceOwner(DEVICE_ADMIN_COMPONENT_FLATTENED, mUserId, /*expectFailure*/
+                    false)) {
+                removeAdmin(DEVICE_ADMIN_COMPONENT_FLATTENED, mUserId);
                 getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
                 fail("Failed to set device owner");
             }
@@ -60,9 +54,37 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     protected void tearDown() throws Exception {
         if (mHasFeature) {
             assertTrue("Failed to remove device owner",
-                    removeAdmin(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId));
+                    removeAdmin(DEVICE_ADMIN_COMPONENT_FLATTENED, mUserId));
         }
         super.tearDown();
+    }
+
+    public void testLockTask_unaffiliatedUser() throws Exception {
+        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
+            return;
+        }
+
+        final int userId = createSecondaryUserAsProfileOwner();
+        runDeviceTestsAsUser(
+                DEVICE_ADMIN_PKG, ".AffiliationTest",
+                "testLockTaskMethodsThrowExceptionIfUnaffiliated", userId);
+
+        setUserAsAffiliatedUserToPrimary(userId);
+        runDeviceTestsAsUser(
+                DEVICE_ADMIN_PKG,
+                ".AffiliationTest",
+                "testSetLockTaskPackagesClearedIfUserBecomesUnaffiliated",
+                userId);
+    }
+
+    public void testLockTask_affiliatedSecondaryUser() throws Exception {
+        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
+            return;
+        }
+        final int userId = createSecondaryUserAsProfileOwner();
+        switchToUser(userId);
+        setUserAsAffiliatedUserToPrimary(userId);
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".LockTaskTest", userId);
     }
 
     public void testDelegatedCertInstallerDeviceIdAttestation() throws Exception {
@@ -104,5 +126,27 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         final List<String> result = new ArrayList<>();
         result.add(DELEGATION_NETWORK_LOGGING);
         return result;
+    }
+
+    private int createSecondaryUserAsProfileOwner() throws Exception {
+        final int userId = createUser();
+        installAppAsUser(INTENT_RECEIVER_APK, userId);
+        installAppAsUser(DEVICE_ADMIN_APK, userId);
+        setProfileOwnerOrFail(DEVICE_ADMIN_COMPONENT_FLATTENED, userId);
+        return userId;
+    }
+
+    private void switchToUser(int userId) throws Exception {
+        switchUser(userId);
+        waitForBroadcastIdle();
+        wakeupAndDismissKeyguard();
+    }
+
+    private void setUserAsAffiliatedUserToPrimary(int userId) throws Exception {
+        // Setting the same affiliation ids on both users
+        runDeviceTestsAsUser(
+                DEVICE_ADMIN_PKG, ".AffiliationTest", "testSetAffiliationId1", mPrimaryUserId);
+        runDeviceTestsAsUser(
+                DEVICE_ADMIN_PKG, ".AffiliationTest", "testSetAffiliationId1", userId);
     }
 }

@@ -16,6 +16,9 @@
 
 package android.systemui.cts;
 
+import static android.server.wm.BarTestUtils.assumeHasColoredNavigationBar;
+import static android.server.wm.BarTestUtils.assumeHasColoredStatusBar;
+
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertTrue;

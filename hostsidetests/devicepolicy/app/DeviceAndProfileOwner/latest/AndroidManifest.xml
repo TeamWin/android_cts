@@ -85,6 +85,20 @@
         <activity
             android:name="com.android.cts.deviceandprofileowner.KeyManagementActivity"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <activity
+            android:name="com.android.cts.deviceandprofileowner.LockTaskUtilityActivity"/>
+        <activity
+            android:name="com.android.cts.deviceandprofileowner.LockTaskUtilityActivityIfWhitelisted"
+            android:launchMode="singleInstance"
+            android:lockTaskMode="if_whitelisted">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.HOME"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+
     </application>
 
     <instrumentation

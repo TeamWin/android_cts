@@ -30,6 +30,14 @@
             android:name=".IsRoleHeldActivity"
             android:exported="true" />
 
+        <activity
+            android:name=".ChangeDefaultDialerActivity"
+            android:exported="true" />
+
+        <activity
+            android:name=".ChangeDefaultSmsActivity"
+            android:exported="true" />
+
         <!-- Dialer -->
         <activity android:name=".DialerDialActivity">
             <intent-filter>

@@ -64,8 +64,6 @@ public class ByodHelperActivity extends LocationListenerActivity
     public static final String ACTION_PROFILE_OWNER_STATUS = "com.android.cts.verifier.managedprovisioning.BYOD_STATUS";
     // Primary -> managed intent: request to delete the current profile
     public static final String ACTION_REMOVE_MANAGED_PROFILE = "com.android.cts.verifier.managedprovisioning.BYOD_REMOVE";
-    // Managed -> managed intent: provisioning completed successfully
-    public static final String ACTION_PROFILE_PROVISIONED = "com.android.cts.verifier.managedprovisioning.BYOD_PROVISIONED";
     // Primary -> managed intent: request to capture and check an image
     public static final String ACTION_CAPTURE_AND_CHECK_IMAGE = "com.android.cts.verifier.managedprovisioning.BYOD_CAPTURE_AND_CHECK_IMAGE";
     // Primary -> managed intent: request to capture and check a video with custom output path
@@ -226,14 +224,8 @@ public class ByodHelperActivity extends LocationListenerActivity
                 NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_ID,
                 NotificationManager.IMPORTANCE_DEFAULT));
 
-        // we are explicitly started by {@link DeviceAdminTestReceiver} after a successful provisioning.
-        if (action.equals(ACTION_PROFILE_PROVISIONED)) {
-            // Jump back to CTS verifier with result.
-            Intent response = new Intent(ACTION_PROFILE_OWNER_STATUS);
-            response.putExtra(EXTRA_PROVISIONED, isProfileOwner());
-            new ByodFlowTestHelper(this).startActivityInPrimary(response);
-            // Queried by CtsVerifier in the primary side using startActivityForResult.
-        } else if (action.equals(ACTION_QUERY_PROFILE_OWNER)) {
+        // Queried by CtsVerifier in the primary side using startActivityForResult.
+        if (action.equals(ACTION_QUERY_PROFILE_OWNER)) {
             Intent response = new Intent();
             response.putExtra(EXTRA_PROVISIONED, isProfileOwner());
             setResult(RESULT_OK, response);

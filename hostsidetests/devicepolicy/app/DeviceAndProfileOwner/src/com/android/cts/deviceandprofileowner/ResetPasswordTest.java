@@ -42,6 +42,7 @@ public class ResetPasswordTest extends BaseDeviceAdminTest {
      * Test: a Device Owner or (un-managed) Profile Owner can create, change and remove a password.
      */
     public void testResetPassword() {
+        waitUntilUserUnlocked();
         testResetPasswordEnabled(true, true);
     }
 
@@ -49,6 +50,7 @@ public class ResetPasswordTest extends BaseDeviceAdminTest {
      * Test: a managed Profile Owner can create and change, but not remove, a password.
      */
     public void testResetPasswordManagedProfile() {
+        waitUntilUserUnlocked();
         testResetPasswordEnabled(true, false);
     }
 

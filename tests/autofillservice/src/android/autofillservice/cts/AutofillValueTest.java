@@ -305,6 +305,9 @@ public class AutofillValueTest
         // Autofill it.
         mUiBot.selectDataset("dataset");
 
+        // TODO(b/137856201): Fix race condition in getSelectedItemPosition().
+        Thread.sleep(1000);
+
         if (expectAutoFill) {
             // Check the results.
             spinnerWatcher.assertAutoFilled();
@@ -524,7 +527,7 @@ public class AutofillValueTest
 
     @Test
     public void autofillInvalidListValueToRadioGroup() throws Exception {
-        autofillListValue(AutofillValue.forList(-1), 0, false);
+        autofillRadioGroup(AutofillValue.forList(-1), 0, false);
     }
 
     @Test
