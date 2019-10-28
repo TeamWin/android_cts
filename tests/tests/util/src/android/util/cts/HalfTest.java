@@ -256,6 +256,13 @@ public class HalfTest {
         assertEquals(-124.0f, toFloat(Half.ceil(toHalf(-124.7f))), 1e-6f);
         assertEquals(125.0f, toFloat(Half.ceil(toHalf(124.2f))), 1e-6f);
         assertEquals(-124.0f, toFloat(Half.ceil(toHalf(-124.2f))), 1e-6f);
+        // ceil for NaN values
+        // These tests check whether the current ceil implementation achieves
+        // bit level compatibility with the hardware implementation (ARM64).
+        assertShortEquals((short) 0x7e01, Half.ceil((short) 0x7c01));
+        assertShortEquals((short) 0x7f00, Half.ceil((short) 0x7d00));
+        assertShortEquals((short) 0xfe01, Half.ceil((short) 0xfc01));
+        assertShortEquals((short) 0xff00, Half.ceil((short) 0xfd00));
     }
 
     @Test
