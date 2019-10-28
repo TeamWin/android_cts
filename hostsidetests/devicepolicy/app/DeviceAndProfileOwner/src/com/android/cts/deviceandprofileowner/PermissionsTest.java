@@ -15,13 +15,13 @@
  */
 package com.android.cts.deviceandprofileowner;
 
+import android.app.AppOpsManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.PermissionChecker;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.support.test.uiautomator.By;
@@ -92,6 +92,28 @@ public class PermissionsTest extends BaseDeviceAdminTest {
         mContext.unregisterReceiver(mReceiver);
         mDevice.removeWatcher(CRASH_WATCHER_ID);
         super.tearDown();
+    }
+
+    /** Return values of {@link #checkPermission} */
+    int PERMISSION_DENIED = PackageManager.PERMISSION_DENIED;
+    int PERMISSION_GRANTED = PackageManager.PERMISSION_GRANTED;
+    int PERMISSION_DENIED_APP_OP = PackageManager.PERMISSION_DENIED - 1;
+
+    /**
+     * Correctly check a runtime permission. This also works for pre-m apps.
+     */
+    private int checkPermission(String permission, int uid, String packageName) {
+        if (mContext.checkPermission(permission, -1, uid) == PackageManager.PERMISSION_DENIED) {
+            return PERMISSION_DENIED;
+        }
+
+        if (mContext.getSystemService(AppOpsManager.class).noteProxyOpNoThrow(
+                AppOpsManager.permissionToOp(permission), packageName, uid)
+                != AppOpsManager.MODE_ALLOWED) {
+            return PERMISSION_DENIED_APP_OP;
+        }
+
+        return PERMISSION_GRANTED;
     }
 
     public void testPermissionGrantState() throws Exception {
@@ -342,9 +364,8 @@ public class PermissionsTest extends BaseDeviceAdminTest {
         // Install time permissions should always be granted
         PackageInfo packageInfo = mContext.getPackageManager().getPackageInfo(
                 SIMPLE_PRE_M_APP_PACKAGE_NAME, 0);
-        assertEquals(PackageManager.PERMISSION_GRANTED,
-                PermissionChecker.checkPermissionForDataDelivery(mContext, PERMISSION_NAME,
-                        PermissionChecker.PID_UNKNOWN, packageInfo.applicationInfo.uid,
+        assertEquals(PERMISSION_GRANTED,
+                checkPermission(PERMISSION_NAME, packageInfo.applicationInfo.uid,
                         SIMPLE_PRE_M_APP_PACKAGE_NAME));
     }
 
@@ -366,10 +387,8 @@ public class PermissionsTest extends BaseDeviceAdminTest {
 
         // For pre-M apps the access to the data might be prevented via app-ops. Hence check that
         // they are correctly set
-        boolean isGranted = (PermissionChecker.checkPermissionForDataDelivery(mContext,
-                PERMISSION_NAME, PermissionChecker.PID_UNKNOWN,
-                packageInfo.applicationInfo.uid, SIMPLE_PRE_M_APP_PACKAGE_NAME)
-                == PackageManager.PERMISSION_GRANTED);
+        boolean isGranted = (checkPermission(PERMISSION_NAME, packageInfo.applicationInfo.uid,
+                SIMPLE_PRE_M_APP_PACKAGE_NAME) == PERMISSION_GRANTED);
         switch (value) {
             case DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED:
                 assertTrue(isGranted);
