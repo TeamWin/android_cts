@@ -77,6 +77,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testInstallStagedApk() throws Exception {
+        assumeSystemUser();
         runPhase("testInstallStagedApk_Commit");
         getDevice().reboot();
         runPhase("testInstallStagedApk_VerifyPostReboot");
@@ -117,9 +118,16 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
 
     @Test
     public void testInstallMultipleStagedApks() throws Exception {
+        assumeSystemUser();
         runPhase("testInstallMultipleStagedApks_Commit");
         getDevice().reboot();
         runPhase("testInstallMultipleStagedApks_VerifyPostReboot");
+    }
+
+    private void assumeSystemUser() throws Exception {
+        String systemUser = "0";
+        assumeThat("Current user is not system user",
+                getDevice().executeShellCommand("am get-current-user").trim(), equalTo(systemUser));
     }
 
     @Test
