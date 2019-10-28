@@ -218,10 +218,9 @@ public class Install {
         PackageInstaller.Session session = InstallUtils.getPackageInstaller()
                 .openSession(sessionId);
 
-        ClassLoader loader = TestApp.class.getClassLoader();
         for (String resourceName : app.getResourceNames()) {
             try (OutputStream os = session.openWrite(resourceName, 0, -1);
-                 InputStream is = loader.getResourceAsStream(resourceName);) {
+                 InputStream is = app.getResourceStream(resourceName);) {
                 if (is == null) {
                     throw new IOException("Resource " + resourceName + " not found");
                 }
