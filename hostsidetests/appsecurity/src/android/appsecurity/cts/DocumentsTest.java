@@ -65,6 +65,10 @@ public class DocumentsTest extends DocumentsTestCase {
         runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testTree");
     }
 
+    public void testTree_blockFromTree() throws Exception {
+        runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testTree_blockFromTree");
+    }
+
     public void testGetContent_rootsShowing() throws Exception {
         runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testGetContent_rootsShowing");
     }
@@ -93,6 +97,10 @@ public class DocumentsTest extends DocumentsTestCase {
 
     public void testOpenDocumentTreeAtInitialLocation() throws Exception {
         runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testOpenDocumentTreeAtInitialLocation");
+    }
+
+    public void testOpenDocumentTreeWithScopedStorage() throws Exception {
+        runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testOpenDocumentTreeWithScopedStorage");
     }
 
     public void testOpenRootWithoutRootIdAtInitialLocation() throws Exception {
