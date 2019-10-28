@@ -45,6 +45,13 @@ public class BuildVersionTest extends TestCase {
     public void testReleaseVersion() {
         // Applications may rely on the exact release version
         assertAnyOf("BUILD.VERSION.RELEASE", Build.VERSION.RELEASE, getExpectedReleases());
+        if ("REL".equals(Build.VERSION.CODENAME)) {
+            assertEquals("BUILD.VERSION.RELEASE_OR_CODENAME", Build.VERSION.RELEASE,
+                    Build.VERSION.RELEASE_OR_CODENAME);
+        } else {
+            assertEquals("BUILD.VERSION.RELEASE_OR_CODENAME", Build.VERSION.CODENAME,
+                    Build.VERSION.RELEASE_OR_CODENAME);
+        }
         assertEquals("Build.VERSION.SDK", "" + EXPECTED_SDK, Build.VERSION.SDK);
         assertEquals("Build.VERSION.SDK_INT", EXPECTED_SDK, Build.VERSION.SDK_INT);
     }

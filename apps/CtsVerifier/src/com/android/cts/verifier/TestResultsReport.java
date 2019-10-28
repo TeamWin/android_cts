@@ -112,7 +112,7 @@ class TestResultsReport {
                 Build.CPU_ABI2, abis, abis32, abis64, Build.BOARD, Build.BRAND, Build.DEVICE,
                 Build.FINGERPRINT, null, Build.ID, Build.MANUFACTURER, Build.MODEL, Build.PRODUCT,
                 referenceFingerprint, Build.getSerial(), Build.TAGS, Build.TYPE, versionBaseOs,
-                Build.VERSION.RELEASE, Integer.toString(Build.VERSION.SDK_INT),
+                Build.VERSION.RELEASE_OR_CODENAME, Integer.toString(Build.VERSION.SDK_INT),
                 versionSecurityPatch, Build.VERSION.INCREMENTAL);
 
         // add device properties to the result with a prefix tag for each key
