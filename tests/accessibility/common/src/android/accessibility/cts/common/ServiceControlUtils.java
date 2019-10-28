@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.view.accessibility.cts;
+package android.accessibility.cts.common;
 
 import static com.android.compatibility.common.util.TestUtils.waitOn;
 
