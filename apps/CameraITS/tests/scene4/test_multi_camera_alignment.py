@@ -285,7 +285,7 @@ def main():
         if len(physical_ids) == 2:
             fmts.insert(0, 'raw')  # insert in first location in list
         else:
-            physical_ids = ids[0:1]
+            physical_ids = ids[0:2]
 
         w, h = its.objects.get_available_output_sizes('yuv', props)[0]
 
