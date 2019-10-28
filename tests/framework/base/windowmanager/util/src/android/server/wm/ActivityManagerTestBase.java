@@ -126,6 +126,7 @@ import android.os.SystemClock;
 import android.provider.Settings;
 import android.server.wm.CommandSession.ActivityCallback;
 import android.server.wm.CommandSession.ActivitySession;
+import android.server.wm.CommandSession.ActivitySessionClient;
 import android.server.wm.CommandSession.ConfigInfo;
 import android.server.wm.CommandSession.LaunchInjector;
 import android.server.wm.CommandSession.LaunchProxy;
@@ -1345,6 +1346,14 @@ public abstract class ActivityManagerTestBase {
         }
 
         return INVALID_DEVICE_ROTATION;
+    }
+
+    /**
+     * Creates a {#link ActivitySessionClient} instance with instrumentation context. It is used
+     * when the caller doen't need try-with-resource.
+     */
+    public static ActivitySessionClient createActivitySessionClient() {
+        return new ActivitySessionClient(getInstrumentation().getContext());
     }
 
     /** Empties the test journal so the following events won't be mixed-up with previous records. */
