@@ -19,6 +19,7 @@ package com.android.tests.stagedinstall.host;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.hamcrest.CoreMatchers.endsWith;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeThat;
