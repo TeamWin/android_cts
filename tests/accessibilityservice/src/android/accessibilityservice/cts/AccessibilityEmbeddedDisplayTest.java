@@ -21,6 +21,7 @@ import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.findWin
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
 import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
+import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_ADDED;
 import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_BOUNDS;
 
 import static org.junit.Assert.assertEquals;
@@ -29,6 +30,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
+import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.cts.activities.AccessibilityTestActivity;
 import android.app.Activity;
 import android.app.ActivityView;
@@ -67,6 +69,7 @@ public class AccessibilityEmbeddedDisplayTest {
     private static UiAutomation sUiAutomation;
 
     private EmbeddedDisplayParentActivity mActivity;
+    private EmbeddedDisplayActivity mEmbeddedDisplayActivity;
     private ActivityView mActivityView;
     private Context mContext;
 
@@ -115,6 +118,7 @@ public class AccessibilityEmbeddedDisplayTest {
 
     @After
     public void tearDown() throws Exception {
+        mEmbeddedDisplayActivity = null;
         if (mActivityView != null) {
             SystemUtil.runWithShellPermissionIdentity(() -> mActivityView.release());
         }
@@ -164,7 +168,37 @@ public class AccessibilityEmbeddedDisplayTest {
     }
 
     @Test
-    public void testA11yWindowNotifyWhenResizeActivityView() throws Exception {
+    public void testA11yWindowNotifyWhenResizeWindowInActivityView() throws Exception {
+        testA11yWindowNotifyAfterResizeWindowInActivityView();
+    }
+
+    @Test
+    public void testA11yWindowNotifyWhenResizeWindowInActivityViewAfterServiceOffAndOn()
+            throws Exception {
+        // Clears window access flag to disable the A11y window tracking.
+        AccessibilityServiceInfo info = sUiAutomation.getServiceInfo();
+        info.flags &= ~AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
+        sUiAutomation.setServiceInfo(info);
+
+        // Only needs to make sure the windows cannot be accessed for UiAutomation service
+        // because other A11y services had been disabled when calling the method, getUiAutomation().
+        assertTrue(sUiAutomation.getWindows().isEmpty());
+
+        // Sets window access flag to enable the A11y window tracking.
+        sUiAutomation.executeAndWaitForEvent(
+                () -> sInstrumentation.runOnMainSync(() -> {
+                    // Make sure we get window events, so we'll know when the window appears
+                    info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
+                    sUiAutomation.setServiceInfo(info);
+                }),
+                filterWindowsChangeTypesAndWindowTitle(sUiAutomation, WINDOWS_CHANGE_ADDED,
+                        mActivityTitle),
+                DEFAULT_TIMEOUT_MS);
+
+        testA11yWindowNotifyAfterResizeWindowInActivityView();
+    }
+
+    private void testA11yWindowNotifyAfterResizeWindowInActivityView() throws Exception {
         final AccessibilityWindowInfo oldActivityWindow =
                 findWindowByTitle(sUiAutomation, mActivityTitle);
         final Rect activityBound = new Rect();
@@ -173,7 +207,7 @@ public class AccessibilityEmbeddedDisplayTest {
         final int width = activityBound.width() / 2;
         final int height = activityBound.height() / 2;
         sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(
-                () -> mActivityView.layout(0, 0, width, height)),
+                () -> mEmbeddedDisplayActivity.getWindow().setLayout(width, height)),
                 filterWindowsChangeTypesAndWindowTitle(sUiAutomation, WINDOWS_CHANGE_BOUNDS,
                         mActivityTitle),
                 DEFAULT_TIMEOUT_MS);
@@ -187,6 +221,8 @@ public class AccessibilityEmbeddedDisplayTest {
     }
 
     private void launchActivityInActivityView() throws Exception {
+        final Instrumentation.ActivityMonitor am = sInstrumentation.addMonitor(
+                EmbeddedDisplayActivity.class.getName(), null, false);
         final Rect bounds = new Rect();
         sUiAutomation.executeAndWaitForEvent(
                 () -> sInstrumentation.runOnMainSync(() -> {
@@ -205,6 +241,9 @@ public class AccessibilityEmbeddedDisplayTest {
                     window.getBoundsInScreen(bounds);
                     return !bounds.isEmpty();
                 }, DEFAULT_TIMEOUT_MS);
+        mEmbeddedDisplayActivity = (EmbeddedDisplayActivity)
+                am.waitForActivityWithTimeout(DEFAULT_TIMEOUT_MS);
+        assertNotNull(mEmbeddedDisplayActivity);
     }
 
     private boolean supportsMultiDisplay() {
