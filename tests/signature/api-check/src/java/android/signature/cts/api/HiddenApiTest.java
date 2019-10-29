@@ -27,6 +27,7 @@ import android.signature.cts.VirtualPath;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.Set;
 import java.util.function.Predicate;
 
 /**
@@ -152,17 +153,15 @@ public class HiddenApiTest extends AbstractApiTest {
                     line = reader.readLine();
                     lineIndex++;
                 }
-
             }
         });
     }
 
-    private boolean shouldTestMember(DexMember member) {
+    protected boolean shouldTestMember(DexMember member) {
+        Set<String> flags = member.getHiddenapiFlags();
         for (String testFlag : hiddenapiTestFlags) {
-            for (String memberFlag : member.getHiddenapiFlags()) {
-                if (testFlag.equals(memberFlag)) {
-                    return true;
-                }
+            if (flags.contains(testFlag)) {
+                return true;
             }
         }
         return false;
