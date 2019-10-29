@@ -66,6 +66,8 @@ public final class HdmiCecUtils {
         int seconds = 0;
 
         commands.add("cec-client");
+        commands.add("-p");
+        commands.add("2");
         mCecClient = RunUtil.getDefault().runCmdInBackground(commands);
         mInputConsole = new BufferedReader(new InputStreamReader(mCecClient.getInputStream()));
 
