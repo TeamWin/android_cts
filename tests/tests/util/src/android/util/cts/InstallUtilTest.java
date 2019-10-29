@@ -36,7 +36,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 
 @SmallTest
@@ -70,6 +72,48 @@ public class InstallUtilTest {
                     Manifest.permission.DELETE_PACKAGES);
         // Better tests work regardless of whether other tests clean up after themselves or not.
         Uninstall.packages(TestApp.A, TestApp.B);
+    }
+
+    /**
+     * Asserts that the resource streams have the same content.
+     */
+    private void assertSameResource(TestApp a, TestApp b) throws Exception {
+        try (InputStream is1 = a.getResourceStream(a.getResourceNames()[0]);
+             InputStream is2 = b.getResourceStream(b.getResourceNames()[0]);) {
+            byte[] buf1 = new byte[64];
+            byte[] buf2 = new byte[64];
+            while (true) {
+                int n1 = is1.read(buf1);
+                int n2 = is2.read(buf2);
+                assertThat(n1).isEqualTo(n2);
+                if (n1 == -1) break;
+                assertThat(buf1).isEqualTo(buf2);
+            }
+        }
+    }
+
+    @Test
+    public void testNativeFilePathTestApp() throws Exception {
+        // Install the apps
+        Install.multi(TestApp.A1, TestApp.B2).commit();
+        // Create TestApps using the native file path of the installed apps
+        TestApp a1 = new TestApp(TestApp.A1.toString(), TestApp.A1.getPackageName(),
+                TestApp.A1.getVersionCode(), false,
+                new File(InstallUtils.getPackageInfo(TestApp.A).applicationInfo.sourceDir));
+        TestApp b2 = new TestApp(TestApp.B2.toString(), TestApp.B2.getPackageName(),
+                TestApp.B2.getVersionCode(), false,
+                new File(InstallUtils.getPackageInfo(TestApp.B).applicationInfo.sourceDir));
+
+        // Assert that the resource streams have the same content
+        assertSameResource(TestApp.A1, a1);
+        assertSameResource(TestApp.B2, b2);
+
+        assertThat(a1.toString()).isEqualTo(TestApp.A1.toString());
+        assertThat(a1.getPackageName()).isEqualTo(TestApp.A1.getPackageName());
+        assertThat(a1.getVersionCode()).isEqualTo(TestApp.A1.getVersionCode());
+        assertThat(b2.toString()).isEqualTo(TestApp.B2.toString());
+        assertThat(b2.getPackageName()).isEqualTo(TestApp.B2.getPackageName());
+        assertThat(b2.getVersionCode()).isEqualTo(TestApp.B2.getVersionCode());
     }
 
     @Test
