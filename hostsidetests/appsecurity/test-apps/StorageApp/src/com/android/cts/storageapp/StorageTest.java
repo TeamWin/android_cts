@@ -99,9 +99,10 @@ public class StorageTest extends InstrumentationTestCase {
         final UiDevice device = UiDevice.getInstance(getInstrumentation());
         device.waitForIdle();
 
-        // Hunt around to clear storage of other app
-        device.findObject(new UiSelector().textContains("internal storage")).click();
-        device.waitForIdle();
+        if (!isTV(getContext())) {
+            device.findObject(new UiSelector().textContains("internal storage")).click();
+            device.waitForIdle();
+        }
         device.findObject(new UiSelector().textContains("Clear")).click();
         device.waitForIdle();
         device.findObject(new UiSelector().text("OK")).click();
@@ -314,5 +315,10 @@ public class StorageTest extends InstrumentationTestCase {
 
     public void testExternalStorageIsolatedNonLegacy() throws Exception {
         assertFalse(new File("/sdcard/cts_top").exists());
+    }
+
+    private static boolean isTV(Context context) {
+        final PackageManager packageManager = context.getPackageManager();
+        return packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK);
     }
 }
