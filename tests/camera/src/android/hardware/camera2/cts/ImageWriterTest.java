@@ -187,6 +187,11 @@ public class ImageWriterTest extends Camera2AndroidTestCase {
         texture.setDefaultBufferSize(640, 480);
         Surface surface = new Surface(texture);
 
+        // Make sure that the default newInstance is still sane.
+        ImageWriter defaultWriter = ImageWriter.newInstance(surface, MAX_NUM_IMAGES);
+        Image defaultImage = defaultWriter.dequeueInputImage();
+        defaultWriter.close();
+
         for (int format : TEXTURE_TEST_FORMATS) {
             // Override default buffer format of Surface texture to test format
             ImageWriter writer = ImageWriter.newInstance(surface, MAX_NUM_IMAGES, format);
