@@ -12,12 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-filegroup {
-    name: "cts-wm-components",
-    srcs: ["**/Components.java"],
-}
+android_test {
+    name: "CtsDeviceDeprecatedSdkApp",
+    defaults: ["cts_support_defaults"],
 
-filegroup {
-    name: "cts-wm-aspect-ratio-test-base",
-    srcs: ["src/android/server/wm/AspectRatioTestsBase.java"],
+    static_libs: ["cts-wm-app-base"],
+
+    srcs: ["src/**/*.java"],
+
+    sdk_version: "16",
+
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ],
 }

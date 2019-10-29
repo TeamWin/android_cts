@@ -149,7 +149,8 @@ public class StartActivityTests extends ActivityManagerTestBase {
      */
     @Test
     public void testStartActivitiesInNewAndSameTask() {
-        final ActivitySession activity = ActivitySessionClient.create().startActivity(
+        final ActivitySessionClient client = createActivitySessionClient();
+        final ActivitySession activity = client.startActivity(
                 getLaunchActivityBuilder().setUseInstrumentation()
                         .setTargetActivity(TEST_ACTIVITY));
 
@@ -172,6 +173,7 @@ public class StartActivityTests extends ActivityManagerTestBase {
         final int callerTaskId = amState.getTaskByActivity(TEST_ACTIVITY).getTaskId();
         final int i0TaskId = amState.getTaskByActivity(intents[0].getComponent()).getTaskId();
         final int i1TaskId = amState.getTaskByActivity(intents[1].getComponent()).getTaskId();
+        client.close();
 
         assertNotEquals("The activities started by startActivities() should have a different task"
                 + " from their caller activity", callerTaskId, i0TaskId);

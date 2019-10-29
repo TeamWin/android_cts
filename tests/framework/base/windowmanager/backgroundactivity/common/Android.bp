@@ -1,4 +1,4 @@
-// Copyright (C) 2018 The Android Open Source Project
+// Copyright (C) 2019 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,12 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-filegroup {
-    name: "cts-wm-components",
-    srcs: ["**/Components.java"],
-}
+java_test {
+    name: "cts-background-activity-common",
 
-filegroup {
-    name: "cts-wm-aspect-ratio-test-base",
-    srcs: ["src/android/server/wm/AspectRatioTestsBase.java"],
+    srcs: ["src/**/*.java"],
+
+    static_libs: [
+        "androidx.annotation_annotation",
+    ],
+
+    sdk_version: "test_current",
+
 }

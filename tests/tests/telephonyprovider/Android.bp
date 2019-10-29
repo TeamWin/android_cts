@@ -12,22 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-filegroup {
-    name: "cts-wm-components-base",
-    srcs: ["**/ComponentsBase.java"],
-}
-
-java_test_helper_library {
-    name: "cts-wm-app-base",
-
-    srcs: [
-        "src/**/*.java",
-        ":cts-wm-app-util",
-    ],
-
+android_test {
+    name: "CtsTelephonyProviderTestCases",
+    defaults: ["cts_defaults"],
+    dex_preopt: {
+        enabled: false,
+    },
+    optimize: {
+        enabled: false,
+    },
     static_libs: [
-        "androidx.annotation_annotation",
+        "compatibility-device-util-axt",
+        "androidx.test.rules",
+        "androidx.test.core",
+        "truth-prebuilt",
     ],
-
+    libs: [
+        "android.test.runner.stubs",
+        "android.test.base.stubs",
+    ],
+    srcs: ["src/**/*.java"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ],
     sdk_version: "test_current",
 }

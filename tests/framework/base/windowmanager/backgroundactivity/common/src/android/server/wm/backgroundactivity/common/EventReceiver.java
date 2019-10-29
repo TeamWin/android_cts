@@ -16,8 +16,6 @@
 
 package android.server.wm.backgroundactivity.common;
 
-import static com.google.common.base.Preconditions.checkState;
-
 import android.os.Bundle;
 import android.os.ConditionVariable;
 import android.os.Handler;
@@ -61,7 +59,9 @@ public class EventReceiver {
      */
     public void waitForEventOrThrow(long timeoutMs) throws TimeoutException {
         // Avoid deadlocks
-        checkState(Thread.currentThread() != mHandler.getLooper().getThread());
+        if (Thread.currentThread() == mHandler.getLooper().getThread()) {
+            throw new IllegalStateException("This method should be called from different thread");
+        }
 
         if (!mEventReceivedVariable.block(timeoutMs)) {
             throw new TimeoutException("Timed out waiting for event " + mEvent);

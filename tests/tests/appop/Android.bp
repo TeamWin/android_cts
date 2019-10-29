@@ -52,7 +52,6 @@ android_test {
 
     jni_libs: [
         "ld-android",
-        "libartbase",
         "libbacktrace",
         "libbase",
         "libbinder",
@@ -63,7 +62,6 @@ android_test {
         "libcgrouprc",
         "libcrypto",
         "libcutils",
-        "libdexfile",
         "libdl_android",
         "libhidl-gen-utils",
         "libhidlbase",

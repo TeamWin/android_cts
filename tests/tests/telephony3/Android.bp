@@ -12,12 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-filegroup {
-    name: "cts-wm-components",
-    srcs: ["**/Components.java"],
-}
-
-filegroup {
-    name: "cts-wm-aspect-ratio-test-base",
-    srcs: ["src/android/server/wm/AspectRatioTestsBase.java"],
+android_test {
+    name: "CtsTelephony3TestCases",
+    defaults: ["cts_defaults"],
+    static_libs: ["ctstestrunner-axt"],
+    srcs: ["src/**/*.java"],
+    // The SDK version is set to 28 to test device identifier access for apps with
+    // the READ_PHONE_STATE permission targeting pre-Q.
+    sdk_version: "28",
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ],
+    libs: ["android.test.runner.stubs"] + ["android.test.base.stubs"],
 }
