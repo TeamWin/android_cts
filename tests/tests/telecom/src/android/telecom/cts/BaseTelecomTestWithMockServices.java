@@ -586,6 +586,11 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     }
 
     void setAndVerifyConnectionForIncomingCall(MockConnection connection) {
+        if (connection.getState() == Connection.STATE_ACTIVE) {
+            // If the connection is already active (like if it got picked up immediately), don't
+            // bother with setting it back to ringing.
+            return;
+        }
         connection.setRinging();
         assertConnectionState(connection, Connection.STATE_RINGING);
     }
