@@ -16,21 +16,41 @@
 
 package android.hdmicec.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
-import com.android.tradefed.testtype.DeviceTestCase;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.IDeviceTest;
+
+import org.junit.runner.RunWith;
+import org.junit.Test;
 
 /** HDMI CEC test to verify physical address after device reboot (Section 10.2.3) */
-public final class HdmiCecLogicalAddressTest extends DeviceTestCase {
+@RunWith(DeviceJUnit4ClassRunner.class)
+public final class HdmiCecLogicalAddressTest implements IDeviceTest {
     private static final CecDevice PLAYBACK_DEVICE = CecDevice.PLAYBACK_1;
+
+    private ITestDevice mDevice;
+
+    @Override
+    public void setDevice(ITestDevice device) {
+        mDevice = device;
+    }
+
+    @Override
+    public ITestDevice getDevice() {
+        return mDevice;
+    }
 
     /**
      * Test 10.2.3-1
      * Tests that the device broadcasts a <REPORT_PHYSICAL_ADDRESS> after a reboot and that the
      * device has taken the logical address "4".
      */
-    public void testRebootLogicalAddress() throws Exception {
-        HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, "1.0.0.0");
+    @Test
+    public void cect_10_2_3_1_RebootLogicalAddress() throws Exception {
         ITestDevice device = getDevice();
         assertNotNull("Device not set", device);
 
@@ -38,6 +58,8 @@ public final class HdmiCecLogicalAddressTest extends DeviceTestCase {
             CLog.v("No HDMI CEC feature running, should skip test.");
             return;
         }
+
+        HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, "1.0.0.0");
 
         try {
             hdmiCecUtils.init();
