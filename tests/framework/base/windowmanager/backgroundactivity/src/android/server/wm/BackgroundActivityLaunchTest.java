@@ -225,6 +225,7 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 143522449)
     public void testActivityNotBlockedWhenForegroundActivityLaunchInDifferentTask()
             throws Exception {
         // Start foreground activity, and foreground activity able to launch background activity
