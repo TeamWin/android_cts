@@ -19,6 +19,7 @@ package android.server.wm.app;
 import static android.server.wm.app.Components.TopActivity.ACTION_CONVERT_FROM_TRANSLUCENT;
 import static android.server.wm.app.Components.TopActivity.ACTION_CONVERT_TO_TRANSLUCENT;
 import static android.server.wm.app.Components.TopActivity.EXTRA_FINISH_DELAY;
+import static android.server.wm.app.Components.TopActivity.EXTRA_FINISH_IN_ON_CREATE;
 import static android.server.wm.app.Components.TopActivity.EXTRA_TOP_WALLPAPER;
 
 import android.os.Bundle;
@@ -47,6 +48,10 @@ public class TopActivity extends AbstractLifecycleLogActivity {
                     Log.d(getTag(), "Calling finish()");
                     finish();
             }, finishDelay);
+        }
+
+        if (getIntent().getBooleanExtra(EXTRA_FINISH_IN_ON_CREATE, false)) {
+            finish();
         }
     }
 
