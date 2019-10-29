@@ -120,6 +120,7 @@ public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestB
 
     @Test
     public void testKeyguardShowHideOverPip() throws Exception {
+        assumeTrue(supportsSecureLock());
         if (!supportsPip()) {
             // Skipping test: no Picture-In-Picture support
             return;
