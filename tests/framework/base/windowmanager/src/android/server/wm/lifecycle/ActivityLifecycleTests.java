@@ -45,12 +45,13 @@ import static android.view.Surface.ROTATION_180;
 import static android.view.Surface.ROTATION_270;
 import static android.view.Surface.ROTATION_90;
 
-import static androidx.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.fail;
 
 import android.app.Activity;
 import android.content.ComponentName;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.platform.test.annotations.Presubmit;
 
@@ -298,8 +299,9 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
      */
     private void testLaunchForResultAndLaunchAfterResultSequence(String flag) throws Exception {
         new Launcher(LaunchForResultActivity.class)
+                .customizeIntent(LaunchForResultActivity.forwardFlag(EXTRA_FINISH_IN_ON_RESUME))
+                .setExtraFlags(flag)
                 .setExpectedState(ON_STOP)
-                .setExtraFlags(flag, EXTRA_FINISH_IN_ON_RESUME)
                 .setNoInstance()
                 .launch();
 
@@ -390,6 +392,50 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 transition(CallbackTrackingActivity.class, ON_TOP_POSITION_GAINED),
                 transition(NoDisplayActivity.class, ON_DESTROY)),
                 getLifecycleLog(), "trampolineLaunch");
+    }
+
+    /** @see #testTrampolineWithAnotherProcess */
+    @Test
+    public void testTrampolineAnotherProcessNewTask() {
+        testTrampolineWithAnotherProcess();
+    }
+
+    /**
+     * Same as {@link #testTrampolineAnotherProcessNewTask()}, but with a living second process.
+     */
+    @Test
+    public void testTrampolineAnotherExistingProcessNewTask() {
+        // Start the second process before running the test. It is to make a specific path that the
+        // the activity may be started when checking visibility instead of attaching its process.
+        mContext.startActivity(new Intent(mContext, SecondProcessCallbackTrackingActivity.class)
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        waitAndAssertActivityStates(
+                state(SecondProcessCallbackTrackingActivity.class, ON_TOP_POSITION_GAINED));
+        getLifecycleLog().clear();
+
+        testTrampolineWithAnotherProcess();
+    }
+
+    /**
+     * Simulates X starts Y in the same task, and Y starts Z in another task then finishes itself:
+     * <pre>
+     * Top Task B: SecondProcessCallbackTrackingActivity (Z)
+     *     Task A: SecondProcessCallbackTrackingActivity (Y) (finishing)
+     *             FirstActivity (X)
+     * </pre>
+     * Expect Y to become invisible and then destroyed when the transition is done.
+     */
+    private void testTrampolineWithAnotherProcess() {
+        // Use another process so its lifecycle won't be affected by the caller activity.
+        final Intent intent2 = new Intent(mContext, SecondProcessCallbackTrackingActivity.class)
+                .addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
+        final Intent intent1 = new Intent(mContext, SecondProcessCallbackTrackingActivity.class)
+                .putExtra(EXTRA_START_ACTIVITY_IN_ON_CREATE, intent2)
+                .putExtra(EXTRA_FINISH_IN_ON_CREATE, true);
+        mContext.startActivity(new Intent(mContext, FirstActivity.class)
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .putExtra(EXTRA_START_ACTIVITY_WHEN_IDLE, intent1));
+        waitAndAssertActivityStates(state(SecondProcessCallbackTrackingActivity.class, ON_DESTROY));
     }
 
     @Test
@@ -497,7 +543,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     @Test
     public void testOnActivityResult() throws Exception {
         new Launcher(LaunchForResultActivity.class)
-                .setExtraFlags(EXTRA_FINISH_IN_ON_RESUME)
+                .customizeIntent(LaunchForResultActivity.forwardFlag(EXTRA_FINISH_IN_ON_RESUME))
                 .launch();
 
         final List<LifecycleLog.ActivityCallback> expectedSequence =
@@ -531,7 +577,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     @Test
     public void testOnActivityResultAfterStop() throws Exception {
         final Activity activity = new Launcher(LaunchForResultActivity.class)
-                .setExtraFlags(EXTRA_FINISH_AFTER_RESUME)
+                .customizeIntent(LaunchForResultActivity.forwardFlag(EXTRA_FINISH_AFTER_RESUME))
                 .launch();
         final boolean isTranslucent = isTranslucent(activity);
 

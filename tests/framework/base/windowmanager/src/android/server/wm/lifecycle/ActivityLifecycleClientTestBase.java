@@ -36,7 +36,7 @@ import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_P
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_LOST;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.PRE_ON_CREATE;
 
-import static androidx.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.fail;
@@ -51,6 +51,7 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.server.wm.MultiDisplayTestBase;
 import android.server.wm.lifecycle.LifecycleLog.ActivityCallback;
 import android.transition.Transition;
@@ -70,6 +71,7 @@ import org.junit.Before;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 
 /** Base class for device-side tests that verify correct activity lifecycle transitions. */
 public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
@@ -87,6 +89,8 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
     static final String EXTRA_FINISH_AFTER_RESUME = "finish_after_resume";
     static final String EXTRA_FINISH_IN_ON_PAUSE = "finish_in_on_pause";
     static final String EXTRA_FINISH_IN_ON_STOP = "finish_in_on_stop";
+    static final String EXTRA_START_ACTIVITY_IN_ON_CREATE = "start_activity_in_on_create";
+    static final String EXTRA_START_ACTIVITY_WHEN_IDLE = "start_activity_when_idle";
 
     static final ComponentName CALLBACK_TRACKING_ACTIVITY =
             getComponentName(CallbackTrackingActivity.class);
@@ -121,6 +125,7 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
         private int mFlags;
         private ActivityCallback mExpectedState;
         private List<String> mExtraFlags = new ArrayList<>();
+        private Consumer<Intent> mPostIntentSetup;
         private ActivityOptions mOptions;
         private boolean mNoInstance;
         private final Class<? extends Activity> mActivityClass;
@@ -151,6 +156,9 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
             }
             for (String flag : mExtraFlags) {
                 intent.putExtra(flag, true);
+            }
+            if (mPostIntentSetup != null) {
+                mPostIntentSetup.accept(intent);
             }
             final Bundle optionsBundle = mOptions != null ? mOptions.toBundle() : null;
 
@@ -192,6 +200,12 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
          */
         public Launcher setExpectedState(ActivityCallback expectedState) {
             mExpectedState = expectedState;
+            return this;
+        }
+
+        /** Allow the caller to customize the intent right before starting activity. */
+        public Launcher customizeIntent(Consumer<Intent> intentSetup) {
+            mPostIntentSetup = intentSetup;
             return this;
         }
 
@@ -328,30 +342,68 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
             mLifecycleLogClient = LifecycleLog.LifecycleLogClient.create(this);
             mLifecycleLogClient.onActivityCallback(PRE_ON_CREATE);
             mLifecycleLogClient.onActivityCallback(ON_CREATE);
+
+            final Intent intent = getIntent();
+            final Intent startOnCreate =
+                    intent.getParcelableExtra(EXTRA_START_ACTIVITY_IN_ON_CREATE);
+            if (startOnCreate != null) {
+                startActivity(startOnCreate);
+            }
+
+            final Intent startOnIdle = intent.getParcelableExtra(EXTRA_START_ACTIVITY_WHEN_IDLE);
+            if (startOnIdle != null) {
+                Looper.getMainLooper().getQueue().addIdleHandler(() -> {
+                    startActivity(startOnIdle);
+                    return false;
+                });
+            }
+
+            if (intent.getBooleanExtra(EXTRA_FINISH_IN_ON_CREATE, false)) {
+                finish();
+            }
         }
 
         @Override
         protected void onStart() {
             super.onStart();
             mLifecycleLogClient.onActivityCallback(ON_START);
+
+            if (getIntent().getBooleanExtra(EXTRA_FINISH_IN_ON_START, false)) {
+                finish();
+            }
         }
 
         @Override
         protected void onResume() {
             super.onResume();
             mLifecycleLogClient.onActivityCallback(ON_RESUME);
+
+            final Intent intent = getIntent();
+            if (intent.getBooleanExtra(EXTRA_FINISH_IN_ON_RESUME, false)) {
+                finish();
+            } else if (intent.getBooleanExtra(EXTRA_FINISH_AFTER_RESUME, false)) {
+                getWindow().getDecorView().post(this::finish);
+            }
         }
 
         @Override
         protected void onPause() {
             super.onPause();
             mLifecycleLogClient.onActivityCallback(ON_PAUSE);
+
+            if (getIntent().getBooleanExtra(EXTRA_FINISH_IN_ON_PAUSE, false)) {
+                finish();
+            }
         }
 
         @Override
         protected void onStop() {
             super.onStop();
             mLifecycleLogClient.onActivityCallback(ON_STOP);
+
+            if (getIntent().getBooleanExtra(EXTRA_FINISH_IN_ON_STOP, false)) {
+                finish();
+            }
         }
 
         @Override
@@ -444,15 +496,31 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
      * Test activity that launches {@link ResultActivity} for result.
      */
     public static class LaunchForResultActivity extends CallbackTrackingActivity {
-        public static String EXTRA_LAUNCH_ON_RESULT = "LAUNCH_ON_RESULT";
-        public static String EXTRA_LAUNCH_ON_RESUME_AFTER_RESULT = "LAUNCH_ON_RESUME_AFTER_RESULT";
+        private static final String EXTRA_FORWARD_EXTRAS = "FORWARD_EXTRAS";
+        public static final String EXTRA_LAUNCH_ON_RESULT = "LAUNCH_ON_RESULT";
+        public static final String EXTRA_LAUNCH_ON_RESUME_AFTER_RESULT =
+                "LAUNCH_ON_RESUME_AFTER_RESULT";
 
         boolean mReceivedResultOk;
+
+        /** Adds the flag to the extra of intent which will forward to {@link ResultActivity}. */
+        static Consumer<Intent> forwardFlag(String flag) {
+            return intent -> {
+                final Bundle data = new Bundle();
+                data.putBoolean(flag, true);
+                intent.putExtra(EXTRA_FORWARD_EXTRAS, data);
+            };
+        }
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-            startForResult();
+            final Intent intent = new Intent(this, ResultActivity.class);
+            final Bundle forwardExtras = getIntent().getBundleExtra(EXTRA_FORWARD_EXTRAS);
+            if (forwardExtras != null) {
+                intent.putExtras(forwardExtras);
+            }
+            startActivityForResult(intent, 1 /* requestCode */);
         }
 
         @Override
@@ -472,58 +540,14 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
                 startActivity(new Intent(this, CallbackTrackingActivity.class));
             }
         }
-
-        private void startForResult() {
-            final Intent intent = new Intent(this, ResultActivity.class);
-            intent.putExtras(getIntent());
-            startActivityForResult(intent, 1 /* requestCode */);
-        }
     }
 
-    /** Test activity that is started for result and finishes itself. */
+    /** Test activity that is started for result. */
     public static class ResultActivity extends CallbackTrackingActivity {
         @Override
         protected void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
             setResult(RESULT_OK);
-            if (getIntent().getBooleanExtra(EXTRA_FINISH_IN_ON_CREATE, false)) {
-                finish();
-            }
-        }
-
-        @Override
-        protected void onStart() {
-            super.onStart();
-            if (getIntent().getBooleanExtra(EXTRA_FINISH_IN_ON_START, false)) {
-                finish();
-            }
-        }
-
-        @Override
-        protected void onResume() {
-            super.onResume();
-            final Intent intent = getIntent();
-            if (intent.getBooleanExtra(EXTRA_FINISH_IN_ON_RESUME, false)) {
-                finish();
-            } else if (intent.getBooleanExtra(EXTRA_FINISH_AFTER_RESUME, false)) {
-                new Handler().postDelayed(() -> finish(), 2000);
-            }
-        }
-
-        @Override
-        protected void onPause() {
-            super.onPause();
-            if (getIntent().getBooleanExtra(EXTRA_FINISH_IN_ON_PAUSE, false)) {
-                finish();
-            }
-        }
-
-        @Override
-        protected void onStop() {
-            super.onStop();
-            if (getIntent().getBooleanExtra(EXTRA_FINISH_IN_ON_STOP, false)) {
-                finish();
-            }
+            super.onCreate(savedInstanceState);
         }
     }
 
