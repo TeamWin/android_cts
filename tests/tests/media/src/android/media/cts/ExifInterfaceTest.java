@@ -69,7 +69,9 @@ public class ExifInterfaceTest extends AndroidTestCase {
     private static final String PENTAX_K5_PEF = "pentax_k5.pef";
     private static final String SAMSUNG_NX3000_SRW = "samsung_nx3000.srw";
     private static final String VOLANTIS_JPEG = "volantis.jpg";
-    private static final String EXIF_BYTE_ORDER_II_PNG = "image_exif_byte_order_ii_png.png";
+    private static final String WEBP_WITH_EXIF = "webp_with_exif.webp";
+    private static final String PNG_WITH_EXIF_BYTE_ORDER_II = "png_with_exif_byte_order_ii.png";
+    private static final String PNG_WITHOUT_EXIF = "png_without_exif.png";
 
     private static final String[] EXIF_TAGS = {
             ExifInterface.TAG_MAKE,
@@ -481,7 +483,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
         }
     }
 
-    private void testExifInterfaceForJpeg(String fileName, int typedArrayResourceId)
+    private void testExifInterfaceForReadAndWrite(String fileName, int typedArrayResourceId)
             throws IOException {
         ExpectedValue expectedValue = new ExpectedValue(
                 getContext().getResources().obtainTypedArray(typedArrayResourceId));
@@ -495,7 +497,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
         testSaveAttributes_withFileDescriptor(fileName, expectedValue);
     }
 
-    private void testExifInterface(String fileName, int typedArrayResourceId)
+    private void testExifInterfaceForRead(String fileName, int typedArrayResourceId)
             throws IOException {
         ExpectedValue expectedValue = new ExpectedValue(
                 getContext().getResources().obtainTypedArray(typedArrayResourceId));
@@ -519,21 +521,21 @@ public class ExifInterfaceTest extends AndroidTestCase {
     }
 
     public void testReadExifDataFromExifByteOrderIIJpeg() throws Throwable {
-        testExifInterfaceForJpeg(EXIF_BYTE_ORDER_II_JPEG, R.array.exifbyteorderii_jpg);
+        testExifInterfaceForReadAndWrite(EXIF_BYTE_ORDER_II_JPEG, R.array.exifbyteorderii_jpg);
     }
 
     public void testReadExifDataFromExifByteOrderMMJpeg() throws Throwable {
-        testExifInterfaceForJpeg(EXIF_BYTE_ORDER_MM_JPEG, R.array.exifbyteordermm_jpg);
+        testExifInterfaceForReadAndWrite(EXIF_BYTE_ORDER_MM_JPEG, R.array.exifbyteordermm_jpg);
     }
 
     public void testReadExifDataFromLgG4Iso800Dng() throws Throwable {
-        testExifInterface(LG_G4_ISO_800_DNG, R.array.lg_g4_iso_800_dng);
+        testExifInterfaceForRead(LG_G4_ISO_800_DNG, R.array.lg_g4_iso_800_dng);
     }
 
     public void testReadExifDataFromLgG4Iso800Jpg() throws Throwable {
         stageFile(R.raw.lg_g4_iso_800, new File(Environment.getExternalStorageDirectory(),
                 EXTERNAL_BASE_DIRECTORY + LG_G4_ISO_800_JPG));
-        testExifInterfaceForJpeg(LG_G4_ISO_800_JPG, R.array.lg_g4_iso_800_jpg);
+        testExifInterfaceForReadAndWrite(LG_G4_ISO_800_JPG, R.array.lg_g4_iso_800_jpg);
     }
 
     public void testDoNotFailOnCorruptedImage() throws Throwable {
@@ -550,54 +552,75 @@ public class ExifInterfaceTest extends AndroidTestCase {
 
     public void testReadExifDataFromVolantisJpg() throws Throwable {
         // Test if it is possible to parse the volantis generated JPEG smoothly.
-        testExifInterfaceForJpeg(VOLANTIS_JPEG, R.array.volantis_jpg);
+        testExifInterfaceForReadAndWrite(VOLANTIS_JPEG, R.array.volantis_jpg);
     }
 
     public void testReadExifDataFromSonyRX100Arw() throws Throwable {
-        testExifInterface(SONY_RX_100_ARW, R.array.sony_rx_100_arw);
+        testExifInterfaceForRead(SONY_RX_100_ARW, R.array.sony_rx_100_arw);
     }
 
     public void testReadExifDataFromCanonG7XCr2() throws Throwable {
-        testExifInterface(CANON_G7X_CR2, R.array.canon_g7x_cr2);
+        testExifInterfaceForRead(CANON_G7X_CR2, R.array.canon_g7x_cr2);
     }
 
     public void testReadExifDataFromFujiX20Raf() throws Throwable {
-        testExifInterface(FUJI_X20_RAF, R.array.fuji_x20_raf);
+        testExifInterfaceForRead(FUJI_X20_RAF, R.array.fuji_x20_raf);
     }
 
     public void testReadExifDataFromNikon1AW1Nef() throws Throwable {
-        testExifInterface(NIKON_1AW1_NEF, R.array.nikon_1aw1_nef);
+        testExifInterfaceForRead(NIKON_1AW1_NEF, R.array.nikon_1aw1_nef);
     }
 
     public void testReadExifDataFromNikonP330Nrw() throws Throwable {
-        testExifInterface(NIKON_P330_NRW, R.array.nikon_p330_nrw);
+        testExifInterfaceForRead(NIKON_P330_NRW, R.array.nikon_p330_nrw);
     }
 
     public void testReadExifDataFromOlympusEPL3Orf() throws Throwable {
-        testExifInterface(OLYMPUS_E_PL3_ORF, R.array.olympus_e_pl3_orf);
+        testExifInterfaceForRead(OLYMPUS_E_PL3_ORF, R.array.olympus_e_pl3_orf);
     }
 
     public void testReadExifDataFromPanasonicGM5Rw2() throws Throwable {
-        testExifInterface(PANASONIC_GM5_RW2, R.array.panasonic_gm5_rw2);
+        testExifInterfaceForRead(PANASONIC_GM5_RW2, R.array.panasonic_gm5_rw2);
     }
 
     public void testReadExifDataFromPentaxK5Pef() throws Throwable {
-        testExifInterface(PENTAX_K5_PEF, R.array.pentax_k5_pef);
+        testExifInterfaceForRead(PENTAX_K5_PEF, R.array.pentax_k5_pef);
     }
 
     public void testReadExifDataFromSamsungNX3000Srw() throws Throwable {
-        testExifInterface(SAMSUNG_NX3000_SRW, R.array.samsung_nx3000_srw);
+        testExifInterfaceForRead(SAMSUNG_NX3000_SRW, R.array.samsung_nx3000_srw);
     }
 
-    public void testReadExifDataFromStandaloneData() throws Throwable {
+    public void testStandaloneDataForRead() throws Throwable {
         testExifInterfaceForStandalone(EXIF_BYTE_ORDER_II_JPEG, R.array.exifbyteorderii_standalone);
         testExifInterfaceForStandalone(EXIF_BYTE_ORDER_MM_JPEG, R.array.exifbyteordermm_standalone);
     }
 
-    public void testReadExifDataFromExifByteOrderIIPng() throws Throwable {
-        stageFile(R.raw.image_exif_byte_order_ii_png, new File(Environment.getExternalStorageDirectory(),
-                EXTERNAL_BASE_DIRECTORY + EXIF_BYTE_ORDER_II_PNG));
-        testExifInterface(EXIF_BYTE_ORDER_II_PNG, R.array.exifbyteorderii_png);
+    public void testExifByteOrderIIPngForReadAndWrite() throws Throwable {
+        stageFile(R.raw.png_with_exif_byte_order_ii, new File(Environment.getExternalStorageDirectory(),
+                EXTERNAL_BASE_DIRECTORY + PNG_WITH_EXIF_BYTE_ORDER_II));
+        testExifInterfaceForRead(PNG_WITH_EXIF_BYTE_ORDER_II, R.array.exifbyteorderii_png);
+    }
+
+    public void testExifByteOrderIIWebpForRead() throws Throwable {
+        stageFile(R.raw.webp_with_exif, new File(Environment.getExternalStorageDirectory(),
+                EXTERNAL_BASE_DIRECTORY + WEBP_WITH_EXIF));
+        testExifInterfaceForRead(WEBP_WITH_EXIF, R.array.exifbyteorderii_webp);
+    }
+
+    public void testPngWithoutExifForWrite() throws Throwable {
+        stageFile(R.raw.png_without_exif, new File(Environment.getExternalStorageDirectory(),
+                EXTERNAL_BASE_DIRECTORY + PNG_WITHOUT_EXIF));
+
+        // Do we need to clone this file?
+        File imageFile = new File(Environment.getExternalStorageDirectory(),
+                EXTERNAL_BASE_DIRECTORY + PNG_WITHOUT_EXIF);
+        ExifInterface exifInterface = new ExifInterface(imageFile.getAbsolutePath());
+        exifInterface.setAttribute(ExifInterface.TAG_MAKE, "abc");
+        exifInterface.saveAttributes();
+        exifInterface = new ExifInterface(imageFile.getAbsolutePath());
+        String make = exifInterface.getAttribute(ExifInterface.TAG_MAKE);
+        assertEquals("abc", make);
     }
 
     public void testSetDateTime() throws IOException {

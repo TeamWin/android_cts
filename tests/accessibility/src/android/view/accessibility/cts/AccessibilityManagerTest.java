@@ -17,8 +17,8 @@
 package android.view.accessibility.cts;
 
 import static android.accessibility.cts.common.InstrumentedAccessibilityService.TIMEOUT_SERVICE_ENABLE;
-import static android.view.accessibility.cts.ServiceControlUtils.getEnabledServices;
-import static android.view.accessibility.cts.ServiceControlUtils.waitForConditionWithServiceStateChange;
+import static android.accessibility.cts.common.ServiceControlUtils.getEnabledServices;
+import static android.accessibility.cts.common.ServiceControlUtils.waitForConditionWithServiceStateChange;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
