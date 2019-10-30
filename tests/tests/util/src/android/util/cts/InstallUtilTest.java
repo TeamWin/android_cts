@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.Manifest;
 import android.content.pm.PackageInstaller;
+import android.content.pm.PackageManager;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.filters.SmallTest;
@@ -107,13 +108,17 @@ public class InstallUtilTest {
         // Assert that the resource streams have the same content
         assertSameResource(TestApp.A1, a1);
         assertSameResource(TestApp.B2, b2);
-
+        // Verify the TestApp constructor which takes a native file path
         assertThat(a1.toString()).isEqualTo(TestApp.A1.toString());
         assertThat(a1.getPackageName()).isEqualTo(TestApp.A1.getPackageName());
         assertThat(a1.getVersionCode()).isEqualTo(TestApp.A1.getVersionCode());
         assertThat(b2.toString()).isEqualTo(TestApp.B2.toString());
         assertThat(b2.getPackageName()).isEqualTo(TestApp.B2.getPackageName());
         assertThat(b2.getVersionCode()).isEqualTo(TestApp.B2.getVersionCode());
+        // Verify TestApps with native file paths can also be installed correctly
+        Install.multi(a1, b2).addInstallFlags(PackageManager.INSTALL_REPLACE_EXISTING).commit();
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
+        assertThat(InstallUtils.getInstalledVersion(TestApp.B)).isEqualTo(2);
     }
 
     @Test
