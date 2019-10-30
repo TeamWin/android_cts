@@ -138,7 +138,8 @@ public class NotificationManagerTest extends AndroidTestCase {
     private static final String DELEGATOR = "com.android.test.notificationdelegator";
     private static final String DELEGATE_POST_CLASS = DELEGATOR + ".NotificationDelegateAndPost";
     private static final String REVOKE_CLASS = DELEGATOR + ".NotificationRevoker";
-    private static final int WAIT_TIME = 2000;
+    private static final long SHORT_WAIT_TIME = 100;
+    private static final long MAX_WAIT_TIME = 2000;
 
     private PackageManager mPackageManager;
     private AudioManager mAudioManager;
@@ -218,6 +219,19 @@ public class NotificationManagerTest extends AndroidTestCase {
                         Settings.Global.NOTIFICATION_BUBBLES, enabled ? 1 : 0));
         Thread.sleep(500); // wait for ranking update
 
+    }
+
+    private boolean isNotificationCancelled(int id, boolean all) {
+        for (long totalWait = 0; totalWait < MAX_WAIT_TIME; totalWait += SHORT_WAIT_TIME) {
+            StatusBarNotification sbn = findPostedNotification(id, all);
+            if (sbn == null) return true;
+            try {
+                Thread.sleep(SHORT_WAIT_TIME);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
     }
 
     private void insertSingleContact(String name, String phone, String email, boolean starred) {
@@ -2268,7 +2282,6 @@ public class NotificationManagerTest extends AndroidTestCase {
         mNotificationManager.notifyAsPackage(DELEGATOR, "tag", 0, n);
 
         assertNotNull(findPostedNotification(0, false));
-
         final Intent revokeIntent = new Intent();
         revokeIntent.setClassName(DELEGATOR, REVOKE_CLASS);
         revokeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -2293,15 +2306,9 @@ public class NotificationManagerTest extends AndroidTestCase {
                 .setSmallIcon(android.R.id.icon)
                 .build();
         mNotificationManager.notifyAsPackage(DELEGATOR, "toBeCanceled", 10000, n);
-
         assertNotNull(findPostedNotification(10000, false));
-
         mNotificationManager.cancelAsPackage(DELEGATOR, "toBeCanceled", 10000);
-
-        Thread.sleep(100);
-        
-        assertNull(findPostedNotification(10000, false));
-
+        assertTrue(isNotificationCancelled(10000, false));
         final Intent revokeIntent = new Intent();
         revokeIntent.setClassName(DELEGATOR, REVOKE_CLASS);
         revokeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
