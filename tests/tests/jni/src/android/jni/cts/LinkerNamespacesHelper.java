@@ -119,7 +119,7 @@ class LinkerNamespacesHelper {
                     }
                     String[] tokens = line.split(" ");
                     if (tokens.length < 1 || tokens.length > 3) {
-                        throw new RuntimeException("Malfomed line: '" + line + "' in " + file);
+                        throw new RuntimeException("Malformed line: '" + line + "' in " + file);
                     }
                     String soname = tokens[0];
                     Bitness bitness = Bitness.ALL;
