@@ -18,26 +18,30 @@ package android.telecom.cts;
 
 import static android.telecom.cts.TestUtils.COMPONENT;
 import static android.telecom.cts.TestUtils.PACKAGE;
+import static android.telephony.TelephonyManager.CALL_STATE_RINGING;
 
 import android.content.ComponentName;
-import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Telephony;
 import android.telecom.Call;
 import android.telecom.Connection;
 import android.telecom.ConnectionRequest;
 import android.telecom.PhoneAccountHandle;
-import android.telecom.StatusHints;
 import android.telecom.TelecomManager;
-import android.telephony.TelephonyManager;
+import android.telephony.PhoneStateListener;
 
 import java.util.Collection;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests valid/invalid incoming calls that are received from the ConnectionService
  * and registered through TelecomManager
  */
 public class IncomingCallTest extends BaseTelecomTestWithMockServices {
+    private static final long STATE_CHANGE_DELAY = 1000;
 
     private static final PhoneAccountHandle TEST_INVALID_HANDLE = new PhoneAccountHandle(
             new ComponentName(PACKAGE, COMPONENT), "WRONG_ID");
@@ -62,7 +66,7 @@ public class IncomingCallTest extends BaseTelecomTestWithMockServices {
         Uri testNumber = createTestNumber();
         addAndVerifyNewIncomingCall(testNumber, null);
         verifyConnectionForIncomingCall();
-        verifyPhoneStateListenerCallbacksForCall(TelephonyManager.CALL_STATE_RINGING,
+        verifyPhoneStateListenerCallbacksForCall(CALL_STATE_RINGING,
                 testNumber.getSchemeSpecificPart());
     }
 
@@ -139,5 +143,30 @@ public class IncomingCallTest extends BaseTelecomTestWithMockServices {
 
         assertTrue((mInCallCallbacks.getService().getLastCall().getDetails().getCallProperties()
                 & Call.Details.PROPERTY_VOIP_AUDIO_MODE) != 0);
+    }
+
+    /**
+     * Ensure the {@link android.telephony.PhoneStateListener#onCallStateChanged(int, String)}
+     * called in an expected way and phone state is correct.
+     * @throws Exception
+     */
+    public void testPhoneStateChangeAsExpected() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
+        Uri testNumber = createTestNumber();
+        addAndVerifyNewIncomingCall(testNumber, null);
+
+        CountDownLatch count = new CountDownLatch(1);
+        Executor executor = (Runnable command)->count.countDown();
+        PhoneStateListener listener = new PhoneStateListener(executor);
+        mTelephonyManager.listen(listener, PhoneStateListener.LISTEN_CALL_STATE);
+
+        count.await(TestUtils.WAIT_FOR_PHONE_STATE_LISTENER_REGISTERED_TIMEOUT_S,
+                TimeUnit.SECONDS);
+
+        Thread.sleep(STATE_CHANGE_DELAY);
+        assertEquals(CALL_STATE_RINGING, mTelephonyManager.getCallState());
     }
 }
