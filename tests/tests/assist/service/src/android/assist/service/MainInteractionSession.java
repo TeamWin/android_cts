@@ -24,6 +24,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.os.RemoteCallback;
@@ -187,21 +188,20 @@ public class MainInteractionSession extends VoiceInteractionSession {
         screenshot.getPixels(pixels, 0, size.x, 0, 0, size.x, size.y);
 
         int expectedColor = 0;
-        int wrongColor = 0;
         for (int pixel : pixels) {
-            if (pixel == color) {
+            // Check for roughly the same because there are rounding errors converting from the
+            // screenshot's color space to SRGB, which is what getPixels does.
+            if ((Color.red(pixel) - Color.red(color) < 5)
+                    && (Color.green(pixel) - Color.green(color) < 5)
+                    && (Color.blue(pixel) - Color.blue(color) < 5)) {
                 expectedColor += 1;
-            } else {
-                wrongColor += 1;
             }
         }
 
-        double colorRatio = (double) expectedColor / (expectedColor + wrongColor);
+        int pixelCount = screenshot.getWidth() * screenshot.getHeight();
+        double colorRatio = (double) expectedColor / pixelCount;
         Log.i(TAG, "the ratio is " + colorRatio);
-        if (colorRatio < 0.6) {
-            return false;
-        }
-        return true;
+        return colorRatio >= 0.6;
     }
 
     private void maybeBroadcastResults() {

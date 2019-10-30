@@ -22,14 +22,12 @@ import android.platform.test.annotations.SecurityTest;
 @SecurityTest
 public class Poc18_07 extends SecurityTestCase {
 
-    /**
-     * b/76221123
-     */
-     @SecurityTest(minPatchLevel = "2018-07")
-     public void testPocCVE_2018_9424() throws Exception {
-       AdbUtils.runCommandLine("logcat -c" , getDevice());
-       AdbUtils.runPoc("CVE-2018-9424", getDevice(), 60);
-       String result = AdbUtils.runCommandLine("logcat -d", getDevice());
-       assertNotMatchesMultiLine("Fatal signal", result);
-     }
+   /**
+    * b/76221123
+    */
+    @SecurityTest(minPatchLevel = "2018-07")
+    public void testPocCVE_2018_9424() throws Exception {
+        AdbUtils.runPocAssertNoCrashes(
+            "CVE-2018-9424", getDevice(), "android\\.hardware\\.drm@\\d\\.\\d-service");
+    }
 }
