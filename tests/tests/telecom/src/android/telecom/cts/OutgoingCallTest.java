@@ -22,13 +22,18 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.telecom.CallAudioState;
 import android.telecom.TelecomManager;
-import android.telecom.VideoProfile;
+import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Verifies the behavior of Telecom during various outgoing call flows.
  */
 public class OutgoingCallTest extends BaseTelecomTestWithMockServices {
+    private static final long STATE_CHANGE_DELAY = 1000;
 
     private static final String TEST_EMERGENCY_NUMBER = "9998887776655443210";
 
@@ -127,5 +132,30 @@ public class OutgoingCallTest extends BaseTelecomTestWithMockServices {
                 .getAddress().getSchemeSpecificPart();
         verifyPhoneStateListenerCallbacksForCall(TelephonyManager.CALL_STATE_OFFHOOK,
                 expectedNumber);
+    }
+
+    /**
+     * Ensure the {@link android.telephony.PhoneStateListener#onCallStateChanged(int, String)}
+     * called in an expected way and phone state is correct.
+     * @throws Exception
+     */
+    public void testPhoneStateChangeAsExpected() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        final Bundle extras = new Bundle();
+        extras.putBoolean(TelecomManager.EXTRA_START_CALL_WITH_SPEAKERPHONE, true);
+        CountDownLatch count = new CountDownLatch(1);
+        Executor executor = (Runnable command)->count.countDown();
+        PhoneStateListener listener = new PhoneStateListener(executor);
+        mTelephonyManager.listen(listener, PhoneStateListener.LISTEN_CALL_STATE);
+
+
+        placeAndVerifyCall(extras);
+        verifyConnectionForOutgoingCall();
+        count.await(TestUtils.WAIT_FOR_PHONE_STATE_LISTENER_REGISTERED_TIMEOUT_S,
+                TimeUnit.SECONDS);
+        Thread.sleep(STATE_CHANGE_DELAY);
+        assertEquals(TelephonyManager.CALL_STATE_OFFHOOK, mTelephonyManager.getCallState());
     }
 }
