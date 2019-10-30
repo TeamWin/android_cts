@@ -281,7 +281,6 @@ def main():
             if (its.caps.raw16(prop) and not its.caps.mono_camera(props)
                         and len(physical_raw_ids) < 2):
                 physical_raw_ids.append(i)
-                props_physical[i] = cam.get_camera_properties_by_id(i)
 
         debug = its.caps.debug_mode()
         avail_fls = props['android.lens.info.availableFocalLengths']
@@ -300,14 +299,12 @@ def main():
         # do captures on 2 cameras
         caps = {}
         for i, fmt in enumerate(fmts):
+            capture_cam_ids = physical_ids
             if fmt == 'raw':
-                out_surfaces = [{'format': 'yuv', 'width': w, 'height': h},
-                                {'format': fmt, 'physicalCamera': physical_raw_ids[0]},
-                                {'format': fmt, 'physicalCamera': physical_raw_ids[1]}]
-            else:
-                out_surfaces = [{'format': 'yuv', 'width': w, 'height': h},
-                                {'format': fmt, 'physicalCamera': physical_ids[0]},
-                                {'format': fmt, 'physicalCamera': physical_ids[1]}]
+                capture_cam_ids = physical_raw_ids
+            out_surfaces = [{'format': 'yuv', 'width': w, 'height': h},
+                            {'format': fmt, 'physicalCamera': capture_cam_ids[0]},
+                            {'format': fmt, 'physicalCamera': capture_cam_ids[1]}]
 
             out_surfaces_supported = cam.is_stream_combination_supported(out_surfaces)
             its.caps.skip_unless(out_surfaces_supported)
@@ -321,7 +318,7 @@ def main():
                 e_corrected = e
             print 'out_surfaces:', out_surfaces
             req = its.objects.manual_capture_request(s, e_corrected, fd)
-            _, caps[(fmt, physical_ids[0])], caps[(fmt, physical_ids[1])] = cam.do_capture(
+            _, caps[(fmt, capture_cam_ids[0])], caps[(fmt, capture_cam_ids[1])] = cam.do_capture(
                     req, out_surfaces)
 
     for j, fmt in enumerate(fmts):
@@ -333,8 +330,11 @@ def main():
         circle = {}
         fl = {}
         sensor_diag = {}
+        capture_cam_ids = physical_ids
+        if fmt == 'raw':
+            capture_cam_ids = physical_raw_ids
         print '\nFormat:', fmt
-        for i in physical_ids:
+        for i in capture_cam_ids:
             # process image
             img = its.image.convert_capture_to_rgb_image(
                     caps[(fmt, i)], props=props_physical[i])
