@@ -318,6 +318,11 @@ public class HalfTest {
         assertEquals(-125.0f, toFloat(Half.floor(toHalf(-124.7f))), 1e-6f);
         assertEquals(124.0f, toFloat(Half.floor(toHalf(124.2f))), 1e-6f);
         assertEquals(-125.0f, toFloat(Half.floor(toHalf(-124.2f))), 1e-6f);
+        // floor for NaN values
+        assertShortEquals((short) 0x7e01, Half.floor((short) 0x7c01));
+        assertShortEquals((short) 0x7f00, Half.floor((short) 0x7d00));
+        assertShortEquals((short) 0xfe01, Half.floor((short) 0xfc01));
+        assertShortEquals((short) 0xff00, Half.floor((short) 0xfd00));
     }
 
     @Test
