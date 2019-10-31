@@ -29,6 +29,7 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
+import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 
 public class GestureUtils {
@@ -165,16 +166,28 @@ public class GestureUtils {
     }
 
     public static GestureDescription tripleTap(PointF point) {
-      return multiTap(point, 3);
+        return multiTap(point, 3);
     }
 
     public static GestureDescription multiTap(PointF point, int taps) {
+        return multiTap(point, taps, 0);
+        }
+
+    public static GestureDescription multiTap(PointF point, int taps, int slop) {
         GestureDescription.Builder builder = new GestureDescription.Builder();
         long time = 0;
-        for (int i = 0; i < taps; i++) {
+        if (taps > 0) {
+            // Place first tap on the point itself.
+            // Subsequent taps will be offset somewhere within slop radius.
+            // If slop is 0 subsequent taps will also be on the point itself.
             StrokeDescription stroke = click(point);
-            builder.addStroke(startingAt(time, stroke));
+            builder.addStroke(stroke);
             time += stroke.getDuration() + 40;
+            for (int i = 1; i < taps; i++) {
+                stroke = click(getPointWithinSlop(point, slop));
+                builder.addStroke(startingAt(time, stroke));
+                time += stroke.getDuration() + 40;
+            }
         }
         return builder.build();
     }
@@ -241,5 +254,9 @@ public class GestureUtils {
                 description.appendText("Matching to point " + point);
             }
         };
+    }
+
+    public static PointF getPointWithinSlop(PointF point, int slop) {
+        return add(point, slop / 2, 0);
     }
 }
