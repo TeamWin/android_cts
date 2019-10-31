@@ -30,6 +30,7 @@ android_test {
         "androidx.test.rules",
         "platform-test-annotations",
         "platformprotosnano",
+        "permission-test-util-lib"
     ],
     srcs: ["src/**/*.java"],
     // Tag this module as a cts test artifact
