@@ -74,3 +74,24 @@ android_test_helper_app {
     use_embedded_native_libs: false,
     stl: "c++_shared",
 }
+
+android_test_helper_app {
+    name: "CtsGpuToolsRootlessGpuDebugApp-INJECT",
+    defaults: ["cts_support_defaults"],
+    srcs: ["src/**/*.java"],
+    sdk_version: "current",
+    // tag this module as a cts test artifact
+    test_suites: ["cts"],
+    compile_multilib: "both",
+    jni_libs: [
+        "libctsgputools_jni",
+        "libVkLayer_nullLayerC",
+        "libGLES_glesLayerC",
+    ],
+    manifest: "inject/AndroidManifest.xml",
+    aaptflags: [
+        "--rename-manifest-package android.rootlessgpudebug.INJECT.app",
+    ],
+    use_embedded_native_libs: false,
+    stl: "c++_shared",
+}
