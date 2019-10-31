@@ -211,6 +211,7 @@ public class WatchUidRunner {
                 if (res[0].startsWith("#")) {
                     Log.d(TAG, "Note: " + res[0]);
                 } else {
+                    Log.v(TAG, "LINE: " + Arrays.toString(res));
                     return res;
                 }
             }
