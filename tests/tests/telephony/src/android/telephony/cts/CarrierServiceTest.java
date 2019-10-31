@@ -16,20 +16,51 @@
 
 package android.telephony.cts;
 
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
+
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.PersistableBundle;
 import android.service.carrier.CarrierIdentifier;
 import android.service.carrier.CarrierService;
+import android.telephony.TelephonyManager;
 import android.test.ServiceTestCase;
+import android.util.Log;
 
 public class CarrierServiceTest extends ServiceTestCase<CarrierServiceTest.TestCarrierService> {
+    private static final String TAG = CarrierServiceTest.class.getSimpleName();
+
+    private boolean mHasCellular;
+
     public CarrierServiceTest() { super(TestCarrierService.class); }
 
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+
+        mHasCellular = hasCellular();
+        if (!mHasCellular) {
+            Log.e(TAG, "No cellular support, all tests will be skipped.");
+        }
+    }
+
+    private static boolean hasCellular() {
+        PackageManager packageManager = getInstrumentation().getContext().getPackageManager();
+        TelephonyManager telephonyManager =
+                getInstrumentation().getContext().getSystemService(TelephonyManager.class);
+        return packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
+                && telephonyManager.getPhoneCount() > 0;
+    }
+
     public void testNotifyCarrierNetworkChange_true() {
+        if (!mHasCellular) return;
+
         notifyCarrierNetworkChange(true);
     }
 
     public void testNotifyCarrierNetworkChange_false() {
+        if (!mHasCellular) return;
+
         notifyCarrierNetworkChange(false);
     }
 
