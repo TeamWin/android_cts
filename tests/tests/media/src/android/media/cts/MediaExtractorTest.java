@@ -399,9 +399,10 @@ public class MediaExtractorTest extends AndroidTestCase {
         public MediaFormat mFormat;
 
         private MediaExtractor mExtractor;
+        private MediaCodecTest.MediaCodecStream mDecoderStream;
 
         public MediaExtractorStream(
-                String mime,
+                String inMime, String outMime,
                 MediaDataSource dataSource) throws Exception {
             mExtractor = new MediaExtractor();
             mExtractor.setDataSource(dataSource);
@@ -411,23 +412,26 @@ public class MediaExtractorTest extends AndroidTestCase {
             for (int i = 0; i < numTracks; ++i) {
                 final MediaFormat format = mExtractor.getTrackFormat(i);
                 final String actualMime = format.getString(MediaFormat.KEY_MIME);
-                if (mime.equals(actualMime)) {
-                    mExtractor.selectTrack(i);
-                    mFormat = format;
+                mExtractor.selectTrack(i);
+                mFormat = format;
+                if (outMime.equals(actualMime)) {
                     break;
+                } else { // no matching mime, try to use decoder
+                    mDecoderStream = new MediaCodecTest.MediaCodecStream(
+                            mExtractor, mFormat);
+                    Log.w(TAG, "fallback to input mime type with decoder");
                 }
             }
-            assertNotNull("MediaExtractor cannot find mime type " + mime, mFormat);
+            assertNotNull("MediaExtractor cannot find mime type " + inMime, mFormat);
             mIsFloat = mFormat.getInteger(
                     MediaFormat.KEY_PCM_ENCODING, AudioFormat.ENCODING_PCM_16BIT)
                             == AudioFormat.ENCODING_PCM_FLOAT;
-
         }
 
         public MediaExtractorStream(
-                String mime,
+                String inMime, String outMime,
                 MediaCodecTest.ByteBufferStream inputStream) throws Exception {
-            this(mime, new ByteBufferDataSource(inputStream));
+            this(inMime, outMime, new ByteBufferDataSource(inputStream));
         }
 
         @Override
@@ -435,7 +439,9 @@ public class MediaExtractorTest extends AndroidTestCase {
             if (mSawOutputEOS) {
                 return null;
             }
-
+            if (mDecoderStream != null) {
+                return mDecoderStream.read();
+            }
             // To preserve codec-like behavior, we create ByteBuffers
             // equal to the media sample size.
             final long size = mExtractor.getSampleSize();
@@ -500,7 +506,8 @@ public class MediaExtractorTest extends AndroidTestCase {
                             new MediaCodecTest.ByteBufferInputStream(audioStream),
                             format, true /* encode */);
             final MediaExtractorStream flacToRaw =
-                    new MediaExtractorStream("audio/raw", rawToFlac);
+                    new MediaExtractorStream(MediaFormat.MIMETYPE_AUDIO_FLAC /* inMime */,
+                            MediaFormat.MIMETYPE_AUDIO_RAW /* outMime */, rawToFlac);
 
             // Note: the existence of signed zero (as well as NAN) may make byte
             // comparisons invalid for floating point output. In our case, since the

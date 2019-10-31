@@ -42,6 +42,7 @@ import android.app.NotificationChannelGroup;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.provider.Settings.Secure;
@@ -128,8 +129,10 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
             tests.add(new EnableHintsTest());
             tests.add(new ReceiveAppBlockNoticeTest());
             tests.add(new ReceiveAppUnblockNoticeTest());
-            tests.add(new ReceiveChannelBlockNoticeTest());
-            tests.add(new ReceiveGroupBlockNoticeTest());
+            if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+                tests.add(new ReceiveChannelBlockNoticeTest());
+                tests.add(new ReceiveGroupBlockNoticeTest());
+            }
             tests.add(new RequestUnbindTest());
             tests.add(new RequestBindTest());
             tests.add(new MessageBundleTest());

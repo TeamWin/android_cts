@@ -43,6 +43,12 @@
         <option name="push" value="CVE-2016-8432->/data/local/tmp/CVE-2016-8432" />
         <option name="push" value="CVE-2016-8434->/data/local/tmp/CVE-2016-8434" />
 
+        <!--__________________-->
+        <!-- Bulletin 2016-02 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2016-0811->/data/local/tmp/CVE-2016-0811" />
+
+        <!--__________________-->
         <!-- Bulletin 2016-04 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
         <option name="push" value="CVE-2016-2412->/data/local/tmp/CVE-2016-2412" />
@@ -189,11 +195,6 @@
         <option name="push" value="Bug-115739809->/data/local/tmp/Bug-115739809" />
         <option name="push" value="CVE-2019-2025->/data/local/tmp/CVE-2019-2025" />
 
-        <!--__________________-->
-        <!-- Bulletin 2019-05 -->
-        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
-        <option name="push" value="CVE-2019-2054->/data/local/tmp/CVE-2019-2054" />
-
         <option name="append-bitness" value="true" />
     </target_preparer>
 
@@ -205,6 +206,7 @@
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="OomCatcher.apk" />
+        <option name="test-file-name" value="MainlineModuleDetector.apk" />
     </target_preparer>
 
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >

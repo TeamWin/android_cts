@@ -140,7 +140,12 @@ public class AssistTestBase extends ActivityInstrumentationTestCase2<TestStartAc
     protected void tearDown() throws Exception {
         mTestActivity.finish();
         mContext.sendBroadcast(new Intent(Utils.HIDE_SESSION));
-        m3pCallbackReceiving.sendResult(Utils.bundleOfRemoteAction(Utils.ACTION_END_OF_TEST));
+
+
+        if (m3pActivityCallback != null) {
+            m3pActivityCallback.sendResult(Utils.bundleOfRemoteAction(Utils.ACTION_END_OF_TEST));
+        }
+
         super.tearDown();
         mSessionCompletedLatch.await(3, TimeUnit.SECONDS);
     }

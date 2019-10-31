@@ -37,10 +37,13 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.RequiredServiceRule;
+
 import com.google.common.collect.Lists;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -57,6 +60,10 @@ public class ContentSuggestionsManagerTest {
 
     private static final long VERIFY_TIMEOUT_MS = 5_000;
     private static final long SERVICE_LIFECYCLE_TIMEOUT_MS = 10_000;
+
+    @ClassRule
+    public static final RequiredServiceRule mRequiredServiceRule =
+            new RequiredServiceRule(Context.CONTENT_SUGGESTIONS_SERVICE);
 
     private ContentSuggestionsManager mManager;
     private CtsContentSuggestionsService.Watcher mWatcher;
