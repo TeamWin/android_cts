@@ -104,17 +104,47 @@ class LinkerNamespacesHelper {
 
     private final static String WEBVIEW_PLAT_SUPPORT_LIB = "libwebviewchromium_plat_support.so";
 
+    static enum Bitness { ALL, ONLY_32, ONLY_64 }
+
     private static List<String> readPublicLibrariesFile(File file) throws IOException {
         List<String> libs = new ArrayList<>();
         if (file.exists()) {
             try (BufferedReader br = new BufferedReader(new FileReader(file))) {
                 String line;
+                final boolean is64Bit = android.os.Process.is64Bit();
                 while ((line = br.readLine()) != null) {
                     line = line.trim();
                     if (line.isEmpty() || line.startsWith("#")) {
                         continue;
                     }
-                    libs.add(line);
+                    String[] tokens = line.split(" ");
+                    if (tokens.length < 1 || tokens.length > 3) {
+                        throw new RuntimeException("Malformed line: '" + line + "' in " + file);
+                    }
+                    String soname = tokens[0];
+                    Bitness bitness = Bitness.ALL;
+                    int i = tokens.length;
+                    while(--i >= 1) {
+                        if (tokens[i].equals("nopreload")) {
+                            continue;
+                        }
+                        else if (tokens[i].equals("32") || tokens[i].equals("64")) {
+                            if (bitness != Bitness.ALL) {
+                                throw new RuntimeException("Malformed line: '" + line +
+                                        "' in " + file + ". Bitness can be specified only once");
+                            }
+                            bitness = tokens[i].equals("32") ? Bitness.ONLY_32 : Bitness.ONLY_64;
+                        } else {
+                            throw new RuntimeException("Unrecognized token '" + tokens[i] +
+                                  "' in " + file);
+                        }
+                    }
+                    if ((is64Bit && bitness == Bitness.ONLY_32) ||
+                        (!is64Bit && bitness == Bitness.ONLY_64)) {
+                        // skip unsupported bitness
+                        continue;
+                    }
+                    libs.add(soname);
                 }
             }
         }
@@ -139,11 +169,6 @@ class LinkerNamespacesHelper {
                 // libFoo.acme.so
                 List<String> libNames = readPublicLibrariesFile(configFile);
                 for (String lib : libNames) {
-                    int space = lib.lastIndexOf(' ');
-                    if (space != -1) {
-                      // Drop 64 or 32 from 'libFoo.so 64'
-                      lib = lib.substring(0, space);
-                    }
                     if (lib.endsWith("." + companyName + ".so")) {
                         libs.add(lib);
                     } else {
