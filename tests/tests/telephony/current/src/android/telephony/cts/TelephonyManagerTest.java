@@ -465,6 +465,7 @@ public class TelephonyManagerTest {
                 .getDefaultOutgoingPhoneAccount(PhoneAccount.SCHEME_TEL);
         mTelephonyManager.getVoicemailRingtoneUri(defaultAccount);
         mTelephonyManager.isVoicemailVibrationEnabled(defaultAccount);
+        mTelephonyManager.getSubIdForPhoneAccountHandle(defaultAccount);
         mTelephonyManager.getCarrierConfig();
     }
 
