@@ -105,7 +105,7 @@ public class TestedScreen extends Activity {
             Log.i(TAG, "idle");
             if (WAIT_BEFORE_FINISH.equals(getIntent().getAction())) {
                 final Message m = Message.obtain();
-                mHandler.sendMessageAtTime(m, SystemClock.uptimeMillis() + 1000);
+                mHandler.sendMessageAtTime(m, SystemClock.uptimeMillis() + 2000);
             } else if (CLEAR_TASK.equals(getIntent().getAction())) {
                 final Message m = Message.obtain();
                 mHandler.sendMessageAtTime(m, SystemClock.uptimeMillis() + 1000);
