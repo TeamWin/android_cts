@@ -36,6 +36,7 @@ import android.content.Context.BIND_AUTO_CREATE
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.ServiceConnection
+import android.content.pm.PackageManager.FEATURE_TELEPHONY
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
@@ -45,11 +46,12 @@ import android.os.IBinder
 import android.os.Looper
 import android.platform.test.annotations.AppModeFull
 import android.provider.ContactsContract
+import android.telephony.TelephonyManager
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Assert.fail
-import org.junit.Assume
+import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.CompletableFuture
@@ -391,11 +393,11 @@ class AppOpsLoggingTest {
         val locationManager = context.createFeatureContext(TEST_FEATURE_ID)
             .getSystemService(LocationManager::class.java)
 
-        Assume.assumeTrue("Device does not have a network provider",
+        assumeTrue("Device does not have a network provider",
             locationManager.getProviders(true).contains(LocationManager.NETWORK_PROVIDER))
 
         val location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
-        Assume.assumeTrue("Could not get last known location", location != null)
+        assumeTrue("Could not get last known location", location != null)
 
         assertThat(noted.map { it.first.op }).containsAnyOf(OPSTR_COARSE_LOCATION,
             OPSTR_FINE_LOCATION)
@@ -411,7 +413,7 @@ class AppOpsLoggingTest {
         val locationManager = context.createFeatureContext(TEST_FEATURE_ID)
             .getSystemService(LocationManager::class.java)
 
-        Assume.assumeTrue("Device does not have a network provider",
+        assumeTrue("Device does not have a network provider",
             locationManager.getProviders(true).contains(LocationManager.NETWORK_PROVIDER))
 
         val gotLocationChangeCallback = CompletableFuture<Unit>()
@@ -432,7 +434,7 @@ class AppOpsLoggingTest {
         try {
             gotLocationChangeCallback.get(TIMEOUT_MILLIS, MILLISECONDS)
         } catch (e: TimeoutException) {
-            Assume.assumeTrue("Could not get location", false)
+            assumeTrue("Could not get location", false)
         }
 
         eventually {
@@ -477,7 +479,7 @@ class AppOpsLoggingTest {
                 try {
                     gotProximityAlert.get(TIMEOUT_MILLIS, MILLISECONDS)
                 } catch (e: TimeoutException) {
-                    Assume.assumeTrue("Could not get proximity alert", false)
+                    assumeTrue("Could not get proximity alert", false)
                 }
 
                 eventually {
@@ -522,6 +524,23 @@ class AppOpsLoggingTest {
         assertThat(noted.map { it.first.op }).containsExactly(OPSTR_WRITE_CONTACTS)
         assertThat(noted[0].first.featureId).isEqualTo("test")
         assertThat(noted[0].second.map { it.methodName }).contains("writeToContactsProvider")
+    }
+
+    /**
+     * Realistic end-to-end test for getting cell info
+     */
+    @Test
+    fun getCellInfo() {
+        assumeTrue(context.packageManager.hasSystemFeature(FEATURE_TELEPHONY))
+
+        val telephonyManager = context.createFeatureContext(TEST_FEATURE_ID)
+            .getSystemService(TelephonyManager::class.java)
+
+        telephonyManager.allCellInfo
+
+        assertThat(noted[0].first.op).isEqualTo(OPSTR_FINE_LOCATION)
+        assertThat(noted[0].first.featureId).isEqualTo(TEST_FEATURE_ID)
+        assertThat(noted[0].second.map { it.methodName }).contains("getCellInfo")
     }
 
     @After
