@@ -227,7 +227,7 @@ mybroadcast:
         verifyVrControllerProto(dump.getVrController(), filterLevel);
         verifyAppTimeTrackerProto(dump.getCurrentTracker(), filterLevel);
         if (filterLevel == PRIVACY_AUTO) {
-            assertTrue(dump.getMemWatchProcesses().getDump().getFile().isEmpty());
+            assertTrue(dump.getMemWatchProcesses().getDump().getUri().isEmpty());
         }
     }
 
