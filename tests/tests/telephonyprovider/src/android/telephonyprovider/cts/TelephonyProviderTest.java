@@ -16,31 +16,39 @@
 
 package android.telephonyprovider.cts;
 
+import static android.telephonyprovider.cts.DefaultSmsAppHelper.assumeTelephony;
+
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
+
 import android.content.ContentResolver;
 import android.database.Cursor;
 import android.provider.Telephony.Carriers;
-import android.test.InstrumentationTestCase;
 
-public class TelephonyProviderTest extends InstrumentationTestCase {
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
+public class TelephonyProviderTest {
     private ContentResolver mContentResolver;
     private static final String[] APN_PROJECTION = {
-        Carriers.TYPE,
-        Carriers.MMSC,
-        Carriers.MMSPROXY,
-        Carriers.MMSPORT,
-        Carriers.MVNO_TYPE,
-        Carriers.MVNO_MATCH_DATA
+            Carriers.TYPE,
+            Carriers.MMSC,
+            Carriers.MMSPROXY,
+            Carriers.MMSPORT,
+            Carriers.MVNO_TYPE,
+            Carriers.MVNO_MATCH_DATA
     };
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
+        assumeTelephony();
         mContentResolver = getInstrumentation().getContext().getContentResolver();
     }
 
     // In JB MR1 access to the TelephonyProvider's Carriers table was clamped down and would
     // throw a SecurityException when queried. That was fixed in JB MR2. Verify that 3rd parties
     // can access the APN info the carriers table, after JB MR1.
+    @Test
     public void testAccessToApns() {
         try {
             String selection = Carriers.CURRENT + " IS NOT NULL";
@@ -48,10 +56,11 @@ public class TelephonyProviderTest extends InstrumentationTestCase {
             Cursor cursor = mContentResolver.query(Carriers.CONTENT_URI,
                     APN_PROJECTION, selection, selectionArgs, null);
         } catch (SecurityException e) {
-            fail("No access to current APN");
+            Assert.fail("No access to current APN");
         }
     }
 
+    @Test
     public void testNoAccessToPassword() {
         try {
             String selection = Carriers.CURRENT + " IS NOT NULL AND "
@@ -59,7 +68,7 @@ public class TelephonyProviderTest extends InstrumentationTestCase {
             String[] selectionArgs = null;
             Cursor cursor = mContentResolver.query(Carriers.CONTENT_URI,
                     APN_PROJECTION, selection, selectionArgs, null);
-            fail("Expected SecurityExceptio");
+            Assert.fail("Expected SecurityExceptio");
         } catch (SecurityException e) {
             // expected
         }
