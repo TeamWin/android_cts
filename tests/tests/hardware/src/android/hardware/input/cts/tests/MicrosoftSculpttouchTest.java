@@ -32,6 +32,13 @@ public class MicrosoftSculpttouchTest extends InputTestCase {
         super(R.raw.microsoft_sculpttouch_register);
     }
 
+    /**
+     * NOTE: We added a test sample on the move behavior which assumes certain parameters passed to
+     * some components in input stack. In particular, in CursorInputMapper we use VelocityControl to
+     * accelerate mouse cursor move. VelocityControl and VelocityTracker have several parameters
+     * that can be configured via either changing code or setting default velocity estimation
+     * strategy. OEMs who changed those values may fail this test.
+     */
     @Test
     public void testAllMotions() {
         try (PointerCaptureSession session = new PointerCaptureSession()) {
