@@ -1234,6 +1234,12 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         assertDomainZeroOrOne("u:r:wpa:s0", "/system/bin/wpa_supplicant");
     }
 
+    /* permissioncontroller may or may not be running */
+    @CddTest(requirement="9.7")
+    public void testPermissionControllerDomain() throws DeviceNotAvailableException {
+        assertDomainZeroOrOne("u:r:permissioncontroller_app:s0:c66,c256,c512,c768", "com.google.android.permissioncontroller");
+    }
+
     /*
      * Nothing should be running in this domain, cardinality test is all thats
      * needed
@@ -1313,29 +1319,31 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
             tDevice.executeShellCommand("toybox ps -A -o label,user,pid,ppid,cmdline", psOut);
             String psOutString = psOut.getOutput();
             Pattern p = Pattern.compile(
-                    "^([\\w_:]+)\\s+([\\w_]+)\\s+(\\d+)\\s+(\\d+)\\s+(\\p{Graph}+)(\\s\\p{Graph}+)*\\s*$",
-                    Pattern.MULTILINE);
-            Matcher m = p.matcher(psOutString);
+                    "^([\\w_:,]+)\\s+([\\w_]+)\\s+(\\d+)\\s+(\\d+)\\s+(\\p{Graph}+)(\\s\\p{Graph}+)*\\s*$"
+            );
             procMap = new HashMap<String, ArrayList<ProcessDetails>>();
             exeMap = new HashMap<String, ArrayList<ProcessDetails>>();
-            while(m.find()) {
-                String domainLabel = m.group(1);
-                String user = m.group(2);
-                int pid = Integer.parseInt(m.group(3));
-                int ppid = Integer.parseInt(m.group(4));
-                String procTitle = m.group(5);
-                ProcessDetails proc = new ProcessDetails(domainLabel, user, pid, ppid, procTitle);
-                if (procMap.get(domainLabel) == null) {
-                    procMap.put(domainLabel, new ArrayList<ProcessDetails>());
+            for(String line : psOutString.split("\n")) {
+                Matcher m = p.matcher(line);
+                if(m.matches()) {
+                    String domainLabel = m.group(1);
+                    String user = m.group(2);
+                    int pid = Integer.parseInt(m.group(3));
+                    int ppid = Integer.parseInt(m.group(4));
+                    String procTitle = m.group(5);
+                    ProcessDetails proc = new ProcessDetails(domainLabel, user, pid, ppid, procTitle);
+                    if (procMap.get(domainLabel) == null) {
+                        procMap.put(domainLabel, new ArrayList<ProcessDetails>());
+                    }
+                    procMap.get(domainLabel).add(proc);
+                    if (procTitle.equals("[kthreadd]") && ppid == 0) {
+                        kernelParentThreadpid = pid;
+                    }
+                    if (exeMap.get(procTitle) == null) {
+                        exeMap.put(procTitle, new ArrayList<ProcessDetails>());
+                    }
+                    exeMap.get(procTitle).add(proc);
                 }
-                procMap.get(domainLabel).add(proc);
-                if (procTitle.equals("[kthreadd]") && ppid == 0) {
-                    kernelParentThreadpid = pid;
-                }
-                if (exeMap.get(procTitle) == null) {
-                    exeMap.put(procTitle, new ArrayList<ProcessDetails>());
-                }
-                exeMap.get(procTitle).add(proc);
             }
         }
 
