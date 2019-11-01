@@ -467,6 +467,7 @@ public class TelephonyManagerTest {
         mTelephonyManager.isVoicemailVibrationEnabled(defaultAccount);
         mTelephonyManager.getSubIdForPhoneAccountHandle(defaultAccount);
         mTelephonyManager.getCarrierConfig();
+        TelephonyManager.getDefaultRespondViaMessageApplication(getContext(), false);
     }
 
     @Test
@@ -685,6 +686,20 @@ public class TelephonyManagerTest {
         String deviceId = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.getDeviceId());
         verifyDeviceId(deviceId);
+    }
+
+    /**
+     * Tests the max number of active SIMs method
+     */
+    @Test
+    public void testGetMaxNumberOfSimultaneouslyActiveSims() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
+            return;
+        }
+
+        int maxNum = mTelephonyManager.getMaxNumberOfSimultaneouslyActiveSims();
+        assertTrue(maxNum >= 1);
     }
 
     /**
