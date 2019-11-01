@@ -49,17 +49,21 @@ def extract_neverallow_rules(policy_file):
         for section in sections:
             depths[section] = 0
         for line in lines:
+            is_header = False
             for section in sections:
                 if line.startswith("BEGIN_%s" % section):
                     depths[section] += 1
+                    is_header = True
                     break
                 elif line.startswith("END_%s" % section):
                     if depths[section] < 1:
                         exit("ERROR: END_%s outside of %s section" % (section, section))
                     depths[section] -= 1
+                    is_header = True
                     break
-            rule = NeverallowRule(line, depths)
-            rules.append(rule)
+            if not is_header:
+                rule = NeverallowRule(line, depths)
+                rules.append(rule)
 
         for section in sections:
             if depths[section] != 0:
