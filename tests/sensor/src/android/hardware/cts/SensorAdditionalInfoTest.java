@@ -266,7 +266,7 @@ public class SensorAdditionalInfoTest extends SensorTestCase {
 
         // Checks sensor placement data length and determinant of rotation matrix is 1.
         private void verifySensorPlacementData(float[] m) {
-            if(m.length != 12) {
+            if(m.length < 12) {
                 mIsSensorPlacementSizeValid = false;
                 return;
             }
