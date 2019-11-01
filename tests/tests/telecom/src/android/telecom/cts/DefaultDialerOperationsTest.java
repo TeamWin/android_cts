@@ -22,6 +22,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.os.Process;
 import android.provider.VoicemailContract.Voicemails;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
@@ -32,6 +33,7 @@ import android.test.InstrumentationTestCase;
 import android.text.TextUtils;
 
 import androidx.test.InstrumentationRegistry;
+import com.android.compatibility.common.util.ShellIdentityUtils;
 
 import java.util.List;
 
@@ -92,6 +94,9 @@ public class DefaultDialerOperationsTest extends InstrumentationTestCase {
         assertEquals(mSystemDialer, mTelecomManager.getDefaultDialerPackage());
         TestUtils.setDefaultDialer(getInstrumentation(), TestUtils.PACKAGE);
         assertEquals(TestUtils.PACKAGE, mTelecomManager.getDefaultDialerPackage());
+        assertEquals(mTelecomManager.getDefaultDialerPackage(),
+                ShellIdentityUtils.invokeMethodWithShellPermissions(mTelecomManager,
+                        tm -> tm.getDefaultDialerPackage(Process.myUserHandle().getIdentifier())));
     }
 
     /** Default dialer should be the default package handling ACTION_DIAL. */
