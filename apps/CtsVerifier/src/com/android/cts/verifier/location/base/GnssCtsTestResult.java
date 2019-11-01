@@ -25,7 +25,7 @@ import junit.framework.TestListener;
 import junit.framework.TestResult;
 
 import android.content.Context;
-import android.location.cts.common.GnssTestCase;
+import android.location.cts.GnssTestCase;
 
 import java.util.Enumeration;
 

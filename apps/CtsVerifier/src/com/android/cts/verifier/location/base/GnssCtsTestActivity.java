@@ -16,8 +16,8 @@
 
 package com.android.cts.verifier.location.base;
 
-import android.location.cts.common.GnssTestCase;
-import android.location.cts.gnss.MultiConstellationNotSupportedException;
+import android.location.cts.GnssTestCase;
+import android.location.cts.MultiConstellationNotSupportedException;
 import android.view.WindowManager;
 
 import com.android.cts.verifier.R;
