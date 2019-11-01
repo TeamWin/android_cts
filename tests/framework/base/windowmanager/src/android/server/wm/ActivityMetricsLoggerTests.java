@@ -265,9 +265,8 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
         assertThat("did not find component in am start output.", amStartOutput,
                 containsString(TEST_ACTIVITY.flattenToShortString()));
 
-        // TODO (b/120981435) use ActivityMetricsLogger to populate hot launch times
-        // assertThat("did not find windows drawn delay time in am start output.", amStartOutput,
-        //       containsString(Integer.toString(windowsDrawnDelayMs)));
+        assertThat("did not find windows drawn delay time in am start output.", amStartOutput,
+                containsString(Integer.toString(windowsDrawnDelayMs)));
 
         assertThat("did not find launch state in am start output.", amStartOutput,
                 containsString("HOT"));
