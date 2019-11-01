@@ -23,8 +23,8 @@ import com.google.common.collect.ImmutableSet;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -64,6 +64,7 @@ public class ParentProfileTest extends BaseManagedProfileTest {
             .add("setPasswordExpirationTimeout")
             .add("getPasswordExpiration")
             .add("getPasswordMaximumLength")
+            .add("getPasswordComplexity")
             .add("isActivePasswordSufficient")
             .add("getCurrentFailedPasswordAttempts")
             .add("getMaximumFailedPasswordsForWipe")
