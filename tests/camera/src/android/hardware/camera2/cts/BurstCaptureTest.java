@@ -23,8 +23,10 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
+import android.hardware.camera2.params.CapabilityAndMaxSize;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.util.Log;
@@ -51,7 +53,8 @@ public class BurstCaptureTest extends Camera2SurfaceViewTestCase {
     @Test
     public void testYuvBurst() throws Exception {
         final int YUV_BURST_SIZE = 100;
-        testBurst(ImageFormat.YUV_420_888, YUV_BURST_SIZE, true/*checkFrameRate*/);
+        testBurst(ImageFormat.YUV_420_888, YUV_BURST_SIZE, true/*checkFrameRate*/,
+                false/*testBokehMode*/);
     }
 
     /**
@@ -64,10 +67,23 @@ public class BurstCaptureTest extends Camera2SurfaceViewTestCase {
     @Test
     public void testJpegBurst() throws Exception {
         final int JPEG_BURST_SIZE = 10;
-        testBurst(ImageFormat.JPEG, JPEG_BURST_SIZE, false/*checkFrameRate*/);
+        testBurst(ImageFormat.JPEG, JPEG_BURST_SIZE, false/*checkFrameRate*/,
+                false/*testBokehMode*/);
     }
 
-    private void testBurst(int fmt, int burstSize, boolean checkFrameRate) throws Exception {
+    /**
+     * Test YUV burst capture with full-AUTO control and STILL_CAPTURE bokeh mode.
+     * Also verifies sensor settings operation if READ_SENSOR_SETTINGS is available.
+     */
+    @Test
+    public void testYuvBurstWithStillBokeh() throws Exception {
+        final int YUV_BURST_SIZE = 100;
+        testBurst(ImageFormat.YUV_420_888, YUV_BURST_SIZE, true/*checkFrameRate*/,
+                true/*testStillBokeh*/);
+    }
+
+    private void testBurst(int fmt, int burstSize, boolean checkFrameRate, boolean testStillBokeh)
+            throws Exception {
         for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
             try {
                 String id = mCameraIdsUnderTest[i];
@@ -88,8 +104,21 @@ public class BurstCaptureTest extends Camera2SurfaceViewTestCase {
                     continue;
                 }
 
+                CapabilityAndMaxSize[] bokehCaps = staticInfo.getAvailableBokehCapsChecked();
+                boolean supportStillBokeh = false;
+                for (CapabilityAndMaxSize bokehCap : bokehCaps) {
+                    if (bokehCap.getMode() == CameraMetadata.CONTROL_BOKEH_MODE_STILL_CAPTURE) {
+                        supportStillBokeh = true;
+                        break;
+                    }
+                }
+                if (testStillBokeh && !supportStillBokeh) {
+                    Log.v(TAG, "Device doesn't support STILL_CAPTURE bokeh. Skip the test");
+                    continue;
+                }
+
                 openDevice(id);
-                burstTestByCamera(id, fmt, burstSize, checkFrameRate);
+                burstTestByCamera(id, fmt, burstSize, checkFrameRate, testStillBokeh);
             } finally {
                 closeDevice();
                 closeImageReader();
@@ -98,7 +127,7 @@ public class BurstCaptureTest extends Camera2SurfaceViewTestCase {
     }
 
     private void burstTestByCamera(String cameraId, int fmt, int burstSize,
-            boolean checkFrameRate) throws Exception {
+            boolean checkFrameRate, boolean testStillBokeh) throws Exception {
         // Parameters
         final int MAX_CONVERGENCE_FRAMES = 150; // 5 sec at 30fps
         final long MAX_PREVIEW_RESULT_TIMEOUT_MS = 2000;
@@ -150,6 +179,12 @@ public class BurstCaptureTest extends Camera2SurfaceViewTestCase {
                 targetRange);
         burstBuilder.set(CaptureRequest.CONTROL_AE_LOCK, true);
         burstBuilder.set(CaptureRequest.CONTROL_AWB_LOCK, true);
+        if (testStillBokeh) {
+            previewBuilder.set(CaptureRequest.CONTROL_BOKEH_MODE,
+                    CameraMetadata.CONTROL_BOKEH_MODE_STILL_CAPTURE);
+            burstBuilder.set(CaptureRequest.CONTROL_BOKEH_MODE,
+                    CameraMetadata.CONTROL_BOKEH_MODE_STILL_CAPTURE);
+        }
 
         // Create session and start up preview
 

@@ -25,6 +25,7 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.cts.CameraTestUtils;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.hardware.camera2.params.CapabilityAndMaxSize;
 import android.util.Range;
 import android.util.Size;
 import android.util.Log;
@@ -1850,6 +1851,68 @@ public class StaticMetadata {
                 modeList.contains(CameraMetadata.CONTROL_EFFECT_MODE_OFF));
 
         return modes;
+    }
+
+    public CapabilityAndMaxSize[] getAvailableBokehCapsChecked() {
+        final Size FULL_HD = new Size(1920, 1080);
+        Rect activeRect = getValueFromKeyNonNull(
+                CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+        Key<CapabilityAndMaxSize[]> key =
+                CameraCharacteristics.CONTROL_AVAILABLE_BOKEH_CAPABILITIES;
+        CapabilityAndMaxSize[] caps = mCharacteristics.get(key);
+        if (caps == null) {
+            return new CapabilityAndMaxSize[0];
+        }
+
+        Size[] yuvSizes = getAvailableSizesForFormatChecked(ImageFormat.YUV_420_888,
+                StaticMetadata.StreamDirection.Output);
+        List<Size> yuvSizesList = Arrays.asList(yuvSizes);
+        for (CapabilityAndMaxSize cap : caps) {
+            int bokehMode = cap.getMode();
+            Size maxStreamingSize = cap.getMaxStreamingSize();
+            boolean maxStreamingSizeIsZero =
+                    maxStreamingSize.getWidth() == 0 && maxStreamingSize.getHeight() == 0;
+            // Check bokeh mode is in range.
+            checkTrueForKey(key,
+                    String.format(" bokehMode %d is out of range [%d, %d]", bokehMode,
+                    CameraMetadata.CONTROL_BOKEH_MODE_OFF,
+                    CameraMetadata.CONTROL_BOKEH_MODE_CONTINUOUS),
+                    bokehMode <= CameraMetadata.CONTROL_BOKEH_MODE_CONTINUOUS &&
+                    bokehMode >= CameraMetadata.CONTROL_BOKEH_MODE_OFF);
+            switch (bokehMode) {
+                case CameraMetadata.CONTROL_BOKEH_MODE_STILL_CAPTURE:
+                    // STILL_CAPTURE: Must either be (0, 0), or one of supported yuv/private sizes.
+                    // Because spec requires yuv and private sizes match, only check YUV sizes here.
+                    checkTrueForKey(key,
+                            String.format(" maxStreamingSize [%d, %d] for bokeh mode " +
+                            "%d must be a supported YCBCR_420_888 size, or (0, 0)",
+                            maxStreamingSize.getWidth(), maxStreamingSize.getHeight(), bokehMode),
+                            yuvSizesList.contains(maxStreamingSize) || maxStreamingSizeIsZero);
+                    break;
+                case CameraMetadata.CONTROL_BOKEH_MODE_CONTINUOUS:
+                    // CONTINUOUS: Must be one of supported yuv/private stream sizes.
+                    checkTrueForKey(key,
+                            String.format(" maxStreamingSize [%d, %d] for bokeh mode " +
+                            "%d must be a supported YCBCR_420_888 size.",
+                            maxStreamingSize.getWidth(), maxStreamingSize.getHeight(), bokehMode),
+                            yuvSizesList.contains(maxStreamingSize));
+                    // Must be at least 1080p if sensor is at least 1080p.
+                    if (activeRect.width() >= FULL_HD.getWidth() &&
+                            activeRect.height() >= FULL_HD.getHeight()) {
+                        checkTrueForKey(key,
+                                String.format(" maxStreamingSize [%d, %d] for bokeh mode %d must " +
+                                "be at least 1080p", maxStreamingSize.getWidth(),
+                                maxStreamingSize.getHeight(), bokehMode),
+                                maxStreamingSize.getWidth() >= FULL_HD.getWidth() &&
+                                maxStreamingSize.getHeight() >= FULL_HD.getHeight());
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        return caps;
     }
 
     /**
