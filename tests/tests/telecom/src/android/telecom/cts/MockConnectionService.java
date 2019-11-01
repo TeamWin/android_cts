@@ -69,7 +69,7 @@ public class MockConnectionService extends ConnectionService {
             ConnectionRequest request) {
         final MockConnection connection = new MockConnection();
         connection.setAddress(request.getAddress(), CONNECTION_PRESENTATION);
-        connection.setPhoneAccountHandle(connectionManagerPhoneAccount);
+        connection.setMockPhoneAccountHandle(connectionManagerPhoneAccount);
         connection.setConnectionCapabilities(Connection.CAPABILITY_SUPPORT_HOLD |
                 Connection.CAPABILITY_HOLD
                 | Connection.CAPABILITY_SUPPORTS_VT_LOCAL_BIDIRECTIONAL
