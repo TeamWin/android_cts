@@ -14,7 +14,7 @@
 -keepclassmembers class * extends com.android.cts.verifier.location.BaseGnssTestActivity {
     public <methods>;
 }
--keepclassmembers class * extends android.location.cts.GnssTestCase {
+-keepclassmembers class * extends android.location.cts.common.GnssTestCase {
     public <methods>;
 }
 
