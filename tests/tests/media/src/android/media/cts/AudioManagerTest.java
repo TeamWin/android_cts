@@ -67,6 +67,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@NonMediaMainlineTest
 public class AudioManagerTest extends InstrumentationTestCase {
     private final static String TAG = "AudioManagerTest";
 
