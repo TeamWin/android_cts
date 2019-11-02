@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,15 @@
 
 package android.media.cts;
 
-import android.media.MediaTimestamp;
-import android.test.AndroidTestCase;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Tests for MediaTimestamp.
+ * Annotation for tests that are not related to media mainline.
  */
-@NonMediaMainlineTest
-public class MediaTimestampTest extends AndroidTestCase {
-    public void testMediaTimestamp() {
-        MediaTimestamp timestamp = new MediaTimestamp(1000, 2000, 2.0f);
-        assertEquals(1000, timestamp.getAnchorMediaTimeUs());
-        assertEquals(2000, timestamp.getAnchorSystemNanoTime());
-        assertEquals(2.0f, timestamp.getMediaClockRate());
-    }
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD, ElementType.TYPE})
+public @interface NonMediaMainlineTest {
 }
