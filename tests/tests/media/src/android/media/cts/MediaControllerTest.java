@@ -39,6 +39,7 @@ import android.view.KeyEvent;
 /**
  * Test {@link android.media.session.MediaController}.
  */
+@NonMediaMainlineTest
 public class MediaControllerTest extends AndroidTestCase {
     // The maximum time to wait for an operation.
     private static final long TIME_OUT_MS = 3000L;

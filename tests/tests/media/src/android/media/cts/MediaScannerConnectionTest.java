@@ -30,6 +30,7 @@ import com.android.compatibility.common.util.PollingCheck;
 
 import java.io.File;
 
+@NonMediaMainlineTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 public class MediaScannerConnectionTest extends AndroidTestCase {
 
