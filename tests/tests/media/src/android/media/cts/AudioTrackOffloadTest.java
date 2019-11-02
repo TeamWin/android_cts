@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.Executor;
 
+@NonMediaMainlineTest
 public class AudioTrackOffloadTest extends CtsAndroidTestCase {
     private static final String TAG = "AudioTrackOffloadTest";
 

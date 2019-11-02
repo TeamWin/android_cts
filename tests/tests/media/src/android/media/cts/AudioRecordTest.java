@@ -69,6 +69,7 @@ import java.util.concurrent.Executor;
 import java.util.List;
 
 
+@NonMediaMainlineTest
 @RunWith(AndroidJUnit4.class)
 public class AudioRecordTest {
     private final static String TAG = "AudioRecordTest";

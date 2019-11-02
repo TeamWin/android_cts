@@ -46,6 +46,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Tests for media framework behaviors related to app ops.
  */
+@NonMediaMainlineTest
 @RunWith(AndroidJUnit4.class)
 public class AudioRecordAppOpTest {
     private static final long APP_OP_CHANGE_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(2);
