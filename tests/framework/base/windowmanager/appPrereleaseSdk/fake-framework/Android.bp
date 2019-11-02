@@ -1,4 +1,5 @@
-// Copyright (C) 2008 The Android Open Source Project
+//
+// Copyright (C) 2018 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,26 +12,19 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
 
-// descGen java library
-// ============================================================
-java_library_host {
-    name: "descGen",
+// A fake framework that mimics an older, pre-release SDK for the purposes of
+// testing what happens when an app linked against a pre-release SDK is installed
+// on release device.
 
-    srcs: [
-        "CollectAllTests.java",
-        "DescriptionGenerator.java",
-        "VogarUtils.java",
-    ],
-
-    use_tools_jar: true,
-
-    libs: [
-        "junit",
-        "tradefed",
-    ],
-    static_libs: [
-        "compatibility-host-util",
-        "vogarexpect",
-    ],
+android_app {
+    name: "fake-framework",
+    installable: false,
+    sdk_version: "core_current",
+    srcs: ["src/**/*.java"],
+    export_package_resources: true,
+    optimize: {
+        enabled: false,
+    },
 }

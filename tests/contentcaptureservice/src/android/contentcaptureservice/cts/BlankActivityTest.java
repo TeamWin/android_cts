@@ -25,16 +25,20 @@ import static com.android.compatibility.common.util.ActivitiesWatcher.ActivityLi
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.platform.test.annotations.AppModeFull;
+import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.ActivitiesWatcher.ActivityWatcher;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -49,6 +53,8 @@ public class BlankActivityTest
     private static final ActivityTestRule<BlankActivity> sActivityRule = new ActivityTestRule<>(
             BlankActivity.class, false, false);
 
+    private UiDevice mDevice;
+
     public BlankActivityTest() {
         super(BlankActivity.class);
     }
@@ -56,6 +62,12 @@ public class BlankActivityTest
     @Override
     protected ActivityTestRule<BlankActivity> getActivityTestRule() {
         return sActivityRule;
+    }
+
+    @Before
+    public void setup() throws Exception {
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        mDevice = UiDevice.getInstance(instrumentation);
     }
 
     @Test
@@ -176,6 +188,8 @@ public class BlankActivityTest
         outsideActivity.setFlags(FLAG_ACTIVITY_NEW_TASK);
 
         sContext.startActivity(outsideActivity);
+
+        mDevice.waitForIdle();
 
         assertThat(service.getAllSessionIds()).isEmpty();
     }

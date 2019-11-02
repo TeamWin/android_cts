@@ -32,7 +32,10 @@ import android.media.MediaDataSource;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
+import android.media.MediaRecorder;
 import android.media.cts.R;
+import android.net.Uri;
+import android.os.Environment;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
@@ -41,11 +44,13 @@ import android.util.Log;
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.MediaUtils;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.function.Function;
 
@@ -60,6 +65,7 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
     protected MediaMetadataRetriever mRetriever;
     private PackageManager mPackageManager;
 
+    protected static final int SLEEP_TIME = 1000;
     private static int BORDER_WIDTH = 16;
     private static Color COLOR_BLOCK =
             Color.valueOf(1.0f, 1.0f, 1.0f);
@@ -336,9 +342,43 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
         assertNotNull("couldn't retrieve album art", mRetriever.getEmbeddedPicture());
     }
 
+    public void testSetDataSourcePath() {
+        File outputFile = new File(Environment.getExternalStorageDirectory(), "retriever_test.3gp");
+        try {
+            recordMedia(outputFile);
+            mRetriever.setDataSource(outputFile.getAbsolutePath());
+        } catch (Exception ex) {
+            fail("Failed setting data source with path, caught exception:" + ex);
+        } finally {
+            outputFile.delete();
+        }
+    }
+
+    public void testSetDataSourceUri() {
+        File outputFile = new File(Environment.getExternalStorageDirectory(), "retriever_test.3gp");
+        try {
+            recordMedia(outputFile);
+            Uri uri = Uri.parse(outputFile.getAbsolutePath());
+            mRetriever.setDataSource(getContext(), uri);
+        } catch (Exception ex) {
+            fail("Failed setting data source with Uri, caught exception:" + ex);
+        } finally {
+            outputFile.delete();
+        }
+    }
+
     public void testSetDataSourceNullPath() {
         try {
             mRetriever.setDataSource((String)null);
+            fail("Expected IllegalArgumentException.");
+        } catch (IllegalArgumentException ex) {
+            // Expected, test passed.
+        }
+    }
+
+    public void testSetDataSourceNullUri() {
+        try {
+            mRetriever.setDataSource(getContext(), (Uri)null);
             fail("Expected IllegalArgumentException.");
         } catch (IllegalArgumentException ex) {
             // Expected, test passed.
@@ -937,6 +977,23 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
             if (inputStream != null) {
                 inputStream.close();
             }
+        }
+    }
+
+    private void recordMedia(File outputFile) throws Exception {
+        MediaRecorder mr = new MediaRecorder();
+        try {
+            mr.setAudioSource(MediaRecorder.AudioSource.MIC);
+            mr.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+            mr.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+            mr.setOutputFile(outputFile.getAbsolutePath());
+
+            mr.prepare();
+            mr.start();
+            Thread.sleep(SLEEP_TIME);
+            mr.stop();
+        } finally {
+            mr.release();
         }
     }
 

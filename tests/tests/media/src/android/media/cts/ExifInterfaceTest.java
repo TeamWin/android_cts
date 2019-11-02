@@ -43,6 +43,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
+@NonMediaMainlineTest
 @AppModeFull(reason = "Instant apps cannot access the SD card")
 public class ExifInterfaceTest extends AndroidTestCase {
     private static final String TAG = ExifInterface.class.getSimpleName();

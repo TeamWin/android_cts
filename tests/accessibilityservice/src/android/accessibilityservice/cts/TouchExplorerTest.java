@@ -28,6 +28,7 @@ import static android.accessibilityservice.cts.utils.GestureUtils.dispatchGestur
 import static android.accessibilityservice.cts.utils.GestureUtils.doubleTap;
 import static android.accessibilityservice.cts.utils.GestureUtils.doubleTapAndHold;
 import static android.accessibilityservice.cts.utils.GestureUtils.isRawAtPoint;
+import static android.accessibilityservice.cts.utils.GestureUtils.multiTap;
 import static android.accessibilityservice.cts.utils.GestureUtils.swipe;
 import static android.accessibilityservice.cts.utils.GestureUtils.times;
 import static android.view.MotionEvent.ACTION_HOVER_ENTER;
@@ -65,6 +66,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityNodeInfo;
 
@@ -245,6 +247,29 @@ public class TouchExplorerTest {
                 TYPE_TOUCH_EXPLORATION_GESTURE_START,
                 TYPE_TOUCH_EXPLORATION_GESTURE_END,
                 TYPE_TOUCH_INTERACTION_END);
+    }
+
+    /**
+     * Test the case where we execute a "sloppy" double tap, meaning that the second tap isn't
+     * exactly in the same location as the first but still within tolerances. It should behave the
+     * same as a standard double tap.
+     */
+    @Test
+    @AppModeFull
+    public void testSloppyDoubleTapAccessibilityFocus_performsClick() {
+        if (!mHasTouchscreen || !mScreenBigEnough) return;
+        syncAccessibilityFocusToInputFocus();
+        int slop = ViewConfiguration.get(mInstrumentation.getContext()).getScaledDoubleTapSlop();
+        dispatch(multiTap(mTapLocation, 2, slop));
+        mHoverListener.assertNonePropagated();
+        // The click should not be delivered via touch events in this case.
+        mTouchListener.assertNonePropagated();
+        mService.assertPropagated(
+                TYPE_VIEW_ACCESSIBILITY_FOCUSED,
+                TYPE_TOUCH_INTERACTION_START,
+                TYPE_TOUCH_INTERACTION_END,
+                TYPE_VIEW_CLICKED);
+        mClickListener.assertClicked(mView);
     }
 
     /**

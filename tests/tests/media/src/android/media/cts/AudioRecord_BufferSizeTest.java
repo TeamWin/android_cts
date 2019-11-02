@@ -28,6 +28,7 @@ import com.android.compatibility.common.util.PollingCheck;
 import java.util.ArrayList;
 import java.util.List;
 
+@NonMediaMainlineTest
 public class AudioRecord_BufferSizeTest extends AndroidTestCase {
 
     private static final String TAG = AudioRecord_BufferSizeTest.class.getSimpleName();

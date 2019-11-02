@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,10 +59,12 @@ public class CtsRootlessGpuDebugHostTest extends BaseHostJUnit4Test implements I
     // - Ensure we can load a layer from app's data directory (testDebugLayerLoadVulkan)
     // - Ensure we can load multiple layers, in order, from app's data directory (testDebugLayerLoadVulkan)
     // - Ensure we can still use system properties if no layers loaded via Settings (testSystemPropertyEnableVulkan)
-    // - Ensure we can find layers in separate specified app (testDebugLayerLoadExternalVulkan)
+    // - Ensure we can find layers in separate specified app and load them in a debuggable app (testDebugLayerLoadExternalVulkan)
+    // - Ensure we can find layers in separate specified app and load them in an injectLayers app (testInjectLayerLoadExternalVulkan)
     // Negative Vulkan tests
     // - Ensure we cannot push a layer to non-debuggable app (testReleaseLayerLoadVulkan)
     // - Ensure non-debuggable app ignores the new Settings (testReleaseLayerLoadVulkan)
+    // - Ensure we cannot push a layer to an injectLayers app (testInjectLayerLoadVulkan)
     // - Ensure we cannot enumerate layers from debuggable app's data directory if Setting not specified (testDebugNoEnumerateVulkan)
     // - Ensure we cannot enumerate layers without specifying the debuggable app (testDebugNoEnumerateVulkan)
     // - Ensure we cannot use system properties when layer is found via Settings with debuggable app (testSystemPropertyIgnoreVulkan)
@@ -75,7 +77,8 @@ public class CtsRootlessGpuDebugHostTest extends BaseHostJUnit4Test implements I
     // - Ensure we can specify the app to load layers (testDebugLayerLoadGLES)
     // - Ensure we can load a layer from app's data directory (testDebugLayerLoadGLES)
     // - Ensure we can load multiple layers, in order, from app's data directory (testDebugLayerLoadGLES)
-    // - Ensure we can find layers in separate specified app (testDebugLayerLoadExternalGLES)
+    // - Ensure we can find layers in separate specified app and load them in a debuggable app (testDebugLayerLoadExternalGLES)
+    // - Ensure we can find layers in separate specified app and load them in an injectLayers app (testInjectLayerLoadExternalGLES)
     // Negative GLES tests
     // - Ensure we cannot push a layer to non-debuggable app (testReleaseLayerLoadGLES)
     // - Ensure non-debuggable app ignores the new Settings (testReleaseLayerLoadGLES)
@@ -100,10 +103,12 @@ public class CtsRootlessGpuDebugHostTest extends BaseHostJUnit4Test implements I
     private static final String LAYER_C_NAME = "VK_LAYER_ANDROID_" + LAYER_C;
     private static final String DEBUG_APP = "android.rootlessgpudebug.DEBUG.app";
     private static final String RELEASE_APP = "android.rootlessgpudebug.RELEASE.app";
+    private static final String INJECT_APP = "android.rootlessgpudebug.INJECT.app";
     private static final String LAYERS_APP = "android.rootlessgpudebug.LAYERS.app";
     private static final String GLES_LAYERS_APP = "android.rootlessgpudebug.GLES_LAYERS.app";
     private static final String DEBUG_APK = "CtsGpuToolsRootlessGpuDebugApp-DEBUG.apk";
     private static final String RELEASE_APK = "CtsGpuToolsRootlessGpuDebugApp-RELEASE.apk";
+    private static final String INJECT_APK = "CtsGpuToolsRootlessGpuDebugApp-INJECT.apk";
     private static final String LAYERS_APK = "CtsGpuToolsRootlessGpuDebugApp-LAYERS.apk";
     private static final String GLES_LAYERS_APK = "CtsGpuToolsRootlessGpuDebugApp-GLES_LAYERS.apk";
     private static final String GLES_LAYER_A = "glesLayerA";
@@ -271,6 +276,7 @@ public class CtsRootlessGpuDebugHostTest extends BaseHostJUnit4Test implements I
     public void cleanup() throws Exception {
         getDevice().executeAdbCommand("shell", "am", "force-stop", DEBUG_APP);
         getDevice().executeAdbCommand("shell", "am", "force-stop", RELEASE_APP);
+        getDevice().executeAdbCommand("shell", "am", "force-stop", INJECT_APP);
         getDevice().executeAdbCommand("shell", "rm", "-f", "/data/local/tmp/" + LAYER_A_LIB);
         getDevice().executeAdbCommand("shell", "rm", "-f", "/data/local/tmp/" + LAYER_B_LIB);
         getDevice().executeAdbCommand("shell", "rm", "-f", "/data/local/tmp/" + LAYER_C_LIB);
@@ -343,34 +349,46 @@ public class CtsRootlessGpuDebugHostTest extends BaseHostJUnit4Test implements I
         Assert.assertTrue("LayerA should be loaded before LayerB", resultA.lineNumber < resultB.lineNumber);
     }
 
-    /**
-     * This test ensures that we cannot push a layer to a non-debuggable app
-     * It also ensures non-debuggable apps ignore Settings and don't enumerate layers in the base directory.
-     */
-    @Test
-    public void testReleaseLayerLoadVulkan() throws Exception {
-
-        // Set up a layers to be loaded for RELEASE app
+    public void testLayerNotLoadedVulkan(final String APP_NAME) throws Exception {
+        // Set up a layers to be loaded for RELEASE or INJECT app
         applySetting("enable_gpu_debug_layers", "1");
-        applySetting("gpu_debug_app", RELEASE_APP);
+        applySetting("gpu_debug_app", APP_NAME);
         applySetting("gpu_debug_layers", LAYER_A_NAME + ":" + LAYER_B_NAME);
 
         // Copy a layer from our LAYERS APK to tmp
         setupLayer(LAYER_A_LIB, LAYERS_APP);
 
-        // Attempt to copy them over to our RELEASE app (this should fail)
+        // Attempt to copy them over to our RELEASE or INJECT app (this should fail)
         getDevice().executeAdbCommand("shell", "cat", "/data/local/tmp/" + LAYER_A_LIB, "|",
-                "run-as", RELEASE_APP, "--user", Integer.toString(getDevice().getCurrentUser()),
-                "sh", "-c", "\'cat", ">", LAYER_A_LIB, ";", "chmod", "700", LAYER_A_LIB + "\'", "||", "echo", "run-as", "failed");
+            "run-as", APP_NAME, "--user", Integer.toString(getDevice().getCurrentUser()),
+            "sh", "-c", "\'cat", ">", LAYER_A_LIB, ";", "chmod", "700", LAYER_A_LIB + "\'", "||", "echo", "run-as", "failed");
 
         // Kick off our RELEASE app
         String appStartTime = getTime();
-        getDevice().executeAdbCommand("shell", "am", "start", "-n", RELEASE_APP + "/" + ACTIVITY);
+        getDevice().executeAdbCommand("shell", "am", "start", "-n", APP_NAME + "/" + ACTIVITY);
 
         // Ensure we don't load the layer in base dir
         String searchStringA = LAYER_A_NAME + "loaded";
         LogScanResult resultA = scanLog(TAG + "," + LAYER_A, searchStringA, appStartTime);
         Assert.assertFalse("LayerA was enumerated", resultA.found);
+    }
+
+    /**
+     * This test ensures that we cannot push a layer to a release app
+     * It also ensures non-debuggable apps ignore Settings and don't enumerate layers in the base directory.
+     */
+    @Test
+    public void testReleaseLayerLoadVulkan() throws Exception {
+        testLayerNotLoadedVulkan(RELEASE_APP);
+    }
+
+    /**
+     * This test ensures that we cannot push a layer to an injectable app
+     * It also ensures non-debuggable apps ignore Settings and don't enumerate layers in the base directory.
+     */
+    @Test
+    public void testInjectLayerLoadVulkan() throws Exception {
+        testLayerNotLoadedVulkan(INJECT_APP);
     }
 
     /**
@@ -531,15 +549,12 @@ public class CtsRootlessGpuDebugHostTest extends BaseHostJUnit4Test implements I
         Assert.assertFalse("LayerB was loaded", resultB.found);
     }
 
-    /**
-     *
-     */
-    @Test
-    public void testDebugLayerLoadExternalVulkan() throws Exception {
+
+    public void testLayerLoadExternalVulkan(final String APP_NAME) throws Exception {
 
         // Set up layers to be loaded
         applySetting("enable_gpu_debug_layers", "1");
-        applySetting("gpu_debug_app", DEBUG_APP);
+        applySetting("gpu_debug_app", APP_NAME);
         applySetting("gpu_debug_layers", LAYER_C_NAME);
 
         // Specify the external app that hosts layers
@@ -547,7 +562,7 @@ public class CtsRootlessGpuDebugHostTest extends BaseHostJUnit4Test implements I
 
         // Kick off our DEBUG app
         String appStartTime = getTime();
-        getDevice().executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
+        getDevice().executeAdbCommand("shell", "am", "start", "-n", APP_NAME + "/" + ACTIVITY);
 
         // Check that our external layer was loaded
         String searchStringC = "nullCreateInstance called in " + LAYER_C;
@@ -555,6 +570,21 @@ public class CtsRootlessGpuDebugHostTest extends BaseHostJUnit4Test implements I
         Assert.assertTrue("LayerC was not loaded", resultC.found);
     }
 
+    /**
+     * This test ensures a debuggable app can load layers from an external package
+     */
+    @Test
+    public void testDebugLayerLoadExternalVulkan() throws Exception {
+        testLayerLoadExternalVulkan(DEBUG_APP);
+    }
+
+    /**
+     * This test ensures an injectLayers app can load layers from an external package
+     */
+    @Test
+    public void testInjectLayerLoadExternalVulkan() throws Exception {
+        testLayerLoadExternalVulkan(INJECT_APP);
+    }
 
     /**
      * This test pushes GLES layers to our debuggable app and ensures they are
@@ -781,15 +811,10 @@ public class CtsRootlessGpuDebugHostTest extends BaseHostJUnit4Test implements I
         Assert.assertFalse(GLES_LAYER_B + " was loaded", resultB.found);
     }
 
-    /**
-     *
-     */
-    @Test
-    public void testDebugLayerLoadExternalGLES() throws Exception {
-
+    public void testLayerLoadExternalGLES(final String APP_NAME) throws Exception {
         // Set up layers to be loaded
         applySetting("enable_gpu_debug_layers", "1");
-        applySetting("gpu_debug_app", DEBUG_APP);
+        applySetting("gpu_debug_app", APP_NAME);
         applySetting("gpu_debug_layers_gles", GLES_LAYER_C_LIB);
 
         // Specify the external app that hosts layers
@@ -797,12 +822,28 @@ public class CtsRootlessGpuDebugHostTest extends BaseHostJUnit4Test implements I
 
         // Kick off our DEBUG app
         String appStartTime = getTime();
-        getDevice().executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
+        getDevice().executeAdbCommand("shell", "am", "start", "-n", APP_NAME + "/" + ACTIVITY);
 
         // Check that our external layer was loaded
         String searchStringC = "glesLayer_eglChooseConfig called in " + GLES_LAYER_C;
         LogScanResult resultC = scanLog(TAG + "," + GLES_LAYER_C, searchStringC, appStartTime);
         Assert.assertTrue(GLES_LAYER_C + " was not loaded", resultC.found);
+    }
+
+    /**
+     * This test ensures that external GLES layers can be loaded by a debuggable app
+     */
+    @Test
+    public void testDebugLayerLoadExternalGLES() throws Exception {
+        testLayerLoadExternalGLES(DEBUG_APP);
+    }
+
+    /**
+     * This test ensures that external GLES layers can be loaded by an injectLayers app
+     */
+    @Test
+    public void testInjectLayerLoadExternalGLES() throws Exception {
+        testLayerLoadExternalGLES(INJECT_APP);
     }
 
     /**

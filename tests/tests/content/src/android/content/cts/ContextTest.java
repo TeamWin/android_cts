@@ -16,6 +16,7 @@
 
 package android.content.cts;
 
+import android.app.AppOpsManager;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -55,6 +56,7 @@ import android.util.Xml;
 import android.view.WindowManager;
 
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.cts.IBinderPermissionTestService;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -567,6 +569,110 @@ public class ContextTest extends AndroidTestCase {
         assertEquals(VALUE_ADDED, resultExtras.getString(KEY_ADDED));
         assertEquals(VALUE_KEPT, resultExtras.getString(KEY_KEPT));
         assertNull(resultExtras.getString(KEY_REMOVED));
+    }
+
+    public void testSendOrderedBroadcastWithAppOp() {
+        // we use a HighPriorityBroadcastReceiver because the final receiver should get the
+        // broadcast only at the end.
+        final ResultReceiver receiver = new HighPriorityBroadcastReceiver();
+        final ResultReceiver finalReceiver = new ResultReceiver();
+
+        AppOpsManager aom =
+                (AppOpsManager) getContextUnderTest().getSystemService(Context.APP_OPS_SERVICE);
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(aom,
+                (appOpsMan) -> appOpsMan.setUidMode(AppOpsManager.OPSTR_READ_CELL_BROADCASTS,
+                Process.myUid(), AppOpsManager.MODE_ALLOWED));
+
+        registerBroadcastReceiver(receiver, new IntentFilter(ResultReceiver.MOCK_ACTION));
+
+        mContext.sendOrderedBroadcast(
+                new Intent(ResultReceiver.MOCK_ACTION),
+                null, // permission
+                AppOpsManager.OPSTR_READ_CELL_BROADCASTS,
+                finalReceiver,
+                null, // scheduler
+                0, // initial code
+                null, //initial data
+                null); // initial extras
+
+        new PollingCheck(BROADCAST_TIMEOUT){
+            @Override
+            protected boolean check() {
+                return receiver.hasReceivedBroadCast()
+                        && !finalReceiver.hasReceivedBroadCast();
+            }
+        }.run();
+
+        synchronized (receiver) {
+            receiver.notify();
+        }
+
+        new PollingCheck(BROADCAST_TIMEOUT){
+            @Override
+            protected boolean check() {
+                // ensure that first receiver has received broadcast before final receiver
+                return receiver.hasReceivedBroadCast()
+                        && finalReceiver.hasReceivedBroadCast();
+            }
+        }.run();
+    }
+
+    public void testSendOrderedBroadcastWithAppOp_NotGranted() {
+        final ResultReceiver receiver = new ResultReceiver();
+
+        AppOpsManager aom =
+                (AppOpsManager) getContextUnderTest().getSystemService(Context.APP_OPS_SERVICE);
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(aom,
+                (appOpsMan) -> appOpsMan.setUidMode(AppOpsManager.OPSTR_READ_CELL_BROADCASTS,
+                        Process.myUid(), AppOpsManager.MODE_ERRORED));
+
+        registerBroadcastReceiver(receiver, new IntentFilter(ResultReceiver.MOCK_ACTION));
+
+        mContext.sendOrderedBroadcast(
+                new Intent(ResultReceiver.MOCK_ACTION),
+                null, // permission
+                AppOpsManager.OPSTR_READ_CELL_BROADCASTS,
+                null, // final receiver
+                null, // scheduler
+                0, // initial code
+                null, //initial data
+                null); // initial extras
+
+        boolean broadcastNeverSent = false;
+        try {
+            new PollingCheck(BROADCAST_TIMEOUT) {
+                @Override
+                protected boolean check() {
+                    return receiver.hasReceivedBroadCast();
+                }
+
+                public void runWithInterruption() throws InterruptedException {
+                    if (check()) {
+                        return;
+                    }
+
+                    long timeout = BROADCAST_TIMEOUT;
+                    while (timeout > 0) {
+                        try {
+                            Thread.sleep(50 /* time slice */);
+                        } catch (InterruptedException e) {
+                            fail("unexpected InterruptedException");
+                        }
+
+                        if (check()) {
+                            return;
+                        }
+
+                        timeout -= 50; // time slice
+                    }
+                    throw new InterruptedException();
+                }
+            }.runWithInterruption();
+        } catch (InterruptedException e) {
+            broadcastNeverSent = true;
+        }
+
+        assertTrue(broadcastNeverSent);
     }
 
     public void testRegisterReceiver1() throws InterruptedException {

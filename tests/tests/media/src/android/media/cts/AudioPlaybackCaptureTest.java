@@ -68,6 +68,7 @@ import java.util.concurrent.TimeUnit;
  * Currently the test that some audio was recorded just check that at least one sample is non 0.
  * A better check needs to be used, eg: compare the power spectrum.
  */
+@NonMediaMainlineTest
 public class AudioPlaybackCaptureTest {
     private static final String TAG = "AudioPlaybackCaptureTest";
     private static final int SAMPLE_RATE = 44100;

@@ -52,6 +52,7 @@ import java.nio.ShortBuffer;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+@NonMediaMainlineTest
 @RunWith(AndroidJUnit4.class)
 public class AudioTrackTest {
     private String TAG = "AudioTrackTest";
