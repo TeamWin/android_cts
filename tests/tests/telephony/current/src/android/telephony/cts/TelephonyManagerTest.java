@@ -50,6 +50,7 @@ import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.telephony.AccessNetworkConstants;
+import android.telephony.Annotation.RadioPowerState;
 import android.telephony.AvailableNetworkInfo;
 import android.telephony.CallAttributes;
 import android.telephony.CallQuality;
@@ -1073,7 +1074,7 @@ public class TelephonyManagerTest {
                 mListener = new PhoneStateListener() {
                     @Override
                     public void onRadioPowerStateChanged(
-                            @TelephonyManager.RadioPowerState int state) {
+                            @RadioPowerState int state) {
                         synchronized (mLock) {
                             if (state == TelephonyManager.RADIO_POWER_ON && mHasRadioPowerOff) {
                                 mRadioRebootTriggered = true;
@@ -1227,7 +1228,7 @@ public class TelephonyManagerTest {
     /**
      * Basic test to ensure {@link NetworkRegistrationInfo#getAccessNetworkTechnology()} not
      * throw any exception and returns valid result
-     * @see TelephonyManager.NetworkType
+     * @see android.telephony.Annotation.NetworkType
      */
     @Test
     public void testNetworkRegistationStateGetAccessNetworkTechnology() {
