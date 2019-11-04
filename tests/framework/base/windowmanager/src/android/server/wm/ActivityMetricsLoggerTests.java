@@ -17,8 +17,7 @@
 package android.server.wm;
 
 import static android.os.SystemClock.sleep;
-import static android.server.wm.UiDeviceUtils.pressBackButton;
-import static android.server.wm.UiDeviceUtils.waitForDeviceIdle;
+import static android.server.wm.ActivityManagerState.STATE_STOPPED;
 import static android.server.wm.app.Components.ENTRY_POINT_ALIAS_ACTIVITY;
 import static android.server.wm.app.Components.NO_DISPLAY_ACTIVITY;
 import static android.server.wm.app.Components.REPORT_FULLY_DRAWN_ACTIVITY;
@@ -60,6 +59,7 @@ import android.metrics.LogMaker;
 import android.metrics.MetricsReader;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.CommandSession.ActivitySessionClient;
 import android.support.test.metricshelper.MetricsAsserts;
 import android.util.EventLog.Event;
 
@@ -208,13 +208,18 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      */
     @Test
     public void testAppWarmLaunchSetsWaitResultDelayData() {
-        SystemUtil.runShellCommand("am start -S -W " + TEST_ACTIVITY.flattenToShortString());
-
-        // Test warm launch
-        pressBackButton();
-        waitForDeviceIdle(1000);
+        try (ActivitySessionClient client = createActivitySessionClient()) {
+            client.startActivity(getLaunchActivityBuilder()
+                    .setUseInstrumentation()
+                    .setTargetActivity(TEST_ACTIVITY)
+                    .setWaitForLaunched(true));
+            separateTestJournal();
+            // The activity will be finished when closing the session client.
+        }
+        assertActivityDestroyed(TEST_ACTIVITY);
         mMetricsReader.checkpoint(); // clear out old logs
 
+        // This is warm launch because its process should be alive after the above steps.
         final String amStartOutput = SystemUtil.runShellCommand(
                 "am start -W " + TEST_ACTIVITY.flattenToShortString());
 
@@ -248,7 +253,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
 
         // Test hot launch
         launchHomeActivityNoWait();
-        waitForDeviceIdle(1000);
+        waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED, "Activity should be stopped");
         mMetricsReader.checkpoint(); // clear out old logs
 
         final String amStartOutput = SystemUtil.runShellCommand(
