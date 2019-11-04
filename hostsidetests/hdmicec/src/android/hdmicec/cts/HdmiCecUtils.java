@@ -36,6 +36,7 @@ public final class HdmiCecUtils {
     private static final int MILLISECONDS_TO_READY = 5000;
     private static final int DEFAULT_TIMEOUT = 20000;
     private static final String HDMI_CEC_FEATURE = "feature:android.hardware.hdmi.cec";
+    private static final int HEXADECIMAL_RADIX = 16;
 
     private Process mCecClient;
     private BufferedWriter mOutputConsole;
@@ -73,7 +74,7 @@ public final class HdmiCecUtils {
 
         /* Wait for the client to become ready */
         mCecClientInitialised = true;
-        if (checkConsoleOutput(CecMessage.CLIENT_CONSOLE_READY + "", MILLISECONDS_TO_READY)) {
+        if (checkConsoleOutput(CecClientMessage.CLIENT_CONSOLE_READY + "", MILLISECONDS_TO_READY)) {
             mOutputConsole = new BufferedWriter(
                                 new OutputStreamWriter(mCecClient.getOutputStream()));
             return;
@@ -222,48 +223,34 @@ public final class HdmiCecUtils {
     /**
      * Gets the params from a CEC message.
      */
-    public String getParamsFromMessage(String message) {
-        try {
-            return getNibbles(message).substring(4);
-        } catch (IndexOutOfBoundsException e) {
-            return "";
-        }
+    public int getParamsFromMessage(String message) {
+        return Integer.parseInt(getNibbles(message).substring(4), HEXADECIMAL_RADIX);
     }
 
     /**
      * Gets the first 'numNibbles' number of param nibbles from a CEC message.
      */
-    public String getParamsFromMessage(String message, int numNibbles) {
-        try {
-            int paramStart = 4;
-            int end = numNibbles + paramStart;
-            return getNibbles(message).substring(paramStart, end);
-        } catch (IndexOutOfBoundsException e) {
-            return "";
-        }
+    public int getParamsFromMessage(String message, int numNibbles) {
+        int paramStart = 4;
+        int end = numNibbles + paramStart;
+        return Integer.parseInt(getNibbles(message).substring(paramStart, end), HEXADECIMAL_RADIX);
     }
 
     /**
      * Gets the source logical address from a CEC message.
      */
-    public String getSourceFromMessage(String message) {
-        try {
-            return getNibbles(message).substring(0, 1);
-        } catch (IndexOutOfBoundsException e) {
-            return "";
-        }
+    public CecDevice getSourceFromMessage(String message) {
+        String param = getNibbles(message).substring(0, 1);
+        return CecDevice.getDevice(Integer.parseInt(param, HEXADECIMAL_RADIX));
     }
 
 
     /**
      * Gets the destination logical address from a CEC message.
      */
-    public String getDestinationFromMessage(String message) {
-        try {
-            return getNibbles(message).substring(1, 2);
-        } catch (IndexOutOfBoundsException e) {
-            return "";
-        }
+    public CecDevice getDestinationFromMessage(String message) {
+        String param = getNibbles(message).substring(1, 2);
+        return CecDevice.getDevice(Integer.parseInt(param, HEXADECIMAL_RADIX));
     }
 
     private String getNibbles(String message) {
@@ -289,7 +276,7 @@ public final class HdmiCecUtils {
     public void killCecProcess() {
         try {
             checkCecClient();
-            sendConsoleMessage(CecMessage.QUIT_CLIENT.toString());
+            sendConsoleMessage(CecClientMessage.QUIT_CLIENT.toString());
             mOutputConsole.close();
             mInputConsole.close();
             mCecClientInitialised = false;
