@@ -342,6 +342,8 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
 
     @Test
     public void testRejectsApexDifferentCertificate() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
         runPhase("testRejectsApexDifferentCertificate");
     }
 
