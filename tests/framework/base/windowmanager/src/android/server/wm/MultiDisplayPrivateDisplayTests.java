@@ -16,8 +16,6 @@
 
 package android.server.wm;
 
-import static android.server.wm.app.Components.LAUNCH_BROADCAST_RECEIVER;
-import static android.server.wm.app.Components.LaunchBroadcastReceiver.LAUNCH_BROADCAST_ACTION;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.view.Display.FLAG_PRIVATE;
 
@@ -31,10 +29,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityManagerState.ActivityDisplay;
-import android.server.wm.TestJournalProvider.TestJournalContainer;
 import android.server.wm.WindowManagerState.Display;
 import android.util.Log;
-import android.view.View;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -51,6 +47,7 @@ import org.junit.Test;
  * in multi-display environment.
  */
 @Presubmit
+@android.server.wm.annotation.Group3
 public class MultiDisplayPrivateDisplayTests extends MultiDisplayTestBase {
     private static final String TAG = "MultiDisplayPrivateDisplayTests";
     private static final boolean DEBUG = Log.isLoggable(TAG, Log.DEBUG);

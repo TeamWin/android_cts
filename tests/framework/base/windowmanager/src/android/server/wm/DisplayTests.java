@@ -32,7 +32,6 @@ import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityManagerState.ActivityDisplay;
 import android.util.Size;
 import android.view.Display;
-import androidx.test.filters.FlakyTest;
 
 import org.junit.Test;
 
@@ -43,6 +42,7 @@ import java.util.List;
  *     atest CtsWindowManagerDeviceTestCases:DisplayTests
  */
 @Presubmit
+@android.server.wm.annotation.Group3
 public class DisplayTests extends MultiDisplayTestBase {
 
     /**

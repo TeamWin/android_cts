@@ -38,6 +38,7 @@ import org.junit.Test;
  *     atest CtsWindowManagerDeviceTestCases:FreeformWindowingModeTests
  */
 @Presubmit
+@android.server.wm.annotation.Group3
 public class FreeformWindowingModeTests extends MultiDisplayTestBase {
 
     private static final int TEST_TASK_OFFSET = 20;

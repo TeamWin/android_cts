@@ -52,6 +52,7 @@ import java.util.List;
 @MediumTest
 @Presubmit
 @FlakyTest(bugId=137329632)
+@android.server.wm.annotation.Group3
 public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
 
     @Before

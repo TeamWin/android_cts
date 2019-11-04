@@ -46,6 +46,7 @@ import java.util.List;
  *     atest CtsWindowManagerDeviceTestCases:VrDisplayTests
  */
 @Presubmit
+@android.server.wm.annotation.Group3
 public class VrDisplayTests extends MultiDisplayTestBase {
     private static final int VR_VIRTUAL_DISPLAY_WIDTH = 700;
     private static final int VR_VIRTUAL_DISPLAY_HEIGHT = 900;

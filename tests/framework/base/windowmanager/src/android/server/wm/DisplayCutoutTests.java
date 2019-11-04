@@ -76,6 +76,7 @@ import java.util.stream.Collectors;
  *     atest CtsWindowManagerDeviceTestCases:DisplayCutoutTests
  */
 @Presubmit
+@android.server.wm.annotation.Group3
 public class DisplayCutoutTests {
     static final Rect ZERO_RECT = new Rect();
 
