@@ -16,22 +16,45 @@
 
 package android.hdmicec.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
-import com.android.tradefed.testtype.DeviceTestCase;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.IDeviceTest;
+
+import org.junit.runner.RunWith;
+import org.junit.Test;
 
 /** HDMI CEC system information tests (Section 11.2.6) */
-public final class HdmiCecSystemInformationTest extends DeviceTestCase {
+@RunWith(DeviceJUnit4ClassRunner.class)
+public final class HdmiCecSystemInformationTest implements IDeviceTest {
 
     /** The version number 0x05 refers to CEC v1.4 */
     private static final int CEC_VERSION_NUMBER = 0x05;
+
+    private ITestDevice mDevice;
+
+    @Override
+    public void setDevice(ITestDevice device) {
+        mDevice = device;
+    }
+    @Override
+    public ITestDevice getDevice() {
+        return mDevice;
+    }
 
     /**
      * Test 11.2.6-1
      * Tests for Ack <Polling Message> message.
      */
-    public void testAck() throws Exception {
+    @Test
+    public void cect_11_2_6_1_Ack() throws Exception {
+        ITestDevice device = getDevice();
+        assertNotNull("Device not set", device);
 
-        if (!HdmiCecUtils.isHdmiCecFeatureSupported(getDevice())) {
+        if (!HdmiCecUtils.isHdmiCecFeatureSupported(device)) {
             CLog.v("No HDMI CEC feature running, should skip test.");
             return;
         }
@@ -58,9 +81,12 @@ public final class HdmiCecSystemInformationTest extends DeviceTestCase {
      * Tests that the device sends a <REPORT_PHYSICAL_ADDRESS> in response to a
      * <GIVE_PHYSICAL_ADDRESS>
      */
-    public void testGivePhysicalAddress() throws Exception {
+    @Test
+    public void cect_11_2_6_2_GivePhysicalAddress() throws Exception {
+        ITestDevice device = getDevice();
+        assertNotNull("Device not set", device);
 
-        if (!HdmiCecUtils.isHdmiCecFeatureSupported(getDevice())) {
+        if (!HdmiCecUtils.isHdmiCecFeatureSupported(device)) {
             CLog.v("No HDMI CEC feature running, should skip test.");
             return;
         }
@@ -85,9 +111,12 @@ public final class HdmiCecSystemInformationTest extends DeviceTestCase {
      * Test 11.2.6-6
      * Tests that the device sends a <CEC_VERSION> in response to a <GET_CEC_VERSION>
      */
-    public void testGiveCecVersion() throws Exception {
+    @Test
+    public void cect_11_2_6_6_GiveCecVersion() throws Exception {
+        ITestDevice device = getDevice();
+        assertNotNull("Device not set", device);
 
-        if (!HdmiCecUtils.isHdmiCecFeatureSupported(getDevice())) {
+        if (!HdmiCecUtils.isHdmiCecFeatureSupported(device)) {
             CLog.v("No HDMI CEC feature running, should skip test.");
             return;
         }
@@ -110,13 +139,17 @@ public final class HdmiCecSystemInformationTest extends DeviceTestCase {
      * Test 11.2.6-7
      * Tests that the device sends a <FEATURE_ABORT> in response to a <GET_MENU_LANGUAGE>
      */
-    public void testGetMenuLanguage() throws Exception {
-        HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, "1.0.0.0");
+    @Test
+    public void cect_11_2_6_7_GetMenuLanguage() throws Exception {
+        ITestDevice device = getDevice();
+        assertNotNull("Device not set", device);
 
-        if (!HdmiCecUtils.isHdmiCecFeatureSupported(getDevice())) {
+        if (!HdmiCecUtils.isHdmiCecFeatureSupported(device)) {
             CLog.v("No HDMI CEC feature running, should skip test.");
             return;
         }
+
+        HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, "1.0.0.0");
 
         try {
             hdmiCecUtils.init();
