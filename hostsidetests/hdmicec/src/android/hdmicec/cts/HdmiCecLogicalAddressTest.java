@@ -18,12 +18,14 @@ package android.hdmicec.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assume.assumeTrue;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.IDeviceTest;
 
+import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.junit.Test;
 
@@ -44,6 +46,10 @@ public final class HdmiCecLogicalAddressTest implements IDeviceTest {
         return mDevice;
     }
 
+    @Before public void testHdmiCecAvailability() throws Exception {
+        assumeTrue(HdmiCecUtils.isHdmiCecFeatureSupported(getDevice()));
+    }
+
     /**
      * Test 10.2.3-1
      * Tests that the device broadcasts a <REPORT_PHYSICAL_ADDRESS> after a reboot and that the
@@ -53,11 +59,6 @@ public final class HdmiCecLogicalAddressTest implements IDeviceTest {
     public void cect_10_2_3_1_RebootLogicalAddress() throws Exception {
         ITestDevice device = getDevice();
         assertNotNull("Device not set", device);
-
-        if (!HdmiCecUtils.isHdmiCecFeatureSupported(device)) {
-            CLog.v("No HDMI CEC feature running, should skip test.");
-            return;
-        }
 
         HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, "1.0.0.0");
 
