@@ -19,6 +19,8 @@ package com.android.cts.devicepolicy;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
 
+import static org.junit.Assert.assertTrue;
+
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
 import android.stats.devicepolicy.EventId;
@@ -26,6 +28,8 @@ import android.stats.devicepolicy.EventId;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil;
+
+import org.junit.Test;
 
 import java.util.Collections;
 
@@ -36,6 +40,7 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
     private static final String PARAM_PROFILE_ID = "profile-id";
 
     @LargeTest
+    @Test
     public void testCrossProfileIntentFilters() throws Exception {
         if (!mHasFeature) {
             return;
@@ -71,6 +76,7 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
     }
 
     @FlakyTest
+    @Test
     public void testCrossProfileContent() throws Exception {
         if (!mHasFeature) {
             return;
@@ -98,6 +104,7 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
     }
 
     @FlakyTest
+    @Test
     public void testCrossProfileNotificationListeners_EmptyWhitelist() throws Exception {
         if (!mHasFeature) {
             return;
@@ -115,6 +122,7 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
                 Collections.singletonMap(PARAM_PROFILE_ID, Integer.toString(mProfileUserId)));
     }
 
+    @Test
     public void testCrossProfileNotificationListeners_NullWhitelist() throws Exception {
         if (!mHasFeature) {
             return;
@@ -132,6 +140,7 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
                 Collections.singletonMap(PARAM_PROFILE_ID, Integer.toString(mProfileUserId)));
     }
 
+    @Test
     public void testCrossProfileNotificationListeners_InWhitelist() throws Exception {
         if (!mHasFeature) {
             return;
@@ -149,6 +158,7 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
                 Collections.singletonMap(PARAM_PROFILE_ID, Integer.toString(mProfileUserId)));
     }
 
+    @Test
     public void testCrossProfileNotificationListeners_setAndGet() throws Exception {
         if (!mHasFeature) {
             return;
@@ -161,6 +171,7 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
     }
 
     @FlakyTest
+    @Test
     public void testCrossProfileCopyPaste() throws Exception {
         if (!mHasFeature) {
             return;
@@ -202,6 +213,7 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
     }
 
     @FlakyTest
+    @Test
     public void testCrossProfileWidgets() throws Exception {
         if (!mHasFeature) {
             return;
@@ -249,6 +261,7 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
     }
 
     @FlakyTest
+    @Test
     public void testCrossProfileWidgetsLogged() throws Exception {
         if (!mHasFeature || !isStatsdEnabled(getDevice())) {
             return;
@@ -281,6 +294,7 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
         }
     }
 
+    @Test
     public void testCrossProfileCalendarPackage() throws Exception {
         if (!mHasFeature) {
             return;
@@ -295,6 +309,7 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
     }
 
     @FlakyTest
+    @Test
     public void testCrossProfileCalendar() throws Exception {
         if (!mHasFeature) {
             return;
@@ -306,6 +321,7 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
     }
 
     @FlakyTest
+    @Test
     public void testDisallowSharingIntoPersonalFromProfile() throws Exception {
         if (!mHasFeature) {
             return;
@@ -320,6 +336,7 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
                 ".DisallowSharingIntoProfileTest", "testSharingFromProfile", mProfileUserId);
     }
 
+    @Test
     public void testDisallowSharingIntoProfileFromPersonal() throws Exception {
         if (!mHasFeature) {
             return;

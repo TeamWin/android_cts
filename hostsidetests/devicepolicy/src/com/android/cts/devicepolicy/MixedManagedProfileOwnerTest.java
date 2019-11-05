@@ -23,6 +23,8 @@ import com.android.cts.devicepolicy.annotations.LockSettingsTest;
 import com.android.cts.devicepolicy.annotations.PermissionsTest;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
+import org.junit.Test;
+
 /**
  * Set of tests for managed profile owner use cases that also apply to device owners.
  * Tests that should be run identically in both cases are added in DeviceAndProfileOwnerTest.
@@ -35,7 +37,7 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     private int mParentUserId = -1;
 
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
 
         // We need managed users to be supported in order to create a profile of the user owner.
@@ -59,7 +61,7 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         if (mHasFeature) {
             removeUser(mUserId);
         }
@@ -73,6 +75,7 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
      * is set on the profile owner.
      */
     @LargeTest
+    @Test
     public void testScreenCaptureDisabled_allowedPrimaryUser() throws Exception {
         if (!mHasFeature) {
             return;
@@ -87,6 +90,7 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @FlakyTest
+    @Test
     public void testScreenCaptureDisabled_assist_allowedPrimaryUser() throws Exception {
         if (!mHasFeature) {
             return;
@@ -118,11 +122,13 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @Override
+    @Test
     public void testDisallowSetWallpaper_allowed() throws Exception {
         // Managed profile doesn't have wallpaper.
     }
 
     @Override
+    @Test
     public void testAudioRestriction() throws Exception {
         // DISALLOW_UNMUTE_MICROPHONE and DISALLOW_ADJUST_VOLUME can only be set by device owners
         // and profile owners on the primary user.
@@ -131,12 +137,14 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     /** VPN tests don't require physical device for managed profile, thus overriding. */
     @FlakyTest
     @Override
+    @Test
     public void testAlwaysOnVpn() throws Exception {
         super.testAlwaysOnVpn();
     }
 
     /** VPN tests don't require physical device for managed profile, thus overriding. */
     @Override
+    @Test
     public void testAlwaysOnVpnLockDown() throws Exception {
         super.testAlwaysOnVpnLockDown();
     }
@@ -144,30 +152,35 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     /** VPN tests don't require physical device for managed profile, thus overriding. */
     @Override
     @LargeTest
+    @Test
     public void testAlwaysOnVpnAcrossReboot() throws Exception {
         super.testAlwaysOnVpnAcrossReboot();
     }
 
     /** VPN tests don't require physical device for managed profile, thus overriding. */
     @Override
+    @Test
     public void testAlwaysOnVpnPackageUninstalled() throws Exception {
         super.testAlwaysOnVpnPackageUninstalled();
     }
 
     /** VPN tests don't require physical device for managed profile, thus overriding. */
     @Override
+    @Test
     public void testAlwaysOnVpnUnsupportedPackage() throws Exception {
         super.testAlwaysOnVpnUnsupportedPackage();
     }
 
     /** VPN tests don't require physical device for managed profile, thus overriding. */
     @Override
+    @Test
     public void testAlwaysOnVpnUnsupportedPackageReplaced() throws Exception {
         super.testAlwaysOnVpnUnsupportedPackageReplaced();
     }
 
     @Override
     @LockSettingsTest
+    @Test
     public void testResetPasswordWithToken() throws Exception {
         if (!mHasFeature || !mHasSecureLockScreen) {
             return;
@@ -179,10 +192,12 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @Override
+    @Test
     public void testSetSystemSetting() {
         // Managed profile owner cannot set currently whitelisted system settings.
     }
 
+    @Test
     public void testCannotClearProfileOwner() throws Exception {
         if (!mHasFeature) {
             return;
@@ -197,6 +212,7 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     }
 
+    @Test
     public void testDelegatedCertInstallerDeviceIdAttestation() throws Exception {
         if (!mHasFeature) {
             return;
@@ -214,6 +230,7 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
                     "testGenerateKeyPairWithDeviceIdAttestationExpectingSuccess", mUserId);
         });
     }
+    @Test
     public void testDeviceIdAttestationForProfileOwner() throws Exception {
         if (!mHasFeature) {
             return;
@@ -232,18 +249,21 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     @FlakyTest
     @Override
+    @Test
     public void testCaCertManagement() throws Exception {
         super.testCaCertManagement();
     }
 
     @FlakyTest
     @Override
+    @Test
     public void testDelegatedCertInstaller() throws Exception {
         super.testDelegatedCertInstaller();
     }
 
     @FlakyTest
     @Override
+    @Test
     public void testPackageInstallUserRestrictions() throws Exception {
         super.testPackageInstallUserRestrictions();
     }
@@ -251,6 +271,7 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     @Override
     @FlakyTest
     @PermissionsTest
+    @Test
     public void testPermissionGrant() throws Exception {
         super.testPermissionGrant();
     }
@@ -258,73 +279,86 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     @Override
     @FlakyTest
     @PermissionsTest
+    @Test
     public void testPermissionMixedPolicies() throws Exception {
         super.testPermissionMixedPolicies();
     }
 
     @FlakyTest
     @Override
+    @Test
     public void testScreenCaptureDisabled_assist() throws Exception {
         super.testScreenCaptureDisabled_assist();
     }
 
     @Override
     @PermissionsTest
+    @Test
     public void testPermissionPolicy() throws Exception {
         super.testPermissionPolicy();
     }
 
     @FlakyTest
     @Override
+    @Test
     public void testSetMeteredDataDisabledPackages() throws Exception {
         super.testSetMeteredDataDisabledPackages();
     }
 
     @Override
     @PermissionsTest
+    @Test
     public void testPermissionAppUpdate() throws Exception {
         super.testPermissionAppUpdate();
     }
 
     @Override
     @PermissionsTest
+    @Test
     public void testPermissionGrantPreMApp() throws Exception {
         super.testPermissionGrantPreMApp();
     }
 
     @Override
     @PermissionsTest
+    @Test
     public void testPermissionGrantOfDisallowedPermissionWhileOtherPermIsGranted()
             throws Exception {
         super.testPermissionGrantOfDisallowedPermissionWhileOtherPermIsGranted();
     }
 
     @Override
+    @Test
     public void testLockTask() {
         // Managed profiles are not allowed to use lock task
     }
 
     @Override
+    @Test
     public void testLockTaskAfterReboot() {
         // Managed profiles are not allowed to use lock task
     }
 
     @Override
+    @Test
     public void testLockTaskAfterReboot_tryOpeningSettings() {
         // Managed profiles are not allowed to use lock task
     }
 
     @Override
+    @Test
     public void testLockTask_defaultDialer() {
         // Managed profiles are not allowed to use lock task
     }
 
     @Override
+    @Test
     public void testLockTask_emergencyDialer() {
         // Managed profiles are not allowed to use lock task
     }
 
     @Override
+    @Test
     public void testLockTask_exitIfNoLongerWhitelisted() {
         // Managed profiles are not allowed to use lock task
     }

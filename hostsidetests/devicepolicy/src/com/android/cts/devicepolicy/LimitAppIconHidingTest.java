@@ -16,6 +16,8 @@
 
 package com.android.cts.devicepolicy;
 
+import org.junit.Test;
+
 import java.util.Collections;
 
 /**
@@ -35,7 +37,7 @@ public class LimitAppIconHidingTest extends BaseLauncherAppsTest {
     private int mCurrentUserId;
 
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
         mHasLauncherApps = getDevice().getApiLevel() >= 21;
 
@@ -48,7 +50,7 @@ public class LimitAppIconHidingTest extends BaseLauncherAppsTest {
     }
 
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         if (mHasLauncherApps) {
             uninstallTestApps();
         }
@@ -71,6 +73,7 @@ public class LimitAppIconHidingTest extends BaseLauncherAppsTest {
         getDevice().uninstallPackage(LAUNCHER_TESTS_HAS_LAUNCHER_ACTIVITY_APK);
     }
 
+    @Test
     public void testHasLauncherActivityAppHasAppDetailsActivityInjected() throws Exception {
         if (!mHasLauncherApps) {
             return;
@@ -80,6 +83,7 @@ public class LimitAppIconHidingTest extends BaseLauncherAppsTest {
                 mCurrentUserId, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber));
     }
 
+    @Test
     public void testNoSystemAppHasSyntheticAppDetailsActivityInjected() throws Exception {
         if (!mHasLauncherApps) {
             return;
@@ -89,6 +93,7 @@ public class LimitAppIconHidingTest extends BaseLauncherAppsTest {
                 mCurrentUserId, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber));
     }
 
+    @Test
     public void testNoLauncherActivityAppNotInjected() throws Exception {
         if (!mHasLauncherApps) {
             return;
@@ -98,6 +103,7 @@ public class LimitAppIconHidingTest extends BaseLauncherAppsTest {
                 mCurrentUserId, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber));
     }
 
+    @Test
     public void testNoPermissionAppNotInjected() throws Exception {
         if (!mHasLauncherApps) {
             return;
@@ -107,6 +113,7 @@ public class LimitAppIconHidingTest extends BaseLauncherAppsTest {
                 mCurrentUserId, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber));
     }
 
+    @Test
     public void testGetSetSyntheticAppDetailsActivityEnabled() throws Exception {
         if (!mHasLauncherApps) {
             return;

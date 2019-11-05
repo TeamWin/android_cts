@@ -16,10 +16,16 @@
 
 package com.android.cts.devicepolicy;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
 import com.android.ddmlib.testrunner.TestResult.TestStatus;
-import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -30,10 +36,15 @@ import com.android.tradefed.result.LogDataType;
 import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.result.TestResult;
 import com.android.tradefed.result.TestRunResult;
-import com.android.tradefed.testtype.DeviceTestCase;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.FileUtil;
 import com.android.tradefed.util.TarUtil;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -56,7 +67,8 @@ import javax.annotation.Nullable;
  * Base class for device policy tests. It offers utility methods to run tests, set device or profile
  * owner, etc.
  */
-public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiver {
+@RunWith(DeviceJUnit4ClassRunner.class)
+public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test implements IBuildReceiver {
 
     @Option(
             name = "skip-device-admin-feature-check",
@@ -82,9 +94,6 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
      */
     private static final long DEFAULT_SHELL_TIMEOUT_MILLIS = TimeUnit.MINUTES.toMillis(20);
 
-    /** instrumentation test runner argument key used for individual test timeout */
-    protected static final String TEST_TIMEOUT_INST_ARGS_KEY = "timeout_msec";
-
     /**
      * Sets timeout (in milliseconds) that will be applied to each test. In the
      * event of a test timeout it will log the results and proceed with executing the next test.
@@ -98,7 +107,6 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     private static final long USER_REMOVE_WAIT = TimeUnit.SECONDS.toMillis(5);
 
     // From the UserInfo class
-    protected static final int FLAG_PRIMARY = 0x00000001;
     protected static final int FLAG_GUEST = 0x00000004;
     protected static final int FLAG_EPHEMERAL = 0x00000100;
     protected static final int FLAG_MANAGED_PROFILE = 0x00000020;
@@ -117,14 +125,6 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
      */
     protected static final int USER_ALL = -1;
 
-    protected static interface Settings {
-        public static final String GLOBAL_NAMESPACE = "global";
-        public static interface Global {
-            public static final String DEVICE_PROVISIONED = "device_provisioned";
-        }
-    }
-
-    protected IBuildInfo mCtsBuild;
     protected CompatibilityBuildHelper mBuildHelper;
     private String mPackageVerifier;
     private HashSet<String> mAvailableFeatures;
@@ -153,15 +153,9 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
 
     private static final String VERIFY_CREDENTIAL_CONFIRMATION = "Lock credential verified";
 
-    @Override
-    public void setBuild(IBuildInfo buildInfo) {
-        mCtsBuild = buildInfo;
-    }
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        assertNotNull(mCtsBuild);  // ensure build has been set before test is run.
+    @Before
+    public void setUp() throws Exception {
+        assertNotNull(getBuild());  // ensure build has been set before test is run.
         mHasFeature = getDevice().getApiLevel() >= 21; /* Build.VERSION_CODES.L */
         if (!mSkipDeviceAdminFeatureCheck) {
             mHasFeature = mHasFeature && hasDeviceFeature("android.software.device_admin");
@@ -170,7 +164,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         mSupportsFbe = hasDeviceFeature("android.software.file_based_encryption");
         mHasTelephony = hasDeviceFeature("android.hardware.telephony");
         mFixedPackages = getDevice().getInstalledPackageNames();
-        mBuildHelper = new CompatibilityBuildHelper(mCtsBuild);
+        mBuildHelper = new CompatibilityBuildHelper(getBuild());
 
         mHasSecureLockScreen = hasDeviceFeature("android.software.secure_lock_screen");
 
@@ -207,8 +201,8 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         executeShellCommand("input keyevent KEYCODE_HOME");
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         // reset the package verifier setting to its original value
         getDevice().executeShellCommand("settings put global package_verifier_enable "
                 + mPackageVerifier);
@@ -216,7 +210,6 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         switchUser(USER_SYSTEM);
         removeTestUsers();
         removeTestPackages();
-        super.tearDown();
     }
 
     protected void installAppAsUser(String appFileName, int userId) throws FileNotFoundException,
@@ -232,8 +225,8 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     protected void installAppAsUser(String appFileName, boolean grantPermissions,
             boolean dontKillApp, int userId)
                     throws FileNotFoundException, DeviceNotAvailableException {
-        CLog.d("Installing app " + appFileName + " for user " + userId);
-        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
+        CLog.e("Installing app " + appFileName + " for user " + userId);
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());
         List<String> extraArgs = new LinkedList<>();
         extraArgs.add("-t");
         if (dontKillApp) extraArgs.add("--dont-kill");
@@ -356,38 +349,15 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     }
 
     protected void waitForBroadcastIdle() throws DeviceNotAvailableException, IOException {
-        CollectingOutputReceiver receiver = new CollectingOutputReceiver();
-        try {
-            // we allow 8min for the command to complete and 4min for the command to start to
-            // output something
-            getDevice().executeShellCommand(
-                    "am wait-for-broadcast-idle", receiver, 8, 4, TimeUnit.MINUTES, 0);
-        } finally {
-            String output = receiver.getOutput();
-            CLog.d("Output from 'am wait-for-broadcast-idle': %s", output);
-            if (!output.contains("All broadcast queues are idle!")) {
-                // Gather the system_server dump data for investigation.
-                File heapDump = getDevice().dumpHeap("system_server", "/data/local/tmp/dump.hprof");
-                if (heapDump != null) {
-                    // If file is too too big, tar if with TarUtil.
-                    String pid = getDevice().getProcessPid("system_server");
-                    // gzip the file it's quite big
-                    File heapDumpGz = TarUtil.gzip(heapDump);
-                    try (FileInputStreamSource source = new FileInputStreamSource(heapDumpGz)) {
-                        addTestLog(
-                                String.format("system_server_dump.%s.%s.hprof",
-                                        pid, getDevice().getDeviceDate()),
-                                LogDataType.GZIP, source);
-                    } finally {
-                        FileUtil.deleteFile(heapDump);
-                    }
-                } else {
-                    CLog.e("Failed to capture the dumpheap from system_server");
-                }
-                // the call most likely failed we should fail the test
-                fail("'am wait-for-broadcase-idle' did not complete.");
-                // TODO: consider adding a reboot or recovery before failing if necessary
-            }
+        final CollectingOutputReceiver receiver = new CollectingOutputReceiver();
+        // We allow 8min for the command to complete and 4min for the command to start to
+        // output something.
+        getDevice().executeShellCommand(
+                "am wait-for-broadcast-idle", receiver, 8, 4, TimeUnit.MINUTES, 0);
+        final String output = receiver.getOutput();
+        if (!output.contains("All broadcast queues are idle!")) {
+            CLog.e("Output from 'am wait-for-broadcast-idle': %s", output);
+            fail("'am wait-for-broadcase-idle' did not complete.");
         }
     }
 
@@ -456,12 +426,6 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         runDeviceTestsAsUser(pkgName, testClassName, testMethodName, userId, params);
     }
 
-    protected void runDeviceTests(
-            String pkgName, @Nullable String testClassName, String testMethodName)
-            throws DeviceNotAvailableException {
-        runDeviceTestsAsUser(pkgName, testClassName, testMethodName, mPrimaryUserId);
-    }
-
     protected void runDeviceTestsAsUser(
             String pkgName, @Nullable String testClassName,
             @Nullable String testMethodName, int userId,
@@ -470,46 +434,19 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
             testClassName = pkgName + testClassName;
         }
 
-        RemoteAndroidTestRunner testRunner = new RemoteAndroidTestRunner(
-                pkgName, RUNNER, getDevice().getIDevice());
-        testRunner.setMaxTimeToOutputResponse(DEFAULT_SHELL_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-        testRunner.addInstrumentationArg(
-                TEST_TIMEOUT_INST_ARGS_KEY, Long.toString(DEFAULT_TEST_TIMEOUT_MILLIS));
-        if (testClassName != null && testMethodName != null) {
-            testRunner.setMethodName(testClassName, testMethodName);
-        } else if (testClassName != null) {
-            testRunner.setClassName(testClassName);
-        }
-
-        for (Map.Entry<String, String> param : params.entrySet()) {
-            testRunner.addInstrumentationArg(param.getKey(), param.getValue());
-        }
-
-        CollectingTestListener listener = new CollectingTestListener();
-        getDevice().runInstrumentationTestsAsUser(testRunner, userId, listener);
-
-        final TestRunResult result = listener.getCurrentRunResults();
-        if (result.isRunFailure()) {
-            throw new AssertionError("Failed to successfully run device tests for "
-                    + result.getName() + ": " + result.getRunFailureMessage());
-        }
-        if (result.getNumTests() == 0) {
-            throw new AssertionError("No tests were run on the device");
-        }
-
-        if (result.hasFailedTests()) {
-            // build a meaningful error message
-            StringBuilder errorBuilder = new StringBuilder("On-device tests failed:\n");
-            for (Map.Entry<TestDescription, TestResult> resultEntry :
-                    result.getTestResults().entrySet()) {
-                if (!resultEntry.getValue().getStatus().equals(TestStatus.PASSED)) {
-                    errorBuilder.append(resultEntry.getKey().toString());
-                    errorBuilder.append(":\n");
-                    errorBuilder.append(resultEntry.getValue().getStackTrace());
-                }
-            }
-            throw new AssertionError(errorBuilder.toString());
-        }
+        runDeviceTests(
+                getDevice(),
+                RUNNER,
+                pkgName,
+                testClassName,
+                testMethodName,
+                userId,
+                DEFAULT_TEST_TIMEOUT_MILLIS,
+                DEFAULT_SHELL_TIMEOUT_MILLIS,
+                0L /* maxInstrumentationTimeoutMs */,
+                true /* checkResults */,
+                false /* isHiddenApiCheckDisabled */,
+                params);
     }
 
     /** Reboots the device and block until the boot complete flag is set. */
@@ -552,32 +489,6 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     protected boolean canStartAdditionalUsers(int numberOfUsers)
             throws DeviceNotAvailableException {
         return listRunningUsers().size() + numberOfUsers <= getMaxNumberOfRunningUsersSupported();
-    }
-
-    protected boolean hasDeviceFeature(String requiredFeature) throws DeviceNotAvailableException {
-        if (mAvailableFeatures == null) {
-            // TODO: Move this logic to ITestDevice.
-            String command = "pm list features";
-            String commandOutput = getDevice().executeShellCommand(command);
-            CLog.i("Output for command " + command + ": " + commandOutput);
-
-            // Extract the id of the new user.
-            mAvailableFeatures = new HashSet<>();
-            for (String feature: commandOutput.split("\\s+")) {
-                // Each line in the output of the command has the format "feature:{FEATURE_VALUE}".
-                String[] tokens = feature.split(":");
-                assertTrue("\"" + feature + "\" expected to have format feature:{FEATURE_VALUE}",
-                        tokens.length > 1);
-                assertEquals(feature, "feature", tokens[0]);
-                mAvailableFeatures.add(tokens[1]);
-            }
-        }
-        boolean result = mAvailableFeatures.contains(requiredFeature);
-        if (!result) {
-            CLog.d("Device doesn't have required feature "
-            + requiredFeature + ". Test won't run.");
-        }
-        return result;
     }
 
     protected int createUser() throws Exception {
@@ -665,9 +576,9 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         // If we succeeded always log, if we are expecting failure don't log failures
         // as call stacks for passing tests confuse the logs.
         if (success || !expectFailure) {
-            CLog.d("Output for command " + command + ": " + commandOutput);
+            CLog.e("Output for command " + command + ": " + commandOutput);
         } else {
-            CLog.d("Command Failed " + command);
+            CLog.e("Command Failed " + command);
         }
         return success;
     }

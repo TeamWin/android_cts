@@ -19,12 +19,19 @@ package com.android.cts.devicepolicy;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.platform.test.annotations.FlakyTest;
-import android.stats.devicepolicy.EventId;
 import android.platform.test.annotations.LargeTest;
+import android.stats.devicepolicy.EventId;
 
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper.Builder;
+
+import org.junit.Test;
 
 import java.util.List;
 
@@ -65,7 +72,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
             COMP_DPC_PKG2 + "/com.android.cts.comp.AdminReceiver";
 
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
         // We need managed user to be supported in order to create a profile of the user owner.
         mHasFeature = mHasFeature && hasDeviceFeature("android.software.managed_users");
@@ -85,7 +92,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         if (mHasFeature) {
             assertTrue("Failed to remove device owner.",
                     removeAdmin(COMP_DPC_ADMIN, mPrimaryUserId));
@@ -98,6 +105,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
      * Both device owner and profile are the same package ({@link #COMP_DPC_PKG}).
      */
     @LargeTest
+    @Test
     public void testBindDeviceAdminServiceAsUser_corpOwnedManagedProfile() throws Exception {
         if (!mHasFeature) {
             return;
@@ -122,6 +130,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
      * creating managed profile through ManagedProvisioning like normal flow
      */
     @FlakyTest
+    @Test
     public void testBindDeviceAdminServiceAsUser_corpOwnedManagedProfileWithManagedProvisioning()
             throws Exception {
         if (!mHasFeature) {
@@ -144,6 +153,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
      * except we don't enable the profile.
      */
     @FlakyTest
+    @Test
     public void testBindDeviceAdminServiceAsUser_canBindEvenIfProfileNotEnabled() throws Exception {
         if (!mHasFeature) {
             return;
@@ -157,6 +167,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
      * Device owner is {@link #COMP_DPC_PKG} while profile owner is {@link #COMP_DPC_PKG2}.
      * Therefore it isn't allowed to bind to each other.
      */
+    @Test
     public void testBindDeviceAdminServiceAsUser_byodPlusDeviceOwnerCannotBind() throws Exception {
         if (!mHasFeature) {
             return;
@@ -182,6 +193,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
      * by createAndManagedUser.
      */
     @FlakyTest
+    @Test
     public void testBindDeviceAdminServiceAsUser_secondaryUser() throws Exception {
         if (!mHasFeature || !canCreateAdditionalUsers(1)) {
             return;
@@ -204,6 +216,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
      * time.
      */
     @FlakyTest
+    @Test
     public void testBindDeviceAdminServiceAsUser_compPlusSecondaryUser() throws Exception {
         if (!mHasFeature || !canCreateAdditionalUsers(2)) {
             return;
@@ -226,6 +239,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
         verifyBindDeviceAdminServiceAsUser(secondaryUserId);
     }
 
+    @Test
     public void testCannotRemoveProfileIfRestrictionSet() throws Exception {
         if (!mHasFeature) {
             return;
@@ -239,6 +253,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @FlakyTest(bugId = 141161038)
+    @Test
     public void testCannotRemoveUserIfRestrictionSet() throws Exception {
         if (!mHasFeature || !canCreateAdditionalUsers(1)) {
             return;
@@ -251,6 +266,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
         assertTrue(getDevice().removeUser(secondaryUserId));
     }
 
+    @Test
     public void testCanRemoveProfileEvenIfDisallowRemoveUserSet() throws Exception {
         if (!mHasFeature) {
             return;
@@ -262,6 +278,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
         assertUserGetsRemoved(profileUserId);
     }
 
+    @Test
     public void testDoCanRemoveProfileEvenIfUserRestrictionSet() throws Exception {
         if (!mHasFeature) {
             return;
@@ -280,6 +297,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
         assertUserGetsRemoved(profileUserId);
     }
 
+    @Test
     public void testCannotAddProfileIfRestrictionSet() throws Exception {
         if (!mHasFeature) {
             return;
@@ -291,6 +309,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
     /**
      * Both device owner and profile are the same package ({@link #COMP_DPC_PKG}).
      */
+    @Test
     public void testIsProvisioningAllowed() throws Exception {
         if (!mHasFeature) {
             return;
@@ -319,6 +338,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
         assertProvisionManagedProfileAllowed(COMP_DPC_PKG);
     }
 
+    @Test
     public void testWipeData_managedProfile() throws Exception {
         if (!mHasFeature) {
             return;
@@ -335,6 +355,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
         assertUserGetsRemoved(profileUserId);
     }
 
+    @Test
     public void testWipeData_managedProfileLogged() throws Exception {
         if (!mHasFeature || !isStatsdEnabled(getDevice())) {
             return;
@@ -346,6 +367,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
         }, WIPE_DATA_WITH_REASON_DEVICE_POLICY_EVENT);
     }
 
+    @Test
     public void testWipeData_secondaryUser() throws Exception {
         if (!mHasFeature || !canCreateAdditionalUsers(1)) {
             return;
@@ -362,6 +384,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
         assertUserGetsRemoved(secondaryUserId);
     }
 
+    @Test
     public void testWipeData_secondaryUserLogged() throws Exception {
         if (!mHasFeature || !canCreateAdditionalUsers(1) || !isStatsdEnabled(getDevice())) {
             return;
@@ -373,6 +396,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
         }, WIPE_DATA_WITH_REASON_DEVICE_POLICY_EVENT);
     }
 
+    @Test
     public void testNetworkAndSecurityLoggingAvailableIfAffiliated() throws Exception {
         if (!mHasFeature) {
             return;
@@ -427,6 +451,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @FlakyTest
+    @Test
     public void testRequestBugreportAvailableIfAffiliated() throws Exception {
         if (!mHasFeature) {
             return;
@@ -467,6 +492,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
                 mPrimaryUserId);
     }
 
+    @Test
     public void testCannotStartManagedProfileInBackground() throws Exception {
         if (!mHasFeature) {
             return;
@@ -480,6 +506,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
                 mPrimaryUserId);
     }
 
+    @Test
     public void testCannotStopManagedProfile() throws Exception {
         if (!mHasFeature) {
             return;
@@ -493,6 +520,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
                 mPrimaryUserId);
     }
 
+    @Test
     public void testCannotLogoutManagedProfile() throws Exception {
         if (!mHasFeature) {
             return;

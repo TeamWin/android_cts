@@ -21,6 +21,8 @@ import android.platform.test.annotations.LargeTest;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
 
+import org.junit.Test;
+
 import java.util.concurrent.TimeUnit;
 
 public class ManagedProfileTimeoutTest extends BaseManagedProfileTest {
@@ -30,6 +32,7 @@ public class ManagedProfileTimeoutTest extends BaseManagedProfileTest {
 
     /** Profile should get locked if it is not in foreground no matter what. */
     @FlakyTest
+    @Test
     public void testWorkProfileTimeoutBackground() throws Exception {
         if (!mHasFeature) {
             return;
@@ -44,6 +47,7 @@ public class ManagedProfileTimeoutTest extends BaseManagedProfileTest {
 
     /** Profile should get locked if it is in foreground but with no user activity. */
     @LargeTest
+    @Test
     public void testWorkProfileTimeoutIdleActivity() throws Exception {
         if (!mHasFeature) {
             return;
@@ -58,6 +62,7 @@ public class ManagedProfileTimeoutTest extends BaseManagedProfileTest {
 
     /** User activity in profile should prevent it from locking. */
     @FlakyTest
+    @Test
     public void testWorkProfileTimeoutUserActivity() throws Exception {
         if (!mHasFeature) {
             return;
@@ -72,6 +77,7 @@ public class ManagedProfileTimeoutTest extends BaseManagedProfileTest {
 
     /** Keep screen on window flag in the profile should prevent it from locking. */
     @FlakyTest
+    @Test
     public void testWorkProfileTimeoutKeepScreenOnWindow() throws Exception {
         if (!mHasFeature) {
             return;
