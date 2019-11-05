@@ -63,6 +63,9 @@ import android.server.wm.CommandSession.ActivitySessionClient;
 import android.support.test.metricshelper.MetricsAsserts;
 import android.util.EventLog.Event;
 
+
+import androidx.test.filters.FlakyTest;
+
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.hamcrest.collection.IsIn;
@@ -206,6 +209,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      * totalTime is set correctly. Make sure the reported value is consistent with value reported to
      * metrics logs. Verify we output the correct launch state.
      */
+    @FlakyTest(bugId = 143855645)
     @Test
     public void testAppWarmLaunchSetsWaitResultDelayData() {
         try (ActivitySessionClient client = createActivitySessionClient()) {
@@ -247,6 +251,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      * totalTime is set correctly. Make sure the reported value is consistent with value reported to
      * metrics logs. Verify we output the correct launch state.
      */
+    @FlakyTest(bugId = 143855645)
     @Test
     public void testAppHotLaunchSetsWaitResultDelayData() {
         SystemUtil.runShellCommand("am start -S -W " + TEST_ACTIVITY.flattenToShortString());
