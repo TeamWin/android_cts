@@ -33,6 +33,7 @@ import android.graphics.Paint;
 import android.graphics.Paint.FontMetricsInt;
 import android.graphics.Typeface;
 import android.os.LocaleList;
+import android.platform.test.annotations.SecurityTest;
 import android.text.Editable;
 import android.text.Layout;
 import android.text.Layout.Alignment;
@@ -1683,6 +1684,7 @@ public class StaticLayoutTest {
     }
 
     // This is for b/140755449
+    @SecurityTest
     @Test
     public void testBidiVisibleEnd() {
         TextPaint paint = new TextPaint();
