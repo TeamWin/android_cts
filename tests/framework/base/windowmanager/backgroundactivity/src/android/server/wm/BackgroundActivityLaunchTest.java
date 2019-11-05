@@ -296,6 +296,7 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 143522449)
     public void testSecondActivityBlockedWhenBackgroundActivityLaunch() throws Exception {
         Intent baseActivityIntent = new Intent();
         baseActivityIntent.setComponent(APP_A_FOREGROUND_ACTIVITY);
