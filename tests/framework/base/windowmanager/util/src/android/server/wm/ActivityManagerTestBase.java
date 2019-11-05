@@ -438,6 +438,15 @@ public abstract class ActivityManagerTestBase {
 
     @After
     public void tearDown() throws Exception {
+        // Synchronous execution of removeStacksWithActivityTypes() ensures that all activities but
+        // home are cleaned up from the stack at the end of each test. Am force stop shell commands
+        // might be asynchronous and could interrupt the stack cleanup process if executed first.
+        removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
+        stopTestPackage(TEST_PACKAGE);
+        stopTestPackage(SECOND_TEST_PACKAGE);
+        stopTestPackage(THIRD_TEST_PACKAGE);
+        launchHomeActivityNoWait();
+
         try {
             // Skip empty stack/task check if a leakage was already found in previous test, or
             // all tests afterward would also fail (since the leakage is always there) and fire
@@ -449,14 +458,6 @@ public abstract class ActivityManagerTestBase {
             sStackTaskLeakFound = true;
             throw t;
         }
-        // Synchronous execution of removeStacksWithActivityTypes() ensures that all activities but
-        // home are cleaned up from the stack at the end of each test. Am force stop shell commands
-        // might be asynchronous and could interrupt the stack cleanup process if executed first.
-        removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
-        stopTestPackage(TEST_PACKAGE);
-        stopTestPackage(SECOND_TEST_PACKAGE);
-        stopTestPackage(THIRD_TEST_PACKAGE);
-        launchHomeActivityNoWait();
     }
 
     /**
