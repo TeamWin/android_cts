@@ -16,22 +16,42 @@
 
 package android.hdmicec.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
-import com.android.tradefed.testtype.DeviceTestCase;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.IDeviceTest;
+
+import org.junit.runner.RunWith;
+import org.junit.Test;
 
 /** HDMI CEC tests for One Touch Play (Section 11.2.1) */
-public final class HdmiCecOneTouchPlayTest extends DeviceTestCase {
+@RunWith(DeviceJUnit4ClassRunner.class)
+public final class HdmiCecOneTouchPlayTest implements IDeviceTest {
 
     private static final int PHYSICAL_ADDRESS = 0x1000;
+
+    private ITestDevice mDevice;
+
+    @Override
+    public void setDevice(ITestDevice device) {
+        mDevice = device;
+    }
+
+    @Override
+    public ITestDevice getDevice() {
+        return mDevice;
+    }
 
     /**
      * Test 11.2.1-1
      * Tests that the device sends a <TEXT_VIEW_ON> when the home key is pressed on device, followed
      * by a <ACTIVE_SOURCE> message.
      */
-    public void testOneTouchPlay() throws Exception {
-        HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, "1.0.0.0");
+    @Test
+    public void cect_11_2_1_1_OneTouchPlay() throws Exception {
         ITestDevice device = getDevice();
         assertNotNull("Device not set", device);
 
@@ -39,6 +59,8 @@ public final class HdmiCecOneTouchPlayTest extends DeviceTestCase {
             CLog.v("No HDMI CEC feature running, should skip test.");
             return;
         }
+
+        HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, "1.0.0.0");
 
         try {
             hdmiCecUtils.init();
