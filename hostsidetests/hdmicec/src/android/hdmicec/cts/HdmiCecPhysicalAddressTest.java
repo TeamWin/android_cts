@@ -24,7 +24,8 @@ import com.android.tradefed.testtype.DeviceTestCase;
 public final class HdmiCecPhysicalAddressTest extends DeviceTestCase {
     private static final int REBOOT_TIMEOUT = 60000;
 
-    public static final String PHY_ADDRESS = "1000";
+    private static final int PHY_ADDRESS = 0x1000;
+    private static final int PHY_ADD_LEN = Integer.toHexString(PHY_ADDRESS).length();
 
     /**
      * Test 10.1.2-1
@@ -45,10 +46,9 @@ public final class HdmiCecPhysicalAddressTest extends DeviceTestCase {
             hdmiCecUtils.init();
             device.executeShellCommand("reboot");
             device.waitForBootComplete(REBOOT_TIMEOUT);
-            String message = hdmiCecUtils.checkExpectedOutput
-                (CecMessage.REPORT_PHYSICAL_ADDRESS);
-            assertEquals(PHY_ADDRESS,
-                            hdmiCecUtils.getParamsFromMessage(message, PHY_ADDRESS.length()));
+            String message = hdmiCecUtils.checkExpectedOutput(CecMessage.REPORT_PHYSICAL_ADDRESS);
+            int physicalAddress = hdmiCecUtils.getParamsFromMessage(message, PHY_ADD_LEN);
+            assertEquals(PHY_ADDRESS, physicalAddress);
         } finally {
             hdmiCecUtils.killCecProcess();
         }

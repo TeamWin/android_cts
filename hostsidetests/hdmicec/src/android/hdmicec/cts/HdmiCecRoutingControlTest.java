@@ -23,7 +23,7 @@ import com.android.tradefed.testtype.DeviceTestCase;
 /** HDMI CEC test to test routing control (Section 11.2.2) */
 public final class HdmiCecRoutingControlTest extends DeviceTestCase {
 
-    private static final String PHYSICAL_ADDRESS = "1000";
+    private static final int PHYSICAL_ADDRESS = 0x1000;
 
     /**
      * Test 11.2.2-2
