@@ -22,8 +22,6 @@ import com.android.tradefed.testtype.DeviceTestCase;
 
 /** HDMI CEC test to verify physical address after device reboot (Section 10.2.3) */
 public final class HdmiCecLogicalAddressTest extends DeviceTestCase {
-    private static final int REBOOT_TIMEOUT = 60000;
-
     private static final CecDevice PLAYBACK_DEVICE = CecDevice.PLAYBACK_1;
 
     /**
@@ -44,7 +42,7 @@ public final class HdmiCecLogicalAddressTest extends DeviceTestCase {
         try {
             hdmiCecUtils.init();
             device.executeShellCommand("reboot");
-            device.waitForBootComplete(REBOOT_TIMEOUT);
+            device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
             String message = hdmiCecUtils.checkExpectedOutput(CecMessage.REPORT_PHYSICAL_ADDRESS);
             assertEquals(PLAYBACK_DEVICE, hdmiCecUtils.getSourceFromMessage(message));
         } finally {
