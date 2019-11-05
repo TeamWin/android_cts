@@ -18,12 +18,14 @@ package android.hdmicec.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assume.assumeTrue;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.IDeviceTest;
 
+import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.junit.Test;
 
@@ -45,6 +47,10 @@ public final class HdmiCecRoutingControlTest implements IDeviceTest {
         return mDevice;
     }
 
+    @Before public void testHdmiCecAvailability() throws Exception {
+        assumeTrue(HdmiCecUtils.isHdmiCecFeatureSupported(getDevice()));
+    }
+
     /**
      * Test 11.2.2-2
      * Tests that the device broadcasts a <ACTIVE_SOURCE> in response to a <REQUEST_ACTIVE_SOURCE>.
@@ -54,11 +60,6 @@ public final class HdmiCecRoutingControlTest implements IDeviceTest {
     public void cect_11_2_2_2_RequestActiveSource() throws Exception {
         ITestDevice device = getDevice();
         assertNotNull("Device not set", device);
-
-        if (!HdmiCecUtils.isHdmiCecFeatureSupported(device)) {
-            CLog.v("No HDMI CEC feature running, should skip test.");
-            return;
-        }
 
         HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, "1.0.0.0");
 
@@ -83,11 +84,6 @@ public final class HdmiCecRoutingControlTest implements IDeviceTest {
     public void cect_11_2_2_4_InactiveSourceOnStandby() throws Exception {
         ITestDevice device = getDevice();
         assertNotNull("Device not set", device);
-
-        if (!HdmiCecUtils.isHdmiCecFeatureSupported(device)) {
-            CLog.v("No HDMI CEC feature running, should skip test.");
-            return;
-        }
 
         HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, "1.0.0.0");
 
