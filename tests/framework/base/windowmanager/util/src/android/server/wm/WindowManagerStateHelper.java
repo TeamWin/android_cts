@@ -129,7 +129,7 @@ public class WindowManagerStateHelper extends WindowManagerState {
         });
     }
 
-    void waitForHomeActivityVisible() {
+    public void waitForHomeActivityVisible() {
         ComponentName homeActivity = getHomeActivityName();
         // Sometimes this function is called before we know what Home Activity is
         if (homeActivity == null) {
@@ -569,7 +569,7 @@ public class WindowManagerStateHelper extends WindowManagerState {
                 visible, isWindowSurfaceShown(windowName));
     }
 
-    void assertHomeActivityVisible(boolean visible) {
+    public void assertHomeActivityVisible(boolean visible) {
         final ComponentName homeActivity = getHomeActivityName();
         assertNotNull(homeActivity);
         assertVisibility(homeActivity, visible);
