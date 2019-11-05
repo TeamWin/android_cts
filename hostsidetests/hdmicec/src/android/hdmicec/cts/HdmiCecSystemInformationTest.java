@@ -59,8 +59,6 @@ public final class HdmiCecSystemInformationTest extends DeviceTestCase {
      * <GIVE_PHYSICAL_ADDRESS>
      */
     public void testGivePhysicalAddress() throws Exception {
-        final int PHYSICAL_ADDRESS = 0x1000;
-        final int PLAYBACK_DEVICE_TYPE = 0x4;
 
         if (!HdmiCecUtils.isHdmiCecFeatureSupported(getDevice())) {
             CLog.v("No HDMI CEC feature running, should skip test.");
@@ -76,8 +74,8 @@ public final class HdmiCecSystemInformationTest extends DeviceTestCase {
             /* The checkExpectedOutput has already verified the first 4 nibbles of the message. We
              * have to verify the last 6 nibbles */
             int receivedParams = hdmiCecUtils.getParamsFromMessage(message);
-            assertEquals(PHYSICAL_ADDRESS, receivedParams >> 8);
-            assertEquals(PLAYBACK_DEVICE_TYPE, receivedParams & 0xFF);
+            assertEquals(HdmiCecConstants.PHYSICAL_ADDRESS, receivedParams >> 8);
+            assertEquals(HdmiCecConstants.PLAYBACK_DEVICE_TYPE, receivedParams & 0xFF);
         } finally {
             hdmiCecUtils.killCecProcess();
         }
