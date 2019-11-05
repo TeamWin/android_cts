@@ -707,23 +707,6 @@ public class NotificationTest extends AndroidTestCase {
         }
     }
 
-    public void testBubbleMetadataBuilder_throwForBitmapIcon() {
-        Bitmap b = Bitmap.createBitmap(50, 25, Bitmap.Config.ARGB_8888);
-        new Canvas(b).drawColor(0xffff0000);
-        Icon icon = Icon.createWithBitmap(b);
-
-        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
-        try {
-            Notification.BubbleMetadata.Builder metadataBuilder =
-                    new Notification.BubbleMetadata.Builder()
-                            .setIcon(icon)
-                            .setIntent(bubbleIntent);
-            fail("Should have thrown IllegalArgumentException, invalid icon type (bitmap)");
-        } catch (IllegalArgumentException e) {
-            // expected
-        }
-    }
-
     public void testBubbleMetadataBuilder_noThrowForAdaptiveBitmapIcon() {
         Bitmap b = Bitmap.createBitmap(50, 25, Bitmap.Config.ARGB_8888);
         new Canvas(b).drawColor(0xffff0000);
