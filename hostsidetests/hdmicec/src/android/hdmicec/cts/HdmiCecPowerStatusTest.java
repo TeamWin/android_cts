@@ -18,12 +18,14 @@ package android.hdmicec.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assume.assumeTrue;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.IDeviceTest;
 
+import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.junit.Test;
 
@@ -46,6 +48,10 @@ public final class HdmiCecPowerStatusTest implements IDeviceTest {
         return mDevice;
     }
 
+    @Before public void testHdmiCecAvailability() throws Exception {
+        assumeTrue(HdmiCecUtils.isHdmiCecFeatureSupported(getDevice()));
+    }
+
     /**
      * Test 11.2.14-1
      * Tests that the device broadcasts a <REPORT_POWER_STATUS> with params 0x0 when the device is
@@ -55,11 +61,6 @@ public final class HdmiCecPowerStatusTest implements IDeviceTest {
     public void cect_11_2_14_1_PowerStatusWhenOn() throws Exception {
         ITestDevice device = getDevice();
         assertNotNull("Device not set", device);
-
-        if (!HdmiCecUtils.isHdmiCecFeatureSupported(device)) {
-            CLog.v("No HDMI CEC feature running, should skip test.");
-            return;
-        }
 
         HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, "1.0.0.0");
 
@@ -85,11 +86,6 @@ public final class HdmiCecPowerStatusTest implements IDeviceTest {
     public void cect_11_2_14_2_PowerStatusWhenOff() throws Exception {
         ITestDevice device = getDevice();
         assertNotNull("Device not set", device);
-
-        if (!HdmiCecUtils.isHdmiCecFeatureSupported(device)) {
-            CLog.v("No HDMI CEC feature running, should skip test.");
-            return;
-        }
 
         HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, "1.0.0.0");
 
