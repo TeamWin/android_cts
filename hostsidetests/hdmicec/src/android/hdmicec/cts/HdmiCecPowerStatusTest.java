@@ -93,14 +93,14 @@ public final class HdmiCecPowerStatusTest implements IDeviceTest {
             hdmiCecUtils.init();
             /* Make sure the device is not booting up/in standby */
             device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
-            device.executeShellCommand("input keyevent KEYCODE_POWER");
+            device.executeShellCommand("input keyevent KEYCODE_SLEEP");
             hdmiCecUtils.sendCecMessage(CecDevice.TV, CecMessage.GIVE_POWER_STATUS);
             String message = hdmiCecUtils.checkExpectedOutput(CecDevice.TV,
                                                               CecMessage.REPORT_POWER_STATUS);
             assertEquals(OFF, hdmiCecUtils.getParamsFromMessage(message));
         } finally {
-            /* Wake up the device again */
-            device.executeShellCommand("input keyevent KEYCODE_POWER");
+            /* Wake up the device */
+            device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
             hdmiCecUtils.killCecProcess();
         }
     }

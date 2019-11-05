@@ -90,11 +90,11 @@ public final class HdmiCecRoutingControlTest implements IDeviceTest {
         try {
             hdmiCecUtils.init();
             device.executeShellCommand("input keyevent KEYCODE_HOME");
-            device.executeShellCommand("input keyevent KEYCODE_POWER");
+            device.executeShellCommand("input keyevent KEYCODE_SLEEP");
             hdmiCecUtils.checkExpectedOutput(CecMessage.INACTIVE_SOURCE);
         } finally {
-            /* Wake up the device again */
-            device.executeShellCommand("input keyevent KEYCODE_POWER");
+            /* Wake up the device */
+            device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
             hdmiCecUtils.killCecProcess();
         }
     }
