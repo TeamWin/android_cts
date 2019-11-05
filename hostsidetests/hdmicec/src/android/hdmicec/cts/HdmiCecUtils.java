@@ -220,6 +220,36 @@ public final class HdmiCecUtils {
         throw new Exception("Could not find message " + expectedMessage.name());
     }
 
+    /** Gets the hexadecimal ASCII character values of a string. */
+    public String getHexAsciiString(String string) {
+        String asciiString = "";
+        byte[] ascii = string.trim().getBytes();
+
+        for (byte b : ascii) {
+            asciiString.concat(Integer.toHexString(b));
+        }
+
+        return asciiString;
+    }
+
+    /** Prepares a CEC message. */
+    public String prepareMessage(CecDevice source, CecDevice destination, CecMessage message,
+                                 int params) {
+        String cecMessage = "" + source + destination + ":" + message;
+
+        String paramsString = Integer.toHexString(params);
+        int position = 0;
+        int endPosition = 2;
+
+        do {
+            cecMessage.concat(":" + paramsString.substring(position, endPosition));
+            position = endPosition;
+            endPosition += 2;
+        } while (endPosition <= paramsString.length());
+
+        return cecMessage;
+    }
+
     /**
      * Gets the params from a CEC message.
      */
@@ -234,6 +264,16 @@ public final class HdmiCecUtils {
         int paramStart = 4;
         int end = numNibbles + paramStart;
         return Integer.parseInt(getNibbles(message).substring(paramStart, end), HEXADECIMAL_RADIX);
+    }
+
+    /**
+     * From the params of a CEC message, gets the nibbles from position start to position end.
+     * The start and end are relative to the beginning of the params. For example, in the following
+     * message - 4F:82:10:00:04, getParamsFromMessage(message, 0, 4) will return 0x1000 and
+     * getParamsFromMessage(message, 4, 6) will return 0x04.
+     */
+    public int getParamsFromMessage(String message, int start, int end) {
+        return Integer.parseInt(getNibbles(message).substring(4).substring(start, end), HEXADECIMAL_RADIX);
     }
 
     /**
