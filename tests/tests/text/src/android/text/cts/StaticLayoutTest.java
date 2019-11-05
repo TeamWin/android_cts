@@ -25,6 +25,7 @@ import static org.junit.Assert.fail;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Typeface;
+import android.platform.test.annotations.SecurityTest;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.Editable;
@@ -1194,6 +1195,7 @@ public class StaticLayoutTest {
     }
 
     // This is for b/140755449
+    @SecurityTest
     @Test
     public void testBidiVisibleEnd() {
         TextPaint paint = new TextPaint();
