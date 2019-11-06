@@ -129,7 +129,8 @@ class TestResultsReport {
                 }
                 currentTestResult.setResultStatus(resultStatus);
                 // TODO: report test details with Extended Device Info (EDI) or CTS metrics
-                // String details = mAdapter.getTestDetails(i);
+                String details = mAdapter.getTestDetails(i);
+                currentTestResult.setMessage(details);
 
                 ReportLog reportLog = mAdapter.getReportLog(i);
                 if (reportLog != null) {
