@@ -22,6 +22,7 @@ android_test_helper_app {
         "cts",
         "vts",
         "general-tests",
+        "mts",
     ],
     dex_preopt: {
         enabled: false,
