@@ -333,21 +333,6 @@ public class ApiComplianceCheckerTest extends AbstractApiCheckerTest<ApiComplian
     }
 
     /**
-     * Test the case where the API declares the method not synchronized, but it
-     * actually is.
-     */
-    @Test
-    @Ignore("b/124445655")
-    public void testAddingSync() {
-        ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_METHOD);
-        JDiffClassDescription clz = createClass(NormalClass.class.getSimpleName());
-        JDiffClassDescription.JDiffMethod method = method("syncMethod", Modifier.PUBLIC, "void");
-        clz.addMethod(method);
-        checkSignatureCompliance(clz, observer);
-        observer.validate();
-    }
-
-    /**
      * Test the case where the API declares the method is synchronized, but it
      * actually is not.
      */
