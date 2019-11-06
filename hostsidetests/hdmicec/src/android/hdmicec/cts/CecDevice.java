@@ -16,22 +16,36 @@
 
 package android.hdmicec.cts;
 
-public enum CecDevice {
-    TV("0"),
-    PLAYBACK_1("4"),
-    PLAYBACK_2("8"),
-    PLAYBACK_3("9"),
-    PLAYBACK_4("b"),
-    BROADCAST("f");
+import java.util.HashMap;
+import java.util.Map;
 
-    private final String playerId;
+public enum CecDevice {
+    TV(0x0),
+    PLAYBACK_1(0x4),
+    PLAYBACK_2(0x8),
+    PLAYBACK_3(0x9),
+    PLAYBACK_4(0xb),
+    BROADCAST(0xf);
+
+    private final int playerId;
+    private static Map deviceMap = new HashMap<>();
 
     @Override
     public String toString() {
-        return this.playerId;
+        return Integer.toHexString(this.playerId);
     }
 
-    private CecDevice(String playerId) {
+    static {
+        for (CecDevice device : CecDevice.values()) {
+            deviceMap.put(device.playerId, device);
+        }
+    }
+
+    public static CecDevice getDevice(int playerId) {
+        return (CecDevice) deviceMap.get(playerId);
+    }
+
+    private CecDevice(int playerId) {
         this.playerId = playerId;
     }
 }

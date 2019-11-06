@@ -16,28 +16,50 @@
 
 package android.hdmicec.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assume.assumeTrue;
+
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
-import com.android.tradefed.testtype.DeviceTestCase;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.IDeviceTest;
+
+import org.junit.Before;
+import org.junit.runner.RunWith;
+import org.junit.Test;
 
 /** HDMI CEC test to test routing control (Section 11.2.2) */
-public final class HdmiCecRoutingControlTest extends DeviceTestCase {
+@RunWith(DeviceJUnit4ClassRunner.class)
+public final class HdmiCecRoutingControlTest implements IDeviceTest {
 
-    private static final String PHYSICAL_ADDRESS = "1000";
+    private static final int PHYSICAL_ADDRESS = 0x1000;
+
+    private ITestDevice mDevice;
+
+    @Override
+    public void setDevice(ITestDevice device) {
+        mDevice = device;
+    }
+
+    @Override
+    public ITestDevice getDevice() {
+        return mDevice;
+    }
+
+    @Before public void testHdmiCecAvailability() throws Exception {
+        assumeTrue(HdmiCecUtils.isHdmiCecFeatureSupported(getDevice()));
+    }
 
     /**
      * Test 11.2.2-2
      * Tests that the device broadcasts a <ACTIVE_SOURCE> in response to a <REQUEST_ACTIVE_SOURCE>.
      * This test depends on One Touch Play, and will pass only if One Touch Play passes.
      */
-    public void testRequestActiveSource() throws Exception {
+    @Test
+    public void cect_11_2_2_2_RequestActiveSource() throws Exception {
         ITestDevice device = getDevice();
         assertNotNull("Device not set", device);
-
-        if (!HdmiCecUtils.isHdmiCecFeatureSupported(device)) {
-            CLog.v("No HDMI CEC feature running, should skip test.");
-            return;
-        }
 
         HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, "1.0.0.0");
 
@@ -58,24 +80,21 @@ public final class HdmiCecRoutingControlTest extends DeviceTestCase {
      * Tests that the device sends a <INACTIVE_SOURCE> message when put on standby.
      * This test depends on One Touch Play, and will pass only if One Touch Play passes.
      */
-    public void testInactiveSourceOnStandby() throws Exception {
-        HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, "1.0.0.0");
+    @Test
+    public void cect_11_2_2_4_InactiveSourceOnStandby() throws Exception {
         ITestDevice device = getDevice();
         assertNotNull("Device not set", device);
 
-        if (!HdmiCecUtils.isHdmiCecFeatureSupported(device)) {
-            CLog.v("No HDMI CEC feature running, should skip test.");
-            return;
-        }
+        HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, "1.0.0.0");
 
         try {
             hdmiCecUtils.init();
             device.executeShellCommand("input keyevent KEYCODE_HOME");
-            device.executeShellCommand("input keyevent KEYCODE_POWER");
+            device.executeShellCommand("input keyevent KEYCODE_SLEEP");
             hdmiCecUtils.checkExpectedOutput(CecMessage.INACTIVE_SOURCE);
         } finally {
-            /* Wake up the device again */
-            device.executeShellCommand("input keyevent KEYCODE_POWER");
+            /* Wake up the device */
+            device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
             hdmiCecUtils.killCecProcess();
         }
     }

@@ -54,6 +54,7 @@ import android.view.Window;
 import android.view.WindowInsets;
 
 import androidx.test.rule.ActivityTestRule;
+import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.PollingCheck;
 
@@ -110,6 +111,7 @@ public class DisplayCutoutTests {
     }
 
     @Test
+    @FlakyTest(bugId = 143855575)
     public void testDisplayCutout_default_portrait() {
         runTest(LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT, (activity, insets, displayCutout, which) -> {
             if (displayCutout == null) {

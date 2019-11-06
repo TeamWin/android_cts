@@ -16,31 +16,50 @@
 
 package android.hdmicec.cts;
 
-public enum CecMessage {
-    FEATURE_ABORT("00"),
-    TEXT_VIEW_ON("0d"),
-    STANDBY("36"),
-    ACTIVE_SOURCE("82"),
-    GIVE_PHYSICAL_ADDRESS("83"),
-    REPORT_PHYSICAL_ADDRESS("84"),
-    REQUEST_ACTIVE_SOURCE("85"),
-    GET_MENU_LANGUAGE("91"),
-    INACTIVE_SOURCE("9d"),
-    CEC_VERSION("9e"),
-    GET_CEC_VERSION("9f"),
-    ABORT("ff"),
-    CLIENT_CONSOLE_READY("waiting for input"),
-    QUIT_CLIENT("q"),
-    POLL("poll");
+import java.util.HashMap;
+import java.util.Map;
 
-    private final String messageId;
+public enum CecMessage {
+    FEATURE_ABORT(0x00),
+    TEXT_VIEW_ON(0x0d),
+    STANDBY(0x36),
+    ACTIVE_SOURCE(0x82),
+    GIVE_PHYSICAL_ADDRESS(0x83),
+    REPORT_PHYSICAL_ADDRESS(0x84),
+    REQUEST_ACTIVE_SOURCE(0x85),
+    GIVE_POWER_STATUS(0x8f),
+    REPORT_POWER_STATUS(0x90),
+    GET_MENU_LANGUAGE(0x91),
+    INACTIVE_SOURCE(0x9d),
+    CEC_VERSION(0x9e),
+    GET_CEC_VERSION(0x9f),
+    ABORT(0xff);
+
+    private final int messageId;
+    private static Map messageMap = new HashMap<>();
+
+    static {
+        for (CecMessage message : CecMessage.values()) {
+            messageMap.put(message.messageId, message);
+        }
+    }
+
+    public static CecMessage getMessage(int messageId) {
+        return (CecMessage) messageMap.get(messageId);
+    }
 
     @Override
     public String toString() {
-        return this.messageId;
+        String message = Integer.toHexString(this.messageId);
+        /* Every message should be of length 2, else prefix with 0 */
+        int numZeros = 2 - message.length();
+        for (int i = 0; i < numZeros; i++) {
+            message = "0" + message;
+        }
+        return message;
     }
 
-    private CecMessage(String messageId) {
+    private CecMessage(int messageId) {
         this.messageId = messageId;
     }
 }

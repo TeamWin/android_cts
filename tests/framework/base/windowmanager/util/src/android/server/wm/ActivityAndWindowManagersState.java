@@ -32,6 +32,7 @@ import static android.util.DisplayMetrics.DENSITY_DEFAULT;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -686,10 +687,12 @@ public class ActivityAndWindowManagersState {
         getAmState().computeState();
         final List<ActivityManagerState.ActivityStack> stacks = getAmState().getStacks();
         for (ActivityManagerState.ActivityStack stack : stacks) {
-            assertThat(stack.getTopTask()).isNotNull();
+            assertWithMessage("Empty stack was found, id = " + stack.mStackId)
+                    .that(stack.getTopTask()).isNotNull();
             final List<ActivityManagerState.ActivityTask> tasks = stack.getTasks();
             for (ActivityManagerState.ActivityTask task : tasks) {
-                assertThat(task.getActivities().size()).isGreaterThan(0);
+                assertWithMessage("Empty task was found, id = " + task.mTaskId)
+                        .that(task.getActivities().size()).isGreaterThan(0);
             }
         }
     }
