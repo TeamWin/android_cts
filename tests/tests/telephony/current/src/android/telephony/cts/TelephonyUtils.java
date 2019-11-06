@@ -26,7 +26,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
-class TelephonyUtils {
+public class TelephonyUtils {
     private static final String COMMAND_ADD_TEST_EMERGENCY_NUMBER =
             "cmd phone emergency-number-test-mode -a ";
 
@@ -93,8 +93,5 @@ class TelephonyUtils {
             } catch (Exception ignored) {
             }
         }
-    }
-
-    private TelephonyUtils() {
     }
 }

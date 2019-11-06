@@ -139,6 +139,15 @@
             </intent-filter>
         </service>
 
+        <service android:name="android.telephony.ims.cts.TestImsService"
+                 android:directBootAware="true"
+                 android:persistent="true"
+                 android:permission="android.permission.BIND_IMS_SERVICE">
+            <intent-filter>
+                <action android:name="android.telephony.ims.ImsService" />
+            </intent-filter>
+        </service>
+
         <activity android:name="android.telephony.cts.StubDialerActvity">
             <intent-filter>
                 <action android:name="android.intent.action.DIAL" />
