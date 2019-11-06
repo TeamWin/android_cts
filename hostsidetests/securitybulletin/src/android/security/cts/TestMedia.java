@@ -25,6 +25,7 @@ import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import static org.junit.Assert.*;
+import junit.framework.Assert;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class TestMedia extends SecurityTestCase {
@@ -151,15 +152,8 @@ public class TestMedia extends SecurityTestCase {
         if (cmdOut.length() > 0) {
             String[] segment = cmdOut.split("\\s+");
             if (segment.length > 1) {
-                int gid = -1;
-                if ((segment[1]).length() < Integer.toString(Integer.MAX_VALUE).length()) {
-                    try {
-                        gid = Integer.parseInt(segment[1]);
-                    } catch (NumberFormatException e) {
-                    }
-                }
-                if (gid == 0) {
-                    fail("mediametrics has root group id");
+                if (segment[1].trim().equals("0")) {
+                    Assert.fail("mediametrics has root group id");
                 }
             }
         }
