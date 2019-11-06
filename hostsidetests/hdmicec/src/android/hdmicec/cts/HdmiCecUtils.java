@@ -16,8 +16,12 @@
 
 package android.hdmicec.cts;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assume.assumeTrue;
+
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.RunUtil;
 
 import java.io.BufferedReader;
@@ -29,8 +33,11 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.junit.Rule;
+import org.junit.rules.ExternalResource;
+
 /** Class that helps communicate with the cec-client */
-public final class HdmiCecUtils {
+public final class HdmiCecUtils extends ExternalResource {
 
     private static final String CEC_CONSOLE_READY = "waiting for input";
     private static final int MILLISECONDS_TO_READY = 5000;
@@ -44,24 +51,40 @@ public final class HdmiCecUtils {
     private boolean mCecClientInitialised = false;
 
     private CecDevice targetDevice;
-    private String physicalAddress;
+    private BaseHostJUnit4Test testObject;
 
-    public HdmiCecUtils(CecDevice targetDevice, String physicalAddress) {
+    public HdmiCecUtils(CecDevice targetDevice, BaseHostJUnit4Test testObject) {
         this.targetDevice = targetDevice;
-        this.physicalAddress = physicalAddress;
+        this.testObject = testObject;
     }
+
+    @Override
+    protected void before() throws Throwable {
+        ITestDevice testDevice;
+        testDevice = testObject.getDevice();
+        assertNotNull("Device not set", testDevice);
+
+        assumeTrue(isHdmiCecFeatureSupported(testDevice));
+
+        this.init();
+    };
+
+    @Override
+    protected void after() {
+        this.killCecProcess();
+    };
 
     /**
      * Checks if the HDMI CEC feature is running on the device. Call this function before running
      * any HDMI CEC tests.
      * This could throw a DeviceNotAvailableException.
      */
-    public static boolean isHdmiCecFeatureSupported(ITestDevice device) throws Exception {
+    private static boolean isHdmiCecFeatureSupported(ITestDevice device) throws Exception {
         return device.hasFeature(HDMI_CEC_FEATURE);
     }
 
     /** Initialise the client */
-    public void init() throws Exception {
+    private void init() throws Exception {
         boolean gotExpectedOut = false;
         List<String> commands = new ArrayList();
         int seconds = 0;
@@ -313,7 +336,7 @@ public final class HdmiCecUtils {
     /**
      * Kills the cec-client process that was created in init().
      */
-    public void killCecProcess() {
+    private void killCecProcess() {
         try {
             checkCecClient();
             sendConsoleMessage(CecClientMessage.QUIT_CLIENT.toString());
