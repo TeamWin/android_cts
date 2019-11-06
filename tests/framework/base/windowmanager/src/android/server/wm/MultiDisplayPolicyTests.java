@@ -326,7 +326,6 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
             // invisible.
             waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED,
                     "Activity launched on external display must be stopped after turning off");
-            mAmWmState.assertVisibility(TEST_ACTIVITY, false /* visible */);
 
             externalDisplaySession.turnDisplayOn();
 

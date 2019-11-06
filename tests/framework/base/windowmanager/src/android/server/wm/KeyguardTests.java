@@ -20,6 +20,7 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+import static android.server.wm.ActivityManagerState.STATE_STOPPED;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.ComponentNameUtils.getWindowName;
 import static android.server.wm.UiDeviceUtils.pressBackButton;
@@ -109,7 +110,8 @@ public class KeyguardTests extends KeyguardTestBase {
             mAmWmState.computeState(true);
             mAmWmState.assertKeyguardShowingAndNotOccluded();
             assertTrue(mKeyguardManager.isKeyguardLocked());
-            mAmWmState.assertVisibility(TEST_ACTIVITY, false);
+            waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED,
+                    "Expected stopped activity ");
         }
         assertFalse(mKeyguardManager.isKeyguardLocked());
     }
@@ -200,7 +202,8 @@ public class KeyguardTests extends KeyguardTestBase {
             lockScreenSession.gotoKeyguard(SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY);
             mAmWmState.computeState(true);
             mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY, true);
-            mAmWmState.assertVisibility(TEST_ACTIVITY, false);
+            waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED,
+                    "Expected stopped activity ");
             mAmWmState.assertKeyguardShowingAndOccluded();
         }
     }
@@ -284,15 +287,18 @@ public class KeyguardTests extends KeyguardTestBase {
             launchActivity(INHERIT_SHOW_WHEN_LOCKED_REMOVE_ACTIVITY);
             mAmWmState.computeState(
                     SHOW_WHEN_LOCKED_ATTR_ACTIVITY, INHERIT_SHOW_WHEN_LOCKED_REMOVE_ACTIVITY);
-            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, false);
+            waitAndAssertActivityState(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, STATE_STOPPED,
+                    "Expected stopped activity ");
             mAmWmState.assertVisibility(INHERIT_SHOW_WHEN_LOCKED_REMOVE_ACTIVITY, true);
 
             lockScreenSession.gotoKeyguard();
             mAmWmState.computeState(true);
             mAmWmState.assertKeyguardShowingAndNotOccluded();
             assertTrue(mKeyguardManager.isKeyguardLocked());
-            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, false);
-            mAmWmState.assertVisibility(INHERIT_SHOW_WHEN_LOCKED_REMOVE_ACTIVITY, false);
+            waitAndAssertActivityState(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, STATE_STOPPED,
+                    "Expected stopped activity ");
+            waitAndAssertActivityState(INHERIT_SHOW_WHEN_LOCKED_REMOVE_ACTIVITY, STATE_STOPPED,
+                    "Expected stopped activity ");
         }
     }
 
@@ -335,15 +341,18 @@ public class KeyguardTests extends KeyguardTestBase {
             launchActivity(NO_INHERIT_SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
             mAmWmState.computeState(
                     SHOW_WHEN_LOCKED_ATTR_ACTIVITY, NO_INHERIT_SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
-            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, false);
+            waitAndAssertActivityState(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, STATE_STOPPED,
+                    "Expected stopped activity ");
             mAmWmState.assertVisibility(NO_INHERIT_SHOW_WHEN_LOCKED_ATTR_ACTIVITY, true);
 
             lockScreenSession.gotoKeyguard();
             mAmWmState.computeState(true);
             mAmWmState.assertKeyguardShowingAndNotOccluded();
             assertTrue(mKeyguardManager.isKeyguardLocked());
-            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, false);
-            mAmWmState.assertVisibility(NO_INHERIT_SHOW_WHEN_LOCKED_ATTR_ACTIVITY, false);
+            waitAndAssertActivityState(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, STATE_STOPPED,
+                    "Expected stopped activity ");
+            waitAndAssertActivityState(NO_INHERIT_SHOW_WHEN_LOCKED_ATTR_ACTIVITY, STATE_STOPPED,
+                    "Expected stopped activity ");
         }
     }
 
