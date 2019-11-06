@@ -18,6 +18,8 @@ package android.telecom.cts;
 import android.app.Instrumentation;
 import android.bluetooth.BluetoothDevice;
 import android.content.ComponentName;
+import android.content.ContentProviderOperation;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -31,6 +33,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.SystemClock;
 import android.os.UserManager;
+import android.provider.ContactsContract;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
@@ -665,5 +668,38 @@ public class TestUtils {
         UserManager userManager =
                 instrumentation.getContext().getSystemService(UserManager.class);
         return userManager.getSerialNumberForUser(Process.myUserHandle());
+    }
+
+
+
+    public static Uri insertContact(ContentResolver contentResolver, String phoneNumber)
+            throws Exception {
+        ArrayList<ContentProviderOperation> ops = new ArrayList<>();
+        ops.add(ContentProviderOperation
+                .newInsert(ContactsContract.RawContacts.CONTENT_URI)
+                .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, "test_type")
+                .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, "test_name")
+                .build());
+        ops.add(ContentProviderOperation
+                .newInsert(ContactsContract.Data.CONTENT_URI)
+                .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+                .withValue(ContactsContract.Data.MIMETYPE,
+                        ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
+                .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, "test")
+                .build());
+        ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+                .withValue(ContactsContract.Data.MIMETYPE,
+                        ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
+                .withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, phoneNumber)
+                .withValue(ContactsContract.CommonDataKinds.Phone.TYPE,
+                        ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE)
+                .withYieldAllowed(true)
+                .build());
+        return contentResolver.applyBatch(ContactsContract.AUTHORITY, ops)[0].uri;
+    }
+
+    public static int deleteContact(ContentResolver contentResolver, Uri deleteUri) {
+        return contentResolver.delete(deleteUri, null, null);
     }
 }
