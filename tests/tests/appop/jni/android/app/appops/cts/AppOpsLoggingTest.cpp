@@ -36,12 +36,10 @@ Java_android_app_appops_cts_AppOpsLoggingTestKt_nativeNoteOp(JNIEnv* env, jobjec
     String16 callingPackageName(nativeCallingPackageName);
 
     const char *nativeFeatureId;
-    String16 *featureId;
+    std::unique_ptr<String16> featureId;
     if (jFeatureId != nullptr) {
         nativeFeatureId = env->GetStringUTFChars(jFeatureId, 0);
-        featureId = new String16(nativeFeatureId);
-    } else {
-        featureId = new String16();
+        featureId = std::unique_ptr<String16>(new String16(nativeFeatureId));
     }
 
     const char *nativeMessage;
@@ -53,14 +51,13 @@ Java_android_app_appops_cts_AppOpsLoggingTestKt_nativeNoteOp(JNIEnv* env, jobjec
         message = new String16();
     }
 
-    appOpsManager.noteOp(op, uid, callingPackageName, *featureId, *message);
+    appOpsManager.noteOp(op, uid, callingPackageName, featureId, *message);
 
     env->ReleaseStringUTFChars(jCallingPackageName, nativeCallingPackageName);
 
     if (jFeatureId != nullptr) {
         env->ReleaseStringUTFChars(jFeatureId, nativeFeatureId);
     }
-    delete featureId;
 
     if (jMessage != nullptr) {
         env->ReleaseStringUTFChars(jMessage, nativeMessage);

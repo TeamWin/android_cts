@@ -181,19 +181,25 @@ class AppOpsLoggingTest {
 
         // All native notes will be reported as async notes
         eventually {
-            assertThat(asyncNoted.map { it.featureId to it.op })
-                .containsExactly(null to OPSTR_COARSE_LOCATION)
+            assertThat(asyncNoted[0].featureId).isEqualTo(null)
+            // There is always a message.
+            assertThat(asyncNoted[0].message).isNotEqualTo(null)
+            assertThat(asyncNoted[0].op).isEqualTo(OPSTR_COARSE_LOCATION)
+            assertThat(asyncNoted[0].notingUid).isEqualTo(myUid)
+            // Noting package name is never set for native notes
+            assertThat(asyncNoted[0].notingPackageName).isEqualTo(null)
         }
     }
 
     @Test
-    fun nativeSelfNoteAndCheckFeature() {
+    fun nativeSelfNoteWithFeatureAndMsgAndCheckLog() {
         nativeNoteOp(strOpToOp(OPSTR_COARSE_LOCATION), myUid, myPackage,
-            featureId = TEST_FEATURE_ID)
+            featureId = TEST_FEATURE_ID, message = "testMsg")
 
         // All native notes will be reported as async notes
         eventually {
-            assertThat(asyncNoted.map { it.featureId }).containsExactly(TEST_FEATURE_ID)
+            assertThat(asyncNoted[0].featureId).isEqualTo(TEST_FEATURE_ID)
+            assertThat(asyncNoted[0].message).isEqualTo("testMsg")
         }
     }
 
