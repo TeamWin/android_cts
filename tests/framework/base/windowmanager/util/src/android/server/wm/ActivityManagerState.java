@@ -767,7 +767,7 @@ public class ActivityManagerState {
         private int mResizeMode;
 
         ActivityTask(TaskRecordProto proto) {
-            super(proto.configurationContainer);
+            super(proto.task.windowContainer.configurationContainer);
             mTaskId = proto.id;
             mStackId = proto.stackId;
             mLastNonFullscreenBounds = extract(proto.lastNonFullscreenBounds);
