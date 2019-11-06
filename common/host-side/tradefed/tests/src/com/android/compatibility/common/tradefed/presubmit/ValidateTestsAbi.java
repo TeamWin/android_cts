@@ -154,6 +154,11 @@ public class ValidateTestsAbi {
          * This binary only exists in 32-bit.
          */
         BINARY_EXCEPTIONS.add("CVE-2017-083332");
+
+        /**
+         * This binary only exists in 32-bit.
+         */
+        BINARY_EXCEPTIONS.add("CVE-2017-1317932");
     }
 
     /**
