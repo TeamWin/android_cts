@@ -75,6 +75,9 @@ public class BatteryStatsBgVsFgActions {
     /** Number of times to check that app is in correct state before giving up. */
     public static final int PROC_STATE_CHECK_ATTEMPTS = 10;
 
+    /** Number of times to check that Bluetooth is enabled before giving up. */
+    public static final int BT_ENABLE_ATTEMPTS = 8;
+
     /** Perform the action specified by the given action code (see constants above). */
     public static void doAction(Context ctx, String actionCode, String requestCode) {
         if (actionCode == null) {
@@ -167,7 +170,17 @@ public class BatteryStatsBgVsFgActions {
                 Log.e(TAG, "Bluetooth is not enabled");
                 return;
             }
-            sleep(8_000);
+            for (int attempt = 0; attempt < BT_ENABLE_ATTEMPTS; attempt++) {
+                if (bluetoothAdapter.isEnabled()) {
+                    break;
+                } else {
+                    if (attempt < BT_ENABLE_ATTEMPTS - 1) {
+                        sleep(1_000);
+                    } else {
+                        throw new RuntimeException("Bluetooth enable failed.");
+                    }
+                }
+            }
             bluetoothEnabledByTest = true;
         }
 
