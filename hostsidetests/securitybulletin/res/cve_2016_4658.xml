@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Test>
+<root xmlns:aaa="aaa.com" xmlns:bbb="bbb.com" xmlns:ccc="ccc.com">
+    <aaa:one>a</aaa:one>
+    <two bbb:c="d">e</two>
+    <three>ccc:f</three>
+</root>
+</Test>
