@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<!-- Copyright (C) 2012 The Android Open Source Project
+<!-- Copyright (C) 2019 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@
                 android:id="@+id/preview_label"
                 android:layout_height="wrap_content"
                 android:layout_width="fill_parent"
-                android:text="@string/cf_preview_label"
                 android:padding="2dp"
                 android:textSize="16sp"
                 android:gravity="center" />
@@ -54,15 +53,14 @@
             android:layout_weight="3" >
 
             <ImageView
-                android:id="@+id/format_view"
+                android:id="@+id/image_view"
                 android:layout_height="0dp"
                 android:layout_width="fill_parent"
                 android:layout_weight="3" />
             <TextView
-                android:id="@+id/format_label"
+                android:id="@+id/image_label"
                 android:layout_height="wrap_content"
                 android:layout_width="fill_parent"
-                android:text="@string/cf_format_label"
                 android:padding="2dp"
                 android:textSize="16sp"
                 android:gravity="center" />
@@ -79,14 +77,15 @@
                 android:id="@+id/cameras_selection"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"/>
-            <Spinner
-                android:id="@+id/resolution_selection"
+
+            <TextView
+                android:id="@+id/test_label"
+                android:layout_height="wrap_content"
                 android:layout_width="fill_parent"
-                android:layout_height="wrap_content"/>
-            <Spinner
-                android:id="@+id/format_selection"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"/>
+                android:padding="2dp"
+                android:textSize="16sp"
+                android:gravity="left" />
+
             <Button
                 android:id="@+id/next_button"
                 android:layout_height="wrap_content"

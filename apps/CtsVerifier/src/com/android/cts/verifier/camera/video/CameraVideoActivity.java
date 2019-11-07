@@ -302,7 +302,7 @@ public class CameraVideoActivity extends PassFailButtons.Activity
         mCameraSpinner = (Spinner) findViewById(R.id.cameras_selection);
         mCameraSpinner.setAdapter(
             new ArrayAdapter<String>(
-                this, R.layout.cf_format_list_item, cameraNames));
+                this, R.layout.camera_list_item, cameraNames));
         mCameraSpinner.setOnItemSelectedListener(mCameraSpinnerListener);
 
         mResolutionSpinner = (Spinner) findViewById(R.id.resolution_selection);
@@ -816,7 +816,7 @@ public class CameraVideoActivity extends PassFailButtons.Activity
 
         mResolutionSpinner.setAdapter(
             new ArrayAdapter<String>(
-                this, R.layout.cf_format_list_item, availableVideoSizeNames));
+                this, R.layout.camera_list_item, availableVideoSizeNames));
 
         // Update untested
         mUntestedCameras.remove("All combinations for Camera " + id + "\n");
