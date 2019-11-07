@@ -61,7 +61,10 @@ public final class HdmiCecRoutingControlTest extends BaseHostJUnit4Test {
         try {
             device.executeShellCommand("input keyevent KEYCODE_HOME");
             device.executeShellCommand("input keyevent KEYCODE_SLEEP");
-            hdmiCecClient.checkExpectedOutput(CecMessage.INACTIVE_SOURCE);
+            String message = hdmiCecClient.checkExpectedOutput(CecDevice.TV,
+                    CecMessage.INACTIVE_SOURCE);
+            assertEquals(HdmiCecConstants.PHYSICAL_ADDRESS,
+                    hdmiCecClient.getParamsFromMessage(message));
         } finally {
             /* Wake up the device */
             device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
