@@ -24,9 +24,8 @@ import com.android.cts.verifier.tv.TvAppVerifierActivity;
  */
 public abstract class AsyncTestStep extends TestStepBase {
 
-    public AsyncTestStep(TvAppVerifierActivity context,
-            String instructionText, int buttonTextId) {
-        super(context, instructionText, buttonTextId);
+    public AsyncTestStep(TvAppVerifierActivity context) {
+        super(context);
     }
 
     /**
