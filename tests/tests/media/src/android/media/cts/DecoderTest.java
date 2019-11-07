@@ -40,6 +40,7 @@ import android.net.Uri;
 
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.DynamicConfigDeviceSide;
+import com.android.compatibility.common.util.MediaPerfUtils;
 import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
@@ -56,6 +57,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.LongStream;
 
 import static android.media.MediaCodecInfo.CodecProfileLevel.*;
 
@@ -63,6 +65,7 @@ import static android.media.MediaCodecInfo.CodecProfileLevel.*;
 @AppModeFull(reason = "There should be no instant apps specific behavior related to decoders")
 public class DecoderTest extends MediaPlayerTestBase {
     private static final String TAG = "DecoderTest";
+    private static final String REPORT_LOG_NAME = "CtsMediaTestCases";
 
     private static final int RESET_MODE_NONE = 0;
     private static final int RESET_MODE_RECONFIGURE = 1;
@@ -3335,5 +3338,136 @@ public class DecoderTest extends MediaPlayerTestBase {
     private boolean supportsVrHighPerformance() {
         PackageManager pm = mContext.getPackageManager();
         return pm.hasSystemFeature(PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE);
+    }
+
+    public void testLowLatencyAVC() throws Exception {
+        testLowLatencyVideo(
+                R.raw.video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz, 300);
+    }
+
+    public void testLowLatencyHEVC() throws Exception {
+        testLowLatencyVideo(
+                R.raw.video_480x360_mp4_hevc_650kbps_30fps_aac_stereo_128kbps_48000hz, 300);
+    }
+
+    private void testLowLatencyVideo(int testVideo, int frameCount) throws Exception {
+        AssetFileDescriptor fd = mResources.openRawResourceFd(testVideo);
+        MediaExtractor extractor = new MediaExtractor();
+        extractor.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
+        fd.close();
+
+        MediaFormat format = null;
+        int trackIndex = -1;
+        for (int i = 0; i < extractor.getTrackCount(); i++) {
+            format = extractor.getTrackFormat(i);
+            if (format.getString(MediaFormat.KEY_MIME).startsWith("video/")) {
+                trackIndex = i;
+                break;
+            }
+        }
+
+        assertTrue("No video track was found", trackIndex >= 0);
+
+        extractor.selectTrack(trackIndex);
+        format.setFeatureEnabled(MediaFormat.KEY_LOW_LATENCY, true /* enable */);
+
+        MediaCodecList mcl = new MediaCodecList(MediaCodecList.ALL_CODECS);
+        String decoderName = mcl.findDecoderForFormat(format);
+        if (decoderName == null) {
+            MediaUtils.skipTest("no low latency decoder for " + format);
+            return;
+        }
+        Log.v(TAG, "found decoder " + decoderName + " for format: " + format);
+
+        Surface surface = getActivity().getSurfaceHolder().getSurface();
+        MediaCodec decoder = MediaCodec.createByCodecName(decoderName);
+        decoder.configure(format, surface, null /* crypto */, 0 /* flags */);
+        decoder.start();
+
+        ByteBuffer[] codecInputBuffers = decoder.getInputBuffers();
+        ByteBuffer[] codecOutputBuffers = decoder.getOutputBuffers();
+        MediaFormat decoderInputFormat = decoder.getInputFormat();
+        MediaFormat decoderOutputFormat = null;
+
+        // start decoding
+        final long kTimeOutUs = 1000000;  // 1 second
+        MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
+        int bufferCounter = 0;
+        long[] latencyMs = new long[frameCount];
+        boolean waitingForOutput = false;
+        long startTimeMs = System.currentTimeMillis();
+        while (bufferCounter < frameCount) {
+            if (!waitingForOutput) {
+                int inputBufferId = decoder.dequeueInputBuffer(kTimeOutUs);
+                if (inputBufferId < 0) {
+                    Log.v(TAG, "no input buffer");
+                    break;
+                }
+
+                ByteBuffer dstBuf = codecInputBuffers[inputBufferId];
+
+                int sampleSize = extractor.readSampleData(dstBuf, 0 /* offset */);
+                long presentationTimeUs = 0;
+                if (sampleSize < 0) {
+                    Log.v(TAG, "had input EOS, early termination at frame " + bufferCounter);
+                    break;
+                } else {
+                    presentationTimeUs = extractor.getSampleTime();
+                }
+
+                startTimeMs = System.currentTimeMillis();
+                decoder.queueInputBuffer(
+                        inputBufferId,
+                        0 /* offset */,
+                        sampleSize,
+                        presentationTimeUs,
+                        0 /* flags */);
+
+                extractor.advance();
+                waitingForOutput = true;
+            }
+
+            int outputBufferId = decoder.dequeueOutputBuffer(info, kTimeOutUs);
+
+            if (outputBufferId >= 0) {
+                waitingForOutput = false;
+                //Log.d(TAG, "got output, size " + info.size + ", time " + info.presentationTimeUs);
+                latencyMs[bufferCounter++] = System.currentTimeMillis() - startTimeMs;
+                // TODO: render the frame and find the rendering time to calculate the total delay
+                decoder.releaseOutputBuffer(outputBufferId, false /* render */);
+            } else if (outputBufferId == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
+                codecOutputBuffers = decoder.getOutputBuffers();
+                Log.d(TAG, "output buffers have changed.");
+            } else if (outputBufferId == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                decoderOutputFormat = decoder.getOutputFormat();
+                Log.d(TAG, "output format has changed to " + decoderOutputFormat);
+            } else {
+                fail("No output buffer returned without frame delay, status " + outputBufferId);
+            }
+        }
+
+        assertTrue("No INFO_OUTPUT_FORMAT_CHANGED from decoder", decoderOutputFormat != null);
+
+        LongStream longStream = Arrays.stream(latencyMs);
+        long latencyMean = (long)longStream.average().getAsDouble();
+        long latencyMax = longStream.max().getAsLong();
+        Log.d(TAG, "latency average " + latencyMean + " ms, max " + latencyMax + " ms");
+
+        DeviceReportLog log = new DeviceReportLog(REPORT_LOG_NAME, "video_decoder_latency");
+        String message = MediaPerfUtils.addPerformanceHeadersToLog(
+                log, "decoder stats: decodeTo=" + ((surface == null) ? "buffer" : "surface"),
+                0 /* round */, decoderName, format, decoderInputFormat, decoderOutputFormat);
+        log.addValue("video_res", testVideo, ResultType.NEUTRAL, ResultUnit.NONE);
+        log.addValue("decode_to", surface == null ? "buffer" : "surface",
+                ResultType.NEUTRAL, ResultUnit.NONE);
+
+        log.addValue("average_latency", latencyMean, ResultType.LOWER_BETTER, ResultUnit.MS);
+        log.addValue("max_latency", latencyMax, ResultType.LOWER_BETTER, ResultUnit.MS);
+
+        log.submit(getInstrumentation());
+
+        decoder.stop();
+        decoder.release();
+        extractor.release();
     }
 }
