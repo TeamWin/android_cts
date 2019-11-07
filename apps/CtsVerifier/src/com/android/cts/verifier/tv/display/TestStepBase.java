@@ -26,7 +26,7 @@ import com.android.cts.verifier.tv.TvAppVerifierActivity;
  */
 public abstract class TestStepBase {
     final protected TvAppVerifierActivity mContext;
-    private View mViewItem;
+    protected View mViewItem;
     private boolean mHasPassed;
     private Runnable mOnDoneListener;
 

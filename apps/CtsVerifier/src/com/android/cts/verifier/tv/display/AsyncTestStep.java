@@ -16,6 +16,9 @@
 
 package com.android.cts.verifier.tv.display;
 
+import android.view.View;
+
+import com.android.cts.verifier.R;
 import com.android.cts.verifier.tv.TvAppVerifierActivity;
 
 /**
@@ -38,6 +41,23 @@ public abstract class AsyncTestStep extends TestStepBase {
     protected void onButtonClickRunTest() {
         // Disable the button, so the user can't run it twice.
         disableButton();
+        showLoadingSpinner();
         runTestAsync();
+    }
+
+    @Override
+    protected void doneWithPassingState(boolean state) {
+        hideLoadingSpinner();
+        super.doneWithPassingState(state);
+    }
+
+    private void showLoadingSpinner() {
+        View spinner = mViewItem.findViewById(R.id.loadingSpinner);
+        spinner.setVisibility(View.VISIBLE);
+    }
+
+    private void hideLoadingSpinner() {
+        View spinner = mViewItem.findViewById(R.id.loadingSpinner);
+        spinner.setVisibility(View.INVISIBLE);
     }
 }
