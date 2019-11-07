@@ -280,9 +280,9 @@ public class HifiUltrasoundSpeakerTestActivity extends PassFailButtons.Activity 
             Arrays.asList(powerWrap),
             "");
         LineAndPointFormatter seriesFormat = new LineAndPointFormatter();
+        seriesFormat.setPointLabelFormatter(new PointLabelFormatter());
         seriesFormat.configure(getApplicationContext(),
             R.xml.ultrasound_line_formatter_trials);
-        seriesFormat.setPointLabelFormatter(new PointLabelFormatter());
         plot.addSeries(series, seriesFormat);
       }
 
@@ -297,9 +297,9 @@ public class HifiUltrasoundSpeakerTestActivity extends PassFailButtons.Activity 
           Arrays.asList(noiseDBWrap),
           "background noise");
       LineAndPointFormatter noiseSeriesFormat = new LineAndPointFormatter();
+      noiseSeriesFormat.setPointLabelFormatter(new PointLabelFormatter());
       noiseSeriesFormat.configure(getApplicationContext(),
           R.xml.ultrasound_line_formatter_noise);
-      noiseSeriesFormat.setPointLabelFormatter(new PointLabelFormatter());
       plot.addSeries(noiseSeries, noiseSeriesFormat);
 
       double[] dB = wavAnalyzerTask.getDB();
@@ -313,9 +313,9 @@ public class HifiUltrasoundSpeakerTestActivity extends PassFailButtons.Activity 
           Arrays.asList(dBWrap),
           "median");
       LineAndPointFormatter seriesFormat = new LineAndPointFormatter();
+      seriesFormat.setPointLabelFormatter(new PointLabelFormatter());
       seriesFormat.configure(getApplicationContext(),
           R.xml.ultrasound_line_formatter_median);
-      seriesFormat.setPointLabelFormatter(new PointLabelFormatter());
       plot.addSeries(series, seriesFormat);
 
       Double[] passX = new Double[] {Common.MIN_FREQUENCY_HZ, Common.MAX_FREQUENCY_HZ};
@@ -323,9 +323,9 @@ public class HifiUltrasoundSpeakerTestActivity extends PassFailButtons.Activity 
       XYSeries passSeries = new SimpleXYSeries(
           Arrays.asList(passX), Arrays.asList(passY), "passing");
       LineAndPointFormatter passSeriesFormat = new LineAndPointFormatter();
+      passSeriesFormat.setPointLabelFormatter(new PointLabelFormatter());
       passSeriesFormat.configure(getApplicationContext(),
           R.xml.ultrasound_line_formatter_pass);
-      passSeriesFormat.setPointLabelFormatter(new PointLabelFormatter());
       plot.addSeries(passSeries, passSeriesFormat);
     }
   }
