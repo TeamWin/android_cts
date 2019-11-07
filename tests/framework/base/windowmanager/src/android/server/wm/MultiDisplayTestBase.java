@@ -235,11 +235,6 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         }
     }
 
-    protected void tapOnDisplayCenter(int displayId) {
-        final Rect bounds = mAmWmState.getWmState().getDisplay(displayId).getDisplayRect();
-        tapOnDisplay(bounds.centerX(), bounds.centerY(), displayId);
-    }
-
     void waitForDisplayGone(Predicate<WindowManagerState.Display> displayPredicate) {
         waitForOrFail("displays to be removed", () -> {
             mAmWmState.computeState(true);
