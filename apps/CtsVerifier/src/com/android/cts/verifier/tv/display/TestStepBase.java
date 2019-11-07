@@ -26,8 +26,6 @@ import com.android.cts.verifier.tv.TvAppVerifierActivity;
  */
 public abstract class TestStepBase {
     final protected TvAppVerifierActivity mContext;
-    final private String mInstructionText;
-    final private int mButtonTextId;
     private View mViewItem;
     private boolean mHasPassed;
     private Runnable mOnDoneListener;
@@ -36,26 +34,9 @@ public abstract class TestStepBase {
      * Constructs a test step containing instruction to the user and a button.
      *
      * @param context The test activity which this test step is part of.
-     * @param instructionText Text of the test instruction visible to the user.
-     * @param buttonTextId Id of a string resource containing the text of the button.
      */
-    public TestStepBase(TvAppVerifierActivity context, String instructionText, int buttonTextId) {
+    public TestStepBase(TvAppVerifierActivity context) {
         this.mContext = context;
-        this.mInstructionText = instructionText;
-        this.mButtonTextId = buttonTextId;
-    }
-
-    /**
-     * Constructs a test step containing instruction to the user and a button.
-     *
-     * @param context The test activity which this test step is part of.
-     * @param instructionTextId Id of a string resource with test instructions visible to the user.
-     * @param buttonTextId Id of a string resource containing the text of the button.
-     */
-    public TestStepBase(TvAppVerifierActivity context, int instructionTextId, int buttonTextId) {
-        this.mContext = context;
-        this.mInstructionText = context.getResources().getString(instructionTextId);
-        this.mButtonTextId = buttonTextId;
     }
 
     public boolean hasPassed() {
@@ -66,7 +47,9 @@ public abstract class TestStepBase {
      * Creates the View for this test step in the context {@link TvAppVerifierActivity}.
      */
     public void createUiElements() {
-        mViewItem = mContext.createUserItem(mInstructionText, mButtonTextId,
+        mViewItem = mContext.createUserItem(
+                getInstructionText(),
+                getButtonStringId(),
                 (View view) -> onButtonClickRunTest());
     }
 
@@ -89,6 +72,16 @@ public abstract class TestStepBase {
     }
 
     protected abstract void onButtonClickRunTest();
+
+    /**
+     * Returns the text of the test instruction visible to the user.
+     */
+    protected abstract String getInstructionText();
+
+    /**
+     * Returns id of string resource containing the text of the button.
+     */
+    protected abstract int getButtonStringId();
 
     protected void doneWithPassingState(boolean state) {
         mHasPassed = state;
