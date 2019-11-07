@@ -17,39 +17,24 @@
 package android.hdmicec.cts;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assume.assumeTrue;
 
 import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.testtype.IDeviceTest;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
-import org.junit.Before;
+import org.junit.Rule;
 import org.junit.runner.RunWith;
 import org.junit.Test;
 
 /** HDMI CEC system information tests (Section 11.2.6) */
 @RunWith(DeviceJUnit4ClassRunner.class)
-public final class HdmiCecSystemInformationTest implements IDeviceTest {
+public final class HdmiCecSystemInformationTest extends BaseHostJUnit4Test {
 
     /** The version number 0x05 refers to CEC v1.4 */
     private static final int CEC_VERSION_NUMBER = 0x05;
 
-    private ITestDevice mDevice;
-
-    @Override
-    public void setDevice(ITestDevice device) {
-        mDevice = device;
-    }
-    @Override
-    public ITestDevice getDevice() {
-        return mDevice;
-    }
-
-    @Before public void testHdmiCecAvailability() throws Exception {
-        assumeTrue(HdmiCecUtils.isHdmiCecFeatureSupported(getDevice()));
-    }
+    @Rule
+    public HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, this);
 
     /**
      * Test 11.2.6-1
@@ -58,19 +43,10 @@ public final class HdmiCecSystemInformationTest implements IDeviceTest {
     @Test
     public void cect_11_2_6_1_Ack() throws Exception {
         String command = CecClientMessage.POLL + " " + CecDevice.PLAYBACK_1;
-        String expectedOutput = "Playback 1 (" + CecDevice.PLAYBACK_1 + "): device " +
-            "status changed into 'present'";
-
-        HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, "1.0.0.0");
-
-        try {
-            hdmiCecUtils.init();
-            hdmiCecUtils.sendConsoleMessage(command);
-            if (!hdmiCecUtils.checkConsoleOutput(expectedOutput)) {
-                throw new Exception("Could not find " + expectedOutput);
-            }
-        } finally {
-            hdmiCecUtils.killCecProcess();
+        String expectedOutput = "POLL sent";
+        hdmiCecUtils.sendConsoleMessage(command);
+        if (!hdmiCecUtils.checkConsoleOutput(expectedOutput)) {
+            throw new Exception("Could not find " + expectedOutput);
         }
     }
 
@@ -81,20 +57,13 @@ public final class HdmiCecSystemInformationTest implements IDeviceTest {
      */
     @Test
     public void cect_11_2_6_2_GivePhysicalAddress() throws Exception {
-        HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, "1.0.0.0");
-
-        try {
-            hdmiCecUtils.init();
-            hdmiCecUtils.sendCecMessage(CecMessage.GIVE_PHYSICAL_ADDRESS);
-            String message = hdmiCecUtils.checkExpectedOutput(CecMessage.REPORT_PHYSICAL_ADDRESS);
-            /* The checkExpectedOutput has already verified the first 4 nibbles of the message. We
-             * have to verify the last 6 nibbles */
-            int receivedParams = hdmiCecUtils.getParamsFromMessage(message);
-            assertEquals(HdmiCecConstants.PHYSICAL_ADDRESS, receivedParams >> 8);
-            assertEquals(HdmiCecConstants.PLAYBACK_DEVICE_TYPE, receivedParams & 0xFF);
-        } finally {
-            hdmiCecUtils.killCecProcess();
-        }
+        hdmiCecUtils.sendCecMessage(CecMessage.GIVE_PHYSICAL_ADDRESS);
+        String message = hdmiCecUtils.checkExpectedOutput(CecMessage.REPORT_PHYSICAL_ADDRESS);
+        /* The checkExpectedOutput has already verified the first 4 nibbles of the message. We
+            * have to verify the last 6 nibbles */
+        int receivedParams = hdmiCecUtils.getParamsFromMessage(message);
+        assertEquals(HdmiCecConstants.PHYSICAL_ADDRESS, receivedParams >> 8);
+        assertEquals(HdmiCecConstants.PLAYBACK_DEVICE_TYPE, receivedParams & 0xFF);
     }
 
     /**
@@ -103,18 +72,11 @@ public final class HdmiCecSystemInformationTest implements IDeviceTest {
      */
     @Test
     public void cect_11_2_6_6_GiveCecVersion() throws Exception {
-        HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, "1.0.0.0");
+        hdmiCecUtils.sendCecMessage(CecDevice.TV, CecMessage.GET_CEC_VERSION);
+        String message = hdmiCecUtils.checkExpectedOutput(CecDevice.TV,
+                                                            CecMessage.CEC_VERSION);
 
-        try {
-            hdmiCecUtils.init();
-            hdmiCecUtils.sendCecMessage(CecDevice.TV, CecMessage.GET_CEC_VERSION);
-            String message = hdmiCecUtils.checkExpectedOutput(CecDevice.TV,
-                                                              CecMessage.CEC_VERSION);
-
-            assertEquals(CEC_VERSION_NUMBER, hdmiCecUtils.getParamsFromMessage(message));
-        } finally {
-            hdmiCecUtils.killCecProcess();
-        }
+        assertEquals(CEC_VERSION_NUMBER, hdmiCecUtils.getParamsFromMessage(message));
     }
 
     /**
@@ -123,19 +85,12 @@ public final class HdmiCecSystemInformationTest implements IDeviceTest {
      */
     @Test
     public void cect_11_2_6_7_GetMenuLanguage() throws Exception {
-        HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, "1.0.0.0");
-
-        try {
-            hdmiCecUtils.init();
-            hdmiCecUtils.sendCecMessage(CecDevice.TV, CecMessage.GET_MENU_LANGUAGE);
-            String message = hdmiCecUtils.checkExpectedOutput(CecDevice.TV,
-                                                              CecMessage.FEATURE_ABORT);
-            int abortedOpcode = hdmiCecUtils.getParamsFromMessage(message,
-                CecMessage.GET_MENU_LANGUAGE.toString().length());
-            assertEquals(CecMessage.getMessage(abortedOpcode), CecMessage.GET_MENU_LANGUAGE);
-        } finally {
-            hdmiCecUtils.killCecProcess();
-        }
+        hdmiCecUtils.sendCecMessage(CecDevice.TV, CecMessage.GET_MENU_LANGUAGE);
+        String message = hdmiCecUtils.checkExpectedOutput(CecDevice.TV,
+                                                            CecMessage.FEATURE_ABORT);
+        int abortedOpcode = hdmiCecUtils.getParamsFromMessage(message,
+            CecMessage.GET_MENU_LANGUAGE.toString().length());
+        assertEquals(CecMessage.getMessage(abortedOpcode), CecMessage.GET_MENU_LANGUAGE);
     }
 
 }

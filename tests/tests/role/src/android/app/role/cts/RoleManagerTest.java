@@ -591,7 +591,7 @@ public class RoleManagerTest {
     }
 
     @Test
-    public void manageRoleFromsFromControllerPermissionShouldBeDeclaredByPermissionController()
+    public void manageRolesFromControllerPermissionShouldBeDeclaredByPermissionController()
             throws PackageManager.NameNotFoundException {
         PermissionInfo permissionInfo = sPackageManager.getPermissionInfo(
                 PERMISSION_MANAGE_ROLES_FROM_CONTROLLER, 0);

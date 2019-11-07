@@ -2186,6 +2186,7 @@ public class BitmapTest {
             surface.unlockCanvasAndPost(canvas);
             bitmap.recycle();
         });
+        renderTarget.destroy();
     }
 
     @Test

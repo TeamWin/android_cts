@@ -17,8 +17,8 @@
 package android.telecom.cts;
 
 import static android.telecom.cts.TestUtils.shouldTestTelecom;
-import static org.junit.Assert.assertTrue;
 
+import android.content.ContentResolver;
 import android.telecom.cts.MockCallScreeningService.CallScreeningServiceCallbacks;
 
 import android.content.ComponentName;
@@ -58,6 +58,7 @@ public class CallScreeningServiceTest extends InstrumentationTestCase {
     private String mPreviousDefaultDialer;
     MockConnectionService mConnectionService;
     private boolean mCallFound;
+    private ContentResolver mContentResolver;
 
     @Override
     protected void setUp() throws Exception {
@@ -70,6 +71,7 @@ public class CallScreeningServiceTest extends InstrumentationTestCase {
             setupConnectionService();
             MockCallScreeningService.enableService(mContext);
         }
+        mContentResolver = getInstrumentation().getTargetContext().getContentResolver();
     }
 
     @Override
@@ -104,6 +106,36 @@ public class CallScreeningServiceTest extends InstrumentationTestCase {
                 return;
             }
         } catch (InterruptedException e) {
+        }
+
+        fail("No call added to CallScreeningService.");
+    }
+
+    /**
+     * Tests that when sendinga a CALL intent via the Telecom stack and the test number is in the
+     * user's contact, Telecom binds to the registered {@link CallScreeningService}s and invokes
+     * onScreenCall.
+     */
+    public void testBindsToCallScreeningServiceWhenContactExist() throws Exception {
+        if (!shouldTestTelecom(mContext)) {
+            return;
+        }
+
+        CallScreeningServiceCallbacks callbacks = createCallbacks();
+        MockCallScreeningService.setCallbacks(callbacks);
+        Uri contactUri = TestUtils.insertContact(mContentResolver,
+                TEST_NUMBER.getSchemeSpecificPart());
+        addNewIncomingCall(TEST_NUMBER);
+
+        try {
+            if (callbacks.lock.tryAcquire(TestUtils.WAIT_FOR_CALL_ADDED_TIMEOUT_S,
+                    TimeUnit.SECONDS)) {
+                assertTrue(mCallFound);
+                return;
+            }
+        } catch (InterruptedException e) {
+        } finally {
+            assertEquals(1, TestUtils.deleteContact(mContentResolver, contactUri));
         }
 
         fail("No call added to CallScreeningService.");

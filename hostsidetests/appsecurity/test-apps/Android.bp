@@ -37,6 +37,7 @@ android_test_helper_app {
         "cts",
         "vts",
         "general-tests",
+        "mts",
     ],
     certificate: ":cts-testkey2",
     optimize: {
@@ -68,6 +69,7 @@ android_test_helper_app {
         "cts",
         "vts",
         "general-tests",
+        "mts",
     ],
     certificate: ":cts-testkey2",
     optimize: {
@@ -98,6 +100,7 @@ android_test_helper_app {
         "cts",
         "vts",
         "general-tests",
+        "mts",
     ],
     certificate: ":cts-testkey2",
     optimize: {
@@ -130,6 +133,7 @@ android_test_helper_app {
         "cts",
         "vts",
         "general-tests",
+        "mts",
     ],
     certificate: ":cts-testkey2",
 }
@@ -155,6 +159,7 @@ android_test_helper_app {
         "cts",
         "vts",
         "general-tests",
+        "mts",
     ],
     certificate: ":cts-testkey2",
     min_sdk_version: "22",
@@ -186,6 +191,7 @@ android_test_helper_app {
         "cts",
         "vts",
         "general-tests",
+        "mts",
     ],
     certificate: ":cts-testkey2",
 }
