@@ -33,7 +33,7 @@ public final class HdmiCecRoutingControlTest extends BaseHostJUnit4Test {
     private static final int PHYSICAL_ADDRESS = 0x1000;
 
     @Rule
-    public HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, this);
+    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(CecDevice.PLAYBACK_1, this);
 
     /**
      * Test 11.2.2-2
@@ -44,10 +44,10 @@ public final class HdmiCecRoutingControlTest extends BaseHostJUnit4Test {
     public void cect_11_2_2_2_RequestActiveSource() throws Exception {
         ITestDevice device = getDevice();
         device.executeShellCommand("input keyevent KEYCODE_HOME");
-        hdmiCecUtils.sendCecMessage(CecDevice.TV, CecDevice.BROADCAST,
+        hdmiCecClient.sendCecMessage(CecDevice.TV, CecDevice.BROADCAST,
             CecMessage.REQUEST_ACTIVE_SOURCE);
-        String message = hdmiCecUtils.checkExpectedOutput(CecMessage.ACTIVE_SOURCE);
-        assertEquals(PHYSICAL_ADDRESS, hdmiCecUtils.getParamsFromMessage(message));
+        String message = hdmiCecClient.checkExpectedOutput(CecMessage.ACTIVE_SOURCE);
+        assertEquals(PHYSICAL_ADDRESS, hdmiCecClient.getParamsFromMessage(message));
     }
 
     /**
@@ -61,7 +61,7 @@ public final class HdmiCecRoutingControlTest extends BaseHostJUnit4Test {
         try {
             device.executeShellCommand("input keyevent KEYCODE_HOME");
             device.executeShellCommand("input keyevent KEYCODE_SLEEP");
-            hdmiCecUtils.checkExpectedOutput(CecMessage.INACTIVE_SOURCE);
+            hdmiCecClient.checkExpectedOutput(CecMessage.INACTIVE_SOURCE);
         } finally {
             /* Wake up the device */
             device.executeShellCommand("input keyevent KEYCODE_WAKEUP");

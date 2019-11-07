@@ -33,7 +33,8 @@ public final class HdmiCecOneTouchPlayTest extends BaseHostJUnit4Test {
     private static final int PHYSICAL_ADDRESS = 0x1000;
 
     @Rule
-    public HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, this);
+    public HdmiCecClientWrapper hdmiCecClient =
+        new HdmiCecClientWrapper(CecDevice.PLAYBACK_1, this);
 
     /**
      * Test 11.2.1-1
@@ -44,8 +45,8 @@ public final class HdmiCecOneTouchPlayTest extends BaseHostJUnit4Test {
     public void cect_11_2_1_1_OneTouchPlay() throws Exception {
         ITestDevice device = getDevice();
         device.executeShellCommand("input keyevent KEYCODE_HOME");
-        hdmiCecUtils.checkExpectedOutput(CecDevice.TV, CecMessage.TEXT_VIEW_ON);
-        String message = hdmiCecUtils.checkExpectedOutput(CecMessage.ACTIVE_SOURCE);
-        assertEquals(PHYSICAL_ADDRESS, hdmiCecUtils.getParamsFromMessage(message));
+        hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecMessage.TEXT_VIEW_ON);
+        String message = hdmiCecClient.checkExpectedOutput(CecMessage.ACTIVE_SOURCE);
+        assertEquals(PHYSICAL_ADDRESS, hdmiCecClient.getParamsFromMessage(message));
     }
 }
