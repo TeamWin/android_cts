@@ -23,7 +23,7 @@ import com.android.cts.verifier.tv.TvAppVerifierActivity;
 
 /**
  *  Encapsulates the logic of an asynchronous test step, which displays a human instructions and a
- *  button to start the test. For synchronous steps see {@link TestStep}.
+ *  button to start the test. For synchronous steps see {@link SyncTestStep}.
  */
 public abstract class AsyncTestStep extends TestStepBase {
 
@@ -32,8 +32,7 @@ public abstract class AsyncTestStep extends TestStepBase {
     }
 
     /**
-     * Runs the test logic, when finished sets the test status by calling
-     * {@link AsyncTestStep#doneWithPassingState(boolean)}.
+     * Runs the test logic, when finished calls {@link AsyncTestStep#done()}.
      */
     public abstract void runTestAsync();
 
@@ -46,9 +45,9 @@ public abstract class AsyncTestStep extends TestStepBase {
     }
 
     @Override
-    protected void doneWithPassingState(boolean state) {
+    protected void done() {
         hideLoadingSpinner();
-        super.doneWithPassingState(state);
+        super.done();
     }
 
     private void showLoadingSpinner() {

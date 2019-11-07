@@ -16,11 +16,13 @@
 
 package com.android.cts.verifier.tv.display;
 
-import android.content.Context;
 import android.view.Display;
 
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.tv.TvAppVerifierActivity;
+
+import com.google.common.base.Throwables;
+import com.google.common.collect.Range;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -38,13 +40,6 @@ import java.util.List;
  * Display is connected and 3. no display is connected.
  */
 public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
-    private static final @Display.HdrCapabilities.HdrType
-    int[] EXPECTED_SUPPORTED_HDR_TYPES_SORTED = {
-            Display.HdrCapabilities.HDR_TYPE_DOLBY_VISION,
-            Display.HdrCapabilities.HDR_TYPE_HDR10,
-            Display.HdrCapabilities.HDR_TYPE_HDR10_PLUS,
-            Display.HdrCapabilities.HDR_TYPE_HLG
-    };
     private static final float MAX_EXPECTED_LUMINANCE = 10_000f;
     private static final int DISPLAY_DISCONNECT_WAIT_TIME_SECONDS = 5;
 
@@ -57,6 +52,11 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
     }
 
     @Override
+    public String getTestDetails() {
+        return mTestSequence.getFailureDetails();
+    }
+
+    @Override
     protected void createTestItems() {
         List<TestStepBase> testSteps = new ArrayList<>();
         testSteps.add(new NonHdrDisplayTestStep(this));
@@ -65,11 +65,6 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
 
         mTestSequence = new TestSequence(this, testSteps);
         mTestSequence.init();
-    }
-
-    private static boolean hasNoHdrSupportedTypes(Display display) {
-        return display.getHdrCapabilities() == null
-                || display.getHdrCapabilities().getSupportedHdrTypes().length == 0;
     }
 
     private static class NonHdrDisplayTestStep extends SyncTestStep {
@@ -85,14 +80,26 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
         }
 
         @Override
+        protected String getStepName() {
+            return "Non HDR Display";
+        }
+
+        @Override
         protected int getButtonStringId() {
             return R.string.tv_start_test;
         }
 
         @Override
-        public boolean runTest() {
+        public void runTest() {
             Display display = mContext.getWindowManager().getDefaultDisplay();
-            return !display.isHdr() && hasNoHdrSupportedTypes(display);
+            getAsserter()
+                    .withMessage("Display.isHdr()")
+                    .that(display.isHdr())
+                    .isFalse();
+            getAsserter()
+                    .withMessage("Display.getHdrCapabilities()")
+                    .that(display.getHdrCapabilities().getSupportedHdrTypes())
+                    .isEmpty();
         }
     }
 
@@ -109,44 +116,55 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
         }
 
         @Override
+        protected String getStepName() {
+            return "HDR Display";
+        }
+
+        @Override
         protected int getButtonStringId() {
             return R.string.tv_start_test;
         }
 
         @Override
-        public boolean runTest() {
+        public void runTest() {
             Display display = mContext.getWindowManager().getDefaultDisplay();
-            return display.isHdr()
-                    && hasExpectedHdrSupportedTypes(display)
-                    && hasSaneLuminanceValues(display);
-        }
 
-        private static boolean hasExpectedHdrSupportedTypes(Display display) {
-            Display.HdrCapabilities actualHdrCapabilities = display.getHdrCapabilities();
-            int[] actualSupportedHdrTypes = actualHdrCapabilities.getSupportedHdrTypes();
-            return Arrays.equals(EXPECTED_SUPPORTED_HDR_TYPES_SORTED, actualSupportedHdrTypes);
-        }
+            getAsserter()
+                    .withMessage("Display.isHdr()")
+                    .that(display.isHdr())
+                    .isTrue();
 
-        private static boolean hasSaneLuminanceValues(Display display) {
             Display.HdrCapabilities hdrCapabilities = display.getHdrCapabilities();
 
+            int[] supportedHdrTypes = hdrCapabilities.getSupportedHdrTypes();
+            Arrays.sort(supportedHdrTypes);
+
+            getAsserter()
+                    .withMessage("Display.getHdrCapabilities().getSupportedTypes()")
+                    .that(supportedHdrTypes)
+                    .isEqualTo(new int[]{
+                        Display.HdrCapabilities.HDR_TYPE_DOLBY_VISION,
+                        Display.HdrCapabilities.HDR_TYPE_HDR10,
+                        Display.HdrCapabilities.HDR_TYPE_HDR10_PLUS,
+                        Display.HdrCapabilities.HDR_TYPE_HLG
+                    });
+
             float maxLuminance = hdrCapabilities.getDesiredMaxLuminance();
-            float maxAvgLuminance = hdrCapabilities.getDesiredMaxAverageLuminance();
+            getAsserter()
+                    .withMessage("Display.getHdrCapabilities().getDesiredMaxLuminance()")
+                    .that(maxLuminance)
+                    .isIn(Range.openClosed(0f, MAX_EXPECTED_LUMINANCE));
+
             float minLuminance = hdrCapabilities.getDesiredMinLuminance();
+            getAsserter()
+                    .withMessage("Display.getHdrCapabilities().getDesiredMinLuminance()")
+                    .that(minLuminance)
+                    .isIn(Range.closedOpen(0f, MAX_EXPECTED_LUMINANCE));
 
-            if(!(0f < maxLuminance && maxLuminance <= MAX_EXPECTED_LUMINANCE)) {
-                return false;
-            }
-
-            if(!(0f < maxAvgLuminance && maxAvgLuminance <= MAX_EXPECTED_LUMINANCE)) {
-                return false;
-            }
-
-            if (!(minLuminance < maxAvgLuminance && maxAvgLuminance <= maxLuminance)) {
-                return false;
-            }
-
-            return true;
+            getAsserter()
+                    .withMessage("Display.getHdrCapabilities().getDesiredMaxAverageLuminance()")
+                    .that(hdrCapabilities.getDesiredMaxAverageLuminance())
+                    .isIn(Range.openClosed(minLuminance, maxLuminance));
         }
     }
 
@@ -164,6 +182,11 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
         }
 
         @Override
+        protected String getStepName() {
+            return "No Display";
+        }
+
+        @Override
         protected int getButtonStringId() {
             return R.string.tv_start_test;
         }
@@ -172,8 +195,15 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
         public void runTestAsync() {
             // Wait for the user to disconnect the display.
             mContext.getPostTarget().postDelayed(() -> {
-                Display display = mContext.getWindowManager().getDefaultDisplay();
-                doneWithPassingState(!display.isHdr() && hasNoHdrSupportedTypes(display));
+                try {
+                    // Verify the display APIs do not crash when the display is disconnected
+                    Display display = mContext.getWindowManager().getDefaultDisplay();
+                    display.isHdr();
+                    display.getHdrCapabilities();
+                } catch (Exception e) {
+                    getAsserter().fail(Throwables.getStackTraceAsString(e));
+                }
+                done();
             }, Duration.ofSeconds(DISPLAY_DISCONNECT_WAIT_TIME_SECONDS).toMillis());
         }
     }
