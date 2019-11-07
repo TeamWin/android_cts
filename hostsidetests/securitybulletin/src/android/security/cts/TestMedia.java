@@ -42,6 +42,16 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/66969193
+     * Vulnerability Behaviour: SIGSEGV in self
+     */
+    @SecurityTest(minPatchLevel = "2018-01")
+    @Test
+    public void testPocCVE_2017_13179() throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-13179", null, getDevice());
+    }
+
+    /**
      * b/127702368
      * Vulnerability Behaviour: EXIT_VULNERABLE (113)
      */
