@@ -66,7 +66,6 @@ import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityManagerState.ActivityDisplay;
 import android.server.wm.ActivityManagerState.ActivityStack;
-import android.server.wm.ActivityManagerState.ActivityTask;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.SizeInfo;
 import android.util.SparseArray;
@@ -83,6 +82,7 @@ import org.junit.Test;
  *  Tests activity launching behavior on multi-display environment.
  */
 @Presubmit
+@android.server.wm.annotation.Group3
 public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
 
     @Before

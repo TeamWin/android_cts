@@ -52,7 +52,6 @@ import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityManagerState;
 import android.server.wm.ActivityManagerState.ActivityStack;
 import android.server.wm.ActivityManagerState.ActivityTask;
-import android.server.wm.lifecycle.ActivityLifecycleClientTestBase.LaunchForResultActivity;
 import android.server.wm.lifecycle.LifecycleLog.ActivityCallback;
 import android.util.Pair;
 
@@ -73,6 +72,7 @@ import java.util.List;
 @MediumTest
 @Presubmit
 @FlakyTest(bugId=137329632)
+@android.server.wm.annotation.Group3
 public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClientTestBase {
 
     @Test

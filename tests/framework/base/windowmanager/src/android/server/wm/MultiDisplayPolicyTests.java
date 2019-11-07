@@ -66,6 +66,7 @@ import org.junit.Test;
  * Tests each expected policy on multi-display environment.
  */
 @Presubmit
+@android.server.wm.annotation.Group3
 public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
 
     @Before

@@ -51,6 +51,7 @@ import org.junit.Test;
  *     atest CtsWindowManagerDeviceTestCases:ActivityStarterTests
  */
 @Presubmit
+@android.server.wm.annotation.Group3
 public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
 
     private static final ComponentName STANDARD_ACTIVITY

@@ -43,6 +43,7 @@ import org.junit.Test;
  *     atest CtsWindowManagerDeviceTestCases:KeyguardTransitionTests
  */
 @Presubmit
+@android.server.wm.annotation.Group2
 public class KeyguardTransitionTests extends ActivityManagerTestBase {
 
     @Before

@@ -24,7 +24,7 @@ import static android.server.wm.app.Components.InputMethodTestActivity.EXTRA_TES
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
-import static androidx.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
@@ -75,6 +75,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *      atest CtsWindowManagerDeviceTestCases:ActivityViewTest
  */
 @Presubmit
+@android.server.wm.annotation.Group3
 public class ActivityViewTest extends ActivityManagerTestBase {
     private static final long IME_EVENT_TIMEOUT = TimeUnit.SECONDS.toMillis(10);
 

@@ -70,6 +70,7 @@ import org.junit.Test;
  *     atest CtsWindowManagerDeviceTestCases:KeyguardTests
  */
 @Presubmit
+@android.server.wm.annotation.Group2
 public class KeyguardTests extends KeyguardTestBase {
     class AodSession extends SettingsSession<Integer> {
         private AmbientDisplayConfiguration mConfig;

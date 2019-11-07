@@ -77,6 +77,7 @@ import org.junit.Test;
  *     atest CtsWindowManagerDeviceTestCases:ActivityVisibilityTests
  */
 @Presubmit
+@android.server.wm.annotation.Group2
 public class ActivityVisibilityTests extends ActivityManagerTestBase {
 
     @Rule
