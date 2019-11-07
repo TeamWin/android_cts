@@ -17,3 +17,26 @@ android_test_import {
         enabled: false,
     },
 }
+
+//#################################################################
+// Unsigned Package
+
+android_test_helper_app {
+    name: "CtsSecureElementAccessControlTestCases1",
+    defaults: ["cts_defaults"],
+    static_libs: [
+        "ctstestrunner-axt",
+        "compatibility-device-util-axt",
+    ],
+    srcs: ["src/**/*.java"],
+    libs: [
+        "android.test.runner",
+        "android.test.base",
+    ],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ],
+}
