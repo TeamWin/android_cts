@@ -16,7 +16,11 @@
 
 package android.content.cts;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
+import android.app.Activity;
 import android.app.AppOpsManager;
+import android.app.Instrumentation;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -57,6 +61,7 @@ import android.view.WindowManager;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.IBinderPermissionTestService;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -857,16 +862,87 @@ public class ContextTest extends AndroidTestCase {
         assertNotNull(mContext.getPackageResourcePath());
     }
 
-    public void testStartActivity() {
+    public void testStartActivityWithActivityNotFound() {
         Intent intent = new Intent(mContext, ContextCtsActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         try {
             mContext.startActivity(intent);
-            fail("Test startActivity should thow a ActivityNotFoundException here.");
+            fail("Test startActivity should throw a ActivityNotFoundException here.");
         } catch (ActivityNotFoundException e) {
             // Because ContextWrapper is a wrapper class, so no need to test
             // the details of the function's performance. Getting a result
             // from the wrapped class is enough for testing.
+        }
+    }
+
+    public void testStartActivities() throws Exception {
+        final Intent[] intents = {
+                new Intent().setComponent(new ComponentName(mContext,
+                        AvailableIntentsActivity.class)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                new Intent().setComponent(new ComponentName(mContext,
+                        ImageCaptureActivity.class)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        };
+
+        final Instrumentation.ActivityMonitor firstMonitor = getInstrumentation()
+                .addMonitor(AvailableIntentsActivity.class.getName(), null /* result */,
+                        false /* block */);
+        final Instrumentation.ActivityMonitor secondMonitor = getInstrumentation()
+                .addMonitor(ImageCaptureActivity.class.getName(), null /* result */,
+                        false /* block */);
+
+        mContext.startActivities(intents);
+
+        Activity firstActivity = getInstrumentation().waitForMonitorWithTimeout(firstMonitor, 5000);
+        assertNotNull(firstActivity);
+
+        Activity secondActivity = getInstrumentation().waitForMonitorWithTimeout(secondMonitor,
+                5000);
+        assertNotNull(secondActivity);
+    }
+
+    public void testStartActivityAsUser() {
+        try (ActivitySession activitySession = new ActivitySession()) {
+            Intent intent = new Intent(mContext, AvailableIntentsActivity.class);
+
+            activitySession.assertActivityLaunched(intent.getComponent().getClassName(),
+                    () -> SystemUtil.runWithShellPermissionIdentity(() ->
+                            mContext.startActivityAsUser(intent, UserHandle.CURRENT)));
+        }
+    }
+
+    public void testStartActivity()  {
+        try (ActivitySession activitySession = new ActivitySession()) {
+            Intent intent = new Intent(mContext, AvailableIntentsActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+            activitySession.assertActivityLaunched(intent.getComponent().getClassName(),
+                    () -> mContext.startActivity(intent));
+        }
+    }
+
+    /**
+     * Helper class to launch / close test activity.
+     */
+    private class ActivitySession implements AutoCloseable {
+        private Activity mTestActivity;
+        private static final int ACTIVITY_LAUNCH_TIMEOUT = 5000;
+
+        void assertActivityLaunched(String activityClassName, Runnable activityStarter) {
+            final Instrumentation.ActivityMonitor monitor = getInstrumentation()
+                    .addMonitor(activityClassName, null /* result */,
+                            false /* block */);
+            activityStarter.run();
+            // Wait for activity launch with timeout.
+            mTestActivity = getInstrumentation().waitForMonitorWithTimeout(monitor,
+                    ACTIVITY_LAUNCH_TIMEOUT);
+            assertNotNull(mTestActivity);
+        }
+
+        @Override
+        public void close() {
+            if (mTestActivity != null) {
+                mTestActivity.finishAndRemoveTask();
+            }
         }
     }
 
