@@ -34,7 +34,8 @@ public final class HdmiCecPowerStatusTest extends BaseHostJUnit4Test {
     private static final int OFF = 0x1;
 
     @Rule
-    public HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, this);
+    public HdmiCecClientWrapper hdmiCecClient =
+        new HdmiCecClientWrapper(CecDevice.PLAYBACK_1, this);
 
     /**
      * Test 11.2.14-1
@@ -46,10 +47,10 @@ public final class HdmiCecPowerStatusTest extends BaseHostJUnit4Test {
         ITestDevice device = getDevice();
         /* Make sure the device is not booting up/in standby */
         device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
-        hdmiCecUtils.sendCecMessage(CecDevice.TV, CecMessage.GIVE_POWER_STATUS);
-        String message = hdmiCecUtils.checkExpectedOutput(CecDevice.TV,
+        hdmiCecClient.sendCecMessage(CecDevice.TV, CecMessage.GIVE_POWER_STATUS);
+        String message = hdmiCecClient.checkExpectedOutput(CecDevice.TV,
                                                             CecMessage.REPORT_POWER_STATUS);
-        assertEquals(ON, hdmiCecUtils.getParamsFromMessage(message));
+        assertEquals(ON, hdmiCecClient.getParamsFromMessage(message));
     }
 
     /**
@@ -64,10 +65,10 @@ public final class HdmiCecPowerStatusTest extends BaseHostJUnit4Test {
             /* Make sure the device is not booting up/in standby */
             device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
             device.executeShellCommand("input keyevent KEYCODE_SLEEP");
-            hdmiCecUtils.sendCecMessage(CecDevice.TV, CecMessage.GIVE_POWER_STATUS);
-            String message = hdmiCecUtils.checkExpectedOutput(CecDevice.TV,
+            hdmiCecClient.sendCecMessage(CecDevice.TV, CecMessage.GIVE_POWER_STATUS);
+            String message = hdmiCecClient.checkExpectedOutput(CecDevice.TV,
                                                               CecMessage.REPORT_POWER_STATUS);
-            assertEquals(OFF, hdmiCecUtils.getParamsFromMessage(message));
+            assertEquals(OFF, hdmiCecClient.getParamsFromMessage(message));
         } finally {
             /* Wake up the device */
             device.executeShellCommand("input keyevent KEYCODE_WAKEUP");

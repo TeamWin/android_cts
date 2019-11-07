@@ -31,7 +31,8 @@ import org.junit.Test;
 public final class HdmiCecPhysicalAddressTest extends BaseHostJUnit4Test {
 
     @Rule
-    public HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, this);
+    public HdmiCecClientWrapper hdmiCecClient =
+        new HdmiCecClientWrapper(CecDevice.PLAYBACK_1, this);
 
     /**
      * Test 10.1.2-1
@@ -43,8 +44,8 @@ public final class HdmiCecPhysicalAddressTest extends BaseHostJUnit4Test {
         ITestDevice device = getDevice();
         device.executeShellCommand("reboot");
         device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
-        String message = hdmiCecUtils.checkExpectedOutput(CecMessage.REPORT_PHYSICAL_ADDRESS);
-        int physicalAddress = hdmiCecUtils.getParamsFromMessage(message,
+        String message = hdmiCecClient.checkExpectedOutput(CecMessage.REPORT_PHYSICAL_ADDRESS);
+        int physicalAddress = hdmiCecClient.getParamsFromMessage(message,
             HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH);
         assertEquals(HdmiCecConstants.PHYSICAL_ADDRESS, physicalAddress);
     }

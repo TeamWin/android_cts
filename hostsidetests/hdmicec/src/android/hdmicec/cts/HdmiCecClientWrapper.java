@@ -37,7 +37,7 @@ import org.junit.Rule;
 import org.junit.rules.ExternalResource;
 
 /** Class that helps communicate with the cec-client */
-public final class HdmiCecUtils extends ExternalResource {
+public final class HdmiCecClientWrapper extends ExternalResource {
 
     private static final String CEC_CONSOLE_READY = "waiting for input";
     private static final int MILLISECONDS_TO_READY = 5000;
@@ -53,7 +53,7 @@ public final class HdmiCecUtils extends ExternalResource {
     private CecDevice targetDevice;
     private BaseHostJUnit4Test testObject;
 
-    public HdmiCecUtils(CecDevice targetDevice, BaseHostJUnit4Test testObject) {
+    public HdmiCecClientWrapper(CecDevice targetDevice, BaseHostJUnit4Test testObject) {
         this.targetDevice = targetDevice;
         this.testObject = testObject;
     }
