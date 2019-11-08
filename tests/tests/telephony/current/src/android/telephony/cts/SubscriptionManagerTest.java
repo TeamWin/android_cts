@@ -285,6 +285,23 @@ public class SubscriptionManagerTest {
     }
 
     @Test
+    public void testSetDefaultVoiceSubId() {
+        int oldSubId = SubscriptionManager.getDefaultVoiceSubscriptionId();
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity();
+        try {
+            mSm.setDefaultVoiceSubscriptionId(SubscriptionManager.INVALID_SUBSCRIPTION_ID);
+            assertEquals(SubscriptionManager.INVALID_SUBSCRIPTION_ID,
+                    SubscriptionManager.getDefaultVoiceSubscriptionId());
+            mSm.setDefaultVoiceSubscriptionId(oldSubId);
+            assertEquals(oldSubId, SubscriptionManager.getDefaultVoiceSubscriptionId());
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
     public void testSubscriptionPlansOverrideUnmetered() throws Exception {
         if (!isSupported()) return;
 
