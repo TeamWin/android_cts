@@ -16,6 +16,7 @@
 
 package android.content.pm.cts;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -25,7 +26,6 @@ import android.platform.test.annotations.AppModeFull;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -33,17 +33,27 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Optional;
 
 @RunWith(AndroidJUnit4.class)
 @AppModeFull // TODO(Instant) Figure out which APIs should work.
 public class PackageManagerShellCommandTest {
 
     private static final String TEST_APP_PACKAGE = "com.example.helloworld";
-    private static final String TEST_APK5_NAME = "HelloWorld5.apk";
-    private static final String TEST_APK7_NAME = "HelloWorld7.apk";
 
-    private String mTestApk5Path = "";
-    private String mTestApk7Path = "";
+    private static final String TEST_APK_PATH = "/data/local/tmp/cts/content/";
+    private static final String TEST_HW5 = "HelloWorld5.apk";
+    private static final String TEST_HW5_SPLIT0 = "HelloWorld5_hdpi-v4.apk";
+    private static final String TEST_HW5_SPLIT1 = "HelloWorld5_mdpi-v4.apk";
+    private static final String TEST_HW5_SPLIT2 = "HelloWorld5_xhdpi-v4.apk";
+    private static final String TEST_HW5_SPLIT3 = "HelloWorld5_xxhdpi-v4.apk";
+    private static final String TEST_HW5_SPLIT4 = "HelloWorld5_xxxhdpi-v4.apk";
+    private static final String TEST_HW7 = "HelloWorld7.apk";
+    private static final String TEST_HW7_SPLIT0 = "HelloWorld7_hdpi-v4.apk";
+    private static final String TEST_HW7_SPLIT1 = "HelloWorld7_mdpi-v4.apk";
+    private static final String TEST_HW7_SPLIT2 = "HelloWorld7_xhdpi-v4.apk";
+    private static final String TEST_HW7_SPLIT3 = "HelloWorld7_xxhdpi-v4.apk";
+    private static final String TEST_HW7_SPLIT4 = "HelloWorld7_xxxhdpi-v4.apk";
 
     private static InputStream executeShellCommand(String command) {
         final ParcelFileDescriptor pfd =
@@ -62,15 +72,9 @@ public class PackageManagerShellCommandTest {
         return result.toString("UTF-8");
     }
 
-    @Before
-    public void setup() throws Exception {
-        mTestApk5Path = "/data/local/tmp/cts/content/" + TEST_APK5_NAME;
-        mTestApk7Path = "/data/local/tmp/cts/content/" + TEST_APK7_NAME;
-    }
-
     @Test
-    public void testAppInstalls() throws Exception {
-        installPackage(mTestApk5Path);
+    public void testAppInstall() throws Exception {
+        installPackage(TEST_HW5);
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
         uninstallPackage(TEST_APP_PACKAGE);
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
@@ -78,12 +82,99 @@ public class PackageManagerShellCommandTest {
 
     @Test
     public void testAppUpdate() throws Exception {
-        installPackage(mTestApk5Path);
+        installPackage(TEST_HW5);
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
-        installPackage(mTestApk7Path);
+        installPackage(TEST_HW7);
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
         uninstallPackage(TEST_APP_PACKAGE);
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
+    }
+
+    @Test
+    public void testSplitsInstall() throws Exception {
+        installSplits(new String[]{TEST_HW5, TEST_HW5_SPLIT0, TEST_HW5_SPLIT1, TEST_HW5_SPLIT2,
+                TEST_HW5_SPLIT3, TEST_HW5_SPLIT4});
+        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+        assertEquals("base, config.hdpi, config.mdpi, config.xhdpi, config.xxhdpi, config.xxxhdpi",
+                getSplits(TEST_APP_PACKAGE));
+        uninstallPackage(TEST_APP_PACKAGE);
+        assertFalse(isAppInstalled(TEST_APP_PACKAGE));
+    }
+
+    @Test
+    public void testSplitsUpdate() throws Exception {
+        installSplits(new String[]{TEST_HW5, TEST_HW5_SPLIT0, TEST_HW5_SPLIT1, TEST_HW5_SPLIT2,
+                TEST_HW5_SPLIT3, TEST_HW5_SPLIT4});
+        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+        assertEquals("base, config.hdpi, config.mdpi, config.xhdpi, config.xxhdpi, config.xxxhdpi",
+                getSplits(TEST_APP_PACKAGE));
+        installSplits(new String[]{TEST_HW7, TEST_HW7_SPLIT0, TEST_HW7_SPLIT1, TEST_HW7_SPLIT2,
+                TEST_HW7_SPLIT3, TEST_HW7_SPLIT4});
+        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+        assertEquals("base, config.hdpi, config.mdpi, config.xhdpi, config.xxhdpi, config.xxxhdpi",
+                getSplits(TEST_APP_PACKAGE));
+        uninstallPackage(TEST_APP_PACKAGE);
+        assertFalse(isAppInstalled(TEST_APP_PACKAGE));
+        assertEquals(null, getSplits(TEST_APP_PACKAGE));
+    }
+
+    @Test
+    public void testSplitsUninstall() throws Exception {
+        installSplits(new String[]{TEST_HW5, TEST_HW5_SPLIT0, TEST_HW5_SPLIT1, TEST_HW5_SPLIT2,
+                TEST_HW5_SPLIT3, TEST_HW5_SPLIT4});
+        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+        assertEquals("base, config.hdpi, config.mdpi, config.xhdpi, config.xxhdpi, config.xxxhdpi",
+                getSplits(TEST_APP_PACKAGE));
+        uninstallSplits(TEST_APP_PACKAGE, new String[]{"config.hdpi"});
+        assertEquals("base, config.mdpi, config.xhdpi, config.xxhdpi, config.xxxhdpi",
+                getSplits(TEST_APP_PACKAGE));
+        uninstallSplits(TEST_APP_PACKAGE, new String[]{"config.xxxhdpi", "config.xhdpi"});
+        assertEquals("base, config.mdpi, config.xxhdpi", getSplits(TEST_APP_PACKAGE));
+        uninstallPackage(TEST_APP_PACKAGE);
+        assertFalse(isAppInstalled(TEST_APP_PACKAGE));
+    }
+
+    @Test
+    public void testSplitsRemove() throws Exception {
+        installSplits(new String[]{TEST_HW7, TEST_HW7_SPLIT0, TEST_HW7_SPLIT1, TEST_HW7_SPLIT2,
+                TEST_HW7_SPLIT3, TEST_HW7_SPLIT4});
+        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+        assertEquals("base, config.hdpi, config.mdpi, config.xhdpi, config.xxhdpi, config.xxxhdpi",
+                getSplits(TEST_APP_PACKAGE));
+
+        String sessionId = createSession(TEST_APP_PACKAGE);
+        removeSplits(sessionId, new String[]{"config.hdpi"});
+        commitSession(sessionId);
+        assertEquals("base, config.mdpi, config.xhdpi, config.xxhdpi, config.xxxhdpi",
+                getSplits(TEST_APP_PACKAGE));
+
+        sessionId = createSession(TEST_APP_PACKAGE);
+        removeSplits(sessionId, new String[]{"config.xxxhdpi", "config.xhdpi"});
+        commitSession(sessionId);
+        assertEquals("base, config.mdpi, config.xxhdpi", getSplits(TEST_APP_PACKAGE));
+
+        uninstallPackage(TEST_APP_PACKAGE);
+        assertFalse(isAppInstalled(TEST_APP_PACKAGE));
+    }
+
+    private String createSession(String packageName) throws IOException {
+        final String prefix = "Success: created install session [";
+        final String suffix = "]\n";
+        final String commandResult = readFullStream(
+                executeShellCommand("pm install-create -p " + packageName));
+        assertTrue(commandResult, commandResult.startsWith(prefix));
+        assertTrue(commandResult, commandResult.endsWith(suffix));
+        return commandResult.substring(prefix.length(), commandResult.length() - suffix.length());
+    }
+
+    private void removeSplits(String sessionId, String[] splitNames) throws IOException {
+        assertEquals("Success\n", readFullStream(executeShellCommand(
+                "pm install-remove " + sessionId + " " + String.join(" ", splitNames))));
+    }
+
+    private void commitSession(String sessionId) throws IOException {
+        assertEquals("Success\n",
+                readFullStream(executeShellCommand("pm install-commit " + sessionId)));
     }
 
     private boolean isAppInstalled(String packageName) throws IOException {
@@ -93,13 +184,42 @@ public class PackageManagerShellCommandTest {
                 .anyMatch(line -> line.substring(prefixLength).equals(packageName));
     }
 
-    private String installPackage(String apkPath) throws IOException {
-        return readFullStream(executeShellCommand("pm install -t -g " + apkPath));
+    private String getSplits(String packageName) throws IOException {
+        final String commandResult = readFullStream(executeShellCommand("pm dump " + packageName));
+        final String prefix = "    splits=[";
+        final int prefixLength = prefix.length();
+        Optional<String> maybeSplits = Arrays.stream(commandResult.split("\\r?\\n"))
+                .filter(line -> line.startsWith(prefix)).findFirst();
+        if (!maybeSplits.isPresent()) {
+            return null;
+        }
+        String splits = maybeSplits.get();
+        return splits.substring(prefixLength, splits.length() - 1);
     }
 
-    private String uninstallPackage(String packageName) throws IOException {
-        return readFullStream(executeShellCommand("pm uninstall " + packageName));
+    private static String createApkPath(String baseName) {
+        return TEST_APK_PATH + baseName;
+    }
+
+    private void installPackage(String baseName) throws IOException {
+        assertEquals("Success\n",
+                readFullStream(executeShellCommand("pm install -t -g " + createApkPath(baseName))));
+    }
+
+    private void installSplits(String[] baseNames) throws IOException {
+        String splits = String.join(" ", Arrays.stream(baseNames).map(
+                baseName -> createApkPath(baseName)).toArray(String[]::new));
+        assertEquals("Success\n",
+                readFullStream(executeShellCommand("pm install -t -g " + splits)));
+    }
+
+    private void uninstallPackage(String packageName) throws IOException {
+        assertEquals("Success\n",
+                readFullStream(executeShellCommand("pm uninstall " + packageName)));
+    }
+
+    private void uninstallSplits(String packageName, String[] splitNames) throws IOException {
+        assertEquals("Success\n", readFullStream(executeShellCommand(
+                "pm uninstall " + packageName + " " + String.join(" ", splitNames))));
     }
 }
-
-
