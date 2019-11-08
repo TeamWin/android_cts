@@ -40,17 +40,7 @@
     <target_preparer class="com.android.tradefed.targetprep.PushFilePreparer">
         <option name="cleanup" value="true" />
         <option name="push-file" key="HelloWorld5.apk" value="/data/local/tmp/cts/content/HelloWorld5.apk" />
-        <option name="push-file" key="HelloWorld5_hdpi-v4.apk" value="/data/local/tmp/cts/content/HelloWorld5_hdpi-v4.apk" />
-        <option name="push-file" key="HelloWorld5_mdpi-v4.apk" value="/data/local/tmp/cts/content/HelloWorld5_mdpi-v4.apk" />
-        <option name="push-file" key="HelloWorld5_xhdpi-v4.apk" value="/data/local/tmp/cts/content/HelloWorld5_xhdpi-v4.apk" />
-        <option name="push-file" key="HelloWorld5_xxhdpi-v4.apk" value="/data/local/tmp/cts/content/HelloWorld5_xxhdpi-v4.apk" />
-        <option name="push-file" key="HelloWorld5_xxxhdpi-v4.apk" value="/data/local/tmp/cts/content/HelloWorld5_xxxhdpi-v4.apk" />
         <option name="push-file" key="HelloWorld7.apk" value="/data/local/tmp/cts/content/HelloWorld7.apk" />
-        <option name="push-file" key="HelloWorld7_hdpi-v4.apk" value="/data/local/tmp/cts/content/HelloWorld7_hdpi-v4.apk" />
-        <option name="push-file" key="HelloWorld7_mdpi-v4.apk" value="/data/local/tmp/cts/content/HelloWorld7_mdpi-v4.apk" />
-        <option name="push-file" key="HelloWorld7_xhdpi-v4.apk" value="/data/local/tmp/cts/content/HelloWorld7_xhdpi-v4.apk" />
-        <option name="push-file" key="HelloWorld7_xxhdpi-v4.apk" value="/data/local/tmp/cts/content/HelloWorld7_xxhdpi-v4.apk" />
-        <option name="push-file" key="HelloWorld7_xxxhdpi-v4.apk" value="/data/local/tmp/cts/content/HelloWorld7_xxxhdpi-v4.apk" />
     </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
