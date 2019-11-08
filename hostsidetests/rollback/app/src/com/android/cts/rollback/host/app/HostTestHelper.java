@@ -28,6 +28,7 @@ import android.util.Log;
 import com.android.cts.install.lib.Install;
 import com.android.cts.install.lib.InstallUtils;
 import com.android.cts.install.lib.TestApp;
+import com.android.cts.install.lib.Uninstall;
 import com.android.cts.rollback.lib.Rollback;
 import com.android.cts.rollback.lib.RollbackUtils;
 
@@ -74,7 +75,7 @@ public class HostTestHelper {
      * so staged-installs won't fail.
      */
     @Test
-    public void cleanUp() {
+    public void cleanUp() throws Exception {
         PackageInstaller packageInstaller = InstallUtils.getPackageInstaller();
         packageInstaller.getStagedSessions().forEach(sessionInfo -> {
             if (sessionInfo.getParentSessionId() != PackageInstaller.SessionInfo.INVALID_ID
@@ -89,6 +90,8 @@ public class HostTestHelper {
                 Log.e(TAG, "Failed to abandon session " + sessionInfo.getSessionId(), e);
             }
         });
+
+        Uninstall.packages(TestApp.A);
     }
 
     /**

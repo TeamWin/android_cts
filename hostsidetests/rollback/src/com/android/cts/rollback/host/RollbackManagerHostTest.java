@@ -40,7 +40,6 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
     private static final String TAG = "RollbackManagerHostTest";
 
     private static final String SHIM_APEX_PACKAGE_NAME = "com.android.apex.cts.shim";
-    private static final String TEST_APK_PACKAGE_NAME = "com.android.cts.install.lib.testapp.A";
 
     /**
      * Runs the helper app test method on device.
@@ -116,8 +115,6 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
     @After
     public void cleanUp() throws Exception {
         run("cleanUp");
-        // uninstalling the APK doesn't have much overhead, so we can do it after every case
-        getDevice().uninstallPackage(TEST_APK_PACKAGE_NAME);
         uninstallShimApexIfNecessary();
     }
 
