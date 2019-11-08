@@ -59,6 +59,8 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.UserManager;
 import android.platform.test.annotations.AppModeFull;
+import android.provider.Settings;
+import android.provider.Settings.Secure;
 import android.util.Log;
 
 import androidx.test.core.app.ApplicationProvider;
@@ -139,6 +141,14 @@ public class LocationManagerFineTest {
     @Test
     public void testIsLocationEnabled() {
         assertTrue(mManager.isLocationEnabled());
+    }
+
+    @Test
+    public void testValidLocationMode() {
+        int locationMode = Secure.getInt(mContext.getContentResolver(), Secure.LOCATION_MODE,
+                Secure.LOCATION_MODE_OFF);
+        assertThat(locationMode).isNotEqualTo(Secure.LOCATION_MODE_SENSORS_ONLY);
+        assertThat(locationMode).isNotEqualTo(Secure.LOCATION_MODE_BATTERY_SAVING);
     }
 
     @Test
