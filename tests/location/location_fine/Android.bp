@@ -12,46 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Reusable Location test classes and helpers
-
-java_test_helper_library {
-    name: "cts-location-fine-tests",
-    libs: [
-        "telephony-common",
-        "android.test.base.stubs",
-    ],
-    static_libs: [
-        "LocationCtsCommon",
-        "compatibility-device-util-axt",
-        "ctstestrunner-axt",
-        "platform-test-annotations",
-    ],
-    srcs: [
-        "src/android/location/cts/**/*.java",
-    ],
-}
-
-// CtsLocationFineTestCases package
 android_test {
     name: "CtsLocationFineTestCases",
     defaults: ["cts_defaults"],
+    static_libs: [
+        "LocationCtsCommon",
+        "androidx.test.ext.junit",
+        "androidx.test.ext.truth",
+        "androidx.test.rules",
+        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
+        "truth-prebuilt",
+    ],
+    libs: [
+        "android.test.base.stubs",
+    ],
+    srcs: ["src/**/*.java"],
     test_suites: [
         "cts",
         "vts",
         "general-tests",
     ],
-    libs: [
-        "telephony-common",
-        "android.test.base.stubs",
-    ],
-    static_libs: [
-        "LocationCtsCommon",
-        "compatibility-device-util-axt",
-        "ctstestrunner-axt",
-    ],
-    srcs: [
-        "src/**/*.java",
-    ],
-    platform_apis: true,
-    dxflags: ["--multi-dex"],
 }

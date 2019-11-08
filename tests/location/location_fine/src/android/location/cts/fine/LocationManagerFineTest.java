@@ -24,7 +24,18 @@ import static android.location.LocationManager.KEY_PROXIMITY_ENTERING;
 import static android.location.LocationManager.NETWORK_PROVIDER;
 import static android.location.LocationManager.PASSIVE_PROVIDER;
 
+import static androidx.test.ext.truth.location.LocationSubject.assertThat;
+
+import static com.android.compatibility.common.util.LocationUtils.createLocation;
+
+import static com.google.common.truth.Truth.assertThat;
+
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -46,83 +57,59 @@ import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.os.HandlerThread;
 import android.os.Looper;
-import android.os.SystemClock;
 import android.os.UserManager;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
+import androidx.test.core.app.ApplicationProvider;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.LocationUtils;
 import com.android.internal.util.Preconditions;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.util.List;
-import java.util.concurrent.Executor;
+import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-/**
- * Requires the permissions
- * android.permission.ACCESS_MOCK_LOCATION to mock provider
- * android.permission.ACCESS_COARSE_LOCATION to access network provider
- * android.permission.ACCESS_FINE_LOCATION to access GPS provider
- * android.permission.ACCESS_LOCATION_EXTRA_COMMANDS to send extra commands to GPS provider
- */
-public class LocationManagerTest extends BaseMockLocationTest {
+@RunWith(AndroidJUnit4.class)
+public class LocationManagerFineTest {
 
-    private static final String TAG = "LocationManagerTest";
+    private static final String TAG = "LocationManagerFineTest";
 
     private static final long TIMEOUT_MS = 5000;
     private static final long FAILURE_TIMEOUT_MS = 200;
 
     private static final String TEST_PROVIDER = "test_provider";
 
+    private Random mRandom;
     private Context mContext;
     private LocationManager mManager;
 
-    private static Location createLocation(String provider, double latitude, double longitude) {
-        Location location = new Location(provider);
-        location.setLatitude(latitude);
-        location.setLongitude(longitude);
-        location.setAccuracy(1.0f);
-        location.setTime(System.currentTimeMillis());
-        location.setElapsedRealtimeNanos(SystemClock.elapsedRealtimeNanos());
-        return location;
-    }
+    @Before
+    public void setUp() throws Exception {
+        LocationUtils.registerMockLocationProvider(InstrumentationRegistry.getInstrumentation(),
+                true);
 
-    private static Executor directExecutor() {
-        return Runnable::run;
-    }
+        long seed = System.currentTimeMillis();
+        Log.i(TAG, "location random seed: " + seed);
 
-    private static void assertLocationEquals(Location expected, Location actual) {
-        if (expected == actual) {
-            return;
-        }
-
-        if (expected == null || actual == null) {
-            // gives nicer error message
-            assertEquals(expected, actual);
-            return;
-        }
-
-        assertEquals(expected.getProvider(), actual.getProvider());
-        assertEquals(expected.getLatitude(), actual.getLatitude());
-        assertEquals(expected.getLongitude(), actual.getLongitude());
-        assertEquals(expected.getTime(), actual.getTime());
-        assertEquals(expected.getElapsedRealtimeNanos(), actual.getElapsedRealtimeNanos());
-    }
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mContext = getInstrumentation().getTargetContext();
+        mRandom = new Random(seed);
+        mContext = ApplicationProvider.getApplicationContext();
         mManager = mContext.getSystemService(LocationManager.class);
 
         assertNotNull(mManager);
 
         for (String provider : mManager.getAllProviders()) {
-            if (PASSIVE_PROVIDER.equals(provider)) {
-                continue;
-            }
             mManager.removeTestProvider(provider);
         }
 
@@ -139,22 +126,22 @@ public class LocationManagerTest extends BaseMockLocationTest {
         mManager.setTestProviderEnabled(TEST_PROVIDER, true);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         for (String provider : mManager.getAllProviders()) {
-            if (PASSIVE_PROVIDER.equals(provider)) {
-                continue;
-            }
             mManager.removeTestProvider(provider);
         }
 
-        super.tearDown();
+        LocationUtils.registerMockLocationProvider(InstrumentationRegistry.getInstrumentation(),
+                false);
     }
 
+    @Test
     public void testIsLocationEnabled() {
         assertTrue(mManager.isLocationEnabled());
     }
 
+    @Test
     public void testIsProviderEnabled() {
         assertTrue(mManager.isProviderEnabled(TEST_PROVIDER));
 
@@ -172,15 +159,16 @@ public class LocationManagerTest extends BaseMockLocationTest {
         }
     }
 
+    @Test
     public void testGetLastKnownLocation() {
-        Location loc1 = createLocation(TEST_PROVIDER, 6, 5);
-        Location loc2 = createLocation(TEST_PROVIDER, 10, 7);
+        Location loc1 = createLocation(TEST_PROVIDER, mRandom);
+        Location loc2 = createLocation(TEST_PROVIDER, mRandom);
 
         mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
-        assertLocationEquals(loc1, mManager.getLastKnownLocation(TEST_PROVIDER));
+        assertThat(mManager.getLastKnownLocation(TEST_PROVIDER)).isEqualTo(loc1);
 
         mManager.setTestProviderLocation(TEST_PROVIDER, loc2);
-        assertLocationEquals(loc2, mManager.getLastKnownLocation(TEST_PROVIDER));
+        assertThat(mManager.getLastKnownLocation(TEST_PROVIDER)).isEqualTo(loc2);
 
         mManager.setTestProviderEnabled(TEST_PROVIDER, false);
         assertNull(mManager.getLastKnownLocation(TEST_PROVIDER));
@@ -193,86 +181,87 @@ public class LocationManagerTest extends BaseMockLocationTest {
         }
     }
 
+    @Test
     public void testGetCurrentLocation() throws Exception {
-        Location loc = createLocation(TEST_PROVIDER, 5, 6);
+        Location loc = createLocation(TEST_PROVIDER, mRandom);
 
         try (GetCurrentLocationCapture capture = new GetCurrentLocationCapture()) {
             mManager.getCurrentLocation(TEST_PROVIDER, capture.getCancellationSignal(),
                     Executors.newSingleThreadExecutor(), capture);
             mManager.setTestProviderLocation(TEST_PROVIDER, loc);
-            assertLocationEquals(loc, capture.getNextLocation(TIMEOUT_MS));
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc);
         }
 
         // TODO: test timeout case
 
         try {
             mManager.getCurrentLocation((String) null, null, Executors.newSingleThreadExecutor(),
-                    (location) -> {
-                    });
+                    (location) -> {});
             fail("Should throw IllegalArgumentException if provider is null!");
         } catch (IllegalArgumentException e) {
             // expected
         }
     }
 
+    @Test
     public void testGetCurrentLocation_DirectExecutor() throws Exception {
-        Location loc = createLocation(TEST_PROVIDER, 2, 1);
+        Location loc = createLocation(TEST_PROVIDER, mRandom);
 
         try (GetCurrentLocationCapture capture = new GetCurrentLocationCapture()) {
             mManager.getCurrentLocation(TEST_PROVIDER, capture.getCancellationSignal(),
-                    directExecutor(), capture);
+                    Runnable::run, capture);
             mManager.setTestProviderLocation(TEST_PROVIDER, loc);
-            assertLocationEquals(loc, capture.getNextLocation(TIMEOUT_MS));
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc);
         }
     }
 
+    @Test
     public void testGetCurrentLocation_Cancellation() throws Exception {
-        Location loc = createLocation(TEST_PROVIDER, 1, 2);
+        Location loc = createLocation(TEST_PROVIDER, mRandom);
 
         try (GetCurrentLocationCapture capture = new GetCurrentLocationCapture()) {
             mManager.getCurrentLocation(TEST_PROVIDER, capture.getCancellationSignal(),
-                    directExecutor(),
-                    capture);
+                    Runnable::run, capture);
             capture.getCancellationSignal().cancel();
             mManager.setTestProviderLocation(TEST_PROVIDER, loc);
             assertNull(capture.getNextLocation(FAILURE_TIMEOUT_MS));
         }
     }
 
+    @Test
     public void testGetCurrentLocation_ProviderDisabled() throws Exception {
         try (GetCurrentLocationCapture capture = new GetCurrentLocationCapture()) {
             mManager.setTestProviderEnabled(TEST_PROVIDER, false);
             mManager.getCurrentLocation(TEST_PROVIDER, capture.getCancellationSignal(),
-                    directExecutor(),
-                    capture);
+                    Runnable::run, capture);
             assertNull(capture.getNextLocation(FAILURE_TIMEOUT_MS));
         }
 
         try (GetCurrentLocationCapture capture = new GetCurrentLocationCapture()) {
             mManager.getCurrentLocation(TEST_PROVIDER, capture.getCancellationSignal(),
-                    directExecutor(),
-                    capture);
+                    Runnable::run, capture);
             mManager.setTestProviderEnabled(TEST_PROVIDER, false);
             assertNull(capture.getNextLocation(FAILURE_TIMEOUT_MS));
         }
     }
 
+    @Test
     public void testRequestLocationUpdates() throws Exception {
-        Location loc1 = createLocation(TEST_PROVIDER, 1, 4);
-        Location loc2 = createLocation(TEST_PROVIDER, 2, 5);
+        Location loc1 = createLocation(TEST_PROVIDER, mRandom);
+        Location loc2 = createLocation(TEST_PROVIDER, mRandom);
 
         try (LocationListenerCapture capture = new LocationListenerCapture(mManager)) {
             mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0,
                     Executors.newSingleThreadExecutor(), capture);
 
             mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
-            assertLocationEquals(loc1, capture.getNextLocation(TIMEOUT_MS));
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc1);
             mManager.setTestProviderLocation(TEST_PROVIDER, loc2);
-            assertLocationEquals(loc2, capture.getNextLocation(TIMEOUT_MS));
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc2);
             mManager.setTestProviderEnabled(TEST_PROVIDER, false);
-            assertEquals(Boolean.FALSE, capture.getNextProviderChange(TIMEOUT_MS));
+            assertThat(capture.getNextProviderChange(TIMEOUT_MS)).isEqualTo(Boolean.FALSE);
             mManager.setTestProviderEnabled(TEST_PROVIDER, true);
-            assertEquals(Boolean.TRUE, capture.getNextProviderChange(TIMEOUT_MS));
+            assertThat(capture.getNextProviderChange(TIMEOUT_MS)).isEqualTo(Boolean.TRUE);
 
             mManager.removeUpdates(capture);
 
@@ -313,21 +302,22 @@ public class LocationManagerTest extends BaseMockLocationTest {
         }
     }
 
+    @Test
     public void testRequestLocationUpdates_PendingIntent() throws Exception {
-        Location loc1 = createLocation(TEST_PROVIDER, 1, 4);
-        Location loc2 = createLocation(TEST_PROVIDER, 2, 5);
+        Location loc1 = createLocation(TEST_PROVIDER, mRandom);
+        Location loc2 = createLocation(TEST_PROVIDER, mRandom);
 
         try (LocationPendingIntentCapture capture = new LocationPendingIntentCapture(mContext)) {
             mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0, capture.getPendingIntent());
 
             mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
-            assertLocationEquals(loc1, capture.getNextLocation(TIMEOUT_MS));
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc1);
             mManager.setTestProviderLocation(TEST_PROVIDER, loc2);
-            assertLocationEquals(loc2, capture.getNextLocation(TIMEOUT_MS));
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc2);
             mManager.setTestProviderEnabled(TEST_PROVIDER, false);
-            assertEquals(Boolean.FALSE, capture.getNextProviderChange(TIMEOUT_MS));
+            assertThat(capture.getNextProviderChange(TIMEOUT_MS)).isEqualTo(Boolean.FALSE);
             mManager.setTestProviderEnabled(TEST_PROVIDER, true);
-            assertEquals(Boolean.TRUE, capture.getNextProviderChange(TIMEOUT_MS));
+            assertThat(capture.getNextProviderChange(TIMEOUT_MS)).isEqualTo(Boolean.TRUE);
 
             mManager.removeUpdates(capture.getPendingIntent());
 
@@ -361,44 +351,46 @@ public class LocationManagerTest extends BaseMockLocationTest {
         }
     }
 
+    @Test
     public void testRequestLocationUpdates_DirectExecutor() throws Exception {
-        Location loc1 = createLocation(TEST_PROVIDER, 1, 4);
-        Location loc2 = createLocation(TEST_PROVIDER, 2, 5);
+        Location loc1 = createLocation(TEST_PROVIDER, mRandom);
+        Location loc2 = createLocation(TEST_PROVIDER, mRandom);
 
         try (LocationListenerCapture capture = new LocationListenerCapture(mManager)) {
-            mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0, directExecutor(), capture);
+            mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0, Runnable::run, capture);
 
             mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
-            assertLocationEquals(loc1, capture.getNextLocation(TIMEOUT_MS));
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc1);
             mManager.setTestProviderLocation(TEST_PROVIDER, loc2);
-            assertLocationEquals(loc2, capture.getNextLocation(TIMEOUT_MS));
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc2);
             mManager.setTestProviderEnabled(TEST_PROVIDER, false);
-            assertEquals(Boolean.FALSE, capture.getNextProviderChange(TIMEOUT_MS));
+            assertThat(capture.getNextProviderChange(TIMEOUT_MS)).isEqualTo(Boolean.FALSE);
             mManager.setTestProviderEnabled(TEST_PROVIDER, true);
-            assertEquals(Boolean.TRUE, capture.getNextProviderChange(TIMEOUT_MS));
+            assertThat(capture.getNextProviderChange(TIMEOUT_MS)).isEqualTo(Boolean.TRUE);
         }
     }
 
+    @Test
     public void testRequestLocationUpdates_Looper() throws Exception {
         HandlerThread thread = new HandlerThread("locationTestThread");
         thread.start();
         Looper looper = thread.getLooper();
         try {
 
-            Location loc1 = createLocation(TEST_PROVIDER, 1, 4);
-            Location loc2 = createLocation(TEST_PROVIDER, 2, 5);
+            Location loc1 = createLocation(TEST_PROVIDER, mRandom);
+            Location loc2 = createLocation(TEST_PROVIDER, mRandom);
 
             try (LocationListenerCapture capture = new LocationListenerCapture(mManager)) {
                 mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0, capture, looper);
 
                 mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
-                assertLocationEquals(loc1, capture.getNextLocation(TIMEOUT_MS));
+                assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc1);
                 mManager.setTestProviderLocation(TEST_PROVIDER, loc2);
-                assertLocationEquals(loc2, capture.getNextLocation(TIMEOUT_MS));
+                assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc2);
                 mManager.setTestProviderEnabled(TEST_PROVIDER, false);
-                assertEquals(Boolean.FALSE, capture.getNextProviderChange(TIMEOUT_MS));
+                assertThat(capture.getNextProviderChange(TIMEOUT_MS)).isEqualTo(Boolean.FALSE);
                 mManager.setTestProviderEnabled(TEST_PROVIDER, true);
-                assertEquals(Boolean.TRUE, capture.getNextProviderChange(TIMEOUT_MS));
+                assertThat(capture.getNextProviderChange(TIMEOUT_MS)).isEqualTo(Boolean.TRUE);
             }
 
         } finally {
@@ -406,6 +398,7 @@ public class LocationManagerTest extends BaseMockLocationTest {
         }
     }
 
+    @Test
     public void testRequestLocationUpdates_Criteria() throws Exception {
         // criteria API will always use the fused provider...
         mManager.addTestProvider(FUSED_PROVIDER,
@@ -424,20 +417,20 @@ public class LocationManagerTest extends BaseMockLocationTest {
         criteria.setAccuracy(Criteria.ACCURACY_FINE);
         criteria.setPowerRequirement(Criteria.POWER_LOW);
 
-        Location loc1 = createLocation(FUSED_PROVIDER, 1, 4);
-        Location loc2 = createLocation(FUSED_PROVIDER, 2, 5);
+        Location loc1 = createLocation(FUSED_PROVIDER, mRandom);
+        Location loc2 = createLocation(FUSED_PROVIDER, mRandom);
 
         try (LocationListenerCapture capture = new LocationListenerCapture(mManager)) {
-            mManager.requestLocationUpdates(0, 0, criteria, directExecutor(), capture);
+            mManager.requestLocationUpdates(0, 0, criteria, Runnable::run, capture);
 
             mManager.setTestProviderLocation(FUSED_PROVIDER, loc1);
-            assertLocationEquals(loc1, capture.getNextLocation(TIMEOUT_MS));
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc1);
             mManager.setTestProviderLocation(FUSED_PROVIDER, loc2);
-            assertLocationEquals(loc2, capture.getNextLocation(TIMEOUT_MS));
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc2);
             mManager.setTestProviderEnabled(FUSED_PROVIDER, false);
-            assertEquals(Boolean.FALSE, capture.getNextProviderChange(TIMEOUT_MS));
+            assertThat(capture.getNextProviderChange(TIMEOUT_MS)).isEqualTo(Boolean.FALSE);
             mManager.setTestProviderEnabled(FUSED_PROVIDER, true);
-            assertEquals(Boolean.TRUE, capture.getNextProviderChange(TIMEOUT_MS));
+            assertThat(capture.getNextProviderChange(TIMEOUT_MS)).isEqualTo(Boolean.TRUE);
 
             mManager.removeUpdates(capture);
 
@@ -465,80 +458,85 @@ public class LocationManagerTest extends BaseMockLocationTest {
         }
 
         try (LocationListenerCapture capture = new LocationListenerCapture(mManager)) {
-            mManager.requestLocationUpdates(0, 0, null, directExecutor(), capture);
+            mManager.requestLocationUpdates(0, 0, null, Runnable::run, capture);
             fail("Should throw IllegalArgumentException if criteria is null!");
         } catch (IllegalArgumentException e) {
             // expected
         }
     }
 
+    @Test
     public void testRequestLocationUpdates_ReplaceRequest() throws Exception {
-        Location loc1 = createLocation(TEST_PROVIDER, 1, 4);
-        Location loc2 = createLocation(TEST_PROVIDER, 2, 5);
+        Location loc1 = createLocation(TEST_PROVIDER, mRandom);
+        Location loc2 = createLocation(TEST_PROVIDER, mRandom);
 
         try (LocationListenerCapture capture = new LocationListenerCapture(mManager)) {
-            mManager.requestLocationUpdates(TEST_PROVIDER, 1000, 1000, directExecutor(), capture);
-            mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0, directExecutor(), capture);
+            mManager.requestLocationUpdates(TEST_PROVIDER, 1000, 1000, Runnable::run, capture);
+            mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0, Runnable::run, capture);
 
             mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
-            assertLocationEquals(loc1, capture.getNextLocation(TIMEOUT_MS));
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc1);
             mManager.setTestProviderLocation(TEST_PROVIDER, loc2);
-            assertLocationEquals(loc2, capture.getNextLocation(TIMEOUT_MS));
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc2);
         }
     }
 
+    @Test
     public void testRequestLocationUpdates_NumUpdates() throws Exception {
-        Location loc1 = createLocation(TEST_PROVIDER, 10, 3);
-        Location loc2 = createLocation(TEST_PROVIDER, 2, 8);
+        Location loc1 = createLocation(TEST_PROVIDER, mRandom);
+        Location loc2 = createLocation(TEST_PROVIDER, mRandom);
 
         LocationRequest request = LocationRequest.createFromDeprecatedProvider(TEST_PROVIDER, 0, 0,
                 false);
         request.setNumUpdates(1);
 
         try (LocationListenerCapture capture = new LocationListenerCapture(mManager)) {
-            mManager.requestLocationUpdates(request, directExecutor(), capture);
+            mManager.requestLocationUpdates(request, Runnable::run, capture);
 
             mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
-            assertLocationEquals(loc1, capture.getNextLocation(TIMEOUT_MS));
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc1);
             mManager.setTestProviderLocation(TEST_PROVIDER, loc2);
             assertNull(capture.getNextLocation(FAILURE_TIMEOUT_MS));
         }
     }
 
+    @Test
     public void testRequestLocationUpdates_MinTime() throws Exception {
-        Location loc1 = createLocation(TEST_PROVIDER, 0, 0);
-        Location loc2 = createLocation(TEST_PROVIDER, 1, 1);
+        Location loc1 = createLocation(TEST_PROVIDER, mRandom);
+        Location loc2 = createLocation(TEST_PROVIDER, mRandom);
 
         LocationRequest request = LocationRequest.createFromDeprecatedProvider(TEST_PROVIDER, 5000,
                 0, false);
 
         try (LocationListenerCapture capture = new LocationListenerCapture(mManager)) {
-            mManager.requestLocationUpdates(request, directExecutor(), capture);
+            mManager.requestLocationUpdates(request, Runnable::run, capture);
 
             mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
-            assertLocationEquals(loc1, capture.getNextLocation(TIMEOUT_MS));
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc1);
             mManager.setTestProviderLocation(TEST_PROVIDER, loc2);
             assertNull(capture.getNextLocation(FAILURE_TIMEOUT_MS));
         }
     }
 
+    @Test
     public void testRequestLocationUpdates_MinDistance() throws Exception {
-        Location loc1 = createLocation(TEST_PROVIDER, 0, 0);
-        Location loc2 = createLocation(TEST_PROVIDER, 0, 1);
+        Location loc1 = createLocation(TEST_PROVIDER, 0, 0, 10);
+        Location loc2 = createLocation(TEST_PROVIDER, 0, 1, 10);
 
         LocationRequest request = LocationRequest.createFromDeprecatedProvider(TEST_PROVIDER, 0,
                 200000, false);
 
         try (LocationListenerCapture capture = new LocationListenerCapture(mManager)) {
-            mManager.requestLocationUpdates(request, directExecutor(), capture);
+            mManager.requestLocationUpdates(request, Runnable::run, capture);
 
             mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
-            assertLocationEquals(loc1, capture.getNextLocation(TIMEOUT_MS));
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc1);
             mManager.setTestProviderLocation(TEST_PROVIDER, loc2);
             assertNull(capture.getNextLocation(FAILURE_TIMEOUT_MS));
         }
     }
 
+    @Test
     public void testGetAllProviders() {
         List<String> providers = mManager.getAllProviders();
         if (hasGpsFeature()) {
@@ -554,6 +552,7 @@ public class LocationManagerTest extends BaseMockLocationTest {
         assertFalse(providers.contains(TEST_PROVIDER));
     }
 
+    @Test
     public void testGetProviders() {
         List<String> providers = mManager.getProviders(false);
         assertTrue(providers.contains(TEST_PROVIDER));
@@ -570,6 +569,7 @@ public class LocationManagerTest extends BaseMockLocationTest {
         assertFalse(providers.contains(TEST_PROVIDER));
     }
 
+    @Test
     public void testGetProviders_Criteria() {
         Criteria criteria = new Criteria();
 
@@ -588,17 +588,18 @@ public class LocationManagerTest extends BaseMockLocationTest {
         assertFalse(providers.contains(TEST_PROVIDER));
     }
 
+    @Test
     public void testGetBestProvider() {
         List<String> allProviders = mManager.getAllProviders();
         Criteria criteria = new Criteria();
 
         String bestProvider = mManager.getBestProvider(criteria, false);
         if (allProviders.contains(GPS_PROVIDER)) {
-            assertEquals(GPS_PROVIDER, bestProvider);
+            assertThat(bestProvider).isEqualTo(GPS_PROVIDER);
         } else if (allProviders.contains(NETWORK_PROVIDER)) {
-            assertEquals(NETWORK_PROVIDER, bestProvider);
+            assertThat(bestProvider).isEqualTo(NETWORK_PROVIDER);
         } else {
-            assertEquals(TEST_PROVIDER, bestProvider);
+            assertThat(bestProvider).isEqualTo(TEST_PROVIDER);
         }
 
         // the "perfect" provider - this test case only works if there is no real provider on the
@@ -616,21 +617,22 @@ public class LocationManagerTest extends BaseMockLocationTest {
 
         criteria.setAccuracy(Criteria.ACCURACY_FINE);
         criteria.setPowerRequirement(Criteria.POWER_LOW);
-        assertEquals(TEST_PROVIDER, mManager.getBestProvider(criteria, false));
+        assertThat(mManager.getBestProvider(criteria, false)).isEqualTo(TEST_PROVIDER);
 
         mManager.setTestProviderEnabled(TEST_PROVIDER, false);
         assertNotEquals(TEST_PROVIDER, mManager.getBestProvider(criteria, true));
     }
 
+    @Test
     public void testGetProvider() {
         LocationProvider provider = mManager.getProvider(TEST_PROVIDER);
         assertNotNull(provider);
-        assertEquals(TEST_PROVIDER, provider.getName());
+        assertThat(provider.getName()).isEqualTo(TEST_PROVIDER);
 
         provider = mManager.getProvider(LocationManager.GPS_PROVIDER);
         if (hasGpsFeature()) {
             assertNotNull(provider);
-            assertEquals(LocationManager.GPS_PROVIDER, provider.getName());
+            assertThat(provider.getName()).isEqualTo(LocationManager.GPS_PROVIDER);
         } else {
             assertNull(provider);
         }
@@ -643,6 +645,8 @@ public class LocationManagerTest extends BaseMockLocationTest {
         }
     }
 
+    @Test
+    @AppModeFull(reason = "Instant apps can't hold ACCESS_LOCATION_EXTRA_COMMANDS")
     public void testSendExtraCommand() {
         for (String provider : mManager.getAllProviders()) {
             boolean res = mManager.sendExtraCommand(provider, "dontCrash", null);
@@ -664,6 +668,7 @@ public class LocationManagerTest extends BaseMockLocationTest {
         }
     }
 
+    @Test
     public void testAddTestProvider() {
         // overwriting providers should not crash
         for (String provider : mManager.getAllProviders()) {
@@ -680,7 +685,7 @@ public class LocationManagerTest extends BaseMockLocationTest {
                     false,
                     Criteria.POWER_MEDIUM,
                     Criteria.ACCURACY_FINE);
-            mManager.setTestProviderLocation(provider, createLocation(provider, 0, 0));
+            mManager.setTestProviderLocation(provider, createLocation(provider, mRandom));
         }
 
         try {
@@ -716,21 +721,22 @@ public class LocationManagerTest extends BaseMockLocationTest {
         }
     }
 
+    @Test
     public void testSetTestProviderLocation() throws Exception {
-        Location loc1 = createLocation(TEST_PROVIDER, 1, 2);
-        Location loc2 = createLocation(TEST_PROVIDER, 2, 1);
+        Location loc1 = createLocation(TEST_PROVIDER, mRandom);
+        Location loc2 = createLocation(TEST_PROVIDER, mRandom);
 
         for (String provider : mManager.getAllProviders()) {
             if (TEST_PROVIDER.equals(provider)) {
                 try (GetCurrentLocationCapture capture = new GetCurrentLocationCapture()) {
                     mManager.getCurrentLocation(provider, capture.getCancellationSignal(),
-                            directExecutor(), capture);
+                            Runnable::run, capture);
                     mManager.setTestProviderLocation(provider, loc1);
 
                     Location received = capture.getNextLocation(TIMEOUT_MS);
-                    assertLocationEquals(loc1, received);
+                    assertThat(received).isEqualTo(loc1);
                     assertTrue(received.isFromMockProvider());
-                    assertLocationEquals(loc1, mManager.getLastKnownLocation(provider));
+                    assertThat(mManager.getLastKnownLocation(provider)).isEqualTo(loc1);
 
                     mManager.setTestProviderEnabled(provider, false);
                     mManager.setTestProviderLocation(provider, loc2);
@@ -771,6 +777,7 @@ public class LocationManagerTest extends BaseMockLocationTest {
         }
     }
 
+    @Test
     public void testSetTestProviderLocation_B33091107() throws Exception {
         // test for b/33091107, where a malicious app could fool a real provider into providing a
         // mock location that isn't marked as being mock
@@ -788,21 +795,21 @@ public class LocationManagerTest extends BaseMockLocationTest {
         providers.remove(PASSIVE_PROVIDER);
 
         String realProvider = providers.get(0);
-        Location loc = createLocation(realProvider, 2, 2);
+        Location loc = createLocation(realProvider, mRandom);
 
         try (GetCurrentLocationCapture capture = new GetCurrentLocationCapture()) {
             mManager.getCurrentLocation(TEST_PROVIDER, capture.getCancellationSignal(),
-                    directExecutor(), capture);
+                    Runnable::run, capture);
             mManager.setTestProviderLocation(TEST_PROVIDER, loc);
 
             Location received = capture.getNextLocation(TIMEOUT_MS);
-            assertLocationEquals(loc, received);
+            assertThat(received).isEqualTo(loc);
             assertTrue(received.isFromMockProvider());
 
             Location realProvideLocation = mManager.getLastKnownLocation(realProvider);
             if (realProvideLocation != null) {
                 try {
-                    assertLocationEquals(loc, realProvideLocation);
+                    assertThat(realProvideLocation).isEqualTo(loc);
                     fail("real provider saw " + TEST_PROVIDER + " location!");
                 } catch (AssertionError e) {
                     // pass
@@ -811,6 +818,7 @@ public class LocationManagerTest extends BaseMockLocationTest {
         }
     }
 
+    @Test
     public void testRemoveTestProvider() {
         // removing providers should not crash
         for (String provider : mManager.getAllProviders()) {
@@ -818,6 +826,7 @@ public class LocationManagerTest extends BaseMockLocationTest {
         }
     }
 
+    @Test
     public void testAddProximityAlert() throws Exception {
         if (isNotSystemUser()) {
             Log.i(TAG, "Skipping test on secondary user");
@@ -835,7 +844,7 @@ public class LocationManagerTest extends BaseMockLocationTest {
                 Criteria.POWER_MEDIUM,
                 Criteria.ACCURACY_FINE);
         mManager.setTestProviderEnabled(FUSED_PROVIDER, true);
-        mManager.setTestProviderLocation(FUSED_PROVIDER, createLocation(FUSED_PROVIDER, 30, 30));
+        mManager.setTestProviderLocation(FUSED_PROVIDER, createLocation(FUSED_PROVIDER, 30, 30, 10));
 
         try (ProximityPendingIntentCapture capture = new ProximityPendingIntentCapture(mContext)) {
             mManager.addProximityAlert(0, 0, 1000, -1, capture.getPendingIntent());
@@ -844,12 +853,12 @@ public class LocationManagerTest extends BaseMockLocationTest {
             // hope the alert is added in the mean time.
             Thread.sleep(500);
 
-            mManager.setTestProviderLocation(FUSED_PROVIDER, createLocation(FUSED_PROVIDER, 0, 0));
-            assertEquals(Boolean.TRUE, capture.getNextProximityChange(TIMEOUT_MS));
+            mManager.setTestProviderLocation(FUSED_PROVIDER, createLocation(FUSED_PROVIDER, 0, 0, 10));
+            assertThat(capture.getNextProximityChange(TIMEOUT_MS)).isEqualTo(Boolean.TRUE);
 
             mManager.setTestProviderLocation(FUSED_PROVIDER,
-                    createLocation(FUSED_PROVIDER, 30, 30));
-            assertEquals(Boolean.FALSE, capture.getNextProximityChange(TIMEOUT_MS));
+                    createLocation(FUSED_PROVIDER, 30, 30, 10));
+            assertThat(capture.getNextProximityChange(TIMEOUT_MS)).isEqualTo(Boolean.FALSE);
         }
 
         try {
@@ -883,6 +892,7 @@ public class LocationManagerTest extends BaseMockLocationTest {
         }
     }
 
+    @Test
     public void testAddProximityAlert_StartProximate() throws Exception {
         if (isNotSystemUser()) {
             Log.i(TAG, "Skipping test on secondary user");
@@ -900,14 +910,15 @@ public class LocationManagerTest extends BaseMockLocationTest {
                 Criteria.POWER_MEDIUM,
                 Criteria.ACCURACY_FINE);
         mManager.setTestProviderEnabled(FUSED_PROVIDER, true);
-        mManager.setTestProviderLocation(FUSED_PROVIDER, createLocation(FUSED_PROVIDER, 0, 0));
+        mManager.setTestProviderLocation(FUSED_PROVIDER, createLocation(FUSED_PROVIDER, 0, 0, 10));
 
         try (ProximityPendingIntentCapture capture = new ProximityPendingIntentCapture(mContext)) {
             mManager.addProximityAlert(0, 0, 1000, -1, capture.getPendingIntent());
-            assertEquals(Boolean.TRUE, capture.getNextProximityChange(TIMEOUT_MS));
+            assertThat(capture.getNextProximityChange(TIMEOUT_MS)).isEqualTo(Boolean.TRUE);
         }
     }
 
+    @Test
     public void testAddProximityAlert_Expires() throws Exception {
         if (isNotSystemUser()) {
             Log.i(TAG, "Skipping test on secondary user");
@@ -925,7 +936,7 @@ public class LocationManagerTest extends BaseMockLocationTest {
                 Criteria.POWER_MEDIUM,
                 Criteria.ACCURACY_FINE);
         mManager.setTestProviderEnabled(FUSED_PROVIDER, true);
-        mManager.setTestProviderLocation(FUSED_PROVIDER, createLocation(FUSED_PROVIDER, 30, 30));
+        mManager.setTestProviderLocation(FUSED_PROVIDER, createLocation(FUSED_PROVIDER, 30, 30, 10));
 
         try (ProximityPendingIntentCapture capture = new ProximityPendingIntentCapture(mContext)) {
             mManager.addProximityAlert(0, 0, 1000, 1, capture.getPendingIntent());
@@ -934,48 +945,56 @@ public class LocationManagerTest extends BaseMockLocationTest {
             // hope the alert is added in the mean time.
             Thread.sleep(500);
 
-            mManager.setTestProviderLocation(FUSED_PROVIDER, createLocation(FUSED_PROVIDER, 0, 0));
+            mManager.setTestProviderLocation(FUSED_PROVIDER, createLocation(FUSED_PROVIDER, 0, 0, 10));
             assertNull(capture.getNextProximityChange(FAILURE_TIMEOUT_MS));
         }
     }
 
+    @Test
     public void testGetGnssYearOfHardware() {
         mManager.getGnssYearOfHardware();
     }
 
+    @Test
     public void testGetGnssHardwareModelName() {
-        mManager.getGnssHardwareModelName();
+        // model name should be longer than 4 characters
+        String gnssHardwareModelName = mManager.getGnssHardwareModelName();
+        assertThat(gnssHardwareModelName.length()).isGreaterThan(3);
     }
 
+    @Test
     public void testRegisterGnssStatusCallback() {
         GnssStatus.Callback callback = new GnssStatus.Callback() {
         };
 
-        mManager.registerGnssStatusCallback(directExecutor(), callback);
+        mManager.registerGnssStatusCallback(Runnable::run, callback);
         mManager.unregisterGnssStatusCallback(callback);
     }
 
+    @Test
     public void testAddNmeaListener() {
         OnNmeaMessageListener listener = (message, timestamp) -> {
         };
 
-        mManager.addNmeaListener(directExecutor(), listener);
+        mManager.addNmeaListener(Runnable::run, listener);
         mManager.removeNmeaListener(listener);
     }
 
+    @Test
     public void testRegisterGnssMeasurementsCallback() {
         GnssMeasurementsEvent.Callback callback = new GnssMeasurementsEvent.Callback() {
         };
 
-        mManager.registerGnssMeasurementsCallback(directExecutor(), callback);
+        mManager.registerGnssMeasurementsCallback(Runnable::run, callback);
         mManager.unregisterGnssMeasurementsCallback(callback);
     }
 
+    @Test
     public void testRegisterGnssNavigationMessageCallback() {
         GnssNavigationMessage.Callback callback = new GnssNavigationMessage.Callback() {
         };
 
-        mManager.registerGnssNavigationMessageCallback(directExecutor(), callback);
+        mManager.registerGnssNavigationMessageCallback(Runnable::run, callback);
         mManager.unregisterGnssNavigationMessageCallback(callback);
     }
 

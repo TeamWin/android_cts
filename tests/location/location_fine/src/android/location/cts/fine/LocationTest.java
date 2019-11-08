@@ -16,24 +16,16 @@
 
 package android.location.cts.fine;
 
-import android.content.Context;
-import android.content.Intent;
 import android.location.Location;
-import android.location.SettingInjectorService;
-import android.os.Handler;
-import android.os.IBinder;
-import android.os.Looper;
-import android.os.Message;
-import android.os.Messenger;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.test.AndroidTestCase;
-import android.util.Printer;
 import android.util.StringBuilderPrinter;
 
 import java.text.DecimalFormat;
 
 public class LocationTest extends AndroidTestCase {
+
     private static final float DELTA = 0.1f;
     private final float TEST_ACCURACY = 1.0f;
     private final float TEST_VERTICAL_ACCURACY = 2.0f;
@@ -269,10 +261,6 @@ public class LocationTest extends AndroidTestCase {
         location.setAccuracy(1.0f);
         assertEquals(1.0, location.getAccuracy(), DELTA);
         assertTrue(location.hasAccuracy());
-
-        location.removeAccuracy();
-        assertEquals(0.0, location.getAccuracy(), DELTA);
-        assertFalse(location.hasAccuracy());
     }
 
     public void testAccessVerticalAccuracy() {
@@ -310,10 +298,6 @@ public class LocationTest extends AndroidTestCase {
         location.setAltitude(1.0);
         assertEquals(1.0, location.getAltitude(), DELTA);
         assertTrue(location.hasAltitude());
-
-        location.removeAltitude();
-        assertEquals(0.0, location.getAltitude(), DELTA);
-        assertFalse(location.hasAltitude());
     }
 
     public void testAccessBearing() {
@@ -331,10 +315,6 @@ public class LocationTest extends AndroidTestCase {
         location.setBearing(-361.0f);
         assertEquals(359.0, location.getBearing(), DELTA);
         assertTrue(location.hasBearing());
-
-        location.removeBearing();
-        assertEquals(0.0, location.getBearing(), DELTA);
-        assertFalse(location.hasBearing());
     }
 
     public void testAccessExtras() {
@@ -390,10 +370,6 @@ public class LocationTest extends AndroidTestCase {
         location.setSpeed(234.0045f);
         assertEquals(234.0045, location.getSpeed(), DELTA);
         assertTrue(location.hasSpeed());
-
-        location.removeSpeed();
-        assertEquals(0.0, location.getSpeed(), DELTA);
-        assertFalse(location.hasSpeed());
     }
 
     public void testAccessTime() {
@@ -487,58 +463,6 @@ public class LocationTest extends AndroidTestCase {
         parcel.recycle();
     }
 
-    public void testSettingInjectorService() {
-        Context c = getContext();
-        SettingInjectorServiceDerived service = new SettingInjectorServiceDerived();
-
-        assertNotNull(c);
-
-        Intent intent =
-            new Intent(c, android.location.SettingInjectorService.class);
-
-        assertNotNull(c.getMainLooper());
-        SettingInjectorResultHandler resultHandler =
-            new SettingInjectorResultHandler(c.getMainLooper());
-
-        Messenger m = new Messenger(resultHandler);
-        intent.putExtra(MESSENGER_KEY, m);
-
-        int ret;
-        final long timeout = 500;
-
-        // should refuse binding
-        IBinder binder = service.callOnBind(intent);
-        assertNull("onBind should always fail.", binder);
-
-        // test if result consistent with the truth
-        // enabled == false case
-        service.setEnabled(false);
-        resultHandler.expectEnabled(false);
-        resultHandler.expectMessage(true);
-        ret = service.callOnStartCommand(intent, SettingInjectorService.START_NOT_STICKY, 0);
-        assertEquals("onStartCommand return value invalid in (enabled == false) case.",
-            ret, SettingInjectorService.START_NOT_STICKY);
-        assertTrue("Message time out in (enabled == false case).",
-            resultHandler.waitForMessage(timeout));
-
-        // enabled == true case
-        service.setEnabled(true);
-        assertTrue(service.onGetEnabled());
-        assertEquals("Summary", service.onGetSummary());
-        resultHandler.expectEnabled(true);
-        resultHandler.expectMessage(true);
-        ret = service.callOnStartCommand(intent, SettingInjectorService.START_NOT_STICKY, 0);
-        assertEquals("onStartCommand return value invalid in (enabled == true) case.",
-            ret, SettingInjectorService.START_NOT_STICKY);
-        assertTrue("Message time out in (enabled == true) case.",
-            resultHandler.waitForMessage(timeout));
-
-        // should not respond to the deprecated method
-        resultHandler.expectMessage(false);
-        service.callOnStart(intent, 0);
-        resultHandler.waitForMessage(timeout);
-    }
-
     private void assertTestLocation(Location l) {
         assertNotNull(l);
         assertEquals(TEST_PROVIDER, l.getProvider());
@@ -580,93 +504,4 @@ public class LocationTest extends AndroidTestCase {
         assertFalse(bundle.getBoolean(TEST_KEY1NAME));
         assertEquals(TEST_KEY2VALUE, bundle.getByte(TEST_KEY2NAME));
     }
-
-    private class SettingInjectorResultHandler extends Handler {
-        private boolean mEnabledShouldBe;
-        private boolean mExpectingMessage;
-        private boolean mMessageArrived;
-
-        SettingInjectorResultHandler(Looper l) {
-            super(l);
-        }
-
-        @Override
-        public void handleMessage(Message m) {
-
-            assertTrue("Unexpected message.", mExpectingMessage);
-
-            boolean enabled = m.getData().getBoolean(ENABLED_KEY);
-
-            assertEquals(String.format(
-                    "Message value (%s) inconsistent with service state (%s).",
-                    String.valueOf(enabled), String.valueOf(mEnabledShouldBe) ),
-                    mEnabledShouldBe, enabled);
-
-            synchronized (this) {
-                mMessageArrived = true;
-                notify();
-            }
-        }
-
-        public void expectEnabled(boolean enabled) {
-            mEnabledShouldBe = enabled;
-        }
-
-        public void expectMessage(boolean expecting) {
-            mMessageArrived = false;
-            mExpectingMessage = expecting;
-        }
-
-        public synchronized boolean waitForMessage(long millis) {
-            synchronized (this) {
-                try {
-                    wait(millis);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                return mMessageArrived;
-            }
-        }
-    }
-
-
-    private class SettingInjectorServiceDerived extends SettingInjectorService {
-
-        private boolean mEnabled;
-
-        SettingInjectorServiceDerived() {
-            super("SettingInjectorServiceDerived");
-            setEnabled(false);
-        }
-
-        @Override
-        // Deprecated API
-        protected String onGetSummary() {
-            return "Summary";
-        }
-
-        @Override
-        protected boolean onGetEnabled() {
-            return mEnabled;
-        }
-
-        public void setEnabled(boolean enabled) {
-            mEnabled = enabled;
-        }
-
-        // API coverage dashboard will not count method call from derived class.
-        // Thus, it is necessary to make explicit call to SettingInjectorService public methods.
-        public IBinder callOnBind(Intent intent) {
-            return super.onBind(intent);
-        }
-
-        public void callOnStart(Intent intent, int startId) {
-            super.onStart(intent, startId);
-        }
-
-        public int callOnStartCommand(Intent intent, int flags, int startId) {
-            return super.onStartCommand(intent, flags, startId);
-        }
-    }
-
 }
