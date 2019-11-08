@@ -74,7 +74,7 @@ public class HostTestHelper {
      * so staged-installs won't fail.
      */
     @Test
-    public void cleanUp() {
+    public void cleanUp() throws Exception {
         PackageInstaller packageInstaller = InstrumentationRegistry.getInstrumentation()
                 .getContext().getPackageManager().getPackageInstaller();
         packageInstaller.getStagedSessions().forEach(sessionInfo -> {
@@ -90,6 +90,8 @@ public class HostTestHelper {
                 Log.e(TAG, "Failed to abandon session " + sessionInfo.getSessionId(), e);
             }
         });
+
+        Utils.uninstall(TestApp.A);
     }
 
     /**
