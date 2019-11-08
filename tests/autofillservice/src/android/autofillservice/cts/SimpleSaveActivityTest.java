@@ -17,6 +17,7 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.AntiTrimmerTextWatcher.TRIMMER_PATTERN;
 import static android.autofillservice.cts.Helper.ID_STATIC_TEXT;
+import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.Helper.LARGE_STRING;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.assertTextValue;
@@ -477,7 +478,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
     }
 
     @Test
-    public void testSaveThenStartNewSessionRightAway() throws Exception {
+    public void testSaveThenStartNewSessionRightAwayShouldKeepSaveUi() throws Exception {
         startActivity();
 
         // Set service.
@@ -501,14 +502,89 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         // Make sure Save UI for 1st session was shown....
         mUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
 
-        // ...then start the new session right away (without finishing the activity).
-        sReplier.addResponse(CannedFillResponse.NO_RESPONSE);
-        mActivity.syncRunOnUiThread(
-                () -> mActivity.getAutofillManager().requestAutofill(mActivity.mInput));
+        // Start new Activity to have a new autofill session
+        startActivityOnNewTask(LoginActivity.class);
+
+        // Make sure LoginActivity started...
+        mUiBot.assertShownByRelativeId(ID_USERNAME_CONTAINER);
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_USERNAME)
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "id")
+                        .setField(ID_PASSWORD, "pwd")
+                        .setPresentation(createPresentation("YO"))
+                        .build())
+                .build());
+        // Trigger fill request on the LoginActivity
+        final LoginActivity act = LoginActivity.getCurrentActivity();
+        act.syncRunOnUiThread(() -> act.forceAutofillOnUsername());
         sReplier.getNextFillRequest();
+
+        // Make sure Fill UI is not shown. And Save UI for 1st session was still shown.
+        mUiBot.assertNoDatasetsEver();
+        sReplier.assertNoUnhandledFillRequests();
+        mUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
+
+        mUiBot.waitForIdle();
+        // Trigger dismiss Save UI
+        mUiBot.pressBack();
+
+        // Make sure Save UI was not shown....
+        mUiBot.assertSaveNotShowing();
+        // Make sure Fill UI is shown.
+        mUiBot.assertDatasets("YO");
+    }
+
+    @Test
+    public void testCloseSaveUiThenStartNewSessionRightAway() throws Exception {
+        startActivity();
+
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
+                .build());
+
+        // Trigger autofill.
+        mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
+        sReplier.getNextFillRequest();
+
+        // Trigger save.
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mInput.setText("108");
+            mActivity.mCommit.performClick();
+        });
+
+        // Make sure Save UI for 1st session was shown....
+        mUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
+
+        // Trigger dismiss Save UI
+        mUiBot.pressBack();
 
         // Make sure Save UI for 1st session was canceled.
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
+
+        // ...then start the new session right away (without finishing the activity).
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_INPUT, "id")
+                        .setPresentation(createPresentation("YO"))
+                        .build())
+                .build());
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mInput.setText("");
+            mActivity.getAutofillManager().requestAutofill(mActivity.mInput);
+        });
+        sReplier.getNextFillRequest();
+
+        // Make sure Fill UI is shown.
+        mUiBot.assertDatasets("YO");
     }
 
     @Test
