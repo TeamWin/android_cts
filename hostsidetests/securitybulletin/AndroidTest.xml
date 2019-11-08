@@ -126,6 +126,7 @@
         <!--__________________-->
         <!-- Bulletin 2017-06 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2016-5131->/data/local/tmp/CVE-2016-5131" />
 
         <!--__________________-->
         <!-- Bulletin 2017-07 -->
