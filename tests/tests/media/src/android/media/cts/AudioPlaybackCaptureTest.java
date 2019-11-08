@@ -422,7 +422,7 @@ public class AudioPlaybackCaptureTest {
         // As a result, read() should fail after at most the total buffer size read.
         // Even if the projection is stopped, the policy unregisteration is async,
         // so double that to be on the conservative side.
-        final int MAX_READ_SIZE = 2 * nativeBufferSize;
+        final int MAX_READ_SIZE = 8 * nativeBufferSize;
         int readSize = 0;
         ByteBuffer buffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
         int status;
