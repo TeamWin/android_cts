@@ -21,7 +21,9 @@ import static com.android.cts.rollback.lib.RollbackInfoSubject.assertThat;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.Manifest;
+import android.content.pm.PackageInstaller;
 import android.content.rollback.RollbackInfo;
+import android.util.Log;
 
 import com.android.cts.install.lib.Install;
 import com.android.cts.install.lib.InstallUtils;
@@ -42,6 +44,8 @@ import java.io.IOException;
  */
 @RunWith(JUnit4.class)
 public class HostTestHelper {
+    private static final String TAG = "RollbackTest";
+
 
     /**
      * Adopts common permissions needed to test rollbacks.
@@ -62,6 +66,27 @@ public class HostTestHelper {
         InstallUtils.dropShellPermissionIdentity();
     }
 
+    /**
+     * Called by host side @Before/@After methods to clean up leftover sessions from last test
+     * so staged-installs won't fail.
+     */
+    @Test
+    public void cleanUp() {
+        PackageInstaller packageInstaller = InstallUtils.getPackageInstaller();
+        packageInstaller.getStagedSessions().forEach(sessionInfo -> {
+            if (sessionInfo.getParentSessionId() != PackageInstaller.SessionInfo.INVALID_ID
+                    || sessionInfo.isStagedSessionApplied()
+                    || sessionInfo.isStagedSessionFailed()) {
+                return;
+            }
+            try {
+                Log.i(TAG, "abandoning session " + sessionInfo.getSessionId());
+                packageInstaller.abandonSession(sessionInfo.getSessionId());
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to abandon session " + sessionInfo.getSessionId(), e);
+            }
+        });
+    }
 
     /**
      * Test rollbacks of staged installs involving only apks.
