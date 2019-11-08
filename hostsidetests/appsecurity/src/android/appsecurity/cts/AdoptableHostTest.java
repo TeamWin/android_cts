@@ -364,12 +364,23 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
             for (String line : lines) {
                 final LocalVolumeInfo info = new LocalVolumeInfo(line.trim());
                 if (!"private".equals(info.volId) && "mounted".equals(info.state)) {
-                    return info;
+                    return waitForVolumeReady(info);
                 }
             }
             Thread.sleep(1000);
         }
         throw new AssertionError("Expected private volume; found " + Arrays.toString(lines));
+    }
+
+    private LocalVolumeInfo waitForVolumeReady(LocalVolumeInfo vol) throws Exception {
+        int attempt = 0;
+        while (attempt++ < 15) {
+            if (getDevice().executeShellCommand("dumpsys package").contains(vol.volId)) {
+                return vol;
+            }
+            Thread.sleep(1000);
+        }
+        throw new AssertionError("Volume not ready " + vol.volId);
     }
 
     private void cleanUp(String diskId) throws Exception {
