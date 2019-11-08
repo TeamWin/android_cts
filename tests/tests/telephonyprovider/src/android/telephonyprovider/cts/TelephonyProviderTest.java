@@ -51,17 +51,4 @@ public class TelephonyProviderTest extends InstrumentationTestCase {
             fail("No access to current APN");
         }
     }
-
-    public void testNoAccessToPassword() {
-        try {
-            String selection = Carriers.CURRENT + " IS NOT NULL AND "
-                    + Carriers.PASSWORD + " IS NOT NULL";
-            String[] selectionArgs = null;
-            Cursor cursor = mContentResolver.query(Carriers.CONTENT_URI,
-                    APN_PROJECTION, selection, selectionArgs, null);
-            fail("Expected SecurityExceptio");
-        } catch (SecurityException e) {
-            // expected
-        }
-    }
 }
