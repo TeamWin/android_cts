@@ -347,8 +347,12 @@ public class HalfTest {
         assertShortEquals(NEGATIVE_ZERO, Half.round(toHalf(-0.2f)));
         assertEquals(1.0f, toFloat(Half.round(toHalf(0.7f))), 1e-6f);
         assertEquals(-1.0f, toFloat(Half.round(toHalf(-0.7f))), 1e-6f);
-        assertEquals(1.0f, toFloat(Half.round(toHalf(0.5f))), 1e-6f);
-        assertEquals(-1.0f, toFloat(Half.round(toHalf(-0.5f))), 1e-6f);
+        assertEquals(0.0f, toFloat(Half.round(toHalf(0.5f))), 1e-6f);
+        assertEquals(-0.0f, toFloat(Half.round(toHalf(-0.5f))), 1e-6f);
+        assertEquals(2.0f, toFloat(Half.round(toHalf(1.5f))), 1e-6f);
+        assertEquals(-2.0f, toFloat(Half.round(toHalf(-1.5f))), 1e-6f);
+        assertEquals(1022.0f, toFloat(Half.round(toHalf(1022.5f))), 1e-6f);
+        assertEquals(-1022.0f, toFloat(Half.round(toHalf(-1022.5f))), 1e-6f);
         assertEquals(125.0f, toFloat(Half.round(toHalf(124.7f))), 1e-6f);
         assertEquals(-125.0f, toFloat(Half.round(toHalf(-124.7f))), 1e-6f);
         assertEquals(124.0f, toFloat(Half.round(toHalf(124.2f))), 1e-6f);
