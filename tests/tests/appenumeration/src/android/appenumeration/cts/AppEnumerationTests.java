@@ -63,7 +63,12 @@ public class AppEnumerationTests {
     private static final String TARGET_FORCEQUERYABLE = PKG_BASE + "forcequeryable";
     /** A package that exposes itself via various intent filters (activities, services, etc.) */
     private static final String TARGET_FILTERS = PKG_BASE + "filters";
+    /** A package that exposes nothing, but is part of a shared user */
+    private static final String TARGET_SHARED_USER = PKG_BASE + "noapi.shareduid";
 
+    /** A package that queries nothing, but is part of a shared user */
+    private static final String QUERIES_NOTHING_SHARED_USER =
+            PKG_BASE + "queries.nothing.shareduid";
     /** A package that has no queries tag or permission to query any specific packages */
     private static final String QUERIES_NOTHING = PKG_BASE + "queries.nothing";
     /** A package that has no queries tag or permissions but targets Q */
@@ -99,6 +104,7 @@ public class AppEnumerationTests {
             QUERIES_UNEXPORTED_SERVICE_ACTION,
             QUERIES_UNEXPORTED_PROVIDER_AUTH,
             QUERIES_PACKAGE,
+            QUERIES_NOTHING_SHARED_USER
     };
 
     private static Context sContext;
@@ -125,7 +131,6 @@ public class AppEnumerationTests {
         System.out.println("Feature enabled: " + sGlobalFeatureEnabled);
         if (!sGlobalFeatureEnabled) return;
 
-        sContext = InstrumentationRegistry.getInstrumentation().getContext();
         sResponseThread = new HandlerThread("response");
         sResponseThread.start();
         sResponseHandler = new Handler(sResponseThread.getLooper());
@@ -135,6 +140,9 @@ public class AppEnumerationTests {
     public void setupTest() {
         if (!sGlobalFeatureEnabled) return;
 
+        if (sContext == null) {
+            sContext = InstrumentationRegistry.getInstrumentation().getContext();
+        }
         setFeatureEnabledForAll(true);
     }
 
@@ -221,6 +229,7 @@ public class AppEnumerationTests {
     public void queriesPackage_canSeeTarget() throws Exception {
         assertVisible(QUERIES_PACKAGE, TARGET_NO_API);
     }
+
     @Test
     public void whenStarted_canSeeCaller() throws Exception {
         // let's first make sure that the target cannot see the caller.
@@ -232,6 +241,19 @@ public class AppEnumerationTests {
         // and finally let's re-run the last check to make sure that the target can still see the
         // caller
         assertVisible(QUERIES_NOTHING, QUERIES_NOTHING_PERM);
+    }
+
+    @Test
+    public void sharedUserMember_canSeeOtherMember() throws Exception {
+        assertVisible(QUERIES_NOTHING_SHARED_USER, TARGET_SHARED_USER);
+    }
+
+    @Test
+    public void queriesPackage_canSeeAllSharedUserMembers() throws Exception {
+        // explicitly queries target via manifest
+        assertVisible(QUERIES_PACKAGE, TARGET_SHARED_USER);
+        // implicitly granted visibility to other member of shared user
+        assertVisible(QUERIES_PACKAGE, QUERIES_NOTHING_SHARED_USER);
     }
 
     private void assertVisible(String sourcePackageName, String targetPackageName)
