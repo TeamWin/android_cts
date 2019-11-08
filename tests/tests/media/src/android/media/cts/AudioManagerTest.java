@@ -1428,12 +1428,24 @@ public class AudioManagerTest extends InstrumentationTestCase {
             assertFalse("Ringer stream should not be muted",
                     mAudioManager.isStreamMute(AudioManager.STREAM_RING));
 
+            // delete the channel that can bypass dnd
+            mNm.deleteNotificationChannel(NOTIFICATION_CHANNEL_ID);
+            // delay for streams to get into correct mute states
+            Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
+
+            assertTrue("Music (media) stream should still be muted",
+                    mAudioManager.isStreamMute(AudioManager.STREAM_MUSIC));
+            assertTrue("System stream should still be muted",
+                    mAudioManager.isStreamMute(AudioManager.STREAM_SYSTEM));
+            assertTrue("Alarm stream should still be muted",
+                    mAudioManager.isStreamMute(AudioManager.STREAM_ALARM));
+            assertTrue("Ringer stream should now be muted",
+                    mAudioManager.isStreamMute(AudioManager.STREAM_RING));
         } finally {
             setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
             mNm.deleteNotificationChannel(NOTIFICATION_CHANNEL_ID);
             Utils.toggleNotificationPolicyAccess(mContext.getPackageName(), getInstrumentation(),
                     false);
-
         }
     }
 
