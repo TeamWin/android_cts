@@ -54,6 +54,18 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/68159767
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2018-02")
+    public void testPocCVE_2017_13234() throws Exception {
+        String inputFiles[] = { "cve_2017_13234.xmf" };
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-13234",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
      * b/64340921
      * Vulnerability Behaviour: SIGABRT in audioserver
      */
