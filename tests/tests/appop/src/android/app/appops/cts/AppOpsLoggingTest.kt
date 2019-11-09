@@ -40,6 +40,7 @@ import android.content.pm.PackageManager.FEATURE_TELEPHONY
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.net.wifi.WifiManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
@@ -389,6 +390,21 @@ class AppOpsLoggingTest {
         rethrowThrowableFrom {
             testService.callApiThatNotesAsyncOpNativelyAndCheckLog(AppOpsUserClient(context))
         }
+    }
+
+    /**
+     * Realistic end-to-end test for scanning wifi
+     */
+    @Test
+    fun getWifiScanResults() {
+        val wifiManager = context.createFeatureContext(TEST_FEATURE_ID)
+            .getSystemService(WifiManager::class.java)
+
+        val results = wifiManager.scanResults
+
+        assertThat(noted[0].first.op).isEqualTo(OPSTR_FINE_LOCATION)
+        assertThat(noted[0].first.featureId).isEqualTo(TEST_FEATURE_ID)
+        assertThat(noted[0].second.map { it.methodName }).contains("getWifiScanResults")
     }
 
     /**
