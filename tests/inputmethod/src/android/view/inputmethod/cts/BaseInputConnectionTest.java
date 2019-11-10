@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.content.ClipDescription;
 import android.net.Uri;
@@ -209,17 +210,38 @@ public class BaseInputConnectionTest {
 
     private static void verifyDeleteSurroundingTextMain(final String initialState,
             final int deleteBefore, final int deleteAfter, final String expectedState) {
-        final CharSequence source = InputConnectionTestUtils.formatString(initialState);
-        final BaseInputConnection ic = createConnectionWithSelection(source);
-        ic.deleteSurroundingText(deleteBefore, deleteAfter);
+        verifyDeleteSurroundingTextMain(initialState, deleteBefore, deleteAfter, expectedState,
+                false /* clearSelection */);
+    }
 
-        final CharSequence expectedString = InputConnectionTestUtils.formatString(expectedState);
+    private static void verifyDeleteSurroundingTextMain(final String initialState,
+            final int deleteBefore, final int deleteAfter, final String expectedState,
+            final boolean clearSelection) {
+        final CharSequence source = clearSelection ? initialState
+                : InputConnectionTestUtils.formatString(initialState);
+        final BaseInputConnection ic = createConnectionWithSelection(source);
+
+        if (clearSelection) {
+            Selection.removeSelection(ic.getEditable());
+        }
+
+        final boolean result = ic.deleteSurroundingText(deleteBefore, deleteAfter);
+
+        final CharSequence expectedString = clearSelection ? expectedState
+                : InputConnectionTestUtils.formatString(expectedState);
         final int expectedSelectionStart = Selection.getSelectionStart(expectedString);
         final int expectedSelectionEnd = Selection.getSelectionEnd(expectedString);
 
         // It is sufficient to check the surrounding text up to source.length() characters, because
         // InputConnection.deleteSurroundingText() is not supposed to increase the text length.
         final int retrievalLength = source.length();
+        if (!result) {
+            assertEquals(expectedState, ic.getEditable().toString());
+            return;
+        } else if (clearSelection) {
+            fail("deleteSurroundingText should return false for invalid selection");
+        }
+
         if (expectedSelectionStart == 0) {
             assertTrue(TextUtils.isEmpty(ic.getTextBeforeCursor(retrievalLength, 0)));
         } else {
@@ -246,6 +268,8 @@ public class BaseInputConnectionTest {
      */
     @Test
     public void testDeleteSurroundingText() {
+        verifyDeleteSurroundingTextMain("0123456789", 1, 2, "0123456789",
+                true /* clearSelection*/);
         verifyDeleteSurroundingTextMain("012[]3456789", 0, 0, "012[]3456789");
         verifyDeleteSurroundingTextMain("012[]3456789", -1, -1, "012[]3456789");
         verifyDeleteSurroundingTextMain("012[]3456789", 1, 2, "01[]56789");
