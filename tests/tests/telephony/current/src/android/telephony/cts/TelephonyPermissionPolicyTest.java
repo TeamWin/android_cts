@@ -33,6 +33,7 @@ public class TelephonyPermissionPolicyTest {
         KNOWN_TELEPHONY_PACKAGES.add("com.android.stk");
         KNOWN_TELEPHONY_PACKAGES.add("com.android.providers.telephony");
         KNOWN_TELEPHONY_PACKAGES.add("com.android.ons");
+        KNOWN_TELEPHONY_PACKAGES.add("com.android.cellbroadcastservice");
     }
 
     @Test
