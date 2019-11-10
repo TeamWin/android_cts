@@ -696,7 +696,7 @@ public class ActivityManagerState {
         ArrayList<ActivityTask> mTasks = new ArrayList<>();
 
         ActivityStack(ActivityStackProto proto) {
-            super(proto.configurationContainer);
+            super(proto.stack.windowContainer.configurationContainer);
             mStackId = proto.id;
             mDisplayId = proto.displayId;
             mBounds = extract(proto.bounds);
