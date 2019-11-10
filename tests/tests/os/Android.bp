@@ -32,6 +32,7 @@ android_test {
     ],
     srcs: [
         "src/**/*.java",
+        "src/**/*.kt",
         "src/android/os/cts/IParcelFileDescriptorPeer.aidl",
         "src/android/os/cts/IEmptyService.aidl",
         "src/android/os/cts/ISeccompIsolatedService.aidl",

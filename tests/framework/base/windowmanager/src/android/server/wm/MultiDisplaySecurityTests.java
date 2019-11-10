@@ -78,6 +78,7 @@ import org.junit.Test;
  * Tests if be allowed to launch an activity on multi-display environment.
  */
 @Presubmit
+@android.server.wm.annotation.Group3
 public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
 
     @Before

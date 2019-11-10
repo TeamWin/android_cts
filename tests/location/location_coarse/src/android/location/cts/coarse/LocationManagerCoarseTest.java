@@ -38,6 +38,7 @@ import android.location.LocationManager;
 import android.location.cts.common.LocationListenerCapture;
 import android.location.cts.common.LocationPendingIntentCapture;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import androidx.test.core.app.ApplicationProvider;
@@ -215,6 +216,7 @@ public class LocationManagerCoarseTest {
     }
 
     @Test
+    @AppModeFull(reason = "Instant apps can't hold ACCESS_LOCATION_EXTRA_COMMANDS")
     public void testSendExtraCommand() {
         mManager.sendExtraCommand(COARSE_TEST_PROVIDER, "command", null);
 

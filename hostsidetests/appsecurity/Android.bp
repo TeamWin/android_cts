@@ -1,0 +1,4 @@
+filegroup {
+    name: "CtsHostsideTestsAppSecurityUtil",
+    srcs: ["src/android/appsecurity/cts/Utils.java"],
+}

@@ -47,7 +47,6 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
-import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 
@@ -65,6 +64,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Presubmit
 @MediumTest
+@android.server.wm.annotation.Group3
 public class MultiDisplayClientTests extends MultiDisplayTestBase {
 
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(10); // 10 seconds

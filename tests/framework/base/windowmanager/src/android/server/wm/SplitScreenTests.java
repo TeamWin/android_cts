@@ -26,7 +26,6 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
-import static android.server.wm.UiDeviceUtils.pressHomeButton;
 import static android.server.wm.WindowManagerState.TRANSIT_WALLPAPER_OPEN;
 import static android.server.wm.app.Components.DOCKED_ACTIVITY;
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
@@ -70,6 +69,7 @@ import org.junit.Test;
  *     atest CtsWindowManagerDeviceTestCases:SplitScreenTests
  */
 @Presubmit
+@android.server.wm.annotation.Group2
 public class SplitScreenTests extends ActivityManagerTestBase {
 
     private static final int TASK_SIZE = 600;

@@ -28,13 +28,12 @@ import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_P
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_LOST;
 import static android.server.wm.lifecycle.LifecycleVerifier.transition;
 
-import static androidx.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.platform.test.annotations.Presubmit;
 
 import androidx.test.filters.FlakyTest;
@@ -53,6 +52,7 @@ import java.util.Arrays;
 @Presubmit
 @MediumTest
 @FlakyTest(bugId=137329632)
+@android.server.wm.annotation.Group3
 public class ActivityTests extends ActivityLifecycleClientTestBase {
     @Test
     public void testReleaseActivityInstance_visible() throws Exception {

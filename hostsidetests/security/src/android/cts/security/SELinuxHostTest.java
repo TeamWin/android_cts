@@ -1021,7 +1021,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     /**
      * Asserts that a domain may exist. If a domain exists, the cardinality of
      * the domain is verified to be 1 and that the correct process is running in
-     * that domain.
+     * that domain. If the process is running, it is running in that domain.
      *
      * @param domain
      *  The domain or SELinux context to check.
@@ -1032,19 +1032,21 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         throws DeviceNotAvailableException {
         List<ProcessDetails> procs = ProcessDetails.getProcMap(mDevice).get(domain);
         List<ProcessDetails> exeProcs = ProcessDetails.getExeMap(mDevice).get(executable);
-
         if (procs != null) {
             String msg = "Expected 1 process in SELinux domain \"" + domain + "\""
-            + " Found: \"" + procs + "\"";
+                + " Found: \"" + procs + "\"";
             assertEquals(msg, 1, procs.size());
 
             msg = "Expected executable \"" + executable + "\" in SELinux domain \"" + domain + "\""
                 + "Found: \"" + procs.get(0) + "\"";
             assertEquals(msg, executable, procs.get(0).procTitle);
         }
-
         if (exeProcs != null) {
-            String msg = "Expected 1 process with executable \"" + executable + "\""
+            String msg = "Expected executable \"" + executable + "\" in SELinux domain \"" + domain + "\""
+                + " Instead found it running in the domain \"" + exeProcs.get(0).label + "\"";
+            assertNotNull(msg, procs);
+
+            msg = "Expected 1 process with executable \"" + executable + "\""
             + " Found: \"" + procs + "\"";
             assertEquals(msg, 1, exeProcs.size());
 
@@ -1237,7 +1239,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     /* permissioncontroller may or may not be running */
     @CddTest(requirement="9.7")
     public void testPermissionControllerDomain() throws DeviceNotAvailableException {
-        assertDomainZeroOrOne("u:r:permissioncontroller_app:s0:c66,c256,c512,c768", "com.google.android.permissioncontroller");
+        assertDomainZeroOrOne("u:r:permissioncontroller_app:s0", "com.google.android.permissioncontroller");
     }
 
     /*
@@ -1327,6 +1329,14 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
                 Matcher m = p.matcher(line);
                 if(m.matches()) {
                     String domainLabel = m.group(1);
+                    // clean up the domainlabel
+                    String[] parts = domainLabel.split(":");
+                    if (parts.length > 4) {
+                        // we have an extra categories bit at the end consisting of cxxx,cxxx ...
+                        // just make the domain out of the first 4 parts
+                        domainLabel = String.join(":", parts[0], parts[1], parts[2], parts[3]);
+                    }
+
                     String user = m.group(2);
                     int pid = Integer.parseInt(m.group(3));
                     int ppid = Integer.parseInt(m.group(4));

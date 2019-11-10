@@ -91,6 +91,7 @@ import java.util.function.Predicate;
  * IME is shown if display supports system decorations (and not shown otherwise)
  */
 @Presubmit
+@android.server.wm.annotation.Group3
 public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
     @Before

@@ -32,7 +32,8 @@ public final class HdmiCecLogicalAddressTest extends BaseHostJUnit4Test {
     private static final CecDevice PLAYBACK_DEVICE = CecDevice.PLAYBACK_1;
 
     @Rule
-    public HdmiCecUtils hdmiCecUtils = new HdmiCecUtils(CecDevice.PLAYBACK_1, this);
+    public HdmiCecClientWrapper hdmiCecClient =
+        new HdmiCecClientWrapper(CecDevice.PLAYBACK_1, this);
 
     /**
      * Test 10.2.3-1
@@ -44,7 +45,7 @@ public final class HdmiCecLogicalAddressTest extends BaseHostJUnit4Test {
         ITestDevice device = getDevice();
         device.executeShellCommand("reboot");
         device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
-        String message = hdmiCecUtils.checkExpectedOutput(CecMessage.REPORT_PHYSICAL_ADDRESS);
-        assertEquals(PLAYBACK_DEVICE, hdmiCecUtils.getSourceFromMessage(message));
+        String message = hdmiCecClient.checkExpectedOutput(CecMessage.REPORT_PHYSICAL_ADDRESS);
+        assertEquals(PLAYBACK_DEVICE, hdmiCecClient.getSourceFromMessage(message));
     }
 }

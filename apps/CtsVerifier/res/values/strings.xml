@@ -1392,7 +1392,6 @@
     </string>
     <string name="cf_preview_label">Normal preview</string>
     <string name="cf_format_label">Processed callback data</string>
-    <string name="cf_next_button">Next</string>
 
     <!-- Strings for Camera Video -->
     <string name="record_button_text">Test</string>
@@ -1549,6 +1548,19 @@
     <string name="sv_no_data">No videos.</string>
     <string name="sv_failed_title">Test Failed</string>
     <string name="sv_failed_message">Unable to play stream.  See log for details.</string>
+
+    <!-- Strings for the Camera Bokeh mode test activity -->
+    <string name="camera_bokeh_test">Camera Bokeh</string>
+    <string name="camera_bokeh_test_info">
+        This test checks camera bokeh mode functionality. It enumerates supported bokeh modes, and
+        makes sure each non-OFF bokeh mode works correctly. For optimal and consistent results,
+        please make sure the camera device is pointing to a well-lit scene with a human face in
+        the center at least 1 meter away, and the rest of the scene is further away in the
+        background.
+    </string>
+    <string name="camera_bokeh_no_support">
+        None of the camera devices support bokeh modes. Please click the Test Passed button.
+    </string>
 
     <!-- Strings for TestListActivity -->
     <string name="wifi_test">Wi-Fi Test</string>
@@ -4403,6 +4415,25 @@ You should be prompted to select credentials; choose the ones you just installed
     and key character map (.kcm) files are found by the system accordingly.
     </string>
     <string name="tv_microphone_device_test_no_input_devices">No input devices found.</string>
+
+    <!-- Common strings for the TV Display tests -->
+    <string name="tv_start_test">Start Test</string>
+
+    <!-- HDR Capabilities test -->
+    <string name="tv_hdr_capabilities_test">HDR Capabilities Test</string>
+    <string name="tv_hdr_capabilities_test_info">This test checks if
+        Display.getHdrCapabilities correctly reports the HDR capabilities of the display.
+    </string>
+    <string name="tv_hdr_connect_no_hdr_display">Connect a non-HDR display and then
+        press the "%s" button, below.
+    </string>
+    <string name="tv_hdr_connect_hdr_display">Connect an HDR display and press
+        the "%s" button, below.
+    </string>
+    <string name="tv_hdr_disconnect_display">Press the "%1$s" button
+        and disconnect the display within %2$d seconds. Wait at least %3$d seconds and then
+        reconnect the display.
+    </string>
 
     <string name="overlay_view_text">Overlay View Dummy Text</string>
     <string name="custom_rating">Example of input app specific custom rating.</string>

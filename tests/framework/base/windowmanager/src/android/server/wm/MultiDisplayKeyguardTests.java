@@ -39,6 +39,7 @@ import java.util.List;
  *     atest CtsWindowManagerDeviceTestCases:MultiDisplayKeyguardTests
  */
 @Presubmit
+@android.server.wm.annotation.Group3
 public class MultiDisplayKeyguardTests extends MultiDisplayTestBase {
 
     @Before

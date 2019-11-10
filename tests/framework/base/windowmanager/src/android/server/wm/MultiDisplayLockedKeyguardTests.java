@@ -41,6 +41,7 @@ import org.junit.Test;
  *     atest CtsWindowManagerDeviceTestCases:MultiDisplayLockedKeyguardTests
  */
 @Presubmit
+@android.server.wm.annotation.Group3
 public class MultiDisplayLockedKeyguardTests extends MultiDisplayTestBase {
 
     @Before

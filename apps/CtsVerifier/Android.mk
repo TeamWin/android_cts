@@ -34,7 +34,7 @@ LOCAL_USE_AAPT2 := true
 LOCAL_STATIC_JAVA_LIBRARIES := android-ex-camera2 \
                                compatibility-common-util-devicesidelib \
                                cts-sensors-tests \
-                               cts-location-tests \
+                               cts-location-gnss-tests \
                                cts-camera-performance-tests \
                                ctstestrunner-axt \
                                apache-commons-math \

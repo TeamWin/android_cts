@@ -115,6 +115,7 @@ import java.util.function.Function;
  * atest CtsWindowManagerDeviceTestCases:PinnedStackTests
  */
 @Presubmit
+@android.server.wm.annotation.Group2
 public class PinnedStackTests extends ActivityManagerTestBase {
     private static final String TAG = PinnedStackTests.class.getSimpleName();
 

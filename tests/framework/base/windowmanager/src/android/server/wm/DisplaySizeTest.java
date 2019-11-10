@@ -46,6 +46,7 @@ import org.junit.Test;
  *     atest CtsWindowManagerDeviceTestCases:DisplaySizeTest
  */
 @Presubmit
+@android.server.wm.annotation.Group3
 public class DisplaySizeTest extends ActivityManagerTestBase {
 
     /** @see com.android.server.wm.UnsupportedDisplaySizeDialog */

@@ -25,7 +25,6 @@ android_test {
         "truth-prebuilt",
     ],
     libs: [
-        "android.test.runner.stubs",
         "android.test.base.stubs",
     ],
     srcs: ["src/**/*.java"],
@@ -34,5 +33,4 @@ android_test {
         "vts",
         "general-tests",
     ],
-    sdk_version: "test_current",
 }

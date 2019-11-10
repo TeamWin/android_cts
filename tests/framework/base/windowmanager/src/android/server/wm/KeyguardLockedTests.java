@@ -57,6 +57,7 @@ import org.junit.Test;
  *     atest CtsWindowManagerDeviceTestCases:KeyguardLockedTests
  */
 @Presubmit
+@android.server.wm.annotation.Group2
 public class KeyguardLockedTests extends KeyguardTestBase {
     @Before
     @Override
