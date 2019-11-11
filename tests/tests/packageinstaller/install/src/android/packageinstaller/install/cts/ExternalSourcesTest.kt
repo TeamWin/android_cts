@@ -92,7 +92,7 @@ class ExternalSourcesTest : PackageInstallerTestBase() {
     private fun allowedSourceTest(startInstallation: () -> Unit) {
         setAppOpsMode(MODE_ALLOWED)
         assertTrue("Package $packageName blocked from installing packages after setting app op " +
-                "to allowed", pm.canRequestPackageInstalls())
+                "to allowed".toRegex(), pm.canRequestPackageInstalls())
 
         startInstallation()
         assertInstallAllowed("Install confirmation not shown when app op set to allowed")

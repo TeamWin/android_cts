@@ -16,6 +16,8 @@
 
 package com.android.cts.usepermission;
 
+import static com.android.compatibility.common.util.UiAutomatorUtils.waitFindObject;
+
 import static junit.framework.Assert.assertEquals;
 
 import static org.junit.Assert.assertNotNull;
@@ -38,6 +40,7 @@ import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.Direction;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
+import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.support.test.uiautomator.UiScrollable;
 import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
@@ -295,48 +298,35 @@ public abstract class BasePermissionsTest {
     }
 
     protected void clickAllowButton() throws Exception {
-        scrollToBottomIfWatch();
-        waitForIdle();
-        getUiDevice().wait(Until.findObject(By.res(
-                "com.android.permissioncontroller:id/permission_allow_button")),
-                GLOBAL_TIMEOUT_MILLIS).click();
+        scrollToBottom();
+        click("com.android.permissioncontroller:id/permission_allow_button");
     }
 
     protected void clickAllowAlwaysButton() throws Exception {
-        waitForIdle();
-        getUiDevice().wait(Until.findObject(By.res(
-                "com.android.permissioncontroller:id/permission_allow_always_button")),
-                GLOBAL_TIMEOUT_MILLIS).click();
+        click("com.android.permissioncontroller:id/permission_allow_always_button");
     }
 
     protected void clickAllowForegroundButton() throws Exception {
-        waitForIdle();
-        getUiDevice().wait(Until.findObject(By.res(
-                "com.android.permissioncontroller:id/permission_allow_foreground_only_button")),
-                GLOBAL_TIMEOUT_MILLIS).click();
+        click("com.android.permissioncontroller:id/permission_allow_foreground_only_button");
     }
 
     protected void clickDenyButton() throws Exception {
-        scrollToBottomIfWatch();
-        waitForIdle();
-        getUiDevice().wait(Until.findObject(By.res(
-                "com.android.permissioncontroller:id/permission_deny_button")),
-                GLOBAL_TIMEOUT_MILLIS).click();
+        scrollToBottom();
+        click("com.android.permissioncontroller:id/permission_deny_button");
     }
 
     protected void clickDenyAndDontAskAgainButton() throws Exception {
-        waitForIdle();
-        getUiDevice().wait(Until.findObject(By.res(
-                "com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button")),
-                GLOBAL_TIMEOUT_MILLIS).click();
+        click("com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button");
     }
 
     protected void clickDontAskAgainButton() throws Exception {
-        scrollToBottomIfWatch();
+        scrollToBottom();
+        click("com.android.permissioncontroller:id/permission_deny_dont_ask_again_button");
+    }
+
+    private void click(String resourceName) throws TimeoutException, UiObjectNotFoundException {
         waitForIdle();
-        getUiDevice().wait(Until.findObject(By.res(
-                "com.android.permissioncontroller:id/permission_deny_dont_ask_again_button")),
-                GLOBAL_TIMEOUT_MILLIS).click();
+        waitFindObject(By.res(resourceName), GLOBAL_TIMEOUT_MILLIS).click();
     }
 
     protected void grantPermission(String permission) throws Exception {
@@ -355,14 +345,13 @@ public abstract class BasePermissionsTest {
         setPermissionGrantState(permissions, false, legacyApp);
     }
 
-    private void scrollToBottomIfWatch() throws Exception {
-        if (mWatch) {
-            getUiDevice().wait(Until.findObject(By.clazz(ScrollView.class)), GLOBAL_TIMEOUT_MILLIS);
-            UiScrollable scrollable =
-                    new UiScrollable(new UiSelector().className(ScrollView.class));
-            if (scrollable.exists()) {
-                scrollable.flingToEnd(10);
-            }
+    private void scrollToBottom() throws Exception {
+        waitFindObject(By.clazz(ScrollView.class));
+        UiScrollable scrollable =
+                new UiScrollable(new UiSelector().className(ScrollView.class));
+        scrollable.setSwipeDeadZonePercentage(0.25);
+        if (scrollable.exists()) {
+            scrollable.flingToEnd(10);
         }
     }
 
@@ -412,17 +401,7 @@ public abstract class BasePermissionsTest {
             // Find the permission screen
             String permissionLabel = getPermissionLabel(permission);
 
-            UiObject2 permissionView = null;
-            long start = System.currentTimeMillis();
-            while (permissionView == null && start + RETRY_TIMEOUT > System.currentTimeMillis()) {
-                permissionView = getUiDevice().wait(Until.findObject(By.text(permissionLabel)),
-                        IDLE_TIMEOUT_MILLIS);
-
-                if (permissionView == null) {
-                    getUiDevice().findObject(By.scrollable(true))
-                            .scroll(Direction.DOWN, 1);
-                }
-            }
+            UiObject2 permissionView = waitFindObject(By.text(permissionLabel));
 
             if (!isTv()) {
                 permissionView.click();
@@ -448,8 +427,8 @@ public abstract class BasePermissionsTest {
                 }
                 waitForIdle();
 
-                if (!granted && legacyApp) {
-                    scrollToBottomIfWatch();
+                if (wasGranted && legacyApp) {
+                    scrollToBottom();
                     Context context = getInstrumentation().getContext();
                     String packageName = context.getPackageManager()
                             .getPermissionControllerPackageName();
