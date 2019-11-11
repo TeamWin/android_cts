@@ -250,6 +250,12 @@ public class AppStandbyTests {
     @Test
     public void testNeverDelay() throws Exception {
         updateAlarmManagerConstants(false);
+        setAppStandbyBucket("active");
+        final long firstTrigger = SystemClock.elapsedRealtime() + MIN_FUTURITY;
+        scheduleAlarm(firstTrigger, false, 0);
+        Thread.sleep(MIN_FUTURITY);
+        assertTrue("Alarm did not fire when app in active", waitForAlarm());
+
         setAppStandbyBucket("never");
         final long expectedTrigger = SystemClock.elapsedRealtime() + MIN_FUTURITY;
         scheduleAlarm(expectedTrigger, true, 0);
