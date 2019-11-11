@@ -612,6 +612,12 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         return userId;
     }
 
+    protected int createUserAndWaitStart() throws Exception {
+        int userId = createUser(0);
+        startUserAndWait(userId);
+        return userId;
+    }
+
     protected int createUser(int flags) throws Exception {
         boolean guest = FLAG_GUEST == (flags & FLAG_GUEST);
         boolean ephemeral = FLAG_EPHEMERAL == (flags & FLAG_EPHEMERAL);
