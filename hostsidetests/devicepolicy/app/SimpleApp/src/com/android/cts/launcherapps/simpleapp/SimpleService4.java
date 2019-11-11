@@ -1,0 +1,122 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.android.cts.launcherapps.simpleapp;
+
+import android.app.Service;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.Looper;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.Process;
+import android.os.RemoteException;
+import android.system.OsConstants;
+import android.util.Log;
+
+/**
+ * A simple service which accepts various test command.
+ */
+public class SimpleService4 extends Service {
+    private static final String TAG = SimpleService4.class.getSimpleName();
+
+    private static final String EXIT_ACTION =
+            "com.android.cts.launchertests.simpleapp.EXIT_ACTION";
+    private static final String EXTRA_ACTION = "action";
+    private static final String EXTRA_MESSENGER = "messenger";
+    private static final String EXTRA_PROCESS_NAME = "process";
+
+    private static final int ACTION_NONE = 0;
+    private static final int ACTION_FINISH = 1;
+    private static final int ACTION_EXIT = 2;
+    private static final int ACTION_ANR = 3;
+    private static final int ACTION_NATIVE_CRASH = 4;
+    private static final int ACTION_KILL = 5;
+    private static final int EXIT_CODE = 123;
+    private static final int CRASH_SIGNAL = OsConstants.SIGSEGV;
+
+    private static final int CMD_PID = 1;
+    private Handler mHandler;
+
+    @Override
+    public void onCreate() {
+        mHandler = new Handler(Looper.getMainLooper());
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        sendPidBack(intent);
+        // perform the action after return from here.
+        mHandler.post(() -> doAction(intent));
+        return START_NOT_STICKY;
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+
+    protected String getProcessName() {
+        return getPackageName();
+    }
+
+    private void sendPidBack(Intent intent) {
+        Messenger messenger = intent.getParcelableExtra(EXTRA_MESSENGER);
+        Message msg = Message.obtain();
+        msg.what = CMD_PID;
+        msg.arg1 = Process.myPid();
+        msg.arg2 = Process.myUid();
+        Bundle b = new Bundle();
+        b.putString(EXTRA_PROCESS_NAME, getProcessName());
+        msg.obj = b;
+        try {
+            messenger.send(msg);
+        } catch (RemoteException e) {
+        }
+    }
+
+    private void doAction(Intent intent) {
+        if (EXIT_ACTION.equals(intent.getAction())) {
+            int action = intent.getIntExtra(EXTRA_ACTION, ACTION_NONE);
+            switch (action) {
+                case ACTION_FINISH:
+                    stopSelf();
+                    break;
+                case ACTION_EXIT:
+                    System.exit(EXIT_CODE);
+                    break; // Shoudln't reachable
+                case ACTION_ANR:
+                    try {
+                        Thread.sleep(3600*1000);
+                    } catch (InterruptedException e) {
+                    }
+                    break;
+                case ACTION_NATIVE_CRASH:
+                    Process.sendSignal(Process.myPid(), CRASH_SIGNAL);
+                    break; // Shoudln't reachable
+                case ACTION_KILL:
+                    Process.sendSignal(Process.myPid(), OsConstants.SIGKILL);
+                    break; // Shoudln't reachable
+                case ACTION_NONE:
+                default:
+                    break;
+            }
+        }
+    }
+}

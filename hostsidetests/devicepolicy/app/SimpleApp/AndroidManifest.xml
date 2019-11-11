@@ -58,6 +58,20 @@
         </service>
         <service android:name=".SimpleService3" android:exported="true" />
 
+        <service android:name=".SimpleService4" android:exported="true">
+            <intent-filter>
+                <action android:name="com.android.cts.launchertests.simpleapp.EXIT_ACTION" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
+
+        <service android:name=".SimpleService5" android:exported="true" android:process=":remote">
+            <intent-filter>
+                <action android:name="com.android.cts.launchertests.simpleapp.EXIT_ACTION" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
+
         <receiver android:name=".SimpleReceiverStartService" android:exported="true">
         </receiver>
         <receiver android:name=".SimpleReceiver" android:exported="true">
