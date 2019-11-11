@@ -463,7 +463,7 @@ public class TelephonyManagerTest {
                 .getDefaultOutgoingPhoneAccount(PhoneAccount.SCHEME_TEL);
         mTelephonyManager.getVoicemailRingtoneUri(defaultAccount);
         mTelephonyManager.isVoicemailVibrationEnabled(defaultAccount);
-        mTelephonyManager.getSubIdForPhoneAccountHandle(defaultAccount);
+        mTelephonyManager.getSubscriptionId(defaultAccount);
         mTelephonyManager.getCarrierConfig();
         TelephonyManager.getDefaultRespondViaMessageApplication(getContext(), false);
     }
