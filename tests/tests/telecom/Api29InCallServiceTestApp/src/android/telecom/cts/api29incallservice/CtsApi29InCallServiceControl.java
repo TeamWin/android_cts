@@ -58,4 +58,10 @@ public class CtsApi29InCallServiceControl extends Service {
         return null;
     }
 
+    @Override
+    public boolean onUnbind(Intent intent) {
+        CtsApi29InCallService.reset();
+        return false;
+    }
+
 }

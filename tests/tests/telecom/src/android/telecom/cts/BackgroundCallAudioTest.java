@@ -32,6 +32,8 @@ import java.util.concurrent.TimeUnit;
 public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
     private static final String LOG_TAG = BackgroundCallAudioTest.class.getSimpleName();
 
+    private ServiceConnection mApiCompatControlServiceConnection;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -302,7 +304,7 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
         }
     }
 
-    public void testLowerApiLevelCompatibility() throws Exception {
+    public void testLowerApiLevelCompatibility1() throws Exception {
         if (!mShouldTestTelecom) {
             return;
         }
@@ -340,9 +342,39 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
         assertEquals(Call.STATE_ACTIVE,
                 controlInterface.getCallState(call.getDetails().getTelecomCallId()));
 
-        TestUtils.executeShellCommand(getInstrumentation(),
-                "telecom add-or-remove-call-companion-app " + CtsApi29InCallService.PACKAGE_NAME
-                        + " 0");
+        tearDownControl();
+    }
+
+    public void testLowerApiLevelCompatibility2() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        ICtsApi29InCallServiceControl controlInterface = setUpControl();
+
+        setupIncomingCallWithCallScreening();
+
+        final MockConnection connection = verifyConnectionForIncomingCall();
+
+        if (!mInCallCallbacks.lock.tryAcquire(TestUtils.WAIT_FOR_CALL_ADDED_TIMEOUT_S,
+                TimeUnit.SECONDS)) {
+            fail("No call added to InCallService.");
+        }
+
+        Call call = mInCallCallbacks.getService().getLastCall();
+        assertCallState(call, Call.STATE_AUDIO_PROCESSING);
+        assertConnectionState(connection, Connection.STATE_ACTIVE);
+        // Make sure that the dummy app never got any calls
+        assertEquals(0, controlInterface.getHistoricalCallCount());
+
+        call.disconnect();
+        assertCallState(call, Call.STATE_DISCONNECTED);
+        waitOnAllHandlers(getInstrumentation());
+        assertConnectionState(connection, Connection.STATE_DISCONNECTED);
+        // Make sure that the dummy app never saw the call
+        assertEquals(0, controlInterface.getHistoricalCallCount());
+
+        tearDownControl();
     }
 
     private Connection placeActiveOutgoingCall() {
@@ -426,7 +458,7 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
         bindIntent.setComponent(controlComponentName);
         LinkedBlockingQueue<ICtsApi29InCallServiceControl> result = new LinkedBlockingQueue<>(1);
 
-        boolean success = mContext.bindService(bindIntent, new ServiceConnection() {
+        mApiCompatControlServiceConnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
                 Log.i(LOG_TAG, "Service Connected: " + name);
@@ -436,10 +468,22 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
             @Override
             public void onServiceDisconnected(ComponentName name) {
             }
-        }, Context.BIND_AUTO_CREATE);
+        };
+
+        boolean success = mContext.bindService(bindIntent,
+                mApiCompatControlServiceConnection, Context.BIND_AUTO_CREATE);
+
         if (!success) {
             fail("Failed to get control interface -- bind error");
         }
         return result.poll(TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+    }
+
+    private void tearDownControl() throws Exception {
+        mContext.unbindService(mApiCompatControlServiceConnection);
+
+        TestUtils.executeShellCommand(getInstrumentation(),
+                "telecom add-or-remove-call-companion-app " + CtsApi29InCallService.PACKAGE_NAME
+                        + " 0");
     }
 }
