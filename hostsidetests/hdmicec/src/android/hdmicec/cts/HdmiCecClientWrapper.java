@@ -281,6 +281,47 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         throw new Exception("Could not find message " + expectedMessage.name());
     }
 
+    /**
+     * Looks for the CEC message incorrectMessage sent to CEC device toDevice on the cec-client
+     * communication channel and throws an exception if it finds the line that contains the message
+     * within the default timeout. If the CEC message is not found within the timeout, function
+     * returns without error.
+     */
+    public void checkOutputDoesNotContainMessage(CecDevice toDevice,
+            CecMessage incorrectMessage) throws Exception {
+        checkOutputDoesNotContainMessage(toDevice, incorrectMessage, DEFAULT_TIMEOUT);
+     }
+
+    /**
+     * Looks for the CEC message incorrectMessage sent to CEC device toDevice on the cec-client
+     * communication channel and throws an exception if it finds the line that contains the message
+     * within timeoutMillis. If the CEC message is not found within the timeout, function returns
+     * without error.
+     */
+    public void checkOutputDoesNotContainMessage(CecDevice toDevice, CecMessage incorrectMessage,
+            long timeoutMillis) throws Exception {
+
+        checkCecClient();
+        long startTime = System.currentTimeMillis();
+        long endTime = startTime;
+        Pattern pattern = Pattern.compile("(.*>>)(.*?)" +
+                                          "(" + targetDevice + toDevice + "):" +
+                                          "(" + incorrectMessage + ")(.*)",
+                                          Pattern.CASE_INSENSITIVE);
+
+        while ((endTime - startTime <= timeoutMillis)) {
+            if (mInputConsole.ready()) {
+                String line = mInputConsole.readLine();
+                if (pattern.matcher(line).matches()) {
+                    CLog.v("Found " + incorrectMessage.name() + " in " + line);
+                    throw new Exception("Found " + incorrectMessage.name() + " to " + toDevice +
+                            " with params " + getParamsFromMessage(line));
+                }
+            }
+            endTime = System.currentTimeMillis();
+        }
+     }
+
     /** Gets the hexadecimal ASCII character values of a string. */
     public String getHexAsciiString(String string) {
         String asciiString = "";
@@ -329,6 +370,17 @@ public final class HdmiCecClientWrapper extends ExternalResource {
 
     public static int hexStringToInt(String message) {
         return Integer.parseInt(message, HEXADECIMAL_RADIX);
+    }
+
+    public String getAsciiStringFromMessage(String message) {
+        String params = getNibbles(message).substring(4);
+        StringBuilder builder = new StringBuilder();
+
+        for (int i = 2; i <= params.length(); i += 2) {
+            builder.append((char) hexStringToInt(params.substring(i - 2, i)));
+        }
+
+        return builder.toString();
     }
 
     /**
