@@ -406,7 +406,7 @@ public class HalfTest {
 
     @Test
     public void lessEquals() {
-        assertTrue(Half.less(NEGATIVE_INFINITY, POSITIVE_INFINITY));
+        assertTrue(Half.lessEquals(NEGATIVE_INFINITY, POSITIVE_INFINITY));
         assertTrue(Half.lessEquals(MAX_VALUE, POSITIVE_INFINITY));
         assertFalse(Half.lessEquals(POSITIVE_INFINITY, MAX_VALUE));
         assertFalse(Half.lessEquals(LOWEST_VALUE, NEGATIVE_INFINITY));
@@ -421,7 +421,7 @@ public class HalfTest {
         assertFalse(Half.lessEquals(toHalf(12.4f), toHalf(12.3f)));
         assertFalse(Half.lessEquals(toHalf(-12.3f), toHalf(-12.4f)));
         assertTrue(Half.lessEquals(toHalf(-12.4f), toHalf(-12.3f)));
-        assertTrue(Half.less(MIN_VALUE, (short) 0x3ff));
+        assertTrue(Half.lessEquals(MIN_VALUE, (short) 0x3ff));
         assertTrue(Half.lessEquals(NEGATIVE_INFINITY, NEGATIVE_INFINITY));
         assertTrue(Half.lessEquals(POSITIVE_INFINITY, POSITIVE_INFINITY));
         assertTrue(Half.lessEquals(toHalf(12.12356f), toHalf(12.12356f)));
@@ -465,11 +465,11 @@ public class HalfTest {
         assertFalse(Half.greaterEquals(toHalf(12.3f), toHalf(12.4f)));
         assertFalse(Half.greaterEquals(toHalf(-12.4f), toHalf(-12.3f)));
         assertTrue(Half.greaterEquals(toHalf(-12.3f), toHalf(-12.4f)));
-        assertTrue(Half.greater((short) 0x3ff, MIN_VALUE));
-        assertTrue(Half.lessEquals(NEGATIVE_INFINITY, NEGATIVE_INFINITY));
-        assertTrue(Half.lessEquals(POSITIVE_INFINITY, POSITIVE_INFINITY));
-        assertTrue(Half.lessEquals(toHalf(12.12356f), toHalf(12.12356f)));
-        assertTrue(Half.lessEquals(toHalf(-12.12356f), toHalf(-12.12356f)));
+        assertTrue(Half.greaterEquals((short) 0x3ff, MIN_VALUE));
+        assertTrue(Half.greaterEquals(NEGATIVE_INFINITY, NEGATIVE_INFINITY));
+        assertTrue(Half.greaterEquals(POSITIVE_INFINITY, POSITIVE_INFINITY));
+        assertTrue(Half.greaterEquals(toHalf(12.12356f), toHalf(12.12356f)));
+        assertTrue(Half.greaterEquals(toHalf(-12.12356f), toHalf(-12.12356f)));
     }
 
     @Test
