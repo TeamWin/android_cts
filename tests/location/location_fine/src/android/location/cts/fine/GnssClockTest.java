@@ -16,49 +16,24 @@
 
 package android.location.cts.fine;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import android.location.GnssClock;
-import android.location.cts.common.GnssTestCase;
 import android.os.Parcel;
 
-public class GnssClockTest extends GnssTestCase {
-    public void testDescribeContents() {
-        GnssClock clock = new GnssClock();
-        clock.describeContents();
-    }
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-    public void testReset() {
-        GnssClock clock = new GnssClock();
-        clock.reset();
-    }
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-    private static void setTestValues(GnssClock clock) {
-        clock.setBiasNanos(1.0);
-        clock.setBiasUncertaintyNanos(2.0);
-        clock.setDriftNanosPerSecond(3.0);
-        clock.setDriftUncertaintyNanosPerSecond(4.0);
-        clock.setFullBiasNanos(5);
-        clock.setHardwareClockDiscontinuityCount(6);
-        clock.setLeapSecond(7);
-        clock.setTimeNanos(8);
-        clock.setTimeUncertaintyNanos(9.0);
-        clock.setElapsedRealtimeNanos(10987732253L);
-        clock.setElapsedRealtimeUncertaintyNanos(3943523.0);
-    }
+@RunWith(AndroidJUnit4.class)
+public class GnssClockTest {
 
-    private static void verifyTestValues(GnssClock clock) {
-        assertEquals(1.0, clock.getBiasNanos());
-        assertEquals(2.0, clock.getBiasUncertaintyNanos());
-        assertEquals(3.0, clock.getDriftNanosPerSecond());
-        assertEquals(4.0, clock.getDriftUncertaintyNanosPerSecond());
-        assertEquals(5, clock.getFullBiasNanos());
-        assertEquals(6, clock.getHardwareClockDiscontinuityCount());
-        assertEquals(7, clock.getLeapSecond());
-        assertEquals(8, clock.getTimeNanos());
-        assertEquals(9.0, clock.getTimeUncertaintyNanos());
-        assertEquals(10987732253L, clock.getElapsedRealtimeNanos());
-        assertEquals(3943523.0, clock.getElapsedRealtimeUncertaintyNanos());
-    }
+    private static final double DELTA = 0.001;
 
+    @Test
     public void testWriteToParcel() {
         GnssClock clock = new GnssClock();
         setTestValues(clock);
@@ -70,6 +45,13 @@ public class GnssClockTest extends GnssTestCase {
         parcel.recycle();
     }
 
+    @Test
+    public void testReset() {
+        GnssClock clock = new GnssClock();
+        clock.reset();
+    }
+
+    @Test
     public void testSet() {
         GnssClock clock = new GnssClock();
         setTestValues(clock);
@@ -78,6 +60,7 @@ public class GnssClockTest extends GnssTestCase {
         verifyTestValues(newClock);
     }
 
+    @Test
     public void testHasAndReset() {
         GnssClock clock = new GnssClock();
         setTestValues(clock);
@@ -117,5 +100,33 @@ public class GnssClockTest extends GnssTestCase {
         assertTrue(clock.hasElapsedRealtimeUncertaintyNanos());
         clock.resetElapsedRealtimeUncertaintyNanos();
         assertFalse(clock.hasElapsedRealtimeUncertaintyNanos());
+    }
+
+    private static void setTestValues(GnssClock clock) {
+        clock.setBiasNanos(1.0);
+        clock.setBiasUncertaintyNanos(2.0);
+        clock.setDriftNanosPerSecond(3.0);
+        clock.setDriftUncertaintyNanosPerSecond(4.0);
+        clock.setFullBiasNanos(5);
+        clock.setHardwareClockDiscontinuityCount(6);
+        clock.setLeapSecond(7);
+        clock.setTimeNanos(8);
+        clock.setTimeUncertaintyNanos(9.0);
+        clock.setElapsedRealtimeNanos(10987732253L);
+        clock.setElapsedRealtimeUncertaintyNanos(3943523.0);
+    }
+
+    private static void verifyTestValues(GnssClock clock) {
+        assertEquals(1.0, clock.getBiasNanos(), DELTA);
+        assertEquals(2.0, clock.getBiasUncertaintyNanos(), DELTA);
+        assertEquals(3.0, clock.getDriftNanosPerSecond(), DELTA);
+        assertEquals(4.0, clock.getDriftUncertaintyNanosPerSecond(), DELTA);
+        assertEquals(5, clock.getFullBiasNanos());
+        assertEquals(6, clock.getHardwareClockDiscontinuityCount());
+        assertEquals(7, clock.getLeapSecond());
+        assertEquals(8, clock.getTimeNanos());
+        assertEquals(9.0, clock.getTimeUncertaintyNanos(), DELTA);
+        assertEquals(10987732253L, clock.getElapsedRealtimeNanos());
+        assertEquals(3943523.0, clock.getElapsedRealtimeUncertaintyNanos(), DELTA);
     }
 }

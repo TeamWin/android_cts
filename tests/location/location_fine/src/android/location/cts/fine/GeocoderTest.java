@@ -17,54 +17,64 @@
 package android.location.cts.fine;
 
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Geocoder;
-import android.test.AndroidTestCase;
+
+import androidx.test.core.app.ApplicationProvider;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.util.Locale;
 
-public class GeocoderTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class GeocoderTest {
 
-    private static final int MAX_NUM_RETRIES = 5;
-    private static final int TIME_BETWEEN_RETRIES_MS = 10 * 1000;
+    private static final int MAX_NUM_RETRIES = 2;
+    private static final int TIME_BETWEEN_RETRIES_MS = 2000;
 
+    private Context mContext;
+
+    @Before
+    public void setUp() {
+        mContext = ApplicationProvider.getApplicationContext();
+    }
+
+    @Test
     public void testConstructor() {
-        new Geocoder(getContext());
+        new Geocoder(mContext);
 
-        new Geocoder(getContext(), Locale.ENGLISH);
+        new Geocoder(mContext, Locale.ENGLISH);
 
         try {
-            new Geocoder(getContext(), null);
+            new Geocoder(mContext, null);
             fail("should throw NullPointerException.");
         } catch (NullPointerException e) {
             // expected.
         }
     }
 
+    @Test
     public void testIsPresent() {
-        Geocoder geocoder = new Geocoder(getContext());
         if (isServiceMissing()) {
-            assertFalse(geocoder.isPresent());
+            assertFalse(Geocoder.isPresent());
         } else {
-            assertTrue(geocoder.isPresent());
+            assertTrue(Geocoder.isPresent());
         }
     }
 
-    private boolean isServiceMissing() {
-        Context context = getContext();
-        PackageManager pm = context.getPackageManager();
-
-        final Intent intent = new Intent("com.android.location.service.GeocodeProvider");
-        final int flags = PackageManager.MATCH_DIRECT_BOOT_AWARE
-               | PackageManager.MATCH_DIRECT_BOOT_UNAWARE;
-        return pm.queryIntentServices(intent, flags).isEmpty();
-    }
-
+    @Test
     public void testGetFromLocation() throws IOException, InterruptedException {
-        Geocoder geocoder = new Geocoder(getContext());
+        Geocoder geocoder = new Geocoder(mContext);
 
         // There is no guarantee that geocoder.getFromLocation returns accurate results
         // Thus only test that calling the method with valid arguments doesn't produce
@@ -92,6 +102,7 @@ public class GeocoderTest extends AndroidTestCase {
             geocoder.getFromLocation(-91, 30, 5);
             fail("should throw IllegalArgumentException");
         } catch (IllegalArgumentException e) {
+            // pass
         }
 
         try {
@@ -99,6 +110,7 @@ public class GeocoderTest extends AndroidTestCase {
             geocoder.getFromLocation(91, 30, 5);
             fail("should throw IllegalArgumentException");
         } catch (IllegalArgumentException e) {
+            // pass
         }
 
         try {
@@ -106,6 +118,7 @@ public class GeocoderTest extends AndroidTestCase {
             geocoder.getFromLocation(10, -181, 5);
             fail("should throw IllegalArgumentException");
         } catch (IllegalArgumentException e) {
+            // pass
         }
 
         try {
@@ -113,11 +126,13 @@ public class GeocoderTest extends AndroidTestCase {
             geocoder.getFromLocation(10, 181, 5);
             fail("should throw IllegalArgumentException");
         } catch (IllegalArgumentException e) {
+            // pass
         }
     }
 
+    @Test
     public void testGetFromLocationName() throws IOException, InterruptedException {
-        Geocoder geocoder = new Geocoder(getContext(), Locale.US);
+        Geocoder geocoder = new Geocoder(mContext, Locale.US);
 
         // There is no guarantee that geocoder.getFromLocationName returns accurate results.
         // Thus only test that calling the method with valid arguments doesn't produce
@@ -143,30 +158,44 @@ public class GeocoderTest extends AndroidTestCase {
             geocoder.getFromLocationName(null, 5);
             fail("should throw IllegalArgumentException");
         } catch (IllegalArgumentException e) {
+            // pass
         }
 
         try {
             geocoder.getFromLocationName("Beijing", 5, -91, 100, 45, 130);
             fail("should throw IllegalArgumentException");
         } catch (IllegalArgumentException e) {
+            // pass
         }
 
         try {
             geocoder.getFromLocationName("Beijing", 5, 25, 190, 45, 130);
             fail("should throw IllegalArgumentException");
         } catch (IllegalArgumentException e) {
+            // pass
         }
 
         try {
             geocoder.getFromLocationName("Beijing", 5, 25, 100, 91, 130);
             fail("should throw IllegalArgumentException");
         } catch (IllegalArgumentException e) {
+            // pass
         }
 
         try {
             geocoder.getFromLocationName("Beijing", 5, 25, 100, 45, -181);
             fail("should throw IllegalArgumentException");
         } catch (IllegalArgumentException e) {
+            // pass
         }
+    }
+
+    private boolean isServiceMissing() {
+        PackageManager pm = mContext.getPackageManager();
+
+        final Intent intent = new Intent("com.android.location.service.GeocodeProvider");
+        final int flags = PackageManager.MATCH_DIRECT_BOOT_AWARE
+                | PackageManager.MATCH_DIRECT_BOOT_UNAWARE;
+        return pm.queryIntentServices(intent, flags).isEmpty();
     }
 }
