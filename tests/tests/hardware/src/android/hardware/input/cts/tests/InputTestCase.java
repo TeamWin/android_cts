@@ -22,6 +22,7 @@ import static org.junit.Assert.fail;
 import android.app.Instrumentation;
 import android.hardware.input.cts.InputCallback;
 import android.hardware.input.cts.InputCtsActivity;
+import android.util.Log;
 import android.view.InputEvent;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -46,8 +47,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public abstract class InputTestCase {
+    private static final String TAG = "InputTestCase";
     private static final float TOLERANCE = 0.005f;
-    private static final long TIMEOUT_DELTA = 10000;
 
     private final BlockingQueue<InputEvent> mEvents;
 
@@ -210,6 +211,9 @@ public abstract class InputTestCase {
         if (event instanceof KeyEvent) {
             return (KeyEvent) event;
         }
+        if (event instanceof MotionEvent) {
+            failWithMessage("Instead of a key event, received " + event);
+        }
         return null;
     }
 
@@ -217,6 +221,9 @@ public abstract class InputTestCase {
         InputEvent event = waitForEvent();
         if (event instanceof MotionEvent) {
             return (MotionEvent) event;
+        }
+        if (event instanceof KeyEvent) {
+            failWithMessage("Instead of a motion event, received " + event);
         }
         return null;
     }
@@ -281,8 +288,17 @@ public abstract class InputTestCase {
 
     /**
      * Append the name of the currently executing test case to the fail message.
+     * Dump out the events queue to help debug.
      */
     private void failWithMessage(String message) {
+        if (mEvents.isEmpty()) {
+            Log.i(TAG, "The events queue is empty");
+        } else {
+            Log.e(TAG, "There are additional events received by the test activity:");
+            for (InputEvent event : mEvents) {
+                Log.i(TAG, event.toString());
+            }
+        }
         fail(mCurrentTestCase + ": " + message);
     }
 
