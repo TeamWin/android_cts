@@ -100,7 +100,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         getLifecycleLog().clear();
         final Activity topActivity = launchActivityAndWait(SingleTopActivity.class);
-        waitAndAssertActivityStates(occludedActivityState(activity, topActivity));
+        waitAndAssertActivityStates(state(activity, ON_STOP));
 
         LifecycleVerifier.assertLaunchSequence(SingleTopActivity.class,
                 CallbackTrackingActivity.class, getLifecycleLog(),
@@ -176,7 +176,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         getLifecycleLog().clear();
         final Activity topActivity = launchActivityAndWait(
                 TranslucentCallbackTrackingActivity.class);
-        waitAndAssertActivityStates(occludedActivityState(activity, topActivity));
+        waitAndAssertActivityStates(state(activity, ON_STOP));
 
         LifecycleVerifier.assertLaunchSequence(TranslucentCallbackTrackingActivity.class,
                 CallbackTrackingActivity.class, getLifecycleLog(),
@@ -234,7 +234,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
                 .customizeIntent(LaunchForResultActivity.forwardFlag(EXTRA_FINISH_IN_ON_RESUME))
                 .launch();
 
-        waitAndAssertActivityStates(occludedActivityState(baseActivity, launchForResultActivity));
+        waitAndAssertActivityStates(state(baseActivity, ON_STOP));
         final List<ActivityCallback> expectedLaunchingSequence =
                 Arrays.asList(
                         PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
@@ -386,7 +386,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         // Launch another activity on top
         final Activity topActivity = launchActivityAndWait(CallbackTrackingActivity.class);
-        waitAndAssertActivityStates(occludedActivityState(singleTopActivity, topActivity));
+        waitAndAssertActivityStates(state(singleTopActivity, ON_STOP));
 
         // Launch the single top activity again to observe new intent
         getLifecycleLog().clear();
@@ -418,7 +418,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         // Launch a translucent activity on top
         final Activity topActivity =
                 launchActivityAndWait(TranslucentCallbackTrackingActivity.class);
-        waitAndAssertActivityStates(occludedActivityState(singleTopActivity, topActivity));
+        waitAndAssertActivityStates(state(singleTopActivity, ON_STOP));
 
         // Launch the single top activity again to observe new intent
         getLifecycleLog().clear();
