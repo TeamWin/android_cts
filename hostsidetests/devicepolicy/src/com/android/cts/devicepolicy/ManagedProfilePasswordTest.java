@@ -27,6 +27,8 @@ import com.android.cts.devicepolicy.annotations.LockSettingsTest;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
+import org.junit.Test;
+
 import java.util.concurrent.TimeUnit;
 
 public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
@@ -36,6 +38,7 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
     private static final String RESET_PASSWORD_TEST_DEFAULT_PASSWORD = "123456";
 
     @FlakyTest
+    @Test
     public void testLockNowWithKeyEviction() throws Exception {
         if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
             return;
@@ -44,6 +47,7 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
         lockProfile();
     }
 
+    @Test
     public void testPasswordMinimumRestrictions() throws Exception {
         if (!mHasFeature) {
             return;
@@ -53,6 +57,7 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
     }
 
     @FlakyTest
+    @Test
     public void testResetPasswordWithTokenBeforeUnlock() throws Exception {
         if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
             return;
@@ -68,6 +73,7 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
     }
 
     @FlakyTest
+    @Test
     public void testClearPasswordWithTokenBeforeUnlock() throws Exception {
         if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
             return;
@@ -90,6 +96,7 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
      * the device lock.
      */
     @FlakyTest
+    @Test
     public void testResetPasswordTokenUsableAfterClearingLock() throws Exception {
         if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
             return;
@@ -118,6 +125,7 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
     }
 
     @LockSettingsTest
+    @Test
     public void testIsUsingUnifiedPassword() throws Exception {
         if (!mHasFeature || !mHasSecureLockScreen) {
             return;
@@ -134,6 +142,7 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
     @FlakyTest
     @LargeTest
     @LockSettingsTest
+    @Test
     public void testUnlockWorkProfile_deviceWidePassword() throws Exception {
         if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
             return;
@@ -159,6 +168,7 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
     @FlakyTest
     @LargeTest
     @LockSettingsTest
+    @Test
     public void testRebootDevice_unifiedPassword() throws Exception {
         if (!mHasFeature || !mHasSecureLockScreen) {
             return;
@@ -182,6 +192,7 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
 
     @LargeTest
     @LockSettingsTest
+    @Test
     public void testRebootDevice_separatePasswords() throws Exception {
         if (!mHasFeature || !mHasSecureLockScreen) {
             return;
@@ -210,6 +221,7 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
         }
     }
 
+    @Test
     public void testCreateSeparateChallengeChangedLogged() throws Exception {
         if (!mHasFeature || !mHasSecureLockScreen || !isStatsdEnabled(getDevice())) {
             return;

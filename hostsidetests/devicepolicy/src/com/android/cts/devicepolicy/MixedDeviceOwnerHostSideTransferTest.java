@@ -15,7 +15,11 @@
  */
 package com.android.cts.devicepolicy;
 
+import static org.junit.Assert.fail;
+
 import android.platform.test.annotations.LargeTest;
+
+import org.junit.Test;
 
 /**
  * Tests the DPC transfer functionality for device owner. Testing is done by having two dummy DPCs,
@@ -34,7 +38,7 @@ public class MixedDeviceOwnerHostSideTransferTest extends
             "com.android.cts.transferowner.TransferProfileOwnerOutgoingTest";
 
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
         if (mHasFeature) {
             installAppAsUser(TRANSFER_OWNER_OUTGOING_APK, mPrimaryUserId);
@@ -52,6 +56,7 @@ public class MixedDeviceOwnerHostSideTransferTest extends
     }
 
     @LargeTest
+    @Test
     public void testTransferAffiliatedProfileOwnershipCompleteCallback() throws Exception {
         if (!mHasFeature || !hasDeviceFeature("android.software.managed_users")) {
             return;
@@ -76,6 +81,7 @@ public class MixedDeviceOwnerHostSideTransferTest extends
     }
 
     @LargeTest
+    @Test
     public void testTransferAffiliatedProfileOwnershipInComp() throws Exception {
         if (!mHasFeature || !hasDeviceFeature("android.software.managed_users")) {
             return;

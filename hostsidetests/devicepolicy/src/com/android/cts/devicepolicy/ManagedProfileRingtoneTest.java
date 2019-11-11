@@ -19,7 +19,10 @@ package com.android.cts.devicepolicy;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 
+import org.junit.Test;
+
 public class ManagedProfileRingtoneTest extends BaseManagedProfileTest {
+    @Test
     public void testRingtoneSync() throws Exception {
         if (!mHasFeature) {
             return;
@@ -30,6 +33,7 @@ public class ManagedProfileRingtoneTest extends BaseManagedProfileTest {
     }
 
     // Test if setting RINGTONE disables sync
+    @Test
     public void testRingtoneSyncAutoDisableRingtone() throws Exception {
         if (!mHasFeature) {
             return;
@@ -40,6 +44,7 @@ public class ManagedProfileRingtoneTest extends BaseManagedProfileTest {
     }
 
     // Test if setting NOTIFICATION disables sync
+    @Test
     public void testRingtoneSyncAutoDisableNotification() throws Exception {
         if (!mHasFeature) {
             return;
@@ -50,6 +55,7 @@ public class ManagedProfileRingtoneTest extends BaseManagedProfileTest {
     }
 
     // Test if setting ALARM disables sync
+    @Test
     public void testRingtoneSyncAutoDisableAlarm() throws Exception {
         if (!mHasFeature) {
             return;

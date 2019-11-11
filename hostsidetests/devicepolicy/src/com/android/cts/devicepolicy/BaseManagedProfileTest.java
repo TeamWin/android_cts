@@ -16,6 +16,8 @@
 
 package com.android.cts.devicepolicy;
 
+import static org.junit.Assert.fail;
+
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil;
 
@@ -40,7 +42,7 @@ public abstract class BaseManagedProfileTest extends BaseDevicePolicyTest {
     protected boolean mHasNfcFeature;
 
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
 
         // We need multi user to be supported in order to create a profile of the user owner.
@@ -77,7 +79,7 @@ public abstract class BaseManagedProfileTest extends BaseDevicePolicyTest {
     }
 
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         if (mHasFeature) {
             removeUser(mProfileUserId);
             getDevice().uninstallPackage(MANAGED_PROFILE_PKG);

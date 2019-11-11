@@ -16,8 +16,13 @@
 
 package com.android.cts.devicepolicy;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
+
+import org.junit.Test;
 
 /**
  * Set of tests for pure (non-managed) profile owner use cases that also apply to device owners.
@@ -26,7 +31,7 @@ import android.platform.test.annotations.LargeTest;
 public class MixedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
 
         if (mHasFeature) {
@@ -44,7 +49,7 @@ public class MixedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         if (mHasFeature) {
             assertTrue("Failed to remove profile owner.",
                     removeAdmin(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId));
@@ -54,42 +59,49 @@ public class MixedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Override
     @FlakyTest
+    @Test
     public void testCaCertManagement() throws Exception {
         super.testCaCertManagement();
     }
 
     @Override
     @FlakyTest
+    @Test
     public void testInstallCaCertLogged() throws Exception {
         super.testInstallCaCertLogged();
     }
 
     @Override
     @LargeTest
+    @Test
     public void testPackageInstallUserRestrictions() throws Exception {
         super.testPackageInstallUserRestrictions();
     }
 
     @Override
     @FlakyTest(bugId = 138721077)
+    @Test
     public void testLockTask_defaultDialer() throws Exception {
         super.testLockTask_defaultDialer();
     }
 
     @Override
     @FlakyTest(bugId = 140932104)
+    @Test
     public void testLockTaskAfterReboot() throws Exception {
         super.testLockTaskAfterReboot();
     }
 
     @Override
     @FlakyTest(bugId = 140932104)
+    @Test
     public void testLockTaskAfterReboot_tryOpeningSettings() throws Exception {
         super.testLockTaskAfterReboot_tryOpeningSettings();
     }
 
     @Override
     @FlakyTest(bugId = 140932104)
+    @Test
     public void testLockTask_exitIfNoLongerWhitelisted() throws Exception {
         super.testLockTask_exitIfNoLongerWhitelisted();
     }
