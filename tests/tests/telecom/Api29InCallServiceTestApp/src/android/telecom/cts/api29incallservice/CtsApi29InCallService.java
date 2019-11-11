@@ -54,4 +54,9 @@ public class CtsApi29InCallService extends MockInCallService {
             return sCalls.size();
         }
     }
+
+    static void reset() {
+        sCalls.clear();
+        sHistoricalCallCount = 0;
+    }
 }
