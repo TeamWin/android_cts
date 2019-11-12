@@ -94,8 +94,10 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     TestUtils.InvokeCounter mOnRttRequestCounter;
     TestUtils.InvokeCounter mOnHandoverCompleteCounter;
     TestUtils.InvokeCounter mOnHandoverFailedCounter;
+    TestUtils.InvokeCounter mOnPhoneAccountChangedCounter;
     Bundle mPreviousExtras;
     int mPreviousProperties = -1;
+    PhoneAccountHandle mPreviousPhoneAccountHandle = null;
 
     InCallServiceCallbacks mInCallCallbacks;
     String mPreviousDefaultDialer = null;
@@ -289,6 +291,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
             public void onCallAdded(Call call, int numCalls) {
                 Log.i(TAG, "onCallAdded, Call: " + call + ", Num Calls: " + numCalls);
                 this.lock.release();
+                mPreviousPhoneAccountHandle = call.getDetails().getAccountHandle();
             }
             @Override
             public void onCallRemoved(Call call, int numCalls) {
@@ -323,6 +326,11 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
                             " to " + Call.Details.propertiesToString(details.getCallProperties()));
                 }
                 mPreviousProperties = details.getCallProperties();
+
+                if (!details.getAccountHandle().equals(mPreviousPhoneAccountHandle)) {
+                    mOnPhoneAccountChangedCounter.invoke(call, details.getAccountHandle());
+                }
+                mPreviousPhoneAccountHandle = details.getAccountHandle();
             }
             @Override
             public void onCallDestroyed(Call call) {
@@ -410,6 +418,8 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         mOnRttRequestCounter = new TestUtils.InvokeCounter("mOnRttRequestCounter");
         mOnHandoverCompleteCounter = new TestUtils.InvokeCounter("mOnHandoverCompleteCounter");
         mOnHandoverFailedCounter = new TestUtils.InvokeCounter("mOnHandoverFailedCounter");
+        mOnPhoneAccountChangedCounter = new TestUtils.InvokeCounter(
+                "mOnPhoneAccountChangedCounter");
     }
 
     /**
@@ -1139,6 +1149,24 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
                 },
                 WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
                 "Call should have display name: " + name
+        );
+    }
+
+    void assertCallConnectTimeChanged(final Call call, final long time) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return true;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return call.getDetails().getConnectTimeMillis() != time;
+                    }
+                },
+                WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                "Call have connect time: " + time
         );
     }
 

@@ -662,6 +662,13 @@ public class TestUtils {
                 mInvokeArgs.clear();
             }
         }
+
+        public void reset() {
+            synchronized (mLock) {
+                clearArgs();
+                mInvokeCount = 0;
+            }
+        }
     }
 
     private static long getCurrentUserSerialNumber(Instrumentation instrumentation) {
