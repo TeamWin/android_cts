@@ -137,6 +137,7 @@ import android.util.EventLog;
 import android.util.EventLog.Event;
 import android.view.Display;
 import android.view.InputDevice;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 
 import androidx.annotation.NonNull;
@@ -511,12 +512,17 @@ public abstract class ActivityManagerTestBase {
         return ComponentName.unflattenFromString(mContext.getResources().getString(resId));
     }
 
-    protected void tapOnDisplay(int x, int y, int displayId) {
+    protected void tapOnDisplaySync(int x, int y, int displayId) {
+        tapOnDisplay(x, y, displayId, true /* sync*/);
+    }
+
+
+    private void tapOnDisplay(int x, int y, int displayId, boolean sync) {
         final long downTime = SystemClock.uptimeMillis();
-        injectMotion(downTime, downTime, MotionEvent.ACTION_DOWN, x, y, displayId);
+        injectMotion(downTime, downTime, MotionEvent.ACTION_DOWN, x, y, displayId, sync);
 
         final long upTime = SystemClock.uptimeMillis();
-        injectMotion(downTime, upTime, MotionEvent.ACTION_UP, x, y, displayId);
+        injectMotion(downTime, upTime, MotionEvent.ACTION_UP, x, y, displayId, sync);
 
         mAmWmState.waitForWithWmState(state -> state.getFocusedDisplayId() == displayId,
                 "top focused displayId: " + displayId);
@@ -529,20 +535,47 @@ public abstract class ActivityManagerTestBase {
     protected void tapOnCenter(Rect bounds, int displayId) {
         final int tapX = bounds.left + bounds.width() / 2;
         final int tapY = bounds.top + bounds.height() / 2;
-        tapOnDisplay(tapX, tapY, displayId);
+        tapOnDisplaySync(tapX, tapY, displayId);
     }
 
     protected void tapOnStackCenter(ActivityManagerState.ActivityStack stack) {
         tapOnCenter(stack.getBounds(), stack.mDisplayId);
     }
 
+    protected void tapOnDisplayCenter(int displayId) {
+        final Rect bounds = mAmWmState.getWmState().getDisplay(displayId).getDisplayRect();
+        tapOnDisplaySync(bounds.centerX(), bounds.centerY(), displayId);
+    }
+
+    protected void tapOnDisplayCenterAsync(int displayId) {
+        final Rect bounds = mAmWmState.getWmState().getDisplay(displayId).getDisplayRect();
+        tapOnDisplay(bounds.centerX(), bounds.centerY(), displayId, false /* sync */);
+    }
+
     private static void injectMotion(long downTime, long eventTime, int action,
-            int x, int y, int displayId) {
+            int x, int y, int displayId, boolean sync) {
         final MotionEvent event = MotionEvent.obtain(downTime, eventTime, action,
                 x, y, 0 /* metaState */);
         event.setSource(InputDevice.SOURCE_TOUCHSCREEN);
         event.setDisplayId(displayId);
-        getInstrumentation().getUiAutomation().injectInputEvent(event, true /* sync */);
+        getInstrumentation().getUiAutomation().injectInputEvent(event, sync);
+    }
+
+    public static void injectKey(int keyCode, boolean longPress, boolean sync) {
+        final long downTime = SystemClock.uptimeMillis();
+        int repeatCount = 0;
+        KeyEvent downEvent =
+                new KeyEvent(downTime, downTime, KeyEvent.ACTION_DOWN, keyCode, repeatCount);
+        getInstrumentation().getUiAutomation().injectInputEvent(downEvent, sync);
+        if (longPress) {
+            repeatCount += 1;
+            KeyEvent repeatEvent = new KeyEvent(downTime, SystemClock.uptimeMillis(),
+                    KeyEvent.ACTION_DOWN, keyCode, repeatCount);
+            getInstrumentation().getUiAutomation().injectInputEvent(repeatEvent, sync);
+        }
+        KeyEvent upEvent = new KeyEvent(downTime, SystemClock.uptimeMillis(),
+                KeyEvent.ACTION_UP, keyCode, 0 /* repeatCount */);
+        getInstrumentation().getUiAutomation().injectInputEvent(upEvent, sync);
     }
 
     protected void removeStacksWithActivityTypes(int... activityTypes) {
@@ -1095,7 +1128,7 @@ public abstract class ActivityManagerTestBase {
         public LockScreenSession enterAndConfirmLockCredential() {
             // Ensure focus will switch to default display. Meanwhile we cannot tap on center area,
             // which may tap on input credential area.
-            tapOnDisplay(10, 10, DEFAULT_DISPLAY);
+            tapOnDisplaySync(10, 10, DEFAULT_DISPLAY);
 
             waitForDeviceIdle(3000);
             SystemUtil.runWithShellPermissionIdentity(() ->
@@ -1137,7 +1170,7 @@ public abstract class ActivityManagerTestBase {
 
         LockScreenSession unlockDevice() {
             // Make sure the unlock button event is send to the default display.
-            tapOnDisplay(10, 10, DEFAULT_DISPLAY);
+            tapOnDisplaySync(10, 10, DEFAULT_DISPLAY);
 
             pressUnlockButton();
             return this;
