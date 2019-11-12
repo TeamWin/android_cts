@@ -238,6 +238,52 @@ public class ConnectionServiceTest extends BaseTelecomTestWithMockServices {
         return connection;
     }
 
+    public void testCallDirectionIncoming() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        // Need to add a call to ensure ConnectionService is up and bound.
+        placeAndVerifyCall();
+        verifyConnectionForOutgoingCall().setActive();
+
+        final MockConnection connection = new MockConnection();
+        connection.setActive();
+        connection.setCallDirection(Call.Details.DIRECTION_INCOMING);
+        CtsConnectionService.addExistingConnectionToTelecom(TEST_PHONE_ACCOUNT_HANDLE, connection);
+        assertNumCalls(mInCallCallbacks.getService(), 2);
+        mInCallCallbacks.lock.drainPermits();
+        final Call call = mInCallCallbacks.getService().getLastCall();
+        assertCallState(call, Call.STATE_ACTIVE);
+        assertEquals(Call.Details.DIRECTION_INCOMING, call.getDetails().getCallDirection());
+    }
+
+    public void testCallDirectionOutgoing() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        // Ensure CS is up and bound.
+        placeAndVerifyCall();
+        verifyConnectionForOutgoingCall().setActive();
+
+        final MockConnection connection = new MockConnection();
+        connection.setActive();
+        connection.setCallDirection(Call.Details.DIRECTION_OUTGOING);
+        connection.setConnectTimeMillis(1000L);
+        assertEquals(1000L, connection.getConnectTimeMillis());
+        connection.setConnectionStartElapsedRealTime(100L);
+        assertEquals(1000L, connection.getConnectElapsedTimeMillis());
+
+        CtsConnectionService.addExistingConnectionToTelecom(TEST_PHONE_ACCOUNT_HANDLE, connection);
+        assertNumCalls(mInCallCallbacks.getService(), 2);
+        mInCallCallbacks.lock.drainPermits();
+        final Call call = mInCallCallbacks.getService().getLastCall();
+        assertCallState(call, Call.STATE_ACTIVE);
+        assertEquals(Call.Details.DIRECTION_OUTGOING, call.getDetails().getCallDirection());
+        assertEquals(1000L, call.getDetails().getConnectTimeMillis());
+    }
+
     public void testGetAllConnections() {
         if (!mShouldTestTelecom) {
             return;
