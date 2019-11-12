@@ -22,16 +22,23 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.role.RoleManager;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Process;
 import android.os.UserHandle;
 
 import androidx.test.core.app.ApplicationProvider;
+
+import org.junit.Assume;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 
 class DefaultSmsAppHelper {
     static void ensureDefaultSmsApp() {
+        if (!hasTelephony()) {
+            return;
+        }
+
         Context context = ApplicationProvider.getApplicationContext();
 
         String packageName = context.getPackageName();
@@ -58,8 +65,17 @@ class DefaultSmsAppHelper {
         try {
             latch.await();
             assertTrue(success[0]);
-        } catch(InterruptedException ex) {
+        } catch (InterruptedException ex) {
             throw new RuntimeException(ex.getMessage());
         }
+    }
+
+    static void assumeTelephony() {
+        Assume.assumeTrue(hasTelephony());
+    }
+
+    private static boolean hasTelephony() {
+        Context context = ApplicationProvider.getApplicationContext();
+        return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
     }
 }
