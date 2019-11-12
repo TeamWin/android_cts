@@ -301,11 +301,11 @@ public class MockConnection extends Connection {
         return mMockVideoProvider;
     }
 
-    public void setPhoneAccountHandle(PhoneAccountHandle handle)  {
+    public void setMockPhoneAccountHandle(PhoneAccountHandle handle)  {
         mPhoneAccountHandle = handle;
     }
 
-    public PhoneAccountHandle getPhoneAccountHandle()  {
+    public PhoneAccountHandle getMockPhoneAccountHandle()  {
         return mPhoneAccountHandle;
     }
 

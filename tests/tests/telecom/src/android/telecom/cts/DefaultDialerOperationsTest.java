@@ -30,6 +30,9 @@ import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.test.InstrumentationTestCase;
 import android.text.TextUtils;
+import android.os.Process;
+
+import com.android.compatibility.common.util.ShellIdentityUtils;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -92,6 +95,9 @@ public class DefaultDialerOperationsTest extends InstrumentationTestCase {
         assertEquals(mSystemDialer, mTelecomManager.getDefaultDialerPackage());
         TestUtils.setDefaultDialer(getInstrumentation(), TestUtils.PACKAGE);
         assertEquals(TestUtils.PACKAGE, mTelecomManager.getDefaultDialerPackage());
+        assertEquals(mTelecomManager.getDefaultDialerPackage(),
+                ShellIdentityUtils.invokeMethodWithShellPermissions(mTelecomManager,
+                        tm -> tm.getDefaultDialerPackage(Process.myUserHandle().getIdentifier())));
     }
 
     /** Default dialer should be the default package handling ACTION_DIAL. */
