@@ -137,6 +137,14 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
                 "testProfileOwnerCannotGetDeviceIdentifiersWithoutPermission", mUserId);
     }
 
+    @Test
+    public void testDevicePolicyManagerParentSupport() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".OrgOwnedProfileOwnerParentTest", mUserId);
+    }
+
     @FlakyTest(bugId = 137088260)
     @Test
     public void testWifi() throws Exception {
