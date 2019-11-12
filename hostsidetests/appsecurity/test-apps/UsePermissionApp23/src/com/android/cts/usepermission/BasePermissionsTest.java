@@ -416,17 +416,23 @@ public abstract class BasePermissionsTest {
                 }
             }
 
-            permissionView.click();
-            waitForIdle();
+            if (!isTv()) {
+                permissionView.click();
+                waitForIdle();
+            }
 
             String denyLabel = mContext.getResources().getString(R.string.Deny);
 
-            final boolean wasGranted = !getUiDevice().wait(Until.findObject(By.text(denyLabel)),
-                    GLOBAL_TIMEOUT_MILLIS).isChecked();
-            if (granted != wasGranted) {
+            final boolean wasGranted = isTv() ? false : !getUiDevice().wait(
+                Until.findObject(By.text(denyLabel)), GLOBAL_TIMEOUT_MILLIS).isChecked();
+            // TV does not use checked state to represent granted state.
+            if (granted != wasGranted || isTv()) {
                 // Toggle the permission
 
-                if (granted) {
+                if (isTv()) {
+                    // no Allow/Deny labels on TV
+                    permissionView.click();
+                } else if (granted) {
                     String allowLabel = mContext.getResources().getString(R.string.Allow);
                     getUiDevice().findObject(By.text(allowLabel)).click();
                 } else {
@@ -455,8 +461,10 @@ public abstract class BasePermissionsTest {
                 }
             }
 
-            getUiDevice().pressBack();
-            waitForIdle();
+            if (!isTv()) {
+                getUiDevice().pressBack();
+                waitForIdle();
+            }
         }
 
         getUiDevice().pressBack();
