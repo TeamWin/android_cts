@@ -168,7 +168,7 @@ public class WindowInsetsPolicyTest extends ActivityManagerTestBase {
                 insets.getMandatorySystemGestureInsets(),
                 insetsLessThanOrEqualTo(insets.getSystemGestureInsets()));
 
-        Insets stableAndSystem = Insets.max(insets.getSystemWindowInsets(),
+        Insets stableAndSystem = Insets.min(insets.getSystemWindowInsets(),
                 insets.getStableInsets());
         assertThat("mandatory system gesture insets must include intersection between "
                         + "stable and system window insets",
