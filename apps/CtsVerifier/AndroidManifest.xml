@@ -3188,7 +3188,8 @@
         </activity>
 
         <activity android:name=".tv.display.DisplayHdrCapabilitiesTestActivity"
-                  android:label="@string/tv_hdr_capabilities_test">
+                  android:label="@string/tv_hdr_capabilities_test"
+                  android:configChanges="orientation|screenSize|density|smallestScreenSize|screenLayout">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
