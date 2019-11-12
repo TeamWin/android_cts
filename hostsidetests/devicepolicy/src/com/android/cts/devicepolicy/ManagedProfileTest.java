@@ -18,6 +18,10 @@ package com.android.cts.devicepolicy;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.platform.test.annotations.LargeTest;
 import android.stats.devicepolicy.EventId;
 
@@ -26,7 +30,7 @@ import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 
-import junit.framework.AssertionFailedError;
+import org.junit.Test;
 
 /**
  * Set of tests for Managed Profile use cases.
@@ -43,6 +47,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     private static final String DEVICE_OWNER_ADMIN =
             DEVICE_OWNER_PKG + ".BaseDeviceOwnerTest$BasicAdminReceiver";
 
+    @Test
     public void testManagedProfilesSupportedWithLockScreenOnly() throws Exception {
         if (mHasFeature) {
             // Managed profiles should be only supported if the device supports the secure lock
@@ -51,6 +56,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
         }
     }
 
+    @Test
     public void testManagedProfileSetup() throws Exception {
         if (!mHasFeature) {
             return;
@@ -60,11 +66,12 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
                 mProfileUserId);
     }
 
+    @Test
     public void testMaxOneManagedProfile() throws Exception {
         int newUserId = -1;
         try {
             newUserId = createManagedProfile(mParentUserId);
-        } catch (AssertionFailedError expected) {
+        } catch (AssertionError expected) {
         }
         if (newUserId > 0) {
             removeUser(newUserId);
@@ -76,6 +83,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     /**
      * Verify that removing a managed profile will remove all networks owned by that profile.
      */
+    @Test
     public void testProfileWifiCleanup() throws Exception {
         if (!mHasFeature || !hasDeviceFeature(FEATURE_WIFI)) {
             return;
@@ -93,6 +101,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
                 mParentUserId);
     }
 
+    @Test
     public void testWifiMacAddress() throws Exception {
         if (!mHasFeature || !hasDeviceFeature(FEATURE_WIFI)) {
             return;
@@ -102,6 +111,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     }
 
     @LargeTest
+    @Test
     public void testAppLinks_verificationStatus() throws Exception {
         if (!mHasFeature) {
             return;
@@ -139,6 +149,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     }
 
     @LargeTest
+    @Test
     public void testAppLinks_enabledStatus() throws Exception {
         if (!mHasFeature) {
             return;
@@ -192,6 +203,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
         assertAppLinkResult("testThreeReceivers");
     }
 
+    @Test
     public void testSettingsIntents() throws Exception {
         if (!mHasFeature) {
             return;
@@ -202,6 +214,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     }
 
     /** Tests for the API helper class. */
+    @Test
     public void testCurrentApiHelper() throws Exception {
         if (!mHasFeature) {
             return;
@@ -211,6 +224,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     }
 
     /** Test: unsupported public APIs are disabled on a parent profile. */
+    @Test
     public void testParentProfileApiDisabled() throws Exception {
         if (!mHasFeature) {
             return;
@@ -223,6 +237,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     // Move it to a MultiUserTest class when there is one. Should probably move
     // SetPolicyActivity to a more generic apk too as it might be useful for different kinds
     // of tests (same applies to ComponentDisablingActivity).
+    @Test
     public void testNoDebuggingFeaturesRestriction() throws Exception {
         if (!mHasFeature) {
             return;
@@ -251,6 +266,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     }
 
     // Test the bluetooth API from a managed profile.
+    @Test
     public void testBluetooth() throws Exception {
         boolean hasBluetooth = hasDeviceFeature(FEATURE_BLUETOOTH);
         if (!mHasFeature || !hasBluetooth) {
@@ -267,6 +283,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
                 "testGetRemoteDevice", mProfileUserId);
     }
 
+    @Test
     public void testCameraPolicy() throws Exception {
         boolean hasCamera = hasDeviceFeature(FEATURE_CAMERA);
         if (!mHasFeature || !hasCamera) {
@@ -286,6 +303,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
         }
     }
 
+    @Test
     public void testOrganizationInfo() throws Exception {
         if (!mHasFeature) {
             return;
@@ -307,6 +325,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
         }
     }
 
+    @Test
     public void testDevicePolicyManagerParentSupport() throws Exception {
         if (!mHasFeature) {
             return;
@@ -315,6 +334,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
                 MANAGED_PROFILE_PKG, ".DevicePolicyManagerParentSupportTest", mProfileUserId);
     }
 
+    @Test
     public void testBluetoothContactSharingDisabled() throws Exception {
         if (!mHasFeature) {
             return;
@@ -334,6 +354,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
                     .build());
     }
 
+    @Test
     public void testCannotSetProfileOwnerAgain() throws Exception {
         if (!mHasFeature) {
             return;
@@ -350,6 +371,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     }
 
     @LargeTest
+    @Test
     public void testCannotSetDeviceOwnerWhenProfilePresent() throws Exception {
         if (!mHasFeature) {
             return;
@@ -366,6 +388,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
         }
     }
 
+    @Test
     public void testNfcRestriction() throws Exception {
         if (!mHasFeature || !mHasNfcFeature) {
             return;
@@ -385,6 +408,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
                 "testNfcShareEnabled", mParentUserId);
     }
 
+    @Test
     public void testIsProvisioningAllowed() throws DeviceNotAvailableException {
         if (!mHasFeature) {
             return;
@@ -399,6 +423,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
                 "testIsProvisioningAllowedTrue", mParentUserId);
     }
 
+    @Test
     public void testPhoneAccountVisibility() throws Exception {
         if (!mHasFeature) {
             return;
@@ -440,6 +465,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     }
 
     @LargeTest
+    @Test
     public void testManagedCall() throws Exception {
         if (!mHasFeature) {
             return;
@@ -490,6 +516,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
                 mParentUserId);
     }
 
+    @Test
     public void testTrustAgentInfo() throws Exception {
         if (!mHasFeature || !mHasSecureLockScreen) {
             return;
@@ -517,6 +544,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
         }
     }
 
+    @Test
     public void testSanityCheck() throws Exception {
         if (!mHasFeature) {
             return;
@@ -526,6 +554,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".SanityTest", mProfileUserId);
     }
 
+    @Test
     public void testBluetoothSharingRestriction() throws Exception {
         final boolean hasBluetooth = hasDeviceFeature(FEATURE_BLUETOOTH);
         if (!mHasFeature || !hasBluetooth) {
@@ -541,6 +570,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
                 "testOppDisabledWhenRestrictionSet", mProfileUserId);
     }
 
+    @Test
     public void testProfileOwnerCanGetDeviceIdentifiers() throws Exception {
         // The Profile Owner should have access to all device identifiers.
         if (!mHasFeature) {
@@ -551,6 +581,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
                 "testProfileOwnerCanGetDeviceIdentifiersWithPermission", mProfileUserId);
     }
 
+    @Test
     public void testProfileOwnerCannotGetDeviceIdentifiersWithoutPermission() throws Exception {
         if (!mHasFeature) {
             return;
@@ -565,6 +596,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
                 "testProfileOwnerCannotGetDeviceIdentifiersWithoutPermission", mProfileUserId);
     }
 
+    @Test
     public void testSetProfileNameLogged() throws Exception {
         if (!mHasFeature || !isStatsdEnabled(getDevice())) {
             return;

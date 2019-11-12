@@ -27,10 +27,12 @@ import java.io.FileNotFoundException;
 
 import android.stats.devicepolicy.EventId;
 
+import org.junit.Test;
+
 public class AdbProvisioningTests extends BaseDevicePolicyTest {
 
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
         if (!mHasFeature) {
             return;
@@ -39,7 +41,7 @@ public class AdbProvisioningTests extends BaseDevicePolicyTest {
     }
 
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         if (!mHasFeature) {
             return;
         }
@@ -47,6 +49,7 @@ public class AdbProvisioningTests extends BaseDevicePolicyTest {
         getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
     }
 
+    @Test
     public void testAdbDeviceOwnerLogged() throws Exception {
         if (!mHasFeature || !isStatsdEnabled(getDevice())) {
             return;
@@ -61,6 +64,7 @@ public class AdbProvisioningTests extends BaseDevicePolicyTest {
                     .build());
     }
 
+    @Test
     public void testAdbProfileOwnerLogged() throws Exception {
         if (!mHasFeature || !isStatsdEnabled(getDevice())) {
             return;

@@ -15,6 +15,8 @@
  */
 package com.android.cts.devicepolicy;
 
+import org.junit.Test;
+
 /**
  * BaseDeviceAdminHostSideTest for device admin targeting API level 29.
  */
@@ -28,6 +30,7 @@ public class DeviceAdminHostSideTestApi29 extends DeviceAdminHostSideTestApi24 {
      * Test that we get expected SecurityExceptions for policies that were disallowed in version 29.
      */
     @Override
+    @Test
     public void testRunDeviceAdminTest() throws Exception {
         if (!mHasFeature) {
             return;
@@ -39,6 +42,7 @@ public class DeviceAdminHostSideTestApi29 extends DeviceAdminHostSideTestApi24 {
      * This test is no longer relevant once DA is disallowed from using password policies.
      */
     @Override
+    @Test
     public void testResetPassword_nycRestrictions() throws Exception {
         return;
     }
@@ -48,6 +52,7 @@ public class DeviceAdminHostSideTestApi29 extends DeviceAdminHostSideTestApi24 {
      * Device Owner functionality is now tested in DeviceAndProfileOwnerTest.
      */
     @Override
+    @Test
     public void testRunDeviceOwnerPasswordTest() throws Exception {
         return;
     }

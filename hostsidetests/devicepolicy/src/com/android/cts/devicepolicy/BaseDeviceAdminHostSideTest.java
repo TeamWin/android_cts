@@ -15,7 +15,11 @@
  */
 package com.android.cts.devicepolicy;
 
+import static org.junit.Assert.assertTrue;
+
 import com.android.tradefed.device.DeviceNotAvailableException;
+
+import org.junit.Test;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -48,7 +52,7 @@ public abstract class BaseDeviceAdminHostSideTest extends BaseDevicePolicyTest {
     }
 
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
 
         mUserId = mPrimaryUserId;
@@ -60,7 +64,7 @@ public abstract class BaseDeviceAdminHostSideTest extends BaseDevicePolicyTest {
     }
 
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         if (mHasFeature) {
             assertTrue("Failed to remove admin", removeAdmin(getAdminReceiverComponent(), mUserId));
             getDevice().uninstallPackage(getDeviceAdminApkPackage());
@@ -83,6 +87,7 @@ public abstract class BaseDeviceAdminHostSideTest extends BaseDevicePolicyTest {
     /**
      * Run all tests in DeviceAdminTest.java (as device admin).
      */
+    @Test
     public void testRunDeviceAdminTest() throws Exception {
         if (!mHasFeature) {
             return;
@@ -90,6 +95,7 @@ public abstract class BaseDeviceAdminHostSideTest extends BaseDevicePolicyTest {
         runTests(getDeviceAdminApkPackage(), "DeviceAdminTest");
     }
 
+    @Test
     public void testResetPassword_nycRestrictions() throws Exception {
         if (!mHasFeature || !mHasSecureLockScreen) {
             return;
@@ -110,6 +116,7 @@ public abstract class BaseDeviceAdminHostSideTest extends BaseDevicePolicyTest {
     /**
      * Run the tests in DeviceOwnerPasswordTest.java (as device owner).
      */
+    @Test
     public void testRunDeviceOwnerPasswordTest() throws Exception {
         if (!mHasFeature || !mHasSecureLockScreen) {
             return;

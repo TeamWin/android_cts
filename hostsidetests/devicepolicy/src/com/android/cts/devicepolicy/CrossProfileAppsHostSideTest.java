@@ -16,6 +16,8 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
+import org.junit.Test;
+
 /**
  * In the test, managed profile and secondary user are created. We then verify
  * {@link android.content.pm.crossprofile.CrossProfileApps} APIs in different directions, like
@@ -36,7 +38,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
     private boolean mCanTestMultiUser;
 
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
         // We need managed users to be supported in order to create a profile of the user owner.
         mHasManagedUserFeature = hasDeviceFeature("android.software.managed_users");
@@ -63,12 +65,14 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
 
     @FlakyTest
     @LargeTest
+    @Test
     public void testPrimaryUserToPrimaryUser() throws Exception {
         verifyCrossProfileAppsApi(mPrimaryUserId, mPrimaryUserId, NON_TARGET_USER_TEST_CLASS);
     }
 
     @FlakyTest
     @LargeTest
+    @Test
     public void testPrimaryUserToManagedProfile() throws Exception {
         if (!mHasManagedUserFeature) {
             return;
@@ -77,6 +81,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
     }
 
     @LargeTest
+    @Test
     public void testManagedProfileToPrimaryUser() throws Exception {
         if (!mHasManagedUserFeature) {
             return;
@@ -85,6 +90,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
     }
 
     @LargeTest
+    @Test
     public void testStartActivity() throws Exception {
         if (!mHasManagedUserFeature) {
             return;
@@ -93,6 +99,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
     }
 
     @LargeTest
+    @Test
     public void testPrimaryUserToSecondaryUser() throws Exception {
         if (!mCanTestMultiUser) {
             return;
@@ -101,6 +108,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
     }
 
     @LargeTest
+    @Test
     public void testSecondaryUserToManagedProfile() throws Exception {
         if (!mCanTestMultiUser || !mHasManagedUserFeature) {
             return;
@@ -110,6 +118,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
     }
 
     @LargeTest
+    @Test
     public void testManagedProfileToSecondaryUser() throws Exception {
         if (!mCanTestMultiUser || !mHasManagedUserFeature) {
             return;
@@ -118,6 +127,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
     }
 
     @LargeTest
+    @Test
     public void testStartMainActivity_logged() throws Exception {
         if (!mHasManagedUserFeature || !isStatsdEnabled(getDevice())) {
             return;
@@ -138,6 +148,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
     }
 
     @LargeTest
+    @Test
     public void testGetTargetUserProfiles_logged() throws Exception {
         if (!mHasManagedUserFeature || !isStatsdEnabled(getDevice())) {
             return;

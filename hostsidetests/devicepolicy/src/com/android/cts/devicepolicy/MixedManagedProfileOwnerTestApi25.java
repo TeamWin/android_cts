@@ -21,6 +21,8 @@ import android.platform.test.annotations.LargeTest;
 
 import com.android.cts.devicepolicy.annotations.PermissionsTest;
 
+import org.junit.Test;
+
 /**
  * Set of tests for managed profile owner use cases that also apply to device owners.
  * Tests that should be run identically in both cases are added in DeviceAndProfileOwnerTestApi25.
@@ -30,7 +32,7 @@ public class MixedManagedProfileOwnerTestApi25 extends DeviceAndProfileOwnerTest
     private int mParentUserId = -1;
 
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
 
         // We need managed users to be supported in order to create a profile of the user owner.
@@ -54,7 +56,7 @@ public class MixedManagedProfileOwnerTestApi25 extends DeviceAndProfileOwnerTest
     }
 
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         if (mHasFeature) {
             removeUser(mUserId);
         }
@@ -66,6 +68,7 @@ public class MixedManagedProfileOwnerTestApi25 extends DeviceAndProfileOwnerTest
      * but cannot remove it.
      */
     @Override
+    @Test
     public void testResetPassword() throws Exception {
         if (!mHasFeature || !mHasSecureLockScreen) {
             return;
@@ -81,6 +84,7 @@ public class MixedManagedProfileOwnerTestApi25 extends DeviceAndProfileOwnerTest
     @Override
     @LargeTest
     @FlakyTest(bugId = 141161690)
+    @Test
     public void testResetPasswordFbe() throws Exception {
         if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
             return;
@@ -104,6 +108,7 @@ public class MixedManagedProfileOwnerTestApi25 extends DeviceAndProfileOwnerTest
 
     @Override
     @PermissionsTest
+    @Test
     public void testPermissionGrantPreMApp() throws Exception {
         super.testPermissionGrantPreMApp();
     }

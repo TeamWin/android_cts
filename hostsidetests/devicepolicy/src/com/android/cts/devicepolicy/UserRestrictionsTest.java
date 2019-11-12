@@ -15,9 +15,13 @@
  */
 package com.android.cts.devicepolicy;
 
+import static org.junit.Assert.assertTrue;
+
 import android.platform.test.annotations.FlakyTest;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
+
+import org.junit.Test;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -44,7 +48,7 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
     private boolean mHasManagedUserFeature;
 
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
 
         mHasManagedUserFeature = hasDeviceFeature("android.software.managed_users");
@@ -53,7 +57,7 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
     }
 
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         if (mHasFeature) {
             if (mRemoveOwnerInTearDown) {
                 assertTrue("Failed to clear owner",
@@ -80,6 +84,7 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
         runTests(className, null, userId);
     }
 
+    @Test
     public void testUserRestrictions_deviceOwnerOnly() throws Exception {
         if (!mHasFeature) {
             return;
@@ -94,6 +99,7 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
                 "testBroadcast", mDeviceOwnerUserId);
     }
 
+    @Test
     public void testUserRestrictions_primaryProfileOwnerOnly() throws Exception {
         if (!mHasFeature) {
             return;
@@ -114,6 +120,7 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
     }
 
     // Checks restrictions for managed user (NOT managed profile).
+    @Test
     public void testUserRestrictions_secondaryProfileOwnerOnly() throws Exception {
         if (!mHasFeature || !mSupportsMultiUser) {
             return;
@@ -131,6 +138,7 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
 
     // Checks restrictions for managed profile.
     @FlakyTest
+    @Test
     public void testUserRestrictions_managedProfileOwnerOnly() throws Exception {
         if (!mHasFeature || !mSupportsMultiUser || !mHasManagedUserFeature) {
             return;
@@ -154,6 +162,7 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
      * DO + PO combination.  Make sure global DO restrictions are visible on secondary users.
      */
     @FlakyTest
+    @Test
     public void testUserRestrictions_layering() throws Exception {
         if (!mHasFeature || !mSupportsMultiUser) {
             return;
@@ -192,6 +201,7 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
     /**
      * PO on user-0.  It can set DO restrictions too, but they shouldn't leak to other users.
      */
+    @Test
     public void testUserRestrictions_layering_profileOwnerNoLeaking() throws Exception {
         if (!mHasFeature || !mSupportsMultiUser) {
             return;
@@ -221,6 +231,7 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
      * users (not a particularly special case but to be sure).
      */
     @FlakyTest
+    @Test
     public void testUserRestrictions_profileGlobalRestrictionsAsDo() throws Exception {
         if (!mHasFeature || !mSupportsMultiUser) {
             return;
@@ -242,6 +253,7 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
      * affect all users.
      */
     @FlakyTest
+    @Test
     public void testUserRestrictions_ProfileGlobalRestrictionsAsPo() throws Exception {
         if (!mHasFeature || !mSupportsMultiUser || !mHasManagedUserFeature) {
             return;

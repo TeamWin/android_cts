@@ -12,28 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH := $(call my-dir)
+include $(call all-subdir-makefiles)
 
-include $(CLEAR_VARS)
-LOCAL_MODULE := CVE-2016-0811
-LOCAL_SRC_FILES := poc.cpp
-LOCAL_MULTILIB := both
-LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE)32
-LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE)64
-
-LOCAL_HEADER_LIBRARIES := \
-    libmediadrm_headers \
-
-LOCAL_SHARED_LIBRARIES := \
-    libbinder \
-    libutils \
-    libmedia \
-    libmediadrm \
-
-# Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts sts vts
-LOCAL_CTS_TEST_PACKAGE := android.security.cts
-
-LOCAL_ARM_MODE := arm
-LOCAL_CFLAGS += -Wall -Werror
-include $(BUILD_CTS_EXECUTABLE)

@@ -19,13 +19,18 @@ package com.android.cts.devicepolicy;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
 
+import static org.junit.Assert.assertTrue;
+
 import android.platform.test.annotations.FlakyTest;
 import android.stats.devicepolicy.EventId;
 
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 
+import org.junit.Test;
+
 public class ManagedProfileWipeTest extends BaseManagedProfileTest {
     @FlakyTest
+    @Test
     public void testWipeDataWithReason() throws Exception {
         if (!mHasFeature) {
             return;
@@ -47,6 +52,7 @@ public class ManagedProfileWipeTest extends BaseManagedProfileTest {
     }
 
     @FlakyTest
+    @Test
     public void testWipeDataLogged() throws Exception {
         if (!mHasFeature || !isStatsdEnabled(getDevice())) {
             return;
@@ -68,6 +74,7 @@ public class ManagedProfileWipeTest extends BaseManagedProfileTest {
     }
 
     @FlakyTest
+    @Test
     public void testWipeDataWithoutReason() throws Exception {
         if (!mHasFeature) {
             return;
@@ -91,6 +98,7 @@ public class ManagedProfileWipeTest extends BaseManagedProfileTest {
     /**
      * wipeData() test removes the managed profile, so it needs to be separated from other tests.
      */
+    @Test
     public void testWipeData() throws Exception {
         if (!mHasFeature) {
             return;

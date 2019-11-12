@@ -413,9 +413,9 @@ public class WindowTest {
     public void testSetBackgroundDrawable() throws Throwable {
         // DecorView holds the background
         View decor = mWindow.getDecorView();
-        if (!mWindow.hasFeature(Window.FEATURE_SWIPE_TO_DISMISS)) {
-            assertEquals(PixelFormat.OPAQUE, decor.getBackground().getOpacity());
-        }
+
+        assertEquals(PixelFormat.OPAQUE, decor.getBackground().getOpacity());
+
         // setBackgroundDrawableResource(int resId) has the same
         // functionality with setBackgroundDrawable(Drawable drawable), just different in
         // parameter.

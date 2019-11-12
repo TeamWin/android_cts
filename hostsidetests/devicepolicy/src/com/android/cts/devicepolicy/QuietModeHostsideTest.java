@@ -2,6 +2,8 @@ package com.android.cts.devicepolicy;
 
 import android.platform.test.annotations.LargeTest;
 
+import org.junit.Test;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,7 +25,7 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
     private String mOriginalLauncher;
 
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
 
         mHasFeature = mHasFeature & hasDeviceFeature("android.software.managed_users");
@@ -43,7 +45,7 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
     }
 
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         if (mHasFeature) {
             getDevice().uninstallPackage(TEST_PACKAGE);
             getDevice().uninstallPackage(TEST_LAUNCHER_PACKAGE);
@@ -52,6 +54,7 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
     }
 
     @LargeTest
+    @Test
     public void testQuietMode_defaultForegroundLauncher() throws Exception {
         if (!mHasFeature) {
           return;
@@ -65,6 +68,7 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
     }
 
     @LargeTest
+    @Test
     public void testQuietMode_notForegroundLauncher() throws Exception {
         if (!mHasFeature) {
             return;
@@ -78,6 +82,7 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
     }
 
     @LargeTest
+    @Test
     public void testQuietMode_notDefaultLauncher() throws Exception {
         if (!mHasFeature) {
             return;

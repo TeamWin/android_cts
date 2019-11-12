@@ -27,6 +27,8 @@ import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil;
 
+import org.junit.Test;
+
 import java.util.concurrent.Callable;
 
 public class ManagedProfileContactsTest extends BaseManagedProfileTest {
@@ -40,6 +42,7 @@ public class ManagedProfileContactsTest extends BaseManagedProfileTest {
     private static final String SET_CUSTOM_DIRECTORY_PREFIX_METHOD = "set_prefix";
 
     @LargeTest
+    @Test
     public void testManagedContactsUris() throws Exception {
         runManagedContactsTest(() -> {
             ContactsTestSet contactsTestSet = new ContactsTestSet(ManagedProfileContactsTest.this,
@@ -55,6 +58,7 @@ public class ManagedProfileContactsTest extends BaseManagedProfileTest {
     }
 
     @FlakyTest
+    @Test
     public void testManagedQuickContacts() throws Exception {
         runManagedContactsTest(() -> {
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
@@ -64,6 +68,7 @@ public class ManagedProfileContactsTest extends BaseManagedProfileTest {
     }
 
     @FlakyTest
+    @Test
     public void testManagedContactsPolicies() throws Exception {
         runManagedContactsTest(() -> {
             ContactsTestSet contactsTestSet = new ContactsTestSet(ManagedProfileContactsTest.this,

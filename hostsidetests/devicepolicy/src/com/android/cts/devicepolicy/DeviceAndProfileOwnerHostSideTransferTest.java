@@ -2,10 +2,14 @@ package com.android.cts.devicepolicy;
 
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 
+import static org.junit.Assert.fail;
+
+import android.stats.devicepolicy.EventId;
+
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
-import android.stats.devicepolicy.EventId;
+import org.junit.Test;
 
 public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevicePolicyTest {
 
@@ -29,6 +33,7 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
     protected String mOutgoingTestClassName;
     protected String mIncomingTestClassName;
 
+    @Test
     public void testTransferOwnership() throws Exception {
         if (!mHasFeature) {
             return;
@@ -45,6 +50,7 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
                 .build());
     }
 
+    @Test
     public void testTransferSameAdmin() throws Exception {
         if (!mHasFeature) {
             return;
@@ -54,6 +60,7 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
                 "testTransferSameAdmin", mUserId);
     }
 
+    @Test
     public void testTransferInvalidTarget() throws Exception {
         if (!mHasFeature) {
             return;
@@ -64,6 +71,7 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
                 "testTransferInvalidTarget", mUserId);
     }
 
+    @Test
     public void testTransferPolicies() throws Exception {
         if (!mHasFeature) {
             return;
@@ -76,6 +84,7 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
                 "testTransferPoliciesAreRetainedAfterTransfer", mUserId);
     }
 
+    @Test
     public void testTransferOwnershipChangedBroadcast() throws Exception {
         if (!mHasFeature) {
             return;
@@ -85,6 +94,7 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
                 "testTransferOwnershipChangedBroadcast", mUserId);
     }
 
+    @Test
     public void testTransferCompleteCallback() throws Exception {
         if (!mHasFeature) {
             return;
@@ -107,6 +117,7 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
         mIncomingTestClassName = incomingTestClassName;
     }
 
+    @Test
     public void testTransferOwnershipNoMetadata() throws Exception {
         if (!mHasFeature) {
             return;
@@ -116,6 +127,7 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
                 "testTransferOwnershipNoMetadata", mUserId);
     }
 
+    @Test
     public void testIsTransferBundlePersisted() throws DeviceNotAvailableException {
         if (!mHasFeature) {
             return;
@@ -128,6 +140,7 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
                 "testTransferOwnershipBundleLoaded", mUserId);
     }
 
+    @Test
     public void testGetTransferOwnershipBundleOnlyCalledFromAdmin()
             throws DeviceNotAvailableException {
         if (!mHasFeature) {
@@ -138,6 +151,7 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
                 "testGetTransferOwnershipBundleOnlyCalledFromAdmin", mUserId);
     }
 
+    @Test
     public void testBundleEmptyAfterTransferWithNullBundle() throws DeviceNotAvailableException {
         if (!mHasFeature) {
             return;
@@ -150,6 +164,7 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
                 "testTransferOwnershipEmptyBundleLoaded", mUserId);
     }
 
+    @Test
     public void testIsBundleNullNoTransfer() throws DeviceNotAvailableException {
         if (!mHasFeature) {
             return;
@@ -208,6 +223,7 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
                 mPrimaryUserId);
     }
 
+    @Test
     public void testTargetDeviceAdminServiceBound() throws Exception {
         if (!mHasFeature) {
             return;

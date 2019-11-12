@@ -17,17 +17,8 @@
 package com.android.cts.devicepolicy;
 
 import android.platform.test.annotations.FlakyTest;
-import android.platform.test.annotations.RequiresDevice;
 
-import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.log.LogUtil.CLog;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import org.junit.Test;
 
 /**
  * Set of tests for use cases that apply to profile and device owner with DPC
@@ -51,7 +42,7 @@ public abstract class DeviceAndProfileOwnerTestApi25 extends BaseDevicePolicyTes
     protected int mUserId;
 
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         if (mHasFeature) {
             getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
             getDevice().uninstallPackage(TEST_APP_PKG);
@@ -65,6 +56,7 @@ public abstract class DeviceAndProfileOwnerTestApi25 extends BaseDevicePolicyTes
     }
 
     /** Test for resetPassword for all devices. */
+    @Test
     public void testResetPassword() throws Exception {
         if (!mHasFeature || !mHasSecureLockScreen) {
             return;
@@ -74,6 +66,7 @@ public abstract class DeviceAndProfileOwnerTestApi25 extends BaseDevicePolicyTes
 
     /** Additional test for resetPassword for FBE-enabled devices. */
     @FlakyTest(bugId = 141161690)
+    @Test
     public void testResetPasswordFbe() throws Exception {
         if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
             return;
@@ -89,6 +82,7 @@ public abstract class DeviceAndProfileOwnerTestApi25 extends BaseDevicePolicyTes
         executeDeviceTestMethod(RESET_PASSWORD_TEST_CLASS, "testResetPassword");
     }
 
+    @Test
     public void testPermissionGrantPreMApp() throws Exception {
         if (!mHasFeature) {
             return;
@@ -97,6 +91,7 @@ public abstract class DeviceAndProfileOwnerTestApi25 extends BaseDevicePolicyTes
         executeDeviceTestMethod(".PermissionsTest", "testPermissionGrantStateAppPreMDeviceAdminPreQ");
     }
 
+    @Test
     public void testPasswordRequirementsApi() throws Exception {
         if (!mHasFeature) {
             return;

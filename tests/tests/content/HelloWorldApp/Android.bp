@@ -12,38 +12,49 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//-----------------------------------------------------------
-android_test_helper_app {
-    name: "HelloWorld5",
+java_defaults {
+    name: "hello_world_defaults",
     defaults: ["cts_defaults"],
-    srcs: ["src5/**/*.java"],
+    sdk_version: "current",
+    min_sdk_version: "24",
     static_libs: [
         "androidx.appcompat_appcompat",
         "androidx-constraintlayout_constraintlayout",
         "com.google.android.material_material",
     ],
-    // tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "vts",
-        "general-tests",
+    package_splits: [
+        "mdpi-v4",
+        "hdpi-v4",
+        "xhdpi-v4",
+        "xxhdpi-v4",
+        "xxxhdpi-v4",
     ],
 }
 
+// TODO(b/140795853): once fixed, uncomment the below targets.
+
 //-----------------------------------------------------------
-android_test_helper_app {
-    name: "HelloWorld7",
-    defaults: ["cts_defaults"],
-    srcs: ["src7/**/*.java"],
-    static_libs: [
-        "androidx.appcompat_appcompat",
-        "androidx-constraintlayout_constraintlayout",
-        "com.google.android.material_material",
-    ],
-    // tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "vts",
-        "general-tests",
-    ],
-}
+//android_test {
+//    name: "HelloWorld5",
+//    defaults: ["hello_world_defaults"],
+//    srcs: ["src5/**/*.java"],
+//    // tag this module as a cts test artifact
+//    test_suites: [
+//        "cts",
+//        "vts",
+//        "general-tests",
+//    ],
+//}
+
+//-----------------------------------------------------------
+//android_test {
+//    name: "HelloWorld7",
+//    defaults: ["hello_world_defaults"],
+//    srcs: ["src7/**/*.java"],
+//    // tag this module as a cts test artifact
+//    test_suites: [
+//        "cts",
+//        "vts",
+//        "general-tests",
+//    ],
+//}
