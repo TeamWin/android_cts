@@ -386,6 +386,7 @@ public class RoleManagerTest {
 
     @Test
     public void targetCurrentSdkAndChangeDefaultDialerThenIsCanceled() throws Exception {
+        assumeTrue(sRoleManager.isRoleAvailable(RoleManager.ROLE_DIALER));
         WaitForResultActivity activity = mActivityRule.getActivity();
         activity.startActivityToWaitForResult(new Intent()
                 .setComponent(new ComponentName(APP_PACKAGE_NAME,
@@ -397,6 +398,7 @@ public class RoleManagerTest {
 
     @Test
     public void targetCurrentSdkAndChangeDefaultSmsThenIsCanceled() throws Exception {
+        assumeTrue(sRoleManager.isRoleAvailable(RoleManager.ROLE_SMS));
         WaitForResultActivity activity = mActivityRule.getActivity();
         activity.startActivityToWaitForResult(new Intent()
                 .setComponent(new ComponentName(APP_PACKAGE_NAME,
@@ -424,6 +426,7 @@ public class RoleManagerTest {
     @FlakyTest
     @Test
     public void targetSdk28AndChangeDefaultSmsAndAllowThenIsDefaultSms() throws Exception {
+        assumeTrue(sRoleManager.isRoleAvailable(RoleManager.ROLE_SMS));
         sContext.startActivity(new Intent()
                 .setComponent(new ComponentName(APP_28_PACKAGE_NAME,
                         APP_28_CHANGE_DEFAULT_SMS_ACTIVITY_NAME))
