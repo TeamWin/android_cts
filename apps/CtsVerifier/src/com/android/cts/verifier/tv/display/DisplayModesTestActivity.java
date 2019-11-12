@@ -16,16 +16,25 @@
 
 package com.android.cts.verifier.tv.display;
 
+import android.content.Context;
+import android.hardware.display.DisplayManager;
 import android.os.Bundle;
+import android.view.Display;
 
 import androidx.annotation.StringRes;
 
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.tv.TvAppVerifierActivity;
 
+import com.google.common.base.Throwables;
+import com.google.common.truth.FailureMetadata;
+import com.google.common.truth.Subject;
+
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.annotation.Nullable;
 
 /**
  * Test for verifying that the platform correctly reports display resolution and refresh rate. More
@@ -34,18 +43,23 @@ import java.util.List;
  */
 public class DisplayModesTestActivity extends TvAppVerifierActivity {
     private static final int DISPLAY_DISCONNECT_WAIT_TIME_SECONDS = 5;
+    private static final float REFRESH_RATE_PRECISION = 0.01f;
+
+    private static final Subject.Factory<ModeSubject, Display.Mode> MODE_SUBJECT_FACTORY =
+            (failureMetadata, mode) -> new ModeSubject(failureMetadata, mode);
 
     private TestSequence mTestSequence;
+    private DisplayManager mDisplayManager;
 
     @Override
     protected void setInfoResources() {
-        setInfoResources(R.string.tv_display_modes_test,
-                R.string.tv_display_modes_test_info, -1);
+        setInfoResources(R.string.tv_display_modes_test, R.string.tv_display_modes_test_info, -1);
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mDisplayManager = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
     }
 
     @Override
@@ -75,7 +89,8 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
 
         @Override
         protected String getInstructionText() {
-            return mContext.getString(R.string.tv_display_modes_disconnect_display,
+            return mContext.getString(
+                    R.string.tv_display_modes_disconnect_display,
                     mContext.getString(getButtonStringId()),
                     DISPLAY_DISCONNECT_WAIT_TIME_SECONDS,
                     DISPLAY_DISCONNECT_WAIT_TIME_SECONDS + 1);
@@ -88,15 +103,26 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
 
         @Override
         public void runTestAsync() {
-            mContext.getPostTarget().postDelayed(() -> {
-                // TODO: implement
-                done();
-            }, Duration.ofSeconds(DISPLAY_DISCONNECT_WAIT_TIME_SECONDS).toMillis());
+            mContext.getPostTarget()
+                    .postDelayed(
+                            () -> {
+                                try {
+                                    // Verify the display APIs do not crash when the display is
+                                    // disconnected
+                                    Display display =
+                                            mDisplayManager.getDisplay(Display.DEFAULT_DISPLAY);
+                                    display.getMode();
+                                } catch (Exception e) {
+                                    getAsserter().fail(Throwables.getStackTraceAsString(e));
+                                }
+                                done();
+                            },
+                            Duration.ofSeconds(DISPLAY_DISCONNECT_WAIT_TIME_SECONDS).toMillis());
         }
     }
 
     private class Display2160pTestStep extends SyncTestStep {
-        public Display2160pTestStep (TvAppVerifierActivity context) {
+        public Display2160pTestStep(TvAppVerifierActivity context) {
             super(context);
         }
 
@@ -107,7 +133,8 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
 
         @Override
         protected String getInstructionText() {
-            return mContext.getString(R.string.tv_display_modes_connect_2160p_display,
+            return mContext.getString(
+                    R.string.tv_display_modes_connect_2160p_display,
                     mContext.getString(getButtonStringId()));
         }
 
@@ -118,15 +145,20 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
 
         @Override
         public void runTest() {
-            // TODO: implement
+            Display display = mDisplayManager.getDisplay(Display.DEFAULT_DISPLAY);
+            getAsserter()
+                    .withMessage("Display.getMode()")
+                    .about(MODE_SUBJECT_FACTORY)
+                    .that(display.getMode())
+                    .isEquivalentTo(new Mode(3840, 2160, 60f), REFRESH_RATE_PRECISION);
         }
     }
-
 
     private class Display1080pTestStep extends SyncTestStep {
         public Display1080pTestStep(TvAppVerifierActivity context) {
             super(context);
         }
+
         @Override
         protected String getStepName() {
             return mContext.getString(R.string.tv_display_modes_test_step_1080p);
@@ -134,7 +166,8 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
 
         @Override
         protected String getInstructionText() {
-            return mContext.getString(R.string.tv_display_modes_connect_1080p_display,
+            return mContext.getString(
+                    R.string.tv_display_modes_connect_1080p_display,
                     mContext.getString(getButtonStringId()));
         }
 
@@ -145,7 +178,50 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
 
         @Override
         public void runTest() {
-            // TODO: implement
+            Display display = mDisplayManager.getDisplay(Display.DEFAULT_DISPLAY);
+
+            getAsserter()
+                    .withMessage("Display.getMode()")
+                    .about(MODE_SUBJECT_FACTORY)
+                    .that(display.getMode())
+                    .isEquivalentTo(new Mode(1920, 1080, 60f), REFRESH_RATE_PRECISION);
+        }
+    }
+
+    // We use a custom Mode class since the constructors of Display.Mode are hidden. Additionally,
+    // we want to use fuzzy comparision for frame rates which is not used in Display.Mode.equals().
+    private static class Mode {
+        public int mWidth;
+        public int mHeight;
+        public float mRefreshRate;
+
+        public Mode(int width, int height, float refreshRate) {
+            this.mWidth = width;
+            this.mHeight = height;
+            this.mRefreshRate = refreshRate;
+        }
+
+        public boolean isEquivalent(Display.Mode displayMode, float refreshRatePrecision) {
+            return mHeight == displayMode.getPhysicalHeight()
+                    && mWidth == displayMode.getPhysicalWidth()
+                    && Math.abs(mRefreshRate - displayMode.getRefreshRate()) < refreshRatePrecision;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%dx%d %.2f Hz", mWidth, mHeight, mRefreshRate);
+        }
+    }
+
+    private static class ModeSubject extends Subject<ModeSubject, Display.Mode> {
+        public ModeSubject(FailureMetadata failureMetadata, @Nullable Display.Mode subject) {
+            super(failureMetadata, subject);
+        }
+
+        public void isEquivalentTo(Mode mode, float refreshRatePrecision) {
+            if (!mode.isEquivalent(actual(), refreshRatePrecision)) {
+                failWithActual("expected", mode);
+            }
         }
     }
 }
