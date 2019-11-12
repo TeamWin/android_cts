@@ -117,17 +117,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
             // Unmount, remount and verify
             getDevice().executeShellCommand("sm unmount " + vol.volId);
             getDevice().executeShellCommand("sm mount " + vol.volId);
-
-            int attempt = 0;
-            String pkgPath = getDevice().executeShellCommand("pm path " + PKG);
-            while ((pkgPath == null || pkgPath.isEmpty()) && attempt++ < 15) {
-                Thread.sleep(1000);
-                pkgPath = getDevice().executeShellCommand("pm path " + PKG);
-            }
-
-            if (pkgPath == null || pkgPath.isEmpty()) {
-                throw new AssertionError("Package not ready yet");
-            }
+            waitForInstrumentationReady();
 
             runDeviceTests(PKG, CLASS, "testDataNotInternal");
             runDeviceTests(PKG, CLASS, "testDataRead");
@@ -192,6 +182,8 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
         getDevice().executeShellCommand("sm unmount " + vol.volId);
         runDeviceTests(PKG, CLASS, "testPrimaryUnmounted");
         getDevice().executeShellCommand("sm mount " + vol.volId);
+        waitForInstrumentationReady();
+
         runDeviceTests(PKG, CLASS, "testPrimaryAdopted");
         runDeviceTests(PKG, CLASS, "testPrimaryDataRead");
 
@@ -236,6 +228,8 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
         getDevice().executeShellCommand("sm unmount " + vol.volId);
         runDeviceTests(PKG, CLASS, "testPrimaryUnmounted");
         getDevice().executeShellCommand("sm mount " + vol.volId);
+        waitForInstrumentationReady();
+
         runDeviceTests(PKG, CLASS, "testPrimaryAdopted");
         runDeviceTests(PKG, CLASS, "testPrimaryDataRead");
 
@@ -303,6 +297,8 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
 
             // Kick through a remount cycle, which should purge the adopted app
             getDevice().executeShellCommand("sm mount " + vol.volId);
+            waitForInstrumentationReady();
+
             runDeviceTests(PKG, CLASS, "testDataInternal");
             boolean didThrow = false;
             try {
@@ -381,6 +377,22 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
             Thread.sleep(1000);
         }
         throw new AssertionError("Volume not ready " + vol.volId);
+    }
+
+    private void waitForInstrumentationReady() throws Exception {
+        // Wait for volume ready first
+        getAdoptionVolume();
+
+        int attempt = 0;
+        String pkgInstr = getDevice().executeShellCommand("pm list instrumentation");
+        while ((pkgInstr == null || !pkgInstr.contains(PKG)) && attempt++ < 15) {
+            Thread.sleep(1000);
+            pkgInstr = getDevice().executeShellCommand("pm list instrumentation");
+        }
+
+        if (pkgInstr == null || !pkgInstr.contains(PKG)) {
+            throw new AssertionError("Package not ready yet");
+        }
     }
 
     private void cleanUp(String diskId) throws Exception {
