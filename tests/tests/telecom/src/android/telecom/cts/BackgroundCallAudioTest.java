@@ -24,8 +24,6 @@ import android.telecom.cts.api29incallservice.ICtsApi29InCallServiceControl;
 import android.text.TextUtils;
 import android.util.Log;
 
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -394,7 +392,7 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
             public void onScreenCall(Details callDetails) {
                 getService().respondToCall(callDetails, new CallResponse.Builder()
                         .setDisallowCall(false)
-                        .setShouldScreenCallFurther(true)
+                        .setShouldScreenCallViaAudioProcessing(true)
                         .build());
                 lock.release();
             }
