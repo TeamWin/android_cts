@@ -26,6 +26,8 @@ import org.junit.Rule;
 import org.junit.runner.RunWith;
 import org.junit.Test;
 
+import java.util.concurrent.TimeUnit;
+
 /** HDMI CEC test to test routing control (Section 11.2.2) */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecRoutingControlTest extends BaseHostJUnit4Test {
@@ -33,7 +35,28 @@ public final class HdmiCecRoutingControlTest extends BaseHostJUnit4Test {
     private static final int PHYSICAL_ADDRESS = 0x1000;
 
     @Rule
-    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(CecDevice.PLAYBACK_1, this);
+    public HdmiCecClientWrapper hdmiCecClient =
+            new HdmiCecClientWrapper(CecDevice.PLAYBACK_1, this);
+
+    /**
+     * Test 11.2.2-1
+     * Tests that the device broadcasts a <ACTIVE_SOURCE> in response to a <SET_STREAM_PATH>, when
+     * the TV has switched to a different input.
+     */
+    @Test
+    public void cect_11_2_2_1_SetStreamPathToDut() throws Exception {
+        final long hdmi2Address = 0x2000;
+        /* Switch to HDMI2. Setup assumes DUT is connected to HDMI1. */
+        hdmiCecClient.sendCecMessage(CecDevice.PLAYBACK_2, CecDevice.BROADCAST,
+                CecMessage.ACTIVE_SOURCE, hdmiCecClient.formatParams(hdmi2Address));
+        TimeUnit.SECONDS.sleep(3);
+        hdmiCecClient.sendCecMessage(CecDevice.TV, CecDevice.BROADCAST,
+                CecMessage.SET_STREAM_PATH,
+                hdmiCecClient.formatParams(HdmiCecConstants.PHYSICAL_ADDRESS));
+        String message = hdmiCecClient.checkExpectedOutput(CecMessage.ACTIVE_SOURCE);
+        assertEquals(HdmiCecConstants.PHYSICAL_ADDRESS,
+                hdmiCecClient.getParamsFromMessage(message));
+    }
 
     /**
      * Test 11.2.2-2
