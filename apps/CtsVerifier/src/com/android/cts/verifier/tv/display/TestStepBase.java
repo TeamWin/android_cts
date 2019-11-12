@@ -111,7 +111,7 @@ public abstract class TestStepBase {
     /**
      * Returns id of string resource containing the text of the button.
      */
-    protected abstract int getButtonStringId();
+    protected abstract @StringRes int getButtonStringId();
 
     protected void done() {
         TvAppVerifierActivity.setPassState(mViewItem, mHasPassed);

@@ -18,6 +18,8 @@ package com.android.cts.verifier.tv.display;
 
 import android.view.Display;
 
+import androidx.annotation.StringRes;
+
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.tv.TvAppVerifierActivity;
 
@@ -85,7 +87,7 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
         }
 
         @Override
-        protected int getButtonStringId() {
+        protected @StringRes int getButtonStringId() {
             return R.string.tv_start_test;
         }
 
@@ -121,7 +123,7 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
         }
 
         @Override
-        protected int getButtonStringId() {
+        protected @StringRes int getButtonStringId() {
             return R.string.tv_start_test;
         }
 
@@ -187,7 +189,7 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
         }
 
         @Override
-        protected int getButtonStringId() {
+        protected @StringRes int getButtonStringId() {
             return R.string.tv_start_test;
         }
 
