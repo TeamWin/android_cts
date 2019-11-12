@@ -28,7 +28,6 @@ import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -176,7 +175,6 @@ public class PackageManagerShellCommandTest {
                 getSplits(TEST_APP_PACKAGE));
     }
 
-    @Ignore("Until pm batch change is in.")
     @Test
     public void testSplitsBatchInstall() throws Exception {
         installSplitsBatch(new String[]{TEST_HW5, TEST_HW5_SPLIT0, TEST_HW5_SPLIT1, TEST_HW5_SPLIT2,
@@ -228,7 +226,6 @@ public class PackageManagerShellCommandTest {
                 getSplits(TEST_APP_PACKAGE));
     }
 
-    @Ignore("Until pm batch change is in.")
     @Test
     public void testSplitsBatchUpdate() throws Exception {
         installSplitsBatch(new String[]{TEST_HW5, TEST_HW5_SPLIT0, TEST_HW5_SPLIT1, TEST_HW5_SPLIT2,
@@ -257,7 +254,6 @@ public class PackageManagerShellCommandTest {
         assertEquals("base, config.mdpi, config.xxhdpi", getSplits(TEST_APP_PACKAGE));
     }
 
-    @Ignore("Until pm batch change is in.")
     @Test
     public void testSplitsBatchUninstall() throws Exception {
         installSplitsBatch(new String[]{TEST_HW5, TEST_HW5_SPLIT0, TEST_HW5_SPLIT1, TEST_HW5_SPLIT2,
@@ -292,7 +288,6 @@ public class PackageManagerShellCommandTest {
         assertEquals("base, config.mdpi, config.xxhdpi", getSplits(TEST_APP_PACKAGE));
     }
 
-    @Ignore("Until pm batch change is in.")
     @Test
     public void testSplitsBatchRemove() throws Exception {
         installSplitsBatch(new String[]{TEST_HW7, TEST_HW7_SPLIT0, TEST_HW7_SPLIT1, TEST_HW7_SPLIT2,
