@@ -273,7 +273,7 @@ public class ConnectionServiceTest extends BaseTelecomTestWithMockServices {
         connection.setConnectTimeMillis(1000L);
         assertEquals(1000L, connection.getConnectTimeMillis());
         connection.setConnectionStartElapsedRealTime(100L);
-        assertEquals(1000L, connection.getConnectElapsedTimeMillis());
+        assertEquals(100L, connection.getConnectElapsedTimeMillis());
 
         CtsConnectionService.addExistingConnectionToTelecom(TEST_PHONE_ACCOUNT_HANDLE, connection);
         assertNumCalls(mInCallCallbacks.getService(), 2);
