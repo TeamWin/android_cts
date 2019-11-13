@@ -27,6 +27,6 @@ public class DataPathPassphraseActiveSubscribeTestActivity extends BaseTestActiv
     @Override
     protected BaseTestCase getTestCase(Context context) {
         return new DataPathInBandTestCase(context, /* isSecurityOpen */ false,
-                /* isPublish */ false, /* isUnsolicited */ false);
+                /* isPublish */ false, /* isUnsolicited */ false, /* usePmk */ false);
     }
 }

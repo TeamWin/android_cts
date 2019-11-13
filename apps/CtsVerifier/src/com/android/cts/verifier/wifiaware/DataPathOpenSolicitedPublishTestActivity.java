@@ -29,7 +29,7 @@ public class DataPathOpenSolicitedPublishTestActivity extends BaseTestActivity {
     @Override
     protected BaseTestCase getTestCase(Context context) {
         return new DataPathInBandTestCase(context, /* isSecurityOpen */ true, /* isPublish */ true,
-                /* isUnsolicited */ false);
+                /* isUnsolicited */ false, /* usePmk */ false);
     }
 
     @Override
