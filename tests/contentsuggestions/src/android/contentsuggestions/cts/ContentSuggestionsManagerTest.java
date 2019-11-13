@@ -56,7 +56,7 @@ public class ContentSuggestionsManagerTest {
     private static final String TAG = ContentSuggestionsManagerTest.class.getSimpleName();
 
     private static final long VERIFY_TIMEOUT_MS = 5_000;
-    private static final long SERVICE_LIFECYCLE_TIMEOUT_MS = 10_000;
+    private static final long SERVICE_LIFECYCLE_TIMEOUT_MS = 30_000;
 
     private ContentSuggestionsManager mManager;
     private CtsContentSuggestionsService.Watcher mWatcher;
@@ -65,6 +65,7 @@ public class ContentSuggestionsManagerTest {
     public void setup() {
         mWatcher = CtsContentSuggestionsService.setWatcher();
 
+        Log.d(TAG, "Test setting service");
         mManager = (ContentSuggestionsManager) getContext()
                 .getSystemService(Context.CONTENT_SUGGESTIONS_SERVICE);
         setService(CtsContentSuggestionsService.SERVICE_COMPONENT.flattenToString());
@@ -79,10 +80,12 @@ public class ContentSuggestionsManagerTest {
 
         await(mWatcher.created, "Waiting for create");
         reset(mWatcher.verifier);
+        Log.d(TAG, "Service set and watcher reset.");
     }
 
     @After
     public void tearDown() {
+        Log.d(TAG, "Starting tear down, watcher is: " + mWatcher);
         resetService();
         await(mWatcher.destroyed, "Waiting for service destroyed");
 
