@@ -1804,8 +1804,10 @@
 
     <string name="aware_dp_ib_open_unsolicited">Data Path: Open: Unsolicited/Passive</string>
     <string name="aware_dp_ib_passphrase_unsolicited">Data Path: Passphrase: Unsolicited/Passive</string>
+    <string name="aware_dp_ib_pmk_unsolicited">Data Path: PMK: Unsolicited/Passive</string>
     <string name="aware_dp_ib_open_solicited">Data Path: Open: Solicited/Active</string>
     <string name="aware_dp_ib_passphrase_solicited">Data Path: Passphrase: Solicited/Active</string>
+    <string name="aware_dp_ib_pmk_solicited">Data Path: PMK: Solicited/Active</string>
     <string name="aware_discovery_ranging">Discovery with Ranging</string>
     <string name="aware_publish">Publish</string>
     <string name="aware_subscribe">Subscribe</string>
@@ -1868,6 +1870,10 @@
     <string name="aware_data_path_passphrase_unsolicited_publish_info">The publisher is now ready.\n\nOn the other device: start the \'Data Path: Passphrase: Unsolicited/Passive\' / \'Subscribe\' test.</string>
     <string name="aware_data_path_passphrase_passive_subscribe">Data Path: Passphrase: Passive Subscribe</string>
 
+    <string name="aware_data_path_pmk_unsolicited_publish">Data Path: PMK: Unsolicited Publish</string>
+    <string name="aware_data_path_pmk_unsolicited_publish_info">The publisher is now ready.\n\nOn the other device: start the \'Data Path: PMK: Unsolicited/Passive\' / \'Subscribe\' test.</string>
+    <string name="aware_data_path_pmk_passive_subscribe">Data Path: PMK: Passive Subscribe</string>
+
     <string name="aware_data_path_open_solicited_publish">Data Path: Open: Solicited Publish</string>
     <string name="aware_data_path_open_solicited_publish_info">The publisher is now ready.\n\nOn the other device: start the \'Data Path: Open: Solicited/Active\' / \'Subscribe\' test.</string>
     <string name="aware_data_path_open_active_subscribe">Data Path: Open: Active Subscribe</string>
@@ -1875,6 +1881,10 @@
     <string name="aware_data_path_passphrase_solicited_publish">Data Path: Passphrase: Solicited Publish</string>
     <string name="aware_data_path_passphrase_solicited_publish_info">The publisher is now ready.\n\nOn the other device: start the \'Data Path: Passphrase: Solicited/Active\' / \'Subscribe\' test.</string>
     <string name="aware_data_path_passphrase_active_subscribe">Data Path: Passphrase: Active Subscribe</string>
+
+    <string name="aware_data_path_pmk_solicited_publish">Data Path: PMK: Solicited Publish</string>
+    <string name="aware_data_path_pmk_solicited_publish_info">The publisher is now ready.\n\nOn the other device: start the \'Data Path: PMK: Solicited/Active\' / \'Subscribe\' test.</string>
+    <string name="aware_data_path_pmk_active_subscribe">Data Path: PMK: Active Subscribe</string>
 
     <string name="aware_data_path_oob_open_responder">Data Path (OOB): Open: Responder</string>
     <string name="aware_data_path_oob_open_responder_info">The responder is now ready.\n\nOn the other device: start the \'Data Path (OOB): Open\' / \'Initiator\' test.</string>

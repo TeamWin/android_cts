@@ -2419,6 +2419,14 @@
                   android:label="@string/aware_data_path_passphrase_passive_subscribe"
                   android:configChanges="keyboardHidden|orientation|screenSize" />
 
+        <activity android:name=".wifiaware.DataPathPmkUnsolicitedPublishTestActivity"
+                  android:label="@string/aware_data_path_pmk_unsolicited_publish"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".wifiaware.DataPathPmkPassiveSubscribeTestActivity"
+                  android:label="@string/aware_data_path_pmk_passive_subscribe"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
+
         <activity android:name=".wifiaware.DataPathOpenSolicitedPublishTestActivity"
                   android:label="@string/aware_data_path_open_solicited_publish"
                   android:configChanges="keyboardHidden|orientation|screenSize" />
@@ -2433,6 +2441,14 @@
 
         <activity android:name=".wifiaware.DataPathPassphraseActiveSubscribeTestActivity"
                   android:label="@string/aware_data_path_passphrase_active_subscribe"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".wifiaware.DataPathPmkSolicitedPublishTestActivity"
+                  android:label="@string/aware_data_path_pmk_solicited_publish"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".wifiaware.DataPathPmkActiveSubscribeTestActivity"
+                  android:label="@string/aware_data_path_pmk_active_subscribe"
                   android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity android:name=".wifiaware.DataPathOobOpenResponderTestActivity"
