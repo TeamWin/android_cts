@@ -25,7 +25,7 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.cts.CameraTestUtils;
 import android.hardware.camera2.params.StreamConfigurationMap;
-import android.hardware.camera2.params.CapabilityAndMaxSize;
+import android.hardware.camera2.params.Capability;
 import android.util.Range;
 import android.util.Size;
 import android.util.Log;
@@ -1816,6 +1816,26 @@ public class StaticMetadata {
         return maxZoom;
     }
 
+    public Range<Float> getZoomRatioRangeChecked() {
+        Key<Range<Float>> key =
+                CameraCharacteristics.CONTROL_ZOOM_RATIO_RANGE;
+
+        Range<Float> zoomRatioRange = getValueFromKeyNonNull(key);
+        if (zoomRatioRange == null) {
+            return new Range<Float>(1.0f, 1.0f);
+        }
+
+        checkTrueForKey(key, String.format(" min zoom ratio %f should be no more than 1",
+                zoomRatioRange.getLower()), zoomRatioRange.getLower() <= 1.0);
+        checkTrueForKey(key, String.format(" max zoom ratio %f should be no less than 1",
+                zoomRatioRange.getUpper()), zoomRatioRange.getUpper() >= 1.0);
+        final float ZOOM_MIN_RANGE = 0.01f;
+        checkTrueForKey(key, " zoom ratio range should be reasonably large",
+                zoomRatioRange.getUpper().equals(zoomRatioRange.getLower()) ||
+                zoomRatioRange.getUpper() - zoomRatioRange.getLower() > ZOOM_MIN_RANGE);
+        return zoomRatioRange;
+    }
+
     public int[] getAvailableSceneModesChecked() {
         Key<int[]> key =
                 CameraCharacteristics.CONTROL_AVAILABLE_SCENE_MODES;
@@ -1853,21 +1873,21 @@ public class StaticMetadata {
         return modes;
     }
 
-    public CapabilityAndMaxSize[] getAvailableBokehCapsChecked() {
+    public Capability[] getAvailableBokehCapsChecked() {
         final Size FULL_HD = new Size(1920, 1080);
         Rect activeRect = getValueFromKeyNonNull(
                 CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
-        Key<CapabilityAndMaxSize[]> key =
+        Key<Capability[]> key =
                 CameraCharacteristics.CONTROL_AVAILABLE_BOKEH_CAPABILITIES;
-        CapabilityAndMaxSize[] caps = mCharacteristics.get(key);
+        Capability[] caps = mCharacteristics.get(key);
         if (caps == null) {
-            return new CapabilityAndMaxSize[0];
+            return new Capability[0];
         }
 
         Size[] yuvSizes = getAvailableSizesForFormatChecked(ImageFormat.YUV_420_888,
                 StaticMetadata.StreamDirection.Output);
         List<Size> yuvSizesList = Arrays.asList(yuvSizes);
-        for (CapabilityAndMaxSize cap : caps) {
+        for (Capability cap : caps) {
             int bokehMode = cap.getMode();
             Size maxStreamingSize = cap.getMaxStreamingSize();
             boolean maxStreamingSizeIsZero =

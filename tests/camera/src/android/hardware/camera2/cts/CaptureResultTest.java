@@ -806,6 +806,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         waiverKeys.add(CaptureResult.CONTROL_AF_MODE);
         waiverKeys.add(CaptureResult.CONTROL_AWB_MODE);
         waiverKeys.add(CaptureResult.CONTROL_AWB_LOCK);
+        waiverKeys.add(CaptureResult.CONTROL_ZOOM_RATIO);
         waiverKeys.add(CaptureResult.STATISTICS_FACE_DETECT_MODE);
         waiverKeys.add(CaptureResult.FLASH_MODE);
         waiverKeys.add(CaptureResult.SCALER_CROP_REGION);
@@ -946,6 +947,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         resultKeys.add(CaptureResult.CONTROL_ENABLE_ZSL);
         resultKeys.add(CaptureResult.CONTROL_AF_SCENE_CHANGE);
         resultKeys.add(CaptureResult.CONTROL_BOKEH_MODE);
+        resultKeys.add(CaptureResult.CONTROL_ZOOM_RATIO);
         resultKeys.add(CaptureResult.EDGE_MODE);
         resultKeys.add(CaptureResult.FLASH_MODE);
         resultKeys.add(CaptureResult.FLASH_STATE);
