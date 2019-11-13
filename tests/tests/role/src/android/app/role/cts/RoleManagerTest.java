@@ -37,8 +37,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
+import android.net.Uri;
 import android.os.Process;
 import android.os.UserHandle;
+import android.provider.Settings;
 import android.provider.Telephony;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
@@ -57,6 +59,7 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.TestUtils;
 import com.android.compatibility.common.util.ThrowingRunnable;
+import com.android.compatibility.common.util.UiAutomatorUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -86,6 +89,8 @@ public class RoleManagerTest {
     private static final long UNEXPECTED_TIMEOUT_MILLIS = 1000;
 
     private static final String ROLE_NAME = RoleManager.ROLE_BROWSER;
+    private static final String ROLE_SHORT_LABEL = "Browser app";
+    private static final String APP_DETAILS_ADVANCED_LABEL = "Advanced";
 
     private static final String APP_APK_PATH = "/data/local/tmp/cts/role/CtsRoleTestApp.apk";
     private static final String APP_PACKAGE_NAME = "android.app.role.cts.app";
@@ -418,6 +423,156 @@ public class RoleManagerTest {
         waitFindObject(By.res("android:id/button1")).click();
         TestUtils.waitUntil("App is not set as default sms app", () -> Objects.equals(
                 Telephony.Sms.getDefaultSmsPackage(sContext), APP_28_PACKAGE_NAME));
+    }
+
+    @Test
+    public void openDefaultAppDetailsThenIsNotDefaultApp() throws Exception {
+        runWithShellPermissionIdentity(() -> sContext.startActivity(new Intent(
+                Intent.ACTION_MANAGE_DEFAULT_APP)
+                .addCategory(Intent.CATEGORY_DEFAULT)
+                .putExtra(Intent.EXTRA_ROLE_NAME, ROLE_NAME)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                        | Intent.FLAG_ACTIVITY_CLEAR_TASK)));
+
+        waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(false))
+                .hasDescendant(By.text(APP_PACKAGE_NAME)));
+
+        pressBack();
+    }
+
+    @Test
+    public void openDefaultAppDetailsAndSetDefaultAppThenIsDefaultApp() throws Exception {
+        runWithShellPermissionIdentity(() -> sContext.startActivity(new Intent(
+                Intent.ACTION_MANAGE_DEFAULT_APP)
+                .addCategory(Intent.CATEGORY_DEFAULT)
+                .putExtra(Intent.EXTRA_ROLE_NAME, ROLE_NAME)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                        | Intent.FLAG_ACTIVITY_CLEAR_TASK)));
+        waitForIdle();
+        waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(false))
+                .hasDescendant(By.text(APP_PACKAGE_NAME))).click();
+
+        waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(true))
+                .hasDescendant(By.text(APP_PACKAGE_NAME)));
+        assertIsRoleHolder(ROLE_NAME, APP_PACKAGE_NAME, true);
+
+        pressBack();
+    }
+
+    @Test
+    public void openDefaultAppDetailsAndSetDefaultAppAndSetAnotherThenIsNotDefaultApp()
+            throws Exception {
+        runWithShellPermissionIdentity(() -> sContext.startActivity(new Intent(
+                Intent.ACTION_MANAGE_DEFAULT_APP)
+                .addCategory(Intent.CATEGORY_DEFAULT)
+                .putExtra(Intent.EXTRA_ROLE_NAME, ROLE_NAME)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                        | Intent.FLAG_ACTIVITY_CLEAR_TASK)));
+        waitForIdle();
+        waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(false))
+                .hasDescendant(By.text(APP_PACKAGE_NAME))).click();
+        waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(true))
+                .hasDescendant(By.text(APP_PACKAGE_NAME)));
+        waitForIdle();
+        waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(false))).click();
+
+        waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(false))
+                .hasDescendant(By.text(APP_PACKAGE_NAME)));
+        assertIsRoleHolder(ROLE_NAME, APP_PACKAGE_NAME, false);
+
+        pressBack();
+    }
+
+    @Test
+    public void openDefaultAppListThenHasDefaultApp() throws Exception {
+        sContext.startActivity(new Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
+                .addCategory(Intent.CATEGORY_DEFAULT)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
+
+        waitFindObject(By.text(ROLE_SHORT_LABEL));
+
+        pressBack();
+    }
+
+    @Test
+    public void openDefaultAppListThenIsNotDefaultAppInList() throws Exception {
+        sContext.startActivity(new Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
+                .addCategory(Intent.CATEGORY_DEFAULT)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
+
+        assertThat(waitFindObjectOrNull(By.text(APP_PACKAGE_NAME), UNEXPECTED_TIMEOUT_MILLIS))
+                .isNull();
+
+        pressBack();
+    }
+
+    @Test
+    public void openDefaultAppListAndSetDefaultAppThenIsDefaultApp() throws Exception {
+        sContext.startActivity(new Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
+                .addCategory(Intent.CATEGORY_DEFAULT)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
+        waitForIdle();
+        waitFindObject(By.text(ROLE_SHORT_LABEL)).click();
+        waitForIdle();
+        waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(false))
+                .hasDescendant(By.text(APP_PACKAGE_NAME))).click();
+
+        waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(true))
+                .hasDescendant(By.text(APP_PACKAGE_NAME)));
+        assertIsRoleHolder(ROLE_NAME, APP_PACKAGE_NAME, true);
+
+        pressBack();
+        pressBack();
+    }
+
+    @Test
+    public void openDefaultAppListAndSetDefaultAppThenIsDefaultAppInList() throws Exception {
+        sContext.startActivity(new Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
+                .addCategory(Intent.CATEGORY_DEFAULT)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
+        waitForIdle();
+        waitFindObject(By.text(ROLE_SHORT_LABEL)).click();
+        waitForIdle();
+        waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(false))
+                .hasDescendant(By.text(APP_PACKAGE_NAME))).click();
+        waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(true))
+                .hasDescendant(By.text(APP_PACKAGE_NAME)));
+        pressBack();
+
+        waitFindObject(By.text(APP_PACKAGE_NAME));
+
+        pressBack();
+    }
+
+    @Test
+    public void openAppDetailsAndSetDefaultAppThenIsDefaultApp() throws Exception {
+        sContext.startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                .setData(Uri.parse("package:" + APP_PACKAGE_NAME))
+                .addCategory(Intent.CATEGORY_DEFAULT)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
+        waitForIdle();
+        waitFindObject(By.text(APP_DETAILS_ADVANCED_LABEL)).click();
+        waitForIdle();
+        waitFindObject(By.text(ROLE_SHORT_LABEL)).click();
+        waitForIdle();
+        waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(false))
+                .hasDescendant(By.text(APP_PACKAGE_NAME))).click();
+
+        waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(true))
+                .hasDescendant(By.text(APP_PACKAGE_NAME)));
+        assertIsRoleHolder(ROLE_NAME, APP_PACKAGE_NAME, true);
+
+        pressBack();
+        pressBack();
+    }
+
+    private static void waitForIdle() {
+        UiAutomatorUtils.getUiDevice().waitForIdle();
+    }
+
+    private static void pressBack() {
+        UiAutomatorUtils.getUiDevice().pressBack();
+        waitForIdle();
     }
 
     @Test
