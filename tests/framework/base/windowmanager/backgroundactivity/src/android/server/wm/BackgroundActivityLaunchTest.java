@@ -125,15 +125,19 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
 
     @After
     public void tearDown() throws Exception {
-        super.tearDown();
-        stopTestPackage(TEST_PACKAGE_APP_A);
-        stopTestPackage(TEST_PACKAGE_APP_B);
-        launchHomeActivity();
-        AppOpsUtils.reset(APP_A_PACKAGE_NAME);
+        // We do this before anything else, because having an active device owner can prevent us
+        // from being able to force stop apps. (b/142061276)
         runWithShellPermissionIdentity(() -> {
             runShellCommand("dpm remove-active-admin --user current "
                     + APP_A_SIMPLE_ADMIN_RECEIVER.flattenToString());
         });
+
+        super.tearDown();
+
+        stopTestPackage(TEST_PACKAGE_APP_A);
+        stopTestPackage(TEST_PACKAGE_APP_B);
+        launchHomeActivity();
+        AppOpsUtils.reset(APP_A_PACKAGE_NAME);
     }
 
     @Test
