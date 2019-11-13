@@ -35,7 +35,6 @@ import android.os.UserHandle;
 
 import android.telecom.Call;
 import android.telecom.PhoneAccount;
-import android.telecom.PhoneAccountHandle;
 import android.telecom.cts.redirectiontestapp.CtsCallRedirectionService;
 import android.telecom.cts.redirectiontestapp.CtsCallRedirectionServiceController;
 import android.telecom.cts.redirectiontestapp.ICtsCallRedirectionServiceController;
@@ -111,7 +110,7 @@ public class CallRedirectionServiceTest extends BaseTelecomTestWithMockServices 
         }
         mCallRedirectionServiceController.setRedirectCall(
                 SAMPLE_HANDLE, null, false);
-        placeAndVerifyCall(true /* viaCallRedirection */, false /* cancelledByCallRedirection */);
+        placeAndVerifyCallByRedirection(false /* cancelledByCallRedirection */);
         mInCallService = mInCallCallbacks.getService();
         assertCallGatewayConstructed(mInCallService.getLastCall(), true);
         mCall = mInCallService.getLastCall();
@@ -128,7 +127,7 @@ public class CallRedirectionServiceTest extends BaseTelecomTestWithMockServices 
         }
         mCallRedirectionServiceController.setRedirectCall(
                 SAMPLE_HANDLE, TestUtils.TEST_PHONE_ACCOUNT_HANDLE_2, false);
-        placeAndVerifyCall(true /* viaCallRedirection */, false /* cancelledByCallRedirection */);
+        placeAndVerifyCallByRedirection(false /* cancelledByCallRedirection */);
         mInCallService = mInCallCallbacks.getService();
         assertCallGatewayConstructed(mInCallService.getLastCall(), true);
         mCall = mInCallService.getLastCall();
@@ -143,7 +142,7 @@ public class CallRedirectionServiceTest extends BaseTelecomTestWithMockServices 
             return;
         }
         mCallRedirectionServiceController.setCancelCall();
-        placeAndVerifyCall(true /* viaCallRedirection */, true /* cancelledByCallRedirection */);
+        placeAndVerifyCallByRedirection(true /* cancelledByCallRedirection */);
         mInCallService = mInCallCallbacks.getService();
         mCall = mInCallService.getLastCall();
         assertCallNotNull(mCall, false);
@@ -154,7 +153,7 @@ public class CallRedirectionServiceTest extends BaseTelecomTestWithMockServices 
             return;
         }
         mCallRedirectionServiceController.setPlaceCallUnmodified();
-        placeAndVerifyCall(true /* viaCallRedirection */, false /* cancelledByCallRedirection */);
+        placeAndVerifyCallByRedirection(true /* cancelledByCallRedirection */);
         mInCallService = mInCallCallbacks.getService();
         assertCallDetailsConstructed(mInCallService.getLastCall(), true);
         mCall = mInCallService.getLastCall();
