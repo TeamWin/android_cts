@@ -817,7 +817,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         });
     }
 
-    @FlakyTest(bugId = 139111392)
+    @FlakyTest(bugId = 142282126)
     @Test
     public void testConfigurationChangeOrderDuringTransition() throws Exception {
         // Launch a PiP activity and ensure configuration change only happened once, and that the
@@ -1115,7 +1115,6 @@ public class PinnedStackTests extends ActivityManagerTestBase {
                 TEST_ACTIVITY).mTaskId);
     }
 
-    @FlakyTest(bugId = 139111392)
     @Test
     public void testLaunchTaskByAffinityMatchSingleTask() throws Exception {
         // Launch an activity into the pinned stack with a fixed affinity
@@ -1172,7 +1171,6 @@ public class PinnedStackTests extends ActivityManagerTestBase {
                 finalAppSize);
     }
 
-    @FlakyTest(bugId = 139111392)
     @Test
     public void testEnterPictureInPictureSavePosition() throws Exception {
         // Ensure we have static shelf offset by running this test over a non-home activity
