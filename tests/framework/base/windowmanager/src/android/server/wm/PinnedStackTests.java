@@ -1494,7 +1494,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         Rect pinnedStackBounds = getPinnedStackBounds();
         int tapX = pinnedStackBounds.left + pinnedStackBounds.width() - 100;
         int tapY = pinnedStackBounds.top + pinnedStackBounds.height() - 100;
-        tapOnDisplay(tapX, tapY, DEFAULT_DISPLAY);
+        tapOnDisplaySync(tapX, tapY, DEFAULT_DISPLAY);
     }
 
     /**

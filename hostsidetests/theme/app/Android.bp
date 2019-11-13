@@ -1,5 +1,4 @@
-//
-// Copyright (C) 2018 The Android Open Source Project
+// Copyright (C) 2014 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,19 +11,19 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
-// A fake framework that mimics an older, pre-release SDK for the purposes of
-// testing what happens when an app linked against a pre-release SDK is installed
-// on release device.
-
-android_app {
-    name: "fake-framework",
-    installable: false,
-    sdk_version: "core_platform",
+android_test_helper_app {
+    name: "CtsThemeDeviceApp",
+    defaults: ["cts_support_defaults"],
+    static_libs: ["androidx.test.rules"],
     srcs: ["src/**/*.java"],
-    export_package_resources: true,
-    optimize: {
-        enabled: false,
-    },
+    // Tell the Android Asset Packaging Tool not to strip for some densities
+    aapt_include_all_resources: true,
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ],
+    sdk_version: "test_current",
 }

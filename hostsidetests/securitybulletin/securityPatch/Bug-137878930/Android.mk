@@ -1,4 +1,4 @@
-# Copyright (C) 2018 The Android Open Source Project
+# Copyright (C) 2019 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,22 +16,22 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := $(call all-java-files-under, src) $(call all-java-files-under, ../common)
-
-LOCAL_MODULE_TAGS := tests
-# When built, explicitly put it in the data partition.
-LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
-
-LOCAL_PACKAGE_NAME := CtsAngleDriverTestCases
-
-LOCAL_SDK_VERSION := current
-
-# tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts
-
+LOCAL_MODULE := Bug-137878930
+LOCAL_SRC_FILES := poc.cpp
 LOCAL_MULTILIB := both
+LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE)32
+LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE)64
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner-axt androidx.test.rules AngleIntegrationTestCommon
+LOCAL_COMPATIBILITY_SUITE := cts
+LOCAL_CTS_TEST_PACKAGE := android.security.cts
 
-include $(call all-makefiles-under,$(LOCAL_PATH))
-include $(BUILD_CTS_SUPPORT_PACKAGE)
+LOCAL_SHARED_LIBRARIES := \
+    android.hardware.drm@1.0 \
+    android.hardware.drm@1.1 \
+    libhidlbase \
+    liblog \
+    libutils
+
+LOCAL_ARM_MODE := arm
+LOCAL_CFLAGS = -Wall -Werror -Wno-unused-parameter -Wno-unused-variable
+include $(BUILD_CTS_EXECUTABLE)

@@ -49,12 +49,14 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
 import android.graphics.Rect;
+import android.os.SystemClock;
 import android.server.wm.ActivityManagerState.ActivityStack;
 import android.server.wm.ActivityManagerState.ActivityTask;
 import android.server.wm.WindowManagerState.Display;
 import android.server.wm.WindowManagerState.WindowStack;
 import android.server.wm.WindowManagerState.WindowState;
 import android.server.wm.WindowManagerState.WindowTask;
+import android.util.Log;
 import android.util.SparseArray;
 
 import java.util.Arrays;
@@ -384,6 +386,20 @@ public class ActivityAndWindowManagersState {
             return true;
         }
         return false;
+    }
+
+    void waitAndAssertAppFocus(String appPackageName, long waitTime) {
+        final Condition<String> condition = new Condition<>(appPackageName + " to be focused");
+        Condition.waitFor(condition.setResultSupplier(() -> {
+            mWmState.computeState();
+            return mWmState.getFocusedApp();
+        }).setResultValidator(focusedAppName -> {
+            return focusedAppName != null && appPackageName.equals(
+                    ComponentName.unflattenFromString(focusedAppName).getPackageName());
+        }).setOnFailure(focusedAppName -> {
+            fail("Timed out waiting for focus on app "
+                    + appPackageName + ", last was " + focusedAppName);
+        }).setRetryIntervalMs(100).setRetryLimit((int) waitTime / 100));
     }
 
     /**

@@ -407,14 +407,19 @@ public abstract class BasePermissionsTest {
                 // Find the permission screen
                 String permissionLabel = getPermissionLabel(permission);
 
-                waitFindObject(By.text(permissionLabel)).click();
-                waitForIdle();
+                if (!isTv()) {
+                    waitFindObject(By.text(permissionLabel)).click();
+                    waitForIdle();
+                }
 
-                final boolean wasGranted = !waitFindObject(byText(R.string.Deny)).isChecked();
-                if (granted != wasGranted) {
+                final boolean wasGranted = isTv() ? false : !waitFindObject(byText(R.string.Deny)).isChecked();
+                // TV does not use checked state to represent granted state.
+                if (granted != wasGranted || isTv()) {
                     // Toggle the permission
 
-                    if (granted) {
+                    if (isTv()) {
+                        waitFindObject(By.text(permissionLabel)).click();
+                    } else if (granted) {
                         waitFindObject(byText(R.string.Allow)).click();
                     } else {
                         waitFindObject(byText(R.string.Deny)).click();
@@ -439,8 +444,10 @@ public abstract class BasePermissionsTest {
                     }
                 }
 
-                getUiDevice().pressBack();
-                waitForIdle();
+                if (!isTv()) {
+                    getUiDevice().pressBack();
+                    waitForIdle();
+                }
             }
 
             getUiDevice().pressBack();

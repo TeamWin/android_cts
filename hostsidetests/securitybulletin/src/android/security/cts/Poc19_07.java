@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2018 The Android Open Source Project
+/**
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,20 @@
  * limitations under the License.
  */
 
-package android.telecom.cts.screeningtestapp;
+package android.security.cts;
 
-import android.graphics.drawable.Icon;
+import static org.junit.Assert.assertTrue;
 
-interface ICallScreeningControl {
-    // Reset the state of the service
-    void reset();
+import android.platform.test.annotations.SecurityTest;
 
-    void setCallResponse(boolean shouldDisallowCall, boolean shouldRejectCall,
-            boolean shouldSkipCall, boolean shouldSkipCallLog, boolean shouldSkipNotification);
-
-    boolean waitForBind();
+@SecurityTest
+public class Poc19_07 extends SecurityTestCase {
+    /**
+     * Bug-137878930
+     */
+    @SecurityTest(minPatchLevel = "2019-07")
+    public void testPocBug_137878930() throws Exception {
+        assertFalse("Heap use after free encountered",
+            AdbUtils.runPocCheckExitCode("Bug-137878930", getDevice(), 300));
+    }
 }
