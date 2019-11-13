@@ -67,7 +67,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class BatterySaverAlarmTest extends BatterySavingTestBase {
     private static final String TAG = "BatterySaverAlarmTest";
 
-    private static final long DEFAULT_WAIT = 1_000;
+    private static final long DEFAULT_WAIT = 2_000;
     private static final long THROTTLED_WAIT = 5_000;
 
     // Tweaked alarm manager constants to facilitate testing
