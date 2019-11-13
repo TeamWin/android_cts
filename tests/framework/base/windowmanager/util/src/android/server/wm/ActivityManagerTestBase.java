@@ -1123,6 +1123,8 @@ public abstract class ActivityManagerTestBase {
                 logE("LockScreenSession.gotoKeyguard() is called without lock enabled.");
             }
             sleepDevice();
+            mAmWmState.waitForWithAmState(
+                state -> state.getKeyguardControllerState().keyguardShowing, "Keyguard showing");
             wakeUpDevice();
             if (showWhenLockedActivities.length == 0) {
                 mAmWmState.waitForKeyguardShowingAndNotOccluded();
