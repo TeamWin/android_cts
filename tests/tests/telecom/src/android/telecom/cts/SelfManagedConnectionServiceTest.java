@@ -37,6 +37,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.function.Predicate;
 
 import static android.media.AudioManager.MODE_IN_COMMUNICATION;
+import static android.telecom.cts.TestUtils.TEST_SELF_MANAGED_HANDLE_1;
 import static android.telecom.cts.TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS;
 import static android.telecom.cts.TestUtils.waitOnAllHandlers;
 
@@ -608,10 +609,77 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
     }
 
     /**
+     * Start a self-managed call and then dial an emergency call and make sure the self-managed
+     * call is successfully disconnected.
+     */
+    public void testDisconnectSelfManagedCallForEmergency() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        setupForEmergencyCalling(TEST_EMERGENCY_NUMBER);
+
+        Uri address = getTestNumber();
+        TestUtils.placeOutgoingCall(getInstrumentation(), mTelecomManager,
+                TEST_SELF_MANAGED_HANDLE_1, address);
+        // Ensure Telecom bound to the self managed CS
+        if (!CtsSelfManagedConnectionService.waitForBinding()) {
+            fail("Could not bind to Self-Managed ConnectionService");
+        }
+        SelfManagedConnection connection = TestUtils.waitForAndGetConnection(address);
+        assertNotNull("Self-Managed Connection should NOT be null.", connection);
+        assertTrue("Self-Managed Connection should be outgoing.", !connection.isIncomingCall());
+        // The self-managed ConnectionService must NOT have been prompted to show its incoming call
+        // UI for an outgoing call.
+        assertEquals(connection.getOnShowIncomingUiInvokeCounter().getInvokeCount(), 0);
+        setActiveAndVerify(connection);
+
+        placeAndVerifyEmergencyCall(true /*supportsHold*/);
+        Call eCall = getInCallService().getLastCall();
+
+        assertIsInCall(true);
+        assertIsInManagedCall(true);
+        try {
+            TestUtils.waitOnAllHandlers(getInstrumentation());
+        } catch (Exception e) {
+            fail("Failed to wait on handlers " + e);
+        }
+        assertCallState(eCall, Call.STATE_DIALING);
+        // The self-managed Connection should be disconnected!
+        assertConnectionState(connection, Connection.STATE_DISCONNECTED);
+    }
+
+    /**
      * Start a managed emergency call and then ensure that a subsequent self-managed call fails to
      * be created.
      */
-    public void testEmergencyCallOngoing() throws Exception {
+    public void testEmergencyCallOngoingNewOutgoingCall() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        setupForEmergencyCalling(TEST_EMERGENCY_NUMBER);
+        placeAndVerifyEmergencyCall(true /*supportsHold*/);
+        assertIsInCall(true);
+        assertIsInManagedCall(true);
+        try {
+            TestUtils.waitOnAllHandlers(getInstrumentation());
+        } catch (Exception e) {
+            fail("Failed to wait on handlers " + e);
+        }
+
+        // Try adding a self managed outgoing call.  It should fail to be created.
+        TestUtils.placeOutgoingCall(getInstrumentation(), mTelecomManager,
+                TestUtils.TEST_SELF_MANAGED_HANDLE_1, TEST_ADDRESS_1);
+        assertTrue("Expected onCreateOutgoingConnectionFailed callback",
+                CtsSelfManagedConnectionService.getConnectionService().waitForUpdate(
+                        CtsSelfManagedConnectionService.CREATE_OUTGOING_CONNECTION_FAILED_LOCK));
+    }
+
+    /**
+     * Start a managed emergency call and then ensure that a subsequent self-managed call fails to
+     * be created.
+     */
+    public void testEmergencyCallOngoingIncomingCall() throws Exception {
         if (!mShouldTestTelecom) {
             return;
         }
@@ -629,7 +697,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
             fail("Failed to wait on handlers " + e);
         }
 
-        // Try adding a self managed call.  It should fail to be created.
+        // Try adding a self managed incoming call.  It should fail to be created.
         TestUtils.addIncomingCall(getInstrumentation(), mTelecomManager,
                 TestUtils.TEST_SELF_MANAGED_HANDLE_1, TEST_ADDRESS_1);
         assertTrue("Expected onCreateIncomingConnectionFailed callback",
