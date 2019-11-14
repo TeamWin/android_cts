@@ -25,7 +25,6 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
-import android.support.test.uiautomator.UiDevice;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -78,7 +77,6 @@ public class EglConfigTest {
             activity.waitToFinishDrawing();
             // TODO(b/30948621): Remove the sleep below once b/30948621 is fixed.
             Thread.sleep(500);
-            UiDevice.getInstance(mInstrumentation).pressHome();
             activity.finish();
             mInstrumentation.waitForIdleSync();
         }
