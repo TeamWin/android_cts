@@ -3300,7 +3300,8 @@ public class CameraTest extends Assert {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
             Log.v(TAG, "Camera id=" + id);
-            testVideoSnapshotByCamera(id);
+            testVideoSnapshotByCamera(id, /*recordingHint*/false);
+            testVideoSnapshotByCamera(id, /*recordingHint*/true);
         }
     }
 
@@ -3316,7 +3317,7 @@ public class CameraTest extends Assert {
         CamcorderProfile.QUALITY_QVGA,
     };
 
-    private void testVideoSnapshotByCamera(int cameraId) throws Exception {
+    private void testVideoSnapshotByCamera(int cameraId, boolean recordingHint) throws Exception {
         initializeMessageLooper(cameraId);
         Camera.Parameters parameters = mCamera.getParameters();
         terminateMessageLooper();
@@ -3344,6 +3345,7 @@ public class CameraTest extends Assert {
                 }
             }
             parameters.setPictureSize(biggestSize.width, biggestSize.height);
+            parameters.setRecordingHint(recordingHint);
 
             mCamera.setParameters(parameters);
             mCamera.startPreview();

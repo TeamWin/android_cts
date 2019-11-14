@@ -24,6 +24,7 @@ import static android.server.wm.app.Components.SINGLE_SECONDARY_HOME_ACTIVITY;
 import static android.server.wm.app.Components.TEST_LIVE_WALLPAPER_SERVICE;
 import static android.server.wm.app.Components.TestLiveWallpaperKeys.COMPONENT;
 import static android.server.wm.app.Components.TestLiveWallpaperKeys.ENGINE_DISPLAY_ID;
+import static android.server.wm.BarTestUtils.assumeHasBars;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
 
@@ -201,6 +202,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
      */
     @Test
     public void testNavBarShowingOnDisplayWithDecor() throws Exception {
+        assumeHasBars();
         try (final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
             final ActivityDisplay newDisplay = externalDisplaySession
                     .setPublicDisplay(true).setShowSystemDecorations(true).createVirtualDisplay();
@@ -214,6 +216,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
      */
     @Test
     public void testNavBarNotShowingOnDisplayWithoutDecor() throws Exception {
+        assumeHasBars();
         try (final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
             // Wait for system decoration showing and record current nav states.
             mAmWmState.waitForHomeActivityVisible();
@@ -232,6 +235,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
      */
     @Test
     public void testNavBarNotShowingOnPrivateDisplay() throws Exception {
+        assumeHasBars();
         try (final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
             // Wait for system decoration showing and record current nav states.
             mAmWmState.waitForHomeActivityVisible();
