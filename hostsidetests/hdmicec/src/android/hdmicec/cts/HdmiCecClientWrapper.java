@@ -29,6 +29,7 @@ import java.io.BufferedWriter;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -52,10 +53,13 @@ public final class HdmiCecClientWrapper extends ExternalResource {
 
     private CecDevice targetDevice;
     private BaseHostJUnit4Test testObject;
+    private String clientParams[];
 
-    public HdmiCecClientWrapper(CecDevice targetDevice, BaseHostJUnit4Test testObject) {
+    public HdmiCecClientWrapper(CecDevice targetDevice, BaseHostJUnit4Test testObject,
+            String ...clientParams) {
         this.targetDevice = targetDevice;
         this.testObject = testObject;
+        this.clientParams = clientParams;
     }
 
     @Override
@@ -92,6 +96,8 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         commands.add("cec-client");
         commands.add("-p");
         commands.add("2");
+        commands.addAll(Arrays.asList(clientParams));
+
         mCecClient = RunUtil.getDefault().runCmdInBackground(commands);
         mInputConsole = new BufferedReader(new InputStreamReader(mCecClient.getInputStream()));
 
