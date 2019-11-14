@@ -87,7 +87,6 @@ public class WindowInsetsBehaviorTests {
     private static final String SETTINGS_PACKAGE_NAME = "com.android.settings";
     private static final String ARGUMENT_KEY_FORCE_ENABLE = "force_enable_gesture_navigation";
     private static final int STEPS = 10;
-    private static final int DIP_INTERVAL = 40;
 
     // The minimum value of the system gesture exclusion limit is 200 dp. The value here should be
     // greater than that, so that we can test if the limit can be changed by DeviceConfig or not.
@@ -96,6 +95,7 @@ public class WindowInsetsBehaviorTests {
     private final boolean mForceEnableGestureNavigation;
     private final Map<String, Boolean> mSystemGestureOptionsMap;
     private float mPixelsPerDp;
+    private float mDensityPerCm;
     private int mDisplayWidth;
     private int mExclusionLimit;
     private UiDevice mDevice;
@@ -283,6 +283,7 @@ public class WindowInsetsBehaviorTests {
         final DisplayMetrics metrics = new DisplayMetrics();
         display.getRealMetrics(metrics);
         mPixelsPerDp = metrics.density;
+        mDensityPerCm = (int) ((float) metrics.densityDpi / 2.54);
         mDisplayWidth = metrics.widthPixels;
         mExclusionLimit = (int) (EXCLUSION_LIMIT_DP * mPixelsPerDp);
 
@@ -390,7 +391,7 @@ public class WindowInsetsBehaviorTests {
             Consumer<Point> callback) {
         final int theLeftestLine = viewBoundary.left + 1;
         final int theRightestLine = viewBoundary.right - 1;
-        final float interval = mPixelsPerDp * DIP_INTERVAL;
+        final float interval = mDensityPerCm;
 
         int count = 0;
         for (int i = theLeftestLine; i < theRightestLine; i += interval) {
@@ -413,7 +414,7 @@ public class WindowInsetsBehaviorTests {
     private int clickAllOfSamplePoints(Rect viewBoundary, Consumer<Point> callback) {
         final int theToppestLine = viewBoundary.top + 1;
         final int theBottomestLine = viewBoundary.bottom - 1;
-        final float interval = mPixelsPerDp * DIP_INTERVAL;
+        final float interval = mDensityPerCm;
         int count = 0;
         for (int i = theToppestLine; i < theBottomestLine; i += interval) {
             count += clickAllOfHorizontalSamplePoints(viewBoundary, i, callback);
@@ -431,7 +432,7 @@ public class WindowInsetsBehaviorTests {
 
         int count = 0;
 
-        for (int i = theToppestLine; i < theBottomestLine; i += mPixelsPerDp * DIP_INTERVAL) {
+        for (int i = theToppestLine; i < theBottomestLine; i += mDensityPerCm) {
             if (callback != null) {
                 callback.accept(new Point(theLeftestLine, i),
                         new Point(viewBoundary.centerX(), i));
@@ -456,7 +457,7 @@ public class WindowInsetsBehaviorTests {
         final int theBottomestLine = viewBoundary.bottom - 1;
 
         int count = 0;
-        for (int i = theToppestLine; i < theBottomestLine; i += mPixelsPerDp * DIP_INTERVAL) {
+        for (int i = theToppestLine; i < theBottomestLine; i += mDensityPerCm) {
             if (callback != null) {
                 callback.accept(new Point(theRightestLine, i),
                         new Point(viewBoundary.centerX(), i));
@@ -490,7 +491,7 @@ public class WindowInsetsBehaviorTests {
         final int theRightestLine = viewBoundary.right - 1;
 
         int count = 0;
-        for (int i = theLeftestLine; i < theRightestLine; i += mPixelsPerDp * DIP_INTERVAL) {
+        for (int i = theLeftestLine; i < theRightestLine; i += mDensityPerCm) {
             if (callback != null) {
                 callback.accept(new Point(i, theToppestLine),
                         new Point(i, viewBoundary.centerY()));
@@ -515,7 +516,7 @@ public class WindowInsetsBehaviorTests {
         final int theBottomestLine = viewBoundary.bottom - 1;
 
         int count = 0;
-        for (int i = theLeftestLine; i < theRightestLine; i += mPixelsPerDp * DIP_INTERVAL) {
+        for (int i = theLeftestLine; i < theRightestLine; i += mDensityPerCm) {
             if (callback != null) {
                 callback.accept(new Point(i, theBottomestLine),
                         new Point(i, viewBoundary.centerY()));
