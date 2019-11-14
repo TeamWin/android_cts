@@ -73,7 +73,7 @@ public class ApexTest extends BaseHostJUnit4Test {
 
   private int countFlattenedApexes(String dir) throws Exception {
     CommandResult result = getDevice().executeShellV2Command(
-        "find " + dir + " -type f -name \"apex_manifest.json\" ! -path \"*" +
+        "find " + dir + " -type f -name \"apex_manifest.pb\" ! -path \"*" +
         CTS_SHIM_APEX_NAME + "*\" | wc -l");
     return result.getExitCode() == 0 ? Integer.parseInt(result.getStdout().trim()) : 0;
   }
