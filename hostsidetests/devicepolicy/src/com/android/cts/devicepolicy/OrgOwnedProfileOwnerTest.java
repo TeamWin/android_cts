@@ -77,7 +77,7 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     private void restrictManagedProfileRemoval() throws DeviceNotAvailableException {
             getDevice().executeShellCommand(
-                    String.format("dpm grant-profile-owner-device-ids-access --user %d '%s'",
+                    String.format("dpm mark-profile-owner-on-organization-owned-device --user %d '%s'",
                             mUserId, DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS));
 
 

@@ -4536,6 +4536,12 @@
     <permission android:name="android.permission.GRANT_PROFILE_OWNER_DEVICE_IDS_ACCESS"
         android:protectionLevel="signature" />
 
+    <!-- Allows an app to set profile owner as managing an organization-owned device.
+         <p>Not for use by third-party applications.
+         @hide -->
+    <permission android:name="android.permission.MARK_DEVICE_ORGANIZATION_OWNED"
+                android:protectionLevel="signature" />
+
     <!-- Allows financial apps to read filtered sms messages. -->
     <permission android:name="android.permission.SMS_FINANCIAL_TRANSACTIONS"
         android:protectionLevel="signature|appop" />
