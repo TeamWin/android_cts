@@ -310,7 +310,6 @@ public abstract class BasePermissionsTest {
     }
 
     protected void clickAllowButton() throws Exception {
-        scrollToBottom();
         click("com.android.permissioncontroller:id/permission_allow_button");
     }
 
@@ -323,17 +322,14 @@ public abstract class BasePermissionsTest {
     }
 
     protected void clickDenyButton() throws Exception {
-        scrollToBottom();
         click("com.android.permissioncontroller:id/permission_deny_button");
     }
 
     protected void clickDenyAndDontAskAgainButton() throws Exception {
-        scrollToBottom();
         click("com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button");
     }
 
     protected void clickDontAskAgainButton() throws Exception {
-        scrollToBottom();
         click("com.android.permissioncontroller:id/permission_deny_dont_ask_again_button");
     }
 
