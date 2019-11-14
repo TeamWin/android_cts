@@ -23,12 +23,14 @@ from matplotlib import pylab
 import matplotlib.pyplot
 import numpy
 
+API_LEVEL_30 = 30
 BURST_LEN = 50
 BURSTS = 5
 COLORS = ["R", "G", "B"]
 FRAMES = BURST_LEN * BURSTS
 NAME = os.path.basename(__file__).split(".")[0]
 SPREAD_THRESH = 0.03
+SPREAD_THRESH_API_LEVEL_30 = 0.02
 
 
 def main():
@@ -91,13 +93,18 @@ def main():
         pylab.ylabel("RGB avg [0, 1]")
         matplotlib.pyplot.savefig("%s_plot_means.png" % (NAME))
 
+        # determine spread_thresh
+        spread_thresh = SPREAD_THRESH
+        if its.device.get_first_api_level() >= API_LEVEL_30:
+            spread_thresh = SPREAD_THRESH_API_LEVEL_30
+
         # PASS/FAIL based on center patch similarity.
         for plane, means in enumerate([r_means, g_means, b_means]):
             spread = max(means) - min(means)
-            msg = "%s spread: %.5f, SPREAD_THRESH: %.3f" % (
-                    COLORS[plane], spread, SPREAD_THRESH)
+            msg = "%s spread: %.5f, spread_thresh: %.3f" % (
+                    COLORS[plane], spread, spread_thresh)
             print msg
-            assert spread < SPREAD_THRESH, msg
+            assert spread < spread_thresh, msg
 
 if __name__ == "__main__":
     main()
