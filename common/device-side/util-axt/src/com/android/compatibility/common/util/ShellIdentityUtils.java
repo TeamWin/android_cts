@@ -56,6 +56,20 @@ public class ShellIdentityUtils {
     }
 
     /**
+     * Utility interface to invoke a method against the target object that may throw an Exception.
+     *
+     * @param <U> the type of the object against which the method is invoked.
+     */
+    public interface ShellPermissionThrowableMethodHelperNoReturn<U, E extends Throwable> {
+        /**
+         * Invokes the method against the target object.
+         *
+         * @param targetObject the object against which the method should be invoked.
+         */
+        void callMethod(U targetObject) throws E;
+    }
+
+    /**
      * Invokes the specified method on the targetObject as the shell user. The method can be invoked
      * as follows:
      *
@@ -73,6 +87,87 @@ public class ShellIdentityUtils {
             uiAutomation.dropShellPermissionIdentity();
         }
     }
+
+    /**
+     * Invokes the specified method on the targetObject as the shell user with only the subset of
+     * permissions specified. The method can be invoked as follows:
+     *
+     * {@code ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+     *        (tm) -> tm.getDeviceId(), "android.permission.READ_PHONE_STATE");}
+     */
+    public static <T, U> T invokeMethodWithShellPermissions(U targetObject,
+            ShellPermissionMethodHelper<T, U> methodHelper, String... permissions) {
+        final UiAutomation uiAutomation =
+                InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity(permissions);
+            return methodHelper.callMethod(targetObject);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Invokes the specified method on the targetObject as the shell user for only the permissions
+     * specified. The method can be invoked as follows:
+     *
+     * {@code ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+     *        (tm) -> tm.getDeviceId(), "android.permission.READ_PHONE_STATE");}
+     */
+    public static <U> void invokeMethodWithShellPermissionsNoReturn(
+            U targetObject, ShellPermissionMethodHelperNoReturn<U> methodHelper,
+            String... permissions) {
+        final UiAutomation uiAutomation =
+                InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity(permissions);
+            methodHelper.callMethod(targetObject);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Invokes the specified throwable method on the targetObject as the shell user with only the
+     * subset of permissions specified specified. The method can be invoked as follows:
+     *
+     * {@code ShellIdentityUtils.invokeMethodWithShellPermissions(mImsMmtelManager,
+     *        (m) -> m.isSupported(...), ImsException.class);}
+     */
+    public static <U, E extends Throwable> void invokeThrowableMethodWithShellPermissionsNoReturn(
+            U targetObject, ShellPermissionThrowableMethodHelperNoReturn<U, E> methodHelper,
+            Class<E> clazz) throws E {
+        final UiAutomation uiAutomation =
+                InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            methodHelper.callMethod(targetObject);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Invokes the specified throwable method on the targetObject as the shell user with only the
+     * subset of permissions specified specified. The method can be invoked as follows:
+     *
+     * {@code ShellIdentityUtils.invokeMethodWithShellPermissions(mImsMmtelManager,
+     *        (m) -> m.isSupported(...), ImsException.class,
+     *        "android.permission.READ_PRIVILEGED_PHONE_STATE");}
+     */
+    public static <U, E extends Throwable> void invokeThrowableMethodWithShellPermissionsNoReturn(
+            U targetObject, ShellPermissionThrowableMethodHelperNoReturn<U, E> methodHelper,
+            Class<E> clazz, String... permissions) throws E {
+        final UiAutomation uiAutomation =
+                InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity(permissions);
+            methodHelper.callMethod(targetObject);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
 
     /**
      * Invokes the specified method on the targetObject as the shell user. The method can be invoked
