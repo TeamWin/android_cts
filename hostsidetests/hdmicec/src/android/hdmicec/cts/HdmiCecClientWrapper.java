@@ -261,22 +261,38 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         return asciiString;
     }
 
-    /** Prepares a CEC message. */
-    public String prepareMessage(CecDevice source, CecDevice destination, CecMessage message,
-                                 int params) {
-        String cecMessage = "" + source + destination + ":" + message;
-
-        String paramsString = Integer.toHexString(params);
+    public String formatParams(String rawParams) {
+        StringBuilder params = new StringBuilder("");
         int position = 0;
         int endPosition = 2;
 
         do {
-            cecMessage.concat(":" + paramsString.substring(position, endPosition));
+            params.append(":" + rawParams.substring(position, endPosition));
             position = endPosition;
             endPosition += 2;
-        } while (endPosition <= paramsString.length());
+        } while (endPosition <= rawParams.length());
+        return params.toString();
+    }
 
-        return cecMessage;
+    public String formatParams(long rawParam) {
+        StringBuilder params = new StringBuilder("");
+
+        do {
+            params.insert(0, ":" + String.format("%02x", rawParam % 256));
+            rawParam >>= 8;
+        } while (rawParam > 0);
+
+        return params.toString();
+    }
+
+    /** Formats a CEC message in the hex colon format (sd:op:xx:xx). */
+    public String formatMessage(CecDevice source, CecDevice destination, CecMessage message,
+            int params) {
+        StringBuilder cecMessage = new StringBuilder("" + source + destination + ":" + message);
+
+        cecMessage.append(formatParams(params));
+
+        return cecMessage.toString();
     }
 
     /**
