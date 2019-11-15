@@ -62,12 +62,12 @@ public class ContentProviderClientTest extends AndroidTestCase {
     private static final String PACKAGE_NAME = "android.content.cts";
     private static final String FEATURE_ID = "testFeature";
     private static final String MODE = "mode";
-    private static final String SELECTION = "selection";
     private static final String AUTHORITY = "authority";
     private static final String METHOD = "method";
     private static final String ARG = "arg";
     private static final Uri URI = Uri.parse("com.example.app://path");
     private static final Bundle ARGS = new Bundle();
+    private static final Bundle EXTRAS = new Bundle();
     private static final ContentValues VALUES = new ContentValues();
     private static final ContentValues[] VALUES_ARRAY = {VALUES};
     private static final ArrayList<ContentProviderOperation> OPS = new ArrayList<>();
@@ -209,17 +209,17 @@ public class ContentProviderClientTest extends AndroidTestCase {
     }
 
     public void testInsert() throws RemoteException {
-        mContentProviderClient.insert(URI, VALUES);
-        verify(mIContentProvider).insert(PACKAGE_NAME, FEATURE_ID, URI, VALUES);
+        mContentProviderClient.insert(URI, VALUES, EXTRAS);
+        verify(mIContentProvider).insert(PACKAGE_NAME, FEATURE_ID, URI, VALUES, EXTRAS);
     }
 
     public void testInsertTimeout() throws RemoteException, InterruptedException {
-        when(mIContentProvider.insert(PACKAGE_NAME, FEATURE_ID, URI, VALUES))
+        when(mIContentProvider.insert(PACKAGE_NAME, FEATURE_ID, URI, VALUES, EXTRAS))
                 .thenAnswer(ANSWER_SLEEP);
 
-        testTimeout(() -> mContentProviderClient.insert(URI, VALUES));
+        testTimeout(() -> mContentProviderClient.insert(URI, VALUES, EXTRAS));
 
-        verify(mIContentProvider).insert(PACKAGE_NAME, FEATURE_ID, URI, VALUES);
+        verify(mIContentProvider).insert(PACKAGE_NAME, FEATURE_ID, URI, VALUES, EXTRAS);
     }
 
     public void testBulkInsert() throws RemoteException {
@@ -237,35 +237,31 @@ public class ContentProviderClientTest extends AndroidTestCase {
     }
 
     public void testDelete() throws RemoteException {
-        mContentProviderClient.delete(URI, SELECTION, new String[0]);
-        verify(mIContentProvider).delete(PACKAGE_NAME, FEATURE_ID, URI, SELECTION, new String[0]);
+        mContentProviderClient.delete(URI, EXTRAS);
+        verify(mIContentProvider).delete(PACKAGE_NAME, FEATURE_ID, URI, EXTRAS);
     }
 
     public void testDeleteTimeout() throws RemoteException, InterruptedException {
-        when(mIContentProvider.delete(PACKAGE_NAME, FEATURE_ID, URI, SELECTION, new String[0]))
+        when(mIContentProvider.delete(PACKAGE_NAME, FEATURE_ID, URI, EXTRAS))
                 .thenAnswer(ANSWER_SLEEP);
 
-        testTimeout(() -> mContentProviderClient.delete(URI, SELECTION, new String[0]));
+        testTimeout(() -> mContentProviderClient.delete(URI, EXTRAS));
 
-        verify(mIContentProvider).delete(PACKAGE_NAME, FEATURE_ID, URI, SELECTION, new String[0]);
+        verify(mIContentProvider).delete(PACKAGE_NAME, FEATURE_ID, URI, EXTRAS);
     }
 
     public void testUpdate() throws RemoteException {
-        mContentProviderClient.update(URI, VALUES, SELECTION, new String[0]);
-        verify(mIContentProvider).update(PACKAGE_NAME, FEATURE_ID, URI, VALUES, SELECTION,
-                new String[0]);
+        mContentProviderClient.update(URI, VALUES, EXTRAS);
+        verify(mIContentProvider).update(PACKAGE_NAME, FEATURE_ID, URI, VALUES, EXTRAS);
     }
 
     public void testUpdateTimeout() throws RemoteException, InterruptedException {
-        when(mIContentProvider.update(PACKAGE_NAME, FEATURE_ID, URI, VALUES, SELECTION,
-                new String[0]))
+        when(mIContentProvider.update(PACKAGE_NAME, FEATURE_ID, URI, VALUES, EXTRAS))
                 .thenAnswer(ANSWER_SLEEP);
 
-        testTimeout(() -> mContentProviderClient.update(URI, VALUES, SELECTION,
-                new String[0]));
+        testTimeout(() -> mContentProviderClient.update(URI, VALUES, EXTRAS));
 
-        verify(mIContentProvider).update(PACKAGE_NAME, FEATURE_ID, URI, VALUES, SELECTION,
-                new String[0]);
+        verify(mIContentProvider).update(PACKAGE_NAME, FEATURE_ID, URI, VALUES, EXTRAS);
     }
 
     public void testOpenFile() throws RemoteException, FileNotFoundException {
