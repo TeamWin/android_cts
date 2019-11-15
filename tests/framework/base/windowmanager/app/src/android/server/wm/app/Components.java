@@ -120,7 +120,6 @@ public class Components extends ComponentsBase {
     public static final ComponentName SINGLE_TASK_ACTIVITY = component("SingleTaskActivity");
     public static final ComponentName SLOW_CREATE_ACTIVITY = component("SlowCreateActivity");
     public static final ComponentName SPLASHSCREEN_ACTIVITY = component("SplashscreenActivity");
-    public static final ComponentName SWIPE_REFRESH_ACTIVITY = component("SwipeRefreshActivity");
     public static final ComponentName TEST_ACTIVITY = component("TestActivity");
     public static final ComponentName TOAST_ACTIVITY = component("ToastActivity");
     public static final ComponentName TOP_ACTIVITY = component("TopActivity");
@@ -225,6 +224,7 @@ public class Components extends ComponentsBase {
         public static final String EXTRA_CONFIGURATION = "configuration";
         public static final String EXTRA_CONFIG_ASSETS_SEQ = "config_assets_seq";
         public static final String EXTRA_INTENTS = "intents";
+        public static final String EXTRA_NO_IDLE = "no_idle";
         public static final String COMMAND_START_ACTIVITIES = "start_activities";
     }
 
