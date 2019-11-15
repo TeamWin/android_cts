@@ -87,11 +87,6 @@
             android:requestLegacyExternalStorage="true"
             android:theme="@android:style/Theme.DeviceDefault">
 
-        <provider android:name="android.location.cts.MmsPduProvider"
-                android:authorities="emergencycallverifier"
-                android:grantUriPermissions="true" />
-        <uses-library android:name="android.test.runner" />
-
         <meta-data android:name="SuiteName" android:value="CTS_VERIFIER" />
 
         <meta-data android:name="android.telephony.HIDE_VOICEMAIL_SETTINGS_MENU"
