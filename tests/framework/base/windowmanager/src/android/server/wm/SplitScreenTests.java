@@ -602,6 +602,7 @@ public class SplitScreenTests extends ActivityManagerTestBase {
 
         setActivityTaskWindowingMode(TEST_ACTIVITY, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
         mAmWmState.computeState(TEST_ACTIVITY);
+        mAmWmState.waitForHomeActivityVisible();
         launchActivity(NO_RELAUNCH_ACTIVITY, WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
 
         mAmWmState.computeState(TEST_ACTIVITY, NO_RELAUNCH_ACTIVITY);
