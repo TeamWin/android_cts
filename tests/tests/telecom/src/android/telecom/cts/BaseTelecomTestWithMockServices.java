@@ -509,9 +509,10 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         // We expect a new connection if it wasn't cancelled.
         if (!wasCancelled) {
             currentConnections++;
+            currentCallCount++;
         }
         placeAndVerifyCall(null, VideoProfile.STATE_AUDIO_ONLY, currentConnections,
-                currentCallCount + 1);
+                currentCallCount);
         // Ensure the new outgoing call broadcast fired for the outgoing call.
         assertOutgoingCallBroadcastReceived(true);
 
@@ -569,6 +570,11 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
             Log.i(TAG, "Test interrupted!");
         }
 
+        // Make sure any procedures to disconnect existing calls (makeRoomForOutgoingCall)
+        // complete successfully
+        TestUtils.waitOnLocalMainLooper(WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+        TestUtils.waitOnAllHandlers(getInstrumentation());
+
         assertEquals("InCallService should match the expected count.", expectedCallCount,
                 mInCallCallbacks.getService().getCallCount());
 
@@ -582,22 +588,28 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         assertCSConnections(expectedConnectionCount);
     }
 
+    /**
+     * Place an emergency call and verify that it has been setup properly.
+     *
+     * @param supportsHold If telecom supports holding emergency calls, this will expect two
+     * calls. If telecom does not support holding emergency calls, this will expect only the
+     * emergency call to be active.
+     * @return The emergency connection
+     */
     public Connection placeAndVerifyEmergencyCall(boolean supportsHold) {
         Bundle extras = new Bundle();
         extras.putParcelable(TestUtils.EXTRA_PHONE_NUMBER, TEST_EMERGENCY_URI);
         int currentConnectionCount = supportsHold ?
                 getNumberOfConnections() + 1 : getNumberOfConnections();
         int currentCallCount = (getInCallService() == null) ? 0 : getInCallService().getCallCount();
-        currentCallCount = (currentCallCount >= 2) ? 2 : (currentCallCount + 1);
+        currentCallCount = supportsHold ? currentCallCount + 1 : currentCallCount;
+        // The device only supports a max of two calls active at any one time
+        currentCallCount = Math.min(currentCallCount, 2);
         placeAndVerifyCall(extras, VideoProfile.STATE_AUDIO_ONLY, currentConnectionCount,
                 currentCallCount);
         assertOutgoingCallBroadcastReceived(true);
         Connection connection = verifyConnectionForOutgoingCall(TEST_EMERGENCY_URI);
-        try {
-            TestUtils.waitOnAllHandlers(getInstrumentation());
-        } catch (Exception e) {
-            fail("Failed to wait on handlers " + e);
-        }
+        TestUtils.waitOnAllHandlers(getInstrumentation());
         return connection;
     }
 
