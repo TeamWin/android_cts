@@ -545,7 +545,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         int currentCallCount = (getInCallService() == null) ? 0 : getInCallService().getCallCount();
         // We expect placing the call adds a new call/connection.
         placeAndVerifyCall(extras, videoState, getNumberOfConnections() + 1, currentCallCount + 1);
-        assertTrue(NewOutgoingCallBroadcastReceiver.isNewOutgoingCallBroadcastReceived());
+        assertOutgoingCallBroadcastReceived(true);
 
         // CTS test does not have read call log permission so should not get the phone number.
         assertNull(NewOutgoingCallBroadcastReceiver.getReceivedNumber());
@@ -591,6 +591,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         currentCallCount = (currentCallCount >= 2) ? 2 : (currentCallCount + 1);
         placeAndVerifyCall(extras, VideoProfile.STATE_AUDIO_ONLY, currentConnectionCount,
                 currentCallCount);
+        assertOutgoingCallBroadcastReceived(true);
         Connection connection = verifyConnectionForOutgoingCall(TEST_EMERGENCY_URI);
         try {
             TestUtils.waitOnAllHandlers(getInstrumentation());
