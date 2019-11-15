@@ -27,6 +27,7 @@
         <option name="package" value="android.signature.cts.api.hiddenapi_blacklist_test" />
         <option name="runner" value="repackaged.android.test.InstrumentationTestRunner" />
         <option name="class" value="android.signature.cts.api.test.HiddenApiTest" />
+        <option name="test-api-checks" value="true" />
         <option name="instrumentation-arg" key="hiddenapi-files" value="hiddenapi-flags.csv" />
         <option name="runtime-hint" value="30s" />
     </test>
