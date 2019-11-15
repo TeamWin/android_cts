@@ -451,19 +451,21 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
             // Device doesn't support updating apex. Nothing to uninstall.
             return;
         }
-        // Non system version is active, need to uninstall it and reboot the device.
-        final String errorMessage = getDevice().uninstallPackage(SHIM_APEX_PACKAGE_NAME);
-        if (errorMessage == null) {
-            Log.i(TAG, "Uninstalling shim apex");
-            getDevice().reboot();
-        } else {
-            // Most likely we tried to uninstall system version and failed. It should be fine to
-            // continue tests.
-            // TODO(ioffe): extend getDevice().getActiveApexes() to include isInstalled/isFactory
-            //  and remove this terrible hack.
-            Log.w(TAG, "Failed to uninstall shim APEX : " + errorMessage);
+        if (getShimApex().sourceDir.startsWith("/system")) {
+            // System version is active, nothing to uninstall.
+            return;
         }
-        assertThat(getShimApex().versionCode).isEqualTo(1L);
+        // Non system version is active, need to uninstall it and reboot the device.
+        Log.i(TAG, "Uninstalling shim apex");
+        final String errorMessage = getDevice().uninstallPackage(SHIM_APEX_PACKAGE_NAME);
+        if (errorMessage != null) {
+            Log.e(TAG, "Failed to uninstall " + SHIM_APEX_PACKAGE_NAME + " : " + errorMessage);
+        } else {
+            getDevice().reboot();
+            final ITestDevice.ApexInfo shim = getShimApex();
+            assertThat(shim.versionCode).isEqualTo(1L);
+            assertThat(shim.sourceDir).startsWith("/system");
+        }
     }
 
     private ITestDevice.ApexInfo getShimApex() throws DeviceNotAvailableException {
