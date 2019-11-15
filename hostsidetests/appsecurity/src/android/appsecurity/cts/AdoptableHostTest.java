@@ -364,7 +364,10 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
             for (String line : lines) {
                 final LocalVolumeInfo info = new LocalVolumeInfo(line.trim());
                 if (!"private".equals(info.volId) && "mounted".equals(info.state)) {
-                    return info;
+                    String loaded_volumes = getDevice().executeShellCommand("dumpsys package volumes");
+                    if (loaded_volumes.contains(info.volId)) {
+                        return info;
+                    }
                 }
             }
             Thread.sleep(1000);
