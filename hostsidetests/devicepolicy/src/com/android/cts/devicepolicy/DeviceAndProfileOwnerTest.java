@@ -1078,13 +1078,9 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         // UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY
         final String DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY =
                 "no_install_unknown_sources_globally";
-        final String PACKAGE_VERIFIER_USER_CONSENT_SETTING = "package_verifier_user_consent";
-        final String PACKAGE_VERIFIER_ENABLE_SETTING = "package_verifier_enable";
         final String SECURE_SETTING_CATEGORY = "secure";
         final String GLOBAL_SETTING_CATEGORY = "global";
         final File apk = mBuildHelper.getTestFile(TEST_APP_APK);
-        String packageVerifierEnableSetting = null;
-        String packageVerifierUserConsentSetting = null;
         try {
             // Install the test and prepare the test apk.
             installAppAsUser(PACKAGE_INSTALLER_APK, mUserId);
@@ -1108,17 +1104,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
             // Clear global restriction and test if we can install the apk.
             changeUserRestrictionOrFail(DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY, false, mUserId);
-
-            // Disable verifier.
-            packageVerifierUserConsentSetting = getSettings(SECURE_SETTING_CATEGORY,
-                    PACKAGE_VERIFIER_USER_CONSENT_SETTING, mUserId);
-            packageVerifierEnableSetting = getSettings(GLOBAL_SETTING_CATEGORY,
-                    PACKAGE_VERIFIER_ENABLE_SETTING, mUserId);
-
-            putSettings(SECURE_SETTING_CATEGORY, PACKAGE_VERIFIER_USER_CONSENT_SETTING, "-1",
-                    mUserId);
-            putSettings(GLOBAL_SETTING_CATEGORY, PACKAGE_VERIFIER_ENABLE_SETTING, "0", mUserId);
-            // Skip verifying above setting values as some of them may be overrided.
             runDeviceTestsAsUser(PACKAGE_INSTALLER_PKG, ".ManualPackageInstallTest",
                     "testManualInstallSucceeded", mUserId);
         } finally {
@@ -1127,14 +1112,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             getDevice().executeShellCommand(command);
             getDevice().uninstallPackage(TEST_APP_PKG);
             getDevice().uninstallPackage(PACKAGE_INSTALLER_PKG);
-            if (packageVerifierEnableSetting != null) {
-                putSettings(GLOBAL_SETTING_CATEGORY, PACKAGE_VERIFIER_ENABLE_SETTING,
-                        packageVerifierEnableSetting, mUserId);
-            }
-            if (packageVerifierUserConsentSetting != null) {
-                putSettings(SECURE_SETTING_CATEGORY, PACKAGE_VERIFIER_USER_CONSENT_SETTING,
-                        packageVerifierUserConsentSetting, mUserId);
-            }
         }
     }
 
