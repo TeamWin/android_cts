@@ -684,11 +684,8 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
             return;
         }
 
-        final String testNumber = "5551212";
-        setupForEmergencyCalling(testNumber);
-        Bundle extras = new Bundle();
-        extras.putParcelable(TestUtils.EXTRA_PHONE_NUMBER, Uri.fromParts("tel", testNumber, null));
-        placeAndVerifyCall(extras);
+        setupForEmergencyCalling(TEST_EMERGENCY_NUMBER);
+        placeAndVerifyEmergencyCall(true /*supportsHold*/);
         assertIsInCall(true);
         assertIsInManagedCall(true);
         try {
