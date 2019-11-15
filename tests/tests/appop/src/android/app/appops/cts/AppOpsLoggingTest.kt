@@ -19,6 +19,7 @@ package android.app.appops.cts
 import android.app.AppOpsManager
 import android.app.AppOpsManager.AppOpsCollector
 import android.app.AppOpsManager.OPSTR_ACCESS_ACCESSIBILITY
+import android.app.AppOpsManager.OPSTR_CAMERA
 import android.app.AppOpsManager.OPSTR_COARSE_LOCATION
 import android.app.AppOpsManager.OPSTR_FINE_LOCATION
 import android.app.AppOpsManager.OPSTR_GET_ACCOUNTS
@@ -37,6 +38,8 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.ServiceConnection
 import android.content.pm.PackageManager.FEATURE_TELEPHONY
+import android.hardware.camera2.CameraDevice
+import android.hardware.camera2.CameraManager
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
@@ -563,6 +566,49 @@ class AppOpsLoggingTest {
         assertThat(noted[0].first.op).isEqualTo(OPSTR_FINE_LOCATION)
         assertThat(noted[0].first.featureId).isEqualTo(TEST_FEATURE_ID)
         assertThat(noted[0].second.map { it.methodName }).contains("getCellInfo")
+    }
+
+    private fun openCamera(context: Context) {
+        val cameraManager = context.getSystemService(CameraManager::class.java)
+
+        val openedCamera = CompletableFuture<CameraDevice>()
+
+        assumeTrue(cameraManager.cameraIdList.isNotEmpty())
+
+        cameraManager.openCamera(cameraManager.cameraIdList[0], { it.run() },
+            object : CameraDevice.StateCallback() {
+                override fun onOpened(camera: CameraDevice) {
+                    openedCamera.complete(camera)
+                }
+
+                override fun onDisconnected(camera: CameraDevice) {}
+                override fun onError(camera: CameraDevice, error: Int) {}
+            })
+
+        openedCamera.get(TIMEOUT_MILLIS, MILLISECONDS).close()
+
+        eventually {
+            assertThat(asyncNoted[0].op).isEqualTo(OPSTR_CAMERA)
+            assertThat(asyncNoted[0].featureId).isEqualTo(context.featureId)
+            assertThat(asyncNoted[0].message).contains(cameraManager.cameraIdList[0])
+        }
+    }
+
+    /**
+     * Realistic end-to-end test for opening camera
+     */
+    @Test
+    fun openCameraWithFeature() {
+        openCamera(context.createFeatureContext(TEST_FEATURE_ID))
+    }
+
+    /**
+     * Realistic end-to-end test for opening camera. This uses the default (==null) feature. This
+     * is interesting as null feature handling is more complex in native code.
+     */
+    @Test
+    fun openCameraWithDefaultFeature() {
+        openCamera(context.createFeatureContext(null))
     }
 
     @After
