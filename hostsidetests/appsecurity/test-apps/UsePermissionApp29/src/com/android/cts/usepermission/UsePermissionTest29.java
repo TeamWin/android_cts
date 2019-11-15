@@ -101,7 +101,7 @@ public class UsePermissionTest29 extends BasePermissionsTest {
         String[] permissions = {ACCESS_FINE_LOCATION, ACCESS_BACKGROUND_LOCATION};
 
         BasePermissionActivity.Result result = requestPermissions(permissions,
-                this::clickAllowAlwaysButton);
+                this::clickAllowAlwaysFromGrantDialog);
         assertPermissionRequestResult(result, permissions, true, true);
 
         assertGranted(ACCESS_FINE_LOCATION);
@@ -123,7 +123,7 @@ public class UsePermissionTest29 extends BasePermissionsTest {
         // Step 2: request background only
         permissions = new String[]{ACCESS_BACKGROUND_LOCATION};
 
-        result = requestPermissions(permissions, this::clickAllowButton);
+        result = requestPermissions(permissions, this::clickAllowAlwaysFromGrantDialog);
         assertPermissionRequestResult(result, permissions, true);
 
         assertGranted(ACCESS_FINE_LOCATION);
@@ -142,7 +142,7 @@ public class UsePermissionTest29 extends BasePermissionsTest {
         assertDenied(ACCESS_BACKGROUND_LOCATION);
 
         // Step 2: grant background
-        result = requestPermissions(permissions, this::clickAllowButton);
+        result = requestPermissions(permissions, this::clickAllowAlwaysFromGrantDialog);
         assertPermissionRequestResult(result, permissions, true, true);
 
         assertGranted(ACCESS_FINE_LOCATION);
