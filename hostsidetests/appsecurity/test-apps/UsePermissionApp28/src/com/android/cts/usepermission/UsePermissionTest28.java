@@ -47,7 +47,7 @@ public class UsePermissionTest28 extends BasePermissionsTest {
         // permission
         BasePermissionActivity.Result result = requestPermissions(permissions, () -> {
             try {
-                clickAllowAlwaysFromGrantDialog();
+                clickSettingsAllowAlwaysFromGrantDialog();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
