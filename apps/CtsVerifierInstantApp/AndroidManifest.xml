@@ -21,7 +21,7 @@
                 <data android:host="instantapp.cts.android.com" android:scheme="https"/>
             </intent-filter>
             <meta-data android:name="default-url"
-                 android:value="http://instantapp.cts.android.com" />
+                 android:value="https://source.android.com/compatibility/cts/verifier-instant-apps" />
         </activity>
     </application>
 </manifest>
