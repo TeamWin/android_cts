@@ -295,11 +295,15 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         return cecMessage.toString();
     }
 
+    public static int hexStringToInt(String message) {
+        return Integer.parseInt(message, HEXADECIMAL_RADIX);
+    }
+
     /**
      * Gets the params from a CEC message.
      */
     public int getParamsFromMessage(String message) {
-        return Integer.parseInt(getNibbles(message).substring(4), HEXADECIMAL_RADIX);
+        return hexStringToInt(getNibbles(message).substring(4));
     }
 
     /**
@@ -308,7 +312,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     public int getParamsFromMessage(String message, int numNibbles) {
         int paramStart = 4;
         int end = numNibbles + paramStart;
-        return Integer.parseInt(getNibbles(message).substring(paramStart, end), HEXADECIMAL_RADIX);
+        return hexStringToInt(getNibbles(message).substring(paramStart, end));
     }
 
     /**
@@ -318,7 +322,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      * getParamsFromMessage(message, 4, 6) will return 0x04.
      */
     public int getParamsFromMessage(String message, int start, int end) {
-        return Integer.parseInt(getNibbles(message).substring(4).substring(start, end), HEXADECIMAL_RADIX);
+        return hexStringToInt(getNibbles(message).substring(4).substring(start, end));
     }
 
     /**
@@ -326,7 +330,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      */
     public CecDevice getSourceFromMessage(String message) {
         String param = getNibbles(message).substring(0, 1);
-        return CecDevice.getDevice(Integer.parseInt(param, HEXADECIMAL_RADIX));
+        return CecDevice.getDevice(hexStringToInt(param));
     }
 
 
@@ -335,7 +339,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      */
     public CecDevice getDestinationFromMessage(String message) {
         String param = getNibbles(message).substring(1, 2);
-        return CecDevice.getDevice(Integer.parseInt(param, HEXADECIMAL_RADIX));
+        return CecDevice.getDevice(hexStringToInt(param));
     }
 
     private String getNibbles(String message) {
