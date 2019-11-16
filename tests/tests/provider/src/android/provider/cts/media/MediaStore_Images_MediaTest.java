@@ -36,9 +36,11 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.ExifInterface;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.storage.StorageManager;
+import android.provider.BaseColumns;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Images.ImageColumns;
 import android.provider.MediaStore.Images.Media;
@@ -64,6 +66,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.HashSet;
 
 @RunWith(Parameterized.class)
 public class MediaStore_Images_MediaTest {
@@ -505,6 +509,84 @@ public class MediaStore_Images_MediaTest {
             final String displayName = c.getString(c.getColumnIndex(ImageColumns.DISPLAY_NAME));
             assertTrue("Invalid display name " + displayName, displayName.startsWith("cts"));
             assertTrue("Invalid display name " + displayName, displayName.endsWith(".jpg"));
+        }
+    }
+
+    @Test
+    public void testGroup() throws Exception {
+        // Confirm that we have at least two images staged
+        ProviderTestUtils.stageMedia(R.raw.scenery, mExternalImages);
+        ProviderTestUtils.stageMedia(R.raw.scenery, mExternalImages);
+
+        final Bundle queryArgs = new Bundle();
+        queryArgs.putStringArray(ContentResolver.QUERY_ARG_GROUP_COLUMNS,
+                new String[] { ImageColumns.BUCKET_ID });
+
+        final HashSet<Integer> seen = new HashSet<>();
+        int maxCount = 0;
+        try (Cursor c = mContentResolver.query(mExternalImages,
+                new String[] { ImageColumns.BUCKET_ID, "COUNT(_id)" }, queryArgs, null)) {
+            final HashSet<String> honored = new HashSet<>(Arrays
+                    .asList(c.getExtras().getStringArray(ContentResolver.EXTRA_HONORED_ARGS)));
+            assertTrue(honored.contains(ContentResolver.QUERY_ARG_GROUP_COLUMNS));
+
+            while (c.moveToNext()) {
+                final int id = c.getInt(0);
+                final int count = c.getInt(1);
+
+                // We should never see the same BUCKET_ID twice
+                assertFalse(seen.contains(id));
+                seen.add(id);
+
+                maxCount = Math.max(maxCount, count);
+            }
+        }
+
+        // At least one bucket should have more than one item
+        assertTrue(maxCount > 1);
+    }
+
+    @Test
+    public void testLimit() throws Exception {
+        // Confirm that we have at least two images staged
+        final Uri red = ProviderTestUtils.stageMedia(R.raw.scenery, mExternalImages);
+        final Uri blue = ProviderTestUtils.stageMedia(R.raw.scenery, mExternalImages);
+
+        final long redId = ContentUris.parseId(red);
+        final long blueId = ContentUris.parseId(blue);
+
+        final Bundle queryArgs = new Bundle();
+        queryArgs.putString(ContentResolver.QUERY_ARG_SQL_SELECTION,
+                BaseColumns._ID + " IN (" + redId + "," + blueId + ")");
+        queryArgs.putString(ContentResolver.QUERY_ARG_SQL_SORT_ORDER,
+                BaseColumns._ID + " ASC");
+        queryArgs.putInt(ContentResolver.QUERY_ARG_LIMIT, 1);
+
+        try (Cursor c = mContentResolver.query(mExternalImages,
+                new String[] { BaseColumns._ID }, queryArgs, null)) {
+            final HashSet<String> honored = new HashSet<>(Arrays
+                    .asList(c.getExtras().getStringArray(ContentResolver.EXTRA_HONORED_ARGS)));
+            assertTrue(honored.contains(ContentResolver.QUERY_ARG_LIMIT));
+
+            // We should only have single lowest image
+            assertEquals(1, c.getCount());
+            assertTrue(c.moveToFirst());
+            assertEquals(Math.min(redId, blueId), c.getLong(0));
+        }
+
+        queryArgs.putInt(ContentResolver.QUERY_ARG_OFFSET, 1);
+
+        try (Cursor c = mContentResolver.query(mExternalImages,
+                new String[] { BaseColumns._ID }, queryArgs, null)) {
+            final HashSet<String> honored = new HashSet<>(Arrays
+                    .asList(c.getExtras().getStringArray(ContentResolver.EXTRA_HONORED_ARGS)));
+            assertTrue(honored.contains(ContentResolver.QUERY_ARG_LIMIT));
+            assertTrue(honored.contains(ContentResolver.QUERY_ARG_OFFSET));
+
+            // We should only have single highest image
+            assertEquals(1, c.getCount());
+            assertTrue(c.moveToFirst());
+            assertEquals(Math.max(redId, blueId), c.getLong(0));
         }
     }
 }

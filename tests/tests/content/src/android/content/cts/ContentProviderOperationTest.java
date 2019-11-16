@@ -16,10 +16,12 @@
 
 package android.content.cts;
 
+import static android.content.ContentResolver.QUERY_ARG_SQL_SELECTION;
+import static android.content.ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -36,6 +38,9 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatchers;
+
+import java.util.Objects;
 
 @RunWith(AndroidJUnit4.class)
 public class ContentProviderOperationTest {
@@ -47,17 +52,19 @@ public class ContentProviderOperationTest {
     private static final String TEST_ARG = "test_arg";
 
     private static final ContentValues TEST_VALUES = new ContentValues();
+    private static final Bundle TEST_EXTRAS = new Bundle();
+    private static final Bundle TEST_EXTRAS_WITH_SQL = new Bundle();
+    private static final Bundle TEST_EXTRAS_RESULT = new Bundle();
+
     static {
         TEST_VALUES.put("test_key", "test_value");
-    }
 
-    private static final Bundle TEST_EXTRAS = new Bundle();
-    static {
         TEST_EXTRAS.putString("test_key", "test_value");
-    }
 
-    private static final Bundle TEST_EXTRAS_RESULT = new Bundle();
-    static {
+        TEST_EXTRAS_WITH_SQL.putAll(TEST_EXTRAS);
+        TEST_EXTRAS_WITH_SQL.putString(QUERY_ARG_SQL_SELECTION, TEST_SELECTION);
+        TEST_EXTRAS_WITH_SQL.putStringArray(QUERY_ARG_SQL_SELECTION_ARGS, TEST_SELECTION_ARGS);
+
         TEST_EXTRAS_RESULT.putString("test_result", "42");
     }
 
@@ -82,13 +89,14 @@ public class ContentProviderOperationTest {
     public void testInsert() throws Exception {
         op = ContentProviderOperation.newInsert(TEST_URI)
                 .withValues(TEST_VALUES)
+                .withExtras(TEST_EXTRAS)
                 .build();
 
         assertEquals(TEST_URI, op.getUri());
         assertTrue(op.isInsert());
         assertTrue(op.isWriteOperation());
 
-        when(provider.insert(eq(TEST_URI), eq(TEST_VALUES)))
+        when(provider.insert(eq(TEST_URI), eq(TEST_VALUES), eqBundle(TEST_EXTRAS)))
                 .thenReturn(TEST_URI_RESULT);
         res = op.apply(provider, null, 0);
         assertEquals(TEST_URI_RESULT, res.uri);
@@ -99,15 +107,15 @@ public class ContentProviderOperationTest {
         op = ContentProviderOperation.newUpdate(TEST_URI)
                 .withSelection(TEST_SELECTION, TEST_SELECTION_ARGS)
                 .withValues(TEST_VALUES)
+                .withExtras(TEST_EXTRAS)
                 .build();
 
         assertEquals(TEST_URI, op.getUri());
         assertTrue(op.isUpdate());
         assertTrue(op.isWriteOperation());
 
-        when(provider.update(eq(TEST_URI), eq(TEST_VALUES),
-                eq(TEST_SELECTION), eq(TEST_SELECTION_ARGS)))
-                        .thenReturn(1);
+        when(provider.update(eq(TEST_URI), eq(TEST_VALUES), eqBundle(TEST_EXTRAS_WITH_SQL)))
+                .thenReturn(1);
         res = op.apply(provider, null, 0);
         assertEquals(1, (int) res.count);
     }
@@ -116,15 +124,15 @@ public class ContentProviderOperationTest {
     public void testDelete() throws Exception {
         op = ContentProviderOperation.newDelete(TEST_URI)
                 .withSelection(TEST_SELECTION, TEST_SELECTION_ARGS)
+                .withExtras(TEST_EXTRAS)
                 .build();
 
         assertEquals(TEST_URI, op.getUri());
         assertTrue(op.isDelete());
         assertTrue(op.isWriteOperation());
 
-        when(provider.delete(eq(TEST_URI),
-                eq(TEST_SELECTION), eq(TEST_SELECTION_ARGS)))
-                        .thenReturn(1);
+        when(provider.delete(eq(TEST_URI), eqBundle(TEST_EXTRAS_WITH_SQL)))
+                .thenReturn(1);
         res = op.apply(provider, null, 0);
         assertEquals(1, (int) res.count);
     }
@@ -133,6 +141,7 @@ public class ContentProviderOperationTest {
     public void testAssertQuery() throws Exception {
         op = ContentProviderOperation.newAssertQuery(TEST_URI)
                 .withSelection(TEST_SELECTION, TEST_SELECTION_ARGS)
+                .withExtras(TEST_EXTRAS)
                 .withValues(TEST_VALUES)
                 .build();
 
@@ -144,7 +153,7 @@ public class ContentProviderOperationTest {
         cursor.addRow(new Object[] { "test_value" });
 
         when(provider.query(eq(TEST_URI), eq(new String[] { "test_key" }),
-              eq(TEST_SELECTION), eq(TEST_SELECTION_ARGS), eq(null)))
+                eqBundle(TEST_EXTRAS_WITH_SQL), eq(null)))
                         .thenReturn(cursor);
         op.apply(provider, null, 0);
     }
@@ -159,7 +168,7 @@ public class ContentProviderOperationTest {
         assertTrue(op.isCall());
 
         when(provider.call(eq(TEST_URI.getAuthority()), eq(TEST_METHOD),
-                eq(TEST_ARG), notNull()))
+                eq(TEST_ARG), eqBundle(TEST_EXTRAS)))
                         .thenReturn(TEST_EXTRAS_RESULT);
         res = op.apply(provider, null, 0);
         assertEquals(TEST_EXTRAS_RESULT, res.extras);
@@ -238,9 +247,18 @@ public class ContentProviderOperationTest {
         assertTrue(op.isExceptionAllowed());
 
         when(provider.call(eq(TEST_URI.getAuthority()), eq(TEST_METHOD),
-                eq(TEST_ARG), notNull()))
+                eq(TEST_ARG), eqBundle(TEST_EXTRAS)))
                         .thenThrow(new IllegalArgumentException());
         res = op.apply(provider, null, 0);
         assertTrue((res.exception instanceof IllegalArgumentException));
+    }
+
+    public static Bundle eqBundle(Bundle bundle) {
+        return ArgumentMatchers.argThat((other) -> {
+            // Ideally we'd use something like Bundle.kindofEquals() here, but
+            // it doesn't perform deep equals inside String[] values, so the
+            // best we can do is a simple string equality check
+            return Objects.equals(bundle.toString(), other.toString());
+        });
     }
 }
