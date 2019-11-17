@@ -42,11 +42,12 @@ public class UsePermissionTest28 extends BasePermissionsTest {
 
         String[] permissions = {ACCESS_FINE_LOCATION};
 
+
         // request only foreground permission. This should automatically also add the background
         // permission
         BasePermissionActivity.Result result = requestPermissions(permissions, () -> {
             try {
-                clickAllowAlwaysButton();
+                clickAllowAlwaysFromGrantDialog();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

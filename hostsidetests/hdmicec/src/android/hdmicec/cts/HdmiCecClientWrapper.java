@@ -29,6 +29,7 @@ import java.io.BufferedWriter;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -52,10 +53,13 @@ public final class HdmiCecClientWrapper extends ExternalResource {
 
     private CecDevice targetDevice;
     private BaseHostJUnit4Test testObject;
+    private String clientParams[];
 
-    public HdmiCecClientWrapper(CecDevice targetDevice, BaseHostJUnit4Test testObject) {
+    public HdmiCecClientWrapper(CecDevice targetDevice, BaseHostJUnit4Test testObject,
+            String ...clientParams) {
         this.targetDevice = targetDevice;
         this.testObject = testObject;
+        this.clientParams = clientParams;
     }
 
     @Override
@@ -92,6 +96,8 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         commands.add("cec-client");
         commands.add("-p");
         commands.add("2");
+        commands.addAll(Arrays.asList(clientParams));
+
         mCecClient = RunUtil.getDefault().runCmdInBackground(commands);
         mInputConsole = new BufferedReader(new InputStreamReader(mCecClient.getInputStream()));
 
@@ -255,29 +261,49 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         return asciiString;
     }
 
-    /** Prepares a CEC message. */
-    public String prepareMessage(CecDevice source, CecDevice destination, CecMessage message,
-                                 int params) {
-        String cecMessage = "" + source + destination + ":" + message;
-
-        String paramsString = Integer.toHexString(params);
+    public String formatParams(String rawParams) {
+        StringBuilder params = new StringBuilder("");
         int position = 0;
         int endPosition = 2;
 
         do {
-            cecMessage.concat(":" + paramsString.substring(position, endPosition));
+            params.append(":" + rawParams.substring(position, endPosition));
             position = endPosition;
             endPosition += 2;
-        } while (endPosition <= paramsString.length());
+        } while (endPosition <= rawParams.length());
+        return params.toString();
+    }
 
-        return cecMessage;
+    public String formatParams(long rawParam) {
+        StringBuilder params = new StringBuilder("");
+
+        do {
+            params.insert(0, ":" + String.format("%02x", rawParam % 256));
+            rawParam >>= 8;
+        } while (rawParam > 0);
+
+        return params.toString();
+    }
+
+    /** Formats a CEC message in the hex colon format (sd:op:xx:xx). */
+    public String formatMessage(CecDevice source, CecDevice destination, CecMessage message,
+            int params) {
+        StringBuilder cecMessage = new StringBuilder("" + source + destination + ":" + message);
+
+        cecMessage.append(formatParams(params));
+
+        return cecMessage.toString();
+    }
+
+    public static int hexStringToInt(String message) {
+        return Integer.parseInt(message, HEXADECIMAL_RADIX);
     }
 
     /**
      * Gets the params from a CEC message.
      */
     public int getParamsFromMessage(String message) {
-        return Integer.parseInt(getNibbles(message).substring(4), HEXADECIMAL_RADIX);
+        return hexStringToInt(getNibbles(message).substring(4));
     }
 
     /**
@@ -286,7 +312,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     public int getParamsFromMessage(String message, int numNibbles) {
         int paramStart = 4;
         int end = numNibbles + paramStart;
-        return Integer.parseInt(getNibbles(message).substring(paramStart, end), HEXADECIMAL_RADIX);
+        return hexStringToInt(getNibbles(message).substring(paramStart, end));
     }
 
     /**
@@ -296,7 +322,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      * getParamsFromMessage(message, 4, 6) will return 0x04.
      */
     public int getParamsFromMessage(String message, int start, int end) {
-        return Integer.parseInt(getNibbles(message).substring(4).substring(start, end), HEXADECIMAL_RADIX);
+        return hexStringToInt(getNibbles(message).substring(4).substring(start, end));
     }
 
     /**
@@ -304,7 +330,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      */
     public CecDevice getSourceFromMessage(String message) {
         String param = getNibbles(message).substring(0, 1);
-        return CecDevice.getDevice(Integer.parseInt(param, HEXADECIMAL_RADIX));
+        return CecDevice.getDevice(hexStringToInt(param));
     }
 
 
@@ -313,7 +339,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      */
     public CecDevice getDestinationFromMessage(String message) {
         String param = getNibbles(message).substring(1, 2);
-        return CecDevice.getDevice(Integer.parseInt(param, HEXADECIMAL_RADIX));
+        return CecDevice.getDevice(hexStringToInt(param));
     }
 
     private String getNibbles(String message) {

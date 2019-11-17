@@ -20,6 +20,7 @@ import static com.android.compatibility.common.util.UiAutomatorUtils.waitFindObj
 import static com.android.compatibility.common.util.UiAutomatorUtils.getUiDevice;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.TestCase.assertTrue;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;
@@ -49,6 +50,8 @@ import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.support.test.uiautomator.UiScrollable;
 import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
+import android.text.Spanned;
+import android.text.style.ClickableSpan;
 import android.util.ArrayMap;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
@@ -64,6 +67,7 @@ import com.android.compatibility.common.util.ThrowingRunnable;
 import com.android.compatibility.common.util.UiDumpUtils;
 
 import junit.framework.Assert;
+import junit.framework.TestCase;
 
 import org.junit.Before;
 import org.junit.runner.RunWith;
@@ -310,12 +314,14 @@ public abstract class BasePermissionsTest {
     }
 
     protected void clickAllowButton() throws Exception {
-        scrollToBottom();
         click("com.android.permissioncontroller:id/permission_allow_button");
     }
 
-    protected void clickAllowAlwaysButton() throws Exception {
-        click("com.android.permissioncontroller:id/permission_allow_always_button");
+    protected void clickAllowAlwaysFromGrantDialog() throws Exception {
+        clickSettingsLink();
+        click("com.android.permissioncontroller:id/allow_radio_button");
+        getUiDevice().waitForIdle();
+        getUiDevice().pressBack();
     }
 
     protected void clickAllowForegroundButton() throws Exception {
@@ -323,18 +329,28 @@ public abstract class BasePermissionsTest {
     }
 
     protected void clickDenyButton() throws Exception {
-        scrollToBottom();
         click("com.android.permissioncontroller:id/permission_deny_button");
     }
 
     protected void clickDenyAndDontAskAgainButton() throws Exception {
-        scrollToBottom();
         click("com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button");
     }
 
     protected void clickDontAskAgainButton() throws Exception {
-        scrollToBottom();
         click("com.android.permissioncontroller:id/permission_deny_dont_ask_again_button");
+    }
+
+    protected void clickSettingsLink() {
+        List<AccessibilityNodeInfo> infos = getInstrumentation().getUiAutomation()
+                .getRootInActiveWindow().findAccessibilityNodeInfosByViewId(
+                        "com.android.permissioncontroller:id/detail_message");
+        AccessibilityNodeInfo info = infos.get(0);
+        Spanned spanned = (Spanned) info.getText();
+        ClickableSpan[] clickableSpans = ((Spanned) info.getText())
+                .getSpans(0, spanned.length(), ClickableSpan.class);
+        ClickableSpan clickableSpan = clickableSpans[0];
+        assertTrue(info.isVisibleToUser());
+        clickableSpan.onClick(null);
     }
 
     private void click(String resourceName) throws TimeoutException, UiObjectNotFoundException {

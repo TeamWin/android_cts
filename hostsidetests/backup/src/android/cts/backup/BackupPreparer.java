@@ -32,7 +32,6 @@ import com.android.tradefed.targetprep.ITargetCleaner;
 import com.android.tradefed.targetprep.TargetSetupError;
 
 import java.io.IOException;
-import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
@@ -66,7 +65,6 @@ public class BackupPreparer implements ITargetCleaner {
 
     private boolean mIsBackupSupported;
     private boolean mWasBackupEnabled;
-    private Optional<Boolean> mWasBackupActivated = Optional.empty();
     private String mOldTransport;
     private ITestDevice mDevice;
     private BackupUtils mBackupUtils;
@@ -83,8 +81,10 @@ public class BackupPreparer implements ITargetCleaner {
         waitForBroadcastIdle();
 
         if (mIsBackupSupported) {
-            CLog.i("Activating backup on %s", mDevice.getSerialNumber());
-            mWasBackupActivated = Optional.of(setBackupActive(true));
+            if (!isBackupActiveForSysytemUser()) {
+                throw new TargetSetupError("Cannot run test as backup is not active for system "
+                        + "user", device.getDeviceDescriptor());
+            }
 
             // Enable backup and select local backup transport
             waitForTransport(LOCAL_TRANSPORT);
@@ -113,18 +113,14 @@ public class BackupPreparer implements ITargetCleaner {
         mDevice = device;
 
         if (mIsBackupSupported) {
-            if (mWasBackupActivated.isPresent()) {
-                setBackupActive(mWasBackupActivated.get());
-
-                if (mEnableBackup) {
-                    CLog.i("Returning backup to it's previous state on %s",
+            if (mEnableBackup) {
+                CLog.i("Returning backup to it's previous state on %s",
+                        mDevice.getSerialNumber());
+                enableBackup(mWasBackupEnabled);
+                if (mSelectLocalTransport) {
+                    CLog.i("Returning selected transport to it's previous value on %s",
                             mDevice.getSerialNumber());
-                    enableBackup(mWasBackupEnabled);
-                    if (mSelectLocalTransport) {
-                        CLog.i("Returning selected transport to it's previous value on %s",
-                                mDevice.getSerialNumber());
-                        setBackupTransport(mOldTransport);
-                    }
+                    setBackupTransport(mOldTransport);
                 }
             }
         }
@@ -230,16 +226,12 @@ public class BackupPreparer implements ITargetCleaner {
         }
     }
 
-    private boolean setBackupActive(boolean active) {
-        boolean wasBackupActive;
+    private boolean isBackupActiveForSysytemUser() {
         try {
-            wasBackupActive  = mBackupUtils.isBackupActivatedForUser(USER_SYSTEM);
-            mBackupUtils.activateBackupForUser(active, USER_SYSTEM);
+            return mBackupUtils.isBackupActivatedForUser(USER_SYSTEM);
         } catch (IOException e) {
-            throw new RuntimeException("Failed set backup active status");
+            throw new RuntimeException("Failed to check backup activation status");
         }
-
-        return wasBackupActive;
     }
 
     private static <T> T uncheck(Callable<T> callable) {

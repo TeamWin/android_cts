@@ -79,13 +79,6 @@ public class MixedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @Override
-    @FlakyTest(bugId = 138721077)
-    @Test
-    public void testLockTask_defaultDialer() throws Exception {
-        super.testLockTask_defaultDialer();
-    }
-
-    @Override
     @FlakyTest(bugId = 140932104)
     @Test
     public void testLockTaskAfterReboot() throws Exception {

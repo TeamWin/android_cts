@@ -1245,6 +1245,32 @@ public class ContentResolverTest extends AndroidTestCase {
         mContentResolver.unregisterContentObserver(mco);
     }
 
+    public void testNotifyChange_Multiple() {
+        final MockContentObserver observer1 = new MockContentObserver();
+        final MockContentObserver observer2 = new MockContentObserver();
+
+        mContentResolver.registerContentObserver(TABLE1_URI, true, observer1);
+        mContentResolver.registerContentObserver(TABLE2_URI, true, observer2);
+
+        assertFalse(observer1.hadOnChanged());
+        assertFalse(observer2.hadOnChanged());
+
+        final ArrayList<Uri> list = new ArrayList<>();
+        list.add(TABLE1_URI);
+        list.add(TABLE2_URI);
+        mContentResolver.notifyChange(list, null, 0);
+
+        new PollingCheck() {
+            @Override
+            protected boolean check() {
+                return observer1.hadOnChanged() && observer2.hadOnChanged();
+            }
+        }.run();
+
+        mContentResolver.unregisterContentObserver(observer1);
+        mContentResolver.unregisterContentObserver(observer2);
+    }
+
     public void testStartCancelSync() {
         Bundle extras = new Bundle();
 

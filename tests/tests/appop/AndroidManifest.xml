@@ -27,6 +27,10 @@
   <uses-permission android:name="android.permission.READ_CONTACTS" />
   <uses-permission android:name="android.permission.WRITE_CONTACTS" />
 
+  <uses-permission android:name="android.permission.CAMERA" />
+
+  <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+
   <application>
       <uses-library android:name="android.test.runner"/>
       <activity android:name=".UidStateForceActivity" />

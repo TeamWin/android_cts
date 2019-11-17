@@ -130,8 +130,7 @@ TEST_F(MediaMetricsTest, testSelfRecord) {
     mediametrics_setCString(handle_, "attr5", "test_string");
     mediametrics_setUid(handle_, 10000);
 
-    // An invalid key 'foo' is used here. Expecting FALSE.
-    EXPECT_FALSE(mediametrics_selfRecord(handle_));
+    EXPECT_TRUE(mediametrics_selfRecord(handle_));
 }
 
 TEST_F(MediaMetricsTest, testIsEnabled) {

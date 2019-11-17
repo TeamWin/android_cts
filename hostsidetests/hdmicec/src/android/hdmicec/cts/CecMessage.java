@@ -50,13 +50,7 @@ public enum CecMessage {
 
     @Override
     public String toString() {
-        String message = Integer.toHexString(this.messageId);
-        /* Every message should be of length 2, else prefix with 0 */
-        int numZeros = 2 - message.length();
-        for (int i = 0; i < numZeros; i++) {
-            message = "0" + message;
-        }
-        return message;
+        return String.format("%02x", messageId);
     }
 
     private CecMessage(int messageId) {
