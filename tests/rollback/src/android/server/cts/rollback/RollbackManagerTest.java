@@ -25,12 +25,10 @@ import android.content.rollback.RollbackInfo;
 
 import androidx.test.InstrumentationRegistry;
 
-import com.android.cts.install.lib.Install;
-import com.android.cts.install.lib.TestApp;
-import com.android.cts.install.lib.Uninstall;
-import com.android.cts.install.lib.InstallUtils;
+import com.android.cts.rollback.lib.Install;
 import com.android.cts.rollback.lib.Rollback;
-import com.android.cts.rollback.lib.RollbackUtils;
+import com.android.cts.rollback.lib.TestApp;
+import com.android.cts.rollback.lib.Utils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -58,7 +56,7 @@ public class RollbackManagerTest {
                     Manifest.permission.DELETE_PACKAGES,
                     Manifest.permission.TEST_MANAGE_ROLLBACKS);
 
-        Uninstall.packages(TestApp.A);
+        Utils.uninstall(TestApp.A);
     }
 
     /**
@@ -66,7 +64,7 @@ public class RollbackManagerTest {
      */
     @After
     public void teardown() throws InterruptedException, IOException {
-        Uninstall.packages(TestApp.A);
+        Utils.uninstall(TestApp.A);
 
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .dropShellPermissionIdentity();
@@ -78,23 +76,23 @@ public class RollbackManagerTest {
     @Test
     public void testBasic() throws Exception {
         Install.single(TestApp.A1).commit();
-        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
-        assertThat(RollbackUtils.getAvailableRollback(TestApp.A)).isNull();
-        assertThat(RollbackUtils.getCommittedRollback(TestApp.A)).isNull();
+        assertThat(Utils.getInstalledVersion(TestApp.A)).isEqualTo(1);
+        assertThat(Utils.getAvailableRollback(TestApp.A)).isNull();
+        assertThat(Utils.getCommittedRollback(TestApp.A)).isNull();
 
         Install.single(TestApp.A2).setEnableRollback().commit();
-        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
-        RollbackInfo available = RollbackUtils.getAvailableRollback(TestApp.A);
+        assertThat(Utils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+        RollbackInfo available = Utils.getAvailableRollback(TestApp.A);
         assertThat(available).isNotNull();
         assertThat(available).isNotStaged();
         assertThat(available).packagesContainsExactly(
                 Rollback.from(TestApp.A2).to(TestApp.A1));
-        assertThat(RollbackUtils.getCommittedRollback(TestApp.A)).isNull();
+        assertThat(Utils.getCommittedRollback(TestApp.A)).isNull();
 
-        RollbackUtils.rollback(available.getRollbackId(), TestApp.A2);
-        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
-        assertThat(RollbackUtils.getAvailableRollback(TestApp.A)).isNull();
-        RollbackInfo committed = RollbackUtils.getCommittedRollback(TestApp.A);
+        Utils.rollback(available.getRollbackId(), TestApp.A2);
+        assertThat(Utils.getInstalledVersion(TestApp.A)).isEqualTo(1);
+        assertThat(Utils.getAvailableRollback(TestApp.A)).isNull();
+        RollbackInfo committed = Utils.getCommittedRollback(TestApp.A);
         assertThat(committed).isNotNull();
         assertThat(committed).hasRollbackId(available.getRollbackId());
         assertThat(committed).isNotStaged();

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.install.lib;
+package com.android.cts.rollback.lib;
 
 import android.content.pm.VersionedPackage;
 
@@ -22,13 +22,13 @@ import android.content.pm.VersionedPackage;
  * Collection of dummy apps used in tests.
  */
 public class TestApp {
-    public static final String A = "com.android.cts.install.lib.testapp.A";
+    public static final String A = "com.android.cts.rollback.lib.testapp.A";
     public static final String Apex = "com.android.apex.cts.shim";
 
-    public static final TestApp A1 = new TestApp("Av1", A, 1, /*isApex*/false,
-            "TestAppAv1.apk");
-    public static final TestApp A2 = new TestApp("Av2", A, 2, /*isApex*/false,
-            "TestAppAv2.apk");
+    public static final TestApp A1 = new TestApp("A1", A, 1, /*isApex*/false,
+            "RollbackManagerTestAppA1.apk");
+    public static final TestApp A2 = new TestApp("A2", A, 2, /*isApex*/false,
+            "RollbackManagerTestAppA2.apk");
     public static final TestApp Apex2 = new TestApp("Apex2", Apex, 2, /*isApex*/true,
             "com.android.apex.cts.shim.v2.apex");
     public static final TestApp Apex3 = new TestApp("Apex3", Apex, 3, /*isApex*/true,
@@ -49,28 +49,28 @@ public class TestApp {
         mIsApex = isApex;
     }
 
-    public String getPackageName() {
+    String getPackageName() {
         return mPackageName;
     }
 
-    public long getVersionCode() {
+    long getVersionCode() {
         return mVersionCode;
     }
 
-    public VersionedPackage getVersionedPackage() {
-        return new VersionedPackage(mPackageName, mVersionCode);
+    String[] getResourceNames() {
+        return mResourceNames;
     }
 
-    @Override
-    public String toString() {
-        return mName;
+    VersionedPackage getVersionedPackage() {
+        return new VersionedPackage(mPackageName, mVersionCode);
     }
 
     boolean isApex() {
         return mIsApex;
     }
 
-    String[] getResourceNames() {
-        return mResourceNames;
+    @Override
+    public String toString() {
+        return mName;
     }
 }
