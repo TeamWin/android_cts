@@ -127,10 +127,12 @@ public class ApexShimValidationTest {
         TestApp apexTestApp = new TestApp("ShimApex", SHIM_APEX_PACKAGE_NAME, 2,
                 true, apexFileName);
         int sessionId = Install.single(apexTestApp).setStaged().createSession();
-        PackageInstaller.Session session = InstallUtils.openPackageInstallerSession(sessionId);
-        session.commit(LocalIntentSender.getIntentSender());
-        Intent result = LocalIntentSender.getIntentSenderResult();
-        InstallUtils.assertStatusSuccess(result);
-        return sessionId;
+        try (PackageInstaller.Session session =
+                     InstallUtils.openPackageInstallerSession(sessionId)) {
+            session.commit(LocalIntentSender.getIntentSender());
+            Intent result = LocalIntentSender.getIntentSenderResult();
+            InstallUtils.assertStatusSuccess(result);
+            return sessionId;
+        }
     }
 }
