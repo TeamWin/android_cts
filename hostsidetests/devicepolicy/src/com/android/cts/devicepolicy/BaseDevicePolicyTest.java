@@ -170,8 +170,8 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test implements
 
         // disable the package verifier to avoid the dialog when installing an app
         mPackageVerifier = getDevice().executeShellCommand(
-                "settings get global package_verifier_enable");
-        getDevice().executeShellCommand("settings put global package_verifier_enable 0");
+                "settings get global verifier_verify_adb_installs");
+        getDevice().executeShellCommand("settings put global verifier_verify_adb_installs 0");
 
         mFixedUsers = new ArrayList<>();
         mPrimaryUserId = getPrimaryUser();
@@ -204,7 +204,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test implements
     @After
     public void tearDown() throws Exception {
         // reset the package verifier setting to its original value
-        getDevice().executeShellCommand("settings put global package_verifier_enable "
+        getDevice().executeShellCommand("settings put global verifier_verify_adb_installs "
                 + mPackageVerifier);
         removeOwners();
         switchUser(USER_SYSTEM);
