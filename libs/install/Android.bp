@@ -12,10 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test {
-    name: "CtsRollbackManagerTestCases",
+
+android_test_helper_app {
+    name: "TestAppAv1",
+    manifest: "testapp/Av1.xml",
+    sdk_version: "current",
+    srcs: ["testapp/src/**/*.java"],
+    resource_dirs: ["testapp/res_v1"],
+}
+
+android_test_helper_app {
+    name: "TestAppAv2",
+    manifest: "testapp/Av2.xml",
+    sdk_version: "current",
+    srcs: ["testapp/src/**/*.java"],
+    resource_dirs: ["testapp/res_v2"],
+}
+
+java_library {
+    name: "cts-install-lib",
     srcs: ["src/**/*.java"],
-    static_libs: ["androidx.test.rules", "cts-rollback-lib", "cts-install-lib"],
-    test_suites: ["general-tests"],
+    static_libs: ["androidx.test.rules", "truth-prebuilt"],
     sdk_version: "test_current",
+    java_resources: [
+        ":TestAppAv1",
+        ":TestAppAv2",
+    ],
 }
