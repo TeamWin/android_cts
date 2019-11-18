@@ -140,22 +140,24 @@ public class Install {
      */
     public int commit() throws IOException, InterruptedException {
         int sessionId = createSession();
-        PackageInstaller.Session session = InstallUtils.openPackageInstallerSession(sessionId);
-        session.commit(LocalIntentSender.getIntentSender());
-        Intent result = LocalIntentSender.getIntentSenderResult();
-        int status = result.getIntExtra(PackageInstaller.EXTRA_STATUS,
-                PackageInstaller.STATUS_FAILURE);
-        if (status == -1) {
-            throw new AssertionError("PENDING USER ACTION");
-        } else if (status > 0) {
-            String message = result.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
-            throw new AssertionError(message == null ? "UNKNOWN FAILURE" : message);
-        }
+        try (PackageInstaller.Session session =
+                     InstallUtils.openPackageInstallerSession(sessionId)) {
+            session.commit(LocalIntentSender.getIntentSender());
+            Intent result = LocalIntentSender.getIntentSenderResult();
+            int status = result.getIntExtra(PackageInstaller.EXTRA_STATUS,
+                    PackageInstaller.STATUS_FAILURE);
+            if (status == -1) {
+                throw new AssertionError("PENDING USER ACTION");
+            } else if (status > 0) {
+                String message = result.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
+                throw new AssertionError(message == null ? "UNKNOWN FAILURE" : message);
+            }
 
-        if (mIsStaged) {
-            InstallUtils.waitForSessionReady(sessionId);
+            if (mIsStaged) {
+                InstallUtils.waitForSessionReady(sessionId);
+            }
+            return sessionId;
         }
-        return sessionId;
     }
 
     /**
@@ -167,14 +169,15 @@ public class Install {
     public int createSession() throws IOException {
         int sessionId;
         if (isMultiPackage()) {
-            PackageInstaller.Session session;
             sessionId = createEmptyInstallSession(/*multiPackage*/ true, /*isApex*/false);
-            session = InstallUtils.openPackageInstallerSession(sessionId);
-            for (Install subInstall : mChildInstalls) {
-                session.addChildSessionId(subInstall.createSession());
-            }
-            for (TestApp testApp : mTestApps) {
-                session.addChildSessionId(createSingleInstallSession(testApp));
+            try (PackageInstaller.Session session =
+                         InstallUtils.openPackageInstallerSession(sessionId)) {
+                for (Install subInstall : mChildInstalls) {
+                    session.addChildSessionId(subInstall.createSession());
+                }
+                for (TestApp testApp : mTestApps) {
+                    session.addChildSessionId(createSingleInstallSession(testApp));
+                }
             }
         } else {
             assert mTestApps.length == 1;
@@ -215,24 +218,23 @@ public class Install {
      */
     private int createSingleInstallSession(TestApp app) throws IOException {
         int sessionId = createEmptyInstallSession(/*multiPackage*/false, app.isApex());
-        PackageInstaller.Session session = InstallUtils.getPackageInstaller()
-                .openSession(sessionId);
-
-        for (String resourceName : app.getResourceNames()) {
-            try (OutputStream os = session.openWrite(resourceName, 0, -1);
-                 InputStream is = app.getResourceStream(resourceName);) {
-                if (is == null) {
-                    throw new IOException("Resource " + resourceName + " not found");
-                }
-                byte[] buffer = new byte[4096];
-                int n;
-                while ((n = is.read(buffer)) >= 0) {
-                    os.write(buffer, 0, n);
+        try (PackageInstaller.Session session =
+                     InstallUtils.getPackageInstaller().openSession(sessionId)) {
+            for (String resourceName : app.getResourceNames()) {
+                try (OutputStream os = session.openWrite(resourceName, 0, -1);
+                     InputStream is = app.getResourceStream(resourceName);) {
+                    if (is == null) {
+                        throw new IOException("Resource " + resourceName + " not found");
+                    }
+                    byte[] buffer = new byte[4096];
+                    int n;
+                    while ((n = is.read(buffer)) >= 0) {
+                        os.write(buffer, 0, n);
+                    }
                 }
             }
+            return sessionId;
         }
-        session.close();
-        return sessionId;
     }
 
     private boolean isMultiPackage() {
