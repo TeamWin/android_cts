@@ -1331,7 +1331,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeSuspendPackageTestMethod("testPackageSuspendedWithPackageManager");
 
         // Undo the suspend.
-        executeDeviceTestMethod(".SuspendPackageTest", "testSetPackagesNotSuspended");
+        executeDeviceTestMethod(".SuspendPackageTest",
+                "testSetPackagesNotSuspendedWithPackageManager");
         // Verify that the package is not suspended from the PREVIOUS test and that the app launches
         executeSuspendPackageTestMethod("testPackageNotSuspended");
     }
