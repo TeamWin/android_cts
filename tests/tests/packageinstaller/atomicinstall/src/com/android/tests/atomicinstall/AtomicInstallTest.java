@@ -141,35 +141,40 @@ public class AtomicInstallTest {
     @Test
     public void testInvalidStateScenarios() throws Exception {
         int parentSessionId = Install.multi(TestApp.A1, TestApp.B1).createSession();
-        PackageInstaller.Session parentSession = openPackageInstallerSession(parentSessionId);
-
-        for (int childSessionId : parentSession.getChildSessionIds()) {
-            PackageInstaller.Session childSession = openPackageInstallerSession(childSessionId);
-            try {
-                childSession.commit(LocalIntentSender.getIntentSender());
-                fail("Should not be able to commit a child session!");
-            } catch (IllegalStateException e) {
-                // ignore
+        try (PackageInstaller.Session parentSession =
+                     openPackageInstallerSession(parentSessionId)) {
+            for (int childSessionId : parentSession.getChildSessionIds()) {
+                try (PackageInstaller.Session childSession =
+                             openPackageInstallerSession(childSessionId)) {
+                    try {
+                        childSession.commit(LocalIntentSender.getIntentSender());
+                        fail("Should not be able to commit a child session!");
+                    } catch (IllegalStateException e) {
+                        // ignore
+                    }
+                    try {
+                        childSession.abandon();
+                        fail("Should not be able to abandon a child session!");
+                    } catch (IllegalStateException e) {
+                        // ignore
+                    }
+                }
             }
-            try {
-                childSession.abandon();
-                fail("Should not be able to abandon a child session!");
-            } catch (IllegalStateException e) {
-                // ignore
+            int toAbandonSessionId = Install.single(TestApp.A1).createSession();
+            try (PackageInstaller.Session toAbandonSession =
+                         openPackageInstallerSession(toAbandonSessionId)) {
+                toAbandonSession.abandon();
+                try {
+                    parentSession.addChildSessionId(toAbandonSessionId);
+                    fail("Should not be able to add abandoned child session!");
+                } catch (RuntimeException e) {
+                    // ignore
+                }
             }
-        }
-        int toAbandonSessionId = Install.single(TestApp.A1).createSession();
-        PackageInstaller.Session toAbandonSession = openPackageInstallerSession(toAbandonSessionId);
-        toAbandonSession.abandon();
-        try {
-            parentSession.addChildSessionId(toAbandonSessionId);
-            fail("Should not be able to add abandoned child session!");
-        } catch (RuntimeException e) {
-            // ignore
-        }
 
-        parentSession.commit(LocalIntentSender.getIntentSender());
-        assertStatusSuccess(LocalIntentSender.getIntentSenderResult());
+            parentSession.commit(LocalIntentSender.getIntentSender());
+            assertStatusSuccess(LocalIntentSender.getIntentSenderResult());
+        }
     }
 
     private static void assertInconsistentStagedSettings(Install install) {

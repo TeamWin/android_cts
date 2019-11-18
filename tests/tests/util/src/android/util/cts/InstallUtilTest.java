@@ -153,68 +153,74 @@ public class InstallUtilTest {
     @Test
     public void testOpenAndAbandonSessionForSingleApk() throws Exception {
         int sessionId = Install.single(TestApp.A1).createSession();
-        PackageInstaller.Session session = InstallUtils
-                .openPackageInstallerSession(sessionId);
-        assertThat(session).isNotNull();
+        try (PackageInstaller.Session session
+                     = InstallUtils.openPackageInstallerSession(sessionId)) {
+            assertThat(session).isNotNull();
 
-        // TODO: is there a way to verify that the APK has been written?
+            // TODO: is there a way to verify that the APK has been written?
 
-        // At this stage, the session can be directly manipulated using
-        // PackageInstaller.Session API, i.e., it can be abandoned.
-        session.abandon();
-        // TODO: maybe add session callback and verify that session was abandoned?
-        // Assert session has not been installed
-        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(-1);
+            // At this stage, the session can be directly manipulated using
+            // PackageInstaller.Session API, i.e., it can be abandoned.
+            session.abandon();
+            // TODO: maybe add session callback and verify that session was abandoned?
+            // Assert session has not been installed
+            assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(-1);
+        }
     }
 
     @Test
     public void testOpenAndCommitSessionForSingleApk() throws Exception {
         assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(-1);
         int sessionId = Install.single(TestApp.A1).createSession();
-        PackageInstaller.Session session = InstallUtils
-                .openPackageInstallerSession(sessionId);
-        assertThat(session).isNotNull();
+        try (PackageInstaller.Session session
+                     = InstallUtils.openPackageInstallerSession(sessionId)) {
+            assertThat(session).isNotNull();
 
-        // Session can be committed directly, but a BroadcastReceiver must be provided.
-        session.commit(LocalIntentSender.getIntentSender());
-        InstallUtils.assertStatusSuccess(LocalIntentSender.getIntentSenderResult());
+            // Session can be committed directly, but a BroadcastReceiver must be provided.
+            session.commit(LocalIntentSender.getIntentSender());
+            InstallUtils.assertStatusSuccess(LocalIntentSender.getIntentSenderResult());
 
-        // Verify app has been installed
-        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
+            // Verify app has been installed
+            assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
+        }
     }
 
     @Test
     public void testOpenSingleSessionWithParameters() throws Exception {
         int sessionId = Install.single(TestApp.A1).setStaged().createSession();
-        PackageInstaller.Session session = InstallUtils.openPackageInstallerSession(sessionId);
-        assertThat(session.isStaged()).isTrue();
+        try (PackageInstaller.Session session
+                     = InstallUtils.openPackageInstallerSession(sessionId)) {
+            assertThat(session.isStaged()).isTrue();
 
-        session.abandon();
+            session.abandon();
+        }
     }
 
     @Test
     public void testOpenSessionForMultiPackageSession() throws Exception {
         int parentSessionId = Install.multi(TestApp.A1, TestApp.B1).setStaged().createSession();
-        PackageInstaller.Session parentSession = InstallUtils
-                .openPackageInstallerSession(parentSessionId);
-        assertThat(parentSession.isMultiPackage()).isTrue();
+        try (PackageInstaller.Session parentSession
+                     = InstallUtils.openPackageInstallerSession(parentSessionId)) {
+            assertThat(parentSession.isMultiPackage()).isTrue();
 
-        assertThat(parentSession.isStaged()).isTrue();
+            assertThat(parentSession.isStaged()).isTrue();
 
-        // Child sessions are consistent with the parent parameters
-        int[] childSessionIds = parentSession.getChildSessionIds();
-        assertThat(childSessionIds.length).isEqualTo(2);
-        for (int childSessionId : childSessionIds) {
-            PackageInstaller.Session childSession = InstallUtils
-                    .openPackageInstallerSession(childSessionId);
-            assertThat(childSession.isStaged()).isTrue();
+            // Child sessions are consistent with the parent parameters
+            int[] childSessionIds = parentSession.getChildSessionIds();
+            assertThat(childSessionIds.length).isEqualTo(2);
+            for (int childSessionId : childSessionIds) {
+                try (PackageInstaller.Session childSession
+                             = InstallUtils.openPackageInstallerSession(childSessionId)) {
+                    assertThat(childSession.isStaged()).isTrue();
+                }
+            }
+
+            parentSession.abandon();
+
+            // Verify apps have not been installed
+            assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(-1);
+            assertThat(InstallUtils.getInstalledVersion(TestApp.B)).isEqualTo(-1);
         }
-
-        parentSession.abandon();
-
-        // Verify apps have not been installed
-        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(-1);
-        assertThat(InstallUtils.getInstalledVersion(TestApp.B)).isEqualTo(-1);
     }
 
     @Test
