@@ -200,7 +200,7 @@ public class CapturedActivity extends Activity {
 
         final long timeOutMs = mOnEmbedded ? 125000 : 62500;
         final long captureDuration = animationTestCase.hasAnimation() ?
-            getCaptureDurationMs() : 200;
+            getCaptureDurationMs() : 0;
         final long endCaptureDelayMs = START_CAPTURE_DELAY_MS + captureDuration;
         final long endDelayMs = endCaptureDelayMs + 1000;
 
@@ -260,8 +260,10 @@ public class CapturedActivity extends Activity {
                     null /*Handler*/);
         }, START_CAPTURE_DELAY_MS);
 
+        final int SINGLE_FRAME_TIMEOUT_MS = 1000;
         mHandler.postDelayed(() -> {
             Log.d(TAG, "Stopping capture");
+            mSurfacePixelValidator.waitForFrame(SINGLE_FRAME_TIMEOUT_MS);
             mVirtualDisplay.release();
             mVirtualDisplay = null;
         }, endCaptureDelayMs);
