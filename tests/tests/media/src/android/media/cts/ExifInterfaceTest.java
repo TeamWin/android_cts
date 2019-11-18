@@ -18,6 +18,7 @@ package android.media.cts;
 
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.ExifInterface;
 import android.os.Environment;
 import android.os.FileUtils;
@@ -115,8 +116,13 @@ public class ExifInterfaceTest extends AndroidTestCase {
         public final float longitude;
         public final float altitude;
 
-        // Values.
+        // Make information
+        public final boolean hasMake;
+        public final int makeOffset;
+        public final int makeLength;
         public final String make;
+
+        // Values.
         public final String model;
         public final float aperture;
         public final String dateTimeOriginal;
@@ -170,8 +176,13 @@ public class ExifInterfaceTest extends AndroidTestCase {
             longitude = typedArray.getFloat(index++, 0f);
             altitude = typedArray.getFloat(index++, 0f);
 
-            // Reads values.
+            // Reads Make information.
+            hasMake = typedArray.getBoolean(index++, false);
+            makeOffset = typedArray.getInt(index++, -1);
+            makeLength = typedArray.getInt(index++, -1);
             make = getString(typedArray, index++);
+
+            // Reads values.
             model = getString(typedArray, index++);
             aperture = typedArray.getFloat(index++, 0f);
             dateTimeOriginal = getString(typedArray, index++);
@@ -280,14 +291,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
                 assertEquals(expectedValue.thumbnailOffset, thumbnailRange[0]);
                 assertEquals(expectedValue.thumbnailLength, thumbnailRange[1]);
             }
-            byte[] thumbnailBytes = exifInterface.getThumbnailBytes();
-            assertNotNull(thumbnailBytes);
-            Bitmap thumbnailBitmap = exifInterface.getThumbnailBitmap();
-            assertNotNull(thumbnailBitmap);
-            assertEquals(expectedValue.thumbnailWidth, thumbnailBitmap.getWidth());
-            assertEquals(expectedValue.thumbnailHeight, thumbnailBitmap.getHeight());
-            assertEquals(expectedValue.isThumbnailCompressed,
-                    exifInterface.isThumbnailCompressed());
+            testThumbnail(expectedValue, exifInterface);
         } else {
             assertNull(exifInterface.getThumbnailRange());
             assertNull(exifInterface.getThumbnail());
@@ -314,6 +318,23 @@ public class ExifInterfaceTest extends AndroidTestCase {
             assertFalse(exifInterface.hasAttribute(ExifInterface.TAG_GPS_LONGITUDE));
         }
         assertEquals(expectedValue.altitude, exifInterface.getAltitude(.0), DIFFERENCE_TOLERANCE);
+
+        // Checks Make information.
+        String make = exifInterface.getAttribute(ExifInterface.TAG_MAKE);
+        assertEquals(expectedValue.hasMake, make != null);
+        if (expectedValue.hasMake) {
+            assertNotNull(exifInterface.getAttributeRange(ExifInterface.TAG_MAKE));
+            if (assertRanges) {
+                final long[] makeRange = exifInterface
+                        .getAttributeRange(ExifInterface.TAG_MAKE);
+                assertEquals(expectedValue.makeOffset, makeRange[0]);
+                assertEquals(expectedValue.makeLength, makeRange[1]);
+            }
+            assertEquals(expectedValue.make, make.trim());
+        } else {
+            assertNull(exifInterface.getAttributeRange(ExifInterface.TAG_MAKE));
+            assertFalse(exifInterface.hasAttribute(ExifInterface.TAG_MAKE));
+        }
 
         // Checks values.
         assertStringTag(exifInterface, ExifInterface.TAG_MAKE, expectedValue.make);
@@ -426,6 +447,59 @@ public class ExifInterfaceTest extends AndroidTestCase {
         }
     }
 
+    private void testExifInterfaceRange(String fileName, ExpectedValue expectedValue)
+            throws IOException {
+        File imageFile = new File(Environment.getExternalStorageDirectory(), fileName);
+        InputStream in = null;
+        try {
+            in = new BufferedInputStream(new FileInputStream(imageFile.getAbsolutePath()));
+            if (expectedValue.hasThumbnail) {
+                in.skip(expectedValue.thumbnailOffset);
+                byte[] thumbnailBytes = new byte[expectedValue.thumbnailLength];
+                if (in.read(thumbnailBytes) != expectedValue.thumbnailLength) {
+                    throw new IOException("Failed to read the expected thumbnail length");
+                }
+                // TODO: Need a way to check uncompressed thumbnail file
+                if (expectedValue.isThumbnailCompressed) {
+                    Bitmap thumbnailBitmap = BitmapFactory.decodeByteArray(thumbnailBytes, 0,
+                            thumbnailBytes.length);
+                    assertNotNull(thumbnailBitmap);
+                    assertEquals(expectedValue.thumbnailWidth, thumbnailBitmap.getWidth());
+                    assertEquals(expectedValue.thumbnailHeight, thumbnailBitmap.getHeight());
+                }
+            }
+            // TODO: Creating a new input stream is a temporary
+            //  workaround for BufferedInputStream#mark/reset not working properly for
+            //  LG_G4_ISO_800_DNG. Need to investigate cause.
+            in = new BufferedInputStream(new FileInputStream(imageFile.getAbsolutePath()));
+            if (expectedValue.hasMake) {
+                in.skip(expectedValue.makeOffset);
+                byte[] makeBytes = new byte[expectedValue.makeLength];
+                if (in.read(makeBytes) != expectedValue.makeLength) {
+                    throw new IOException("Failed to read the expected make length");
+                }
+                String makeString = new String(makeBytes);
+                // Remove null bytes
+                makeString = makeString.replaceAll("\u0000.*", "");
+                assertEquals(expectedValue.make, makeString.trim());
+            }
+            in = new BufferedInputStream(new FileInputStream(imageFile.getAbsolutePath()));
+            if (expectedValue.hasXmp) {
+                in.skip(expectedValue.xmpOffset);
+                byte[] identifierBytes = new byte[expectedValue.xmpLength];
+                if (in.read(identifierBytes) != expectedValue.xmpLength) {
+                    throw new IOException("Failed to read the expected xmp length");
+                }
+                final String xmpIdentifier = "<?xpacket begin=";
+                assertTrue(new String(identifierBytes, StandardCharsets.UTF_8)
+                        .startsWith(xmpIdentifier));
+            }
+            // TODO: Add code for retrieving raw latitude data using offset and length
+        } finally {
+            IoUtils.closeQuietly(in);
+        }
+    }
+
     private void testSaveAttributes_withFileName(String fileName, ExpectedValue expectedValue)
             throws IOException {
         File srcFile = new File(Environment.getExternalStorageDirectory(), fileName);
@@ -441,8 +515,17 @@ public class ExifInterfaceTest extends AndroidTestCase {
         String backupValue = exifInterface.getAttribute(ExifInterface.TAG_MAKE);
         exifInterface.setAttribute(ExifInterface.TAG_MAKE, "abc");
         exifInterface.saveAttributes();
+        // Check if thumbnail offset and length are properly updated without parsing the data again.
+        if (expectedValue.hasThumbnail) {
+            testThumbnail(expectedValue, exifInterface);
+        }
         exifInterface = new ExifInterface(imageFile.getAbsolutePath());
         assertEquals("abc", exifInterface.getAttribute(ExifInterface.TAG_MAKE));
+        // Check if thumbnail bytes can be retrieved from the new thumbnail range.
+        if (expectedValue.hasThumbnail) {
+            testThumbnail(expectedValue, exifInterface);
+        }
+
         // Restore the backup value.
         exifInterface.setAttribute(ExifInterface.TAG_MAKE, backupValue);
         exifInterface.saveAttributes();
@@ -469,9 +552,19 @@ public class ExifInterfaceTest extends AndroidTestCase {
             String backupValue = exifInterface.getAttribute(ExifInterface.TAG_MAKE);
             exifInterface.setAttribute(ExifInterface.TAG_MAKE, "abc");
             exifInterface.saveAttributes();
+            // Check if thumbnail offset and length are properly updated without parsing the data
+            // again.
+            if (expectedValue.hasThumbnail) {
+                testThumbnail(expectedValue, exifInterface);
+            }
             Os.lseek(fd, 0, OsConstants.SEEK_SET);
             exifInterface = new ExifInterface(fd);
             assertEquals("abc", exifInterface.getAttribute(ExifInterface.TAG_MAKE));
+            // Check if thumbnail bytes can be retrieved from the new thumbnail range.
+            if (expectedValue.hasThumbnail) {
+                testThumbnail(expectedValue, exifInterface);
+            }
+
             // Restore the backup value.
             exifInterface.setAttribute(ExifInterface.TAG_MAKE, backupValue);
             exifInterface.saveAttributes();
@@ -494,6 +587,9 @@ public class ExifInterfaceTest extends AndroidTestCase {
         fileName = EXTERNAL_BASE_DIRECTORY + fileName;
         testExifInterfaceCommon(fileName, expectedValue);
 
+        // Test for checking expected range by retrieving raw data with given offset and length.
+        testExifInterfaceRange(fileName, expectedValue);
+
         // Test for saving attributes.
         testSaveAttributes_withFileName(fileName, expectedValue);
         testSaveAttributes_withFileDescriptor(fileName, expectedValue);
@@ -508,8 +604,20 @@ public class ExifInterfaceTest extends AndroidTestCase {
         fileName = EXTERNAL_BASE_DIRECTORY + fileName;
         testExifInterfaceCommon(fileName, expectedValue);
 
-        // Since ExifInterface does not support for saving attributes for RAW files, do not test
-        // about writing back in here.
+        // Test for checking expected range by retrieving raw data with given offset and length.
+        testExifInterfaceRange(fileName, expectedValue);
+    }
+
+    private void testThumbnail(ExpectedValue expectedValue, ExifInterface exifInterface) {
+        byte[] thumbnail = exifInterface.getThumbnailBytes();
+        // TODO: Add support for testing validity of uncompressed thumbnails
+        if (expectedValue.isThumbnailCompressed) {
+            Bitmap thumbnailBitmap = BitmapFactory.decodeByteArray(thumbnail, 0,
+                    thumbnail.length);
+            assertNotNull(thumbnailBitmap);
+            assertEquals(expectedValue.thumbnailWidth, thumbnailBitmap.getWidth());
+            assertEquals(expectedValue.thumbnailHeight, thumbnailBitmap.getHeight());
+        }
     }
 
     @Override
