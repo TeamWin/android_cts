@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.install.lib;
+package com.android.cts.rollback.lib;
 
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -43,7 +43,7 @@ public class LocalIntentSender extends BroadcastReceiver {
     /**
      * Get a LocalIntentSender.
      */
-    public static IntentSender getIntentSender() {
+    static IntentSender getIntentSender() {
         Context context = InstrumentationRegistry.getContext();
         Intent intent = new Intent(context, LocalIntentSender.class);
         PendingIntent pending = PendingIntent.getBroadcast(context, 0, intent, 0);
@@ -53,7 +53,7 @@ public class LocalIntentSender extends BroadcastReceiver {
     /**
      * Returns the most recent Intent sent by a LocalIntentSender.
      */
-    public static Intent getIntentSenderResult() throws InterruptedException {
+    static Intent getIntentSenderResult() throws InterruptedException {
         return sIntentSenderResults.take();
     }
 }
