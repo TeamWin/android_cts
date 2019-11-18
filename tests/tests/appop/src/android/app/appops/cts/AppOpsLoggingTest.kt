@@ -24,12 +24,15 @@ import android.app.AppOpsManager.OPSTR_COARSE_LOCATION
 import android.app.AppOpsManager.OPSTR_FINE_LOCATION
 import android.app.AppOpsManager.OPSTR_GET_ACCOUNTS
 import android.app.AppOpsManager.OPSTR_READ_CONTACTS
+import android.app.AppOpsManager.OPSTR_READ_EXTERNAL_STORAGE
 import android.app.AppOpsManager.OPSTR_READ_PHONE_STATE
 import android.app.AppOpsManager.OPSTR_WRITE_CONTACTS
 import android.app.AppOpsManager.strOpToOp
 import android.app.AsyncNotedAppOp
 import android.app.PendingIntent
 import android.app.SyncNotedAppOp
+import android.app.WallpaperManager
+import android.app.WallpaperManager.FLAG_SYSTEM
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.ContentValues
@@ -627,6 +630,21 @@ class AppOpsLoggingTest {
         assertThat(noted[0].first.op).isEqualTo(OPSTR_READ_PHONE_STATE)
         assertThat(noted[0].first.featureId).isEqualTo(TEST_FEATURE_ID)
         assertThat(noted[0].second.map { it.methodName }).contains("getMultiSimSupport")
+    }
+
+    /**
+     * Realistic end-to-end test for getting wallpaper
+     */
+    @Test
+    fun getWallpaper() {
+        val wallpaperManager = context.createFeatureContext(TEST_FEATURE_ID)
+                .getSystemService(WallpaperManager::class.java)
+
+        wallpaperManager.getWallpaperFile(FLAG_SYSTEM)
+
+        assertThat(noted[0].first.op).isEqualTo(OPSTR_READ_EXTERNAL_STORAGE)
+        assertThat(noted[0].first.featureId).isEqualTo(TEST_FEATURE_ID)
+        assertThat(noted[0].second.map { it.methodName }).contains("getWallpaper")
     }
 
     @After
