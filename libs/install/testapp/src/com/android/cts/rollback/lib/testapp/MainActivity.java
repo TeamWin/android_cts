@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.rollback.lib.testapp;
+package com.android.cts.install.lib.testapp;
 
 import android.app.Activity;
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.rollback.lib;
+package com.android.cts.install.lib;
 
 import android.content.pm.VersionedPackage;
 
@@ -22,13 +22,13 @@ import android.content.pm.VersionedPackage;
  * Collection of dummy apps used in tests.
  */
 public class TestApp {
-    public static final String A = "com.android.cts.rollback.lib.testapp.A";
+    public static final String A = "com.android.cts.install.lib.testapp.A";
     public static final String Apex = "com.android.apex.cts.shim";
 
-    public static final TestApp A1 = new TestApp("A1", A, 1, /*isApex*/false,
-            "RollbackManagerTestAppA1.apk");
-    public static final TestApp A2 = new TestApp("A2", A, 2, /*isApex*/false,
-            "RollbackManagerTestAppA2.apk");
+    public static final TestApp A1 = new TestApp("Av1", A, 1, /*isApex*/false,
+            "TestAppAv1.apk");
+    public static final TestApp A2 = new TestApp("Av2", A, 2, /*isApex*/false,
+            "TestAppAv2.apk");
     public static final TestApp Apex2 = new TestApp("Apex2", Apex, 2, /*isApex*/true,
             "com.android.apex.cts.shim.v2.apex");
     public static final TestApp Apex3 = new TestApp("Apex3", Apex, 3, /*isApex*/true,
@@ -49,28 +49,28 @@ public class TestApp {
         mIsApex = isApex;
     }
 
-    String getPackageName() {
+    public String getPackageName() {
         return mPackageName;
     }
 
-    long getVersionCode() {
+    public long getVersionCode() {
         return mVersionCode;
     }
 
-    String[] getResourceNames() {
-        return mResourceNames;
+    public VersionedPackage getVersionedPackage() {
+        return new VersionedPackage(mPackageName, mVersionCode);
     }
 
-    VersionedPackage getVersionedPackage() {
-        return new VersionedPackage(mPackageName, mVersionCode);
+    @Override
+    public String toString() {
+        return mName;
     }
 
     boolean isApex() {
         return mIsApex;
     }
 
-    @Override
-    public String toString() {
-        return mName;
+    String[] getResourceNames() {
+        return mResourceNames;
     }
 }
