@@ -800,20 +800,6 @@ public class StagedInstallTest {
         assertThat(info).isStagedSessionReady();
     }
 
-    // Key downgrade should fail if new key is not ancestor of current key
-    @Test
-    public void testKeyDowngradeFailIfMismatch()
-            throws Exception {
-        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(2);
-        int sessionId = stageDowngradeSingleApk(Apex2SignedEve).assertSuccessful().getSessionId();
-        PackageInstaller.SessionInfo info =
-                SessionUpdateBroadcastReceiver.sessionBroadcasts.poll(60, TimeUnit.SECONDS);
-        assertThat(info.getSessionId()).isEqualTo(sessionId);
-        assertThat(info).isStagedSessionFailed();
-        assertThat(info.getStagedSessionErrorMessage()).contains("is not compatible with the one "
-                + "currently installed on device");
-    }
-
     @Test
     public void testSamegradeSystemApex_Commit() throws Exception {
         final PackageInfo shim = InstrumentationRegistry.getInstrumentation().getContext()
