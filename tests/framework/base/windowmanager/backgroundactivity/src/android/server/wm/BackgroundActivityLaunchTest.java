@@ -499,25 +499,6 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         return waitForActivityFocused(ACTIVITY_FOCUS_TIMEOUT_MS, componentName);
     }
 
-    // Return true if the activity is shown before timeout
-    private boolean waitForActivityFocused(int timeoutMs, ComponentName componentName) {
-        long endTime = System.currentTimeMillis() + timeoutMs;
-        while (endTime > System.currentTimeMillis()) {
-            mAmWmState.getAmState().computeState();
-            mAmWmState.getWmState().computeState();
-            if (mAmWmState.getAmState().hasActivityState(componentName, STATE_RESUMED)) {
-                SystemClock.sleep(200);
-                mAmWmState.getAmState().computeState();
-                mAmWmState.getWmState().computeState();
-                break;
-            }
-            SystemClock.sleep(200);
-            mAmWmState.getAmState().computeState();
-            mAmWmState.getWmState().computeState();
-        }
-        return getActivityName(componentName).equals(mAmWmState.getAmState().getFocusedActivity());
-    }
-
     private void sendPendingIntentActivity() {
         Intent intent = new Intent();
         intent.setComponent(APP_A_SEND_PENDING_INTENT_RECEIVER);
