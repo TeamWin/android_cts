@@ -36,7 +36,7 @@ public class UiAutomatorUtils {
     }
 
     public static UiObject2 waitFindObject(BySelector selector) throws UiObjectNotFoundException {
-        return waitFindObject(selector, 100_000);
+        return waitFindObject(selector, 100_00);
     }
 
     public static UiObject2 waitFindObject(BySelector selector, long timeoutMs)
