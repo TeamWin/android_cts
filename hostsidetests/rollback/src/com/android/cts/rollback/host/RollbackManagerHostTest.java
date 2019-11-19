@@ -26,6 +26,7 @@ import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -36,7 +37,6 @@ import org.junit.runner.RunWith;
 public class RollbackManagerHostTest extends BaseHostJUnit4Test {
 
     private static final String SHIM_APEX_PACKAGE_NAME = "com.android.apex.cts.shim";
-    private static final String TEST_APK_PACKAGE_NAME = "com.android.cts.rollback.lib.testapp.A";
 
     /**
      * Runs the helper app test method on device.
@@ -96,11 +96,13 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
      * to complete the uninstall.
      *
      * <p>This is needed because the apex cannot be deleted using PackageInstaller API.
+     *
+     * Also abandon sessions left by previous tests so staged-installs won't fail.
      */
+    @Before
     @After
-    public void tearDown() throws Exception {
-        // uninstalling the APK doesn't have much overhead, so we can do it after every case
-        getDevice().uninstallPackage(TEST_APK_PACKAGE_NAME);
+    public void cleanUp() throws Exception {
+        run("cleanUp");
         uninstallShimApexIfNecessary();
     }
 
