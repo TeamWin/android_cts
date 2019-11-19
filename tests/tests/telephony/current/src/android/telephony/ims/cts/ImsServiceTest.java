@@ -651,7 +651,7 @@ public class ImsServiceTest {
         ImsMmTelManager mmTelManager = ImsMmTelManager.createForSubscriptionId(sTestSub);
         LinkedBlockingQueue<Integer> state = new LinkedBlockingQueue<>(1);
         ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(mmTelManager,
-                (m) -> m.getFeatureState(state::offer, Runnable::run), ImsException.class);
+                (m) -> m.getFeatureState(Runnable::run, state::offer), ImsException.class);
         return state.poll(ImsUtils.TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS);
     }
 
