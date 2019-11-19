@@ -87,6 +87,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
 
         getLifecycleLog().clear();
+        launchActivityAndWait(SecondActivity.class);
         waitAndAssertActivityStates(state(firstActivity, ON_STOP));
 
         LifecycleVerifier.assertLaunchSequence(SecondActivity.class, FirstActivity.class,
@@ -466,6 +467,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     @Test
     public void testRelaunchStopped() throws Exception {
         final Activity stoppedActivity = launchActivityAndWait(FirstActivity.class);
+        launchActivityAndWait(SecondActivity.class);
 
         waitAndAssertActivityStates(state(stoppedActivity, ON_STOP));
 
