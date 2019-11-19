@@ -405,9 +405,6 @@ public class PermissionPolicyTest {
                 case "telephony": {
                     protectionLevel |= PermissionInfo.PROTECTION_FLAG_TELEPHONY;
                 } break;
-                case "wifi": {
-                    protectionLevel |= PermissionInfo.PROTECTION_FLAG_WIFI;
-                } break;
             }
         }
         return protectionLevel;
