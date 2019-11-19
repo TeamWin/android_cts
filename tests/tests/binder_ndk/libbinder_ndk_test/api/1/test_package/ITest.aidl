@@ -40,6 +40,7 @@ interface ITest {
   test_package.LongEnum[] RepeatLongEnumArray(in test_package.LongEnum[] input, out test_package.LongEnum[] repeated);
   String[] RepeatStringArray(in String[] input, out String[] repeated);
   test_package.RegularPolygon[] RepeatRegularPolygonArray(in test_package.RegularPolygon[] input, out test_package.RegularPolygon[] repeated);
+  ParcelFileDescriptor[] RepeatFdArray(in ParcelFileDescriptor[] input, out ParcelFileDescriptor[] repeated);
   @nullable boolean[] RepeatNullableBooleanArray(in @nullable boolean[] input);
   @nullable byte[] RepeatNullableByteArray(in @nullable byte[] input);
   @nullable char[] RepeatNullableCharArray(in @nullable char[] input);
