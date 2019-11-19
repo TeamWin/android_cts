@@ -409,15 +409,6 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
 
     @Test
     @LargeTest
-    public void testKeyDowngradeFailIfMismatch() throws Exception {
-        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
-
-        installV3SignedBobApex();
-        runPhase("testKeyDowngradeFailIfMismatch");
-    }
-
-    @Test
-    @LargeTest
     public void testSamegradeSystemApex() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
 
