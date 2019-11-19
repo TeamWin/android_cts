@@ -538,8 +538,8 @@
            </intent-filter>
         </service>
 
-        <receiver
-            android:name=".ToastReceiver"
+        <activity
+            android:name=".ClickableToastActivity"
             android:exported="true" />
     </application>
 </manifest>

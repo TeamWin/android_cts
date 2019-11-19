@@ -54,6 +54,7 @@ public class ToastTest extends ActivityManagerTestBase {
     private static final String SETTING_HIDDEN_API_POLICY = "hidden_api_policy";
     private static final long TOAST_DISPLAY_TIMEOUT_MS = 8000;
     private static final long TOAST_TAP_TIMEOUT_MS = 3500;
+    private static final int ACTIVITY_FOCUS_TIMEOUT_MS = 3000;
 
     /**
      * Tests can be executed as soon as the device has booted. When that happens the broadcast queue
@@ -105,8 +106,10 @@ public class ToastTest extends ActivityManagerTestBase {
     @Test
     public void testToastIsNotClickable() {
         Intent intent = new Intent();
-        intent.setComponent(Components.TOAST_RECEIVER);
-        sendAndWaitForBroadcast(intent);
+        intent.setComponent(Components.CLICKABLE_TOAST_ACTIVITY);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
+        waitForActivityFocused(ACTIVITY_FOCUS_TIMEOUT_MS, Components.CLICKABLE_TOAST_ACTIVITY);
         boolean toastDisplayed = getBroadcastReceivedVariable(ACTION_TOAST_DISPLAYED).block(
                 TOAST_DISPLAY_TIMEOUT_MS);
         assertTrue("Toast not displayed on time", toastDisplayed);
@@ -120,27 +123,6 @@ public class ToastTest extends ActivityManagerTestBase {
         boolean toastClicked = getBroadcastReceivedVariable(ACTION_TOAST_TAP_DETECTED).block(
                 TOAST_TAP_TIMEOUT_MS);
         assertFalse("Toast tap detected", toastClicked);
-    }
-
-    private void sendAndWaitForBroadcast(Intent intent) {
-        assertNotEquals("Can't wait on main thread", Thread.currentThread(),
-                Looper.getMainLooper().getThread());
-
-        ConditionVariable broadcastDelivered = new ConditionVariable(false);
-        mContext.sendOrderedBroadcast(
-                intent,
-                null,
-                new BroadcastReceiver() {
-                    @Override
-                    public void onReceive(Context context, Intent intent) {
-                        broadcastDelivered.open();
-                    }
-                },
-                new Handler(Looper.getMainLooper()),
-                Activity.RESULT_OK,
-                null,
-                null);
-        broadcastDelivered.block(BROADCAST_DELIVERY_TIMEOUT_MS);
     }
 
     private ConditionVariable getBroadcastReceivedVariable(String action) {
