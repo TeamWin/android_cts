@@ -501,6 +501,20 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
                 "reviewPermissionWhenServiceIsBound");
     }
 
+    public void testGrantDialogToSettingsNoOp() throws Exception {
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_29), true, false));
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest29",
+                "openSettingsFromGrantNoOp");
+    }
+
+    public void testGrantDialogToSettingsDowngrade() throws Exception {
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_29), false, false));
+        runThrowingTest("com.android.cts.usepermission.UsePermissionTest29",
+                "openSettingsFromGrantDowngrade");
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest29",
+                "assertPermissionsNotGranted");
+    }
+
     private void runDeviceTests(String packageName, String testClassName, String testMethodName)
             throws DeviceNotAvailableException {
         Utils.runDeviceTestsAsCurrentUser(getDevice(), packageName, testClassName, testMethodName);
