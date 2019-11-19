@@ -304,6 +304,34 @@ static void checkFdRepeat(
   checkInOut(writeFd, readOutFd);
 }
 
+TEST_P(NdkBinderTest_Aidl, RepeatFdArray) {
+  int fds[2];
+
+  while (pipe(fds) == -1 && errno == EAGAIN)
+    ;
+  std::vector<ScopedFileDescriptor> sfds;
+  sfds.emplace_back(fds[0]);
+  sfds.emplace_back(fds[1]);
+
+  std::vector<ScopedFileDescriptor> sfds_out1;
+  sfds_out1.resize(sfds.size());
+  std::vector<ScopedFileDescriptor> sfds_out2;
+
+  ASSERT_OK((iface->RepeatFdArray(sfds, &sfds_out1, &sfds_out2)));
+
+  // sfds <-> sfds_out1
+  checkInOut(sfds[1], sfds_out1[0]);
+  checkInOut(sfds_out1[1], sfds[0]);
+
+  // sfds_out1 <-> sfds_out2
+  checkInOut(sfds_out1[1], sfds_out2[0]);
+  checkInOut(sfds_out2[1], sfds_out1[0]);
+
+  // sfds <-> sfds_out2
+  checkInOut(sfds[1], sfds_out2[0]);
+  checkInOut(sfds_out2[1], sfds[0]);
+}
+
 TEST_P(NdkBinderTest_Aidl, RepeatFd) { checkFdRepeat(iface, &ITest::RepeatFd); }
 
 TEST_P(NdkBinderTest_Aidl, RepeatNullableFd) {

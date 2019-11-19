@@ -172,6 +172,19 @@ class MyTest : public ::aidl::test_package::BnTest,
     _aidl_return->set(dup(in_value.get()));
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
+
+  ::ndk::ScopedAStatus RepeatFdArray(
+      const std::vector<::ndk::ScopedFileDescriptor>& in_input,
+      std::vector<::ndk::ScopedFileDescriptor>* out_repeated,
+      std::vector<::ndk::ScopedFileDescriptor>* _aidl_return) override {
+    out_repeated->clear();
+    for (auto& fd : in_input) {
+      out_repeated->emplace_back(dup(fd.get()));
+      _aidl_return->emplace_back(dup(fd.get()));
+    }
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+
   ::ndk::ScopedAStatus RepeatNullableFd(
       const ::ndk::ScopedFileDescriptor& in_value,
       ::ndk::ScopedFileDescriptor* _aidl_return) override {
