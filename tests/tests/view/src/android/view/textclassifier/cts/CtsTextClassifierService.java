@@ -17,7 +17,6 @@ package android.view.textclassifier.cts;
 
 import android.os.CancellationSignal;
 import android.service.textclassifier.TextClassifierService;
-import android.util.Log;
 import android.view.textclassifier.ConversationActions;
 import android.view.textclassifier.SelectionEvent;
 import android.view.textclassifier.TextClassification;
@@ -29,7 +28,6 @@ import android.view.textclassifier.TextLinks;
 import android.view.textclassifier.TextSelection;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,29 +40,18 @@ import java.util.concurrent.TimeUnit;
  */
 public final class CtsTextClassifierService extends TextClassifierService {
 
-    private static final String TAG = CtsTextClassifierService.class.getSimpleName();
+    private static final String TAG = "CtsTextClassifierService";
     public static final String MY_PACKAGE = "android.view.cts";
-    private static final ArrayList<Throwable> sExceptions = new ArrayList<>();
-    private static final long GENERIC_TIMEOUT_MS = 10_000;
-
-    private static ServiceWatcher sServiceWatcher;
 
     private final ArrayList<TextClassificationSessionId> mRequestSessions = new ArrayList<>();
     private final CountDownLatch mRequestLatch = new CountDownLatch(1);
 
+    /**
+     * Returns the TestWatcher that was used for the testing.
+     */
     @NonNull
-    static ServiceWatcher setServiceWatcher() {
-        if (sServiceWatcher == null) {
-            sServiceWatcher = new ServiceWatcher();
-        }
-        return sServiceWatcher;
-    }
-
-    static void clearServiceWatcher() {
-        if (sServiceWatcher != null) {
-            sServiceWatcher.mService = null;
-            sServiceWatcher = null;
-        }
+    public static TextClassifierTestWatcher getTestWatcher() {
+        return new TextClassifierTestWatcher();
     }
 
     @NonNull
@@ -77,21 +64,6 @@ public final class CtsTextClassifierService extends TextClassifierService {
             mRequestLatch.await(timeoutMillis, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             // do nothing
-        }
-    }
-
-    /**
-     * Gets the exceptions that were thrown while the service handled requests.
-     */
-    @NonNull
-    public static List<Throwable> getExceptions() throws Exception {
-        return Collections.unmodifiableList(sExceptions);
-    }
-
-    public static void resetStaticState() {
-        sExceptions.clear();
-        if (sServiceWatcher != null) {
-            sServiceWatcher = null;
         }
     }
 
@@ -162,73 +134,11 @@ public final class CtsTextClassifierService extends TextClassifierService {
 
     @Override
     public void onConnected() {
-        Log.i(TAG, "onConnected:  sServiceWatcher=" + sServiceWatcher);
-
-        if (sServiceWatcher == null) {
-            addException("onConnected() without a watcher");
-            return;
-        }
-
-        if (sServiceWatcher.mService != null) {
-            addException("onConnected(): already created: " + sServiceWatcher);
-            return;
-        }
-
-        sServiceWatcher.mService = this;
-        sServiceWatcher.mCreated.countDown();
+        TextClassifierTestWatcher.ServiceWatcher.onConnected(/* service */ this);
     }
 
     @Override
     public void onDisconnected() {
-        Log.i(TAG, "onDisconnected:  sServiceWatcher=" + sServiceWatcher);
-
-        if (sServiceWatcher == null) {
-            addException("onDisconnected() without a watcher");
-            return;
-        }
-
-        if (sServiceWatcher.mService == null) {
-            addException("onDisconnected(): no service on %s", sServiceWatcher);
-            return;
-        }
-        sServiceWatcher.mDestroyed.countDown();
-    }
-
-    private static void addException(@NonNull String fmt, @Nullable Object...args) {
-        final String msg = String.format(fmt, args);
-        Log.e(TAG, msg);
-        sExceptions.add(new IllegalStateException(msg));
-    }
-
-    // TODO: add a TestRule which extends TestWatcher
-    public static final class ServiceWatcher {
-        private final CountDownLatch mCreated = new CountDownLatch(1);
-        private final CountDownLatch mDestroyed = new CountDownLatch(1);
-
-        CtsTextClassifierService mService;
-
-        @NonNull
-        public CtsTextClassifierService waitOnConnected() throws InterruptedException {
-            await(mCreated, "not created");
-
-            if (mService == null) {
-                throw new IllegalStateException("not created");
-            }
-            return mService;
-        }
-
-        public void waitOnDisconnected() throws InterruptedException {
-            await(mDestroyed, "not destroyed");
-        }
-
-        private void await(@NonNull CountDownLatch latch, @NonNull String fmt,
-                @Nullable Object... args)
-                throws InterruptedException {
-            final boolean called = latch.await(GENERIC_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-            if (!called) {
-                throw new IllegalStateException(String.format(fmt, args)
-                        + " in " + GENERIC_TIMEOUT_MS + "ms");
-            }
-        }
+        TextClassifierTestWatcher.ServiceWatcher.onDisconnected();
     }
 }
