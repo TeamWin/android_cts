@@ -89,15 +89,7 @@ public class ProtectedConfirmationTest extends PassFailButtons.Activity {
                 v.post(new Runnable() {
                     @Override
                     public void run() {
-                        createKey(false /* useStrongbox */);
-                        if (trySign(getString(R.string.sec_protected_confirmation_message)
-                                .getBytes())) {
-                            showToast("Test failed. Key could sign without confirmation.");
-                        } else {
-                            showConfirmationPrompt(
-                                    getString(R.string.sec_protected_confirmation_message),
-                                    false  /* useStrongbox */);
-                        }
+                        runTest(false /* useStrongbox */);
                     }
                 });
             }
@@ -114,15 +106,7 @@ public class ProtectedConfirmationTest extends PassFailButtons.Activity {
                     v.post(new Runnable() {
                         @Override
                         public void run() {
-                            createKey(true /* useStrongbox */);
-                            if (trySign(getString(R.string.sec_protected_confirmation_message)
-                                    .getBytes())) {
-                                showToast("Test failed. Key could sign without confirmation.");
-                            } else {
-                                showConfirmationPrompt(
-                                        getString(R.string.sec_protected_confirmation_message),
-                                                  true /* useStrongbox */);
-                            }
+                            runTest(true /* useStrongbox */);
                         }
                     });
                 }
@@ -130,7 +114,7 @@ public class ProtectedConfirmationTest extends PassFailButtons.Activity {
             });
         } else {
             startStrongboxTestButton.setVisibility(View.GONE);
-            // since strongbox is available we mark the strongbox test as passed so that the tee
+            // since strongbox is unavailable we mark the strongbox test as passed so that the tee
             // test alone can make the test pass.
             strongboxTestSuccess = true;
         }
@@ -182,6 +166,18 @@ public class ProtectedConfirmationTest extends PassFailButtons.Activity {
             return false;
         }
         return true;
+    }
+
+    private void runTest(boolean useStrongbox) {
+        createKey(useStrongbox);
+        if (trySign(getString(R.string.sec_protected_confirmation_message)
+                .getBytes())) {
+            showToast("Test failed. Key could sign without confirmation.");
+        } else {
+            showConfirmationPrompt(
+                    getString(R.string.sec_protected_confirmation_message),
+                    useStrongbox);
+        }
     }
 
     private void showConfirmationPrompt(String confirmationMessage, boolean useStrongbox) {
