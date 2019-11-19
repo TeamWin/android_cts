@@ -122,7 +122,7 @@ public class AppEnumerationTests {
                                 + "package_query_filtering_enabled")
                         .trim();
         if ("null".equalsIgnoreCase(deviceConfigResponse) || deviceConfigResponse.isEmpty()) {
-            sGlobalFeatureEnabled = false;
+            sGlobalFeatureEnabled = true;
         } else {
             sGlobalFeatureEnabled = Boolean.parseBoolean(deviceConfigResponse);
         }
