@@ -162,6 +162,11 @@
         <option name="push" value="CVE-2017-13232->/data/local/tmp/CVE-2017-13232" />
 
         <!--__________________-->
+        <!-- Bulletin 2018-03 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2017-13253->/data/local/tmp/CVE-2017-13253" />
+
+        <!--__________________-->
         <!-- Bulletin 2018-06 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
         <option name="push" value="CVE-2018-9344->/data/local/tmp/CVE-2018-9344" />
