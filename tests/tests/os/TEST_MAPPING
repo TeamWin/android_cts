@@ -8,9 +8,6 @@
         },
         {
           "exclude-filter": "android.os.cts.StrictModeTest#testNonSdkApiUsage"
-        },
-        {
-          "exclude-filter": "android.os.cts.UsbDebuggingTest#testUsbDebugging"
         }
       ]
     }
