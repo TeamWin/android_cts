@@ -104,6 +104,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      * - am_activity_launch_time event is generated
      * In all three cases, verify the delay measurements are the same.
      */
+    @FlakyTest(bugId = 143855645)
     @Test
     public void testAppLaunchIsLogged() {
         launchAndWaitForActivity(TEST_ACTIVITY);
@@ -178,6 +179,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      * In both cases verify fully drawn delay measurements are equal.
      * See {@link Activity#reportFullyDrawn()}
      */
+    @FlakyTest(bugId = 143855645)
     @Test
     public void testAppFullyDrawnReportIsLogged() {
         launchAndWaitForActivity(REPORT_FULLY_DRAWN_ACTIVITY);
@@ -287,6 +289,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      * totalTime is set correctly. Make sure the reported value is consistent with value reported to
      * metrics logs. Verify we output the correct launch state.
      */
+    @FlakyTest(bugId = 143855645)
     @Test
     public void testAppColdLaunchSetsWaitResultDelayData() {
         final String amStartOutput = SystemUtil.runShellCommand(
@@ -315,6 +318,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      * receive a windows drawn message.
      * see b/117148004
      */
+    @FlakyTest(bugId = 143855645)
     @Test
     public void testLaunchOfVisibleApp() {
         // Launch an activity.
