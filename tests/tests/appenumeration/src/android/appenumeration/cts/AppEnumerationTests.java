@@ -93,9 +93,8 @@ public class AppEnumerationTests {
     /** A package that queries for {@link #TARGET_NO_API} package */
     private static final String QUERIES_PACKAGE = PKG_BASE + "queries.pkg";
 
-    private static final String[] ALL_QUERIES_PACKAGES = {
+    private static final String[] ALL_QUERIES_TARGETING_Q_PACKAGES = {
             QUERIES_NOTHING,
-            QUERIES_NOTHING_Q,
             QUERIES_NOTHING_PERM,
             QUERIES_ACTIVITY_ACTION,
             QUERIES_SERVICE_ACTION,
@@ -265,9 +264,10 @@ public class AppEnumerationTests {
 
 
     private void setFeatureEnabledForAll(Boolean enabled) {
-        for (String pkgName : ALL_QUERIES_PACKAGES) {
+        for (String pkgName : ALL_QUERIES_TARGETING_Q_PACKAGES) {
             setFeatureEnabledForAll(pkgName, enabled);
         }
+        setFeatureEnabledForAll(QUERIES_NOTHING_Q, enabled == null ? null : false);
     }
 
     private void setFeatureEnabledForAll(String packageName, Boolean enabled) {
