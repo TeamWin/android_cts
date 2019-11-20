@@ -1911,6 +1911,7 @@ public class ImageDecoderTest {
             if (resId == R.drawable.webp_orientation1) {
                 // The webp files may not look exactly the same as the jpegs.
                 // Recreate the reference.
+                reference.recycle();
                 reference = null;
             }
             Uri uri = getAsResourceUri(resId);
@@ -1928,6 +1929,7 @@ public class ImageDecoderTest {
                     reference = bm;
                 } else {
                     BitmapUtils.compareBitmaps(bm, reference);
+                    bm.recycle();
                 }
             } catch (IOException e) {
                 fail("Decoding " + uri.toString() + " yielded " + e);
