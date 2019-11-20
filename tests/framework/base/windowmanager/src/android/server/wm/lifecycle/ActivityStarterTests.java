@@ -80,7 +80,6 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
      * - {@code FLAG_ACTIVITY_NEW_TASK}
      */
     @Test
-    @FlakyTest(bugId=137329632)
     public void testClearTopNewTaskResetTask() throws Exception {
         // Start activity normally
         launchActivityAndWait(FirstActivity.class);

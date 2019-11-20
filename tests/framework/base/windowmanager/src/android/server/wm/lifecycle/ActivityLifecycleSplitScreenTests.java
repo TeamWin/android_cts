@@ -62,7 +62,6 @@ import java.util.List;
  */
 @MediumTest
 @Presubmit
-@FlakyTest(bugId=137329632)
 @android.server.wm.annotation.Group3
 public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTestBase {
 
@@ -113,6 +112,7 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
     }
 
     @Test
+    @FlakyTest(bugId=127741025)
     public void testOccludingMovedBetweenStacks() throws Exception {
         // Launch first activity
         final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
@@ -155,6 +155,7 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
     }
 
     @Test
+    @FlakyTest(bugId=127741025)
     public void testTranslucentMovedBetweenStacks() throws Exception {
         // Launch first activity
         final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
@@ -247,6 +248,7 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
     }
 
     @Test
+    @FlakyTest(bugId=127741025)
     public void testResumedWhenRestartedFromInNonFocusedStack() throws Exception {
         // Launch first activity
         final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
