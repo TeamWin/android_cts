@@ -169,8 +169,8 @@ public class Components extends ComponentsBase {
     public static final ComponentName LAUNCH_BROADCAST_RECEIVER =
             component("LaunchBroadcastReceiver");
 
-    public static final ComponentName TOAST_RECEIVER =
-            component("ToastReceiver");
+    public static final ComponentName CLICKABLE_TOAST_ACTIVITY =
+            component("ClickableToastActivity");
 
     public static class LaunchBroadcastReceiver {
         public static final String LAUNCH_BROADCAST_ACTION =

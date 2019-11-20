@@ -1,4 +1,4 @@
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2019 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,20 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test_helper_app {
-    name: "CtsHostsideTestsFullBackupApp",
-    defaults: ["cts_defaults"],
-    static_libs: [
-        "androidx.test.rules",
-        "platform-test-annotations",
-    ],
-    srcs: ["src/**/*.java"],
-    // tag this module as a cts test artifact
+android_test {
+    name: "StorageDelegator",
+    defaults: ["cts_support_defaults"],
+
+    optimize: {
+        enabled: false,
+    },
+
+    srcs: ["**/*.java"],
+
+    // Tag this module as a cts test artifact
     test_suites: [
-        "arcts",
         "cts",
         "vts",
         "general-tests",
     ],
-    sdk_version: "current",
 }

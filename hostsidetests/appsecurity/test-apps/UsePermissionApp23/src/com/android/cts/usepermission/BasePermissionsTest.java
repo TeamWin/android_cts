@@ -317,8 +317,9 @@ public abstract class BasePermissionsTest {
         click("com.android.permissioncontroller:id/permission_allow_button");
     }
 
-    protected void clickAllowAlwaysFromGrantDialog() throws Exception {
+    protected void clickSettingsAllowAlwaysFromGrantDialog() throws Exception {
         clickSettingsLink();
+        getUiDevice().waitForIdle();
         click("com.android.permissioncontroller:id/allow_radio_button");
         getUiDevice().waitForIdle();
         getUiDevice().pressBack();
@@ -338,6 +339,22 @@ public abstract class BasePermissionsTest {
 
     protected void clickDontAskAgainButton() throws Exception {
         click("com.android.permissioncontroller:id/permission_deny_dont_ask_again_button");
+    }
+
+    protected void clickNoUpgradeButton() throws Exception {
+        click("com.android.permissioncontroller:id/permission_no_upgrade_button");
+    }
+
+    protected void clickNoUpgradeAndDontAskAgainButton() throws Exception {
+        click("com.android.permissioncontroller:id/permission_no_upgrade_and_dont_ask_again_button");
+    }
+
+    protected void clickSettingsDenyFromGrantDialog() throws Exception {
+        clickSettingsLink();
+        getUiDevice().waitForIdle();
+        click("com.android.permissioncontroller:id/deny_radio_button");
+        getUiDevice().waitForIdle();
+        getUiDevice().pressBack();
     }
 
     protected void clickSettingsLink() {

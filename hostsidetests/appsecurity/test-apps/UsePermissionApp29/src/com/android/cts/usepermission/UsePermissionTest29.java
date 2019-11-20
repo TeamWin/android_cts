@@ -22,8 +22,12 @@ import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
 import static com.android.compatibility.common.util.UiAutomatorUtils.getUiDevice;
+import static com.android.compatibility.common.util.UiAutomatorUtils.waitFindObject;
 
 import static junit.framework.Assert.assertEquals;
+
+import android.support.test.uiautomator.By;
+import android.support.test.uiautomator.UiObjectNotFoundException;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -67,6 +71,7 @@ public class UsePermissionTest29 extends BasePermissionsTest {
         BasePermissionsTest.assertPermissionRequestResult(result, permissions, granted);
     }
 
+    @Test
     @Before
     public void assertPermissionsNotGranted() {
         assertDenied(ACCESS_FINE_LOCATION);
@@ -101,7 +106,7 @@ public class UsePermissionTest29 extends BasePermissionsTest {
         String[] permissions = {ACCESS_FINE_LOCATION, ACCESS_BACKGROUND_LOCATION};
 
         BasePermissionActivity.Result result = requestPermissions(permissions,
-                this::clickAllowAlwaysFromGrantDialog);
+                this::clickSettingsAllowAlwaysFromGrantDialog);
         assertPermissionRequestResult(result, permissions, true, true);
 
         assertGranted(ACCESS_FINE_LOCATION);
@@ -123,7 +128,7 @@ public class UsePermissionTest29 extends BasePermissionsTest {
         // Step 2: request background only
         permissions = new String[]{ACCESS_BACKGROUND_LOCATION};
 
-        result = requestPermissions(permissions, this::clickAllowAlwaysFromGrantDialog);
+        result = requestPermissions(permissions, this::clickSettingsAllowAlwaysFromGrantDialog);
         assertPermissionRequestResult(result, permissions, true);
 
         assertGranted(ACCESS_FINE_LOCATION);
@@ -142,7 +147,7 @@ public class UsePermissionTest29 extends BasePermissionsTest {
         assertDenied(ACCESS_BACKGROUND_LOCATION);
 
         // Step 2: grant background
-        result = requestPermissions(permissions, this::clickAllowAlwaysFromGrantDialog);
+        result = requestPermissions(permissions, this::clickSettingsAllowAlwaysFromGrantDialog);
         assertPermissionRequestResult(result, permissions, true, true);
 
         assertGranted(ACCESS_FINE_LOCATION);
@@ -174,5 +179,54 @@ public class UsePermissionTest29 extends BasePermissionsTest {
 
         assertDenied(ACCESS_FINE_LOCATION);
         assertDenied(ACCESS_BACKGROUND_LOCATION);
+    }
+
+    @Test
+    public void openSettingsFromGrantNoOp() throws Exception {
+        // Step 1: Request both, go to settings, do nothing
+        String[] permissions = {ACCESS_FINE_LOCATION, ACCESS_BACKGROUND_LOCATION};
+
+        BasePermissionActivity.Result result = requestPermissions(permissions,
+                () -> {
+                    clickSettingsLink();
+                    getUiDevice().waitForIdle();
+                    getUiDevice().pressBack();
+                    try {
+                        waitFindObject(By.res("com.android.permissioncontroller:id/grant_dialog"));
+                    } catch (UiObjectNotFoundException e) {
+                        throw new AssertionError("Permission grant dialog didn't resume", e);
+                    }
+                    assertPermissionsNotGranted();
+                    clickAllowForegroundButton();
+                });
+        assertPermissionRequestResult(result, permissions, true, false);
+
+        // Step 2: Upgrade foreground to background, go to settings, do nothing
+        requestPermissions(permissions,
+                () -> {
+                    clickSettingsLink();
+                    getUiDevice().waitForIdle();
+                    getUiDevice().pressBack();
+                    getUiDevice().waitForIdle();
+                    try {
+                        waitFindObject(By.res("com.android.permissioncontroller:id/grant_dialog"));
+                    } catch (UiObjectNotFoundException e) {
+                        throw new AssertionError("Permission grant dialog didn't resume", e);
+                    }
+                    assertDenied(ACCESS_BACKGROUND_LOCATION);
+                    clickNoUpgradeAndDontAskAgainButton();
+                });
+        assertPermissionRequestResult(result, permissions, true, false);
+    }
+
+    @Test
+    public void openSettingsFromGrantDowngrade() throws Exception {
+        // Request upgrade, downgrade permission to denied in settings
+        String[] permissions = {ACCESS_FINE_LOCATION, ACCESS_BACKGROUND_LOCATION};
+
+        requestPermissions(permissions, this::clickAllowForegroundButton);
+
+        requestPermissions(permissions, this::clickSettingsDenyFromGrantDialog);
+        // Expect process to get killed
     }
 }

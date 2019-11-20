@@ -19,9 +19,10 @@ package android.server.wm.app;
 import static android.server.wm.app.Components.ToastReceiver.ACTION_TOAST_DISPLAYED;
 import static android.server.wm.app.Components.ToastReceiver.ACTION_TOAST_TAP_DETECTED;
 
-import android.content.BroadcastReceiver;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.view.Gravity;
@@ -33,18 +34,18 @@ import android.widget.Toast;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 
-public class ToastReceiver extends BroadcastReceiver {
+public class ClickableToastActivity extends Activity {
     private static final int DETECT_TOAST_TIMEOUT_MS = 15000;
     private static final int DETECT_TOAST_POOLING_INTERVAL_MS = 200;
 
     @Override
-    public void onReceive(Context context, Intent intent) {
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
         Handler handler = new Handler();
-        Toast toast = getToast(context);
+        Toast toast = getToast(this);
         long deadline = SystemClock.uptimeMillis() + DETECT_TOAST_TIMEOUT_MS;
-        handler.post(
-                new DetectToastRunnable(
-                        context.getApplicationContext(), toast.getView(), deadline, handler));
+        handler.post(new DetectToastRunnable(getApplicationContext(), toast.getView(), deadline,
+                handler));
         toast.show();
     }
 

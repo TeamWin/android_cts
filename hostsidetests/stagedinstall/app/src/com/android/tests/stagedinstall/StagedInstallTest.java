@@ -64,6 +64,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * This series of tests are meant to be driven by a host, since some of the interactions being
@@ -151,6 +152,10 @@ public class StagedInstallTest {
         PackageInstaller packageInstaller = getPackageInstaller();
         List<PackageInstaller.SessionInfo> stagedSessions = packageInstaller.getStagedSessions();
         for (PackageInstaller.SessionInfo sessionInfo : stagedSessions) {
+            if (sessionInfo.getParentSessionId() != PackageInstaller.SessionInfo.INVALID_ID) {
+                // Cannot abandon a child session
+                continue;
+            }
             try {
                 Log.i(TAG, "abandoning session " + sessionInfo.getSessionId());
                 packageInstaller.abandonSession(sessionInfo.getSessionId());
@@ -201,7 +206,7 @@ public class StagedInstallTest {
         assertSessionApplied(sessionId);
         // Session is in a final state. Test that abandoning the session doesn't remove it from the
         // session database.
-        getPackageInstaller().abandonSession(sessionId);
+        abandonSession(sessionId);
         assertSessionApplied(sessionId);
     }
 
@@ -227,45 +232,49 @@ public class StagedInstallTest {
     }
 
     @Test
-    public void testFailInstallAnotherSessionAlreadyInProgress_BothSinglePackage()
-            throws Exception {
-        int sessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
+    public void testFailOverlappingMultipleStagedInstall_BothSinglePackage_Apk() throws Exception {
+        stageSingleApk(TestApp.A1).assertSuccessful();
         StageSessionResult failedSessionResult = stageSingleApk(TestApp.A1);
         assertThat(failedSessionResult.getErrorMessage()).contains(
-                "There is already in-progress committed staged session");
-        getPackageInstaller().abandonSession(sessionId);
+                "has been staged already by session");
     }
 
     @Test
-    public void testFailInstallAnotherSessionAlreadyInProgress_SinglePackageMultiPackage()
+    public void testAllowNonOverlappingMultipleStagedInstall_MultiPackageSinglePackage_Apk()
             throws Exception {
-        int sessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
-        StageSessionResult failedSessionResult = stageMultipleApks(TestApp.A1, TestApp.B1);
-        assertThat(failedSessionResult.getErrorMessage()).contains(
-                "There is already in-progress committed staged session");
-        getPackageInstaller().abandonSession(sessionId);
+        stageMultipleApks(TestApp.A1, TestApp.B1).assertSuccessful();
+        stageSingleApk(TestApp.C1).assertSuccessful();
     }
 
     @Test
-    public void testFailInstallAnotherSessionAlreadyInProgress_MultiPackageSinglePackage()
-            throws Exception {
-        int sessionId = stageMultipleApks(TestApp.A1, TestApp.B1)
-                .assertSuccessful().getSessionId();
-        StageSessionResult failedSessionResult = stageSingleApk(TestApp.A1);
+    public void testFailOverlappingMultipleStagedInstall_BothMultiPackage_Apk() throws Exception {
+        stageMultipleApks(TestApp.A1, TestApp.B1).assertSuccessful();
+        StageSessionResult failedSessionResult = stageMultipleApks(TestApp.A2, TestApp.C1);
         assertThat(failedSessionResult.getErrorMessage()).contains(
-                "There is already in-progress committed staged session");
-        getPackageInstaller().abandonSession(sessionId);
+                "has been staged already by session");
     }
 
     @Test
-    public void testFailInstallAnotherSessionAlreadyInProgress_BothMultiPackage()
+    public void testMultipleStagedInstall_ApkOnly_Commit()
             throws Exception {
-        int sessionId = stageMultipleApks(TestApp.A1, TestApp.B1)
-                .assertSuccessful().getSessionId();
-        StageSessionResult failedSessionResult = stageMultipleApks(TestApp.A1, TestApp.B1);
-        assertThat(failedSessionResult.getErrorMessage()).contains(
-                "There is already in-progress committed staged session");
-        getPackageInstaller().abandonSession(sessionId);
+        int firstSessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
+        waitForIsReadyBroadcast(firstSessionId);
+        int secondSessionId = stageSingleApk(TestApp.B1).assertSuccessful().getSessionId();
+        waitForIsReadyBroadcast(secondSessionId);
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
+        storeSessionIds(Arrays.asList(firstSessionId, secondSessionId));
+    }
+
+    @Test
+    public void testMultipleStagedInstall_ApkOnly_VerifyPostReboot()
+            throws Exception {
+        List<Integer> sessionIds = retrieveLastSessionIds();
+        for (int sessionId: sessionIds) {
+            assertSessionApplied(sessionId);
+        }
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(1);
+        assertThat(getInstalledVersion(TestApp.B)).isEqualTo(1);
     }
 
     @Test
@@ -302,26 +311,35 @@ public class StagedInstallTest {
     }
 
     @Test
-    public void testGetActiveStagedSession() throws Exception {
+    public void testGetActiveStagedSessions() throws Exception {
         PackageInstaller packageInstaller = getPackageInstaller();
-        int sessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
-        PackageInstaller.SessionInfo session = packageInstaller.getActiveStagedSession();
-        assertThat(session.getSessionId()).isEqualTo(sessionId);
+        int firstSessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
+        int secondSessionId = stageSingleApk(TestApp.B1).assertSuccessful().getSessionId();
+        List<Integer> stagedSessionIds = packageInstaller.getActiveStagedSessions()
+                .stream().map(s -> s.getSessionId()).collect(Collectors.toList());
+        assertThat(stagedSessionIds).hasSize(2);
+        assertThat(stagedSessionIds).contains(firstSessionId);
+        assertThat(stagedSessionIds).contains(secondSessionId);
     }
 
     @Test
-    public void testGetActiveStagedSessionNoSessionActive() throws Exception {
+    public void testGetActiveStagedSessionsNoSessionActive() throws Exception {
         PackageInstaller packageInstaller = getPackageInstaller();
-        PackageInstaller.SessionInfo session = packageInstaller.getActiveStagedSession();
-        assertThat(session).isNull();
+        List<PackageInstaller.SessionInfo> sessions = packageInstaller.getActiveStagedSessions();
+        assertThat(sessions).isEmpty();
     }
 
     @Test
-    public void testGetGetActiveStagedSession_MultiApkSession() throws Exception {
-        int sessionId = stageMultipleApks(TestApp.A1, TestApp.B1)
+    public void testGetActiveStagedSessions_MultiApkSession() throws Exception {
+        int firstSessionId = stageMultipleApks(TestApp.A1, TestApp.B1)
                 .assertSuccessful().getSessionId();
-        PackageInstaller.SessionInfo session = getPackageInstaller().getActiveStagedSession();
-        assertThat(session.getSessionId()).isEqualTo(sessionId);
+        int secondSessionId = stageMultipleApks(TestApp.C1)
+                .assertSuccessful().getSessionId();
+        List<Integer> stagedSessionIds = getPackageInstaller().getActiveStagedSessions()
+                .stream().map(s -> s.getSessionId()).collect(Collectors.toList());
+        assertThat(stagedSessionIds).hasSize(2);
+        assertThat(stagedSessionIds).contains(firstSessionId);
+        assertThat(stagedSessionIds).contains(secondSessionId);
     }
 
     @Test
@@ -618,7 +636,7 @@ public class StagedInstallTest {
         assertSessionFailed(sessionId);
         // Session is in a final state. Test that abandoning the session doesn't remove it from the
         // session database.
-        getPackageInstaller().abandonSession(sessionId);
+        abandonSession(sessionId);
         assertSessionFailed(sessionId);
     }
 
@@ -782,20 +800,6 @@ public class StagedInstallTest {
         assertThat(info).isStagedSessionReady();
     }
 
-    // Key downgrade should fail if new key is not ancestor of current key
-    @Test
-    public void testKeyDowngradeFailIfMismatch()
-            throws Exception {
-        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(2);
-        int sessionId = stageDowngradeSingleApk(Apex2SignedEve).assertSuccessful().getSessionId();
-        PackageInstaller.SessionInfo info =
-                SessionUpdateBroadcastReceiver.sessionBroadcasts.poll(60, TimeUnit.SECONDS);
-        assertThat(info.getSessionId()).isEqualTo(sessionId);
-        assertThat(info).isStagedSessionFailed();
-        assertThat(info.getStagedSessionErrorMessage()).contains("is not compatible with the one "
-                + "currently installed on device");
-    }
-
     @Test
     public void testSamegradeSystemApex_Commit() throws Exception {
         final PackageInfo shim = InstrumentationRegistry.getInstrumentation().getContext()
@@ -949,6 +953,24 @@ public class StagedInstallTest {
         }
     }
 
+    private void storeSessionIds(List<Integer> sessionIds) throws Exception {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(mTestStateFile))) {
+            writer.write(sessionIds.toString());
+        }
+    }
+
+    private List<Integer> retrieveLastSessionIds() throws Exception {
+        try (BufferedReader reader = new BufferedReader(new FileReader(mTestStateFile))) {
+            String line = reader.readLine();
+            String[] sessionIdsStr = line.substring(1, line.length() - 1).split(", ");
+            ArrayList<Integer> result = new ArrayList<>();
+            for (String sessionIdStr: sessionIdsStr) {
+                result.add(Integer.parseInt(sessionIdStr));
+            }
+            return result;
+        }
+    }
+
     private static void writeApk(PackageInstaller.Session session, String apkFileName,
             String outputFileName)
             throws Exception {
@@ -1055,7 +1077,8 @@ public class StagedInstallTest {
     private PackageInstaller.SessionInfo waitForBroadcast(int sessionId) throws Exception {
         PackageInstaller.SessionInfo info =
                 SessionUpdateBroadcastReceiver.sessionBroadcasts.poll(60, TimeUnit.SECONDS);
-        assertThat(info).isNotNull();
+        assertWithMessage("Timed out while waiting for session to get ready")
+                .that(info).isNotNull();
         assertThat(info.getSessionId()).isEqualTo(sessionId);
         return info;
     }

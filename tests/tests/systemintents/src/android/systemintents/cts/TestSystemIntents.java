@@ -16,9 +16,14 @@
 
 package android.systemintents.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
@@ -29,12 +34,30 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class TestSystemIntents {
+    private static final int EXCLUDE_TV = 1 << 0;
+    private static final int EXCLUDE_WATCH = 1 << 1;
+    private static final int EXCLUDE_NON_TELEPHONY = 1 << 2;
+    private static final int EXCLUDE_NON_INSTALLABLE_IME = 1 << 3;
+
+    private static class IntentEntry {
+        public int flags;
+        public Intent intent;
+
+        public IntentEntry(int f, Intent i) {
+            flags = f;
+            intent = i;
+        }
+    }
+
+    private Context mContext;
+    private PackageManager mPackageManager;
 
     /*
      * List of activity intents defined by the system.  Activities to handle each of these
@@ -46,22 +69,6 @@ public class TestSystemIntents {
      * The flags associated with each intent indicate kinds of device on which the given
      * UI intent is *not* applicable.
      */
-
-    private static final int EXCLUDE_TV = 1 << 0;
-    private static final int EXCLUDE_WATCH = 1 << 1;
-    private static final int EXCLUDE_NON_TELEPHONY = 1 << 2;
-    private static final int EXCLUDE_NON_INSTALLABLE_IME = 1 << 3;
-
-    class IntentEntry {
-        public int flags;
-        public Intent intent;
-
-        public IntentEntry(int f, Intent i) {
-            flags = f;
-            intent = i;
-        }
-    }
-
     private final IntentEntry[] mTestIntents = {
             /* Settings-namespace intent actions */
             new IntentEntry(0, new Intent(Settings.ACTION_SETTINGS)),
@@ -81,20 +88,25 @@ public class TestSystemIntents {
                     new Intent(Settings.ACTION_INPUT_METHOD_SETTINGS))
     };
 
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getContext();
+        mPackageManager = mContext.getPackageManager();
+    }
+
     @Test
     public void testSystemIntents() {
-        final PackageManager pm = InstrumentationRegistry.getContext().getPackageManager();
         int productFlags = 0;
 
-        if (pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
+        if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
             productFlags |= EXCLUDE_TV;
         }
 
-        if (!pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             productFlags |= EXCLUDE_NON_TELEPHONY;
         }
 
-        if (!pm.hasSystemFeature(PackageManager.FEATURE_INPUT_METHODS)) {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_INPUT_METHODS)) {
             productFlags |= EXCLUDE_NON_INSTALLABLE_IME;
         }
 
@@ -105,9 +117,33 @@ public class TestSystemIntents {
 
         for (IntentEntry e : mTestIntents) {
             if ((productFlags & e.flags) == 0) {
-                final ResolveInfo ri = pm.resolveActivity(e.intent, PackageManager.MATCH_DEFAULT_ONLY);
+                final ResolveInfo ri = mPackageManager.resolveActivity(e.intent,
+                        PackageManager.MATCH_DEFAULT_ONLY);
                 assertTrue("API intent " + e.intent + " not implemented by any activity", ri != null);
             }
         }
+    }
+
+    @Test
+    public void testManageOverlayPermissionIntentWithDataResolvesToSameIntentWithoutData() {
+        Intent genericIntent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
+        Intent appSpecificIntent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
+        appSpecificIntent.setData(Uri.fromParts("package", mContext.getPackageName(), null));
+
+        ResolveInfo genericResolveInfo = mPackageManager.resolveActivity(genericIntent, 0);
+        ResolveInfo appSpecificResolveInfo = mPackageManager.resolveActivity(appSpecificIntent, 0);
+
+        String errorMessage =
+                "ACTION_MANAGE_OVERLAY_PERMISSION intent with data and without data should "
+                        + "resolve to the same activity";
+        if (genericResolveInfo == null) {
+            assertNull(errorMessage, appSpecificResolveInfo);
+            return;
+        }
+        assertNotNull(errorMessage, appSpecificResolveInfo);
+        ActivityInfo genericActivity = genericResolveInfo.activityInfo;
+        ActivityInfo appActivity = appSpecificResolveInfo.activityInfo;
+        assertEquals(errorMessage, genericActivity.packageName, appActivity.packageName);
+        assertEquals(errorMessage, genericActivity.name, appActivity.name);
     }
 }

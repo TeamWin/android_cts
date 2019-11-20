@@ -94,23 +94,30 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void testFailInstallAnotherSessionAlreadyInProgress_BothSinglePackage() throws Exception {
-        runPhase("testFailInstallAnotherSessionAlreadyInProgress_BothSinglePackage");
+    public void testFailOverlappingMultipleStagedInstall_BothSinglePackage_Apk() throws Exception {
+        runPhase("testFailOverlappingMultipleStagedInstall_BothSinglePackage_Apk");
     }
 
     @Test
-    public void testFailInstallAnotherSessionAlreadyInProgress_SinglePackageMultiPackage() throws Exception {
-        runPhase("testFailInstallAnotherSessionAlreadyInProgress_SinglePackageMultiPackage");
+    public void testAllowNonOverlappingMultipleStagedInstall_MultiPackageSinglePackage_Apk()
+            throws Exception {
+        runPhase("testAllowNonOverlappingMultipleStagedInstall_MultiPackageSinglePackage_Apk");
     }
 
     @Test
-    public void testFailInstallAnotherSessionAlreadyInProgress_MultiPackageSinglePackage() throws Exception {
-        runPhase("testFailInstallAnotherSessionAlreadyInProgress_MultiPackageSinglePackage");
+    public void testFailOverlappingMultipleStagedInstall_BothMultiPackage_Apk() throws Exception {
+        runPhase("testFailOverlappingMultipleStagedInstall_BothMultiPackage_Apk");
     }
 
+    /**
+     * Tests for installing multiple staged sessions at the same time
+     */
     @Test
-    public void testFailInstallAnotherSessionAlreadyInProgress_BothMultiPackage() throws Exception {
-        runPhase("testFailInstallAnotherSessionAlreadyInProgress_BothMultiPackage");
+    @LargeTest
+    public void testMultipleStagedInstall_ApkOnly() throws Exception {
+        runPhase("testMultipleStagedInstall_ApkOnly_Commit");
+        getDevice().reboot();
+        runPhase("testMultipleStagedInstall_ApkOnly_VerifyPostReboot");
     }
 
     @Test
@@ -137,18 +144,18 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void testGetActiveStagedSession() throws Exception {
-        runPhase("testGetActiveStagedSession");
+    public void testGetActiveStagedSessions() throws Exception {
+        runPhase("testGetActiveStagedSessions");
     }
 
     @Test
-    public void testGetActiveStagedSessionNoSessionActive() throws Exception {
-        runPhase("testGetActiveStagedSessionNoSessionActive");
+    public void testGetActiveStagedSessionsNoSessionActive() throws Exception {
+        runPhase("testGetActiveStagedSessionsNoSessionActive");
     }
 
     @Test
-    public void getGetActiveStagedSession_MultiApkSession() throws Exception {
-        runPhase("testGetGetActiveStagedSession_MultiApkSession");
+    public void testGetActiveStagedSessions_MultiApkSession() throws Exception {
+        runPhase("testGetActiveStagedSessions_MultiApkSession");
     }
 
     @Test
@@ -398,15 +405,6 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
 
         installV2SignedBobApex();
         runPhase("testAfterRotationNewKeyCanUpdateFurtherWithoutLineage");
-    }
-
-    @Test
-    @LargeTest
-    public void testKeyDowngradeFailIfMismatch() throws Exception {
-        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
-
-        installV3SignedBobApex();
-        runPhase("testKeyDowngradeFailIfMismatch");
     }
 
     @Test

@@ -30,6 +30,7 @@ import java.util.function.Function;
 public class TestApp {
     public static final String A = "com.android.cts.install.lib.testapp.A";
     public static final String B = "com.android.cts.install.lib.testapp.B";
+    public static final String C = "com.android.cts.install.lib.testapp.C";
     public static final String Apex = "com.android.apex.cts.shim";
     public static final String NotPreInstalledApex = "com.android.apex.cts.shim_not_pre_installed";
 
@@ -51,6 +52,9 @@ public class TestApp {
             "TestAppBv1.apk");
     public static final TestApp B2 = new TestApp("Bv2", B, 2, /*isApex*/false,
             "TestAppBv2.apk");
+
+    public static final TestApp C1 = new TestApp("Cv1", C, 1, /*isApex*/false,
+            "TestAppCv1.apk");
 
     // Apex collection
     public static final TestApp Apex1 =
