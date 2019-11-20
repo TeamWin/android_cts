@@ -26,10 +26,13 @@ import android.media.MediaCodecInfo.VideoCapabilities;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.os.Build;
+import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.util.Pair;
+import android.text.TextUtils;
 import android.view.Surface;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.MediaPerfUtils;
@@ -74,11 +77,14 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     private int mBitrate;
 
     private Resources mResources;
+    private boolean mSkipRateChecking = false;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         mResources = mContext.getResources();
+        Bundle bundle = InstrumentationRegistry.getArguments();
+        mSkipRateChecking = TextUtils.equals("true", bundle.getString("mts-media"));
     }
 
     @Override
@@ -141,7 +147,7 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
 
         String error =
             MediaPerfUtils.verifyAchievableFrameRates(name, mime, width, height, measuredFps);
-        if (frankenDevice() && error != null) {
+        if ((frankenDevice() || mSkipRateChecking) && error != null) {
             // ensure there is data, but don't insist that it is correct
             assertFalse(error, error.startsWith("Failed to get "));
         } else {
