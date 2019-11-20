@@ -215,7 +215,6 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
      * - Instance of single task activity is only one in its task.
      */
     @Test
-    @FlakyTest(bugId = 127741025)
     public void testLaunchSingleTaskActivity() {
         // Launch a standard activity.
         launchActivity(STANDARD_ACTIVITY);
@@ -243,7 +242,7 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
 
         // Launch a single task activity again.
         launchActivity(SINGLE_TASK_ACTIVITY);
-        mAmWmState.waitForActivityState(SECOND_STANDARD_ACTIVITY, STATE_DESTROYED);
+        mAmWmState.waitForActivityRemoved(SECOND_STANDARD_ACTIVITY);
 
         // Make sure the number of instances for single task activity is only one.
         assertEquals("Instance of single task activity in its task must be only one", 1,
