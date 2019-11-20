@@ -14,11 +14,16 @@
 
 package android.accessibilityservice.cts;
 
+import static android.accessibilityservice.AccessibilityServiceInfo.FLAG_REQUEST_ACCESSIBILITY_BUTTON;
+
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.accessibilityservice.AccessibilityButtonController;
+import android.accessibilityservice.AccessibilityServiceInfo;
+import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.view.Display;
 
@@ -86,5 +91,20 @@ public class AccessibilityButtonTest {
                 mService.getAccessibilityButtonController(
                         Display.DEFAULT_DISPLAY);
         assertNotNull(buttonController);
+    }
+
+    @Test
+    @AppModeFull
+    public void testUpdateRequestAccessibilityButtonFlag_targetSdkGreaterThanQ_ignoresUpdate() {
+        final AccessibilityServiceInfo serviceInfo = mService.getServiceInfo();
+        assertTrue((serviceInfo.flags & FLAG_REQUEST_ACCESSIBILITY_BUTTON)
+                == FLAG_REQUEST_ACCESSIBILITY_BUTTON);
+        assertTrue(mService.getApplicationInfo().targetSdkVersion > Build.VERSION_CODES.Q);
+
+        serviceInfo.flags &= ~FLAG_REQUEST_ACCESSIBILITY_BUTTON;
+        mService.setServiceInfo(serviceInfo);
+        assertTrue("Update flagRequestAccessibilityButton should fail",
+                (mService.getServiceInfo().flags & FLAG_REQUEST_ACCESSIBILITY_BUTTON)
+                        == FLAG_REQUEST_ACCESSIBILITY_BUTTON);
     }
 }
