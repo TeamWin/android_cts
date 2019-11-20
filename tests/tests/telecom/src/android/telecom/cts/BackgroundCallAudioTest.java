@@ -25,6 +25,8 @@ import android.telecom.cts.api29incallservice.ICtsApi29InCallServiceControl;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.test.InstrumentationRegistry;
+
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -416,72 +418,85 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
             return;
         }
 
-        ICtsApi29InCallServiceControl controlInterface = setUpControl();
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.CONTROL_INCALL_EXPERIENCE");
+        try {
+            ICtsApi29InCallServiceControl controlInterface = setUpControl();
 
-        setupIncomingCallWithCallScreening();
+            setupIncomingCallWithCallScreening();
 
-        final MockConnection connection = verifyConnectionForIncomingCall();
+            final MockConnection connection = verifyConnectionForIncomingCall();
 
-        if (!mInCallCallbacks.lock.tryAcquire(TestUtils.WAIT_FOR_CALL_ADDED_TIMEOUT_S,
-                TimeUnit.SECONDS)) {
-            fail("No call added to InCallService.");
+            if (!mInCallCallbacks.lock.tryAcquire(TestUtils.WAIT_FOR_CALL_ADDED_TIMEOUT_S,
+                    TimeUnit.SECONDS)) {
+                fail("No call added to InCallService.");
+            }
+
+            Call call = mInCallCallbacks.getService().getLastCall();
+            assertCallState(call, Call.STATE_AUDIO_PROCESSING);
+            assertConnectionState(connection, Connection.STATE_ACTIVE);
+            // Make sure that the dummy app never got any calls
+            assertEquals(0, controlInterface.getHistoricalCallCount());
+
+            call.exitBackgroundAudioProcessing(true);
+            assertCallState(call, Call.STATE_SIMULATED_RINGING);
+            waitOnAllHandlers(getInstrumentation());
+            assertConnectionState(connection, Connection.STATE_ACTIVE);
+            // Make sure that the dummy app sees a ringing call.
+            assertEquals(Call.STATE_RINGING,
+                    controlInterface.getCallState(call.getDetails().getTelecomCallId()));
+
+            call.answer(VideoProfile.STATE_AUDIO_ONLY);
+            assertCallState(call, Call.STATE_ACTIVE);
+            waitOnAllHandlers(getInstrumentation());
+            assertConnectionState(connection, Connection.STATE_ACTIVE);
+            // Make sure that the dummy app sees an active call.
+            assertEquals(Call.STATE_ACTIVE,
+                    controlInterface.getCallState(call.getDetails().getTelecomCallId()));
+
+            tearDownControl();
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
         }
-
-        Call call = mInCallCallbacks.getService().getLastCall();
-        assertCallState(call, Call.STATE_AUDIO_PROCESSING);
-        assertConnectionState(connection, Connection.STATE_ACTIVE);
-        // Make sure that the dummy app never got any calls
-        assertEquals(0, controlInterface.getHistoricalCallCount());
-
-        call.exitBackgroundAudioProcessing(true);
-        assertCallState(call, Call.STATE_SIMULATED_RINGING);
-        waitOnAllHandlers(getInstrumentation());
-        assertConnectionState(connection, Connection.STATE_ACTIVE);
-        // Make sure that the dummy app sees a ringing call.
-        assertEquals(Call.STATE_RINGING,
-                controlInterface.getCallState(call.getDetails().getTelecomCallId()));
-
-        call.answer(VideoProfile.STATE_AUDIO_ONLY);
-        assertCallState(call, Call.STATE_ACTIVE);
-        waitOnAllHandlers(getInstrumentation());
-        assertConnectionState(connection, Connection.STATE_ACTIVE);
-        // Make sure that the dummy app sees an active call.
-        assertEquals(Call.STATE_ACTIVE,
-                controlInterface.getCallState(call.getDetails().getTelecomCallId()));
-
-        tearDownControl();
     }
 
     public void testLowerApiLevelCompatibility2() throws Exception {
         if (!mShouldTestTelecom) {
             return;
         }
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.CONTROL_INCALL_EXPERIENCE");
+        try {
+            ICtsApi29InCallServiceControl controlInterface = setUpControl();
 
-        ICtsApi29InCallServiceControl controlInterface = setUpControl();
+            setupIncomingCallWithCallScreening();
 
-        setupIncomingCallWithCallScreening();
+            final MockConnection connection = verifyConnectionForIncomingCall();
 
-        final MockConnection connection = verifyConnectionForIncomingCall();
+            if (!mInCallCallbacks.lock.tryAcquire(TestUtils.WAIT_FOR_CALL_ADDED_TIMEOUT_S,
+                    TimeUnit.SECONDS)) {
+                fail("No call added to InCallService.");
+            }
 
-        if (!mInCallCallbacks.lock.tryAcquire(TestUtils.WAIT_FOR_CALL_ADDED_TIMEOUT_S,
-                TimeUnit.SECONDS)) {
-            fail("No call added to InCallService.");
+            Call call = mInCallCallbacks.getService().getLastCall();
+            assertCallState(call, Call.STATE_AUDIO_PROCESSING);
+            assertConnectionState(connection, Connection.STATE_ACTIVE);
+            // Make sure that the dummy app never got any calls
+            assertEquals(0, controlInterface.getHistoricalCallCount());
+
+            call.disconnect();
+            assertCallState(call, Call.STATE_DISCONNECTED);
+            waitOnAllHandlers(getInstrumentation());
+            assertConnectionState(connection, Connection.STATE_DISCONNECTED);
+            // Make sure that the dummy app never saw the call
+            assertEquals(0, controlInterface.getHistoricalCallCount());
+
+            tearDownControl();
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
         }
-
-        Call call = mInCallCallbacks.getService().getLastCall();
-        assertCallState(call, Call.STATE_AUDIO_PROCESSING);
-        assertConnectionState(connection, Connection.STATE_ACTIVE);
-        // Make sure that the dummy app never got any calls
-        assertEquals(0, controlInterface.getHistoricalCallCount());
-
-        call.disconnect();
-        assertCallState(call, Call.STATE_DISCONNECTED);
-        waitOnAllHandlers(getInstrumentation());
-        assertConnectionState(connection, Connection.STATE_DISCONNECTED);
-        // Make sure that the dummy app never saw the call
-        assertEquals(0, controlInterface.getHistoricalCallCount());
-
-        tearDownControl();
     }
 
     private Connection placeActiveOutgoingCall() {
