@@ -19,6 +19,7 @@ package android.server.wm.app;
 import static android.server.wm.app.Components.TestActivity.EXTRA_CONFIG_ASSETS_SEQ;
 import static android.server.wm.app.Components.TestActivity.EXTRA_FIXED_ORIENTATION;
 import static android.server.wm.app.Components.TestActivity.EXTRA_INTENTS;
+import static android.server.wm.app.Components.TestActivity.EXTRA_NO_IDLE;
 import static android.server.wm.app.Components.TestActivity.TEST_ACTIVITY_ACTION_FINISH_SELF;
 import static android.server.wm.app.Components.TestActivity.COMMAND_START_ACTIVITIES;
 
@@ -28,7 +29,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.os.Bundle;
+import android.os.Looper;
 import android.os.Parcelable;
+import android.view.animation.Animation;
+import android.view.animation.RotateAnimation;
+import android.widget.ProgressBar;
 
 import java.util.Arrays;
 
@@ -52,6 +57,28 @@ public class TestActivity extends AbstractLifecycleLogActivity {
             final int ori = Integer.parseInt(getIntent().getStringExtra(EXTRA_FIXED_ORIENTATION));
             setRequestedOrientation(ori);
         }
+
+        if (getIntent().hasExtra(EXTRA_NO_IDLE)) {
+            preventAcitivtyIdle();
+        }
+    }
+
+    /** Starts a repeated animation on main thread to make its message queue non-empty. */
+    private void preventAcitivtyIdle() {
+        final ProgressBar progressBar = new ProgressBar(this);
+        progressBar.setIndeterminate(true);
+        setContentView(progressBar);
+        final RotateAnimation animation = new RotateAnimation(0, 180, Animation.RELATIVE_TO_SELF,
+                0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+        animation.setRepeatCount(Animation.INFINITE);
+        progressBar.startAnimation(animation);
+
+        Looper.myLooper().getQueue().addIdleHandler(() -> {
+            if (progressBar.isAnimating()) {
+                throw new RuntimeException("Shouldn't receive idle while animating");
+            }
+            return false;
+        });
     }
 
     @Override

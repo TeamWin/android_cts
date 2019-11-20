@@ -20,7 +20,6 @@ android_test {
         "cts-wm-app-base",
          // Used by InputMethodTestActivity for ImeAwareEditText.
         "compatibility-device-util-axt",
-        "androidx.legacy_legacy-support-v4",
     ],
 
     srcs: [
