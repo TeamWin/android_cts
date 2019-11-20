@@ -679,6 +679,8 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
 
     private void queryProfileOwner(boolean showToast) {
         try {
+            // Set execution start time for counting test execution time.
+            mStartTime = System.currentTimeMillis();
             Intent intent = new Intent(ByodHelperActivity.ACTION_QUERY_PROFILE_OWNER);
             startActivityForResult(intent, REQUEST_PROFILE_OWNER_STATUS);
         }
