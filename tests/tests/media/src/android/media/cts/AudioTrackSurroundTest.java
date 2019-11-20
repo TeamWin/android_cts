@@ -225,8 +225,8 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
                 // Only save timestamps after the data is flowing.
                 if (mPreviousTimestamp != null
                     && timestamp.framePosition > 0
-                    && (timestamp.nanoTime != mPreviousTimestamp.nanoTime
-                            || timestamp.framePosition != mPreviousTimestamp.framePosition)) {
+                    && timestamp.nanoTime != mPreviousTimestamp.nanoTime
+                    && timestamp.framePosition != mPreviousTimestamp.framePosition) {
                     mTimestamps.add(timestamp);
                 }
                 mPreviousTimestamp = timestamp;
