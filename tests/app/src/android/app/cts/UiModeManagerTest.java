@@ -15,6 +15,9 @@
  */
 package android.app.cts;
 
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
+
+import android.app.UiAutomation;
 import android.app.UiModeManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -150,6 +153,41 @@ public class UiModeManagerTest extends AndroidTestCase {
         assertVisibleNightModeInConfiguration(Configuration.UI_MODE_NIGHT_NO);
 
         BatteryUtils.runDumpsysBatteryReset();
+    }
+
+    /**
+     * Verifies that an app holding the ENTER_CAR_MODE_PRIORITIZED permission can enter car mode
+     * while specifying a priority.
+     */
+    public void testEnterCarModePrioritized() {
+        // Adopt shell permission so the required permission
+        // (android.permission.ENTER_CAR_MODE_PRIORITIZED) is granted.
+        UiAutomation ui = getInstrumentation().getUiAutomation();
+        ui.adoptShellPermissionIdentity();
+
+        try {
+            mUiModeManager.enableCarMode(100, 0);
+            assertEquals(Configuration.UI_MODE_TYPE_CAR, mUiModeManager.getCurrentModeType());
+
+            mUiModeManager.disableCarMode(0);
+            assertEquals(Configuration.UI_MODE_TYPE_NORMAL, mUiModeManager.getCurrentModeType());
+        } finally {
+            ui.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Attempts to use the prioritized car mode API when the caller does not hold the correct
+     * permission to use that API.
+     */
+    public void testEnterCarModePrioritizedDenied() {
+        try {
+            mUiModeManager.enableCarMode(100, 0);
+        } catch (SecurityException se) {
+            // Expect exception.
+            return;
+        }
+        fail("Expected SecurityException");
     }
 
     private boolean isAutomotive() {
