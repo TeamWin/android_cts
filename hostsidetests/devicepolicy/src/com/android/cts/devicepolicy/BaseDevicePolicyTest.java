@@ -95,6 +95,11 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
      */
     private static final long USER_REMOVE_WAIT = TimeUnit.SECONDS.toMillis(5);
 
+    /**
+     * The amount of milliseconds to wait for the switch user calls in {@link #tearDown}.
+     */
+    private static final long USER_SWITCH_WAIT = TimeUnit.SECONDS.toMillis(5);
+
     // From the UserInfo class
     protected static final int FLAG_PRIMARY = 0x00000001;
     protected static final int FLAG_GUEST = 0x00000004;
@@ -133,6 +138,9 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     /** Whether DPM is supported. */
     protected boolean mHasFeature;
     protected int mPrimaryUserId;
+
+    /** Record the initial user ID. */
+    protected int mInitialUserId;
 
     /** Whether multi-user is supported. */
     protected boolean mSupportsMultiUser;
@@ -179,6 +187,11 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
 
         mFixedUsers = new ArrayList<>();
         mPrimaryUserId = getPrimaryUser();
+
+        // Set the value of initial user ID calls in {@link #setUp}.
+        if(mSupportsMultiUser) {
+            mInitialUserId = getDevice().getCurrentUser();
+        }
         mFixedUsers.add(mPrimaryUserId);
         if (mPrimaryUserId != USER_SYSTEM) {
             mFixedUsers.add(USER_SYSTEM);
@@ -211,7 +224,11 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         getDevice().executeShellCommand("settings put global package_verifier_enable "
                 + mPackageVerifier);
         removeOwners();
-        switchUser(USER_SYSTEM);
+
+        // Switch back to initial user.
+        if (mSupportsMultiUser && getDevice().getCurrentUser() != mInitialUserId) {
+            switchUser(mInitialUserId);
+        }
         removeTestUsers();
         removeTestPackages();
         super.tearDown();
@@ -282,7 +299,15 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
      */
     protected void switchUser(int userId) throws Exception {
         // TODO Move this logic to ITestDevice
+        int retries = 10;
         executeShellCommand("am switch-user " + userId);
+        while (getDevice().getCurrentUser() != userId && (--retries) >= 0) {
+            // am switch-user can be ignored if a previous user-switching operation
+            // is still in progress. In this case, sleep a bit and then retry
+            Thread.sleep(USER_SWITCH_WAIT);
+            executeShellCommand("am switch-user " + userId);
+        }
+        assertTrue("Failed to switch user after multiple retries", getDevice().getCurrentUser() == userId);
     }
 
     protected int getMaxNumberOfUsersSupported() throws DeviceNotAvailableException {
