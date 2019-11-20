@@ -43,7 +43,6 @@ import java.util.Arrays;
  */
 @MediumTest
 @Presubmit
-@FlakyTest(bugId=137329632)
 @android.server.wm.annotation.Group3
 public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestBase {
 
@@ -83,6 +82,7 @@ public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestB
     }
 
     @Test
+    @FlakyTest(bugId=127741025)
     public void testKeyguardShowHideOverSplitScreen() throws Exception {
         assumeTrue(supportsSecureLock());
         assumeTrue(supportsSplitScreenMultiWindow());

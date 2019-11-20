@@ -71,7 +71,6 @@ import java.util.List;
  */
 @MediumTest
 @Presubmit
-@FlakyTest(bugId=137329632)
 @android.server.wm.annotation.Group3
 public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClientTestBase {
 
@@ -277,6 +276,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
     }
 
     @Test
+    @FlakyTest(bugId=127741025)
     public void testTopPositionLostWhenDocked() throws Exception {
         assumeTrue(supportsSplitScreenMultiWindow());
 
@@ -288,6 +288,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
     }
 
     @Test
+    @FlakyTest(bugId=127741025)
     public void testTopPositionSwitchToAnotherVisibleActivity() throws Exception {
         assumeTrue(supportsSplitScreenMultiWindow());
 
@@ -313,6 +314,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
     }
 
     @Test
+    @FlakyTest(bugId=127741025)
     public void testTopPositionSwitchBetweenVisibleActivities() throws Exception {
         assumeTrue(supportsSplitScreenMultiWindow());
 
@@ -452,6 +454,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
     }
 
     @Test
+    @FlakyTest(bugId=127741025)
     public void testTopPositionSwitchOnTap() throws Exception {
         assumeTrue(supportsSplitScreenMultiWindow());
 
@@ -498,6 +501,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
     }
 
     @Test
+    @FlakyTest(bugId=127741025)
     public void testTopPositionSwitchOnTapSlowDifferentProcess() throws Exception {
         assumeTrue(supportsSplitScreenMultiWindow());
 
@@ -642,6 +646,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
     }
 
     @Test
+    @FlakyTest(bugId=127741025)
     public void testTopPositionLaunchedBehindLockScreen() throws Exception {
         assumeTrue(supportsSecureLock());
 
@@ -665,6 +670,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
     }
 
     @Test
+    @FlakyTest(bugId=127741025)
     public void testTopPositionRemovedBehindLockScreen() throws Exception {
         assumeTrue(supportsSecureLock());
 
@@ -688,6 +694,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
     }
 
     @Test
+    @FlakyTest(bugId=127741025)
     public void testTopPositionLaunchedOnTopOfLockScreen() throws Exception {
         assumeTrue(supportsSecureLock());
 
@@ -718,6 +725,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
     }
 
     @Test
+    @FlakyTest(bugId=127741025)
     public void testTopPositionSwitchAcrossDisplays() throws Exception {
         assumeTrue(supportsMultiDisplay());
 
@@ -1064,6 +1072,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
     }
 
     @Test
+    @FlakyTest(bugId=127741025)
     public void testTopPositionNotSwitchedToPip() throws Exception {
         assumeTrue(supportsPip());
 
