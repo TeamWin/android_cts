@@ -211,17 +211,7 @@ public class JavaClientTest {
         socketIn.checkError();
         repeatFd.checkError();
 
-        FileOutputStream repeatFdStream = new ParcelFileDescriptor.AutoCloseOutputStream(repeatFd);
-        String testData = "asdf";
-        byte[] output = testData.getBytes();
-        repeatFdStream.write(output);
-        repeatFdStream.close();
-
-        FileInputStream fileInputStream = new ParcelFileDescriptor.AutoCloseInputStream(socketOut);
-        byte[] input = new byte[output.length];
-
-        assertEquals(input.length, fileInputStream.read(input));
-        Assert.assertArrayEquals(input, output);
+        checkInOutSockets(repeatFd, socketOut);
     }
 
     @Test
@@ -233,6 +223,32 @@ public class JavaClientTest {
     public void testRepeatNullableFd() throws RemoteException, IOException {
         checkFdRepeated((fd) -> mInterface.RepeatNullableFd(fd));
         assertEquals(null, mInterface.RepeatNullableFd(null));
+    }
+
+    private void checkInOutSockets(ParcelFileDescriptor in, ParcelFileDescriptor out) throws IOException {
+        FileOutputStream repeatFdStream = new ParcelFileDescriptor.AutoCloseOutputStream(in);
+        String testData = "asdf";
+        byte[] output = testData.getBytes();
+        repeatFdStream.write(output);
+        repeatFdStream.close();
+
+        FileInputStream fileInputStream = new ParcelFileDescriptor.AutoCloseInputStream(out);
+        byte[] input = new byte[output.length];
+
+        assertEquals(input.length, fileInputStream.read(input));
+        Assert.assertArrayEquals(input, output);
+    }
+
+    @Test
+    public void testRepeatFdArray() throws RemoteException, IOException {
+        ParcelFileDescriptor[] sockets1 = ParcelFileDescriptor.createReliableSocketPair();
+        ParcelFileDescriptor[] sockets2 = ParcelFileDescriptor.createReliableSocketPair();
+        ParcelFileDescriptor[] inputs = {sockets1[0], sockets2[0]};
+        ParcelFileDescriptor[] repeatFdArray = new ParcelFileDescriptor[inputs.length];
+        mInterface.RepeatFdArray(inputs, repeatFdArray);
+
+        checkInOutSockets(repeatFdArray[0], sockets1[1]);
+        checkInOutSockets(repeatFdArray[1], sockets2[1]);
     }
 
     @Test

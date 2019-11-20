@@ -88,6 +88,7 @@ interface ITest {
     LongEnum[] RepeatLongEnumArray(in LongEnum[] input, out LongEnum[] repeated);
     String[] RepeatStringArray(in String[] input, out String[] repeated);
     RegularPolygon[] RepeatRegularPolygonArray(in RegularPolygon[] input, out RegularPolygon[] repeated);
+    ParcelFileDescriptor[] RepeatFdArray(in ParcelFileDescriptor[] input, out ParcelFileDescriptor[] repeated);
 
     // Nullable Arrays
     @nullable boolean[] RepeatNullableBooleanArray(in @nullable boolean[] input);
