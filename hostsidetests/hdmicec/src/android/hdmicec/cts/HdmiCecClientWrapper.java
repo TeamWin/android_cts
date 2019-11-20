@@ -28,6 +28,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.util.concurrent.TimeUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -45,6 +46,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     private static final int DEFAULT_TIMEOUT = 20000;
     private static final String HDMI_CEC_FEATURE = "feature:android.hardware.hdmi.cec";
     private static final int HEXADECIMAL_RADIX = 16;
+    private static final int BUFFER_SIZE = 1024;
 
     private Process mCecClient;
     private BufferedWriter mOutputConsole;
@@ -105,7 +107,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         mCecClientInitialised = true;
         if (checkConsoleOutput(CecClientMessage.CLIENT_CONSOLE_READY + "", MILLISECONDS_TO_READY)) {
             mOutputConsole = new BufferedWriter(
-                                new OutputStreamWriter(mCecClient.getOutputStream()));
+                                new OutputStreamWriter(mCecClient.getOutputStream()), BUFFER_SIZE);
             return;
         }
 
@@ -153,9 +155,39 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      * the cec-communication channel with the appended params.
      */
     public void sendCecMessage(CecDevice source, CecDevice destination,
-        CecMessage message, String params) throws Exception {
+            CecMessage message, String params) throws Exception {
         checkCecClient();
         mOutputConsole.write("tx " + source + destination + ":" + message + params);
+        mOutputConsole.flush();
+    }
+
+    /**
+     * Sends a <USER_CONTROL_PRESSED> and <USER_CONTROL_RELEASED> from TV to target device
+     * through the output console of the cec-communication channel with the mentioned keycode.
+     */
+    public void sendUserControlPressAndRelease(int keycode, boolean holdKey) throws Exception {
+        checkCecClient();
+        String key = String.format("%02x", keycode);
+        String command = "tx " + CecDevice.TV + CecDevice.PLAYBACK_1 + ":" +
+                CecMessage.USER_CONTROL_PRESSED + ":" + key;
+
+        if (holdKey) {
+            /* Repeat once between 200ms and 450ms for at least 5 seconds. Since message will be
+             * sent once later, send 16 times in loop every 300ms. */
+            int repeat = 16;
+            for (int i = 0; i < repeat; i++) {
+                mOutputConsole.write(command);
+                mOutputConsole.flush();
+                TimeUnit.MILLISECONDS.sleep(300);
+            }
+        }
+
+        mOutputConsole.write(command);
+        mOutputConsole.newLine();
+        /* Sleep less than 200ms between press and release */
+        TimeUnit.MILLISECONDS.sleep(100);
+        mOutputConsole.write("tx " + CecDevice.TV + CecDevice.PLAYBACK_1 + ":" +
+                              CecMessage.USER_CONTROL_RELEASED);
         mOutputConsole.flush();
     }
 
