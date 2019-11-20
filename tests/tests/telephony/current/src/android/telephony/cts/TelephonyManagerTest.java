@@ -2013,6 +2013,67 @@ public class TelephonyManagerTest {
         }
     }
 
+    @Test
+    public void testGetCarrierInfoForImsiEncryption() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        // test without permission: verify SecurityException
+        try {
+            mTelephonyManager.getCarrierInfoForImsiEncryption(TelephonyManager.KEY_TYPE_EPDG);
+            fail("testGetCarrierInfoForImsiEncryption: "
+                    + "SecurityException expected on getCarrierInfoForImsiEncryption");
+        } catch (SecurityException se) {
+            // expected
+        }
+        try {
+            mTelephonyManager.getCarrierInfoForImsiEncryption(TelephonyManager.KEY_TYPE_WLAN);
+            fail("testGetCarrierInfoForImsiEncryption: "
+                    + "SecurityException expected on getCarrierInfoForImsiEncryption");
+        } catch (SecurityException se) {
+            // expected
+        }
+        // test with permission
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                    (tm) -> tm.getCarrierInfoForImsiEncryption(TelephonyManager.KEY_TYPE_EPDG));
+        } catch (SecurityException se) {
+            fail("testGetCarrierInfoForImsiEncryption: SecurityException not expected");
+        } catch (IllegalArgumentException iae) {
+            // IllegalArgumentException is okay, just not SecurityException
+        }
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                    (tm) -> tm.getCarrierInfoForImsiEncryption(TelephonyManager.KEY_TYPE_WLAN));
+        } catch (SecurityException se) {
+            fail("testGetCarrierInfoForImsiEncryption: SecurityException not expected");
+        } catch (IllegalArgumentException iae) {
+            // IllegalArgumentException is okay, just not SecurityException
+        }
+    }
+
+    @Test
+    public void testResetCarrierKeysForImsiEncryption() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        // test without permission: verify SecurityException
+        try {
+            mTelephonyManager.resetCarrierKeysForImsiEncryption();
+            fail("testResetCarrierKeysForImsiEncryption: SecurityException expected");
+        } catch (SecurityException se) {
+            // expected
+        }
+        // test with permission
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mTelephonyManager,
+                    (tm) -> tm.resetCarrierKeysForImsiEncryption());
+        } catch (SecurityException se) {
+            fail("testResetCarrierKeysForImsiEncryption: SecurityException not expected");
+        }
+    }
+
     /**
      * Validate Emergency Number address that only contains the dialable character.
      *
