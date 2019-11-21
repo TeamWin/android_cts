@@ -26,12 +26,16 @@ import org.junit.Rule;
 import org.junit.runner.RunWith;
 import org.junit.Test;
 
+import java.util.concurrent.TimeUnit;
+
 /** HDMI CEC test to check if the device reports power status correctly (Section 11.2.14) */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecPowerStatusTest extends BaseHostJUnit4Test {
 
     private static final int ON = 0x0;
     private static final int OFF = 0x1;
+
+    private static final int WAIT_TIME = 5;
 
     @Rule
     public HdmiCecClientWrapper hdmiCecClient =
@@ -65,6 +69,7 @@ public final class HdmiCecPowerStatusTest extends BaseHostJUnit4Test {
             /* Make sure the device is not booting up/in standby */
             device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
             device.executeShellCommand("input keyevent KEYCODE_SLEEP");
+            TimeUnit.SECONDS.sleep(WAIT_TIME);
             hdmiCecClient.sendCecMessage(CecDevice.TV, CecMessage.GIVE_POWER_STATUS);
             String message = hdmiCecClient.checkExpectedOutput(CecDevice.TV,
                                                               CecMessage.REPORT_POWER_STATUS);
