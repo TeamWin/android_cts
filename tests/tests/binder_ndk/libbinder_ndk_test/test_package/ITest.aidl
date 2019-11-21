@@ -90,6 +90,10 @@ interface ITest {
     RegularPolygon[] RepeatRegularPolygonArray(in RegularPolygon[] input, out RegularPolygon[] repeated);
     ParcelFileDescriptor[] RepeatFdArray(in ParcelFileDescriptor[] input, out ParcelFileDescriptor[] repeated);
 
+    // Lists
+    List<String> Repeat2StringList(in List<String> input, out List<String> repeated);
+    List<RegularPolygon> Repeat2RegularPolygonList(in List<RegularPolygon> input, out List<RegularPolygon> repeated);
+
     // Nullable Arrays
     @nullable boolean[] RepeatNullableBooleanArray(in @nullable boolean[] input);
     @nullable byte[] RepeatNullableByteArray(in @nullable byte[] input);
