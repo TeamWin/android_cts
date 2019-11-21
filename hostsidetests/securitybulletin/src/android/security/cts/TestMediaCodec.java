@@ -26,9 +26,6 @@ import java.util.regex.Pattern;
 @SecurityTest
 public class TestMediaCodec extends SecurityTestCase {
 
-    final static int TIMEOUT_SEC = 9 * 60;
-    final static String RESOURCE_ROOT = "/";
-    final static String TMP_FILE_PATH = "/data/local/tmp/";
     final static String HEVCDEC_BINARY = "testhevc";
     final static String AVCDEC_BINARY = "testavc";
     final static String MPEG2DEC_BINARY = "testmpeg2";
@@ -39,177 +36,206 @@ public class TestMediaCodec extends SecurityTestCase {
     final static String AVCDEC_MEMUNDERFLOW_BINARY = "testavc_mem2";
     final static String MPEG2DEC_MEMUNDERFLOW_BINARY = "testmpeg2_mem2";
 
-    /***********************************************************
-    To prevent merge conflicts, add HEVC decoder tests for N
-    below this comment, before any existing test methods
-    ***********************************************************/
+    /******************************************************************************
+     * To prevent merge conflicts, add HEVC decoder tests for N below this comment,
+     * before any existing test methods
+     ******************************************************************************/
 
-    @SecurityTest
+    /**
+     * b/73965867
+     **/
+    @SecurityTest(minPatchLevel = "2018-06")
     public void testPocBug_73965867() throws Exception {
         String inputFiles[] = {"bug_73965867.hevc"};
-        runHevcDecodeTest(inputFiles,
-                "-i " + TMP_FILE_PATH + "bug_73965867.hevc", getDevice(), null);
+        runHevcDecodeTest(inputFiles, "-i " + AdbUtils.TMP_PATH + inputFiles[0], getDevice());
     }
 
-    @SecurityTest
+    /**
+     * b/64380202
+     **/
+    @SecurityTest(minPatchLevel = "2018-01")
     public void testPocBug_64380202() throws Exception {
         String inputFiles[] = {"bug_64380202.hevc"};
-        runHevcDecodeTest(inputFiles, "--input " + TMP_FILE_PATH
-                + "bug_64380202.hevc --num_frames -1 --num_cores 4",
-                getDevice(), null);
+        runHevcDecodeTest(inputFiles,
+                "--input " + AdbUtils.TMP_PATH + inputFiles[0] + " --num_frames -1 --num_cores 4",
+                getDevice());
     }
 
-    @SecurityTest
+    /**
+     * b/64380403
+     **/
+    @SecurityTest(minPatchLevel = "2018-01")
     public void testPocBug_64380403() throws Exception {
         String inputFiles[] = {"bug_64380403.hevc"};
-        runHevcDecodeTest(inputFiles, "--input " + TMP_FILE_PATH
-                + "bug_64380403.hevc --num_frames -1 --num_cores 4",
-                getDevice(), null);
+        runHevcDecodeTest(inputFiles,
+                "--input " + AdbUtils.TMP_PATH + inputFiles[0] + " --num_frames -1 --num_cores 4",
+                getDevice());
     }
 
-    /***********************************************************
-    To prevent merge conflicts, add HEVC decoder tests for O
-    below this comment, before any existing test methods
-    ***********************************************************/
+    /******************************************************************************
+     * To prevent merge conflicts, add HEVC decoder tests for O below this comment,
+     * before any existing test methods
+     ******************************************************************************/
+
+    /**
+     * b/68299873
+     **/
     @SecurityTest(minPatchLevel = "2018-01")
     public void testPocCVE_2017_13190() throws Exception {
-        runDecodeTest("CVE-2017-13190", null, null, getDevice(), null);
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-13190", null, null, AdbUtils.TMP_PATH,
+                getDevice());
     }
 
-
+    /**
+     * b/34897036
+     **/
     @SecurityTest(minPatchLevel = "2017-05")
     public void testPocCVE_2017_0589() throws Exception {
         String inputFiles[] = {"cve_2017_0589.hevc"};
-        runHevcDecodeMemTest(inputFiles,
-                "--input " + TMP_FILE_PATH + inputFiles[0] + " --save_output 0"
-                + " --num_frames -1", getDevice(), null);
+        runHevcDecodeMemTest(inputFiles, "--input " + AdbUtils.TMP_PATH + inputFiles[0]
+                + " --save_output 0" + " --num_frames -1", getDevice());
     }
 
+    /**
+     * b/65718319
+     **/
     @SecurityTest(minPatchLevel = "2018-01")
     public void testPocCVE_2017_13193() throws Exception {
         String inputFiles[] = {"cve_2017_13193.hevc"};
-        runHevcDecodeTest(inputFiles, "--input " + TMP_FILE_PATH
-                + "cve_2017_13193.hevc --num_frames -1", getDevice(), null);
+        runHevcDecodeTest(inputFiles,
+                "--input " + AdbUtils.TMP_PATH + "cve_2017_13193.hevc --num_frames -1",
+                getDevice());
     }
 
     @SecurityTest(minPatchLevel = "2017-07")
     public void testPocCVE_2017_0695() throws Exception {
         String inputFiles[] = {"cve_2017_0695.hevc"};
-        runHevcDecodeMemTest(inputFiles,
-                "--input " + TMP_FILE_PATH + inputFiles[0] + " --num_frames -1",
-                getDevice(), null);
+        runHevcDecodeTest(inputFiles,
+                "--input " + AdbUtils.TMP_PATH + inputFiles[0] + " --num_frames -1",
+                getDevice());
     }
 
-    /***********************************************************
-    To prevent merge conflicts, add AVC decoder tests for N
-    below this comment, before any existing test methods
-    ***********************************************************/
+    /******************************************************************************
+     * To prevent merge conflicts, add AVC decoder tests for N below this comment,
+     * before any existing test methods
+     ******************************************************************************/
 
     @SecurityTest(minPatchLevel = "2017-03")
     public void testPocBug_33139050() throws Exception {
         String inputFiles[] = {"bug_33139050.h264"};
         runAvcDecodeMemTest(inputFiles,
-                "--input " + TMP_FILE_PATH
+                "--input " + AdbUtils.TMP_PATH
                         + "bug_33139050.h264 --output /dev/null --num_cores 2",
-                getDevice(), null);
+                getDevice());
     }
 
-    @SecurityTest
+    /**
+     * b/33621215
+     **/
+    @SecurityTest(minPatchLevel = "2017-03")
     public void testPocBug_33621215() throws Exception {
         String inputFiles[] = {"bug_33621215.h264"};
         runAvcDecodeTest(inputFiles,
-                "--input " + TMP_FILE_PATH
-                        + "bug_33621215.h264 --output /dev/null",
-                getDevice(), null);
+                "--input " + AdbUtils.TMP_PATH + inputFiles[0] + " --output /dev/null",
+                getDevice());
     }
 
-    /***********************************************************
-    To prevent merge conflicts, add AVC decoder tests for O
-    below this comment, before any existing test methods
-    ***********************************************************/
+    /******************************************************************************
+     * To prevent merge conflicts, add AVC decoder tests for O below this comment,
+     * before any existing test methods
+     ******************************************************************************/
 
+    /**
+     * b/63521984
+     **/
     @SecurityTest(minPatchLevel = "2018-08")
     public void testPocCVE_2018_9444() throws Exception {
         String inputFiles[] = {"cve_2018_9444.h264"};
         runAvcDecodeTest(inputFiles,
-                "--input " + TMP_FILE_PATH + "cve_2018_9444.h264 --num_frames -1",
-                getDevice(), null);
+                "--input " + AdbUtils.TMP_PATH + inputFiles[0] + " --num_frames -1", getDevice());
     }
 
-    /***********************************************************
-    To prevent merge conflicts, add MPEG2 decoder tests for N
-    below this comment, before any existing test methods
-    ***********************************************************/
+    /******************************************************************************
+     * To prevent merge conflicts, add MPEG2 decoder tests for N below this comment,
+     * before any existing test methods
+     ******************************************************************************/
 
-    @SecurityTest
+    /**
+     * b/34203195
+     **/
+    @SecurityTest(minPatchLevel = "2017-07")
     public void testPocBug_34203195() throws Exception {
         String inputFiles[] = {"bug_34203195.m2v"};
-        runMpeg2DecodeTest(inputFiles,
-                "--input " + TMP_FILE_PATH + "bug_34203195.m2v --num_cores 2 "
-                        + "--output /dev/null --num_frames -1",
-                getDevice(), null);
+        runMpeg2DecodeTest(inputFiles, "--input " + AdbUtils.TMP_PATH + inputFiles[0]
+                + " --num_cores 2 --output /dev/null --num_frames -1", getDevice());
     }
 
-    @SecurityTest
+    /**
+     * b/37561455
+     **/
+    @SecurityTest(minPatchLevel = "2017-08")
     public void testPocBug_37561455() throws Exception {
         String inputFiles[] = {"bug_37561455.m2v"};
-        runMpeg2DecodeTest(inputFiles,
-                "--input " + TMP_FILE_PATH
-                        + "bug_37561455.m2v --output /dev/null --num_frames -1",
-                getDevice(), null);
+        runMpeg2DecodeTest(inputFiles, "--input " + AdbUtils.TMP_PATH + inputFiles[0]
+                + " --output /dev/null --num_frames -1", getDevice());
     }
 
-    @SecurityTest
+    /**
+     * b/63316255
+     **/
+    @SecurityTest(minPatchLevel = "2017-12")
     public void testPocBug_63316255() throws Exception {
         String inputFiles[] = {"bug_63316255.m2v"};
         runMpeg2DecodeTest(inputFiles,
-                "--input " + TMP_FILE_PATH + "bug_63316255.m2v --num_frames -1",
-                getDevice(), null);
+                "--input " + AdbUtils.TMP_PATH + inputFiles[0] + " --num_frames -1", getDevice());
     }
 
-    /***********************************************************
-    To prevent merge conflicts, add MPEG2 decoder tests for O
-    below this comment, before any existing test methods
-    ***********************************************************/
+    /******************************************************************************
+     * To prevent merge conflicts, add MPEG2 decoder tests for O below this comment,
+     * before any existing test methods
+     ******************************************************************************/
 
 
     /**
-     * Calls runDecodeTest with HEVC decoder binary name as argument
+     * Calls runPocAssertNoCrashesNotVulnerable with HEVC decoder binary name as
+     * argument
      *
      * @param inputFiles files required as input
      * @param arguments arguments for running the binary
      * @param device device to be run on
-     * @param errPattern error patterns to be checked for
      */
-    public static void runHevcDecodeTest(String inputFiles[], String arguments,
-            ITestDevice device, String errPattern[]) throws Exception {
-        runDecodeTest(HEVCDEC_BINARY, inputFiles, arguments, device, errPattern);
+    public static void runHevcDecodeTest(String inputFiles[], String arguments, ITestDevice device)
+            throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(HEVCDEC_BINARY, arguments, inputFiles,
+                AdbUtils.TMP_PATH, device);
     }
 
     /**
-     * Calls runDecodeTest with MPEG2 decoder binary name as argument
+     * Calls runPocAssertNoCrashesNotVulnerable with MPEG2 decoder binary name as
+     * argument
      *
      * @param inputFiles files required as input
      * @param arguments arguments for running the binary
      * @param device device to be run on
-     * @param errPattern error patterns to be checked for
      */
-    public static void runMpeg2DecodeTest(String inputFiles[], String arguments,
-            ITestDevice device, String errPattern[]) throws Exception {
-        runDecodeTest(MPEG2DEC_BINARY, inputFiles, arguments, device, errPattern);
+    public static void runMpeg2DecodeTest(String inputFiles[], String arguments, ITestDevice device)
+            throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(MPEG2DEC_BINARY, arguments, inputFiles,
+                AdbUtils.TMP_PATH, device);
     }
 
     /**
-     * Calls runDecodeTest with AVC decoder binary name as argument
+     * Calls runPocAssertNoCrashesNotVulnerable with AVC decoder binary name as
+     * argument
      *
      * @param inputFiles files required as input
      * @param arguments arguments for running the binary
      * @param device device to be run on
-     * @param errPattern error patterns to be checked for
      */
-    public static void runAvcDecodeTest(String inputFiles[], String arguments,
-            ITestDevice device, String errPattern[]) throws Exception {
-        runDecodeTest(AVCDEC_BINARY, inputFiles, arguments, device, errPattern);
+    public static void runAvcDecodeTest(String inputFiles[], String arguments, ITestDevice device)
+            throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(AVCDEC_BINARY, arguments, inputFiles,
+                AdbUtils.TMP_PATH, device);
     }
 
     /**
@@ -218,44 +244,39 @@ public class TestMediaCodec extends SecurityTestCase {
      * @param inputFiles files required as input
      * @param arguments arguments for running the binary
      * @param device device to be run on
-     * @param errPattern error patterns to be checked for
      */
-    public static void runHevcDecodeMemTest(String inputFiles[],
-            String arguments, ITestDevice device, String errPattern[])
-            throws Exception {
-        runHevcDecodeMemOverflowTest(inputFiles, arguments, device, errPattern);
-        runHevcDecodeMemUnderflowTest(inputFiles, arguments, device,
-                errPattern);
+    public static void runHevcDecodeMemTest(String inputFiles[], String arguments,
+            ITestDevice device) throws Exception {
+        runHevcDecodeMemOverflowTest(inputFiles, arguments, device);
+        runHevcDecodeMemUnderflowTest(inputFiles, arguments, device);
     }
 
     /**
-     * Calls runDecodeTest with HEVC decoder overflow test binary name argument
+     * Calls runPocAssertNoCrashesNotVulnerable with HEVC decoder overflow test
+     * binary name argument
      *
      * @param inputFiles files required as input
      * @param arguments arguments for running the binary
      * @param device device to be run on
-     * @param errPattern error patterns to be checked for
      */
-    public static void runHevcDecodeMemOverflowTest(String inputFiles[],
-            String arguments, ITestDevice device, String errPattern[])
-            throws Exception {
-        runDecodeTest(HEVCDEC_MEMOVERFLOW_BINARY, inputFiles, arguments, device,
-                errPattern);
+    public static void runHevcDecodeMemOverflowTest(String inputFiles[], String arguments,
+            ITestDevice device) throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(HEVCDEC_MEMOVERFLOW_BINARY, arguments,
+                inputFiles, AdbUtils.TMP_PATH, device);
     }
 
     /**
-     * Calls runDecodeTest with HEVC decoder underflow test binary name argument
+     * Calls runPocAssertNoCrashesNotVulnerable with HEVC decoder underflow test
+     * binary name argument
      *
      * @param inputFiles files required as input
      * @param arguments arguments for running the binary
      * @param device device to be run on
-     * @param errPattern error patterns to be checked for
      */
-    public static void runHevcDecodeMemUnderflowTest(String inputFiles[],
-            String arguments, ITestDevice device, String errPattern[])
-            throws Exception {
-        runDecodeTest(HEVCDEC_MEMUNDERFLOW_BINARY, inputFiles, arguments, device,
-                errPattern);
+    public static void runHevcDecodeMemUnderflowTest(String inputFiles[], String arguments,
+            ITestDevice device) throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(HEVCDEC_MEMUNDERFLOW_BINARY, arguments,
+                inputFiles, AdbUtils.TMP_PATH, device);
     }
 
     /**
@@ -264,45 +285,39 @@ public class TestMediaCodec extends SecurityTestCase {
      * @param inputFiles files required as input
      * @param arguments arguments for running the binary
      * @param device device to be run on
-     * @param errPattern error patterns to be checked for
      */
-    public static void runMpeg2DecodeMemTest(String inputFiles[],
-            String arguments, ITestDevice device, String errPattern[])
-            throws Exception {
-        runMpeg2DecodeMemOverflowTest(inputFiles, arguments, device,
-                errPattern);
-        runMpeg2DecodeMemUnderflowTest(inputFiles, arguments, device,
-                errPattern);
+    public static void runMpeg2DecodeMemTest(String inputFiles[], String arguments,
+            ITestDevice device) throws Exception {
+        runMpeg2DecodeMemOverflowTest(inputFiles, arguments, device);
+        runMpeg2DecodeMemUnderflowTest(inputFiles, arguments, device);
     }
 
     /**
-     * Calls runDecodeTest with MPEG2 decoder overflow test binary name argument
+     * Calls runPocAssertNoCrashesNotVulnerable with MPEG2 decoder overflow test
+     * binary name argument
      *
      * @param inputFiles files required as input
      * @param arguments arguments for running the binary
      * @param device device to be run on
-     * @param errPattern error patterns to be checked for
      */
-    public static void runMpeg2DecodeMemOverflowTest(String inputFiles[],
-            String arguments, ITestDevice device, String errPattern[])
-            throws Exception {
-        runDecodeTest(MPEG2DEC_MEMOVERFLOW_BINARY, inputFiles, arguments, device,
-                errPattern);
+    public static void runMpeg2DecodeMemOverflowTest(String inputFiles[], String arguments,
+            ITestDevice device) throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(MPEG2DEC_MEMOVERFLOW_BINARY, arguments,
+                inputFiles, AdbUtils.TMP_PATH, device);
     }
 
     /**
-     * Calls runDecodeTest with MPEG2 decoder underflow test binary name argument
+     * Calls runPocAssertNoCrashesNotVulnerable with MPEG2 decoder underflow test
+     * binary name argument
      *
      * @param inputFiles files required as input
      * @param arguments arguments for running the binary
      * @param device device to be run on
-     * @param errPattern error patterns to be checked for
      */
-    public static void runMpeg2DecodeMemUnderflowTest(String inputFiles[],
-            String arguments, ITestDevice device, String errPattern[])
-            throws Exception {
-        runDecodeTest(MPEG2DEC_MEMUNDERFLOW_BINARY, inputFiles, arguments, device,
-                errPattern);
+    public static void runMpeg2DecodeMemUnderflowTest(String inputFiles[], String arguments,
+            ITestDevice device) throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(MPEG2DEC_MEMUNDERFLOW_BINARY, arguments,
+                inputFiles, AdbUtils.TMP_PATH, device);
     }
 
     /**
@@ -311,80 +326,38 @@ public class TestMediaCodec extends SecurityTestCase {
      * @param inputFiles files required as input
      * @param arguments arguments for running the binary
      * @param device device to be run on
-     * @param errPattern error patterns to be checked for
      */
-    public static void runAvcDecodeMemTest(String inputFiles[],
-            String arguments, ITestDevice device, String errPattern[])
-            throws Exception {
-        runAvcDecodeMemOverflowTest(inputFiles, arguments, device, errPattern);
-        runAvcDecodeMemUnderflowTest(inputFiles, arguments, device, errPattern);
+    public static void runAvcDecodeMemTest(String inputFiles[], String arguments,
+            ITestDevice device) throws Exception {
+        runAvcDecodeMemOverflowTest(inputFiles, arguments, device);
+        runAvcDecodeMemUnderflowTest(inputFiles, arguments, device);
     }
 
     /**
-     * Calls runDecodeTest with AVC decoder overflow test binary name argument
+     * Calls runPocAssertNoCrashesNotVulnerable with AVC decoder overflow test
+     * binary name argument
      *
      * @param inputFiles files required as input
      * @param arguments arguments for running the binary
      * @param device device to be run on
-     * @param errPattern error patterns to be checked for
      */
-    public static void runAvcDecodeMemOverflowTest(String inputFiles[],
-            String arguments, ITestDevice device, String errPattern[])
-            throws Exception {
-        runDecodeTest(AVCDEC_MEMOVERFLOW_BINARY, inputFiles, arguments, device,
-                errPattern);
+    public static void runAvcDecodeMemOverflowTest(String inputFiles[], String arguments,
+            ITestDevice device) throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(AVCDEC_MEMOVERFLOW_BINARY, arguments,
+                inputFiles, AdbUtils.TMP_PATH, device);
     }
 
     /**
-     * Calls runDecodeTest with AVC decoder underflow test binary name argument
+     * Calls runPocAssertNoCrashesNotVulnerable with AVC decoder underflow test
+     * binary name argument
      *
      * @param inputFiles files required as input
      * @param arguments arguments for running the binary
      * @param device device to be run on
-     * @param errPattern error patterns to be checked for
      */
-    public static void runAvcDecodeMemUnderflowTest(String inputFiles[],
-            String arguments, ITestDevice device, String errPattern[])
-            throws Exception {
-        runDecodeTest(AVCDEC_MEMUNDERFLOW_BINARY, inputFiles, arguments, device,
-                errPattern);
-    }
-
-
-    /**
-     * Pushes input files, runs the PoC and checks for crash and hang
-     *
-     * @param binaryName name of the decoder binary
-     * @param inputFiles files required as input
-     * @param arguments arguments for running the binary
-     * @param device device to be run on
-     * @param errPattern error patterns to be checked for
-     */
-    public static void runDecodeTest(String binaryName, String inputFiles[],
-            String arguments, ITestDevice device, String processPatternStrings[])
-            throws Exception {
-        if (inputFiles != null) {
-            for (int i = 0; i < inputFiles.length; i++) {
-                AdbUtils.pushResource(RESOURCE_ROOT + inputFiles[i],
-                        TMP_FILE_PATH + inputFiles[i], device);
-            }
-        }
-        AdbUtils.runCommandLine("logcat -c", device);
-        AdbUtils.runWithTimeoutDeleteFiles(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    AdbUtils.runPocNoOutput(binaryName, device,
-                            TIMEOUT_SEC + 30, arguments);
-                } catch (Exception e) {
-                    CLog.w("Exception: " + e.getMessage());
-                }
-            }
-        }, TIMEOUT_SEC * 1000, device, inputFiles);
-
-        AdbUtils.assertNoCrashes(device, binaryName);
-        if (processPatternStrings != null) {
-            AdbUtils.assertNoCrashes(device, processPatternStrings);
-        }
+    public static void runAvcDecodeMemUnderflowTest(String inputFiles[], String arguments,
+            ITestDevice device) throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(AVCDEC_MEMUNDERFLOW_BINARY, arguments,
+                inputFiles, AdbUtils.TMP_PATH, device);
     }
 }
