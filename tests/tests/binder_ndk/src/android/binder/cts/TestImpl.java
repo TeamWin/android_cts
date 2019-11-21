@@ -284,6 +284,19 @@ public class TestImpl extends ITest.Stub {
     return out;
   }
 
+  public java.util.List<String> Repeat2StringList(java.util.List<String> in_value, java.util.List<String> repeated) {
+    repeated.addAll(in_value);
+    repeated.addAll(in_value);
+    return repeated;
+  }
+
+  @Override
+  public java.util.List<RegularPolygon> Repeat2RegularPolygonList(java.util.List<RegularPolygon> in_value, java.util.List<RegularPolygon> repeated) {
+    repeated.addAll(in_value);
+    repeated.addAll(in_value);
+    return repeated;
+  }
+
   @Override
   public boolean[] RepeatNullableBooleanArray(boolean[] in_value) {
     return in_value;
