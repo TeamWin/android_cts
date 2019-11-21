@@ -51,7 +51,6 @@ import java.util.List;
  */
 @MediumTest
 @Presubmit
-@FlakyTest(bugId=137329632)
 @android.server.wm.annotation.Group3
 public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
 
@@ -219,6 +218,7 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
     }
 
     @Test
+    @FlakyTest(bugId=127741025)
     public void testSplitScreenBelowPip() throws Exception {
         // Launch Pip-capable activity and enter Pip immediately
         new Launcher(PipActivity.class)
@@ -254,6 +254,7 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
     }
 
     @Test
+    @FlakyTest(bugId=127741025)
     public void testPipAboveSplitScreen() throws Exception {
         // Launch first activity
         final Activity firstActivity = launchActivityAndWait(FirstActivity.class);

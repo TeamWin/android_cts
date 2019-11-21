@@ -22,36 +22,23 @@ import static org.junit.Assert.assertNotNull;
 import android.content.ContentResolver;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.SystemClock;
 import android.provider.Settings;
 import android.provider.Settings.NameValueTable;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import com.android.compatibility.common.util.AdoptShellPermissionsRule;
+
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 public class Settings_NameValueTableTest {
-    @BeforeClass
-    public static void setUp() throws Exception {
-        final String packageName = InstrumentationRegistry.getTargetContext().getPackageName();
-        InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(
-                "appops set " + packageName + " android:write_settings allow");
 
-        // Wait a beat to persist the change
-        SystemClock.sleep(500);
-    }
-
-    @AfterClass
-    public static void tearDown() throws Exception {
-        final String packageName = InstrumentationRegistry.getTargetContext().getPackageName();
-        InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(
-                "appops set " + packageName + " android:write_settings default");
-    }
+    @Rule
+    public AdoptShellPermissionsRule shellPermRule = new AdoptShellPermissionsRule();
 
     @Test
     public void testPutString() {

@@ -27,4 +27,16 @@ final class HdmiCecConstants {
 
     static final int PLAYBACK_DEVICE_TYPE = 0x04;
 
+    static final int CEC_CONTROL_SELECT = 0x0;
+    static final int CEC_CONTROL_UP = 0x1;
+    static final int CEC_CONTROL_DOWN = 0x2;
+    static final int CEC_CONTROL_LEFT = 0x3;
+    static final int CEC_CONTROL_RIGHT = 0x4;
+    static final int CEC_CONTROL_BACK = 0xd;
+    static final int CEC_CONTROL_VOLUME_UP = 0x41;
+    static final int CEC_CONTROL_VOLUME_DOWN = 0x42;
+    static final int CEC_CONTROL_MUTE = 0x43;
+
+    static final int UNRECOGNIZED_OPCODE = 0x0;
+
 }

@@ -603,18 +603,17 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         installPackage(config.apk);
 
         // TODO: extend test to exercise secondary users
-        for (int user : Arrays.copyOf(mUsers, 1)) {
-            updatePermissions(config.pkg, user, new String[] {
-                    PERM_READ_EXTERNAL_STORAGE,
-            }, true);
-            updatePermissions(config.pkg, user, new String[] {
-                    PERM_WRITE_EXTERNAL_STORAGE,
-            }, false);
+        int user = getDevice().getCurrentUser();
+        updatePermissions(config.pkg, user, new String[] {
+                PERM_READ_EXTERNAL_STORAGE,
+        }, true);
+        updatePermissions(config.pkg, user, new String[] {
+                PERM_WRITE_EXTERNAL_STORAGE,
+        }, false);
 
-            runDeviceTests(config.pkg, config.clazz, "testMediaEscalation_Open", user);
-            runDeviceTests(config.pkg, config.clazz, "testMediaEscalation_Update", user);
-            runDeviceTests(config.pkg, config.clazz, "testMediaEscalation_Delete", user);
-        }
+        runDeviceTests(config.pkg, config.clazz, "testMediaEscalation_Open", user);
+        runDeviceTests(config.pkg, config.clazz, "testMediaEscalation_Update", user);
+        runDeviceTests(config.pkg, config.clazz, "testMediaEscalation_Delete", user);
     }
 
     @Test

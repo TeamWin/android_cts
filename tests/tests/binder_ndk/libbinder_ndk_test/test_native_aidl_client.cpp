@@ -179,66 +179,72 @@ TEST_P(NdkBinderTest_Aidl, Constants) {
   ASSERT_EQ(std::string("foo"), ITest::kFoo);
 }
 
-TEST_P(NdkBinderTest_Aidl, RepeatPrimitives) {
-  {
-    int32_t out;
-    ASSERT_OK(iface->RepeatInt(3, &out));
-    EXPECT_EQ(3, out);
-  }
+TEST_P(NdkBinderTest_Aidl, RepeatPrimitiveInt) {
+  int32_t out;
+  ASSERT_OK(iface->RepeatInt(3, &out));
+  EXPECT_EQ(3, out);
+}
 
-  {
-    int64_t out;
-    ASSERT_OK(iface->RepeatLong(3, &out));
-    EXPECT_EQ(3, out);
-  }
+TEST_P(NdkBinderTest_Aidl, RepeatPrimitiveLong) {
+  int64_t out;
+  ASSERT_OK(iface->RepeatLong(3, &out));
+  EXPECT_EQ(3, out);
+}
 
-  {
-    float out;
-    ASSERT_OK(iface->RepeatFloat(2.0f, &out));
-    EXPECT_EQ(2.0f, out);
-  }
+TEST_P(NdkBinderTest_Aidl, RepeatPrimitiveFloat) {
+  float out;
+  ASSERT_OK(iface->RepeatFloat(2.0f, &out));
+  EXPECT_EQ(2.0f, out);
+}
 
-  {
-    double out;
-    ASSERT_OK(iface->RepeatDouble(3.0, &out));
-    EXPECT_EQ(3.0, out);
-  }
+TEST_P(NdkBinderTest_Aidl, RepeatPrimitiveDouble) {
+  double out;
+  ASSERT_OK(iface->RepeatDouble(3.0, &out));
+  EXPECT_EQ(3.0, out);
+}
 
-  {
-    bool out;
-    ASSERT_OK(iface->RepeatBoolean(true, &out));
-    EXPECT_EQ(true, out);
-  }
+TEST_P(NdkBinderTest_Aidl, RepeatPrimitiveBoolean) {
+  bool out;
+  ASSERT_OK(iface->RepeatBoolean(true, &out));
+  EXPECT_EQ(true, out);
+}
 
-  {
-    char16_t out;
-    ASSERT_OK(iface->RepeatChar(L'@', &out));
-    EXPECT_EQ(L'@', out);
-  }
+TEST_P(NdkBinderTest_Aidl, RepeatPrimitiveChar) {
+  char16_t out;
+  ASSERT_OK(iface->RepeatChar(L'@', &out));
+  EXPECT_EQ(L'@', out);
+}
 
-  {
-    int8_t out;
-    ASSERT_OK(iface->RepeatByte(3, &out));
-    EXPECT_EQ(3, out);
-  }
+TEST_P(NdkBinderTest_Aidl, RepeatPrimitiveByte) {
+  int8_t out;
+  ASSERT_OK(iface->RepeatByte(3, &out));
+  EXPECT_EQ(3, out);
+}
 
-  {
-    ByteEnum out;
-    ASSERT_OK(iface->RepeatByteEnum(ByteEnum::FOO, &out));
-    EXPECT_EQ(ByteEnum::FOO, out);
-  }
+TEST_P(NdkBinderTest_Aidl, RepeatPrimitiveByteEnum) {
+  ByteEnum out;
+  ASSERT_OK(iface->RepeatByteEnum(ByteEnum::FOO, &out));
+  EXPECT_EQ(ByteEnum::FOO, out);
+}
 
-  {
-    IntEnum out;
-    ASSERT_OK(iface->RepeatIntEnum(IntEnum::FOO, &out));
-    EXPECT_EQ(IntEnum::FOO, out);
-  }
+TEST_P(NdkBinderTest_Aidl, RepeatPrimitiveIntEnum) {
+  IntEnum out;
+  ASSERT_OK(iface->RepeatIntEnum(IntEnum::FOO, &out));
+  EXPECT_EQ(IntEnum::FOO, out);
+}
 
-  {
-    LongEnum out;
-    ASSERT_OK(iface->RepeatLongEnum(LongEnum::FOO, &out));
-    EXPECT_EQ(LongEnum::FOO, out);
-  }
+TEST_P(NdkBinderTest_Aidl, RepeatPrimitiveLongEnum) {
+  LongEnum out;
+  ASSERT_OK(iface->RepeatLongEnum(LongEnum::FOO, &out));
+  EXPECT_EQ(LongEnum::FOO, out);
+}
+
+TEST_P(NdkBinderTest_Aidl, EnumToString) {
+  EXPECT_EQ(toString(ByteEnum::FOO), "FOO");
+  EXPECT_EQ(toString(IntEnum::BAR), "BAR");
+  EXPECT_EQ(toString(LongEnum::FOO), "FOO");
+
+  EXPECT_EQ(toString(static_cast<IntEnum>(-1)), "-1");
 }
 
 TEST_P(NdkBinderTest_Aidl, RepeatBinder) {
@@ -302,6 +308,34 @@ static void checkFdRepeat(
   ASSERT_OK((test.get()->*repeatFd)(readFd, &readOutFd));
 
   checkInOut(writeFd, readOutFd);
+}
+
+TEST_P(NdkBinderTest_Aidl, RepeatFdArray) {
+  int fds[2];
+
+  while (pipe(fds) == -1 && errno == EAGAIN)
+    ;
+  std::vector<ScopedFileDescriptor> sfds;
+  sfds.emplace_back(fds[0]);
+  sfds.emplace_back(fds[1]);
+
+  std::vector<ScopedFileDescriptor> sfds_out1;
+  sfds_out1.resize(sfds.size());
+  std::vector<ScopedFileDescriptor> sfds_out2;
+
+  ASSERT_OK((iface->RepeatFdArray(sfds, &sfds_out1, &sfds_out2)));
+
+  // sfds <-> sfds_out1
+  checkInOut(sfds[1], sfds_out1[0]);
+  checkInOut(sfds_out1[1], sfds[0]);
+
+  // sfds_out1 <-> sfds_out2
+  checkInOut(sfds_out1[1], sfds_out2[0]);
+  checkInOut(sfds_out2[1], sfds_out1[0]);
+
+  // sfds <-> sfds_out2
+  checkInOut(sfds[1], sfds_out2[0]);
+  checkInOut(sfds_out2[1], sfds[0]);
 }
 
 TEST_P(NdkBinderTest_Aidl, RepeatFd) { checkFdRepeat(iface, &ITest::RepeatFd); }

@@ -47,9 +47,9 @@ import java.io.IOException;
 public class HostTestHelper {
     private static final String TAG = "RollbackTest";
 
-    private static final TestApp Apex2SignedBobRot = new TestApp(
-            "Apex2SignedBobRot", TestApp.Apex, 2, /*isApex*/true,
-            "com.android.apex.cts.shim.v2_signed_bob_rot.apex");
+    private static final TestApp Apex2SignedBobRotRollback = new TestApp(
+            "Apex2SignedBobRotRollback", TestApp.Apex, 2, /*isApex*/true,
+            "com.android.apex.cts.shim.v2_signed_bob_rot_rollback.apex");
 
     /**
      * Adopts common permissions needed to test rollbacks.
@@ -526,7 +526,7 @@ public class HostTestHelper {
     @Test
     public void testApexKeyRotationStagedRollback_Phase1() throws Exception {
         assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(1);
-        Install.single(Apex2SignedBobRot).setStaged().setEnableRollback().commit();
+        Install.single(Apex2SignedBobRotRollback).setStaged().setEnableRollback().commit();
     }
 
     @Test
@@ -535,15 +535,15 @@ public class HostTestHelper {
         RollbackInfo available = RollbackUtils.getAvailableRollback(TestApp.Apex);
         assertThat(available).isStaged();
         assertThat(available).packagesContainsExactly(
-                Rollback.from(Apex2SignedBobRot).to(TestApp.Apex1));
+                Rollback.from(Apex2SignedBobRotRollback).to(TestApp.Apex1));
 
-        RollbackUtils.rollback(available.getRollbackId(), Apex2SignedBobRot);
+        RollbackUtils.rollback(available.getRollbackId(), Apex2SignedBobRotRollback);
         RollbackInfo committed = RollbackUtils.getCommittedRollbackById(available.getRollbackId());
         assertThat(committed).isNotNull();
         assertThat(committed).isStaged();
         assertThat(committed).packagesContainsExactly(
-                Rollback.from(Apex2SignedBobRot).to(TestApp.Apex1));
-        assertThat(committed).causePackagesContainsExactly(Apex2SignedBobRot);
+                Rollback.from(Apex2SignedBobRotRollback).to(TestApp.Apex1));
+        assertThat(committed).causePackagesContainsExactly(Apex2SignedBobRotRollback);
         assertThat(committed.getCommittedSessionId()).isNotEqualTo(-1);
 
         // Note: The app is not rolled back until after the rollback is staged

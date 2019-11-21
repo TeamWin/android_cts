@@ -51,7 +51,6 @@ import java.util.Arrays;
  */
 @Presubmit
 @MediumTest
-@FlakyTest(bugId=137329632)
 @android.server.wm.annotation.Group3
 public class ActivityTests extends ActivityLifecycleClientTestBase {
     @Test
@@ -196,7 +195,6 @@ public class ActivityTests extends ActivityLifecycleClientTestBase {
      * Verify the lifecycle of {@link Activity#finishAfterTransition()} for activity with no
      * transition set (root of task).
      */
-    @FlakyTest(bugId=137329632)
     @Test
     public void testFinishAfterTransition_noTransition_rootOfTask() throws Exception {
         final Activity activity = launchActivityAndWait(FirstActivity.class);
@@ -231,7 +229,6 @@ public class ActivityTests extends ActivityLifecycleClientTestBase {
      * Verify that {@link Activity#finishAffinity()} will finish all activities with the same
      * affinity below the target activity.
      */
-    @FlakyTest(bugId=137329632)
     @Test
     public void testFinishAffinity() throws Exception {
         final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
@@ -252,7 +249,6 @@ public class ActivityTests extends ActivityLifecycleClientTestBase {
      * Verify that {@link Activity#finishAffinity()} will not finish activities with different
      * affinities in the same task.
      */
-    @FlakyTest(bugId=137329632)
     @Test
     public void testFinishAffinity_differentAffinity() throws Exception {
         final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
@@ -272,7 +268,6 @@ public class ActivityTests extends ActivityLifecycleClientTestBase {
      * Verify that {@link Activity#finishAffinity()} will not finish activities with the same
      * affinity in different tasks.
      */
-    @FlakyTest(bugId=137329632)
     @Test
     public void testFinishAffinity_multiTask() throws Exception {
         final Activity firstActivity = launchActivityAndWait(FirstActivity.class);

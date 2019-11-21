@@ -47,7 +47,6 @@ import static android.server.wm.app.Components.MoveTaskToBackActivity.FINISH_POI
 import static android.server.wm.app.Components.MoveTaskToBackActivity.FINISH_POINT_ON_STOP;
 import static android.server.wm.app.Components.NO_HISTORY_ACTIVITY;
 import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_DIALOG_ACTIVITY;
-import static android.server.wm.app.Components.SWIPE_REFRESH_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.app.Components.TOP_ACTIVITY;
 import static android.server.wm.app.Components.TRANSLUCENT_ACTIVITY;
@@ -422,7 +421,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
      * above becomes visible and does not idle.
      */
     @Test
-    public void testNoHistoryActivityFinishedResumedActivityNotIdle() throws Exception {
+    public void testNoHistoryActivityFinishedResumedActivityNotIdle() {
         if (!hasHomeScreen()) {
             return;
         }
@@ -433,8 +432,13 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         // Launch no history activity
         launchActivity(NO_HISTORY_ACTIVITY);
 
-        // Launch an activity with a swipe refresh layout configured to prevent idle.
-        launchActivity(SWIPE_REFRESH_ACTIVITY);
+        // Launch an activity that won't report idle.
+        getLaunchActivityBuilder()
+                .setUseInstrumentation()
+                .setIntentExtra(
+                        extra -> extra.putBoolean(Components.TestActivity.EXTRA_NO_IDLE, true))
+                .setTargetActivity(TEST_ACTIVITY)
+                .execute();
 
         pressBackButton();
         mAmWmState.waitForHomeActivityVisible();

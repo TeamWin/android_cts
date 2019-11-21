@@ -71,7 +71,6 @@ import java.util.List;
  */
 @MediumTest
 @Presubmit
-@FlakyTest(bugId=137329632)
 @android.server.wm.annotation.Group3
 public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
@@ -95,6 +94,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     }
 
     @Test
+    @FlakyTest(bugId=127741025)
     public void testLaunchTranslucentOnTop() throws Exception {
         // Launch fullscreen activity
         final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
@@ -109,6 +109,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     }
 
     @Test
+    @FlakyTest(bugId=127741025)
     public void testLaunchDoubleTranslucentOnTop() throws Exception {
         final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
 
@@ -341,6 +342,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     }
 
     @Test
+    @FlakyTest(bugId=127741025)
     public void testLaunchAndDestroy() throws Exception {
         final Activity activity = launchActivityAndWait(FirstActivity.class);
 
@@ -405,6 +407,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
      * Same as {@link #testTrampolineAnotherProcessNewTask()}, but with a living second process.
      */
     @Test
+    @FlakyTest(bugId=127741025)
     public void testTrampolineAnotherExistingProcessNewTask() {
         // Start the second process before running the test. It is to make a specific path that the
         // the activity may be started when checking visibility instead of attaching its process.
@@ -542,6 +545,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     }
 
     @Test
+    @FlakyTest(bugId=127741025)
     public void testOnActivityResult() throws Exception {
         new Launcher(LaunchForResultActivity.class)
                 .customizeIntent(LaunchForResultActivity.forwardFlag(EXTRA_FINISH_IN_ON_RESUME))
@@ -576,6 +580,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     }
 
     @Test
+    @FlakyTest(bugId=127741025)
     public void testOnActivityResultAfterStop() throws Exception {
         final Activity activity = new Launcher(LaunchForResultActivity.class)
                 .customizeIntent(LaunchForResultActivity.forwardFlag(EXTRA_FINISH_AFTER_RESUME))
@@ -624,6 +629,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     }
 
     @Test
+    @FlakyTest(bugId=127741025)
     public void testOnPostCreateAfterRecreateInOnPause() throws Exception {
         final Activity trackingActivity = launchActivityAndWait(CallbackTrackingActivity.class);
 
@@ -842,6 +848,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     }
 
     @Test
+    @FlakyTest(bugId=127741025)
     public void testFinishInOnStart() throws Exception {
         verifyFinishAtStage(ResultActivity.class, EXTRA_FINISH_IN_ON_START,
                 Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE, ON_STOP,
@@ -849,6 +856,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     }
 
     @Test
+    @FlakyTest(bugId=127741025)
     public void testFinishInOnStartNoDisplay() throws Exception {
         verifyFinishAtStage(NoDisplayActivity.class, EXTRA_FINISH_IN_ON_START,
                 Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE, ON_STOP,
@@ -856,6 +864,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     }
 
     @Test
+    @FlakyTest(bugId=127741025)
     public void testFinishInOnResume() throws Exception {
         verifyFinishAtStage(ResultActivity.class, EXTRA_FINISH_IN_ON_RESUME,
                 Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
@@ -884,6 +893,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     }
 
     @Test
+    @FlakyTest(bugId=127741025)
     public void testFinishInOnPause() throws Exception {
         verifyFinishAtStage(ResultActivity.class, EXTRA_FINISH_IN_ON_PAUSE, "onPause",
                 TranslucentActivity.class);
