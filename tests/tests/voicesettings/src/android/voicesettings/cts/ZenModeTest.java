@@ -92,7 +92,9 @@ public class ZenModeTest extends BroadcastTestBase {
     }
 
     private boolean runTest(BroadcastUtils.TestcaseType test, int expectedMode) throws Exception {
-        if (!startTestAndWaitForBroadcast(test, VOICE_SETTINGS_PACKAGE, VOICE_INTERACTION_CLASS)) {
+        if (!startTestAndWaitForChange(test,
+                Settings.Global.getUriFor(ZEN_MODE), VOICE_SETTINGS_PACKAGE,
+                VOICE_INTERACTION_CLASS)) {
             return false;
         }
 
