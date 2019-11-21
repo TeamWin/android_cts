@@ -1566,13 +1566,13 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             // Check that the app's proc state has fallen
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
             uid3Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
-
+        } finally {
             // Clean up: unbind services to avoid from interferences with other tests
             CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_UNBIND_SERVICE,
                     PACKAGE_NAME_APP3, PACKAGE_NAME_APP1, 0, null);
             CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_UNBIND_SERVICE,
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP3, 0, null);
-        } finally {
+
             uid1Watcher.finish();
             uid3Watcher.finish();
         }
@@ -1647,7 +1647,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
             uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
             uid3Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
-
+        } finally {
             // Clean up: unbind services to avoid from interferences with other tests
             CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_UNBIND_SERVICE,
                     PACKAGE_NAME_APP2, PACKAGE_NAME_APP3, 0, null);
@@ -1656,7 +1656,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             // Stop the foreground service
             CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE,
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
-        } finally {
+
             uid1Watcher.finish();
             uid2Watcher.finish();
             uid3Watcher.finish();
@@ -1723,7 +1723,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
             uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
             uid3Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
-
+        } finally {
             // Clean up: unbind services to avoid from interferences with other tests
             CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_UNBIND_SERVICE,
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, 0, null);
@@ -1735,7 +1735,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
                     PACKAGE_NAME_APP3, PACKAGE_NAME_APP2, 0, null);
             CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_UNBIND_SERVICE,
                     PACKAGE_NAME_APP3, PACKAGE_NAME_APP1, 0, null);
-        } finally {
+
             uid1Watcher.finish();
             uid2Watcher.finish();
             uid3Watcher.finish();
@@ -1868,13 +1868,13 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             mWatchers[0].waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_CACHED_EMPTY,
                     new Integer(PROCESS_CAPABILITY_NONE));
-
+        } finally {
             // Clean up: unbind services to avoid from interferences with other tests
             CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_UNBIND_SERVICE,
                     mAppInfo[0].packageName, mAppInfo[1].packageName, 0, null);
             CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_UNBIND_SERVICE,
-                    mAppInfo[0].packageName, mAppInfo[2].packageName, 0, bundle);
-        } finally {
+                    mAppInfo[0].packageName, mAppInfo[2].packageName, 0, null);
+
             shutdownWatchers();
         }
     }
@@ -1906,13 +1906,13 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
                     STUB_PACKAGE_NAME, mAppInfo[1].packageName, 0, bundle);
             mWatchers[1].waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_BOUND_TOP,
                     new Integer(PROCESS_CAPABILITY_ALL));
-
+        } finally {
             // Clean up: unbind services to avoid from interferences with other tests
             CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_UNBIND_SERVICE,
                     STUB_PACKAGE_NAME, mAppInfo[0].packageName, 0, null);
             CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_UNBIND_SERVICE,
-                    STUB_PACKAGE_NAME, mAppInfo[1].packageName, 0, bundle);
-        } finally {
+                    STUB_PACKAGE_NAME, mAppInfo[1].packageName, 0, null);
+
             shutdownWatchers();
             if (activity != null) {
                 activity.finish();
@@ -2033,7 +2033,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             uid3Listener.waitForValue(
                     IMPORTANCE_CACHED,
                     IMPORTANCE_CACHED);
-
+        } finally {
             // Clean up: unbind services to avoid from interferences with other tests
             CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_UNBIND_SERVICE,
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, 0, null);
@@ -2041,7 +2041,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
                     PACKAGE_NAME_APP2, PACKAGE_NAME_APP3, 0, null);
             CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_UNBIND_SERVICE,
                     PACKAGE_NAME_APP3, PACKAGE_NAME_APP1, 0, null);
-        } finally {
+
             uid1Listener.unregister();
             uid1ServiceListener.unregister();
             uid2Listener.unregister();
