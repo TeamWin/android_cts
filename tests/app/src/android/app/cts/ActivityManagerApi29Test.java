@@ -67,7 +67,7 @@ public class ActivityManagerApi29Test {
     private static final String SIMPLE_ACTIVITY = ".SimpleActivity";
     private static final String SERVICE_NAME = ".LocationForegroundService";
     private static final String PROPERTY_PERMISSIONS_HUB_ENABLED = "permissions_hub_enabled";
-    private static final int WAITFOR_MSEC = 5000;
+    private static final int WAITFOR_MSEC = 10000;
     private static final int NOTEOP_COUNT = 5;
     private static Instrumentation sInstrumentation = InstrumentationRegistry.getInstrumentation();
     private static Context sContext = sInstrumentation.getContext();
