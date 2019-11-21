@@ -298,6 +298,37 @@ class MyTest : public ::aidl::test_package::BnTest,
     *_aidl_return = in_value;
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
+
+  ::ndk::ScopedAStatus Repeat2StringList(const std::vector<std::string>& in_input,
+                                         std::vector<std::string>* out_repeated,
+                                         std::vector<std::string>* _aidl_return) override {
+    *out_repeated = std::vector<std::string>();
+    *_aidl_return = std::vector<std::string>();
+    for (int i = 0; i < 2; i++) {
+      for (auto& s : in_input) {
+        out_repeated->emplace_back(s);
+        _aidl_return->emplace_back(s);
+      }
+    }
+
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+
+  ::ndk::ScopedAStatus Repeat2RegularPolygonList(
+      const std::vector<::aidl::test_package::RegularPolygon>& in_input,
+      std::vector<::aidl::test_package::RegularPolygon>* out_repeated,
+      std::vector<::aidl::test_package::RegularPolygon>* _aidl_return) override {
+    *out_repeated = std::vector<::aidl::test_package::RegularPolygon>();
+    *_aidl_return = std::vector<::aidl::test_package::RegularPolygon>();
+    for (int i = 0; i < 2; i++) {
+      for (auto& s : in_input) {
+        out_repeated->emplace_back(s);
+        _aidl_return->emplace_back(s);
+      }
+    }
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+
   ::ndk::ScopedAStatus RepeatNullableBooleanArray(
       const std::optional<std::vector<bool>>& in_value,
       std::optional<std::vector<bool>>* _aidl_return) override {
