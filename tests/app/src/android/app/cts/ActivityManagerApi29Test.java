@@ -90,6 +90,7 @@ public class ActivityManagerApi29Test {
 
     @Before
     public void setUp() throws Exception {
+        CtsAppTestUtils.turnScreenOn(sInstrumentation, sContext);
         // PACKAGE_NAME's targetSdkVersion is 29, when ACCESS_COARSE_LOCATION is granted, appOp is
         // MODE_FOREGROUND (In API level lower than 29, appOp is MODE_ALLOWED).
         assertEquals(AppOpsManager.MODE_FOREGROUND,
