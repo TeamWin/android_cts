@@ -504,6 +504,23 @@ void testRepeat(const std::shared_ptr<ITest>& i, RepeatMethod<T> repeatMethod,
   }
 }
 
+template <typename T>
+void testRepeat2List(const std::shared_ptr<ITest>& i, RepeatMethod<T> repeatMethod,
+                     std::vector<std::vector<T>> tests) {
+  for (const auto& input : tests) {
+    std::vector<T> out1;
+    std::vector<T> out2;
+    std::vector<T> expected;
+
+    expected.insert(expected.end(), input.begin(), input.end());
+    expected.insert(expected.end(), input.begin(), input.end());
+
+    ASSERT_OK((i.get()->*repeatMethod)(input, &out1, &out2)) << expected.size();
+    EXPECT_EQ(expected, out1);
+    EXPECT_EQ(expected, out2);
+  }
+}
+
 TEST_P(NdkBinderTest_Aidl, Arrays) {
   testRepeat<bool>(iface, &ITest::RepeatBooleanArray,
                    {
@@ -577,6 +594,22 @@ TEST_P(NdkBinderTest_Aidl, Arrays) {
                                  {{"hexagon", 6, 2.0f}},
                                  {{"hexagon", 6, 2.0f}, {"square", 4, 7.0f}, {"pentagon", 5, 4.2f}},
                              });
+}
+
+TEST_P(NdkBinderTest_Aidl, Lists) {
+  testRepeat2List<std::string>(iface, &ITest::Repeat2StringList,
+                               {
+                                   {},
+                                   {"asdf"},
+                                   {"", "aoeu", "lol", "brb"},
+                               });
+  testRepeat2List<RegularPolygon>(
+      iface, &ITest::Repeat2RegularPolygonList,
+      {
+          {},
+          {{"hexagon", 6, 2.0f}},
+          {{"hexagon", 6, 2.0f}, {"square", 4, 7.0f}, {"pentagon", 5, 4.2f}},
+      });
 }
 
 template <typename T>

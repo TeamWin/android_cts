@@ -49,6 +49,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.function.BiPredicate;
 
 @RunWith(Parameterized.class)
 public class JavaClientTest {
@@ -408,6 +411,41 @@ public class JavaClientTest {
 
             assertPolygonEquals(value, out1);
             assertPolygonEquals(value, out2);
+        }
+    }
+
+    @Test
+    public void testLists() throws RemoteException {
+        {
+            List<String> value = Arrays.asList("", "aoeu", "lol", "brb");
+            List<String> out1 = new ArrayList<>();
+            List<String> out2 = mInterface.Repeat2StringList(value, out1);
+
+            List<String> expected = new ArrayList<>();
+            expected.addAll(value);
+            expected.addAll(value);
+            String[] expectedArray = expected.toArray(new String[0]);
+
+            Assert.assertArrayEquals(expectedArray, out1.toArray(new String[0]));
+            Assert.assertArrayEquals(expectedArray, out2.toArray(new String[0]));
+        }
+        {
+            RegularPolygon septagon = new RegularPolygon();
+            septagon.name = "septagon";
+            septagon.numSides = 7;
+            septagon.sideLength = 1.0f;
+
+            List<RegularPolygon> value = Arrays.asList(septagon, new RegularPolygon(), new RegularPolygon());
+            List<RegularPolygon> out1 = new ArrayList<>();
+            List<RegularPolygon> out2 = mInterface.Repeat2RegularPolygonList(value, out1);
+
+            List<RegularPolygon> expected = new ArrayList<>();
+            expected.addAll(value);
+            expected.addAll(value);
+            RegularPolygon[] expectedArray = expected.toArray(new RegularPolygon[0]);
+
+            assertPolygonEquals(expectedArray, out1.toArray(new RegularPolygon[0]));
+            assertPolygonEquals(expectedArray, out1.toArray(new RegularPolygon[0]));
         }
     }
 

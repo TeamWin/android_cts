@@ -41,6 +41,8 @@ interface ITest {
   String[] RepeatStringArray(in String[] input, out String[] repeated);
   test_package.RegularPolygon[] RepeatRegularPolygonArray(in test_package.RegularPolygon[] input, out test_package.RegularPolygon[] repeated);
   ParcelFileDescriptor[] RepeatFdArray(in ParcelFileDescriptor[] input, out ParcelFileDescriptor[] repeated);
+  List<String> Repeat2StringList(in List<String> input, out List<String> repeated);
+  List<test_package.RegularPolygon> Repeat2RegularPolygonList(in List<test_package.RegularPolygon> input, out List<test_package.RegularPolygon> repeated);
   @nullable boolean[] RepeatNullableBooleanArray(in @nullable boolean[] input);
   @nullable byte[] RepeatNullableByteArray(in @nullable byte[] input);
   @nullable char[] RepeatNullableCharArray(in @nullable char[] input);
