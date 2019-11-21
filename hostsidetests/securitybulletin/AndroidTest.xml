@@ -187,6 +187,11 @@
         <option name="push" value="CVE-2018-9424->/data/local/tmp/CVE-2018-9424" />
 
         <!--__________________-->
+        <!-- Bulletin 2018-09 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2018-9472->/data/local/tmp/CVE-2018-9472" />
+
+        <!--__________________-->
         <!-- Bulletin 2018-10 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
         <option name="push" value="CVE-2018-9515->/data/local/tmp/CVE-2018-9515" />
