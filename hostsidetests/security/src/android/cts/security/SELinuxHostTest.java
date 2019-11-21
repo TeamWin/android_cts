@@ -448,7 +448,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
             return;
         }
 
-        if (getDevice().hasFeature("android.hardware.type.automotive")) {
+        if (getDevice().hasFeature("feature:android.hardware.type.automotive")) {
             return;
         }
 
