@@ -16,67 +16,37 @@
 
 package android.location.cts.fine;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import android.location.GnssMeasurement;
 import android.location.GnssStatus;
-import android.location.cts.common.GnssTestCase;
 import android.os.Parcel;
 
-public class GnssMeasurementTest extends GnssTestCase {
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class GnssMeasurementTest {
+
+    private static final double DELTA = 0.001;
+
+    @Test
     public void testDescribeContents() {
         GnssMeasurement measurement = new GnssMeasurement();
-        measurement.describeContents();
+        assertEquals(0, measurement.describeContents());
     }
 
+    @Test
     public void testReset() {
         GnssMeasurement measurement = new GnssMeasurement();
         measurement.reset();
     }
 
-    private static void setTestValues(GnssMeasurement measurement) {
-        measurement.setAccumulatedDeltaRangeMeters(1.0);
-        measurement.setAccumulatedDeltaRangeState(2);
-        measurement.setAccumulatedDeltaRangeUncertaintyMeters(3.0);
-        measurement.setCarrierCycles(4);
-        measurement.setCarrierFrequencyHz(5.0f);
-        measurement.setCarrierPhase(6.0);
-        measurement.setCarrierPhaseUncertainty(7.0);
-        measurement.setCn0DbHz(8.0);
-        measurement.setCodeType("C");
-        measurement.setConstellationType(GnssStatus.CONSTELLATION_GALILEO);
-        measurement.setMultipathIndicator(GnssMeasurement.MULTIPATH_INDICATOR_DETECTED);
-        measurement.setPseudorangeRateMetersPerSecond(9.0);
-        measurement.setPseudorangeRateUncertaintyMetersPerSecond(10.0);
-        measurement.setReceivedSvTimeNanos(11);
-        measurement.setReceivedSvTimeUncertaintyNanos(12);
-        measurement.setSnrInDb(13.0);
-        measurement.setState(14);
-        measurement.setSvid(15);
-        measurement.setTimeOffsetNanos(16.0);
-    }
-
-    private static void verifyTestValues(GnssMeasurement measurement) {
-        assertEquals(1.0, measurement.getAccumulatedDeltaRangeMeters());
-        assertEquals(2, measurement.getAccumulatedDeltaRangeState());
-        assertEquals(3.0, measurement.getAccumulatedDeltaRangeUncertaintyMeters());
-        assertEquals(4, measurement.getCarrierCycles());
-        assertEquals(5.0f, measurement.getCarrierFrequencyHz());
-        assertEquals(6.0, measurement.getCarrierPhase());
-        assertEquals(7.0, measurement.getCarrierPhaseUncertainty());
-        assertEquals(8.0, measurement.getCn0DbHz());
-        assertEquals(GnssStatus.CONSTELLATION_GALILEO, measurement.getConstellationType());
-        assertEquals(GnssMeasurement.MULTIPATH_INDICATOR_DETECTED,
-                measurement.getMultipathIndicator());
-        assertEquals("C", measurement.getCodeType());
-        assertEquals(9.0, measurement.getPseudorangeRateMetersPerSecond());
-        assertEquals(10.0, measurement.getPseudorangeRateUncertaintyMetersPerSecond());
-        assertEquals(11, measurement.getReceivedSvTimeNanos());
-        assertEquals(12, measurement.getReceivedSvTimeUncertaintyNanos());
-        assertEquals(13.0, measurement.getSnrInDb());
-        assertEquals(14, measurement.getState());
-        assertEquals(15, measurement.getSvid());
-        assertEquals(16.0, measurement.getTimeOffsetNanos());
-    }
-
+    @Test
     public void testWriteToParcel() {
         GnssMeasurement measurement = new GnssMeasurement();
         setTestValues(measurement);
@@ -88,6 +58,7 @@ public class GnssMeasurementTest extends GnssTestCase {
         parcel.recycle();
     }
 
+    @Test
     public void testSet() {
         GnssMeasurement measurement = new GnssMeasurement();
         setTestValues(measurement);
@@ -96,6 +67,7 @@ public class GnssMeasurementTest extends GnssTestCase {
         verifyTestValues(newMeasurement);
     }
 
+    @Test
     public void testSetReset() {
         GnssMeasurement measurement = new GnssMeasurement();
         setTestValues(measurement);
@@ -123,5 +95,50 @@ public class GnssMeasurementTest extends GnssTestCase {
         assertTrue(measurement.hasCodeType());
         measurement.resetCodeType();
         assertFalse(measurement.hasCodeType());
+    }
+
+    private static void setTestValues(GnssMeasurement measurement) {
+        measurement.setAccumulatedDeltaRangeMeters(1.0);
+        measurement.setAccumulatedDeltaRangeState(2);
+        measurement.setAccumulatedDeltaRangeUncertaintyMeters(3.0);
+        measurement.setCarrierCycles(4);
+        measurement.setCarrierFrequencyHz(5.0f);
+        measurement.setCarrierPhase(6.0);
+        measurement.setCarrierPhaseUncertainty(7.0);
+        measurement.setCn0DbHz(8.0);
+        measurement.setCodeType("C");
+        measurement.setConstellationType(GnssStatus.CONSTELLATION_GALILEO);
+        measurement.setMultipathIndicator(GnssMeasurement.MULTIPATH_INDICATOR_DETECTED);
+        measurement.setPseudorangeRateMetersPerSecond(9.0);
+        measurement.setPseudorangeRateUncertaintyMetersPerSecond(10.0);
+        measurement.setReceivedSvTimeNanos(11);
+        measurement.setReceivedSvTimeUncertaintyNanos(12);
+        measurement.setSnrInDb(13.0);
+        measurement.setState(14);
+        measurement.setSvid(15);
+        measurement.setTimeOffsetNanos(16.0);
+    }
+
+    private static void verifyTestValues(GnssMeasurement measurement) {
+        assertEquals(1.0, measurement.getAccumulatedDeltaRangeMeters(), DELTA);
+        assertEquals(2, measurement.getAccumulatedDeltaRangeState());
+        assertEquals(3.0, measurement.getAccumulatedDeltaRangeUncertaintyMeters(), DELTA);
+        assertEquals(4, measurement.getCarrierCycles());
+        assertEquals(5.0f, measurement.getCarrierFrequencyHz(), DELTA);
+        assertEquals(6.0, measurement.getCarrierPhase(), DELTA);
+        assertEquals(7.0, measurement.getCarrierPhaseUncertainty(), DELTA);
+        assertEquals(8.0, measurement.getCn0DbHz(), DELTA);
+        assertEquals(GnssStatus.CONSTELLATION_GALILEO, measurement.getConstellationType());
+        assertEquals(GnssMeasurement.MULTIPATH_INDICATOR_DETECTED,
+                measurement.getMultipathIndicator());
+        assertEquals("C", measurement.getCodeType());
+        assertEquals(9.0, measurement.getPseudorangeRateMetersPerSecond(), DELTA);
+        assertEquals(10.0, measurement.getPseudorangeRateUncertaintyMetersPerSecond(), DELTA);
+        assertEquals(11, measurement.getReceivedSvTimeNanos());
+        assertEquals(12, measurement.getReceivedSvTimeUncertaintyNanos());
+        assertEquals(13.0, measurement.getSnrInDb(), DELTA);
+        assertEquals(14, measurement.getState());
+        assertEquals(15, measurement.getSvid());
+        assertEquals(16.0, measurement.getTimeOffsetNanos(), DELTA);
     }
 }

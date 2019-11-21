@@ -16,26 +16,36 @@
 
 package android.location.cts.fine;
 
+import static org.junit.Assert.assertEquals;
+
 import android.location.GnssClock;
 import android.location.GnssMeasurement;
 import android.location.GnssMeasurementsEvent;
 import android.location.GnssStatus;
-import android.location.cts.common.GnssTestCase;
 import android.os.Parcel;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.Collection;
 import java.util.Iterator;
 
-public class GnssMeasurementsEventTest extends GnssTestCase {
+@RunWith(AndroidJUnit4.class)
+public class GnssMeasurementsEventTest {
+
+    @Test
     public void testDescribeContents() {
         GnssClock clock = new GnssClock();
         GnssMeasurement m1 = new GnssMeasurement();
         GnssMeasurement m2 = new GnssMeasurement();
         GnssMeasurementsEvent event = new GnssMeasurementsEvent(
                 clock, new GnssMeasurement[] {m1, m2});
-        event.describeContents();
+        assertEquals(0, event.describeContents());
     }
 
+    @Test
     public void testWriteToParcel() {
         GnssClock clock = new GnssClock();
         clock.setLeapSecond(100);

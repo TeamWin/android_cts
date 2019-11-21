@@ -19,11 +19,11 @@ import android.test.AndroidTestCase;
 
 /**
  * Base Test Case class for all Gnss Tests.
+ *
+ * @deprecated Pointless base class, do not use.
  */
+@Deprecated
 public abstract class GnssTestCase extends AndroidTestCase {
-
-    // This is used to mark cts tests as CtsVerifier tests.
-    private volatile boolean mCtsVerifierTest = false;
 
     protected static boolean YEAR_2017_CAPABILITY_ENFORCED = false;
 
@@ -32,11 +32,7 @@ public abstract class GnssTestCase extends AndroidTestCase {
     protected GnssTestCase() {
     }
 
-    public void setTestAsCtsVerifierTest(boolean value) {
-        mCtsVerifierTest = value;
-    }
-
     public boolean isCtsVerifierTest() {
-        return mCtsVerifierTest;
+        return false;
     }
 }

@@ -18,9 +18,6 @@ package android.location.cts.fine;
 
 import static android.location.LocationManager.FUSED_PROVIDER;
 import static android.location.LocationManager.GPS_PROVIDER;
-import static android.location.LocationManager.KEY_LOCATION_CHANGED;
-import static android.location.LocationManager.KEY_PROVIDER_ENABLED;
-import static android.location.LocationManager.KEY_PROXIMITY_ENTERING;
 import static android.location.LocationManager.NETWORK_PROVIDER;
 import static android.location.LocationManager.PASSIVE_PROVIDER;
 
@@ -53,13 +50,16 @@ import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.location.LocationRequest;
 import android.location.OnNmeaMessageListener;
-import android.os.Bundle;
-import android.os.CancellationSignal;
+import android.location.cts.common.GetCurrentLocationCapture;
+import android.location.cts.common.LocationListenerCapture;
+import android.location.cts.common.LocationPendingIntentCapture;
+import android.location.cts.common.ProximityPendingIntentCapture;
+import android.os.Build.VERSION;
+import android.os.Build.VERSION_CODES;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.UserManager;
 import android.platform.test.annotations.AppModeFull;
-import android.provider.Settings;
 import android.provider.Settings.Secure;
 import android.util.Log;
 
@@ -68,7 +68,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.LocationUtils;
-import com.android.internal.util.Preconditions;
 
 import org.junit.After;
 import org.junit.Before;
@@ -77,11 +76,9 @@ import org.junit.runner.RunWith;
 
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 
 @RunWith(AndroidJUnit4.class)
 public class LocationManagerFineTest {
@@ -199,10 +196,8 @@ public class LocationManagerFineTest {
             mManager.getCurrentLocation(TEST_PROVIDER, capture.getCancellationSignal(),
                     Executors.newSingleThreadExecutor(), capture);
             mManager.setTestProviderLocation(TEST_PROVIDER, loc);
-            assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc);
+            assertThat(capture.getLocation(TIMEOUT_MS)).isEqualTo(loc);
         }
-
-        // TODO: test timeout case
 
         try {
             mManager.getCurrentLocation((String) null, null, Executors.newSingleThreadExecutor(),
@@ -221,7 +216,7 @@ public class LocationManagerFineTest {
             mManager.getCurrentLocation(TEST_PROVIDER, capture.getCancellationSignal(),
                     Runnable::run, capture);
             mManager.setTestProviderLocation(TEST_PROVIDER, loc);
-            assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc);
+            assertThat(capture.getLocation(TIMEOUT_MS)).isEqualTo(loc);
         }
     }
 
@@ -234,7 +229,7 @@ public class LocationManagerFineTest {
                     Runnable::run, capture);
             capture.getCancellationSignal().cancel();
             mManager.setTestProviderLocation(TEST_PROVIDER, loc);
-            assertNull(capture.getNextLocation(FAILURE_TIMEOUT_MS));
+            assertFalse(capture.hasLocation(FAILURE_TIMEOUT_MS));
         }
     }
 
@@ -244,14 +239,14 @@ public class LocationManagerFineTest {
             mManager.setTestProviderEnabled(TEST_PROVIDER, false);
             mManager.getCurrentLocation(TEST_PROVIDER, capture.getCancellationSignal(),
                     Runnable::run, capture);
-            assertNull(capture.getNextLocation(FAILURE_TIMEOUT_MS));
+            assertNull(capture.getLocation(FAILURE_TIMEOUT_MS));
         }
 
         try (GetCurrentLocationCapture capture = new GetCurrentLocationCapture()) {
             mManager.getCurrentLocation(TEST_PROVIDER, capture.getCancellationSignal(),
                     Runnable::run, capture);
             mManager.setTestProviderEnabled(TEST_PROVIDER, false);
-            assertNull(capture.getNextLocation(FAILURE_TIMEOUT_MS));
+            assertNull(capture.getLocation(FAILURE_TIMEOUT_MS));
         }
     }
 
@@ -260,7 +255,7 @@ public class LocationManagerFineTest {
         Location loc1 = createLocation(TEST_PROVIDER, mRandom);
         Location loc2 = createLocation(TEST_PROVIDER, mRandom);
 
-        try (LocationListenerCapture capture = new LocationListenerCapture(mManager)) {
+        try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
             mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0,
                     Executors.newSingleThreadExecutor(), capture);
 
@@ -290,14 +285,14 @@ public class LocationManagerFineTest {
             // expected
         }
 
-        try (LocationListenerCapture capture = new LocationListenerCapture(mManager)) {
+        try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
             mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0, null, capture);
             fail("Should throw IllegalArgumentException if executor is null!");
         } catch (IllegalArgumentException e) {
             // expected
         }
 
-        try (LocationListenerCapture capture = new LocationListenerCapture(mManager)) {
+        try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
             mManager.requestLocationUpdates(null, 0, 0, capture);
             fail("Should throw IllegalArgumentException if provider is null!");
         } catch (IllegalArgumentException e) {
@@ -366,7 +361,7 @@ public class LocationManagerFineTest {
         Location loc1 = createLocation(TEST_PROVIDER, mRandom);
         Location loc2 = createLocation(TEST_PROVIDER, mRandom);
 
-        try (LocationListenerCapture capture = new LocationListenerCapture(mManager)) {
+        try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
             mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0, Runnable::run, capture);
 
             mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
@@ -390,7 +385,7 @@ public class LocationManagerFineTest {
             Location loc1 = createLocation(TEST_PROVIDER, mRandom);
             Location loc2 = createLocation(TEST_PROVIDER, mRandom);
 
-            try (LocationListenerCapture capture = new LocationListenerCapture(mManager)) {
+            try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
                 mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0, capture, looper);
 
                 mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
@@ -421,7 +416,7 @@ public class LocationManagerFineTest {
                 true,
                 Criteria.POWER_LOW,
                 Criteria.ACCURACY_FINE);
-        mManager.setTestProviderEnabled(FUSED_PROVIDER, true);
+        setTestProviderEnabled(FUSED_PROVIDER, true);
 
         Criteria criteria = new Criteria();
         criteria.setAccuracy(Criteria.ACCURACY_FINE);
@@ -430,7 +425,7 @@ public class LocationManagerFineTest {
         Location loc1 = createLocation(FUSED_PROVIDER, mRandom);
         Location loc2 = createLocation(FUSED_PROVIDER, mRandom);
 
-        try (LocationListenerCapture capture = new LocationListenerCapture(mManager)) {
+        try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
             mManager.requestLocationUpdates(0, 0, criteria, Runnable::run, capture);
 
             mManager.setTestProviderLocation(FUSED_PROVIDER, loc1);
@@ -460,14 +455,14 @@ public class LocationManagerFineTest {
             // expected
         }
 
-        try (LocationListenerCapture capture = new LocationListenerCapture(mManager)) {
+        try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
             mManager.requestLocationUpdates(0, 0, criteria, null, capture);
             fail("Should throw IllegalArgumentException if executor is null!");
         } catch (IllegalArgumentException e) {
             // expected
         }
 
-        try (LocationListenerCapture capture = new LocationListenerCapture(mManager)) {
+        try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
             mManager.requestLocationUpdates(0, 0, null, Runnable::run, capture);
             fail("Should throw IllegalArgumentException if criteria is null!");
         } catch (IllegalArgumentException e) {
@@ -480,7 +475,7 @@ public class LocationManagerFineTest {
         Location loc1 = createLocation(TEST_PROVIDER, mRandom);
         Location loc2 = createLocation(TEST_PROVIDER, mRandom);
 
-        try (LocationListenerCapture capture = new LocationListenerCapture(mManager)) {
+        try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
             mManager.requestLocationUpdates(TEST_PROVIDER, 1000, 1000, Runnable::run, capture);
             mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0, Runnable::run, capture);
 
@@ -500,7 +495,7 @@ public class LocationManagerFineTest {
                 false);
         request.setNumUpdates(1);
 
-        try (LocationListenerCapture capture = new LocationListenerCapture(mManager)) {
+        try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
             mManager.requestLocationUpdates(request, Runnable::run, capture);
 
             mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
@@ -518,7 +513,7 @@ public class LocationManagerFineTest {
         LocationRequest request = LocationRequest.createFromDeprecatedProvider(TEST_PROVIDER, 5000,
                 0, false);
 
-        try (LocationListenerCapture capture = new LocationListenerCapture(mManager)) {
+        try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
             mManager.requestLocationUpdates(request, Runnable::run, capture);
 
             mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
@@ -536,13 +531,49 @@ public class LocationManagerFineTest {
         LocationRequest request = LocationRequest.createFromDeprecatedProvider(TEST_PROVIDER, 0,
                 200000, false);
 
-        try (LocationListenerCapture capture = new LocationListenerCapture(mManager)) {
+        try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
             mManager.requestLocationUpdates(request, Runnable::run, capture);
 
             mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
             assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc1);
             mManager.setTestProviderLocation(TEST_PROVIDER, loc2);
             assertNull(capture.getNextLocation(FAILURE_TIMEOUT_MS));
+        }
+    }
+
+    @Test
+    @AppModeFull(reason = "Instant apps can't hold ACCESS_LOCATION_EXTRA_COMMANDS permission")
+    public void testRequestGpsUpdates_B9758659() throws Exception {
+        // test for b/9758659, where the gps provider may reuse network provider positions creating
+        // an unnatural feedback loop
+        assertTrue(mManager.isProviderEnabled(GPS_PROVIDER));
+
+        Location networkLocation = createLocation(NETWORK_PROVIDER, mRandom);
+
+        mManager.addTestProvider(NETWORK_PROVIDER,
+                false,
+                false,
+                false,
+                false,
+                true,
+                true,
+                true,
+                Criteria.POWER_LOW,
+                Criteria.ACCURACY_COARSE);
+        setTestProviderEnabled(NETWORK_PROVIDER, true);
+        mManager.setTestProviderLocation(NETWORK_PROVIDER, networkLocation);
+
+        // reset gps provider to give it a cold start scenario
+        mManager.sendExtraCommand(GPS_PROVIDER, "delete_aiding_data", null);
+
+        LocationRequest request = LocationRequest.createFromDeprecatedProvider(GPS_PROVIDER, 0, 0, false);
+        try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
+            mManager.requestLocationUpdates(request, Runnable::run, capture);
+
+            Location location = capture.getNextLocation(TIMEOUT_MS);
+            if (location != null) {
+                assertThat(location.distanceTo(networkLocation)).isGreaterThan(1000.0f);
+            }
         }
     }
 
@@ -563,14 +594,14 @@ public class LocationManagerFineTest {
     }
 
     @Test
-    public void testGetProviders() {
+    public void testGetProviders() throws Exception {
         List<String> providers = mManager.getProviders(false);
         assertTrue(providers.contains(TEST_PROVIDER));
 
         providers = mManager.getProviders(true);
         assertTrue(providers.contains(TEST_PROVIDER));
 
-        mManager.setTestProviderEnabled(TEST_PROVIDER, false);
+        setTestProviderEnabled(TEST_PROVIDER, false);
 
         providers = mManager.getProviders(false);
         assertTrue(providers.contains(TEST_PROVIDER));
@@ -599,7 +630,7 @@ public class LocationManagerFineTest {
     }
 
     @Test
-    public void testGetBestProvider() {
+    public void testGetBestProvider() throws Exception {
         List<String> allProviders = mManager.getAllProviders();
         Criteria criteria = new Criteria();
 
@@ -629,7 +660,7 @@ public class LocationManagerFineTest {
         criteria.setPowerRequirement(Criteria.POWER_LOW);
         assertThat(mManager.getBestProvider(criteria, false)).isEqualTo(TEST_PROVIDER);
 
-        mManager.setTestProviderEnabled(TEST_PROVIDER, false);
+        setTestProviderEnabled(TEST_PROVIDER, false);
         assertNotEquals(TEST_PROVIDER, mManager.getBestProvider(criteria, true));
     }
 
@@ -656,7 +687,7 @@ public class LocationManagerFineTest {
     }
 
     @Test
-    @AppModeFull(reason = "Instant apps can't hold ACCESS_LOCATION_EXTRA_COMMANDS")
+    @AppModeFull(reason = "Instant apps can't hold ACCESS_LOCATION_EXTRA_COMMANDS permission")
     public void testSendExtraCommand() {
         for (String provider : mManager.getAllProviders()) {
             boolean res = mManager.sendExtraCommand(provider, "dontCrash", null);
@@ -743,12 +774,12 @@ public class LocationManagerFineTest {
                             Runnable::run, capture);
                     mManager.setTestProviderLocation(provider, loc1);
 
-                    Location received = capture.getNextLocation(TIMEOUT_MS);
+                    Location received = capture.getLocation(TIMEOUT_MS);
                     assertThat(received).isEqualTo(loc1);
                     assertTrue(received.isFromMockProvider());
                     assertThat(mManager.getLastKnownLocation(provider)).isEqualTo(loc1);
 
-                    mManager.setTestProviderEnabled(provider, false);
+                    setTestProviderEnabled(provider, false);
                     mManager.setTestProviderLocation(provider, loc2);
                     assertNull(mManager.getLastKnownLocation(provider));
                 }
@@ -812,7 +843,7 @@ public class LocationManagerFineTest {
                     Runnable::run, capture);
             mManager.setTestProviderLocation(TEST_PROVIDER, loc);
 
-            Location received = capture.getNextLocation(TIMEOUT_MS);
+            Location received = capture.getLocation(TIMEOUT_MS);
             assertThat(received).isEqualTo(loc);
             assertTrue(received.isFromMockProvider());
 
@@ -853,7 +884,7 @@ public class LocationManagerFineTest {
                 false,
                 Criteria.POWER_MEDIUM,
                 Criteria.ACCURACY_FINE);
-        mManager.setTestProviderEnabled(FUSED_PROVIDER, true);
+        setTestProviderEnabled(FUSED_PROVIDER, true);
         mManager.setTestProviderLocation(FUSED_PROVIDER, createLocation(FUSED_PROVIDER, 30, 30, 10));
 
         try (ProximityPendingIntentCapture capture = new ProximityPendingIntentCapture(mContext)) {
@@ -919,7 +950,7 @@ public class LocationManagerFineTest {
                 false,
                 Criteria.POWER_MEDIUM,
                 Criteria.ACCURACY_FINE);
-        mManager.setTestProviderEnabled(FUSED_PROVIDER, true);
+        setTestProviderEnabled(FUSED_PROVIDER, true);
         mManager.setTestProviderLocation(FUSED_PROVIDER, createLocation(FUSED_PROVIDER, 0, 0, 10));
 
         try (ProximityPendingIntentCapture capture = new ProximityPendingIntentCapture(mContext)) {
@@ -945,7 +976,7 @@ public class LocationManagerFineTest {
                 false,
                 Criteria.POWER_MEDIUM,
                 Criteria.ACCURACY_FINE);
-        mManager.setTestProviderEnabled(FUSED_PROVIDER, true);
+        setTestProviderEnabled(FUSED_PROVIDER, true);
         mManager.setTestProviderLocation(FUSED_PROVIDER, createLocation(FUSED_PROVIDER, 30, 30, 10));
 
         try (ProximityPendingIntentCapture capture = new ProximityPendingIntentCapture(mContext)) {
@@ -1017,190 +1048,28 @@ public class LocationManagerFineTest {
         return !mContext.getSystemService(UserManager.class).isSystemUser();
     }
 
-    private static class LocationListenerCapture implements LocationListener, AutoCloseable {
+    private void setTestProviderEnabled(String provider, boolean enabled) throws InterruptedException {
+        // prior to R, setTestProviderEnabled is asynchronous, so we have to wait for provider
+        // state to settle.
+        if (VERSION.SDK_INT <= VERSION_CODES.Q) {
+            CountDownLatch latch = new CountDownLatch(1);
+            BroadcastReceiver receiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    latch.countDown();
+                }
+            };
+            mContext.registerReceiver(receiver,
+                    new IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION));
+            mManager.setTestProviderEnabled(provider, enabled);
 
-        private final LocationManager mLocationManager;
-        private final LinkedBlockingQueue<Location> mLocations;
-        private final LinkedBlockingQueue<Boolean> mProviderChanges;
-
-        public LocationListenerCapture(LocationManager locationManager) {
-            mLocationManager = locationManager;
-            mLocations = new LinkedBlockingQueue<>();
-            mProviderChanges = new LinkedBlockingQueue<>();
-        }
-
-        public Location getNextLocation(long timeoutMs) throws InterruptedException {
-            return mLocations.poll(timeoutMs, TimeUnit.MILLISECONDS);
-        }
-
-        public Boolean getNextProviderChange(long timeoutMs) throws InterruptedException {
-            return mProviderChanges.poll(timeoutMs, TimeUnit.MILLISECONDS);
-        }
-
-        @Override
-        public void onLocationChanged(Location location) {
-            mLocations.add(location);
-        }
-
-        @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-        }
-
-        @Override
-        public void onProviderEnabled(String provider) {
-            mProviderChanges.add(true);
-        }
-
-        @Override
-        public void onProviderDisabled(String provider) {
-            mProviderChanges.add(false);
-        }
-
-        @Override
-        public void close() {
-            mLocationManager.removeUpdates(this);
-        }
-    }
-
-    private static class LocationPendingIntentCapture extends BroadcastReceiver implements
-            AutoCloseable {
-
-        private static final String ACTION = "android.location.cts.LOCATION_BROADCAST";
-        private static final AtomicInteger sRequestCode = new AtomicInteger(0);
-
-        private final Context mContext;
-        private final LocationManager mLocationManager;
-        private final PendingIntent mPendingIntent;
-        private final LinkedBlockingQueue<Location> mLocations;
-        private final LinkedBlockingQueue<Boolean> mProviderChanges;
-
-        public LocationPendingIntentCapture(Context context) {
-            mContext = context;
-            mLocationManager = context.getSystemService(LocationManager.class);
-            mPendingIntent = PendingIntent.getBroadcast(context, sRequestCode.getAndIncrement(),
-                    new Intent(ACTION).setPackage(context.getPackageName()),
-                    PendingIntent.FLAG_CANCEL_CURRENT);
-            mLocations = new LinkedBlockingQueue<>();
-            mProviderChanges = new LinkedBlockingQueue<>();
-
-            context.registerReceiver(this, new IntentFilter(ACTION));
-        }
-
-        public PendingIntent getPendingIntent() {
-            return mPendingIntent;
-        }
-
-        /**
-         * May not be called from the main thread. Tests do not run on the main thread so this
-         * generally shouldn't be a problem.
-         */
-        public Location getNextLocation(long timeoutMs) throws InterruptedException {
-            Preconditions.checkState(Looper.myLooper() != Looper.getMainLooper());
-            return mLocations.poll(timeoutMs, TimeUnit.MILLISECONDS);
-        }
-
-        /**
-         * May not be called from the main thread. Tests do not run on the main thread so this
-         * generally shouldn't be a problem.
-         */
-        public Boolean getNextProviderChange(long timeoutMs) throws InterruptedException {
-            Preconditions.checkState(Looper.myLooper() != Looper.getMainLooper());
-            return mProviderChanges.poll(timeoutMs, TimeUnit.MILLISECONDS);
-        }
-
-        @Override
-        public void close() {
-            mLocationManager.removeUpdates(mPendingIntent);
-            mContext.unregisterReceiver(this);
-            mPendingIntent.cancel();
-        }
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (intent.hasExtra(KEY_PROVIDER_ENABLED)) {
-                mProviderChanges.add(intent.getBooleanExtra(KEY_PROVIDER_ENABLED, false));
-            } else if (intent.hasExtra(KEY_LOCATION_CHANGED)) {
-                mLocations.add(intent.getParcelableExtra(KEY_LOCATION_CHANGED));
+            // it's ok if this times out, as we don't notify for noop changes
+            if (!latch.await(500, TimeUnit.MILLISECONDS)) {
+                Log.i(TAG, "timeout while waiting for provider enabled change");
             }
-        }
-    }
-
-    private static class ProximityPendingIntentCapture extends BroadcastReceiver implements
-            AutoCloseable {
-
-        private static final String ACTION = "android.location.cts.LOCATION_BROADCAST";
-        private static final AtomicInteger sRequestCode = new AtomicInteger(0);
-
-        private final Context mContext;
-        private final LocationManager mLocationManager;
-        private final PendingIntent mPendingIntent;
-        private final LinkedBlockingQueue<Boolean> mProximityChanges;
-
-        public ProximityPendingIntentCapture(Context context) {
-            mContext = context;
-            mLocationManager = context.getSystemService(LocationManager.class);
-            mPendingIntent = PendingIntent.getBroadcast(context, sRequestCode.getAndIncrement(),
-                    new Intent(ACTION).setPackage(context.getPackageName()),
-                    PendingIntent.FLAG_CANCEL_CURRENT);
-            mProximityChanges = new LinkedBlockingQueue<>();
-
-            context.registerReceiver(this, new IntentFilter(ACTION));
-        }
-
-        public PendingIntent getPendingIntent() {
-            return mPendingIntent;
-        }
-
-        /**
-         * May not be called from the main thread. Tests do not run on the main thread so this
-         * generally shouldn't be a problem.
-         */
-        public Boolean getNextProximityChange(long timeoutMs) throws InterruptedException {
-            Preconditions.checkState(Looper.myLooper() != Looper.getMainLooper());
-            return mProximityChanges.poll(timeoutMs, TimeUnit.MILLISECONDS);
-        }
-
-        @Override
-        public void close() {
-            mLocationManager.removeProximityAlert(mPendingIntent);
-            mContext.unregisterReceiver(this);
-            mPendingIntent.cancel();
-        }
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (intent.hasExtra(KEY_PROXIMITY_ENTERING)) {
-                mProximityChanges.add(intent.getBooleanExtra(KEY_PROXIMITY_ENTERING, false));
-            }
-        }
-    }
-
-    private static class GetCurrentLocationCapture implements Consumer<Location>, AutoCloseable {
-
-        private final CancellationSignal mCancellationSignal;
-        private final LinkedBlockingQueue<Location> locations;
-
-        public GetCurrentLocationCapture() {
-            locations = new LinkedBlockingQueue<>();
-            mCancellationSignal = new CancellationSignal();
-        }
-
-        public CancellationSignal getCancellationSignal() {
-            return mCancellationSignal;
-        }
-
-        public Location getNextLocation(long timeoutMs) throws InterruptedException {
-            return locations.poll(timeoutMs, TimeUnit.MILLISECONDS);
-        }
-
-        @Override
-        public void accept(Location location) {
-            locations.add(location);
-        }
-
-        @Override
-        public void close() {
-            mCancellationSignal.cancel();
+            mContext.unregisterReceiver(receiver);
+        } else {
+            mManager.setTestProviderEnabled(provider, enabled);
         }
     }
 }
