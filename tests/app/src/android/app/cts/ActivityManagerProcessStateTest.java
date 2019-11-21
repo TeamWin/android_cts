@@ -76,8 +76,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, PACKAGE_NAME_APP3
     };
 
-    private static final int WAIT_TIME = 2000;
-    private static final int WAITFOR_MSEC = 5000;
+    private static final int WAIT_TIME = 10000;
+    private static final int WAITFOR_MSEC = 10000;
     // A secondary test activity from another APK.
     static final String SIMPLE_PACKAGE_NAME = "com.android.cts.launcherapps.simpleapp";
     static final String SIMPLE_SERVICE = ".SimpleService";
