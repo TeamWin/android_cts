@@ -93,6 +93,7 @@ public final class CannedFillResponse {
     private final UserData mUserData;
     private final DoubleVisitor<List<FillContext>, FillResponse.Builder> mVisitor;
     private DoubleVisitor<List<FillContext>, SaveInfo.Builder> mSaveInfoVisitor;
+    private final int[] mCancelIds;
 
     private CannedFillResponse(Builder builder) {
         mResponseType = builder.mResponseType;
@@ -123,6 +124,7 @@ public final class CannedFillResponse {
         mUserData = builder.mUserData;
         mVisitor = builder.mVisitor;
         mSaveInfoVisitor = builder.mSaveInfoVisitor;
+        mCancelIds = builder.mCancelIds;
     }
 
     /**
@@ -257,6 +259,7 @@ public final class CannedFillResponse {
             Log.d(TAG, "Visiting " + builder);
             mVisitor.visit(contexts, builder);
         }
+        builder.setCancelTargetIds(mCancelIds);
 
         final FillResponse response = builder.build();
         Log.v(TAG, "Response: " + response);
@@ -328,6 +331,7 @@ public final class CannedFillResponse {
         private UserData mUserData;
         private DoubleVisitor<List<FillContext>, FillResponse.Builder> mVisitor;
         private DoubleVisitor<List<FillContext>, SaveInfo.Builder> mSaveInfoVisitor;
+        private int[] mCancelIds;
 
         public Builder(ResponseType type) {
             mResponseType = type;
@@ -524,6 +528,14 @@ public final class CannedFillResponse {
         public Builder setSaveInfoVisitor(
                 @NonNull DoubleVisitor<List<FillContext>, SaveInfo.Builder> visitor) {
             mSaveInfoVisitor = visitor;
+            return this;
+        }
+
+        /**
+         * Sets targets that cancel current session
+         */
+        public Builder setCancelTargetIds(int[] ids) {
+            mCancelIds = ids;
             return this;
         }
     }

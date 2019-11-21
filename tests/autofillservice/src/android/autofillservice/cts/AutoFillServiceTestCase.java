@@ -404,6 +404,13 @@ public final class AutoFillServiceTestCase {
             return presentation;
         }
 
+        protected RemoteViews createPresentationWithCancel(String message) {
+            final RemoteViews presentation = new RemoteViews(getContext()
+                    .getPackageName(), R.layout.list_item_cancel);
+            presentation.setTextViewText(R.id.text1, message);
+            return presentation;
+        }
+
         @NonNull
         protected AutofillManager getAutofillManager() {
             return mContext.getSystemService(AutofillManager.class);
