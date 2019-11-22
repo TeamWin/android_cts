@@ -60,6 +60,7 @@ import android.content.pm.PackageManager;
 import android.os.ResultReceiver;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.SystemUserOnly;
 import android.server.wm.backgroundactivity.common.CommonComponents.Event;
 import android.server.wm.backgroundactivity.common.EventReceiver;
 
@@ -415,6 +416,7 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
     }
 
     @Test
+    @SystemUserOnly(reason = "Device owner must be SYSTEM user")
     public void testDeviceOwner() throws Exception {
         // Send pendingIntent from AppA to AppB, and the AppB launch the pending intent to start
         // activity in App A
