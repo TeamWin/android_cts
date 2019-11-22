@@ -25,6 +25,7 @@ import android.util.Log;
 import android.media.cts.R;
 
 import java.io.File;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -98,7 +99,8 @@ public class VideoCodecTest extends VideoCodecTestBase {
                     bitRateMode,
                     targetBitrate,
                     true);
-            ArrayList<MediaCodec.BufferInfo> bufInfo = encode(params);
+            ArrayList<ByteBuffer> codecConfigs = new ArrayList<>();
+            ArrayList<MediaCodec.BufferInfo> bufInfo = encode(params, codecConfigs);
             if (bufInfo == null) {
                 continue;
             }
@@ -116,7 +118,8 @@ public class VideoCodecTest extends VideoCodecTestBase {
                     MAX_BITRATE_VARIATION * targetBitrate);
             }
 
-            decode(params.outputIvfFilename, null, codecMimeType, FPS, params.forceGoogleEncoder);
+            decode(params.outputIvfFilename, null, codecMimeType, FPS,
+                    params.forceGoogleEncoder, codecConfigs);
         }
 
         if (skipped) {
@@ -147,13 +150,15 @@ public class VideoCodecTest extends VideoCodecTestBase {
                 bitRateMode,
                 BITRATE,
                 syncEncoding);
-        ArrayList<MediaCodec.BufferInfo> bufInfos = encodeAsync(params);
+        ArrayList<ByteBuffer> codecConfigs = new ArrayList<>();
+        ArrayList<MediaCodec.BufferInfo> bufInfos = encodeAsync(params, codecConfigs);
         if (bufInfos == null) {
             Log.i(TAG, "SKIPPING testAsyncEncoding(): no suitable encoder found");
             return;
         }
         computeEncodingStatistics(bufInfos);
-        decode(params.outputIvfFilename, OUTPUT_YUV, codecMimeType, FPS, params.forceGoogleEncoder);
+        decode(params.outputIvfFilename, OUTPUT_YUV, codecMimeType, FPS,
+                params.forceGoogleEncoder, codecConfigs);
         VideoDecodingStatistics statisticsAsync = computeDecodingStatistics(
                 params.inputYuvFilename, R.raw.football_qvga, OUTPUT_YUV,
                 params.frameWidth, params.frameHeight);
@@ -172,13 +177,15 @@ public class VideoCodecTest extends VideoCodecTestBase {
                 bitRateMode,
                 BITRATE,
                 syncEncoding);
-        bufInfos = encode(params);
+        codecConfigs.clear();
+        bufInfos = encode(params, codecConfigs);
         if (bufInfos == null) {
             Log.i(TAG, "SKIPPING testAsyncEncoding(): no suitable encoder found");
             return;
         }
         computeEncodingStatistics(bufInfos);
-        decode(params.outputIvfFilename, OUTPUT_YUV, codecMimeType, FPS, params.forceGoogleEncoder);
+        decode(params.outputIvfFilename, OUTPUT_YUV, codecMimeType, FPS,
+                params.forceGoogleEncoder, codecConfigs);
         VideoDecodingStatistics statisticsSync = computeDecodingStatistics(
                 params.inputYuvFilename, R.raw.football_qvga, OUTPUT_YUV,
                 params.frameWidth, params.frameHeight);
@@ -351,11 +358,17 @@ public class VideoCodecTest extends VideoCodecTestBase {
                  BITRATE,
                  true);
          final String inputIvfFilename = params.outputIvfFilename;
+         final ArrayList<ByteBuffer> codecConfigs = new ArrayList<>();
 
          Runnable runEncoder = new Runnable() {
              public void run() {
                  try {
-                     ArrayList<MediaCodec.BufferInfo> bufInfo = encode(params);
+                     ArrayList<MediaCodec.BufferInfo> bufInfo;
+                     if (codecConfigs.isEmpty()) {
+                         bufInfo = encode(params, codecConfigs);
+                     } else {
+                         bufInfo = encode(params);
+                     }
                      VideoEncodingStatistics statistics = computeEncodingStatistics(bufInfo);
                      bitrate[0] = statistics.mAverageBitrate;
                  } catch (Exception e) {
@@ -367,7 +380,8 @@ public class VideoCodecTest extends VideoCodecTestBase {
          Runnable runDecoder = new Runnable() {
              public void run() {
                  try {
-                     decode(inputIvfFilename, OUTPUT_YUV, codecMimeType, FPS, params.forceGoogleEncoder);
+                     decode(inputIvfFilename, OUTPUT_YUV, codecMimeType, FPS,
+                            params.forceGoogleEncoder, codecConfigs);
                      VideoDecodingStatistics statistics = computeDecodingStatistics(
                             params.inputYuvFilename, R.raw.football_qvga, OUTPUT_YUV,
                             params.frameWidth, params.frameHeight);
@@ -448,7 +462,8 @@ public class VideoCodecTest extends VideoCodecTestBase {
                     bitRateMode,
                     TEST_BITRATES_SET[i],
                     true);
-            if (encode(params) == null) {
+            ArrayList<ByteBuffer> codecConfigs = new ArrayList<>();
+            if (encode(params, codecConfigs) == null) {
                 // parameters not supported, try other bitrates
                 completed[i] = false;
                 continue;
@@ -456,7 +471,8 @@ public class VideoCodecTest extends VideoCodecTestBase {
             completed[i] = true;
             skipped = false;
 
-            decode(params.outputIvfFilename, OUTPUT_YUV, codecMimeType, FPS, params.forceGoogleEncoder);
+            decode(params.outputIvfFilename, OUTPUT_YUV, codecMimeType, FPS,
+                    params.forceGoogleEncoder, codecConfigs);
             VideoDecodingStatistics statistics = computeDecodingStatistics(
                     params.inputYuvFilename, R.raw.football_qvga, OUTPUT_YUV,
                     params.frameWidth, params.frameHeight);
