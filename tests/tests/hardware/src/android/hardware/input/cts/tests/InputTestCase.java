@@ -99,7 +99,7 @@ public abstract class InputTestCase {
      * KeyEvents are received within a reasonable amount of time, then this will throw an
      * {@link AssertionError}.
      *
-     * Only action and keyCode are being compared.
+     * Only action, keyCode and metaState are being compared.
      */
     private void assertReceivedKeyEvent(@NonNull KeyEvent expectedKeyEvent) {
         KeyEvent receivedKeyEvent = waitForKey();
@@ -110,6 +110,8 @@ public abstract class InputTestCase {
                 expectedKeyEvent.getAction(), receivedKeyEvent.getAction());
         assertEquals(mCurrentTestCase + " (keycode)",
                 expectedKeyEvent.getKeyCode(), receivedKeyEvent.getKeyCode());
+        assertEquals(mCurrentTestCase + " (metaState)",
+                expectedKeyEvent.getMetaState(), receivedKeyEvent.getMetaState());
     }
 
     private void assertReceivedMotionEvent(@NonNull MotionEvent expectedEvent) {
