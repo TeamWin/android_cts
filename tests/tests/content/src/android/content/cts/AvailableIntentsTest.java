@@ -281,11 +281,17 @@ public class AvailableIntentsTest extends AndroidTestCase {
     }
 
     public void testAlarmClockDismissAlarm() {
+        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY)) {
+            return;
+        }
         Intent intent = new Intent(AlarmClock.ACTION_DISMISS_ALARM);
         assertCanBeHandled(intent);
     }
 
     public void testAlarmClockSnoozeAlarm() {
+        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY)) {
+            return;
+        }
         Intent intent = new Intent(AlarmClock.ACTION_SNOOZE_ALARM);
         intent.putExtra(AlarmClock.EXTRA_ALARM_SNOOZE_DURATION, 10);
         assertCanBeHandled(intent);
