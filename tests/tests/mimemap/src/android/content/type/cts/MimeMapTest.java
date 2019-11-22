@@ -254,14 +254,7 @@ public class MimeMapTest {
             Objects.requireNonNull(mimeType);
             assertEquals(mimeType, webkitMap.getMimeTypeFromExtension(extension));
             assertTrue(webkitMap.hasExtension(extension));
-
-            // Extensions should never start with '.', make sure this is not the case ahead
-            // of the subsequent check.
-            assertFalse(extension.startsWith("."));
-            // Relax this check for extensions that contain "." because of http://b/141880067
-            if (!extension.contains(".")) {
-                assertEquals(mimeType, urlConnectionMap.getContentTypeFor("filename." + extension));
-            }
+            assertEquals(mimeType, urlConnectionMap.getContentTypeFor("filename." + extension));
         }
 
         for (String mimeType : mimeMap.mimeTypes()) {
