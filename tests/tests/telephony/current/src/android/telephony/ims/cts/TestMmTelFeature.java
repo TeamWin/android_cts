@@ -47,7 +47,6 @@ public class TestMmTelFeature extends MmTelFeature {
         setFeatureState(STATE_READY);
     }
 
-    @Override
     public TestImsSmsImpl getSmsImplementation() {
         return mSmsImpl;
     }
