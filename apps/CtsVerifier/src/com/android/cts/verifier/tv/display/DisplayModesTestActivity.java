@@ -27,11 +27,13 @@ import com.android.cts.verifier.R;
 import com.android.cts.verifier.tv.TvAppVerifierActivity;
 
 import com.google.common.base.Throwables;
+import com.google.common.truth.Correspondence;
 import com.google.common.truth.FailureMetadata;
 import com.google.common.truth.Subject;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.annotation.Nullable;
@@ -47,6 +49,19 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
 
     private static final Subject.Factory<ModeSubject, Display.Mode> MODE_SUBJECT_FACTORY =
             (failureMetadata, mode) -> new ModeSubject(failureMetadata, mode);
+
+    private static final Correspondence<Display.Mode, Mode> MODE_CORRESPONDENCE =
+            new Correspondence<Display.Mode, Mode>() {
+                @Override
+                public boolean compare(Display.Mode displayMode, Mode mode) {
+                    return mode.isEquivalent(displayMode, REFRESH_RATE_PRECISION);
+                }
+
+                @Override
+                public String toString() {
+                    return "is equivalent to";
+                }
+            };
 
     private TestSequence mTestSequence;
     private DisplayManager mDisplayManager;
@@ -112,6 +127,7 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
                                     Display display =
                                             mDisplayManager.getDisplay(Display.DEFAULT_DISPLAY);
                                     display.getMode();
+                                    display.getSupportedModes();
                                 } catch (Exception e) {
                                     getAsserter().fail(Throwables.getStackTraceAsString(e));
                                 }
@@ -151,6 +167,31 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
                     .about(MODE_SUBJECT_FACTORY)
                     .that(display.getMode())
                     .isEquivalentTo(new Mode(3840, 2160, 60f), REFRESH_RATE_PRECISION);
+
+             Mode[] expected2160pSupportedModes = new Mode[]{
+                    new Mode(720, 480, 60f),
+                    new Mode(720, 576, 50f),
+                    // 720p modes
+                    new Mode(1280, 720, 50f),
+                    new Mode(1280, 720, 60f),
+                    // 1080p modes
+                    new Mode(1920, 1080, 24f),
+                    new Mode(1920, 1080, 25f),
+                    new Mode(1920, 1080, 30f),
+                    new Mode(1920, 1080, 50f),
+                    new Mode(1920, 1080, 60f),
+                    // 2160p modes
+                    new Mode(3840, 2160, 24f),
+                    new Mode(3840, 2160, 25f),
+                    new Mode(3840, 2160, 30f),
+                    new Mode(3840, 2160, 50f),
+                    new Mode(3840, 2160, 60f)
+            };
+            getAsserter()
+                    .withMessage("Display.getSupportedModes()")
+                    .that(Arrays.asList(display.getSupportedModes()))
+                    .comparingElementsUsing(MODE_CORRESPONDENCE)
+                    .containsAllIn(expected2160pSupportedModes);
         }
     }
 
@@ -185,6 +226,25 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
                     .about(MODE_SUBJECT_FACTORY)
                     .that(display.getMode())
                     .isEquivalentTo(new Mode(1920, 1080, 60f), REFRESH_RATE_PRECISION);
+
+            final Mode[] expected1080pSupportedModes = new Mode[]{
+                    new Mode(720, 480, 60f),
+                    new Mode(720, 576, 50f),
+                    // 720p modes
+                    new Mode(1280, 720, 50f),
+                    new Mode(1280, 720, 60f),
+                    // 1080p modes
+                    new Mode(1920, 1080, 24f),
+                    new Mode(1920, 1080, 25f),
+                    new Mode(1920, 1080, 30f),
+                    new Mode(1920, 1080, 50f),
+                    new Mode(1920, 1080, 60f),
+            };
+            getAsserter()
+                    .withMessage("Display.getSupportedModes()")
+                    .that(Arrays.asList(display.getSupportedModes()))
+                    .comparingElementsUsing(MODE_CORRESPONDENCE)
+                    .containsAllIn(expected1080pSupportedModes);
         }
     }
 
