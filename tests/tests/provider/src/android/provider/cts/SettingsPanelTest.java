@@ -258,23 +258,28 @@ public class SettingsPanelTest {
 
     private void launchVolumePanel() {
         assumeFalse("Skipping test: TV does not support handle ACTION_VOLUME", isTv());
+        assumeFalse("Skipping test: automotive does not support handle ACTION_VOLUME", isCar());
         launchPanel(Settings.Panel.ACTION_VOLUME);
     }
 
     private void launchInternetPanel() {
         assumeFalse("Skipping test: TV does not support handle ACTION_INTERNET_CONNECTIVITY",
                 isTv());
+        assumeFalse("Skipping test: automotive does not support handle ACTION_INTERNET_CONNECTIVITY",
+                isCar());
         launchPanel(Settings.Panel.ACTION_INTERNET_CONNECTIVITY);
     }
 
     private void launchNfcPanel() {
         assumeFalse("Skipping test: TV does not support handle ACTION_NFC", isTv());
         assumeTrue("device does not support NFC", RequiredServiceRule.hasService("nfc"));
+        assumeFalse("Skipping test: automotive does not support handle ACTION_NFC", isCar());
         launchPanel(Settings.Panel.ACTION_NFC);
     }
 
     private void launchWifiPanel() {
         assumeFalse("Skipping test: TV does not support handle ACTION_WIFI", isTv());
+        assumeFalse("Skipping test: automotive does not support handle ACTION_WIFI", isCar());
         launchPanel(Settings.Panel.ACTION_WIFI);
     }
 
@@ -282,6 +287,11 @@ public class SettingsPanelTest {
         PackageManager packageManager = mContext.getPackageManager();
         return packageManager.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
                 && packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+    }
+
+    private boolean isCar() {
+        PackageManager packageManager = mContext.getPackageManager();
+        return packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 
     private void launchPanel(String action) {
