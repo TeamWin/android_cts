@@ -18,6 +18,7 @@ package android.provider.cts.media;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -25,6 +26,7 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
@@ -43,6 +45,7 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
+import java.io.OutputStream;
 import java.util.Optional;
 
 @RunWith(Parameterized.class)
@@ -53,6 +56,10 @@ public class MediaStorePlacementTest {
     private ContentResolver mContentResolver;
 
     private Uri mExternalImages;
+    private Uri mExternalVideo;
+
+    private ContentValues mValues = new ContentValues();
+    private Bundle mExtras = new Bundle();
 
     @Parameter(0)
     public String mVolumeName;
@@ -69,6 +76,10 @@ public class MediaStorePlacementTest {
 
         Log.d(TAG, "Using volume " + mVolumeName);
         mExternalImages = MediaStore.Images.Media.getContentUri(mVolumeName);
+        mExternalVideo = MediaStore.Video.Media.getContentUri(mVolumeName);
+
+        mValues.clear();
+        mExtras.clear();
     }
 
     @Test
@@ -224,6 +235,76 @@ public class MediaStorePlacementTest {
                 Optional.of("Android/media/com.example/foo"), null));
         assertTrue(updatePlacement(uri,
                 Optional.of("DCIM"), null));
+    }
+
+    @Test
+    public void testRelated() throws Exception {
+        final Uri unusualUri = stageImageInAudio();
+
+        // Normal file creation should fail (image in audio)
+        mValues.put(MediaColumns.DISPLAY_NAME, "edited" + System.nanoTime());
+        mValues.put(MediaColumns.MIME_TYPE, "image/png");
+        mValues.put(MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_ALARMS + "/");
+        try {
+            mContentResolver.insert(mExternalImages, mValues, mExtras);
+            fail();
+        } catch (Exception expected) {
+        }
+
+        // But if we leverage item already there, we can succeed
+        mExtras.putParcelable(MediaStore.QUERY_ARG_RELATED_URI, unusualUri);
+        final Uri probeUri = mContentResolver.insert(mExternalImages, mValues, mExtras);
+        assertNotNull(probeUri);
+        assertEquals(ProviderTestUtils.getRelativeFile(unusualUri).getParent(),
+                ProviderTestUtils.getRelativeFile(probeUri).getParent());
+
+        // And we should have edit and delete access, since we created it
+        try (OutputStream out = mContentResolver.openOutputStream(probeUri)) {
+            out.write(42);
+        }
+        assertEquals(1, mContentResolver.delete(probeUri, null));
+    }
+
+    @Test
+    public void testRelated_InvalidMime() throws Exception {
+        final Uri unusualUri = stageImageInAudio();
+
+        // Normal file creation should fail (video doesn't match related image)
+        mValues.put(MediaColumns.DISPLAY_NAME, "edited" + System.nanoTime());
+        mValues.put(MediaColumns.MIME_TYPE, "video/mp4");
+        mValues.put(MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_ALARMS + "/");
+        mExtras.putParcelable(MediaStore.QUERY_ARG_RELATED_URI, unusualUri);
+        try {
+            mContentResolver.insert(mExternalVideo, mValues, mExtras);
+            fail();
+        } catch (Exception expected) {
+        }
+    }
+
+    @Test
+    public void testRelated_InvalidPath() throws Exception {
+        final Uri unusualUri = stageImageInAudio();
+
+        // Normal file creation should fail (path not exact match)
+        mValues.put(MediaColumns.DISPLAY_NAME, "edited" + System.nanoTime());
+        mValues.put(MediaColumns.MIME_TYPE, "image/jpeg");
+        mValues.put(MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_ALARMS + "/cts/");
+        mExtras.putParcelable(MediaStore.QUERY_ARG_RELATED_URI, unusualUri);
+        try {
+            mContentResolver.insert(mExternalImages, mValues, mExtras);
+            fail();
+        } catch (Exception expected) {
+        }
+    }
+
+    private Uri stageImageInAudio() throws Exception {
+        Assume.assumeFalse(MediaStore.VOLUME_EXTERNAL.equals(mVolumeName));
+
+        final String displayName = "cts" + System.nanoTime() + ".jpg";
+        final File file = Environment.buildPath(MediaStore.getVolumePath(mVolumeName),
+                Environment.DIRECTORY_ALARMS, displayName);
+        return ProviderTestUtils.scanFileFromShell(
+                ProviderTestUtils.stageFile(R.raw.scenery, file));
     }
 
     private boolean updatePlacement(Uri uri, Optional<String> path, Optional<String> displayName)
