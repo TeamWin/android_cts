@@ -216,7 +216,7 @@ public class MediaStore_Audio_Playlists_MembersTest {
         if (!MediaStore.VOLUME_EXTERNAL.equals(mVolumeName)) return;
 
         ContentValues values = new ContentValues();
-        values.put(Playlists.NAME, "My favourites");
+        values.put(Playlists.NAME, "My favourites " + System.nanoTime());
         values.put(Playlists.DATA, "");
         long dateAdded = System.currentTimeMillis();
         values.put(Playlists.DATE_ADDED, dateAdded);
@@ -383,7 +383,7 @@ public class MediaStore_Audio_Playlists_MembersTest {
 
             // create another playlist
             values.clear();
-            values.put(Playlists.NAME, "My favourites 2");
+            values.put(Playlists.NAME, "My favourites " + System.nanoTime());
             values.put(Playlists.DATA, "");
             values.put(Playlists.DATE_ADDED, dateAdded);
             values.put(Playlists.DATE_MODIFIED, dateModified);

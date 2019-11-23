@@ -24,6 +24,7 @@ import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
@@ -342,8 +343,12 @@ public class ProviderTestUtils {
     }
 
     public static boolean containsId(Uri uri, long id) {
+        return containsId(uri, null, id);
+    }
+
+    public static boolean containsId(Uri uri, Bundle extras, long id) {
         try (Cursor c = InstrumentationRegistry.getTargetContext().getContentResolver().query(uri,
-                new String[] { MediaColumns._ID }, null, null)) {
+                new String[] { MediaColumns._ID }, extras, null)) {
             while (c.moveToNext()) {
                 if (c.getLong(0) == id) return true;
             }
