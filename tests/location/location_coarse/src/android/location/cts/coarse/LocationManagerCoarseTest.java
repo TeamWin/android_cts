@@ -64,7 +64,7 @@ public class LocationManagerCoarseTest {
     private static final long TIMEOUT_MS = 5000;
 
     // 2000m is the default grid size used by location fudger
-    private static final float MAX_COARSE_FUDGE_DISTANCE_M = 2000f;
+    private static final float MAX_COARSE_FUDGE_DISTANCE_M = 2500f;
 
     private static final String COARSE_TEST_PROVIDER = "coarse_test_provider";
     private static final String FINE_TEST_PROVIDER = "fine_test_provider";
