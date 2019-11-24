@@ -128,8 +128,7 @@ public class AccessibilityServiceInfoTest {
                 AccessibilityServiceInfo.FLAG_REQUEST_FINGERPRINT_GESTURES));
         assertEquals("FLAG_REQUEST_SHORTCUT_WARNING_DIALOG_SPOKEN_FEEDBACK", AccessibilityServiceInfo.flagToString(
                 AccessibilityServiceInfo.FLAG_REQUEST_SHORTCUT_WARNING_DIALOG_SPOKEN_FEEDBACK));
-        assertEquals("FLAG_HANDLE_SHORTCUT", AccessibilityServiceInfo.flagToString(
-                AccessibilityServiceInfo.FLAG_HANDLE_SHORTCUT));
+
     }
 
     /**

@@ -1967,6 +1967,7 @@ public class ImageDecoderTest {
             if (resId == R.drawable.webp_orientation1) {
                 // The webp files may not look exactly the same as the jpegs.
                 // Recreate the reference.
+                reference.recycle();
                 reference = null;
                 isWebp = true;
             }
@@ -1986,6 +1987,7 @@ public class ImageDecoderTest {
                 } else {
                     int mse = isWebp ? 70 : 1;
                     BitmapUtils.assertBitmapsMse(bm, reference, mse, true, false);
+                    bm.recycle();
                 }
             } catch (IOException e) {
                 fail("Decoding " + uri.toString() + " yielded " + e);

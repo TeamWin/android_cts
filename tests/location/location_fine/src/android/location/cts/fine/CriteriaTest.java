@@ -17,11 +17,23 @@
 package android.location.cts.fine;
 
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.location.Criteria;
 import android.os.Parcel;
-import android.test.AndroidTestCase;
 
-public class CriteriaTest extends AndroidTestCase {
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class CriteriaTest {
+
+    @Test
     public void testConstructor() {
         new Criteria();
 
@@ -48,11 +60,13 @@ public class CriteriaTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testDescribeContents() {
         Criteria criteria = new Criteria();
         criteria.describeContents();
     }
 
+    @Test
     public void testAccessAccuracy() {
         Criteria criteria = new Criteria();
 
@@ -79,6 +93,7 @@ public class CriteriaTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testAccessPowerRequirement() {
         Criteria criteria = new Criteria();
 
@@ -103,6 +118,7 @@ public class CriteriaTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testAccessAltitudeRequired() {
         Criteria criteria = new Criteria();
 
@@ -113,6 +129,7 @@ public class CriteriaTest extends AndroidTestCase {
         assertTrue(criteria.isAltitudeRequired());
     }
 
+    @Test
     public void testAccessBearingAccuracy() {
         Criteria criteria = new Criteria();
 
@@ -126,6 +143,7 @@ public class CriteriaTest extends AndroidTestCase {
         assertEquals(Criteria.NO_REQUIREMENT, criteria.getBearingAccuracy());
       }
 
+    @Test
     public void testAccessBearingRequired() {
         Criteria criteria = new Criteria();
 
@@ -136,6 +154,7 @@ public class CriteriaTest extends AndroidTestCase {
         assertTrue(criteria.isBearingRequired());
     }
 
+    @Test
     public void testAccessCostAllowed() {
         Criteria criteria = new Criteria();
 
@@ -146,6 +165,7 @@ public class CriteriaTest extends AndroidTestCase {
         assertTrue(criteria.isCostAllowed());
     }
 
+    @Test
     public void testAccessHorizontalAccuracy() {
         Criteria criteria = new Criteria();
 
@@ -162,6 +182,7 @@ public class CriteriaTest extends AndroidTestCase {
         assertEquals(Criteria.NO_REQUIREMENT, criteria.getHorizontalAccuracy());
     }
 
+    @Test
     public void testAccessSpeedAccuracy() {
         Criteria criteria = new Criteria();
 
@@ -185,6 +206,7 @@ public class CriteriaTest extends AndroidTestCase {
         assertTrue(criteria.isSpeedRequired());
     }
 
+    @Test
     public void testAccessVerticalAccuracy() {
         Criteria criteria = new Criteria();
 
@@ -198,6 +220,7 @@ public class CriteriaTest extends AndroidTestCase {
         assertEquals(Criteria.NO_REQUIREMENT, criteria.getVerticalAccuracy());
     }
 
+    @Test
     public void testWriteToParcel() {
         Criteria criteria = new Criteria();
         criteria.setAltitudeRequired(true);

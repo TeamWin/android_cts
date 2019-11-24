@@ -16,15 +16,27 @@
 
 package android.location.cts.fine;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Parcel;
-import android.test.AndroidTestCase;
 import android.util.StringBuilderPrinter;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.text.DecimalFormat;
 
-public class LocationTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class LocationTest {
 
     private static final float DELTA = 0.1f;
     private final float TEST_ACCURACY = 1.0f;
@@ -43,10 +55,7 @@ public class LocationTest extends AndroidTestCase {
     private final boolean TEST_KEY1VALUE = false;
     private final byte TEST_KEY2VALUE = 10;
 
-    private static final String ENABLED_KEY = "enabled";
-    private static final String MESSENGER_KEY = "messenger";
-
-
+    @Test
     public void testConstructor() {
         new Location("LocationProvider");
 
@@ -62,6 +71,7 @@ public class LocationTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testDump() {
         StringBuilder sb = new StringBuilder();
         StringBuilderPrinter printer = new StringBuilderPrinter(sb);
@@ -70,6 +80,7 @@ public class LocationTest extends AndroidTestCase {
         assertNotNull(sb.toString());
     }
 
+    @Test
     public void testBearingTo() {
         Location location = new Location("");
         Location dest = new Location("");
@@ -110,6 +121,7 @@ public class LocationTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testConvert_CoordinateToRepresentation() {
         DecimalFormat df = new DecimalFormat("###.#####");
         String result;
@@ -154,20 +166,21 @@ public class LocationTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testConvert_RepresentationToCoordinate() {
         double result;
 
         result = Location.convert("-80.075");
-        assertEquals(-80.075, result);
+        assertEquals(-80.075, result, DELTA);
 
         result = Location.convert("-80:05.10000");
-        assertEquals(-80.085, result);
+        assertEquals(-80.085, result, DELTA);
 
         result = Location.convert("-80:04:03.00000");
-        assertEquals(-80.0675, result);
+        assertEquals(-80.0675, result, DELTA);
 
         result = Location.convert("-80:4:3");
-        assertEquals(-80.0675, result);
+        assertEquals(-80.0675, result, DELTA);
 
         try {
             Location.convert(null);
@@ -205,11 +218,13 @@ public class LocationTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testDescribeContents() {
         Location location = new Location("");
         location.describeContents();
     }
 
+    @Test
     public void testDistanceBetween() {
         float[] result = new float[3];
         Location.distanceBetween(0, 0, 0, 0, result);
@@ -237,6 +252,7 @@ public class LocationTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testDistanceTo() {
         float distance;
         Location zeroLocation = new Location("");
@@ -254,6 +270,7 @@ public class LocationTest extends AndroidTestCase {
         assertEquals(6244139.0, distance, 1);
     }
 
+    @Test
     public void testAccessAccuracy() {
         Location location = new Location("");
         assertFalse(location.hasAccuracy());
@@ -263,6 +280,7 @@ public class LocationTest extends AndroidTestCase {
         assertTrue(location.hasAccuracy());
     }
 
+    @Test
     public void testAccessVerticalAccuracy() {
         Location location = new Location("");
         assertFalse(location.hasVerticalAccuracy());
@@ -272,6 +290,7 @@ public class LocationTest extends AndroidTestCase {
         assertTrue(location.hasVerticalAccuracy());
     }
 
+    @Test
     public void testAccessSpeedAccuracy() {
         Location location = new Location("");
         assertFalse(location.hasSpeedAccuracy());
@@ -281,6 +300,7 @@ public class LocationTest extends AndroidTestCase {
         assertTrue(location.hasSpeedAccuracy());
     }
 
+    @Test
     public void testAccessBearingAccuracy() {
         Location location = new Location("");
         assertFalse(location.hasBearingAccuracy());
@@ -291,6 +311,7 @@ public class LocationTest extends AndroidTestCase {
     }
 
 
+    @Test
     public void testAccessAltitude() {
         Location location = new Location("");
         assertFalse(location.hasAltitude());
@@ -300,6 +321,7 @@ public class LocationTest extends AndroidTestCase {
         assertTrue(location.hasAltitude());
     }
 
+    @Test
     public void testAccessBearing() {
         Location location = new Location("");
         assertFalse(location.hasBearing());
@@ -317,6 +339,7 @@ public class LocationTest extends AndroidTestCase {
         assertTrue(location.hasBearing());
     }
 
+    @Test
     public void testAccessExtras() {
         Location location = createTestLocation();
 
@@ -326,6 +349,7 @@ public class LocationTest extends AndroidTestCase {
         assertNull(location.getExtras());
     }
 
+    @Test
     public void testAccessLatitude() {
         Location location = new Location("");
 
@@ -339,6 +363,7 @@ public class LocationTest extends AndroidTestCase {
         assertEquals(-90, location.getLatitude(), DELTA);
     }
 
+    @Test
     public void testAccessLongitude() {
         Location location = new Location("");
 
@@ -352,6 +377,7 @@ public class LocationTest extends AndroidTestCase {
         assertEquals(-180, location.getLongitude(), DELTA);
     }
 
+    @Test
     public void testAccessProvider() {
         Location location = new Location("");
 
@@ -363,6 +389,7 @@ public class LocationTest extends AndroidTestCase {
         assertNull(location.getProvider());
     }
 
+    @Test
     public void testAccessSpeed() {
         Location location = new Location("");
         assertFalse(location.hasSpeed());
@@ -385,6 +412,7 @@ public class LocationTest extends AndroidTestCase {
         assertEquals(12000, location.getTime());
     }
 
+    @Test
     public void testAccessElapsedRealtime() {
         Location location = new Location("");
 
@@ -398,20 +426,22 @@ public class LocationTest extends AndroidTestCase {
         assertEquals(12000, location.getElapsedRealtimeNanos());
     }
 
+    @Test
     public void testAccessElapsedRealtimeUncertaintyNanos() {
         Location location = new Location("");
         assertFalse(location.hasElapsedRealtimeUncertaintyNanos());
-        assertEquals(0.0, location.getElapsedRealtimeUncertaintyNanos());
+        assertEquals(0.0, location.getElapsedRealtimeUncertaintyNanos(), DELTA);
 
         location.setElapsedRealtimeUncertaintyNanos(12000.0);
-        assertEquals(12000.0, location.getElapsedRealtimeUncertaintyNanos());
+        assertEquals(12000.0, location.getElapsedRealtimeUncertaintyNanos(), DELTA);
         assertTrue(location.hasElapsedRealtimeUncertaintyNanos());
 
         location.reset();
         assertFalse(location.hasElapsedRealtimeUncertaintyNanos());
-        assertEquals(0.0, location.getElapsedRealtimeUncertaintyNanos());
+        assertEquals(0.0, location.getElapsedRealtimeUncertaintyNanos(), DELTA);
     }
 
+    @Test
     public void testSet() {
         Location location = new Location("");
 
@@ -445,12 +475,14 @@ public class LocationTest extends AndroidTestCase {
         assertNull(location.getExtras());
     }
 
+    @Test
     public void testToString() {
         Location location = createTestLocation();
 
         assertNotNull(location.toString());
     }
 
+    @Test
     public void testWriteToParcel() {
         Location location = createTestLocation();
 

@@ -20,6 +20,7 @@ import static android.autofillservice.cts.CannedFillResponse.DO_NOT_REPLY_RESPON
 import static android.autofillservice.cts.CannedFillResponse.FAIL;
 import static android.autofillservice.cts.CannedFillResponse.NO_MOAR_RESPONSES;
 import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
+import static android.autofillservice.cts.Helper.ID_CANCEL;
 import static android.autofillservice.cts.Helper.ID_EMPTY;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_PASSWORD_LABEL;
@@ -2040,7 +2041,6 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         assertThat(latch.await(500, TimeUnit.SECONDS)).isTrue();
     }
 
-
     @Test
     public void testContinueStylePositiveSaveButton() throws Exception {
         enableService();
@@ -2859,5 +2859,65 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         // Check the results.
         mActivity.assertAutoFilled();
         mUiBot.assertNoDatasets();
+    }
+
+    @Test
+    public void testCancelActionButton() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentationWithCancel("The Dude"))
+                        .build())
+                .setCancelTargetIds(new int[]{R.id.cancel});
+        sReplier.addResponse(builder.build());
+
+        // Trigger auto-fill.
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+
+        mUiBot.assertDatasetsContains("The Dude");
+
+        // Tap cancel button
+        mUiBot.selectByRelativeId(ID_CANCEL);
+        mUiBot.waitForIdle();
+
+        mUiBot.assertNoDatasets();
+
+        // Test and verify auto-fill does not trigger
+        mActivity.onPassword(View::requestFocus);
+        mUiBot.waitForIdle();
+
+        mUiBot.assertNoDatasetsEver();
+
+        // Test and verify auto-fill does not trigger.
+        mActivity.onUsername(View::requestFocus);
+        mUiBot.waitForIdle();
+
+        mUiBot.assertNoDatasetsEver();
+
+        // Reset
+        mActivity.tapClear();
+
+        // Set expectations.
+        final CannedFillResponse.Builder builder2 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentationWithCancel("The Dude"))
+                        .build())
+                .setCancelTargetIds(new int[]{R.id.cancel});
+        sReplier.addResponse(builder2.build());
+
+        // Trigger auto-fill.
+        mActivity.onPassword(View::requestFocus);
+        sReplier.getNextFillRequest();
+
+        // Verify auto-fill has been triggered.
+        mUiBot.assertDatasetsContains("The Dude");
     }
 }

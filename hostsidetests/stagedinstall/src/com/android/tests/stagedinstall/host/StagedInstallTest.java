@@ -94,33 +94,6 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void testFailOverlappingMultipleStagedInstall_BothSinglePackage_Apk() throws Exception {
-        runPhase("testFailOverlappingMultipleStagedInstall_BothSinglePackage_Apk");
-    }
-
-    @Test
-    public void testAllowNonOverlappingMultipleStagedInstall_MultiPackageSinglePackage_Apk()
-            throws Exception {
-        runPhase("testAllowNonOverlappingMultipleStagedInstall_MultiPackageSinglePackage_Apk");
-    }
-
-    @Test
-    public void testFailOverlappingMultipleStagedInstall_BothMultiPackage_Apk() throws Exception {
-        runPhase("testFailOverlappingMultipleStagedInstall_BothMultiPackage_Apk");
-    }
-
-    /**
-     * Tests for installing multiple staged sessions at the same time
-     */
-    @Test
-    @LargeTest
-    public void testMultipleStagedInstall_ApkOnly() throws Exception {
-        runPhase("testMultipleStagedInstall_ApkOnly_Commit");
-        getDevice().reboot();
-        runPhase("testMultipleStagedInstall_ApkOnly_VerifyPostReboot");
-    }
-
-    @Test
     @LargeTest
     public void testAbandonStagedApkBeforeReboot() throws Exception {
         runPhase("testAbandonStagedApkBeforeReboot_CommitAndAbandon");
@@ -145,6 +118,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
 
     @Test
     public void testGetActiveStagedSessions() throws Exception {
+        assumeTrue(isCheckpointSupported());
         runPhase("testGetActiveStagedSessions");
     }
 
@@ -155,6 +129,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
 
     @Test
     public void testGetActiveStagedSessions_MultiApkSession() throws Exception {
+        assumeTrue(isCheckpointSupported());
         runPhase("testGetActiveStagedSessions_MultiApkSession");
     }
 
@@ -424,6 +399,44 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testAfterRotationNewKeyCanUpdateFurtherWithoutLineage");
     }
 
+    /**
+     * Tests for staging and installing multiple staged sessions.
+     */
+
+    // Should fail to stage multiple sessions when check-point is not available
+    @Test
+    public void testFailStagingMultipleSessionsIfNoCheckPoint() throws Exception {
+        assumeFalse(isCheckpointSupported());
+        runPhase("testFailStagingMultipleSessionsIfNoCheckPoint");
+    }
+
+    @Test
+    public void testFailOverlappingMultipleStagedInstall_BothSinglePackage_Apk() throws Exception {
+        runPhase("testFailOverlappingMultipleStagedInstall_BothSinglePackage_Apk");
+    }
+
+    @Test
+    public void testAllowNonOverlappingMultipleStagedInstall_MultiPackageSinglePackage_Apk()
+            throws Exception {
+        assumeTrue(isCheckpointSupported());
+        runPhase("testAllowNonOverlappingMultipleStagedInstall_MultiPackageSinglePackage_Apk");
+    }
+
+    @Test
+    public void testFailOverlappingMultipleStagedInstall_BothMultiPackage_Apk() throws Exception {
+        assumeTrue(isCheckpointSupported());
+        runPhase("testFailOverlappingMultipleStagedInstall_BothMultiPackage_Apk");
+    }
+
+    // Test for installing multiple staged sessions at the same time
+    @Test
+    @LargeTest
+    public void testMultipleStagedInstall_ApkOnly() throws Exception {
+        runPhase("testMultipleStagedInstall_ApkOnly_Commit");
+        getDevice().reboot();
+        runPhase("testMultipleStagedInstall_ApkOnly_VerifyPostReboot");
+    }
+
     @Test
     @LargeTest
     public void testSamegradeSystemApex() throws Exception {
@@ -519,6 +532,14 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
                 return "Failed to get staged sessions";
             }
         }
+    }
 
+    private boolean isCheckpointSupported() throws Exception {
+        try {
+            runPhase("isCheckpointSupported");
+            return true;
+        } catch (AssertionError ignore) {
+            return false;
+        }
     }
 }

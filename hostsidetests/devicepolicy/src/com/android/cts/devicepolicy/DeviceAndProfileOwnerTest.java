@@ -2112,7 +2112,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
      * Start SimpleActivity synchronously in a particular user.
      */
     protected void startSimpleActivityAsUser(int userId) throws Exception {
-        installAppAsUser(TEST_APP_APK, userId);
+        installAppAsUser(TEST_APP_APK, /* grantPermissions */ true, /* dontKillApp */ true, userId);
         startActivityAsUser(userId, TEST_APP_PKG, TEST_APP_PKG + ".SimpleActivity");
     }
 

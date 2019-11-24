@@ -39,8 +39,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.util.Locale;
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 
@@ -532,13 +532,15 @@ public class VideoCodecTestBase extends AndroidTestCase {
      * @param outputYuvFilename The name of the output YUV file (optional).
      * @param frameRate         Frame rate of input file in frames per second
      * @param forceGoogleDecoder    Force to use Google Video decoder.
+     * @param codecConfigs      Codec config buffers to be added to the format
      */
     protected ArrayList<MediaCodec.BufferInfo> decode(
             String inputIvfFilename,
             String outputYuvFilename,
             String codecMimeType,
             int frameRate,
-            boolean forceGoogleDecoder) throws Exception {
+            boolean forceGoogleDecoder,
+            ArrayList<ByteBuffer> codecConfigs) throws Exception {
         ArrayList<MediaCodec.BufferInfo> bufferInfos = new ArrayList<MediaCodec.BufferInfo>();
 
         // Open input/output.
@@ -567,6 +569,11 @@ public class VideoCodecTestBase extends AndroidTestCase {
         }
         int frameColorFormat = properties.colorFormat;
         format.setInteger(MediaFormat.KEY_COLOR_FORMAT, properties.colorFormat);
+        int csdIndex = 0;
+        for (ByteBuffer config : codecConfigs) {
+            format.setByteBuffer("csd-" + csdIndex, config);
+            ++csdIndex;
+        }
 
         FileOutputStream yuv = null;
         if (outputYuvFilename != null) {
@@ -761,6 +768,7 @@ public class VideoCodecTestBase extends AndroidTestCase {
         private final CodecProperties mProperties;
         private final ArrayList<MediaCodec.BufferInfo> mBufferInfos;
         private final IvfWriter mIvf;
+        private final ArrayList<ByteBuffer> mCodecConfigs;
         private final byte[] mSrcFrame;
 
         private InputStream mYuvStream;
@@ -770,12 +778,14 @@ public class VideoCodecTestBase extends AndroidTestCase {
                 EncoderOutputStreamParameters streamParams,
                 CodecProperties properties,
                 ArrayList<MediaCodec.BufferInfo> bufferInfos,
-                IvfWriter ivf)
+                IvfWriter ivf,
+                ArrayList<ByteBuffer> codecConfigs)
                 throws Exception {
             mStreamParams = streamParams;
             mProperties = properties;
             mBufferInfos = bufferInfos;
             mIvf = ivf;
+            mCodecConfigs = codecConfigs;
 
             int srcFrameSize = streamParams.frameWidth * streamParams.frameHeight * 3 / 2;
             mSrcFrame = new byte[srcFrameSize];
@@ -820,6 +830,12 @@ public class VideoCodecTestBase extends AndroidTestCase {
 
         public boolean saveOutputFrame(MediaEncoderOutput out) {
             if (out.outputGenerated) {
+                if ((out.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
+                    Log.d(TAG, "Storing codec config separately");
+                    mCodecConfigs.add(
+                            ByteBuffer.allocate(out.buffer.length).put(out.buffer));
+                    out.buffer = new byte[0];
+                }
                 if (out.buffer.length > 0) {
                     // Save frame
                     try {
@@ -1306,6 +1322,14 @@ public class VideoCodecTestBase extends AndroidTestCase {
     }
 
     /**
+     * @see #encode(EncoderOutputStreamParameters, ArrayList<ByteBuffer>)
+     */
+    protected ArrayList<MediaCodec.BufferInfo> encode(
+            EncoderOutputStreamParameters streamParams) throws Exception {
+        return encode(streamParams, new ArrayList<ByteBuffer>());
+    }
+
+    /**
      * Video encoding loop supporting encoding single streams with an option
      * to run in a looper thread and use buffer ready notification callbacks.
      *
@@ -1319,10 +1343,12 @@ public class VideoCodecTestBase extends AndroidTestCase {
      * include any header data.
      *
      * @param streamParams  Structure with encoder parameters
+     * @param codecConfigs  List to be filled with codec config buffers
      * @return              Returns array of encoded frames information for each frame.
      */
     protected ArrayList<MediaCodec.BufferInfo> encode(
-            EncoderOutputStreamParameters streamParams) throws Exception {
+            EncoderOutputStreamParameters streamParams,
+            ArrayList<ByteBuffer> codecConfigs) throws Exception {
 
         ArrayList<MediaCodec.BufferInfo> bufferInfos = new ArrayList<MediaCodec.BufferInfo>();
         Log.d(TAG, "Source resolution: "+streamParams.frameWidth + " x " +
@@ -1452,6 +1478,12 @@ public class VideoCodecTestBase extends AndroidTestCase {
                     Log.d(TAG, "----Output EOS ");
                     sawOutputEOS = true;
                 }
+                if ((out.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
+                    Log.d(TAG, "Storing codec config separately");
+                    codecConfigs.add(
+                            ByteBuffer.allocate(out.buffer.length).put(out.buffer));
+                    out.buffer = new byte[0];
+                }
 
                 if (out.buffer.length > 0) {
                     // Save frame
@@ -1493,10 +1525,12 @@ public class VideoCodecTestBase extends AndroidTestCase {
      * include any header data.
      *
      * @param streamParams  Structure with encoder parameters
+     * @param codecConfigs  List to be filled with codec config buffers
      * @return              Returns array of encoded frames information for each frame.
      */
     protected ArrayList<MediaCodec.BufferInfo> encodeAsync(
-            EncoderOutputStreamParameters streamParams) throws Exception {
+            EncoderOutputStreamParameters streamParams,
+            ArrayList<ByteBuffer> codecConfigs) throws Exception {
         if (!streamParams.runInLooperThread) {
             throw new RuntimeException("encodeAsync should run with a looper thread!");
         }
@@ -1548,7 +1582,7 @@ public class VideoCodecTestBase extends AndroidTestCase {
 
         MediaEncoderAsync codec = new MediaEncoderAsync();
         MediaEncoderAsyncHelper helper = new MediaEncoderAsyncHelper(
-                streamParams, properties, bufferInfos, ivf);
+                streamParams, properties, bufferInfos, ivf, codecConfigs);
 
         codec.setAsyncHelper(helper);
         codec.createCodec(0, properties.codecName, format,
@@ -1577,13 +1611,15 @@ public class VideoCodecTestBase extends AndroidTestCase {
      * @param srcFrameWidth     Frame width of input yuv file
      * @param srcFrameHeight    Frame height of input yuv file
      * @param encodingParams    Encoder parameters
+     * @param codecConfigs      List to be filled with codec config buffers
      * @return                  Returns 2D array of encoded frames information for each stream and
      *                          for each frame.
      */
     protected ArrayList<ArrayList<MediaCodec.BufferInfo>> encodeSimulcast(
             int srcFrameWidth,
             int srcFrameHeight,
-            ArrayList<EncoderOutputStreamParameters> encodingParams)  throws Exception {
+            ArrayList<EncoderOutputStreamParameters> encodingParams,
+            ArrayList<ArrayList<ByteBuffer>> codecConfigs) throws Exception {
         int numEncoders = encodingParams.size();
 
         // Create arrays of input/output, formats, bitrates etc
@@ -1747,6 +1783,12 @@ public class VideoCodecTestBase extends AndroidTestCase {
                     if ((out.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                         Log.d(TAG, "----Enc" + i + ". Output EOS ");
                         sawOutputEOS[i] = true;
+                    }
+                    if ((out.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
+                        Log.d(TAG, "----Enc" + i + ". Storing codec config separately");
+                        codecConfigs.get(i).add(
+                                ByteBuffer.allocate(out.buffer.length).put(out.buffer));
+                        out.buffer = new byte[0];
                     }
 
                     if (out.buffer.length > 0) {

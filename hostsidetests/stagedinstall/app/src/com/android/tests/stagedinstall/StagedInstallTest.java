@@ -33,6 +33,7 @@ import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.storage.StorageManager;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -227,52 +228,6 @@ public class StagedInstallTest {
     public void testInstallMultipleStagedApks_VerifyPostReboot() throws Exception {
         int sessionId = retrieveLastSessionId();
         assertSessionApplied(sessionId);
-        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(1);
-        assertThat(getInstalledVersion(TestApp.B)).isEqualTo(1);
-    }
-
-    @Test
-    public void testFailOverlappingMultipleStagedInstall_BothSinglePackage_Apk() throws Exception {
-        stageSingleApk(TestApp.A1).assertSuccessful();
-        StageSessionResult failedSessionResult = stageSingleApk(TestApp.A1);
-        assertThat(failedSessionResult.getErrorMessage()).contains(
-                "has been staged already by session");
-    }
-
-    @Test
-    public void testAllowNonOverlappingMultipleStagedInstall_MultiPackageSinglePackage_Apk()
-            throws Exception {
-        stageMultipleApks(TestApp.A1, TestApp.B1).assertSuccessful();
-        stageSingleApk(TestApp.C1).assertSuccessful();
-    }
-
-    @Test
-    public void testFailOverlappingMultipleStagedInstall_BothMultiPackage_Apk() throws Exception {
-        stageMultipleApks(TestApp.A1, TestApp.B1).assertSuccessful();
-        StageSessionResult failedSessionResult = stageMultipleApks(TestApp.A2, TestApp.C1);
-        assertThat(failedSessionResult.getErrorMessage()).contains(
-                "has been staged already by session");
-    }
-
-    @Test
-    public void testMultipleStagedInstall_ApkOnly_Commit()
-            throws Exception {
-        int firstSessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
-        waitForIsReadyBroadcast(firstSessionId);
-        int secondSessionId = stageSingleApk(TestApp.B1).assertSuccessful().getSessionId();
-        waitForIsReadyBroadcast(secondSessionId);
-        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
-        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
-        storeSessionIds(Arrays.asList(firstSessionId, secondSessionId));
-    }
-
-    @Test
-    public void testMultipleStagedInstall_ApkOnly_VerifyPostReboot()
-            throws Exception {
-        List<Integer> sessionIds = retrieveLastSessionIds();
-        for (int sessionId: sessionIds) {
-            assertSessionApplied(sessionId);
-        }
         assertThat(getInstalledVersion(TestApp.A)).isEqualTo(1);
         assertThat(getInstalledVersion(TestApp.B)).isEqualTo(1);
     }
@@ -805,6 +760,65 @@ public class StagedInstallTest {
         waitForIsReadyBroadcast(sessionId);
     }
 
+    /**
+     * Tests for staging and installing multiple staged sessions.
+     */
+
+    // Should fail to stage multiple sessions when check-point is not available
+    @Test
+    public void testFailStagingMultipleSessionsIfNoCheckPoint() throws Exception {
+        stageSingleApk(TestApp.A1).assertSuccessful();
+        StageSessionResult failedSessionResult = stageSingleApk(TestApp.B1);
+        assertThat(failedSessionResult.getErrorMessage()).contains(
+                "Cannot stage multiple sessions without checkpoint support");
+    }
+
+    @Test
+    public void testFailOverlappingMultipleStagedInstall_BothSinglePackage_Apk() throws Exception {
+        stageSingleApk(TestApp.A1).assertSuccessful();
+        StageSessionResult failedSessionResult = stageSingleApk(TestApp.A1);
+        assertThat(failedSessionResult.getErrorMessage()).contains(
+                "has been staged already by session");
+    }
+
+    @Test
+    public void testAllowNonOverlappingMultipleStagedInstall_MultiPackageSinglePackage_Apk()
+            throws Exception {
+        stageMultipleApks(TestApp.A1, TestApp.B1).assertSuccessful();
+        stageSingleApk(TestApp.C1).assertSuccessful();
+    }
+
+    @Test
+    public void testFailOverlappingMultipleStagedInstall_BothMultiPackage_Apk() throws Exception {
+        stageMultipleApks(TestApp.A1, TestApp.B1).assertSuccessful();
+        StageSessionResult failedSessionResult = stageMultipleApks(TestApp.A2, TestApp.C1);
+        assertThat(failedSessionResult.getErrorMessage()).contains(
+                "has been staged already by session");
+    }
+
+    @Test
+    public void testMultipleStagedInstall_ApkOnly_Commit()
+            throws Exception {
+        int firstSessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
+        waitForIsReadyBroadcast(firstSessionId);
+        int secondSessionId = stageSingleApk(TestApp.B1).assertSuccessful().getSessionId();
+        waitForIsReadyBroadcast(secondSessionId);
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
+        storeSessionIds(Arrays.asList(firstSessionId, secondSessionId));
+    }
+
+    @Test
+    public void testMultipleStagedInstall_ApkOnly_VerifyPostReboot()
+            throws Exception {
+        List<Integer> sessionIds = retrieveLastSessionIds();
+        for (int sessionId: sessionIds) {
+            assertSessionApplied(sessionId);
+        }
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(1);
+        assertThat(getInstalledVersion(TestApp.B)).isEqualTo(1);
+    }
+
     @Test
     public void testSamegradeSystemApex_Commit() throws Exception {
         final PackageInfo shim = InstrumentationRegistry.getInstrumentation().getContext()
@@ -1085,5 +1099,12 @@ public class StagedInstallTest {
                 .that(info).isNotNull();
         assertThat(info.getSessionId()).isEqualTo(sessionId);
         return info;
+    }
+
+    @Test
+    public void isCheckpointSupported() {
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        StorageManager sm = (StorageManager) context.getSystemService(Context.STORAGE_SERVICE);
+        assertThat(sm.isCheckpointSupported()).isTrue();
     }
 }

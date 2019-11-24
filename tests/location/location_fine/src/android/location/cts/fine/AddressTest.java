@@ -16,18 +16,30 @@
 
 package android.location.cts.fine;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.util.Locale;
 
-import junit.framework.TestCase;
 import android.location.Address;
 import android.os.Bundle;
 import android.os.Parcel;
-import android.os.Parcelable;
 
-/**
- * Test the main functionalities of the AddressTest.
- */
-public class AddressTest extends TestCase {
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class AddressTest {
+
+    private static final double DELTA = 0.001;
+
+    @Test
     public void testConstructor() {
         new Address(Locale.ENGLISH);
 
@@ -36,18 +48,7 @@ public class AddressTest extends TestCase {
         new Address(null);
     }
 
-    public void testDescribeContents() {
-        Address address = new Address(Locale.GERMAN);
-
-        assertEquals(0, address.describeContents());
-
-        Bundle extras = new Bundle();
-        extras.putParcelable("key1", new MockParcelable());
-        address.setExtras(extras);
-
-        assertEquals(extras.describeContents(), address.describeContents());
-    }
-
+    @Test
     public void testAccessAdminArea() {
         Address address = new Address(Locale.ITALY);
 
@@ -59,6 +60,7 @@ public class AddressTest extends TestCase {
         assertNull(address.getAdminArea());
     }
 
+    @Test
     public void testAccessCountryCode() {
         Address address = new Address(Locale.JAPAN);
 
@@ -70,6 +72,7 @@ public class AddressTest extends TestCase {
         assertNull(address.getCountryCode());
     }
 
+    @Test
     public void testAccessCountryName() {
         Address address = new Address(Locale.KOREA);
 
@@ -81,6 +84,7 @@ public class AddressTest extends TestCase {
         assertNull(address.getCountryName());
     }
 
+    @Test
     public void testAccessExtras() {
         Address address = new Address(Locale.TAIWAN);
 
@@ -98,6 +102,7 @@ public class AddressTest extends TestCase {
         assertNull(address.getExtras());
     }
 
+    @Test
     public void testAccessFeatureName() {
         Address address = new Address(Locale.SIMPLIFIED_CHINESE);
 
@@ -109,6 +114,7 @@ public class AddressTest extends TestCase {
         assertNull(address.getFeatureName());
     }
 
+    @Test
     public void testAccessLatitude() {
         Address address = new Address(Locale.CHINA);
         assertFalse(address.hasLatitude());
@@ -116,7 +122,7 @@ public class AddressTest extends TestCase {
         double latitude = 1.23456789;
         address.setLatitude(latitude);
         assertTrue(address.hasLatitude());
-        assertEquals(latitude, address.getLatitude());
+        assertEquals(latitude, address.getLatitude(), DELTA);
 
         address.clearLatitude();
         assertFalse(address.hasLatitude());
@@ -124,9 +130,11 @@ public class AddressTest extends TestCase {
             address.getLatitude();
             fail("should throw IllegalStateException.");
         } catch (IllegalStateException e) {
+            // pass
         }
     }
 
+    @Test
     public void testAccessLongitude() {
         Address address = new Address(Locale.CHINA);
         assertFalse(address.hasLongitude());
@@ -134,7 +142,7 @@ public class AddressTest extends TestCase {
         double longitude = 1.23456789;
         address.setLongitude(longitude);
         assertTrue(address.hasLongitude());
-        assertEquals(longitude, address.getLongitude());
+        assertEquals(longitude, address.getLongitude(), DELTA);
 
         address.clearLongitude();
         assertFalse(address.hasLongitude());
@@ -142,9 +150,11 @@ public class AddressTest extends TestCase {
             address.getLongitude();
             fail("should throw IllegalStateException.");
         } catch (IllegalStateException e) {
+            // pass
         }
     }
 
+    @Test
     public void testAccessPhone() {
         Address address = new Address(Locale.CHINA);
 
@@ -156,6 +166,7 @@ public class AddressTest extends TestCase {
         assertNull(address.getPhone());
     }
 
+    @Test
     public void testAccessPostalCode() {
         Address address = new Address(Locale.CHINA);
 
@@ -167,6 +178,7 @@ public class AddressTest extends TestCase {
         assertNull(address.getPostalCode());
     }
 
+    @Test
     public void testAccessThoroughfare() {
         Address address = new Address(Locale.CHINA);
 
@@ -178,6 +190,7 @@ public class AddressTest extends TestCase {
         assertNull(address.getThoroughfare());
     }
 
+    @Test
     public void testAccessUrl() {
         Address address = new Address(Locale.CHINA);
 
@@ -189,6 +202,7 @@ public class AddressTest extends TestCase {
         assertNull(address.getUrl());
     }
 
+    @Test
     public void testAccessSubAdminArea() {
         Address address = new Address(Locale.CHINA);
 
@@ -200,6 +214,7 @@ public class AddressTest extends TestCase {
         assertNull(address.getSubAdminArea());
     }
 
+    @Test
     public void testToString() {
         Address address = new Address(Locale.CHINA);
 
@@ -212,6 +227,7 @@ public class AddressTest extends TestCase {
         assertEquals(expected, address.toString());
     }
 
+    @Test
     public void testAddressLine() {
         Address address = new Address(Locale.CHINA);
 
@@ -219,12 +235,14 @@ public class AddressTest extends TestCase {
             address.setAddressLine(-1, null);
             fail("should throw IllegalArgumentException");
         } catch (IllegalArgumentException e) {
+            // pass
         }
 
         try {
             address.getAddressLine(-1);
             fail("should throw IllegalArgumentException");
         } catch (IllegalArgumentException e) {
+            // pass
         }
 
         address.setAddressLine(0, null);
@@ -246,6 +264,7 @@ public class AddressTest extends TestCase {
         assertEquals(5, address.getMaxAddressLineIndex());
     }
 
+    @Test
     public void testGetLocale() {
         Locale locale = Locale.US;
         Address address = new Address(locale);
@@ -259,6 +278,7 @@ public class AddressTest extends TestCase {
         assertNull(address.getLocale());
     }
 
+    @Test
     public void testAccessLocality() {
         Address address = new Address(Locale.PRC);
 
@@ -270,6 +290,7 @@ public class AddressTest extends TestCase {
         assertNull(address.getLocality());
     }
 
+    @Test
     public void testAccessPremises() {
         Address address = new Address(Locale.PRC);
 
@@ -281,6 +302,7 @@ public class AddressTest extends TestCase {
         assertNull(address.getPremises());
     }
 
+    @Test
     public void testAccessSubLocality() {
         Address address = new Address(Locale.PRC);
 
@@ -292,6 +314,7 @@ public class AddressTest extends TestCase {
         assertNull(address.getSubLocality());
     }
 
+    @Test
     public void testAccessSubThoroughfare() {
         Address address = new Address(Locale.PRC);
 
@@ -303,6 +326,7 @@ public class AddressTest extends TestCase {
         assertNull(address.getSubThoroughfare());
     }
 
+    @Test
     public void testWriteToParcel() {
         Locale locale = Locale.KOREA;
         Address address = new Address(locale);
@@ -331,14 +355,5 @@ public class AddressTest extends TestCase {
         assertEquals(address.getExtras(), parcel.readBundle());
 
         parcel.recycle();
-    }
-
-    private class MockParcelable implements Parcelable {
-        public int describeContents() {
-            return Parcelable.CONTENTS_FILE_DESCRIPTOR;
-        }
-
-        public void writeToParcel(Parcel dest, int flags) {
-        }
     }
 }

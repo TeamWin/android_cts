@@ -2,6 +2,7 @@
 <resources>
     <string name="Permissions">Permissions</string>
     <string name="Deny">Deny</string>
+    <string name="Ask">Ask every time</string>
     <string name="Allow">Allow</string>
     <string name="AllowAll">Allow all the time</string>
 </resources>

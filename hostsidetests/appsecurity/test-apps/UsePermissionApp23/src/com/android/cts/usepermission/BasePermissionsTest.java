@@ -90,6 +90,10 @@ public abstract class BasePermissionsTest {
     private static final long RETRY_TIMEOUT = 10 * GLOBAL_TIMEOUT_MILLIS;
     private static final String LOG_TAG = "BasePermissionsTest";
 
+    private static final int STATE_ALLOWED = 0;
+    private static final int STATE_DENIED = 1;
+    private static final int STATE_DENIED_WITH_PREJUDICE = 2;
+
     private static Map<String, String> sPermissionToLabelResNameMap = new ArrayMap<>();
 
     private Context mContext;
@@ -380,7 +384,7 @@ public abstract class BasePermissionsTest {
     }
 
     protected void grantPermissions(String[] permissions) throws Exception {
-        setPermissionGrantState(permissions, true, false);
+        setPermissionGrantState(permissions, STATE_ALLOWED, false);
     }
 
     protected void revokePermission(String permission) throws Exception {
@@ -388,7 +392,7 @@ public abstract class BasePermissionsTest {
     }
 
     protected void revokePermissions(String[] permissions, boolean legacyApp) throws Exception {
-        setPermissionGrantState(permissions, false, legacyApp);
+        setPermissionGrantState(permissions, STATE_DENIED, legacyApp);
     }
 
     private void scrollToBottom() throws Exception {
@@ -401,7 +405,7 @@ public abstract class BasePermissionsTest {
         }
     }
 
-    private void setPermissionGrantState(String[] permissions, boolean granted,
+    private void setPermissionGrantState(String[] permissions, int state,
             boolean legacyApp) throws Exception {
         ExceptionUtils.wrappingExceptions(UiDumpUtils::wrapWithUiDump, () -> {
             getUiDevice().pressBack();
@@ -445,36 +449,49 @@ public abstract class BasePermissionsTest {
                     waitForIdle();
                 }
 
-                final boolean wasGranted = isTv() ? false : !waitFindObject(byText(R.string.Deny)).isChecked();
-                // TV does not use checked state to represent granted state.
-                if (granted != wasGranted || isTv()) {
-                    // Toggle the permission
-
-                    if (isTv()) {
-                        waitFindObject(By.text(permissionLabel)).click();
-                    } else if (granted) {
-                        waitFindObject(byText(R.string.Allow)).click();
-                    } else {
-                        waitFindObject(byText(R.string.Deny)).click();
+                final boolean wasGranted = isTv() ? false : !(waitFindObject(byText(R.string.Deny)).isChecked() || waitFindObject(byText(R.string.Ask)).isChecked());
+                boolean alreadyChecked = false;
+                if (isTv()) {
+                    waitFindObject(By.text(permissionLabel)).click();
+                } else if (state == STATE_ALLOWED) {
+                    UiObject2 object = waitFindObject(byText(R.string.Allow));
+                    alreadyChecked = object.isChecked();
+                    if (!alreadyChecked) {
+                        object.click();
                     }
+                } else if (state == STATE_DENIED){
+                    UiObject2 object = waitFindObject(byText(R.string.Ask));
+                    alreadyChecked = object.isChecked();
+                    if (!alreadyChecked) {
+                        object.click();
+                    }
+                } else if (state == STATE_DENIED_WITH_PREJUDICE) {
+                    UiObject2 object = waitFindObject(byText(R.string.Deny));
+                    alreadyChecked = object.isChecked();
+                    if (!alreadyChecked) {
+                        object.click();
+                    }
+                }
+                if (alreadyChecked) {
+                    continue;
+                }
+                waitForIdle();
+
+                if (wasGranted && legacyApp) {
+                    scrollToBottom();
+                    Context context = getInstrumentation().getContext();
+                    String packageName = context.getPackageManager()
+                            .getPermissionControllerPackageName();
+                    String resIdName = "com.android.permissioncontroller"
+                            + ":string/grant_dialog_button_deny_anyway";
+                    Resources resources = context
+                            .createPackageContext(packageName, 0).getResources();
+                    final int confirmResId = resources.getIdentifier(resIdName, null, null);
+                    String confirmTitle = resources.getString(confirmResId);
+
+                    waitFindObject(byTextStartsWithCaseInsensitive(confirmTitle))
+                            .click();
                     waitForIdle();
-
-                    if (wasGranted && legacyApp) {
-                        scrollToBottom();
-                        Context context = getInstrumentation().getContext();
-                        String packageName = context.getPackageManager()
-                                .getPermissionControllerPackageName();
-                        String resIdName = "com.android.permissioncontroller"
-                                + ":string/grant_dialog_button_deny_anyway";
-                        Resources resources = context
-                                .createPackageContext(packageName, 0).getResources();
-                        final int confirmResId = resources.getIdentifier(resIdName, null, null);
-                        String confirmTitle = resources.getString(confirmResId);
-
-                        waitFindObject(byTextStartsWithCaseInsensitive(confirmTitle))
-                                .click();
-                        waitForIdle();
-                    }
                 }
 
                 if (!isTv()) {

@@ -28,6 +28,8 @@ import static org.junit.Assert.fail;
 
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
+import android.provider.Settings;
+import android.server.wm.settings.SettingsSession;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
@@ -57,16 +59,21 @@ import androidx.test.platform.app.InstrumentationRegistry;
 public class AnrTests extends ActivityManagerTestBase {
     private static final String TAG = "AnrTests";
     private LogSeparator mLogSeparator;
+    private SettingsSession<Integer> mHideDialogSetting;
 
     @Before
     public void setup() throws Exception {
         super.setUp();
         mLogSeparator = separateLogs(); // add a new separator for logs
+        mHideDialogSetting = new SettingsSession<>(
+                Settings.Global.getUriFor(Settings.Global.HIDE_ERROR_DIALOGS),
+                Settings.Global::getInt, Settings.Global::putInt);
+        mHideDialogSetting.set(0);
     }
-
 
     @After
     public void teardown() throws Exception {
+        mHideDialogSetting.close();
         stopTestPackage(UNRESPONSIVE_ACTIVITY.getPackageName());
         super.tearDown();
     }
