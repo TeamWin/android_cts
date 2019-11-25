@@ -39,11 +39,11 @@ import androidx.annotation.Nullable;
 
 import com.android.server.am.nano.ActivityDisplayProto;
 import com.android.server.am.nano.ActivityManagerServiceDumpActivitiesProto;
-import com.android.server.am.nano.ActivityRecordProto;
 import com.android.server.am.nano.ActivityStackProto;
 import com.android.server.am.nano.ActivityStackSupervisorProto;
 import com.android.server.am.nano.KeyguardControllerProto;
 import com.android.server.am.nano.TaskRecordProto;
+import com.android.server.wm.nano.ActivityRecordProto;
 import com.android.server.wm.nano.ConfigurationContainerProto;
 
 import com.google.protobuf.nano.InvalidProtocolBufferNanoException;
@@ -807,7 +807,7 @@ public class ActivityManagerState {
         public boolean translucent;
 
         Activity(ActivityRecordProto proto) {
-            super(proto.appWindowToken.windowToken.windowContainer.configurationContainer);
+            super(proto.windowToken.windowContainer.configurationContainer);
             name = proto.identifier.title;
             state = proto.state;
             visible = proto.visible;

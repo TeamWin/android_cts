@@ -31,7 +31,7 @@ import android.view.nano.DisplayInfoProto;
 
 import androidx.test.InstrumentationRegistry;
 
-import com.android.server.wm.nano.AppWindowTokenProto;
+import com.android.server.wm.nano.ActivityRecordProto;
 import com.android.server.wm.nano.ConfigurationContainerProto;
 import com.android.server.wm.nano.DisplayContentProto;
 import com.android.server.wm.nano.IdentifierProto;
@@ -343,10 +343,10 @@ public class WindowManagerState {
             mTaskId = proto.id;
             mFullscreen = proto.fillsParent;
             mBounds = extract(proto.bounds);
-            for (int i = 0; i < proto.appWindowTokens.length; i++) {
-                AppWindowTokenProto appWindowTokenProto = proto.appWindowTokens[i];
-                mAppTokens.add(appWindowTokenProto.name);
-                WindowTokenProto windowTokenProto = appWindowTokenProto.windowToken;
+            for (int i = 0; i < proto.activity.length; i++) {
+                ActivityRecordProto activityRecordProto = proto.activity[i];
+                mAppTokens.add(activityRecordProto.name);
+                WindowTokenProto windowTokenProto = activityRecordProto.windowToken;
                 for (int j = 0; j < windowTokenProto.windows.length; j++) {
                     WindowStateProto windowProto = windowTokenProto.windows[j];
                     WindowState window = new WindowState(windowProto);
