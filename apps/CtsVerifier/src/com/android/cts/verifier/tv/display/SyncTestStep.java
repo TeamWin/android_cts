@@ -25,8 +25,8 @@ import com.android.cts.verifier.tv.TvAppVerifierActivity;
  * and a button to start the test. For asynchronous steps see {@link AsyncTestStep}.
  */
 public abstract class SyncTestStep extends TestStepBase {
-    public SyncTestStep(TvAppVerifierActivity context) {
-        super(context);
+    public SyncTestStep(TvAppVerifierActivity context, int instructionTextId, int buttonTextId) {
+        super(context, instructionTextId, buttonTextId);
     }
 
     public abstract boolean runTest();

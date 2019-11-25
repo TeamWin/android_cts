@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.tv.display;
 
-import android.content.Context;
 import android.view.Display;
 
 import com.android.cts.verifier.R;
@@ -75,18 +74,9 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
     private static class NonHdrDisplayTestStep extends SyncTestStep {
 
         public NonHdrDisplayTestStep(TvAppVerifierActivity context) {
-            super(context);
-        }
-
-        @Override
-        protected String getInstructionText() {
-            return mContext.getString(R.string.tv_hdr_connect_no_hdr_display,
-                    mContext.getString(getButtonStringId()));
-        }
-
-        @Override
-        protected int getButtonStringId() {
-            return R.string.tv_start_test;
+            super(context,
+                    R.string.tv_hdr_connect_no_hdr_display,
+                    R.string.tv_start_test);
         }
 
         @Override
@@ -99,18 +89,9 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
     private static class HdrDisplayTestStep extends SyncTestStep {
 
         public HdrDisplayTestStep(TvAppVerifierActivity context) {
-            super(context);
-        }
-
-        @Override
-        protected String getInstructionText() {
-            return mContext.getString(R.string.tv_hdr_connect_hdr_display,
-                    mContext.getString(getButtonStringId()));
-        }
-
-        @Override
-        protected int getButtonStringId() {
-            return R.string.tv_start_test;
+            super(context,
+                    R.string.tv_hdr_connect_hdr_display,
+                    R.string.tv_start_test);
         }
 
         @Override
@@ -152,20 +133,12 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
 
     private static class NoDisplayTestStep extends AsyncTestStep {
         public NoDisplayTestStep(TvAppVerifierActivity context) {
-            super(context);
-        }
-
-        @Override
-        protected String getInstructionText() {
-            return mContext.getString(R.string.tv_hdr_disconnect_display,
-                    mContext.getString(getButtonStringId()),
-                    DISPLAY_DISCONNECT_WAIT_TIME_SECONDS,
-                    DISPLAY_DISCONNECT_WAIT_TIME_SECONDS+1);
-        }
-
-        @Override
-        protected int getButtonStringId() {
-            return R.string.tv_start_test;
+            super(context,
+                    context.getString(
+                            R.string.tv_hdr_disconnect_display,
+                            DISPLAY_DISCONNECT_WAIT_TIME_SECONDS,
+                            DISPLAY_DISCONNECT_WAIT_TIME_SECONDS + 1),
+                    R.string.tv_start_test);
         }
 
         @Override
