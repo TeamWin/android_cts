@@ -36,7 +36,7 @@ import org.junit.runner.RunWith;
 public class RollbackManagerHostTest extends BaseHostJUnit4Test {
 
     private static final String SHIM_APEX_PACKAGE_NAME = "com.android.apex.cts.shim";
-    private static final String TEST_APK_PACKAGE_NAME = "com.android.cts.rollback.lib.testapp.A";
+    private static final String TEST_APK_PACKAGE_NAME = "com.android.cts.install.lib.testapp.A";
 
     /**
      * Runs the helper app test method on device.

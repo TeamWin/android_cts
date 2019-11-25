@@ -16,6 +16,7 @@
 
 package com.android.tests.stagedinstall;
 
+import static com.android.cts.install.lib.InstallUtils.getPackageInstaller;
 import static com.android.tests.stagedinstall.PackageInstallerSessionInfoSubject.assertThat;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -32,9 +33,14 @@ import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
-import android.util.Pair;
 
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.cts.install.lib.Install;
+import com.android.cts.install.lib.InstallUtils;
+import com.android.cts.install.lib.LocalIntentSender;
+import com.android.cts.install.lib.TestApp;
+import com.android.cts.install.lib.Uninstall;
 
 import org.junit.After;
 import org.junit.Before;
@@ -47,6 +53,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -82,18 +89,16 @@ public class StagedInstallTest {
 
     private static final String TAG = "StagedInstallTest";
 
-    private static final String TEST_APP_A = "com.android.tests.stagedinstall.testapp.A";
-    private static final String TEST_APP_B = "com.android.tests.stagedinstall.testapp.B";
-    private static final String SHIM_APEX_PACKAGE_NAME = "com.android.apex.cts.shim";
-    private static final String NOT_PRE_INSTALLED_SHIM_APEX_PACKAGE_NAME =
-            "com.android.apex.cts.shim_not_pre_installed";
-
     private File mTestStateFile = new File(
             InstrumentationRegistry.getInstrumentation().getContext().getFilesDir(),
             "ctsstagedinstall_state");
 
     private static final Duration WAIT_FOR_SESSION_REMOVED_TTL = Duration.ofSeconds(10);
     private static final Duration SLEEP_DURATION = Duration.ofMillis(200);
+
+    private static final TestApp TESTAPP_SAME_NAME_AS_APEX = new TestApp(
+            "TestAppSamePackageNameAsApex", "com.android.apex.cts.shim", 1, /*isApex*/ false,
+            "StagedInstallTestAppSamePackageNameAsApex.apk");
 
     @Before
     public void adoptShellPermissions() {
@@ -133,8 +138,7 @@ public class StagedInstallTest {
                 Log.e(TAG, "Failed to abandon session " + sessionInfo.getSessionId(), e);
             }
         }
-        uninstall(TEST_APP_A);
-        uninstall(TEST_APP_B);
+        Uninstall.packages(TestApp.A, TestApp.B);
         Files.deleteIfExists(mTestStateFile.toPath());
     }
 
@@ -156,20 +160,19 @@ public class StagedInstallTest {
 
     @Test
     public void testInstallStagedApk_Commit() throws Exception {
-        int sessionId = stageSingleApk(
-                "StagedInstallTestAppAv1.apk").assertSuccessful().getSessionId();
-        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
+        int sessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
         waitForIsReadyBroadcast(sessionId);
         assertSessionReady(sessionId);
         storeSessionId(sessionId);
-        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
     }
 
     @Test
     public void testInstallStagedApk_VerifyPostReboot() throws Exception {
         int sessionId = retrieveLastSessionId();
         assertSessionApplied(sessionId);
-        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(1);
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(1);
     }
 
     @Test
@@ -184,33 +187,30 @@ public class StagedInstallTest {
 
     @Test
     public void testInstallMultipleStagedApks_Commit() throws Exception {
-        int sessionId = stageMultipleApks(
-                "StagedInstallTestAppAv1.apk",
-                "StagedInstallTestAppBv1.apk")
+        int sessionId = stageMultipleApks(TestApp.A1, TestApp.B1)
                 .assertSuccessful().getSessionId();
-        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
-        assertThat(getInstalledVersion(TEST_APP_B)).isEqualTo(-1);
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
+        assertThat(getInstalledVersion(TestApp.B)).isEqualTo(-1);
         waitForIsReadyBroadcast(sessionId);
         assertSessionReady(sessionId);
         storeSessionId(sessionId);
-        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
-        assertThat(getInstalledVersion(TEST_APP_B)).isEqualTo(-1);
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
+        assertThat(getInstalledVersion(TestApp.B)).isEqualTo(-1);
     }
 
     @Test
     public void testInstallMultipleStagedApks_VerifyPostReboot() throws Exception {
         int sessionId = retrieveLastSessionId();
         assertSessionApplied(sessionId);
-        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(1);
-        assertThat(getInstalledVersion(TEST_APP_B)).isEqualTo(1);
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(1);
+        assertThat(getInstalledVersion(TestApp.B)).isEqualTo(1);
     }
 
     @Test
     public void testFailInstallAnotherSessionAlreadyInProgress_BothSinglePackage()
             throws Exception {
-        int sessionId = stageSingleApk(
-                "StagedInstallTestAppAv1.apk").assertSuccessful().getSessionId();
-        StageSessionResult failedSessionResult = stageSingleApk("StagedInstallTestAppAv1.apk");
+        int sessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
+        StageSessionResult failedSessionResult = stageSingleApk(TestApp.A1);
         assertThat(failedSessionResult.getErrorMessage()).contains(
                 "There is already in-progress committed staged session");
         getPackageInstaller().abandonSession(sessionId);
@@ -219,11 +219,8 @@ public class StagedInstallTest {
     @Test
     public void testFailInstallAnotherSessionAlreadyInProgress_SinglePackageMultiPackage()
             throws Exception {
-        int sessionId = stageSingleApk(
-                "StagedInstallTestAppAv1.apk").assertSuccessful().getSessionId();
-        StageSessionResult failedSessionResult = stageMultipleApks(
-                "StagedInstallTestAppAv1.apk",
-                "StagedInstallTestAppBv1.apk");
+        int sessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
+        StageSessionResult failedSessionResult = stageMultipleApks(TestApp.A1, TestApp.B1);
         assertThat(failedSessionResult.getErrorMessage()).contains(
                 "There is already in-progress committed staged session");
         getPackageInstaller().abandonSession(sessionId);
@@ -232,11 +229,9 @@ public class StagedInstallTest {
     @Test
     public void testFailInstallAnotherSessionAlreadyInProgress_MultiPackageSinglePackage()
             throws Exception {
-        int sessionId = stageMultipleApks(
-                "StagedInstallTestAppAv1.apk",
-                "StagedInstallTestAppBv1.apk").assertSuccessful().getSessionId();
-        StageSessionResult failedSessionResult = stageSingleApk(
-                "StagedInstallTestAppAv1.apk");
+        int sessionId = stageMultipleApks(TestApp.A1, TestApp.B1)
+                .assertSuccessful().getSessionId();
+        StageSessionResult failedSessionResult = stageSingleApk(TestApp.A1);
         assertThat(failedSessionResult.getErrorMessage()).contains(
                 "There is already in-progress committed staged session");
         getPackageInstaller().abandonSession(sessionId);
@@ -245,12 +240,9 @@ public class StagedInstallTest {
     @Test
     public void testFailInstallAnotherSessionAlreadyInProgress_BothMultiPackage()
             throws Exception {
-        int sessionId = stageMultipleApks(
-                "StagedInstallTestAppAv1.apk",
-                "StagedInstallTestAppBv1.apk").assertSuccessful().getSessionId();
-        StageSessionResult failedSessionResult = stageMultipleApks(
-                "StagedInstallTestAppAv1.apk",
-                "StagedInstallTestAppBv1.apk");
+        int sessionId = stageMultipleApks(TestApp.A1, TestApp.B1)
+                .assertSuccessful().getSessionId();
+        StageSessionResult failedSessionResult = stageMultipleApks(TestApp.A1, TestApp.B1);
         assertThat(failedSessionResult.getErrorMessage()).contains(
                 "There is already in-progress committed staged session");
         getPackageInstaller().abandonSession(sessionId);
@@ -258,9 +250,8 @@ public class StagedInstallTest {
 
     @Test
     public void testAbandonStagedApkBeforeReboot_CommitAndAbandon() throws Exception {
-        int sessionId = stageSingleApk(
-                "StagedInstallTestAppAv1.apk").assertSuccessful().getSessionId();
-        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
+        int sessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
         waitForIsReadyBroadcast(sessionId);
         PackageInstaller.SessionInfo session = getStagedSessionInfo(sessionId);
         assertSessionReady(sessionId);
@@ -287,14 +278,13 @@ public class StagedInstallTest {
 
     @Test
     public void testAbandonStagedApkBeforeReboot_VerifyPostReboot() throws Exception {
-        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
     }
 
     @Test
     public void testGetActiveStagedSession() throws Exception {
         PackageInstaller packageInstaller = getPackageInstaller();
-        int sessionId = stageSingleApk(
-                "StagedInstallTestAppAv1.apk").assertSuccessful().getSessionId();
+        int sessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
         PackageInstaller.SessionInfo session = packageInstaller.getActiveStagedSession();
         assertThat(session.getSessionId()).isEqualTo(sessionId);
     }
@@ -308,9 +298,7 @@ public class StagedInstallTest {
 
     @Test
     public void testGetGetActiveStagedSession_MultiApkSession() throws Exception {
-        int sessionId = stageMultipleApks(
-                "StagedInstallTestAppAv1.apk",
-                "StagedInstallTestAppBv1.apk")
+        int sessionId = stageMultipleApks(TestApp.A1, TestApp.B1)
                 .assertSuccessful().getSessionId();
         PackageInstaller.SessionInfo session = getPackageInstaller().getActiveStagedSession();
         assertThat(session.getSessionId()).isEqualTo(sessionId);
@@ -318,22 +306,20 @@ public class StagedInstallTest {
 
     @Test
     public void testStagedInstallDowngrade_DowngradeNotRequested_Fails_Commit()  throws Exception {
-        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
-        installNonStaged("StagedInstallTestAppAv2.apk");
-        int sessionId = stageSingleApk(
-                "StagedInstallTestAppAv1.apk").assertSuccessful().getSessionId();
-        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(2);
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
+        Install.single(TestApp.A2).commit();
+        int sessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(2);
         PackageInstaller.SessionInfo sessionInfo = waitForBroadcast(sessionId);
         assertThat(sessionInfo).isStagedSessionFailed();
     }
 
     @Test
     public void testStagedInstallDowngrade_DowngradeRequested_Commit() throws Exception {
-        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
-        installNonStaged("StagedInstallTestAppAv2.apk");
-        int sessionId = stageDowngradeSingleApk(
-                "StagedInstallTestAppAv1.apk").assertSuccessful().getSessionId();
-        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(2);
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
+        Install.single(TestApp.A2).commit();
+        int sessionId = stageDowngradeSingleApk(TestApp.A1).assertSuccessful().getSessionId();
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(2);
         waitForIsReadyBroadcast(sessionId);
         assertSessionReady(sessionId);
         storeSessionId(sessionId);
@@ -341,11 +327,10 @@ public class StagedInstallTest {
 
     @Test
     public void testStagedInstallDowngrade_DowngradeRequested_Fails_Commit() throws Exception {
-        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
-        installNonStaged("StagedInstallTestAppAv2.apk");
-        int sessionId = stageDowngradeSingleApk(
-                "StagedInstallTestAppAv1.apk").assertSuccessful().getSessionId();
-        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(2);
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
+        Install.single(TestApp.A2).commit();
+        int sessionId = stageDowngradeSingleApk(TestApp.A1).assertSuccessful().getSessionId();
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(2);
         PackageInstaller.SessionInfo sessionInfo = waitForBroadcast(sessionId);
         assertThat(sessionInfo).isStagedSessionFailed();
     }
@@ -356,49 +341,47 @@ public class StagedInstallTest {
         int sessionId = retrieveLastSessionId();
         assertSessionApplied(sessionId);
         // App should be downgraded.
-        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(1);
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(1);
     }
 
     @Test
     public void testInstallStagedApex_Commit() throws Exception {
-        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
-        int sessionId = stageSingleApk(
-                "com.android.apex.cts.shim.v2.apex").assertSuccessful().getSessionId();
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(1);
+        int sessionId = stageSingleApk(TestApp.Apex2).assertSuccessful().getSessionId();
         waitForIsReadyBroadcast(sessionId);
         assertSessionReady(sessionId);
         storeSessionId(sessionId);
         // Version shouldn't change before reboot.
-        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(1);
     }
 
     @Test
     public void testInstallStagedApex_VerifyPostReboot() throws Exception {
         int sessionId = retrieveLastSessionId();
         assertSessionApplied(sessionId);
-        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(2);
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(2);
     }
 
     @Test
     public void testInstallStagedApexAndApk_Commit() throws Exception {
-        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
-        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
-        int sessionId = stageMultipleApks(
-                "com.android.apex.cts.shim.v2.apex",
-                "StagedInstallTestAppAv1.apk").assertSuccessful().getSessionId();
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(1);
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
+        int sessionId = stageMultipleApks(TestApp.Apex2, TestApp.A1)
+                .assertSuccessful().getSessionId();
         waitForIsReadyBroadcast(sessionId);
         assertSessionReady(sessionId);
         storeSessionId(sessionId);
         // Version shouldn't change before reboot.
-        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
-        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(1);
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
     }
 
     @Test
     public void testInstallStagedApexAndApk_VerifyPostReboot() throws Exception {
         int sessionId = retrieveLastSessionId();
         assertSessionApplied(sessionId);
-        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(2);
-        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(1);
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(2);
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(1);
     }
 
     @Test
@@ -418,9 +401,9 @@ public class StagedInstallTest {
 
     @Test
     public void testInstallStagedNonPreInstalledApex_Fails() throws Exception {
-        assertThat(getInstalledVersion(NOT_PRE_INSTALLED_SHIM_APEX_PACKAGE_NAME)).isEqualTo(-1);
+        assertThat(getInstalledVersion(TestApp.NotPreInstalledApex)).isEqualTo(-1);
         int sessionId = stageSingleApk(
-                "com.android.apex.cts.shim_not_pre_installed.apex")
+                TestApp.ApexNotPreInstalled)
                 .assertSuccessful().getSessionId();
         PackageInstaller.SessionInfo sessionInfo = waitForBroadcast(sessionId);
         assertThat(sessionInfo).isStagedSessionFailed();
@@ -428,9 +411,9 @@ public class StagedInstallTest {
 
     @Test
     public void testStageApkWithSameNameAsApexShouldFail_Commit() throws Exception {
-        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
-        int sessionId = stageSingleApk(
-                "StagedInstallTestAppSamePackageNameAsApex.apk").assertSuccessful().getSessionId();
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(1);
+        int sessionId = stageSingleApk(TESTAPP_SAME_NAME_AS_APEX)
+                .assertSuccessful().getSessionId();
         waitForIsReadyBroadcast(sessionId);
         assertSessionReady(sessionId);
         storeSessionId(sessionId);
@@ -440,28 +423,21 @@ public class StagedInstallTest {
     public void testStageApkWithSameNameAsApexShouldFail_VerifyPostReboot() throws Exception {
         int sessionId = retrieveLastSessionId();
         assertSessionFailed(sessionId);
-        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(1);
     }
 
     @Test
     public void testNonStagedInstallApkWithSameNameAsApexShouldFail() throws Exception {
-        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
-        PackageInstaller packageInstaller = getPackageInstaller();
-        PackageInstaller.SessionParams sessionParams = new PackageInstaller.SessionParams(
-                PackageInstaller.SessionParams.MODE_FULL_INSTALL);
-        int sessionId = packageInstaller.createSession(sessionParams);
-        PackageInstaller.Session session = packageInstaller.openSession(sessionId);
-        writeApk(session, "StagedInstallTestAppSamePackageNameAsApex.apk");
-        session.commit(LocalIntentSender.getIntentSender());
-        final String errorMessage = extractErrorMessage(LocalIntentSender.getIntentSenderResult());
-        assertThat(errorMessage).contains("is an APEX package and can't be installed as an APK");
-        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(1);
+        InstallUtils.commitExpectingFailure(AssertionError.class,
+                "is an APEX package and can't be installed as an APK",
+                Install.single(TESTAPP_SAME_NAME_AS_APEX));
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(1);
     }
 
     @Test
     public void testInstallV3Apex_Commit() throws Exception {
-        int sessionId = stageSingleApk(
-                "com.android.apex.cts.shim.v3.apex").assertSuccessful().getSessionId();
+        int sessionId = stageSingleApk(TestApp.Apex3).assertSuccessful().getSessionId();
         waitForIsReadyBroadcast(sessionId);
         assertSessionReady(sessionId);
         storeSessionId(sessionId);
@@ -471,15 +447,14 @@ public class StagedInstallTest {
     public void testInstallV3Apex_VerifyPostReboot() throws Exception {
         int sessionId = retrieveLastSessionId();
         assertSessionApplied(sessionId);
-        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(3);
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(3);
     }
 
     @Test
     public void testStagedInstallDowngradeApex_DowngradeNotRequested_Fails_Commit()
             throws Exception {
-        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(3);
-        int sessionId = stageSingleApk(
-                "com.android.apex.cts.shim.v2.apex").assertSuccessful().getSessionId();
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(3);
+        int sessionId = stageSingleApk(TestApp.Apex2).assertSuccessful().getSessionId();
         PackageInstaller.SessionInfo sessionInfo = waitForBroadcast(sessionId);
         assertThat(sessionInfo).isStagedSessionFailed();
         // Also verify that correct session info is reported by PackageManager.
@@ -493,15 +468,14 @@ public class StagedInstallTest {
         int sessionId = retrieveLastSessionId();
         assertSessionFailed(sessionId);
         // INSTALL_REQUEST_DOWNGRADE wasn't set, so apex shouldn't be downgraded.
-        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(3);
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(3);
     }
 
     @Test
     public void testStagedInstallDowngradeApex_DowngradeRequested_DebugBuild_Commit()
             throws Exception {
-        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(3);
-        int sessionId = stageDowngradeSingleApk(
-                "com.android.apex.cts.shim.v2.apex").assertSuccessful().getSessionId();
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(3);
+        int sessionId = stageDowngradeSingleApk(TestApp.Apex2).assertSuccessful().getSessionId();
         waitForIsReadyBroadcast(sessionId);
         assertSessionReady(sessionId);
         storeSessionId(sessionId);
@@ -513,15 +487,14 @@ public class StagedInstallTest {
         int sessionId = retrieveLastSessionId();
         assertSessionApplied(sessionId);
         // Apex should be downgraded.
-        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(2);
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(2);
     }
 
     @Test
     public void testStagedInstallDowngradeApex_DowngradeRequested_UserBuild_Fails_Commit()
             throws Exception {
-        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(3);
-        int sessionId = stageDowngradeSingleApk(
-                "com.android.apex.cts.shim.v2.apex").assertSuccessful().getSessionId();
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(3);
+        int sessionId = stageDowngradeSingleApk(TestApp.Apex2).assertSuccessful().getSessionId();
         PackageInstaller.SessionInfo sessionInfo = waitForBroadcast(sessionId);
         assertThat(sessionInfo).isStagedSessionFailed();
         // Also verify that correct session info is reported by PackageManager.
@@ -535,25 +508,20 @@ public class StagedInstallTest {
         int sessionId = retrieveLastSessionId();
         assertSessionFailed(sessionId);
         // Apex shouldn't be downgraded.
-        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(3);
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(3);
     }
 
     @Test
     public void testInstallApex_DeviceDoesNotSupportApex_Fails() throws Exception {
-        try {
-            stageSingleApk("com.android.apex.cts.shim.v2.apex");
-            fail("IllegalArgumentException expected");
-        } catch (IllegalArgumentException expected) {
-            assertThat(expected.getMessage()).contains(
-                    "This device doesn't support the installation of APEX files");
-        }
+        InstallUtils.commitExpectingFailure(IllegalArgumentException.class,
+                "This device doesn't support the installation of APEX files",
+                Install.single(TestApp.Apex2).setStaged());
     }
 
     @Test
     public void testFailsInvalidApexInstall_Commit() throws Exception {
-        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
-        int sessionId = stageSingleApk(
-                "com.android.apex.cts.shim.v2_wrong_sha.apex").assertSuccessful()
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(1);
+        int sessionId = stageSingleApk(TestApp.ApexWrongSha2).assertSuccessful()
                 .getSessionId();
         waitForIsFailedBroadcast(sessionId);
         assertSessionFailed(sessionId);
@@ -603,13 +571,12 @@ public class StagedInstallTest {
         };
 
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        PackageInstaller packageInstaller = context.getPackageManager().getPackageInstaller();
+        PackageInstaller packageInstaller = getPackageInstaller();
         packageInstaller.registerSessionCallback(callback, handler);
 
-        int sessionId = stageSingleApk(
-                "StagedInstallTestAppAv1.apk").assertSuccessful().getSessionId();
+        int sessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
 
-        assertThat(getInstalledVersion(TEST_APP_A)).isEqualTo(-1);
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
         waitForIsReadyBroadcast(sessionId);
         assertSessionReady(sessionId);
 
@@ -627,9 +594,24 @@ public class StagedInstallTest {
         packageInstaller.abandonSession(sessionId);
     }
 
-    private static PackageInstaller getPackageInstaller() {
-        return InstrumentationRegistry.getInstrumentation().getContext().getPackageManager()
-                .getPackageInstaller();
+    @Test
+    public void testInstallStagedApexWithoutApexSuffix_Commit() throws Exception {
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(1);
+
+        int sessionId = stageSingleApk("com.android.apex.cts.shim.v2.apex", "package")
+                .assertSuccessful().getSessionId();
+        waitForIsReadyBroadcast(sessionId);
+        assertSessionReady(sessionId);
+        storeSessionId(sessionId);
+        // Version shouldn't change before reboot.
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(1);
+    }
+
+    @Test
+    public void testInstallStagedApexWithoutApexSuffix_VerifyPostReboot() throws Exception {
+        int sessionId = retrieveLastSessionId();
+        assertSessionApplied(sessionId);
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(2);
     }
 
     private static long getInstalledVersion(String packageName) {
@@ -646,73 +628,52 @@ public class StagedInstallTest {
     // It becomes harder to maintain this variety of install-related helper methods.
     // TODO(ioffe): refactor install-related helper methods into a separate utility.
     private static int createStagedSession() throws Exception {
-        return createStagedSession(getPackageInstaller(), false, false, false);
+        return Install.single(TestApp.A1).setStaged().createSession();
     }
 
-    private static int createStagedSession(
-            PackageInstaller packageInstaller,
-            boolean multiPackage, boolean isDowngrade, boolean isApexSession) throws Exception {
-        PackageInstaller.SessionParams sessionParams = new PackageInstaller.SessionParams(
-                PackageInstaller.SessionParams.MODE_FULL_INSTALL);
-        if (multiPackage) {
-            sessionParams.setMultiPackage();
-        }
-        sessionParams.setStaged();
-        sessionParams.setRequestDowngrade(isDowngrade);
-        if (isApexSession) {
-            sessionParams.setInstallAsApex();
-        }
-
-        return packageInstaller.createSession(sessionParams);
+    private static void commitSession(int sessionId) throws IOException {
+        InstallUtils.openPackageInstallerSession(sessionId)
+                .commit(LocalIntentSender.getIntentSender());
     }
 
-    private static StageSessionResult stageDowngradeSingleApk(String apkFileName) throws Exception {
-        Log.i(TAG, "Staging a downgrade of " + apkFileName);
-        PackageInstaller packageInstaller = getPackageInstaller();
-
-        Pair<Integer, PackageInstaller.Session> sessionPair =
-                prepareSingleApkStagedSession(packageInstaller, apkFileName, true);
+    private static StageSessionResult stageDowngradeSingleApk(TestApp testApp) throws Exception {
+        Log.i(TAG, "Staging a downgrade of " + testApp);
+        int sessionId = Install.single(testApp).setStaged().setRequestDowngrade().createSession();
         // Commit the session (this will start the installation workflow).
-        Log.i(TAG, "Committing downgrade session for apk: " + apkFileName);
-        sessionPair.second.commit(LocalIntentSender.getIntentSender());
-        return new StageSessionResult(sessionPair.first, LocalIntentSender.getIntentSenderResult());
+        Log.i(TAG, "Committing downgrade session for apk: " + testApp);
+        commitSession(sessionId);
+        return new StageSessionResult(sessionId, LocalIntentSender.getIntentSenderResult());
     }
 
-    private static StageSessionResult stageSingleApk(String apkFileName) throws Exception {
+    private static StageSessionResult stageSingleApk(String apkFileName, String outputFileName)
+            throws Exception {
         Log.i(TAG, "Staging an install of " + apkFileName);
-        PackageInstaller packageInstaller = getPackageInstaller();
-
-        Pair<Integer, PackageInstaller.Session> sessionPair =
-                prepareSingleApkStagedSession(packageInstaller, apkFileName, false);
+        // this is a trick to open an empty install session so we can manually write the package
+        // using writeApk
+        TestApp empty = new TestApp(null, null, -1,
+                apkFileName.endsWith(".apex"));
+        int sessionId = Install.single(empty).setStaged().createSession();
+        PackageInstaller.Session session = InstallUtils.openPackageInstallerSession(sessionId);
+        writeApk(session, apkFileName, outputFileName);
         // Commit the session (this will start the installation workflow).
         Log.i(TAG, "Committing session for apk: " + apkFileName);
-        sessionPair.second.commit(LocalIntentSender.getIntentSender());
-        return new StageSessionResult(sessionPair.first, LocalIntentSender.getIntentSenderResult());
+        commitSession(sessionId);
+        return new StageSessionResult(sessionId, LocalIntentSender.getIntentSenderResult());
     }
 
-    private static Pair<Integer, PackageInstaller.Session>
-            prepareSingleApkStagedSession(PackageInstaller packageInstaller, String apkFileName,
-            boolean isDowngrade)
-            throws Exception {
-        int sessionId = createStagedSession(packageInstaller, false, isDowngrade,
-                apkFileName.endsWith(".apex"));
-        PackageInstaller.Session session = packageInstaller.openSession(sessionId);
-        writeApk(session, apkFileName);
-        return new Pair<>(sessionId, session);
+    private static StageSessionResult stageSingleApk(TestApp testApp) throws Exception {
+        Log.i(TAG, "Staging an install of " + testApp);
+        int sessionId = Install.single(testApp).setStaged().createSession();
+        // Commit the session (this will start the installation workflow).
+        Log.i(TAG, "Committing session for apk: " + testApp);
+        commitSession(sessionId);
+        return new StageSessionResult(sessionId, LocalIntentSender.getIntentSenderResult());
     }
 
-    private static StageSessionResult stageMultipleApks(String... apkFileNames) throws Exception {
-        Log.i(TAG, "Staging an install of " + Arrays.toString(apkFileNames));
-        PackageInstaller packageInstaller = getPackageInstaller();
-        int multiPackageSessionId = createStagedSession(packageInstaller, true, false, false);
-        PackageInstaller.Session multiPackageSession = packageInstaller.openSession(
-                multiPackageSessionId);
-        for (String apkFileName : apkFileNames) {
-            Pair<Integer, PackageInstaller.Session> sessionPair =
-                    prepareSingleApkStagedSession(packageInstaller, apkFileName, false);
-            multiPackageSession.addChildSessionId(sessionPair.first);
-        }
-        multiPackageSession.commit(LocalIntentSender.getIntentSender());
+    private static StageSessionResult stageMultipleApks(TestApp... testApps) throws Exception {
+        Log.i(TAG, "Staging an install of " + Arrays.toString(testApps));
+        int multiPackageSessionId = Install.multi(testApps).setStaged().createSession();
+        commitSession(multiPackageSessionId);
         return new StageSessionResult(
                 multiPackageSessionId, LocalIntentSender.getIntentSenderResult());
     }
@@ -764,20 +725,10 @@ public class StagedInstallTest {
         }
     }
 
-    private static void installNonStaged(String apkFileName) throws Exception {
-        PackageInstaller packageInstaller = getPackageInstaller();
-        PackageInstaller.SessionParams sessionParams = new PackageInstaller.SessionParams(
-                PackageInstaller.SessionParams.MODE_FULL_INSTALL);
-        int sessionId = packageInstaller.createSession(sessionParams);
-        PackageInstaller.Session session = packageInstaller.openSession(sessionId);
-        writeApk(session, apkFileName);
-        session.commit(LocalIntentSender.getIntentSender());
-        assertStatusSuccess(LocalIntentSender.getIntentSenderResult());
-    }
-
-    private static void writeApk(PackageInstaller.Session session, String apkFileName)
+    private static void writeApk(PackageInstaller.Session session, String apkFileName,
+            String outputFileName)
             throws Exception {
-        try (OutputStream packageInSession = session.openWrite(apkFileName, 0, -1);
+        try (OutputStream packageInSession = session.openWrite(outputFileName, 0, -1);
              InputStream is =
                      StagedInstallTest.class.getClassLoader().getResourceAsStream(apkFileName)) {
             byte[] buffer = new byte[4096];
@@ -843,19 +794,6 @@ public class StagedInstallTest {
 
     private static PackageInstaller.SessionInfo getSessionInfo(int sessionId) {
         return getPackageInstaller().getSessionInfo(sessionId);
-    }
-
-    private static void uninstall(String packageName) throws Exception {
-        // No need to uninstall if the package isn't installed.
-        if (getInstalledVersion(packageName) == -1) {
-            return;
-        }
-
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        PackageManager packageManager = context.getPackageManager();
-        PackageInstaller packageInstaller = packageManager.getPackageInstaller();
-        packageInstaller.uninstall(packageName, LocalIntentSender.getIntentSender());
-        assertStatusSuccess(LocalIntentSender.getIntentSenderResult());
     }
 
     private static void assertStatusSuccess(Intent result) {
