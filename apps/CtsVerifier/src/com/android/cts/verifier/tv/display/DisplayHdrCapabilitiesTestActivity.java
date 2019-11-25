@@ -16,8 +16,6 @@
 
 package com.android.cts.verifier.tv.display;
 
-import android.view.Display;
-
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.tv.TvAppVerifierActivity;
 
@@ -57,16 +55,13 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
     private static class NonHdrDisplayTestStep extends TestStep {
 
         public NonHdrDisplayTestStep(TvAppVerifierActivity context) {
-            super(context,
-                    R.string.tv_hdr_connect_no_hdr_display,
-                    R.string.tv_start_test);
+            super(context, "", R.string.tv_start_test);
         }
 
         @Override
         public boolean runTest() {
-            Display display = mContext.getWindowManager().getDefaultDisplay();
-            return !display.isHdr() && (display.getHdrCapabilities() == null
-                    || display.getHdrCapabilities().getSupportedHdrTypes().length == 0);
+            // TODO: Add test logic
+            return false;
         }
     }
 

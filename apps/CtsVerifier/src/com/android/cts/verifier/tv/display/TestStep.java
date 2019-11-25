@@ -45,19 +45,6 @@ public abstract class TestStep {
         this.mButtonTextId = buttonTextId;
     }
 
-    /**
-     * Constructs a test step containing instruction to the user and a button.
-     *
-     * @param context The test activity which this test step is part of.
-     * @param instructionTextId Id of a string resource with test instructions visible to the user.
-     * @param buttonTextId Id of a string resource containing the text of the button.
-     */
-    public TestStep(TvAppVerifierActivity context, int instructionTextId, int buttonTextId) {
-        this.mContext = context;
-        this.mInstructionText = context.getResources().getString(instructionTextId);
-        this.mButtonTextId = buttonTextId;
-    }
-
     public boolean hasPassed() {
         return mHasPassed;
     }
