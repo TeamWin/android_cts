@@ -25,6 +25,7 @@ import android.content.res.Resources;
 import android.graphics.ImageFormat;
 import android.media.cts.CodecUtils;
 import android.media.Image;
+import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.MediaCodec;
 import android.media.MediaCodec.BufferInfo;
@@ -232,6 +233,62 @@ public class DecoderTest extends MediaPlayerTestBase {
     }
     public void testDecodeOpusMp4() throws Exception {
         testTimeStampOrdering(R.raw.sinesweepopusmp4);
+    }
+    public void testDecodeOpusChannelsAndRates() throws Exception {
+        int[] sampleRates = { 16000, 24000, 44100, 48000 };
+        int[] channelMasks = { AudioFormat.CHANNEL_OUT_MONO,
+                               AudioFormat.CHANNEL_OUT_STEREO,
+                               AudioFormat.CHANNEL_OUT_5POINT1 };
+
+        for (MediaCodecInfo codecInfo : getOpusDecoderMediaCodecInfoList()) {
+            MediaCodec codec = MediaCodec.createByCodecName(codecInfo.getCanonicalName());
+            for (int sampleRate : sampleRates) {
+                for (int channelMask : channelMasks) {
+                    int channelCount = AudioFormat.channelCountFromOutChannelMask(channelMask);
+
+                    codec.reset();
+                    MediaFormat desiredFormat = MediaFormat.createAudioFormat(
+                            MediaFormat.MIMETYPE_AUDIO_OPUS,
+                            sampleRate,
+                            channelCount);
+                    codec.configure(desiredFormat, null, null, 0);
+
+                    Log.d(TAG, "codec: " + codecInfo.getCanonicalName() +
+                            " sample rate: " + sampleRate +
+                            " channelcount:" + channelCount);
+
+                    MediaFormat actualFormat = codec.getInputFormat();
+                    int actualChannels = actualFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT, -1);
+                    int actualSampleRate = actualFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE, -1);
+                    assertTrue("channels: configured " + actualChannels + " != desired " + channelCount,
+                               actualChannels == channelCount);
+                    assertTrue("sample rate: configured " + actualSampleRate + " != desired " + sampleRate,
+                               actualSampleRate == sampleRate);
+                }
+            }
+
+            codec.release();
+        }
+    }
+
+    private ArrayList<MediaCodecInfo> getOpusDecoderMediaCodecInfoList() {
+        MediaCodecList mediaCodecList = new MediaCodecList(MediaCodecList.ALL_CODECS);
+        ArrayList<MediaCodecInfo> opusDecoderInfos = new ArrayList<MediaCodecInfo>();
+        for (MediaCodecInfo codecInfo : mediaCodecList.getCodecInfos()) {
+            if (!codecInfo.isEncoder() && isOpusSupported(codecInfo)) {
+                opusDecoderInfos.add(codecInfo);
+            }
+        }
+        return opusDecoderInfos;
+    }
+
+    private boolean isOpusSupported(MediaCodecInfo codecInfo) {
+        for (String type : codecInfo.getSupportedTypes()) {
+            if (type.equalsIgnoreCase(MediaFormat.MIMETYPE_AUDIO_OPUS)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void testDecode51M4a() throws Exception {
