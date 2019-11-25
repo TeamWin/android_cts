@@ -16,22 +16,18 @@
 
 package android.systemintents.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.provider.Settings;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.MediumTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
@@ -90,7 +86,7 @@ public class TestSystemIntents {
 
     @Before
     public void setUp() throws Exception {
-        mContext = InstrumentationRegistry.getContext();
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mPackageManager = mContext.getPackageManager();
     }
 
@@ -110,7 +106,7 @@ public class TestSystemIntents {
             productFlags |= EXCLUDE_NON_INSTALLABLE_IME;
         }
 
-        final Configuration config = InstrumentationRegistry.getContext().getResources().getConfiguration();
+        final Configuration config = mContext.getResources().getConfiguration();
         if ((config.uiMode & Configuration.UI_MODE_TYPE_WATCH) != 0) {
             productFlags |= EXCLUDE_WATCH;
         }
@@ -122,28 +118,5 @@ public class TestSystemIntents {
                 assertTrue("API intent " + e.intent + " not implemented by any activity", ri != null);
             }
         }
-    }
-
-    @Test
-    public void testManageOverlayPermissionIntentWithDataResolvesToSameIntentWithoutData() {
-        Intent genericIntent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
-        Intent appSpecificIntent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
-        appSpecificIntent.setData(Uri.fromParts("package", mContext.getPackageName(), null));
-
-        ResolveInfo genericResolveInfo = mPackageManager.resolveActivity(genericIntent, 0);
-        ResolveInfo appSpecificResolveInfo = mPackageManager.resolveActivity(appSpecificIntent, 0);
-
-        String errorMessage =
-                "ACTION_MANAGE_OVERLAY_PERMISSION intent with data and without data should "
-                        + "resolve to the same activity";
-        if (genericResolveInfo == null) {
-            assertNull(errorMessage, appSpecificResolveInfo);
-            return;
-        }
-        assertNotNull(errorMessage, appSpecificResolveInfo);
-        ActivityInfo genericActivity = genericResolveInfo.activityInfo;
-        ActivityInfo appActivity = appSpecificResolveInfo.activityInfo;
-        assertEquals(errorMessage, genericActivity.packageName, appActivity.packageName);
-        assertEquals(errorMessage, genericActivity.name, appActivity.name);
     }
 }
