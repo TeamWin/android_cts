@@ -22,7 +22,6 @@ import com.android.cts.verifier.R;
 import com.android.cts.verifier.tv.TvAppVerifierActivity;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -36,15 +35,6 @@ import java.util.List;
  * Display is connected and 3. no display is connected.
  */
 public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
-    private static final @Display.HdrCapabilities.HdrType
-    int[] EXPECTED_SUPPORTED_HDR_TYPES_SORTED = {
-            Display.HdrCapabilities.HDR_TYPE_DOLBY_VISION,
-            Display.HdrCapabilities.HDR_TYPE_HDR10,
-            Display.HdrCapabilities.HDR_TYPE_HDR10_PLUS,
-            Display.HdrCapabilities.HDR_TYPE_HLG
-    };
-    private static final float MAX_EXPECTED_LUMINANCE = 10_000f;
-
     private TestSequence mTestSequence;
 
     @Override
@@ -83,45 +73,13 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
     private static class HdrDisplayTestStep extends TestStep {
 
         public HdrDisplayTestStep(TvAppVerifierActivity context) {
-            super(context,
-                    R.string.tv_hdr_connect_hdr_display,
-                    R.string.tv_start_test);
+            super(context, "", R.string.tv_start_test);
         }
 
         @Override
         public boolean runTest() {
-            Display display = mContext.getWindowManager().getDefaultDisplay();
-            return display.isHdr()
-                    && hasExpectedHdrSupportedTypes(display)
-                    && hasSaneLuminanceValues(display);
-        }
-
-        private static boolean hasExpectedHdrSupportedTypes(Display display) {
-            Display.HdrCapabilities actualHdrCapabilities = display.getHdrCapabilities();
-            int[] actualSupportedHdrTypes = actualHdrCapabilities.getSupportedHdrTypes();
-            return Arrays.equals(EXPECTED_SUPPORTED_HDR_TYPES_SORTED, actualSupportedHdrTypes);
-        }
-
-        private static boolean hasSaneLuminanceValues(Display display) {
-            Display.HdrCapabilities hdrCapabilities = display.getHdrCapabilities();
-
-            float maxLuminance = hdrCapabilities.getDesiredMaxLuminance();
-            float maxAvgLuminance = hdrCapabilities.getDesiredMaxAverageLuminance();
-            float minLuminance = hdrCapabilities.getDesiredMinLuminance();
-
-            if(!(0f < maxLuminance && maxLuminance <= MAX_EXPECTED_LUMINANCE)) {
-                return false;
-            }
-
-            if(!(0f < maxAvgLuminance && maxAvgLuminance <= MAX_EXPECTED_LUMINANCE)) {
-                return false;
-            }
-
-            if (!(minLuminance < maxAvgLuminance && maxAvgLuminance <= maxLuminance)) {
-                return false;
-            }
-
-            return true;
+            // TODO: Add test logic
+            return false;
         }
     }
 

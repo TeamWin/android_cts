@@ -4345,9 +4345,6 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="tv_hdr_connect_no_hdr_display">Connect a non-HDR display and then
         press the "Start Test" button, below.
     </string>
-    <string name="tv_hdr_connect_hdr_display">Connect an HDR display and press
-        the "Start Test" button, below.
-    </string>
 
     <string name="overlay_view_text">Overlay View Dummy Text</string>
     <string name="custom_rating">Example of input app specific custom rating.</string>
