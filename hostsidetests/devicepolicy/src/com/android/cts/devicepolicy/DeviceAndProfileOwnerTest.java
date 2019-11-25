@@ -1398,6 +1398,15 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                     .build());
     }
 
+    /** Test for resetPassword for all devices. */
+    @Test
+    public void testResetPasswordDeprecated() throws Exception {
+        if (!mHasFeature || !mHasSecureLockScreen) {
+            return;
+        }
+        executeDeviceTestMethod(".ResetPasswordTest", "testResetPasswordDeprecated");
+    }
+
     @LockSettingsTest
     @Test
     public void testResetPasswordWithToken() throws Exception {

@@ -96,37 +96,12 @@ public abstract class BaseDeviceAdminHostSideTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testResetPassword_nycRestrictions() throws Exception {
+    public void testResetPasswordDeprecated() throws Exception {
         if (!mHasFeature || !mHasSecureLockScreen) {
             return;
         }
 
-        try {
-            runTests(getDeviceAdminApkPackage(), "DeviceAdminPasswordTest",
-                            "testResetPassword_nycRestrictions");
-        } finally {
-            changeUserCredential(null, "1234", 0);
-        }
-    }
-
-    private void clearPasswordForDeviceOwner() throws Exception {
-        runTests(getDeviceAdminApkPackage(), "ClearPasswordTest");
-    }
-
-    /**
-     * Run the tests in DeviceOwnerPasswordTest.java (as device owner).
-     */
-    @Test
-    public void testRunDeviceOwnerPasswordTest() throws Exception {
-        if (!mHasFeature || !mHasSecureLockScreen) {
-            return;
-        }
-
-        setDeviceOwner(getAdminReceiverComponent(), mUserId, /*expectFailure*/ false);
-        try {
-            runTests(getDeviceAdminApkPackage(), "DeviceOwnerPasswordTest");
-        } finally {
-            clearPasswordForDeviceOwner();
-        }
+        runTests(getDeviceAdminApkPackage(), "DeviceAdminPasswordTest",
+                        "testResetPasswordDeprecated");
     }
 }

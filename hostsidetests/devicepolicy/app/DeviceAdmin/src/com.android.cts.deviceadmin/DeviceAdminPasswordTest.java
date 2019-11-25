@@ -15,8 +15,7 @@
  */
 package com.android.cts.deviceadmin;
 
-import android.app.admin.DevicePolicyManager;
-import android.test.MoreAsserts;
+import android.os.Build;
 
 /**
  * Tests that:
@@ -35,82 +34,18 @@ public class DeviceAdminPasswordTest extends BaseDeviceAdminTest {
         assertNotDeviceOwner();
     }
 
-    private void checkSetPassword_nycRestrictions_success() {
-        assertTrue(dpm.resetPassword("1234", /* flags= */ 0));
-    }
-
-    private void checkSetPassword_nycRestrictions_failure() {
-        try {
-            assertFalse(dpm.resetPassword("1234", /* flags= */ 0));
-            if (shouldResetPasswordThrow()) {
-                fail("Didn't throw");
-            }
-        } catch (SecurityException e) {
-            if (!shouldResetPasswordThrow()) {
-                fail("Shouldn't throw");
-            }
-            MoreAsserts.assertContainsRegex("Cannot change current password", e.getMessage());
+    public void testResetPasswordDeprecated() {
+        if (getTargetSdkLevel() < Build.VERSION_CODES.N) {
+            assertFalse(dpm.resetPassword("1234", 0));
+        } else {
+            try {
+                dpm.resetPassword("1234", 0);
+                fail("resetPassword() should throw SecurityException");
+            } catch (SecurityException e) { }
         }
     }
 
-    private void checkClearPassword_nycRestrictions_failure() {
-        try {
-            assertFalse(dpm.resetPassword("", /* flags= */ 0));
-            if (shouldResetPasswordThrow()) {
-                fail("Didn't throw");
-            }
-        } catch (SecurityException e) {
-            if (!shouldResetPasswordThrow()) {
-                fail("Shouldn't throw");
-            }
-            MoreAsserts.assertContainsRegex("Cannot call with null password", e.getMessage());
-        }
-    }
-
-    private boolean getPasswordState() throws InterruptedException {
-        final int currentQuality = dpm.getPasswordQuality(mAdminComponent);
-        dpm.setPasswordQuality(mAdminComponent, DevicePolicyManager.PASSWORD_QUALITY_SOMETHING);
-        try {
-            return dpm.isActivePasswordSufficient();
-        } finally {
-            dpm.setPasswordQuality(mAdminComponent, currentQuality);
-        }
-    }
-
-    private void assertHasPassword() throws InterruptedException {
-        assertTrue("No password set", getPasswordState());
-    }
-
-    private void assertNoPassword() throws InterruptedException {
-        assertFalse("Password is set", getPasswordState());
-    }
-
-    /**
-     * Tests for the new restrictions on {@link DevicePolicyManager#resetPassword} introduced
-     * on NYC.
-     */
-    public void testResetPassword_nycRestrictions() throws Exception {
-
-        assertNoPassword();
-
-        // Can't clear the password, even if there's no password set currently.
-        checkClearPassword_nycRestrictions_failure();
-
-        assertNoPassword();
-
-        // No password -> setting one is okay.
-        checkSetPassword_nycRestrictions_success();
-
-        assertHasPassword();
-
-        // But once set, DA can't change the password.
-        checkSetPassword_nycRestrictions_failure();
-
-        assertHasPassword();
-
-        // Still can't clear the password.
-        checkClearPassword_nycRestrictions_failure();
-
-        assertHasPassword();
+    private int getTargetSdkLevel() {
+        return mContext.getApplicationContext().getApplicationInfo().targetSdkVersion;
     }
 }
