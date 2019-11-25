@@ -18,6 +18,8 @@ package com.android.cts.install.lib;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.fail;
+
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -33,6 +35,7 @@ import android.os.HandlerThread;
 
 import androidx.test.InstrumentationRegistry;
 
+import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -102,7 +105,7 @@ public class InstallUtils {
         Context context = InstrumentationRegistry.getContext();
         context.registerReceiver(sessionUpdatedReceiver, sessionUpdatedFilter);
 
-        PackageInstaller installer = context.getPackageManager().getPackageInstaller();
+        PackageInstaller installer = getPackageInstaller();
         PackageInstaller.SessionInfo info = installer.getSessionInfo(sessionId);
 
         try {
@@ -134,6 +137,22 @@ public class InstallUtils {
     }
 
     /**
+     * Returns the PackageInstaller instance of the current {@code Context}
+     */
+    public static PackageInstaller getPackageInstaller() {
+        return InstrumentationRegistry.getContext().getPackageManager().getPackageInstaller();
+    }
+
+    /**
+     * Returns an existing session to actively perform work.
+     * {@see PackageInstaller#openSession}
+     */
+    public static PackageInstaller.Session openPackageInstallerSession(int sessionId)
+            throws IOException {
+        return getPackageInstaller().openSession(sessionId);
+    }
+
+    /**
      * Asserts that {@code result} intent has a success status.
      */
     public static void assertStatusSuccess(Intent result) {
@@ -145,6 +164,17 @@ public class InstallUtils {
             String message = result.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
             throw new AssertionError(message == null ? "UNKNOWN FAILURE" : message);
         }
+    }
+
+    /**
+     * Commits {@link Install} but expects to fail.
+     *
+     * @param expectedThrowableClass class or superclass of the expected throwable.
+     *
+     */
+    public static void commitExpectingFailure(Class expectedThrowableClass,
+            String expectedFailMessage, Install install) {
+        assertThrows(expectedThrowableClass, expectedFailMessage, () -> install.commit());
     }
 
     private static final String NO_RESPONSE = "NO RESPONSE";
@@ -204,5 +234,34 @@ public class InstallUtils {
             return ((pi.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0)
                     && ((pi.applicationInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) == 0);
         }
+    }
+
+    /**
+     * A functional interface representing an operation that takes no arguments,
+     * returns no arguments and might throw a {@link Throwable} of any kind.
+     */
+    @FunctionalInterface
+    private interface Operation {
+        /**
+         * This is the method that gets called for any object that implements this interface.
+         */
+        void run() throws Throwable;
+    }
+
+    /**
+     * Runs {@link Operation} and expects a {@link Throwable} of the given class to be thrown.
+     *
+     * @param expectedThrowableClass class or superclass of the expected throwable.
+     */
+    private static void assertThrows(Class expectedThrowableClass, String expectedFailMessage,
+            Operation operation) {
+        try {
+            operation.run();
+        } catch (Throwable expected) {
+            assertThat(expectedThrowableClass.isAssignableFrom(expected.getClass())).isTrue();
+            assertThat(expected.getMessage()).containsMatch(expectedFailMessage);
+            return;
+        }
+        fail("Operation was expected to fail!");
     }
 }

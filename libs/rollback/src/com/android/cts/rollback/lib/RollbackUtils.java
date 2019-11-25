@@ -18,8 +18,6 @@ package com.android.cts.rollback.lib;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assert.fail;
-
 import android.app.ActivityManager;
 import android.app.AlarmManager;
 import android.content.BroadcastReceiver;
@@ -40,8 +38,10 @@ import com.android.cts.install.lib.TestApp;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.SynchronousQueue;
+import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * Utilities to facilitate testing rollbacks.
@@ -49,6 +49,17 @@ import java.util.concurrent.SynchronousQueue;
 public class RollbackUtils {
 
     private static final String TAG = "RollbackTest";
+
+    /**
+     * Time between repeated checks in {@link #retry}.
+     */
+    private static final long RETRY_CHECK_INTERVAL_MILLIS = 500;
+
+    /**
+     * Maximum number of checks in {@link #retry} before a timeout occurs.
+     */
+    private static final long RETRY_MAX_INTERVALS = 20;
+
 
     /**
      * Gets the RollbackManager for the instrumentation context.
@@ -60,27 +71,6 @@ public class RollbackUtils {
             throw new AssertionError("Failed to get RollbackManager");
         }
         return rm;
-    }
-
-    /**
-     * Returns a rollback for the given package name in the list of
-     * rollbacks. Returns null if there are no available rollbacks, and throws
-     * an assertion if there is more than one.
-     */
-    private static RollbackInfo getRollback(List<RollbackInfo> rollbacks, String packageName) {
-        RollbackInfo found = null;
-        for (RollbackInfo rollback : rollbacks) {
-            for (PackageRollbackInfo info : rollback.getPackages()) {
-                if (packageName.equals(info.getPackageName())) {
-                    if (found != null) {
-                        throw new AssertionError("Multiple available matching rollbacks found");
-                    }
-                    found = rollback;
-                    break;
-                }
-            }
-        }
-        return found;
     }
 
     /**
@@ -102,7 +92,7 @@ public class RollbackUtils {
      */
     public static RollbackInfo getAvailableRollback(String packageName) {
         RollbackManager rm = getRollbackManager();
-        return getRollback(rm.getAvailableRollbacks(), packageName);
+        return getUniqueRollbackInfoForPackage(rm.getAvailableRollbacks(), packageName);
     }
 
     /**
@@ -112,7 +102,7 @@ public class RollbackUtils {
      */
     public static RollbackInfo getCommittedRollback(String packageName) {
         RollbackManager rm = getRollbackManager();
-        return getRollback(rm.getRecentlyCommittedRollbacks(), packageName);
+        return getUniqueRollbackInfoForPackage(rm.getRecentlyCommittedRollbacks(), packageName);
     }
 
     /**
@@ -175,38 +165,48 @@ public class RollbackUtils {
     }
 
     /**
+     * Returns an available rollback matching the specified package name. If no such rollback is
+     * available, getAvailableRollbacks is called repeatedly until one becomes available. An
+     * assertion is raised if this does not occur after a certain number of checks.
+     */
+    public static RollbackInfo waitForAvailableRollback(String packageName)
+            throws InterruptedException {
+        return retry(() -> getAvailableRollback(packageName),
+                Objects::nonNull, "Rollback did not become available.");
+    }
+
+    /**
+     * If there is no available rollback matching the specified package name, this returns
+     * immediately. If such a rollback is available, getAvailableRollbacks is called repeatedly
+     * until it is no longer available. An assertion is raised if this does not occur after a
+     * certain number of checks.
+     */
+    public static void waitForUnavailableRollback(String packageName) throws InterruptedException {
+        retry(() -> getAvailableRollback(packageName), Objects::isNull,
+                "Rollback did not become unavailable");
+    }
+
+    private static <T> T retry(Supplier<T> supplier, Predicate<T> predicate, String message)
+            throws InterruptedException {
+        for (int i = 0; i < RETRY_MAX_INTERVALS; i++) {
+            T result = supplier.get();
+            if (predicate.test(result)) {
+                return result;
+            }
+            Thread.sleep(RETRY_CHECK_INTERVAL_MILLIS);
+        }
+        throw new AssertionError(message);
+    }
+
+    /**
      * Send broadcast to crash {@code packageName} {@code count} times. If {@code count} is at least
      * {@link PackageWatchdog#TRIGGER_FAILURE_COUNT}, watchdog crash detection will be triggered.
      */
-    public static BroadcastReceiver sendCrashBroadcast(Context context, String packageName,
+    public static void sendCrashBroadcast(String packageName,
             int count) throws InterruptedException, IOException {
-        BlockingQueue<Integer> crashQueue = new SynchronousQueue<>();
-        IntentFilter crashCountFilter = new IntentFilter();
-        crashCountFilter.addAction("com.android.tests.rollback.CRASH");
-        crashCountFilter.addCategory(Intent.CATEGORY_DEFAULT);
-
-        BroadcastReceiver crashCountReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                try {
-                    // Sleep long enough for packagewatchdog to be notified of crash
-                    Thread.sleep(1000);
-                    // Kill app and close AppErrorDialog
-                    ActivityManager am = context.getSystemService(ActivityManager.class);
-                    am.killBackgroundProcesses(packageName);
-                    // Allow another package launch
-                    crashQueue.put(intent.getIntExtra("count", 0));
-                } catch (InterruptedException e) {
-                    fail("Failed to communicate with test app");
-                }
-            }
-        };
-        context.registerReceiver(crashCountReceiver, crashCountFilter);
-
-        do {
-            launchPackage(packageName);
-        } while(crashQueue.take() < count);
-        return crashCountReceiver;
+        for (int i = 0; i < count; ++i) {
+            launchPackageForCrash(packageName);
+        }
     }
 
     private static void setTime(long millis) {
@@ -215,15 +215,50 @@ public class RollbackUtils {
         am.setTime(millis);
     }
 
-    /** Launches {@code packageName} with {@link Intent#ACTION_MAIN}. */
-    private static void launchPackage(String packageName)
+    /**
+     * Launches {@code packageName} with {@link Intent#ACTION_MAIN} and
+     * waits for a CRASH broadcast from the launched app.
+     */
+    private static void launchPackageForCrash(String packageName)
             throws InterruptedException, IOException {
+        // Force stop the package before launching it to make sure it isn't
+        // stuck in a non-launchable state. And wait a second afterwards to
+        // avoid interfering with when we launch the app.
+        Log.i(TAG, "Force stopping " + packageName);
         Context context = InstrumentationRegistry.getContext();
+        ActivityManager am = context.getSystemService(ActivityManager.class);
+        am.forceStopPackage(packageName);
+        Thread.sleep(1000);
+
+        // Register a receiver to listen for the CRASH broadcast.
+        CountDownLatch latch = new CountDownLatch(1);
+        IntentFilter crashFilter = new IntentFilter();
+        crashFilter.addAction("com.android.tests.rollback.CRASH");
+        crashFilter.addCategory(Intent.CATEGORY_DEFAULT);
+        BroadcastReceiver crashReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.i(TAG, "Received CRASH broadcast from " + packageName);
+                latch.countDown();
+            }
+        };
+        context.registerReceiver(crashReceiver, crashFilter);
+
+        // Launch the app.
         Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.setPackage(packageName);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.addCategory(Intent.CATEGORY_LAUNCHER);
+        Log.i(TAG, "Launching " + packageName + " with " + intent);
         context.startActivity(intent);
+
+        Log.i(TAG, "Waiting for CRASH broadcast from " + packageName);
+        latch.await();
+
+        context.unregisterReceiver(crashReceiver);
+
+        // Sleep long enough for packagewatchdog to be notified of crash
+        Thread.sleep(1000);
     }
 }
 

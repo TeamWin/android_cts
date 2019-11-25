@@ -25,6 +25,7 @@ public class TestApp {
     public static final String A = "com.android.cts.install.lib.testapp.A";
     public static final String B = "com.android.cts.install.lib.testapp.B";
     public static final String Apex = "com.android.apex.cts.shim";
+    public static final String NotPreInstalledApex = "com.android.apex.cts.shim_not_pre_installed";
 
     // Apk collection
     public static final TestApp A1 = new TestApp("Av1", A, 1, /*isApex*/false,
@@ -46,10 +47,18 @@ public class TestApp {
             "TestAppBv2.apk");
 
     // Apex collection
-    public static final TestApp Apex2 = new TestApp("Apex2", Apex, 2, /*isApex*/true,
+    public static final TestApp Apex2 =
+            new TestApp("Apex2", Apex, 2, /*isApex*/true,
             "com.android.apex.cts.shim.v2.apex");
-    public static final TestApp Apex3 = new TestApp("Apex3", Apex, 3, /*isApex*/true,
+    public static final TestApp ApexWrongSha2 = new TestApp(
+            "ApexWrongSha2", Apex, 2, /*isApex*/true,
+            "com.android.apex.cts.shim.v2_wrong_sha.apex");
+    public static final TestApp Apex3 =
+            new TestApp("Apex3", Apex, 3, /*isApex*/true,
             "com.android.apex.cts.shim.v3.apex");
+    public static final TestApp ApexNotPreInstalled =
+            new TestApp("ApexNotPreInstalled", NotPreInstalledApex, 3, /*isApex*/true,
+            "com.android.apex.cts.shim_not_pre_installed.apex");
 
     private final String mName;
     private final String mPackageName;
