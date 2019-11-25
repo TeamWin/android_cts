@@ -41,6 +41,7 @@ public class ApexTest extends BaseHostJUnit4Test {
   public void testApexType() throws Exception {
     String[] builtinDirs = {
       "/system/apex",
+      "/system_ext/apex",
       "/product/apex",
       "/vendor/apex"
     };
