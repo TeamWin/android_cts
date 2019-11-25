@@ -18,9 +18,11 @@ package android.permission.cts;
 
 import static android.Manifest.permission.ACCESS_BACKGROUND_LOCATION;
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
+import static android.Manifest.permission.PACKAGE_USAGE_STATS;
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.MODE_FOREGROUND;
 import static android.app.AppOpsManager.MODE_IGNORED;
+import static android.app.AppOpsManager.OPSTR_GET_USAGE_STATS;
 import static android.app.AppOpsManager.permissionToOp;
 import static android.content.pm.PackageManager.FLAG_PERMISSION_REVIEW_REQUIRED;
 import static android.content.pm.PackageManager.FLAG_PERMISSION_REVOKE_ON_UPGRADE;
@@ -201,6 +203,8 @@ public class PermissionUtils {
             } else {
                 setAppOp(packageName, ACCESS_COARSE_LOCATION, MODE_FOREGROUND);
             }
+        } else if (permission.equals(PACKAGE_USAGE_STATS)) {
+            setAppOpByName(packageName, OPSTR_GET_USAGE_STATS, MODE_ALLOWED);
         } else {
             setAppOp(packageName, permission, MODE_ALLOWED);
         }
@@ -226,6 +230,8 @@ public class PermissionUtils {
             if (isGranted(packageName, ACCESS_COARSE_LOCATION)) {
                 setAppOp(packageName, ACCESS_COARSE_LOCATION, MODE_FOREGROUND);
             }
+        } else if (permission.equals(PACKAGE_USAGE_STATS)) {
+            setAppOpByName(packageName, OPSTR_GET_USAGE_STATS, MODE_IGNORED);
         } else {
             setAppOp(packageName, permission, MODE_IGNORED);
         }

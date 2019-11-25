@@ -52,6 +52,7 @@ import android.os.IBinder;
 import android.os.Parcel;
 import android.os.RemoteException;
 import android.os.SystemClock;
+import android.permission.cts.PermissionUtils;
 import android.server.wm.WindowManagerState;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
@@ -238,7 +239,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         UidImportanceListener uidForegroundListener = new UidImportanceListener(mContext,
                 appInfo.uid, ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE, WAIT_TIME);
 
-        mInstrumentation.getUiAutomation().revokeRuntimePermission(
+        PermissionUtils.revokePermission(
                 STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
         boolean gotException = false;
         try {
@@ -248,7 +249,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         }
         assertTrue("Expected SecurityException thrown", gotException);
 
-        mInstrumentation.getUiAutomation().grantRuntimePermission(
+        PermissionUtils.grantPermission(
                 STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
         /*
         Log.d("XXXX", "Invoke: " + cmd);
@@ -406,7 +407,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
         ActivityManager am = mContext.getSystemService(ActivityManager.class);
 
-        mInstrumentation.getUiAutomation().grantRuntimePermission(
+        PermissionUtils.grantPermission(
                 STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
         /*
         Log.d("XXXX", "Invoke: " + cmd);
@@ -572,7 +573,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
         ActivityManager am = mContext.getSystemService(ActivityManager.class);
 
-        mInstrumentation.getUiAutomation().grantRuntimePermission(
+        PermissionUtils.grantPermission(
                 STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
         /*
         Log.d("XXXX", "Invoke: " + cmd);
@@ -740,6 +741,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         broadcastIntent.setClassName(SIMPLE_PACKAGE_NAME,
                 SIMPLE_PACKAGE_NAME + SIMPLE_RECEIVER_START_SERVICE);
 
+        PermissionUtils.grantPermission(
+                STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
         final ServiceProcessController controller = new ServiceProcessController(mContext,
                 mInstrumentation, STUB_PACKAGE_NAME, mAllProcesses, WAIT_TIME);
         final ServiceConnectionHandler conn = new ServiceConnectionHandler(mContext,
@@ -870,6 +873,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
                 SIMPLE_PACKAGE_NAME + SIMPLE_ACTIVITY_START_SERVICE);
         activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
+        PermissionUtils.grantPermission(
+                STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
         final ServiceProcessController controller = new ServiceProcessController(mContext,
                 mInstrumentation, STUB_PACKAGE_NAME, mAllProcesses, WAIT_TIME);
         final ServiceConnectionHandler conn = new ServiceConnectionHandler(mContext,
@@ -952,6 +957,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
      * Test that the foreground service app op does prevent the foreground state.
      */
     public void testForegroundServiceAppOp() throws Exception {
+        PermissionUtils.grantPermission(
+                STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
         // Use default timeout value 5000
         final ServiceProcessController controller = new ServiceProcessController(mContext,
                 mInstrumentation, STUB_PACKAGE_NAME, mAllProcesses);
@@ -1115,6 +1122,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
                         SIMPLE_PACKAGE_NAME + SIMPLE_ACTIVITY_START_FG_SERVICE)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
+        PermissionUtils.grantPermission(
+                STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
         final ServiceProcessController controller = new ServiceProcessController(mContext,
                 getInstrumentation(), STUB_PACKAGE_NAME, mAllProcesses, WAIT_TIME);
         final WatchUidRunner uidWatcher = controller.getUidWatcher();
@@ -1217,7 +1226,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
         ActivityManager am = mContext.getSystemService(ActivityManager.class);
 
-        mInstrumentation.getUiAutomation().grantRuntimePermission(
+        PermissionUtils.grantPermission(
                 STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
 
         // We don't want to wait for the uid to actually go idle, we can force it now.
@@ -1360,7 +1369,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         ActivityManager am = mContext.getSystemService(ActivityManager.class);
         UiDevice device = UiDevice.getInstance(mInstrumentation);
 
-        mInstrumentation.getUiAutomation().grantRuntimePermission(
+        PermissionUtils.grantPermission(
                 STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
 
         // We don't want to wait for the uid to actually go idle, we can force it now.
@@ -1906,6 +1915,13 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         ApplicationInfo app3Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP3, 0);
 
+        PermissionUtils.grantPermission(
+                PACKAGE_NAME_APP1, android.Manifest.permission.PACKAGE_USAGE_STATS);
+        PermissionUtils.grantPermission(
+                PACKAGE_NAME_APP2, android.Manifest.permission.PACKAGE_USAGE_STATS);
+        PermissionUtils.grantPermission(
+                PACKAGE_NAME_APP3, android.Manifest.permission.PACKAGE_USAGE_STATS);
+
         UidImportanceListener uid1Listener = new UidImportanceListener(mContext,
                 app1Info.uid, IMPORTANCE_VISIBLE,
                 WAITFOR_MSEC);
@@ -2031,6 +2047,15 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         ApplicationInfo app3Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP3, 0);
 
+        PermissionUtils.grantPermission(
+                STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
+        PermissionUtils.grantPermission(
+                PACKAGE_NAME_APP1, android.Manifest.permission.PACKAGE_USAGE_STATS);
+        PermissionUtils.grantPermission(
+                PACKAGE_NAME_APP2, android.Manifest.permission.PACKAGE_USAGE_STATS);
+        PermissionUtils.grantPermission(
+                PACKAGE_NAME_APP3, android.Manifest.permission.PACKAGE_USAGE_STATS);
+
         UidImportanceListener stubListener = new UidImportanceListener(mContext,
                 stubInfo.uid, ActivityManager.RunningAppProcessInfo.IMPORTANCE_PERCEPTIBLE,
                 WAITFOR_MSEC);
@@ -2061,6 +2086,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         try {
             // Stub app should have been in foreground since it's being instrumented.
 
+            PermissionUtils.grantPermission(
+                    STUB_PACKAGE_NAME, android.Manifest.permission.SYSTEM_ALERT_WINDOW);
             // Show an alert on app0
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_START_ALERT_SERVICE, STUB_PACKAGE_NAME,

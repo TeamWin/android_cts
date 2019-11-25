@@ -122,6 +122,7 @@ public class CommandReceiver extends BroadcastReceiver {
     private void doStartForegroundServiceWithType(Context context, Intent commandIntent) {
         String targetPackage = getTargetPackage(commandIntent);
         Intent fgsIntent = new Intent();
+        fgsIntent.putExtras(commandIntent); // include the fg service type if any.
         fgsIntent.setComponent(new ComponentName(targetPackage, FG_LOCATION_SERVICE_NAME));
         int command = LocalForegroundServiceLocation.COMMAND_START_FOREGROUND_WITH_TYPE;
         fgsIntent.putExtras(LocalForegroundService.newCommand(new Binder(), command));
