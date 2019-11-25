@@ -192,6 +192,13 @@ open class PackageInstallerTestBase {
                 .click()
     }
 
+    /**
+     * Sets the given secure setting to the provided value.
+     */
+    fun setSecureSetting(secureSetting: String, value: Int) {
+        uiDevice.executeShellCommand("settings put secure $secureSetting $value")
+    }
+
     @After
     fun unregisterInstallResultReceiver() {
         try {
