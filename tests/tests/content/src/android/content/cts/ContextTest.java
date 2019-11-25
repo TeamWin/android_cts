@@ -737,6 +737,46 @@ public class ContextTest extends AndroidTestCase {
         mContext.unregisterReceiver(broadcastReceiver);
     }
 
+    public void testRegisterReceiverForAllUsers() throws InterruptedException {
+        FilteredReceiver broadcastReceiver = new FilteredReceiver();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(MOCK_ACTION1);
+
+        // Test registerReceiverForAllUsers without permission: verify SecurityException.
+        try {
+            mContext.registerReceiverForAllUsers(broadcastReceiver, filter, null, null);
+            fail("testRegisterReceiverForAllUsers: "
+                    + "SecurityException expected on registerReceiverForAllUsers");
+        } catch (SecurityException se) {
+            // expected
+        }
+
+        // Test registerReceiverForAllUsers with permission.
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mContext,
+                    (ctx) -> ctx.registerReceiverForAllUsers(broadcastReceiver, filter, null, null)
+            );
+        } catch (SecurityException se) {
+            fail("testRegisterReceiverForAllUsers: SecurityException not expected");
+        }
+
+        // Test unwanted intent(action = MOCK_ACTION2)
+        broadcastReceiver.reset();
+        waitForFilteredIntent(mContext, MOCK_ACTION2);
+        assertFalse(broadcastReceiver.hadReceivedBroadCast1());
+        assertFalse(broadcastReceiver.hadReceivedBroadCast2());
+
+        // Send wanted intent(action = MOCK_ACTION1)
+        broadcastReceiver.reset();
+        waitForFilteredIntent(mContext, MOCK_ACTION1);
+        assertTrue(broadcastReceiver.hadReceivedBroadCast1());
+        assertEquals(broadcastReceiver.getSendingUser(), Process.myUserHandle());
+        assertFalse(broadcastReceiver.hadReceivedBroadCast2());
+
+        mContext.unregisterReceiver(broadcastReceiver);
+    }
+
     public void testAccessWallpaper() throws IOException, InterruptedException {
         // set Wallpaper by context#setWallpaper(Bitmap)
         Bitmap bitmap = Bitmap.createBitmap(20, 30, Bitmap.Config.RGB_565);
