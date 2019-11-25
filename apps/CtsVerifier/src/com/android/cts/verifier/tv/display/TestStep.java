@@ -24,7 +24,7 @@ import com.android.cts.verifier.tv.TvAppVerifierActivity;
  * Encapsulates the logic of a test step, which displays a human instructions and a button to start
  * the test.
  */
-public abstract class TestStepBase {
+public abstract class TestStep {
     final protected TvAppVerifierActivity mContext;
     final private String mInstructionText;
     final private int mButtonTextId;
@@ -39,7 +39,7 @@ public abstract class TestStepBase {
      * @param instructionText Text of the test instruction visible to the user.
      * @param buttonTextId Id of a string resource containing the text of the button.
      */
-    public TestStepBase(TvAppVerifierActivity context, String instructionText, int buttonTextId) {
+    public TestStep(TvAppVerifierActivity context, String instructionText, int buttonTextId) {
         this.mContext = context;
         this.mInstructionText = instructionText;
         this.mButtonTextId = buttonTextId;
@@ -52,7 +52,7 @@ public abstract class TestStepBase {
      * @param instructionTextId Id of a string resource with test instructions visible to the user.
      * @param buttonTextId Id of a string resource containing the text of the button.
      */
-    public TestStepBase(TvAppVerifierActivity context, int instructionTextId, int buttonTextId) {
+    public TestStep(TvAppVerifierActivity context, int instructionTextId, int buttonTextId) {
         this.mContext = context;
         this.mInstructionText = context.getResources().getString(instructionTextId);
         this.mButtonTextId = buttonTextId;
@@ -73,29 +73,23 @@ public abstract class TestStepBase {
     /**
      * Enables the button of this test step.
      */
-    public void enableButton() {
+    public void enable() {
         TvAppVerifierActivity.setButtonEnabled(mViewItem, true);
-    }
-
-    /**
-     * Disables the button of this test step.
-     */
-    public void disableButton() {
-        TvAppVerifierActivity.setButtonEnabled(mViewItem, false);
     }
 
     public void setOnDoneListener(Runnable listener) {
         mOnDoneListener = listener;
     }
 
-    protected abstract void onButtonClickRunTest();
+    public abstract boolean runTest();
 
-    protected void doneWithPassingState(boolean state) {
+    private void onButtonClickRunTest() {
+        setPassingState(runTest());
+        mOnDoneListener.run();
+    }
+
+    private void setPassingState(boolean state) {
         mHasPassed = state;
         TvAppVerifierActivity.setPassState(mViewItem, state);
-
-        if (mOnDoneListener != null) {
-            mOnDoneListener.run();
-        }
     }
 }

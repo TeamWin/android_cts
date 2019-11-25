@@ -21,7 +21,6 @@ import android.view.Display;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.tv.TvAppVerifierActivity;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -45,7 +44,6 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
             Display.HdrCapabilities.HDR_TYPE_HLG
     };
     private static final float MAX_EXPECTED_LUMINANCE = 10_000f;
-    private static final int DISPLAY_DISCONNECT_WAIT_TIME_SECONDS = 5;
 
     private TestSequence mTestSequence;
 
@@ -57,7 +55,7 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
 
     @Override
     protected void createTestItems() {
-        List<TestStepBase> testSteps = new ArrayList<>();
+        List<TestStep> testSteps = new ArrayList<>();
         testSteps.add(new NonHdrDisplayTestStep(this));
         testSteps.add(new HdrDisplayTestStep(this));
         testSteps.add(new NoDisplayTestStep(this));
@@ -66,12 +64,7 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
         mTestSequence.init();
     }
 
-    private static boolean hasNoHdrSupportedTypes(Display display) {
-        return display.getHdrCapabilities() == null
-                || display.getHdrCapabilities().getSupportedHdrTypes().length == 0;
-    }
-
-    private static class NonHdrDisplayTestStep extends SyncTestStep {
+    private static class NonHdrDisplayTestStep extends TestStep {
 
         public NonHdrDisplayTestStep(TvAppVerifierActivity context) {
             super(context,
@@ -82,11 +75,12 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
         @Override
         public boolean runTest() {
             Display display = mContext.getWindowManager().getDefaultDisplay();
-            return !display.isHdr() && hasNoHdrSupportedTypes(display);
+            return !display.isHdr() && (display.getHdrCapabilities() == null
+                    || display.getHdrCapabilities().getSupportedHdrTypes().length == 0);
         }
     }
 
-    private static class HdrDisplayTestStep extends SyncTestStep {
+    private static class HdrDisplayTestStep extends TestStep {
 
         public HdrDisplayTestStep(TvAppVerifierActivity context) {
             super(context,
@@ -131,23 +125,15 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
         }
     }
 
-    private static class NoDisplayTestStep extends AsyncTestStep {
+    private static class NoDisplayTestStep extends TestStep {
         public NoDisplayTestStep(TvAppVerifierActivity context) {
-            super(context,
-                    context.getString(
-                            R.string.tv_hdr_disconnect_display,
-                            DISPLAY_DISCONNECT_WAIT_TIME_SECONDS,
-                            DISPLAY_DISCONNECT_WAIT_TIME_SECONDS + 1),
-                    R.string.tv_start_test);
+            super(context, "", R.string.tv_start_test);
         }
 
         @Override
-        public void runTestAsync() {
-            // Wait for the user to disconnect the display.
-            mContext.getPostTarget().postDelayed(() -> {
-                Display display = mContext.getWindowManager().getDefaultDisplay();
-                doneWithPassingState(!display.isHdr() && hasNoHdrSupportedTypes(display));
-            }, Duration.ofSeconds(DISPLAY_DISCONNECT_WAIT_TIME_SECONDS).toMillis());
+        public boolean runTest() {
+            // TODO: Add test logic
+            return false;
         }
     }
 }

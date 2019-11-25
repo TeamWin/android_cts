@@ -6,18 +6,18 @@ import com.android.cts.verifier.tv.TvAppVerifierActivity;
 import java.util.List;
 
 /**
- * A sequence of {@link TestStepBase}s within a {@link TvAppVerifierActivity}, which are meant to be
+ * A sequence of {@link TestStep}s within a {@link TvAppVerifierActivity}, which are meant to be
  * executed one after another. The whole sequence passes if all containing test steps pass.
  */
 public class TestSequence {
-    private List<TestStepBase> steps;
+    private List<TestStep> steps;
     private TvAppVerifierActivity context;
 
     /**
      * @param context The TvAppVerifierActivity containing this sequence.
      * @param steps List of the steps contained in the sequence.
      */
-    public TestSequence(TvAppVerifierActivity context, List<TestStepBase> steps) {
+    public TestSequence(TvAppVerifierActivity context, List<TestStep> steps) {
         this.context = context;
         this.steps = steps;
     }
@@ -39,7 +39,7 @@ public class TestSequence {
         // After a step is completed we enable the button of the next step.
         for (int i = 0; i < steps.size() - 1; i++) {
             final int next = i + 1;
-            steps.get(i).setOnDoneListener(() -> steps.get(next).enableButton());
+            steps.get(i).setOnDoneListener(() -> steps.get(next).enable());
         }
 
         // When the last step is done, mark the sequence as done.
@@ -47,7 +47,7 @@ public class TestSequence {
                 .setOnDoneListener(() -> onAllStepsDone());
 
         // Enable the button of the first test step so the user can start it.
-        steps.get(0).enableButton();
+        steps.get(0).enable();
     }
 
     private void onAllStepsDone() {

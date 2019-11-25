@@ -37,7 +37,7 @@ public abstract class TvAppVerifierActivity extends PassFailButtons.Activity {
     private ViewGroup mItemList;
     private View mPostTarget;
 
-    public View getPostTarget() {
+    protected View getPostTarget() {
         return mPostTarget;
     }
 
