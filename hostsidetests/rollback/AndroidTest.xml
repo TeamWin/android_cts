@@ -23,6 +23,12 @@
         <option name="test-file-name" value="CtsRollbackManagerHostTestHelperApp.apk" />
         <option name="test-file-name" value="CtsRollbackManagerHostTestHelperApp2.apk" />
     </target_preparer>
+    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <option name="run-command" value="svc wifi disable" />
+        <option name="run-command" value="svc data disable" />
+        <option name="teardown-command" value="svc wifi enable" />
+        <option name="teardown-command" value="svc data enable" />
+    </target_preparer>
     <test class="com.android.tradefed.testtype.HostTest" >
         <option name="class" value="com.android.cts.rollback.host.RollbackManagerHostTest" />
     </test>
