@@ -2074,6 +2074,28 @@ public class TelephonyManagerTest {
         }
     }
 
+    @Test
+    public void testIsInEmergencySmsMode() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        // test without permission: verify SecurityException
+        try {
+            mTelephonyManager.isInEmergencySmsMode();
+            fail("testIsInEmergencySmsMode: SecurityException expected");
+        } catch (SecurityException se) {
+            // expected
+        }
+        // test with permission
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mTelephonyManager,
+                    (tm) -> tm.isInEmergencySmsMode());
+        } catch (SecurityException se) {
+            fail("testIsInEmergencySmsMode: SecurityException not expected");
+        }
+    }
+
     /**
      * Validate Emergency Number address that only contains the dialable character.
      *
