@@ -201,9 +201,11 @@ public class HidJsonParser {
     private KeyEvent parseKeyEvent(int source, JSONObject entry) throws JSONException {
         int action = keyActionFromString(entry.getString("action"));
         int keyCode = KeyEvent.keyCodeFromString(entry.getString("keycode"));
-        // Only care about key code, action and source here. Times are not checked.
+        final String metaStateString = entry.optString("metaState");
+        int metaState = metaStateString.isEmpty() ? 0 : metaStateFromString(metaStateString);
+        // We will only check select fields of the KeyEvent. Times are not checked.
         return new KeyEvent(/* downTime */ 0, /* eventTime */ 0, action, keyCode,
-                /* repeat */ 0, /* metaState */ 0, /* deviceId */ 0, /* scanCode */ 0,
+                /* repeat */ 0, metaState, /* deviceId */ 0, /* scanCode */ 0,
                 /* flags */ 0, source);
     }
 
@@ -249,6 +251,52 @@ public class HidJsonParser {
         throw new RuntimeException("Unknown action specified: " + action);
     }
 
+    private static int metaStateFromString(String metaStateString) {
+        int metaState = 0;
+        final String[] metaKeys = metaStateString.split("\\|");
+        for (final String metaKeyString : metaKeys) {
+            final String trimmedKeyString = metaKeyString.trim();
+            switch (trimmedKeyString.toUpperCase()) {
+                case "SHIFT_LEFT":
+                    metaState |= KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON;
+                    break;
+                case "SHIFT_RIGHT":
+                    metaState |= KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_RIGHT_ON;
+                    break;
+                case "CTRL_LEFT":
+                    metaState |= KeyEvent.META_CTRL_ON | KeyEvent.META_CTRL_LEFT_ON;
+                    break;
+                case "CTRL_RIGHT":
+                    metaState |= KeyEvent.META_CTRL_ON | KeyEvent.META_CTRL_RIGHT_ON;
+                    break;
+                case "ALT_LEFT":
+                    metaState |= KeyEvent.META_ALT_ON | KeyEvent.META_ALT_LEFT_ON;
+                    break;
+                case "ALT_RIGHT":
+                    metaState |= KeyEvent.META_ALT_ON | KeyEvent.META_ALT_RIGHT_ON;
+                    break;
+                case "META_LEFT":
+                    metaState |= KeyEvent.META_META_ON | KeyEvent.META_META_LEFT_ON;
+                    break;
+                case "META_RIGHT":
+                    metaState |= KeyEvent.META_META_ON | KeyEvent.META_META_RIGHT_ON;
+                    break;
+                case "CAPS_LOCK":
+                    metaState |= KeyEvent.META_CAPS_LOCK_ON;
+                    break;
+                case "NUM_LOCK":
+                    metaState |= KeyEvent.META_NUM_LOCK_ON;
+                    break;
+                case "SCROLL_LOCK":
+                    metaState |= KeyEvent.META_SCROLL_LOCK_ON;
+                    break;
+                default:
+                    throw new RuntimeException("Unknown meta state: " + trimmedKeyString);
+            }
+        }
+        return metaState;
+    }
+
     private static int motionActionFromString(String action) {
         switch (action.toUpperCase()) {
             case "DOWN":
@@ -277,6 +325,8 @@ public class HidJsonParser {
                 return InputDevice.SOURCE_MOUSE_RELATIVE;
             case "JOYSTICK":
                 return InputDevice.SOURCE_JOYSTICK;
+            case "KEYBOARD":
+                return InputDevice.SOURCE_KEYBOARD;
             case "UNKNOWN":
                 return InputDevice.SOURCE_UNKNOWN;
         }
