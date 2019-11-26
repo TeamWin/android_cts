@@ -77,6 +77,15 @@ public class BatteryUtils {
     }
 
     /**
+     * Turn off the Battery saver manually.
+     */
+    public static void runDumpsysBatterySaverOff() {
+        if (isBatterySaverSupported() && getPowerManager().isPowerSaveMode()) {
+            SystemUtil.runShellCommandForNoOutput("cmd power set-mode 0");
+        }
+    }
+
+    /**
      * Enable / disable battery saver. Note {@link #runDumpsysBatteryUnplug} must have been
      * executed before enabling BS.
      */
