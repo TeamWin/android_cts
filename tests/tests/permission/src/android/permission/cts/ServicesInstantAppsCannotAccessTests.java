@@ -26,10 +26,8 @@ import static android.content.Context.WIFI_P2P_SERVICE;
 import static android.content.Context.WIFI_SERVICE;
 
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
 
 import android.content.Context;
-import android.net.wifi.WifiManager;
 import android.platform.test.annotations.AppModeInstant;
 
 import androidx.test.InstrumentationRegistry;
@@ -82,17 +80,8 @@ public class ServicesInstantAppsCannotAccessTests {
 
     @Test
     public void cannotGetWifiManager() {
-       // WifiManager binder object is retrieved lazily, so invoke a method to trigger a remote
-       // exception.
-        WifiManager wifiManager = (WifiManager) InstrumentationRegistry.getTargetContext()
-                .getSystemService(WIFI_SERVICE);
-        if (wifiManager == null) return;
-        try {
-            wifiManager.startLocalOnlyHotspot(new WifiManager.LocalOnlyHotspotCallback(), null);
-            fail(); // expect a exception.
-        } catch (Exception e) {
-            // expected
-        }
+        assertNull(InstrumentationRegistry.getTargetContext().getSystemService(
+                WIFI_SERVICE));
     }
 
     @Test
