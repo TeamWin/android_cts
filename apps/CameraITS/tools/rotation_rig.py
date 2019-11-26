@@ -82,6 +82,7 @@ def main():
     vid:pid can be found through lsusb on the host.
     ch is hard wired and must be determined from the box.
     """
+    num_rotations = NUM_ROTATIONS
     for s in sys.argv[1:]:
         if s[:8] == 'rotator=':
             if len(s) > 8:
@@ -112,9 +113,11 @@ def main():
                     err_string += 'rotator=VID:PID:CH or rotator=CH'
                     print err_string
                     sys.exit()
+        if s[:14] == 'num_rotations=':
+            num_rotations = int(s[14:])
 
-    print 'Rotating phone %dx' % NUM_ROTATIONS
-    for _ in xrange(NUM_ROTATIONS):
+    print 'Rotating phone %dx' % num_rotations
+    for _ in xrange(num_rotations):
         set_relay_channel_state(vid, pid, ch, 'ON')
         time.sleep(SLEEP_TIME)
         set_relay_channel_state(vid, pid, ch, 'OFF')

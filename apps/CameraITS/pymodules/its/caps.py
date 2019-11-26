@@ -17,6 +17,12 @@ import unittest
 
 import its.objects
 
+# lens facing
+FACING_FRONT = 0
+FACING_BACK = 1
+FACING_EXTERNAL = 2
+
+SKIP_RET_CODE = 101
 
 def skip_unless(cond):
     """Skips the test if the condition is false.
@@ -31,8 +37,6 @@ def skip_unless(cond):
     Returns:
         Nothing.
     """
-    SKIP_RET_CODE = 101
-
     if not cond:
         print "Test skipped"
         sys.exit(SKIP_RET_CODE)
@@ -549,6 +553,23 @@ def backward_compatible(props):
     """
     return props.has_key("android.request.availableCapabilities") and \
               0 in props["android.request.availableCapabilities"]
+
+
+def sensor_fusion_capable(props):
+    """Determine if test_sensor_fusion is run."""
+    return all([
+            its.caps.sensor_fusion(props),
+            its.caps.manual_sensor(props),
+            props["android.lens.facing"] != FACING_EXTERNAL])
+
+
+def multi_camera_frame_sync_capable(props):
+    """Determine if test_multi_camera_frame_sync is run."""
+    return all([
+            read_3a(props),
+            per_frame_control(props),
+            logical_multi_camera(props),
+            sensor_fusion(props)])
 
 
 class __UnitTest(unittest.TestCase):

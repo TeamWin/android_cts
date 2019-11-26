@@ -39,7 +39,6 @@ CHART_LEVEL = 96
 CHART_SCALE_START = 0.65
 CHART_SCALE_STOP = 1.35
 CHART_SCALE_STEP = 0.025
-FACING_EXTERNAL = 2
 NOT_YET_MANDATED_ALL = 100
 NUM_TRYS = 2
 PROC_TIMEOUT_CODE = -101  # terminated process return -process_id
@@ -273,16 +272,18 @@ def evaluate_socket_failure(err_file_path):
     return socket_fail
 
 
-def skip_sensor_fusion(camera_id):
-    """Determine if sensor fusion test is skipped for this camera."""
-
-    skip_code = SKIP_RET_CODE
+def run_rotations(camera_id, test_name):
+    """Determine if camera rotation is run for this test."""
     with ItsSession(camera_id) as cam:
         props = cam.get_camera_properties()
-        if (its.caps.sensor_fusion(props) and its.caps.manual_sensor(props) and
-                props['android.lens.facing'] is not FACING_EXTERNAL):
-            skip_code = None
-    return skip_code
+        method = {'test_sensor_fusion': {
+                        'flag': its.caps.sensor_fusion_capable(props),
+                        'runs': 10},
+                  'test_multi_camera_frame_sync': {
+                        'flag': its.caps.multi_camera_frame_sync_capable(props),
+                        'runs': 5}
+                 }
+        return method[test_name]
 
 
 def main():
@@ -511,20 +512,17 @@ def main():
             tests.sort()
             tot_tests.extend(tests)
 
-            summary = "Cam" + id_combo_string + " " + scene + "\n"
+            summary = 'Cam' + id_combo_string + ' ' + scene + '\n'
             numpass = 0
             numskip = 0
             num_not_mandated_fail = 0
             numfail = 0
             validate_switch = True
             if SCENE_REQ[scene] is not None:
-                out_path = os.path.join(topdir, id_combo_string, scene+".jpg")
-                out_arg = "out=" + out_path
-                if scene == 'sensor_fusion':
-                    skip_code = skip_sensor_fusion(id_combo.id)
-                    if rot_rig_id or skip_code == SKIP_RET_CODE:
-                        validate_switch = False
-                if skip_scene_validation:
+                out_path = os.path.join(topdir, id_combo_string, scene+'.jpg')
+                out_arg = 'out=' + out_path
+                if ((scene == 'sensor_fusion' and rot_rig_id) or
+                            skip_scene_validation):
                     validate_switch = False
                 cmd = None
                 if auto_scene_switch:
@@ -588,11 +586,13 @@ def main():
                     outpath = os.path.join(outdir, testname+'_stdout.txt')
                     errpath = os.path.join(outdir, testname+'_stderr.txt')
                     if scene == 'sensor_fusion':
-                        if skip_code is not SKIP_RET_CODE:
+                        # determine if you need to rotate for specific test
+                        rotation_props = run_rotations(id_combo.id, testname)
+                        if rotation_props['flag']:
                             if rot_rig_id:
                                 print 'Rotating phone w/ rig %s' % rot_rig_id
-                                rig = ('python tools/rotation_rig.py rotator=%s' %
-                                       rot_rig_id)
+                                rig = 'python tools/rotation_rig.py rotator=%s num_rotations=%s' % (
+                                        rot_rig_id, rotation_props['runs'])
                                 subprocess.Popen(rig.split())
                             else:
                                 print 'Rotate phone 15s as shown in SensorFusion.pdf'
