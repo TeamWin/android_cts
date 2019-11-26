@@ -862,9 +862,11 @@ public class KeyAttestationTest extends AndroidTestCase {
 
             case KM_SECURITY_LEVEL_SOFTWARE:
             default:
-                // TEE attestation has been required since Android 7.0.
-                fail("Unexpected attestation security level: " +
-                     attestation.securityLevelToString(attestationSecurityLevel));
+                // TEE attestation has been mandatory since Android 8.0.
+                if (SystemProperties.getInt("ro.product.first_api_level", 0) >= 26) {
+                    fail("Unexpected attestation security level: " +
+                         attestation.securityLevelToString(attestationSecurityLevel));
+                }
                 break;
         }
     }
