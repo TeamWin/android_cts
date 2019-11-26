@@ -325,6 +325,7 @@ public class JobThrottlingTest {
             toggleDeviceIdleState(false);
         }
         mTestAppInterface.cleanup();
+        BatteryUtils.runDumpsysBatterySaverOff();
         BatteryUtils.runDumpsysBatteryReset();
         removeTestAppFromTempWhitelist();
 
