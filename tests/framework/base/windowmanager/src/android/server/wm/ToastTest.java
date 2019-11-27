@@ -16,23 +16,20 @@
 
 package android.server.wm;
 
-import static android.server.wm.app.Components.ToastReceiver.ACTION_TOAST_DISPLAYED;
-import static android.server.wm.app.Components.ToastReceiver.ACTION_TOAST_TAP_DETECTED;
+import static android.server.wm.app.Components.ClickableToastActivity.ACTION_TOAST_DISPLAYED;
+import static android.server.wm.app.Components.ClickableToastActivity.ACTION_TOAST_TAP_DETECTED;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.ConditionVariable;
-import android.os.Handler;
-import android.os.Looper;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.server.wm.WindowManagerState.WindowState;
@@ -55,12 +52,6 @@ public class ToastTest extends ActivityManagerTestBase {
     private static final long TOAST_DISPLAY_TIMEOUT_MS = 8000;
     private static final long TOAST_TAP_TIMEOUT_MS = 3500;
     private static final int ACTIVITY_FOCUS_TIMEOUT_MS = 3000;
-
-    /**
-     * Tests can be executed as soon as the device has booted. When that happens the broadcast queue
-     * is long and it takes some time to process the broadcast we just sent.
-     */
-    private static final long BROADCAST_DELIVERY_TIMEOUT_MS = 60000;
 
     @Nullable
     private String mPreviousHiddenApiPolicy;

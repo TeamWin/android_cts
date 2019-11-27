@@ -436,7 +436,7 @@ public class Components extends ComponentsBase {
         public static final String COMMAND_RESIZE_DISPLAY = "resize_display";
     }
 
-    public static class ToastReceiver {
+    public static class ClickableToastActivity {
         public static final String ACTION_TOAST_DISPLAYED = "toast_displayed";
         public static final String ACTION_TOAST_TAP_DETECTED = "toast_tap_detected";
     }

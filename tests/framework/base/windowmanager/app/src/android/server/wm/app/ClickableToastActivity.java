@@ -16,8 +16,8 @@
 
 package android.server.wm.app;
 
-import static android.server.wm.app.Components.ToastReceiver.ACTION_TOAST_DISPLAYED;
-import static android.server.wm.app.Components.ToastReceiver.ACTION_TOAST_TAP_DETECTED;
+import static android.server.wm.app.Components.ClickableToastActivity.ACTION_TOAST_DISPLAYED;
+import static android.server.wm.app.Components.ClickableToastActivity.ACTION_TOAST_TAP_DETECTED;
 
 import android.app.Activity;
 import android.content.Context;
