@@ -251,7 +251,7 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
      */
     @CddTest(requirement="9.7")
     public void testConfigDisableUsermodehelper() throws Exception {
-        if (PropertyUtil.getFirstApiLevel(mDevice) < 29) {
+        if (PropertyUtil.getFirstApiLevel(mDevice) < 30) {
             return;
         }
 

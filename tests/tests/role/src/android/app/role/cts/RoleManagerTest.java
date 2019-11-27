@@ -272,12 +272,15 @@ public class RoleManagerTest {
         // Wait for the don't ask again to be forgotten.
         Thread.sleep(2000);
 
-        requestRole(ROLE_NAME);
-        UiObject2 dontAskAgainCheck = findDontAskAgainCheck(false);
+        TestUtils.waitUntil("Find and respond to request role UI", () -> {
+            requestRole(ROLE_NAME);
+            UiObject2 dontAskAgainCheck = findDontAskAgainCheck(false);
 
-        assertThat(dontAskAgainCheck).isNull();
+            assertThat(dontAskAgainCheck).isNull();
 
-        respondToRoleRequest(false);
+            respondToRoleRequest(false);
+            return true;
+        });
     }
 
     @FlakyTest
@@ -296,12 +299,15 @@ public class RoleManagerTest {
         Thread.sleep(2000);
         installPackage(APP_APK_PATH);
 
-        requestRole(ROLE_NAME);
-        UiObject2 dontAskAgainCheck = findDontAskAgainCheck(false);
+        TestUtils.waitUntil("Find and respond to request role UI", () -> {
+            requestRole(ROLE_NAME);
+            UiObject2 dontAskAgainCheck = findDontAskAgainCheck(false);
 
-        assertThat(dontAskAgainCheck).isNull();
+            assertThat(dontAskAgainCheck).isNull();
 
-        respondToRoleRequest(false);
+            respondToRoleRequest(false);
+            return true;
+        });
     }
 
     @Test
@@ -320,7 +326,7 @@ public class RoleManagerTest {
     }
 
     private void respondToRoleRequest(boolean allow)
-            throws InterruptedException, IOException, UiObjectNotFoundException {
+            throws InterruptedException, UiObjectNotFoundException {
         if (allow) {
             waitFindObject(By.text(APP_PACKAGE_NAME)).click();
         }
@@ -344,8 +350,8 @@ public class RoleManagerTest {
     }
 
     @NonNull
-    private Pair<Integer, Intent> clickButtonAndWaitForResult(boolean positive) throws IOException,
-            InterruptedException, UiObjectNotFoundException {
+    private Pair<Integer, Intent> clickButtonAndWaitForResult(boolean positive)
+            throws InterruptedException, UiObjectNotFoundException {
         waitFindObject(By.res(positive ? "android:id/button1" : "android:id/button2")).click();
         return waitForResult();
     }

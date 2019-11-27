@@ -64,10 +64,10 @@ public class EncryptionTest extends AndroidTestCase {
     private void handleEncryptedDevice() {
         if ("file".equals(PropertyUtil.getProperty("ro.crypto.type"))) {
             Log.d(TAG, "Device is encrypted with file-based encryption.");
-            // TODO(b/111311698): If we're able to determine if the hardware
-            //     has AES instructions, confirm that AES, and only AES,
-            //     is in use.  If the hardware does not have AES instructions,
-            //     confirm that either AES or Adiantum is in use.
+            // Note: this test doesn't check whether the requirements for
+            // encryption algorithms are met, since apps don't have a way to
+            // query this information.  Instead, it's tested in
+            // CtsNativeEncryptionTestCases.
             return;
         }
         if (PropertyUtil.getFirstApiLevel() < MIN_FBE_REQUIRED_API_LEVEL) {

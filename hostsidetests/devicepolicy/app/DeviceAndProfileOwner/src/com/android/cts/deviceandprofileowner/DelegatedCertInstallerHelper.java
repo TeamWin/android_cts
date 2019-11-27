@@ -76,4 +76,8 @@ public class DelegatedCertInstallerHelper extends BaseDeviceAdminTest {
     public void testManualClearGeneratedKey() {
         assertTrue(mDpm.removeKeyPair(ADMIN_RECEIVER_COMPONENT, PRE_SELECTED_ALIAS));
     }
+
+    public void testManualWipeProfile() {
+        mDpm.wipeData(0);
+    }
 }

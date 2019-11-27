@@ -25,6 +25,7 @@ import android.content.res.Resources;
 import android.graphics.ImageFormat;
 import android.media.cts.CodecUtils;
 import android.media.Image;
+import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.MediaCodec;
 import android.media.MediaCodec.BufferInfo;
@@ -57,7 +58,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.LongStream;
 
 import static android.media.MediaCodecInfo.CodecProfileLevel.*;
 
@@ -232,6 +232,62 @@ public class DecoderTest extends MediaPlayerTestBase {
     }
     public void testDecodeOpusMp4() throws Exception {
         testTimeStampOrdering(R.raw.sinesweepopusmp4);
+    }
+    public void testDecodeOpusChannelsAndRates() throws Exception {
+        int[] sampleRates = { 16000, 24000, 44100, 48000 };
+        int[] channelMasks = { AudioFormat.CHANNEL_OUT_MONO,
+                               AudioFormat.CHANNEL_OUT_STEREO,
+                               AudioFormat.CHANNEL_OUT_5POINT1 };
+
+        for (MediaCodecInfo codecInfo : getOpusDecoderMediaCodecInfoList()) {
+            MediaCodec codec = MediaCodec.createByCodecName(codecInfo.getCanonicalName());
+            for (int sampleRate : sampleRates) {
+                for (int channelMask : channelMasks) {
+                    int channelCount = AudioFormat.channelCountFromOutChannelMask(channelMask);
+
+                    codec.reset();
+                    MediaFormat desiredFormat = MediaFormat.createAudioFormat(
+                            MediaFormat.MIMETYPE_AUDIO_OPUS,
+                            sampleRate,
+                            channelCount);
+                    codec.configure(desiredFormat, null, null, 0);
+
+                    Log.d(TAG, "codec: " + codecInfo.getCanonicalName() +
+                            " sample rate: " + sampleRate +
+                            " channelcount:" + channelCount);
+
+                    MediaFormat actualFormat = codec.getInputFormat();
+                    int actualChannels = actualFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT, -1);
+                    int actualSampleRate = actualFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE, -1);
+                    assertTrue("channels: configured " + actualChannels + " != desired " + channelCount,
+                               actualChannels == channelCount);
+                    assertTrue("sample rate: configured " + actualSampleRate + " != desired " + sampleRate,
+                               actualSampleRate == sampleRate);
+                }
+            }
+
+            codec.release();
+        }
+    }
+
+    private ArrayList<MediaCodecInfo> getOpusDecoderMediaCodecInfoList() {
+        MediaCodecList mediaCodecList = new MediaCodecList(MediaCodecList.ALL_CODECS);
+        ArrayList<MediaCodecInfo> opusDecoderInfos = new ArrayList<MediaCodecInfo>();
+        for (MediaCodecInfo codecInfo : mediaCodecList.getCodecInfos()) {
+            if (!codecInfo.isEncoder() && isOpusSupported(codecInfo)) {
+                opusDecoderInfos.add(codecInfo);
+            }
+        }
+        return opusDecoderInfos;
+    }
+
+    private boolean isOpusSupported(MediaCodecInfo codecInfo) {
+        for (String type : codecInfo.getSupportedTypes()) {
+            if (type.equalsIgnoreCase(MediaFormat.MIMETYPE_AUDIO_OPUS)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void testDecode51M4a() throws Exception {
@@ -3340,12 +3396,27 @@ public class DecoderTest extends MediaPlayerTestBase {
         return pm.hasSystemFeature(PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE);
     }
 
-    public void testLowLatencyAVC() throws Exception {
+    public void testLowLatencyVp9At1280x720() throws Exception {
+        testLowLatencyVideo(
+                R.raw.video_1280x720_webm_vp9_csd_309kbps_25fps_vorbis_stereo_128kbps_48000hz, 300);
+    }
+
+    public void testLowLatencyVp9At1920x1080() throws Exception {
+        testLowLatencyVideo(
+                R.raw.bbb_s2_1920x1080_webm_vp9_0p41_10mbps_60fps_vorbis_6ch_384kbps_22050hz, 300);
+    }
+
+    public void testLowLatencyVp9At3840x2160() throws Exception {
+        testLowLatencyVideo(
+                R.raw.bbb_s2_3840x2160_webm_vp9_0p51_20mbps_60fps_vorbis_6ch_384kbps_32000hz, 300);
+    }
+
+    public void testLowLatencyAVCAt1280x720() throws Exception {
         testLowLatencyVideo(
                 R.raw.video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz, 300);
     }
 
-    public void testLowLatencyHEVC() throws Exception {
+    public void testLowLatencyHEVCAt480x360() throws Exception {
         testLowLatencyVideo(
                 R.raw.video_480x360_mp4_hevc_650kbps_30fps_aac_stereo_128kbps_48000hz, 300);
     }
@@ -3448,10 +3519,21 @@ public class DecoderTest extends MediaPlayerTestBase {
 
         assertTrue("No INFO_OUTPUT_FORMAT_CHANGED from decoder", decoderOutputFormat != null);
 
-        LongStream longStream = Arrays.stream(latencyMs);
-        long latencyMean = (long)longStream.average().getAsDouble();
-        long latencyMax = longStream.max().getAsLong();
-        Log.d(TAG, "latency average " + latencyMean + " ms, max " + latencyMax + " ms");
+        long latencyMean = 0;
+        long latencyMax = 0;
+        int maxIndex = 0;
+        for (int i = 0; i < bufferCounter; ++i) {
+            latencyMean += latencyMs[i];
+            if (latencyMs[i] > latencyMax) {
+                latencyMax = latencyMs[i];
+                maxIndex = i;
+            }
+        }
+        if (bufferCounter > 0) {
+            latencyMean /= bufferCounter;
+        }
+        Log.d(TAG, "latency average " + latencyMean + " ms, max " + latencyMax + " ms at frame " +
+                maxIndex);
 
         DeviceReportLog log = new DeviceReportLog(REPORT_LOG_NAME, "video_decoder_latency");
         String message = MediaPerfUtils.addPerformanceHeadersToLog(

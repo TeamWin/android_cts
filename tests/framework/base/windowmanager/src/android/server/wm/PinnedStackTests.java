@@ -1171,6 +1171,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
                 finalAppSize);
     }
 
+    @FlakyTest(bugId = 145133340)
     @Test
     public void testEnterPictureInPictureSavePosition() throws Exception {
         // Ensure we have static shelf offset by running this test over a non-home activity

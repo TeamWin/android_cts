@@ -205,9 +205,9 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, CLEAR_PROFILE_OWNER_NEGATIVE_TEST_CLASS, mUserId);
     }
 
-    private void grantProfileOwnerDeviceIdsAccess() throws DeviceNotAvailableException {
+    private void markProfileOwnerOnOrganizationOwnedDevice() throws DeviceNotAvailableException {
         getDevice().executeShellCommand(
-                String.format("dpm grant-profile-owner-device-ids-access --user %d '%s'",
+                String.format("dpm mark-profile-owner-on-organization-owned-device --user %d '%s'",
                     mUserId, DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS));
 
     }
@@ -223,12 +223,16 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
                     ".DelegatedDeviceIdAttestationTest",
                     "testGenerateKeyPairWithDeviceIdAttestationExpectingFailure", mUserId);
 
-            grantProfileOwnerDeviceIdsAccess();
+            markProfileOwnerOnOrganizationOwnedDevice();
 
             runDeviceTestsAsUser("com.android.cts.certinstaller",
                     ".DelegatedDeviceIdAttestationTest",
                     "testGenerateKeyPairWithDeviceIdAttestationExpectingSuccess", mUserId);
         });
+
+        // Clean up:
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DelegatedCertInstallerHelper",
+                "testManualWipeProfile", mUserId);
     }
     @Test
     public void testDeviceIdAttestationForProfileOwner() throws Exception {
@@ -241,7 +245,7 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
                 "testFailsWithoutProfileOwnerIdsGrant", mUserId);
 
         // Test that Device ID attestation for the profile owner works with a grant.
-        grantProfileOwnerDeviceIdsAccess();
+        markProfileOwnerOnOrganizationOwnedDevice();
 
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DeviceIdAttestationTest",
                 "testSucceedsWithProfileOwnerIdsGrant", mUserId);

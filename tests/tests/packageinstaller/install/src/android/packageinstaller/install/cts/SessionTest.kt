@@ -27,6 +27,7 @@ import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.AppOpsUtils
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -96,5 +97,28 @@ class SessionTest : PackageInstallerTestBase() {
         assertEquals(STATUS_FAILURE_ABORTED, getInstallSessionResult())
         assertEquals(RESULT_CANCELED, installation.get(TIMEOUT, TimeUnit.MILLISECONDS))
         assertNotInstalled()
+    }
+
+    /**
+     * Check that can't install when FRP mode is enabled.
+     */
+    @Test
+    fun confirmFrpInstallationFails() {
+        try {
+            setSecureSetting("secure_frp_mode", 1)
+
+            try {
+                val installation = startInstallationViaSession()
+                clickInstallerUIButton(CANCEL_BUTTON_ID)
+
+                fail("Package should not be installed")
+            } catch (expected: SecurityException) {
+            }
+
+            // Install should never have started
+            assertNotInstalled()
+        } finally {
+            setSecureSetting("secure_frp_mode", 0)
+        }
     }
 }

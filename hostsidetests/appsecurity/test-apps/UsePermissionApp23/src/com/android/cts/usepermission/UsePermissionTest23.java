@@ -512,7 +512,7 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         // Request the permission and allow it
         BasePermissionActivity.Result result = requestPermissions(permissions, () -> {
             try {
-                clickAllowButton();
+                clickAllowForegroundButton();
                 getUiDevice().waitForIdle();
                 clickAllowButton();
                 getUiDevice().waitForIdle();

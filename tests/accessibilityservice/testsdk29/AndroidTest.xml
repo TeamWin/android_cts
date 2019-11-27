@@ -13,23 +13,25 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Runs the RollbackManager host tests">
+<configuration description="Config for CTS accessibility service Sdk 29 test cases">
     <option name="test-suite-tag" value="cts" />
     <option name="config-descriptor:metadata" key="component" value="framework" />
-    <option name="config-descriptor:metadata" key="parameter" value="not_instant_app" />
+    <option name="config-descriptor:metadata" key="parameter" value="instant_app" />
     <option name="config-descriptor:metadata" key="parameter" value="not_multi_abi" />
+    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <option name="run-command" value="cmd accessibility set-bind-instant-service-allowed true" />
+        <option name="teardown-command" value="cmd accessibility set-bind-instant-service-allowed false" />
+    </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
-        <option name="test-file-name" value="CtsRollbackManagerHostTestHelperApp.apk" />
-        <option name="test-file-name" value="CtsRollbackManagerHostTestHelperApp2.apk" />
+        <option name="test-file-name" value="CtsAccessibilityServiceSdk29TestCases.apk" />
     </target_preparer>
-    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
-        <option name="run-command" value="svc wifi disable" />
-        <option name="run-command" value="svc data disable" />
-        <option name="teardown-command" value="svc wifi enable" />
-        <option name="teardown-command" value="svc data enable" />
-    </target_preparer>
-    <test class="com.android.tradefed.testtype.HostTest" >
-        <option name="class" value="com.android.cts.rollback.host.RollbackManagerHostTest" />
+    <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
+        <option name="package" value="android.accessibilityservice.cts.testsdk29" />
+        <option name="runtime-hint" value="1m" />
     </test>
+    <metrics_collector class="com.android.tradefed.device.metric.FilePullerLogCollector">
+        <option name="directory-keys" value="/sdcard/android.accessibilityservice.cts.testsdk29" />
+        <option name="collect-on-run-ended-only" value="true" />
+    </metrics_collector>
 </configuration>
