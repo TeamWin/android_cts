@@ -173,7 +173,7 @@ public class HidJsonParser {
                     testData.reports.add(report);
                 }
 
-                final int source = sourceFromString(testcaseEntry.optString("source", "UNKNOWN"));
+                final int source = sourceFromString(testcaseEntry.optString("source"));
 
                 JSONArray events = testcaseEntry.getJSONArray("events");
                 for (int i = 0; i < events.length(); i++) {
@@ -201,8 +201,7 @@ public class HidJsonParser {
     private KeyEvent parseKeyEvent(int source, JSONObject entry) throws JSONException {
         int action = keyActionFromString(entry.getString("action"));
         int keyCode = KeyEvent.keyCodeFromString(entry.getString("keycode"));
-        final String metaStateString = entry.optString("metaState");
-        int metaState = metaStateString.isEmpty() ? 0 : metaStateFromString(metaStateString);
+        int metaState = metaStateFromString(entry.optString("metaState"));
         // We will only check select fields of the KeyEvent. Times are not checked.
         return new KeyEvent(/* downTime */ 0, /* eventTime */ 0, action, keyCode,
                 /* repeat */ 0, metaState, /* deviceId */ 0, /* scanCode */ 0,
@@ -253,6 +252,9 @@ public class HidJsonParser {
 
     private static int metaStateFromString(String metaStateString) {
         int metaState = 0;
+        if (metaStateString.isEmpty()) {
+            return metaState;
+        }
         final String[] metaKeys = metaStateString.split("\\|");
         for (final String metaKeyString : metaKeys) {
             final String trimmedKeyString = metaKeyString.trim();
@@ -291,7 +293,8 @@ public class HidJsonParser {
                     metaState |= KeyEvent.META_SCROLL_LOCK_ON;
                     break;
                 default:
-                    throw new RuntimeException("Unknown meta state: " + trimmedKeyString);
+                    throw new RuntimeException("Unknown meta state chunk: " + trimmedKeyString
+                            + " in meta state string: " + metaStateString);
             }
         }
         return metaState;
@@ -319,18 +322,36 @@ public class HidJsonParser {
         throw new RuntimeException("Unknown action specified: " + action);
     }
 
-    private static int sourceFromString(String source) {
-        switch (source.toUpperCase()) {
-            case "MOUSE_RELATIVE":
-                return InputDevice.SOURCE_MOUSE_RELATIVE;
-            case "JOYSTICK":
-                return InputDevice.SOURCE_JOYSTICK;
-            case "KEYBOARD":
-                return InputDevice.SOURCE_KEYBOARD;
-            case "UNKNOWN":
-                return InputDevice.SOURCE_UNKNOWN;
+    private static int sourceFromString(String sourceString) {
+        if (sourceString.isEmpty()) {
+            return InputDevice.SOURCE_UNKNOWN;
         }
-        throw new RuntimeException("Unknown source specified: " + source);
+        int source = 0;
+        final String[] sourceEntries = sourceString.split("\\|");
+        for (final String sourceEntry : sourceEntries) {
+            final String trimmedSourceEntry = sourceEntry.trim();
+            switch (trimmedSourceEntry.toUpperCase()) {
+                case "MOUSE_RELATIVE":
+                    source |= InputDevice.SOURCE_MOUSE_RELATIVE;
+                    break;
+                case "JOYSTICK":
+                    source |= InputDevice.SOURCE_JOYSTICK;
+                    break;
+                case "KEYBOARD":
+                    source |= InputDevice.SOURCE_KEYBOARD;
+                    break;
+                case "GAMEPAD":
+                    source |= InputDevice.SOURCE_GAMEPAD;
+                    break;
+                case "DPAD":
+                    source |= InputDevice.SOURCE_DPAD;
+                    break;
+                default:
+                    throw new RuntimeException("Unknown source chunk: " + trimmedSourceEntry
+                            + " in source string: " + sourceString);
+            }
+        }
+        return source;
     }
 
     private static int motionButtonFromString(String button) {
