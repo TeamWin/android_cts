@@ -103,6 +103,15 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
                 () -> new AssertionError("Can't find " + SHIM_APEX_PACKAGE_NAME));
     }
 
+    private boolean isCheckpointSupported() throws Exception {
+        try {
+            run("isCheckpointSupported");
+            return true;
+        } catch (AssertionError ignore) {
+            return false;
+        }
+    }
+
     /**
      * Uninstalls any version greater than 1 of shim apex and reboots the device if necessary
      * to complete the uninstall.
@@ -135,6 +144,7 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testApkOnlyMultipleStagedRollback() throws Exception {
+        assumeTrue(isCheckpointSupported());
         run("testApkOnlyMultipleStagedRollback_Phase1");
         getDevice().reboot();
         run("testApkOnlyMultipleStagedRollback_Phase2");
@@ -147,6 +157,7 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testApkOnlyMultipleStagedPartialRollback() throws Exception {
+        assumeTrue(isCheckpointSupported());
         run("testApkOnlyMultipleStagedPartialRollback_Phase1");
         getDevice().reboot();
         run("testApkOnlyMultipleStagedPartialRollback_Phase2");

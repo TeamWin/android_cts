@@ -21,9 +21,13 @@ import static com.android.cts.rollback.lib.RollbackInfoSubject.assertThat;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.pm.PackageInstaller;
 import android.content.rollback.RollbackInfo;
+import android.os.storage.StorageManager;
 import android.util.Log;
+
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.cts.install.lib.Install;
 import com.android.cts.install.lib.InstallUtils;
@@ -561,5 +565,12 @@ public class HostTestHelper {
     public void testApkRollbackByAnotherInstaller_Phase1() throws Exception {
         Install.single(TestApp.A1).commit();
         Install.single(TestApp.A2).setEnableRollback().commit();
+    }
+
+    @Test
+    public void isCheckpointSupported() {
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        StorageManager sm = (StorageManager) context.getSystemService(Context.STORAGE_SERVICE);
+        assertThat(sm.isCheckpointSupported()).isTrue();
     }
 }
