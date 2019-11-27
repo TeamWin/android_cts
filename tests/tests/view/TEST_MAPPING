@@ -1,9 +1,6 @@
 {
   "presubmit": [
     {
-      "name": "CtsTextTestCases"
-    },
-    {
       "name": "minikin_tests"
     }
   ]
