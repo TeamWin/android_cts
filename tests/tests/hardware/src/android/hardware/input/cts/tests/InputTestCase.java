@@ -112,7 +112,7 @@ public abstract class InputTestCase {
                 expectedKeyEvent.getSource(), receivedKeyEvent.getSource());
         assertEquals(mCurrentTestCase + " (keycode)",
                 expectedKeyEvent.getKeyCode(), receivedKeyEvent.getKeyCode());
-        assertEquals(mCurrentTestCase + " (metaState)",
+        assertEquals(mCurrentTestCase + " (meta state)",
                 expectedKeyEvent.getMetaState(), receivedKeyEvent.getMetaState());
     }
 
