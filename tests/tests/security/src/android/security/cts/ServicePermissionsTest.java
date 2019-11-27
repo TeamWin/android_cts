@@ -107,6 +107,7 @@ public class ServicePermissionsTest extends AndroidTestCase {
             } catch (SecurityException e) {
                 String msg = e.getMessage();
                 if ((msg == null) || msg.contains("android.permission.DUMP")) {
+                    Log.d(TAG, "Service " + service + " correctly checked permission");
                     // Service correctly checked for DUMP permission, yay
                 } else {
                     // Service is throwing about something else; they're
@@ -115,7 +116,9 @@ public class ServicePermissionsTest extends AndroidTestCase {
                     continue;
                 }
             } catch (TransactionTooLargeException | DeadObjectException e) {
-                // SELinux likely prevented the dump - assume safe
+                // SELinux likely prevented the dump - assume safe, but log anywasy
+                // (as the exception might happens in some devices but not on others)
+                Log.w(TAG, "Service " + service + " threw exception: " + e);
                 continue;
             } finally {
                 out.close();
