@@ -143,6 +143,7 @@ public class StagedInstallTest {
     @Before
     public void clearBroadcastReceiver() {
         SessionUpdateBroadcastReceiver.sessionBroadcasts.clear();
+        SessionUpdateBroadcastReceiver.sessionCommittedBroadcasts.clear();
     }
 
     // This is marked as @Test to take advantage of @Before/@After methods of this class. Actual
@@ -192,6 +193,7 @@ public class StagedInstallTest {
         assertSessionReady(sessionId);
         storeSessionId(sessionId);
         assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
+        assertNoSessionCommitBroadcastSent();
     }
 
     @Test
@@ -199,6 +201,7 @@ public class StagedInstallTest {
         int sessionId = retrieveLastSessionId();
         assertSessionApplied(sessionId);
         assertThat(getInstalledVersion(TestApp.A)).isEqualTo(1);
+        assertNoSessionCommitBroadcastSent();
     }
 
     @Test
@@ -222,6 +225,7 @@ public class StagedInstallTest {
         storeSessionId(sessionId);
         assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
         assertThat(getInstalledVersion(TestApp.B)).isEqualTo(-1);
+        assertNoSessionCommitBroadcastSent();
     }
 
     @Test
@@ -230,6 +234,7 @@ public class StagedInstallTest {
         assertSessionApplied(sessionId);
         assertThat(getInstalledVersion(TestApp.A)).isEqualTo(1);
         assertThat(getInstalledVersion(TestApp.B)).isEqualTo(1);
+        assertNoSessionCommitBroadcastSent();
     }
 
     @Test
@@ -346,6 +351,7 @@ public class StagedInstallTest {
         storeSessionId(sessionId);
         // Version shouldn't change before reboot.
         assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(1);
+        assertNoSessionCommitBroadcastSent();
     }
 
     @Test
@@ -353,6 +359,7 @@ public class StagedInstallTest {
         int sessionId = retrieveLastSessionId();
         assertSessionApplied(sessionId);
         assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(2);
+        assertNoSessionCommitBroadcastSent();
     }
 
     @Test
@@ -367,6 +374,7 @@ public class StagedInstallTest {
         // Version shouldn't change before reboot.
         assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(1);
         assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
+        assertNoSessionCommitBroadcastSent();
     }
 
     @Test
@@ -375,6 +383,7 @@ public class StagedInstallTest {
         assertSessionApplied(sessionId);
         assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(2);
         assertThat(getInstalledVersion(TestApp.A)).isEqualTo(1);
+        assertNoSessionCommitBroadcastSent();
     }
 
     @Test
@@ -1099,6 +1108,13 @@ public class StagedInstallTest {
                 .that(info).isNotNull();
         assertThat(info.getSessionId()).isEqualTo(sessionId);
         return info;
+    }
+
+    private void assertNoSessionCommitBroadcastSent() throws Exception {
+        PackageInstaller.SessionInfo info =
+                SessionUpdateBroadcastReceiver.sessionCommittedBroadcasts.poll(10,
+                        TimeUnit.SECONDS);
+        assertThat(info).isNull();
     }
 
     @Test
