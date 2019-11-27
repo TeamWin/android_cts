@@ -108,7 +108,8 @@ public final class UiBot {
             "autofill_save_type_payment_card";
     private static final String RESOURCE_STRING_SAVE_TYPE_GENERIC_CARD =
             "autofill_save_type_generic_card";
-    private static final String RESOURCE_STRING_SAVE_BUTTON_NOT_NOW = "save_password_notnow";
+    private static final String RESOURCE_STRING_SAVE_BUTTON_NEVER = "autofill_save_never";
+    private static final String RESOURCE_STRING_SAVE_BUTTON_NOT_NOW = "autofill_save_notnow";
     private static final String RESOURCE_STRING_SAVE_BUTTON_NO_THANKS = "autofill_save_no";
     private static final String RESOURCE_STRING_SAVE_BUTTON_YES = "autofill_save_yes";
     private static final String RESOURCE_STRING_UPDATE_BUTTON_YES = "autofill_update_yes";
@@ -743,10 +744,14 @@ public final class UiBot {
         assertWithMessage("wrong text on positive button")
                 .that(positiveButton.getText().toUpperCase()).isEqualTo(expectedPositiveButtonText);
 
-        final String negativeButtonStringId =
-                (negativeButtonStyle == SaveInfo.NEGATIVE_BUTTON_STYLE_REJECT)
-                ? RESOURCE_STRING_SAVE_BUTTON_NOT_NOW
-                : RESOURCE_STRING_SAVE_BUTTON_NO_THANKS;
+        final String negativeButtonStringId;
+        if (negativeButtonStyle == SaveInfo.NEGATIVE_BUTTON_STYLE_REJECT) {
+            negativeButtonStringId = RESOURCE_STRING_SAVE_BUTTON_NOT_NOW;
+        } else if (negativeButtonStyle == SaveInfo.NEGATIVE_BUTTON_STYLE_NEVER) {
+            negativeButtonStringId = RESOURCE_STRING_SAVE_BUTTON_NEVER;
+        } else {
+            negativeButtonStringId = RESOURCE_STRING_SAVE_BUTTON_NO_THANKS;
+        }
         final String expectedNegativeButtonText = getString(negativeButtonStringId).toUpperCase();
         final UiObject2 negativeButton = waitForObject(snackbar,
                 By.res("android", RESOURCE_ID_SAVE_BUTTON_NO), timeout);
