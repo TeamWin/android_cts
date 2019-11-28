@@ -26,11 +26,14 @@ import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.FileUtil;
 import com.android.tradefed.util.ZipUtil;
 
+import org.hamcrest.CustomTypeSafeMatcher;
+import org.hamcrest.Matcher;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ErrorCollector;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
@@ -79,6 +82,9 @@ public class ApexSignatureVerificationTest extends BaseHostJUnit4Test {
     private static List<File> mWellKnownKeyFileList = new ArrayList<>();
     private ITestDevice mDevice;
 
+    @Rule
+    public final ErrorCollector mErrorCollector = new ErrorCollector();
+
     @Before
     public void setUp() throws Exception {
         mDevice = getDevice();
@@ -125,7 +131,6 @@ public class ApexSignatureVerificationTest extends BaseHostJUnit4Test {
 
     @Test
     public void testApexPubKeyIsNotWellKnownKey() {
-        assertThat(mWellKnownKeyFileList).isNotNull();
 
         for (Map.Entry<String, File> entry : mExtractedTestDirMap.entrySet()) {
             final File pubKeyFile = FileUtil.findFile(entry.getValue(), APEX_PUB_KEY_NAME);
@@ -135,14 +140,8 @@ public class ApexSignatureVerificationTest extends BaseHostJUnit4Test {
 
             while (it.hasNext()) {
                 final File wellKnownKey = (File) it.next();
-
-                try {
-                    assertWithMessage("Well-known key:" + wellKnownKey.getName() + ", match apex:"
-                            + entry.getKey()).that(
-                            FileUtil.compareFileContents(pubKeyFile, wellKnownKey)).isFalse();
-                } catch (IOException e) {
-                    throw new AssertionError("compareFileContents IOException" + e);
-                }
+                verifyPubKey("must not use well known pubkey", pubKeyFile,
+                        pubkeyShouldNotEqualTo(wellKnownKey));
             }
         }
     }
@@ -260,6 +259,28 @@ public class ApexSignatureVerificationTest extends BaseHostJUnit4Test {
                 throw new AssertionError("Copy well-known keys to tmp IOException" + e);
             }
         }
+
+        assertThat(mWellKnownKeyFileList).isNotEmpty();
+    }
+
+    private <T> void verifyPubKey(String reason, T actual, Matcher<? super T> matcher) {
+        mErrorCollector.checkThat(reason, actual, matcher);
+    }
+
+    private static Matcher<File> pubkeyShouldNotEqualTo(File wellknownKey) {
+        return new CustomTypeSafeMatcher<File>("must not match well known key ") {
+            @Override
+            protected boolean matchesSafely(File actual) {
+                boolean isMatchWellknownKey = false;
+                try {
+                    isMatchWellknownKey = FileUtil.compareFileContents(actual, wellknownKey);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                // Assert fail if the keys matched
+                return !isMatchWellknownKey;
+            }
+        };
     }
 
     /**
