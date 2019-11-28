@@ -101,6 +101,15 @@ public class GnssStatusTest extends GnssTestCase  {
           status.getCn0DbHz(i) >= 0.0 &&
               status.getCn0DbHz(i) <= 63.0);
 
+      Log.i(TAG, "hasBasebandCn0DbHz: " + status.hasBasebandCn0DbHz(i));
+      if (status.hasBasebandCn0DbHz(i)) {
+        softAssert.assertTrue("baseband_cn0_dbhz: Baseband carrier-to-noise density",
+                "0.0 <= X <= 63",
+                String.valueOf(status.getBasebandCn0DbHz(i)),
+                status.getBasebandCn0DbHz(i) >= 0.0 &&
+                        status.getBasebandCn0DbHz(i) <= 63.0);
+      }
+
       softAssert.assertTrue("elevation_degrees: Elevation in Degrees :",
           "0.0 <= X <= 90.0",
           String.valueOf(status.getElevationDegrees(i)),

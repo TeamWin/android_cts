@@ -811,6 +811,14 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
+    public void testSetLocationEnabled() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceOwnerTest("SetLocationEnabledTest");
+    }
+
+    @Test
     public void testDeviceOwnerProvisioning() throws Exception {
         if (!mHasFeature) {
             return;

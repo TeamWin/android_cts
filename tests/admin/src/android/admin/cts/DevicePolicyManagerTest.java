@@ -274,6 +274,19 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         }
     }
 
+    public void testSetLocationEnabled_failIfNotDeviceOwner() {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testSetLocationEnabled_failIfNotDeviceOwner");
+            return;
+        }
+        try {
+            mDevicePolicyManager.setLocationEnabled(mComponent, true);
+            fail("did not throw expected SecurityException");
+        } catch (SecurityException e) {
+            assertDeviceOwnerMessage(e.getMessage());
+        }
+    }
+
     public void testSetGlobalSetting_failIfNotDeviceOwner() {
         if (!mDeviceAdmin) {
             Log.w(TAG, "Skipping testSetGlobalSetting_failIfNotDeviceOwner");
