@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import android.support.test.runner.AndroidJUnit4;
+import android.platform.test.annotations.SecurityTest;
 import com.android.compatibility.common.util.CpuFeatures;
 
 /**
@@ -97,6 +98,11 @@ public class SeccompDeviceTest {
         }
     }
 
+    @SecurityTest(minPatchLevel = "2019-05")
+    public void testPtraceSeccomp_CVE_2019_2054() throws Exception {
+        Assert.assertTrue(testPtrace_CVE_2019_2054());
+    }
+
     private void testBlocked(int nr) {
         Assert.assertTrue("Syscall " + nr + " not blocked", testSyscallBlocked(nr));
     }
@@ -106,4 +112,5 @@ public class SeccompDeviceTest {
     }
 
     private static final native boolean testSyscallBlocked(int nr);
+    private static final native boolean testPtrace_CVE_2019_2054();
 }
