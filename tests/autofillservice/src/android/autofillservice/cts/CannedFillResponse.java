@@ -72,7 +72,7 @@ public final class CannedFillResponse {
     private final String[] mRequiredSavableIds;
     private final String[] mOptionalSavableIds;
     private final AutofillId[] mRequiredSavableAutofillIds;
-    private final String mSaveDescription;
+    private final CharSequence mSaveDescription;
     private final Bundle mExtras;
     private final RemoteViews mPresentation;
     private final RemoteViews mHeader;
@@ -309,7 +309,7 @@ public final class CannedFillResponse {
         private String[] mRequiredSavableIds;
         private String[] mOptionalSavableIds;
         private AutofillId[] mRequiredSavableAutofillIds;
-        private String mSaveDescription;
+        private CharSequence mSaveDescription;
         public int mSaveType = -1;
         private Bundle mExtras;
         private RemoteViews mPresentation;
@@ -377,7 +377,7 @@ public final class CannedFillResponse {
         /**
          * Sets the description passed to the {@link SaveInfo}.
          */
-        public Builder setSaveDescription(String description) {
+        public Builder setSaveDescription(CharSequence description) {
             mSaveDescription = description;
             return this;
         }
