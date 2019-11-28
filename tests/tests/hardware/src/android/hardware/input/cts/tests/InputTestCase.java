@@ -92,14 +92,14 @@ public abstract class InputTestCase {
     }
 
     /**
-     * Asserts that the application received a {@link android.view.KeyEvent} with the given action
-     * and keycode.
+     * Asserts that the application received a {@link android.view.KeyEvent} with the given
+     * metadata.
      *
      * If other KeyEvents are received by the application prior to the expected KeyEvent, or no
      * KeyEvents are received within a reasonable amount of time, then this will throw an
      * {@link AssertionError}.
      *
-     * Only action, keyCode and metaState are being compared.
+     * Only action, source, keyCode and metaState are being compared.
      */
     private void assertReceivedKeyEvent(@NonNull KeyEvent expectedKeyEvent) {
         KeyEvent receivedKeyEvent = waitForKey();
@@ -108,9 +108,11 @@ public abstract class InputTestCase {
         }
         assertEquals(mCurrentTestCase + " (action)",
                 expectedKeyEvent.getAction(), receivedKeyEvent.getAction());
+        assertEquals(mCurrentTestCase + " (source)",
+                expectedKeyEvent.getSource(), receivedKeyEvent.getSource());
         assertEquals(mCurrentTestCase + " (keycode)",
                 expectedKeyEvent.getKeyCode(), receivedKeyEvent.getKeyCode());
-        assertEquals(mCurrentTestCase + " (metaState)",
+        assertEquals(mCurrentTestCase + " (meta state)",
                 expectedKeyEvent.getMetaState(), receivedKeyEvent.getMetaState());
     }
 
