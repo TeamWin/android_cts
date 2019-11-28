@@ -39,4 +39,11 @@ final class HdmiCecConstants {
 
     static final int UNRECOGNIZED_OPCODE = 0x0;
 
+    static final int CEC_DEVICE_TYPE_TV = 0;
+    static final int CEC_DEVICE_TYPE_RECORDING_DEVICE = 1;
+    static final int CEC_DEVICE_TYPE_RESERVED = 2;
+    static final int CEC_DEVICE_TYPE_TUNER = 3;
+    static final int CEC_DEVICE_TYPE_PLAYBACK_DEVICE = 4;
+    static final int CEC_DEVICE_TYPE_AUDIO_SYSTEM = 5;
+
 }
