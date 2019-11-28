@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package com.android.cts.deviceowner;
+package com.android.cts.deviceandprofileowner;
+
+import android.content.ComponentName;
 
 import java.lang.Character;
 
-public class LockScreenInfoTest extends BaseDeviceOwnerTest {
+public class LockScreenInfoTest extends BaseDeviceAdminTest {
 
     @Override
     public void tearDown() throws Exception {
@@ -80,5 +82,9 @@ public class LockScreenInfoTest extends BaseDeviceOwnerTest {
     private void setLockInfo(String message) {
         mDevicePolicyManager.setDeviceOwnerLockScreenInfo(getWho(), message);
         assertEquals(message, mDevicePolicyManager.getDeviceOwnerLockScreenInfo());
+    }
+
+    protected ComponentName getWho() {
+        return ADMIN_RECEIVER_COMPONENT;
     }
 }
