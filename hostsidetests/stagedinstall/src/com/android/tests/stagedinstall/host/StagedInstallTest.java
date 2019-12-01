@@ -48,6 +48,13 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
 
     private static final String SHIM_APEX_PACKAGE_NAME = "com.android.apex.cts.shim";
 
+    private static final String PACKAGE_NAME = "com.android.tests.stagedinstall";
+
+    private static final String BROADCAST_RECEIVER_COMPONENT = PACKAGE_NAME + "/"
+            + PACKAGE_NAME + ".LauncherActivity";
+
+    private String mDefaultLauncher = null;
+
     @Rule
     public final FailedTestLogHook mFailedTestLogHook = new FailedTestLogHook(this);
 
@@ -58,7 +65,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
      * For example, <code>runPhase("testInstallStagedApkCommit");</code>
      */
     private void runPhase(String phase) throws Exception {
-        assertThat(runDeviceTests("com.android.tests.stagedinstall",
+        assertThat(runDeviceTests(PACKAGE_NAME,
                 "com.android.tests.stagedinstall.StagedInstallTest",
                 phase)).isTrue();
     }
@@ -67,12 +74,14 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     public void setUp() throws Exception {
         runPhase("cleanUp");
         uninstallShimApexIfNecessary();
+        storeDefaultLauncher();
     }
 
     @After
     public void tearDown() throws Exception {
         runPhase("cleanUp");
         uninstallShimApexIfNecessary();
+        setDefaultLauncher(mDefaultLauncher);
     }
 
     /**
@@ -82,6 +91,8 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @LargeTest
     public void testInstallStagedApk() throws Exception {
         assumeSystemUser();
+
+        setDefaultLauncher(BROADCAST_RECEIVER_COMPONENT);
         runPhase("testInstallStagedApk_Commit");
         getDevice().reboot();
         runPhase("testInstallStagedApk_VerifyPostReboot");
@@ -105,6 +116,8 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @LargeTest
     public void testInstallMultipleStagedApks() throws Exception {
         assumeSystemUser();
+
+        setDefaultLauncher(BROADCAST_RECEIVER_COMPONENT);
         runPhase("testInstallMultipleStagedApks_Commit");
         getDevice().reboot();
         runPhase("testInstallMultipleStagedApks_VerifyPostReboot");
@@ -167,6 +180,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     public void testInstallStagedApex() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
 
+        setDefaultLauncher(BROADCAST_RECEIVER_COMPONENT);
         runPhase("testInstallStagedApex_Commit");
         getDevice().reboot();
         runPhase("testInstallStagedApex_VerifyPostReboot");
@@ -176,6 +190,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     public void testInstallStagedApexAndApk() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
 
+        setDefaultLauncher(BROADCAST_RECEIVER_COMPONENT);
         runPhase("testInstallStagedApexAndApk_Commit");
         getDevice().reboot();
         runPhase("testInstallStagedApexAndApk_VerifyPostReboot");
@@ -500,6 +515,31 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         return getDevice().getActiveApexes().stream().filter(
                 apex -> apex.name.equals(SHIM_APEX_PACKAGE_NAME)).findAny().orElseThrow(
                 () -> new AssertionError("Can't find " + SHIM_APEX_PACKAGE_NAME));
+    }
+
+    /**
+     * Store the component name of the default launcher. This value will be used to reset the
+     * default launcher to its correct component upon test completion.
+     */
+    private void storeDefaultLauncher() throws DeviceNotAvailableException {
+        final String PREFIX = "Launcher: ComponentInfo{";
+        final String POSTFIX = "}";
+        for (String s : getDevice().executeShellCommand("cmd shortcut get-default-launcher")
+                .split("\n")) {
+            if (s.startsWith(PREFIX) && s.endsWith(POSTFIX)) {
+                mDefaultLauncher = s.substring(PREFIX.length(), s.length() - POSTFIX.length());
+            }
+        }
+    }
+
+    /**
+     * Set the default launcher to a given component.
+     * If set to the broadcast receiver component of this test app, this will allow the test app to
+     * receive SESSION_COMMITTED broadcasts.
+     */
+    private void setDefaultLauncher(String launcherComponent) throws DeviceNotAvailableException {
+        assertThat(launcherComponent).isNotEmpty();
+        getDevice().executeShellCommand("cmd package set-home-activity " + launcherComponent);
     }
 
     private static final class FailedTestLogHook extends TestWatcher {
