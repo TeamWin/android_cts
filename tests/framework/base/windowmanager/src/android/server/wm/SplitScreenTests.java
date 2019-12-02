@@ -353,7 +353,7 @@ public class SplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testRotationWhenDocked() throws Exception {
+    public void testRotationWhenDocked() {
         launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
                 getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
@@ -364,28 +364,27 @@ public class SplitScreenTests extends ActivityManagerTestBase {
 
         // Rotate device single steps (90°) 0-1-2-3.
         // Each time we compute the state we implicitly assert valid bounds.
-        try (final RotationSession rotationSession = new RotationSession()) {
-            for (int i = 0; i < 4; i++) {
-                rotationSession.set(i);
-                mAmWmState.computeState(LAUNCHING_ACTIVITY, TEST_ACTIVITY);
-            }
-            // Double steps (180°) We ended the single step at 3. So, we jump directly to 1 for
-            // double step. So, we are testing 3-1-3 for one side and 0-2-0 for the other side.
-            rotationSession.set(ROTATION_90);
-            mAmWmState.computeState(LAUNCHING_ACTIVITY, TEST_ACTIVITY);
-            rotationSession.set(ROTATION_270);
-            mAmWmState.computeState(LAUNCHING_ACTIVITY, TEST_ACTIVITY);
-            rotationSession.set(ROTATION_0);
-            mAmWmState.computeState(LAUNCHING_ACTIVITY, TEST_ACTIVITY);
-            rotationSession.set(ROTATION_180);
-            mAmWmState.computeState(LAUNCHING_ACTIVITY, TEST_ACTIVITY);
-            rotationSession.set(ROTATION_0);
+        final RotationSession rotationSession = createManagedRotationSession();
+        for (int i = 0; i < 4; i++) {
+            rotationSession.set(i);
             mAmWmState.computeState(LAUNCHING_ACTIVITY, TEST_ACTIVITY);
         }
+        // Double steps (180°) We ended the single step at 3. So, we jump directly to 1 for
+        // double step. So, we are testing 3-1-3 for one side and 0-2-0 for the other side.
+        rotationSession.set(ROTATION_90);
+        mAmWmState.computeState(LAUNCHING_ACTIVITY, TEST_ACTIVITY);
+        rotationSession.set(ROTATION_270);
+        mAmWmState.computeState(LAUNCHING_ACTIVITY, TEST_ACTIVITY);
+        rotationSession.set(ROTATION_0);
+        mAmWmState.computeState(LAUNCHING_ACTIVITY, TEST_ACTIVITY);
+        rotationSession.set(ROTATION_180);
+        mAmWmState.computeState(LAUNCHING_ACTIVITY, TEST_ACTIVITY);
+        rotationSession.set(ROTATION_0);
+        mAmWmState.computeState(LAUNCHING_ACTIVITY, TEST_ACTIVITY);
     }
 
     @Test
-    public void testRotationWhenDockedWhileLocked() throws Exception {
+    public void testRotationWhenDockedWhileLocked() {
         launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
                 getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
@@ -395,99 +394,94 @@ public class SplitScreenTests extends ActivityManagerTestBase {
         mAmWmState.assertContainsStack("Must contain docked stack.",
                 WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
 
-        try (final RotationSession rotationSession = new RotationSession();
-             final LockScreenSession lockScreenSession = new LockScreenSession()) {
-            for (int i = 0; i < 4; i++) {
-                lockScreenSession.sleepDevice();
-                // The display may not be rotated while device is locked.
-                rotationSession.set(i, false /* waitDeviceRotation */);
-                lockScreenSession.wakeUpDevice()
-                        .unlockDevice();
-                mAmWmState.computeState(LAUNCHING_ACTIVITY, TEST_ACTIVITY);
-            }
+        final RotationSession rotationSession = createManagedRotationSession();
+        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        for (int i = 0; i < 4; i++) {
+            lockScreenSession.sleepDevice();
+            // The display may not be rotated while device is locked.
+            rotationSession.set(i, false /* waitDeviceRotation */);
+            lockScreenSession.wakeUpDevice()
+                    .unlockDevice();
+            mAmWmState.computeState(LAUNCHING_ACTIVITY, TEST_ACTIVITY);
         }
     }
 
     @Test
-    public void testMinimizedFromEachDockedSide() throws Exception {
-        try (final RotationSession rotationSession = new RotationSession()) {
-            for (int i = 0; i < 2; i++) {
-                rotationSession.set(i);
-                launchActivityInDockStackAndMinimize(TEST_ACTIVITY);
-                if (!mAmWmState.isScreenPortrait() && isTablet()) {
-                    // Test minimize to the right only on tablets in landscape
-                    removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
-                    launchActivityInDockStackAndMinimize(TEST_ACTIVITY,
-                            SPLIT_SCREEN_CREATE_MODE_BOTTOM_OR_RIGHT);
-                }
+    public void testMinimizedFromEachDockedSide() {
+        final RotationSession rotationSession = createManagedRotationSession();
+        for (int i = 0; i < 2; i++) {
+            rotationSession.set(i);
+            launchActivityInDockStackAndMinimize(TEST_ACTIVITY);
+            if (!mAmWmState.isScreenPortrait() && isTablet()) {
+                // Test minimize to the right only on tablets in landscape
                 removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
+                launchActivityInDockStackAndMinimize(TEST_ACTIVITY,
+                        SPLIT_SCREEN_CREATE_MODE_BOTTOM_OR_RIGHT);
             }
+            removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
         }
     }
 
     @Test
-    public void testRotationWhileDockMinimized() throws Exception {
+    public void testRotationWhileDockMinimized() {
         launchActivityInDockStackAndMinimize(TEST_ACTIVITY);
 
         // Rotate device single steps (90°) 0-1-2-3.
         // Each time we compute the state we implicitly assert valid bounds in minimized mode.
-        try (final RotationSession rotationSession = new RotationSession()) {
-            for (int i = 0; i < 4; i++) {
-                rotationSession.set(i);
-                mAmWmState.computeState(TEST_ACTIVITY);
-            }
-
-            // Double steps (180°) We ended the single step at 3. So, we jump directly to 1 for
-            // double step. So, we are testing 3-1-3 for one side and 0-2-0 for the other side in
-            // minimized mode.
-            rotationSession.set(ROTATION_90);
-            mAmWmState.computeState(TEST_ACTIVITY);
-            rotationSession.set(ROTATION_270);
-            mAmWmState.computeState(TEST_ACTIVITY);
-            rotationSession.set(ROTATION_0);
-            mAmWmState.computeState(TEST_ACTIVITY);
-            rotationSession.set(ROTATION_180);
-            mAmWmState.computeState(TEST_ACTIVITY);
-            rotationSession.set(ROTATION_0);
+        final RotationSession rotationSession = createManagedRotationSession();
+        for (int i = 0; i < 4; i++) {
+            rotationSession.set(i);
             mAmWmState.computeState(TEST_ACTIVITY);
         }
+
+        // Double steps (180°) We ended the single step at 3. So, we jump directly to 1 for
+        // double step. So, we are testing 3-1-3 for one side and 0-2-0 for the other side in
+        // minimized mode.
+        rotationSession.set(ROTATION_90);
+        mAmWmState.computeState(TEST_ACTIVITY);
+        rotationSession.set(ROTATION_270);
+        mAmWmState.computeState(TEST_ACTIVITY);
+        rotationSession.set(ROTATION_0);
+        mAmWmState.computeState(TEST_ACTIVITY);
+        rotationSession.set(ROTATION_180);
+        mAmWmState.computeState(TEST_ACTIVITY);
+        rotationSession.set(ROTATION_0);
+        mAmWmState.computeState(TEST_ACTIVITY);
     }
 
     @Test
-    public void testMinimizeAndUnminimizeThenGoingHome() throws Exception {
+    public void testMinimizeAndUnminimizeThenGoingHome() {
         // Rotate the screen to check that minimize, unminimize, dismiss the docked stack and then
         // going home has the correct app transition
-        try (final RotationSession rotationSession = new RotationSession()) {
-            for (int rotation = ROTATION_0; rotation <= ROTATION_270; rotation++) {
-                launchActivityInDockStackAndMinimize(DOCKED_ACTIVITY);
-                // Set rotation after docked stack exists so the display can be rotated (home may
-                // be fixed-orientation if it is fullscreen).
-                rotationSession.set(rotation);
+        final RotationSession rotationSession = createManagedRotationSession();
+        for (int rotation = ROTATION_0; rotation <= ROTATION_270; rotation++) {
+            launchActivityInDockStackAndMinimize(DOCKED_ACTIVITY);
+            // Set rotation after docked stack exists so the display can be rotated (home may
+            // be fixed-orientation if it is fullscreen).
+            rotationSession.set(rotation);
 
-                if (mIsHomeRecentsComponent) {
-                    launchActivity(TEST_ACTIVITY,
-                            WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
-                } else {
-                    // Unminimize the docked stack
-                    pressAppSwitchButtonAndWaitForRecents();
-                    waitForDockNotMinimized();
-                    assertDockNotMinimized();
-                }
-
-                // Dismiss the dock stack
-                setActivityTaskWindowingMode(DOCKED_ACTIVITY,
-                        WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
-                mAmWmState.computeState(DOCKED_ACTIVITY);
-
-                // Go home and check the app transition
-                assertNotEquals(TRANSIT_WALLPAPER_OPEN,
-                        mAmWmState.getWmState().getDefaultDisplayLastTransition());
-                launchHomeActivity();
-                mAmWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
-
-                assertEquals(TRANSIT_WALLPAPER_OPEN,
-                        mAmWmState.getWmState().getDefaultDisplayLastTransition());
+            if (mIsHomeRecentsComponent) {
+                launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
+            } else {
+                // Unminimize the docked stack
+                pressAppSwitchButtonAndWaitForRecents();
+                waitForDockNotMinimized();
+                assertDockNotMinimized();
             }
+
+            // Dismiss the dock stack
+            setActivityTaskWindowingMode(DOCKED_ACTIVITY,
+                    WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
+            mAmWmState.computeState(DOCKED_ACTIVITY);
+
+            // Go home and check the app transition
+            assertNotEquals(TRANSIT_WALLPAPER_OPEN,
+                    mAmWmState.getWmState().getDefaultDisplayLastTransition());
+            launchHomeActivity();
+            mAmWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
+
+            assertEquals(TRANSIT_WALLPAPER_OPEN,
+                    mAmWmState.getWmState().getDefaultDisplayLastTransition());
         }
     }
 
@@ -503,41 +497,37 @@ public class SplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testDockedStackToMinimizeWhenUnlocked() throws Exception {
+    public void testDockedStackToMinimizeWhenUnlocked() {
         if (!mIsHomeRecentsComponent) {
             launchActivityInDockStackAndMinimize(TEST_ACTIVITY);
         } else {
             launchActivityInSplitScreenWithRecents(TEST_ACTIVITY);
         }
         mAmWmState.computeState(TEST_ACTIVITY);
-        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
-            lockScreenSession.sleepDevice()
-                    .wakeUpDevice()
-                    .unlockDevice();
-            mAmWmState.computeState(TEST_ACTIVITY);
-            assertDockMinimized();
-        }
+        createManagedLockScreenSession().sleepDevice()
+                .wakeUpDevice()
+                .unlockDevice();
+        mAmWmState.computeState(TEST_ACTIVITY);
+        assertDockMinimized();
     }
 
     @Test
-    public void testMinimizedStateWhenUnlockedAndUnMinimized() throws Exception {
+    public void testMinimizedStateWhenUnlockedAndUnMinimized() {
         launchActivityInDockStackAndMinimize(TEST_ACTIVITY);
 
-        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
-            lockScreenSession.sleepDevice()
-                    .wakeUpDevice()
-                    .unlockDevice();
-            mAmWmState.computeState(TEST_ACTIVITY);
+        createManagedLockScreenSession().sleepDevice()
+                .wakeUpDevice()
+                .unlockDevice();
+        mAmWmState.computeState(TEST_ACTIVITY);
 
-            // Unminimized back to splitscreen
-            if (mIsHomeRecentsComponent) {
-                launchActivity(RESIZEABLE_ACTIVITY,
-                        WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
-            } else {
-                pressAppSwitchButtonAndWaitForRecents();
-            }
-            mAmWmState.computeState(TEST_ACTIVITY);
+        // Unminimized back to splitscreen
+        if (mIsHomeRecentsComponent) {
+            launchActivity(RESIZEABLE_ACTIVITY,
+                    WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
+        } else {
+            pressAppSwitchButtonAndWaitForRecents();
         }
+        mAmWmState.computeState(TEST_ACTIVITY);
     }
 
     /**

@@ -38,6 +38,7 @@ import android.view.WindowManager.LayoutParams;
 
 import com.android.compatibility.common.util.SystemUtil;
 
+import org.junit.After;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -84,14 +85,13 @@ public class ToastTest extends ActivityManagerTestBase {
         mContext.registerReceiver(mAppCommunicator, filter);
     }
 
-    @Override
-    public void tearDown() throws Exception {
+    @After
+    public void tearDown() {
         mContext.unregisterReceiver(mAppCommunicator);
         SystemUtil.runWithShellPermissionIdentity(() -> {
             Settings.Global.putString(mContext.getContentResolver(), SETTING_HIDDEN_API_POLICY,
                     mPreviousHiddenApiPolicy);
         });
-        super.tearDown();
     }
 
     @Test

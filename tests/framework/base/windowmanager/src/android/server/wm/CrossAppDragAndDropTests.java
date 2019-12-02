@@ -117,9 +117,7 @@ public class CrossAppDragAndDropTests extends ActivityManagerTestBase {
     }
 
     @After
-    @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
+    public void tearDown() {
         cleanupState();
     }
 
@@ -127,7 +125,7 @@ public class CrossAppDragAndDropTests extends ActivityManagerTestBase {
      * Make sure that the special activity stacks are removed and the ActivityManager/WindowManager
      * is in a good state.
      */
-    private void cleanupState() throws Exception {
+    private void cleanupState() {
         stopTestPackage(DRAG_SOURCE.getPackageName());
         stopTestPackage(DROP_TARGET.getPackageName());
         stopTestPackage(DROP_TARGET_SDK23.getPackageName());
