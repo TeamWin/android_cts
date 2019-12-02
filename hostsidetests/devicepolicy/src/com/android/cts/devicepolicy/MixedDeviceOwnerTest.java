@@ -16,6 +16,9 @@
 
 package com.android.cts.devicepolicy;
 
+import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
+import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
+
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -158,6 +161,23 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         final List<String> result = new ArrayList<>();
         result.add(DELEGATION_NETWORK_LOGGING);
         return result;
+    }
+
+    @Test
+    public void testLockScreenInfo() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".LockScreenInfoTest", mUserId);
+
+        if (isStatsdEnabled(getDevice())) {
+            assertMetricsLogged(getDevice(), () -> {
+                executeDeviceTestMethod(".LockScreenInfoTest", "testSetAndGetLockInfo");
+            }, new DevicePolicyEventWrapper.Builder(EventId.SET_DEVICE_OWNER_LOCK_SCREEN_INFO_VALUE)
+                    .setAdminPackageName(DEVICE_ADMIN_PKG)
+                    .build());
+        }
     }
 
     private int createSecondaryUserAsProfileOwner() throws Exception {

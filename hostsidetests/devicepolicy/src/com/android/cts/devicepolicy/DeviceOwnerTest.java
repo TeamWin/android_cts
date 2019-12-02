@@ -158,21 +158,6 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeDeviceOwnerTest("DeviceOwnerSetupTest");
     }
 
-    @Test
-    public void testLockScreenInfo() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-        executeDeviceOwnerTest("LockScreenInfoTest");
-        if (isStatsdEnabled(getDevice())) {
-            assertMetricsLogged(getDevice(), () -> {
-                executeDeviceTestMethod(".LockScreenInfoTest", "testSetAndGetLockInfo");
-            }, new DevicePolicyEventWrapper.Builder(EventId.SET_DEVICE_OWNER_LOCK_SCREEN_INFO_VALUE)
-                    .setAdminPackageName(DEVICE_OWNER_PKG)
-                    .build());
-        }
-    }
-
     @FlakyTest(bugId = 137088260)
     @Test
     public void testWifi() throws Exception {

@@ -16,17 +16,31 @@
 
 package com.android.cts.deviceandprofileowner;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.test.AndroidTestCase;
-import android.test.MoreAsserts;
 
 public class RelinquishDeviceTest extends AndroidTestCase {
+    private final static String DUMMY_OWNER_INFO = "some info";
+
+    public static final ComponentName ADMIN_RECEIVER_COMPONENT = new ComponentName(
+            BaseDeviceAdminTest.BasicAdminReceiver.class.getPackage().getName(),
+            BaseDeviceAdminTest.BasicAdminReceiver.class.getName());
+
     private DevicePolicyManager mDevicePolicyManager;
 
     public void testRelinquishDeviceWhenHasRestriction() {
         mDevicePolicyManager = (DevicePolicyManager)
                 mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
+
+        mDevicePolicyManager.setDeviceOwnerLockScreenInfo(
+                ADMIN_RECEIVER_COMPONENT, DUMMY_OWNER_INFO);
+        assertThat(mDevicePolicyManager.getDeviceOwnerLockScreenInfo()).isEqualTo(DUMMY_OWNER_INFO);
+
         mDevicePolicyManager.wipeData(0);
+        assertThat(mDevicePolicyManager.getDeviceOwnerLockScreenInfo()).isNull();
     }
 }

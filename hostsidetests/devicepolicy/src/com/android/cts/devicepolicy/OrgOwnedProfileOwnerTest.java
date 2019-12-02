@@ -104,6 +104,14 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         mHasProfileToRemove = false;
     }
 
+    @Test
+    public void testLockScreenInfo() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".LockScreenInfoTest", mUserId);
+    }
+
     private void removeOrgOwnedProfile() throws DeviceNotAvailableException {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, RELINQUISH_DEVICE_TEST_CLASS, mUserId);
     }
