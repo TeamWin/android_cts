@@ -21,6 +21,7 @@ import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
 import static android.widget.PopupWindow.INPUT_METHOD_NOT_NEEDED;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcherRestartingFalse;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectBindInput;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
@@ -121,7 +122,8 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
             assertFalse(stream.dump(), onStart.getArguments().getBoolean("restarting"));
 
             // There shouldn't be onStartInput any more.
-            notExpectEvent(stream, editorMatcher("onStartInput", marker), NOT_EXPECT_TIMEOUT);
+            notExpectEvent(stream, editorMatcherRestartingFalse("onStartInput", marker),
+                           NOT_EXPECT_TIMEOUT);
         }
     }
 
