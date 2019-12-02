@@ -26,10 +26,10 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-public class MicrosoftXboxonesTest extends InputTestCase {
+public class MicrosoftXboxOneSTest extends InputTestCase {
 
     // Exercises the Bluetooth behavior of the Xbox One S controller
-    public MicrosoftXboxonesTest() {
+    public MicrosoftXboxOneSTest() {
         super(R.raw.microsoft_xboxones_register);
     }
 
