@@ -28,6 +28,8 @@ import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.test.InstrumentationTestCase;
 
+import com.android.compatibility.common.util.ShellIdentityUtils;
+
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
@@ -197,6 +199,22 @@ public class PhoneAccountOperationsTest extends InstrumentationTestCase {
             assertFalse("Enabled Phone accounts should not contain the test account.",
                     oldAccounts.contains(TEST_PHONE_ACCOUNT_HANDLE));
         }
+
+        try {
+            final List<PhoneAccountHandle> allAccounts =
+                    mTelecomManager.getCallCapablePhoneAccounts(true);
+            assertTrue("No results expected without READ_PRIVILEGED_PHONE_STATE",
+                    allAccounts.isEmpty());
+        } catch (SecurityException e) {
+            // expected
+        }
+
+        final List<PhoneAccountHandle> allAccounts =
+                ShellIdentityUtils.invokeMethodWithShellPermissions(mTelecomManager,
+                        (telecomManager) -> telecomManager.getCallCapablePhoneAccounts(true));
+        assertTrue("All Phone accounts should contain the test account.",
+                allAccounts.contains(TEST_PHONE_ACCOUNT_HANDLE));
+
         TestUtils.enablePhoneAccount(getInstrumentation(), TEST_PHONE_ACCOUNT_HANDLE);
         final List<PhoneAccountHandle> newAccounts = mTelecomManager.getCallCapablePhoneAccounts();
         assertNotNull("No enabled Phone account found.", newAccounts);
