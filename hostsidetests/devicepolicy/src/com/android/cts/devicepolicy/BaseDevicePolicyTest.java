@@ -46,6 +46,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
@@ -579,21 +581,15 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
 
     protected int getUserSerialNumber(int userId) throws DeviceNotAvailableException{
         // TODO: Move this logic to ITestDevice.
-        // dumpsys user return lines like "UserInfo{0:Owner:13} serialNo=0"
-        String commandOutput = getDevice().executeShellCommand("dumpsys user");
-        String[] tokens = commandOutput.split("\\n");
-        for (String token : tokens) {
-            token = token.trim();
-            if (token.contains("UserInfo{" + userId + ":")) {
-                String[] split = token.split("serialNo=");
-                assertTrue(split.length == 2);
-                int serialNumber = Integer.parseInt(split[1]);
-                CLog.d("Serial number of user " + userId + ": "
-                        + serialNumber);
-                return serialNumber;
-            }
+        // dumpsys user output contains lines like "UserInfo{0:Owner:13} serialNo=0 isPrimary=true"
+        final Pattern pattern =
+                Pattern.compile("UserInfo\\{" + userId + ":[^\\n]*\\sserialNo=(\\d+)\\s");
+        final String commandOutput = getDevice().executeShellCommand("dumpsys user");
+        final Matcher matcher = pattern.matcher(commandOutput);
+        if (matcher.find()) {
+            return Integer.parseInt(matcher.group(1));
         }
-        fail("Couldn't find user " + userId);
+        fail("Couldn't find serial number for user " + userId);
         return -1;
     }
 
