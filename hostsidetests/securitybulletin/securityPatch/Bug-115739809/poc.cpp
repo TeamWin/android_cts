@@ -136,6 +136,12 @@ static void sanitizeMessage(const InputMessage& msg, InputMessage* outMsg) {
             outMsg->body.finished.handled = msg.body.finished.handled;
             break;
         }
+        case InputMessage::Type::FOCUS: {
+            outMsg->body.focus.seq = msg.body.focus.seq;
+            outMsg->body.focus.hasFocus = msg.body.focus.hasFocus;
+            outMsg->body.focus.inTouchMode = msg.body.focus.inTouchMode;
+            break;
+        }
     }
 }
 
@@ -205,7 +211,8 @@ int main() {
     InputMessage::Type types[] = {
         InputMessage::Type::KEY,
         InputMessage::Type::MOTION,
-        InputMessage::Type::FINISHED
+        InputMessage::Type::FINISHED,
+        InputMessage::Type::FOCUS,
     };
     for (InputMessage::Type type : types) {
         bool success = checkMessage(server, client, type);
