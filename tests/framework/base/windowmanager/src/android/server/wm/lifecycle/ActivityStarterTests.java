@@ -329,6 +329,7 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
         // Launch a standard activity
         getLaunchActivityBuilder()
                 .setTargetActivity(STANDARD_ACTIVITY)
+                .setUseInstrumentation()
                 .execute();
 
         final int taskId = mAmWmState.getAmState().getTaskByActivity(STANDARD_ACTIVITY).getTaskId();
@@ -336,13 +337,13 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
         // Launch a second standard activity
         getLaunchActivityBuilder()
                 .setTargetActivity(SECOND_STANDARD_ACTIVITY)
-                .setLaunchingActivity(TEST_LAUNCHING_ACTIVITY)
+                .setUseInstrumentation()
                 .execute();
 
         // Launch a standard activity again with CLEAR_TOP_FLAG
         getLaunchActivityBuilder()
                 .setTargetActivity(STANDARD_ACTIVITY)
-                .setLaunchingActivity(TEST_LAUNCHING_ACTIVITY)
+                .setUseInstrumentation()
                 .setIntentFlags(FLAG_ACTIVITY_CLEAR_TOP)
                 .execute();
 
@@ -397,6 +398,7 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
     public void testLaunchActivityWithFlagSingleTop() {
         // Launch a standard activity
         getLaunchActivityBuilder()
+                .setUseInstrumentation()
                 .setTargetActivity(STANDARD_ACTIVITY)
                 .execute();
 
@@ -406,7 +408,7 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
         // This standard activity launches a standard activity with single top flag.
         getLaunchActivityBuilder()
                 .setTargetActivity(STANDARD_SINGLE_TOP_ACTIVITY)
-                .setLaunchingActivity(TEST_LAUNCHING_ACTIVITY)
+                .setUseInstrumentation()
                 .setIntentFlags(FLAG_ACTIVITY_SINGLE_TOP)
                 .execute();
 

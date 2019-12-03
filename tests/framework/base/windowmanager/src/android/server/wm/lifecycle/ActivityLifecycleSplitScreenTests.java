@@ -363,17 +363,15 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
 
     @Test
     public void testLifecycleOnMoveToFromSplitScreenNoRelaunch() throws Exception {
-        // Launch a test activity
-        launchActivityAndWait(ConfigChangeHandlingActivity.class);
 
-        // Wait for the activity to resume
-        LifecycleVerifier.assertLaunchSequence(ConfigChangeHandlingActivity.class,
-                getLifecycleLog());
-
-        // Enter split screen
-        getLifecycleLog().clear();
-        setActivityTaskWindowingMode(CONFIG_CHANGE_HANDLING_ACTIVITY,
-                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
+        // Launch activities and enter split screen. Launched an activity on
+        // split-screen secondary stack to ensure the TOP_POSITION_LOST is send
+        // prior to MULTI_WINDOW_MODE_CHANGED.
+        launchActivitiesInSplitScreen(
+                getLaunchActivityBuilder().
+                        setTargetActivity(getComponentName(ConfigChangeHandlingActivity.class)),
+                getLaunchActivityBuilder().
+                        setTargetActivity(getComponentName(SecondActivity.class)));
 
         // Wait for the activity to receive the change
         waitForActivityTransitions(ConfigChangeHandlingActivity.class,
