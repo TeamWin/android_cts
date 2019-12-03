@@ -61,4 +61,13 @@ public class Poc19_05 extends SecurityTestCase {
         assertFalse(result.contains(
                             "permission com.qualcomm.permission.USE_QTI_TELEPHONY_SERVICE"));
     }
+
+    /**
+     * b/117555811
+     */
+    @SecurityTest(minPatchLevel = "2019-05")
+    public void testPocCVE_2019_2051() throws Exception {
+        int code = AdbUtils.runProxyAutoConfig("CVE-2019-2051", getDevice());
+        assertTrue(code != 139); // 128 + signal 11
+    }
 }
