@@ -59,6 +59,7 @@ import android.server.wm.ActivityManagerState.ActivityDisplay;
 import android.server.wm.ActivityManagerState.ActivityStack;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
+import android.util.SparseArray;
 import android.view.Display;
 import android.view.View;
 import android.view.ViewGroup;
@@ -92,29 +93,31 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      * for activities with same UID.
      */
     @Test
-    public void testLaunchWithoutPermissionOnVirtualDisplayByOwner() {
-        // Create new virtual display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
+    public void testLaunchWithoutPermissionOnVirtualDisplayByOwner() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Create new virtual display.
+            final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
 
-        // Try to launch an activity and check it security exception was triggered.
-        getLaunchActivityBuilder()
-                .setUseBroadcastReceiver(LAUNCH_BROADCAST_RECEIVER, LAUNCH_BROADCAST_ACTION)
-                .setDisplayId(newDisplay.mId)
-                .setTargetActivity(TEST_ACTIVITY)
-                .execute();
+            // Try to launch an activity and check it security exception was triggered.
+            getLaunchActivityBuilder()
+                    .setUseBroadcastReceiver(LAUNCH_BROADCAST_RECEIVER, LAUNCH_BROADCAST_ACTION)
+                    .setDisplayId(newDisplay.mId)
+                    .setTargetActivity(TEST_ACTIVITY)
+                    .execute();
 
-        mAmWmState.waitForValidState(TEST_ACTIVITY);
+            mAmWmState.waitForValidState(TEST_ACTIVITY);
 
-        final int externalFocusedStackId = mAmWmState.getAmState().getFocusedStackId();
-        final ActivityStack focusedStack =
-                mAmWmState.getAmState().getStackById(externalFocusedStackId);
-        assertEquals("Focused stack must be on secondary display", newDisplay.mId,
-                focusedStack.mDisplayId);
+            final int externalFocusedStackId = mAmWmState.getAmState().getFocusedStackId();
+            final ActivityStack focusedStack =
+                    mAmWmState.getAmState().getStackById(externalFocusedStackId);
+            assertEquals("Focused stack must be on secondary display", newDisplay.mId,
+                    focusedStack.mDisplayId);
 
-        mAmWmState.assertFocusedActivity("Focus must be on newly launched app",
-                TEST_ACTIVITY);
-        assertEquals("Activity launched by owner must be on external display",
-                externalFocusedStackId, mAmWmState.getAmState().getFocusedStackId());
+            mAmWmState.assertFocusedActivity("Focus must be on newly launched app",
+                    TEST_ACTIVITY);
+            assertEquals("Activity launched by owner must be on external display",
+                    externalFocusedStackId, mAmWmState.getAmState().getFocusedStackId());
+        }
     }
 
     /**
@@ -122,25 +125,27 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      * allowed.
      */
     @Test
-    public void testLaunchWithoutPermissionOnVirtualDisplay() {
-        // Create new virtual display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
+    public void testLaunchWithoutPermissionOnVirtualDisplay() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Create new virtual display.
+            final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
 
-        separateTestJournal();
+            separateTestJournal();
 
-        // Try to launch an activity and check it security exception was triggered.
-        getLaunchActivityBuilder()
-                .setUseBroadcastReceiver(SECOND_LAUNCH_BROADCAST_RECEIVER,
-                        SECOND_LAUNCH_BROADCAST_ACTION)
-                .setDisplayId(newDisplay.mId)
-                .setTargetActivity(TEST_ACTIVITY)
-                .execute();
+            // Try to launch an activity and check it security exception was triggered.
+            getLaunchActivityBuilder()
+                    .setUseBroadcastReceiver(SECOND_LAUNCH_BROADCAST_RECEIVER,
+                            SECOND_LAUNCH_BROADCAST_ACTION)
+                    .setDisplayId(newDisplay.mId)
+                    .setTargetActivity(TEST_ACTIVITY)
+                    .execute();
 
-        assertSecurityExceptionFromActivityLauncher();
+            assertSecurityExceptionFromActivityLauncher();
 
-        mAmWmState.computeState(TEST_ACTIVITY);
-        assertFalse("Restricted activity must not be launched",
-                mAmWmState.getAmState().containsActivity(TEST_ACTIVITY));
+            mAmWmState.computeState(TEST_ACTIVITY);
+            assertFalse("Restricted activity must not be launched",
+                    mAmWmState.getAmState().containsActivity(TEST_ACTIVITY));
+        }
     }
 
     /**
@@ -148,31 +153,27 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      * doesn't allow embedding - it should fail with security exception.
      */
     @Test
-    public void testConsequentLaunchActivityFromVirtualDisplayNoEmbedding() {
-        // Create new virtual display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
+    public void testConsequentLaunchActivityFromVirtualDisplayNoEmbedding() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Create new virtual display.
+            final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
 
-        // Launch activity on new secondary display.
-        launchActivityOnDisplay(LAUNCHING_ACTIVITY, newDisplay.mId);
+            // Launch activity on new secondary display.
+            launchActivityOnDisplay(LAUNCHING_ACTIVITY, newDisplay.mId);
 
-        waitAndAssertTopResumedActivity(LAUNCHING_ACTIVITY, newDisplay.mId,
-                "Activity launched on secondary display must be resumed");
+            waitAndAssertTopResumedActivity(LAUNCHING_ACTIVITY, newDisplay.mId,
+                    "Activity launched on secondary display must be resumed");
 
-        separateTestJournal();
+            separateTestJournal();
 
-        // Launch second activity from app on secondary display specifying same display id.
-        getLaunchActivityBuilder()
-                .setTargetActivity(SECOND_NO_EMBEDDING_ACTIVITY)
-                .setDisplayId(newDisplay.mId)
-                .execute();
+            // Launch second activity from app on secondary display specifying same display id.
+            getLaunchActivityBuilder()
+                    .setTargetActivity(SECOND_NO_EMBEDDING_ACTIVITY)
+                    .setDisplayId(newDisplay.mId)
+                    .execute();
 
-        assertSecurityExceptionFromActivityLauncher();
-    }
-
-    private boolean isActivityStartAllowedOnDisplay(int displayId, ComponentName activity) {
-        final Intent intent = new Intent(Intent.ACTION_VIEW).setComponent(activity);
-        return mTargetContext.getSystemService(ActivityManager.class)
-                .isActivityStartAllowedOnDisplay(mTargetContext, displayId, intent);
+            assertSecurityExceptionFromActivityLauncher();
+        }
     }
 
     /**
@@ -181,12 +182,18 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      * for simulated display. It is owned by system and is public, so should be accessible.
      */
     @Test
-    public void testCanAccessSystemOwnedDisplay()  {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
-                .setSimulateDisplay(true)
-                .createDisplay();
+    public void testCanAccessSystemOwnedDisplay() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.setSimulateDisplay(true)
+                    .createDisplay();
 
-        assertTrue(isActivityStartAllowedOnDisplay(newDisplay.mId, TEST_ACTIVITY));
+            final ActivityManager activityManager =
+                    (ActivityManager) mTargetContext.getSystemService(Context.ACTIVITY_SERVICE);
+            final Intent intent = new Intent(Intent.ACTION_VIEW).setComponent(TEST_ACTIVITY);
+
+            assertTrue(activityManager.isActivityStartAllowedOnDisplay(mTargetContext,
+                    newDisplay.mId, intent));
+        }
     }
 
     /**
@@ -195,15 +202,20 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      * for a public virtual display and an activity that doesn't support embedding from shell.
      */
     @Test
-    public void testCanAccessPublicVirtualDisplayWithInternalPermission() {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
-                .setPublicDisplay(true)
-                .createDisplay();
+    public void testCanAccessPublicVirtualDisplayWithInternalPermission() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true)
+                    .createDisplay();
 
-        SystemUtil.runWithShellPermissionIdentity(
-                () -> assertTrue(isActivityStartAllowedOnDisplay(
-                        newDisplay.mId, SECOND_NO_EMBEDDING_ACTIVITY)),
-                "android.permission.INTERNAL_SYSTEM_WINDOW");
+            final ActivityManager activityManager =
+                    (ActivityManager) mTargetContext.getSystemService(Context.ACTIVITY_SERVICE);
+            final Intent intent = new Intent(Intent.ACTION_VIEW)
+                    .setComponent(SECOND_NO_EMBEDDING_ACTIVITY);
+
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    assertTrue(activityManager.isActivityStartAllowedOnDisplay(mTargetContext,
+                            newDisplay.mId, intent)), "android.permission.INTERNAL_SYSTEM_WINDOW");
+        }
     }
 
     /**
@@ -212,15 +224,20 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      * for a private virtual display and an activity that doesn't support embedding from shell.
      */
     @Test
-    public void testCanAccessPrivateVirtualDisplayWithInternalPermission() {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
-                .setPublicDisplay(false)
-                .createDisplay();
+    public void testCanAccessPrivateVirtualDisplayWithInternalPermission() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(false)
+                    .createDisplay();
 
-        SystemUtil.runWithShellPermissionIdentity(
-                () -> assertTrue(isActivityStartAllowedOnDisplay(
-                        newDisplay.mId, SECOND_NO_EMBEDDING_ACTIVITY)),
-                "android.permission.INTERNAL_SYSTEM_WINDOW");
+            final ActivityManager activityManager =
+                    (ActivityManager) mTargetContext.getSystemService(Context.ACTIVITY_SERVICE);
+            final Intent intent = new Intent(Intent.ACTION_VIEW)
+                    .setComponent(SECOND_NO_EMBEDDING_ACTIVITY);
+
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    assertTrue(activityManager.isActivityStartAllowedOnDisplay(mTargetContext,
+                            newDisplay.mId, intent)), "android.permission.INTERNAL_SYSTEM_WINDOW");
+        }
     }
 
     /**
@@ -230,12 +247,18 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      * does not have required permission to embed an activity from other app.
      */
     @Test
-    public void testCantAccessPublicVirtualDisplayNoEmbeddingPermission() {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
-                .setPublicDisplay(true)
-                .createDisplay();
+    public void testCantAccessPublicVirtualDisplayNoEmbeddingPermission() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true)
+                    .createDisplay();
 
-        assertFalse(isActivityStartAllowedOnDisplay(newDisplay.mId, SECOND_ACTIVITY));
+            final ActivityManager activityManager =
+                    (ActivityManager) mTargetContext.getSystemService(Context.ACTIVITY_SERVICE);
+            final Intent intent = new Intent(Intent.ACTION_VIEW).setComponent(SECOND_ACTIVITY);
+
+            assertFalse(activityManager.isActivityStartAllowedOnDisplay(mTargetContext,
+                    newDisplay.mId, intent));
+        }
     }
 
     /**
@@ -244,15 +267,20 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      * for a public virtual display and an activity that does not support embedding.
      */
     @Test
-    public void testCantAccessPublicVirtualDisplayActivityEmbeddingNotAllowed() {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
-                .setPublicDisplay(true)
-                .createDisplay();
+    public void testCantAccessPublicVirtualDisplayActivityEmbeddingNotAllowed() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true)
+                    .createDisplay();
 
-        SystemUtil.runWithShellPermissionIdentity(
-                () -> assertFalse(isActivityStartAllowedOnDisplay(
-                        newDisplay.mId, SECOND_NO_EMBEDDING_ACTIVITY)),
-                "android.permission.ACTIVITY_EMBEDDING");
+            final ActivityManager activityManager =
+                    (ActivityManager) mTargetContext.getSystemService(Context.ACTIVITY_SERVICE);
+            final Intent intent = new Intent(Intent.ACTION_VIEW)
+                    .setComponent(SECOND_NO_EMBEDDING_ACTIVITY);
+
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    assertFalse(activityManager.isActivityStartAllowedOnDisplay(mTargetContext,
+                            newDisplay.mId, intent)), "android.permission.ACTIVITY_EMBEDDING");
+        }
     }
 
     /**
@@ -261,15 +289,20 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      * for a public virtual display and an activity that supports embedding.
      */
     @Test
-    public void testCanAccessPublicVirtualDisplayActivityEmbeddingAllowed() {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
-                .setPublicDisplay(true)
-                .createDisplay();
+    public void testCanAccessPublicVirtualDisplayActivityEmbeddingAllowed() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true)
+                    .createDisplay();
 
-        SystemUtil.runWithShellPermissionIdentity(
-                () -> assertTrue(isActivityStartAllowedOnDisplay(
-                        newDisplay.mId, SECOND_ACTIVITY)),
-                "android.permission.ACTIVITY_EMBEDDING");
+            final ActivityManager activityManager =
+                    (ActivityManager) mTargetContext.getSystemService(Context.ACTIVITY_SERVICE);
+            final Intent intent = new Intent(Intent.ACTION_VIEW)
+                    .setComponent(SECOND_ACTIVITY);
+
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    assertTrue(activityManager.isActivityStartAllowedOnDisplay(mTargetContext,
+                            newDisplay.mId, intent)), "android.permission.ACTIVITY_EMBEDDING");
+        }
     }
 
     /**
@@ -278,12 +311,18 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      * for a private virtual display.
      */
     @Test
-    public void testCantAccessPrivateVirtualDisplay() {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
-                .setPublicDisplay(false)
-                .createDisplay();
+    public void testCantAccessPrivateVirtualDisplay() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(false)
+                    .createDisplay();
 
-        assertFalse(isActivityStartAllowedOnDisplay(newDisplay.mId, SECOND_ACTIVITY));
+            final ActivityManager activityManager =
+                    (ActivityManager) mTargetContext.getSystemService(Context.ACTIVITY_SERVICE);
+            final Intent intent = new Intent(Intent.ACTION_VIEW).setComponent(SECOND_ACTIVITY);
+
+            assertFalse(activityManager.isActivityStartAllowedOnDisplay(mTargetContext,
+                    newDisplay.mId, intent));
+        }
     }
 
     /**
@@ -292,20 +331,21 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      * for a private virtual display to check the start of its own activity.
      */
     @Test
-    public void testCanAccessPrivateVirtualDisplayByOwner() {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
-                .setPublicDisplay(false)
-                .createDisplay();
+    public void testCanAccessPrivateVirtualDisplayByOwner() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(false)
+                    .createDisplay();
 
-        // Check the embedding call.
-        separateTestJournal();
-        mContext.sendBroadcast(new Intent(ACTION_TEST_ACTIVITY_START)
-                .setPackage(LAUNCH_BROADCAST_RECEIVER.getPackageName())
-                .setFlags(Intent.FLAG_RECEIVER_FOREGROUND)
-                .putExtra(EXTRA_COMPONENT_NAME, TEST_ACTIVITY)
-                .putExtra(EXTRA_TARGET_DISPLAY, newDisplay.mId));
+            // Check the embedding call
+            separateTestJournal();
+            mContext.sendBroadcast(new Intent(ACTION_TEST_ACTIVITY_START)
+                    .setPackage(LAUNCH_BROADCAST_RECEIVER.getPackageName())
+                    .setFlags(Intent.FLAG_RECEIVER_FOREGROUND)
+                    .putExtra(EXTRA_COMPONENT_NAME, TEST_ACTIVITY)
+                    .putExtra(EXTRA_TARGET_DISPLAY, newDisplay.mId));
 
-        assertActivityStartCheckResult(true);
+            assertActivityStartCheckResult(true);
+        }
     }
 
     /**
@@ -315,21 +355,23 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      * embedding.
      */
     @Test
-    public void testCanAccessPrivateVirtualDisplayByUidPresentOnDisplayActivityEmbeddingAllowed() {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
-                .setPublicDisplay(false)
-                .createDisplay();
-        // Launch a test activity into the target display.
-        launchActivityOnDisplay(EMBEDDING_ACTIVITY, newDisplay.mId);
+    public void testCanAccessPrivateVirtualDisplayByUidPresentOnDisplayActivityEmbeddingAllowed()
+            throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(false)
+                    .createDisplay();
+            // Launch a test activity into the target display
+            launchActivityOnDisplay(EMBEDDING_ACTIVITY, newDisplay.mId);
 
-        // Check the embedding call.
-        separateTestJournal();
-        mContext.sendBroadcast(new Intent(ACTION_EMBEDDING_TEST_ACTIVITY_START)
-                .setFlags(Intent.FLAG_RECEIVER_FOREGROUND)
-                .putExtra(EXTRA_EMBEDDING_COMPONENT_NAME, SECOND_ACTIVITY)
-                .putExtra(EXTRA_EMBEDDING_TARGET_DISPLAY, newDisplay.mId));
+            // Check the embedding call
+            separateTestJournal();
+            mContext.sendBroadcast(new Intent(ACTION_EMBEDDING_TEST_ACTIVITY_START)
+                    .setFlags(Intent.FLAG_RECEIVER_FOREGROUND)
+                    .putExtra(EXTRA_EMBEDDING_COMPONENT_NAME, SECOND_ACTIVITY)
+                    .putExtra(EXTRA_EMBEDDING_TARGET_DISPLAY, newDisplay.mId));
 
-        assertActivityStartCheckResult(true);
+            assertActivityStartCheckResult(true);
+        }
     }
 
     /**
@@ -341,20 +383,21 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
     @Test
     public void testCanAccessPrivateVirtualDisplayByUidPresentOnDisplayActivityEmbeddingNotAllowed()
             throws Exception {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
-                .setPublicDisplay(false)
-                .createDisplay();
-        // Launch a test activity into the target display.
-        launchActivityOnDisplay(EMBEDDING_ACTIVITY, newDisplay.mId);
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(false)
+                    .createDisplay();
+            // Launch a test activity into the target display
+            launchActivityOnDisplay(EMBEDDING_ACTIVITY, newDisplay.mId);
 
-        // Check the embedding call.
-        separateTestJournal();
-        mContext.sendBroadcast(new Intent(ACTION_EMBEDDING_TEST_ACTIVITY_START)
-                .setFlags(Intent.FLAG_RECEIVER_FOREGROUND)
-                .putExtra(EXTRA_EMBEDDING_COMPONENT_NAME, SECOND_NO_EMBEDDING_ACTIVITY)
-                .putExtra(EXTRA_EMBEDDING_TARGET_DISPLAY, newDisplay.mId));
+            // Check the embedding call
+            separateTestJournal();
+            mContext.sendBroadcast(new Intent(ACTION_EMBEDDING_TEST_ACTIVITY_START)
+                    .setFlags(Intent.FLAG_RECEIVER_FOREGROUND)
+                    .putExtra(EXTRA_EMBEDDING_COMPONENT_NAME, SECOND_NO_EMBEDDING_ACTIVITY)
+                    .putExtra(EXTRA_EMBEDDING_TARGET_DISPLAY, newDisplay.mId));
 
-        assertActivityStartCheckResult(false);
+            assertActivityStartCheckResult(false);
+        }
     }
 
     private void assertActivityStartCheckResult(boolean expected) {
@@ -374,78 +417,81 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
     }
 
     @Test
-    public void testDisplayHasAccess_UIDCanPresentOnPrivateDisplay() {
-        final VirtualDisplayLauncher virtualDisplayLauncher =
-                mObjectTracker.manage(new VirtualDisplayLauncher());
-        // Create a virtual private display.
-        final ActivityDisplay newDisplay = virtualDisplayLauncher
-                .setPublicDisplay(false)
-                .createDisplay();
-        // Launch an embeddable activity into the private display.
-        // Assert that the UID can present on display.
-        final ActivitySession session1 = virtualDisplayLauncher.launchActivityOnDisplay(
-                DISPLAY_ACCESS_CHECK_EMBEDDING_ACTIVITY, newDisplay);
-        assertEquals("Activity which the UID should accessible on private display",
-                isUidAccesibleOnDisplay(session1), true);
+    public void testDisplayHasAccess_UIDCanPresentOnPrivateDisplay() throws Exception {
+        try (final VirtualDisplayLauncher virtualDisplayLauncher = new VirtualDisplayLauncher()) {
+            // Create a virtual private display.
+            final ActivityDisplay newDisplay = virtualDisplayLauncher
+                    .setPublicDisplay(false)
+                    .createDisplay();
+            // Launch an embeddable activity into the private display.
+            // Assert that the UID can present on display.
+            final ActivitySession session1 = virtualDisplayLauncher.launchActivityOnDisplay(
+                    DISPLAY_ACCESS_CHECK_EMBEDDING_ACTIVITY, newDisplay);
+            assertEquals("Activity which the UID should accessible on private display",
+                    isUidAccesibleOnDisplay(session1), true);
 
-        // Launch another embeddable activity with a different UID, verify that it will be
-        // able to access the display where it was put.
-        // Note that set withShellPermission as true in launchActivityOnDisplay is to
-        // make sure ACTIVITY_EMBEDDING can be granted by shell.
-        final ActivitySession session2 = virtualDisplayLauncher.launchActivityOnDisplay(
-                SECOND_ACTIVITY, newDisplay,
-                bundle -> bundle.putBoolean(EXTRA_DISPLAY_ACCESS_CHECK, true),
-                true /* withShellPermission */, true /* waitForLaunch */);
+            // Launch another embeddable activity with a different UID, verify that it will be
+            // able to access the display where it was put.
+            // Note that set withShellPermission as true in launchActivityOnDisplay is to
+            // make sure ACTIVITY_EMBEDDING can be granted by shell.
+            final ActivitySession session2 = virtualDisplayLauncher.launchActivityOnDisplay(
+                    SECOND_ACTIVITY, newDisplay,
+                    bundle -> bundle.putBoolean(EXTRA_DISPLAY_ACCESS_CHECK, true),
+                    true /* withShellPermission */, true /* waitForLaunch */);
 
-        // Verify SECOND_ACTIVITY's UID has access to this virtual private display.
-        assertEquals("Second activity which the UID should accessible on private display",
-                isUidAccesibleOnDisplay(session2), true);
-    }
-
-    @Test
-    public void testDisplayHasAccess_NoAccessWhenUIDNotPresentOnPrivateDisplay() {
-        final VirtualDisplayLauncher virtualDisplayLauncher =
-                mObjectTracker.manage(new VirtualDisplayLauncher());
-        // Create a virtual private display.
-        final ActivityDisplay newDisplay = virtualDisplayLauncher
-                .setPublicDisplay(false)
-                .createDisplay();
-        // Launch an embeddable activity into the private display.
-        // Assume that the UID can access on display.
-        final ActivitySession session1 = virtualDisplayLauncher.launchActivityOnDisplay(
-                DISPLAY_ACCESS_CHECK_EMBEDDING_ACTIVITY, newDisplay);
-        assertEquals("Activity which the UID should accessible on private display",
-                isUidAccesibleOnDisplay(session1), true);
-
-        // Verify SECOND_NO_EMBEDDING_ACTIVITY's UID can't access this virtual private display
-        // since there is no entity with this UID on this display.
-        // Note that set withShellPermission as false in launchActivityOnDisplay is to
-        // prevent activity can launch when INTERNAL_SYSTEM_WINDOW granted by shell case.
-        separateTestJournal();
-        final ActivitySession session2 = virtualDisplayLauncher.launchActivityOnDisplay(
-                SECOND_NO_EMBEDDING_ACTIVITY, newDisplay, null /* extrasConsumer */,
-                false /* withShellPermission */, false /* waitForLaunch */);
-        assertEquals("Second activity which the UID should not accessible on private display",
-                isUidAccesibleOnDisplay(session2), false);
-    }
-
-    @Test
-    public void testDisplayHasAccess_ExceptionWhenAddViewWithoutPresentOnPrivateDisplay() {
-        // Create a virtual private display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
-                .setPublicDisplay(false)
-                .createDisplay();
-        try {
-            final Display display = mContext.getSystemService(DisplayManager.class).getDisplay(
-                    newDisplay.mId);
-            final Context newDisplayContext = mContext.createDisplayContext(display);
-            newDisplayContext.getSystemService(WindowManager.class).addView(new View(mContext),
-                    new ViewGroup.LayoutParams(WRAP_CONTENT, WRAP_CONTENT));
-        } catch (IllegalArgumentException e) {
-            // Exception happened when createDisplayContext with invalid display.
-            return;
+            // Verify SECOND_ACTIVITY's UID has access to this virtual private display.
+            assertEquals("Second activity which the UID should accessible on private display",
+                    isUidAccesibleOnDisplay(session2), true);
         }
-        fail("UID should not have access to private display without present entities.");
+    }
+
+    @Test
+    public void testDisplayHasAccess_NoAccessWhenUIDNotPresentOnPrivateDisplay() throws Exception {
+        try (final VirtualDisplayLauncher virtualDisplayLauncher = new VirtualDisplayLauncher()) {
+            // Create a virtual private display.
+            final ActivityDisplay newDisplay = virtualDisplayLauncher
+                    .setPublicDisplay(false)
+                    .createDisplay();
+            // Launch an embeddable activity into the private display.
+            // Assume that the UID can access on display.
+            final ActivitySession session1 = virtualDisplayLauncher.launchActivityOnDisplay(
+                    DISPLAY_ACCESS_CHECK_EMBEDDING_ACTIVITY, newDisplay);
+            assertEquals("Activity which the UID should accessible on private display",
+                    isUidAccesibleOnDisplay(session1), true);
+
+            // Verify SECOND_NO_EMBEDDING_ACTIVITY's UID can't access this virtual private display
+            // since there is no entity with this UID on this display.
+            // Note that set withShellPermission as false in launchActivityOnDisplay is to
+            // prevent activity can launch when INTERNAL_SYSTEM_WINDOW granted by shell case.
+            separateTestJournal();
+            final ActivitySession session2 = virtualDisplayLauncher.launchActivityOnDisplay(
+                    SECOND_NO_EMBEDDING_ACTIVITY, newDisplay, null /* extrasConsumer */,
+                    false /* withShellPermission */, false /* waitForLaunch */);
+            assertEquals("Second activity which the UID should not accessible on private display",
+                    isUidAccesibleOnDisplay(session2), false);
+        }
+    }
+
+    @Test
+    public void testDisplayHasAccess_ExceptionWhenAddViewWithoutPresentOnPrivateDisplay()
+            throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Create a virtual private display.
+            final ActivityDisplay newDisplay = virtualDisplaySession
+                    .setPublicDisplay(false)
+                    .createDisplay();
+            try {
+                final Display display = mContext.getSystemService(DisplayManager.class).getDisplay(
+                        newDisplay.mId);
+                final Context newDisplayContext = mContext.createDisplayContext(display);
+                newDisplayContext.getSystemService(WindowManager.class).addView(new View(mContext),
+                        new ViewGroup.LayoutParams(WRAP_CONTENT, WRAP_CONTENT));
+            } catch (IllegalArgumentException e) {
+                // Exception happened when createDisplayContext with invalid display.
+                return;
+            }
+            fail("UID should not have access to private display without present entities.");
+        }
     }
 
     private boolean isUidAccesibleOnDisplay(ActivitySession session) {
@@ -460,91 +506,106 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
 
     /** Test that shell is allowed to launch on secondary displays. */
     @Test
-    public void testPermissionLaunchFromShell(){
-        // Create new virtual display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
-        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
-        mAmWmState.assertFocusedActivity("Virtual display activity must be on top",
-                VIRTUAL_DISPLAY_ACTIVITY);
-        final int defaultDisplayFocusedStackId = mAmWmState.getAmState().getFocusedStackId();
-        ActivityStack frontStack = mAmWmState.getAmState().getStackById(
-                defaultDisplayFocusedStackId);
-        assertEquals("Top stack must remain on primary display",
-                DEFAULT_DISPLAY, frontStack.mDisplayId);
+    public void testPermissionLaunchFromShell() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Create new virtual display.
+            final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
+            mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+            mAmWmState.assertFocusedActivity("Virtual display activity must be on top",
+                    VIRTUAL_DISPLAY_ACTIVITY);
+            final int defaultDisplayFocusedStackId = mAmWmState.getAmState().getFocusedStackId();
+            ActivityStack frontStack = mAmWmState.getAmState().getStackById(
+                    defaultDisplayFocusedStackId);
+            assertEquals("Top stack must remain on primary display",
+                    DEFAULT_DISPLAY, frontStack.mDisplayId);
 
-        // Launch activity on new secondary display.
-        launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
+            // Launch activity on new secondary display.
+            launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
 
-        waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
-                "Front activity must be on secondary display");
-        assertBothDisplaysHaveResumedActivities(pair(DEFAULT_DISPLAY, VIRTUAL_DISPLAY_ACTIVITY),
-                pair(newDisplay.mId, TEST_ACTIVITY));
+            waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
+                    "Front activity must be on secondary display");
+            mAmWmState.assertResumedActivities("Both displays must have resumed activities",
+                    new SparseArray<ComponentName>(){{
+                        put(DEFAULT_DISPLAY, VIRTUAL_DISPLAY_ACTIVITY);
+                        put(newDisplay.mId, TEST_ACTIVITY);
+                    }}
+            );
 
-        // Launch other activity with different uid and check it is launched on dynamic stack on
-        // secondary display.
-        final String startCmd = "am start -n " + getActivityName(SECOND_ACTIVITY)
-                + " --display " + newDisplay.mId;
-        executeShellCommand(startCmd);
+            // Launch other activity with different uid and check it is launched on dynamic stack on
+            // secondary display.
+            final String startCmd = "am start -n " + getActivityName(SECOND_ACTIVITY)
+                    + " --display " + newDisplay.mId;
+            executeShellCommand(startCmd);
 
-        waitAndAssertTopResumedActivity(SECOND_ACTIVITY, newDisplay.mId,
-                "Focus must be on newly launched app");
-        assertBothDisplaysHaveResumedActivities(pair(DEFAULT_DISPLAY, VIRTUAL_DISPLAY_ACTIVITY),
-                pair(newDisplay.mId, SECOND_ACTIVITY));
+            waitAndAssertTopResumedActivity(SECOND_ACTIVITY, newDisplay.mId,
+                    "Focus must be on newly launched app");
+            mAmWmState.assertResumedActivities("Both displays must have resumed activities",
+                    new SparseArray<ComponentName>(){{
+                        put(DEFAULT_DISPLAY, VIRTUAL_DISPLAY_ACTIVITY);
+                        put(newDisplay.mId, SECOND_ACTIVITY);
+                    }}
+            );
+        }
     }
 
     /** Test that launching from app that is on external display is allowed. */
     @Test
-    public void testPermissionLaunchFromAppOnSecondary() {
-        // Create new simulated display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
-                .setSimulateDisplay(true)
-                .createDisplay();
+    public void testPermissionLaunchFromAppOnSecondary() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Create new simulated display.
+            final ActivityDisplay newDisplay = virtualDisplaySession.setSimulateDisplay(true)
+                    .createDisplay();
 
-        // Launch activity with different uid on secondary display.
-        final String startCmd = "am start -n " + getActivityName(SECOND_ACTIVITY)
-                + " --display " + newDisplay.mId;
-        executeShellCommand(startCmd);
+            // Launch activity with different uid on secondary display.
+            final String startCmd = "am start -n " + getActivityName(SECOND_ACTIVITY)
+                    + " --display " + newDisplay.mId;
+            executeShellCommand(startCmd);
 
-        waitAndAssertTopResumedActivity(SECOND_ACTIVITY, newDisplay.mId,
-                "Top activity must be the newly launched one");
+            waitAndAssertTopResumedActivity(SECOND_ACTIVITY, newDisplay.mId,
+                    "Top activity must be the newly launched one");
 
-        // Launch another activity with third different uid from app on secondary display and
-        // check it is launched on secondary display.
-        getLaunchActivityBuilder()
-                .setUseBroadcastReceiver(SECOND_LAUNCH_BROADCAST_RECEIVER,
-                        SECOND_LAUNCH_BROADCAST_ACTION)
-                .setDisplayId(newDisplay.mId)
-                .setTargetActivity(THIRD_ACTIVITY)
-                .execute();
+            // Launch another activity with third different uid from app on secondary display and
+            // check it is launched on secondary display.
+            getLaunchActivityBuilder()
+                    .setUseBroadcastReceiver(SECOND_LAUNCH_BROADCAST_RECEIVER,
+                            SECOND_LAUNCH_BROADCAST_ACTION)
+                    .setDisplayId(newDisplay.mId)
+                    .setTargetActivity(THIRD_ACTIVITY)
+                    .execute();
 
-        waitAndAssertTopResumedActivity(THIRD_ACTIVITY, newDisplay.mId,
-                "Top activity must be the newly launched one");
+            waitAndAssertTopResumedActivity(THIRD_ACTIVITY, newDisplay.mId,
+                    "Top activity must be the newly launched one");
+        }
     }
 
     /** Tests that an activity can launch an activity from a different UID into its own task. */
     @Test
-    public void testPermissionLaunchMultiUidTask() {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
-                .setSimulateDisplay(true)
-                .createDisplay();
+    public void testPermissionLaunchMultiUidTask() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.setSimulateDisplay(true)
+                    .createDisplay();
 
-        launchActivityOnDisplay(LAUNCHING_ACTIVITY, newDisplay.mId);
-        mAmWmState.computeState(LAUNCHING_ACTIVITY);
+            launchActivityOnDisplay(LAUNCHING_ACTIVITY, newDisplay.mId);
+            mAmWmState.computeState(LAUNCHING_ACTIVITY);
 
-        // Check that the first activity is launched onto the secondary display.
-        final int frontStackId = mAmWmState.getAmState().getFrontStackId(newDisplay.mId);
-        ActivityStack frontStack = mAmWmState.getAmState().getStackById(frontStackId);
-        assertEquals("Activity launched on secondary display must be resumed",
-                getActivityName(LAUNCHING_ACTIVITY), frontStack.mResumedActivity);
-        mAmWmState.assertFocusedStack("Top stack must be on secondary display", frontStackId);
+            // Check that the first activity is launched onto the secondary display
+            final int frontStackId = mAmWmState.getAmState().getFrontStackId(newDisplay.mId);
+            ActivityStack frontStack = mAmWmState.getAmState().getStackById(
+                    frontStackId);
+            assertEquals("Activity launched on secondary display must be resumed",
+                    getActivityName(LAUNCHING_ACTIVITY),
+                    frontStack.mResumedActivity);
+            mAmWmState.assertFocusedStack("Top stack must be on secondary display",
+                    frontStackId);
 
-        // Launch an activity from a different UID into the first activity's task.
-        getLaunchActivityBuilder().setTargetActivity(SECOND_ACTIVITY).execute();
+            // Launch an activity from a different UID into the first activity's task
+            getLaunchActivityBuilder().setTargetActivity(SECOND_ACTIVITY).execute();
 
-        waitAndAssertTopResumedActivity(SECOND_ACTIVITY, newDisplay.mId,
-                "Top activity must be the newly launched one");
-        frontStack = mAmWmState.getAmState().getStackById(frontStackId);
-        assertEquals("Secondary display must contain 1 task", 1, frontStack.getTasks().size());
+            waitAndAssertTopResumedActivity(SECOND_ACTIVITY, newDisplay.mId,
+                    "Top activity must be the newly launched one");
+            frontStack = mAmWmState.getAmState().getStackById(frontStackId);
+            assertEquals("Secondary display must contain 1 task", 1, frontStack.getTasks().size());
+        }
     }
 
     /**
@@ -552,36 +613,38 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      * doesn't have anything on the display.
      */
     @Test
-    public void testPermissionLaunchFromOwner() {
-        // Create new virtual display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
-        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
-        mAmWmState.assertFocusedActivity("Virtual display activity must be focused",
-                VIRTUAL_DISPLAY_ACTIVITY);
-        final int defaultDisplayFocusedStackId = mAmWmState.getAmState().getFocusedStackId();
-        ActivityStack frontStack =
-                mAmWmState.getAmState().getStackById(defaultDisplayFocusedStackId);
-        assertEquals("Top stack must remain on primary display",
-                DEFAULT_DISPLAY, frontStack.mDisplayId);
+    public void testPermissionLaunchFromOwner() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Create new virtual display.
+            final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
+            mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+            mAmWmState.assertFocusedActivity("Virtual display activity must be focused",
+                    VIRTUAL_DISPLAY_ACTIVITY);
+            final int defaultDisplayFocusedStackId = mAmWmState.getAmState().getFocusedStackId();
+            ActivityStack frontStack =
+                    mAmWmState.getAmState().getStackById(defaultDisplayFocusedStackId);
+            assertEquals("Top stack must remain on primary display",
+                    DEFAULT_DISPLAY, frontStack.mDisplayId);
 
-        // Launch other activity with different uid on secondary display.
-        final String startCmd = "am start -n " + getActivityName(SECOND_ACTIVITY)
-                + " --display " + newDisplay.mId;
-        executeShellCommand(startCmd);
+            // Launch other activity with different uid on secondary display.
+            final String startCmd = "am start -n " + getActivityName(SECOND_ACTIVITY)
+                    + " --display " + newDisplay.mId;
+            executeShellCommand(startCmd);
 
-        waitAndAssertTopResumedActivity(SECOND_ACTIVITY, newDisplay.mId,
-                "Top activity must be the newly launched one");
+            waitAndAssertTopResumedActivity(SECOND_ACTIVITY, newDisplay.mId,
+                    "Top activity must be the newly launched one");
 
-        // Check that owner uid can launch its own activity on secondary display.
-        getLaunchActivityBuilder()
-                .setUseBroadcastReceiver(LAUNCH_BROADCAST_RECEIVER, LAUNCH_BROADCAST_ACTION)
-                .setNewTask(true)
-                .setMultipleTask(true)
-                .setDisplayId(newDisplay.mId)
-                .execute();
+            // Check that owner uid can launch its own activity on secondary display.
+            getLaunchActivityBuilder()
+                    .setUseBroadcastReceiver(LAUNCH_BROADCAST_RECEIVER, LAUNCH_BROADCAST_ACTION)
+                    .setNewTask(true)
+                    .setMultipleTask(true)
+                    .setDisplayId(newDisplay.mId)
+                    .execute();
 
-        waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
-                "Top activity must be the newly launched one");
+            waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
+                    "Top activity must be the newly launched one");
+        }
     }
 
     /**
@@ -589,54 +652,58 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      * that external display is not allowed.
      */
     @Test
-    public void testPermissionLaunchFromDifferentApp() {
-        // Create new virtual display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
-        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
-        mAmWmState.assertFocusedActivity("Virtual display activity must be focused",
-                VIRTUAL_DISPLAY_ACTIVITY);
-        final int defaultDisplayFocusedStackId = mAmWmState.getAmState().getFocusedStackId();
-        ActivityStack frontStack = mAmWmState.getAmState().getStackById(
-                defaultDisplayFocusedStackId);
-        assertEquals("Top stack must remain on primary display",
-                DEFAULT_DISPLAY, frontStack.mDisplayId);
+    public void testPermissionLaunchFromDifferentApp() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Create new virtual display.
+            final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
+            mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+            mAmWmState.assertFocusedActivity("Virtual display activity must be focused",
+                    VIRTUAL_DISPLAY_ACTIVITY);
+            final int defaultDisplayFocusedStackId = mAmWmState.getAmState().getFocusedStackId();
+            ActivityStack frontStack = mAmWmState.getAmState().getStackById(
+                    defaultDisplayFocusedStackId);
+            assertEquals("Top stack must remain on primary display",
+                    DEFAULT_DISPLAY, frontStack.mDisplayId);
 
-        // Launch activity on new secondary display.
-        launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
-        waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
-                "Top activity must be the newly launched one");
+            // Launch activity on new secondary display.
+            launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
+            waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
+                    "Top activity must be the newly launched one");
 
-        separateTestJournal();
+            separateTestJournal();
 
-        // Launch other activity with different uid and check security exception is triggered.
-        getLaunchActivityBuilder()
-                .setUseBroadcastReceiver(SECOND_LAUNCH_BROADCAST_RECEIVER,
-                        SECOND_LAUNCH_BROADCAST_ACTION)
-                .setDisplayId(newDisplay.mId)
-                .setTargetActivity(THIRD_ACTIVITY)
-                .execute();
+            // Launch other activity with different uid and check security exception is triggered.
+            getLaunchActivityBuilder()
+                    .setUseBroadcastReceiver(SECOND_LAUNCH_BROADCAST_RECEIVER,
+                            SECOND_LAUNCH_BROADCAST_ACTION)
+                    .setDisplayId(newDisplay.mId)
+                    .setTargetActivity(THIRD_ACTIVITY)
+                    .execute();
 
-        assertSecurityExceptionFromActivityLauncher();
+            assertSecurityExceptionFromActivityLauncher();
 
-        mAmWmState.waitForValidState(TEST_ACTIVITY);
-        mAmWmState.assertFocusedActivity("Top activity must be the first one launched",
-                TEST_ACTIVITY);
+            mAmWmState.waitForValidState(TEST_ACTIVITY);
+            mAmWmState.assertFocusedActivity("Top activity must be the first one launched",
+                    TEST_ACTIVITY);
+        }
     }
 
     /**
      * Test that only private virtual display can show content with insecure keyguard.
      */
     @Test
-    public void testFlagShowWithInsecureKeyguardOnPublicVirtualDisplay() {
-        // Try to create new show-with-insecure-keyguard public virtual display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
-                .setPublicDisplay(true)
-                .setCanShowWithInsecureKeyguard(true)
-                .setMustBeCreated(false)
-                .createDisplay();
+    public void testFlagShowWithInsecureKeyguardOnPublicVirtualDisplay() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Try to create new show-with-insecure-keyguard public virtual display.
+            final ActivityDisplay newDisplay = virtualDisplaySession
+                    .setPublicDisplay(true)
+                    .setCanShowWithInsecureKeyguard(true)
+                    .setMustBeCreated(false)
+                    .createDisplay();
 
-        // Check that the display is not created.
-        assertNull(newDisplay);
+            // Check that the display is not created.
+            assertNull(newDisplay);
+        }
     }
 
     /**
@@ -644,40 +711,41 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      */
     @Test
     public void testSettingFlagWithoutInternalSystemPermission() throws Exception {
-        // The reason to use a trusted display is that we can guarantee the security exception
-        // is coming from lacking internal system permission.
-        final ActivityDisplay trustedDisplay = createManagedVirtualDisplaySession()
-                .setSimulateDisplay(true)
-                .createDisplay();
-        final WindowManager wm = mTargetContext.getSystemService(WindowManager.class);
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // The reason to use a trusted display is that we can guarantee the security exception
+            // is coming from lacking internal system permission.
+            final ActivityDisplay trustedDisplay = virtualDisplaySession
+                    .setSimulateDisplay(true).createDisplay();
+            final WindowManager wm = mTargetContext.getSystemService(WindowManager.class);
 
-        // Verify setting system decorations flag without internal system permission.
-        try {
-            wm.setShouldShowSystemDecors(trustedDisplay.mId, true);
+            // Verify setting system decorations flag without internal system permission.
+            try {
+                wm.setShouldShowSystemDecors(trustedDisplay.mId, true);
 
-            // Unexpected result, restore flag to avoid affecting other tests.
-            wm.setShouldShowSystemDecors(trustedDisplay.mId, false);
-            TestUtils.waitUntil("Waiting for system decoration flag to be set",
-                    5 /* timeoutSecond */,
-                    () -> !wm.shouldShowSystemDecors(trustedDisplay.mId));
-            fail("Should not allow setting system decoration flag without internal system "
-                    + "permission");
-        } catch (SecurityException e) {
-            // Expected security exception.
-        }
+                // Unexpected result, restore flag to avoid affecting other tests.
+                wm.setShouldShowSystemDecors(trustedDisplay.mId, false);
+                TestUtils.waitUntil("Waiting for system decoration flag to be set",
+                        5 /* timeoutSecond */,
+                        () -> !wm.shouldShowSystemDecors(trustedDisplay.mId));
+                fail("Should not allow setting system decoration flag without internal system "
+                        + "permission");
+            } catch (SecurityException e) {
+                // Expected security exception.
+            }
 
-        // Verify setting show IME flag without internal system permission.
-        try {
-            wm.setShouldShowIme(trustedDisplay.mId, true);
+            // Verify setting show IME flag without internal system permission.
+            try {
+                wm.setShouldShowIme(trustedDisplay.mId, true);
 
-            // Unexpected result, restore flag to avoid affecting other tests.
-            wm.setShouldShowIme(trustedDisplay.mId, false);
-            TestUtils.waitUntil("Waiting for show IME flag to be set",
-                    5 /* timeoutSecond */,
-                    () -> !wm.shouldShowIme(trustedDisplay.mId));
-            fail("Should not allow setting show IME flag without internal system permission");
-        } catch (SecurityException e) {
-            // Expected security exception.
+                // Unexpected result, restore flag to avoid affecting other tests.
+                wm.setShouldShowIme(trustedDisplay.mId, false);
+                TestUtils.waitUntil("Waiting for show IME flag to be set",
+                        5 /* timeoutSecond */,
+                        () -> !wm.shouldShowIme(trustedDisplay.mId));
+                fail("Should not allow setting show IME flag without internal system permission");
+            } catch (SecurityException e) {
+                // Expected security exception.
+            }
         }
     }
 
@@ -685,28 +753,29 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      * Test getting system decoration flag and show IME flag without sufficient permissions.
      */
     @Test
-    public void testGettingFlagWithoutInternalSystemPermission() {
-        // The reason to use a trusted display is that we can guarantee the security exception
-        // is coming from lacking internal system permission.
-        final ActivityDisplay trustedDisplay = createManagedVirtualDisplaySession()
-                .setSimulateDisplay(true)
-                .createDisplay();
-        final WindowManager wm = mTargetContext.getSystemService(WindowManager.class);
+    public void testGettingFlagWithoutInternalSystemPermission() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // The reason to use a trusted display is that we can guarantee the security exception
+            // is coming from lacking internal system permission.
+            final ActivityDisplay trustedDisplay = virtualDisplaySession
+                    .setSimulateDisplay(true).createDisplay();
+            final WindowManager wm = mTargetContext.getSystemService(WindowManager.class);
 
-        // Verify getting system decorations flag without internal system permission.
-        try {
-            wm.shouldShowSystemDecors(trustedDisplay.mId);
-            fail("Only allow internal system to get system decoration flag");
-        } catch (SecurityException e) {
-            // Expected security exception.
-        }
+            // Verify getting system decorations flag without internal system permission.
+            try {
+                wm.shouldShowSystemDecors(trustedDisplay.mId);
+                fail("Only allow internal system to get system decoration flag");
+            } catch (SecurityException e) {
+                // Expected security exception.
+            }
 
-        // Verify getting show IME flag without internal system permission.
-        try {
-            wm.shouldShowIme(trustedDisplay.mId);
-            fail("Only allow internal system to get show IME flag");
-        } catch (SecurityException e) {
-            // Expected security exception.
+            // Verify getting show IME flag without internal system permission.
+            try {
+                wm.shouldShowIme(trustedDisplay.mId);
+                fail("Only allow internal system to get show IME flag");
+            } catch (SecurityException e) {
+                // Expected security exception.
+            }
         }
     }
 
@@ -715,43 +784,44 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      */
     @Test
     public void testSettingFlagToUntrustedDisplay() throws Exception {
-        final ActivityDisplay untrustedDisplay = createManagedVirtualDisplaySession()
-                .createDisplay();
-        final WindowManager wm = mTargetContext.getSystemService(WindowManager.class);
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay untrustedDisplay = virtualDisplaySession.createDisplay();
+            final WindowManager wm = mTargetContext.getSystemService(WindowManager.class);
 
-        // Verify setting system decoration flag to an untrusted display.
-        getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
-        try {
-            wm.setShouldShowSystemDecors(untrustedDisplay.mId, true);
+            // Verify setting system decoration flag to an untrusted display.
+            getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
+            try {
+                wm.setShouldShowSystemDecors(untrustedDisplay.mId, true);
 
-            // Unexpected result, restore flag to avoid affecting other tests.
-            wm.setShouldShowSystemDecors(untrustedDisplay.mId, false);
-            TestUtils.waitUntil("Waiting for system decoration flag to be set",
-                    5 /* timeoutSecond */,
-                    () -> !wm.shouldShowSystemDecors(untrustedDisplay.mId));
-            fail("Should not allow setting system decoration flag to the untrusted virtual "
-                    + "display");
-        } catch (SecurityException e) {
-            // Expected security exception.
-        } finally {
-            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
-        }
+                // Unexpected result, restore flag to avoid affecting other tests.
+                wm.setShouldShowSystemDecors(untrustedDisplay.mId, false);
+                TestUtils.waitUntil("Waiting for system decoration flag to be set",
+                        5 /* timeoutSecond */,
+                        () -> !wm.shouldShowSystemDecors(untrustedDisplay.mId));
+                fail("Should not allow setting system decoration flag to the untrusted virtual "
+                        + "display");
+            } catch (SecurityException e) {
+                // Expected security exception.
+            } finally {
+                getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+            }
 
-        // Verify setting show IME flag to an untrusted display.
-        getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
-        try {
-            wm.setShouldShowIme(untrustedDisplay.mId, true);
+            // Verify setting show IME flag to an untrusted display.
+            getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
+            try {
+                wm.setShouldShowIme(untrustedDisplay.mId, true);
 
-            // Unexpected result, restore flag to avoid affecting other tests.
-            wm.setShouldShowIme(untrustedDisplay.mId, false);
-            TestUtils.waitUntil("Waiting for show IME flag to be set",
-                    5 /* timeoutSecond */,
-                    () -> !wm.shouldShowIme(untrustedDisplay.mId));
-            fail("Should not allow setting show IME flag to the untrusted virtual display");
-        } catch (SecurityException e) {
-            // Expected security exception.
-        } finally {
-            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+                // Unexpected result, restore flag to avoid affecting other tests.
+                wm.setShouldShowIme(untrustedDisplay.mId, false);
+                TestUtils.waitUntil("Waiting for show IME flag to be set",
+                        5 /* timeoutSecond */,
+                        () -> !wm.shouldShowIme(untrustedDisplay.mId));
+                fail("Should not allow setting show IME flag to the untrusted virtual display");
+            } catch (SecurityException e) {
+                // Expected security exception.
+            } finally {
+                getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+            }
         }
     }
 
@@ -759,20 +829,21 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      * Test getting system decoration flag and show IME flag from the untrusted display.
      */
     @Test
-    public void testGettingFlagFromUntrustedDisplay() {
-        final ActivityDisplay untrustedDisplay = createManagedVirtualDisplaySession()
-                .createDisplay();
-        final WindowManager wm = mTargetContext.getSystemService(WindowManager.class);
+    public void testGettingFlagFromUntrustedDisplay() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay untrustedDisplay = virtualDisplaySession.createDisplay();
+            final WindowManager wm = mTargetContext.getSystemService(WindowManager.class);
 
-        // Verify getting system decoration flag from an untrusted display.
-        SystemUtil.runWithShellPermissionIdentity(() -> assertFalse(
-                "Display should not support showing system decorations",
-                wm.shouldShowSystemDecors(untrustedDisplay.mId)));
+            // Verify getting system decoration flag from an untrusted display.
+            SystemUtil.runWithShellPermissionIdentity(() -> assertFalse(
+                    "Display should not support showing system decorations",
+                    wm.shouldShowSystemDecors(untrustedDisplay.mId)));
 
-        // Verify getting show IME flag from an untrusted display.
-        SystemUtil.runWithShellPermissionIdentity(() -> assertFalse(
-                "Display should not support showing IME window",
-                wm.shouldShowIme(untrustedDisplay.mId)));
+            // Verify getting show IME flag from an untrusted display.
+            SystemUtil.runWithShellPermissionIdentity(() -> assertFalse(
+                    "Display should not support showing IME window",
+                    wm.shouldShowIme(untrustedDisplay.mId)));
+        }
     }
 
     /**
@@ -780,51 +851,52 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      */
     @Test
     public void testSettingFlagToTrustedDisplay() throws Exception {
-        final ActivityDisplay trustedDisplay = createManagedVirtualDisplaySession()
-                .setSimulateDisplay(true)
-                .createDisplay();
-        final WindowManager wm = mTargetContext.getSystemService(WindowManager.class);
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay trustedDisplay = virtualDisplaySession
+                    .setSimulateDisplay(true).createDisplay();
+            final WindowManager wm = mTargetContext.getSystemService(WindowManager.class);
 
-        // Verify setting system decoration flag to a trusted display.
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            // Assume the display should not support system decorations by default.
-            assertFalse(wm.shouldShowSystemDecors(trustedDisplay.mId));
+            // Verify setting system decoration flag to a trusted display.
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                // Assume the display should not support system decorations by default.
+                assertFalse(wm.shouldShowSystemDecors(trustedDisplay.mId));
 
-            try {
-                wm.setShouldShowSystemDecors(trustedDisplay.mId, true);
-                TestUtils.waitUntil("Waiting for system decoration flag to be set",
-                        5 /* timeoutSecond */,
-                        () -> wm.shouldShowSystemDecors(trustedDisplay.mId));
+                try {
+                    wm.setShouldShowSystemDecors(trustedDisplay.mId, true);
+                    TestUtils.waitUntil("Waiting for system decoration flag to be set",
+                            5 /* timeoutSecond */,
+                            () -> wm.shouldShowSystemDecors(trustedDisplay.mId));
 
-                assertTrue(wm.shouldShowSystemDecors(trustedDisplay.mId));
-            } finally {
-                // Restore flag to avoid affecting other tests.
-                wm.setShouldShowSystemDecors(trustedDisplay.mId, false);
-                TestUtils.waitUntil("Waiting for system decoration flag to be set",
-                        5 /* timeoutSecond */,
-                        () -> !wm.shouldShowSystemDecors(trustedDisplay.mId));
-            }
-        });
+                    assertTrue(wm.shouldShowSystemDecors(trustedDisplay.mId));
+                } finally {
+                    // Restore flag to avoid affecting other tests.
+                    wm.setShouldShowSystemDecors(trustedDisplay.mId, false);
+                    TestUtils.waitUntil("Waiting for system decoration flag to be set",
+                            5 /* timeoutSecond */,
+                            () -> !wm.shouldShowSystemDecors(trustedDisplay.mId));
+                }
+            });
 
-        // Verify setting show IME flag to a trusted display.
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            // Assume the display should not show IME window by default.
-            assertFalse(wm.shouldShowIme(trustedDisplay.mId));
+            // Verify setting show IME flag to a trusted display.
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                // Assume the display should not show IME window by default.
+                assertFalse(wm.shouldShowIme(trustedDisplay.mId));
 
-            try {
-                wm.setShouldShowIme(trustedDisplay.mId, true);
-                TestUtils.waitUntil("Waiting for show IME flag to be set",
-                        5 /* timeoutSecond */,
-                        () -> wm.shouldShowIme(trustedDisplay.mId));
+                try {
+                    wm.setShouldShowIme(trustedDisplay.mId, true);
+                    TestUtils.waitUntil("Waiting for show IME flag to be set",
+                            5 /* timeoutSecond */,
+                            () -> wm.shouldShowIme(trustedDisplay.mId));
 
-                assertTrue(wm.shouldShowIme(trustedDisplay.mId));
-            } finally {
-                // Restore flag to avoid affecting other tests.
-                wm.setShouldShowIme(trustedDisplay.mId, false);
-                TestUtils.waitUntil("Waiting for show IME flag to be set",
-                        5 /* timeoutSecond */,
-                        () -> !wm.shouldShowIme(trustedDisplay.mId));
-            }
-        });
+                    assertTrue(wm.shouldShowIme(trustedDisplay.mId));
+                } finally {
+                    // Restore flag to avoid affecting other tests.
+                    wm.setShouldShowIme(trustedDisplay.mId, false);
+                    TestUtils.waitUntil("Waiting for show IME flag to be set",
+                            5 /* timeoutSecond */,
+                            () -> !wm.shouldShowIme(trustedDisplay.mId));
+                }
+            });
+        }
     }
 }

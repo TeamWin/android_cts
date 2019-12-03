@@ -63,11 +63,13 @@ public class DisplayTests extends MultiDisplayTestBase {
      */
     @Test
     public void testCreateVirtualDisplayWithCustomConfig() throws Exception {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
 
-        // Find the density of created display.
-        final int newDensityDpi = newDisplay.mFullConfiguration.densityDpi;
-        assertEquals(CUSTOM_DENSITY_DPI, newDensityDpi);
+            // Find the density of created display.
+            final int newDensityDpi = newDisplay.mFullConfiguration.densityDpi;
+            assertEquals(CUSTOM_DENSITY_DPI, newDensityDpi);
+        }
     }
 
     @Test
@@ -98,25 +100,27 @@ public class DisplayTests extends MultiDisplayTestBase {
         // Only check devices with the feature disabled.
         assumeFalse(supportsMultiDisplay());
 
-        // Create new virtual display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Create new virtual display.
+            final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
 
-        // Launch activity on new secondary display.
-        launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
-        mAmWmState.computeState(TEST_ACTIVITY);
+            // Launch activity on new secondary display.
+            launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
+            mAmWmState.computeState(TEST_ACTIVITY);
 
-        mAmWmState.assertFocusedActivity("Launched activity must be focused",
-                TEST_ACTIVITY);
+            mAmWmState.assertFocusedActivity("Launched activity must be focused",
+                    TEST_ACTIVITY);
 
-        // Check that activity is on the right display.
-        final int frontStackId = mAmWmState.getAmState().getFrontStackId(DEFAULT_DISPLAY);
-        final ActivityManagerState.ActivityStack frontStack =
-                mAmWmState.getAmState().getStackById(frontStackId);
-        assertEquals("Launched activity must be resumed",
-                getActivityName(TEST_ACTIVITY), frontStack.mResumedActivity);
-        assertEquals("Front stack must be on the default display",
-                DEFAULT_DISPLAY, frontStack.mDisplayId);
-        mAmWmState.assertFocusedStack("Focus must be on the default display", frontStackId);
+            // Check that activity is on the right display.
+            final int frontStackId = mAmWmState.getAmState().getFrontStackId(DEFAULT_DISPLAY);
+            final ActivityManagerState.ActivityStack frontStack =
+                    mAmWmState.getAmState().getStackById(frontStackId);
+            assertEquals("Launched activity must be resumed",
+                    getActivityName(TEST_ACTIVITY), frontStack.mResumedActivity);
+            assertEquals("Front stack must be on the default display",
+                    DEFAULT_DISPLAY, frontStack.mDisplayId);
+            mAmWmState.assertFocusedStack("Focus must be on the default display", frontStackId);
+        }
     }
 
     @Test
@@ -136,40 +140,40 @@ public class DisplayTests extends MultiDisplayTestBase {
      * and unlocking the phone and verifies that overrides are kept.
      */
     @Test
-    public void testForceDisplayMetrics() {
+    public void testForceDisplayMetrics() throws Exception {
         launchHomeActivity();
 
-        final DisplayMetricsSession displayMetricsSession =
-                mObjectTracker.manage(new DisplayMetricsSession(DEFAULT_DISPLAY));
-        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        try (final DisplayMetricsSession displayMetricsSession =
+                     new DisplayMetricsSession(DEFAULT_DISPLAY);
+             final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            // Read initial sizes.
+            final ReportedDisplayMetrics originalDisplayMetrics =
+                    displayMetricsSession.getInitialDisplayMetrics();
 
-        // Read initial sizes.
-        final ReportedDisplayMetrics originalDisplayMetrics =
-                displayMetricsSession.getInitialDisplayMetrics();
+            // Apply new override values that don't match the physical metrics.
+            final Size overrideSize = new Size(
+                    (int) (originalDisplayMetrics.physicalSize.getWidth() * 1.5),
+                    (int) (originalDisplayMetrics.physicalSize.getHeight() * 1.5));
+            final Integer overrideDensity = (int) (originalDisplayMetrics.physicalDensity * 1.1);
+            displayMetricsSession.overrideDisplayMetrics(overrideSize, overrideDensity);
 
-        // Apply new override values that don't match the physical metrics.
-        final Size overrideSize = new Size(
-                (int) (originalDisplayMetrics.physicalSize.getWidth() * 1.5),
-                (int) (originalDisplayMetrics.physicalSize.getHeight() * 1.5));
-        final Integer overrideDensity = (int) (originalDisplayMetrics.physicalDensity * 1.1);
-        displayMetricsSession.overrideDisplayMetrics(overrideSize, overrideDensity);
+            // Check if overrides applied correctly.
+            ReportedDisplayMetrics displayMetrics = displayMetricsSession.getDisplayMetrics();
+            assertEquals(overrideSize, displayMetrics.overrideSize);
+            assertEquals(overrideDensity, displayMetrics.overrideDensity);
 
-        // Check if overrides applied correctly.
-        ReportedDisplayMetrics displayMetrics = displayMetricsSession.getDisplayMetrics();
-        assertEquals(overrideSize, displayMetrics.overrideSize);
-        assertEquals(overrideDensity, displayMetrics.overrideDensity);
+            // Lock and unlock device. This will cause a DISPLAY_CHANGED event to be triggered and
+            // might update the metrics.
+            lockScreenSession.sleepDevice()
+                    .wakeUpDevice()
+                    .unlockDevice();
+            mAmWmState.waitForHomeActivityVisible();
 
-        // Lock and unlock device. This will cause a DISPLAY_CHANGED event to be triggered and
-        // might update the metrics.
-        lockScreenSession.sleepDevice()
-                .wakeUpDevice()
-                .unlockDevice();
-        mAmWmState.waitForHomeActivityVisible();
-
-        // Check if overrides are still applied.
-        displayMetrics = displayMetricsSession.getDisplayMetrics();
-        assertEquals(overrideSize, displayMetrics.overrideSize);
-        assertEquals(overrideDensity, displayMetrics.overrideDensity);
+            // Check if overrides are still applied.
+            displayMetrics = displayMetricsSession.getDisplayMetrics();
+            assertEquals(overrideSize, displayMetrics.overrideSize);
+            assertEquals(overrideDensity, displayMetrics.overrideDensity);
+        }
     }
 
     private Configuration getDisplayResourcesConfiguration(int displayWidth, int displayHeight)
@@ -195,7 +199,7 @@ public class DisplayTests extends MultiDisplayTestBase {
         private final ReportedDisplayMetrics mInitialDisplayMetrics;
         private final int mDisplayId;
 
-        DisplayMetricsSession(int displayId) {
+        DisplayMetricsSession(int displayId) throws Exception {
             mDisplayId = displayId;
             mInitialDisplayMetrics = ReportedDisplayMetrics.getDisplayMetrics(mDisplayId);
         }
@@ -204,7 +208,7 @@ public class DisplayTests extends MultiDisplayTestBase {
             return mInitialDisplayMetrics;
         }
 
-        ReportedDisplayMetrics getDisplayMetrics() {
+        ReportedDisplayMetrics getDisplayMetrics() throws Exception {
             return ReportedDisplayMetrics.getDisplayMetrics(mDisplayId);
         }
 
@@ -213,7 +217,7 @@ public class DisplayTests extends MultiDisplayTestBase {
         }
 
         @Override
-        public void close() {
+        public void close() throws Exception {
             mInitialDisplayMetrics.restoreDisplayMetrics();
         }
     }

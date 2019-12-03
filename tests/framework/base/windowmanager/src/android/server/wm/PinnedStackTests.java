@@ -209,57 +209,59 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testPinnedStackDefaultBounds() {
+    public void testPinnedStackDefaultBounds() throws Exception {
         // Launch a PIP activity
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         // Wait for animation complete since we are comparing bounds
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
 
-        final RotationSession rotationSession = createManagedRotationSession();
-        rotationSession.set(ROTATION_0);
-        waitForValidPinnedStackBounds(WindowManagerState::getDefaultPinnedStackBounds);
-        WindowManagerState wmState = mAmWmState.getWmState();
-        wmState.computeState();
-        Rect defaultPipBounds = wmState.getDefaultPinnedStackBounds();
-        Rect stableBounds = wmState.getStableBounds();
-        assertTrue(defaultPipBounds.width() > 0 && defaultPipBounds.height() > 0);
-        assertTrue(stableBounds.contains(defaultPipBounds));
+        try (final RotationSession rotationSession = new RotationSession()) {
+            rotationSession.set(ROTATION_0);
+            waitForValidPinnedStackBounds(WindowManagerState::getDefaultPinnedStackBounds);
+            WindowManagerState wmState = mAmWmState.getWmState();
+            wmState.computeState();
+            Rect defaultPipBounds = wmState.getDefaultPinnedStackBounds();
+            Rect stableBounds = wmState.getStableBounds();
+            assertTrue(defaultPipBounds.width() > 0 && defaultPipBounds.height() > 0);
+            assertTrue(stableBounds.contains(defaultPipBounds));
 
-        rotationSession.set(ROTATION_90);
-        waitForValidPinnedStackBounds(WindowManagerState::getDefaultPinnedStackBounds);
-        wmState = mAmWmState.getWmState();
-        wmState.computeState();
-        defaultPipBounds = wmState.getDefaultPinnedStackBounds();
-        stableBounds = wmState.getStableBounds();
-        assertTrue(defaultPipBounds.width() > 0 && defaultPipBounds.height() > 0);
-        assertTrue(stableBounds.contains(defaultPipBounds));
+            rotationSession.set(ROTATION_90);
+            waitForValidPinnedStackBounds(WindowManagerState::getDefaultPinnedStackBounds);
+            wmState = mAmWmState.getWmState();
+            wmState.computeState();
+            defaultPipBounds = wmState.getDefaultPinnedStackBounds();
+            stableBounds = wmState.getStableBounds();
+            assertTrue(defaultPipBounds.width() > 0 && defaultPipBounds.height() > 0);
+            assertTrue(stableBounds.contains(defaultPipBounds));
+        }
     }
 
     @Test
-    public void testPinnedStackMovementBounds() {
+    public void testPinnedStackMovementBounds() throws Exception {
         // Launch a PIP activity
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         // Wait for animation complete since we are comparing bounds
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
 
-        final RotationSession rotationSession = createManagedRotationSession();
-        rotationSession.set(ROTATION_0);
-        waitForValidPinnedStackBounds(WindowManagerState::getPinnedStackMovementBounds);
-        WindowManagerState wmState = mAmWmState.getWmState();
-        wmState.computeState();
-        Rect pipMovementBounds = wmState.getPinnedStackMovementBounds();
-        Rect stableBounds = wmState.getStableBounds();
-        assertTrue(pipMovementBounds.width() > 0 && pipMovementBounds.height() > 0);
-        assertTrue(stableBounds.contains(pipMovementBounds));
+        try (final RotationSession rotationSession = new RotationSession()) {
+            rotationSession.set(ROTATION_0);
+            waitForValidPinnedStackBounds(WindowManagerState::getPinnedStackMovementBounds);
+            WindowManagerState wmState = mAmWmState.getWmState();
+            wmState.computeState();
+            Rect pipMovementBounds = wmState.getPinnedStackMovementBounds();
+            Rect stableBounds = wmState.getStableBounds();
+            assertTrue(pipMovementBounds.width() > 0 && pipMovementBounds.height() > 0);
+            assertTrue(stableBounds.contains(pipMovementBounds));
 
-        rotationSession.set(ROTATION_90);
-        waitForValidPinnedStackBounds(WindowManagerState::getPinnedStackMovementBounds);
-        wmState = mAmWmState.getWmState();
-        wmState.computeState();
-        pipMovementBounds = wmState.getPinnedStackMovementBounds();
-        stableBounds = wmState.getStableBounds();
-        assertTrue(pipMovementBounds.width() > 0 && pipMovementBounds.height() > 0);
-        assertTrue(stableBounds.contains(pipMovementBounds));
+            rotationSession.set(ROTATION_90);
+            waitForValidPinnedStackBounds(WindowManagerState::getPinnedStackMovementBounds);
+            wmState = mAmWmState.getWmState();
+            wmState.computeState();
+            pipMovementBounds = wmState.getPinnedStackMovementBounds();
+            stableBounds = wmState.getStableBounds();
+            assertTrue(pipMovementBounds.width() > 0 && pipMovementBounds.height() > 0);
+            assertTrue(stableBounds.contains(pipMovementBounds));
+        }
     }
 
     private void waitForValidPinnedStackBounds(Function<WindowManagerState, Rect> boundsFunc) {
@@ -302,7 +304,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testPinnedStackInBoundsAfterRotation() {
+    public void testPinnedStackInBoundsAfterRotation() throws Exception {
         // Launch an activity into the pinned stack
         launchActivity(PIP_ACTIVITY,
                 EXTRA_ENTER_PIP, "true",
@@ -311,15 +313,16 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
 
         // Ensure that the PIP stack is fully visible in each orientation
-        final RotationSession rotationSession = createManagedRotationSession();
-        rotationSession.set(ROTATION_0);
-        assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
-        rotationSession.set(ROTATION_90);
-        assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
-        rotationSession.set(ROTATION_180);
-        assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
-        rotationSession.set(ROTATION_270);
-        assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
+        try (final RotationSession rotationSession = new RotationSession()) {
+            rotationSession.set(ROTATION_0);
+            assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
+            rotationSession.set(ROTATION_90);
+            assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
+            rotationSession.set(ROTATION_180);
+            assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
+            rotationSession.set(ROTATION_270);
+            assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
+        }
     }
 
     @Test
@@ -844,7 +847,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         }
 
         @Override
-        public void close() {
+        public void close() throws Exception {
             // Wait for the restored setting to apply before we continue on with the next test
             final CountDownLatch waitLock = new CountDownLatch(1);
             final Context context = getInstrumentation().getTargetContext();
@@ -856,44 +859,44 @@ public class PinnedStackTests extends ActivityManagerTestBase {
                         }
                     });
             super.close();
-            try {
-                if (!waitLock.await(2, TimeUnit.SECONDS)) {
-                    Log.i(TAG, "TransitionAnimationScaleSession value not restored");
-                }
-            } catch (InterruptedException impossible) {}
+            if (!waitLock.await(2, TimeUnit.SECONDS)) {
+                Log.i(TAG, "TransitionAnimationScaleSession value not restored");
+            }
         }
     }
 
     @Test
-    public void testEnterPipInterruptedCallbacks() {
-        final TransitionAnimationScaleSession transitionAnimationScaleSession =
-                mObjectTracker.manage(new TransitionAnimationScaleSession());
-        // Slow down the transition animations for this test
-        transitionAnimationScaleSession.set(20f);
+    public void testEnterPipInterruptedCallbacks() throws Exception {
+        try (final TransitionAnimationScaleSession transitionAnimationScaleSession =
+                new TransitionAnimationScaleSession()) {
+            // Slow down the transition animations for this test
+            transitionAnimationScaleSession.set(20f);
 
-        // Launch a PiP activity
-        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
-        // Wait until the PiP activity has moved into the pinned stack (happens before the
-        // transition has started)
-        waitForEnterPip(PIP_ACTIVITY);
-        assertPinnedStackExists();
+            // Launch a PiP activity
+            launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+            // Wait until the PiP activity has moved into the pinned stack (happens before the
+            // transition has started)
+            waitForEnterPip(PIP_ACTIVITY);
+            assertPinnedStackExists();
 
-        // Relaunch the PiP activity back into fullscreen
-        separateTestJournal();
-        launchActivity(PIP_ACTIVITY);
-        // Wait until the PiP activity is reparented into the fullscreen stack (happens after
-        // the transition has finished)
-        waitForExitPipToFullscreen(PIP_ACTIVITY);
+            // Relaunch the PiP activity back into fullscreen
+            separateTestJournal();
+            launchActivity(PIP_ACTIVITY);
+            // Wait until the PiP activity is reparented into the fullscreen stack (happens after
+            // the transition has finished)
+            waitForExitPipToFullscreen(PIP_ACTIVITY);
 
-        // Ensure that we get the callbacks indicating that PiP/MW mode was cancelled, but no
-        // configuration change (since none was sent)
-        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(PIP_ACTIVITY);
-        assertEquals("onConfigurationChanged", 0,
-                lifecycleCounts.getCount(ActivityCallback.ON_CONFIGURATION_CHANGED));
-        assertEquals("onPictureInPictureModeChanged", 1,
-                lifecycleCounts.getCount(ActivityCallback.ON_PICTURE_IN_PICTURE_MODE_CHANGED));
-        assertEquals("onMultiWindowModeChanged", 1,
-                lifecycleCounts.getCount(ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED));
+            // Ensure that we get the callbacks indicating that PiP/MW mode was cancelled, but no
+            // configuration change (since none was sent)
+            final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(
+                    PIP_ACTIVITY);
+            assertEquals("onConfigurationChanged", 0,
+                    lifecycleCounts.getCount(ActivityCallback.ON_CONFIGURATION_CHANGED));
+            assertEquals("onPictureInPictureModeChanged", 1,
+                    lifecycleCounts.getCount(ActivityCallback.ON_PICTURE_IN_PICTURE_MODE_CHANGED));
+            assertEquals("onMultiWindowModeChanged", 1,
+                    lifecycleCounts.getCount(ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED));
+        }
     }
 
     @Test

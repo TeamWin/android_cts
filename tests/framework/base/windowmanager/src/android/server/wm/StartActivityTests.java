@@ -35,6 +35,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.CommandSession.ActivitySession;
+import android.server.wm.CommandSession.ActivitySessionClient;
 
 import androidx.test.rule.ActivityTestRule;
 
@@ -148,8 +149,10 @@ public class StartActivityTests extends ActivityManagerTestBase {
      */
     @Test
     public void testStartActivitiesInNewAndSameTask() {
-        final ActivitySession activity = createManagedActivityClientSession()
-                .startActivity(getLaunchActivityBuilder().setUseInstrumentation());
+        final ActivitySessionClient client = createActivitySessionClient();
+        final ActivitySession activity = client.startActivity(
+                getLaunchActivityBuilder().setUseInstrumentation()
+                        .setTargetActivity(TEST_ACTIVITY));
 
         final Intent[] intents = {
                 new Intent().setComponent(NO_RELAUNCH_ACTIVITY)
@@ -170,6 +173,7 @@ public class StartActivityTests extends ActivityManagerTestBase {
         final int callerTaskId = amState.getTaskByActivity(TEST_ACTIVITY).getTaskId();
         final int i0TaskId = amState.getTaskByActivity(intents[0].getComponent()).getTaskId();
         final int i1TaskId = amState.getTaskByActivity(intents[1].getComponent()).getTaskId();
+        client.close();
 
         assertNotEquals("The activities started by startActivities() should have a different task"
                 + " from their caller activity", callerTaskId, i0TaskId);

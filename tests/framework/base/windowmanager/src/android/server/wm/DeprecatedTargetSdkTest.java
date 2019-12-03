@@ -38,7 +38,10 @@ public class DeprecatedTargetSdkTest extends ActivityManagerTestBase {
             "DeprecatedTargetSdkVersionDialog";
 
     @After
-    public void tearDown() {
+    @Override
+    public void tearDown() throws Exception {
+        super.tearDown();
+
         // Ensure app process is stopped.
         stopTestPackage(MAIN_ACTIVITY.getPackageName());
     }

@@ -57,111 +57,113 @@ public class MultiDisplayLockedKeyguardTests extends MultiDisplayTestBase {
      * Test that virtual display content is hidden when device is locked.
      */
     @Test
-    public void testVirtualDisplayHidesContentWhenLocked() {
-        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
-        lockScreenSession.setLockCredential();
+    public void testVirtualDisplayHidesContentWhenLocked() throws Exception {
+        try (final LockScreenSession lockScreenSession = new LockScreenSession();
+             final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            lockScreenSession.setLockCredential();
 
-        // Create new usual virtual display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
-                .setPublicDisplay(true)
-                .createDisplay();
-        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+            // Create new usual virtual display.
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true)
+                    .createDisplay();
+            mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
 
-        // Launch activity on new secondary display.
-        launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
-        mAmWmState.assertVisibility(TEST_ACTIVITY, true /* visible */);
+            // Launch activity on new secondary display.
+            launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
+            mAmWmState.assertVisibility(TEST_ACTIVITY, true /* visible */);
 
-        // Lock the device.
-        lockScreenSession.gotoKeyguard();
-        waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED,
-                "Expected stopped activity on secondary display ");
-        mAmWmState.assertVisibility(TEST_ACTIVITY, false /* visible */);
+            // Lock the device.
+            lockScreenSession.gotoKeyguard();
+            waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED,
+                    "Expected stopped activity on secondary display ");
+            mAmWmState.assertVisibility(TEST_ACTIVITY, false /* visible */);
 
-        // Unlock and check if visibility is back.
-        lockScreenSession.unlockDevice();
+            // Unlock and check if visibility is back.
+            lockScreenSession.unlockDevice();
 
-        lockScreenSession.enterAndConfirmLockCredential();
-        mAmWmState.waitForKeyguardGone();
-        mAmWmState.assertKeyguardGone();
-        waitAndAssertActivityState(TEST_ACTIVITY, STATE_RESUMED,
-                "Expected resumed activity on secondary display");
-        mAmWmState.assertVisibility(TEST_ACTIVITY, true /* visible */);
+            lockScreenSession.enterAndConfirmLockCredential();
+            mAmWmState.waitForKeyguardGone();
+            mAmWmState.assertKeyguardGone();
+            waitAndAssertActivityState(TEST_ACTIVITY, STATE_RESUMED,
+                    "Expected resumed activity on secondary display");
+            mAmWmState.assertVisibility(TEST_ACTIVITY, true /* visible */);
+        }
     }
 
     /**
      * Tests that private display cannot show content while device locked.
      */
     @Test
-    public void testPrivateDisplayHideContentWhenLocked() {
-        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
-        lockScreenSession.setLockCredential();
+    public void testPrivateDisplayHideContentWhenLocked() throws Exception {
+        try (final LockScreenSession lockScreenSession = new LockScreenSession();
+             final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            lockScreenSession.setLockCredential();
 
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
-                .setPublicDisplay(false)
-                .createDisplay();
-        launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
+            final ActivityDisplay newDisplay =
+                    virtualDisplaySession.setPublicDisplay(false).createDisplay();
+            launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
 
-        lockScreenSession.gotoKeyguard();
+            lockScreenSession.gotoKeyguard();
 
-        waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED,
-                "Expected stopped activity on private display");
-        mAmWmState.assertVisibility(TEST_ACTIVITY, false /* visible */);
+            waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED,
+                    "Expected stopped activity on private display");
+            mAmWmState.assertVisibility(TEST_ACTIVITY, false /* visible */);
+        }
     }
 
     /**
      * Tests whether a FLAG_DISMISS_KEYGUARD activity on a secondary display dismisses the keyguard.
      */
     @Test
-    public void testDismissKeyguard_secondaryDisplay() {
-        final LockScreenSession lockScreenSession =
-                mObjectTracker.manage(new LockScreenSession(FLAG_REMOVE_ACTIVITIES_ON_CLOSE));
-        lockScreenSession.setLockCredential();
+    public void testDismissKeyguard_secondaryDisplay() throws Exception {
+        try (final LockScreenSession lockScreenSession =
+                     new LockScreenSession(FLAG_REMOVE_ACTIVITIES_ON_CLOSE);
+             final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            lockScreenSession.setLockCredential();
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true).
+                    createDisplay();
 
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
-                .setPublicDisplay(true)
-                .createDisplay();
-
-        lockScreenSession.gotoKeyguard();
-        mAmWmState.assertKeyguardShowingAndNotOccluded();
-        getLaunchActivityBuilder().setUseInstrumentation()
-                .setTargetActivity(DISMISS_KEYGUARD_ACTIVITY).setNewTask(true)
-                .setMultipleTask(true).setDisplayId(newDisplay.mId)
-                .setWaitForLaunched(false).execute();
-        waitAndAssertActivityState(DISMISS_KEYGUARD_ACTIVITY, STATE_STOPPED,
-                "Expected stopped activity on secondary display");
-        lockScreenSession.enterAndConfirmLockCredential();
-        mAmWmState.waitForKeyguardGone();
-        mAmWmState.assertKeyguardGone();
-        mAmWmState.assertVisibility(DISMISS_KEYGUARD_ACTIVITY, true);
+            lockScreenSession.gotoKeyguard();
+            mAmWmState.assertKeyguardShowingAndNotOccluded();
+            getLaunchActivityBuilder().setUseInstrumentation()
+                    .setTargetActivity(DISMISS_KEYGUARD_ACTIVITY).setNewTask(true)
+                    .setMultipleTask(true).setDisplayId(newDisplay.mId)
+                    .setWaitForLaunched(false).execute();
+            waitAndAssertActivityState(DISMISS_KEYGUARD_ACTIVITY, STATE_STOPPED,
+                    "Expected stopped activity on secondary display");
+            lockScreenSession.enterAndConfirmLockCredential();
+            mAmWmState.waitForKeyguardGone();
+            mAmWmState.assertKeyguardGone();
+            mAmWmState.assertVisibility(DISMISS_KEYGUARD_ACTIVITY, true);
+        }
     }
 
     @FlakyTest(bugId = 141674516)
     @Test
-    public void testDismissKeyguard_whileOccluded_secondaryDisplay() {
-        final LockScreenSession lockScreenSession =
-                mObjectTracker.manage(new LockScreenSession(FLAG_REMOVE_ACTIVITIES_ON_CLOSE));
-        lockScreenSession.setLockCredential();
+    public void testDismissKeyguard_whileOccluded_secondaryDisplay() throws Exception {
+        try (final LockScreenSession lockScreenSession =
+                     new LockScreenSession(FLAG_REMOVE_ACTIVITIES_ON_CLOSE);
+             final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            lockScreenSession.setLockCredential();
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true).
+                    createDisplay();
 
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
-                .setPublicDisplay(true)
-                .createDisplay();
-
-        lockScreenSession.gotoKeyguard();
-        mAmWmState.assertKeyguardShowingAndNotOccluded();
-        launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
-        mAmWmState.computeState(SHOW_WHEN_LOCKED_ACTIVITY);
-        mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
-        getLaunchActivityBuilder().setUseInstrumentation()
-                .setTargetActivity(DISMISS_KEYGUARD_ACTIVITY).setNewTask(true)
-                .setMultipleTask(true).setDisplayId(newDisplay.mId)
-                .setWaitForLaunched(false).execute();
-        waitAndAssertActivityState(DISMISS_KEYGUARD_ACTIVITY, STATE_STOPPED,
-                "Expected stopped activity on secondary display");
-        lockScreenSession.enterAndConfirmLockCredential();
-        mAmWmState.waitForKeyguardGone();
-        mAmWmState.assertKeyguardGone();
-        mAmWmState.computeState(DISMISS_KEYGUARD_ACTIVITY);
-        mAmWmState.assertVisibility(DISMISS_KEYGUARD_ACTIVITY, true);
-        mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
+            lockScreenSession.gotoKeyguard();
+            mAmWmState.assertKeyguardShowingAndNotOccluded();
+            launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
+            mAmWmState.computeState(SHOW_WHEN_LOCKED_ACTIVITY);
+            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
+            getLaunchActivityBuilder().setUseInstrumentation()
+                    .setTargetActivity(DISMISS_KEYGUARD_ACTIVITY).setNewTask(true)
+                    .setMultipleTask(true).setDisplayId(newDisplay.mId)
+                    .setWaitForLaunched(false).execute();
+            waitAndAssertActivityState(DISMISS_KEYGUARD_ACTIVITY, STATE_STOPPED,
+                    "Expected stopped activity on secondary display");
+            lockScreenSession.enterAndConfirmLockCredential();
+            mAmWmState.waitForKeyguardGone();
+            mAmWmState.assertKeyguardGone();
+            mAmWmState.computeState(DISMISS_KEYGUARD_ACTIVITY);
+            mAmWmState.assertVisibility(DISMISS_KEYGUARD_ACTIVITY, true);
+            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
+        }
     }
 }

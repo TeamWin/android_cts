@@ -497,50 +497,51 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 state(becomingVisibleActivity, ON_STOP),
                 state(translucentActivity, ON_STOP));
 
-        final RotationSession rotationSession = createManagedRotationSession();
-        if (!supportsLockedUserRotation(
-                rotationSession, translucentActivity.getDisplay().getDisplayId())) {
-            return;
+        try (final RotationSession rotationSession = new RotationSession()) {
+            if (!supportsLockedUserRotation(
+                    rotationSession, translucentActivity.getDisplay().getDisplayId())) {
+                return;
+            }
+
+            getLifecycleLog().clear();
+
+            final int current = rotationSession.get();
+            // Set new rotation to cause a configuration change.
+            switch (current) {
+                case ROTATION_0:
+                case ROTATION_180:
+                    rotationSession.set(ROTATION_90);
+                    break;
+                case ROTATION_90:
+                case ROTATION_270:
+                    rotationSession.set(ROTATION_0);
+                    break;
+                default:
+                    fail("Unknown rotation:" + current);
+            }
+
+            // Assert that the top activity was relaunched.
+            waitAndAssertActivityStates(state(topOpaqueActivity, ON_RESUME));
+            LifecycleVerifier.assertRelaunchSequence(
+                    SecondActivity.class, getLifecycleLog(), ON_RESUME);
+
+            // Finish the top activity
+            getLifecycleLog().clear();
+            topOpaqueActivity.finish();
+
+            // Assert that the translucent activity and the activity visible behind it were
+            // relaunched.
+            waitAndAssertActivityStates(state(becomingVisibleActivity, ON_PAUSE),
+                    state(translucentActivity, ON_RESUME));
+
+            LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
+                    Arrays.asList(ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME,
+                            ON_PAUSE), "becomingVisiblePaused");
+            final List<LifecycleLog.ActivityCallback> expectedSequence =
+                    Arrays.asList(ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME);
+            LifecycleVerifier.assertSequence(TranslucentActivity.class, getLifecycleLog(),
+                    expectedSequence, "becomingVisibleResumed");
         }
-
-        getLifecycleLog().clear();
-
-        final int current = rotationSession.get();
-        // Set new rotation to cause a configuration change.
-        switch (current) {
-            case ROTATION_0:
-            case ROTATION_180:
-                rotationSession.set(ROTATION_90);
-                break;
-            case ROTATION_90:
-            case ROTATION_270:
-                rotationSession.set(ROTATION_0);
-                break;
-            default:
-                fail("Unknown rotation:" + current);
-        }
-
-        // Assert that the top activity was relaunched.
-        waitAndAssertActivityStates(state(topOpaqueActivity, ON_RESUME));
-        LifecycleVerifier.assertRelaunchSequence(
-                SecondActivity.class, getLifecycleLog(), ON_RESUME);
-
-        // Finish the top activity
-        getLifecycleLog().clear();
-        topOpaqueActivity.finish();
-
-        // Assert that the translucent activity and the activity visible behind it were
-        // relaunched.
-        waitAndAssertActivityStates(state(becomingVisibleActivity, ON_PAUSE),
-                state(translucentActivity, ON_RESUME));
-
-        LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
-                Arrays.asList(ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME,
-                        ON_PAUSE), "becomingVisiblePaused");
-        final List<LifecycleLog.ActivityCallback> expectedSequence =
-                Arrays.asList(ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME);
-        LifecycleVerifier.assertSequence(TranslucentActivity.class, getLifecycleLog(),
-                expectedSequence, "becomingVisibleResumed");
     }
 
     @Test

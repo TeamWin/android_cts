@@ -124,7 +124,7 @@ public class SettingsSession<T> implements AutoCloseable {
     }
 
     @Override
-    public void close() {
+    public void close() throws Exception {
         if (mHasInitialValue) {
             put(mUri, mSetter, mInitialValue);
             if (DEBUG) {

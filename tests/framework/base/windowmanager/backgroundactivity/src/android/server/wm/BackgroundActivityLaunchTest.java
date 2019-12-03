@@ -64,6 +64,7 @@ import android.server.wm.backgroundactivity.common.CommonComponents.Event;
 import android.server.wm.backgroundactivity.common.EventReceiver;
 
 import androidx.annotation.Nullable;
+import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.AppOpsUtils;
@@ -98,15 +99,20 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
      */
     private static final int BROADCAST_DELIVERY_TIMEOUT_MS = 60000;
 
-    @Override
     @Before
     public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getContext();
+        mAm = mContext.getSystemService(ActivityManager.class);
+        mAtm = mContext.getSystemService(ActivityTaskManager.class);
+
         // disable SAW appopp for AppA (it's granted autonatically when installed in CTS)
         AppOpsUtils.setOpMode(APP_A_PACKAGE_NAME, "android:system_alert_window", MODE_ERRORED);
         assertEquals(AppOpsUtils.getOpMode(APP_A_PACKAGE_NAME, "android:system_alert_window"),
                 MODE_ERRORED);
 
-        super.setUp();
+        pressWakeupButton();
+        pressUnlockButton();
+        removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
         assertNull(mAmWmState.getAmState().getTaskByActivity(APP_A_BACKGROUND_ACTIVITY));
         assertNull(mAmWmState.getAmState().getTaskByActivity(APP_A_FOREGROUND_ACTIVITY));
         assertNull(mAmWmState.getAmState().getTaskByActivity(APP_B_FOREGROUND_ACTIVITY));
@@ -126,8 +132,11 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
                     + APP_A_SIMPLE_ADMIN_RECEIVER.flattenToString());
         });
 
+        super.tearDown();
+
         stopTestPackage(TEST_PACKAGE_APP_A);
         stopTestPackage(TEST_PACKAGE_APP_B);
+        launchHomeActivity();
         AppOpsUtils.reset(APP_A_PACKAGE_NAME);
     }
 
