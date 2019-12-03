@@ -1,4 +1,4 @@
-// Copyright (C) 2019 The Android Open Source Project
+// Copyright (C) 2014 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,16 +13,23 @@
 // limitations under the License.
 
 android_test_helper_app {
-    name: "CtsBackgroundActivityAppA",
-    defaults: ["cts_support_defaults"],
-    static_libs: [
-        "cts-wm-app-base",
-        "androidx.legacy_legacy-support-v4",
-    ],
+    name: "CtsLauncherAppsTests",
+    defaults: ["cts_defaults"],
     srcs: ["src/**/*.java"],
-    sdk_version: "test_current",
-    // Tag this module as a cts test artifact
+    libs: [
+        "junit",
+        "android.test.base.stubs",
+    ],
+    static_libs: [
+        "androidx.legacy_legacy-support-v4",
+        "ctstestrunner-axt",
+        "androidx.test.rules",
+        "compatibility-device-util-axt",
+        "ShortcutManagerTestUtils",
+        "testng",
+    ],
     test_suites: [
+        "arcts",
         "cts",
         "vts",
         "general-tests",

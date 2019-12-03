@@ -13,18 +13,15 @@
 // limitations under the License.
 
 android_test_helper_app {
-    name: "CtsBackgroundActivityAppB",
-    defaults: ["cts_support_defaults"],
-    static_libs: [
-        "cts-wm-app-base",
-        "androidx.legacy_legacy-support-v4",
-    ],
+    name: "CtsDevicePolicyContentSuggestionsApp",
+    defaults: ["cts_defaults"],
     srcs: ["src/**/*.java"],
-    sdk_version: "test_current",
     // Tag this module as a cts test artifact
     test_suites: [
+        "arcts",
         "cts",
         "vts",
         "general-tests",
     ],
+    sdk_version: "system_current",
 }

@@ -17,21 +17,23 @@ LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
 # Don't include this package in any target.
-LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_TAGS := tests
 
-# When built, explicitly put it in the data partition.
-LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
+LOCAL_USE_AAPT2 := true
+
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    cts-wm-app-base
+
+LOCAL_STATIC_ANDROID_LIBRARIES := \
+    androidx.legacy_legacy-support-v4
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
+
+LOCAL_SDK_VERSION := test_current
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-LOCAL_PACKAGE_NAME := CtsDevicePolicyContentSuggestionsApp
+LOCAL_PACKAGE_NAME := CtsBackgroundActivityAppB
 
-LOCAL_SDK_VERSION := system_current
-
-# tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := arcts cts vts general-tests
-
-include $(BUILD_CTS_PACKAGE)
+include $(BUILD_CTS_SUPPORT_PACKAGE)

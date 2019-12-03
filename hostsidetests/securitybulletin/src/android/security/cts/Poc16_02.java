@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2018 The Android Open Source Project
+/**
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.cts.nolaunchableactivityapp;
 
-import android.app.Service;
-import android.content.Intent;
-import android.os.IBinder;
+package android.security.cts;
 
-public class EmptyService extends Service {
-    public EmptyService() {
-    }
+import android.platform.test.annotations.SecurityTest;
 
-    @Override
-    public IBinder onBind(Intent intent) {
-        // do nothing, just here for the app to have some code
-        throw new UnsupportedOperationException("Not yet implemented");
+public class Poc16_02 extends SecurityTestCase {
+    /**
+     *  b/25800375
+     */
+    @SecurityTest(minPatchLevel = "2016-02")
+    public void testPocCVE_2016_0811() throws Exception {
+        AdbUtils.runPocAssertNoCrashes("CVE-2016-0811", getDevice(), "mediaserver");
     }
 }
-

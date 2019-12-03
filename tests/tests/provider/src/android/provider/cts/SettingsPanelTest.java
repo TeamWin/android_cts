@@ -124,43 +124,6 @@ public class SettingsPanelTest {
     }
 
     @Test
-    public void internetPanel_correctTitle() {
-        launchInternetPanel();
-
-        final UiObject2 titleView = mDevice.findObject(By.res(mSettingsPackage, RESOURCE_TITLE));
-
-        assertThat(titleView.getText()).isEqualTo("Internet Connectivity");
-    }
-
-    @Test
-    public void volumePanel_correctTitle() {
-        launchVolumePanel();
-
-        final UiObject2 titleView = mDevice.findObject(By.res(mSettingsPackage, RESOURCE_TITLE));
-
-        assertThat(titleView.getText()).isEqualTo("Volume");
-    }
-
-    @Test
-    public void nfcPanel_correctTitle() {
-        launchNfcPanel();
-
-        final UiObject2 titleView = mDevice.findObject(By.res(mSettingsPackage, RESOURCE_TITLE));
-
-        assertThat(titleView.getText()).isEqualTo("NFC");
-    }
-
-    @Test
-    public void wifiPanel_correctTitle() {
-        launchWifiPanel();
-
-        final UiObject2 titleView = mDevice.findObject(By.res(mSettingsPackage, RESOURCE_TITLE));
-
-        // title must be "Wi\u2011Fi" or "WLAN"
-        assertThat(titleView.getText()).isIn(Arrays.asList("Wi\u2011Fi", "WLAN"));
-    }
-
-    @Test
     public void internetPanel_doneClosesPanel() {
         // Launch panel
         launchInternetPanel();

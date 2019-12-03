@@ -1,4 +1,4 @@
-// Copyright (C) 2019 The Android Open Source Project
+// Copyright (C) 2014 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,21 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test {
-    name: "CtsActivityManagerBackgroundActivityTestCases",
+java_test_host {
+    name: "CtsDevicePolicyManagerTestCases",
     defaults: ["cts_defaults"],
-    // TODO(b/129909356): Consolidate this to CtsWindowManagerDeviceTestCases.apk
     srcs: ["src/**/*.java"],
-    sdk_version: "test_current",
-    static_libs: [
-        "androidx.test.rules",
-        "cts-wm-util",
-        "cts-wm-app-base",
-        "cts-core-test-runner-axt",
+    libs: [
+        "tools-common-prebuilt",
+        "cts-tradefed",
+        "tradefed",
+        "compatibility-host-util",
+        "guava",
+        "truth-prebuilt",
     ],
+    // tag this module as a cts test artifact
     test_suites: [
+        "arcts",
         "cts",
-        "vts",
         "general-tests",
+        "vts",
     ],
+    java_resource_dirs: ["res"],
+    data: [":current-api-xml"],
 }
