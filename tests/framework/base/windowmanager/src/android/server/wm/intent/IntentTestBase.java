@@ -45,9 +45,7 @@ public abstract class IntentTestBase extends ActivityManagerTestBase {
     }
 
     @After
-    @Override
     public void tearDown() throws Exception {
-        super.tearDown();
         cleanUp(activitiesUsedInTest());
     }
 

@@ -48,10 +48,7 @@ public class PrereleaseSdkTest extends ActivityManagerTestBase {
     }
 
     @After
-    @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
-
+    public void tearDown() {
         // Ensure app process is stopped.
         stopTestPackage(MAIN_ACTIVITY.getPackageName());
     }

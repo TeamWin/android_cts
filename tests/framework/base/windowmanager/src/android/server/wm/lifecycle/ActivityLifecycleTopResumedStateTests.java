@@ -48,6 +48,7 @@ import android.app.Activity;
 import android.app.ActivityOptions;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityManagerState;
 import android.server.wm.ActivityManagerState.ActivityStack;
@@ -793,189 +794,186 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         waitAndAssertTopResumedActivity(getComponentName(CallbackTrackingActivity.class),
                 DEFAULT_DISPLAY, "Activity launched on default display must be focused");
 
-        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
-            // Create new simulated display
-            final ActivityManagerState.ActivityDisplay newDisplay
-                    = virtualDisplaySession.setSimulateDisplay(true).createDisplay();
+        // Create new simulated display
+        final ActivityManagerState.ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+                .setSimulateDisplay(true)
+                .createDisplay();
 
-            // Launch another activity on new secondary display.
-            getLifecycleLog().clear();
-            launchOptions.setLaunchDisplayId(newDisplay.mId);
-            new Launcher(SingleTopActivity.class)
-                    .setFlags(FLAG_ACTIVITY_NEW_TASK)
-                    .setOptions(launchOptions)
-                    .launch();
-            waitAndAssertTopResumedActivity(getComponentName(SingleTopActivity.class),
-                    newDisplay.mId, "Activity launched on secondary display must be focused");
+        // Launch another activity on new secondary display.
+        getLifecycleLog().clear();
+        launchOptions.setLaunchDisplayId(newDisplay.mId);
+        new Launcher(SingleTopActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK)
+                .setOptions(launchOptions)
+                .launch();
+        waitAndAssertTopResumedActivity(getComponentName(SingleTopActivity.class),
+                newDisplay.mId, "Activity launched on secondary display must be focused");
 
-            getLifecycleLog().clear();
+        getLifecycleLog().clear();
 
-            // Tap on default display to switch the top activity
-            tapOnDisplayCenter(DEFAULT_DISPLAY);
+        // Tap on default display to switch the top activity
+        tapOnDisplayCenter(DEFAULT_DISPLAY);
 
-            // Wait and assert focus switch
-            waitAndAssertActivityTransitions(SingleTopActivity.class,
-                    Arrays.asList(ON_TOP_POSITION_LOST), "tapOnFocusSwitch");
-            waitAndAssertActivityTransitions(CallbackTrackingActivity.class,
-                    Arrays.asList(ON_TOP_POSITION_GAINED), "tapOnFocusSwitch");
-            LifecycleVerifier.assertEntireSequence(Arrays.asList(
-                    transition(SingleTopActivity.class, ON_TOP_POSITION_LOST),
-                    transition(CallbackTrackingActivity.class, ON_TOP_POSITION_GAINED)),
-                    getLifecycleLog(), "Top activity must be switched on tap");
+        // Wait and assert focus switch
+        waitAndAssertActivityTransitions(SingleTopActivity.class,
+                Arrays.asList(ON_TOP_POSITION_LOST), "tapOnFocusSwitch");
+        waitAndAssertActivityTransitions(CallbackTrackingActivity.class,
+                Arrays.asList(ON_TOP_POSITION_GAINED), "tapOnFocusSwitch");
+        LifecycleVerifier.assertEntireSequence(Arrays.asList(
+                transition(SingleTopActivity.class, ON_TOP_POSITION_LOST),
+                transition(CallbackTrackingActivity.class, ON_TOP_POSITION_GAINED)),
+                getLifecycleLog(), "Top activity must be switched on tap");
 
-            getLifecycleLog().clear();
+        getLifecycleLog().clear();
 
-            // Tap on new display to switch the top activity
-            tapOnDisplayCenter(newDisplay.mId);
+        // Tap on new display to switch the top activity
+        tapOnDisplayCenter(newDisplay.mId);
 
-            // Wait and assert focus switch
-            waitAndAssertActivityTransitions(CallbackTrackingActivity.class,
-                    Arrays.asList(ON_TOP_POSITION_LOST), "tapOnFocusSwitch");
-            waitAndAssertActivityTransitions(SingleTopActivity.class,
-                    Arrays.asList(ON_TOP_POSITION_GAINED), "tapOnFocusSwitch");
-            LifecycleVerifier.assertEntireSequence(Arrays.asList(
-                    transition(CallbackTrackingActivity.class, ON_TOP_POSITION_LOST),
-                    transition(SingleTopActivity.class, ON_TOP_POSITION_GAINED)),
-                    getLifecycleLog(), "Top activity must be switched on tap");
-        }
+        // Wait and assert focus switch
+        waitAndAssertActivityTransitions(CallbackTrackingActivity.class,
+                Arrays.asList(ON_TOP_POSITION_LOST), "tapOnFocusSwitch");
+        waitAndAssertActivityTransitions(SingleTopActivity.class,
+                Arrays.asList(ON_TOP_POSITION_GAINED), "tapOnFocusSwitch");
+        LifecycleVerifier.assertEntireSequence(Arrays.asList(
+                transition(CallbackTrackingActivity.class, ON_TOP_POSITION_LOST),
+                transition(SingleTopActivity.class, ON_TOP_POSITION_GAINED)),
+                getLifecycleLog(), "Top activity must be switched on tap");
     }
 
     @Test
-    public void testTopPositionSwitchAcrossDisplaysOnTapSlowDifferentProcess() throws Exception {
+    public void testTopPositionSwitchAcrossDisplaysOnTapSlowDifferentProcess() {
         assumeTrue(supportsMultiDisplay());
 
-        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
-            // Create new simulated display
-            final ActivityManagerState.ActivityDisplay newDisplay
-                    = virtualDisplaySession.setSimulateDisplay(true).createDisplay();
+        // Create new simulated display.
+        final ActivityManagerState.ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+                .setSimulateDisplay(true)
+                .createDisplay();
 
-            // Launch an activity on new secondary display.
-            final Class<? extends Activity> secondActivityClass =
-                    SecondProcessCallbackTrackingActivity.class;
-            final ComponentName secondActivityComponent =
-                    new ComponentName(mTargetContext, secondActivityClass);
+        // Launch an activity on new secondary display.
+        final Class<? extends Activity> secondActivityClass =
+                SecondProcessCallbackTrackingActivity.class;
+        final ComponentName secondActivityComponent =
+                new ComponentName(mTargetContext, secondActivityClass);
 
-            getLaunchActivityBuilder()
-                    .setTargetActivity(secondActivityComponent)
-                    .setUseInstrumentation()
-                    .setDisplayId(newDisplay.mId)
-                    .execute();
-            waitAndAssertActivityStates(state(secondActivityClass, ON_TOP_POSITION_GAINED));
+        getLaunchActivityBuilder()
+                .setTargetActivity(secondActivityComponent)
+                .setUseInstrumentation()
+                .setDisplayId(newDisplay.mId)
+                .execute();
+        waitAndAssertActivityStates(state(secondActivityClass, ON_TOP_POSITION_GAINED));
 
-            // Launch activity on default display, which will be slow to release top position
-            getLifecycleLog().clear();
-            final ActivityOptions launchOptions = ActivityOptions.makeBasic();
-            launchOptions.setLaunchDisplayId(DEFAULT_DISPLAY);
-            final Class defaultActivityClass = SlowActivity.class;
-            final Intent defaultDisplaySlowIntent = new Intent(mContext, defaultActivityClass);
-            defaultDisplaySlowIntent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
-            defaultDisplaySlowIntent.putExtra(SlowActivity.EXTRA_CONTROL_FLAGS,
-                    SlowActivity.FLAG_SLOW_TOP_RESUME_RELEASE);
-            mTargetContext.startActivity(defaultDisplaySlowIntent, launchOptions.toBundle());
+        // Launch activity on default display, which will be slow to release top position.
+        getLifecycleLog().clear();
+        final ActivityOptions launchOptions = ActivityOptions.makeBasic();
+        launchOptions.setLaunchDisplayId(DEFAULT_DISPLAY);
+        final Class<? extends Activity> defaultActivityClass = SlowActivity.class;
+        final Intent defaultDisplaySlowIntent = new Intent(mContext, defaultActivityClass);
+        defaultDisplaySlowIntent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
+        defaultDisplaySlowIntent.putExtra(SlowActivity.EXTRA_CONTROL_FLAGS,
+                SlowActivity.FLAG_SLOW_TOP_RESUME_RELEASE);
+        mTargetContext.startActivity(defaultDisplaySlowIntent, launchOptions.toBundle());
 
-            waitAndAssertTopResumedActivity(getComponentName(SlowActivity.class),
-                    DEFAULT_DISPLAY, "Activity launched on default display must be focused");
+        waitAndAssertTopResumedActivity(getComponentName(SlowActivity.class),
+                DEFAULT_DISPLAY, "Activity launched on default display must be focused");
 
-            // Wait and assert focus switch
-            waitAndAssertActivityStates(state(secondActivityClass, ON_TOP_POSITION_LOST),
-                    state(defaultActivityClass, ON_TOP_POSITION_GAINED));
-            LifecycleVerifier.assertOrder(getLifecycleLog(), Arrays.asList(
-                    transition(secondActivityClass, ON_TOP_POSITION_LOST),
-                    transition(defaultActivityClass, ON_TOP_POSITION_GAINED)),
-                    "launchOnDifferentDisplay");
+        // Wait and assert focus switch
+        waitAndAssertActivityStates(state(secondActivityClass, ON_TOP_POSITION_LOST),
+                state(defaultActivityClass, ON_TOP_POSITION_GAINED));
+        LifecycleVerifier.assertOrder(getLifecycleLog(), Arrays.asList(
+                transition(secondActivityClass, ON_TOP_POSITION_LOST),
+                transition(defaultActivityClass, ON_TOP_POSITION_GAINED)),
+                "launchOnDifferentDisplay");
 
-            // Tap on secondary display to switch the top activity
-            getLifecycleLog().clear();
-            tapOnDisplayCenter(newDisplay.mId);
+        // Tap on secondary display to switch the top activity.
+        getLifecycleLog().clear();
+        tapOnDisplayCenter(newDisplay.mId);
 
-            // Wait and assert top resumed position switch
-            waitAndAssertActivityStates(state(secondActivityClass, ON_TOP_POSITION_GAINED),
-                    state(defaultActivityClass, ON_TOP_POSITION_LOST));
-            LifecycleVerifier.assertOrder(getLifecycleLog(), Arrays.asList(
-                    transition(defaultActivityClass, ON_TOP_POSITION_LOST),
-                    transition(secondActivityClass, ON_TOP_POSITION_GAINED)),
-                    "tapOnDifferentDisplay");
+        // Wait and assert top resumed position switch.
+        waitAndAssertActivityStates(state(secondActivityClass, ON_TOP_POSITION_GAINED),
+                state(defaultActivityClass, ON_TOP_POSITION_LOST));
+        LifecycleVerifier.assertOrder(getLifecycleLog(), Arrays.asList(
+                transition(defaultActivityClass, ON_TOP_POSITION_LOST),
+                transition(secondActivityClass, ON_TOP_POSITION_GAINED)),
+                "tapOnDifferentDisplay");
 
-            // Tap on default display to switch the top activity again
-            getLifecycleLog().clear();
-            tapOnDisplayCenter(DEFAULT_DISPLAY);
+        // Tap on default display to switch the top activity again.
+        getLifecycleLog().clear();
+        tapOnDisplayCenter(DEFAULT_DISPLAY);
 
-            // Wait and assert top resumed position switch
-            waitAndAssertActivityStates(state(secondActivityClass, ON_TOP_POSITION_LOST),
-                    state(defaultActivityClass, ON_TOP_POSITION_GAINED));
-            LifecycleVerifier.assertOrder(getLifecycleLog(), Arrays.asList(
-                    transition(secondActivityClass, ON_TOP_POSITION_LOST),
-                    transition(defaultActivityClass, ON_TOP_POSITION_GAINED)),
-                    "tapOnDifferentDisplay");
-        }
+        // Wait and assert top resumed position switch.
+        waitAndAssertActivityStates(state(secondActivityClass, ON_TOP_POSITION_LOST),
+                state(defaultActivityClass, ON_TOP_POSITION_GAINED));
+        LifecycleVerifier.assertOrder(getLifecycleLog(), Arrays.asList(
+                transition(secondActivityClass, ON_TOP_POSITION_LOST),
+                transition(defaultActivityClass, ON_TOP_POSITION_GAINED)),
+                "tapOnDifferentDisplay");
     }
 
     @Test
-    public void testTopPositionSwitchAcrossDisplaysOnTapTimeoutDifferentProcess() throws Exception {
+    public void testTopPositionSwitchAcrossDisplaysOnTapTimeoutDifferentProcess() {
         assumeTrue(supportsMultiDisplay());
 
-        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
-            // Create new simulated display
-            final ActivityManagerState.ActivityDisplay newDisplay
-                    = virtualDisplaySession.setSimulateDisplay(true).createDisplay();
+        // Create new simulated display.
+        final ActivityManagerState.ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+                .setSimulateDisplay(true)
+                .createDisplay();
 
-            // Launch an activity on new secondary display.
-            final Class<? extends Activity> secondActivityClass =
-                    SecondProcessCallbackTrackingActivity.class;
-            final ComponentName secondActivityComponent =
-                    new ComponentName(mTargetContext, secondActivityClass);
+        // Launch an activity on new secondary display.
+        final Class<? extends Activity> secondActivityClass =
+                SecondProcessCallbackTrackingActivity.class;
+        final ComponentName secondActivityComponent =
+                new ComponentName(mTargetContext, secondActivityClass);
 
-            getLaunchActivityBuilder()
-                    .setTargetActivity(secondActivityComponent)
-                    .setUseInstrumentation()
-                    .setDisplayId(newDisplay.mId)
-                    .execute();
-            waitAndAssertActivityStates(state(secondActivityClass, ON_TOP_POSITION_GAINED));
+        getLaunchActivityBuilder()
+                .setTargetActivity(secondActivityComponent)
+                .setUseInstrumentation()
+                .setDisplayId(newDisplay.mId)
+                .execute();
+        waitAndAssertActivityStates(state(secondActivityClass, ON_TOP_POSITION_GAINED));
 
-            // Launch activity on default display, which will be slow to release top position
-            getLifecycleLog().clear();
-            final ActivityOptions launchOptions = ActivityOptions.makeBasic();
-            launchOptions.setLaunchDisplayId(DEFAULT_DISPLAY);
-            final Class defaultActivityClass = SlowActivity.class;
-            final Intent defaultDisplaySlowIntent = new Intent(mContext, defaultActivityClass);
-            defaultDisplaySlowIntent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
-            defaultDisplaySlowIntent.putExtra(SlowActivity.EXTRA_CONTROL_FLAGS,
-                    SlowActivity.FLAG_TIMEOUT_TOP_RESUME_RELEASE);
-            mTargetContext.startActivity(defaultDisplaySlowIntent, launchOptions.toBundle());
+        // Launch activity on default display, which will be slow to release top position.
+        getLifecycleLog().clear();
+        final ActivityOptions launchOptions = ActivityOptions.makeBasic();
+        launchOptions.setLaunchDisplayId(DEFAULT_DISPLAY);
+        final Class<? extends Activity> defaultActivityClass = SlowActivity.class;
+        final Intent defaultDisplaySlowIntent = new Intent(mContext, defaultActivityClass);
+        defaultDisplaySlowIntent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
+        defaultDisplaySlowIntent.putExtra(SlowActivity.EXTRA_CONTROL_FLAGS,
+                SlowActivity.FLAG_TIMEOUT_TOP_RESUME_RELEASE);
+        mTargetContext.startActivity(defaultDisplaySlowIntent, launchOptions.toBundle());
 
-            waitAndAssertTopResumedActivity(getComponentName(SlowActivity.class),
-                    DEFAULT_DISPLAY, "Activity launched on default display must be focused");
+        waitAndAssertTopResumedActivity(getComponentName(SlowActivity.class),
+                DEFAULT_DISPLAY, "Activity launched on default display must be focused");
 
-            // Wait and assert focus switch
-            waitAndAssertActivityStates(state(secondActivityClass, ON_TOP_POSITION_LOST),
-                    state(defaultActivityClass, ON_TOP_POSITION_GAINED));
-            LifecycleVerifier.assertOrder(getLifecycleLog(), Arrays.asList(
-                    transition(secondActivityClass, ON_TOP_POSITION_LOST),
-                    transition(defaultActivityClass, ON_TOP_POSITION_GAINED)),
-                    "launchOnDifferentDisplay");
+        // Wait and assert focus switch.
+        waitAndAssertActivityStates(state(secondActivityClass, ON_TOP_POSITION_LOST),
+                state(defaultActivityClass, ON_TOP_POSITION_GAINED));
+        LifecycleVerifier.assertOrder(getLifecycleLog(), Arrays.asList(
+                transition(secondActivityClass, ON_TOP_POSITION_LOST),
+                transition(defaultActivityClass, ON_TOP_POSITION_GAINED)),
+                "launchOnDifferentDisplay");
 
-            // Tap on secondary display to switch the top activity
-            getLifecycleLog().clear();
-            tapOnDisplayCenter(newDisplay.mId);
+        // Tap on secondary display to switch the top activity.
+        getLifecycleLog().clear();
+        tapOnDisplayCenter(newDisplay.mId);
 
-            // Wait and assert top resumed position switch. Because of timeout top position gain
-            // will appear before top position loss handling is finished.
-            waitAndAssertActivityStates(state(secondActivityClass, ON_TOP_POSITION_GAINED),
-                    state(defaultActivityClass, ON_TOP_POSITION_LOST));
-            LifecycleVerifier.assertOrder(getLifecycleLog(), Arrays.asList(
-                    transition(secondActivityClass, ON_TOP_POSITION_GAINED),
-                    transition(defaultActivityClass, ON_TOP_POSITION_LOST)),
-                    "tapOnDifferentDisplay");
+        // Wait and assert top resumed position switch. Because of timeout top position gain
+        // will appear before top position loss handling is finished.
+        waitAndAssertActivityStates(state(secondActivityClass, ON_TOP_POSITION_GAINED),
+                state(defaultActivityClass, ON_TOP_POSITION_LOST));
+        LifecycleVerifier.assertOrder(getLifecycleLog(), Arrays.asList(
+                transition(secondActivityClass, ON_TOP_POSITION_GAINED),
+                transition(defaultActivityClass, ON_TOP_POSITION_LOST)),
+                "tapOnDifferentDisplay");
 
-            // Wait 5 seconds more to make sure that no new messages received after top resumed state
-            // released by the slow activity
-            getLifecycleLog().clear();
-            Thread.sleep(5000);
-            LifecycleVerifier.assertEmptySequence(defaultActivityClass, getLifecycleLog(),
-                    "topStateLossTimeout");
-            LifecycleVerifier.assertEmptySequence(secondActivityClass, getLifecycleLog(),
-                    "topStateLossTimeout");
-        }
+        // Wait 5 seconds more to make sure that no new messages received after top resumed state
+        // released by the slow activity
+        getLifecycleLog().clear();
+        SystemClock.sleep(5000);
+        LifecycleVerifier.assertEmptySequence(defaultActivityClass, getLifecycleLog(),
+                "topStateLossTimeout");
+        LifecycleVerifier.assertEmptySequence(secondActivityClass, getLifecycleLog(),
+                "topStateLossTimeout");
     }
 
     @FlakyTest(bugId=137329632)
@@ -990,37 +988,36 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         waitAndAssertTopResumedActivity(getComponentName(CallbackTrackingActivity.class),
                 DEFAULT_DISPLAY, "Activity launched on default display must be focused");
 
-        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
-            // Create new simulated display
-            final ActivityManagerState.ActivityDisplay newDisplay
-                    = virtualDisplaySession.setSimulateDisplay(true).createDisplay();
+        // Create new simulated display.
+        final ActivityManagerState.ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+                .setSimulateDisplay(true)
+                .createDisplay();
 
-            // Launch another activity on new secondary display.
-            getLifecycleLog().clear();
-            final ActivityOptions launchOptions = ActivityOptions.makeBasic();
-            launchOptions.setLaunchDisplayId(newDisplay.mId);
-            new Launcher(SingleTopActivity.class)
-                    .setFlags(FLAG_ACTIVITY_NEW_TASK)
-                    .setOptions(launchOptions)
-                    .launch();
-            waitAndAssertTopResumedActivity(getComponentName(SingleTopActivity.class),
-                    newDisplay.mId, "Activity launched on secondary display must be focused");
-            // An activity is launched on the new display, so the activity on default display should
-            // lose the top state.
-            LifecycleVerifier.assertSequence(CallbackTrackingActivity.class, getLifecycleLog(),
-                    Arrays.asList(ON_TOP_POSITION_LOST), "launchFocusSwitch");
+        // Launch another activity on new secondary display.
+        getLifecycleLog().clear();
+        final ActivityOptions launchOptions = ActivityOptions.makeBasic();
+        launchOptions.setLaunchDisplayId(newDisplay.mId);
+        new Launcher(SingleTopActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK)
+                .setOptions(launchOptions)
+                .launch();
+        waitAndAssertTopResumedActivity(getComponentName(SingleTopActivity.class),
+                newDisplay.mId, "Activity launched on secondary display must be focused");
+        // An activity is launched on the new display, so the activity on default display should
+        // lose the top state.
+        LifecycleVerifier.assertSequence(CallbackTrackingActivity.class, getLifecycleLog(),
+                Arrays.asList(ON_TOP_POSITION_LOST), "launchFocusSwitch");
 
-            // Finish the activity on the default display
-            getLifecycleLog().clear();
-            callbackTrackingActivity.finish();
+        // Finish the activity on the default display.
+        getLifecycleLog().clear();
+        callbackTrackingActivity.finish();
 
-            // Verify that activity was actually destroyed
-            waitAndAssertActivityStates(state(CallbackTrackingActivity.class, ON_DESTROY));
-            // Verify that the original focused display is not affected by the finished activity on
-            // non-focused display.
-            LifecycleVerifier.assertEmptySequence(SingleTopActivity.class, getLifecycleLog(),
-                    "destructionOnDifferentDisplay");
-        }
+        // Verify that activity was actually destroyed.
+        waitAndAssertActivityStates(state(CallbackTrackingActivity.class, ON_DESTROY));
+        // Verify that the original focused display is not affected by the finished activity on
+        // non-focused display.
+        LifecycleVerifier.assertEmptySequence(SingleTopActivity.class, getLifecycleLog(),
+                "destructionOnDifferentDisplay");
     }
 
     @FlakyTest(bugId=137329632)
@@ -1036,40 +1033,38 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         waitAndAssertTopResumedActivity(getComponentName(CallbackTrackingActivity.class),
                 DEFAULT_DISPLAY, "Activity launched on default display must be focused");
 
-        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
-            // Create new simulated display
-            final ActivityManagerState.ActivityDisplay newDisplay
-                    = virtualDisplaySession.setSimulateDisplay(true).createDisplay();
+        // Create new simulated display.
+        final ActivityManagerState.ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+                .setSimulateDisplay(true)
+                .createDisplay();
 
-            // Launch another activity on new secondary display.
-            getLifecycleLog().clear();
-            final ActivityOptions launchOptions = ActivityOptions.makeBasic();
-            launchOptions.setLaunchDisplayId(newDisplay.mId);
-            new Launcher(SingleTopActivity.class)
-                    .setFlags(FLAG_ACTIVITY_NEW_TASK)
-                    .setOptions(launchOptions)
-                    .launch();
-            waitAndAssertTopResumedActivity(getComponentName(SingleTopActivity.class),
-                    newDisplay.mId, "Activity launched on secondary display must be focused");
+        // Launch another activity on new secondary display.
+        getLifecycleLog().clear();
+        final ActivityOptions launchOptions = ActivityOptions.makeBasic();
+        launchOptions.setLaunchDisplayId(newDisplay.mId);
+        new Launcher(SingleTopActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK)
+                .setOptions(launchOptions)
+                .launch();
+        waitAndAssertTopResumedActivity(getComponentName(SingleTopActivity.class),
+                newDisplay.mId, "Activity launched on secondary display must be focused");
 
-            // Bring the focus back
-            final Intent sameInstanceIntent = new Intent(mContext, CallbackTrackingActivity.class);
-            sameInstanceIntent.setFlags(FLAG_ACTIVITY_REORDER_TO_FRONT);
-            bottomActivity.startActivity(sameInstanceIntent, null);
-            waitAndAssertActivityStates(
-                    state(CallbackTrackingActivity.class, ON_TOP_POSITION_GAINED));
+        // Bring the focus back.
+        final Intent sameInstanceIntent = new Intent(mContext, CallbackTrackingActivity.class);
+        sameInstanceIntent.setFlags(FLAG_ACTIVITY_REORDER_TO_FRONT);
+        bottomActivity.startActivity(sameInstanceIntent, null);
+        waitAndAssertActivityStates(state(CallbackTrackingActivity.class, ON_TOP_POSITION_GAINED));
 
-            // Finish the focused activity
-            getLifecycleLog().clear();
-            callbackTrackingActivity.finish();
+        // Finish the focused activity
+        getLifecycleLog().clear();
+        callbackTrackingActivity.finish();
 
-            // Verify that lifecycle of the activity on a different display did not change.
-            // Top resumed state will be given to home activity on that display.
-            waitAndAssertActivityStates(state(CallbackTrackingActivity.class, ON_DESTROY),
-                    state(SecondActivity.class, ON_RESUME));
-            LifecycleVerifier.assertEmptySequence(SingleTopActivity.class, getLifecycleLog(),
-                    "destructionOnDifferentDisplay");
-        }
+        // Verify that lifecycle of the activity on a different display did not change.
+        // Top resumed state will be given to home activity on that display.
+        waitAndAssertActivityStates(state(CallbackTrackingActivity.class, ON_DESTROY),
+                state(SecondActivity.class, ON_RESUME));
+        LifecycleVerifier.assertEmptySequence(SingleTopActivity.class, getLifecycleLog(),
+                "destructionOnDifferentDisplay");
     }
 
     @Test

@@ -72,10 +72,9 @@ public class AnrTests extends ActivityManagerTestBase {
     }
 
     @After
-    public void teardown() throws Exception {
+    public void teardown() {
         mHideDialogSetting.close();
         stopTestPackage(UNRESPONSIVE_ACTIVITY.getPackageName());
-        super.tearDown();
     }
 
     @Test
