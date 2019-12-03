@@ -4,6 +4,7 @@ package com.android.cts.verifier.tv.display;
 import com.android.cts.verifier.tv.TvAppVerifierActivity;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * A sequence of {@link TestStepBase}s within a {@link TvAppVerifierActivity}, which are meant to be
@@ -48,6 +49,13 @@ public class TestSequence {
 
         // Enable the button of the first test step so the user can start it.
         steps.get(0).enableButton();
+    }
+
+    public String getFailureDetails() {
+        return steps.stream()
+                .filter(step -> !step.hasPassed())
+                .map(step -> step.getFailureDetails())
+                .collect(Collectors.joining("\n"));
     }
 
     private void onAllStepsDone() {

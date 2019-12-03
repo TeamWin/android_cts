@@ -16,8 +16,6 @@
 
 package com.android.cts.verifier.tv.display;
 
-import android.view.View;
-
 import com.android.cts.verifier.tv.TvAppVerifierActivity;
 
 /**
@@ -29,10 +27,11 @@ public abstract class SyncTestStep extends TestStepBase {
         super(context);
     }
 
-    public abstract boolean runTest();
+    public abstract void runTest();
 
     @Override
     protected void onButtonClickRunTest() {
-        doneWithPassingState(runTest());
+        runTest();
+        done();
     }
 }
