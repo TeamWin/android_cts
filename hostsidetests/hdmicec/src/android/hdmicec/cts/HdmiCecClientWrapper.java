@@ -42,7 +42,7 @@ import org.junit.rules.ExternalResource;
 public final class HdmiCecClientWrapper extends ExternalResource {
 
     private static final String CEC_CONSOLE_READY = "waiting for input";
-    private static final int MILLISECONDS_TO_READY = 5000;
+    private static final int MILLISECONDS_TO_READY = 10000;
     private static final int DEFAULT_TIMEOUT = 20000;
     private static final String HDMI_CEC_FEATURE = "feature:android.hardware.hdmi.cec";
     private static final int HEXADECIMAL_RADIX = 16;
@@ -453,9 +453,20 @@ public final class HdmiCecClientWrapper extends ExternalResource {
             mOutputConsole.close();
             mInputConsole.close();
             mCecClientInitialised = false;
+            if (!mCecClient.waitFor(MILLISECONDS_TO_READY, TimeUnit.MILLISECONDS)) {
+                /* Use a pkill cec-client if the cec-client process is not dead in spite of the
+                 * quit above.
+                 */
+                List<String> commands = new ArrayList<>();
+                Process killProcess;
+                commands.add("pkill");
+                commands.add("cec-client");
+                killProcess = RunUtil.getDefault().runCmdInBackground(commands);
+                killProcess.waitFor();
+            }
         } catch (Exception e) {
             /* If cec-client is not running, do not throw an exception, just return. */
-            return;
+            CLog.w("Unable to close cec-client", e);
         }
     }
 }
