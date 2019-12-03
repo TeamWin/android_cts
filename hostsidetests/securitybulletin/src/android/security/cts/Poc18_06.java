@@ -37,24 +37,11 @@ public class Poc18_06 extends SecurityTestCase {
   }
 
   /**
-   * CVE-2018-5892
+   *  b/73172817
    */
-  @SecurityTest(minPatchLevel = "2018-06")
-  public void testPocCVE_2018_5892() throws Exception {
-    String result = AdbUtils.runCommandLine(
-        "pm list package com.emoji.keyboard.touchpal", getDevice());
-    assertFalse(result.contains("com.emoji.keyboard.touchpal"));
+  @SecurityTest
+  public void testPocCVE_2018_9344() throws Exception {
+      AdbUtils.runPocAssertNoCrashes(
+          "CVE-2018-9344", getDevice(), "android\\.hardware\\.drm@\\d\\.\\d-service");
   }
-
-    /**
-     *  b/73172817
-     */
-    @SecurityTest
-    public void testPocCVE_2018_9344() throws Exception {
-        AdbUtils.runCommandLine("logcat -c", getDevice());
-        AdbUtils.runPoc("CVE-2018-9344", getDevice(), 30);
-        String output = AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertNotMatchesMultiLine(">>> /vendor/bin/hw/android.hardware.cas@1.0-service <<<" +
-                ".*?signal 11 \\(SIGSEGV\\)", output);
-    }
 }

@@ -113,6 +113,6 @@ public final class DeviceTestConstants {
     private static final String NO_OP_TEST =
             "android.inputmethodservice.cts.devicetest.NoOpDeviceTest";
 
-    public static final TestInfo TEST_WAIT_3SEC =
-            new TestInfo(PACKAGE, NO_OP_TEST, "testWait3Sec");
+    public static final TestInfo TEST_WAIT_15SEC =
+            new TestInfo(PACKAGE, NO_OP_TEST, "testWait15Sec");
 }

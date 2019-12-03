@@ -25,15 +25,18 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.app.AppOpsManager;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
+import android.os.Process;
 import android.os.storage.StorageManager;
 import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
@@ -219,18 +222,13 @@ public class MediaStore_Images_MediaTest {
 
     @Test
     public void testStoreImagesMediaExternal() throws Exception {
-        final String externalPath = new File(ProviderTestUtils.stageDir(mVolumeName),
-                "testimage.jpg").getAbsolutePath();
-        final String externalPath2 = new File(ProviderTestUtils.stageDir(mVolumeName),
-                "testimage1.jpg").getAbsolutePath();
+        final File dir = ProviderTestUtils.stageDir(mVolumeName);
+        final File file = ProviderTestUtils.stageFile(R.raw.scenery,
+                new File(dir, "cts" + System.nanoTime() + ".jpg"));
 
-        // clean up any potential left over entries from a previous aborted run
-        cleanExternalMediaFile(externalPath);
-        cleanExternalMediaFile(externalPath2);
+        final String externalPath = file.getAbsolutePath();
+        final long numBytes = file.length();
 
-        int numBytes = 1337;
-        File file = new File(externalPath);
-        FileUtils.createFile(file, numBytes);
         ProviderTestUtils.waitUntilExists(file);
 
         ContentValues values = new ContentValues();
@@ -242,7 +240,7 @@ public class MediaStore_Images_MediaTest {
         values.put(Media.IS_PRIVATE, 1);
         values.put(Media.MINI_THUMB_MAGIC, 0);
         values.put(Media.DATA, externalPath);
-        values.put(Media.DISPLAY_NAME, "testimage");
+        values.put(Media.DISPLAY_NAME, file.getName());
         values.put(Media.MIME_TYPE, "image/jpeg");
         values.put(Media.SIZE, numBytes);
         values.put(Media.TITLE, "testimage");
@@ -270,7 +268,7 @@ public class MediaStore_Images_MediaTest {
             assertEquals(1, c.getInt(c.getColumnIndex(Media.IS_PRIVATE)));
             assertEquals(0, c.getLong(c.getColumnIndex(Media.MINI_THUMB_MAGIC)));
             assertEquals(externalPath, c.getString(c.getColumnIndex(Media.DATA)));
-            assertEquals("testimage.jpg", c.getString(c.getColumnIndex(Media.DISPLAY_NAME)));
+            assertEquals(file.getName(), c.getString(c.getColumnIndex(Media.DISPLAY_NAME)));
             assertEquals("image/jpeg", c.getString(c.getColumnIndex(Media.MIME_TYPE)));
             assertEquals("testimage", c.getString(c.getColumnIndex(Media.TITLE)));
             assertEquals(numBytes, c.getInt(c.getColumnIndex(Media.SIZE)));
@@ -341,6 +339,26 @@ public class MediaStore_Images_MediaTest {
         }
         // As owner, we should be able to request the original bytes
         try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(originalUri, "r")) {
+        }
+
+        // Remove ACCESS_MEDIA_LOCATION permission
+        try {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation().
+                    adoptShellPermissionIdentity("android.permission.MANAGE_APP_OPS_MODES");
+
+            // Revoking ACCESS_MEDIA_LOCATION permission will kill the test app.
+            // Deny access_media_permission App op to revoke this permission.
+            if (mContext.getPackageManager().checkPermission(
+                    android.Manifest.permission.ACCESS_MEDIA_LOCATION, mContext.getPackageName())
+                    == PackageManager.PERMISSION_GRANTED) {
+
+                mContext.getSystemService(AppOpsManager.class).setUidMode(
+                        "android:access_media_location", Process.myUid(),
+                        AppOpsManager.MODE_IGNORED);
+            }
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation().
+                    dropShellPermissionIdentity();
         }
 
         // Now remove ownership, which means that Exif/XMP location data should be redacted

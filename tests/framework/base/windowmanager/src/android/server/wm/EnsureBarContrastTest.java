@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
 import static android.server.wm.EnsureBarContrastTest.TestActivity.EXTRA_ENSURE_CONTRAST;
 import static android.server.wm.EnsureBarContrastTest.TestActivity.EXTRA_LIGHT_BARS;
 import static android.server.wm.EnsureBarContrastTest.TestActivity.backgroundForBar;
@@ -26,6 +27,7 @@ import static android.server.wm.BarTestUtils.isAssumptionViolated;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+import static org.junit.Assume.assumeFalse;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -121,6 +123,10 @@ public class EnsureBarContrastTest {
     }
 
     public void runTestDontEnsureContrast(boolean lightBars) {
+        assumeFalse(
+                "Skipping test: automotive may not have transparent background for the status bar",
+                getInstrumentation().getContext().getPackageManager().hasSystemFeature(
+                        FEATURE_AUTOMOTIVE));
         TestActivity activity = launchAndWait(mTestActivity, lightBars, false /* ensureContrast */);
         for (Bar bar : Bar.BARS) {
             Bitmap bitmap = getOnMainSync(() -> activity.screenshotBar(bar, mDumper));

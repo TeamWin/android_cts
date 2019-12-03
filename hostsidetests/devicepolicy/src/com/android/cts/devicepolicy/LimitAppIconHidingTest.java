@@ -23,10 +23,10 @@ import java.util.Collections;
  */
 public class LimitAppIconHidingTest extends BaseLauncherAppsTest {
 
-    private static final String LAUNCHER_TESTS_NO_LAUNCHABLE_ACTIVITY_APK =
-            "CtsNoLaunchableActivityApp.apk";
-    private static final String LAUNCHER_TESTS_NO_COMPONENT_APK =
-            "CtsNoComponentApp.apk";
+    private static final String LAUNCHER_TESTS_HAS_LAUNCHER_ACTIVITY_APK =
+            "CtsHasLauncherActivityApp.apk";
+    private static final String LAUNCHER_TESTS_NO_LAUNCHER_ACTIVITY_APK =
+            "CtsNoLauncherActivityApp.apk";
     private static final String LAUNCHER_TESTS_NO_PERMISSION_APK =
             "CtsNoPermissionApp.apk";
 
@@ -58,8 +58,8 @@ public class LimitAppIconHidingTest extends BaseLauncherAppsTest {
     @Override
     protected void installTestApps(int userId) throws Exception {
         super.installTestApps(mCurrentUserId);
-        installAppAsUser(LAUNCHER_TESTS_NO_LAUNCHABLE_ACTIVITY_APK, mCurrentUserId);
-        installAppAsUser(LAUNCHER_TESTS_NO_COMPONENT_APK, mCurrentUserId);
+        installAppAsUser(LAUNCHER_TESTS_HAS_LAUNCHER_ACTIVITY_APK, mCurrentUserId);
+        installAppAsUser(LAUNCHER_TESTS_NO_LAUNCHER_ACTIVITY_APK, mCurrentUserId);
         installAppAsUser(LAUNCHER_TESTS_NO_PERMISSION_APK, mCurrentUserId);
     }
 
@@ -67,16 +67,16 @@ public class LimitAppIconHidingTest extends BaseLauncherAppsTest {
     protected void uninstallTestApps() throws Exception {
         super.uninstallTestApps();
         getDevice().uninstallPackage(LAUNCHER_TESTS_NO_PERMISSION_APK);
-        getDevice().uninstallPackage(LAUNCHER_TESTS_NO_COMPONENT_APK);
-        getDevice().uninstallPackage(LAUNCHER_TESTS_NO_LAUNCHABLE_ACTIVITY_APK);
+        getDevice().uninstallPackage(LAUNCHER_TESTS_NO_LAUNCHER_ACTIVITY_APK);
+        getDevice().uninstallPackage(LAUNCHER_TESTS_HAS_LAUNCHER_ACTIVITY_APK);
     }
 
-    public void testNoLaunchableActivityAppHasAppDetailsActivityInjected() throws Exception {
+    public void testHasLauncherActivityAppHasAppDetailsActivityInjected() throws Exception {
         if (!mHasLauncherApps) {
             return;
         }
         runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
-                LAUNCHER_TESTS_CLASS, "testNoLaunchableActivityAppHasAppDetailsActivityInjected",
+                LAUNCHER_TESTS_CLASS, "testHasLauncherActivityAppHasAppDetailsActivityInjected",
                 mCurrentUserId, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber));
     }
 
@@ -89,12 +89,12 @@ public class LimitAppIconHidingTest extends BaseLauncherAppsTest {
                 mCurrentUserId, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber));
     }
 
-    public void testNoComponentAppNotInjected() throws Exception {
+    public void testNoLauncherActivityAppNotInjected() throws Exception {
         if (!mHasLauncherApps) {
             return;
         }
         runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
-                LAUNCHER_TESTS_CLASS, "testNoComponentAppNotInjected",
+                LAUNCHER_TESTS_CLASS, "testNoLauncherActivityAppNotInjected",
                 mCurrentUserId, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber));
     }
 

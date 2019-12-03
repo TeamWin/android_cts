@@ -1,4 +1,4 @@
-# Copyright (C) 2014 The Android Open Source Project
+# Copyright (C) 2019 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,32 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH:= $(call my-dir)
+LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_PACKAGE_NAME := CtsLauncherAppsTests
-
-LOCAL_MODULE_TAGS := optional
-
-LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
-
+# Only compile source java files in this apk.
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_JAVA_LIBRARIES := junit android.test.base.stubs
+LOCAL_MODULE := CtsCheckpointTestCases
+LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util
 
-LOCAL_STATIC_JAVA_LIBRARIES = \
-	androidx.legacy_legacy-support-v4 \
-	ctstestrunner-axt \
-	androidx.test.rules \
-	compatibility-device-util-axt \
-	ShortcutManagerTestUtils \
-	testng
-
-LOCAL_SDK_VERSION := system_current
-LOCAL_MIN_SDK_VERSION := 21
+LOCAL_CTS_TEST_PACKAGE := android.checkpoint
 
 # tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := arcts cts vts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests gts
 
-include $(BUILD_CTS_PACKAGE)
+LOCAL_MIN_SDK_VERSION := 4
+
+include $(BUILD_CTS_HOST_JAVA_LIBRARY)
+
+# Build the test APKs using their own makefiles
+include $(call all-makefiles-under,$(LOCAL_PATH))
