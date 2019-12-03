@@ -26,8 +26,8 @@ import org.junit.runner.RunWith;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
-public class AsusGamepadTestCase extends InputTestCase {
-    public AsusGamepadTestCase() {
+public class AsusGamepadTest extends InputTestCase {
+    public AsusGamepadTest() {
         super(R.raw.asus_gamepad_register);
     }
 
