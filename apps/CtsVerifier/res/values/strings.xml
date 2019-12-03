@@ -4366,6 +4366,26 @@ You should be prompted to select credentials; choose the ones you just installed
         reconnect the display.
     </string>
 
+    <!-- Display Modes Test -->
+    <string name="tv_display_modes_test">Display Modes Test</string>
+    <string name="tv_display_modes_test_info">This test checks if Display.getSupportedModes()
+        and Display.getMode() are correctly reporting the supported screen modes.
+    </string>
+    <string name="tv_display_modes_disconnect_display">
+        Press the "%1$s" button and disconnect the display within %2$d seconds. Wait at least %3$d
+        seconds and then reconnect the display.
+    </string>
+    <string name="tv_display_modes_test_step_no_display">No Display</string>
+    <string name="tv_display_modes_test_step_1080p">1080p Display</string>
+    <string name="tv_display_modes_test_step_2160p">2160p Display</string>
+    <string name="tv_display_modes_start_test_button">Start Test</string>
+    <string name="tv_display_modes_connect_2160p_display">
+        Connect a 2160p display and press the "%s" button, below.
+    </string>
+    <string name="tv_display_modes_connect_1080p_display">
+        Connect a 1080p display and press the "%s" button, below.
+    </string>
+
     <string name="overlay_view_text">Overlay View Dummy Text</string>
     <string name="custom_rating">Example of input app specific custom rating.</string>
 
