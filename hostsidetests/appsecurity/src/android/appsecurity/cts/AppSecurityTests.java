@@ -16,6 +16,8 @@
 
 package android.appsecurity.cts;
 
+import android.platform.test.annotations.SecurityTest;
+
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.Log;
 import com.android.tradefed.build.IBuildInfo;
@@ -266,6 +268,7 @@ public class AppSecurityTests extends DeviceTestCase implements IAbiReceiver, IB
      * Test that an app cannot use a signature-enforced permission if it is signed with a different
      * certificate than the app that declared the permission.
      */
+    @SecurityTest
     public void testPermissionDiffCert() throws Exception {
         Log.i(LOG_TAG, "installing app that attempts to use permission of another app");
         try {
