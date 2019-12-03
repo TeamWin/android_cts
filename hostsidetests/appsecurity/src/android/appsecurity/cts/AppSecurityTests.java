@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
+import android.platform.test.annotations.SecurityTest;
 
 import com.android.ddmlib.Log;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -224,6 +225,7 @@ public class AppSecurityTests extends BaseAppSecurityTest {
      */
     @Test
     @AppModeFull(reason = "Only the platform can define permissions obtainable by instant applications")
+    @SecurityTest
     public void testPermissionDiffCert() throws Exception {
         Log.i(LOG_TAG, "installing app that attempts to use permission of another app");
         try {
