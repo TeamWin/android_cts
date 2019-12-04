@@ -12,6 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+filegroup {
+    name: "car-mode-app-srcs",
+    srcs: [
+        "src/android/telecom/cts/carmodetestapp/CtsCarModeInCallService.java",
+        "src/android/telecom/cts/carmodetestapp/CtsCarModeInCallServiceControl.java",
+    ],
+    path: "src/",
+}
+
+filegroup {
+    name: "car-mode-app-aidl",
+    srcs: [
+        "aidl/android/telecom/cts/carmodetestapp/ICtsCarModeInCallServiceControl.aidl",
+    ],
+    path: "aidl/",
+}
+
 android_test {
     name: "CtsTelecomTestCases",
     defaults: ["cts_defaults"],
@@ -28,6 +45,7 @@ android_test {
     ],
     srcs: [
         "src/**/*.java",
+        "aidl/**/I*.aidl",
         "CallScreeningServiceTestApp/**/*.java",
         "CallScreeningServiceTestApp/**/I*.aidl",
         "ThirdPtyInCallServiceTestApp/**/*.java",
@@ -47,6 +65,7 @@ android_test {
             "ThirdPtyInCallServiceTestApp/aidl/",
             "CallRedirectionServiceTestApp/aidl/",
             "CallScreeningServiceTestApp/aidl/",
+            "aidl/",
         ],
     },
     sdk_version: "test_current",
