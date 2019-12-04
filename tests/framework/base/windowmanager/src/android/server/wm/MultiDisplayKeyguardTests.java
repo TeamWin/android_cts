@@ -56,16 +56,18 @@ public class MultiDisplayKeyguardTests extends MultiDisplayTestBase {
      * insecure keyguard).
      */
     @Test
-    public void testDismissKeyguardActivity_secondaryDisplay() {
-        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
+    public void testDismissKeyguardActivity_secondaryDisplay() throws Exception {
+        try (final LockScreenSession lockScreenSession = new LockScreenSession();
+             final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
 
-        lockScreenSession.gotoKeyguard();
-        mAmWmState.assertKeyguardShowingAndNotOccluded();
-        launchActivityOnDisplay(DISMISS_KEYGUARD_ACTIVITY, newDisplay.mId);
-        mAmWmState.waitForKeyguardShowingAndNotOccluded();
-        mAmWmState.assertKeyguardShowingAndNotOccluded();
-        mAmWmState.assertVisibility(DISMISS_KEYGUARD_ACTIVITY, true);
+            lockScreenSession.gotoKeyguard();
+            mAmWmState.assertKeyguardShowingAndNotOccluded();
+            launchActivityOnDisplay(DISMISS_KEYGUARD_ACTIVITY, newDisplay.mId);
+            mAmWmState.waitForKeyguardShowingAndNotOccluded();
+            mAmWmState.assertKeyguardShowingAndNotOccluded();
+            mAmWmState.assertVisibility(DISMISS_KEYGUARD_ACTIVITY, true);
+        }
     }
 
     /**
@@ -73,23 +75,23 @@ public class MultiDisplayKeyguardTests extends MultiDisplayTestBase {
      * @throws Exception
      */
     @Test
-    public void testShowKeyguardDialogOnSecondaryDisplay() {
-        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
-        final ActivityDisplay publicDisplay = createManagedVirtualDisplaySession()
-                .setPublicDisplay(true)
-                .createDisplay();
+    public void testShowKeyguardDialogOnSecondaryDisplay() throws Exception {
+        try (final LockScreenSession lockScreenSession = new LockScreenSession();
+             final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay publicDisplay = virtualDisplaySession.setPublicDisplay(true)
+                    .createDisplay();
+            lockScreenSession.gotoKeyguard();
+            assertTrue("KeyguardDialog must show on external public display",
+                    mAmWmState.waitForWithWmState(
+                            state -> isKeyguardOnDisplay(state, publicDisplay.mId),
+                            "keyguard window to show"));
 
-        lockScreenSession.gotoKeyguard();
-        assertTrue("KeyguardDialog must show on external public display",
-                mAmWmState.waitForWithWmState(
-                        state -> isKeyguardOnDisplay(state, publicDisplay.mId),
-                        "keyguard window to show"));
-
-        // Keyguard dialog mustn't be removed when press back key
-        pressBackButton();
-        mAmWmState.computeState(true);
-        assertTrue("KeyguardDialog must not be removed when press back key",
-                isKeyguardOnDisplay(mAmWmState.getWmState(), publicDisplay.mId));
+            // Keyguard dialog mustn't be removed when press back key
+            pressBackButton();
+            mAmWmState.computeState(true);
+            assertTrue("KeyguardDialog must not be removed when press back key",
+                    isKeyguardOnDisplay(mAmWmState.getWmState(), publicDisplay.mId));
+        }
     }
 
     /**
@@ -97,23 +99,23 @@ public class MultiDisplayKeyguardTests extends MultiDisplayTestBase {
      * @throws Exception
      */
     @Test
-    public void testNoKeyguardDialogOnPrivateDisplay() {
-        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
-        final VirtualDisplaySession virtualDisplaySession = createManagedVirtualDisplaySession();
+    public void testNoKeyguardDialogOnPrivateDisplay() throws Exception {
+        try (final LockScreenSession lockScreenSession = new LockScreenSession();
+             final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay privateDisplay = virtualDisplaySession.setPublicDisplay(false)
+                    .createDisplay();
+            final ActivityDisplay publicDisplay = virtualDisplaySession.setPublicDisplay(true)
+                    .createDisplay();
 
-        final ActivityDisplay privateDisplay =
-                virtualDisplaySession.setPublicDisplay(false).createDisplay();
-        final ActivityDisplay publicDisplay =
-                virtualDisplaySession.setPublicDisplay(true).createDisplay();
+            lockScreenSession.gotoKeyguard();
+            assertTrue("KeyguardDialog must show on external public display",
+                    mAmWmState.waitForWithWmState(
+                            state -> isKeyguardOnDisplay(state, publicDisplay.mId),
+                            "keyguard window to show"));
 
-        lockScreenSession.gotoKeyguard();
-        assertTrue("KeyguardDialog must show on external public display",
-                mAmWmState.waitForWithWmState(
-                        state -> isKeyguardOnDisplay(state, publicDisplay.mId),
-                        "keyguard window to show"));
-
-        assertFalse("KeyguardDialog must not show on external private display",
-                isKeyguardOnDisplay(mAmWmState.getWmState(), privateDisplay.mId));
+            assertFalse("KeyguardDialog must not show on external private display",
+                    isKeyguardOnDisplay(mAmWmState.getWmState(), privateDisplay.mId));
+        }
     }
 
     private boolean isKeyguardOnDisplay(WindowManagerState windowManagerState, int displayId) {

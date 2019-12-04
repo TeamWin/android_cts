@@ -40,7 +40,6 @@ import android.content.Intent;
 import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.ActivityManagerState.ActivityDisplay;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
@@ -88,9 +87,9 @@ public class MultiDisplayClientTests extends MultiDisplayTestBase {
         testDisplayIdUpdateOnMove(NoRelaunchActivity.class, true /* handlesConfigChange */);
     }
 
-    private <T extends Activity> void testDisplayIdUpdateOnMove(Class<T> activityClass,
+    private void testDisplayIdUpdateOnMove(Class<? extends Activity> activityClass,
             boolean handlesConfigChange) throws Exception {
-        final ActivityTestRule<T> activityTestRule = new ActivityTestRule<>(
+        final ActivityTestRule activityTestRule = new ActivityTestRule(
                 activityClass, true /* initialTouchMode */, false /* launchActivity */);
 
         // Launch activity display.
@@ -99,44 +98,45 @@ public class MultiDisplayClientTests extends MultiDisplayTestBase {
         final ComponentName activityName = activity.getComponentName();
         waitAndAssertResume(activityName);
 
-        // Create new simulated display
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
-                .setSimulateDisplay(true)
-                .createDisplay();
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Create new simulated display
+            final ActivityManagerState.ActivityDisplay newDisplay =
+                    virtualDisplaySession.setSimulateDisplay(true).createDisplay();
 
-        // Move the activity to the new secondary display.
-        separateTestJournal();
-        final ActivityOptions launchOptions = ActivityOptions.makeBasic();
-        final int displayId = newDisplay.mId;
-        launchOptions.setLaunchDisplayId(displayId);
-        final Intent newDisplayIntent = new Intent(mContext, activityClass);
-        newDisplayIntent.setFlags(FLAG_ACTIVITY_NEW_TASK);
-        getInstrumentation().getTargetContext().startActivity(newDisplayIntent,
-                launchOptions.toBundle());
-        waitAndAssertTopResumedActivity(activityName, displayId,
-                "Activity moved to secondary display must be focused");
+            // Move the activity to the new secondary display.
+            separateTestJournal();
+            final ActivityOptions launchOptions = ActivityOptions.makeBasic();
+            final int displayId = newDisplay.mId;
+            launchOptions.setLaunchDisplayId(displayId);
+            final Intent newDisplayIntent = new Intent(mContext, activityClass);
+            newDisplayIntent.setFlags(FLAG_ACTIVITY_NEW_TASK);
+            getInstrumentation().getTargetContext().startActivity(newDisplayIntent,
+                    launchOptions.toBundle());
+            waitAndAssertTopResumedActivity(activityName, displayId,
+                    "Activity moved to secondary display must be focused");
 
-        if (handlesConfigChange) {
-            // Wait for activity to receive the configuration change after move
-            waitAndAssertConfigurationChange(activityName);
-        } else {
-            // Activity will be re-created, wait for resumed state
-            waitAndAssertResume(activityName);
-            activity = activityTestRule.getActivity();
+            if (handlesConfigChange) {
+                // Wait for activity to receive the configuration change after move
+                waitAndAssertConfigurationChange(activityName);
+            } else {
+                // Activity will be re-created, wait for resumed state
+                waitAndAssertResume(activityName);
+                activity = activityTestRule.getActivity();
+            }
+
+            final String suffix = " must be updated.";
+            assertEquals("Activity#getDisplayId()" + suffix, displayId, activity.getDisplayId());
+            assertEquals("Activity#getDisplay" + suffix,
+                    displayId, activity.getDisplay().getDisplayId());
+
+            final WindowManager wm = activity.getWindowManager();
+            assertEquals("WM#getDefaultDisplay()" + suffix,
+                    displayId, wm.getDefaultDisplay().getDisplayId());
+
+            final View view = activity.getWindow().getDecorView();
+            assertEquals("View#getDisplay()" + suffix,
+                    displayId, view.getDisplay().getDisplayId());
         }
-
-        final String suffix = " must be updated.";
-        assertEquals("Activity#getDisplayId()" + suffix, displayId, activity.getDisplayId());
-        assertEquals("Activity#getDisplay" + suffix,
-                displayId, activity.getDisplay().getDisplayId());
-
-        final WindowManager wm = activity.getWindowManager();
-        assertEquals("WM#getDefaultDisplay()" + suffix,
-                displayId, wm.getDefaultDisplay().getDisplayId());
-
-        final View view = activity.getWindow().getDecorView();
-        assertEquals("View#getDisplay()" + suffix,
-                displayId, view.getDisplay().getDisplayId());
     }
 
     @Test
@@ -151,18 +151,19 @@ public class MultiDisplayClientTests extends MultiDisplayTestBase {
 
     private void testDisplayIdUpdateWhenImeMove(Class<? extends ImeTestActivity> activityClass)
             throws Exception {
-        final VirtualDisplaySession virtualDisplaySession = createManagedVirtualDisplaySession();
-        final MockImeSession mockImeSession = MockImeHelper.createManagedMockImeSession(this);
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession();
+            final MockImeSession mockImeSession = MockImeSession.create(mContext)) {
 
-        assertImeShownAndMatchesDisplayId(
-                activityClass, mockImeSession, DEFAULT_DISPLAY);
+            assertImeShownAndMatchesDisplayId(
+                    activityClass, mockImeSession, DEFAULT_DISPLAY);
 
-        final ActivityDisplay newDisplay = virtualDisplaySession
-                .setSimulateDisplay(true).setShowSystemDecorations(true).createDisplay();
+            final ActivityManagerState.ActivityDisplay newDisplay = virtualDisplaySession
+                    .setSimulateDisplay(true).setShowSystemDecorations(true).createDisplay();
 
-        // Launch activity on the secondary display and make IME show.
-        assertImeShownAndMatchesDisplayId(
-                activityClass, mockImeSession, newDisplay.mId);
+            // Launch activity on the secondary display and make IME show.
+            assertImeShownAndMatchesDisplayId(
+                    activityClass, mockImeSession, newDisplay.mId);
+        }
     }
 
     private  void assertImeShownAndMatchesDisplayId(Class<? extends ImeTestActivity> activityClass,
@@ -188,76 +189,83 @@ public class MultiDisplayClientTests extends MultiDisplayTestBase {
     }
 
     @Test
-    public void testInputMethodManagerDisplayId() {
-        // Create a simulated display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
-                .setSimulateDisplay(true)
-                .createDisplay();
+    public void testInputMethodManagerDisplayId() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Create a simulated display.
+            final ActivityManagerState.ActivityDisplay newDisplay = virtualDisplaySession
+                    .setSimulateDisplay(true).createDisplay();
 
-        final Display display = mContext.getSystemService(DisplayManager.class)
-                .getDisplay(newDisplay.mId);
-        final Context newDisplayContext = mContext.createDisplayContext(display);
-        final InputMethodManager imm = newDisplayContext.getSystemService(InputMethodManager.class);
+            final Display display = mContext.getSystemService(DisplayManager.class)
+                    .getDisplay(newDisplay.mId);
+            final Context newDisplayContext = mContext.createDisplayContext(display);
+            final InputMethodManager imm =
+                    newDisplayContext.getSystemService(InputMethodManager.class);
 
-        assertEquals("IMM#getDisplayId() must match.", newDisplay.mId, imm.getDisplayId());
+            assertEquals("IMM#getDisplayId() must match.", newDisplay.mId, imm.getDisplayId());
+        }
     }
 
     @Test
-    public void testViewGetDisplayOnPrimaryDisplay() {
+    public void testViewGetDisplayOnPrimaryDisplay() throws Exception {
         testViewGetDisplay(true /* isPrimary */);
     }
 
     @Test
-    public void testViewGetDisplayOnSecondaryDisplay() {
+    public void testViewGetDisplayOnSecondaryDisplay() throws Exception {
         testViewGetDisplay(false /* isPrimary */);
     }
 
-    private void testViewGetDisplay(boolean isPrimary) {
-        final TestActivitySession<ClientTestActivity> activitySession =
-                createManagedTestActivitySession();
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
-                .setSimulateDisplay(true)
-                .createDisplay();
-        final int displayId = isPrimary ? DEFAULT_DISPLAY : newDisplay.mId;
+    private void testViewGetDisplay(boolean isPrimary) throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession();
+             final TestActivitySession<ClientTestActivity> activitySession =
+                     new TestActivitySession<>()) {
 
-        separateTestJournal();
-        activitySession.launchTestActivityOnDisplaySync(ClientTestActivity.class, displayId);
+            final ActivityManagerState.ActivityDisplay newDisplay = virtualDisplaySession
+                    .setSimulateDisplay(true).createDisplay();
+            final int displayId = (isPrimary) ? DEFAULT_DISPLAY : newDisplay.mId;
 
-        final Activity activity = activitySession.getActivity();
-        final ComponentName activityName = activity.getComponentName();
+            separateTestJournal();
+            activitySession.launchTestActivityOnDisplaySync(
+                    ClientTestActivity.class, displayId);
 
-        waitAndAssertTopResumedActivity(activityName, displayId,
-                "Activity launched on display:" + displayId + " must be focused");
+            final Activity activity = activitySession.getActivity();
+            final ComponentName activityName = activity.getComponentName();
 
-        // Test View#getdisplay() from activity
-        final View view = activity.getWindow().getDecorView();
-        assertEquals("View#getDisplay() must match.", displayId, view.getDisplay().getDisplayId());
+            waitAndAssertTopResumedActivity(activityName, displayId,
+                    "Activity launched on display:" + displayId + " must be focused");
 
-        final int[] resultDisplayId = { INVALID_DISPLAY };
-        activitySession.runOnMainAndAssertWithTimeout(
-                () -> {
-                    // Test View#getdisplay() from WM#addView()
-                    final WindowManager wm = activity.getWindowManager();
-                    final View addedView = new View(activity);
-                    wm.addView(addedView, new WindowManager.LayoutParams());
+            // Test View#getdisplay() from activity
+            final View view = activity.getWindow().getDecorView();
+            assertEquals("View#getDisplay() must match.",
+                    displayId, view.getDisplay().getDisplayId());
 
-                    // Get display ID from callback in case the added view has not be attached.
-                    addedView.addOnAttachStateChangeListener(
-                            new View.OnAttachStateChangeListener() {
-                                @Override
-                                public void onViewAttachedToWindow(View view) {
-                                    resultDisplayId[0] = view.getDisplay().getDisplayId();
-                                }
+            final int[] resultDisplayId = new int[] { INVALID_DISPLAY };
+            activitySession.runOnMainAndAssertWithTimeout(
+                    () -> {
+                        // Test View#getdisplay() from WM#addView()
+                        final WindowManager wm = activity.getWindowManager();
+                        final View addedView = new View(activity);
+                        wm.addView(addedView, new WindowManager.LayoutParams());
 
-                                @Override
-                                public void onViewDetachedFromWindow(View view) {}
-                            });
+                        // Get display ID from callback in case the added view has not be attached.
+                        addedView.addOnAttachStateChangeListener(
+                                new View.OnAttachStateChangeListener() {
+                                    @Override
+                                    public void onViewAttachedToWindow(View view) {
+                                        resultDisplayId[0] = view.getDisplay().getDisplayId();
+                                    }
 
-                    return displayId == resultDisplayId[0];
-                }, TIMEOUT, "Display from added view must match. "
-                        + "Should be display:" + displayId
-                        + ", but was display:" + resultDisplayId[0]
-        );
+                                    @Override
+                                    public void onViewDetachedFromWindow(View view) {}
+                                });
+
+                        return displayId == resultDisplayId[0];
+                    }, TIMEOUT, "Display from added view must match. "
+                            + "Should be display:" + displayId
+                            + ", but was display:" + resultDisplayId[0]
+            );
+
+        }
     }
 
     private void waitAndAssertConfigurationChange(ComponentName activityName) {

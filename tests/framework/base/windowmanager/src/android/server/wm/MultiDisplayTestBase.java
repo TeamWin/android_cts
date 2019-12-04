@@ -55,7 +55,6 @@ import android.server.wm.ActivityManagerState.ActivityDisplay;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.ActivitySessionClient;
 import android.server.wm.settings.SettingsSession;
-import android.util.Pair;
 import android.util.Size;
 import android.view.WindowManager;
 
@@ -248,11 +247,6 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             ActivityLauncher::hasCaughtSecurityException);
     }
 
-    /** @see ObjectTracker#manage(AutoCloseable) */
-    protected VirtualDisplaySession createManagedVirtualDisplaySession() {
-        return mObjectTracker.manage(new VirtualDisplaySession());
-    }
-
     /**
      * This class should only be used when you need to test virtual display created by a
      * non-privileged app.
@@ -334,12 +328,12 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         }
 
         @Nullable
-        public ActivityDisplay createDisplay() {
+        public ActivityDisplay createDisplay() throws Exception {
             return createDisplays(1).stream().findFirst().orElse(null);
         }
 
         @NonNull
-        List<ActivityDisplay> createDisplays(int count) {
+        List<ActivityDisplay> createDisplays(int count) throws Exception {
             if (mSimulateDisplay) {
                 return simulateDisplay();
             } else {
@@ -353,7 +347,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         }
 
         @Override
-        public void close()  {
+        public void close() throws Exception {
             mOverlayDisplayDeviceSession.close();
             if (mVirtualDisplayCreated) {
                 destroyVirtualDisplays();
@@ -368,7 +362,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
          * </pre>
          * @return {@link ActivityDisplay} of newly created display.
          */
-        private List<ActivityDisplay> simulateDisplay() {
+        private List<ActivityDisplay> simulateDisplay() throws Exception {
             // Create virtual display with custom density dpi and specified size.
             mOverlayDisplayDeviceSession.set(mSimulationDisplaySize + "/" + mDensityDpi);
             if (mShowSystemDecorations) {
@@ -488,7 +482,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         }
 
         @Override
-        public void close() {
+        public void close() throws Exception {
             super.close();
             mActivitySessionClient.close();
         }
@@ -557,7 +551,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         }
 
         @Override
-        public void close() {
+        public void close() throws Exception {
             // Need to restore display state before display is destroyed.
             restoreDisplayStates();
             super.close();
@@ -636,28 +630,9 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         return newDisplays;
     }
 
-    /** A clearer alias of {@link Pair#create(Object, Object)}. */
-    protected <K, V> Pair<K, V> pair(K k, V v) {
-        return new Pair<>(k, v);
-    }
-
-    protected void assertBothDisplaysHaveResumedActivities(
-            Pair<Integer, ComponentName> firstPair, Pair<Integer, ComponentName> secondPair) {
-        mAmWmState.assertResumedActivities("Both displays must have resumed activities",
-                mapping -> {
-                    mapping.put(firstPair.first, firstPair.second);
-                    mapping.put(secondPair.first, secondPair.second);
-                });
-    }
-
     /** Checks if the device supports multi-display. */
     protected boolean supportsMultiDisplay() {
         return hasDeviceFeature(FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS);
-    }
-
-    /** @see ObjectTracker#manage(AutoCloseable) */
-    protected ExternalDisplaySession createManagedExternalDisplaySession() {
-        return mObjectTracker.manage(new ExternalDisplaySession());
     }
 
     /**
@@ -695,7 +670,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         /**
          * Creates a private virtual display with insecure keyguard flags set.
          */
-        ActivityDisplay createVirtualDisplay() {
+        ActivityDisplay createVirtualDisplay() throws Exception {
             final List<ActivityDisplay> originalDS = getDisplaysStates();
             final int originalDisplayCount = originalDS.size();
 
@@ -732,7 +707,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         }
 
         @Override
-        public void close() {
+        public void close() throws Exception {
             if (mExternalDisplayHelper != null) {
                 mExternalDisplayHelper.releaseDisplay();
                 mExternalDisplayHelper = null;
@@ -750,7 +725,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         }
 
         @Override
-        public void close() {
+        public void close() throws Exception {
             setPrimaryDisplayState(true);
         }
 

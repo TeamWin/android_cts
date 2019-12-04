@@ -142,13 +142,13 @@ import android.view.MotionEvent;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.SystemUtil;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
-import org.junit.rules.ErrorCollector;
-import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -162,6 +162,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -213,16 +214,18 @@ public abstract class ActivityManagerTestBase {
     protected ActivityManager mAm;
     protected ActivityTaskManager mAtm;
 
-    /** The tracker to manage objects (especially {@link AutoCloseable}) in a test method. */
-    protected final ObjectTracker mObjectTracker = new ObjectTracker();
+    /**
+     * Callable to clear launch params for all test packages.
+     */
+    private final Callable<Void> mClearLaunchParamsCallable = () -> {
+        mAtm.clearLaunchParamsForPackages(TEST_PACKAGES);
+        return null;
+    };
 
-    /** The last rule to handle all errors. */
-    private final ErrorCollector mPostAssertionRule = new PostAssertionRule();
-
-    /** The necessary procedures of set up and tear down. */
     @Rule
-    public final TestRule mBaseRule = RuleChain.outerRule(mPostAssertionRule)
-            .around(new WrapperRule(this::setUpBase, this::tearDownBase));
+    public final ActivityTestRule<SideActivity> mSideActivityRule =
+            new ActivityTestRule<>(SideActivity.class, true /* initialTouchMode */,
+                    false /* launchActivity */);
 
     /**
      * @return the am command to start the given activity with the following extra key/value pairs.
@@ -390,8 +393,7 @@ public abstract class ActivityManagerTestBase {
                         .addMonitor((String) null, null, false);
                 mContext.startActivity(intent.addFlags(FLAG_ACTIVITY_NEW_TASK), bundle);
                 // Wait for activity launch with timeout.
-                mTestActivity = (T) getInstrumentation().waitForMonitorWithTimeout(monitor,
-                        ACTIVITY_LAUNCH_TIMEOUT);
+                mTestActivity = (T) monitor.waitForActivityWithTimeout(ACTIVITY_LAUNCH_TIMEOUT);
                 assertNotNull(mTestActivity);
                 // Check activity is launched and resumed.
                 final ComponentName testActivityName = mTestActivity.getComponentName();
@@ -434,7 +436,7 @@ public abstract class ActivityManagerTestBase {
         }
 
         @Override
-        public void close() {
+        public void close() throws Exception {
             if (mTestActivity != null && mFinishAfterClose) {
                 mTestActivity.finishAndRemoveTask();
             }
@@ -443,27 +445,21 @@ public abstract class ActivityManagerTestBase {
 
     @Before
     public void setUp() throws Exception {
+        mContext = getInstrumentation().getContext();
+        mAm = mContext.getSystemService(ActivityManager.class);
+        mAtm = mContext.getSystemService(ActivityTaskManager.class);
+
         pressWakeupButton();
         pressUnlockButton();
         launchHomeActivityNoWait();
         removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
 
         // Clear launch params for all test packages to make sure each test is run in a clean state.
-        SystemUtil.runWithShellPermissionIdentity(
-                () -> mAtm.clearLaunchParamsForPackages(TEST_PACKAGES));
+        SystemUtil.callWithShellPermissionIdentity(mClearLaunchParamsCallable);
     }
 
-    /** It always executes before {@link Before}. */
-    private void setUpBase() {
-        mContext = getInstrumentation().getContext();
-        mAm = mContext.getSystemService(ActivityManager.class);
-        mAtm = mContext.getSystemService(ActivityTaskManager.class);
-    }
-
-    /** It always executes after {@link After}. */
-    private void tearDownBase() {
-        mObjectTracker.tearDown(mPostAssertionRule::addError);
-
+    @After
+    public void tearDown() throws Exception {
         // Synchronous execution of removeStacksWithActivityTypes() ensures that all activities but
         // home are cleaned up from the stack at the end of each test. Am force stop shell commands
         // might be asynchronous and could interrupt the stack cleanup process if executed first.
@@ -472,6 +468,18 @@ public abstract class ActivityManagerTestBase {
         stopTestPackage(SECOND_TEST_PACKAGE);
         stopTestPackage(THIRD_TEST_PACKAGE);
         launchHomeActivityNoWait();
+
+        try {
+            // Skip empty stack/task check if a leakage was already found in previous test, or
+            // all tests afterward would also fail (since the leakage is always there) and fire
+            // unnecessary false alarms.
+            if (!sStackTaskLeakFound) {
+                mAmWmState.assertEmptyStackOrTask();
+            }
+        } catch (Throwable t) {
+            sStackTaskLeakFound = true;
+            throw t;
+        }
     }
 
     /**
@@ -755,10 +763,9 @@ public abstract class ActivityManagerTestBase {
             if (showSideActivity) {
                 if (isHomeRecentsComponent) {
                     // Launch Placeholder Side Activity
-                    final ComponentName sideActivityName =
-                            new ComponentName(mContext, SideActivity.class);
-                    launchActivityNoWait(sideActivityName);
-                    mAmWmState.waitForActivityState(sideActivityName, STATE_RESUMED);
+                    final Activity sideActivity = mSideActivityRule.launchActivity(
+                            new Intent());
+                    mAmWmState.waitForActivityState(sideActivity.getComponentName(), STATE_RESUMED);
                 }
 
                 // There are two cases when showSideActivity == true:
@@ -929,7 +936,7 @@ public abstract class ActivityManagerTestBase {
         mAmWmState.assertFocusedStack("Top activity's stack must also be on top", frontStackId);
         mAmWmState.assertVisibility(activityName, true /* visible */);
     }
-
+    
     // TODO: Switch to using a feature flag, when available.
     protected static boolean isUiModeLockedToVrHeadset() {
         final String output = runCommandAndPrintOutput("dumpsys uimode");
@@ -1017,31 +1024,6 @@ public abstract class ActivityManagerTestBase {
                 .getBoolean(android.R.bool.config_perDisplayFocusEnabled);
     }
 
-    /** @see ObjectTracker#manage(AutoCloseable) */
-    protected HomeActivitySession createManagedHomeActivitySession(ComponentName homeActivity) {
-        return mObjectTracker.manage(new HomeActivitySession(homeActivity));
-    }
-
-    /** @see ObjectTracker#manage(AutoCloseable) */
-    protected ActivitySessionClient createManagedActivityClientSession() {
-        return mObjectTracker.manage(new ActivitySessionClient(mContext));
-    }
-
-    /** @see ObjectTracker#manage(AutoCloseable) */
-    protected LockScreenSession createManagedLockScreenSession() {
-        return mObjectTracker.manage(new LockScreenSession());
-    }
-
-    /** @see ObjectTracker#manage(AutoCloseable) */
-    protected RotationSession createManagedRotationSession() {
-        return mObjectTracker.manage(new RotationSession());
-    }
-
-    /** @see ObjectTracker#manage(AutoCloseable) */
-    protected <T extends Activity> TestActivitySession<T> createManagedTestActivitySession() {
-        return new TestActivitySession<T>();
-    }
-
     /**
      * Test @Rule class that disables screen doze settings before each test method running and
      * restoring to initial values after test method finished.
@@ -1096,7 +1078,7 @@ public abstract class ActivityManagerTestBase {
         private ComponentName mOrigHome;
         private ComponentName mSessionHome;
 
-        HomeActivitySession(ComponentName sessionHome) {
+        public HomeActivitySession(ComponentName sessionHome) {
             mSessionHome = sessionHome;
             mPackageManager = mContext.getPackageManager();
 
@@ -1352,7 +1334,7 @@ public abstract class ActivityManagerTestBase {
         }
 
         @Override
-        public void close() {
+        public void close() throws Exception {
             mThread.quitSafely();
             mUserRotation.close();
             // Restore accelerometer_rotation preference.
@@ -1399,7 +1381,8 @@ public abstract class ActivityManagerTestBase {
      * @return {@code true} if test device respects settings of locked user rotation mode;
      * {@code false} if not.
      */
-    protected boolean supportsLockedUserRotation(RotationSession session, int displayId) {
+    protected boolean supportsLockedUserRotation(RotationSession session, int displayId)
+            throws Exception {
         final int origRotation = getDeviceRotation(displayId);
         // Use the same orientation as target rotation to avoid affect of app-requested orientation.
         final int targetRotation = (origRotation + 2) % 4;
@@ -2116,63 +2099,6 @@ public abstract class ActivityManagerTestBase {
                 mLaunchInjector.setupShellCommand(commandBuilder);
             }
             executeShellCommand(commandBuilder.toString());
-        }
-    }
-
-    /**
-     * The actions which wraps a test method. It is used to set necessary rules that cannot be
-     * overridden by subclasses. It executes in the outer scope of {@link Before} and {@link After}.
-     */
-    protected class WrapperRule implements TestRule {
-        private final Runnable mBefore;
-        private final Runnable mAfter;
-
-        protected WrapperRule(Runnable before, Runnable after) {
-            mBefore = before;
-            mAfter = after;
-        }
-
-        @Override
-        public Statement apply(final Statement base, final Description description) {
-            return new Statement() {
-                @Override
-                public void evaluate()  {
-                    if (mBefore != null) {
-                        mBefore.run();
-                    }
-                    try {
-                        base.evaluate();
-                    } catch (Throwable e) {
-                        mPostAssertionRule.addError(e);
-                    } finally {
-                        if (mAfter != null) {
-                            mAfter.run();
-                        }
-                    }
-                }
-            };
-        }
-    }
-
-    /**
-     * The post assertion to ensure all test methods don't violate the generic rule. It is also used
-     * to collect multiple errors.
-     */
-    private class PostAssertionRule extends ErrorCollector {
-        @Override
-        protected void verify() throws Throwable {
-            if (!sStackTaskLeakFound) {
-                // Skip empty stack/task check if a leakage was already found in previous test, or
-                // all tests afterward would also fail (since the leakage is always there) and fire
-                // unnecessary false alarms.
-                try {
-                    mAmWmState.assertEmptyStackOrTask();
-                } catch (Throwable t) {
-                    sStackTaskLeakFound = true;
-                    addError(t);
-                }
-            }
-            super.verify();
         }
     }
 

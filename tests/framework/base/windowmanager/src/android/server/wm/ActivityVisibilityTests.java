@@ -220,10 +220,11 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
 
     @Test
     public void testTurnScreenOnActivity() {
-        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
-        final ActivitySessionClient activityClient = createManagedActivityClientSession();
-        testTurnScreenOnActivity(lockScreenSession, activityClient, true /* useWindowFlags */);
-        testTurnScreenOnActivity(lockScreenSession, activityClient, false /* useWindowFlags */);
+        try (final LockScreenSession lockScreenSession = new LockScreenSession();
+             final ActivitySessionClient activityClient = new ActivitySessionClient(mContext)) {
+            testTurnScreenOnActivity(lockScreenSession, activityClient, true /* useWindowFlags */);
+            testTurnScreenOnActivity(lockScreenSession, activityClient, false /* useWindowFlags */);
+        }
     }
 
     private void testTurnScreenOnActivity(LockScreenSession lockScreenSession,
@@ -445,99 +446,108 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testTurnScreenOnAttrNoLockScreen() {
-        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
-        lockScreenSession.disableLockScreen().sleepDevice();
-        separateTestJournal();
-        launchActivity(TURN_SCREEN_ON_ATTR_ACTIVITY);
-        mAmWmState.assertVisibility(TURN_SCREEN_ON_ATTR_ACTIVITY, true);
-        assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
-        assertSingleLaunch(TURN_SCREEN_ON_ATTR_ACTIVITY);
+    public void testTurnScreenOnAttrNoLockScreen() throws Exception {
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            lockScreenSession.disableLockScreen()
+                    .sleepDevice();
+            separateTestJournal();
+            launchActivity(TURN_SCREEN_ON_ATTR_ACTIVITY);
+            mAmWmState.assertVisibility(TURN_SCREEN_ON_ATTR_ACTIVITY, true);
+            assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
+            assertSingleLaunch(TURN_SCREEN_ON_ATTR_ACTIVITY);
+        }
     }
 
     @Test
-    public void testTurnScreenOnAttrWithLockScreen() {
+    public void testTurnScreenOnAttrWithLockScreen() throws Exception {
         assumeTrue(supportsSecureLock());
 
-        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
-        lockScreenSession.setLockCredential().sleepDevice();
-        separateTestJournal();
-        launchActivityNoWait(TURN_SCREEN_ON_ATTR_ACTIVITY);
-        // Wait for the activity stopped because lock screen prevent showing the activity.
-        mAmWmState.waitForActivityState(TURN_SCREEN_ON_ATTR_ACTIVITY, STATE_STOPPED);
-        assertFalse("Display keeps off", isDisplayOn(DEFAULT_DISPLAY));
-        assertSingleLaunchAndStop(TURN_SCREEN_ON_ATTR_ACTIVITY);
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            lockScreenSession.setLockCredential()
+                    .sleepDevice();
+            separateTestJournal();
+            launchActivityNoWait(TURN_SCREEN_ON_ATTR_ACTIVITY);
+            // Wait for the activity stopped because lock screen prevent showing the activity.
+            mAmWmState.waitForActivityState(TURN_SCREEN_ON_ATTR_ACTIVITY, STATE_STOPPED);
+            assertFalse("Display keeps off", isDisplayOn(DEFAULT_DISPLAY));
+            assertSingleLaunchAndStop(TURN_SCREEN_ON_ATTR_ACTIVITY);
+        }
     }
 
     @Test
-    public void testTurnScreenOnShowOnLockAttr() {
-        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
-        lockScreenSession.sleepDevice();
-        mAmWmState.waitForAllStoppedActivities();
-        separateTestJournal();
-        launchActivity(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY);
-        mAmWmState.assertVisibility(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY, true);
-        assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
-        assertSingleLaunch(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY);
+    public void testTurnScreenOnShowOnLockAttr() throws Exception {
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            lockScreenSession.sleepDevice();
+            mAmWmState.waitForAllStoppedActivities();
+            separateTestJournal();
+            launchActivity(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY);
+            mAmWmState.assertVisibility(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY, true);
+            assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
+            assertSingleLaunch(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY);
+        }
     }
 
     @Test
-    public void testTurnScreenOnAttrRemove() {
-        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
-        lockScreenSession.sleepDevice();
-        mAmWmState.waitForAllStoppedActivities();
-        separateTestJournal();
-        launchActivity(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY);
-        assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
-        assertSingleLaunch(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY);
+    public void testTurnScreenOnAttrRemove() throws Exception {
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            lockScreenSession.sleepDevice();
+            mAmWmState.waitForAllStoppedActivities();
+            separateTestJournal();
+            launchActivity(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY);
+            assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
+            assertSingleLaunch(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY);
 
-        lockScreenSession.sleepDevice();
-        mAmWmState.waitForAllStoppedActivities();
-        separateTestJournal();
-        launchActivity(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY);
-        mAmWmState.waitForActivityState(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY, STATE_STOPPED);
-        // Display should keep off, because setTurnScreenOn(false) has been called at
-        // {@link TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY}'s onStop.
-        assertFalse("Display keeps off", isDisplayOn(DEFAULT_DISPLAY));
-        assertSingleStartAndStop(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY);
+            lockScreenSession.sleepDevice();
+            mAmWmState.waitForAllStoppedActivities();
+            separateTestJournal();
+            launchActivity(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY);
+            mAmWmState.waitForActivityState(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY,
+                STATE_STOPPED);
+            // Display should keep off, because setTurnScreenOn(false) has been called at
+            // {@link TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY}'s onStop.
+            assertFalse("Display keeps off", isDisplayOn(DEFAULT_DISPLAY));
+            assertSingleStartAndStop(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY);
+        }
     }
 
     @Test
-    public void testTurnScreenOnSingleTask() {
-        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
-        lockScreenSession.sleepDevice();
-        separateTestJournal();
-        launchActivity(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY);
-        mAmWmState.assertVisibility(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, true);
-        assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
-        assertSingleLaunch(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY);
+    public void testTurnScreenOnSingleTask() throws Exception {
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            lockScreenSession.sleepDevice();
+            separateTestJournal();
+            launchActivity(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY);
+            mAmWmState.assertVisibility(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, true);
+            assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
+            assertSingleLaunch(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY);
 
-        lockScreenSession.sleepDevice();
-        // We should make sure test activity stopped to prevent a false alarm stop state
-        // included in the lifecycle count.
-        waitAndAssertActivityState(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, STATE_STOPPED,
-                "Activity should be stopped");
-        separateTestJournal();
-        launchActivity(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY);
-        mAmWmState.assertVisibility(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, true);
-        // Wait more for display state change since turning the display ON may take longer
-        // and reported after the activity launch.
-        waitForDefaultDisplayState(true /* wantOn */);
-        assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
-        assertSingleStart(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY);
+            lockScreenSession.sleepDevice();
+            // We should make sure test activity stopped to prevent a false alarm stop state
+            // included in the lifecycle count.
+            waitAndAssertActivityState(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, STATE_STOPPED,
+                    "Activity should be stopped");
+            separateTestJournal();
+            launchActivity(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY);
+            mAmWmState.assertVisibility(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, true);
+            // Wait more for display state change since turning the display ON may take longer
+            // and reported after the activity launch.
+            waitForDefaultDisplayState(true /* wantOn */);
+            assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
+            assertSingleStart(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY);
+        }
     }
 
     @Test
-    public void testTurnScreenOnActivity_withRelayout() {
-        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
-        lockScreenSession.sleepDevice();
-        launchActivity(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY);
-        mAmWmState.assertVisibility(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, true);
+    public void testTurnScreenOnActivity_withRelayout() throws Exception {
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            lockScreenSession.sleepDevice();
+            launchActivity(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY);
+            mAmWmState.assertVisibility(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, true);
 
-        lockScreenSession.sleepDevice();
-        waitAndAssertActivityState(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, STATE_STOPPED,
-                "Activity should be stopped");
-        assertFalse("Display keeps off", isDisplayOn(DEFAULT_DISPLAY));
+            lockScreenSession.sleepDevice();
+            waitAndAssertActivityState(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, STATE_STOPPED,
+                    "Activity should be stopped");
+            assertFalse("Display keeps off", isDisplayOn(DEFAULT_DISPLAY));
+        }
     }
 
     @Test
@@ -596,69 +606,73 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
 
     @Test
     public void testConvertTranslucentOnTranslucentActivity() {
-        final ActivitySessionClient activityClient = createManagedActivityClientSession();
-        // Start CONVERT_TRANSLUCENT_DIALOG_ACTIVITY on top of LAUNCHING_ACTIVITY
-        final ActivitySession activity = activityClient.startActivity(
-                getLaunchActivityBuilder().setTargetActivity(TRANSLUCENT_TOP_ACTIVITY));
-        verifyActivityVisibilities(TRANSLUCENT_TOP_ACTIVITY, false);
-        verifyActivityVisibilities(LAUNCHING_ACTIVITY, false);
+        try (final ActivitySessionClient activityClient = new ActivitySessionClient(mContext)) {
+            // Start CONVERT_TRANSLUCENT_DIALOG_ACTIVITY on top of LAUNCHING_ACTIVITY
+            final ActivitySession activity = activityClient.startActivity(
+                    getLaunchActivityBuilder().setTargetActivity(TRANSLUCENT_TOP_ACTIVITY));
+            verifyActivityVisibilities(TRANSLUCENT_TOP_ACTIVITY, false);
+            verifyActivityVisibilities(LAUNCHING_ACTIVITY, false);
 
-        activity.sendCommand(ACTION_CONVERT_FROM_TRANSLUCENT);
-        verifyActivityVisibilities(LAUNCHING_ACTIVITY, true);
+            activity.sendCommand(ACTION_CONVERT_FROM_TRANSLUCENT);
+            verifyActivityVisibilities(LAUNCHING_ACTIVITY, true);
 
-        activity.sendCommand(ACTION_CONVERT_TO_TRANSLUCENT);
-        verifyActivityVisibilities(LAUNCHING_ACTIVITY, false);
+            activity.sendCommand(ACTION_CONVERT_TO_TRANSLUCENT);
+            verifyActivityVisibilities(LAUNCHING_ACTIVITY, false);
+        }
     }
 
     @Test
     public void testConvertTranslucentOnNonTopTranslucentActivity() {
-        final ActivitySessionClient activityClient = createManagedActivityClientSession();
-        final ActivitySession activity = activityClient.startActivity(
-                getLaunchActivityBuilder().setTargetActivity(TRANSLUCENT_TOP_ACTIVITY));
-        getLaunchActivityBuilder().setTargetActivity(SHOW_WHEN_LOCKED_DIALOG_ACTIVITY)
-                .setUseInstrumentation().execute();
-        verifyActivityVisibilities(SHOW_WHEN_LOCKED_DIALOG_ACTIVITY, false);
-        verifyActivityVisibilities(TRANSLUCENT_TOP_ACTIVITY, false);
-        verifyActivityVisibilities(LAUNCHING_ACTIVITY, false);
+        try (final ActivitySessionClient activityClient = new ActivitySessionClient(mContext)) {
+            final ActivitySession activity = activityClient.startActivity(
+                    getLaunchActivityBuilder().setTargetActivity(TRANSLUCENT_TOP_ACTIVITY));
+            getLaunchActivityBuilder().setTargetActivity(SHOW_WHEN_LOCKED_DIALOG_ACTIVITY)
+                    .setUseInstrumentation().execute();
+            verifyActivityVisibilities(SHOW_WHEN_LOCKED_DIALOG_ACTIVITY, false);
+            verifyActivityVisibilities(TRANSLUCENT_TOP_ACTIVITY, false);
+            verifyActivityVisibilities(LAUNCHING_ACTIVITY, false);
 
-        activity.sendCommand(ACTION_CONVERT_FROM_TRANSLUCENT);
-        verifyActivityVisibilities(LAUNCHING_ACTIVITY, true);
+            activity.sendCommand(ACTION_CONVERT_FROM_TRANSLUCENT);
+            verifyActivityVisibilities(LAUNCHING_ACTIVITY, true);
 
-        activity.sendCommand(ACTION_CONVERT_TO_TRANSLUCENT);
-        verifyActivityVisibilities(LAUNCHING_ACTIVITY, false);
+            activity.sendCommand(ACTION_CONVERT_TO_TRANSLUCENT);
+            verifyActivityVisibilities(LAUNCHING_ACTIVITY, false);
+        }
     }
 
     @Test
     public void testConvertTranslucentOnOpaqueActivity() {
-        final ActivitySessionClient activityClient = createManagedActivityClientSession();
-        final ActivitySession activity = activityClient.startActivity(
-                getLaunchActivityBuilder().setTargetActivity(TOP_ACTIVITY));
-        verifyActivityVisibilities(TOP_ACTIVITY, false);
-        verifyActivityVisibilities(LAUNCHING_ACTIVITY, true);
+        try (final ActivitySessionClient activityClient = new ActivitySessionClient(mContext)) {
+            final ActivitySession activity = activityClient.startActivity(
+                    getLaunchActivityBuilder().setTargetActivity(TOP_ACTIVITY));
+            verifyActivityVisibilities(TOP_ACTIVITY, false);
+            verifyActivityVisibilities(LAUNCHING_ACTIVITY, true);
 
-        activity.sendCommand(ACTION_CONVERT_TO_TRANSLUCENT);
-        verifyActivityVisibilities(LAUNCHING_ACTIVITY, false);
+            activity.sendCommand(ACTION_CONVERT_TO_TRANSLUCENT);
+            verifyActivityVisibilities(LAUNCHING_ACTIVITY, false);
 
-        activity.sendCommand(ACTION_CONVERT_FROM_TRANSLUCENT);
-        verifyActivityVisibilities(LAUNCHING_ACTIVITY, true);
+            activity.sendCommand(ACTION_CONVERT_FROM_TRANSLUCENT);
+            verifyActivityVisibilities(LAUNCHING_ACTIVITY, true);
+        }
     }
 
     @Test
     public void testConvertTranslucentOnNonTopOpaqueActivity() {
-        final ActivitySessionClient activityClient = createManagedActivityClientSession();
-        final ActivitySession activity = activityClient.startActivity(
-                getLaunchActivityBuilder().setTargetActivity(TOP_ACTIVITY));
-        getLaunchActivityBuilder().setTargetActivity(SHOW_WHEN_LOCKED_DIALOG_ACTIVITY)
-                .setUseInstrumentation().execute();
-        verifyActivityVisibilities(SHOW_WHEN_LOCKED_DIALOG_ACTIVITY, false);
-        verifyActivityVisibilities(TOP_ACTIVITY, false);
-        verifyActivityVisibilities(LAUNCHING_ACTIVITY, true);
+        try (final ActivitySessionClient activityClient = new ActivitySessionClient(mContext)) {
+            final ActivitySession activity = activityClient.startActivity(
+                    getLaunchActivityBuilder().setTargetActivity(TOP_ACTIVITY));
+            getLaunchActivityBuilder().setTargetActivity(SHOW_WHEN_LOCKED_DIALOG_ACTIVITY)
+                    .setUseInstrumentation().execute();
+            verifyActivityVisibilities(SHOW_WHEN_LOCKED_DIALOG_ACTIVITY, false);
+            verifyActivityVisibilities(TOP_ACTIVITY, false);
+            verifyActivityVisibilities(LAUNCHING_ACTIVITY, true);
 
-        activity.sendCommand(ACTION_CONVERT_TO_TRANSLUCENT);
-        verifyActivityVisibilities(LAUNCHING_ACTIVITY, false);
+            activity.sendCommand(ACTION_CONVERT_TO_TRANSLUCENT);
+            verifyActivityVisibilities(LAUNCHING_ACTIVITY, false);
 
-        activity.sendCommand(ACTION_CONVERT_FROM_TRANSLUCENT);
-        verifyActivityVisibilities(LAUNCHING_ACTIVITY, true);
+            activity.sendCommand(ACTION_CONVERT_FROM_TRANSLUCENT);
+            verifyActivityVisibilities(LAUNCHING_ACTIVITY, true);
+        }
     }
 
     private void verifyActivityVisibilities(ComponentName activityBehind,
