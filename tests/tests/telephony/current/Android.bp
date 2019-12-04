@@ -60,6 +60,7 @@ android_test {
     test_suites: [
         "cts",
         "vts",
+        "mts",
         "general-tests",
     ],
     platform_apis: true,
