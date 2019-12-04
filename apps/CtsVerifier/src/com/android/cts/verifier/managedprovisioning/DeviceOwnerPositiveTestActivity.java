@@ -495,6 +495,8 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     }
 
     private Intent createCreateManagedUserIntent() {
+        // Set execution start time for counting test execution time.
+        mStartTime = System.currentTimeMillis();
         return new Intent(this, CommandReceiverActivity.class)
                 .putExtra(CommandReceiverActivity.EXTRA_COMMAND,
                         CommandReceiverActivity.COMMAND_CREATE_MANAGED_USER);
