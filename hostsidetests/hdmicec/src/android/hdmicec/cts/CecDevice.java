@@ -43,6 +43,24 @@ public enum CecDevice {
         }
     }
 
+    public static String getDeviceType(CecDevice device) {
+        switch (device) {
+            case PLAYBACK_1:
+            case PLAYBACK_2:
+            case PLAYBACK_3:
+            case PLAYBACK_4:
+                return Integer.toString(HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
+            case TV:
+                return Integer.toString(HdmiCecConstants.CEC_DEVICE_TYPE_TV);
+            case AUDIO_SYSTEM:
+                return Integer.toString(HdmiCecConstants.CEC_DEVICE_TYPE_AUDIO_SYSTEM);
+            case RECORDING_1:
+                return Integer.toString(HdmiCecConstants.CEC_DEVICE_TYPE_RECORDING_DEVICE);
+            default:
+                return Integer.toString(HdmiCecConstants.CEC_DEVICE_TYPE_RESERVED);
+        }
+    }
+
     public static CecDevice getDevice(int playerId) {
         return (CecDevice) deviceMap.get(playerId);
     }
