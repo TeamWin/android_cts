@@ -21,22 +21,35 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
+import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
+import android.app.Activity;
+import android.content.Context;
 import android.os.Message;
 import android.os.Parcel;
 import android.platform.test.annotations.Presubmit;
 import android.text.TextUtils;
+import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityRecord;
-
+import android.view.accessibility.cts.SpeakingAccessibilityService;
+import android.widget.LinearLayout;
 import androidx.test.filters.SmallTest;
+import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
-
 import junit.framework.TestCase;
-
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
+
+import java.util.ArrayList;
+import java.util.concurrent.Callable;
+import java.util.List;
+
+import static org.junit.Assert.*;
 
 /**
  * Class for testing {@link AccessibilityEvent}.
@@ -45,9 +58,214 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class AccessibilityEventTest {
 
-    @Rule
-    public final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+    private EventReportingLinearLayout mParentView;
+    private View mChildView;
+    private AccessibilityManager mAccessibilityManager;
+
+    private final ActivityTestRule<DummyActivity> mActivityRule =
+            new ActivityTestRule<>(DummyActivity.class, false, false);
+    private final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
+    private InstrumentedAccessibilityServiceTestRule<SpeakingAccessibilityService>
+            mInstrumentedAccessibilityServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
+            SpeakingAccessibilityService.class, false);
+
+    @Rule
+    public final RuleChain mRuleChain = RuleChain
+            .outerRule(mActivityRule)
+            .around(mInstrumentedAccessibilityServiceRule)
+            .around(mDumpOnFailureRule);
+
+    @Before
+    public void setUp() throws Throwable {
+        final Activity activity = mActivityRule.launchActivity(null);
+        mAccessibilityManager = activity.getSystemService(AccessibilityManager.class);
+        mInstrumentedAccessibilityServiceRule.enableService();
+        mActivityRule.runOnUiThread(() -> {
+            final LinearLayout grandparent = new LinearLayout(activity);
+            activity.setContentView(grandparent);
+            mParentView = new EventReportingLinearLayout(activity);
+            mChildView = new View(activity);
+            grandparent.addView(mParentView);
+            mParentView.addView(mChildView);
+        });
+    }
+
+    private static class EventReportingLinearLayout extends LinearLayout {
+        public List<AccessibilityEvent> mReceivedEvents = new ArrayList<AccessibilityEvent>();
+
+        public EventReportingLinearLayout(Context context) {
+            super(context);
+        }
+
+        @Override
+        public boolean requestSendAccessibilityEvent(View child, AccessibilityEvent event) {
+            mReceivedEvents.add(AccessibilityEvent.obtain(event));
+            return super.requestSendAccessibilityEvent(child, event);
+        }
+    }
+
+    @Test
+    public void testScrollEvent() throws Exception {
+        mChildView.scrollTo(0,100);
+        Thread.sleep(1000);
+        scrollEventFilter.assertReceivedEventCount(1);
+    }
+
+    @Test
+    public void testScrollEventBurstCombined() throws Exception {
+        mChildView.scrollTo(0, 100);
+        mChildView.scrollTo(0, 125);
+        mChildView.scrollTo(0, 150);
+        mChildView.scrollTo(0, 175);
+        Thread.sleep(1000);
+        scrollEventFilter.assertReceivedEventCount(1);
+    }
+
+    @Test
+    public void testScrollEventsDeliveredInCorrectInterval() throws Exception {
+        mChildView.scrollTo(0, 25);
+        mChildView.scrollTo(0, 50);
+        mChildView.scrollTo(0, 100);
+        Thread.sleep(150);
+        mChildView.scrollTo(0, 150);
+        mChildView.scrollTo(0, 175);
+        Thread.sleep(50);
+        mChildView.scrollTo(0, 200);
+        Thread.sleep(1000);
+        scrollEventFilter.assertReceivedEventCount(2);
+    }
+
+    private AccessibilityEventFilter scrollEventFilter = new AccessibilityEventFilter() {
+        public boolean pass(AccessibilityEvent event) {
+            return event.getEventType() == AccessibilityEvent.TYPE_VIEW_SCROLLED;
+        }
+    };
+
+    @Test
+    public void testScrollEventsClearedOnDetach() throws Throwable {
+        mChildView.scrollTo(0, 25);
+        mChildView.scrollTo(5, 50);
+        mChildView.scrollTo(7, 100);
+        mActivityRule.runOnUiThread(() -> {
+            mParentView.removeView(mChildView);
+            mParentView.addView(mChildView);
+        });
+        mChildView.scrollTo(0, 150);
+        Thread.sleep(1000);
+        AccessibilityEvent event = scrollEventFilter.getLastEvent();
+        assertEquals(-7, event.getScrollDeltaX());
+        assertEquals(50, event.getScrollDeltaY());
+    }
+
+    @Test
+    public void testScrollEventsCaptureTotalDelta() throws Throwable {
+        mChildView.scrollTo(0, 25);
+        mChildView.scrollTo(5, 50);
+        mChildView.scrollTo(7, 100);
+        Thread.sleep(1000);
+        AccessibilityEvent event = scrollEventFilter.getLastEvent();
+        assertEquals(7, event.getScrollDeltaX());
+        assertEquals(100, event.getScrollDeltaY());
+    }
+
+    @Test
+    public void testScrollEventsClearDeltaAfterSending() throws Throwable {
+        mChildView.scrollTo(0, 25);
+        mChildView.scrollTo(5, 50);
+        mChildView.scrollTo(7, 100);
+        Thread.sleep(1000);
+        mChildView.scrollTo(0, 150);
+        Thread.sleep(1000);
+        AccessibilityEvent event = scrollEventFilter.getLastEvent();
+        assertEquals(-7, event.getScrollDeltaX());
+        assertEquals(50, event.getScrollDeltaY());
+    }
+
+    @Test
+    public void testStateEvent() throws Throwable {
+        sendStateDescriptionChangedEvent(mChildView);
+        Thread.sleep(1000);
+        stateDescriptionEventFilter.assertReceivedEventCount(1);
+    }
+
+    @Test
+    public void testStateEventBurstCombined() throws Throwable {
+        sendStateDescriptionChangedEvent(mChildView);
+        sendStateDescriptionChangedEvent(mChildView);
+        sendStateDescriptionChangedEvent(mChildView);
+        sendStateDescriptionChangedEvent(mChildView);
+        Thread.sleep(1000);
+        stateDescriptionEventFilter.assertReceivedEventCount(1);
+    }
+
+    @Test
+    public void testStateEventsDeliveredInCorrectInterval() throws Throwable {
+        sendStateDescriptionChangedEvent(mChildView);
+        sendStateDescriptionChangedEvent(mChildView);
+        sendStateDescriptionChangedEvent(mChildView);
+        Thread.sleep(150);
+        sendStateDescriptionChangedEvent(mChildView);
+        sendStateDescriptionChangedEvent(mChildView);
+        Thread.sleep(50);
+        sendStateDescriptionChangedEvent(mChildView);
+        Thread.sleep(1000);
+        stateDescriptionEventFilter.assertReceivedEventCount(2);
+    }
+
+    @Test
+    public void testStateEventsHaveLastEventText() throws Throwable {
+        sendStateDescriptionChangedEvent(mChildView, "First state");
+        String expectedState = "Second state";
+        sendStateDescriptionChangedEvent(mChildView, expectedState);
+        Thread.sleep(1000);
+        AccessibilityEvent event = stateDescriptionEventFilter.getLastEvent();
+        assertEquals(expectedState, event.getText().get(0));
+    }
+
+    private AccessibilityEventFilter stateDescriptionEventFilter = new AccessibilityEventFilter() {
+        public boolean pass(AccessibilityEvent event) {
+            return event.getContentChangeTypes() == AccessibilityEvent.CONTENT_CHANGE_TYPE_STATE_DESCRIPTION;
+        }
+    };
+
+    private abstract class AccessibilityEventFilter {
+        abstract boolean pass(AccessibilityEvent event);
+
+        void assertReceivedEventCount(int count) {
+            assertEquals(count, filteredEventsReceived().size());
+        }
+
+        AccessibilityEvent getLastEvent() {
+            List<AccessibilityEvent> events = filteredEventsReceived();
+            if (events.size() > 0) {
+                return events.get(events.size() - 1);
+            }
+            return null;
+        }
+
+        private List<AccessibilityEvent> filteredEventsReceived() {
+            List<AccessibilityEvent> filteredEvents = new ArrayList<AccessibilityEvent>();
+            List<AccessibilityEvent> receivedEvents = mParentView.mReceivedEvents;
+            for (int i = 0; i < receivedEvents.size(); i++) {
+                if (pass(receivedEvents.get(i))) {
+                    filteredEvents.add(receivedEvents.get(i));
+                }
+            }
+            return filteredEvents;
+        }
+    }
+
+    private void sendStateDescriptionChangedEvent(View view) {
+        sendStateDescriptionChangedEvent(view, null);
+    }
+
+    private void sendStateDescriptionChangedEvent(View view, CharSequence text) {
+        AccessibilityEvent event = AccessibilityEvent.obtain(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED);
+        event.setContentChangeTypes(AccessibilityEvent.CONTENT_CHANGE_TYPE_STATE_DESCRIPTION);
+        event.getText().add(text);
+        view.sendAccessibilityEventUnchecked(event);
+    }
 
     /**
      * Tests whether accessibility events are correctly written and
@@ -240,7 +458,7 @@ public class AccessibilityEventTest {
      * that is expected.
      */
     private static void assertEqualsAccessiblityEvent(AccessibilityEvent expectedEvent,
-            AccessibilityEvent receivedEvent) {
+                                                      AccessibilityEvent receivedEvent) {
         assertEquals("addedCount has incorrect value", expectedEvent.getAddedCount(), receivedEvent
                 .getAddedCount());
         assertEquals("beforeText has incorrect value", expectedEvent.getBeforeText(), receivedEvent
