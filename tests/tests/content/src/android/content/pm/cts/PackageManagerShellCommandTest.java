@@ -24,12 +24,14 @@ import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -41,10 +43,9 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Optional;
 
-@RunWith(AndroidJUnit4.class)
+@RunWith(Parameterized.class)
 @AppModeFull // TODO(Instant) Figure out which APIs should work.
 public class PackageManagerShellCommandTest {
-
     private static final String TEST_APP_PACKAGE = "com.example.helloworld";
 
     private static final String TEST_APK_PATH = "/data/local/tmp/cts/content/";
@@ -61,6 +62,16 @@ public class PackageManagerShellCommandTest {
     private static final String TEST_HW7_SPLIT3 = "HelloWorld7_xxhdpi-v4.apk";
     private static final String TEST_HW7_SPLIT4 = "HelloWorld7_xxxhdpi-v4.apk";
 
+    @Parameter
+    public boolean mStreaming;
+
+    @Parameters
+    public static Iterable<Object> initParameters() {
+        return Arrays.asList(false, true);
+    }
+
+    private String mInstall = "";
+
     private static String executeShellCommand(String command) throws IOException {
         final ParcelFileDescriptor stdout =
                 InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(
@@ -72,15 +83,23 @@ public class PackageManagerShellCommandTest {
 
     private static String executeShellCommand(String command, File input)
             throws IOException {
+        return executeShellCommand(command, new File[]{input});
+    }
+
+    private static String executeShellCommand(String command, File[] inputs)
+            throws IOException {
         final ParcelFileDescriptor[] pfds =
                 InstrumentationRegistry.getInstrumentation().getUiAutomation()
                         .executeShellCommandRw(command);
         ParcelFileDescriptor stdout = pfds[0];
         ParcelFileDescriptor stdin = pfds[1];
-        try (FileInputStream inputStream = new FileInputStream(input);
-             FileOutputStream outputStream = new ParcelFileDescriptor.AutoCloseOutputStream(
-                     stdin)) {
-            writeFullStream(inputStream, outputStream, input.length());
+        try (FileOutputStream outputStream = new ParcelFileDescriptor.AutoCloseOutputStream(
+                stdin)) {
+            for (File input : inputs) {
+                try (FileInputStream inputStream = new FileInputStream(input)) {
+                    writeFullStream(inputStream, outputStream, input.length());
+                }
+            }
         }
         try (InputStream inputStream = new ParcelFileDescriptor.AutoCloseInputStream(stdout)) {
             return readFullStream(inputStream);
@@ -110,12 +129,13 @@ public class PackageManagerShellCommandTest {
 
     @Before
     public void checkNotInstalled() throws Exception {
+        mInstall = mStreaming ? " install-streaming " : " install ";
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
     }
 
     @After
     public void uninstall() throws Exception {
-        uninstallPackage(TEST_APP_PACKAGE);
+        uninstallPackageSilently(TEST_APP_PACKAGE);
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
         assertEquals(null, getSplits(TEST_APP_PACKAGE));
     }
@@ -324,7 +344,8 @@ public class PackageManagerShellCommandTest {
     private void addSplits(String sessionId, String[] splitNames) throws IOException {
         for (String splitName : splitNames) {
             File file = new File(splitName);
-            assertEquals("Success: streamed " + file.length() + " bytes\n",
+            assertEquals(
+                    "Success: streamed " + file.length() + " bytes\n",
                     executeShellCommand("pm install-write " + sessionId + " " + file.getName() + " "
                             + splitName));
         }
@@ -334,10 +355,9 @@ public class PackageManagerShellCommandTest {
             throws IOException {
         for (String splitName : splitNames) {
             File file = new File(splitName);
-            assertEquals("Success: streamed " + file.length() + " bytes\n",
-                    executeShellCommand(
-                            "pm install-write -S " + file.length() + " " + sessionId + " "
-                                    + file.getName() + " " + args, file));
+            assertEquals("Success: streamed " + file.length() + " bytes\n", executeShellCommand(
+                    "pm install-write -S " + file.length() + " " + sessionId + " "
+                            + file.getName() + " " + args, file));
         }
     }
 
@@ -354,6 +374,10 @@ public class PackageManagerShellCommandTest {
     }
 
     private void commitSession(String sessionId) throws IOException {
+        assertEquals("Success\n", executeShellCommand("pm install-commit " + sessionId));
+    }
+
+    private void commitSessionStdIn(String sessionId, String[] splitNames) throws IOException {
         assertEquals("Success\n", executeShellCommand("pm install-commit " + sessionId));
     }
 
@@ -382,14 +406,15 @@ public class PackageManagerShellCommandTest {
     }
 
     private void installPackage(String baseName) throws IOException {
+        File file = new File(createApkPath(baseName));
         assertEquals("Success\n",
-                executeShellCommand("pm install -t -g " + createApkPath(baseName)));
+                executeShellCommand("pm " + mInstall + " -t -g " + file.getPath()));
     }
 
     private void installPackageStdIn(String baseName) throws IOException {
         File file = new File(createApkPath(baseName));
         assertEquals("Success\n",
-                executeShellCommand("pm install -t -g -S " + file.length(), file));
+                executeShellCommand("pm " + mInstall + " -t -g -S " + file.length(), file));
     }
 
     private void installSplits(String[] baseNames) throws IOException {
@@ -405,18 +430,22 @@ public class PackageManagerShellCommandTest {
                 baseName -> createApkPath(baseName)).toArray(String[]::new);
         String sessionId = createSession(TEST_APP_PACKAGE);
         addSplitsStdIn(sessionId, splits, args);
-        commitSession(sessionId);
+        commitSessionStdIn(sessionId, splits);
     }
 
     private void installSplitsBatch(String[] baseNames) throws IOException {
         String[] splits = Arrays.stream(baseNames).map(
                 baseName -> createApkPath(baseName)).toArray(String[]::new);
         assertEquals("Success\n",
-                executeShellCommand("pm install -t -g " + String.join(" ", splits)));
+                executeShellCommand("pm " + mInstall + " -t -g " + String.join(" ", splits)));
+    }
+
+    private String uninstallPackageSilently(String packageName) throws IOException {
+        return executeShellCommand("pm uninstall " + packageName);
     }
 
     private void uninstallPackage(String packageName) throws IOException {
-        assertEquals("Success\n", executeShellCommand("pm uninstall " + packageName));
+        assertEquals("Success\n", uninstallPackageSilently(packageName));
     }
 
     private void uninstallSplits(String packageName, String[] splitNames) throws IOException {
