@@ -22,6 +22,7 @@ import java.util.Map;
 public enum CecMessage {
     FEATURE_ABORT(0x00),
     TEXT_VIEW_ON(0x0d),
+    SET_MENU_LANGUAGE(0x32),
     STANDBY(0x36),
     USER_CONTROL_PRESSED(0x44),
     USER_CONTROL_RELEASED(0x45),
