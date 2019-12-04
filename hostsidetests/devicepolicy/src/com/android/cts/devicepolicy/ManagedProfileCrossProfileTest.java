@@ -320,6 +320,71 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
         runCrossProfileCalendarTestsWhenNotWhitelisted();
     }
 
+    @Test
+    public void testSetCrossProfilePackages_notProfileOwner_throwsSecurityException()
+            throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(
+                MANAGED_PROFILE_PKG,
+                ".CrossProfileTest",
+                "testSetCrossProfilePackages_notProfileOwner_throwsSecurityException",
+                mProfileUserId);
+    }
+
+    @Test
+    public void testGetCrossProfilePackages_notProfileOwner_throwsSecurityException()
+            throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(
+                MANAGED_PROFILE_PKG,
+                ".CrossProfileTest",
+                "testGetCrossProfilePackages_notProfileOwner_throwsSecurityException",
+                mProfileUserId);
+    }
+
+    @Test
+    public void testGetCrossProfilePackages_notSet_returnsEmpty()
+            throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(
+                MANAGED_PROFILE_PKG,
+                ".CrossProfileTest",
+                "testGetCrossProfilePackages_notSet_returnsEmpty",
+                mProfileUserId);
+    }
+
+    @Test
+    public void testGetCrossProfilePackages_whenSetTwice_returnsLatestNotConcatenated()
+            throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(
+                MANAGED_PROFILE_PKG,
+                ".CrossProfileTest",
+                "testGetCrossProfilePackages_whenSetTwice_returnsLatestNotConcatenated",
+                mProfileUserId);
+    }
+
+    @Test
+    public void testGetCrossProfilePackages_whenSet_returnsEqual()
+            throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(
+                MANAGED_PROFILE_PKG,
+                ".CrossProfileTest",
+                "testGetCrossProfilePackages_whenSet_returnsEqual",
+                mProfileUserId);
+    }
+
     @FlakyTest
     @Test
     public void testDisallowSharingIntoPersonalFromProfile() throws Exception {
