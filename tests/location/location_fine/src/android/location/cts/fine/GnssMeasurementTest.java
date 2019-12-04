@@ -95,12 +95,17 @@ public class GnssMeasurementTest {
         assertTrue(measurement.hasCodeType());
         measurement.resetCodeType();
         assertFalse(measurement.hasCodeType());
+
+        assertTrue(measurement.hasBasebandCn0DbHz());
+        measurement.resetBasebandCn0DbHz();
+        assertFalse(measurement.hasBasebandCn0DbHz());
     }
 
     private static void setTestValues(GnssMeasurement measurement) {
         measurement.setAccumulatedDeltaRangeMeters(1.0);
         measurement.setAccumulatedDeltaRangeState(2);
         measurement.setAccumulatedDeltaRangeUncertaintyMeters(3.0);
+        measurement.setBasebandCn0DbHz(3.0);
         measurement.setCarrierCycles(4);
         measurement.setCarrierFrequencyHz(5.0f);
         measurement.setCarrierPhase(6.0);
@@ -123,6 +128,7 @@ public class GnssMeasurementTest {
         assertEquals(1.0, measurement.getAccumulatedDeltaRangeMeters(), DELTA);
         assertEquals(2, measurement.getAccumulatedDeltaRangeState());
         assertEquals(3.0, measurement.getAccumulatedDeltaRangeUncertaintyMeters(), DELTA);
+        assertEquals(3.0, measurement.getBasebandCn0DbHz(), DELTA);
         assertEquals(4, measurement.getCarrierCycles());
         assertEquals(5.0f, measurement.getCarrierFrequencyHz(), DELTA);
         assertEquals(6.0, measurement.getCarrierPhase(), DELTA);
