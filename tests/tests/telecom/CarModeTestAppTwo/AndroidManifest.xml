@@ -15,36 +15,34 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.telecom.cts.api29incallservice"
+          package="android.telecom.cts.carmodetestapptwo"
           android:versionCode="1"
           android:versionName="1.0"
           android:sharedUserId="android.telecom.cts">
 
-    <!-- sdk 15 is the max for read call log -->
-    <uses-sdk android:minSdkVersion="15"
-              android:targetSdkVersion="29" />
-
-    <uses-permission android:name="android.permission.READ_CALL_LOG"/>
-    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
     <uses-permission android:name="android.permission.CONTROL_INCALL_EXPERIENCE" />
+    <uses-permission android:name="android.permission.ENTER_CAR_MODE_PRIORITIZED" />
 
-    <application android:label="Api29CTSInCallService">
-        <service android:name=".CtsApi29InCallService"
+    <application android:label="CarModeTestAppTwo">
+        <service android:name=".CtsCarModeInCallServiceTwo"
                  android:permission="android.permission.BIND_INCALL_SERVICE"
                  android:launchMode="singleInstance"
                  android:exported="true">
-            <!--  indicates it's a non-UI service, required by non-Ui InCallService -->
+            <meta-data android:name="android.telecom.IN_CALL_SERVICE_CAR_MODE_UI"
+                       android:value="true"/>
+            <meta-data android:name="android.telecom.INCLUDE_EXTERNAL_CALLS"
+                       android:value="true" />
             <intent-filter>
-                <action android:name="android.telecom.InCallService"/>
+              <action android:name="android.telecom.InCallService"/>
             </intent-filter>
         </service>
-        <service android:name=".CtsApi29InCallServiceControl"
-                 android:launchMode="singleInstance">
+        <service android:name=".CtsCarModeInCallServiceControlTwo"
+                 android:launchMode="singleInstance"
+                 android:exported="true">
             <intent-filter>
                 <action
-                    android:name="android.telecom.cts.api29incallservice.ACTION_API29_CONTROL"/>
+                    android:name="android.telecom.cts.carmodetestapp.ACTION_CAR_MODE_CONTROL"/>
             </intent-filter>
         </service>
     </application>
-
 </manifest>
