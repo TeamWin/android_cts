@@ -17,8 +17,17 @@
 package com.android.cts.verifier.tv.display;
 
 import android.view.View;
+import android.widget.TextView;
 
+import androidx.annotation.StringRes;
+
+import com.android.cts.verifier.R;
 import com.android.cts.verifier.tv.TvAppVerifierActivity;
+
+import com.google.common.truth.FailureStrategy;
+import com.google.common.truth.StandardSubjectBuilder;
+
+import java.util.Arrays;
 
 /**
  * Encapsulates the logic of a test step, which displays a human instructions and a button to start
@@ -26,9 +35,11 @@ import com.android.cts.verifier.tv.TvAppVerifierActivity;
  */
 public abstract class TestStepBase {
     final protected TvAppVerifierActivity mContext;
-    private View mViewItem;
+    protected View mViewItem;
     private boolean mHasPassed;
     private Runnable mOnDoneListener;
+    private String mFailureDetails;
+    private StandardSubjectBuilder mAsserter;
 
     /**
      * Constructs a test step containing instruction to the user and a button.
@@ -37,6 +48,13 @@ public abstract class TestStepBase {
      */
     public TestStepBase(TvAppVerifierActivity context) {
         this.mContext = context;
+
+        FailureStrategy failureStrategy = assertionError -> {
+            appendFailureDetails(assertionError.getMessage());
+            mHasPassed = false;
+        };
+        mAsserter = StandardSubjectBuilder.forCustomFailureStrategy(failureStrategy);
+        mHasPassed = true;
     }
 
     public boolean hasPassed() {
@@ -50,7 +68,10 @@ public abstract class TestStepBase {
         mViewItem = mContext.createUserItem(
                 getInstructionText(),
                 getButtonStringId(),
-                (View view) -> onButtonClickRunTest());
+                (View view) -> {
+                    appendInfoDetails("Running test step %s...", getStepName());
+                    onButtonClickRunTest();
+                });
     }
 
     /**
@@ -71,6 +92,15 @@ public abstract class TestStepBase {
         mOnDoneListener = listener;
     }
 
+    public String getFailureDetails() {
+        return mFailureDetails;
+    }
+
+    /**
+     * Human readable name of this test step to be output to logs.
+     */
+    protected abstract String getStepName();
+
     protected abstract void onButtonClickRunTest();
 
     /**
@@ -81,14 +111,40 @@ public abstract class TestStepBase {
     /**
      * Returns id of string resource containing the text of the button.
      */
-    protected abstract int getButtonStringId();
+    protected abstract @StringRes int getButtonStringId();
 
-    protected void doneWithPassingState(boolean state) {
-        mHasPassed = state;
-        TvAppVerifierActivity.setPassState(mViewItem, state);
-
+    protected void done() {
+        TvAppVerifierActivity.setPassState(mViewItem, mHasPassed);
         if (mOnDoneListener != null) {
             mOnDoneListener.run();
         }
+    }
+
+    protected StandardSubjectBuilder getAsserter() {
+        return mAsserter;
+    }
+
+    protected void appendInfoDetails(String infoFormat, Object... args) {
+        String info = String.format(infoFormat, args);
+        String details = String.format("Info: %s", info);
+        appendDetails(details);
+    }
+
+    protected void appendFailureDetails(String failure) {
+        String details = String.format("Failure: %s", failure);
+        appendDetails(details);
+        appendMessageToView(mViewItem, details);
+    }
+
+    protected void appendDetails(String details) {
+        if (mFailureDetails == null) {
+            mFailureDetails = new String();
+        }
+        mFailureDetails += details + "\n";
+    }
+
+    private static void appendMessageToView(View item, String message) {
+        TextView instructions = item.findViewById(R.id.instructions);
+        instructions.setText(instructions.getText() + "\n" + message);
     }
 }

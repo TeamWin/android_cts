@@ -16,11 +16,14 @@
 
 package com.android.cts.verifier.tv.display;
 
+import android.view.View;
+
+import com.android.cts.verifier.R;
 import com.android.cts.verifier.tv.TvAppVerifierActivity;
 
 /**
  *  Encapsulates the logic of an asynchronous test step, which displays a human instructions and a
- *  button to start the test. For synchronous steps see {@link TestStep}.
+ *  button to start the test. For synchronous steps see {@link SyncTestStep}.
  */
 public abstract class AsyncTestStep extends TestStepBase {
 
@@ -29,8 +32,7 @@ public abstract class AsyncTestStep extends TestStepBase {
     }
 
     /**
-     * Runs the test logic, when finished sets the test status by calling
-     * {@link AsyncTestStep#doneWithPassingState(boolean)}.
+     * Runs the test logic, when finished calls {@link AsyncTestStep#done()}.
      */
     public abstract void runTestAsync();
 
@@ -38,6 +40,23 @@ public abstract class AsyncTestStep extends TestStepBase {
     protected void onButtonClickRunTest() {
         // Disable the button, so the user can't run it twice.
         disableButton();
+        showLoadingSpinner();
         runTestAsync();
+    }
+
+    @Override
+    protected void done() {
+        hideLoadingSpinner();
+        super.done();
+    }
+
+    private void showLoadingSpinner() {
+        View spinner = mViewItem.findViewById(R.id.loadingSpinner);
+        spinner.setVisibility(View.VISIBLE);
+    }
+
+    private void hideLoadingSpinner() {
+        View spinner = mViewItem.findViewById(R.id.loadingSpinner);
+        spinner.setVisibility(View.INVISIBLE);
     }
 }

@@ -103,6 +103,13 @@ public class ActivityViewTest extends ActivityManagerTestBase {
     public void tearDown() throws Exception {
         super.tearDown();
         if (mActivityView != null) {
+            try {
+              // Detach ActivityView before releasing to avoid accessing removed display.
+              mActivityRule.runOnUiThread(
+                      () -> ((ViewGroup) mActivityView.getParent()).removeView(mActivityView));
+            } catch (Throwable e) {
+              throw new Exception(e);
+            }
             SystemUtil.runWithShellPermissionIdentity(() -> mActivityView.release());
         }
     }
