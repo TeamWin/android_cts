@@ -25,8 +25,10 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThat;
 
+import android.app.UiModeManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.media.AudioManager;
@@ -148,6 +150,10 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         if (!mShouldTestTelecom) {
             return;
         }
+
+        // Assume we start in normal mode at the start of all Telecom tests; a failure to leave car
+        // mode in any of the tests would cause subsequent test failures.
+        assertUiMode(Configuration.UI_MODE_TYPE_NORMAL);
 
         mTelecomManager = (TelecomManager) mContext.getSystemService(Context.TELECOM_SERVICE);
         mTelephonyManager = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
@@ -1648,6 +1654,30 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
 
     MockInCallService getInCallService() {
         return (mInCallCallbacks == null) ? null : mInCallCallbacks.getService();
+    }
+
+    /**
+     * Asserts that the {@link UiModeManager} mode matches the specified mode.
+     *
+     * @param uiMode The expected ui mode.
+     */
+    public void assertUiMode(final int uiMode) {
+        final UiModeManager uiModeManager = mContext.getSystemService(UiModeManager.class);
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return uiMode;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return uiModeManager.getCurrentModeType();
+                    }
+                },
+                TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                "Expected ui mode " + uiMode
+        );
     }
 
     void waitUntilConditionIsTrueOrTimeout(Condition condition, long timeout,
