@@ -234,6 +234,9 @@ public class BiometricTest extends PassFailButtons.Activity {
         } else if (testType == TEST_AUTHENTICATE) {
             if (result == BiometricManager.BIOMETRIC_SUCCESS) {
                 showBiometricPrompt(false /* allowCredential */);
+            } else if (result == BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE) {
+                showToastAndLog("No biometric features, test passed.");
+                getPassButton().setEnabled(true);
             } else {
                 showToastAndLog("Error: " + result +
                         " Please ensure at least one biometric is enrolled and try again");
