@@ -417,6 +417,18 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         return CecDevice.getDevice(hexStringToInt(param));
     }
 
+    /**
+     * Converts ascii characters to hexadecimal numbers that can be appended to a CEC message as
+     * params. For example, "spa" will be converted to ":73:70:61"
+     */
+    public static String convertStringToHexParams(String rawParams) {
+        StringBuilder params = new StringBuilder("");
+        for (int i = 0; i < rawParams.length(); i++) {
+            params.append(String.format(":%02x", (int) rawParams.charAt(i)));
+        }
+        return params.toString();
+    }
+
 
     /**
      * Gets the destination logical address from a CEC message.
