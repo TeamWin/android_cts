@@ -28,25 +28,40 @@ import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 public class ImsReasonInfoTest {
+    private ImsReasonInfo mInfo;
+    int mCode = ImsReasonInfo.CODE_LOCAL_IMS_SERVICE_DOWN;
+    int mExtraCode = ImsReasonInfo.EXTRA_CODE_CALL_RETRY_NORMAL;
 
+
+    @Test
+    public void testBasics() {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        String extraMessage = null;
+        mInfo = new ImsReasonInfo(mCode, mExtraCode, extraMessage);
+        assertEquals(mCode, mInfo.getCode());
+        assertEquals(mExtraCode, mInfo.getExtraCode());
+        assertEquals(extraMessage, mInfo.getExtraMessage());
+    }
     @Test
     public void testParcelUnparcel() {
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
-        int code = ImsReasonInfo.CODE_LOCAL_IMS_SERVICE_DOWN;
-        int extraCode = ImsReasonInfo.EXTRA_CODE_CALL_RETRY_NORMAL;
+
         String extraMessage = "oops";
-        ImsReasonInfo info = new ImsReasonInfo(code, extraCode, extraMessage);
+        mInfo = new ImsReasonInfo(mCode, mExtraCode, extraMessage);
+
 
         Parcel parcel = Parcel.obtain();
-        info.writeToParcel(parcel, 0);
+        mInfo.writeToParcel(parcel, 0);
         parcel.setDataPosition(0);
         ImsReasonInfo unparceledInfo = ImsReasonInfo.CREATOR.createFromParcel(parcel);
         parcel.recycle();
 
-        assertEquals(code, unparceledInfo.getCode());
-        assertEquals(extraCode, unparceledInfo.getExtraCode());
+        assertEquals(mCode, unparceledInfo.getCode());
+        assertEquals(mExtraCode, unparceledInfo.getExtraCode());
         assertEquals(extraMessage, unparceledInfo.getExtraMessage());
     }
 }
