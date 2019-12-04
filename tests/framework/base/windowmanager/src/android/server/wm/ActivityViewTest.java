@@ -59,7 +59,6 @@ import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.mockime.ImeCommand;
 import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
-import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 
 import org.junit.After;
@@ -100,16 +99,11 @@ public class ActivityViewTest extends ActivityManagerTestBase {
     }
 
     @After
-    public void tearDown() throws Exception {
-        super.tearDown();
+    public void tearDown() throws Throwable {
         if (mActivityView != null) {
-            try {
-              // Detach ActivityView before releasing to avoid accessing removed display.
-              mActivityRule.runOnUiThread(
-                      () -> ((ViewGroup) mActivityView.getParent()).removeView(mActivityView));
-            } catch (Throwable e) {
-              throw new Exception(e);
-            }
+            // Detach ActivityView before releasing to avoid accessing removed display.
+            mActivityRule.runOnUiThread(
+                    () -> ((ViewGroup) mActivityView.getParent()).removeView(mActivityView));
             SystemUtil.runWithShellPermissionIdentity(() -> mActivityView.release());
         }
     }
@@ -226,43 +220,40 @@ public class ActivityViewTest extends ActivityManagerTestBase {
         extras.putString(EXTRA_PRIVATE_IME_OPTIONS, privateImeOptions);
         extras.putParcelable(EXTRA_TEST_CURSOR_ANCHOR_INFO, mockResult);
 
-        try (final MockImeSession imeSession = MockImeSession.create(mContext,
-                mInstrumentation.getUiAutomation(), new ImeSettings.Builder())) {
-            final ImeEventStream stream = imeSession.openEventStream();
-            launchActivityInActivityView(INPUT_METHOD_TEST_ACTIVITY, extras);
+        final MockImeSession imeSession = MockImeHelper.createManagedMockImeSession(this);
+        final ImeEventStream stream = imeSession.openEventStream();
+        launchActivityInActivityView(INPUT_METHOD_TEST_ACTIVITY, extras);
 
-            // IME's seeing uniqueStringValue means that a valid connection is successfully
-            // established from INPUT_METHOD_TEST_ACTIVITY the MockIme
-            expectEvent(stream, editorMatcher("onStartInput", privateImeOptions),
-                    IME_EVENT_TIMEOUT);
+        // IME's seeing uniqueStringValue means that a valid connection is successfully
+        // established from INPUT_METHOD_TEST_ACTIVITY the MockIme.
+        expectEvent(stream, editorMatcher("onStartInput", privateImeOptions), IME_EVENT_TIMEOUT);
 
-            // Make sure that InputConnection#requestCursorUpdates() works.
-            final ImeCommand cursorUpdatesCommand = imeSession.callRequestCursorUpdates(
-                    InputConnection.CURSOR_UPDATE_IMMEDIATE);
-            final ImeEvent cursorUpdatesEvent = expectCommand(
-                    stream, cursorUpdatesCommand, IME_EVENT_TIMEOUT);
-            assertTrue(cursorUpdatesEvent.getReturnBooleanValue());
+        // Make sure that InputConnection#requestCursorUpdates() works.
+        final ImeCommand cursorUpdatesCommand = imeSession.callRequestCursorUpdates(
+                InputConnection.CURSOR_UPDATE_IMMEDIATE);
+        final ImeEvent cursorUpdatesEvent = expectCommand(
+                stream, cursorUpdatesCommand, IME_EVENT_TIMEOUT);
+        assertTrue(cursorUpdatesEvent.getReturnBooleanValue());
 
-            // Make sure that MockIme received the object sent above.
-            final CursorAnchorInfo receivedInfo = expectEvent(stream,
-                    event -> "onUpdateCursorAnchorInfo".equals(event.getEventName()),
-                    IME_EVENT_TIMEOUT).getArguments().getParcelable("cursorAnchorInfo");
-            assertNotNull(receivedInfo);
+        // Make sure that MockIme received the object sent above.
+        final CursorAnchorInfo receivedInfo = expectEvent(stream,
+                event -> "onUpdateCursorAnchorInfo".equals(event.getEventName()),
+                IME_EVENT_TIMEOUT).getArguments().getParcelable("cursorAnchorInfo");
+        assertNotNull(receivedInfo);
 
-            // Get the location of ActivityView in the default display's screen coordinates.
-            final AtomicReference<Point> offsetRef = new AtomicReference<>();
-            mInstrumentation.runOnMainSync(() -> {
-                final int[] xy = new int[2];
-                mActivityView.getLocationOnScreen(xy);
-                offsetRef.set(new Point(xy[0], xy[1]));
-            });
-            final Point offset = offsetRef.get();
+        // Get the location of ActivityView in the default display's screen coordinates.
+        final AtomicReference<Point> offsetRef = new AtomicReference<>();
+        mInstrumentation.runOnMainSync(() -> {
+            final int[] xy = new int[2];
+            mActivityView.getLocationOnScreen(xy);
+            offsetRef.set(new Point(xy[0], xy[1]));
+        });
+        final Point offset = offsetRef.get();
 
-            // Make sure that the received CursorAnchorInfo has an adjusted Matrix.
-            final Matrix expectedMatrix = mockResult.getMatrix();
-            expectedMatrix.postTranslate(offset.x, offset.y);
-            assertEquals(expectedMatrix, receivedInfo.getMatrix());
-        }
+        // Make sure that the received CursorAnchorInfo has an adjusted Matrix.
+        final Matrix expectedMatrix = mockResult.getMatrix();
+        expectedMatrix.postTranslate(offset.x, offset.y);
+        assertEquals(expectedMatrix, receivedInfo.getMatrix());
     }
 
     private void launchActivityInActivityView(ComponentName activity) {
