@@ -79,8 +79,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
             getDevice().executeShellCommand(
                     String.format("dpm mark-profile-owner-on-organization-owned-device --user %d '%s'",
                             mUserId, DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS));
-
-
     }
 
     @Test
@@ -110,6 +108,32 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".LockScreenInfoTest", mUserId);
+    }
+
+    @Test
+    public void testProfileOwnerCanGetDeviceIdentifiers() throws Exception {
+        // The Profile Owner should have access to all device identifiers.
+        if (!mHasFeature) {
+            return;
+        }
+
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DeviceIdentifiersTest",
+                "testProfileOwnerCanGetDeviceIdentifiersWithPermission", mUserId);
+    }
+
+    @Test
+    public void testProfileOwnerCannotGetDeviceIdentifiersWithoutPermission() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        // Revoke the READ_PHONE_STATE permission for the profile user ID to ensure the profile
+        // owner cannot access device identifiers without consent.
+        getDevice().executeShellCommand(
+                "pm revoke --user " + mUserId + " " + DEVICE_ADMIN_PKG
+                        + " android.permission.READ_PHONE_STATE");
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DeviceIdentifiersTest",
+                "testProfileOwnerCannotGetDeviceIdentifiersWithoutPermission", mUserId);
     }
 
     private void removeOrgOwnedProfile() throws DeviceNotAvailableException {

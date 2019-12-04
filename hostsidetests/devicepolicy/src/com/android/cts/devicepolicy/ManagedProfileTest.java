@@ -571,29 +571,14 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     }
 
     @Test
-    public void testProfileOwnerCanGetDeviceIdentifiers() throws Exception {
+    public void testProfileOwnerOnPersonalDeviceCannotGetDeviceIdentifiers() throws Exception {
         // The Profile Owner should have access to all device identifiers.
         if (!mHasFeature) {
             return;
         }
 
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".DeviceIdentifiersTest",
-                "testProfileOwnerCanGetDeviceIdentifiersWithPermission", mProfileUserId);
-    }
-
-    @Test
-    public void testProfileOwnerCannotGetDeviceIdentifiersWithoutPermission() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
-        // Revoke the READ_PHONE_STATE permission for the profile user ID to ensure the profile
-        // owner cannot access device identifiers without consent.
-        getDevice().executeShellCommand(
-                "pm revoke --user " + mProfileUserId + " " + MANAGED_PROFILE_PKG
-                        + " android.permission.READ_PHONE_STATE");
-        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".DeviceIdentifiersTest",
-                "testProfileOwnerCannotGetDeviceIdentifiersWithoutPermission", mProfileUserId);
+                "testProfileOwnerOnPersonalDeviceCannotGetDeviceIdentifiers", mProfileUserId);
     }
 
     @Test
