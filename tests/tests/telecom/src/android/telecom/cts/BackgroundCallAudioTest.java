@@ -565,7 +565,7 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
             public void onScreenCall(Details callDetails) {
                 getService().respondToCall(callDetails, new CallResponse.Builder()
                         .setDisallowCall(false)
-                        .setShouldScreenCallFurther(true)
+                        .setShouldScreenCallViaAudioProcessing(true)
                         .build());
                 lock.release();
             }
