@@ -42,6 +42,7 @@
 
         <!-- Bulletin 2015-12 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2015-6632->/data/local/tmp/CVE-2015-6632" />
         <option name="push" value="CVE-2015-6626->/data/local/tmp/CVE-2015-6626" />
 
         <!--__________________-->
