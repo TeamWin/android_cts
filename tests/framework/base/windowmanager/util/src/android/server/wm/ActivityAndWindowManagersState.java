@@ -31,7 +31,6 @@ import static android.server.wm.StateLogger.logE;
 import static android.util.DisplayMetrics.DENSITY_DEFAULT;
 import static android.view.Display.DEFAULT_DISPLAY;
 
-import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.hamcrest.Matchers.greaterThan;
@@ -49,20 +48,19 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
 import android.graphics.Rect;
-import android.os.SystemClock;
 import android.server.wm.ActivityManagerState.ActivityStack;
 import android.server.wm.ActivityManagerState.ActivityTask;
 import android.server.wm.WindowManagerState.Display;
 import android.server.wm.WindowManagerState.WindowStack;
 import android.server.wm.WindowManagerState.WindowState;
 import android.server.wm.WindowManagerState.WindowTask;
-import android.util.Log;
 import android.util.SparseArray;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -286,11 +284,6 @@ public class ActivityAndWindowManagersState {
                 "activity to be removed");
         waitForWithWmState((state) -> !state.containsWindow(getWindowName(activityName)),
                 "activity window to be gone");
-    }
-
-    @Deprecated
-    void waitForFocusedStack(int stackId) {
-        waitForWithAmState(state -> state.getFocusedStackId() == stackId, "focused stack");
     }
 
     void waitForFocusedStack(int windowingMode, int activityType) {
@@ -607,7 +600,9 @@ public class ActivityAndWindowManagersState {
 
     /** Asserts that each display has correct resumed activity. */
     public void assertResumedActivities(final String msg,
-            SparseArray<ComponentName> resumedActivities) {
+            Consumer<SparseArray<ComponentName>> resumedActivitiesMapping) {
+        final SparseArray<ComponentName> resumedActivities = new SparseArray<>();
+        resumedActivitiesMapping.accept(resumedActivities);
         for (int i = 0; i < resumedActivities.size(); i++) {
             final int displayId = resumedActivities.keyAt(i);
             final ComponentName activityComponent = resumedActivities.valueAt(i);
@@ -935,11 +930,11 @@ public class ActivityAndWindowManagersState {
         }
     }
 
-    public void assertActivityDisplayed(final ComponentName activityName) throws Exception {
+    public void assertActivityDisplayed(final ComponentName activityName) {
         assertWindowDisplayed(getWindowName(activityName));
     }
 
-    public void assertWindowDisplayed(final String windowName) throws Exception {
+    public void assertWindowDisplayed(final String windowName) {
         waitForValidState(WaitForValidActivityState.forWindow(windowName));
         assertTrue(windowName + "is visible", getWmState().isWindowVisible(windowName));
     }

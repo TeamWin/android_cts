@@ -72,6 +72,10 @@ public final class HdmiCecClientWrapper extends ExternalResource {
 
         assumeTrue(isHdmiCecFeatureSupported(testDevice));
 
+        String deviceTypeCsv = testDevice.executeShellCommand("getprop ro.hdmi.device_type").trim();
+        List<String> deviceType = Arrays.asList(deviceTypeCsv.replaceAll("\\s+", "").split(","));
+        assumeTrue(deviceType.contains(CecDevice.getDeviceType(targetDevice)));
+
         this.init();
     };
 
@@ -415,6 +419,18 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     public CecDevice getSourceFromMessage(String message) {
         String param = getNibbles(message).substring(0, 1);
         return CecDevice.getDevice(hexStringToInt(param));
+    }
+
+    /**
+     * Converts ascii characters to hexadecimal numbers that can be appended to a CEC message as
+     * params. For example, "spa" will be converted to ":73:70:61"
+     */
+    public static String convertStringToHexParams(String rawParams) {
+        StringBuilder params = new StringBuilder("");
+        for (int i = 0; i < rawParams.length(); i++) {
+            params.append(String.format(":%02x", (int) rawParams.charAt(i)));
+        }
+        return params.toString();
     }
 
 

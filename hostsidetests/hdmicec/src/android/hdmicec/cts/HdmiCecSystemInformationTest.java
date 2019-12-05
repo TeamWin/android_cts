@@ -17,6 +17,7 @@
 package android.hdmicec.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeTrue;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -32,6 +33,8 @@ public final class HdmiCecSystemInformationTest extends BaseHostJUnit4Test {
 
     /** The version number 0x05 refers to CEC v1.4 */
     private static final int CEC_VERSION_NUMBER = 0x05;
+
+    private static final String PROPERTY_LOCALE = "persist.sys.locale";
 
     @Rule
     public HdmiCecClientWrapper hdmiCecClient =
@@ -87,11 +90,87 @@ public final class HdmiCecSystemInformationTest extends BaseHostJUnit4Test {
     @Test
     public void cect_11_2_6_7_GetMenuLanguage() throws Exception {
         hdmiCecClient.sendCecMessage(CecDevice.TV, CecMessage.GET_MENU_LANGUAGE);
-        String message = hdmiCecClient.checkExpectedOutput(CecDevice.TV,
-                                                            CecMessage.FEATURE_ABORT);
+        String message = hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecMessage.FEATURE_ABORT);
         int abortedOpcode = hdmiCecClient.getParamsFromMessage(message,
-            CecMessage.GET_MENU_LANGUAGE.toString().length());
+                CecMessage.GET_MENU_LANGUAGE.toString().length());
         assertEquals(CecMessage.getMessage(abortedOpcode), CecMessage.GET_MENU_LANGUAGE);
     }
 
+    private String getSystemLocale() throws Exception {
+        ITestDevice device = getDevice();
+        return device.executeShellCommand("getprop " + PROPERTY_LOCALE).trim();
+    }
+
+    private void setSystemLocale(String locale) throws Exception {
+        ITestDevice device = getDevice();
+        device.executeShellCommand("setprop " + PROPERTY_LOCALE + " " + locale);
+    }
+
+    private boolean isLanguageEditable() throws Exception {
+        String val = getDevice().executeShellCommand("getprop ro.hdmi.set_menu_language");
+        return val.trim().equals("true") ? true : false;
+    }
+
+    private static String extractLanguage(String locale) {
+        return locale.split("[^a-zA-Z]")[0];
+    }
+
+    /**
+     * Test 11.2.6-3
+     * Tests that the device handles a <SET_MENU_LANGUAGE> with a valid language correctly.
+     */
+    @Test
+    public void cect_11_2_6_3_SetValidMenuLanguage() throws Exception {
+        assumeTrue(isLanguageEditable());
+        final String locale = getSystemLocale();
+        final String originalLanguage = extractLanguage(locale);
+        final String language = originalLanguage.equals("spa") ? "eng" : "spa";
+        final String newLanguage = originalLanguage.equals("spa") ? "en" : "es";
+        try {
+            hdmiCecClient.sendCecMessage(CecDevice.TV, CecDevice.BROADCAST,
+                    CecMessage.SET_MENU_LANGUAGE, hdmiCecClient.convertStringToHexParams(language));
+            assertEquals(newLanguage, extractLanguage(getSystemLocale()));
+        } finally {
+            setSystemLocale(locale);
+        }
+    }
+
+    /**
+     * Test 11.2.6-4
+     * Tests that the device ignores a <SET_MENU_LANGUAGE> with an invalid language.
+     */
+    @Test
+    public void cect_11_2_6_4_SetInvalidMenuLanguage() throws Exception {
+        assumeTrue(isLanguageEditable());
+        final String locale = getSystemLocale();
+        final String originalLanguage = extractLanguage(locale);
+        final String language = "spb";
+        try {
+            hdmiCecClient.sendCecMessage(CecDevice.TV, CecDevice.BROADCAST,
+                    CecMessage.SET_MENU_LANGUAGE, hdmiCecClient.convertStringToHexParams(language));
+            assertEquals(originalLanguage, extractLanguage(getSystemLocale()));
+        } finally {
+            setSystemLocale(locale);
+        }
+    }
+
+    /**
+     * Test 11.2.6-5
+     * Tests that the device ignores a <SET_MENU_LANGUAGE> with a valid language that comes from a
+     * source device which is not TV.
+     */
+    @Test
+    public void cect_11_2_6_5_SetValidMenuLanguageFromInvalidSource() throws Exception {
+        assumeTrue(isLanguageEditable());
+        final String locale = getSystemLocale();
+        final String originalLanguage = extractLanguage(locale);
+        final String language = originalLanguage.equals("spa") ? "eng" : "spa";
+        try {
+            hdmiCecClient.sendCecMessage(CecDevice.RECORDING_1, CecDevice.BROADCAST,
+                    CecMessage.SET_MENU_LANGUAGE, hdmiCecClient.convertStringToHexParams(language));
+            assertEquals(originalLanguage, extractLanguage(getSystemLocale()));
+        } finally {
+            setSystemLocale(locale);
+        }
+    }
 }

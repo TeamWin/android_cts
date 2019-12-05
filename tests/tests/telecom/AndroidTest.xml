@@ -29,6 +29,8 @@
         <option name="test-file-name" value="ThirdPtyInCallServiceTestApp.apk" />
         <option name="test-file-name" value="Api29InCallServiceTestApp.apk" />
         <option name="test-file-name" value="CallScreeningServiceTestApp.apk" />
+        <option name="test-file-name" value="CarModeTestApp.apk" />
+        <option name="test-file-name" value="CarModeTestAppTwo.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.telecom.cts" />

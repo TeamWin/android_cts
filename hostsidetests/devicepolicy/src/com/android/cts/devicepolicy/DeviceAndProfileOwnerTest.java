@@ -1915,6 +1915,23 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
+    public void testSetAutoTime() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".DevicePolicyLoggingTest", "testSetAutoTime");
+        }, new DevicePolicyEventWrapper.Builder(EventId.SET_AUTO_TIME_VALUE)
+                    .setAdminPackageName(DEVICE_ADMIN_PKG)
+                    .setBoolean(true)
+                    .build(),
+            new DevicePolicyEventWrapper.Builder(EventId.SET_AUTO_TIME_VALUE)
+                    .setAdminPackageName(DEVICE_ADMIN_PKG)
+                    .setBoolean(false)
+                    .build());
+    }
+
+    @Test
     public void testEnableSystemAppLogged() throws Exception {
         if (!mHasFeature || !isStatsdEnabled(getDevice())) {
             return;

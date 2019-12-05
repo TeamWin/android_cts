@@ -16,7 +16,6 @@
 
 package android.server.wm.lifecycle;
 
-import static android.app.Activity.RESULT_OK;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.StateLogger.log;
@@ -50,9 +49,9 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.Looper;
 import android.server.wm.MultiDisplayTestBase;
+import android.server.wm.ObjectTracker;
 import android.server.wm.lifecycle.LifecycleLog.ActivityCallback;
 import android.transition.Transition;
 import android.transition.TransitionListenerAdapter;
@@ -121,7 +120,7 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
     }
 
     /** Activity launch builder for lifecycle tests. */
-    class Launcher {
+    class Launcher implements ObjectTracker.Consumable {
         private int mFlags;
         private ActivityCallback mExpectedState;
         private List<String> mExtraFlags = new ArrayList<>();
@@ -138,6 +137,7 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
          */
         Launcher(@NonNull Class<? extends Activity> activityClass) {
             mActivityClass = activityClass;
+            mObjectTracker.track(this);
         }
 
         /**
@@ -238,11 +238,8 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
         }
 
         @Override
-        protected void finalize() throws Throwable {
-            super.finalize();
-            if (!mLaunchCalled) {
-                throw new IllegalStateException("Activity launch builder created but not used!");
-            }
+        public boolean isConsumed() {
+            return mLaunchCalled;
         }
     }
 

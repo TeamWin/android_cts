@@ -151,6 +151,13 @@ public class DevicePolicyLoggingTest extends BaseDeviceAdminTest {
         mDevicePolicyManager.setAutoTimeRequired(ADMIN_RECEIVER_COMPONENT, initialValue);
     }
 
+    public void testSetAutoTime() {
+        final boolean initialValue = mDevicePolicyManager.getAutoTime(ADMIN_RECEIVER_COMPONENT);
+        mDevicePolicyManager.setAutoTime(ADMIN_RECEIVER_COMPONENT, true);
+        mDevicePolicyManager.setAutoTime(ADMIN_RECEIVER_COMPONENT, false);
+        mDevicePolicyManager.setAutoTime(ADMIN_RECEIVER_COMPONENT, initialValue);
+    }
+
     public void testEnableSystemAppLogged() {
         final String systemPackageToEnable =
                 InstrumentationRegistry.getArguments().getString(PARAM_APP_TO_ENABLE);
