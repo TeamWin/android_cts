@@ -64,4 +64,8 @@ android_test {
         "general-tests",
     ],
     platform_apis: true,
+    host_required: [
+        "compatibility-host-telephony-preconditions",
+        "cts-tradefed",
+    ],
 }
