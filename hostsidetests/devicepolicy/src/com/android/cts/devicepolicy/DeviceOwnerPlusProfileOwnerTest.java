@@ -21,6 +21,7 @@ import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -37,10 +38,11 @@ import org.junit.Test;
 import java.util.List;
 
 /**
- * Tests for having both device owner and profile owner. Device owner is setup for you in
- * {@link #setUp()} and it is always the {@link #COMP_DPC_PKG}. You are required to call
- * {@link #setupManagedProfile} or {@link #setupManagedSecondaryUser} yourself to create another
- * profile/user on each test case.
+ * Tests for device owner and profile owner as well as multiple users. Device owner is setup
+ * {@link #setUp()} and it is always the {@link #COMP_DPC_PKG}. Each test is required to call
+ * {@link #setupManagedSecondaryUser} to create another user on each test case.
+ * As combining a profile owner with a device owner is not supported, this class contains
+ * negative test cases to ensure this combination cannot be set up.
  */
 public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String BIND_DEVICE_ADMIN_SERVICE_GOOD_SETUP_TEST =
@@ -107,86 +109,43 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
      */
     @LargeTest
     @Test
-    public void testBindDeviceAdminServiceAsUser_corpOwnedManagedProfile() throws Exception {
+    public void testCannotAddManagedProfileWithDeviceOwner() throws Exception {
         if (!mHasFeature) {
             return;
         }
-        int profileUserId = setupManagedProfile(COMP_DPC_APK, COMP_DPC_PKG, COMP_DPC_ADMIN);
 
-        // Not setting affiliation ids, should not be possible to bind.
-        verifyBindDeviceAdminServiceAsUserFails(profileUserId);
-
-        // Now setting the same affiliation ids, binding is allowed.
-        setSameAffiliationId(profileUserId);
-        assertOtherProfilesEqualsBindTargetUsers(profileUserId);
-        verifyBindDeviceAdminServiceAsUser(profileUserId);
-
-        // Setting different affiliation ids makes binding unavailable.
-        setDifferentAffiliationId(profileUserId);
-        verifyBindDeviceAdminServiceAsUserFails(profileUserId);
+        assertCannotCreateManagedProfile(mPrimaryUserId);
     }
 
     /**
-     * Same as {@link #testBindDeviceAdminServiceAsUser_corpOwnedManagedProfile} except
+     * DISABLED: Test currently disabled because of a bug in managed provisioning.
+     * TODO: Re-enable once b/146048940 is fixed.
+     * Same as {@link #testCannotAddManagedProfileWithDeviceOwner} except
      * creating managed profile through ManagedProvisioning like normal flow
      */
     @FlakyTest
     @Test
-    public void testBindDeviceAdminServiceAsUser_corpOwnedManagedProfileWithManagedProvisioning()
+    @Ignore
+    public void testCannotAddManagedProfileViaManagedProvisioning()
             throws Exception {
         if (!mHasFeature) {
             return;
         }
         int profileUserId = provisionCorpOwnedManagedProfile();
-        setSameAffiliationId(profileUserId);
-        runDeviceTestsAsUser(
-                COMP_DPC_PKG,
-                MANAGED_PROFILE_PROVISIONING_TEST,
-                "testEnableProfile",
-                profileUserId);
-        assertOtherProfilesEqualsBindTargetUsers(profileUserId);
-        verifyBindDeviceAdminServiceAsUser(profileUserId);
+        assertFalse(profileUserId >= 0);
     }
 
     /**
-     * Same as
-     * {@link #testBindDeviceAdminServiceAsUser_corpOwnedManagedProfileWithManagedProvisioning}
-     * except we don't enable the profile.
+     * Test that isProvisioningAllowed returns false when called with
+     * ACTION_PROVISION_MANAGED_PROFILE when there's a device owner.
      */
-    @FlakyTest
     @Test
-    public void testBindDeviceAdminServiceAsUser_canBindEvenIfProfileNotEnabled() throws Exception {
+    public void testProvisioningNotAllowedWithDeviceOwner() throws Exception {
         if (!mHasFeature) {
             return;
         }
-        int profileUserId = provisionCorpOwnedManagedProfile();
-        setSameAffiliationId(profileUserId);
-        verifyBindDeviceAdminServiceAsUser(profileUserId);
-    }
 
-    /**
-     * Device owner is {@link #COMP_DPC_PKG} while profile owner is {@link #COMP_DPC_PKG2}.
-     * Therefore it isn't allowed to bind to each other.
-     */
-    @Test
-    public void testBindDeviceAdminServiceAsUser_byodPlusDeviceOwnerCannotBind() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-        int profileUserId = setupManagedProfile(COMP_DPC_APK2, COMP_DPC_PKG2, COMP_DPC_ADMIN2);
-
-        // Setting same affiliation ids shouldn't make a difference. Binding still not allowed.
-        setSameAffiliationId(profileUserId, COMP_DPC_PKG2);
-        // Testing device owner -> profile owner.
-        runDeviceTestsAsUser(
-                COMP_DPC_PKG,
-                BIND_DEVICE_ADMIN_SERVICE_FAILS_TEST,
-                mPrimaryUserId);
-        // Testing profile owner -> device owner.
-        runDeviceTestsAsUser(
-                COMP_DPC_PKG2,
-                BIND_DEVICE_ADMIN_SERVICE_FAILS_TEST,
-                profileUserId);
+        assertProvisionManagedProfileNotAllowed(COMP_DPC_PKG);
     }
 
     /**
@@ -212,34 +171,6 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
         verifyBindDeviceAdminServiceAsUser(secondaryUserId);
     }
 
-    /**
-     * Test that the DO can talk to both a managed profile and managed secondary user at the same
-     * time.
-     */
-    @FlakyTest
-    @Test
-    public void testBindDeviceAdminServiceAsUser_compPlusSecondaryUser() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(2)) {
-            return;
-        }
-        int secondaryUserId = setupManagedSecondaryUser();
-        int profileUserId = setupManagedProfile(COMP_DPC_APK, COMP_DPC_PKG, COMP_DPC_ADMIN);
-
-        // Affiliate only the secondary user. The DO and the PO from that user can talk, but not
-        // the DO and the PO of the un-affiliated managed profile.
-        setSameAffiliationId(secondaryUserId);
-        verifyBindDeviceAdminServiceAsUser(secondaryUserId);
-        runDeviceTestsAsUser(
-                COMP_DPC_PKG,
-                BIND_DEVICE_ADMIN_SERVICE_FAILS_TEST,
-                profileUserId);
-
-        // Now affiliate the work profile - the DO is able to talk to both.
-        setSameAffiliationId(profileUserId);
-        verifyBindDeviceAdminServiceAsUser(profileUserId);
-        verifyBindDeviceAdminServiceAsUser(secondaryUserId);
-    }
-
     @FlakyTest(bugId = 141161038)
     @Test
     public void testCannotRemoveUserIfRestrictionSet() throws Exception {
@@ -255,96 +186,12 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testCanRemoveProfileEvenIfDisallowRemoveUserSet() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-        int profileUserId = setupManagedProfile(COMP_DPC_APK2, COMP_DPC_PKG2, COMP_DPC_ADMIN2);
-        addDisallowRemoveUserRestriction();
-        // DISALLOW_REMOVE_USER only affects users, not profiles.
-        assertTrue(getDevice().removeUser(profileUserId));
-        assertUserGetsRemoved(profileUserId);
-    }
-
-    @Test
-    public void testDoCanRemoveProfileEvenIfUserRestrictionSet() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-        int profileUserId = setupManagedProfile(COMP_DPC_APK, COMP_DPC_PKG, COMP_DPC_ADMIN);
-        addDisallowRemoveUserRestriction();
-
-        // The DO should be allowed to remove the managed profile, even though disallow remove user
-        // and disallow remove managed profile restrictions are set.
-        runDeviceTestsAsUser(
-                COMP_DPC_PKG,
-                MANAGEMENT_TEST,
-                "testCanRemoveManagedProfile",
-                mPrimaryUserId);
-        assertUserGetsRemoved(profileUserId);
-    }
-
-    //TODO(b/138709492) Re-enable once restriction on creating a work profile when there's
-    // a device owner is on by default.
-    @Test
-    @Ignore
     public void testCannotAddProfileIfRestrictionSet() throws Exception {
         if (!mHasFeature) {
             return;
         }
         // by default, disallow add managed profile users restriction is set.
         assertCannotCreateManagedProfile(mPrimaryUserId);
-    }
-
-    /**
-     * TODO(b/138709492): Remove this test as a part of the COMP deprecation.
-     * Both device owner and profile are the same package ({@link #COMP_DPC_PKG}).
-     */
-    @Test
-    public void testIsProvisioningAllowed() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-        installAppAsUser(COMP_DPC_APK2, mPrimaryUserId);
-        // Disallowing adding managed profile is no longer set by default, so every DPC can
-        // provision a work profile.
-        assertProvisionManagedProfileAllowed(COMP_DPC_PKG2);
-        // Including the device owner, which can still provision a managed profile.
-        assertProvisionManagedProfileAllowed(COMP_DPC_PKG);
-
-        setupManagedProfile(COMP_DPC_APK, COMP_DPC_PKG, COMP_DPC_ADMIN);
-
-        // We've created a managed profile, but it's still possible to delete it to create a new
-        // one.
-        assertProvisionManagedProfileAllowed(COMP_DPC_PKG2);
-        assertProvisionManagedProfileAllowed(COMP_DPC_PKG);
-    }
-
-    @Test
-    public void testWipeData_managedProfile() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-        int profileUserId = setupManagedProfile(COMP_DPC_APK, COMP_DPC_PKG, COMP_DPC_ADMIN);
-        // The PO of the managed profile should be allowed to delete the managed profile, even
-        // though the disallow remove profile restriction is set.
-        runDeviceTestsAsUser(
-                COMP_DPC_PKG,
-                MANAGEMENT_TEST,
-                "testWipeData",
-                profileUserId);
-        assertUserGetsRemoved(profileUserId);
-    }
-
-    @Test
-    public void testWipeData_managedProfileLogged() throws Exception {
-        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
-            return;
-        }
-        int profileUserId = setupManagedProfile(COMP_DPC_APK, COMP_DPC_PKG, COMP_DPC_ADMIN);
-        assertMetricsLogged(getDevice(), () -> {
-            runDeviceTestsAsUser(COMP_DPC_PKG, MANAGEMENT_TEST, "testWipeData", profileUserId);
-        }, WIPE_DATA_WITH_REASON_DEVICE_POLICY_EVENT);
     }
 
     @Test
@@ -382,16 +229,12 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
 
-        if (canCreateAdditionalUsers(2)) {
-            // If secondary users are allowed, create an affiliated one, to check that this still
-            // works if having both an affiliated user and an affiliated managed profile.
-            int secondaryUserId = setupManagedSecondaryUser();
-            setSameAffiliationId(secondaryUserId);
+        if (!canCreateAdditionalUsers(2)) {
+            return;
         }
-
-        // Create a managed profile for a different DPC package name, to test that the features are
-        // still available as long as the users are affiliated
-        int profileUserId = setupManagedProfile(COMP_DPC_APK2, COMP_DPC_PKG2, COMP_DPC_ADMIN2);
+        // If secondary users are allowed, create an affiliated one, to check that this still
+        // works if having both an affiliated user and an affiliated managed profile.
+        final int secondaryUserId = setupManagedSecondaryUser();
 
         runDeviceTestsAsUser(
                 COMP_DPC_PKG,
@@ -406,16 +249,15 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
                     "testRetrievingLogsThrowsSecurityException",
                     mPrimaryUserId);
 
-            // Affiliate the DO and the managed profile (the secondary user is already affiliated,
-            // if it was added).
-            setSameAffiliationId(profileUserId, COMP_DPC_PKG2);
+            // Affiliate the DO and the secondary user.
+            setSameAffiliationId(secondaryUserId);
             runDeviceTestsAsUser(
                     COMP_DPC_PKG,
                     DEVICE_WIDE_LOGGING_TEST,
                     "testRetrievingLogsDoesNotThrowException",
                     mPrimaryUserId);
 
-            setDifferentAffiliationId(profileUserId, COMP_DPC_PKG2);
+            setDifferentAffiliationId(secondaryUserId);
             runDeviceTestsAsUser(
                     COMP_DPC_PKG,
                     DEVICE_WIDE_LOGGING_TEST,
@@ -437,82 +279,34 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
 
-        if (canCreateAdditionalUsers(2)) {
-            // If secondary users are allowed, create an affiliated one, to check that this still
-            // works if having both an affiliated user and an affiliated managed profile.
-            int secondaryUserId = setupManagedSecondaryUser();
-            setSameAffiliationId(secondaryUserId);
+        if (!canCreateAdditionalUsers(2)) {
+            return;
         }
 
-        // Create a managed profile for a different DPC package name, to test that the feature is
-        // still available as long as the users are affiliated
-        int profileUserId = setupManagedProfile(COMP_DPC_APK2, COMP_DPC_PKG2, COMP_DPC_ADMIN2);
+        final int secondaryUserId = setupManagedSecondaryUser();
 
-        // No affiliation ids have been set on the profile, the feature shouldn't be available.
+        // No affiliation ids have been set on the secondary user, the feature shouldn't be
+        // available.
         runDeviceTestsAsUser(
                 COMP_DPC_PKG,
                 DEVICE_WIDE_LOGGING_TEST,
                 "testRequestBugreportThrowsSecurityException",
                 mPrimaryUserId);
 
-        // Affiliate the DO and the managed profile (the secondary user is already affiliated,
-        // if it was added).
-        setSameAffiliationId(profileUserId, COMP_DPC_PKG2);
+        // Affiliate the DO and the secondary user.
+        setSameAffiliationId(secondaryUserId);
         runDeviceTestsAsUser(
                 COMP_DPC_PKG,
                 DEVICE_WIDE_LOGGING_TEST,
                 "testRequestBugreportDoesNotThrowException",
                 mPrimaryUserId);
 
-        setDifferentAffiliationId(profileUserId, COMP_DPC_PKG2);
+        setDifferentAffiliationId(secondaryUserId, COMP_DPC_PKG);
         runDeviceTestsAsUser(
                 COMP_DPC_PKG,
                 DEVICE_WIDE_LOGGING_TEST,
                 "testRequestBugreportThrowsSecurityException",
                 mPrimaryUserId);
-    }
-
-    @Test
-    public void testCannotStartManagedProfileInBackground() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-        setupManagedProfile(COMP_DPC_APK, COMP_DPC_PKG, COMP_DPC_ADMIN);
-
-        runDeviceTestsAsUser(
-                COMP_DPC_PKG,
-                MANAGEMENT_TEST,
-                "testCannotStartManagedProfileInBackground",
-                mPrimaryUserId);
-    }
-
-    @Test
-    public void testCannotStopManagedProfile() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-        setupManagedProfile(COMP_DPC_APK, COMP_DPC_PKG, COMP_DPC_ADMIN);
-
-        runDeviceTestsAsUser(
-                COMP_DPC_PKG,
-                MANAGEMENT_TEST,
-                "testCannotStopManagedProfile",
-                mPrimaryUserId);
-    }
-
-    @Test
-    public void testCannotLogoutManagedProfile() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-        int profileUserId = setupManagedProfile(COMP_DPC_APK, COMP_DPC_PKG, COMP_DPC_ADMIN);
-        setSameAffiliationId(profileUserId);
-
-        runDeviceTestsAsUser(
-                COMP_DPC_PKG,
-                MANAGEMENT_TEST,
-                "testCannotLogoutManagedProfile",
-                profileUserId);
     }
 
     private void verifyBindDeviceAdminServiceAsUser(int profileOwnerUserId) throws Exception {
@@ -583,14 +377,6 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
 
     private void setDifferentAffiliationId(int profileOwnerUserId) throws Exception {
         setDifferentAffiliationId(profileOwnerUserId, COMP_DPC_PKG);
-    }
-
-    private void assertProvisionManagedProfileAllowed(String packageName) throws Exception {
-        runDeviceTestsAsUser(
-                packageName,
-                MANAGEMENT_TEST,
-                "testProvisionManagedProfileAllowed",
-                mPrimaryUserId);
     }
 
     private void assertProvisionManagedProfileNotAllowed(String packageName) throws Exception {
