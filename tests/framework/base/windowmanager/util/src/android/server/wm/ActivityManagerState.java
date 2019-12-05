@@ -650,7 +650,7 @@ public class ActivityManagerState {
         boolean mSingleTaskInstance;
 
         ActivityDisplay(ActivityDisplayProto proto, ActivityManagerState amState) {
-            super(proto.configurationContainer);
+            super(proto.display.windowContainer.configurationContainer);
             mId = proto.id;
             mFocusedStackId = proto.focusedStackId;
             mSingleTaskInstance = proto.singleTaskInstance;
