@@ -49,6 +49,17 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     *  b/34749571
+     *  Vulnerability Behaviour: SIGSEGV in audioserver
+     **/
+    @SecurityTest(minPatchLevel = "2017-05")
+    public void testPocCVE_2017_0597() throws Exception {
+        String processPatternStrings[] = {"audioserver"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0597", null, getDevice(),
+                processPatternStrings);
+    }
+
+    /**
      * b/68300072
      * Vulnerability Behaviour: EXIT_VULNERABLE (113)
      */
