@@ -134,6 +134,22 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         super.testInstallCaCertLogged();
     }
 
+    @FlakyTest(bugId = 137088260)
+    @Test
+    public void testWifi() throws Exception {
+        if (!mHasFeature || !hasDeviceFeature("android.hardware.wifi")) {
+            return;
+        }
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".WifiTest", "testGetWifiMacAddress", mUserId);
+        if (isStatsdEnabled(getDevice())) {
+            assertMetricsLogged(getDevice(), () -> {
+                executeDeviceTestMethod(".WifiTest", "testGetWifiMacAddress");
+            }, new DevicePolicyEventWrapper.Builder(EventId.GET_WIFI_MAC_ADDRESS_VALUE)
+                    .setAdminPackageName(DEVICE_ADMIN_PKG)
+                    .build());
+        }
+    }
+
     Map<String, DevicePolicyEventWrapper[]> getAdditionalDelegationTests() {
         final Map<String, DevicePolicyEventWrapper[]> result = new HashMap<>();
         DevicePolicyEventWrapper[] expectedMetrics = new DevicePolicyEventWrapper[] {

@@ -13,28 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.cts.deviceowner;
+package com.android.cts.deviceandprofileowner;
 
+import android.content.ComponentName;
 import android.content.pm.PackageManager;
 import android.text.TextUtils;
 
 /**
  * Tests that require the WiFi feature.
  */
-public class WifiTest extends BaseDeviceOwnerTest {
+public class WifiTest extends BaseDeviceAdminTest {
     /** Mac address returned when the caller doesn't have access. */
     private static final String DEFAULT_MAC_ADDRESS = "02:00:00:00:00:00";
+
+    public static final ComponentName ADMIN_RECEIVER_COMPONENT = new ComponentName(
+            BaseDeviceAdminTest.BasicAdminReceiver.class.getPackage().getName(),
+            BaseDeviceAdminTest.BasicAdminReceiver.class.getName());
 
     public void testGetWifiMacAddress() {
         if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI)) {
             // wifi not supported.
             return;
         }
-        final String macAddress = mDevicePolicyManager.getWifiMacAddress(getWho());
+        final String macAddress = mDevicePolicyManager.getWifiMacAddress(ADMIN_RECEIVER_COMPONENT);
 
         assertFalse("Device owner should be able to get the real MAC address",
                 DEFAULT_MAC_ADDRESS.equals(macAddress));
         assertFalse("getWifiMacAddress() returned an empty string.  WiFi not enabled?",
                 TextUtils.isEmpty(macAddress));
+    }
+
+    public void testCannotGetWifiMacAddress() {
+        try {
+            mDevicePolicyManager.getWifiMacAddress(ADMIN_RECEIVER_COMPONENT);
+            fail("Profile owner shouldn't be able to get the MAC address");
+        } catch (SecurityException expected) {
+        }
     }
 }

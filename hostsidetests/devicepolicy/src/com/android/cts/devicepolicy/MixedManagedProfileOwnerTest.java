@@ -33,6 +33,7 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     private static final String CLEAR_PROFILE_OWNER_NEGATIVE_TEST_CLASS =
             DEVICE_ADMIN_PKG + ".ClearProfileOwnerNegativeTest";
+    private static final String FEATURE_WIFI = "android.hardware.wifi";
 
     private int mParentUserId = -1;
 
@@ -369,5 +370,15 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     @Test
     public void testLockTask_exitIfNoLongerWhitelisted() {
         // Managed profiles are not allowed to use lock task
+    }
+
+    @Test
+    public void testWifiMacAddress() throws Exception {
+        if (!mHasFeature || !hasDeviceFeature(FEATURE_WIFI)) {
+            return;
+        }
+
+        runDeviceTestsAsUser(
+                DEVICE_ADMIN_PKG, ".WifiTest", "testCannotGetWifiMacAddress", mUserId);
     }
 }

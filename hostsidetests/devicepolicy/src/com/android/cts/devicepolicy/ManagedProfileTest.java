@@ -101,15 +101,6 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
                 mParentUserId);
     }
 
-    @Test
-    public void testWifiMacAddress() throws Exception {
-        if (!mHasFeature || !hasDeviceFeature(FEATURE_WIFI)) {
-            return;
-        }
-        runDeviceTestsAsUser(
-                MANAGED_PROFILE_PKG, ".WifiTest", "testCannotGetWifiMacAddress", mProfileUserId);
-    }
-
     @LargeTest
     @Test
     public void testAppLinks_verificationStatus() throws Exception {
