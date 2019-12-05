@@ -1,0 +1,210 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.app.appops.cts
+
+import android.app.AppOpsManager
+import android.app.AppOpsManager.OPSTR_WIFI_SCAN
+import android.app.AppOpsManager.OP_FLAGS_ALL
+import android.app.AppOpsManager.OP_FLAG_SELF
+import android.app.AppOpsManager.OP_FLAG_TRUSTED_PROXIED
+import android.app.AppOpsManager.OP_FLAG_TRUSTED_PROXY
+import android.app.AppOpsManager.OP_FLAG_UNTRUSTED_PROXIED
+import android.content.Intent
+import android.content.Intent.ACTION_APPLICATION_PREFERENCES
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.rule.ActivityTestRule
+import androidx.test.uiautomator.UiDevice
+import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
+import com.google.common.truth.Truth.assertThat
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import java.lang.Thread.sleep
+
+class AppOpEventCollectionTest {
+    private val instrumentation = InstrumentationRegistry.getInstrumentation()
+    private val context = instrumentation.targetContext
+    private val appOpsManager = context.getSystemService(AppOpsManager::class.java)
+
+    private val myUid = android.os.Process.myUid()
+    private val myPackage = context.packageName
+
+    // Start an activity to make sure this app counts as being in the foreground
+    @Rule
+    @JvmField
+    var activityRule = ActivityTestRule(UidStateForceActivity::class.java)
+
+    @Before
+    fun wakeScreenUp() {
+        val uiDevice = UiDevice.getInstance(instrumentation)
+        uiDevice.wakeUp()
+        uiDevice.executeShellCommand("wm dismiss-keyguard")
+    }
+
+    @Before
+    fun makeSureTimeStampsAreDistinct() {
+        sleep(1)
+    }
+
+    @Test
+    fun noteWithFeatureAndCheckOpEntries() {
+        val before = System.currentTimeMillis()
+        appOpsManager.noteOp(OPSTR_WIFI_SCAN, myUid, myPackage, "testFeature", null)
+        val after = System.currentTimeMillis()
+
+        val opEntry = callWithShellPermissionIdentity {
+            appOpsManager.getOpsForPackage(myUid, myPackage, OPSTR_WIFI_SCAN)
+        }[0].ops[0]!!
+        val featureOpEntry = opEntry.features["testFeature"]!!
+
+        assertThat(featureOpEntry.getLastAccessForegroundTime(OP_FLAG_SELF)).isIn(before..after)
+
+        // Access should should also show up in the combined state for all op-flags
+        assertThat(featureOpEntry.getLastAccessForegroundTime(OP_FLAGS_ALL)).isIn(before..after)
+        assertThat(opEntry.getLastAccessTime(OP_FLAGS_ALL)).isIn(before..after)
+
+        // Foreground access should should also show up in the combined state for fg and bg
+        assertThat(featureOpEntry.getLastAccessTime(OP_FLAG_SELF)).isIn(before..after)
+        assertThat(opEntry.getLastAccessTime(OP_FLAG_SELF)).isIn(before..after)
+
+        // The access was in foreground, hence there is no background access
+        assertThat(featureOpEntry.getLastBackgroundDuration(OP_FLAG_SELF)).isLessThan(before)
+        assertThat(opEntry.getLastBackgroundDuration(OP_FLAG_SELF)).isLessThan(before)
+
+        // The access was for a feature, hence there is no access for the default feature
+        if (null in opEntry.features) {
+            assertThat(opEntry.features[null]!!.getLastAccessForegroundTime(OP_FLAG_SELF))
+                    .isLessThan(before)
+        }
+
+        // The access does not show up for other op-flags
+        assertThat(featureOpEntry.getLastAccessForegroundTime(
+                OP_FLAGS_ALL and OP_FLAG_SELF.inv())).isLessThan(before)
+        assertThat(opEntry.getLastAccessForegroundTime(
+                OP_FLAGS_ALL and OP_FLAG_SELF.inv())).isLessThan(before)
+    }
+
+    @Test
+    fun noteSelfAndTrustedAccessAndCheckOpEntries() {
+        val before = System.currentTimeMillis()
+
+        // Using the shell identity causes a trusted proxy note
+        runWithShellPermissionIdentity {
+            appOpsManager.noteOp(OPSTR_WIFI_SCAN, myUid, myPackage, null, null)
+        }
+        val afterTrusted = System.currentTimeMillis()
+
+        // Make sure timestamps are distinct
+        sleep(1)
+
+        // self note
+        appOpsManager.noteOp(OPSTR_WIFI_SCAN, myUid, myPackage, null, null)
+        val after = System.currentTimeMillis()
+
+        val opEntry = callWithShellPermissionIdentity {
+            appOpsManager.getOpsForPackage(myUid, myPackage, OPSTR_WIFI_SCAN)
+        }[0].ops[0]!!
+        val featureOpEntry = opEntry.features[null]!!
+
+        assertThat(featureOpEntry.getLastAccessTime(OP_FLAG_TRUSTED_PROXY))
+                .isIn(before..afterTrusted)
+        assertThat(featureOpEntry.getLastAccessTime(OP_FLAG_SELF)).isIn(afterTrusted..after)
+        assertThat(opEntry.getLastAccessTime(OP_FLAG_TRUSTED_PROXY)).isIn(before..afterTrusted)
+        assertThat(opEntry.getLastAccessTime(OP_FLAG_SELF)).isIn(afterTrusted..after)
+
+        // When asked for any flags, the second access overrides the first
+        assertThat(featureOpEntry.getLastAccessTime(OP_FLAGS_ALL)).isIn(afterTrusted..after)
+        assertThat(opEntry.getLastAccessTime(OP_FLAGS_ALL)).isIn(afterTrusted..after)
+    }
+
+    @Test
+    fun noteForTwoFeaturesCheckOpEntries() {
+        val before = System.currentTimeMillis()
+        appOpsManager.noteOp(OPSTR_WIFI_SCAN, myUid, myPackage, "firstFeature", null)
+        val afterFirst = System.currentTimeMillis()
+
+        // Make sure timestamps are distinct
+        sleep(1)
+
+        // self note
+        appOpsManager.noteOp(OPSTR_WIFI_SCAN, myUid, myPackage, "secondFeature", null)
+        val after = System.currentTimeMillis()
+
+        val opEntry = callWithShellPermissionIdentity {
+            appOpsManager.getOpsForPackage(myUid, myPackage, OPSTR_WIFI_SCAN)
+        }[0].ops[0]!!
+        val firstFeatureOpEntry = opEntry.features["firstFeature"]!!
+        val secondFeatureOpEntry = opEntry.features["secondFeature"]!!
+
+        assertThat(firstFeatureOpEntry.getLastAccessTime(OP_FLAG_SELF)).isIn(before..afterFirst)
+        assertThat(secondFeatureOpEntry.getLastAccessTime(OP_FLAG_SELF)).isIn(afterFirst..after)
+
+        // When asked for any feature, the second access overrides the first
+        assertThat(opEntry.getLastAccessTime(OP_FLAG_SELF)).isIn(afterFirst..after)
+    }
+
+    @Test
+    fun noteFromTwoProxiesAndVerifyProxyInfo() {
+        // Find another app to blame
+        val otherAppInfo = context.packageManager
+                .resolveActivity(Intent(ACTION_APPLICATION_PREFERENCES), 0)!!
+                .activityInfo.applicationInfo
+        val otherPkg = otherAppInfo.packageName
+        val otherUid = otherAppInfo.uid
+
+        // Using the shell identity causes a trusted proxy note
+        runWithShellPermissionIdentity {
+            context.createFeatureContext("firstProxyFeature")
+                    .getSystemService(AppOpsManager::class.java)
+                    .noteProxyOp(OPSTR_WIFI_SCAN, otherPkg, otherUid, null, null)
+        }
+
+        // Make sure timestamps are distinct
+        sleep(1)
+
+        // untrusted proxy note
+        context.createFeatureContext("secondProxyFeature")
+                .getSystemService(AppOpsManager::class.java)
+                .noteProxyOp(OPSTR_WIFI_SCAN, otherPkg, otherUid, null, null)
+
+        val opEntry = callWithShellPermissionIdentity {
+            appOpsManager.getOpsForPackage(otherUid, otherPkg, OPSTR_WIFI_SCAN)
+        }[0].ops[0]!!
+        val featureOpEntry = opEntry.features[null]!!
+
+        assertThat(featureOpEntry.getLastProxyPackageName(OP_FLAG_TRUSTED_PROXIED))
+                .isEqualTo(myPackage)
+        assertThat(opEntry.getLastProxyPackageName(OP_FLAG_TRUSTED_PROXIED)).isEqualTo(myPackage)
+        assertThat(featureOpEntry.getLastProxyUid(OP_FLAG_TRUSTED_PROXIED)).isEqualTo(myUid)
+        assertThat(opEntry.getLastProxyUid(OP_FLAG_TRUSTED_PROXIED)).isEqualTo(myUid)
+
+        assertThat(featureOpEntry.getLastProxyPackageName(OP_FLAG_UNTRUSTED_PROXIED))
+                .isEqualTo(myPackage)
+        assertThat(opEntry.getLastProxyPackageName(OP_FLAG_UNTRUSTED_PROXIED)).isEqualTo(myPackage)
+        assertThat(featureOpEntry.getLastProxyUid(OP_FLAG_UNTRUSTED_PROXIED)).isEqualTo(myUid)
+        assertThat(opEntry.getLastProxyUid(OP_FLAG_UNTRUSTED_PROXIED)).isEqualTo(myUid)
+
+        assertThat(featureOpEntry.getLastProxyFeatureId(OP_FLAG_TRUSTED_PROXIED))
+                .isEqualTo("firstProxyFeature")
+        assertThat(featureOpEntry.getLastProxyFeatureId(OP_FLAG_UNTRUSTED_PROXIED))
+                .isEqualTo("secondProxyFeature")
+
+        // If asked for all op-flags the second feature overrides the first
+        assertThat(featureOpEntry.getLastProxyFeatureId(OP_FLAGS_ALL))
+                .isEqualTo("secondProxyFeature")
+    }
+}
