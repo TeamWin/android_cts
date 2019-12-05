@@ -232,7 +232,7 @@ public class DecoderTest extends MediaPlayerTestBase {
         testTimeStampOrdering(R.raw.sinesweepopusmp4);
     }
     public void testDecodeOpusChannelsAndRates() throws Exception {
-        int[] sampleRates = { 16000, 24000, 44100, 48000 };
+        int[] sampleRates = { 8000, 12000, 16000, 24000, 48000 };
         int[] channelMasks = { AudioFormat.CHANNEL_OUT_MONO,
                                AudioFormat.CHANNEL_OUT_STEREO,
                                AudioFormat.CHANNEL_OUT_5POINT1 };
