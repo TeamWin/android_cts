@@ -16,9 +16,6 @@
 
 package android.server.wm;
 
-import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
-import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
-import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Display.INVALID_DISPLAY;
 import static android.view.KeyEvent.ACTION_DOWN;
@@ -42,17 +39,12 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
-import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Canvas;
-import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.hardware.display.DisplayManager;
-import android.hardware.display.VirtualDisplay;
-import android.media.ImageReader;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
-import android.view.Display;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -119,18 +111,6 @@ public class WindowFocusTests extends WindowManagerTestBase {
         getInstrumentation().sendPointerSync(upEvent);
     }
 
-    /** Checks if the device supports multi-display. */
-    private static boolean supportsMultiDisplay() {
-        return getInstrumentation().getTargetContext().getPackageManager()
-                .hasSystemFeature(FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS);
-    }
-
-    /** Checks if per-display-focus is enabled in the device. */
-    private static boolean perDisplayFocusEnabled() {
-        return getInstrumentation().getTargetContext().getResources()
-                    .getBoolean(android.R.bool.config_perDisplayFocusEnabled);
-    }
-
     /**
      * Test the following conditions:
      * - Each display can have a focused window at the same time.
@@ -140,7 +120,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
      * - The window which lost top-focus can receive display-unspecified cancel events.
      */
     @Test
-    public void testKeyReceiving() throws InterruptedException {
+    public void testKeyReceiving() throws Exception {
         final PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class,
                 DEFAULT_DISPLAY);
         sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_0, INVALID_DISPLAY);
@@ -148,8 +128,9 @@ public class WindowFocusTests extends WindowManagerTestBase {
 
         assumeTrue(supportsMultiDisplay());
         try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
-            final int secondaryDisplayId = displaySession.createDisplay(
-                    getInstrumentation().getTargetContext()).getDisplayId();
+            final ActivityManagerState.ActivityDisplay display = displaySession
+                    .setPublicDisplay(true).setSimulateDisplay(true).createDisplay();
+            final int secondaryDisplayId = display.mId;
             final SecondaryActivity secondaryActivity =
                     startActivity(SecondaryActivity.class, secondaryDisplayId);
             sendAndAssertTargetConsumedKey(secondaryActivity, KEYCODE_2, INVALID_DISPLAY);
@@ -193,7 +174,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
      * Test if a display targeted by a key event can be moved to top in a single-focus system.
      */
     @Test
-    public void testMovingDisplayToTopByKeyEvent() throws InterruptedException {
+    public void testMovingDisplayToTopByKeyEvent() throws Exception {
         assumeTrue(supportsMultiDisplay());
         assumeFalse(perDisplayFocusEnabled());
 
@@ -201,8 +182,9 @@ public class WindowFocusTests extends WindowManagerTestBase {
                 DEFAULT_DISPLAY);
 
         try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
-            final int secondaryDisplayId = displaySession.createDisplay(
-                    getInstrumentation().getTargetContext()).getDisplayId();
+            final ActivityManagerState.ActivityDisplay display = displaySession
+                    .setPublicDisplay(true).setSimulateDisplay(true).createDisplay();
+            final int secondaryDisplayId = display.mId;
             final SecondaryActivity secondaryActivity =
                     startActivity(SecondaryActivity.class, secondaryDisplayId);
 
@@ -236,7 +218,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
      */
     @Test
     @FlakyTest(bugId = 135574991)
-    public void testPointerCapture() throws InterruptedException {
+    public void testPointerCapture() throws Exception {
         final PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class,
                 DEFAULT_DISPLAY);
 
@@ -246,8 +228,9 @@ public class WindowFocusTests extends WindowManagerTestBase {
 
         assumeTrue(supportsMultiDisplay());
         try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
-            final int secondaryDisplayId = displaySession.createDisplay(
-                    getInstrumentation().getTargetContext()).getDisplayId();
+            final ActivityManagerState.ActivityDisplay display = displaySession
+                    .setPublicDisplay(true).setSimulateDisplay(true).createDisplay();
+            final int secondaryDisplayId = display.mId;
             final SecondaryActivity secondaryActivity =
                     startActivity(SecondaryActivity.class, secondaryDisplayId);
 
@@ -269,7 +252,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
      * Test if the focused window can still have focus after it is moved to another display.
      */
     @Test
-    public void testDisplayChanged() throws InterruptedException {
+    public void testDisplayChanged() throws Exception {
         assumeTrue(supportsMultiDisplay());
 
         final PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class,
@@ -277,9 +260,13 @@ public class WindowFocusTests extends WindowManagerTestBase {
 
         final SecondaryActivity secondaryActivity;
         try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
-            final int secondaryDisplayId = displaySession.createDisplay(
-                    getInstrumentation().getTargetContext()).getDisplayId();
-            secondaryActivity = startActivity(SecondaryActivity.class, secondaryDisplayId);
+            final ActivityManagerState.ActivityDisplay display = displaySession
+                    .setPublicDisplay(true).createDisplay();
+            final int secondaryDisplayId = display.mId;
+            // For launching activity on untrusted display, by default the activity will not get
+            // focus for security concern.
+            secondaryActivity = startActivity(SecondaryActivity.class, secondaryDisplayId,
+                    false /* hasFocus */);
         }
         // Secondary display disconnected.
 
@@ -295,15 +282,16 @@ public class WindowFocusTests extends WindowManagerTestBase {
      * that display.
      */
     @Test
-    public void testTapFocusableWindow() throws InterruptedException {
+    public void testTapFocusableWindow() throws Exception {
         assumeTrue(supportsMultiDisplay());
         assumeFalse(perDisplayFocusEnabled());
 
         PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class, DEFAULT_DISPLAY);
 
         try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
-            final int secondaryDisplayId = displaySession.createDisplay(
-                    getInstrumentation().getTargetContext()).getDisplayId();
+            final ActivityManagerState.ActivityDisplay display = displaySession
+                    .setPublicDisplay(true).setSimulateDisplay(true).createDisplay();
+            final int secondaryDisplayId = display.mId;
             SecondaryActivity secondaryActivity = startActivity(SecondaryActivity.class,
                     secondaryDisplayId);
 
@@ -319,15 +307,16 @@ public class WindowFocusTests extends WindowManagerTestBase {
      * window on that display.
      */
     @Test
-    public void testTapNonFocusableWindow() throws InterruptedException {
+    public void testTapNonFocusableWindow() throws Exception {
         assumeTrue(supportsMultiDisplay());
         assumeFalse(perDisplayFocusEnabled());
 
         PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class, DEFAULT_DISPLAY);
 
         try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
-            final int secondaryDisplayId = displaySession.createDisplay(
-                    getInstrumentation().getTargetContext()).getDisplayId();
+            final ActivityManagerState.ActivityDisplay display = displaySession
+                    .setPublicDisplay(true).setSimulateDisplay(true).createDisplay();
+            final int secondaryDisplayId = display.mId;
             SecondaryActivity secondaryActivity = startActivity(SecondaryActivity.class,
                     secondaryDisplayId);
 
@@ -349,7 +338,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
     }
 
     private static class InputTargetActivity extends FocusableActivity {
-        private static final long TIMEOUT_DISPLAY_CHANGED = 1000; // milliseconds
+        private static final long TIMEOUT_DISPLAY_CHANGED = 5000; // milliseconds
         private static final long TIMEOUT_POINTER_CAPTURE_CHANGED = 1000;
         private static final long TIMEOUT_NEXT_KEY_EVENT = 1000;
 
@@ -489,38 +478,6 @@ public class WindowFocusTests extends WindowManagerTestBase {
         boolean losesFocusWhenNewFocusIsNotDrawn() {
             synchronized (this) {
                 return mLosesFocusWhenNewFocusIsNotDrawn;
-            }
-        }
-    }
-
-    private static class VirtualDisplaySession implements AutoCloseable {
-        private static final int WIDTH = 800;
-        private static final int HEIGHT = 480;
-        private static final int DENSITY = 160;
-
-        private VirtualDisplay mVirtualDisplay;
-        private ImageReader mReader;
-
-        Display createDisplay(Context context) {
-            if (mReader != null) {
-                throw new IllegalStateException(
-                        "Only one display can be created during this session.");
-            }
-            mReader = ImageReader.newInstance(WIDTH, HEIGHT, PixelFormat.RGBA_8888,
-                    2 /* maxImages */);
-            mVirtualDisplay = context.getSystemService(DisplayManager.class).createVirtualDisplay(
-                    "CtsDisplay", WIDTH, HEIGHT, DENSITY, mReader.getSurface(),
-                    VIRTUAL_DISPLAY_FLAG_PUBLIC | VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY);
-            return mVirtualDisplay.getDisplay();
-        }
-
-        @Override
-        public void close() {
-            if (mVirtualDisplay != null) {
-                mVirtualDisplay.release();
-            }
-            if (mReader != null) {
-                mReader.close();
             }
         }
     }

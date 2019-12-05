@@ -85,12 +85,12 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
 
             // Launch activities on new secondary display.
             launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
-            waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
-                    "Launched activity must be on top");
+            waitAndAssertActivityStateOnDisplay(TEST_ACTIVITY, STATE_RESUMED, newDisplay.mId,
+                    "Launched activity must be resumed");
 
             launchActivityOnDisplay(RESIZEABLE_ACTIVITY, newDisplay.mId);
-            waitAndAssertTopResumedActivity(RESIZEABLE_ACTIVITY, newDisplay.mId,
-                    "Launched activity must be on top");
+            waitAndAssertActivityStateOnDisplay(RESIZEABLE_ACTIVITY, STATE_RESUMED, newDisplay.mId,
+                    "Launched activity must be resumed");
 
             separateTestJournal();
             // Destroy the display and check if activities are removed from system.
@@ -127,8 +127,8 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
             // Launch activities on new secondary display.
             launchActivityOnDisplay(LAUNCH_TEST_ON_DESTROY_ACTIVITY, newDisplay.mId);
 
-            waitAndAssertTopResumedActivity(LAUNCH_TEST_ON_DESTROY_ACTIVITY, newDisplay.mId,
-                    "Launched activity must be on top");
+            waitAndAssertActivityStateOnDisplay(LAUNCH_TEST_ON_DESTROY_ACTIVITY, STATE_RESUMED,
+                    newDisplay.mId,"Launched activity must be resumed on secondary display");
 
             // Destroy the display
         }
@@ -150,8 +150,8 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         // Launch a resizeable activity on new secondary display.
         separateTestJournal();
         launchActivityOnDisplay(RESIZEABLE_ACTIVITY, newDisplay.mId);
-        waitAndAssertTopResumedActivity(RESIZEABLE_ACTIVITY, newDisplay.mId,
-                "Launched activity must be on top");
+        waitAndAssertActivityStateOnDisplay(RESIZEABLE_ACTIVITY, STATE_RESUMED, newDisplay.mId,
+                "Launched activity must be resumed");
 
         // Grab reported sizes and compute new with slight size change.
         final SizeInfo initialSize = getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY);
@@ -202,7 +202,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         // Launch activity on new secondary display.
         final ActivitySession resizeableActivitySession =
                 virtualLauncher.launchActivityOnDisplay(RESIZEABLE_ACTIVITY, newDisplay);
-        waitAndAssertTopResumedActivity(RESIZEABLE_ACTIVITY, newDisplay.mId,
+        waitAndAssertActivityStateOnDisplay(RESIZEABLE_ACTIVITY, STATE_RESUMED, newDisplay.mId,
                 "Top activity must be on secondary display");
         final SizeInfo initialSize = resizeableActivitySession.getConfigInfo().sizeInfo;
 
@@ -218,7 +218,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
 
         final ActivitySession testActivitySession =
                 virtualLauncher.launchActivityOnDisplay(TEST_ACTIVITY, newDisplay);
-        waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
+        waitAndAssertActivityStateOnDisplay(TEST_ACTIVITY, STATE_RESUMED, newDisplay.mId,
                 "Top activity must be on secondary display");
         final SizeInfo testActivitySize = testActivitySession.getConfigInfo().sizeInfo;
 
@@ -253,7 +253,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
 
         // Check that the activity is launched onto the external display
-        waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
+        waitAndAssertActivityStateOnDisplay(TEST_ACTIVITY, STATE_RESUMED, newDisplay.mId,
                 "Activity launched on external display must be resumed");
         mAmWmState.assertFocusedAppOnDisplay("App on default display must still be focused",
                 RESIZEABLE_ACTIVITY, DEFAULT_DISPLAY);
@@ -272,7 +272,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         }
         // For this test we create this virtual display with flag showContentWhenLocked, so it
         // cannot be effected when default display screen off.
-        waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
+        waitAndAssertActivityStateOnDisplay(TEST_ACTIVITY, STATE_RESUMED, newDisplay.mId,
                 "Activity launched on external display must be resumed");
     }
 
@@ -288,7 +288,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
 
         // Check that the test activity is resumed on the external display
-        waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
+        waitAndAssertActivityStateOnDisplay(TEST_ACTIVITY, STATE_RESUMED, newDisplay.mId,
                 "Activity launched on external display must be resumed");
 
         externalDisplaySession.turnDisplayOff();
@@ -302,7 +302,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         externalDisplaySession.turnDisplayOn();
 
         // Check that turning on the external display resumes the activity
-        waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
+        waitAndAssertActivityStateOnDisplay(TEST_ACTIVITY, STATE_RESUMED, newDisplay.mId,
                 "Activity launched on external display must be resumed");
     }
 
@@ -320,8 +320,9 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         // display.
         mAmWmState.getAmState().computeState();
         final int displayCount = mAmWmState.getAmState().getDisplayCount();
-        try (final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
-            final ActivityDisplay newDisplay = externalDisplaySession.createVirtualDisplay();
+        try (final VirtualDisplaySession externalDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = externalDisplaySession
+                    .setSimulateDisplay(true).createDisplay();
             launchActivityOnDisplay(VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId);
             waitAndAssertTopResumedActivity(VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId,
                     "Virtual activity should be Top Resumed Activity.");
@@ -382,7 +383,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         // Launch activity on new secondary display.
         launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
 
-        waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
+        waitAndAssertActivityStateOnDisplay(TEST_ACTIVITY, STATE_RESUMED, newDisplay.mId,
                 "Top activity must be on secondary display");
         assertBothDisplaysHaveResumedActivities(pair(DEFAULT_DISPLAY, VIRTUAL_DISPLAY_ACTIVITY),
                 pair(newDisplay.mId, TEST_ACTIVITY));
@@ -460,17 +461,14 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
                     .setPublicDisplay(true)
                     .setLaunchInSplitScreen(splitScreen)
                     .createDisplay();
-            mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
             if (splitScreen) {
                 mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
             }
 
             // Launch activity on new secondary display.
             launchActivityOnDisplay(RESIZEABLE_ACTIVITY, newDisplay.mId);
-            waitAndAssertTopResumedActivity(RESIZEABLE_ACTIVITY, newDisplay.mId,
-                    "Top activity must be on secondary display");
-            final int frontStackId = mAmWmState.getAmState().getFrontStackId(newDisplay.mId);
-            mAmWmState.assertFocusedStack("Top stack must be on secondary display", frontStackId);
+            waitAndAssertActivityStateOnDisplay(RESIZEABLE_ACTIVITY, STATE_RESUMED, newDisplay.mId,
+                    "Test activity must be on secondary display");
 
             separateTestJournal();
             // Destroy virtual display.
@@ -523,8 +521,8 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
 
         // Launch activity on new secondary display.
         launchActivityOnDisplay(BROADCAST_RECEIVER_ACTIVITY, newDisplay.mId);
-        waitAndAssertTopResumedActivity(BROADCAST_RECEIVER_ACTIVITY, newDisplay.mId,
-                "Top activity must be on secondary display");
+        waitAndAssertActivityStateOnDisplay(BROADCAST_RECEIVER_ACTIVITY, STATE_RESUMED,
+                newDisplay.mId,"Top activity must be on secondary display");
 
         if (lockScreenSession != null) {
             // Lock the device, so that activity containers will be detached.
@@ -561,8 +559,8 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
 
         launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
 
-        waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
-                "Activity launched on secondary display must be on top");
+        waitAndAssertActivityStateOnDisplay(TEST_ACTIVITY, STATE_RESUMED, newDisplay.mId,
+                "Activity launched on secondary display must be resumed");
 
         tapOnDisplayCenter(DEFAULT_DISPLAY);
 
@@ -570,7 +568,10 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
                 "Top activity must be on the primary display");
         assertBothDisplaysHaveResumedActivities(pair(DEFAULT_DISPLAY, VIRTUAL_DISPLAY_ACTIVITY),
                 pair(newDisplay.mId, TEST_ACTIVITY));
-        mAmWmState.assertFocusedAppOnDisplay("App on secondary display must still be focused",
+
+        tapOnDisplayCenter(newDisplay.mId);
+        mAmWmState.waitForValidState(TEST_ACTIVITY);
+        mAmWmState.assertFocusedAppOnDisplay("App on secondary display must be focused",
                 TEST_ACTIVITY, newDisplay.mId);
     }
 
@@ -609,8 +610,8 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         mAmWmState.waitForValidState(RESIZEABLE_ACTIVITY, TEST_ACTIVITY);
 
         // Check that the test activity is resumed on the external display and is on top
-        waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
-                "Activity on external display must be resumed and on top");
+        waitAndAssertActivityStateOnDisplay(TEST_ACTIVITY, STATE_RESUMED, newDisplay.mId,
+                "Activity on external display must be resumed");
         assertBothDisplaysHaveResumedActivities(pair(DEFAULT_DISPLAY, RESIZEABLE_ACTIVITY),
                 pair(newDisplay.mId, TEST_ACTIVITY));
 
@@ -621,8 +622,6 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
                 "Activity on primary display must be resumed and on top");
         assertBothDisplaysHaveResumedActivities(pair(DEFAULT_DISPLAY, RESIZEABLE_ACTIVITY),
                 pair(newDisplay.mId, TEST_ACTIVITY));
-        mAmWmState.assertFocusedAppOnDisplay("App on external display must still be focused",
-                TEST_ACTIVITY, newDisplay.mId);
     }
 
     /**
@@ -645,8 +644,8 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
 
         waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED,
                 "Expected stopped activity on default display");
-        waitAndAssertTopResumedActivity(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, newDisplay.mId,
-                "Expected resumed activity on secondary display");
+        waitAndAssertActivityStateOnDisplay(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, STATE_RESUMED,
+                newDisplay.mId, "Expected resumed activity on secondary display");
     }
 
     /**
@@ -659,8 +658,8 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         launchActivity(TEST_ACTIVITY);
         mAmWmState.waitForActivityState(TEST_ACTIVITY, STATE_RESUMED);
 
-        final ActivityDisplay newDisplay = createManagedExternalDisplaySession()
-                .createVirtualDisplay();
+        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+                .setSimulateDisplay(true).createDisplay();
         launchActivityOnDisplay(VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId);
         waitAndAssertTopResumedActivity(VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId,
                 "Virtual activity should be Top Resumed Activity.");
@@ -695,7 +694,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
                 .createDisplay();
         final String TOAST_NAME = "Toast";
         launchActivityOnDisplay(TOAST_ACTIVITY, newDisplay.mId);
-        waitAndAssertTopResumedActivity(TOAST_ACTIVITY, newDisplay.mId,
+        waitAndAssertActivityStateOnDisplay(TOAST_ACTIVITY, STATE_RESUMED, newDisplay.mId,
                 "Activity launched on external display must be resumed");
 
         assertTrue("Toast window must be shown", mAmWmState.waitForWithWmState(
@@ -716,7 +715,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
                     .createDisplay();
             launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
 
-            waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
+            waitAndAssertActivityStateOnDisplay(TEST_ACTIVITY, STATE_RESUMED, newDisplay.mId,
                     "Top activity must be the newly launched one");
             assertTopTaskSameSurfaceSizeWithDisplay(newDisplay.mId);
 
@@ -840,5 +839,4 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
                 mAmWmState.getAmState().getResumedActivitiesCountInPackage(
                         SDK_27_TEST_ACTIVITY.getPackageName()));
     }
-
 }

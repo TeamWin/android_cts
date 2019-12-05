@@ -224,6 +224,8 @@ public class ActivityViewTest extends ActivityManagerTestBase {
         final ImeEventStream stream = imeSession.openEventStream();
         launchActivityInActivityView(INPUT_METHOD_TEST_ACTIVITY, extras);
 
+        tapOnDisplayCenter(mActivityView.getVirtualDisplayId());
+
         // IME's seeing uniqueStringValue means that a valid connection is successfully
         // established from INPUT_METHOD_TEST_ACTIVITY the MockIme.
         expectEvent(stream, editorMatcher("onStartInput", privateImeOptions), IME_EVENT_TIMEOUT);
