@@ -32,19 +32,19 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class LocationPendingIntentCapture extends BroadcastReceiver implements AutoCloseable {
+public class LocationPendingIntentCapture extends BroadcastCapture {
 
     private static final String ACTION = "android.location.cts.LOCATION_BROADCAST";
     private static final AtomicInteger sRequestCode = new AtomicInteger(0);
 
-    private final Context mContext;
     private final LocationManager mLocationManager;
     private final PendingIntent mPendingIntent;
     private final LinkedBlockingQueue<Location> mLocations;
     private final LinkedBlockingQueue<Boolean> mProviderChanges;
 
     public LocationPendingIntentCapture(Context context) {
-        mContext = context;
+        super(context);
+
         mLocationManager = context.getSystemService(LocationManager.class);
         mPendingIntent = PendingIntent.getBroadcast(context, sRequestCode.getAndIncrement(),
                 new Intent(ACTION).setPackage(context.getPackageName()),
@@ -52,7 +52,7 @@ public class LocationPendingIntentCapture extends BroadcastReceiver implements A
         mLocations = new LinkedBlockingQueue<>();
         mProviderChanges = new LinkedBlockingQueue<>();
 
-        context.registerReceiver(this, new IntentFilter(ACTION));
+        register(ACTION);
     }
 
     public PendingIntent getPendingIntent() {
@@ -77,13 +77,14 @@ public class LocationPendingIntentCapture extends BroadcastReceiver implements A
 
     @Override
     public void close() {
+        super.close();
         mLocationManager.removeUpdates(mPendingIntent);
-        mContext.unregisterReceiver(this);
         mPendingIntent.cancel();
     }
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        super.onReceive(context, intent);
         if (intent.hasExtra(KEY_PROVIDER_ENABLED)) {
             mProviderChanges.add(intent.getBooleanExtra(KEY_PROVIDER_ENABLED, false));
         } else if (intent.hasExtra(KEY_LOCATION_CHANGED)) {

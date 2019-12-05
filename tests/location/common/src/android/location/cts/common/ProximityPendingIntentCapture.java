@@ -14,25 +14,25 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ProximityPendingIntentCapture extends BroadcastReceiver implements AutoCloseable {
+public class ProximityPendingIntentCapture extends BroadcastCapture {
 
     private static final String ACTION = "android.location.cts.LOCATION_BROADCAST";
     private static final AtomicInteger sRequestCode = new AtomicInteger(0);
 
-    private final Context mContext;
     private final LocationManager mLocationManager;
     private final PendingIntent mPendingIntent;
     private final LinkedBlockingQueue<Boolean> mProximityChanges;
 
     public ProximityPendingIntentCapture(Context context) {
-        mContext = context;
+        super(context);
+
         mLocationManager = context.getSystemService(LocationManager.class);
         mPendingIntent = PendingIntent.getBroadcast(context, sRequestCode.getAndIncrement(),
                 new Intent(ACTION).setPackage(context.getPackageName()),
                 PendingIntent.FLAG_CANCEL_CURRENT);
         mProximityChanges = new LinkedBlockingQueue<>();
 
-        context.registerReceiver(this, new IntentFilter(ACTION));
+        register(ACTION);
     }
 
     public PendingIntent getPendingIntent() {
@@ -49,13 +49,14 @@ public class ProximityPendingIntentCapture extends BroadcastReceiver implements 
 
     @Override
     public void close() {
+        super.close();
         mLocationManager.removeProximityAlert(mPendingIntent);
-        mContext.unregisterReceiver(this);
         mPendingIntent.cancel();
     }
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        super.onReceive(context, intent);
         if (intent.hasExtra(KEY_PROXIMITY_ENTERING)) {
             mProximityChanges.add(intent.getBooleanExtra(KEY_PROXIMITY_ENTERING, false));
         }
