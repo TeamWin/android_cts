@@ -22,18 +22,22 @@ import junit.framework.TestCase;
 
 public class SdkExtensionsTest extends TestCase {
 
-    /**
-     * Verify that getExtensionVersion only accepts valid extension SDKs
-     */
+    /** Verify that getExtensionVersion only accepts valid extension SDKs */
     public void testBadArgument() throws Exception {
-        try {
-            SdkExtensions.getExtensionVersion(Build.VERSION_CODES.Q);
-            fail("expected IllegalArgumentException");
-        } catch (IllegalArgumentException expected) { }
+        // R is the first SDK version with extensions.
+        for (int sdk = -1_000_000; sdk < Build.VERSION_CODES.R; sdk++) {
+            try {
+                SdkExtensions.getExtensionVersion(sdk);
+                fail("expected IllegalArgumentException");
+            } catch (IllegalArgumentException expected) { }
+        }
     }
 
-    public void testDefault() throws Exception {
-        int r = SdkExtensions.getExtensionVersion(Build.VERSION_CODES.R);
-        assertTrue(r >= 0);
+    /** Verifies that getExtensionVersion only return existing versions */
+    public void testValidValues() throws Exception {
+        for (int sdk = Build.VERSION_CODES.R; sdk <= 1_000_000; sdk++) {
+            // No extension SDKs versions yet.
+            assertEquals(0, SdkExtensions.getExtensionVersion(sdk));
+        }
     }
 }
