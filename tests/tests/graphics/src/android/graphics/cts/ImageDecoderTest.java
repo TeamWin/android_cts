@@ -1533,9 +1533,59 @@ public class ImageDecoderTest {
         }
     }
 
+    // One static PNG and one animated GIF to test setting invalid crop rects,
+    // to test both paths (animated and non-animated) through ImageDecoder.
+    private static Object[] resourcesForCropTests() {
+        return new Object[] { R.drawable.png_test, R.drawable.animated };
+    }
+
     @Test(expected = IllegalStateException.class)
-    public void testCropNegativeLeft() {
-        ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
+    @Parameters(method = "resourcesForCropTests")
+    public void testInvertCropWidth(int resId) {
+        ImageDecoder.Source src = mCreators[0].apply(resId);
+        try {
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                // This rect is unsorted.
+                decoder.setCrop(new Rect(info.getSize().getWidth(), 0, 0,
+                                         info.getSize().getHeight()));
+            });
+        } catch (IOException e) {
+            fail("Failed with exception " + e);
+        }
+    }
+
+    @Test(expected = IllegalStateException.class)
+    @Parameters(method = "resourcesForCropTests")
+    public void testInvertCropHeight(int resId) {
+        ImageDecoder.Source src = mCreators[0].apply(resId);
+        try {
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                // This rect is unsorted.
+                decoder.setCrop(new Rect(0, info.getSize().getWidth(),
+                                         info.getSize().getHeight(), 0));
+            });
+        } catch (IOException e) {
+            fail("Failed with exception " + e);
+        }
+    }
+
+    @Test(expected = IllegalStateException.class)
+    @Parameters(method = "resourcesForCropTests")
+    public void testEmptyCrop(int resId) {
+        ImageDecoder.Source src = mCreators[0].apply(resId);
+        try {
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                decoder.setCrop(new Rect(1, 1, 1, 1));
+            });
+        } catch (IOException e) {
+            fail("Failed with exception " + e);
+        }
+    }
+
+    @Test(expected = IllegalStateException.class)
+    @Parameters(method = "resourcesForCropTests")
+    public void testCropNegativeLeft(int resId) {
+        ImageDecoder.Source src = mCreators[0].apply(resId);
         try {
             ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
                 decoder.setCrop(new Rect(-1, 0, info.getSize().getWidth(),
@@ -1547,21 +1597,9 @@ public class ImageDecoderTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testCropNegativeLeftAnimated() {
-        ImageDecoder.Source src = mCreators[0].apply(R.drawable.animated);
-        try {
-            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
-                decoder.setCrop(new Rect(-1, 0, info.getSize().getWidth(),
-                                                info.getSize().getHeight()));
-            });
-        } catch (IOException e) {
-            fail("Failed with exception " + e);
-        }
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testCropNegativeTop() {
-        ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
+    @Parameters(method = "resourcesForCropTests")
+    public void testCropNegativeTop(int resId) {
+        ImageDecoder.Source src = mCreators[0].apply(resId);
         try {
             ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
                 decoder.setCrop(new Rect(0, -1, info.getSize().getWidth(),
@@ -1573,21 +1611,9 @@ public class ImageDecoderTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testCropNegativeTopAnimated() {
-        ImageDecoder.Source src = mCreators[0].apply(R.drawable.animated);
-        try {
-            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
-                decoder.setCrop(new Rect(0, -1, info.getSize().getWidth(),
-                                                info.getSize().getHeight()));
-            });
-        } catch (IOException e) {
-            fail("Failed with exception " + e);
-        }
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testCropTooWide() {
-        ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
+    @Parameters(method = "resourcesForCropTests")
+    public void testCropTooWide(int resId) {
+        ImageDecoder.Source src = mCreators[0].apply(resId);
         try {
             ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
                 decoder.setCrop(new Rect(1, 0, info.getSize().getWidth() + 1,
@@ -1598,22 +1624,11 @@ public class ImageDecoderTest {
         }
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void testCropTooWideAnimated() {
-        ImageDecoder.Source src = mCreators[0].apply(R.drawable.animated);
-        try {
-            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
-                decoder.setCrop(new Rect(1, 0, info.getSize().getWidth() + 1,
-                                               info.getSize().getHeight()));
-            });
-        } catch (IOException e) {
-            fail("Failed with exception " + e);
-        }
-    }
 
     @Test(expected = IllegalStateException.class)
-    public void testCropTooTall() {
-        ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
+    @Parameters(method = "resourcesForCropTests")
+    public void testCropTooTall(int resId) {
+        ImageDecoder.Source src = mCreators[0].apply(resId);
         try {
             ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
                 decoder.setCrop(new Rect(0, 1, info.getSize().getWidth(),
@@ -1625,23 +1640,9 @@ public class ImageDecoderTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testCropResize() {
-        ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
-        try {
-            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
-                Size size = info.getSize();
-                decoder.setTargetSize(size.getWidth() / 2, size.getHeight() / 2);
-                decoder.setCrop(new Rect(0, 0, size.getWidth(),
-                                               size.getHeight()));
-            });
-        } catch (IOException e) {
-            fail("Failed with exception " + e);
-        }
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testCropResizeAnimated() {
-        ImageDecoder.Source src = mCreators[0].apply(R.drawable.animated);
+    @Parameters(method = "resourcesForCropTests")
+    public void testCropResize(int resId) {
+        ImageDecoder.Source src = mCreators[0].apply(resId);
         try {
             ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
                 Size size = info.getSize();
