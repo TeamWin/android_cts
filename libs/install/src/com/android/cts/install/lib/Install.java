@@ -39,6 +39,7 @@ public class Install {
     private boolean mIsStaged = false;
     private boolean mIsDowngrade = false;
     private boolean mEnableRollback = false;
+    private int mRollbackDataPolicy = 0;
     private int mSessionMode = PackageInstaller.SessionParams.MODE_FULL_INSTALL;
     private int mInstallFlags = 0;
 
@@ -111,6 +112,15 @@ public class Install {
      */
     public Install setEnableRollback() {
         mEnableRollback = true;
+        return this;
+    }
+
+    /**
+     * Enables rollback for the install with specified rollback data policy.
+     */
+    public Install setEnableRollback(int dataPolicy) {
+        mEnableRollback = true;
+        mRollbackDataPolicy = dataPolicy;
         return this;
     }
 
@@ -204,7 +214,7 @@ public class Install {
             params.setStaged();
         }
         params.setRequestDowngrade(mIsDowngrade);
-        params.setEnableRollback(mEnableRollback);
+        params.setEnableRollback(mEnableRollback, mRollbackDataPolicy);
         if (mInstallFlags != 0) {
             InstallUtils.mutateInstallFlags(params, mInstallFlags);
         }

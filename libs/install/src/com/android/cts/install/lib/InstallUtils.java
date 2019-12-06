@@ -46,6 +46,8 @@ import java.util.concurrent.LinkedBlockingQueue;
  * Utilities to facilitate installation in tests.
  */
 public class InstallUtils {
+    private static final int NUM_MAX_POLLS = 5;
+    private static final int POLL_WAIT_TIME_MILLIS = 200;
 
     /**
      * Adopts the given shell permissions.
@@ -217,6 +219,7 @@ public class InstallUtils {
         Intent intent = new Intent();
         intent.setComponent(new ComponentName(packageName,
                 "com.android.cts.install.lib.testapp.ProcessUserData"));
+        intent.setAction("PROCESS_USER_DATA");
         Context context = InstrumentationRegistry.getContext();
 
         HandlerThread handlerThread = new HandlerThread("RollbackTestHandlerThread");
@@ -225,7 +228,7 @@ public class InstallUtils {
         // It can sometimes take a while after rollback before the app will
         // receive this broadcast, so try a few times in a loop.
         String result = NO_RESPONSE;
-        for (int i = 0; result.equals(NO_RESPONSE) && i < 5; ++i) {
+        for (int i = 0; i < NUM_MAX_POLLS; ++i) {
             BlockingQueue<String> resultQueue = new LinkedBlockingQueue<>();
             context.sendOrderedBroadcast(intent, null, new BroadcastReceiver() {
                 @Override
@@ -244,12 +247,59 @@ public class InstallUtils {
 
             try {
                 result = resultQueue.take();
+                if (!result.equals(NO_RESPONSE)) {
+                    break;
+                }
+                Thread.sleep(POLL_WAIT_TIME_MILLIS);
             } catch (InterruptedException e) {
                 throw new AssertionError(e);
             }
         }
 
         assertThat(result).isEqualTo("OK");
+    }
+
+    /**
+     * Retrieves the app's user data version from userdata.txt.
+     * @return -1 if userdata.txt doesn't exist or -2 if the app doesn't handle the broadcast which
+     * could happen when the app crashes or doesn't start at all.
+     */
+    public static int getUserDataVersion(String packageName) {
+        Intent intent = new Intent();
+        intent.setComponent(new ComponentName(packageName,
+                "com.android.cts.install.lib.testapp.ProcessUserData"));
+        intent.setAction("GET_USER_DATA_VERSION");
+        Context context = InstrumentationRegistry.getContext();
+
+        HandlerThread handlerThread = new HandlerThread("RollbackTestHandlerThread");
+        handlerThread.start();
+
+        // The response code returned when the broadcast is not received by the app or when the app
+        // crashes during handling the broadcast. We will retry when this code is returned.
+        final int noResponse = -2;
+        // It can sometimes take a while after rollback before the app will
+        // receive this broadcast, so try a few times in a loop.
+        BlockingQueue<Integer> resultQueue = new LinkedBlockingQueue<>();
+        for (int i = 0; i < NUM_MAX_POLLS; ++i) {
+            context.sendOrderedBroadcast(intent, null, new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    resultQueue.add(getResultCode());
+                }
+            }, new Handler(handlerThread.getLooper()), noResponse, null, null);
+
+            try {
+                int userDataVersion = resultQueue.take();
+                if (userDataVersion != noResponse) {
+                    return userDataVersion;
+                }
+                Thread.sleep(POLL_WAIT_TIME_MILLIS);
+            } catch (InterruptedException e) {
+                throw new AssertionError(e);
+            }
+        }
+
+        return noResponse;
     }
 
     /**
