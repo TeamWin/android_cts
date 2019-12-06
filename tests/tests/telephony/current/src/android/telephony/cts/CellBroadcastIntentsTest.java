@@ -25,6 +25,8 @@ import android.telephony.CellBroadcastIntents;
 
 import androidx.test.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.ShellIdentityUtils;
+
 import org.junit.Test;
 
 public class CellBroadcastIntentsTest {
@@ -42,5 +44,17 @@ public class CellBroadcastIntentsTest {
             return;
         }
         fail();
+    }
+
+    @Test
+    public void testGetIntentForBackgroundReceiversWithPermission() {
+        ShellIdentityUtils.invokeStaticMethodWithShellPermissions(
+                () -> {
+                    CellBroadcastIntents.sendOrderedBroadcastForBackgroundReceivers(
+                            InstrumentationRegistry.getContext(), UserHandle.ALL,
+                            new Intent(TEST_ACTION),
+                            null, null, null, null, 0, null, null);
+                    return true;
+                });
     }
 }
