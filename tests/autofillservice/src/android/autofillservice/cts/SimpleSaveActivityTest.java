@@ -1434,6 +1434,136 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
     }
 
+    enum SetTextCondition {
+        NORMAL,
+        HAS_SESSION,
+        EMPTY_TEXT,
+        FOCUSED,
+        NOT_IMPORTANT_FOR_AUTOFILL,
+        INVISIBLE
+    }
+
+    /**
+     * Tests scenario when a text field's text is set automatically, it should trigger autofill and
+     * show Save UI.
+     */
+    @Test
+    public void testShowSaveUiWhenSetTextAutomatically() throws Exception {
+        triggerAutofillWhenSetTextAutomaticallyTest(SetTextCondition.NORMAL);
+    }
+
+    /**
+     * Tests scenario when a text field's text is set automatically, it should not trigger autofill
+     * when there is an existing session.
+     */
+    @Test
+    public void testNotTriggerAutofillWhenSetTextWhileSessionExists() throws Exception {
+        triggerAutofillWhenSetTextAutomaticallyTest(SetTextCondition.HAS_SESSION);
+    }
+
+    /**
+     * Tests scenario when a text field's text is set automatically, it should not trigger autofill
+     * when the text is empty.
+     */
+    @Test
+    public void testNotTriggerAutofillWhenSetTextWhileEmptyText() throws Exception {
+        triggerAutofillWhenSetTextAutomaticallyTest(SetTextCondition.EMPTY_TEXT);
+    }
+
+    /**
+     * Tests scenario when a text field's text is set automatically, it should not trigger autofill
+     * when the field is focused.
+     */
+    @Test
+    public void testNotTriggerAutofillWhenSetTextWhileFocused() throws Exception {
+        triggerAutofillWhenSetTextAutomaticallyTest(SetTextCondition.FOCUSED);
+    }
+
+    /**
+     * Tests scenario when a text field's text is set automatically, it should not trigger autofill
+     * when the field is not important for autofill.
+     */
+    @Test
+    public void testNotTriggerAutofillWhenSetTextWhileNotImportantForAutofill() throws Exception {
+        triggerAutofillWhenSetTextAutomaticallyTest(SetTextCondition.NOT_IMPORTANT_FOR_AUTOFILL);
+    }
+
+    /**
+     * Tests scenario when a text field's text is set automatically, it should not trigger autofill
+     * when the field is not visible.
+     */
+    @Test
+    public void testNotTriggerAutofillWhenSetTextWhileInvisible() throws Exception {
+        triggerAutofillWhenSetTextAutomaticallyTest(SetTextCondition.INVISIBLE);
+    }
+
+    private void triggerAutofillWhenSetTextAutomaticallyTest(SetTextCondition condition)
+            throws Exception {
+        startActivity();
+
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
+                .build());
+
+        CharSequence inputText = "108";
+
+        switch (condition) {
+            case NORMAL:
+                // Nothing.
+                break;
+            case HAS_SESSION:
+                mActivity.syncRunOnUiThread(() -> {
+                    mActivity.mInput.setText("100");
+                });
+                sReplier.getNextFillRequest();
+                break;
+            case EMPTY_TEXT:
+                inputText = "";
+                break;
+            case FOCUSED:
+                mActivity.syncRunOnUiThread(() -> {
+                    mActivity.mInput.requestFocus();
+                });
+                sReplier.getNextFillRequest();
+                break;
+            case NOT_IMPORTANT_FOR_AUTOFILL:
+                mActivity.syncRunOnUiThread(() -> {
+                    mActivity.mInput.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO);
+                });
+                break;
+            case INVISIBLE:
+                mActivity.syncRunOnUiThread(() -> {
+                    mActivity.mInput.setVisibility(View.INVISIBLE);
+                });
+                break;
+            default:
+                throw new IllegalArgumentException("invalid condition: " + condition);
+        }
+
+        // Trigger autofill by setting text.
+        final CharSequence text = inputText;
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mInput.setText(text);
+        });
+
+        if (condition == SetTextCondition.NORMAL) {
+            sReplier.getNextFillRequest();
+
+            mActivity.syncRunOnUiThread(() -> {
+                mActivity.mInput.setText("100");
+                mActivity.mCommit.performClick();
+            });
+
+            mUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
+        } else {
+            sReplier.assertOnFillRequestNotCalled();
+        }
+    }
+
     @Test
     public void testExplicitySaveButton() throws Exception {
         explicitySaveButtonTest(false, 0);
