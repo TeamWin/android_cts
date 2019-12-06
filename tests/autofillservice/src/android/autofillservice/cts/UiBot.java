@@ -55,10 +55,13 @@ import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
 import android.text.Html;
+import android.text.Spanned;
+import android.text.style.URLSpan;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 
 import androidx.annotation.NonNull;
@@ -1196,5 +1199,26 @@ public final class UiBot {
                     + timeout + "ms instead");
             SystemClock.sleep(timeout);
         }
+    }
+
+    /**
+     * Finds the first {@link URLSpan} on the current screen.
+     */
+    public URLSpan findFirstUrlSpanWithText(String str) throws Exception {
+        final List<AccessibilityNodeInfo> list = mAutoman.getRootInActiveWindow()
+                .findAccessibilityNodeInfosByText(str);
+        if (list.isEmpty()) {
+            throw new AssertionError("Didn't found AccessibilityNodeInfo with " + str);
+        }
+
+        final AccessibilityNodeInfo text = list.get(0);
+        final CharSequence accessibilityTextWithSpan = text.getText();
+        if (!(accessibilityTextWithSpan instanceof Spanned)) {
+            throw new AssertionError("\"" + text.getViewIdResourceName() + "\" was not a Spanned");
+        }
+
+        final URLSpan[] spans = ((Spanned) accessibilityTextWithSpan)
+                .getSpans(0, accessibilityTextWithSpan.length(), URLSpan.class);
+        return spans[0];
     }
 }
