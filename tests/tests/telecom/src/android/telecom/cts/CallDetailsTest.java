@@ -465,6 +465,7 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
         exampleExtras.putString(Connection.EXTRA_CHILD_ADDRESS, TEST_CHILD_NUMBER);
         exampleExtras.putString(Connection.EXTRA_LAST_FORWARDED_NUMBER, TEST_FORWARDED_NUMBER);
         exampleExtras.putInt(TEST_EXTRA_KEY, TEST_EXTRA_VALUE);
+        exampleExtras.putInt(Connection.EXTRA_AUDIO_CODEC, Connection.AUDIO_CODEC_AMR);
         mConnection.setExtras(exampleExtras);
 
         // Make sure we got back a bundle with the call subject key set.
@@ -476,6 +477,8 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
         assertEquals(TEST_FORWARDED_NUMBER,
                 callExtras.getString(Connection.EXTRA_LAST_FORWARDED_NUMBER));
         assertEquals(TEST_EXTRA_VALUE, callExtras.getInt(TEST_EXTRA_KEY));
+        assertEquals(Connection.AUDIO_CODEC_AMR,
+                callExtras.getInt(Connection.EXTRA_AUDIO_CODEC));
     }
 
     /**

@@ -117,7 +117,8 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
 
     private void validateActivityLaunchOnNewDisplay(int activityType) {
         // Create new virtual display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
+        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+                .setSimulateDisplay(true).createDisplay();
 
         // Launch activity on new secondary display.
         separateTestJournal();
@@ -216,7 +217,7 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
         launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
 
         // Check that the test activity is resumed on the external display
-        waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
+        waitAndAssertActivityStateOnDisplay(TEST_ACTIVITY, STATE_RESUMED, newDisplay.mId,
                 "Activity launched on external display must be resumed");
         mAmWmState.assertFocusedAppOnDisplay("App on default display must still be focused",
                 RESIZEABLE_ACTIVITY, DEFAULT_DISPLAY);
@@ -229,7 +230,8 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
     @Test
     public void testLaunchNonResizeableActivityOnSecondaryDisplay() {
         // Create new virtual display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
+        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+                .setSimulateDisplay(true).createDisplay();
 
         // Launch activity on new secondary display.
         launchActivityOnDisplay(NON_RESIZEABLE_ACTIVITY, newDisplay.mId);
@@ -259,7 +261,8 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
         final VirtualDisplayLauncher virtualLauncher =
                 mObjectTracker.manage(new VirtualDisplayLauncher());
         // Create new virtual display.
-        final ActivityDisplay newDisplay = virtualLauncher.createDisplay();
+        final ActivityDisplay newDisplay = virtualLauncher
+                .setSimulateDisplay(true).createDisplay();
         // Launch a non-resizeable activity on a primary display.
         final ActivitySession nonResizeableSession = virtualLauncher.launchActivity(
                 builder -> builder.setTargetActivity(NON_RESIZEABLE_ACTIVITY).setNewTask(true));
@@ -316,7 +319,8 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
     @Test
     public void testLaunchNonResizeableActivityFromSecondaryDisplayNewTask() {
         // Create new virtual display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
+        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+                .setSimulateDisplay(true).createDisplay();
 
         // Launch activity on new secondary display.
         launchActivityOnDisplay(LAUNCHING_ACTIVITY, newDisplay.mId);
@@ -352,7 +356,8 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
     @Test
     public void testConsequentLaunchActivity() {
         // Create new virtual display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
+        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+                .setSimulateDisplay(true).createDisplay();
 
         // Launch activity on new secondary display.
         launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
@@ -402,7 +407,8 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
     @Test
     public void testConsequentLaunchActivityFromVirtualDisplay() {
         // Create new virtual display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
+        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+                .setSimulateDisplay(true).createDisplay();
 
         // Launch activity on new secondary display.
         launchActivityOnDisplay(LAUNCHING_ACTIVITY, newDisplay.mId);
@@ -426,7 +432,8 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
     @Test
     public void testConsequentLaunchActivityFromVirtualDisplayToTargetDisplay() {
         // Create new virtual display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
+        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+                .setSimulateDisplay(true).createDisplay();
 
         // Launch activity on new secondary display.
         launchActivityOnDisplay(LAUNCHING_ACTIVITY, newDisplay.mId);
@@ -551,7 +558,7 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
         executeShellCommand(launchCommand);
 
         // Check that activity is brought to front.
-        waitAndAssertTopResumedActivity(LAUNCHING_ACTIVITY, newDisplay.mId,
+        waitAndAssertActivityStateOnDisplay(LAUNCHING_ACTIVITY, STATE_RESUMED, newDisplay.mId,
                 "Existing task must be brought to front");
 
         // Check that task has moved from primary display to secondary.
@@ -594,7 +601,7 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
         executeShellCommand(launchCommand);
 
         // Check that activity is brought to front.
-        waitAndAssertTopResumedActivity(RESIZEABLE_ACTIVITY, newDisplay.mId,
+        waitAndAssertActivityStateOnDisplay(RESIZEABLE_ACTIVITY, STATE_RESUMED, newDisplay.mId,
                 "Existing task must be brought to front");
 
         // Check that task has moved from primary display to secondary.
@@ -610,7 +617,8 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
      */
     @Test
     public void testTaskMatchAcrossDisplays() {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
+        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+                .setSimulateDisplay(true).createDisplay();
 
         launchActivityOnDisplay(LAUNCHING_ACTIVITY, newDisplay.mId);
         mAmWmState.computeState(LAUNCHING_ACTIVITY);
@@ -686,7 +694,8 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
      */
     @Test
     public void testLaunchDisplayAffinityMatch() {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
+        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+                .setSimulateDisplay(true).createDisplay();
 
         launchActivityOnDisplay(LAUNCHING_ACTIVITY, newDisplay.mId);
 
@@ -765,14 +774,12 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
                 .createDisplay();
 
         // Check that activity is launched and placed correctly.
-        waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
+        waitAndAssertActivityStateOnDisplay(TEST_ACTIVITY, STATE_RESUMED, newDisplay.mId,
                 "Test activity must be on top");
         final int frontStackId = mAmWmState.getAmState().getFrontStackId(newDisplay.mId);
         final ActivityStack firstFrontStack = mAmWmState.getAmState().getStackById(frontStackId);
         assertEquals("Activity launched on secondary display must be resumed",
                 getActivityName(TEST_ACTIVITY), firstFrontStack.mResumedActivity);
-        mAmWmState.assertFocusedStack("Top stack must be on secondary display",
-                frontStackId);
     }
 
     /** Tests launching of activities on a single task instance display. */

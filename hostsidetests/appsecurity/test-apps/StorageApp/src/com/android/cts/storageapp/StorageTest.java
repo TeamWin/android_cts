@@ -103,7 +103,8 @@ public class StorageTest extends InstrumentationTestCase {
             device.findObject(new UiSelector().textContains("internal storage")).click();
             device.waitForIdle();
         }
-        device.findObject(new UiSelector().textContains("Clear")).click();
+        String clearString = isCar(getContext()) ? "Clear storage" : "Clear";
+        device.findObject(new UiSelector().textContains(clearString)).click();
         device.waitForIdle();
         device.findObject(new UiSelector().text("OK")).click();
         device.waitForIdle();
@@ -320,5 +321,10 @@ public class StorageTest extends InstrumentationTestCase {
     private static boolean isTV(Context context) {
         final PackageManager packageManager = context.getPackageManager();
         return packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+    }
+
+    private static boolean isCar(Context context) {
+        PackageManager pm = context.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 }

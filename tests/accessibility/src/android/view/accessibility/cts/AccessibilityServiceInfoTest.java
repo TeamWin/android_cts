@@ -98,7 +98,10 @@ public class AccessibilityServiceInfoTest {
                 | AccessibilityServiceInfo.CAPABILITY_CAN_REQUEST_TOUCH_EXPLORATION
                 | AccessibilityServiceInfo.CAPABILITY_CAN_RETRIEVE_WINDOW_CONTENT);
         assertEquals("foo.bar.Activity", speakingService.getSettingsActivityName());
+        assertEquals(R.drawable.size_48x48, speakingService.getAnimatedImageRes());
         assertEquals("Some description", speakingService.loadDescription(
+                getInstrumentation().getContext().getPackageManager()));
+        assertEquals("Some html description", speakingService.loadHtmlDescription(
                 getInstrumentation().getContext().getPackageManager()));
         assertEquals("Some summary", speakingService.loadSummary(
                 getInstrumentation().getContext().getPackageManager()));

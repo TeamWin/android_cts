@@ -18,6 +18,7 @@ package com.android.cts.devicepolicy;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -134,6 +135,15 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
                         + " android.permission.READ_PHONE_STATE");
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DeviceIdentifiersTest",
                 "testProfileOwnerCannotGetDeviceIdentifiersWithoutPermission", mUserId);
+    }
+
+    @FlakyTest(bugId = 137088260)
+    @Test
+    public void testWifi() throws Exception {
+        if (!mHasFeature || !hasDeviceFeature("android.hardware.wifi")) {
+            return;
+        }
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".WifiTest", "testGetWifiMacAddress", mUserId);
     }
 
     private void removeOrgOwnedProfile() throws DeviceNotAvailableException {

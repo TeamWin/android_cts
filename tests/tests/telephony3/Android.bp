@@ -24,6 +24,7 @@ android_test {
     test_suites: [
         "cts",
         "vts",
+        "mts",
         "general-tests",
     ],
     libs: ["android.test.runner.stubs"] + ["android.test.base.stubs"],

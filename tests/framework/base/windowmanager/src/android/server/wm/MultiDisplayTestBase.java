@@ -40,6 +40,8 @@ import static android.view.Display.INVALID_DISPLAY;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
+import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertEquals;
@@ -63,12 +65,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.cts.mockime.ImeEvent;
+import com.android.cts.mockime.ImeEventStream;
 
 import org.junit.Before;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -658,6 +663,16 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
     /** @see ObjectTracker#manage(AutoCloseable) */
     protected ExternalDisplaySession createManagedExternalDisplaySession() {
         return mObjectTracker.manage(new ExternalDisplaySession());
+    }
+
+    @SafeVarargs
+    final void waitOrderedImeEventsThenAssertImeShown(ImeEventStream stream, int displayId,
+            Predicate<ImeEvent>... conditions) throws Exception {
+        for (Predicate<ImeEvent> condition : conditions) {
+            expectEvent(stream, condition, TimeUnit.SECONDS.toMillis(5) /* eventTimeout */);
+        }
+        // Assert the IME is shown on the expected display.
+        mAmWmState.waitAndAssertImeWindowShownOnDisplay(displayId);
     }
 
     /**

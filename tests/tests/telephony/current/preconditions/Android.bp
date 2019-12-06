@@ -27,6 +27,7 @@ java_test_helper_library {
     test_suites: [
         "cts",
         "vts",
+        "mts",
         "general-tests",
     ],
 

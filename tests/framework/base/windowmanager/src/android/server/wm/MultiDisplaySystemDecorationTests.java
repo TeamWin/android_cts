@@ -17,6 +17,7 @@
 package android.server.wm;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
+import static android.server.wm.ActivityManagerState.STATE_RESUMED;
 import static android.server.wm.app.Components.HOME_ACTIVITY;
 import static android.server.wm.app.Components.SECONDARY_HOME_ACTIVITY;
 import static android.server.wm.app.Components.SINGLE_HOME_ACTIVITY;
@@ -295,12 +296,15 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
         // Create new virtual display with system decoration support.
         final ActivityDisplay newDisplay = createManagedExternalDisplaySession()
-                .setShowSystemDecorations(true).createVirtualDisplay();
+                .setShowSystemDecorations(true)
+                .createVirtualDisplay();
 
         // If default home doesn't support multi-instance, default secondary home activity
         // should be automatically launched on the new display.
-        waitAndAssertTopResumedActivity(getDefaultSecondaryHomeComponent(), newDisplay.mId,
-                "Activity launched on secondary display must be focused and on top");
+        waitAndAssertActivityStateOnDisplay(getDefaultSecondaryHomeComponent(), STATE_RESUMED,
+                newDisplay.mId, "Activity launched on secondary display must be resumed");
+
+        tapOnDisplayCenter(newDisplay.mId);
         assertEquals("Top activity must be home type", ACTIVITY_TYPE_HOME,
                 mAmWmState.getAmState().getFrontStackActivityType(newDisplay.mId));
     }
@@ -315,12 +319,15 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
         // Create new virtual display with system decoration support.
         final ActivityDisplay newDisplay = createManagedExternalDisplaySession()
-                .setShowSystemDecorations(true).createVirtualDisplay();
+                .setShowSystemDecorations(true)
+                .createVirtualDisplay();
 
         // If provided secondary home doesn't support multi-instance, default secondary home
         // activity should be automatically launched on the new display.
-        waitAndAssertTopResumedActivity(getDefaultSecondaryHomeComponent(), newDisplay.mId,
-                "Activity launched on secondary display must be focused and on top");
+        waitAndAssertActivityStateOnDisplay(getDefaultSecondaryHomeComponent(), STATE_RESUMED,
+                newDisplay.mId, "Activity launched on secondary display must be resumed");
+
+        tapOnDisplayCenter(newDisplay.mId);
         assertEquals("Top activity must be home type", ACTIVITY_TYPE_HOME,
                 mAmWmState.getAmState().getFrontStackActivityType(newDisplay.mId));
     }
@@ -332,16 +339,19 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     @Test
     public void testLaunchHomeActivityOnDisplayWithDecorations() {
         createManagedHomeActivitySession(HOME_ACTIVITY);
-        final ExternalDisplaySession externalDisplaySession = createManagedExternalDisplaySession();
+        final VirtualDisplaySession virtualDisplaySession = createManagedVirtualDisplaySession();
 
         // Create new virtual display with system decoration support.
-        final ActivityDisplay newDisplay =
-                externalDisplaySession.setShowSystemDecorations(true).createVirtualDisplay();
+        final ActivityDisplay newDisplay = createManagedExternalDisplaySession()
+                .setShowSystemDecorations(true)
+                .createVirtualDisplay();
 
         // If default home doesn't have SECONDARY_HOME category, default secondary home
         // activity should be automatically launched on the new display.
-        waitAndAssertTopResumedActivity(getDefaultSecondaryHomeComponent(), newDisplay.mId,
-                "Activity launched on secondary display must be focused and on top");
+        waitAndAssertActivityStateOnDisplay(getDefaultSecondaryHomeComponent(), STATE_RESUMED,
+                newDisplay.mId, "Activity launched on secondary display must be resumed");
+
+        tapOnDisplayCenter(newDisplay.mId);
         assertEquals("Top activity must be home type", ACTIVITY_TYPE_HOME,
                 mAmWmState.getAmState().getFrontStackActivityType(newDisplay.mId));
     }
@@ -353,15 +363,18 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     @Test
     public void testLaunchSecondaryHomeActivityOnDisplayWithDecorations() {
         createManagedHomeActivitySession(SECONDARY_HOME_ACTIVITY);
-        final ExternalDisplaySession externalDisplaySession = createManagedExternalDisplaySession();
+        final VirtualDisplaySession virtualDisplaySession = createManagedVirtualDisplaySession();
 
         // Create new virtual display with system decoration support.
-        final ActivityDisplay newDisplay =
-                externalDisplaySession.setShowSystemDecorations(true).createVirtualDisplay();
+        final ActivityDisplay newDisplay = createManagedExternalDisplaySession()
+                .setShowSystemDecorations(true)
+                .createVirtualDisplay();
 
         // Provided secondary home activity should be automatically launched on the new display.
-        waitAndAssertTopResumedActivity(SECONDARY_HOME_ACTIVITY, newDisplay.mId,
-                "Activity launched on secondary display must be focused and on top");
+        waitAndAssertActivityStateOnDisplay(SECONDARY_HOME_ACTIVITY, STATE_RESUMED,
+                newDisplay.mId, "Activity launched on secondary display must be resumed");
+
+        tapOnDisplayCenter(newDisplay.mId);
         assertEquals("Top activity must be home type", ACTIVITY_TYPE_HOME,
                 mAmWmState.getAmState().getFrontStackActivityType(newDisplay.mId));
     }
@@ -527,8 +540,14 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
                                 .shouldShowIme(newDisplay.mId)));
 
         // Launch Ime test activity in virtual display.
-        imeTestActivitySession.launchTestActivityOnDisplaySync(ImeTestActivity.class,
+        imeTestActivitySession.launchTestActivityOnDisplay(ImeTestActivity.class,
                 newDisplay.mId);
+
+        // Expect onStartInput / showSoftInput would be executed when user tapping on the
+        // non-system created display intentionally.
+        final Rect drawRect = new Rect();
+        imeTestActivitySession.getActivity().mEditText.getDrawingRect(drawRect);
+        tapOnDisplaySync(drawRect.left, drawRect.top, newDisplay.mId);
 
         // Verify the activity to show soft input on the default display.
         final ImeEventStream stream = mockImeSession.openEventStream();
@@ -564,8 +583,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
             mEditText = new ImeAwareEditText(this);
             // Set private IME option for editorMatcher to identify which TextView received
             // onStartInput event.
-            mEditText.setPrivateImeOptions(
-                    getClass().getName() + "/" + Long.toString(SystemClock.elapsedRealtimeNanos()));
+            resetPrivateImeOptionsIdentifier();
             final LinearLayout layout = new LinearLayout(this);
             layout.setOrientation(LinearLayout.VERTICAL);
             layout.addView(mEditText);
@@ -575,6 +593,11 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
         void showSoftInput() {
             mEditText.scheduleShowSoftInput();
+        }
+
+        void resetPrivateImeOptionsIdentifier() {
+            mEditText.setPrivateImeOptions(
+                    getClass().getName() + "/" + Long.toString(SystemClock.elapsedRealtimeNanos()));
         }
     }
 
@@ -640,15 +663,5 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
         assertEquals("Display density not the same", displayDensityDpi, displayDensityDpiForIme);
         assertEquals("Display bounds not the same", displayBounds, displayBoundsForIme);
-    }
-
-    @SafeVarargs
-    final void waitOrderedImeEventsThenAssertImeShown(ImeEventStream stream, int displayId,
-            Predicate<ImeEvent>... conditions) throws Exception {
-        for (Predicate<ImeEvent> condition : conditions) {
-            expectEvent(stream, condition, TimeUnit.SECONDS.toMillis(5) /* eventTimeout */);
-        }
-        // Assert the IME is shown on the expected display.
-        mAmWmState.waitAndAssertImeWindowShownOnDisplay(displayId);
     }
 }

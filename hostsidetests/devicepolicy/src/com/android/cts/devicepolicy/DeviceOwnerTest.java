@@ -158,22 +158,6 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeDeviceOwnerTest("DeviceOwnerSetupTest");
     }
 
-    @FlakyTest(bugId = 137088260)
-    @Test
-    public void testWifi() throws Exception {
-        if (!mHasFeature || !hasDeviceFeature("android.hardware.wifi")) {
-            return;
-        }
-        executeDeviceOwnerTest("WifiTest");
-        if (isStatsdEnabled(getDevice())) {
-            assertMetricsLogged(getDevice(), () -> {
-                executeDeviceTestMethod(".WifiTest", "testGetWifiMacAddress");
-            }, new DevicePolicyEventWrapper.Builder(EventId.GET_WIFI_MAC_ADDRESS_VALUE)
-                    .setAdminPackageName(DEVICE_OWNER_PKG)
-                    .build());
-        }
-    }
-
     @Test
     public void testRemoteBugreportWithTwoUsers() throws Exception {
         if (!mHasFeature || !canCreateAdditionalUsers(1)) {

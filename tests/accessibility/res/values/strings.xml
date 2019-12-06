@@ -29,6 +29,9 @@
     <!-- Description of the speaking accessibility service -->
     <string name="some_description">Some description</string>
 
+    <!-- Html description of the speaking accessibility service -->
+    <string name="some_html_description">Some html description</string>
+
     <!-- Summary of the speaking accessibility service -->
     <string name="some_summary">Some summary</string>
 
