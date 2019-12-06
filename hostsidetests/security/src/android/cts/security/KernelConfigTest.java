@@ -207,10 +207,13 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
         put("Kirin710", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("SM6150", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("SM7150", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
-        put("SM7250", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("LITO", null);
         put("SM8150", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("SM8150P", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
-        put("SM8250", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("KONA", null);
+        put("SDM429", null);
+        put("SDM439", null);
+        put("QM215", null);
         put("DEFAULT", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y",
             "CONFIG_UNMAP_KERNEL_AT_EL0=y"});
     }};
