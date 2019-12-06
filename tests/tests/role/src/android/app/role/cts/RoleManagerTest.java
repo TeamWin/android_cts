@@ -274,6 +274,11 @@ public class RoleManagerTest {
 
         TestUtils.waitUntil("Find and respond to request role UI", () -> {
             requestRole(ROLE_NAME);
+            UiObject2 cancelButton = waitFindObjectOrNull(By.res("android:id/button2"));
+            if (cancelButton == null) {
+                // Dialog not found, try again later.
+                return false;
+            }
             UiObject2 dontAskAgainCheck = findDontAskAgainCheck(false);
 
             assertThat(dontAskAgainCheck).isNull();
@@ -301,6 +306,11 @@ public class RoleManagerTest {
 
         TestUtils.waitUntil("Find and respond to request role UI", () -> {
             requestRole(ROLE_NAME);
+            UiObject2 cancelButton = waitFindObjectOrNull(By.res("android:id/button2"));
+            if (cancelButton == null) {
+                // Dialog not found, try again later.
+                return false;
+            }
             UiObject2 dontAskAgainCheck = findDontAskAgainCheck(false);
 
             assertThat(dontAskAgainCheck).isNull();
@@ -340,7 +350,7 @@ public class RoleManagerTest {
     private UiObject2 findDontAskAgainCheck(boolean expected) throws UiObjectNotFoundException {
         BySelector selector = By.text("Don\u2019t ask again");
         return expected
-                ? waitFindObject(selector, TIMEOUT_MILLIS)
+                ? waitFindObject(selector)
                 : waitFindObjectOrNull(selector, UNEXPECTED_TIMEOUT_MILLIS);
     }
 
