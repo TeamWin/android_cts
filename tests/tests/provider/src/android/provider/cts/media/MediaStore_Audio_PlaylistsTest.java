@@ -40,8 +40,6 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
-import java.io.File;
-
 @RunWith(Parameterized.class)
 public class MediaStore_Audio_PlaylistsTest {
     private Context mContext;
@@ -74,11 +72,8 @@ public class MediaStore_Audio_PlaylistsTest {
 
     @Test
     public void testStoreAudioPlaylistsExternal() throws Exception {
-        final String externalPlaylistPath = new File(ProviderTestUtils.stageDir(mVolumeName),
-                "my_favorites.pl").getAbsolutePath();
         ContentValues values = new ContentValues();
-        values.put(Playlists.NAME, "My favourites");
-        values.put(Playlists.DATA, externalPlaylistPath);
+        values.put(Playlists.NAME, "My favourites " + System.nanoTime());
         long dateAdded = System.currentTimeMillis() / 1000;
         long dateModified = System.currentTimeMillis() / 1000;
         values.put(Playlists.DATE_MODIFIED, dateModified);
@@ -91,9 +86,8 @@ public class MediaStore_Audio_PlaylistsTest {
             Cursor c = mContentResolver.query(uri, null, null, null, null);
             assertEquals(1, c.getCount());
             c.moveToFirst();
-            assertEquals("My favourites", c.getString(c.getColumnIndex(Playlists.NAME)));
-            assertEquals(externalPlaylistPath,
-                    c.getString(c.getColumnIndex(Playlists.DATA)));
+            assertEquals(values.getAsString(Playlists.NAME),
+                    c.getString(c.getColumnIndex(Playlists.NAME)));
 
             long realDateAdded = c.getLong(c.getColumnIndex(Playlists.DATE_ADDED));
             assertTrue(realDateAdded >= dateAdded);

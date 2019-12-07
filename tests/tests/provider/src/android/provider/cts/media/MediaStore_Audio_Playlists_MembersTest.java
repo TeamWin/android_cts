@@ -211,13 +211,12 @@ public class MediaStore_Audio_Playlists_MembersTest {
     }
 
     @Test
-    public void testStoreAudioPlaylistsMembersExternal() {
+    public void testStoreAudioPlaylistsMembersExternal() throws Exception {
         // TODO: expand test to verify paths from secondary storage devices
         if (!MediaStore.VOLUME_EXTERNAL.equals(mVolumeName)) return;
 
         ContentValues values = new ContentValues();
         values.put(Playlists.NAME, "My favourites " + System.nanoTime());
-        values.put(Playlists.DATA, "");
         long dateAdded = System.currentTimeMillis();
         values.put(Playlists.DATE_ADDED, dateAdded);
         long dateModified = System.currentTimeMillis();
@@ -384,7 +383,6 @@ public class MediaStore_Audio_Playlists_MembersTest {
             // create another playlist
             values.clear();
             values.put(Playlists.NAME, "My favourites " + System.nanoTime());
-            values.put(Playlists.DATA, "");
             values.put(Playlists.DATE_ADDED, dateAdded);
             values.put(Playlists.DATE_MODIFIED, dateModified);
             // insert
