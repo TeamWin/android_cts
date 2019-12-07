@@ -324,7 +324,7 @@ public abstract class BasePermissionsTest {
     protected void clickSettingsAllowAlwaysFromGrantDialog() throws Exception {
         clickSettingsLink();
         getUiDevice().waitForIdle();
-        click("com.android.permissioncontroller:id/allow_radio_button");
+        click("com.android.permissioncontroller:id/allow_always_radio_button");
         getUiDevice().waitForIdle();
         getUiDevice().pressBack();
     }
