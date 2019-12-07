@@ -368,7 +368,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     }
 
     public void testPermissionSplit28() throws Exception {
-        if (getDevice().hasFeature("android.software.leanback")) {
+        if (getDevice().hasFeature("feature:android.software.leanback")) {
             return;
         }
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_28), false, false));
@@ -377,7 +377,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     }
 
     public void testPermissionNotSplit29() throws Exception {
-        if (getDevice().hasFeature("android.software.leanback")) {
+        if (getDevice().hasFeature("feature:android.software.leanback")) {
             return;
         }
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_29), false, false));
@@ -392,7 +392,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     }
 
     public void testRequestBoth() throws Exception {
-        if (getDevice().hasFeature("android.software.leanback")) {
+        if (getDevice().hasFeature("feature:android.software.leanback")) {
             return;
         }
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_29), false, false));
@@ -401,7 +401,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     }
 
     public void testRequestBothInSequence() throws Exception {
-        if (getDevice().hasFeature("android.software.leanback")) {
+        if (getDevice().hasFeature("feature:android.software.leanback")) {
             return;
         }
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_29), false, false));
@@ -410,7 +410,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     }
 
     public void testRequestBothButGrantInSequence() throws Exception {
-        if (getDevice().hasFeature("android.software.leanback")) {
+        if (getDevice().hasFeature("feature:android.software.leanback")) {
             return;
         }
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_29), false, false));
@@ -419,7 +419,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     }
 
     public void testDenyBackgroundWithPrejudice() throws Exception {
-        if (getDevice().hasFeature("android.software.leanback")) {
+        if (getDevice().hasFeature("feature:android.software.leanback")) {
             return;
         }
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_29), false, false));
@@ -428,7 +428,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     }
 
     public void testPermissionNotSplitLatest() throws Exception {
-        if (getDevice().hasFeature("android.software.leanback")) {
+        if (getDevice().hasFeature("feature:android.software.leanback")) {
             return;
         }
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_Latest), false, false));

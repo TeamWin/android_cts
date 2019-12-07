@@ -43,6 +43,16 @@
         <activity android:name=".LoginNotImportantForAutofillWrappedActivityContextActivity" />
         <activity android:name=".LoginNotImportantForAutofillWrappedApplicationContextActivity" />
         <activity android:name=".WelcomeActivity" android:taskAffinity=".WelcomeActivity"/>
+        <activity android:name=".ViewActionActivity"
+                  android:taskAffinity=".ViewActionActivity"
+                  android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <data android:scheme="autofillcts" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".SecondActivity" android:taskAffinity=".SecondActivity"/>
         <activity android:name=".ViewAttributesTestActivity" />
         <activity android:name=".AuthenticationActivity" />
         <activity android:name=".ManualAuthenticationActivity" />

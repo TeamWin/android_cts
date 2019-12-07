@@ -46,6 +46,45 @@ public class IncomingCallTest extends BaseTelecomTestWithMockServices {
     private static final PhoneAccountHandle TEST_INVALID_HANDLE = new PhoneAccountHandle(
             new ComponentName(PACKAGE, COMPONENT), "WRONG_ID");
 
+    public void testVerstatPassed() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
+        addAndVerifyNewIncomingCall(MockConnectionService.VERSTAT_PASSED_NUMBER, null);
+        verifyConnectionForIncomingCall();
+
+        Call call = mInCallCallbacks.getService().getLastCall();
+        assertEquals(Connection.VERIFICATION_STATUS_PASSED,
+                call.getDetails().getCallerNumberVerificationStatus());
+    }
+
+    public void testVerstatFailed() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
+        addAndVerifyNewIncomingCall(MockConnectionService.VERSTAT_FAILED_NUMBER, null);
+        verifyConnectionForIncomingCall();
+
+        Call call = mInCallCallbacks.getService().getLastCall();
+        assertEquals(Connection.VERIFICATION_STATUS_FAILED,
+                call.getDetails().getCallerNumberVerificationStatus());
+    }
+
+    public void testVerstatNotVerified() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
+        addAndVerifyNewIncomingCall(MockConnectionService.VERSTAT_NOT_VERIFIED_NUMBER, null);
+        verifyConnectionForIncomingCall();
+
+        Call call = mInCallCallbacks.getService().getLastCall();
+        assertEquals(Connection.VERIFICATION_STATUS_NOT_VERIFIED,
+                call.getDetails().getCallerNumberVerificationStatus());
+    }
+
     public void testAddNewIncomingCall_CorrectPhoneAccountHandle() throws Exception {
         if (!mShouldTestTelecom) {
             return;

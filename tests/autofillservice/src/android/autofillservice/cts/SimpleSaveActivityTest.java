@@ -58,6 +58,9 @@ import android.service.autofill.TextValueSanitizer;
 import android.service.autofill.Validator;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiObject2;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.URLSpan;
 import android.view.View;
 import android.view.autofill.AutofillId;
 import android.widget.RemoteViews;
@@ -888,7 +891,6 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
 
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_INPUT), "108");
-
     }
 
     @Override
@@ -1432,6 +1434,136 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
     }
 
+    enum SetTextCondition {
+        NORMAL,
+        HAS_SESSION,
+        EMPTY_TEXT,
+        FOCUSED,
+        NOT_IMPORTANT_FOR_AUTOFILL,
+        INVISIBLE
+    }
+
+    /**
+     * Tests scenario when a text field's text is set automatically, it should trigger autofill and
+     * show Save UI.
+     */
+    @Test
+    public void testShowSaveUiWhenSetTextAutomatically() throws Exception {
+        triggerAutofillWhenSetTextAutomaticallyTest(SetTextCondition.NORMAL);
+    }
+
+    /**
+     * Tests scenario when a text field's text is set automatically, it should not trigger autofill
+     * when there is an existing session.
+     */
+    @Test
+    public void testNotTriggerAutofillWhenSetTextWhileSessionExists() throws Exception {
+        triggerAutofillWhenSetTextAutomaticallyTest(SetTextCondition.HAS_SESSION);
+    }
+
+    /**
+     * Tests scenario when a text field's text is set automatically, it should not trigger autofill
+     * when the text is empty.
+     */
+    @Test
+    public void testNotTriggerAutofillWhenSetTextWhileEmptyText() throws Exception {
+        triggerAutofillWhenSetTextAutomaticallyTest(SetTextCondition.EMPTY_TEXT);
+    }
+
+    /**
+     * Tests scenario when a text field's text is set automatically, it should not trigger autofill
+     * when the field is focused.
+     */
+    @Test
+    public void testNotTriggerAutofillWhenSetTextWhileFocused() throws Exception {
+        triggerAutofillWhenSetTextAutomaticallyTest(SetTextCondition.FOCUSED);
+    }
+
+    /**
+     * Tests scenario when a text field's text is set automatically, it should not trigger autofill
+     * when the field is not important for autofill.
+     */
+    @Test
+    public void testNotTriggerAutofillWhenSetTextWhileNotImportantForAutofill() throws Exception {
+        triggerAutofillWhenSetTextAutomaticallyTest(SetTextCondition.NOT_IMPORTANT_FOR_AUTOFILL);
+    }
+
+    /**
+     * Tests scenario when a text field's text is set automatically, it should not trigger autofill
+     * when the field is not visible.
+     */
+    @Test
+    public void testNotTriggerAutofillWhenSetTextWhileInvisible() throws Exception {
+        triggerAutofillWhenSetTextAutomaticallyTest(SetTextCondition.INVISIBLE);
+    }
+
+    private void triggerAutofillWhenSetTextAutomaticallyTest(SetTextCondition condition)
+            throws Exception {
+        startActivity();
+
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
+                .build());
+
+        CharSequence inputText = "108";
+
+        switch (condition) {
+            case NORMAL:
+                // Nothing.
+                break;
+            case HAS_SESSION:
+                mActivity.syncRunOnUiThread(() -> {
+                    mActivity.mInput.setText("100");
+                });
+                sReplier.getNextFillRequest();
+                break;
+            case EMPTY_TEXT:
+                inputText = "";
+                break;
+            case FOCUSED:
+                mActivity.syncRunOnUiThread(() -> {
+                    mActivity.mInput.requestFocus();
+                });
+                sReplier.getNextFillRequest();
+                break;
+            case NOT_IMPORTANT_FOR_AUTOFILL:
+                mActivity.syncRunOnUiThread(() -> {
+                    mActivity.mInput.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO);
+                });
+                break;
+            case INVISIBLE:
+                mActivity.syncRunOnUiThread(() -> {
+                    mActivity.mInput.setVisibility(View.INVISIBLE);
+                });
+                break;
+            default:
+                throw new IllegalArgumentException("invalid condition: " + condition);
+        }
+
+        // Trigger autofill by setting text.
+        final CharSequence text = inputText;
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mInput.setText(text);
+        });
+
+        if (condition == SetTextCondition.NORMAL) {
+            sReplier.getNextFillRequest();
+
+            mActivity.syncRunOnUiThread(() -> {
+                mActivity.mInput.setText("100");
+                mActivity.mCommit.performClick();
+            });
+
+            mUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
+        } else {
+            sReplier.assertOnFillRequestNotCalled();
+        }
+    }
+
     @Test
     public void testExplicitySaveButton() throws Exception {
         explicitySaveButtonTest(false, 0);
@@ -1552,5 +1684,169 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         // Make sure new activity is shown...
         WelcomeActivity.assertShowingDefaultMessage(mUiBot);
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
+    }
+
+    enum DescriptionType {
+        SUCCINCT,
+        CUSTOM,
+    }
+
+    /**
+     * Tests scenarios when user taps a span in the custom description, then the new activity
+     * finishes:
+     * the Save UI should have been restored.
+     */
+    @Test
+    public void testTapUrlSpanOnCustomDescription_thenTapBack() throws Exception {
+        saveUiRestoredAfterTappingSpanTest(DescriptionType.CUSTOM,
+                ViewActionActivity.ActivityCustomAction.NORMAL_ACTIVITY);
+    }
+
+    /**
+     * Tests scenarios when user taps a span in the succinct description, then the new activity
+     * finishes:
+     * the Save UI should have been restored.
+     */
+    @Test
+    public void testTapUrlSpanOnSuccinctDescription_thenTapBack() throws Exception {
+        saveUiRestoredAfterTappingSpanTest(DescriptionType.SUCCINCT,
+                ViewActionActivity.ActivityCustomAction.NORMAL_ACTIVITY);
+    }
+
+    /**
+     * Tests scenarios when user taps a span in the custom description, then the new activity
+     * starts an another activity then it finishes:
+     * the Save UI should have been restored.
+     */
+    @Test
+    public void testTapUrlSpanOnCustomDescription_forwardAnotherActivityThenTapBack()
+            throws Exception {
+        saveUiRestoredAfterTappingSpanTest(DescriptionType.CUSTOM,
+                ViewActionActivity.ActivityCustomAction.FAST_FORWARD_ANOTHER_ACTIVITY);
+    }
+
+    /**
+     * Tests scenarios when user taps a span in the succinct description, then the new activity
+     * starts an another activity then it finishes:
+     * the Save UI should have been restored.
+     */
+    @Test
+    public void testTapUrlSpanOnSuccinctDescription_forwardAnotherActivityThenTapBack()
+            throws Exception {
+        saveUiRestoredAfterTappingSpanTest(DescriptionType.SUCCINCT,
+                ViewActionActivity.ActivityCustomAction.FAST_FORWARD_ANOTHER_ACTIVITY);
+    }
+
+    /**
+     * Tests scenarios when user taps a span in the custom description, then the new activity
+     * stops but does not finish:
+     * the Save UI should have been restored.
+     */
+    @Test
+    public void testTapUrlSpanOnCustomDescription_tapBackWithoutFinish() throws Exception {
+        saveUiRestoredAfterTappingSpanTest(DescriptionType.CUSTOM,
+                ViewActionActivity.ActivityCustomAction.TAP_BACK_WITHOUT_FINISH);
+    }
+
+    /**
+     * Tests scenarios when user taps a span in the succinct description, then the new activity
+     * stops but does not finish:
+     * the Save UI should have been restored.
+     */
+    @Test
+    public void testTapUrlSpanOnSuccinctDescription_tapBackWithoutFinish() throws Exception {
+        saveUiRestoredAfterTappingSpanTest(DescriptionType.SUCCINCT,
+                ViewActionActivity.ActivityCustomAction.TAP_BACK_WITHOUT_FINISH);
+    }
+
+    private void saveUiRestoredAfterTappingSpanTest(
+            DescriptionType type, ViewActionActivity.ActivityCustomAction action) throws Exception {
+        startActivity();
+        // Set service.
+        enableService();
+
+        switch (type) {
+            case SUCCINCT:
+                // Set expectations with custom description.
+                sReplier.addResponse(new CannedFillResponse.Builder()
+                        .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
+                        .setSaveDescription(newDescriptionWithUrlSpan(action.toString()))
+                        .build());
+                break;
+            case CUSTOM:
+                // Set expectations with custom description.
+                sReplier.addResponse(new CannedFillResponse.Builder()
+                        .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
+                        .setSaveInfoVisitor((contexts, builder) -> builder
+                                .setCustomDescription(
+                                        newCustomDescriptionWithUrlSpan(action.toString())))
+                        .build());
+                break;
+            default:
+                throw new IllegalArgumentException("invalid type: " + type);
+        }
+
+        // Trigger autofill.
+        mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
+        sReplier.getNextFillRequest();
+
+        // Trigger save.
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mInput.setText("108");
+            mActivity.mCommit.performClick();
+        });
+
+        mUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
+
+        // Tapping URLSpan.
+        final URLSpan span = mUiBot.findFirstUrlSpanWithText("Here is URLSpan");
+        span.onClick(/* unused= */ null);
+
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
+
+        // .. check activity show up as expected
+        switch (action) {
+            case FAST_FORWARD_ANOTHER_ACTIVITY:
+                // Show up second activity.
+                SecondActivity.assertShowingDefaultMessage(mUiBot);
+                break;
+            case NORMAL_ACTIVITY:
+            case TAP_BACK_WITHOUT_FINISH:
+                // Show up view action handle activity.
+                ViewActionActivity.assertShowingDefaultMessage(mUiBot);
+                break;
+            default:
+                throw new IllegalArgumentException("invalid action: " + action);
+        }
+
+        // ..then go back and save it.
+        mUiBot.pressBack();
+
+        // Make sure previous activity is back...
+        mUiBot.assertShownByRelativeId(ID_INPUT);
+
+        // ... and tap save.
+        final UiObject2 newSaveUi = mUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
+        mUiBot.saveForAutofill(newSaveUi, /* yesDoIt= */ true);
+
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_INPUT), "108");
+
+        SecondActivity.finishIt();
+        ViewActionActivity.finishIt();
+    }
+
+    private CustomDescription newCustomDescriptionWithUrlSpan(String action) {
+        final RemoteViews presentation = newTemplate();
+        presentation.setTextViewText(R.id.custom_text, newDescriptionWithUrlSpan(action));
+        return new CustomDescription.Builder(presentation).build();
+    }
+
+    private CharSequence newDescriptionWithUrlSpan(String action) {
+        final String url = "autofillcts:" + action;
+        final SpannableString ss = new SpannableString("Here is URLSpan");
+        ss.setSpan(new URLSpan(url),
+                /* start= */ 8,  /* end= */ 15, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return ss;
     }
 }
