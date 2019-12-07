@@ -39,6 +39,7 @@ import android.util.Log;
 import android.view.Surface;
 import android.net.Uri;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.DynamicConfigDeviceSide;
 import com.android.compatibility.common.util.MediaPerfUtils;
@@ -233,57 +234,83 @@ public class DecoderTest extends MediaPlayerTestBase {
     public void testDecodeOpusMp4() throws Exception {
         testTimeStampOrdering(R.raw.sinesweepopusmp4);
     }
+
+    @CddTest(requirement="5.1.3")
+    public void testDecodeG711ChannelsAndRates() throws Exception {
+        String[] mimetypes = { MediaFormat.MIMETYPE_AUDIO_G711_ALAW,
+                               MediaFormat.MIMETYPE_AUDIO_G711_MLAW };
+        int[] sampleRates = { 8000 };
+        int[] channelMasks = { AudioFormat.CHANNEL_OUT_MONO,
+                               AudioFormat.CHANNEL_OUT_STEREO,
+                               AudioFormat.CHANNEL_OUT_5POINT1 };
+
+        verifyChannelsAndRates(mimetypes, sampleRates, channelMasks);
+    }
+
+    @CddTest(requirement="5.1.3")
     public void testDecodeOpusChannelsAndRates() throws Exception {
+        String[] mimetypes = { MediaFormat.MIMETYPE_AUDIO_OPUS };
         int[] sampleRates = { 8000, 12000, 16000, 24000, 48000 };
         int[] channelMasks = { AudioFormat.CHANNEL_OUT_MONO,
                                AudioFormat.CHANNEL_OUT_STEREO,
                                AudioFormat.CHANNEL_OUT_5POINT1 };
 
-        for (MediaCodecInfo codecInfo : getOpusDecoderMediaCodecInfoList()) {
-            MediaCodec codec = MediaCodec.createByCodecName(codecInfo.getCanonicalName());
-            for (int sampleRate : sampleRates) {
-                for (int channelMask : channelMasks) {
-                    int channelCount = AudioFormat.channelCountFromOutChannelMask(channelMask);
+        verifyChannelsAndRates(mimetypes, sampleRates, channelMasks);
+    }
 
-                    codec.reset();
-                    MediaFormat desiredFormat = MediaFormat.createAudioFormat(
-                            MediaFormat.MIMETYPE_AUDIO_OPUS,
-                            sampleRate,
-                            channelCount);
-                    codec.configure(desiredFormat, null, null, 0);
+    private void verifyChannelsAndRates(String[] mimetypes, int[] sampleRates,
+                                       int[] channelMasks) throws Exception {
 
-                    Log.d(TAG, "codec: " + codecInfo.getCanonicalName() +
-                            " sample rate: " + sampleRate +
-                            " channelcount:" + channelCount);
+        for (String mimetype : mimetypes) {
+            ArrayList<MediaCodecInfo> codecInfoList = getDecoderMediaCodecInfoList(mimetype);
+            if (codecInfoList == null) {
+                continue;
+            }
+            for (MediaCodecInfo codecInfo : codecInfoList) {
+                MediaCodec codec = MediaCodec.createByCodecName(codecInfo.getName());
+                for (int sampleRate : sampleRates) {
+                    for (int channelMask : channelMasks) {
+                        int channelCount = AudioFormat.channelCountFromOutChannelMask(channelMask);
 
-                    MediaFormat actualFormat = codec.getInputFormat();
-                    int actualChannels = actualFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT, -1);
-                    int actualSampleRate = actualFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE, -1);
-                    assertTrue("channels: configured " + actualChannels + " != desired " + channelCount,
-                               actualChannels == channelCount);
-                    assertTrue("sample rate: configured " + actualSampleRate + " != desired " + sampleRate,
-                               actualSampleRate == sampleRate);
+                        codec.reset();
+                        MediaFormat desiredFormat = MediaFormat.createAudioFormat(
+                                mimetype,
+                                sampleRate,
+                                channelCount);
+                        codec.configure(desiredFormat, null, null, 0);
+
+                        Log.d(TAG, "codec: " + codecInfo.getName() +
+                                " sample rate: " + sampleRate +
+                                " channelcount:" + channelCount);
+
+                        MediaFormat actual = codec.getInputFormat();
+                        int actualChannels = actual.getInteger(MediaFormat.KEY_CHANNEL_COUNT, -1);
+                        int actualSampleRate = actual.getInteger(MediaFormat.KEY_SAMPLE_RATE, -1);
+                        assertTrue("channels: configured " + actualChannels +
+                                   " != desired " + channelCount, actualChannels == channelCount);
+                        assertTrue("sample rate: configured " + actualSampleRate +
+                                   " != desired " + sampleRate, actualSampleRate == sampleRate);
+                    }
                 }
+                codec.release();
             }
-
-            codec.release();
         }
     }
 
-    private ArrayList<MediaCodecInfo> getOpusDecoderMediaCodecInfoList() {
+    private ArrayList<MediaCodecInfo> getDecoderMediaCodecInfoList(String mimeType) {
         MediaCodecList mediaCodecList = new MediaCodecList(MediaCodecList.ALL_CODECS);
-        ArrayList<MediaCodecInfo> opusDecoderInfos = new ArrayList<MediaCodecInfo>();
+        ArrayList<MediaCodecInfo> decoderInfos = new ArrayList<MediaCodecInfo>();
         for (MediaCodecInfo codecInfo : mediaCodecList.getCodecInfos()) {
-            if (!codecInfo.isEncoder() && isOpusSupported(codecInfo)) {
-                opusDecoderInfos.add(codecInfo);
+            if (!codecInfo.isEncoder() && isMimeTypeSupported(codecInfo, mimeType)) {
+                decoderInfos.add(codecInfo);
             }
         }
-        return opusDecoderInfos;
+        return decoderInfos;
     }
 
-    private boolean isOpusSupported(MediaCodecInfo codecInfo) {
+    private boolean isMimeTypeSupported(MediaCodecInfo codecInfo, String mimeType) {
         for (String type : codecInfo.getSupportedTypes()) {
-            if (type.equalsIgnoreCase(MediaFormat.MIMETYPE_AUDIO_OPUS)) {
+            if (type.equalsIgnoreCase(mimeType)) {
                 return true;
             }
         }
