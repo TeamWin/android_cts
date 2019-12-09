@@ -447,6 +447,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     @LargeTest
     public void testMultipleStagedInstall_ApkOnly() throws Exception {
+        assumeTrue(isCheckpointSupported());
         runPhase("testMultipleStagedInstall_ApkOnly_Commit");
         getDevice().reboot();
         runPhase("testMultipleStagedInstall_ApkOnly_VerifyPostReboot");
