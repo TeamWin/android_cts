@@ -32,13 +32,27 @@ public class ApexTest extends BaseHostJUnit4Test {
     return Boolean.parseBoolean(getDevice().getProperty("ro.apex.updatable"));
   }
 
+  private boolean isGSI() throws Exception {
+    String systemProduct = getDevice().getProperty("ro.product.system.name");
+    return systemProduct.equals("aosp_arm")
+      || systemProduct.equals("aosp_arm64")
+      || systemProduct.equals("aosp_x86")
+      || systemProduct.equals("aosp_x86_64");
+  }
+
   /**
    * Ensures that the built-in APEXes are all with flattened APEXes
    * or non-flattend APEXes. Mixture of them is not supported and thus
    * not allowed.
+   *
+   * GSI is exempt from this test since it exceptionally includes both types os APEXes.
    */
   @Test
   public void testApexType() throws Exception {
+    if (isGSI()) {
+      return;
+    }
+
     String[] builtinDirs = {
       "/system/apex",
       "/system_ext/apex",
