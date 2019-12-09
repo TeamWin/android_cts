@@ -28,7 +28,7 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.ActivityManagerState.ActivityDisplay;
+import android.server.wm.ActivityManagerState.DisplayContent;
 import android.server.wm.WindowManagerState.Display;
 import android.util.Log;
 
@@ -70,8 +70,8 @@ public class MultiDisplayPrivateDisplayTests extends MultiDisplayTestBase {
         mPrivateDisplayIds.clear();
         mAmWmState.computeState(true);
 
-        for (ActivityDisplay activityDisplay: getDisplaysStates()) {
-            int displayId = activityDisplay.mId;
+        for (DisplayContent displayContent: getDisplaysStates()) {
+            int displayId = displayContent.mId;
             Display display = mAmWmState.getWmState().getDisplay(displayId);
             if ((display.getFlags() & FLAG_PRIVATE) != 0) {
                 mPrivateDisplayIds.add(displayId);

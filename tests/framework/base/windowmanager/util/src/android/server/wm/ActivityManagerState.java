@@ -68,7 +68,7 @@ public class ActivityManagerState {
     private static final String DUMPSYS_ACTIVITY_ACTIVITIES = "dumpsys activity --proto activities";
 
     // Displays in z-order with the top most at the front of the list, starting with primary.
-    private final List<ActivityDisplay> mDisplays = new ArrayList<>();
+    private final List<DisplayContent> mDisplays = new ArrayList<>();
     // Stacks in z-order with the top most at the front of the list, starting with primary display.
     private final List<ActivityStack> mStacks = new ArrayList<>();
     private KeyguardControllerState mKeyguardControllerState;
@@ -160,7 +160,7 @@ public class ActivityManagerState {
                 .activityStackSupervisor;
         for (int i = 0; i < state.displays.length; i++) {
             ActivityDisplayProto activityDisplay = state.displays[i];
-            mDisplays.add(new ActivityDisplay(activityDisplay, this));
+            mDisplays.add(new DisplayContent(activityDisplay, this));
         }
         mKeyguardControllerState = new KeyguardControllerState(state.keyguardController);
         mTopFocusedStackId = state.focusedStackId;
@@ -196,8 +196,8 @@ public class ActivityManagerState {
         return mIsHomeRecentsComponent;
     }
 
-    ActivityDisplay getDisplay(int displayId) {
-        for (ActivityDisplay display : mDisplays) {
+    DisplayContent getDisplay(int displayId) {
+        for (DisplayContent display : mDisplays) {
             if (display.mId == displayId) {
                 return display;
             }
@@ -339,7 +339,7 @@ public class ActivityManagerState {
 
     /** Get the stack position on its display. */
     int getStackIndexByActivityType(int activityType) {
-        for (ActivityDisplay display : mDisplays) {
+        for (DisplayContent display : mDisplays) {
             for (int i = 0; i < display.mStacks.size(); i++) {
                 if (activityType == display.mStacks.get(i).getActivityType()) {
                     return i;
@@ -353,7 +353,7 @@ public class ActivityManagerState {
     int getStackIndexByActivity(ComponentName activityName) {
         final String fullName = getActivityName(activityName);
 
-        for (ActivityDisplay display : mDisplays) {
+        for (DisplayContent display : mDisplays) {
             for (int i = display.mStacks.size() - 1; i >= 0; --i) {
                 final ActivityStack stack = display.mStacks.get(i);
                 for (ActivityTask task : stack.mTasks) {
@@ -377,7 +377,7 @@ public class ActivityManagerState {
         return getStackById(task.mStackId).mDisplayId;
     }
 
-    List<ActivityDisplay> getDisplays() {
+    List<DisplayContent> getDisplays() {
         return new ArrayList<>(mDisplays);
     }
 
@@ -641,7 +641,7 @@ public class ActivityManagerState {
         return mPendingActivities.contains(getActivityName(activityName));
     }
 
-    public static class ActivityDisplay extends ActivityContainer {
+    public static class DisplayContent extends ActivityContainer {
 
         public int mId;
         ArrayList<ActivityStack> mStacks = new ArrayList<>();
@@ -649,7 +649,7 @@ public class ActivityManagerState {
         String mResumedActivity;
         boolean mSingleTaskInstance;
 
-        ActivityDisplay(ActivityDisplayProto proto, ActivityManagerState amState) {
+        DisplayContent(ActivityDisplayProto proto, ActivityManagerState amState) {
             super(proto.display.windowContainer.configurationContainer);
             mId = proto.id;
             mFocusedStackId = proto.focusedStackId;

@@ -40,7 +40,7 @@ import android.content.Intent;
 import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.ActivityManagerState.ActivityDisplay;
+import android.server.wm.ActivityManagerState.DisplayContent;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
@@ -100,7 +100,7 @@ public class MultiDisplayClientTests extends MultiDisplayTestBase {
         waitAndAssertResume(activityName);
 
         // Create new simulated display
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true)
                 .createDisplay();
 
@@ -157,7 +157,7 @@ public class MultiDisplayClientTests extends MultiDisplayTestBase {
         assertImeShownAndMatchesDisplayId(
                 activityClass, mockImeSession, DEFAULT_DISPLAY);
 
-        final ActivityDisplay newDisplay = virtualDisplaySession
+        final DisplayContent newDisplay = virtualDisplaySession
                 .setSimulateDisplay(true).setShowSystemDecorations(true).createDisplay();
 
         // Launch activity on the secondary display and make IME show.
@@ -190,7 +190,7 @@ public class MultiDisplayClientTests extends MultiDisplayTestBase {
     @Test
     public void testInputMethodManagerDisplayId() {
         // Create a simulated display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true)
                 .createDisplay();
 
@@ -215,7 +215,7 @@ public class MultiDisplayClientTests extends MultiDisplayTestBase {
     private void testViewGetDisplay(boolean isPrimary) {
         final TestActivitySession<ClientTestActivity> activitySession =
                 createManagedTestActivitySession();
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true)
                 .createDisplay();
         final int displayId = isPrimary ? DEFAULT_DISPLAY : newDisplay.mId;

@@ -48,7 +48,7 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.ActivityManagerState.ActivityDisplay;
+import android.server.wm.ActivityManagerState.DisplayContent;
 import android.server.wm.ActivityManagerState.ActivityStack;
 import android.server.wm.CommandSession.ActivityCallback;
 import android.server.wm.CommandSession.ActivitySession;
@@ -80,7 +80,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
     public void testContentDestroyOnDisplayRemoved() {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new private virtual display.
-            final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
+            final DisplayContent newDisplay = virtualDisplaySession.createDisplay();
             mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
 
             // Launch activities on new secondary display.
@@ -121,7 +121,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
     public void testActivityLaunchOnContentDestroyDisplayRemoved() {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new private virtual display.
-            final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
+            final DisplayContent newDisplay = virtualDisplaySession.createDisplay();
             mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
 
             // Launch activities on new secondary display.
@@ -144,7 +144,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
     public void testDisplayResize() {
         final VirtualDisplaySession virtualDisplaySession = createManagedVirtualDisplaySession();
         // Create new virtual display.
-        final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
+        final DisplayContent newDisplay = virtualDisplaySession.createDisplay();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
 
         // Launch a resizeable activity on new secondary display.
@@ -196,7 +196,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         final VirtualDisplayLauncher virtualLauncher =
                 mObjectTracker.manage(new VirtualDisplayLauncher());
         // Create new virtual display.
-        final ActivityDisplay newDisplay = virtualLauncher.setResizeDisplay(false).createDisplay();
+        final DisplayContent newDisplay = virtualLauncher.setResizeDisplay(false).createDisplay();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
 
         // Launch activity on new secondary display.
@@ -247,7 +247,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         waitAndAssertTopResumedActivity(RESIZEABLE_ACTIVITY, DEFAULT_DISPLAY,
                 "Activity launched on primary display must be resumed");
 
-        final ActivityDisplay newDisplay = createManagedExternalDisplaySession()
+        final DisplayContent newDisplay = createManagedExternalDisplaySession()
                 .setCanShowWithInsecureKeyguard(true).createVirtualDisplay();
 
         launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
@@ -283,7 +283,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
     @Test
     public void testExternalDisplayToggleState() {
         final ExternalDisplaySession externalDisplaySession = createManagedExternalDisplaySession();
-        final ActivityDisplay newDisplay = externalDisplaySession.createVirtualDisplay();
+        final DisplayContent newDisplay = externalDisplaySession.createVirtualDisplay();
 
         launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
 
@@ -321,7 +321,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         mAmWmState.getAmState().computeState();
         final int displayCount = mAmWmState.getAmState().getDisplayCount();
         try (final VirtualDisplaySession externalDisplaySession = new VirtualDisplaySession()) {
-            final ActivityDisplay newDisplay = externalDisplaySession
+            final DisplayContent newDisplay = externalDisplaySession
                     .setSimulateDisplay(true).createDisplay();
             launchActivityOnDisplay(VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId);
             waitAndAssertTopResumedActivity(VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId,
@@ -346,7 +346,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         launchActivity(LAUNCHING_ACTIVITY);
 
         // Create new virtual display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession().createDisplay();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
 
         // Launch activity on new secondary display.
@@ -370,7 +370,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
     @Test
     public void testMoveTaskBetweenDisplays() {
         // Create new virtual display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession().createDisplay();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
         mAmWmState.assertFocusedActivity("Virtual display activity must be on top",
                 VIRTUAL_DISPLAY_ACTIVITY);
@@ -457,7 +457,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
     private void tryCreatingAndRemovingDisplayWithActivity(boolean splitScreen, int windowingMode) {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new virtual display.
-            final ActivityDisplay newDisplay = virtualDisplaySession
+            final DisplayContent newDisplay = virtualDisplaySession
                     .setPublicDisplay(true)
                     .setLaunchInSplitScreen(splitScreen)
                     .createDisplay();
@@ -516,7 +516,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
     private void validateStackFocusSwitchOnStackEmptied(VirtualDisplaySession virtualDisplaySession,
             LockScreenSession lockScreenSession) {
         // Create new virtual display.
-        final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
+        final DisplayContent newDisplay = virtualDisplaySession.createDisplay();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
 
         // Launch activity on new secondary display.
@@ -551,7 +551,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         assumeFalse(perDisplayFocusEnabled());
 
         // Create new virtual display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession().createDisplay();
 
         mAmWmState.computeState(VIRTUAL_DISPLAY_ACTIVITY);
         mAmWmState.assertFocusedActivity("Top activity must be the latest launched one",
@@ -598,7 +598,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         assertEquals("Unexpected resumed activity",
                 0, mAmWmState.getAmState().getResumedActivitiesCount());
 
-        final ActivityDisplay newDisplay = createManagedExternalDisplaySession()
+        final DisplayContent newDisplay = createManagedExternalDisplaySession()
                 .setCanShowWithInsecureKeyguard(true).createVirtualDisplay();
 
         launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
@@ -636,7 +636,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
 
         launchActivity(TEST_ACTIVITY);
 
-        final ActivityDisplay newDisplay = createManagedExternalDisplaySession()
+        final DisplayContent newDisplay = createManagedExternalDisplaySession()
                 .createVirtualDisplay();
         launchActivityOnDisplay(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, newDisplay.mId);
 
@@ -658,7 +658,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         launchActivity(TEST_ACTIVITY);
         mAmWmState.waitForActivityState(TEST_ACTIVITY, STATE_RESUMED);
 
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true).createDisplay();
         launchActivityOnDisplay(VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId);
         waitAndAssertTopResumedActivity(VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId,
@@ -689,7 +689,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
      */
     @Test
     public void testSecondaryDisplayShowToast() {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setPublicDisplay(true)
                 .createDisplay();
         final String TOAST_NAME = "Toast";
@@ -711,7 +711,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
     public void testTaskSurfaceSizeAfterReparentDisplay() {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new simulated display and launch an activity on it.
-            final ActivityDisplay newDisplay = virtualDisplaySession.setSimulateDisplay(true)
+            final DisplayContent newDisplay = virtualDisplaySession.setSimulateDisplay(true)
                     .createDisplay();
             launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
 
@@ -749,7 +749,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         final TestActivitySession<StandardActivity> transitionActivitySession =
                 createManagedTestActivitySession();
         // Create new simulated display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true).createDisplay();
 
         // Launch BottomActivity on top of launcher activity to prevent transition state
@@ -783,7 +783,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
     @Test
     public void testNoTransitionWhenMovingActivityToDisplay() throws Exception {
         // Create new simulated display & capture new display's transition state.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true).createDisplay();
 
         // Launch TestActivity in virtual display & capture its transition state.
@@ -809,7 +809,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
 
     @Test
     public void testPreQTopProcessResumedActivity() {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true).createDisplay();
 
         getLaunchActivityBuilder().setUseInstrumentation()
@@ -842,7 +842,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
 
     @Test
     public void testPreQTopProcessResumedDisplayMoved() throws Exception {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true).createDisplay();
         getLaunchActivityBuilder().setUseInstrumentation()
                 .setTargetActivity(SDK_27_LAUNCHING_ACTIVITY).setNewTask(true)

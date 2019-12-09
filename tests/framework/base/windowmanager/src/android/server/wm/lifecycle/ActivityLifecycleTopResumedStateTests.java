@@ -746,7 +746,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new simulated display
-            final ActivityManagerState.ActivityDisplay newDisplay
+            final ActivityManagerState.DisplayContent newDisplay
                     = virtualDisplaySession.setSimulateDisplay(true).createDisplay();
 
             // Launch another activity on new secondary display.
@@ -795,7 +795,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
                 DEFAULT_DISPLAY, "Activity launched on default display must be focused");
 
         // Create new simulated display
-        final ActivityManagerState.ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final ActivityManagerState.DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true)
                 .createDisplay();
 
@@ -845,7 +845,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         assumeTrue(supportsMultiDisplay());
 
         // Create new simulated display.
-        final ActivityManagerState.ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final ActivityManagerState.DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true)
                 .createDisplay();
 
@@ -914,7 +914,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         assumeTrue(supportsMultiDisplay());
 
         // Create new simulated display.
-        final ActivityManagerState.ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final ActivityManagerState.DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true)
                 .createDisplay();
 
@@ -989,7 +989,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
                 DEFAULT_DISPLAY, "Activity launched on default display must be focused");
 
         // Create new simulated display.
-        final ActivityManagerState.ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final ActivityManagerState.DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true)
                 .createDisplay();
 
@@ -1034,7 +1034,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
                 DEFAULT_DISPLAY, "Activity launched on default display must be focused");
 
         // Create new simulated display.
-        final ActivityManagerState.ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final ActivityManagerState.DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true)
                 .createDisplay();
 

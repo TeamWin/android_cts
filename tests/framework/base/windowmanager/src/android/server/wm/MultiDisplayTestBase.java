@@ -53,7 +53,7 @@ import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.server.wm.ActivityManagerState.ActivityDisplay;
+import android.server.wm.ActivityManagerState.DisplayContent;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.ActivitySessionClient;
 import android.server.wm.settings.SettingsSession;
@@ -99,12 +99,12 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         mTargetContext = getInstrumentation().getTargetContext();
     }
 
-    ActivityDisplay getDisplayState(int displayId) {
+    DisplayContent getDisplayState(int displayId) {
         return getDisplayState(getDisplaysStates(), displayId);
     }
 
-    ActivityDisplay getDisplayState(List<ActivityDisplay> displays, int displayId) {
-        for (ActivityDisplay display : displays) {
+    DisplayContent getDisplayState(List<DisplayContent> displays, int displayId) {
+        for (DisplayContent display : displays) {
             if (display.mId == displayId) {
                 return display;
             }
@@ -113,9 +113,9 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
     }
 
     /** Return the display state with width, height, dpi. Always not default display. */
-    ActivityDisplay getDisplayState(List<ActivityDisplay> displays, int width, int height,
+    DisplayContent getDisplayState(List<DisplayContent> displays, int width, int height,
             int dpi) {
-        for (ActivityDisplay display : displays) {
+        for (DisplayContent display : displays) {
             if (display.mId == DEFAULT_DISPLAY) {
                 continue;
             }
@@ -128,17 +128,17 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         return null;
     }
 
-    List<ActivityDisplay> getDisplaysStates() {
+    List<DisplayContent> getDisplaysStates() {
         mAmWmState.getAmState().computeState();
         return mAmWmState.getAmState().getDisplays();
     }
 
     /** Find the display that was not originally reported in oldDisplays and added in newDisplays */
-    List<ActivityDisplay> findNewDisplayStates(List<ActivityDisplay> oldDisplays,
-            List<ActivityDisplay> newDisplays) {
-        final ArrayList<ActivityDisplay> result = new ArrayList<>();
+    List<DisplayContent> findNewDisplayStates(List<DisplayContent> oldDisplays,
+            List<DisplayContent> newDisplays) {
+        final ArrayList<DisplayContent> result = new ArrayList<>();
 
-        for (ActivityDisplay newDisplay : newDisplays) {
+        for (DisplayContent newDisplay : newDisplays) {
             if (oldDisplays.stream().noneMatch(d -> d.mId == newDisplay.mId)) {
                 result.add(newDisplay);
             }
@@ -339,12 +339,12 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         }
 
         @Nullable
-        public ActivityDisplay createDisplay() {
+        public DisplayContent createDisplay() {
             return createDisplays(1).stream().findFirst().orElse(null);
         }
 
         @NonNull
-        List<ActivityDisplay> createDisplays(int count) {
+        List<DisplayContent> createDisplays(int count) {
             if (mSimulateDisplay) {
                 return simulateDisplay();
             } else {
@@ -371,9 +371,9 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
          * <pre>
          * <code>mDensityDpi</code> provide custom density for the display.
          * </pre>
-         * @return {@link ActivityDisplay} of newly created display.
+         * @return {@link DisplayContent} of newly created display.
          */
-        private List<ActivityDisplay> simulateDisplay() {
+        private List<DisplayContent> simulateDisplay() {
             // Create virtual display with custom density dpi and specified size.
             mOverlayDisplayDeviceSession.set(mSimulationDisplaySize + "/" + mDensityDpi);
             if (mShowSystemDecorations) {
@@ -399,10 +399,10 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
          *     creation.
          * </pre>
          * @param displayCount number of displays to be created.
-         * @return A list of {@link ActivityDisplay} that represent newly created displays.
+         * @return A list of {@link DisplayContent} that represent newly created displays.
          * @throws Exception
          */
-        private List<ActivityDisplay> createVirtualDisplays(int displayCount) {
+        private List<DisplayContent> createVirtualDisplays(int displayCount) {
             // Start an activity that is able to create virtual displays.
             if (mLaunchInSplitScreen) {
                 getLaunchActivityBuilder()
@@ -417,7 +417,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
             mAmWmState.assertFocusedActivity("Focus must be on virtual display host activity",
                     VIRTUAL_DISPLAY_ACTIVITY);
-            final List<ActivityDisplay> originalDS = getDisplaysStates();
+            final List<DisplayContent> originalDS = getDisplaysStates();
 
             // Create virtual display with custom density dpi.
             final StringBuilder createVirtualDisplayCommand = new StringBuilder(
@@ -466,13 +466,13 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         private final ActivitySessionClient mActivitySessionClient = createActivitySessionClient();
 
         ActivitySession launchActivityOnDisplay(ComponentName activityName,
-                ActivityDisplay display) {
+                DisplayContent display) {
             return launchActivityOnDisplay(activityName, display, null /* extrasConsumer */,
                     true /* withShellPermission */, true /* waitForLaunch */);
         }
 
         ActivitySession launchActivityOnDisplay(ComponentName activityName,
-                ActivityDisplay display, Consumer<Bundle> extrasConsumer,
+                DisplayContent display, Consumer<Bundle> extrasConsumer,
                 boolean withShellPermission, boolean waitForLaunch) {
             return launchActivity(builder -> builder
                     // VirtualDisplayActivity is in different package. If the display is not public,
@@ -502,7 +502,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
     /** Helper class to save, set, and restore overlay_display_devices preference. */
     private class OverlayDisplayDevicesSession extends SettingsSession<String> {
         /** The displays which are created by this session. */
-        private final List<ActivityDisplay> mDisplays = new ArrayList<>();
+        private final List<DisplayContent> mDisplays = new ArrayList<>();
         /** The configured displays that need to be restored when this session is closed. */
         private final List<OverlayDisplayState> mDisplayStates = new ArrayList<>();
         private final WindowManager mWm;
@@ -516,13 +516,13 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             mWm = context.getSystemService(WindowManager.class);
         }
 
-        List<ActivityDisplay> getCreatedDisplays() {
+        List<DisplayContent> getCreatedDisplays() {
             return new ArrayList<>(mDisplays);
         }
 
         @Override
         public void set(String value) {
-            final List<ActivityDisplay> originalDisplays = getDisplaysStates();
+            final List<DisplayContent> originalDisplays = getDisplaysStates();
             super.set(value);
             final int newDisplayCount = 1 + (int) value.chars().filter(ch -> ch == ';').count();
             mDisplays.addAll(assertAndGetNewDisplays(newDisplayCount, originalDisplays));
@@ -530,7 +530,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
 
         void configureDisplays(boolean requestShowSysDecors, boolean requestShowIme) {
             SystemUtil.runWithShellPermissionIdentity(() -> {
-                for (ActivityDisplay display : mDisplays) {
+                for (DisplayContent display : mDisplays) {
                     final boolean showSystemDecors = mWm.shouldShowSystemDecors(display.mId);
                     final boolean showIme = mWm.shouldShowIme(display.mId);
                     mDisplayStates.add(new OverlayDisplayState(
@@ -590,7 +590,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
     }
 
     /** Wait for provided number of displays and report their configurations. */
-    List<ActivityDisplay> getDisplayStateAfterChange(int expectedDisplayCount) {
+    List<DisplayContent> getDisplayStateAfterChange(int expectedDisplayCount) {
         return Condition.waitForResult("the correct number of displays=" + expectedDisplayCount,
                 condition -> condition
                         .setReturnLastResult(true)
@@ -599,11 +599,11 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
                                 displays -> areDisplaysValid(displays, expectedDisplayCount)));
     }
 
-    private boolean areDisplaysValid(List<ActivityDisplay> displays, int expectedDisplayCount) {
+    private boolean areDisplaysValid(List<DisplayContent> displays, int expectedDisplayCount) {
         if (displays.size() != expectedDisplayCount) {
             return false;
         }
-        for (ActivityDisplay display : displays) {
+        for (DisplayContent display : displays) {
             if (display.mOverrideConfiguration.densityDpi == 0) {
                 return false;
             }
@@ -618,12 +618,12 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
      * @param originalDisplays display states before creation of new display(s).
      * @return list of new displays, empty list if no new display is created.
      */
-    private List<ActivityDisplay> assertAndGetNewDisplays(int newDisplayCount,
-            List<ActivityDisplay> originalDisplays) {
+    private List<DisplayContent> assertAndGetNewDisplays(int newDisplayCount,
+            List<DisplayContent> originalDisplays) {
         final int originalDisplayCount = originalDisplays.size();
 
         // Wait for the display(s) to be created and get configurations.
-        final List<ActivityDisplay> ds = getDisplayStateAfterChange(
+        final List<DisplayContent> ds = getDisplayStateAfterChange(
                 originalDisplayCount + newDisplayCount);
         if (newDisplayCount != -1) {
             assertEquals("New virtual display(s) must be created",
@@ -635,7 +635,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         }
 
         // Find the newly added display(s).
-        final List<ActivityDisplay> newDisplays = findNewDisplayStates(originalDisplays, ds);
+        final List<DisplayContent> newDisplays = findNewDisplayStates(originalDisplays, ds);
         assertThat("New virtual display must be created", newDisplays, hasSize(newDisplayCount));
 
         return newDisplays;
@@ -710,8 +710,8 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         /**
          * Creates a private virtual display with insecure keyguard flags set.
          */
-        ActivityDisplay createVirtualDisplay() {
-            final List<ActivityDisplay> originalDS = getDisplaysStates();
+        DisplayContent createVirtualDisplay() {
+            final List<DisplayContent> originalDS = getDisplaysStates();
             final int originalDisplayCount = originalDS.size();
 
             mExternalDisplayHelper = new VirtualDisplayHelper();
@@ -722,12 +722,12 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
                     .createAndWaitForDisplay();
 
             // Wait for the virtual display to be created and get configurations.
-            final List<ActivityDisplay> ds = getDisplayStateAfterChange(originalDisplayCount + 1);
+            final List<DisplayContent> ds = getDisplayStateAfterChange(originalDisplayCount + 1);
             assertEquals("New virtual display must be created", originalDisplayCount + 1,
                     ds.size());
 
             // Find the newly added display.
-            final ActivityDisplay newDisplay = findNewDisplayStates(originalDS, ds).get(0);
+            final DisplayContent newDisplay = findNewDisplayStates(originalDS, ds).get(0);
             mDisplayId = newDisplay.mId;
             return newDisplay;
         }
