@@ -63,49 +63,6 @@ public class MixedManagedProfileOwnerTestApi25 extends DeviceAndProfileOwnerTest
         super.tearDown();
     }
 
-    /**
-     * Verify the Profile Owner of a managed profile can create and change the password,
-     * but cannot remove it.
-     */
-    @Override
-    @Test
-    public void testResetPassword() throws Exception {
-        if (!mHasFeature || !mHasSecureLockScreen) {
-            return;
-        }
-
-        executeDeviceTestMethod(RESET_PASSWORD_TEST_CLASS, "testResetPasswordManagedProfile");
-    }
-
-    /**
-     *  Verify the Profile Owner of a managed profile can only change the password when FBE is
-     *  unlocked, and cannot remove the password even when FBE is unlocked.
-     */
-    @Override
-    @LargeTest
-    @FlakyTest(bugId = 141161690)
-    @Test
-    public void testResetPasswordFbe() throws Exception {
-        if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
-            return;
-        }
-
-        // Make sure user initialization is complete before proceeding.
-        waitForBroadcastIdle();
-
-        // Lock FBE and verify resetPassword is disabled
-        executeDeviceTestMethod(FBE_HELPER_CLASS, "testSetPassword");
-        rebootAndWaitUntilReady();
-        executeDeviceTestMethod(RESET_PASSWORD_TEST_CLASS, "testResetPasswordDisabled");
-
-        // Start an activity in managed profile to trigger work challenge
-        startSimpleActivityAsUser(mUserId);
-
-        // Unlock FBE and verify resetPassword is enabled again
-        executeDeviceTestMethod(FBE_HELPER_CLASS, "testUnlockFbe");
-        executeDeviceTestMethod(RESET_PASSWORD_TEST_CLASS, "testResetPasswordManagedProfile");
-    }
-
     @Override
     @PermissionsTest
     @Test

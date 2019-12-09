@@ -36,9 +36,6 @@ public abstract class DeviceAndProfileOwnerTestApi25 extends BaseDevicePolicyTes
     protected static final String ADMIN_RECEIVER_TEST_CLASS
             = ".BaseDeviceAdminTest$BasicAdminReceiver";
 
-    protected static final String RESET_PASSWORD_TEST_CLASS = ".ResetPasswordTest";
-    protected static final String FBE_HELPER_CLASS = ".FbeHelper";
-
     protected int mUserId;
 
     @Override
@@ -53,33 +50,6 @@ public abstract class DeviceAndProfileOwnerTestApi25 extends BaseDevicePolicyTes
             getDevice().executeShellCommand("input keyevent 3");
         }
         super.tearDown();
-    }
-
-    /** Test for resetPassword for all devices. */
-    @Test
-    public void testResetPassword() throws Exception {
-        if (!mHasFeature || !mHasSecureLockScreen) {
-            return;
-        }
-        executeDeviceTestMethod(RESET_PASSWORD_TEST_CLASS, "testResetPassword");
-    }
-
-    /** Additional test for resetPassword for FBE-enabled devices. */
-    @FlakyTest(bugId = 141161690)
-    @Test
-    public void testResetPasswordFbe() throws Exception {
-        if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
-            return;
-        }
-
-        // Lock FBE and verify resetPassword is disabled
-        executeDeviceTestMethod(FBE_HELPER_CLASS, "testSetPassword");
-        rebootAndWaitUntilReady();
-        executeDeviceTestMethod(RESET_PASSWORD_TEST_CLASS, "testResetPasswordDisabled");
-
-        // Unlock FBE and verify resetPassword is enabled again
-        executeDeviceTestMethod(FBE_HELPER_CLASS, "testUnlockFbe");
-        executeDeviceTestMethod(RESET_PASSWORD_TEST_CLASS, "testResetPassword");
     }
 
     @Test
@@ -99,6 +69,14 @@ public abstract class DeviceAndProfileOwnerTestApi25 extends BaseDevicePolicyTes
 
         executeDeviceTestMethod(".PasswordRequirementsTest",
                 "testPasswordConstraintsDoesntThrowAndPreservesValuesPreR");
+    }
+
+    @Test
+    public void testResetPasswordDeprecated() throws Exception {
+        if (!mHasFeature || !mHasSecureLockScreen) {
+            return;
+        }
+        executeDeviceTestMethod(".ResetPasswordTest", "testResetPasswordDeprecated");
     }
 
     protected void executeDeviceTestClass(String className) throws Exception {
