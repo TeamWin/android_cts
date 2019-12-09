@@ -65,6 +65,8 @@ public class ParentProfileTest extends BaseManagedProfileTest {
             .add("getPasswordExpiration")
             .add("getPasswordMaximumLength")
             .add("getPasswordComplexity")
+            .add("setCameraDisabled")
+            .add("getCameraDisabled")
             .add("isActivePasswordSufficient")
             .add("getCurrentFailedPasswordAttempts")
             .add("getMaximumFailedPasswordsForWipe")
