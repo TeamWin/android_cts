@@ -1707,8 +1707,9 @@ public class TelephonyManagerTest {
         assertThat(value).isEqualTo(TelephonyManager.SET_OPPORTUNISTIC_SUB_SUCCESS);
     }
 
-    private static void assertSetOpportunisticInvalidParameter(int value) {
-        assertThat(value).isEqualTo(TelephonyManager.SET_OPPORTUNISTIC_SUB_INACTIVE_SUBSCRIPTION);
+    private static void assertSetOpportunisticNoOpportunisticSub(int value) {
+        assertThat(value).isEqualTo(
+                TelephonyManager.SET_OPPORTUNISTIC_SUB_NO_OPPORTUNISTIC_SUB_AVAILABLE);
     }
 
     /**
@@ -1743,18 +1744,17 @@ public class TelephonyManagerTest {
                 ShellIdentityUtils.invokeMethodWithShellPermissions(mSubscriptionManager,
                         (tm) -> tm.getOpportunisticSubscriptions());
         Consumer<Integer> callbackSuccess = TelephonyManagerTest::assertSetOpportunisticSubSuccess;
-        Consumer<Integer> callbackFailure =
-                TelephonyManagerTest::assertSetOpportunisticInvalidParameter;
+        Consumer<Integer> callbackNoOpSub =
+                TelephonyManagerTest::assertSetOpportunisticNoOpportunisticSub;
         if (subscriptionInfoList == null || subscriptionInfoList.size() == 0) {
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                     (tm) -> tm.setPreferredOpportunisticDataSubscription(randomSubId, false,
-                            AsyncTask.SERIAL_EXECUTOR, callbackFailure));
+                            AsyncTask.SERIAL_EXECUTOR, callbackNoOpSub));
             // wait for the data change to take effect
             waitForMs(500);
             subId = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                     (tm) -> tm.getPreferredOpportunisticDataSubscription());
             assertThat(subId).isEqualTo(SubscriptionManager.DEFAULT_SUBSCRIPTION_ID);
-
         } else {
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                     (tm) -> tm.setPreferredOpportunisticDataSubscription(
@@ -1784,6 +1784,11 @@ public class TelephonyManagerTest {
 
     private static void assertUpdateAvailableNetworkInvalidArguments(int value) {
         assertThat(value).isEqualTo(TelephonyManager.UPDATE_AVAILABLE_NETWORKS_INVALID_ARGUMENTS);
+    }
+
+    private static void assertUpdateAvailableNetworkNoOpportunisticSub(int value) {
+        assertThat(value).isEqualTo(
+                TelephonyManager.UPDATE_AVAILABLE_NETWORKS_NO_OPPORTUNISTIC_SUB_AVAILABLE);
     }
 
     private static boolean checkIfEmergencyNumberListHasSpecificAddress(
@@ -1846,7 +1851,13 @@ public class TelephonyManagerTest {
         int randomSubId = 1;
         int activeSubscriptionInfoCount = ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mSubscriptionManager, (tm) -> tm.getActiveSubscriptionInfoCount());
+        boolean isOpportunisticNetworkEnabled = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.isOpportunisticNetworkEnabled());
+
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        if (!isOpportunisticNetworkEnabled) {
             return;
         }
         if (mTelephonyManager.getPhoneCount() == 1) {
@@ -1866,6 +1877,8 @@ public class TelephonyManagerTest {
                 TelephonyManagerTest::assertUpdateAvailableNetworkSuccess;
         Consumer<Integer> callbackFailure =
                 TelephonyManagerTest::assertUpdateAvailableNetworkInvalidArguments;
+        Consumer<Integer> callbackNoOpSub =
+                TelephonyManagerTest::assertUpdateAvailableNetworkNoOpportunisticSub;
         if (subscriptionInfoList == null || subscriptionInfoList.size() == 0
                 || !mSubscriptionManager.isActiveSubscriptionId(
                 subscriptionInfoList.get(0).getSubscriptionId())) {
@@ -1874,7 +1887,7 @@ public class TelephonyManagerTest {
             availableNetworkInfos.add(availableNetworkInfo);
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                     (tm) -> tm.updateAvailableNetworks(availableNetworkInfos,
-                            AsyncTask.SERIAL_EXECUTOR, callbackFailure));
+                            AsyncTask.SERIAL_EXECUTOR, callbackNoOpSub));
             // wait for the data change to take effect
             waitForMs(500);
             // clear all the operations at the end of test.
