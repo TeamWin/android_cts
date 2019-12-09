@@ -56,7 +56,7 @@ public class TestMedia extends SecurityTestCase {
      */
     public static void runMediaTest(String binaryName,
             String inputFiles[], String arguments, ITestDevice device,
-            String errPattern[]) throws Exception {
+            String processPatternStrings[]) throws Exception {
         if (inputFiles != null) {
             for (String tempFile : inputFiles) {
                 AdbUtils.pushResource(RESOURCE_ROOT + tempFile,
@@ -77,5 +77,8 @@ public class TestMedia extends SecurityTestCase {
         }, TIMEOUT_SEC * 1000, device, inputFiles);
 
         AdbUtils.assertNoCrashes(device, binaryName);
+        if (processPatternStrings != null) {
+            AdbUtils.assertNoCrashes(device, processPatternStrings);
+        }
     }
 }
