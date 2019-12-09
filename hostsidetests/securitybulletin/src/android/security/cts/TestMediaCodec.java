@@ -325,7 +325,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * @param errPattern error patterns to be checked for
      */
     public static void runDecodeTest(String binaryName, String inputFiles[],
-            String arguments, ITestDevice device, String errPattern[])
+            String arguments, ITestDevice device, String processPatternStrings[])
             throws Exception {
         if (inputFiles != null) {
             for (int i = 0; i < inputFiles.length; i++) {
@@ -347,5 +347,8 @@ public class TestMediaCodec extends SecurityTestCase {
         }, TIMEOUT_SEC * 1000, device, inputFiles);
 
         AdbUtils.assertNoCrashes(device, binaryName);
+        if (processPatternStrings != null) {
+            AdbUtils.assertNoCrashes(device, processPatternStrings);
+        }
     }
 }
