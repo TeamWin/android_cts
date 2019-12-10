@@ -31,6 +31,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.OnHierarchyChangeListener;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -410,6 +411,31 @@ public class RadioGroupTest {
         mRadioGroup.addView(choice4, 4, new ViewGroup.LayoutParams(100, 200));
         assertEquals(id, mRadioGroup.getCheckedRadioButtonId());
         assertEquals(5, mRadioGroup.getChildCount());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testOnInitializeAccessibilityNodeInfo_populatesCollectionInfo() {
+        AccessibilityNodeInfo info = AccessibilityNodeInfo.obtain();
+        mRadioGroup.onInitializeAccessibilityNodeInfo(info);
+
+        AccessibilityNodeInfo.CollectionInfo colInfo = info.getCollectionInfo();
+        assertNotNull(colInfo);
+        assertEquals(colInfo.getRowCount(), mRadioGroup.getChildCount());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testOnInitializeAccessibilityNodeInfo_populatesCollectionItemInfo() {
+        RadioButton child = (RadioButton) mRadioGroup.getChildAt(1);
+        child.setChecked(true);
+
+        AccessibilityNodeInfo info = AccessibilityNodeInfo.obtain();
+        child.onInitializeAccessibilityNodeInfo(info);
+
+        AccessibilityNodeInfo.CollectionItemInfo colItemInfo = info.getCollectionItemInfo();
+        assertEquals(colItemInfo.getRowIndex(), 1);
+        assertEquals(colItemInfo.isSelected(), true);
     }
 
     private AttributeSet getAttributeSet(int resId) {
