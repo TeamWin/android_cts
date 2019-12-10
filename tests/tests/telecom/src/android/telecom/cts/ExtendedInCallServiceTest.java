@@ -400,7 +400,11 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
     }
 
     private Uri blockNumber(Uri phoneNumberUri) {
-        return insertBlockedNumber(mContext, phoneNumberUri.getSchemeSpecificPart());
+        Uri number = insertBlockedNumber(mContext, phoneNumberUri.getSchemeSpecificPart());
+        if (number == null) {
+            fail("Failed to insert into blocked number provider");
+        }
+        return number;
     }
 
     private int unblockNumber(Uri uri) {
