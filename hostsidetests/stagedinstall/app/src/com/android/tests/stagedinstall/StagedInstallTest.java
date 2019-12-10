@@ -213,6 +213,11 @@ public class StagedInstallTest {
         StageSessionResult failedSessionResult = stageSingleApk(TestApp.A1);
         assertThat(failedSessionResult.getErrorMessage()).contains(
                 "There is already in-progress committed staged session");
+        // Currently abandoning a session before pre-reboot verification finishes might result in
+        // a system_server crash. Before that issue is resolved we need to manually wait for
+        // pre-reboot verification to finish before abandoning sessions.
+        // TODO(b/145925842): remove following line after fixing the bug.
+        waitForIsReadyBroadcast(sessionId);
         getPackageInstaller().abandonSession(sessionId);
     }
 
@@ -223,6 +228,11 @@ public class StagedInstallTest {
         StageSessionResult failedSessionResult = stageMultipleApks(TestApp.A1, TestApp.B1);
         assertThat(failedSessionResult.getErrorMessage()).contains(
                 "There is already in-progress committed staged session");
+        // Currently abandoning a session before pre-reboot verification finishes might result in
+        // a system_server crash. Before that issue is resolved we need to manually wait for
+        // pre-reboot verification to finish before abandoning sessions.
+        // TODO(b/145925842): remove following line after fixing the bug.
+        waitForIsReadyBroadcast(sessionId);
         getPackageInstaller().abandonSession(sessionId);
     }
 
@@ -234,6 +244,11 @@ public class StagedInstallTest {
         StageSessionResult failedSessionResult = stageSingleApk(TestApp.A1);
         assertThat(failedSessionResult.getErrorMessage()).contains(
                 "There is already in-progress committed staged session");
+        // Currently abandoning a session before pre-reboot verification finishes might result in
+        // a system_server crash. Before that issue is resolved we need to manually wait for
+        // pre-reboot verification to finish before abandoning sessions.
+        // TODO(b/145925842): remove following line after fixing the bug.
+        waitForIsReadyBroadcast(sessionId);
         getPackageInstaller().abandonSession(sessionId);
     }
 
@@ -245,6 +260,11 @@ public class StagedInstallTest {
         StageSessionResult failedSessionResult = stageMultipleApks(TestApp.A1, TestApp.B1);
         assertThat(failedSessionResult.getErrorMessage()).contains(
                 "There is already in-progress committed staged session");
+        // Currently abandoning a session before pre-reboot verification finishes might result in
+        // a system_server crash. Before that issue is resolved we need to manually wait for
+        // pre-reboot verification to finish before abandoning sessions.
+        // TODO(b/145925842): remove following line after fixing the bug.
+        waitForIsReadyBroadcast(sessionId);
         getPackageInstaller().abandonSession(sessionId);
     }
 
@@ -287,6 +307,11 @@ public class StagedInstallTest {
         int sessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
         PackageInstaller.SessionInfo session = packageInstaller.getActiveStagedSession();
         assertThat(session.getSessionId()).isEqualTo(sessionId);
+        // Currently abandoning a session before pre-reboot verification finishes might result in
+        // a system_server crash. Before that issue is resolved we need to manually wait for
+        // pre-reboot verification to finish before abandoning sessions.
+        // TODO(b/145925842): remove following line after fixing the bug.
+        waitForIsReadyBroadcast(sessionId);
     }
 
     @Test
@@ -302,6 +327,11 @@ public class StagedInstallTest {
                 .assertSuccessful().getSessionId();
         PackageInstaller.SessionInfo session = getPackageInstaller().getActiveStagedSession();
         assertThat(session.getSessionId()).isEqualTo(sessionId);
+        // Currently abandoning a session before pre-reboot verification finishes might result in
+        // a system_server crash. Before that issue is resolved we need to manually wait for
+        // pre-reboot verification to finish before abandoning sessions.
+        // TODO(b/145925842): remove following line after fixing the bug.
+        waitForIsReadyBroadcast(sessionId);
     }
 
     @Test
