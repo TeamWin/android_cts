@@ -16,6 +16,8 @@
 
 package com.android.cts.managedprofile;
 
+import static org.testng.Assert.assertThrows;
+
 import android.app.admin.DevicePolicyManager;
 import android.util.Log;
 
@@ -82,6 +84,9 @@ public class ParentProfileTest extends BaseManagedProfileTest {
             .add("setRequiredStrongAuthTimeout")
             .add("isDeviceIdAttestationSupported")
             .add("isUniqueDeviceAttestationSupported")
+            .add("wipeData")
+            .add("getAutoTime")
+            .add("setAutoTime")
             .build();
 
     private static final String LOG_TAG = "ParentProfileTest";
@@ -145,5 +150,10 @@ public class ParentProfileTest extends BaseManagedProfileTest {
         for (String name : names) {
             assertTrue(name + " is not found in the API list", allNames.contains(name));
         }
+    }
+
+    public void testCannotWipeParentProfile() {
+        assertThrows(SecurityException.class,
+                () -> mParentDevicePolicyManager.wipeData(0));
     }
 }

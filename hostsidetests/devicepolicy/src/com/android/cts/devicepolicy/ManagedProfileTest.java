@@ -224,6 +224,15 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
                 "testParentProfileApiDisabled", mProfileUserId);
     }
 
+    @Test
+    public void testCannotCallMethodsOnParentProfile() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ParentProfileTest",
+                "testCannotWipeParentProfile", mProfileUserId);
+    }
+
     // TODO: This test is not specific to managed profiles, but applies to multi-user in general.
     // Move it to a MultiUserTest class when there is one. Should probably move
     // SetPolicyActivity to a more generic apk too as it might be useful for different kinds
