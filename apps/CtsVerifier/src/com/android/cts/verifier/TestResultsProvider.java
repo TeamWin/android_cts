@@ -78,6 +78,9 @@ public class TestResultsProvider extends ContentProvider {
     /** ReportLog containing the test result metrics. */
     static final String COLUMN_TEST_METRICS = "testmetrics";
 
+    /** TestResultHistory containing the test run histories. */
+    static final String COLUMN_TEST_RESULT_HISTORY = "testresulthistory";
+
     private static final UriMatcher URI_MATCHER = new UriMatcher(UriMatcher.NO_MATCH);
     private static final int RESULTS_ALL = 1;
     private static final int RESULTS_ID = 2;
@@ -120,7 +123,8 @@ public class TestResultsProvider extends ContentProvider {
                     + COLUMN_TEST_RESULT + " INTEGER,"
                     + COLUMN_TEST_INFO_SEEN + " INTEGER DEFAULT 0,"
                     + COLUMN_TEST_DETAILS + " TEXT,"
-                    + COLUMN_TEST_METRICS + " BLOB);");
+                    + COLUMN_TEST_METRICS + " BLOB,"
+                    + COLUMN_TEST_RESULT_HISTORY + " BLOB);");
         }
 
         @Override
@@ -226,12 +230,13 @@ public class TestResultsProvider extends ContentProvider {
     }
 
     static void setTestResult(Context context, String testName, int testResult,
-            String testDetails, ReportLog reportLog) {
+            String testDetails, ReportLog reportLog, TestResultHistoryCollection historyCollection) {
         ContentValues values = new ContentValues(2);
         values.put(TestResultsProvider.COLUMN_TEST_RESULT, testResult);
         values.put(TestResultsProvider.COLUMN_TEST_NAME, testName);
         values.put(TestResultsProvider.COLUMN_TEST_DETAILS, testDetails);
         values.put(TestResultsProvider.COLUMN_TEST_METRICS, serialize(reportLog));
+        values.put(TestResultsProvider.COLUMN_TEST_RESULT_HISTORY, serialize(historyCollection));
 
         final Uri uri = getResultContentUri(context);
         ContentResolver resolver = context.getContentResolver();

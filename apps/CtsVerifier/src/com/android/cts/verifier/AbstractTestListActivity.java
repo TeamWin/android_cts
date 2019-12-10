@@ -31,6 +31,8 @@ public abstract class AbstractTestListActivity extends ListActivity {
     private static final int LAUNCH_TEST_REQUEST_CODE = 9001;
 
     protected TestListAdapter mAdapter;
+    // Start time of test item.
+    protected long mStartTime;
 
     protected void setTestListAdapter(TestListAdapter adapter) {
         mAdapter = adapter;
@@ -74,6 +76,8 @@ public abstract class AbstractTestListActivity extends ListActivity {
     protected void handleLaunchTestResult(int resultCode, Intent data) {
         if (resultCode == RESULT_OK) {
             TestResult testResult = TestResult.fromActivityResult(resultCode, data);
+            testResult.getHistoryCollection().add(
+                testResult.getName(), mStartTime, System.currentTimeMillis());
             mAdapter.setTestResult(testResult);
         }
     }
@@ -82,6 +86,7 @@ public abstract class AbstractTestListActivity extends ListActivity {
     @Override
     protected final void onListItemClick(ListView listView, View view, int position, long id) {
         super.onListItemClick(listView, view, position, id);
+        mStartTime = System.currentTimeMillis();
         handleItemClick(listView, view, position, id);
     }
 
