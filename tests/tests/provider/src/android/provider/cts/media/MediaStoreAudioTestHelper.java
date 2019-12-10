@@ -211,7 +211,7 @@ public class MediaStoreAudioTestHelper {
         @Override
         public ContentValues getContentValues(String volumeName) {
             ContentValues values = super.getContentValues(volumeName);
-            values.put(Media.DATA, values.getAsString(Media.DATA) + "_3");
+            values.put(Media.DATA, values.getAsString(Media.DATA) + ".3.mp3");
             return values;
         }
     }
@@ -229,7 +229,7 @@ public class MediaStoreAudioTestHelper {
         @Override
         public ContentValues getContentValues(String volumeName) {
             ContentValues values = super.getContentValues(volumeName);
-            values.put(Media.DATA, values.getAsString(Media.DATA) + "_4");
+            values.put(Media.DATA, values.getAsString(Media.DATA) + ".4.mp3");
             return values;
         }
     }
@@ -247,7 +247,7 @@ public class MediaStoreAudioTestHelper {
         @Override
         public ContentValues getContentValues(String volumeName) {
             ContentValues values = super.getContentValues(volumeName);
-            values.put(Media.DATA, values.getAsString(Media.DATA) + "_5");
+            values.put(Media.DATA, values.getAsString(Media.DATA) + ".5.mp3");
             return values;
         }
     }

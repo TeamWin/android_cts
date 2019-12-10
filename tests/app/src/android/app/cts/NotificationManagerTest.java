@@ -100,7 +100,6 @@ import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.Data;
 import android.provider.Settings;
 import android.provider.Telephony.Threads;
-import android.server.wm.ActivityManagerTestBase;
 import android.service.notification.Condition;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
@@ -687,22 +686,6 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     private void cleanupSendBubbleActivity() {
         mContext.unregisterReceiver(mBubbleBroadcastReceiver);
-    }
-
-    private class HomeHelper extends ActivityManagerTestBase implements AutoCloseable {
-
-        HomeHelper() throws Exception {
-            setUp();
-        }
-
-        void goHome() {
-            launchHomeActivity();
-        }
-
-        @Override
-        public void close() throws Exception {
-            tearDown();
-        }
     }
 
     public void testConsolidatedNotificationPolicy() throws Exception {
@@ -2977,8 +2960,9 @@ public class NotificationManagerTest extends AndroidTestCase {
             }
 
             // Make ourselves not foreground
-            HomeHelper homeHelper = new HomeHelper();
-            homeHelper.goHome();
+            getContext().startActivity(new Intent(Intent.ACTION_MAIN)
+                    .addCategory(Intent.CATEGORY_HOME).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            a.waitForStopped();
 
             // The notif should be allowed to update as a bubble
             a.sendBubble(4001, false /* autoExpand */);
@@ -3000,7 +2984,6 @@ public class NotificationManagerTest extends AndroidTestCase {
             }
 
             cleanupSendBubbleActivity();
-            homeHelper.close();
         } finally {
             // turn off bubbles globally
             toggleBubbleSetting(false);

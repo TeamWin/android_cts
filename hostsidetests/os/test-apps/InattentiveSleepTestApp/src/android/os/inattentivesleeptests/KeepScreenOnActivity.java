@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.cts.deviceadmin;
 
-public class ClearPasswordTest extends BaseDeviceAdminTest {
+package android.os.inattentivesleeptests;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.view.WindowManager;
+
+public class KeepScreenOnActivity extends Activity {
     @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        assertDeviceOwner();
-    }
-
-    public void testClearPassword() {
-        clearPassword();
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 }

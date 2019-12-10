@@ -37,23 +37,4 @@ public class DeviceAdminHostSideTestApi29 extends DeviceAdminHostSideTestApi24 {
         }
         runTests(getDeviceAdminApkPackage(), "DeviceAdminWithEnterprisePoliciesBlockedTest");
     }
-
-    /**
-     * This test is no longer relevant once DA is disallowed from using password policies.
-     */
-    @Override
-    @Test
-    public void testResetPassword_nycRestrictions() throws Exception {
-        return;
-    }
-
-    /**
-     * This test is no longer relevant since resetPassword() was deprecated in version 26.
-     * Device Owner functionality is now tested in DeviceAndProfileOwnerTest.
-     */
-    @Override
-    @Test
-    public void testRunDeviceOwnerPasswordTest() throws Exception {
-        return;
-    }
 }

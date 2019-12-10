@@ -25,7 +25,6 @@ import android.content.Intent;
 import android.graphics.drawable.Icon;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.WindowManager;
 
 /**
  * Used by NotificationManagerTest for testing policy around bubbles, this activity is able to
@@ -40,6 +39,8 @@ public class SendBubbleActivity extends Activity {
     public static final String BUBBLE_ACTIVITY_OPENED =
             "android.app.stubs.BUBBLE_ACTIVITY_OPENED";
     public static final int BUBBLE_NOTIF_ID = 1;
+
+    private volatile boolean mIsStopped;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -82,5 +83,32 @@ public class SendBubbleActivity extends Activity {
                 Context.NOTIFICATION_SERVICE);
         noMan.notify(BUBBLE_NOTIF_ID, n);
         Log.d(TAG, "posting bubble: " + n + ", " + i);
+    }
+
+    /** Waits for the activity to be stopped. Do not call this method on main thread. */
+    public void waitForStopped() {
+        synchronized (this) {
+            while (!mIsStopped) {
+                try {
+                    wait(5000 /* timeout */);
+                } catch (InterruptedException ignored) {
+                }
+            }
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        mIsStopped = false;
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        synchronized (this) {
+            mIsStopped = true;
+            notifyAll();
+        }
     }
 }
