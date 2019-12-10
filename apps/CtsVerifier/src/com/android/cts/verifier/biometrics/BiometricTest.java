@@ -18,8 +18,6 @@ package com.android.cts.verifier.biometrics;
 
 import android.Manifest;
 import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.DialogFragment;
 import android.app.KeyguardManager;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -30,6 +28,7 @@ import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.text.InputType;
 import android.util.Log;
 import android.view.View;
@@ -54,7 +53,6 @@ import java.util.concurrent.Executor;
 public class BiometricTest extends PassFailButtons.Activity {
 
     private static final String TAG = "BiometricTest";
-    private static final String BIOMETRIC_ENROLL = "android.settings.BIOMETRIC_ENROLL";
     private static final int BIOMETRIC_PERMISSION_REQUEST_CODE = 0;
 
     // Test that BiometricPrompt setAllowDeviceCredentials returns ERROR_NO_DEVICE_CREDENTIAL when
@@ -183,7 +181,9 @@ public class BiometricTest extends PassFailButtons.Activity {
             });
             mButtonEnroll.setOnClickListener((view) -> {
                 final Intent intent = new Intent();
-                intent.setAction(BIOMETRIC_ENROLL);
+                intent.setAction(Settings.ACTION_BIOMETRIC_ENROLL);
+                intent.putExtra(Settings.EXTRA_BIOMETRIC_MINIMUM_STRENGTH_REQUIRED,
+                        BiometricManager.Authenticators.BIOMETRIC_STRONG);
                 startActivity(intent);
             });
             mButtonTestCredential.setOnClickListener((view) -> {
