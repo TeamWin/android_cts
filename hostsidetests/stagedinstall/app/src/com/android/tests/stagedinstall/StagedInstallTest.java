@@ -274,7 +274,17 @@ public class StagedInstallTest {
     public void testGetActiveStagedSessions() throws Exception {
         PackageInstaller packageInstaller = getPackageInstaller();
         int firstSessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
+        // Currently abandoning a session before pre-reboot verification finishes might result in
+        // a system_server crash. Before that issue is resolved we need to manually wait for
+        // pre-reboot verification to finish before abandoning sessions.
+        // TODO(b/145925842): remove following two lines after fixing the bug.
+        waitForIsReadyBroadcast(firstSessionId);
         int secondSessionId = stageSingleApk(TestApp.B1).assertSuccessful().getSessionId();
+        // Currently abandoning a session before pre-reboot verification finishes might result in
+        // a system_server crash. Before that issue is resolved we need to manually wait for
+        // pre-reboot verification to finish before abandoning sessions.
+        // TODO(b/145925842): remove following two lines after fixing the bug.
+        waitForIsReadyBroadcast(secondSessionId);
         List<Integer> stagedSessionIds = packageInstaller.getActiveStagedSessions()
                 .stream().map(s -> s.getSessionId()).collect(Collectors.toList());
         assertThat(stagedSessionIds).hasSize(2);
@@ -293,8 +303,17 @@ public class StagedInstallTest {
     public void testGetActiveStagedSessions_MultiApkSession() throws Exception {
         int firstSessionId = stageMultipleApks(TestApp.A1, TestApp.B1)
                 .assertSuccessful().getSessionId();
+        // Currently abandoning a session before pre-reboot verification finishes might result in
+        // a system_server crash. Before that issue is resolved we need to manually wait for
+        // pre-reboot verification to finish before abandoning sessions.
+        // TODO(b/145925842): remove following two lines after fixing the bug.
+        waitForIsReadyBroadcast(firstSessionId);
         int secondSessionId = stageMultipleApks(TestApp.C1)
                 .assertSuccessful().getSessionId();
+        // Currently abandoning a session before pre-reboot verification finishes might result in
+        // a system_server crash. Before that issue is resolved we need to manually wait for
+        // pre-reboot verification to finish before abandoning sessions.
+        waitForIsReadyBroadcast(secondSessionId);
         List<Integer> stagedSessionIds = getPackageInstaller().getActiveStagedSessions()
                 .stream().map(s -> s.getSessionId()).collect(Collectors.toList());
         assertThat(stagedSessionIds).hasSize(2);
@@ -684,8 +703,7 @@ public class StagedInstallTest {
     public void testRejectsApexDifferentCertificate() throws Exception {
         int sessionId = stageSingleApk(Apex2DifferentCertificate)
                 .assertSuccessful().getSessionId();
-        PackageInstaller.SessionInfo info =
-                SessionUpdateBroadcastReceiver.sessionBroadcasts.poll(60, TimeUnit.SECONDS);
+        PackageInstaller.SessionInfo info = waitForBroadcast(sessionId);
         assertThat(info.getSessionId()).isEqualTo(sessionId);
         assertThat(info).isStagedSessionFailed();
         assertThat(info.getStagedSessionErrorMessage()).contains("is not compatible with the one "
@@ -776,33 +794,59 @@ public class StagedInstallTest {
     // Should fail to stage multiple sessions when check-point is not available
     @Test
     public void testFailStagingMultipleSessionsIfNoCheckPoint() throws Exception {
-        stageSingleApk(TestApp.A1).assertSuccessful();
+        int sessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
         StageSessionResult failedSessionResult = stageSingleApk(TestApp.B1);
         assertThat(failedSessionResult.getErrorMessage()).contains(
                 "Cannot stage multiple sessions without checkpoint support");
+        // Currently abandoning a session before pre-reboot verification finishes might result in
+        // a system_server crash. Before that issue is resolved we need to manually wait for
+        // pre-reboot verification to finish before abandoning sessions.
+        // TODO(b/145925842): remove following two lines after fixing the bug.
+        waitForIsReadyBroadcast(sessionId);
     }
 
     @Test
     public void testFailOverlappingMultipleStagedInstall_BothSinglePackage_Apk() throws Exception {
-        stageSingleApk(TestApp.A1).assertSuccessful();
+        int sessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
         StageSessionResult failedSessionResult = stageSingleApk(TestApp.A1);
         assertThat(failedSessionResult.getErrorMessage()).contains(
                 "has been staged already by session");
+        // Currently abandoning a session before pre-reboot verification finishes might result in
+        // a system_server crash. Before that issue is resolved we need to manually wait for
+        // pre-reboot verification to finish before abandoning sessions.
+        // TODO(b/145925842): remove following two lines after fixing the bug.
+        waitForIsReadyBroadcast(sessionId);
     }
 
     @Test
     public void testAllowNonOverlappingMultipleStagedInstall_MultiPackageSinglePackage_Apk()
             throws Exception {
-        stageMultipleApks(TestApp.A1, TestApp.B1).assertSuccessful();
-        stageSingleApk(TestApp.C1).assertSuccessful();
+        int firstSessionId = stageMultipleApks(TestApp.A1, TestApp.B1).assertSuccessful()
+                .getSessionId();
+        // Currently abandoning a session before pre-reboot verification finishes might result in
+        // a system_server crash. Before that issue is resolved we need to manually wait for
+        // pre-reboot verification to finish before abandoning sessions.
+        // TODO(b/145925842): remove following two lines after fixing the bug.
+        waitForIsReadyBroadcast(firstSessionId);
+        int secondSessionId = stageSingleApk(TestApp.C1).assertSuccessful().getSessionId();
+        // Currently abandoning a session before pre-reboot verification finishes might result in
+        // a system_server crash. Before that issue is resolved we need to manually wait for
+        // pre-reboot verification to finish before abandoning sessions.
+        // TODO(b/145925842): remove following two lines after fixing the bug.
+        waitForIsReadyBroadcast(secondSessionId);
     }
 
     @Test
     public void testFailOverlappingMultipleStagedInstall_BothMultiPackage_Apk() throws Exception {
-        stageMultipleApks(TestApp.A1, TestApp.B1).assertSuccessful();
+        int sessionId = stageMultipleApks(TestApp.A1, TestApp.B1).assertSuccessful().getSessionId();
         StageSessionResult failedSessionResult = stageMultipleApks(TestApp.A2, TestApp.C1);
         assertThat(failedSessionResult.getErrorMessage()).contains(
                 "has been staged already by session");
+        // Currently abandoning a session before pre-reboot verification finishes might result in
+        // a system_server crash. Before that issue is resolved we need to manually wait for
+        // pre-reboot verification to finish before abandoning sessions.
+        // TODO(b/145925842): remove following two lines after fixing the bug.
+        waitForIsReadyBroadcast(sessionId);
     }
 
     @Test
