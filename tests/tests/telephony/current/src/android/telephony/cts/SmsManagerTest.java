@@ -687,6 +687,9 @@ public class SmsManagerTest {
 
     private void blockNumber(String number) {
         mBlockedNumberUri = insertBlockedNumber(mContext, number);
+        if (mBlockedNumberUri == null) {
+            fail("Failed to insert into blocked number provider.");
+        }
     }
 
     private void unblockNumber(Uri uri) {
