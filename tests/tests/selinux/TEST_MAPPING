@@ -1,0 +1,20 @@
+{
+  "presubmit": [
+    {
+      "name": "CtsSelinuxEphemeralTestCases"
+    },
+    {
+      "name": "CtsSelinuxTargetSdk25TestCases"
+    },
+    {
+      "name": "CtsSelinuxTargetSdk27TestCases"
+    },
+    {
+      "name": "CtsSelinuxTargetSdk28TestCases"
+    },
+    {
+      "name": "CtsSelinuxTargetSdkCurrentTestCases"
+    }
+  ]
+}
+
