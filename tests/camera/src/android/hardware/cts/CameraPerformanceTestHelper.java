@@ -16,6 +16,10 @@
 
 package android.hardware.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import android.hardware.Camera;
 import android.hardware.Camera.AutoFocusCallback;
 import android.hardware.Camera.ErrorCallback;
@@ -28,26 +32,24 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import junit.framework.TestCase;
-
-public class CameraTestCase extends TestCase {
+public class CameraPerformanceTestHelper {
     private static final String TAG = "CameraTestCase";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
 
-    protected static final int NO_ERROR = -1;
-    protected static final long WAIT_FOR_COMMAND_TO_COMPLETE_NS = 5000000000L;
-    protected static final long WAIT_FOR_FOCUS_TO_COMPLETE_NS = 5000000000L;
-    protected static final long WAIT_FOR_SNAPSHOT_TO_COMPLETE_NS = 5000000000L;
-    protected Looper mLooper = null;
+    public static final int NO_ERROR = -1;
+    public static final long WAIT_FOR_COMMAND_TO_COMPLETE_NS = 5000000000L;
+    public static final long WAIT_FOR_FOCUS_TO_COMPLETE_NS = 5000000000L;
+    public static final long WAIT_FOR_SNAPSHOT_TO_COMPLETE_NS = 5000000000L;
 
-    protected int mCameraErrorCode;
-    protected Camera mCamera;
+    private Looper mLooper = null;
+    private int mCameraErrorCode;
+    private Camera mCamera;
 
     /**
      * Initializes the message looper so that the Camera object can
      * receive the callback messages.
      */
-    protected void initializeMessageLooper(final int cameraId) throws InterruptedException {
+    public void initializeMessageLooper(final int cameraId) throws InterruptedException {
         Lock startLock = new ReentrantLock();
         Condition startDone = startLock.newCondition();
         mCameraErrorCode = NO_ERROR;
@@ -80,9 +82,9 @@ public class CameraTestCase extends TestCase {
 
         startLock.lock();
         try {
-            if (startDone.awaitNanos(WAIT_FOR_COMMAND_TO_COMPLETE_NS) <= 0L) {
-                fail("initializeMessageLooper: start timeout");
-            }
+            assertTrue(
+                    "initializeMessageLooper: start timeout",
+                    startDone.awaitNanos(WAIT_FOR_COMMAND_TO_COMPLETE_NS) > 0L);
         } finally {
             startLock.unlock();
         }
@@ -93,7 +95,7 @@ public class CameraTestCase extends TestCase {
     /**
      * Terminates the message looper thread, optionally allowing evict error
      */
-    protected void terminateMessageLooper() throws Exception {
+    public void terminateMessageLooper() throws Exception {
         mLooper.quit();
         // Looper.quit() is asynchronous. The looper may still has some
         // preview callbacks in the queue after quit is called. The preview
@@ -110,7 +112,7 @@ public class CameraTestCase extends TestCase {
      * Start preview and wait for the first preview callback, which indicates the
      * preview becomes active.
      */
-    protected void startPreview() throws InterruptedException {
+    public void startPreview() throws InterruptedException {
         Lock previewLock = new ReentrantLock();
         Condition previewDone = previewLock.newCondition();
 
@@ -126,9 +128,9 @@ public class CameraTestCase extends TestCase {
 
         previewLock.lock();
         try {
-            if (previewDone.awaitNanos(WAIT_FOR_COMMAND_TO_COMPLETE_NS) <= 0L) {
-                fail("Preview done timeout");
-            }
+            assertTrue(
+                    "Preview done timeout",
+                    previewDone.awaitNanos(WAIT_FOR_COMMAND_TO_COMPLETE_NS) > 0L);
         } finally {
             previewLock.unlock();
         }
@@ -139,7 +141,7 @@ public class CameraTestCase extends TestCase {
     /**
      * Trigger and wait for autofocus to complete.
      */
-    protected void autoFocus() throws InterruptedException {
+    public void autoFocus() throws InterruptedException {
         Lock focusLock = new ReentrantLock();
         Condition focusDone = focusLock.newCondition();
 
@@ -154,9 +156,9 @@ public class CameraTestCase extends TestCase {
 
         focusLock.lock();
         try {
-            if (focusDone.awaitNanos(WAIT_FOR_FOCUS_TO_COMPLETE_NS) <= 0L) {
-                fail("Autofocus timeout");
-            }
+            assertTrue(
+                    "Autofocus timeout",
+                    focusDone.awaitNanos(WAIT_FOR_FOCUS_TO_COMPLETE_NS) > 0L);
         } finally {
             focusLock.unlock();
         }
@@ -165,34 +167,35 @@ public class CameraTestCase extends TestCase {
     /**
      * Trigger and wait for snapshot to finish.
      */
-    protected void takePicture() throws InterruptedException {
+    public void takePicture() throws InterruptedException {
         Lock snapshotLock = new ReentrantLock();
         Condition snapshotDone = snapshotLock.newCondition();
 
         mCamera.takePicture(/*shutterCallback*/ null, /*rawPictureCallback*/ null,
                 new PictureCallback() {
-            @Override
-            public void onPictureTaken(byte[] rawData, Camera camera) {
-                snapshotLock.lock();
-                try {
-                    if (rawData == null) {
-                        fail("Empty jpeg data");
+                    @Override
+                    public void onPictureTaken(byte[] rawData, Camera camera) {
+                        snapshotLock.lock();
+                        try {
+                            assertNotNull("Empty jpeg data", rawData);
+                            snapshotDone.signal();
+                        } finally {
+                            snapshotLock.unlock();
+                        }
                     }
-                    snapshotDone.signal();
-                } finally {
-                    snapshotLock.unlock();
-                }
-            }
-        });
+                });
 
         snapshotLock.lock();
         try {
-            if (snapshotDone.awaitNanos(WAIT_FOR_SNAPSHOT_TO_COMPLETE_NS) <= 0L) {
-                fail("TakePicture timeout");
-            }
+            assertTrue(
+                    "TakePicture timeout",
+                    snapshotDone.awaitNanos(WAIT_FOR_SNAPSHOT_TO_COMPLETE_NS) > 0L);
         } finally {
             snapshotLock.unlock();
         }
     }
 
+    public Camera getCamera() {
+        return mCamera;
+    }
 }

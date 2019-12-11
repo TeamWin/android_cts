@@ -20,7 +20,6 @@ import static android.hardware.camera2.cts.CameraTestUtils.*;
 import static com.android.ex.camera2.blocking.BlockingStateCallback.*;
 
 import android.content.Context;
-import android.graphics.ImageFormat;
 import android.graphics.Rect;
 
 import android.hardware.camera2.cts.CameraTestUtils;
@@ -41,13 +40,14 @@ import android.media.Image.Plane;
 import android.media.ImageReader;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.test.AndroidTestCase;
 import android.util.Log;
 import android.view.Surface;
 import android.view.WindowManager;
 
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
 import com.android.ex.camera2.blocking.BlockingStateCallback;
+
+import org.junit.rules.ExternalResource;
 
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -56,7 +56,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-public class Camera2AndroidBasicTestCase extends AndroidTestCase {
+public class Camera2AndroidTestRule extends ExternalResource {
     private static final String TAG = "Camera2AndroidBasicTestCase";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
 
@@ -64,34 +64,115 @@ public class Camera2AndroidBasicTestCase extends AndroidTestCase {
     protected static final Size DEFAULT_CAPTURE_SIZE = new Size(640, 480);
     protected static final int CAPTURE_WAIT_TIMEOUT_MS = 5000;
 
-    protected CameraManager mCameraManager;
-    protected CameraDevice mCamera;
-    protected CameraCaptureSession mCameraSession;
-    protected BlockingSessionCallback mCameraSessionListener;
-    protected BlockingStateCallback mCameraListener;
-    protected String[] mCameraIdsUnderTest;
+    private CameraManager mCameraManager;
+    private CameraDevice mCamera;
+    private CameraCaptureSession mCameraSession;
+    private BlockingSessionCallback mCameraSessionListener;
+    private BlockingStateCallback mCameraListener;
+    private String[] mCameraIdsUnderTest;
     // include both standalone camera IDs and "hidden" physical camera IDs
-    protected String[] mAllCameraIds;
-    protected HashMap<String, StaticMetadata> mAllStaticInfo;
-    protected ImageReader mReader;
-    protected Surface mReaderSurface;
-    protected Handler mHandler;
-    protected HandlerThread mHandlerThread;
-    protected StaticMetadata mStaticInfo;
-    protected CameraErrorCollector mCollector;
-    protected List<Size> mOrderedPreviewSizes; // In descending order.
-    protected List<Size> mOrderedVideoSizes; // In descending order.
-    protected List<Size> mOrderedStillSizes; // In descending order.
-    protected String mDebugFileNameBase;
+    private String[] mAllCameraIds;
+    private HashMap<String, StaticMetadata> mAllStaticInfo;
+    private ImageReader mReader;
+    private Surface mReaderSurface;
+    private Handler mHandler;
+    private HandlerThread mHandlerThread;
+    private StaticMetadata mStaticInfo;
+    private CameraErrorCollector mCollector;
+    private List<Size> mOrderedPreviewSizes; // In descending order.
+    private List<Size> mOrderedVideoSizes; // In descending order.
+    private List<Size> mOrderedStillSizes; // In descending order.
+    private String mDebugFileNameBase;
 
-    protected WindowManager mWindowManager;
+    private WindowManager mWindowManager;
+    private Context mContext;
 
-    @Override
-    public void setContext(Context context) {
-        super.setContext(context);
-        mCameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
-        assertNotNull("Can't connect to camera manager!", mCameraManager);
-        mWindowManager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
+    public Camera2AndroidTestRule(Context context) {
+        mContext = context;
+    }
+
+    public Context getContext() {
+        return mContext;
+    }
+
+    public String[] getCameraIdsUnderTest() {
+        return mCameraIdsUnderTest;
+    }
+
+    public StaticMetadata getStaticInfo() {
+        return mStaticInfo;
+    }
+
+    public CameraManager getCameraManager() {
+        return mCameraManager;
+    }
+
+    public void setStaticInfo(StaticMetadata staticInfo) {
+        mStaticInfo = staticInfo;
+    }
+
+    public CameraCaptureSession getCameraSession() {
+        return mCameraSession;
+    }
+
+    public CameraDevice getCamera() {
+        return mCamera;
+    }
+
+    public void setCamera(CameraDevice camera) {
+        mCamera = camera;
+    }
+
+    public void setCameraSession(CameraCaptureSession session) {
+        mCameraSession = session;
+    }
+
+    public BlockingStateCallback getCameraListener() {
+        return mCameraListener;
+    }
+
+    public BlockingSessionCallback getCameraSessionListener() {
+        return mCameraSessionListener;
+    }
+
+    public Handler getHandler() {
+        return mHandler;
+    }
+
+    public void setCameraSessionListener(BlockingSessionCallback listener) {
+        mCameraSessionListener = listener;
+    }
+
+    public ImageReader getReader() {
+        return mReader;
+    }
+
+    public HashMap<String, StaticMetadata> getAllStaticInfo() {
+        return mAllStaticInfo;
+    }
+
+    public List<Size> getOrderedPreviewSizes() {
+        return mOrderedPreviewSizes;
+    }
+
+    public List<Size> getOrderedStillSizes() {
+        return mOrderedStillSizes;
+    }
+
+    public Surface getReaderSurface() {
+        return mReaderSurface;
+    }
+
+    public void setOrderedPreviewSizes(List<Size> sizes) {
+        mOrderedPreviewSizes = sizes;
+    }
+
+    public WindowManager getWindowManager() {
+        return mWindowManager;
+    }
+
+    public CameraErrorCollector getCollector() {
+        return mCollector;
     }
 
     /**
@@ -99,9 +180,11 @@ public class Camera2AndroidBasicTestCase extends AndroidTestCase {
      * HandlerThread, Camera IDs, and CameraStateCallback etc.
      */
     @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
+    public void before() throws Exception {
+        Log.v(TAG, "Set up...");
+        mCameraManager = (CameraManager) mContext.getSystemService(Context.CAMERA_SERVICE);
+        assertNotNull("Can't connect to camera manager!", mCameraManager);
+        mWindowManager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
         /**
          * Workaround for mockito and JB-MR2 incompatibility
          *
@@ -152,27 +235,26 @@ public class Camera2AndroidBasicTestCase extends AndroidTestCase {
     }
 
     @Override
-    protected void tearDown() throws Exception {
-        String[] cameraIdsPostTest =
-                mCameraManager.getCameraIdListNoLazy();
-        assertNotNull("Camera ids shouldn't be null", cameraIdsPostTest);
-        Log.i(TAG, "Camera ids in setup:" + Arrays.toString(mCameraIdsUnderTest));
-        Log.i(TAG, "Camera ids in tearDown:" + Arrays.toString(cameraIdsPostTest));
-        assertTrue(
-                "Number of cameras changed from " + mCameraIdsUnderTest.length + " to " +
-                cameraIdsPostTest.length,
-                mCameraIdsUnderTest.length == cameraIdsPostTest.length);
-        mHandlerThread.quitSafely();
-        mHandler = null;
-        closeDefaultImageReader();
-
-        try {
-            mCollector.verify();
-        } catch (Throwable e) {
-            // When new Exception(e) is used, exception info will be printed twice.
-            throw new Exception(e.getMessage());
-        } finally {
-            super.tearDown();
+    public void after() {
+        Log.v(TAG, "Tear down...");
+        if (mCameraManager != null) {
+            try {
+                String[] cameraIdsPostTest = mCameraManager.getCameraIdListNoLazy();
+                assertNotNull("Camera ids shouldn't be null", cameraIdsPostTest);
+                Log.i(TAG, "Camera ids in setup:" + Arrays.toString(mCameraIdsUnderTest));
+                Log.i(TAG, "Camera ids in tearDown:" + Arrays.toString(cameraIdsPostTest));
+                assertTrue(
+                        "Number of cameras changed from " + mCameraIdsUnderTest.length + " to " +
+                                cameraIdsPostTest.length,
+                        mCameraIdsUnderTest.length == cameraIdsPostTest.length);
+                mHandlerThread.quitSafely();
+                mHandler = null;
+                closeDefaultImageReader();
+                mCollector.verify();
+            } catch (Throwable e) {
+                // When new Exception(e) is used, exception info will be printed twice.
+                throw new RuntimeException(e.getMessage());
+            }
         }
     }
 
@@ -184,7 +266,7 @@ public class Camera2AndroidBasicTestCase extends AndroidTestCase {
      * @param listener The {@link #CaptureCallback} camera device used to notify callbacks.
      * @param handler The handler camera device used to post callbacks.
      */
-    protected void startCapture(CaptureRequest request, boolean repeating,
+    public void startCapture(CaptureRequest request, boolean repeating,
             CaptureCallback listener, Handler handler) throws Exception {
         if (VERBOSE) Log.v(TAG, "Starting capture from device");
 
@@ -201,7 +283,7 @@ public class Camera2AndroidBasicTestCase extends AndroidTestCase {
      * @param fast When it is true, {@link CameraDevice#flush} is called, the stop capture
      * could be faster.
      */
-    protected void stopCapture(boolean fast) throws Exception {
+    public void stopCapture(boolean fast) throws Exception {
         if (VERBOSE) Log.v(TAG, "Stopping capture");
 
         if (fast) {
@@ -225,7 +307,7 @@ public class Camera2AndroidBasicTestCase extends AndroidTestCase {
      *
      * @param cameraId The id of the camera device to be opened.
      */
-    protected void openDevice(String cameraId) throws Exception {
+    public void openDevice(String cameraId) throws Exception {
         openDevice(cameraId, mCameraListener);
     }
 
@@ -235,7 +317,7 @@ public class Camera2AndroidBasicTestCase extends AndroidTestCase {
      * @param cameraId The id of the camera device to be opened.
      * @param listener The {@link #BlockingStateCallback} used to wait for states.
      */
-    protected void openDevice(String cameraId, BlockingStateCallback listener) throws Exception {
+    public void openDevice(String cameraId, BlockingStateCallback listener) throws Exception {
         mCamera = CameraTestUtils.openCamera(
                 mCameraManager, cameraId, listener, mHandler);
         mCollector.setCameraId(cameraId);
@@ -258,7 +340,7 @@ public class Camera2AndroidBasicTestCase extends AndroidTestCase {
      *
      * @param outputSurfaces The set of output surfaces to configure for this session
      */
-    protected void createSession(List<Surface> outputSurfaces) throws Exception {
+    public void createSession(List<Surface> outputSurfaces) throws Exception {
         mCameraSessionListener = new BlockingSessionCallback();
         mCameraSession = CameraTestUtils.configureCameraSession(mCamera, outputSurfaces,
                 mCameraSessionListener, mHandler);
@@ -270,7 +352,7 @@ public class Camera2AndroidBasicTestCase extends AndroidTestCase {
      *
      * @param outputSurfaces The set of output surfaces to configure for this session
      */
-    protected void createSessionByConfigs(List<OutputConfiguration> outputConfigs) throws Exception {
+    public void createSessionByConfigs(List<OutputConfiguration> outputConfigs) throws Exception {
         mCameraSessionListener = new BlockingSessionCallback();
         mCameraSession = CameraTestUtils.configureCameraSessionWithConfig(mCamera, outputConfigs,
                 mCameraSessionListener, mHandler);
@@ -286,7 +368,7 @@ public class Camera2AndroidBasicTestCase extends AndroidTestCase {
      *
      * @param cameraId The id of the {@link #CameraDevice camera device} to be closed.
      */
-    protected void closeDevice(String cameraId) {
+    public void closeDevice(String cameraId) {
         closeDevice(cameraId, mCameraListener);
     }
 
@@ -301,7 +383,7 @@ public class Camera2AndroidBasicTestCase extends AndroidTestCase {
      * @param cameraId The id of the camera device to be closed.
      * @param listener The BlockingStateCallback used to wait for states.
      */
-    protected void closeDevice(String cameraId, BlockingStateCallback listener) {
+    public void closeDevice(String cameraId, BlockingStateCallback listener) {
         if (mCamera != null) {
             if (!cameraId.equals(mCamera.getId())) {
                 throw new IllegalStateException("Try to close a device that is not opened yet");
@@ -337,7 +419,7 @@ public class Camera2AndroidBasicTestCase extends AndroidTestCase {
      * @param listener The listener used by this ImageReader to notify
      *            callbacks.
      */
-    protected void createDefaultImageReader(Size size, int format, int maxNumImages,
+    public void createDefaultImageReader(Size size, int format, int maxNumImages,
             ImageReader.OnImageAvailableListener listener) throws Exception {
         closeDefaultImageReader();
 
@@ -362,7 +444,7 @@ public class Camera2AndroidBasicTestCase extends AndroidTestCase {
      * @param listener The listener used by this ImageReader to notify
      *            callbacks.
      */
-    protected void createDefaultImageReader(Size size, int format, int maxNumImages, long usage,
+    public void createDefaultImageReader(Size size, int format, int maxNumImages, long usage,
             ImageReader.OnImageAvailableListener listener) throws Exception {
         closeDefaultImageReader();
 
@@ -382,7 +464,7 @@ public class Camera2AndroidBasicTestCase extends AndroidTestCase {
      * @param listener The listener used by this ImageReader to notify callbacks.
      */
 
-    protected ImageReader createImageReader(Size size, int format, int maxNumImages,
+    public ImageReader createImageReader(Size size, int format, int maxNumImages,
             ImageReader.OnImageAvailableListener listener) throws Exception {
 
         ImageReader reader = null;
@@ -406,7 +488,7 @@ public class Camera2AndroidBasicTestCase extends AndroidTestCase {
      * @param listener The listener used by this ImageReader to notify callbacks.
      */
 
-    protected ImageReader createImageReader(Size size, int format, int maxNumImages, long usage,
+    public ImageReader createImageReader(Size size, int format, int maxNumImages, long usage,
             ImageReader.OnImageAvailableListener listener) throws Exception {
         ImageReader reader = null;
         reader = ImageReader.newInstance(size.getWidth(), size.getHeight(),
@@ -420,7 +502,7 @@ public class Camera2AndroidBasicTestCase extends AndroidTestCase {
     /**
      * Close the pending images then close current default {@link ImageReader} object.
      */
-    protected void closeDefaultImageReader() {
+    public void closeDefaultImageReader() {
         closeImageReader(mReader);
         mReader = null;
         mReaderSurface = null;
@@ -431,7 +513,7 @@ public class Camera2AndroidBasicTestCase extends AndroidTestCase {
      *
      * @param reader
      */
-    protected void closeImageReader(ImageReader reader) {
+    public void closeImageReader(ImageReader reader) {
         if (reader != null) {
             try {
                 // Close all possible pending images first.
@@ -446,7 +528,7 @@ public class Camera2AndroidBasicTestCase extends AndroidTestCase {
         }
     }
 
-    protected void checkImageReaderSessionConfiguration(String msg) throws Exception {
+    public void checkImageReaderSessionConfiguration(String msg) throws Exception {
         List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration>();
         outputConfigs.add(new OutputConfiguration(mReaderSurface));
 
@@ -454,11 +536,11 @@ public class Camera2AndroidBasicTestCase extends AndroidTestCase {
                 SessionConfiguration.SESSION_REGULAR, /*expectedResult*/ true, msg);
     }
 
-    protected CaptureRequest prepareCaptureRequest() throws Exception {
+    public CaptureRequest prepareCaptureRequest() throws Exception {
         return prepareCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
     }
 
-    protected CaptureRequest prepareCaptureRequest(int template) throws Exception {
+    public CaptureRequest prepareCaptureRequest(int template) throws Exception {
         List<Surface> outputSurfaces = new ArrayList<Surface>();
         Surface surface = mReader.getSurface();
         assertNotNull("Fail to get surface from ImageReader", surface);
@@ -467,7 +549,7 @@ public class Camera2AndroidBasicTestCase extends AndroidTestCase {
                 .build();
     }
 
-    protected CaptureRequest.Builder prepareCaptureRequestForSurfaces(List<Surface> surfaces,
+    public CaptureRequest.Builder prepareCaptureRequestForSurfaces(List<Surface> surfaces,
             int template)
             throws Exception {
         createSession(surfaces);
@@ -482,7 +564,7 @@ public class Camera2AndroidBasicTestCase extends AndroidTestCase {
         return captureBuilder;
     }
 
-    protected CaptureRequest.Builder prepareCaptureRequestForConfigs(
+    public CaptureRequest.Builder prepareCaptureRequestForConfigs(
             List<OutputConfiguration> outputConfigs, int template) throws Exception {
         createSessionByConfigs(outputConfigs);
 
@@ -506,7 +588,7 @@ public class Camera2AndroidBasicTestCase extends AndroidTestCase {
      * @param closedBuffer The ByteBuffer from a closed Image. buffer invalid
      *            access will be skipped if it is null.
      */
-    protected void imageInvalidAccessTestAfterClose(Image closedImage,
+    public void imageInvalidAccessTestAfterClose(Image closedImage,
             Plane closedPlane, ByteBuffer closedBuffer) {
         if (closedImage == null) {
             throw new IllegalArgumentException(" closedImage must be non-null");

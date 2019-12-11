@@ -50,9 +50,9 @@ LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util-axt \
 	androidx.test.rules
 
 LOCAL_SRC_FILES := \
-	src/android/hardware/camera2/cts/testcases/Camera2AndroidBasicTestCase.java \
+	src/android/hardware/camera2/cts/testcases/Camera2AndroidTestRule.java \
 	src/android/hardware/camera2/cts/PerformanceTest.java \
-	src/android/hardware/cts/CameraTestCase.java \
+	src/android/hardware/cts/CameraPerformanceTestHelper.java \
 	src/android/hardware/cts/LegacyCameraPerformanceTest.java
 
 LOCAL_SDK_VERSION := test_current
