@@ -156,4 +156,13 @@ public class ParentProfileTest extends BaseManagedProfileTest {
         assertThrows(SecurityException.class,
                 () -> mParentDevicePolicyManager.wipeData(0));
     }
+
+    public void testCannotCallAutoTimeMethodsOnParentProfile() {
+        assertThrows(SecurityException.class,
+                () -> mParentDevicePolicyManager.setAutoTime(ADMIN_RECEIVER_COMPONENT, true));
+
+        assertThrows(SecurityException.class,
+                () -> mParentDevicePolicyManager.getAutoTime(ADMIN_RECEIVER_COMPONENT));
+    }
+
 }

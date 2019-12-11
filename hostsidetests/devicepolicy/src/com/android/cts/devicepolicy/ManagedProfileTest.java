@@ -231,6 +231,9 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
         }
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ParentProfileTest",
                 "testCannotWipeParentProfile", mProfileUserId);
+
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ParentProfileTest",
+                "testCannotCallAutoTimeMethodsOnParentProfile", mProfileUserId);
     }
 
     // TODO: This test is not specific to managed profiles, but applies to multi-user in general.
