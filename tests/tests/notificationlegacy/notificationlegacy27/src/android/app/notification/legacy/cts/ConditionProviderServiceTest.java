@@ -175,6 +175,7 @@ public class ConditionProviderServiceTest {
         // trigger a change in the bound service's condition
         ((LegacyConditionProviderService) LegacyConditionProviderService.getInstance())
                 .toggleDND(false);
+        sleep(500);
 
         // verify that the unbound service maintains it's DND vote
         assertEquals(INTERRUPTION_FILTER_ALARMS, mNm.getCurrentInterruptionFilter());
