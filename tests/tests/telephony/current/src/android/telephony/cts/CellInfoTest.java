@@ -777,8 +777,16 @@ public class CellInfoTest {
         wcdma.getDbm();
 
         int asuLevel = wcdma.getAsuLevel();
-        assertTrue("getAsuLevel() out of range 0..96, 255, asuLevel=" + asuLevel,
-                asuLevel == 255 || (asuLevel >= 0 && asuLevel <= 96));
+        if (wcdma.getRscp() != CellInfo.UNAVAILABLE) {
+            assertTrue("getAsuLevel() out of range 0..96, 255), asuLevel=" + asuLevel,
+                    asuLevel == 255 || (asuLevel >= 0 && asuLevel <= 96));
+        } else if (wcdma.getRssi() != CellInfo.UNAVAILABLE) {
+            assertTrue("getAsuLevel() out of range 0..31, 99), asuLevel=" + asuLevel,
+                    asuLevel == 99 || (asuLevel >= 0 && asuLevel <= 31));
+        } else {
+            assertTrue("getAsuLevel() out of range 0..96, 255), asuLevel=" + asuLevel,
+                    asuLevel == 255);
+        }
 
         int level = wcdma.getLevel();
         assertTrue("getLevel() out of range [0,4], level=" + level, level >= 0 && level <= 4);
