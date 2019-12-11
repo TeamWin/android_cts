@@ -17,7 +17,7 @@ android_test {
     sdk_version: "test_current",
 
     srcs: [
-        "src/**/*.java"
+        "src/**/*.java",
     ],
 
     static_libs: [
@@ -31,5 +31,6 @@ android_test {
         "cts",
         "vts",
         "general-tests",
-    ]
+        "mts",
+    ],
 }
