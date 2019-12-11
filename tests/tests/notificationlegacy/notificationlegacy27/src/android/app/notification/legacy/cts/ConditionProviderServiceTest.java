@@ -39,6 +39,7 @@ import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 import android.service.notification.Condition;
+import android.service.notification.ZenModeConfig;
 import android.util.ArraySet;
 import android.util.Log;
 
@@ -293,8 +294,13 @@ public class ConditionProviderServiceTest {
     }
 
     private void addRule(ComponentName cn, int filter, boolean enabled) {
+        final Uri conditionId = new Uri.Builder()
+                .scheme(Condition.SCHEME)
+                .authority(ZenModeConfig.SYSTEM_AUTHORITY)
+                .appendPath(cn.toString())
+                .build();
         String id = mNm.addAutomaticZenRule(new AutomaticZenRule("name",
-                cn, Uri.EMPTY, filter, enabled));
+                cn, conditionId, filter, enabled));
         Log.d(TAG, "Created rule with id " + id);
         ids.add(id);
     }
