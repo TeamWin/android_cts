@@ -67,6 +67,12 @@ public class SmsCbMessageTest {
 
     @Before
     public void setUp() {
+        TEST_GEOS.add(new CbGeoUtils.Geometry() {
+            @Override
+            public boolean contains(CbGeoUtils.LatLng p) {
+                return false;
+            }
+        });
         mSmsCbMessage = new SmsCbMessage(TEST_MESSAGE_FORMAT, TEST_GEO_SCOPE, TEST_SERIAL,
                 TEST_LOCATION, TEST_SERVICE_CATEGORY, TEST_LANGUAGE, TEST_BODY, TEST_PRIORITY,
                 TEST_ETWS_INFO, null, TEST_MAX_WAIT_TIME, TEST_GEOS, TEST_RECEIVED_TIME,
