@@ -18,6 +18,7 @@ android_test {
     static_libs: [
         "compatibility-device-util-axt",
         "ub-uiautomator",
+        "cts-wm-util",
         "androidx.test.rules",
     ],
     libs: ["android.test.base.stubs"],
