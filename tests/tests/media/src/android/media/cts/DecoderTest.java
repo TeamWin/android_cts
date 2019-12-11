@@ -3425,30 +3425,51 @@ public class DecoderTest extends MediaPlayerTestBase {
 
     public void testLowLatencyVp9At1280x720() throws Exception {
         testLowLatencyVideo(
-                R.raw.video_1280x720_webm_vp9_csd_309kbps_25fps_vorbis_stereo_128kbps_48000hz, 300);
+                R.raw.video_1280x720_webm_vp9_csd_309kbps_25fps_vorbis_stereo_128kbps_48000hz, 300,
+                false /* useNdk */);
+        testLowLatencyVideo(
+                R.raw.video_1280x720_webm_vp9_csd_309kbps_25fps_vorbis_stereo_128kbps_48000hz, 300,
+                true /* useNdk */);
     }
 
     public void testLowLatencyVp9At1920x1080() throws Exception {
         testLowLatencyVideo(
-                R.raw.bbb_s2_1920x1080_webm_vp9_0p41_10mbps_60fps_vorbis_6ch_384kbps_22050hz, 300);
+                R.raw.bbb_s2_1920x1080_webm_vp9_0p41_10mbps_60fps_vorbis_6ch_384kbps_22050hz, 300,
+                false /* useNdk */);
+        testLowLatencyVideo(
+                R.raw.bbb_s2_1920x1080_webm_vp9_0p41_10mbps_60fps_vorbis_6ch_384kbps_22050hz, 300,
+                true /* useNdk */);
     }
 
     public void testLowLatencyVp9At3840x2160() throws Exception {
         testLowLatencyVideo(
-                R.raw.bbb_s2_3840x2160_webm_vp9_0p51_20mbps_60fps_vorbis_6ch_384kbps_32000hz, 300);
+                R.raw.bbb_s2_3840x2160_webm_vp9_0p51_20mbps_60fps_vorbis_6ch_384kbps_32000hz, 300,
+                false /* useNdk */);
+        testLowLatencyVideo(
+                R.raw.bbb_s2_3840x2160_webm_vp9_0p51_20mbps_60fps_vorbis_6ch_384kbps_32000hz, 300,
+                true /* useNdk */);
     }
 
     public void testLowLatencyAVCAt1280x720() throws Exception {
         testLowLatencyVideo(
-                R.raw.video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz, 300);
+                R.raw.video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz, 300,
+                false /* useNdk */);
+        testLowLatencyVideo(
+                R.raw.video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz, 300,
+                true /* useNdk */);
     }
 
     public void testLowLatencyHEVCAt480x360() throws Exception {
         testLowLatencyVideo(
-                R.raw.video_480x360_mp4_hevc_650kbps_30fps_aac_stereo_128kbps_48000hz, 300);
+                R.raw.video_480x360_mp4_hevc_650kbps_30fps_aac_stereo_128kbps_48000hz, 300,
+                false /* useNdk */);
+        testLowLatencyVideo(
+                R.raw.video_480x360_mp4_hevc_650kbps_30fps_aac_stereo_128kbps_48000hz, 300,
+                true /* useNdk */);
     }
 
-    private void testLowLatencyVideo(int testVideo, int frameCount) throws Exception {
+    private void testLowLatencyVideo(int testVideo, int frameCount, boolean useNdk)
+            throws Exception {
         AssetFileDescriptor fd = mResources.openRawResourceFd(testVideo);
         MediaExtractor extractor = new MediaExtractor();
         extractor.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
@@ -3475,17 +3496,24 @@ public class DecoderTest extends MediaPlayerTestBase {
             MediaUtils.skipTest("no low latency decoder for " + format);
             return;
         }
-        Log.v(TAG, "found decoder " + decoderName + " for format: " + format);
+        String entry = (useNdk ? "NDK" : "SDK");
+        Log.v(TAG, "found " + entry + " decoder " + decoderName + " for format: " + format);
 
         Surface surface = getActivity().getSurfaceHolder().getSurface();
-        MediaCodec decoder = MediaCodec.createByCodecName(decoderName);
-        decoder.configure(format, surface, null /* crypto */, 0 /* flags */);
+        MediaCodecWrapper decoder = null;
+        if (useNdk) {
+            decoder = new NdkMediaCodec(decoderName);
+        } else {
+            decoder = new SdkMediaCodec(MediaCodec.createByCodecName(decoderName));
+        }
+        decoder.configure(format, 0 /* flags */, surface);
         decoder.start();
 
-        ByteBuffer[] codecInputBuffers = decoder.getInputBuffers();
+        if (!useNdk) {
+            decoder.getInputBuffers();
+        }
         ByteBuffer[] codecOutputBuffers = decoder.getOutputBuffers();
-        MediaFormat decoderInputFormat = decoder.getInputFormat();
-        MediaFormat decoderOutputFormat = null;
+        String decoderOutputFormatString = null;
 
         // start decoding
         final long kTimeOutUs = 1000000;  // 1 second
@@ -3502,7 +3530,7 @@ public class DecoderTest extends MediaPlayerTestBase {
                     break;
                 }
 
-                ByteBuffer dstBuf = codecInputBuffers[inputBufferId];
+                ByteBuffer dstBuf = decoder.getInputBuffer(inputBufferId);
 
                 int sampleSize = extractor.readSampleData(dstBuf, 0 /* offset */);
                 long presentationTimeUs = 0;
@@ -3537,14 +3565,14 @@ public class DecoderTest extends MediaPlayerTestBase {
                 codecOutputBuffers = decoder.getOutputBuffers();
                 Log.d(TAG, "output buffers have changed.");
             } else if (outputBufferId == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-                decoderOutputFormat = decoder.getOutputFormat();
-                Log.d(TAG, "output format has changed to " + decoderOutputFormat);
+                decoderOutputFormatString = decoder.getOutputFormatString();
+                Log.d(TAG, "output format has changed to " + decoderOutputFormatString);
             } else {
                 fail("No output buffer returned without frame delay, status " + outputBufferId);
             }
         }
 
-        assertTrue("No INFO_OUTPUT_FORMAT_CHANGED from decoder", decoderOutputFormat != null);
+        assertTrue("No INFO_OUTPUT_FORMAT_CHANGED from decoder", decoderOutputFormatString != null);
 
         long latencyMean = 0;
         long latencyMax = 0;
@@ -3559,13 +3587,17 @@ public class DecoderTest extends MediaPlayerTestBase {
         if (bufferCounter > 0) {
             latencyMean /= bufferCounter;
         }
-        Log.d(TAG, "latency average " + latencyMean + " ms, max " + latencyMax + " ms at frame " +
-                maxIndex);
+        Log.d(TAG, entry + " latency average " + latencyMean + " ms, max " + latencyMax +
+                " ms at frame " + maxIndex);
 
         DeviceReportLog log = new DeviceReportLog(REPORT_LOG_NAME, "video_decoder_latency");
-        String message = MediaPerfUtils.addPerformanceHeadersToLog(
-                log, "decoder stats: decodeTo=" + ((surface == null) ? "buffer" : "surface"),
-                0 /* round */, decoderName, format, decoderInputFormat, decoderOutputFormat);
+        String mime = format.getString(MediaFormat.KEY_MIME);
+        int width = format.getInteger(MediaFormat.KEY_WIDTH);
+        int height = format.getInteger(MediaFormat.KEY_HEIGHT);
+        log.addValue("codec_name", decoderName, ResultType.NEUTRAL, ResultUnit.NONE);
+        log.addValue("mime_type", mime, ResultType.NEUTRAL, ResultUnit.NONE);
+        log.addValue("width", width, ResultType.NEUTRAL, ResultUnit.NONE);
+        log.addValue("height", height, ResultType.NEUTRAL, ResultUnit.NONE);
         log.addValue("video_res", testVideo, ResultType.NEUTRAL, ResultUnit.NONE);
         log.addValue("decode_to", surface == null ? "buffer" : "surface",
                 ResultType.NEUTRAL, ResultUnit.NONE);
