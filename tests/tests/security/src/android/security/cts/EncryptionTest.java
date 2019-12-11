@@ -16,6 +16,7 @@
 
 package android.security.cts;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.PropertyUtil;
 
 import android.platform.test.annotations.AppModeFull;
@@ -80,6 +81,7 @@ public class EncryptionTest extends AndroidTestCase {
     // "getprop", used by PropertyUtil.getProperty(), is not executable
     // to instant apps
     @AppModeFull
+    @CddTest(requirement="9.9.2/C-0-1,C-0-2,C-0-3")
     public void testEncryption() throws Exception {
         if ("encrypted".equals(PropertyUtil.getProperty("ro.crypto.state"))) {
             handleEncryptedDevice();
