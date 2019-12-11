@@ -195,6 +195,11 @@ public class ContactsContract_RawContactsTest extends AndroidTestCase {
     /**
      * The local account is the default if a raw contact insert does not specify a value for
      * {@link RawContacts#ACCOUNT_NAME} and {@link RawContacts#ACCOUNT_TYPE}.
+     *
+     * <p>The values returned by {@link RawContacts#getLocalAccountName()} and
+     * {@link RawContacts#getLocalAccountType()} can be  customized by overriding the
+     * config_rawContactsLocalAccountName and config_rawContactsLocalAccountType resource strings 
+     * defined in platform/frameworks/base/core/res/res/values/config.xml.
      */
     public void testRawContactCreate_noAccountUsesLocalAccount() {
         // Save a raw contact without an account.
