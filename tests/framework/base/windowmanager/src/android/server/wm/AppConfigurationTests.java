@@ -17,6 +17,7 @@
 package android.server.wm;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
@@ -36,6 +37,7 @@ import static android.server.wm.app.Components.RESIZEABLE_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.translucentapp.Components.TRANSLUCENT_LANDSCAPE_ACTIVITY;
 import static android.server.wm.translucentapp26.Components.SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY;
+import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Surface.ROTATION_0;
 import static android.view.Surface.ROTATION_180;
 import static android.view.Surface.ROTATION_270;
@@ -56,6 +58,7 @@ import android.content.ComponentName;
 import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.SizeInfo;
 
 import org.junit.Ignore;
@@ -857,5 +860,152 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
         mAmWmState.assertFocusedActivity("Launched activity should be focused",
                 NIGHT_MODE_ACTIVITY);
         mAmWmState.assertResumedActivity("Launched activity must be resumed", NIGHT_MODE_ACTIVITY);
+    }
+
+    @Test
+    public void testAppConfigurationMatchesActivityInMultiWindow() throws Exception {
+        assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
+
+        final ActivitySession activitySession = createManagedActivityClientSession()
+                .startActivity(getLaunchActivityBuilder()
+                        .setUseInstrumentation()
+                        .setTargetActivity(RESIZEABLE_ACTIVITY)
+                        .setWindowingMode(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY));
+        SizeInfo dockedActivitySizes = getActivitySizeInfo(activitySession);
+        SizeInfo applicationSizes = getAppSizeInfo(activitySession);
+        assertSizesAreSame(dockedActivitySizes, applicationSizes);
+
+        // Move the activity to fullscreen and check that the size was updated
+        separateTestJournal();
+        setActivityTaskWindowingMode(RESIZEABLE_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
+        waitForOrFail("Activity and application configuration must match",
+                () -> activityAndAppSizesMatch(activitySession));
+        final SizeInfo fullscreenSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY);
+        applicationSizes = getAppSizeInfo(activitySession);
+        assertSizesAreSane(fullscreenSizes, dockedActivitySizes);
+        assertSizesAreSame(fullscreenSizes, applicationSizes);
+
+        // Move the activity to docked size again, check if the sizes were updated
+        separateTestJournal();
+        setActivityTaskWindowingMode(RESIZEABLE_ACTIVITY, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
+        waitForOrFail("Activity and application configuration must match",
+                () -> activityAndAppSizesMatch(activitySession));
+        dockedActivitySizes = getActivitySizeInfo(activitySession);
+        applicationSizes = getAppSizeInfo(activitySession);
+        assertSizesAreSane(fullscreenSizes, dockedActivitySizes);
+        assertSizesAreSame(dockedActivitySizes, applicationSizes);
+    }
+
+    @Test
+    public void testAppConfigurationMatchesTopActivityInMultiWindow() throws Exception {
+        assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
+
+        // Launch initial activity in fullscreen and assert sizes
+        final ActivitySession fullscreenActivitySession = createManagedActivityClientSession()
+                .startActivity(getLaunchActivityBuilder()
+                        .setUseInstrumentation()
+                        .setTargetActivity(TEST_ACTIVITY)
+                        .setWindowingMode(WINDOWING_MODE_FULLSCREEN));
+        SizeInfo fullscreenActivitySizes = getActivitySizeInfo(fullscreenActivitySession);
+        SizeInfo applicationSizes = getAppSizeInfo(fullscreenActivitySession);
+        assertSizesAreSame(fullscreenActivitySizes, applicationSizes);
+
+        // Launch second activity in split-screen and assert that sizes were updated
+        separateTestJournal();
+        final ActivitySession secondActivitySession = createManagedActivityClientSession()
+                .startActivity(getLaunchActivityBuilder()
+                        .setUseInstrumentation()
+                        .setTargetActivity(RESIZEABLE_ACTIVITY)
+                        .setNewTask(true)
+                        .setMultipleTask(true)
+                        .setWindowingMode(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY));
+        waitForOrFail("Activity and application configuration must match",
+                () -> activityAndAppSizesMatch(secondActivitySession));
+        SizeInfo dockedActivitySizes = getActivitySizeInfo(secondActivitySession);
+        applicationSizes = getAppSizeInfo(secondActivitySession);
+        assertSizesAreSame(dockedActivitySizes, applicationSizes);
+        assertSizesAreSane(fullscreenActivitySizes, dockedActivitySizes);
+
+        // Launch third activity in secondary split-screen and assert that sizes were updated
+        separateTestJournal();
+        final ActivitySession thirdActivitySession = createManagedActivityClientSession()
+                .startActivity(getLaunchActivityBuilder()
+                        .setUseInstrumentation()
+                        .setTargetActivity(RESIZEABLE_ACTIVITY)
+                        .setNewTask(true)
+                        .setMultipleTask(true)
+                        .setWindowingMode(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY));
+        waitForOrFail("Activity and application configuration must match",
+                () -> activityAndAppSizesMatch(thirdActivitySession));
+        SizeInfo secondarySplitActivitySizes = getActivitySizeInfo(thirdActivitySession);
+        applicationSizes = getAppSizeInfo(thirdActivitySession);
+        assertSizesAreSame(secondarySplitActivitySizes, applicationSizes);
+        assertSizesAreSane(fullscreenActivitySizes, secondarySplitActivitySizes);
+    }
+
+    @Test
+    public void testAppConfigurationMatchesActivityInFreeform() throws Exception {
+        assumeTrue("Skipping test: no freeform support", supportsFreeform());
+
+        // Launch activity in freeform and assert sizes
+        final ActivitySession freeformActivitySession = createManagedActivityClientSession()
+                .startActivity(getLaunchActivityBuilder()
+                        .setUseInstrumentation()
+                        .setTargetActivity(TEST_ACTIVITY)
+                        .setWindowingMode(WINDOWING_MODE_FREEFORM));
+        SizeInfo freeformActivitySizes = getActivitySizeInfo(freeformActivitySession);
+        SizeInfo applicationSizes = getAppSizeInfo(freeformActivitySession);
+        assertSizesAreSame(freeformActivitySizes, applicationSizes);
+    }
+
+    @Test
+    public void testAppConfigurationUpdatesWhenSplitScreenActivityFinishes() throws Exception {
+        assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
+
+        // Launch activity in fullscreen initially
+        final ActivitySession fullscreenActivitySession = createManagedActivityClientSession()
+                .startActivity(getLaunchActivityBuilder()
+                        .setUseInstrumentation()
+                        .setTargetActivity(TEST_ACTIVITY)
+                        .setWindowingMode(WINDOWING_MODE_FULLSCREEN));
+        SizeInfo fullscreenActivitySizes = getActivitySizeInfo(fullscreenActivitySession);
+        SizeInfo initialApplicationSizes = getAppSizeInfo(fullscreenActivitySession);
+        assertSizesAreSame(fullscreenActivitySizes, initialApplicationSizes);
+
+        // Launch activity in split-screen and assert sizes
+        separateTestJournal();
+        final ActivitySession secondActivitySession = createManagedActivityClientSession()
+                .startActivity(getLaunchActivityBuilder()
+                        .setUseInstrumentation()
+                        .setTargetActivity(RESIZEABLE_ACTIVITY)
+                        .setNewTask(true)
+                        .setMultipleTask(true)
+                        .setWindowingMode(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY));
+        waitForOrFail("Activity and application configuration must match",
+                () -> activityAndAppSizesMatch(secondActivitySession));
+        SizeInfo dockedActivitySizes = getActivitySizeInfo(secondActivitySession);
+        SizeInfo newApplicationSizes = getAppSizeInfo(secondActivitySession);
+        assertSizesAreSame(dockedActivitySizes, newApplicationSizes);
+        assertSizesAreSane(fullscreenActivitySizes, dockedActivitySizes);
+
+        // Finish top activity and assert the size change
+        secondActivitySession.finish();
+        waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY, "finishActivityOnTop");
+        waitForOrFail("Application configuration must be restored to the original size",
+                () -> initialApplicationSizes.equals(getAppSizeInfo(fullscreenActivitySession)));
+    }
+
+    private boolean activityAndAppSizesMatch(ActivitySession activitySession) {
+        final SizeInfo activitySize = activitySession.getConfigInfo().sizeInfo;
+        final SizeInfo appSize = activitySession.getAppConfigInfo().sizeInfo;
+        return activitySize.equals(appSize);
+    }
+
+    private SizeInfo getActivitySizeInfo(ActivitySession activitySession) {
+        return activitySession.getConfigInfo().sizeInfo;
+    }
+
+    private SizeInfo getAppSizeInfo(ActivitySession activitySession) {
+        return activitySession.getAppConfigInfo().sizeInfo;
     }
 }
