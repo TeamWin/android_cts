@@ -738,7 +738,7 @@ public abstract class ActivityManagerTestBase {
     }
 
     public void moveTaskToPrimarySplitScreen(int taskId) {
-        moveTaskToPrimarySplitScreen(taskId, false /* showRecents */);
+        moveTaskToPrimarySplitScreen(taskId, false /* showSideActivity */);
     }
 
     /**
@@ -763,7 +763,8 @@ public abstract class ActivityManagerTestBase {
                     // Launch Placeholder Side Activity
                     final ComponentName sideActivityName =
                             new ComponentName(mContext, SideActivity.class);
-                    launchActivityNoWait(sideActivityName);
+                    mContext.startActivity(new Intent().setComponent(sideActivityName)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
                     mAmWmState.waitForActivityState(sideActivityName, STATE_RESUMED);
                 }
 
@@ -2189,7 +2190,10 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
-    // Activity used in place of recents when home is the recents component.
+    /**
+     * Activity used in place of recents when home is the recents component. It should only be used
+     * by {@link #moveTaskToPrimarySplitScreen}.
+     */
     public static class SideActivity extends Activity {
     }
 }
