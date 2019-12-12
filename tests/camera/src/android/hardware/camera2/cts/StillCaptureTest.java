@@ -1030,6 +1030,9 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
                 // stopPreview must be called here to make sure next time a preview stream
                 // is created with new size.
                 stopPreview();
+                // Drain the results after each combination. Depending on the device the results
+                // can be relatively big and could accumulate fairly quickly after many iterations.
+                resultListener.drain();
             }
     }
 
