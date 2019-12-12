@@ -29,7 +29,7 @@ LOCAL_JAVA_LIBRARIES := android.test.base.stubs
 LOCAL_PACKAGE_NAME := CtsUsePermissionDiffCert
 
 # tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests sts
 
 # sign this app with a different cert than CtsPermissionDeclareApp
 LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/cts-testkey2

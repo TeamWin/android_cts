@@ -22,6 +22,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.SecurityTest;
+
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.Log;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -260,6 +262,7 @@ public class AppSecurityTests extends BaseHostJUnit4Test {
      */
     @Test
     @AppModeFull // TODO: Needs porting to instant
+    @SecurityTest
     public void testPermissionDiffCert() throws Exception {
         Log.i(LOG_TAG, "installing app that attempts to use permission of another app");
         try {
