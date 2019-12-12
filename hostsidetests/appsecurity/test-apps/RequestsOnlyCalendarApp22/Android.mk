@@ -39,7 +39,7 @@ LOCAL_PACKAGE_NAME := RequestsOnlyCalendarApp22
 LOCAL_PRIVATE_PLATFORM_APIS := true
 
 # tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests mts
 
 LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/cts-testkey2
 
