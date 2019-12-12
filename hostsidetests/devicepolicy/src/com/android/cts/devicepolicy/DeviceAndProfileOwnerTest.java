@@ -1941,6 +1941,23 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
+    public void testSetAutoTimeZone() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        assertMetricsLogged(getDevice(), () -> {
+                    executeDeviceTestMethod(".TimeManagementTest", "testSetAutoTimeZone");
+                }, new DevicePolicyEventWrapper.Builder(EventId.SET_AUTO_TIME_ZONE_VALUE)
+                        .setAdminPackageName(DEVICE_ADMIN_PKG)
+                        .setBoolean(true)
+                        .build(),
+                new DevicePolicyEventWrapper.Builder(EventId.SET_AUTO_TIME_ZONE_VALUE)
+                        .setAdminPackageName(DEVICE_ADMIN_PKG)
+                        .setBoolean(false)
+                        .build());
+    }
+
+    @Test
     public void testEnableSystemAppLogged() throws Exception {
         if (!mHasFeature || !isStatsdEnabled(getDevice())) {
             return;
