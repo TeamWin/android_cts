@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 public class ManagedProfileTimeoutTest extends BaseManagedProfileTest {
     private static final String PROFILE_CREDENTIAL = "1234";
     // This should be sufficiently larger than ProfileTimeoutTestHelper.TIMEOUT_MS
-    private static final int PROFILE_TIMEOUT_DELAY_MS = 40_000;
+    private static final int PROFILE_TIMEOUT_DELAY_MS = 60_000;
 
     /** Profile should get locked if it is not in foreground no matter what. */
     @FlakyTest
