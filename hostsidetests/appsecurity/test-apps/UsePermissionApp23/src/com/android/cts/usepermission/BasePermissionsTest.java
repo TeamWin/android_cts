@@ -449,7 +449,7 @@ public abstract class BasePermissionsTest {
                     waitForIdle();
                 }
 
-                final boolean wasGranted = isTv() ? false : !(waitFindObject(byText(R.string.Deny)).isChecked() || waitFindObject(byText(R.string.Ask)).isChecked());
+                final boolean wasGranted = isTv() ? false : !(waitFindObject(byText(R.string.Deny)).isChecked() || (!legacyApp && waitFindObject(byText(R.string.Ask)).isChecked()));
                 boolean alreadyChecked = false;
                 if (isTv()) {
                     waitFindObject(By.text(permissionLabel)).click();
@@ -460,7 +460,12 @@ public abstract class BasePermissionsTest {
                         object.click();
                     }
                 } else if (state == STATE_DENIED){
-                    UiObject2 object = waitFindObject(byText(R.string.Ask));
+                    UiObject2 object;
+                    if (legacyApp) {
+                        object = waitFindObject(byText(R.string.Deny));
+                    } else {
+                        object = waitFindObject(byText(R.string.Ask));
+                    }
                     alreadyChecked = object.isChecked();
                     if (!alreadyChecked) {
                         object.click();
