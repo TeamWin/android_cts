@@ -18,8 +18,9 @@ package com.android.cts.devicepolicy;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertTrue;
+
 import android.platform.test.annotations.FlakyTest;
-import android.platform.test.annotations.LargeTest;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
 
@@ -40,6 +41,7 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     private int mParentUserId = -1;
     protected int mUserId;
     private boolean mHasProfileToRemove = true;
+    private boolean mHasSecondaryProfileToRemove = false;
 
     @Override
     public void setUp() throws Exception {
@@ -72,6 +74,10 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         if (mHasFeature && mHasProfileToRemove) {
             removeOrgOwnedProfile();
             removeUser(mUserId);
+        }
+        if (mHasSecondaryProfileToRemove) {
+            removeTestUsers();
+            getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
         }
         super.tearDown();
     }
@@ -145,6 +151,33 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".OrgOwnedProfileOwnerParentTest", mUserId);
     }
 
+    @Test
+    public void testUserRestrictionsSetOnParentAreNotPersisted() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        int secondaryUserId = createUser();
+        setPoAsUser(secondaryUserId);
+        mHasSecondaryProfileToRemove = true;
+
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
+                "testAddUserRestriction_onParent", mUserId);
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
+                "testHasUserRestriction", mUserId);
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
+                "testHasUserRestriction", secondaryUserId);
+        removeOrgOwnedProfile();
+        assertHasNoUser(mUserId);
+        mHasProfileToRemove = false;
+
+        // Make sure the user restrictions are removed before continuing
+        waitForBroadcastIdle();
+
+        // User restrictions are not persist after organization-owned profile owner is removed
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
+                "testUserRestrictionAreNotPersisted", secondaryUserId);
+    }
+
     @FlakyTest(bugId = 137088260)
     @Test
     public void testWifi() throws Exception {
@@ -172,4 +205,12 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
         assertThat(listUsers()).doesNotContain(userId);
     }
+
+    private void setPoAsUser(int userId) throws Exception {
+        installAppAsUser(DEVICE_ADMIN_APK, true, true, userId);
+        assertTrue("Failed to set profile owner",
+                setProfileOwner(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
+                        userId, /* expectFailure */ false));
+    }
+
 }
