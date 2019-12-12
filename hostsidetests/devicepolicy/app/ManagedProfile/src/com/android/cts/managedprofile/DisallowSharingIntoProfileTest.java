@@ -176,7 +176,8 @@ public class DisallowSharingIntoProfileTest extends InstrumentationTestCase {
                         UserManager.DISALLOW_SHARE_INTO_MANAGED_PROFILE);
             }
             // Wait for the restriction to apply
-            assertTrue("Restriction not applied after 5 seconds", latch.await(5, TimeUnit.SECONDS));
+            assertTrue("Restriction not applied after 60 seconds",
+                    latch.await(60, TimeUnit.SECONDS));
         } finally {
             mContext.unregisterReceiver(receiver);
         }
