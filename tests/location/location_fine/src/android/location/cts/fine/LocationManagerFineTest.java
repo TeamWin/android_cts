@@ -31,11 +31,6 @@ import static com.android.compatibility.common.util.LocationUtils.createLocation
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.PendingIntent;
@@ -79,10 +74,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -112,7 +107,7 @@ public class LocationManagerFineTest {
         mContext = ApplicationProvider.getApplicationContext();
         mManager = mContext.getSystemService(LocationManager.class);
 
-        assertNotNull(mManager);
+        assertThat(mManager).isNotNull();
 
         for (String provider : mManager.getAllProviders()) {
             mManager.removeTestProvider(provider);
@@ -143,7 +138,7 @@ public class LocationManagerFineTest {
 
     @Test
     public void testIsLocationEnabled() {
-        assertTrue(mManager.isLocationEnabled());
+        assertThat(mManager.isLocationEnabled()).isTrue();
     }
 
     @Test
@@ -156,13 +151,13 @@ public class LocationManagerFineTest {
 
     @Test
     public void testIsProviderEnabled() {
-        assertTrue(mManager.isProviderEnabled(TEST_PROVIDER));
+        assertThat(mManager.isProviderEnabled(TEST_PROVIDER)).isTrue();
 
         mManager.setTestProviderEnabled(TEST_PROVIDER, false);
-        assertFalse(mManager.isProviderEnabled(TEST_PROVIDER));
+        assertThat(mManager.isProviderEnabled(TEST_PROVIDER)).isFalse();
 
         mManager.setTestProviderEnabled(TEST_PROVIDER, true);
-        assertTrue(mManager.isProviderEnabled(TEST_PROVIDER));
+        assertThat(mManager.isProviderEnabled(TEST_PROVIDER)).isTrue();
 
         try {
             mManager.isProviderEnabled(null);
@@ -184,7 +179,7 @@ public class LocationManagerFineTest {
         assertThat(mManager.getLastKnownLocation(TEST_PROVIDER)).isEqualTo(loc2);
 
         mManager.setTestProviderEnabled(TEST_PROVIDER, false);
-        assertNull(mManager.getLastKnownLocation(TEST_PROVIDER));
+        assertThat(mManager.getLastKnownLocation(TEST_PROVIDER)).isNull();
 
         try {
             mManager.getLastKnownLocation(null);
@@ -235,7 +230,7 @@ public class LocationManagerFineTest {
                     Executors.newSingleThreadExecutor(), capture);
             capture.getCancellationSignal().cancel();
             mManager.setTestProviderLocation(TEST_PROVIDER, loc);
-            assertFalse(capture.hasLocation(FAILURE_TIMEOUT_MS));
+            assertThat(capture.hasLocation(FAILURE_TIMEOUT_MS)).isFalse();
         }
     }
 
@@ -245,14 +240,14 @@ public class LocationManagerFineTest {
             mManager.setTestProviderEnabled(TEST_PROVIDER, false);
             mManager.getCurrentLocation(TEST_PROVIDER, capture.getCancellationSignal(),
                     Executors.newSingleThreadExecutor(), capture);
-            assertNull(capture.getLocation(FAILURE_TIMEOUT_MS));
+            assertThat(capture.getLocation(FAILURE_TIMEOUT_MS)).isNull();
         }
 
         try (GetCurrentLocationCapture capture = new GetCurrentLocationCapture()) {
             mManager.getCurrentLocation(TEST_PROVIDER, capture.getCancellationSignal(),
                     Executors.newSingleThreadExecutor(), capture);
             mManager.setTestProviderEnabled(TEST_PROVIDER, false);
-            assertNull(capture.getLocation(FAILURE_TIMEOUT_MS));
+            assertThat(capture.getLocation(FAILURE_TIMEOUT_MS)).isNull();
         }
     }
 
@@ -277,11 +272,11 @@ public class LocationManagerFineTest {
             mManager.removeUpdates(capture);
 
             mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
-            assertNull(capture.getNextLocation(FAILURE_TIMEOUT_MS));
+            assertThat(capture.getNextLocation(FAILURE_TIMEOUT_MS)).isNull();
             mManager.setTestProviderEnabled(TEST_PROVIDER, false);
-            assertNull(capture.getNextProviderChange(FAILURE_TIMEOUT_MS));
+            assertThat(capture.getNextProviderChange(FAILURE_TIMEOUT_MS)).isNull();
             mManager.setTestProviderEnabled(TEST_PROVIDER, true);
-            assertNull(capture.getNextProviderChange(FAILURE_TIMEOUT_MS));
+            assertThat(capture.getNextProviderChange(FAILURE_TIMEOUT_MS)).isNull();
         }
 
         try {
@@ -333,11 +328,11 @@ public class LocationManagerFineTest {
             mManager.removeUpdates(capture.getPendingIntent());
 
             mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
-            assertNull(capture.getNextLocation(FAILURE_TIMEOUT_MS));
+            assertThat(capture.getNextLocation(FAILURE_TIMEOUT_MS)).isNull();
             mManager.setTestProviderEnabled(TEST_PROVIDER, false);
-            assertNull(capture.getNextProviderChange(FAILURE_TIMEOUT_MS));
+            assertThat(capture.getNextProviderChange(FAILURE_TIMEOUT_MS)).isNull();
             mManager.setTestProviderEnabled(TEST_PROVIDER, true);
-            assertNull(capture.getNextProviderChange(FAILURE_TIMEOUT_MS));
+            assertThat(capture.getNextProviderChange(FAILURE_TIMEOUT_MS)).isNull();
         }
 
         try {
@@ -446,11 +441,11 @@ public class LocationManagerFineTest {
             mManager.removeUpdates(capture);
 
             mManager.setTestProviderLocation(FUSED_PROVIDER, loc1);
-            assertNull(capture.getNextLocation(FAILURE_TIMEOUT_MS));
+            assertThat(capture.getNextLocation(FAILURE_TIMEOUT_MS)).isNull();
             mManager.setTestProviderEnabled(FUSED_PROVIDER, false);
-            assertNull(capture.getNextProviderChange(FAILURE_TIMEOUT_MS));
+            assertThat(capture.getNextProviderChange(FAILURE_TIMEOUT_MS)).isNull();
             mManager.setTestProviderEnabled(FUSED_PROVIDER, true);
-            assertNull(capture.getNextProviderChange(FAILURE_TIMEOUT_MS));
+            assertThat(capture.getNextProviderChange(FAILURE_TIMEOUT_MS)).isNull();
         }
 
 
@@ -507,7 +502,7 @@ public class LocationManagerFineTest {
             mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
             assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc1);
             mManager.setTestProviderLocation(TEST_PROVIDER, loc2);
-            assertNull(capture.getNextLocation(FAILURE_TIMEOUT_MS));
+            assertThat(capture.getNextLocation(FAILURE_TIMEOUT_MS)).isNull();
         }
     }
 
@@ -525,7 +520,7 @@ public class LocationManagerFineTest {
             mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
             assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc1);
             mManager.setTestProviderLocation(TEST_PROVIDER, loc2);
-            assertNull(capture.getNextLocation(FAILURE_TIMEOUT_MS));
+            assertThat(capture.getNextLocation(FAILURE_TIMEOUT_MS)).isNull();
         }
     }
 
@@ -543,7 +538,7 @@ public class LocationManagerFineTest {
             mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
             assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc1);
             mManager.setTestProviderLocation(TEST_PROVIDER, loc2);
-            assertNull(capture.getNextLocation(FAILURE_TIMEOUT_MS));
+            assertThat(capture.getNextLocation(FAILURE_TIMEOUT_MS)).isNull();
         }
     }
 
@@ -552,7 +547,7 @@ public class LocationManagerFineTest {
     public void testRequestGpsUpdates_B9758659() throws Exception {
         // test for b/9758659, where the gps provider may reuse network provider positions creating
         // an unnatural feedback loop
-        assertTrue(mManager.isProviderEnabled(GPS_PROVIDER));
+        assertThat(mManager.isProviderEnabled(GPS_PROVIDER)).isTrue();
 
         Location networkLocation = createLocation(NETWORK_PROVIDER, mRandom);
 
@@ -597,7 +592,7 @@ public class LocationManagerFineTest {
             mManager.removeUpdates(capture);
 
             mManager.setTestProviderEnabled(TEST_PROVIDER, false);
-            assertNull(capture.getNextLocation(FAILURE_TIMEOUT_MS));
+            assertThat(capture.getNextLocation(FAILURE_TIMEOUT_MS)).isNull();
         }
     }
 
@@ -614,7 +609,7 @@ public class LocationManagerFineTest {
             mManager.removeUpdates(capture.getPendingIntent());
 
             mManager.setTestProviderEnabled(TEST_PROVIDER, false);
-            assertNull(capture.getNextLocation(FAILURE_TIMEOUT_MS));
+            assertThat(capture.getNextLocation(FAILURE_TIMEOUT_MS)).isNull();
         }
     }
 
@@ -641,33 +636,34 @@ public class LocationManagerFineTest {
     public void testGetAllProviders() {
         List<String> providers = mManager.getAllProviders();
         if (hasGpsFeature()) {
-            assertTrue(providers.contains(LocationManager.GPS_PROVIDER));
+            assertThat(providers.contains(LocationManager.GPS_PROVIDER)).isTrue();
         }
-        assertTrue(providers.contains(PASSIVE_PROVIDER));
-        assertTrue(providers.contains(TEST_PROVIDER));
+        assertThat(providers.contains(PASSIVE_PROVIDER)).isTrue();
+        assertThat(providers.contains(TEST_PROVIDER)).isTrue();
+        assertThat(providers.size()).isEqualTo(new HashSet<>(providers).size());
 
         mManager.removeTestProvider(TEST_PROVIDER);
 
         providers = mManager.getAllProviders();
-        assertTrue(providers.contains(PASSIVE_PROVIDER));
-        assertFalse(providers.contains(TEST_PROVIDER));
+        assertThat(providers.contains(PASSIVE_PROVIDER)).isTrue();
+        assertThat(providers.contains(TEST_PROVIDER)).isFalse();
     }
 
     @Test
     public void testGetProviders() throws Exception {
         List<String> providers = mManager.getProviders(false);
-        assertTrue(providers.contains(TEST_PROVIDER));
+        assertThat(providers.contains(TEST_PROVIDER)).isTrue();
 
         providers = mManager.getProviders(true);
-        assertTrue(providers.contains(TEST_PROVIDER));
+        assertThat(providers.contains(TEST_PROVIDER)).isTrue();
 
         setTestProviderEnabled(TEST_PROVIDER, false);
 
         providers = mManager.getProviders(false);
-        assertTrue(providers.contains(TEST_PROVIDER));
+        assertThat(providers.contains(TEST_PROVIDER)).isTrue();
 
         providers = mManager.getProviders(true);
-        assertFalse(providers.contains(TEST_PROVIDER));
+        assertThat(providers.contains(TEST_PROVIDER)).isFalse();
     }
 
     @Test
@@ -675,18 +671,18 @@ public class LocationManagerFineTest {
         Criteria criteria = new Criteria();
 
         List<String> providers = mManager.getProviders(criteria, false);
-        assertTrue(providers.contains(TEST_PROVIDER));
+        assertThat(providers.contains(TEST_PROVIDER)).isTrue();
 
         providers = mManager.getProviders(criteria, true);
-        assertTrue(providers.contains(TEST_PROVIDER));
+        assertThat(providers.contains(TEST_PROVIDER)).isTrue();
 
         criteria.setPowerRequirement(Criteria.POWER_LOW);
 
         providers = mManager.getProviders(criteria, false);
-        assertFalse(providers.contains(TEST_PROVIDER));
+        assertThat(providers.contains(TEST_PROVIDER)).isFalse();
 
         providers = mManager.getProviders(criteria, true);
-        assertFalse(providers.contains(TEST_PROVIDER));
+        assertThat(providers.contains(TEST_PROVIDER)).isFalse();
     }
 
     @Test
@@ -721,21 +717,21 @@ public class LocationManagerFineTest {
         assertThat(mManager.getBestProvider(criteria, false)).isEqualTo(TEST_PROVIDER);
 
         setTestProviderEnabled(TEST_PROVIDER, false);
-        assertNotEquals(TEST_PROVIDER, mManager.getBestProvider(criteria, true));
+        assertThat(mManager.getBestProvider(criteria, true)).isNotEqualTo(TEST_PROVIDER);
     }
 
     @Test
     public void testGetProvider() {
         LocationProvider provider = mManager.getProvider(TEST_PROVIDER);
-        assertNotNull(provider);
+        assertThat(provider).isNotNull();
         assertThat(provider.getName()).isEqualTo(TEST_PROVIDER);
 
         provider = mManager.getProvider(LocationManager.GPS_PROVIDER);
         if (hasGpsFeature()) {
-            assertNotNull(provider);
+            assertThat(provider).isNotNull();
             assertThat(provider.getName()).isEqualTo(LocationManager.GPS_PROVIDER);
         } else {
-            assertNull(provider);
+            assertThat(provider).isNull();
         }
 
         try {
@@ -751,7 +747,7 @@ public class LocationManagerFineTest {
     public void testSendExtraCommand() {
         for (String provider : mManager.getAllProviders()) {
             boolean res = mManager.sendExtraCommand(provider, "dontCrash", null);
-            assertTrue(res);
+            assertThat(res).isTrue();
 
             try {
                 mManager.sendExtraCommand(provider, null, null);
@@ -824,9 +820,6 @@ public class LocationManagerFineTest {
 
     @Test
     public void testSetTestProviderEnabled() {
-        Location loc1 = createLocation(TEST_PROVIDER, mRandom);
-        Location loc2 = createLocation(TEST_PROVIDER, mRandom);
-
         for (String provider : mManager.getAllProviders()) {
             if (TEST_PROVIDER.equals(provider)) {
                 mManager.setTestProviderEnabled(provider, false);
@@ -875,12 +868,12 @@ public class LocationManagerFineTest {
 
                     Location received = capture.getLocation(TIMEOUT_MS);
                     assertThat(received).isEqualTo(loc1);
-                    assertTrue(received.isFromMockProvider());
+                    assertThat(received.isFromMockProvider()).isTrue();
                     assertThat(mManager.getLastKnownLocation(provider)).isEqualTo(loc1);
 
                     setTestProviderEnabled(provider, false);
                     mManager.setTestProviderLocation(provider, loc2);
-                    assertNull(mManager.getLastKnownLocation(provider));
+                    assertThat(mManager.getLastKnownLocation(provider)).isNull();
                 }
             } else {
                 try {
@@ -926,8 +919,8 @@ public class LocationManagerFineTest {
         if (providers.size() <= 2) {
             // can't perform the test without any real providers, and no need to do so since there
             // are no providers a malicious app could fool
-            assertTrue(providers.contains(TEST_PROVIDER));
-            assertTrue(providers.contains(PASSIVE_PROVIDER));
+            assertThat(providers.contains(TEST_PROVIDER)).isTrue();
+            assertThat(providers.contains(PASSIVE_PROVIDER)).isTrue();
             return;
         }
 
@@ -944,7 +937,7 @@ public class LocationManagerFineTest {
 
             Location received = capture.getLocation(TIMEOUT_MS);
             assertThat(received).isEqualTo(loc);
-            assertTrue(received.isFromMockProvider());
+            assertThat(received.isFromMockProvider()).isTrue();
 
             Location realProvideLocation = mManager.getLastKnownLocation(realProvider);
             if (realProvideLocation != null) {
@@ -1086,7 +1079,7 @@ public class LocationManagerFineTest {
             Thread.sleep(500);
 
             mManager.setTestProviderLocation(FUSED_PROVIDER, createLocation(FUSED_PROVIDER, 0, 0, 10));
-            assertNull(capture.getNextProximityChange(FAILURE_TIMEOUT_MS));
+            assertThat(capture.getNextProximityChange(FAILURE_TIMEOUT_MS)).isNull();
         }
     }
 
