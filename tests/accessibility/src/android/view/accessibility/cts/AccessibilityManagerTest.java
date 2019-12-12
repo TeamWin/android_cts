@@ -17,10 +17,6 @@
 package android.view.accessibility.cts;
 
 import static android.accessibility.cts.common.InstrumentedAccessibilityService.TIMEOUT_SERVICE_ENABLE;
-import static android.accessibility.cts.common.ServiceControlUtils.getEnabledServices;
-import static android.accessibility.cts.common.ServiceControlUtils.waitForConditionWithServiceStateChange;
-
-import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -38,9 +34,6 @@ import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.ServiceInfo;
 import android.os.Handler;
-import android.platform.test.annotations.AppModeFull;
-import android.provider.Settings;
-import android.text.TextUtils;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityManager.AccessibilityStateChangeListener;
@@ -442,64 +435,6 @@ public class AccessibilityManagerTest {
         } finally {
             automan.destroy();
         }
-    }
-
-    @AppModeFull
-    @Test
-    public void performShortcut_withoutPermission_fails() {
-        UiAutomation uiAutomation = sInstrumentation.getUiAutomation(
-                UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
-
-        String originalShortcut = configureShortcut(
-                uiAutomation, SpeakingAccessibilityService.COMPONENT_NAME.flattenToString());
-        try {
-            mAccessibilityManager.performAccessibilityShortcut();
-            fail("No security exception thrown when performing shortcut without permission");
-        } catch (SecurityException e) {
-            // Expected
-        } finally {
-            configureShortcut(uiAutomation, originalShortcut);
-            uiAutomation.destroy();
-        }
-        assertTrue(TextUtils.isEmpty(getEnabledServices(mTargetContext.getContentResolver())));
-    }
-
-    @AppModeFull
-    @Test
-    public void performShortcut_withPermission_succeeds() {
-        UiAutomation uiAutomation = sInstrumentation.getUiAutomation(
-                UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
-
-        String originalShortcut = configureShortcut(
-                uiAutomation, SpeakingAccessibilityService.COMPONENT_NAME.flattenToString());
-        try {
-            runWithShellPermissionIdentity(uiAutomation,
-                    () -> mAccessibilityManager.performAccessibilityShortcut());
-            // Make sure the service starts up
-            final SpeakingAccessibilityService service =
-                    SpeakingAccessibilityService.getInstanceForClass(
-                    SpeakingAccessibilityService.class, TIMEOUT_SERVICE_ENABLE);
-            assertTrue("Speaking accessibility service starts up", service != null);
-        } finally {
-            configureShortcut(uiAutomation, originalShortcut);
-            uiAutomation.destroy();
-        }
-    }
-
-    private String configureShortcut(UiAutomation uiAutomation, String shortcutService) {
-        String currentService = Settings.Secure.getString(mTargetContext.getContentResolver(),
-                Settings.Secure.ACCESSIBILITY_SHORTCUT_TARGET_SERVICE);
-        putSecureSetting(uiAutomation, Settings.Secure.ACCESSIBILITY_SHORTCUT_TARGET_SERVICE,
-                shortcutService);
-        if (shortcutService != null) {
-            runWithShellPermissionIdentity(uiAutomation, () ->
-                    waitForConditionWithServiceStateChange(mTargetContext, () -> TextUtils.equals(
-                            mAccessibilityManager.getAccessibilityShortcutService(),
-                            shortcutService),
-                            TIMEOUT_SERVICE_ENABLE,
-                            "accessibility shortcut set to test service"));
-        }
-        return currentService;
     }
 
     private void assertAtomicBooleanBecomes(AtomicBoolean atomicBoolean,

@@ -49,8 +49,12 @@ import android.accessibilityservice.cts.utils.DisplayUtils;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
+import android.os.SystemClock;
+import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.Gravity;
+import android.view.InputDevice;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityNodeInfo;
@@ -254,6 +258,26 @@ public class AccessibilityWindowReportingTest {
                             sUiAutomation,
                             AccessibilityEmbeddedDisplayTest.EmbeddedDisplayActivity.class,
                             virtualDisplayId);
+            // Window manager changed the behavior of focused window at a virtual display. A window
+            // at virtual display needs to be touched then it becomes to be focused one. Adding this
+            // touch event on the activity window of the virtual display to pass this test case.
+            final DisplayMetrics displayMetrics = mActivity.getResources().getDisplayMetrics();
+            final int xOnScreen = displayMetrics.widthPixels / 2;
+            final int yOnScreen = displayMetrics.heightPixels / 2;
+            final long downEventTime = SystemClock.uptimeMillis();
+            final MotionEvent downEvent = MotionEvent.obtain(downEventTime, downEventTime,
+                    MotionEvent.ACTION_DOWN, xOnScreen, yOnScreen, 0);
+            downEvent.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+            downEvent.setDisplayId(virtualDisplayId);
+            sUiAutomation.injectInputEvent(downEvent, true);
+
+            final long upEventTime = downEventTime + 10;
+            final MotionEvent upEvent = MotionEvent.obtain(downEventTime, upEventTime,
+                    MotionEvent.ACTION_UP, xOnScreen, yOnScreen, 0);
+            upEvent.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+            upEvent.setDisplayId(virtualDisplayId);
+            sUiAutomation.injectInputEvent(upEvent, true);
+
             final CharSequence activityTitle = getActivityTitle(sInstrumentation,
                     activityOnVirtualDisplay);
             // Make sure activityWindow on virtual display is focused.

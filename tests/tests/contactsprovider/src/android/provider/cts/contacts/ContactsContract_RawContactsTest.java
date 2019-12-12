@@ -17,6 +17,7 @@
 package android.provider.cts.contacts;
 
 
+import android.accounts.Account;
 import android.content.ContentProviderClient;
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -120,6 +121,14 @@ public class ContactsContract_RawContactsTest extends AndroidTestCase {
                 lookupContact.getId(), rawContact.load().getContactId());
     }
 
+    public void testGetDeviceAccountNameAndType_haveSameNullness() {
+        String name = RawContacts.getLocalAccountName(mContext);
+        String type = RawContacts.getLocalAccountType(mContext);
+
+        assertTrue("Device account name and type must both be null or both be non-null",
+                (name == null && type == null) || (name != null && type != null));
+    }
+
     public void testRawContactDelete_setsDeleteFlag() {
         long rawContactid = RawContactUtil.insertRawContact(mResolver,
                 StaticAccountAuthenticator.ACCOUNT_1);
@@ -142,7 +151,11 @@ public class ContactsContract_RawContactsTest extends AndroidTestCase {
     }
 
     public void testRawContactDelete_localDeleteRemovesRecord() {
-        long rawContactid = RawContactUtil.insertRawContact(mResolver, null);
+        String name = RawContacts.getLocalAccountName(mContext);
+        String type = RawContacts.getLocalAccountType(mContext);
+        Account account = name != null && type != null ? new Account(name, type) : null;
+
+        long rawContactid = RawContactUtil.insertRawContact(mResolver, account);
         assertTrue(RawContactUtil.rawContactExistsById(mResolver, rawContactid));
 
         // Local raw contacts should be deleted immediately even if isSyncAdapter=false
@@ -177,6 +190,27 @@ public class ContactsContract_RawContactsTest extends AndroidTestCase {
 
         // Clean up
         RawContactUtil.delete(mResolver, ids.mRawContactId, true);
+    }
+
+    /**
+     * The local account is the default if a raw contact insert does not specify a value for
+     * {@link RawContacts#ACCOUNT_NAME} and {@link RawContacts#ACCOUNT_TYPE}.
+     */
+    public void testRawContactCreate_noAccountUsesLocalAccount() {
+        // Save a raw contact without an account.
+        long rawContactid = RawContactUtil.insertRawContact(mResolver, null);
+
+        String[] row =  RawContactUtil.queryByRawContactId(mResolver, rawContactid,
+                new String[] {
+                        RawContacts.ACCOUNT_NAME, RawContacts.ACCOUNT_TYPE
+                });
+
+        // When no account is specified the contact is created in the local account.
+        assertEquals(RawContacts.getLocalAccountName(mContext), row[0]);
+        assertEquals(RawContacts.getLocalAccountType(mContext), row[1]);
+
+        // Clean up
+        RawContactUtil.delete(mResolver, rawContactid, true);
     }
 
     public void testRawContactUpdate_updatesContactUpdatedTimestamp() {
