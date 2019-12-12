@@ -5,6 +5,8 @@ import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import android.stats.devicepolicy.EventId;
 
 public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevicePolicyTest {
@@ -24,6 +26,10 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
         "com.android.cts.transferowner.TransferProfileOwnerOutgoingTest";
     protected static final String TRANSFER_PROFILE_OWNER_INCOMING_TEST =
         "com.android.cts.transferowner.TransferProfileOwnerIncomingTest";
+    private final String INCOMING_ADMIN_SERVICE_FULL_NAME =
+            "com.android.cts.transferowner"
+                    + ".DeviceAndProfileOwnerTransferIncomingTest$BasicAdminService";
+
 
     protected int mUserId;
     protected String mOutgoingTestClassName;
@@ -215,9 +221,13 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
         runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
             mOutgoingTestClassName,
             "testTransferOwnership", mUserId);
-        runDeviceTestsAsUser(TRANSFER_OWNER_INCOMING_PKG,
-            mIncomingTestClassName,
-            "testAdminServiceIsBound", mUserId);
+        assertServiceRunning(INCOMING_ADMIN_SERVICE_FULL_NAME);
+    }
+
+    private void assertServiceRunning(String serviceName) throws DeviceNotAvailableException {
+        final String result = getDevice().executeShellCommand(
+                String.format("dumpsys activity services %s", serviceName));
+        assertThat(result).contains("app=ProcessRecord");
     }
 
     protected void setSameAffiliationId(int profileUserId, String testClassName)
@@ -239,9 +249,4 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
             testClassName,
             "testIsAffiliationId1", profileUserId);
     }
-
-    /* TODO: Add tests for:
-    * 1. passwordOwner
-    *
-    * */
 }
