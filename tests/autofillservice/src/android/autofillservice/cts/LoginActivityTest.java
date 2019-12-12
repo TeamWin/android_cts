@@ -20,7 +20,7 @@ import static android.autofillservice.cts.CannedFillResponse.DO_NOT_REPLY_RESPON
 import static android.autofillservice.cts.CannedFillResponse.FAIL;
 import static android.autofillservice.cts.CannedFillResponse.NO_MOAR_RESPONSES;
 import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
-import static android.autofillservice.cts.Helper.ID_CANCEL;
+import static android.autofillservice.cts.Helper.ID_CANCEL_FILL;
 import static android.autofillservice.cts.Helper.ID_EMPTY;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_PASSWORD_LABEL;
@@ -2839,7 +2839,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
                         .setField(ID_PASSWORD, "sweet")
                         .setPresentation(createPresentationWithCancel("The Dude"))
                         .build())
-                .setCancelTargetIds(new int[]{R.id.cancel});
+                .setCancelTargetIds(new int[]{R.id.cancel_fill});
         sReplier.addResponse(builder.build());
 
         // Trigger auto-fill.
@@ -2848,8 +2848,8 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
 
         mUiBot.assertDatasetsContains("The Dude");
 
-        // Tap cancel button
-        mUiBot.selectByRelativeId(ID_CANCEL);
+        // Tap cancel button on fill UI
+        mUiBot.selectByRelativeId(ID_CANCEL_FILL);
         mUiBot.waitForIdle();
 
         mUiBot.assertNoDatasets();
