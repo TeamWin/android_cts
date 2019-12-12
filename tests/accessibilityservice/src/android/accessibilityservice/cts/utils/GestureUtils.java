@@ -29,7 +29,6 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
-import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 
 public class GestureUtils {
@@ -258,5 +257,26 @@ public class GestureUtils {
 
     public static PointF getPointWithinSlop(PointF point, int slop) {
         return add(point, slop / 2, 0);
+    }
+
+    /**
+     * Simulates a user placing one finger on the screen for a specified amount of time and then multi-tapping with a second finger.
+     * @param explorePoint Where to place the first finger.
+     * @param tapPoint Where to tap with the second finger.
+     * @param taps The number of second-finger taps.
+     * @param waitTime How long to hold the first finger before tapping with the second finger.
+     */
+    public static GestureDescription secondFingerMultiTap(
+            PointF explorePoint, PointF tapPoint, int taps, int waitTime) {
+        GestureDescription.Builder builder = new GestureDescription.Builder();
+        long time = waitTime;
+        for (int i = 0; i < taps; i++) {
+            StrokeDescription stroke = click(tapPoint);
+            builder.addStroke(startingAt(time, stroke));
+            time += stroke.getDuration();
+            time += ViewConfiguration.getDoubleTapTimeout() / 3;
+        }
+        builder.addStroke(swipe(explorePoint, explorePoint, time));
+        return builder.build();
     }
 }
