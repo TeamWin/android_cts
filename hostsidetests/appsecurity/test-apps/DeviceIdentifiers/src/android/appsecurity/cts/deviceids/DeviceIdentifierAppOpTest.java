@@ -64,6 +64,9 @@ public class DeviceIdentifierAppOpTest  {
                     ShellIdentityUtils.invokeMethodWithShellPermissions(telephonyManager,
                             (tm) -> tm.getSimSerialNumber()),
                     telephonyManager.getSimSerialNumber());
+            assertEquals(String.format(DEVICE_ID_WITH_APPOP_ERROR_MESSAGE, "getNai"),
+                    ShellIdentityUtils.invokeMethodWithShellPermissions(telephonyManager,
+                            (tm) -> tm.getNai()), telephonyManager.getNai());
             assertEquals(String.format(DEVICE_ID_WITH_APPOP_ERROR_MESSAGE, "Build#getSerial"),
                     ShellIdentityUtils.invokeStaticMethodWithShellPermissions(Build::getSerial),
                     Build.getSerial());

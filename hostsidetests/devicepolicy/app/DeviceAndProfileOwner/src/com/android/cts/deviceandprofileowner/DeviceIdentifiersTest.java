@@ -15,6 +15,8 @@
  */
 package com.android.cts.deviceandprofileowner;
 
+import static org.testng.Assert.assertThrows;
+
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -61,6 +63,9 @@ public class DeviceIdentifiersTest extends BaseDeviceAdminTest {
                     ShellIdentityUtils.invokeMethodWithShellPermissions(telephonyManager,
                             (tm) -> tm.getSimSerialNumber()),
                     telephonyManager.getSimSerialNumber());
+            assertEquals(String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE, "getNai"),
+                    ShellIdentityUtils.invokeMethodWithShellPermissions(telephonyManager,
+                            (tm) -> tm.getNai()), telephonyManager.getNai());
             assertEquals(String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE, "Build#getSerial"),
                     ShellIdentityUtils.invokeStaticMethodWithShellPermissions(Build::getSerial),
                     Build.getSerial());
@@ -78,64 +83,22 @@ public class DeviceIdentifiersTest extends BaseDeviceAdminTest {
         // Allow the APIs to also return null if the telephony feature is not supported.
         boolean hasTelephonyFeature =
                 mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
-        try {
-            String deviceId = telephonyManager.getDeviceId();
-            if (hasTelephonyFeature) {
-                fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getDeviceId"));
-            } else {
-                assertEquals(null, deviceId);
-            }
-        } catch (SecurityException expected) {
-        }
-
-        try {
-            String imei = telephonyManager.getImei();
-            if (hasTelephonyFeature) {
-                fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getImei"));
-            } else {
-                assertEquals(null, imei);
-            }
-        } catch (SecurityException expected) {
-        }
-
-        try {
-            String meid = telephonyManager.getMeid();
-            if (hasTelephonyFeature) {
-                fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getMeid"));
-            } else {
-                assertEquals(null, meid);
-            }
-        } catch (SecurityException expected) {
-        }
-
-        try {
-            String subscriberId = telephonyManager.getSubscriberId();
-            if (hasTelephonyFeature) {
-                fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getSubscriberId"));
-            } else {
-                assertEquals(null, subscriberId);
-            }
-        } catch (SecurityException expected) {
-        }
-
-        try {
-            String simSerialNumber = telephonyManager.getSimSerialNumber();
-            if (hasTelephonyFeature) {
-                fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getSimSerialNumber"));
-            } else {
-                assertEquals(null, simSerialNumber);
-            }
-        } catch (SecurityException expected) {
-        }
-
-        try {
-            String serial = Build.getSerial();
-            if (hasTelephonyFeature) {
-                fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "Build#getSerial"));
-            } else {
-              assertEquals(null, serial);
-            }
-        } catch (SecurityException expected) {
+        if (hasTelephonyFeature) {
+            assertThrows(SecurityException.class, telephonyManager::getDeviceId);
+            assertThrows(SecurityException.class, telephonyManager::getImei);
+            assertThrows(SecurityException.class, telephonyManager::getMeid);
+            assertThrows(SecurityException.class, telephonyManager::getSubscriberId);
+            assertThrows(SecurityException.class, telephonyManager::getSimSerialNumber);
+            assertThrows(SecurityException.class, telephonyManager::getNai);
+            assertThrows(SecurityException.class, Build::getSerial);
+        } else {
+            assertNull(telephonyManager.getDeviceId());
+            assertNull(telephonyManager.getImei());
+            assertNull(telephonyManager.getMeid());
+            assertNull(telephonyManager.getSubscriberId());
+            assertNull(telephonyManager.getSimSerialNumber());
+            assertNull(telephonyManager.getNai());
+            assertNull(Build.getSerial());
         }
     }
 }
