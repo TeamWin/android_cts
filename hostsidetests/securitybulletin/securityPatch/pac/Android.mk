@@ -27,7 +27,7 @@ LOCAL_C_INCLUDES:= \
 LOCAL_SHARED_LIBRARIES := \
         libpac \
 
-LOCAL_COMPATIBILITY_SUITE := cts sts
+LOCAL_COMPATIBILITY_SUITE := cts sts vts
 LOCAL_CTS_TEST_PACKAGE := android.security.cts
 
 LOCAL_ARM_MODE := arm
