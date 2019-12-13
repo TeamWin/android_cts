@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.audio;
 
+import android.content.Context;
 import android.media.*;
 import android.media.audiofx.AcousticEchoCanceler;
 import android.os.Bundle;
@@ -61,8 +62,10 @@ public class AudioAEC extends AudioFrequencyActivity implements View.OnClickList
     private final int CORRELATION_DURATION_MS = TEST_DURATION_MS - 3000;
     private final int SHOT_COUNT_CORRELATION = CORRELATION_DURATION_MS/SHOT_FREQUENCY_MS;
     private final int SHOT_COUNT = TEST_DURATION_MS/SHOT_FREQUENCY_MS;
+    private final float MIN_RMS_DB = -60.0f; //dB
+    private final float MIN_RMS_VAL = (float)Math.pow(10,(MIN_RMS_DB/20));
 
-    private final double TEST_THRESHOLD_AEC_ON = 0.4; //From SoloTester
+    private final double TEST_THRESHOLD_AEC_ON = 0.5;
     private final double TEST_THRESHOLD_AEC_OFF = 0.6;
     private RmsHelper mRMSRecorder1 = new RmsHelper(mBlockSizeSamples, SHOT_COUNT);
     private RmsHelper mRMSRecorder2 = new RmsHelper(mBlockSizeSamples, SHOT_COUNT);
@@ -131,6 +134,9 @@ public class AudioAEC extends AudioFrequencyActivity implements View.OnClickList
                         count++;
                     }
                     float rms = count > 0 ? (float)Math.sqrt(rmsTempSum / count) : 0f;
+                    if (rms < MIN_RMS_VAL) {
+                        rms = MIN_RMS_VAL;
+                    }
 
                     double alpha = 0.9;
                     double total_rms = rms * alpha + mRmsCurrent * (1.0f - alpha);
@@ -162,9 +168,10 @@ public class AudioAEC extends AudioFrequencyActivity implements View.OnClickList
             DspBufferDouble crossCorr = new DspBufferDouble(actualLen);
 
             for (int i = firstShot, index = 0; i <= lastShot; ++i, ++index) {
-                double valPlayerdB = Math.max(20 * Math.log10(buffRmsPlayer.mData[i]), -120);
+                double valPlayerdB = Math.max(20 * Math.log10(buffRmsPlayer.mData[i]), MIN_RMS_DB);
                 rmsPlayerdB.setValue(index, valPlayerdB);
-                double valRecorderdB = Math.max(20 * Math.log10(buffRmsRecorder.mData[i]), -120);
+                double valRecorderdB = Math.max(20 * Math.log10(buffRmsRecorder.mData[i]),
+                        MIN_RMS_DB);
                 rmsRecorderdB.setValue(index, valRecorderdB);
             }
 
@@ -288,20 +295,37 @@ public class AudioAEC extends AudioFrequencyActivity implements View.OnClickList
                     return;
                 }
 
-                int playbackStreamType = AudioManager.STREAM_MUSIC;
+                 //Step 0. Prepare system
+                AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+                int targetMode = AudioManager.MODE_IN_COMMUNICATION;
+                int originalMode = am.getMode();
+                am.setMode(targetMode);
+
+                if (am.getMode() != targetMode) {
+                    sendMessage(AudioTestRunner.TEST_ENDED_ERROR,
+                            "Couldn't set mode to MODE_IN_COMMUNICATION.");
+                    return;
+                }
+
+                int playbackStreamType = AudioManager.STREAM_VOICE_CALL;
                 int maxLevel = getMaxLevelForStream(playbackStreamType);
                 int desiredLevel = maxLevel - 1;
                 setLevelForStream(playbackStreamType, desiredLevel);
 
                 int currentLevel = getLevelForStream(playbackStreamType);
                 if (currentLevel != desiredLevel) {
+                    am.setMode(originalMode);
                     sendMessage(AudioTestRunner.TEST_ENDED_ERROR,
-                            "Couldn't set level for STREAM_MUSIC. Expected " +
+                            "Couldn't set level for STREAM_VOICE_CALL. Expected " +
                                     desiredLevel +" got: " + currentLevel);
                     return;
                 }
 
+                boolean originalSpeakerPhone = am.isSpeakerphoneOn();
+                am.setSpeakerphoneOn(true);
+
                 //Step 1. With AEC (on by Default when using VOICE_COMMUNICATION audio source).
+                mSPlayer.setStreamType(playbackStreamType);
                 mSPlayer.setSoundWithResId(getApplicationContext(), R.raw.speech);
                 mSRecorder.startRecording();
 
@@ -316,16 +340,20 @@ public class AudioAEC extends AudioFrequencyActivity implements View.OnClickList
                 } catch (Exception e) {
                     mSRecorder.stopRecording();
                     String msg = "Could not create AEC Effect. " + e.toString();
-                    sendMessage(AudioTestRunner.TEST_ENDED_ERROR, msg);
                     recordTestResults(mMandatory, 0, 0, msg);
+                    am.setSpeakerphoneOn(originalSpeakerPhone);
+                    am.setMode(originalMode);
+                    sendMessage(AudioTestRunner.TEST_ENDED_ERROR, msg);
                     return;
                 }
 
                 if (mAec == null) {
                     mSRecorder.stopRecording();
                     String msg = "Could not create AEC Effect (AEC Null)";
-                    sendMessage(AudioTestRunner.TEST_ENDED_ERROR, msg);
                     recordTestResults(mMandatory,0, 0, msg);
+                    am.setSpeakerphoneOn(originalSpeakerPhone);
+                    am.setMode(originalMode);
+                    sendMessage(AudioTestRunner.TEST_ENDED_ERROR, msg);
                     return;
                 }
 
@@ -333,8 +361,10 @@ public class AudioAEC extends AudioFrequencyActivity implements View.OnClickList
                     String msg = "AEC is not enabled by default.";
                     if (mMandatory) {
                         mSRecorder.stopRecording();
-                        sendMessage(AudioTestRunner.TEST_ENDED_ERROR, msg);
                         recordTestResults(mMandatory,0, 0, msg);
+                        am.setSpeakerphoneOn(originalSpeakerPhone);
+                        am.setMode(originalMode);
+                        sendMessage(AudioTestRunner.TEST_ENDED_ERROR, msg);
                         return;
                     } else {
                         sb.append("Warning. " + msg + "\n");
@@ -358,9 +388,9 @@ public class AudioAEC extends AudioFrequencyActivity implements View.OnClickList
                                     20 * Math.log10(mRMSPlayer1.getRmsCurrent())));
                 }
 
-                mSPlayer.play(false);
                 mRMSPlayer1.setRunning(false);
                 mRMSRecorder1.setRunning(false);
+                mSPlayer.play(false);
 
                 int lastShot = SHOT_COUNT - 1;
                 int firstShot = SHOT_COUNT - SHOT_COUNT_CORRELATION;
@@ -397,10 +427,13 @@ public class AudioAEC extends AudioFrequencyActivity implements View.OnClickList
                                     20 * Math.log10(mRMSPlayer2.getRmsCurrent())));
                 }
 
-                mSRecorder.stopRecording();
-                mSPlayer.play(false);
                 mRMSPlayer2.setRunning(false);
                 mRMSRecorder2.setRunning(false);
+                mSRecorder.stopRecording();
+                mSPlayer.play(false);
+
+                am.setSpeakerphoneOn(originalSpeakerPhone);
+                am.setMode(originalMode);
 
                 double maxNoAEC = computeAcousticCouplingFactor(mRMSPlayer2.getRmsSnapshots(),
                         mRMSRecorder2.getRmsSnapshots(), firstShot, lastShot);
