@@ -611,12 +611,9 @@ public class TelephonyManagerTest {
 
         if (sanitizedForFineOnly) return;
 
-        assertTrue(TextUtils.isEmpty(state.getDataOperatorAlphaLong()));
-        assertTrue(TextUtils.isEmpty(state.getDataOperatorAlphaShort()));
-        assertTrue(TextUtils.isEmpty(state.getDataOperatorNumeric()));
-        assertTrue(TextUtils.isEmpty(state.getVoiceOperatorAlphaLong()));
-        assertTrue(TextUtils.isEmpty(state.getVoiceOperatorAlphaShort()));
-        assertTrue(TextUtils.isEmpty(state.getVoiceOperatorNumeric()));
+        assertTrue(TextUtils.isEmpty(state.getOperatorAlphaLong()));
+        assertTrue(TextUtils.isEmpty(state.getOperatorAlphaShort()));
+        assertTrue(TextUtils.isEmpty(state.getOperatorNumeric()));
     }
 
     @Test
