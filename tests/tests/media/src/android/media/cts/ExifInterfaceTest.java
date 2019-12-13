@@ -366,18 +366,18 @@ public class ExifInterfaceTest extends AndroidTestCase {
         // Creates via path.
         ExifInterface exifInterface = new ExifInterface(imageFile.getAbsolutePath());
         assertNotNull(exifInterface);
-        compareWithExpectedValue(exifInterface, expectedValue, verboseTag, true);
+        compareWithExpectedValue(exifInterface, expectedValue, verboseTag, false);
 
         // Creates via file.
         exifInterface = new ExifInterface(imageFile);
-        compareWithExpectedValue(exifInterface, expectedValue, verboseTag, true);
+        compareWithExpectedValue(exifInterface, expectedValue, verboseTag, false);
 
         InputStream in = null;
         // Creates via InputStream.
         try {
             in = new BufferedInputStream(new FileInputStream(imageFile.getAbsolutePath()));
             exifInterface = new ExifInterface(in);
-            compareWithExpectedValue(exifInterface, expectedValue, verboseTag, true);
+            compareWithExpectedValue(exifInterface, expectedValue, verboseTag, false);
         } finally {
             IoUtils.closeQuietly(in);
         }
@@ -387,7 +387,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
         try {
             fd = Os.open(imageFile.getAbsolutePath(), OsConstants.O_RDONLY, 0600);
             exifInterface = new ExifInterface(fd);
-            compareWithExpectedValue(exifInterface, expectedValue, verboseTag, true);
+            compareWithExpectedValue(exifInterface, expectedValue, verboseTag, false);
         } catch (ErrnoException e) {
             throw e.rethrowAsIOException();
         } finally {
