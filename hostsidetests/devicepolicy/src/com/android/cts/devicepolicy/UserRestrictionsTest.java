@@ -17,8 +17,6 @@ package com.android.cts.devicepolicy;
 
 import static org.junit.Assert.assertTrue;
 
-import android.platform.test.annotations.FlakyTest;
-
 import com.android.tradefed.device.DeviceNotAvailableException;
 
 import org.junit.Test;
@@ -137,7 +135,6 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
     }
 
     // Checks restrictions for managed profile.
-    @FlakyTest
     @Test
     public void testUserRestrictions_managedProfileOwnerOnly() throws Exception {
         if (!mHasFeature || !mSupportsMultiUser || !mHasManagedUserFeature) {
@@ -161,7 +158,6 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
     /**
      * DO + PO combination.  Make sure global DO restrictions are visible on secondary users.
      */
-    @FlakyTest
     @Test
     public void testUserRestrictions_layering() throws Exception {
         if (!mHasFeature || !mSupportsMultiUser) {
@@ -230,7 +226,6 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
      * DO sets profile global restrictions (only ENSURE_VERIFY_APPS), should affect all
      * users (not a particularly special case but to be sure).
      */
-    @FlakyTest
     @Test
     public void testUserRestrictions_profileGlobalRestrictionsAsDo() throws Exception {
         if (!mHasFeature || !mSupportsMultiUser) {
@@ -252,7 +247,6 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
      * Managed profile owner sets profile global restrictions (only ENSURE_VERIFY_APPS), should
      * affect all users.
      */
-    @FlakyTest
     @Test
     public void testUserRestrictions_ProfileGlobalRestrictionsAsPo() throws Exception {
         if (!mHasFeature || !mSupportsMultiUser || !mHasManagedUserFeature) {
@@ -276,7 +270,8 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
 
     /** Installs admin package and makes it a profile owner for a given user. */
     private void setPoAsUser(int userId) throws Exception {
-        installAppAsUser(DEVICE_ADMIN_APK, userId);
+        installAppAsUser(DEVICE_ADMIN_APK, /* grantPermssions= */true,
+                /* dontKillApp= */ true, userId);
         assertTrue("Failed to set profile owner",
                 setProfileOwner(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
                         userId, /* expectFailure */ false));
