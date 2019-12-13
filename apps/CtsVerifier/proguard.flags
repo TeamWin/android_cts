@@ -19,11 +19,15 @@
 }
 
 # ensure we keep public camera test methods, these are needed at runtime
--keepclassmembers class * extends android.hardware.camera2.cts.testcases.Camera2AndroidBasicTestCase {
+-keepclassmembers class android.hardware.camera2.cts.PerformanceTest {
     public <methods>;
 }
 
--keepclassmembers class * extends android.hardware.cts.CameraTestCase {
+-keepclassmembers class android.hardware.cts.LegacyCameraPerformanceTest {
+    public <methods>;
+}
+
+-keepclassmembers class org.junit.runners.JUnit4 {
     public <methods>;
 }
 
