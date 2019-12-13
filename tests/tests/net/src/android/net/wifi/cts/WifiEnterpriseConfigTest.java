@@ -687,14 +687,15 @@ public class WifiEnterpriseConfigTest extends AndroidTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        if(!hasWifi()) {
+            return;
+        }
         mWifiManager = (WifiManager) mContext
                 .getSystemService(Context.WIFI_SERVICE);
         assertNotNull(mWifiManager);
         SystemUtil.runShellCommand("svc wifi enable");
         Thread.sleep(ENABLE_DELAY);
-        if (hasWifi()) {
-            assertTrue(mWifiManager.isWifiEnabled());
-        }
+        assertTrue(mWifiManager.isWifiEnabled());
     }
 
     public void testSettersAndGetters() throws Exception {
@@ -778,6 +779,9 @@ public class WifiEnterpriseConfigTest extends AndroidTestCase {
     }
 
     public void testEnterpriseConfigDoesNotPrintPassword() {
+        if(!hasWifi()) {
+            return;
+        }
         WifiEnterpriseConfig enterpriseConfig = new WifiEnterpriseConfig();
         final String identity = "IdentityIsOkayToBeDisplayedHere";
         final String password = "PasswordIsNotOkayToBeDisplayedHere";
