@@ -34,9 +34,11 @@ import android.graphics.Color;
 import android.graphics.ColorSpace;
 import android.graphics.ColorSpace.Named;
 import android.graphics.ImageDecoder;
+import android.graphics.LinearGradient;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Picture;
+import android.graphics.Shader;
 import android.hardware.HardwareBuffer;
 import android.os.Debug;
 import android.os.Parcel;
@@ -59,6 +61,7 @@ import org.junit.runner.RunWith;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.IntBuffer;
@@ -2443,6 +2446,152 @@ public class BitmapTest {
     }
 
     private static native int nGetDataSpace(Bitmap bm);
+
+    // These match the NDK APIs.
+    private static final int ANDROID_BITMAP_COMPRESS_FORMAT_JPEG = 0;
+    private static final int ANDROID_BITMAP_COMPRESS_FORMAT_PNG = 1;
+    private static final int ANDROID_BITMAP_COMPRESS_FORMAT_WEBP_LOSSY = 3;
+    private static final int ANDROID_BITMAP_COMPRESS_FORMAT_WEBP_LOSSLESS = 4;
+
+    private int nativeCompressFormat(CompressFormat format) {
+        switch (format) {
+            case JPEG:
+                return ANDROID_BITMAP_COMPRESS_FORMAT_JPEG;
+            case PNG:
+                return ANDROID_BITMAP_COMPRESS_FORMAT_PNG;
+            case WEBP_LOSSY:
+                return ANDROID_BITMAP_COMPRESS_FORMAT_WEBP_LOSSY;
+            case WEBP_LOSSLESS:
+                return ANDROID_BITMAP_COMPRESS_FORMAT_WEBP_LOSSLESS;
+            default:
+                fail("format " + format + " has no corresponding native compress format!");
+                return -1;
+        }
+    }
+
+    private static Object[] parametersForNdkCompress() {
+        // Skip WEBP, which has no corresponding native compress format.
+        Object[] formats = new Object[] {
+                CompressFormat.JPEG,
+                CompressFormat.PNG,
+                CompressFormat.WEBP_LOSSY,
+                CompressFormat.WEBP_LOSSLESS,
+        };
+        // These are the ColorSpaces with corresponding ADataSpaces
+        Object[] colorSpaces = new Object[] {
+                ColorSpace.get(Named.SRGB),
+                ColorSpace.get(Named.EXTENDED_SRGB),
+                ColorSpace.get(Named.LINEAR_SRGB),
+                ColorSpace.get(Named.LINEAR_EXTENDED_SRGB),
+
+                ColorSpace.get(Named.DISPLAY_P3),
+                ColorSpace.get(Named.DCI_P3),
+                ColorSpace.get(Named.BT2020),
+                ColorSpace.get(Named.BT709),
+                ColorSpace.get(Named.ADOBE_RGB),
+        };
+
+        Object[] configs = new Object[] {
+                Config.ARGB_8888,
+                Config.RGB_565,
+                Config.RGBA_F16,
+        };
+
+        return crossProduct(formats, colorSpaces, configs);
+    }
+
+    private static Object[] crossProduct(Object[] a, Object[] b, Object[] c) {
+        final int length = a.length * b.length * c.length;
+        Object[] ret = new Object[length];
+        for (int i = 0; i < a.length; i++) {
+            for (int j = 0; j < b.length; j++) {
+                for (int k = 0; k < c.length; k++) {
+                    int index = i * (b.length * c.length) + j * c.length + k;
+                    assertNull(ret[index]);
+                    ret[index] = new Object[] { a[i], b[j], c[k] };
+                }
+            }
+        }
+        return ret;
+    }
+
+    private static boolean isSrgb(ColorSpace cs) {
+        return cs == ColorSpace.get(Named.SRGB)
+                || cs == ColorSpace.get(Named.EXTENDED_SRGB)
+                || cs == ColorSpace.get(Named.LINEAR_SRGB)
+                || cs == ColorSpace.get(Named.LINEAR_EXTENDED_SRGB);
+    }
+
+    @Test
+    @Parameters(method = "parametersForNdkCompress")
+    public void testNdkCompress(CompressFormat format, ColorSpace cs, Config config)
+            throws IOException {
+        // Verify that ndk compress behaves the same as Bitmap#compress
+        Bitmap bitmap = Bitmap.createBitmap(10, 10, config, true /* hasAlpha */, cs);
+        assertNotNull(bitmap);
+
+        {
+            // Use different colors and alphas.
+            Canvas canvas = new Canvas(bitmap);
+            long color0 = Color.pack(0, 0, 1, 1, cs);
+            long color1 = Color.pack(1, 0, 0, 0, cs);
+            LinearGradient gradient = new LinearGradient(0, 0, 10, 10, color0, color1,
+                    Shader.TileMode.CLAMP);
+            Paint paint = new Paint();
+            paint.setShader(gradient);
+            canvas.drawPaint(paint);
+        }
+
+        byte[] storage = new byte[16 * 1024];
+        for (int quality : new int[] { 50, 80, 100 }) {
+            byte[] expected = null;
+            try (ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
+                assertTrue("Failed to encode a Bitmap with " + cs + " to " + format + " at quality "
+                        + quality + " from Java API", bitmap.compress(format, quality, stream));
+                expected = stream.toByteArray();
+            }
+
+            try (ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
+                boolean success = nCompress(bitmap, nativeCompressFormat(format),
+                        quality, stream, storage);
+                assertTrue("Failed to encode pixels with " + cs + " to " + format + " at quality "
+                        + quality + " from NDK API", success);
+                byte[] actual = stream.toByteArray();
+
+                if (isSrgb(cs)) {
+                    if (!Arrays.equals(expected, actual)) {
+                        fail("NDK compression did not match for " + cs + " and format " + format
+                                + " at quality " + quality);
+                    }
+                } else {
+                    // The byte arrays will match exactly for SRGB and its variants, because those
+                    // are treated specially. For the others, there are some small differences
+                    // between Skia's and ColorSpace's values that result in the ICC profiles being
+                    // written slightly differently. They should still look the same, though.
+                    Bitmap expectedBitmap = decodeBytes(expected);
+                    Bitmap actualBitmap = decodeBytes(actual);
+                    boolean matched = BitmapUtils.compareBitmapsMse(expectedBitmap, actualBitmap,
+                              5, true, false);
+                    expectedBitmap.recycle();
+                    actualBitmap.recycle();
+                    assertTrue("NDK compression did not match for " + cs + " and format " + format
+                                + " at quality " + quality, matched);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testNdkCompressBadParameter() throws IOException {
+        try (ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
+            nTestNdkCompressBadParameter(mBitmap, stream, new byte[16 * 1024]);
+        }
+    }
+
+    private static native boolean nCompress(Bitmap bitmap, int format, int quality,
+            OutputStream stream, byte[] storage);
+    private static native void nTestNdkCompressBadParameter(Bitmap bitmap,
+            OutputStream stream, byte[] storage);
 
     private void strictModeTest(Runnable runnable) {
         StrictMode.ThreadPolicy originalPolicy = StrictMode.getThreadPolicy();
