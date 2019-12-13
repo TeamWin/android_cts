@@ -33,6 +33,7 @@ import android.app.PendingIntent
 import android.app.SyncNotedAppOp
 import android.app.WallpaperManager
 import android.app.WallpaperManager.FLAG_SYSTEM
+import android.bluetooth.BluetoothManager
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.ContentValues
@@ -41,6 +42,7 @@ import android.content.Context.BIND_AUTO_CREATE
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.ServiceConnection
+import android.content.pm.PackageManager.FEATURE_BLUETOOTH
 import android.content.pm.PackageManager.FEATURE_TELEPHONY
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
@@ -412,6 +414,27 @@ class AppOpsLoggingTest {
         assertThat(noted[0].first.op).isEqualTo(OPSTR_FINE_LOCATION)
         assertThat(noted[0].first.featureId).isEqualTo(TEST_FEATURE_ID)
         assertThat(noted[0].second.map { it.methodName }).contains("getWifiScanResults")
+    }
+
+    /**
+     * Realistic end-to-end test for scanning bluetooth
+     */
+    @Test
+    fun getBTScanResults() {
+        assumeTrue("Device does not support bluetooth",
+                context.packageManager.hasSystemFeature(FEATURE_BLUETOOTH))
+
+        val btManager = context.createFeatureContext(TEST_FEATURE_ID)
+                .getSystemService(BluetoothManager::class.java)
+
+        btManager.adapter.startDiscovery()
+        try {
+            assertThat(noted[0].first.op).isEqualTo(OPSTR_FINE_LOCATION)
+            assertThat(noted[0].first.featureId).isEqualTo(TEST_FEATURE_ID)
+            assertThat(noted[0].second.map { it.methodName }).contains("getBTScanResults")
+        } finally {
+            btManager.adapter.cancelDiscovery()
+        }
     }
 
     /**
