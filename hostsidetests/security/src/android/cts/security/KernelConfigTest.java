@@ -206,6 +206,7 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
         put("Kirin970", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("Kirin810", null);
         put("Kirin710", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("SDMMAGPIE", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("SM6150", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("SM7150", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("SM7250", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
@@ -228,14 +229,19 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
      */
     @CddTest(requirement="9.7")
     public void testConfigHardwareMitigations() throws Exception {
+        String mitigations[];
+
         if (PropertyUtil.getFirstApiLevel(mDevice) < 28) {
             return;
         }
 
         if (CpuFeatures.isArm64(mDevice) && !CpuFeatures.kernelVersionLessThan(mDevice, 4, 4)) {
-            for (String mitigation : lookupMitigations()) {
-                assertTrue("Linux kernel must have " + mitigation + " enabled.",
-                        configSet.contains(mitigation));
+            mitigations = lookupMitigations();
+            if (mitigations != null) {
+                for (String mitigation : mitigations) {
+                    assertTrue("Linux kernel must have " + mitigation + " enabled.",
+                            configSet.contains(mitigation));
+                }
             }
         } else if (CpuFeatures.isX86(mDevice)) {
             assertTrue("Linux kernel must have KPTI enabled: CONFIG_PAGE_TABLE_ISOLATION=y",

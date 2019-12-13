@@ -144,13 +144,6 @@ final class TextClassifierTestWatcher extends TestWatcher {
         if (!TextUtils.isEmpty(deviceConfigSetting) && !deviceConfigSetting.equals("null")) {
             return deviceConfigSetting;
         }
-        // TODO(b/143585708): remove the logic when text_classifier_constants is removed
-        final String globalSetting = runShellCommand(
-                "settings get global text_classifier_constants");
-        if (!TextUtils.isEmpty(globalSetting) && globalSetting.contains(
-                "extclassifier_service_package_override")) {
-            return globalSetting.substring(globalSetting.indexOf('=') + 1);
-        }
         return DEFAULT_TEXT_CLASSIFIER_SERVICE_PACKAGE_OVERRIDE;
     }
 
@@ -159,14 +152,6 @@ final class TextClassifierTestWatcher extends TestWatcher {
                 "device_config get textclassifier system_textclassifier_enabled");
         if (!TextUtils.isEmpty(deviceConfigSetting) && !deviceConfigSetting.equals("null")) {
             return deviceConfigSetting.toLowerCase().equals("true");
-        }
-        // TODO(b/143585708): remove the logic when text_classifier_constants is removed
-        final String globalSetting = runShellCommand(
-                "settings get global text_classifier_constants");
-        if (!TextUtils.isEmpty(globalSetting) && globalSetting.contains(
-                "system_textclassifier_enabled")) {
-            return globalSetting.substring(globalSetting.indexOf('=') + 1).toLowerCase().equals(
-                    "true");
         }
         return SYSTEM_TEXT_CLASSIFIER_ENABLED_DEFAULT;
     }
