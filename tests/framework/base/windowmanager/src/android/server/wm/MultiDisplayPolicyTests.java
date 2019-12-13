@@ -839,4 +839,28 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
                 mAmWmState.getAmState().getResumedActivitiesCountInPackage(
                         SDK_27_TEST_ACTIVITY.getPackageName()));
     }
+
+    @Test
+    public void testPreQTopProcessResumedDisplayMoved() throws Exception {
+        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+                .setSimulateDisplay(true).createDisplay();
+        getLaunchActivityBuilder().setUseInstrumentation()
+                .setTargetActivity(SDK_27_LAUNCHING_ACTIVITY).setNewTask(true)
+                .setDisplayId(DEFAULT_DISPLAY).execute();
+        waitAndAssertTopResumedActivity(SDK_27_LAUNCHING_ACTIVITY, DEFAULT_DISPLAY,
+                "Activity launched on default display must be resumed and focused");
+
+        getLaunchActivityBuilder().setUseInstrumentation()
+                .setTargetActivity(SDK_27_TEST_ACTIVITY).setNewTask(true)
+                .setDisplayId(newDisplay.mId).execute();
+        waitAndAssertTopResumedActivity(SDK_27_TEST_ACTIVITY, newDisplay.mId,
+                "Activity launched on secondary display must be resumed and focused");
+
+        tapOnDisplayCenter(DEFAULT_DISPLAY);
+        waitAndAssertTopResumedActivity(SDK_27_LAUNCHING_ACTIVITY, DEFAULT_DISPLAY,
+                "Activity launched on default display must be resumed and focused");
+        assertEquals("There must be only one resumed activity in the package.", 1,
+                mAmWmState.getAmState().getResumedActivitiesCountInPackage(
+                        SDK_27_LAUNCHING_ACTIVITY.getPackageName()));
+    }
 }
