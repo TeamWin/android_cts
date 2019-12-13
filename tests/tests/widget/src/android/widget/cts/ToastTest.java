@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -274,6 +275,8 @@ public class ToastTest {
 
     @Test
     public void testAccessMargin() throws Throwable {
+        assumeFalse("Skipping test: Auto does not support toast with margin", isCar());
+
         makeToast();
         View view = mToast.getView();
         assertFalse(view.getLayoutParams() instanceof WindowManager.LayoutParams);
@@ -335,6 +338,8 @@ public class ToastTest {
 
     @Test
     public void testAccessGravity() throws Throwable {
+        assumeFalse("Skipping test: Auto does not support toast with gravity", isCar());
+
         makeToast();
         runOnMainAndDrawSync(mToast.getView(), () -> {
             mToast.setGravity(Gravity.CENTER, 0, 0);
@@ -514,5 +519,10 @@ public class ToastTest {
         } catch (Throwable t) {
             throw new RuntimeException(t);
         }
+    }
+
+    private boolean isCar() {
+        PackageManager pm = mContext.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 }
