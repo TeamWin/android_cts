@@ -51,6 +51,7 @@ import com.android.compatibility.common.util.TestThread;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -145,6 +146,7 @@ public class CarrierConfigManagerTest {
     }
 
     @SecurityTest
+    @Ignore // TODO(b/146238285) -- Appop commands not working.
     @Test
     public void testRevokePermission() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
