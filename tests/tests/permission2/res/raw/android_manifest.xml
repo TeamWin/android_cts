@@ -2910,6 +2910,11 @@
     <permission android:name="android.permission.REQUEST_INCIDENT_REPORT_APPROVAL"
         android:protectionLevel="signature|privileged" />
 
+    <!-- @hide @SystemApi
+         Allows an application to register stats pull atom callbacks.
+    <p>Not for use by third-party applications.-->
+    <permission android:name="android.permission.REGISTER_STATS_PULL_ATOM"
+        android:protectionLevel="signature|privileged" />
     <!-- ==================================== -->
     <!-- Private permissions                  -->
     <!-- ==================================== -->
