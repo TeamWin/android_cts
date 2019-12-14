@@ -557,11 +557,11 @@ class AppOpsLoggingTest {
      */
     @Test
     fun readFromContactsProvider() {
-        context.createFeatureContext("test").contentResolver
+        context.createFeatureContext(TEST_FEATURE_ID).contentResolver
             .query(ContactsContract.Contacts.CONTENT_URI, null, null, null, null)
 
         assertThat(noted.map { it.first.op }).containsExactly(OPSTR_READ_CONTACTS)
-        assertThat(noted[0].first.featureId).isEqualTo("test")
+        assertThat(noted[0].first.featureId).isEqualTo(TEST_FEATURE_ID)
         assertThat(noted[0].second.map { it.methodName }).contains("readFromContactsProvider")
     }
 
@@ -570,11 +570,11 @@ class AppOpsLoggingTest {
      */
     @Test
     fun writeToContactsProvider() {
-        context.createFeatureContext("test").contentResolver
+        context.createFeatureContext(TEST_FEATURE_ID).contentResolver
             .insert(ContactsContract.RawContacts.CONTENT_URI, ContentValues())
 
         assertThat(noted.map { it.first.op }).containsExactly(OPSTR_WRITE_CONTACTS)
-        assertThat(noted[0].first.featureId).isEqualTo("test")
+        assertThat(noted[0].first.featureId).isEqualTo(TEST_FEATURE_ID)
         assertThat(noted[0].second.map { it.methodName }).contains("writeToContactsProvider")
     }
 
