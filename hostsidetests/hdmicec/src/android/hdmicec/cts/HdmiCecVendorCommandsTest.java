@@ -52,7 +52,7 @@ public final class HdmiCecVendorCommandsTest extends BaseHostJUnit4Test {
 
     /**
      * Test 11.2.9-2
-     * Tests that the device broadcasts a <DEVICE_VENDOR_ID> message after successfull
+     * Tests that the device broadcasts a <DEVICE_VENDOR_ID> message after successful
      * initialisation and address allocation.
      */
     @Test

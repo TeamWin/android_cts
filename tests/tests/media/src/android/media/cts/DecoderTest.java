@@ -3488,7 +3488,8 @@ public class DecoderTest extends MediaPlayerTestBase {
         assertTrue("No video track was found", trackIndex >= 0);
 
         extractor.selectTrack(trackIndex);
-        format.setFeatureEnabled(MediaFormat.KEY_LOW_LATENCY, true /* enable */);
+        format.setFeatureEnabled(MediaCodecInfo.CodecCapabilities.FEATURE_LowLatency,
+                true /* enable */);
 
         MediaCodecList mcl = new MediaCodecList(MediaCodecList.ALL_CODECS);
         String decoderName = mcl.findDecoderForFormat(format);
@@ -3506,6 +3507,8 @@ public class DecoderTest extends MediaPlayerTestBase {
         } else {
             decoder = new SdkMediaCodec(MediaCodec.createByCodecName(decoderName));
         }
+        format.removeFeature(MediaCodecInfo.CodecCapabilities.FEATURE_LowLatency);
+        format.setInteger(MediaFormat.KEY_LOW_LATENCY, 1);
         decoder.configure(format, 0 /* flags */, surface);
         decoder.start();
 

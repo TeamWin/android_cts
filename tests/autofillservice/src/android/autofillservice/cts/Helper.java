@@ -98,7 +98,7 @@ public final class Helper {
     public static final String ID_OUTPUT = "output";
     public static final String ID_STATIC_TEXT = "static_text";
     public static final String ID_EMPTY = "empty";
-    public static final String ID_CANCEL = "cancel";
+    public static final String ID_CANCEL_FILL = "cancel_fill";
 
     public static final String NULL_DATASET_ID = null;
 
