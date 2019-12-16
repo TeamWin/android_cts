@@ -92,8 +92,9 @@ public class TelephonyManagerTest {
 
     @Test
     public void testListen() throws Throwable {
-        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
-            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
+        if (!InstrumentationRegistry.getContext().getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "Skipping test that requires PackageManager.FEATURE_TELEPHONY");
             return;
         }
 
@@ -186,7 +187,9 @@ public class TelephonyManagerTest {
         }
 
         // Make sure devices without MMS service won't fail on this
-        if (mTelephonyManager.getPhoneType() != TelephonyManager.PHONE_TYPE_NONE) {
+        if (InstrumentationRegistry.getContext().getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
+                && (mTelephonyManager.getPhoneType() != TelephonyManager.PHONE_TYPE_NONE)) {
             assertFalse(mTelephonyManager.getMmsUserAgent().isEmpty());
             assertFalse(mTelephonyManager.getMmsUAProfUrl().isEmpty());
         }
