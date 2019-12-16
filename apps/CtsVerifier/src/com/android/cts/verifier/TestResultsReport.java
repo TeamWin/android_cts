@@ -29,6 +29,7 @@ import com.android.compatibility.common.util.InvocationResult;
 import com.android.compatibility.common.util.ITestResult;
 import com.android.compatibility.common.util.MetricsXmlSerializer;
 import com.android.compatibility.common.util.ReportLog;
+import com.android.compatibility.common.util.TestResultHistory;
 import com.android.compatibility.common.util.TestStatus;
 import com.android.cts.verifier.TestListAdapter.TestListItem;
 
@@ -38,9 +39,16 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Helper class for creating an {@code InvocationResult} for CTS result generation.
@@ -134,6 +142,27 @@ class TestResultsReport {
                 ReportLog reportLog = mAdapter.getReportLog(i);
                 if (reportLog != null) {
                     currentTestResult.setReportLog(reportLog);
+                }
+
+                TestResultHistoryCollection historyCollection = mAdapter.getHistoryCollection(i);
+                if (historyCollection != null) {
+                    // Get non-terminal prefixes.
+                    Set<String> prefixes = new HashSet<>();
+                    for (TestResultHistory history: historyCollection.asSet()) {
+                        Arrays.stream(history.getTestName().split(":")).reduce(
+                            (total, current) -> { prefixes.add(total);
+                            return total + ":" + current;
+                        });
+                    }
+
+                    // Filter out non-leaf test histories.
+                    List<TestResultHistory> leafTestHistories = new ArrayList<TestResultHistory>();
+                    for (TestResultHistory history: historyCollection.asSet()) {
+                        if (!prefixes.contains(history.getTestName())) {
+                            leafTestHistories.add(history);
+                        }
+                    }
+                    currentTestResult.setTestResultHistories(leafTestHistories);
                 }
             }
         }
