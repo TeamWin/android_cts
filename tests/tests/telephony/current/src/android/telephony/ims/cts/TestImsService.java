@@ -58,8 +58,10 @@ public class TestImsService extends Service {
     public static final int LATCH_REMOVE_MMTEL = 5;
     public static final int LATCH_REMOVE_RCS = 6;
     public static final int LATCH_MMTEL_READY = 7;
-    public static final int LATCH_MMTEL_CAP_SET = 8;
-    private static final int LATCH_MAX = 9;
+    public static final int LATCH_RCS_READY = 8;
+    public static final int LATCH_MMTEL_CAP_SET = 9;
+    public static final int LATCH_RCS_CAP_SET = 10;
+    private static final int LATCH_MAX = 11;
     protected static final CountDownLatch[] sLatches = new CountDownLatch[LATCH_MAX];
     static {
         for (int i = 0; i < LATCH_MAX; i++) {
@@ -123,12 +125,27 @@ public class TestImsService extends Service {
         public RcsFeature createRcsFeature(int slotId) {
             synchronized (mLock) {
                 countDownLatch(LATCH_CREATE_RCS);
-                mTestRcsFeature = new TestRcsFeature(() -> {
-                    synchronized (mLock) {
-                        countDownLatch(LATCH_REMOVE_RCS);
-                        mTestRcsFeature = null;
-                    }
-                });
+                mTestRcsFeature = new TestRcsFeature(
+                        //onReady
+                        () -> {
+                            synchronized (mLock) {
+                                countDownLatch(LATCH_RCS_READY);
+                            }
+                        },
+                        //onRemoved
+                        () -> {
+                            synchronized (mLock) {
+                                countDownLatch(LATCH_REMOVE_RCS);
+                                mTestRcsFeature = null;
+                            }
+                        },
+                        //onCapabilitiesSet
+                        () -> {
+                            synchronized (mLock) {
+                                countDownLatch(LATCH_RCS_CAP_SET);
+                            }
+                        }
+                        );
                 return mTestRcsFeature;
             }
         }

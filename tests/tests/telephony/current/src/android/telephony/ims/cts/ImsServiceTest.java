@@ -40,13 +40,17 @@ import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.telephony.cts.AsyncSmsMessageListener;
 import android.telephony.cts.SmsReceiverHelper;
+import android.telephony.cts.externalimsservice.ITestExternalImsService;
 import android.telephony.ims.ImsException;
+import android.telephony.ims.ImsManager;
 import android.telephony.ims.ImsMmTelManager;
+import android.telephony.ims.ImsRcsManager;
 import android.telephony.ims.ImsReasonInfo;
 import android.telephony.ims.ProvisioningManager;
 import android.telephony.ims.RegistrationManager;
 import android.telephony.ims.feature.ImsFeature;
 import android.telephony.ims.feature.MmTelFeature;
+import android.telephony.ims.feature.RcsFeature.RcsImsCapabilities;
 import android.telephony.ims.stub.ImsFeatureConfiguration;
 import android.telephony.ims.stub.ImsRegistrationImplBase;
 import android.util.Base64;
@@ -76,6 +80,10 @@ import java.util.concurrent.TimeUnit;
 public class ImsServiceTest {
 
     private static ImsServiceConnector sServiceConnector;
+
+    private static final int RCS_CAP_NONE = RcsImsCapabilities.CAPABILITY_TYPE_NONE;
+    private static final int RCS_CAP_OPTIONS = RcsImsCapabilities.CAPABILITY_TYPE_OPTIONS_UCE;
+    private static final int RCS_CAP_PRESENCE = RcsImsCapabilities.CAPABILITY_TYPE_PRESENCE_UCE;
 
     private static final String MSG_CONTENTS = "hi";
     private static final String EXPECTED_RECEIVED_MESSAGE = "foo5";
@@ -899,6 +907,107 @@ public class ImsServiceTest {
     }
 
     @Test
+    public void testRcsCapabilityStatusCallback() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        if (imsManager == null) {
+            fail("Cannot find IMS service");
+        }
+
+        // Connect to device ImsService with RcsFeature
+        triggerFrameworkConnectToDeviceImsServiceBindRcsFeature();
+
+        int registrationTech = ImsRegistrationImplBase.REGISTRATION_TECH_LTE;
+        ImsRcsManager imsRcsManager = imsManager.getImsRcsManager(sTestSub);
+
+        ITestExternalImsService testImsService = sServiceConnector.getExternalService();
+        // Wait for the framework to set the capabilities on the ImsService
+        testImsService.waitForLatchCountdown(TestImsService.LATCH_RCS_CAP_SET);
+        // Make sure we start off with none-capability
+        testImsService.updateImsRegistration(ImsRegistrationImplBase.REGISTRATION_TECH_LTE);
+        testImsService.notifyRcsCapabilitiesStatusChanged(RCS_CAP_NONE);
+
+        // Make sure the capabilities match the API getter for capabilities
+        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        // Latch will count down here (we callback on the state during registration).
+        try {
+            automan.adoptShellPermissionIdentity();
+            // Make sure we are tracking voice capability over LTE properly.
+            assertEquals(testImsService.isRcsAvailable(RCS_CAP_PRESENCE),
+                    imsRcsManager.isAvailable(RCS_CAP_PRESENCE));
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        // Trigger carrier config changed
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putBoolean(CarrierConfigManager.KEY_USE_RCS_SIP_OPTIONS_BOOL, true);
+        bundle.putBoolean(CarrierConfigManager.KEY_USE_RCS_PRESENCE_BOOL, true);
+        overrideCarrierConfig(bundle);
+
+        // The carrier config changed should trigger RcsFeature#changeEnabledCapabilities
+        try {
+            automan.adoptShellPermissionIdentity();
+            // Checked by isCapable api to make sure RcsFeature#changeEnabledCapabilities is called
+            assertTrue(ImsUtils.retryUntilTrue(() ->
+                    imsRcsManager.isCapable(RCS_CAP_OPTIONS, registrationTech)));
+            assertTrue(ImsUtils.retryUntilTrue(() ->
+                    imsRcsManager.isCapable(RCS_CAP_PRESENCE, registrationTech)));
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        // A queue to receive capability changed
+        LinkedBlockingQueue<RcsImsCapabilities> mQueue = new LinkedBlockingQueue<>();
+        ImsRcsManager.AvailabilityCallback callback = new ImsRcsManager.AvailabilityCallback() {
+            @Override
+            public void onAvailabilityChanged(RcsImsCapabilities capabilities) {
+                mQueue.offer(capabilities);
+            }
+        };
+
+        // Latch will count down here (we callback on the state during registration).
+        try {
+            automan.adoptShellPermissionIdentity();
+            imsRcsManager.registerRcsAvailabilityCallback(getContext().getMainExecutor(), callback);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        // We should not have any availabilities here, we notified the framework earlier.
+        RcsImsCapabilities capCb = waitForResult(mQueue);
+
+        // The SIP OPTIONS capability from onAvailabilityChanged should be disabled.
+        // Moreover, ImsRcsManager#isAvailable also return FALSE with SIP OPTIONS
+        assertTrue(capCb.isCapable(RCS_CAP_NONE));
+        try {
+            automan.adoptShellPermissionIdentity();
+            assertFalse(imsRcsManager.isAvailable(RCS_CAP_OPTIONS));
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        // Notify the SIP OPTIONS capability status changed
+        testImsService.notifyRcsCapabilitiesStatusChanged(RCS_CAP_OPTIONS);
+        capCb = waitForResult(mQueue);
+
+        // The SIP OPTIONS capability from onAvailabilityChanged should be enabled.
+        // Verify ImsRcsManager#isAvailable also return true with SIP OPTIONS
+        assertTrue(capCb.isCapable(RCS_CAP_OPTIONS));
+        try {
+            automan.adoptShellPermissionIdentity();
+            assertTrue(imsRcsManager.isAvailable(RCS_CAP_OPTIONS));
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        overrideCarrierConfig(null);
+    }
+
+    @Test
     public void testProvisioningManagerSetConfig() throws Exception {
         if (!ImsUtils.shouldTestImsService()) {
             return;
@@ -1035,6 +1144,20 @@ public class ImsServiceTest {
                 TestImsService.LATCH_MMTEL_READY));
         assertNotNull("ImsService created, but ImsService#createMmTelFeature was not called!",
                 sServiceConnector.getCarrierService().getMmTelFeature());
+    }
+
+    private void triggerFrameworkConnectToDeviceImsServiceBindRcsFeature() throws Exception {
+        // Connect to the ImsService with the RCS feature.
+        assertTrue(sServiceConnector.connectDeviceImsService(new ImsFeatureConfiguration.Builder()
+                .addFeature(sTestSlot, ImsFeature.FEATURE_RCS)
+                .build()));
+        // The RcsFeature is created when the ImsService is bound. If it wasn't created, then the
+        // Framework did not call it.
+        sServiceConnector.getExternalService().waitForLatchCountdown(
+                TestImsService.LATCH_CREATE_RCS);
+        // Make sure the RcsFeature was created in the test service.
+        assertTrue("Device ImsService created, but TestDeviceImsService#createRcsFeature was not"
+                + "called!", sServiceConnector.getExternalService().isRcsFeatureCreated());
     }
 
     private void verifyRegistrationState(RegistrationManager regManager, int expectedState)
