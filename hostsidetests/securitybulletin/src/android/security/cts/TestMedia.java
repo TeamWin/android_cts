@@ -33,6 +33,11 @@ public class TestMedia extends SecurityTestCase {
      * before any existing test methods
      ****************************************************************/
 
+    @SecurityTest(minPatchLevel = "2017-07")
+    public void testPocCVE_2017_0684() throws Exception {
+        String processPatterns[] = {"media.codec", "media.swcodec"};
+        runMediaTest("CVE-2017-0684", null, null, getDevice(), processPatterns);
+    }
 
     /****************************************************************
      * To prevent merge conflicts, add tests for O below this comment,
