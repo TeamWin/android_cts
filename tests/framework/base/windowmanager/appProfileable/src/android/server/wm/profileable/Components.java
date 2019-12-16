@@ -23,4 +23,12 @@ public class Components extends ComponentsBase {
 
     public static final ComponentName PROFILEABLE_APP_ACTIVITY =
             component(Components.class, "ProfileableAppActivity");
+
+    public static class ProfileableAppActivity {
+        /** @see android.os.ShellCommand#openFileForSystem */
+        public static final String OUTPUT_DIR = "/data/local/tmp/AmProfileTest/";
+        public static final String OUTPUT_NAME = "profile.trace";
+        public static final String OUTPUT_FILE_PATH = OUTPUT_DIR + OUTPUT_NAME;
+        public static final String COMMAND_WAIT_FOR_PROFILE_OUTPUT = "wait_for_profile_output";
+    }
 }
