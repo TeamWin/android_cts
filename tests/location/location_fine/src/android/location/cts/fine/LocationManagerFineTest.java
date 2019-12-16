@@ -874,6 +874,7 @@ public class LocationManagerFineTest {
                     setTestProviderEnabled(provider, false);
                     mManager.setTestProviderLocation(provider, loc2);
                     assertThat(mManager.getLastKnownLocation(provider)).isNull();
+                    assertThat(capture.getLocation(FAILURE_TIMEOUT_MS)).isNull();
                 }
             } else {
                 try {
