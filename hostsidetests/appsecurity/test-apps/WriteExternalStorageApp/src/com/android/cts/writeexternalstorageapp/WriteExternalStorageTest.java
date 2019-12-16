@@ -261,7 +261,7 @@ public class WriteExternalStorageTest extends AndroidTestCase {
         final List<File> paths = getAllPackageSpecificPathsExceptMedia(getContext());
 
         for (File path : paths) {
-            MediaStore.scanFile(getContext(), path);
+            MediaStore.scanFile(getContext().getContentResolver(), path);
         }
 
         // Require that .nomedia was created somewhere above each dir

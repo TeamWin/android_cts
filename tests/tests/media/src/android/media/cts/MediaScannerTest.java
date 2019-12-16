@@ -618,14 +618,14 @@ public class MediaScannerTest extends AndroidTestCase {
 
     public static void startMediaScan() {
         new Thread(() -> {
-            MediaStore.scanVolume(InstrumentationRegistry.getTargetContext(),
-                    Environment.getExternalStorageDirectory());
+            MediaStore.scanVolume(InstrumentationRegistry.getTargetContext().getContentResolver(),
+                    MediaStore.VOLUME_EXTERNAL_PRIMARY);
         }).start();
     }
 
     public static void startMediaScanAndWait() {
-        MediaStore.scanVolume(InstrumentationRegistry.getTargetContext(),
-                Environment.getExternalStorageDirectory());
+        MediaStore.scanVolume(InstrumentationRegistry.getTargetContext().getContentResolver(),
+                MediaStore.VOLUME_EXTERNAL_PRIMARY);
     }
 
     private void checkMediaScannerConnection() {

@@ -29,6 +29,8 @@ import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 import android.os.UserManager;
+import android.os.storage.StorageManager;
+import android.os.storage.StorageVolume;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
 import android.provider.cts.media.MediaStoreUtils;
@@ -186,6 +188,10 @@ public class ProviderTestUtils {
         executeShellCommand("bmgr wipe " + backupTransport + " " + packageName, uiAutomation);
     }
 
+    public static void waitForIdle() {
+        MediaStore.waitForIdle(InstrumentationRegistry.getTargetContext().getContentResolver());
+    }
+
     /**
      * Waits until a file exists, or fails.
      *
@@ -201,11 +207,20 @@ public class ProviderTestUtils {
         }
     }
 
+    public static File getVolumePath(String volumeName) {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        return context.getSystemService(StorageManager.class)
+                .getStorageVolume(MediaStore.Files.getContentUri(volumeName)).getDirectory();
+    }
+
     public static File stageDir(String volumeName) throws IOException {
         if (MediaStore.VOLUME_EXTERNAL.equals(volumeName)) {
             volumeName = MediaStore.VOLUME_EXTERNAL_PRIMARY;
         }
-        File dir = Environment.buildPath(MediaStore.getVolumePath(volumeName), "Android", "media",
+        final StorageVolume vol = InstrumentationRegistry.getTargetContext()
+                .getSystemService(StorageManager.class)
+                .getStorageVolume(MediaStore.Files.getContentUri(volumeName));
+        File dir = Environment.buildPath(vol.getDirectory(), "Android", "media",
                 "android.provider.cts");
         Log.d(TAG, "stageDir(" + volumeName + "): returning " + dir);
         return dir;
@@ -215,7 +230,10 @@ public class ProviderTestUtils {
         if (MediaStore.VOLUME_EXTERNAL.equals(volumeName)) {
             volumeName = MediaStore.VOLUME_EXTERNAL_PRIMARY;
         }
-        return Environment.buildPath(MediaStore.getVolumePath(volumeName),
+        final StorageVolume vol = InstrumentationRegistry.getTargetContext()
+                .getSystemService(StorageManager.class)
+                .getStorageVolume(MediaStore.Files.getContentUri(volumeName));
+        return Environment.buildPath(vol.getDirectory(),
                 Environment.DIRECTORY_DOWNLOADS, "android.provider.cts");
     }
 
@@ -271,19 +289,21 @@ public class ProviderTestUtils {
     }
 
     public static Uri scanFile(File file) throws Exception {
-        Uri uri = MediaStore.scanFile(InstrumentationRegistry.getTargetContext(), file);
+        final Uri uri = MediaStore
+                .scanFile(InstrumentationRegistry.getTargetContext().getContentResolver(), file);
         assertWithMessage("no URI for '%s'", file).that(uri).isNotNull();
         return uri;
     }
 
     public static Uri scanFileFromShell(File file) throws Exception {
-        Uri uri = MediaStore.scanFileFromShell(InstrumentationRegistry.getTargetContext(), file);
-        assertWithMessage("no URI for '%s'", file).that(uri).isNotNull();
-        return uri;
+        return scanFile(file);
     }
 
     public static void scanVolume(File file) throws Exception {
-        MediaStore.scanVolume(InstrumentationRegistry.getTargetContext(), file);
+        final StorageVolume vol = InstrumentationRegistry.getTargetContext()
+                .getSystemService(StorageManager.class).getStorageVolume(file);
+        MediaStore.scanVolume(InstrumentationRegistry.getTargetContext().getContentResolver(),
+                vol.getMediaStoreVolumeName());
     }
 
     public static byte[] hash(InputStream in) throws Exception {
