@@ -85,7 +85,7 @@ public class ProtectedBroadcastsTest extends AndroidTestCase {
         "android.telephony.action.NETWORK_SET_TIME",
         "android.telephony.action.SUBSCRIPTION_CARRIER_IDENTITY_CHANGED",
         "android.telephony.action.SUBSCRIPTION_SPECIFIC_CARRIER_IDENTITY_CHANGED",
-        "com.android.internal.intent.action.ACTION_SHOW_NOTICE_ECM_BLOCK_OTHERS",
+        "android.telephony.action.SHOW_NOTICE_ECM_BLOCK_OTHERS",
     };
 
     /**
