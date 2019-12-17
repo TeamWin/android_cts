@@ -16,18 +16,77 @@
 
 package android.telephony.ims.cts;
 
+import android.telephony.ims.feature.CapabilityChangeRequest;
 import android.telephony.ims.feature.RcsFeature;
+import android.telephony.ims.stub.ImsRegistrationImplBase;
+import android.util.Log;
+
+import java.util.List;
 
 public class TestRcsFeature extends RcsFeature {
+    private static final String TAG = "CtsTestImsService";
 
+    private final TestImsService.ReadyListener mReadyListener;
     private final TestImsService.RemovedListener mRemovedListener;
+    private final TestImsService.CapabilitiesSetListener mCapSetListener;
 
-    TestRcsFeature(TestImsService.RemovedListener listener) {
+    private RcsImsCapabilities mCapabilities =
+            new RcsImsCapabilities(RcsImsCapabilities.CAPABILITY_TYPE_NONE);
+
+    TestRcsFeature(TestImsService.ReadyListener readyListener,
+            TestImsService.RemovedListener listener,
+            TestImsService.CapabilitiesSetListener setListener) {
+        mReadyListener = readyListener;
         mRemovedListener = listener;
+        mCapSetListener = setListener;
+
+        setFeatureState(STATE_READY);
+    }
+
+    @Override
+    public void onFeatureReady() {
+        if (ImsUtils.VDBG) {
+            Log.d(TAG, "TestRcsFeature.onFeatureReady called");
+        }
+        mReadyListener.onReady();
     }
 
     @Override
     public void onFeatureRemoved() {
+        if (ImsUtils.VDBG) {
+            Log.d(TAG, "TestRcsFeature.onFeatureRemoved called");
+        }
         mRemovedListener.onRemoved();
+    }
+
+
+    @Override
+    public boolean queryCapabilityConfiguration(int capability, int radioTech) {
+        if (ImsUtils.VDBG) {
+            Log.d(TAG, "TestRcsFeature.queryCapabilityConfiguration called with capability: "
+                    + capability);
+        }
+        return mCapabilities.isCapable(capability);
+    }
+
+    @Override
+    public void changeEnabledCapabilities(CapabilityChangeRequest request,
+            CapabilityCallbackProxy c) {
+        if (ImsUtils.VDBG) {
+            Log.d(TAG, "TestRcsFeature.changeEnabledCapabilities");
+        }
+        List<CapabilityChangeRequest.CapabilityPair> pairs = request.getCapabilitiesToEnable();
+        for (CapabilityChangeRequest.CapabilityPair pair : pairs) {
+            if (pair.getRadioTech() == ImsRegistrationImplBase.REGISTRATION_TECH_LTE) {
+                mCapabilities.addCapabilities(pair.getCapability());
+            }
+        }
+        pairs = request.getCapabilitiesToDisable();
+        for (CapabilityChangeRequest.CapabilityPair pair : pairs) {
+            if (pair.getRadioTech() == ImsRegistrationImplBase.REGISTRATION_TECH_LTE) {
+                mCapabilities.removeCapabilities(pair.getCapability());
+            }
+        }
+        mCapSetListener.onSet();
     }
 }
