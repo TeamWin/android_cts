@@ -27,7 +27,7 @@ import static android.server.wm.app.Components.VIRTUAL_DISPLAY_ACTIVITY;
 import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.ActivityManagerState.ActivityDisplay;
+import android.server.wm.ActivityManagerState.DisplayContent;
 
 import androidx.test.filters.FlakyTest;
 
@@ -62,7 +62,7 @@ public class MultiDisplayLockedKeyguardTests extends MultiDisplayTestBase {
         lockScreenSession.setLockCredential();
 
         // Create new usual virtual display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setPublicDisplay(true)
                 .createDisplay();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
@@ -96,7 +96,7 @@ public class MultiDisplayLockedKeyguardTests extends MultiDisplayTestBase {
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
         lockScreenSession.setLockCredential();
 
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setPublicDisplay(false)
                 .createDisplay();
         launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
@@ -117,7 +117,7 @@ public class MultiDisplayLockedKeyguardTests extends MultiDisplayTestBase {
                 mObjectTracker.manage(new LockScreenSession(FLAG_REMOVE_ACTIVITIES_ON_CLOSE));
         lockScreenSession.setLockCredential();
 
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setPublicDisplay(true)
                 .createDisplay();
 
@@ -142,7 +142,7 @@ public class MultiDisplayLockedKeyguardTests extends MultiDisplayTestBase {
                 mObjectTracker.manage(new LockScreenSession(FLAG_REMOVE_ACTIVITIES_ON_CLOSE));
         lockScreenSession.setLockCredential();
 
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setPublicDisplay(true)
                 .createDisplay();
 

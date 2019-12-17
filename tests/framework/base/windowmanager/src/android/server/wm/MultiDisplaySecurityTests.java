@@ -63,7 +63,7 @@ import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.ActivityManagerState.ActivityDisplay;
+import android.server.wm.ActivityManagerState.DisplayContent;
 import android.server.wm.ActivityManagerState.ActivityStack;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
@@ -107,7 +107,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
     @Test
     public void testLaunchWithoutPermissionOnVirtualDisplayByOwner() {
         // Create new virtual display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession().createDisplay();
 
         // Try to launch an activity and check it security exception was triggered.
         getLaunchActivityBuilder()
@@ -135,7 +135,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
     @Test
     public void testLaunchWithoutPermissionOnVirtualDisplay() {
         // Create new virtual display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession().createDisplay();
 
         separateTestJournal();
 
@@ -161,7 +161,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
     @Test
     public void testConsequentLaunchActivityFromVirtualDisplayNoEmbedding() {
         // Create new virtual display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession().createDisplay();
 
         // Launch activity on new secondary display.
         launchActivityOnDisplay(LAUNCHING_ACTIVITY, newDisplay.mId);
@@ -193,7 +193,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      */
     @Test
     public void testCanAccessSystemOwnedDisplay()  {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true)
                 .createDisplay();
 
@@ -207,7 +207,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      */
     @Test
     public void testCanAccessPublicVirtualDisplayWithInternalPermission() {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setPublicDisplay(true)
                 .createDisplay();
 
@@ -224,7 +224,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      */
     @Test
     public void testCanAccessPrivateVirtualDisplayWithInternalPermission() {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setPublicDisplay(false)
                 .createDisplay();
 
@@ -242,7 +242,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      */
     @Test
     public void testCantAccessPublicVirtualDisplayNoEmbeddingPermission() {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setPublicDisplay(true)
                 .createDisplay();
 
@@ -256,7 +256,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      */
     @Test
     public void testCantAccessPublicVirtualDisplayActivityEmbeddingNotAllowed() {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setPublicDisplay(true)
                 .createDisplay();
 
@@ -273,7 +273,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      */
     @Test
     public void testCanAccessPublicVirtualDisplayActivityEmbeddingAllowed() {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setPublicDisplay(true)
                 .createDisplay();
 
@@ -290,7 +290,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      */
     @Test
     public void testCantAccessPrivateVirtualDisplay() {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setPublicDisplay(false)
                 .createDisplay();
 
@@ -304,7 +304,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      */
     @Test
     public void testCanAccessPrivateVirtualDisplayByOwner() {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setPublicDisplay(false)
                 .createDisplay();
 
@@ -327,7 +327,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      */
     @Test
     public void testCanAccessPrivateVirtualDisplayByUidPresentOnDisplayActivityEmbeddingAllowed() {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setPublicDisplay(false)
                 .createDisplay();
         // Launch a test activity into the target display.
@@ -352,7 +352,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
     @Test
     public void testCanAccessPrivateVirtualDisplayByUidPresentOnDisplayActivityEmbeddingNotAllowed()
             throws Exception {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setPublicDisplay(false)
                 .createDisplay();
         // Launch a test activity into the target display.
@@ -389,7 +389,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
         final VirtualDisplayLauncher virtualDisplayLauncher =
                 mObjectTracker.manage(new VirtualDisplayLauncher());
         // Create a virtual private display.
-        final ActivityDisplay newDisplay = virtualDisplayLauncher
+        final DisplayContent newDisplay = virtualDisplayLauncher
                 .setPublicDisplay(false)
                 .createDisplay();
         // Launch an embeddable activity into the private display.
@@ -418,7 +418,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
         final VirtualDisplayLauncher virtualDisplayLauncher =
                 mObjectTracker.manage(new VirtualDisplayLauncher());
         // Create a virtual private display.
-        final ActivityDisplay newDisplay = virtualDisplayLauncher
+        final DisplayContent newDisplay = virtualDisplayLauncher
                 .setPublicDisplay(false)
                 .createDisplay();
         // Launch an embeddable activity into the private display.
@@ -443,7 +443,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
     @Test
     public void testDisplayHasAccess_ExceptionWhenAddViewWithoutPresentOnPrivateDisplay() {
         // Create a virtual private display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setPublicDisplay(false)
                 .createDisplay();
         try {
@@ -473,7 +473,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
     @Test
     public void testPermissionLaunchFromShell(){
         // Create new virtual display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession().createDisplay();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
         mAmWmState.assertFocusedActivity("Virtual display activity must be on top",
                 VIRTUAL_DISPLAY_ACTIVITY);
@@ -507,7 +507,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
     @Test
     public void testPermissionLaunchFromAppOnSecondary() {
         // Create new simulated display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true)
                 .createDisplay();
 
@@ -535,7 +535,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
     /** Tests that an activity can launch an activity from a different UID into its own task. */
     @Test
     public void testPermissionLaunchMultiUidTask() {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true)
                 .createDisplay();
 
@@ -565,7 +565,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
     @Test
     public void testPermissionLaunchFromOwner() {
         // Create new virtual display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession().createDisplay();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
         mAmWmState.assertFocusedActivity("Virtual display activity must be focused",
                 VIRTUAL_DISPLAY_ACTIVITY);
@@ -602,7 +602,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
     @Test
     public void testPermissionLaunchFromDifferentApp() {
         // Create new virtual display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession().createDisplay();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
         mAmWmState.assertFocusedActivity("Virtual display activity must be focused",
                 VIRTUAL_DISPLAY_ACTIVITY);
@@ -636,7 +636,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
     @Test
     public void testFlagShowWithInsecureKeyguardOnPublicVirtualDisplay() {
         // Try to create new show-with-insecure-keyguard public virtual display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setPublicDisplay(true)
                 .setCanShowWithInsecureKeyguard(true)
                 .setMustBeCreated(false)
@@ -653,7 +653,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
     public void testSettingFlagWithoutInternalSystemPermission() throws Exception {
         // The reason to use a trusted display is that we can guarantee the security exception
         // is coming from lacking internal system permission.
-        final ActivityDisplay trustedDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent trustedDisplay = createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true)
                 .createDisplay();
         final WindowManager wm = mTargetContext.getSystemService(WindowManager.class);
@@ -695,7 +695,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
     public void testGettingFlagWithoutInternalSystemPermission() {
         // The reason to use a trusted display is that we can guarantee the security exception
         // is coming from lacking internal system permission.
-        final ActivityDisplay trustedDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent trustedDisplay = createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true)
                 .createDisplay();
         final WindowManager wm = mTargetContext.getSystemService(WindowManager.class);
@@ -722,7 +722,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      */
     @Test
     public void testSettingFlagToUntrustedDisplay() throws Exception {
-        final ActivityDisplay untrustedDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent untrustedDisplay = createManagedVirtualDisplaySession()
                 .createDisplay();
         final WindowManager wm = mTargetContext.getSystemService(WindowManager.class);
 
@@ -767,7 +767,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      */
     @Test
     public void testGettingFlagFromUntrustedDisplay() {
-        final ActivityDisplay untrustedDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent untrustedDisplay = createManagedVirtualDisplaySession()
                 .createDisplay();
         final WindowManager wm = mTargetContext.getSystemService(WindowManager.class);
 
@@ -787,7 +787,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      */
     @Test
     public void testSettingFlagToTrustedDisplay() throws Exception {
-        final ActivityDisplay trustedDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent trustedDisplay = createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true)
                 .createDisplay();
         final WindowManager wm = mTargetContext.getSystemService(WindowManager.class);
@@ -843,7 +843,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
         final TestActivitySession<ImeTestActivity> imeTestActivitySession =
                 createManagedTestActivitySession();
          // Create a untrusted virtual display and assume the display should not show IME window.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setPublicDisplay(true).createDisplay();
 
         // Launch Ime test activity in virtual display.

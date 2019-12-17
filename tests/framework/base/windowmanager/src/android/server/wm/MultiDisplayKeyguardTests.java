@@ -25,7 +25,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.ActivityManagerState.ActivityDisplay;
+import android.server.wm.ActivityManagerState.DisplayContent;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -58,7 +58,7 @@ public class MultiDisplayKeyguardTests extends MultiDisplayTestBase {
     @Test
     public void testDismissKeyguardActivity_secondaryDisplay() {
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession().createDisplay();
 
         lockScreenSession.gotoKeyguard();
         mAmWmState.assertKeyguardShowingAndNotOccluded();
@@ -75,7 +75,7 @@ public class MultiDisplayKeyguardTests extends MultiDisplayTestBase {
     @Test
     public void testShowKeyguardDialogOnSecondaryDisplay() {
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
-        final ActivityDisplay publicDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent publicDisplay = createManagedVirtualDisplaySession()
                 .setPublicDisplay(true)
                 .createDisplay();
 
@@ -101,9 +101,9 @@ public class MultiDisplayKeyguardTests extends MultiDisplayTestBase {
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
         final VirtualDisplaySession virtualDisplaySession = createManagedVirtualDisplaySession();
 
-        final ActivityDisplay privateDisplay =
+        final DisplayContent privateDisplay =
                 virtualDisplaySession.setPublicDisplay(false).createDisplay();
-        final ActivityDisplay publicDisplay =
+        final DisplayContent publicDisplay =
                 virtualDisplaySession.setPublicDisplay(true).createDisplay();
 
         lockScreenSession.gotoKeyguard();

@@ -53,7 +53,7 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.ActivityManagerState.ActivityDisplay;
+import android.server.wm.ActivityManagerState.DisplayContent;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
 import android.server.wm.WindowManagerState.Display;
 import android.server.wm.WindowManagerState.WindowState;
@@ -78,7 +78,6 @@ import org.junit.Test;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
 
 /**
  * Build/Install/Run:
@@ -114,7 +113,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
         TestJournalContainer.start();
 
-        final ActivityDisplay newDisplay = virtualDisplaySession
+        final DisplayContent newDisplay = virtualDisplaySession
                 .setSimulateDisplay(true).setShowSystemDecorations(true).createDisplay();
 
         wallpaperSession.setWallpaperComponent(TEST_LIVE_WALLPAPER_SERVICE);
@@ -131,10 +130,10 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     public void testWallpaperShowOnSecondaryDisplays()  {
         final ChangeWallpaperSession wallpaperSession = createManagedChangeWallpaperSession();
 
-        final ActivityDisplay untrustedDisplay = createManagedExternalDisplaySession()
+        final DisplayContent untrustedDisplay = createManagedExternalDisplaySession()
                 .setPublicDisplay(true).setShowSystemDecorations(true).createVirtualDisplay();
 
-        final ActivityDisplay decoredSystemDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent decoredSystemDisplay = createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true).setShowSystemDecorations(true).createDisplay();
 
         final Bitmap tmpWallpaper = wallpaperSession.getTestBitmap();
@@ -202,7 +201,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     @Test
     public void testNavBarShowingOnDisplayWithDecor() {
         assumeHasBars();
-        final ActivityDisplay newDisplay = createManagedExternalDisplaySession()
+        final DisplayContent newDisplay = createManagedExternalDisplaySession()
                 .setPublicDisplay(true).setShowSystemDecorations(true).createVirtualDisplay();
 
         mAmWmState.waitAndAssertNavBarShownOnDisplay(newDisplay.mId);
@@ -251,7 +250,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         // bars were added to a display that was added before executing this method that shouldn't
         // have nav bars (i.e. private or without system ui decor).
         try (final ExternalDisplaySession secondDisplaySession = new ExternalDisplaySession()) {
-            final ActivityDisplay supportsSysDecorDisplay = secondDisplaySession
+            final DisplayContent supportsSysDecorDisplay = secondDisplaySession
                     .setPublicDisplay(true).setShowSystemDecorations(true).createVirtualDisplay();
             mAmWmState.waitAndAssertNavBarShownOnDisplay(supportsSysDecorDisplay.mId);
             // This display has finished his task. Just close it.
@@ -278,7 +277,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         createManagedHomeActivitySession(SECONDARY_HOME_ACTIVITY);
 
         // Create new virtual display without system decoration support.
-        final ActivityDisplay newDisplay = createManagedExternalDisplaySession()
+        final DisplayContent newDisplay = createManagedExternalDisplaySession()
                 .createVirtualDisplay();
 
         // Secondary home activity can't be launched on the display without system decoration
@@ -295,7 +294,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         createManagedHomeActivitySession(SINGLE_HOME_ACTIVITY);
 
         // Create new virtual display with system decoration support.
-        final ActivityDisplay newDisplay = createManagedExternalDisplaySession()
+        final DisplayContent newDisplay = createManagedExternalDisplaySession()
                 .setShowSystemDecorations(true)
                 .createVirtualDisplay();
 
@@ -318,7 +317,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         createManagedHomeActivitySession(SINGLE_SECONDARY_HOME_ACTIVITY);
 
         // Create new virtual display with system decoration support.
-        final ActivityDisplay newDisplay = createManagedExternalDisplaySession()
+        final DisplayContent newDisplay = createManagedExternalDisplaySession()
                 .setShowSystemDecorations(true)
                 .createVirtualDisplay();
 
@@ -342,7 +341,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         final VirtualDisplaySession virtualDisplaySession = createManagedVirtualDisplaySession();
 
         // Create new virtual display with system decoration support.
-        final ActivityDisplay newDisplay = createManagedExternalDisplaySession()
+        final DisplayContent newDisplay = createManagedExternalDisplaySession()
                 .setShowSystemDecorations(true)
                 .createVirtualDisplay();
 
@@ -366,7 +365,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         final VirtualDisplaySession virtualDisplaySession = createManagedVirtualDisplaySession();
 
         // Create new virtual display with system decoration support.
-        final ActivityDisplay newDisplay = createManagedExternalDisplaySession()
+        final DisplayContent newDisplay = createManagedExternalDisplaySession()
                 .setShowSystemDecorations(true)
                 .createVirtualDisplay();
 
@@ -389,7 +388,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
                 createManagedTestActivitySession();
 
         // Create a virtual display and launch an activity on it.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setShowSystemDecorations(true)
                 .setSimulateDisplay(true)
                 .createDisplay();
@@ -435,7 +434,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         final TestActivitySession<ImeTestActivityWithBrokenContextWrapper> imeTestActivitySession =
                 createManagedTestActivitySession();
         // Create a virtual display and launch an activity on it.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setShowSystemDecorations(true)
                 .setSimulateDisplay(true)
                 .createDisplay();
@@ -475,7 +474,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
                 createManagedTestActivitySession();
 
         // Create a virtual display and launch an activity on virtual & default display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setShowSystemDecorations(true)
                 .setSimulateDisplay(true)
                 .createDisplay();
@@ -531,7 +530,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
                 createManagedTestActivitySession();
 
         // Create a virtual display by app and assume the display should not show IME window.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession()
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setPublicDisplay(true)
                 .createDisplay();
         SystemUtil.runWithShellPermissionIdentity(
@@ -653,7 +652,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     }
 
     void assertImeWindowAndDisplayConfiguration(
-            WindowManagerState.WindowState imeWinState, ActivityDisplay display) {
+            WindowManagerState.WindowState imeWinState, DisplayContent display) {
         final Configuration configurationForIme = imeWinState.mMergedOverrideConfiguration;
         final Configuration configurationForDisplay =  display.mMergedOverrideConfiguration;
         final int displayDensityDpiForIme = configurationForIme.densityDpi;

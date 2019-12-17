@@ -353,7 +353,7 @@ public class KeyguardTests extends KeyguardTestBase {
 
         final int displayId = mAmWmState.getAmState()
                 .getDisplayByActivity(SHOW_WHEN_LOCKED_ATTR_ROTATION_ACTIVITY);
-        ActivityManagerState.ActivityDisplay display = mAmWmState.getAmState()
+        ActivityManagerState.DisplayContent display = mAmWmState.getAmState()
                 .getDisplay(displayId);
         final int origDisplayOrientation = display.mFullConfiguration.orientation;
         final int orientation = origDisplayOrientation == Configuration.ORIENTATION_LANDSCAPE
