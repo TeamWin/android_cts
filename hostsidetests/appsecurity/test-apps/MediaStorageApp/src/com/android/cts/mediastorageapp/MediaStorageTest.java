@@ -27,6 +27,7 @@ import static org.junit.Assert.fail;
 
 import android.app.Activity;
 import android.app.Instrumentation;
+import android.app.PendingIntent;
 import android.app.RecoverableSecurityException;
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -42,6 +43,7 @@ import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
 import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiSelector;
 
 import androidx.test.InstrumentationRegistry;
@@ -59,6 +61,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.concurrent.Callable;
 
@@ -375,7 +378,89 @@ public class MediaStorageTest {
         assertEquals(1, mContentResolver.delete(red, null, null));
     }
 
+    @Test
+    public void testMediaEscalation_RequestWrite() throws Exception {
+        doMediaEscalation_RequestWrite(MediaStorageTest::createAudio);
+        doMediaEscalation_RequestWrite(MediaStorageTest::createVideo);
+        doMediaEscalation_RequestWrite(MediaStorageTest::createImage);
+    }
+
+    private void doMediaEscalation_RequestWrite(Callable<Uri> create) throws Exception {
+        final Uri red = create.call();
+        clearMediaOwner(red, mUserId);
+
+        try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(red, "w")) {
+            fail("Expected write access to be blocked");
+        } catch (RecoverableSecurityException expected) {
+        }
+
+        doEscalation(MediaStore.createWriteRequest(mContentResolver, Arrays.asList(red)));
+
+        try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(red, "w")) {
+        }
+    }
+
+    @Test
+    public void testMediaEscalation_RequestTrash() throws Exception {
+        doMediaEscalation_RequestTrash(MediaStorageTest::createAudio);
+        doMediaEscalation_RequestTrash(MediaStorageTest::createVideo);
+        doMediaEscalation_RequestTrash(MediaStorageTest::createImage);
+    }
+
+    private void doMediaEscalation_RequestTrash(Callable<Uri> create) throws Exception {
+        final Uri red = create.call();
+        clearMediaOwner(red, mUserId);
+
+        assertEquals("0", queryForSingleColumn(red, MediaColumns.IS_TRASHED));
+        doEscalation(MediaStore.createTrashRequest(mContentResolver, Arrays.asList(red), true));
+        assertEquals("1", queryForSingleColumn(red, MediaColumns.IS_TRASHED));
+        doEscalation(MediaStore.createTrashRequest(mContentResolver, Arrays.asList(red), false));
+        assertEquals("0", queryForSingleColumn(red, MediaColumns.IS_TRASHED));
+    }
+
+    @Test
+    public void testMediaEscalation_RequestFavorite() throws Exception {
+        doMediaEscalation_RequestFavorite(MediaStorageTest::createAudio);
+        doMediaEscalation_RequestFavorite(MediaStorageTest::createVideo);
+        doMediaEscalation_RequestFavorite(MediaStorageTest::createImage);
+    }
+
+    private void doMediaEscalation_RequestFavorite(Callable<Uri> create) throws Exception {
+        final Uri red = create.call();
+        clearMediaOwner(red, mUserId);
+
+        assertEquals("0", queryForSingleColumn(red, MediaColumns.IS_FAVORITE));
+        doEscalation(MediaStore.createFavoriteRequest(mContentResolver, Arrays.asList(red), true));
+        assertEquals("1", queryForSingleColumn(red, MediaColumns.IS_FAVORITE));
+        doEscalation(MediaStore.createFavoriteRequest(mContentResolver, Arrays.asList(red), false));
+        assertEquals("0", queryForSingleColumn(red, MediaColumns.IS_FAVORITE));
+    }
+
+    @Test
+    public void testMediaEscalation_RequestDelete() throws Exception {
+        doMediaEscalation_RequestDelete(MediaStorageTest::createAudio);
+        doMediaEscalation_RequestDelete(MediaStorageTest::createVideo);
+        doMediaEscalation_RequestDelete(MediaStorageTest::createImage);
+    }
+
+    private void doMediaEscalation_RequestDelete(Callable<Uri> create) throws Exception {
+        final Uri red = create.call();
+        clearMediaOwner(red, mUserId);
+
+        try (Cursor c = mContentResolver.query(red, null, null, null)) {
+            assertEquals(1, c.getCount());
+        }
+        doEscalation(MediaStore.createDeleteRequest(mContentResolver, Arrays.asList(red)));
+        try (Cursor c = mContentResolver.query(red, null, null, null)) {
+            assertEquals(0, c.getCount());
+        }
+    }
+
     private void doEscalation(RecoverableSecurityException exception) throws Exception {
+        doEscalation(exception.getUserAction().getActionIntent());
+    }
+
+    private void doEscalation(PendingIntent pi) throws Exception {
         // Try launching the action to grant ourselves access
         final Instrumentation inst = InstrumentationRegistry.getInstrumentation();
         final Intent intent = new Intent(inst.getContext(), GetResultActivity.class);
@@ -389,12 +474,17 @@ public class MediaStorageTest {
         final GetResultActivity activity = (GetResultActivity) inst.startActivitySync(intent);
         device.waitForIdle();
         activity.clearResult();
-        activity.startIntentSenderForResult(
-                exception.getUserAction().getActionIntent().getIntentSender(),
-                42, null, 0, 0, 0);
+        activity.startIntentSenderForResult(pi.getIntentSender(), 42, null, 0, 0, 0);
 
         device.waitForIdle();
-        device.findObject(new UiSelector().textMatches("(?i:Allow)")).click();
+
+        // Some dialogs may have granted access automatically, so we're willing
+        // to keep rolling forward if we can't find our grant button
+        final UiSelector grant = new UiSelector()
+                .textMatches("(Allow|Change|Move to trash|Move out of trash|Delete)");
+        if (new UiObject(grant).waitForExists(2_000)) {
+            device.findObject(grant).click();
+        }
 
         // Verify that we now have access
         final GetResultActivity.Result res = activity.getResult();
@@ -443,6 +533,16 @@ public class MediaStorageTest {
                 bitmap.compress(Bitmap.CompressFormat.PNG, 90, out);
             }
             return session.publish();
+        }
+    }
+
+    private static String queryForSingleColumn(Uri uri, String column) throws Exception {
+        final ContentResolver resolver = InstrumentationRegistry.getTargetContext()
+                .getContentResolver();
+        try (Cursor c = resolver.query(uri, new String[] { column }, null, null)) {
+            assertEquals(c.getCount(), 1);
+            assertTrue(c.moveToFirst());
+            return c.getString(0);
         }
     }
 
