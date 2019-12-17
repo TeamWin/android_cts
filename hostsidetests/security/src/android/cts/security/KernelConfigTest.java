@@ -248,14 +248,19 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
      */
     @CddTest(requirement="9.7")
     public void testConfigHardwareMitigations() throws Exception {
+        String mitigations[];
+
         if (PropertyUtil.getFirstApiLevel(mDevice) < 28) {
             return;
         }
 
         if (CpuFeatures.isArm64(mDevice) && !CpuFeatures.kernelVersionLessThan(mDevice, 4, 4)) {
-            for (String mitigation : lookupMitigations()) {
-                assertTrue("Linux kernel must have " + mitigation + " enabled.",
-                        configSet.contains(mitigation));
+            mitigations = lookupMitigations();
+            if (mitigations != null) {
+                for (String mitigation : mitigations) {
+                    assertTrue("Linux kernel must have " + mitigation + " enabled.",
+                            configSet.contains(mitigation));
+                }
             }
         } else if (CpuFeatures.isX86(mDevice)) {
             assertTrue("Linux kernel must have KPTI enabled: CONFIG_PAGE_TABLE_ISOLATION=y",
