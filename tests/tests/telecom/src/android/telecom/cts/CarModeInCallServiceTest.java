@@ -76,10 +76,10 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
             mCarModeIncallServiceControlTwo.reset();
         }
 
+        assertUiMode(Configuration.UI_MODE_TYPE_NORMAL);
+
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .dropShellPermissionIdentity();
-
-        assertUiMode(Configuration.UI_MODE_TYPE_NORMAL);
     }
 
     /**

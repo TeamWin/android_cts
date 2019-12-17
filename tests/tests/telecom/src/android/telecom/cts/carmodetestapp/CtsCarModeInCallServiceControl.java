@@ -43,7 +43,7 @@ public class CtsCarModeInCallServiceControl extends Service {
 
         @Override
         public boolean isUnbound() {
-            return CtsCarModeInCallService.isBound();
+            return CtsCarModeInCallService.isUnbound();
         }
 
         @Override
