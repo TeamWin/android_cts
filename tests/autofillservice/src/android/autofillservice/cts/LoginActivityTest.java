@@ -1569,7 +1569,18 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
 
         // Trigger auto-fill.
         if (manually) {
+            // setText() will trigger a fill request.
+            // Waits the first fill request triggered by the setText() is received by the service to
+            // avoid flaky.
+            sReplier.getNextFillRequest();
+            mUiBot.waitForIdle();
+
+            // Set expectations again.
+            sReplier.addResponse(new CannedFillResponse.Builder()
+                    .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
+                    .build());
             mActivity.forceAutofillOnUsername();
+            mUiBot.waitForIdle();
         } else {
             mActivity.onUsername(View::requestFocus);
         }
@@ -1589,6 +1600,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         final String expectedMessage = getWelcomeMessage("user_after");
         final String actualMessage = mActivity.tapLogin();
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+        mUiBot.waitForIdle();
 
         // Assert the snack bar is shown and tap "Save".
         mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
@@ -2220,9 +2232,16 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         // Set service.
         enableService();
 
+        sReplier.addResponse(NO_RESPONSE);
         // And activity.
         mActivity.onUsername((v) -> v.setText("dud"));
         mActivity.onPassword((v) -> v.setText("IamSecretMan"));
+
+        // setText() will trigger a fill request.
+        // Waits the first fill request triggered by the setText() is received by the service to
+        // avoid flaky.
+        sReplier.getNextFillRequest();
+        mUiBot.waitForIdle();
 
         // Set expectations.
         sReplier.addResponse(new CannedDataset.Builder()
