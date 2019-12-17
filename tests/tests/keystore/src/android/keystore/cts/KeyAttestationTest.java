@@ -64,6 +64,7 @@ import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.test.AndroidTestCase;
 import android.util.ArraySet;
+import android.util.Log;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -98,6 +99,8 @@ import javax.crypto.KeyGenerator;
  * Tests for Android KeysStore attestation.
  */
 public class KeyAttestationTest extends AndroidTestCase {
+
+    private static final String TAG = AndroidKeyStoreTest.class.getSimpleName();
 
     private static final int ORIGINATION_TIME_OFFSET = 1000000;
     private static final int CONSUMPTION_TIME_OFFSET = 2000000;
@@ -880,7 +883,8 @@ public class KeyAttestationTest extends AndroidTestCase {
         RootOfTrust rootOfTrust = attestation.getTeeEnforced().getRootOfTrust();
         assertNotNull(rootOfTrust);
         assertNotNull(rootOfTrust.getVerifiedBootKey());
-        assertTrue(rootOfTrust.getVerifiedBootKey().length >= 32);
+        assertTrue("Verified boot key is only " + rootOfTrust.getVerifiedBootKey().length +
+                   " bytes long", rootOfTrust.getVerifiedBootKey().length >= 32);
         checkEntropy(rootOfTrust.getVerifiedBootKey());
         if (requireLocked) {
             assertTrue(rootOfTrust.isDeviceLocked());
@@ -889,8 +893,8 @@ public class KeyAttestationTest extends AndroidTestCase {
     }
 
     private void checkEntropy(byte[] verifiedBootKey) {
-        assertTrue(checkShannonEntropy(verifiedBootKey));
-        assertTrue(checkTresBiEntropy(verifiedBootKey));
+        assertTrue("Failed Shannon entropy check", checkShannonEntropy(verifiedBootKey));
+        assertTrue("Failed BiEntropy check", checkTresBiEntropy(verifiedBootKey));
     }
 
     private boolean checkShannonEntropy(byte[] verifiedBootKey) {
@@ -900,8 +904,10 @@ public class KeyAttestationTest extends AndroidTestCase {
 
     private double calculateShannonEntropy(double probabilityOfSetBit) {
         if (probabilityOfSetBit <= 0.001 || probabilityOfSetBit >= .999) return 0;
-        return (-probabilityOfSetBit * logTwo(probabilityOfSetBit)) -
-               ((1 - probabilityOfSetBit) * logTwo(1 - probabilityOfSetBit));
+        double entropy = (-probabilityOfSetBit * logTwo(probabilityOfSetBit)) -
+                            ((1 - probabilityOfSetBit) * logTwo(1 - probabilityOfSetBit));
+        Log.i(TAG, "Shannon entropy of VB Key: " + entropy);
+        return entropy;
     }
 
     private boolean checkTresBiEntropy(byte[] verifiedBootKey) {
@@ -917,6 +923,7 @@ public class KeyAttestationTest extends AndroidTestCase {
             length -= 1;
         }
         double tresBiEntropy = (1 / weightingFactor) * weightedEntropy;
+        Log.i(TAG, "BiEntropy of VB Key: " + tresBiEntropy);
         return tresBiEntropy > 0.9;
     }
 

@@ -49,6 +49,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
@@ -76,6 +77,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
+import java.util.function.IntConsumer;
 
 /**
  * CTS device tests for {@link com.android.server.wm.ActivityMetricsLogger}.
@@ -85,6 +87,7 @@ import java.util.concurrent.TimeUnit;
 @Presubmit
 public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
     private static final String TAG_ATM = "ActivityTaskManager";
+    private static final int EVENT_WM_ACTIVITY_LAUNCH_TIME = 30009;
     private final MetricsReader mMetricsReader = new MetricsReader();
     private long mPreUptimeMs;
     private LogSeparator mLogSeparator;
@@ -112,7 +115,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
         final LogMaker metricsLog = getMetricsLog(TEST_ACTIVITY, APP_TRANSITION);
         final String[] deviceLogs = getDeviceLogsForComponents(mLogSeparator, TAG_ATM);
         final List<Event> eventLogs = getEventLogsForComponents(mLogSeparator,
-                30009 /* AM_ACTIVITY_LAUNCH_TIME */);
+                EVENT_WM_ACTIVITY_LAUNCH_TIME);
 
         final long postUptimeMs = SystemClock.uptimeMillis();
         assertMetricsLogs(TEST_ACTIVITY, APP_TRANSITION, metricsLog, mPreUptimeMs, postUptimeMs);
@@ -158,18 +161,24 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
 
     private void assertEventLogsContainsLaunchTime(List<Event> events, ComponentName componentName,
             int windowsDrawnDelayMs) {
-        for (Event event : events) {
-            Object[] arr = (Object[]) event.getData();
+        verifyLaunchTimeEventLogs(events, componentName,
+                delay -> assertEquals("Unexpected windows drawn delay for " + componentName,
+                        delay, windowsDrawnDelayMs));
+    }
+
+    private void verifyLaunchTimeEventLogs(List<Event> launchTimeEvents,
+            ComponentName componentName, IntConsumer launchTimeVerifier) {
+        for (Event event : launchTimeEvents) {
+            final Object[] arr = (Object[]) event.getData();
             assertEquals(4, arr.length);
             final String name = (String) arr[2];
-            final int delay = (int) arr[3];
+            final int launchTime = (int) arr[3];
             if (name.equals(componentName.flattenToShortString())) {
-                assertEquals("Unexpected windows drawn delay for " + componentName,
-                        delay, windowsDrawnDelayMs);
+                launchTimeVerifier.accept(launchTime);
                 return;
             }
         }
-        fail("Could not find am_activity_launch_time for " + componentName);
+        fail("Could not find wm_activity_launch_time for " + componentName);
     }
 
     /**
@@ -401,6 +410,18 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
         final long postUptimeMs = SystemClock.uptimeMillis();
         assertMetricsLogs(SINGLE_TASK_ACTIVITY, APP_TRANSITION, metricsLog, mPreUptimeMs,
                         postUptimeMs);
+    }
+
+    @Test
+    public void testLaunchTimeEventLogNonProcessSwitch() {
+        launchAndWaitForActivity(SINGLE_TASK_ACTIVITY);
+        mLogSeparator = separateLogs();
+
+        // Launch another activity in the same process.
+        launchAndWaitForActivity(TEST_ACTIVITY);
+        final List<Event> eventLogs = getEventLogsForComponents(mLogSeparator,
+                EVENT_WM_ACTIVITY_LAUNCH_TIME);
+        verifyLaunchTimeEventLogs(eventLogs, TEST_ACTIVITY, time -> assertNotEquals(0, time));
     }
 
     private void launchAndWaitForActivity(ComponentName activity) {
