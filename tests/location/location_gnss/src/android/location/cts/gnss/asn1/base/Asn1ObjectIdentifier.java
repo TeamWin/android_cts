@@ -16,7 +16,6 @@
 
 package android.location.cts.asn1.base;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
@@ -24,6 +23,7 @@ import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Object identifiers are similar in concept to URIs (indeed
@@ -70,7 +70,7 @@ public class Asn1ObjectIdentifier extends Asn1Object {
   }
 
   private byte[] encodeBerInternal() {
-    Preconditions.checkNotNull(value);
+    Objects.requireNonNull(value);
     // Encode according to BER.
     BitStream basicEncoding = new BitStream();
     Iterator<Integer> valueIterator = value.iterator();
