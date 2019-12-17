@@ -172,6 +172,10 @@ public class DecoderTest extends MediaPlayerTestBase {
         decode(R.raw.sinesweepwav, 0.0f);
         testTimeStampOrdering(R.raw.sinesweepwav);
     }
+    public void testDecodeWav24() throws Exception {
+        decode(R.raw.sinesweepwav24, 0.0f);
+        testTimeStampOrdering(R.raw.sinesweepwav24);
+    }
     public void testDecodeFlacMkv() throws Exception {
         decode(R.raw.sinesweepflacmkv, 0.0f);
         testTimeStampOrdering(R.raw.sinesweepflacmkv);
