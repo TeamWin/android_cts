@@ -34,7 +34,6 @@ import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.Insets;
 import android.graphics.PixelFormat;
-import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.cts.R;
 import android.graphics.drawable.Drawable.ConstantState;
@@ -720,6 +719,7 @@ public class GradientDrawableTest {
 
         GradientDrawable drawable = (GradientDrawable)
                 context.getDrawable(R.drawable.gradientdrawable_mix_theme);
+
         // Verify that despite multiple inflation passes are done to inflate both
         // the non-theme attributes as well as the themed attributes
         assertEquals(GradientDrawable.RADIAL_GRADIENT, drawable.getGradientType());
@@ -763,27 +763,6 @@ public class GradientDrawableTest {
                 Orientation.BL_TR);
         verifyGradientOrientation(R.drawable.gradientdrawable_negative_angle_360,
                 Orientation.LEFT_RIGHT);
-    }
-
-    @Test
-    public void testTintedStrokeWithoutSolidColor() {
-        final Context context = InstrumentationRegistry.getTargetContext();
-        GradientDrawable strokeDrawable = (GradientDrawable)
-                context.getDrawable(R.drawable.gradientdrawable_stroke_tint);
-        int bgColor = context.getColor(android.R.color.holo_blue_light);
-        int tintColor = context.getColor(android.R.color.holo_orange_light);
-        int width = 100;
-        int height = 100;
-        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        canvas.drawColor(bgColor);
-        strokeDrawable.setTint(tintColor);
-        strokeDrawable.setTintMode(PorterDuff.Mode.MULTIPLY);
-        strokeDrawable.setBounds(0, 0, width, height);
-        strokeDrawable.draw(canvas);
-
-        assertEquals(bitmap.getPixel(width / 2, height / 2), bgColor);
-        assertEquals(bitmap.getPixel(2, height / 2), tintColor);
     }
 
     private void verifyGradientOrientation(int resId, Orientation expected) {
