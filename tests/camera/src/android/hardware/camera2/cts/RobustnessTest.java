@@ -17,6 +17,7 @@
 package android.hardware.camera2.cts;
 
 import static android.hardware.camera2.cts.CameraTestUtils.*;
+import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.*;
 
 import android.content.Context;
 import android.graphics.ImageFormat;
@@ -38,12 +39,16 @@ import android.hardware.camera2.params.MandatoryStreamCombination;
 import android.hardware.camera2.params.MandatoryStreamCombination.MandatoryStreamInformation;
 import android.hardware.camera2.params.SessionConfiguration;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.media.CamcorderProfile;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.ImageWriter;
 import android.util.Log;
+import android.util.Pair;
 import android.util.Size;
+import android.view.Display;
 import android.view.Surface;
+import android.view.WindowManager;
 
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
 
@@ -1807,4 +1812,810 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         return precaptureComplete;
     }
 
+    /**
+     * Test for making sure that all expected mandatory stream combinations are present and
+     * advertised accordingly.
+     */
+    @Test
+    public void testVerifyMandatoryOutputCombinationTables() throws Exception {
+       final int[][] LEGACY_COMBINATIONS = {
+            // Simple preview, GPU video processing, or no-preview video recording
+            {PRIV, MAXIMUM},
+            // No-viewfinder still image capture
+            {JPEG, MAXIMUM},
+            // In-application video/image processing
+            {YUV,  MAXIMUM},
+            // Standard still imaging.
+            {PRIV, PREVIEW,  JPEG, MAXIMUM},
+            // In-app processing plus still capture.
+            {YUV,  PREVIEW,  JPEG, MAXIMUM},
+            // Standard recording.
+            {PRIV, PREVIEW,  PRIV, PREVIEW},
+            // Preview plus in-app processing.
+            {PRIV, PREVIEW,  YUV,  PREVIEW},
+            // Still capture plus in-app processing.
+            {PRIV, PREVIEW,  YUV,  PREVIEW,  JPEG, MAXIMUM}
+        };
+
+        final int[][] LIMITED_COMBINATIONS = {
+            // High-resolution video recording with preview.
+            {PRIV, PREVIEW,  PRIV, RECORD },
+            // High-resolution in-app video processing with preview.
+            {PRIV, PREVIEW,  YUV , RECORD },
+            // Two-input in-app video processing.
+            {YUV , PREVIEW,  YUV , RECORD },
+            // High-resolution recording with video snapshot.
+            {PRIV, PREVIEW,  PRIV, RECORD,   JPEG, RECORD  },
+            // High-resolution in-app processing with video snapshot.
+            {PRIV, PREVIEW,  YUV,  RECORD,   JPEG, RECORD  },
+            // Two-input in-app processing with still capture.
+            {YUV , PREVIEW,  YUV,  PREVIEW,  JPEG, MAXIMUM }
+        };
+
+        final int[][] BURST_COMBINATIONS = {
+            // Maximum-resolution GPU processing with preview.
+            {PRIV, PREVIEW,  PRIV, MAXIMUM },
+            // Maximum-resolution in-app processing with preview.
+            {PRIV, PREVIEW,  YUV,  MAXIMUM },
+            // Maximum-resolution two-input in-app processing.
+            {YUV,  PREVIEW,  YUV,  MAXIMUM },
+        };
+
+        final int[][] FULL_COMBINATIONS = {
+            // Video recording with maximum-size video snapshot.
+            {PRIV, PREVIEW,  PRIV, PREVIEW,  JPEG, MAXIMUM },
+            // Standard video recording plus maximum-resolution in-app processing.
+            {YUV,  VGA,      PRIV, PREVIEW,  YUV,  MAXIMUM },
+            // Preview plus two-input maximum-resolution in-app processing.
+            {YUV,  VGA,      YUV,  PREVIEW,  YUV,  MAXIMUM }
+        };
+
+        final int[][] RAW_COMBINATIONS = {
+            // No-preview DNG capture.
+            {RAW,  MAXIMUM },
+            // Standard DNG capture.
+            {PRIV, PREVIEW,  RAW,  MAXIMUM },
+            // In-app processing plus DNG capture.
+            {YUV,  PREVIEW,  RAW,  MAXIMUM },
+            // Video recording with DNG capture.
+            {PRIV, PREVIEW,  PRIV, PREVIEW,  RAW, MAXIMUM},
+            // Preview with in-app processing and DNG capture.
+            {PRIV, PREVIEW,  YUV,  PREVIEW,  RAW, MAXIMUM},
+            // Two-input in-app processing plus DNG capture.
+            {YUV,  PREVIEW,  YUV,  PREVIEW,  RAW, MAXIMUM},
+            // Still capture with simultaneous JPEG and DNG.
+            {PRIV, PREVIEW,  JPEG, MAXIMUM,  RAW, MAXIMUM},
+            // In-app processing with simultaneous JPEG and DNG.
+            {YUV,  PREVIEW,  JPEG, MAXIMUM,  RAW, MAXIMUM}
+        };
+
+        final int[][] LEVEL_3_COMBINATIONS = {
+            // In-app viewfinder analysis with dynamic selection of output format
+            {PRIV, PREVIEW, PRIV, VGA, YUV, MAXIMUM, RAW, MAXIMUM},
+            // In-app viewfinder analysis with dynamic selection of output format
+            {PRIV, PREVIEW, PRIV, VGA, JPEG, MAXIMUM, RAW, MAXIMUM}
+        };
+
+        final int[][][] TABLES =
+                { LEGACY_COMBINATIONS, LIMITED_COMBINATIONS, BURST_COMBINATIONS, FULL_COMBINATIONS,
+                  RAW_COMBINATIONS, LEVEL_3_COMBINATIONS };
+
+        sanityCheckConfigurationTables(TABLES);
+
+        for (String id : mCameraIdsUnderTest) {
+            openDevice(id);
+            MandatoryStreamCombination[] combinations =
+                    mStaticInfo.getCharacteristics().get(
+                            CameraCharacteristics.SCALER_MANDATORY_STREAM_COMBINATIONS);
+            if ((combinations == null) || (combinations.length == 0)) {
+                Log.i(TAG, "No mandatory stream combinations for camera: " + id + " skip test");
+                closeDevice(id);
+                continue;
+            }
+
+            MaxStreamSizes maxSizes = new MaxStreamSizes(mStaticInfo, id, mContext);
+            try {
+                if (mStaticInfo.isColorOutputSupported()) {
+                    for (int[] c : LEGACY_COMBINATIONS) {
+                        assertTrue(String.format("Expected static stream combination: %s not " +
+                                    "found among the available mandatory combinations",
+                                    maxSizes.combinationToString(c)),
+                                isMandatoryCombinationAvailable(c, maxSizes, combinations));
+                    }
+                }
+
+                if (!mStaticInfo.isHardwareLevelLegacy()) {
+                    if (mStaticInfo.isColorOutputSupported()) {
+                        for (int[] c : LIMITED_COMBINATIONS) {
+                            assertTrue(String.format("Expected static stream combination: %s not " +
+                                        "found among the available mandatory combinations",
+                                        maxSizes.combinationToString(c)),
+                                    isMandatoryCombinationAvailable(c, maxSizes, combinations));
+                        }
+                    }
+
+                    if (mStaticInfo.isCapabilitySupported(
+                            CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_BURST_CAPTURE)) {
+                        for (int[] c : BURST_COMBINATIONS) {
+                            assertTrue(String.format("Expected static stream combination: %s not " +
+                                        "found among the available mandatory combinations",
+                                        maxSizes.combinationToString(c)),
+                                    isMandatoryCombinationAvailable(c, maxSizes, combinations));
+                        }
+                    }
+
+                    if (mStaticInfo.isHardwareLevelAtLeastFull()) {
+                        for (int[] c : FULL_COMBINATIONS) {
+                            assertTrue(String.format("Expected static stream combination: %s not " +
+                                        "found among the available mandatory combinations",
+                                        maxSizes.combinationToString(c)),
+                                    isMandatoryCombinationAvailable(c, maxSizes, combinations));
+                        }
+                    }
+
+                    if (mStaticInfo.isCapabilitySupported(
+                            CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW)) {
+                        for (int[] c : RAW_COMBINATIONS) {
+                            assertTrue(String.format("Expected static stream combination: %s not " +
+                                        "found among the available mandatory combinations",
+                                        maxSizes.combinationToString(c)),
+                                    isMandatoryCombinationAvailable(c, maxSizes, combinations));
+                        }
+                    }
+
+                    if (mStaticInfo.isHardwareLevelAtLeast(
+                            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_3)) {
+                        for (int[] c: LEVEL_3_COMBINATIONS) {
+                            assertTrue(String.format("Expected static stream combination: %s not " +
+                                        "found among the available mandatory combinations",
+                                        maxSizes.combinationToString(c)),
+                                    isMandatoryCombinationAvailable(c, maxSizes, combinations));
+                        }
+                    }
+                }
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    /**
+     * Test for making sure that all expected reprocessable mandatory stream combinations are
+     * present and advertised accordingly.
+     */
+    @Test
+    public void testVerifyReprocessMandatoryOutputCombinationTables() throws Exception {
+        final int[][] LIMITED_COMBINATIONS = {
+            // Input           Outputs
+            {PRIV, MAXIMUM,    JPEG, MAXIMUM},
+            {YUV , MAXIMUM,    JPEG, MAXIMUM},
+            {PRIV, MAXIMUM,    PRIV, PREVIEW, JPEG, MAXIMUM},
+            {YUV , MAXIMUM,    PRIV, PREVIEW, JPEG, MAXIMUM},
+            {PRIV, MAXIMUM,    YUV , PREVIEW, JPEG, MAXIMUM},
+            {YUV , MAXIMUM,    YUV , PREVIEW, JPEG, MAXIMUM},
+            {PRIV, MAXIMUM,    YUV , PREVIEW, YUV , PREVIEW, JPEG, MAXIMUM},
+            {YUV,  MAXIMUM,    YUV , PREVIEW, YUV , PREVIEW, JPEG, MAXIMUM},
+        };
+
+        final int[][] FULL_COMBINATIONS = {
+            // Input           Outputs
+            {YUV , MAXIMUM,    PRIV, PREVIEW},
+            {YUV , MAXIMUM,    YUV , PREVIEW},
+            {PRIV, MAXIMUM,    PRIV, PREVIEW, YUV , RECORD},
+            {YUV , MAXIMUM,    PRIV, PREVIEW, YUV , RECORD},
+            {PRIV, MAXIMUM,    PRIV, PREVIEW, YUV , MAXIMUM},
+            {PRIV, MAXIMUM,    YUV , PREVIEW, YUV , MAXIMUM},
+            {PRIV, MAXIMUM,    PRIV, PREVIEW, YUV , PREVIEW, JPEG, MAXIMUM},
+            {YUV , MAXIMUM,    PRIV, PREVIEW, YUV , PREVIEW, JPEG, MAXIMUM},
+        };
+
+        final int[][] RAW_COMBINATIONS = {
+            // Input           Outputs
+            {PRIV, MAXIMUM,    YUV , PREVIEW, RAW , MAXIMUM},
+            {YUV , MAXIMUM,    YUV , PREVIEW, RAW , MAXIMUM},
+            {PRIV, MAXIMUM,    PRIV, PREVIEW, YUV , PREVIEW, RAW , MAXIMUM},
+            {YUV , MAXIMUM,    PRIV, PREVIEW, YUV , PREVIEW, RAW , MAXIMUM},
+            {PRIV, MAXIMUM,    YUV , PREVIEW, YUV , PREVIEW, RAW , MAXIMUM},
+            {YUV , MAXIMUM,    YUV , PREVIEW, YUV , PREVIEW, RAW , MAXIMUM},
+            {PRIV, MAXIMUM,    PRIV, PREVIEW, JPEG, MAXIMUM, RAW , MAXIMUM},
+            {YUV , MAXIMUM,    PRIV, PREVIEW, JPEG, MAXIMUM, RAW , MAXIMUM},
+            {PRIV, MAXIMUM,    YUV , PREVIEW, JPEG, MAXIMUM, RAW , MAXIMUM},
+            {YUV , MAXIMUM,    YUV , PREVIEW, JPEG, MAXIMUM, RAW , MAXIMUM},
+        };
+
+        final int[][] LEVEL_3_COMBINATIONS = {
+            // Input          Outputs
+            // In-app viewfinder analysis with YUV->YUV ZSL and RAW
+            {YUV , MAXIMUM,   PRIV, PREVIEW, PRIV, VGA, RAW, MAXIMUM},
+            // In-app viewfinder analysis with PRIV->JPEG ZSL and RAW
+            {PRIV, MAXIMUM,   PRIV, PREVIEW, PRIV, VGA, RAW, MAXIMUM, JPEG, MAXIMUM},
+            // In-app viewfinder analysis with YUV->JPEG ZSL and RAW
+            {YUV , MAXIMUM,   PRIV, PREVIEW, PRIV, VGA, RAW, MAXIMUM, JPEG, MAXIMUM},
+        };
+
+        final int[][][] TABLES =
+                { LIMITED_COMBINATIONS, FULL_COMBINATIONS, RAW_COMBINATIONS, LEVEL_3_COMBINATIONS };
+
+        sanityCheckConfigurationTables(TABLES);
+
+        for (String id : mCameraIdsUnderTest) {
+            openDevice(id);
+            MandatoryStreamCombination[] cs = mStaticInfo.getCharacteristics().get(
+                    CameraCharacteristics.SCALER_MANDATORY_STREAM_COMBINATIONS);
+            if ((cs == null) || (cs.length == 0)) {
+                Log.i(TAG, "No mandatory stream combinations for camera: " + id + " skip test");
+                closeDevice(id);
+                continue;
+            }
+
+            boolean supportYuvReprocess = mStaticInfo.isCapabilitySupported(
+                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_YUV_REPROCESSING);
+            boolean supportOpaqueReprocess = mStaticInfo.isCapabilitySupported(
+                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_PRIVATE_REPROCESSING);
+            if (!supportYuvReprocess && !supportOpaqueReprocess) {
+                Log.i(TAG, "No reprocess support for camera: " + id + " skip test");
+                closeDevice(id);
+                continue;
+            }
+
+            MaxStreamSizes maxSizes = new MaxStreamSizes(mStaticInfo, id, mContext);
+            try {
+                for (int[] c : LIMITED_COMBINATIONS) {
+                    assertTrue(String.format("Expected static reprocessable stream combination:" +
+                                "%s not found among the available mandatory combinations",
+                                maxSizes.reprocessCombinationToString(c)),
+                            isMandatoryCombinationAvailable(c, maxSizes, /*isInput*/ true, cs));
+                }
+
+                if (mStaticInfo.isHardwareLevelAtLeastFull()) {
+                    for (int[] c : FULL_COMBINATIONS) {
+                        assertTrue(String.format(
+                                    "Expected static reprocessable stream combination:" +
+                                    "%s not found among the available mandatory combinations",
+                                    maxSizes.reprocessCombinationToString(c)),
+                                isMandatoryCombinationAvailable(c, maxSizes, /*isInput*/ true, cs));
+                    }
+                }
+
+                if (mStaticInfo.isCapabilitySupported(
+                        CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW)) {
+                    for (int[] c : RAW_COMBINATIONS) {
+                        assertTrue(String.format(
+                                    "Expected static reprocessable stream combination:" +
+                                    "%s not found among the available mandatory combinations",
+                                    maxSizes.reprocessCombinationToString(c)),
+                                isMandatoryCombinationAvailable(c, maxSizes, /*isInput*/ true, cs));
+                    }
+                }
+
+                if (mStaticInfo.isHardwareLevelAtLeast(
+                            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_3)) {
+                    for (int[] c : LEVEL_3_COMBINATIONS) {
+                        assertTrue(String.format(
+                                    "Expected static reprocessable stream combination:" +
+                                    "%s not found among the available mandatory combinations",
+                                    maxSizes.reprocessCombinationToString(c)),
+                                isMandatoryCombinationAvailable(c, maxSizes, /*isInput*/ true, cs));
+                    }
+                }
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    private boolean isMandatoryCombinationAvailable(final int[] combination,
+            final MaxStreamSizes maxSizes,
+            final MandatoryStreamCombination[] availableCombinations) {
+        return isMandatoryCombinationAvailable(combination, maxSizes, /*isInput*/ false,
+                availableCombinations);
+    }
+
+    private boolean isMandatoryCombinationAvailable(final int[] combination,
+            final MaxStreamSizes maxSizes, boolean isInput,
+            final MandatoryStreamCombination[] availableCombinations) {
+        // Static combinations to be verified can be composed of multiple entries
+        // that have the following layout (format, size). In case "isInput" is set,
+        // the first stream configuration entry will contain the input format and size
+        // as well as the first matching output.
+        int streamCount = combination.length / 2;
+        ArrayList<Pair<Pair<Integer, Boolean>, Size>> currentCombination =
+                new ArrayList<Pair<Pair<Integer, Boolean>, Size>>(streamCount);
+        for (int i = 0; i < combination.length; i += 2) {
+            if (isInput && (i == 0)) {
+                Size sz = maxSizes.getMaxInputSizeForFormat(combination[i]);
+                currentCombination.add(Pair.create(Pair.create(new Integer(combination[i]),
+                            new Boolean(true)), sz));
+                currentCombination.add(Pair.create(Pair.create(new Integer(combination[i]),
+                            new Boolean(false)), sz));
+            } else {
+                Size sz = maxSizes.getOutputSizeForFormat(combination[i], combination[i+1]);
+                currentCombination.add(Pair.create(Pair.create(new Integer(combination[i]),
+                            new Boolean(false)), sz));
+            }
+        }
+
+        for (MandatoryStreamCombination c : availableCombinations) {
+            List<MandatoryStreamInformation> streamInfoList = c.getStreamsInformation();
+            if ((streamInfoList.size() == currentCombination.size()) &&
+                    (isInput == c.isReprocessable())) {
+                ArrayList<Pair<Pair<Integer, Boolean>, Size>> expected =
+                        new ArrayList<Pair<Pair<Integer, Boolean>, Size>>(currentCombination);
+
+                for (MandatoryStreamInformation streamInfo : streamInfoList) {
+                    Size maxSize = CameraTestUtils.getMaxSize(
+                            streamInfo.getAvailableSizes().toArray(new Size[0]));
+                    Pair p = Pair.create(Pair.create(new Integer(streamInfo.getFormat()),
+                            new Boolean(streamInfo.isInput())), maxSize);
+                    if (expected.contains(p)) {
+                        expected.remove(p);
+                    }
+                }
+
+                if (expected.isEmpty()) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Sanity check the configuration tables.
+     */
+    private void sanityCheckConfigurationTables(final int[][][] tables) throws Exception {
+        int tableIdx = 0;
+        for (int[][] table : tables) {
+            int rowIdx = 0;
+            for (int[] row : table) {
+                assertTrue(String.format("Odd number of entries for table %d row %d: %s ",
+                                tableIdx, rowIdx, Arrays.toString(row)),
+                        (row.length % 2) == 0);
+                for (int i = 0; i < row.length; i += 2) {
+                    int format = row[i];
+                    int maxSize = row[i + 1];
+                    assertTrue(String.format("table %d row %d index %d format not valid: %d",
+                                    tableIdx, rowIdx, i, format),
+                            format == PRIV || format == JPEG || format == YUV || format == RAW);
+                    assertTrue(String.format("table %d row %d index %d max size not valid: %d",
+                                    tableIdx, rowIdx, i + 1, maxSize),
+                            maxSize == PREVIEW || maxSize == RECORD ||
+                            maxSize == MAXIMUM || maxSize == VGA);
+                }
+                rowIdx++;
+            }
+            tableIdx++;
+        }
+    }
+
+    /**
+     * Simple holder for resolutions to use for different camera outputs and size limits.
+     */
+    static class MaxStreamSizes {
+        // Format shorthands
+        static final int PRIV = ImageFormat.PRIVATE;
+        static final int JPEG = ImageFormat.JPEG;
+        static final int YUV  = ImageFormat.YUV_420_888;
+        static final int RAW  = ImageFormat.RAW_SENSOR;
+        static final int Y8   = ImageFormat.Y8;
+        static final int HEIC = ImageFormat.HEIC;
+
+        // Max resolution indices
+        static final int PREVIEW = 0;
+        static final int RECORD  = 1;
+        static final int MAXIMUM = 2;
+        static final int VGA = 3;
+        static final int VGA_FULL_FOV = 4;
+        static final int MAX_30FPS = 5;
+        static final int RESOLUTION_COUNT = 6;
+
+        static final long FRAME_DURATION_30FPS_NSEC = (long) 1e9 / 30;
+
+        public MaxStreamSizes(StaticMetadata sm, String cameraId, Context context) {
+            Size[] privSizes = sm.getAvailableSizesForFormatChecked(ImageFormat.PRIVATE,
+                    StaticMetadata.StreamDirection.Output);
+            Size[] yuvSizes = sm.getAvailableSizesForFormatChecked(ImageFormat.YUV_420_888,
+                    StaticMetadata.StreamDirection.Output);
+            Size[] y8Sizes = sm.getAvailableSizesForFormatChecked(ImageFormat.Y8,
+                    StaticMetadata.StreamDirection.Output);
+            Size[] jpegSizes = sm.getJpegOutputSizesChecked();
+            Size[] rawSizes = sm.getRawOutputSizesChecked();
+            Size[] heicSizes = sm.getHeicOutputSizesChecked();
+
+            Size maxPreviewSize = getMaxPreviewSize(context, cameraId);
+
+            maxRawSize = (rawSizes.length != 0) ? CameraTestUtils.getMaxSize(rawSizes) : null;
+
+            StreamConfigurationMap configs = sm.getCharacteristics().get(
+                    CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            if (sm.isColorOutputSupported()) {
+                maxPrivSizes[PREVIEW] = getMaxSize(privSizes, maxPreviewSize);
+                maxYuvSizes[PREVIEW]  = getMaxSize(yuvSizes, maxPreviewSize);
+                maxJpegSizes[PREVIEW] = getMaxSize(jpegSizes, maxPreviewSize);
+
+                if (sm.isExternalCamera()) {
+                    maxPrivSizes[RECORD] = getMaxExternalRecordingSize(cameraId, configs);
+                    maxYuvSizes[RECORD]  = getMaxExternalRecordingSize(cameraId, configs);
+                    maxJpegSizes[RECORD] = getMaxExternalRecordingSize(cameraId, configs);
+                } else {
+                    maxPrivSizes[RECORD] = getMaxRecordingSize(cameraId);
+                    maxYuvSizes[RECORD]  = getMaxRecordingSize(cameraId);
+                    maxJpegSizes[RECORD] = getMaxRecordingSize(cameraId);
+                }
+
+                maxPrivSizes[MAXIMUM] = CameraTestUtils.getMaxSize(privSizes);
+                maxYuvSizes[MAXIMUM] = CameraTestUtils.getMaxSize(yuvSizes);
+                maxJpegSizes[MAXIMUM] = CameraTestUtils.getMaxSize(jpegSizes);
+
+                // Must always be supported, add unconditionally
+                final Size vgaSize = new Size(640, 480);
+                maxPrivSizes[VGA] = vgaSize;
+                maxYuvSizes[VGA] = vgaSize;
+                maxJpegSizes[VGA] = vgaSize;
+
+                if (sm.isMonochromeWithY8()) {
+                    maxY8Sizes[PREVIEW]  = getMaxSize(y8Sizes, maxPreviewSize);
+                    if (sm.isExternalCamera()) {
+                        maxY8Sizes[RECORD]  = getMaxExternalRecordingSize(cameraId, configs);
+                    } else {
+                        maxY8Sizes[RECORD]  = getMaxRecordingSize(cameraId);
+                    }
+                    maxY8Sizes[MAXIMUM] = CameraTestUtils.getMaxSize(y8Sizes);
+                    maxY8Sizes[VGA] = vgaSize;
+                }
+
+                if (sm.isHeicSupported()) {
+                    maxHeicSizes[PREVIEW] = getMaxSize(heicSizes, maxPreviewSize);
+                    maxHeicSizes[RECORD] = getMaxRecordingSize(cameraId);
+                    maxHeicSizes[MAXIMUM] = CameraTestUtils.getMaxSize(heicSizes);
+                    maxHeicSizes[VGA] = vgaSize;
+                }
+            }
+            if (sm.isColorOutputSupported() && !sm.isHardwareLevelLegacy()) {
+                // VGA resolution, but with aspect ratio matching full res FOV
+                float fullFovAspect = maxYuvSizes[MAXIMUM].getWidth() /
+                    (float) maxYuvSizes[MAXIMUM].getHeight();
+                Size vgaFullFovSize = new Size(640, (int) (640 / fullFovAspect));
+
+                maxPrivSizes[VGA_FULL_FOV] = vgaFullFovSize;
+                maxYuvSizes[VGA_FULL_FOV] = vgaFullFovSize;
+                maxJpegSizes[VGA_FULL_FOV] = vgaFullFovSize;
+                if (sm.isMonochromeWithY8()) {
+                    maxY8Sizes[VGA_FULL_FOV] = vgaFullFovSize;
+                }
+
+                // Max resolution that runs at 30fps
+
+                Size maxPriv30fpsSize = null;
+                Size maxYuv30fpsSize = null;
+                Size maxY830fpsSize = null;
+                Size maxJpeg30fpsSize = null;
+                Comparator<Size> comparator = new SizeComparator();
+                for (Map.Entry<Size, Long> e :
+                             sm.getAvailableMinFrameDurationsForFormatChecked(ImageFormat.PRIVATE).
+                             entrySet()) {
+                    Size s = e.getKey();
+                    Long minDuration = e.getValue();
+                    Log.d(TAG, String.format("Priv Size: %s, duration %d limit %d", s, minDuration,
+                                FRAME_DURATION_30FPS_NSEC));
+                    if (minDuration <= FRAME_DURATION_30FPS_NSEC) {
+                        if (maxPriv30fpsSize == null ||
+                                comparator.compare(maxPriv30fpsSize, s) < 0) {
+                            maxPriv30fpsSize = s;
+                        }
+                    }
+                }
+                assertTrue("No PRIVATE resolution available at 30fps!", maxPriv30fpsSize != null);
+
+                for (Map.Entry<Size, Long> e :
+                             sm.getAvailableMinFrameDurationsForFormatChecked(
+                                     ImageFormat.YUV_420_888).
+                             entrySet()) {
+                    Size s = e.getKey();
+                    Long minDuration = e.getValue();
+                    Log.d(TAG, String.format("YUV Size: %s, duration %d limit %d", s, minDuration,
+                                FRAME_DURATION_30FPS_NSEC));
+                    if (minDuration <= FRAME_DURATION_30FPS_NSEC) {
+                        if (maxYuv30fpsSize == null ||
+                                comparator.compare(maxYuv30fpsSize, s) < 0) {
+                            maxYuv30fpsSize = s;
+                        }
+                    }
+                }
+                assertTrue("No YUV_420_888 resolution available at 30fps!",
+                        maxYuv30fpsSize != null);
+
+                if (sm.isMonochromeWithY8()) {
+                    for (Map.Entry<Size, Long> e :
+                                 sm.getAvailableMinFrameDurationsForFormatChecked(
+                                         ImageFormat.Y8).
+                                 entrySet()) {
+                        Size s = e.getKey();
+                        Long minDuration = e.getValue();
+                        Log.d(TAG, String.format("Y8 Size: %s, duration %d limit %d",
+                                s, minDuration, FRAME_DURATION_30FPS_NSEC));
+                        if (minDuration <= FRAME_DURATION_30FPS_NSEC) {
+                            if (maxY830fpsSize == null ||
+                                    comparator.compare(maxY830fpsSize, s) < 0) {
+                                maxY830fpsSize = s;
+                            }
+                        }
+                    }
+                    assertTrue("No Y8 resolution available at 30fps!", maxY830fpsSize != null);
+                }
+
+                for (Map.Entry<Size, Long> e :
+                             sm.getAvailableMinFrameDurationsForFormatChecked(ImageFormat.JPEG).
+                             entrySet()) {
+                    Size s = e.getKey();
+                    Long minDuration = e.getValue();
+                    Log.d(TAG, String.format("JPEG Size: %s, duration %d limit %d", s, minDuration,
+                                FRAME_DURATION_30FPS_NSEC));
+                    if (minDuration <= FRAME_DURATION_30FPS_NSEC) {
+                        if (maxJpeg30fpsSize == null ||
+                                comparator.compare(maxJpeg30fpsSize, s) < 0) {
+                            maxJpeg30fpsSize = s;
+                        }
+                    }
+                }
+                assertTrue("No JPEG resolution available at 30fps!", maxJpeg30fpsSize != null);
+
+                maxPrivSizes[MAX_30FPS] = maxPriv30fpsSize;
+                maxYuvSizes[MAX_30FPS] = maxYuv30fpsSize;
+                maxY8Sizes[MAX_30FPS] = maxY830fpsSize;
+                maxJpegSizes[MAX_30FPS] = maxJpeg30fpsSize;
+            }
+
+            Size[] privInputSizes = configs.getInputSizes(ImageFormat.PRIVATE);
+            maxInputPrivSize = privInputSizes != null ?
+                    CameraTestUtils.getMaxSize(privInputSizes) : null;
+            Size[] yuvInputSizes = configs.getInputSizes(ImageFormat.YUV_420_888);
+            maxInputYuvSize = yuvInputSizes != null ?
+                    CameraTestUtils.getMaxSize(yuvInputSizes) : null;
+            Size[] y8InputSizes = configs.getInputSizes(ImageFormat.Y8);
+            maxInputY8Size = y8InputSizes != null ?
+                    CameraTestUtils.getMaxSize(y8InputSizes) : null;
+        }
+
+        private final Size[] maxPrivSizes = new Size[RESOLUTION_COUNT];
+        private final Size[] maxJpegSizes = new Size[RESOLUTION_COUNT];
+        private final Size[] maxYuvSizes = new Size[RESOLUTION_COUNT];
+        private final Size[] maxY8Sizes = new Size[RESOLUTION_COUNT];
+        private final Size[] maxHeicSizes = new Size[RESOLUTION_COUNT];
+        private final Size maxRawSize;
+        // TODO: support non maximum reprocess input.
+        private final Size maxInputPrivSize;
+        private final Size maxInputYuvSize;
+        private final Size maxInputY8Size;
+
+        public final Size getOutputSizeForFormat(int format, int resolutionIndex) {
+            if (resolutionIndex >= RESOLUTION_COUNT) {
+                return new Size(0, 0);
+            }
+
+            switch (format) {
+                case PRIV:
+                    return maxPrivSizes[resolutionIndex];
+                case YUV:
+                    return maxYuvSizes[resolutionIndex];
+                case JPEG:
+                    return maxJpegSizes[resolutionIndex];
+                case Y8:
+                    return maxY8Sizes[resolutionIndex];
+                case HEIC:
+                    return maxHeicSizes[resolutionIndex];
+                case RAW:
+                    return maxRawSize;
+                default:
+                    return new Size(0, 0);
+            }
+        }
+
+        public final Size getMaxInputSizeForFormat(int format) {
+            switch (format) {
+                case PRIV:
+                    return maxInputPrivSize;
+                case YUV:
+                    return maxInputYuvSize;
+                case Y8:
+                    return maxInputY8Size;
+                default:
+                    return new Size(0, 0);
+            }
+        }
+
+        static public String combinationToString(int[] combination) {
+            StringBuilder b = new StringBuilder("{ ");
+            for (int i = 0; i < combination.length; i += 2) {
+                int format = combination[i];
+                int sizeLimit = combination[i + 1];
+
+                appendFormatSize(b, format, sizeLimit);
+                b.append(" ");
+            }
+            b.append("}");
+            return b.toString();
+        }
+
+        static public String reprocessCombinationToString(int[] reprocessCombination) {
+            // reprocessConfig[0..1] is the input configuration
+            StringBuilder b = new StringBuilder("Input: ");
+            appendFormatSize(b, reprocessCombination[0], reprocessCombination[1]);
+
+            // reprocessCombnation[0..1] is also output combination to be captured as reprocess
+            // input.
+            b.append(", Outputs: { ");
+            for (int i = 0; i < reprocessCombination.length; i += 2) {
+                int format = reprocessCombination[i];
+                int sizeLimit = reprocessCombination[i + 1];
+
+                appendFormatSize(b, format, sizeLimit);
+                b.append(" ");
+            }
+            b.append("}");
+            return b.toString();
+        }
+
+        static private void appendFormatSize(StringBuilder b, int format, int Size) {
+            switch (format) {
+                case PRIV:
+                    b.append("[PRIV, ");
+                    break;
+                case JPEG:
+                    b.append("[JPEG, ");
+                    break;
+                case YUV:
+                    b.append("[YUV, ");
+                    break;
+                case Y8:
+                    b.append("[Y8, ");
+                    break;
+                case RAW:
+                    b.append("[RAW, ");
+                    break;
+                default:
+                    b.append("[UNK, ");
+                    break;
+            }
+
+            switch (Size) {
+                case PREVIEW:
+                    b.append("PREVIEW]");
+                    break;
+                case RECORD:
+                    b.append("RECORD]");
+                    break;
+                case MAXIMUM:
+                    b.append("MAXIMUM]");
+                    break;
+                case VGA:
+                    b.append("VGA]");
+                    break;
+                case VGA_FULL_FOV:
+                    b.append("VGA_FULL_FOV]");
+                    break;
+                case MAX_30FPS:
+                    b.append("MAX_30FPS]");
+                    break;
+                default:
+                    b.append("UNK]");
+                    break;
+            }
+        }
+    }
+
+    private static Size getMaxRecordingSize(String cameraId) {
+        int id = Integer.valueOf(cameraId);
+
+        int quality =
+                CamcorderProfile.hasProfile(id, CamcorderProfile.QUALITY_2160P) ?
+                    CamcorderProfile.QUALITY_2160P :
+                CamcorderProfile.hasProfile(id, CamcorderProfile.QUALITY_1080P) ?
+                    CamcorderProfile.QUALITY_1080P :
+                CamcorderProfile.hasProfile(id, CamcorderProfile.QUALITY_720P) ?
+                    CamcorderProfile.QUALITY_720P :
+                CamcorderProfile.hasProfile(id, CamcorderProfile.QUALITY_480P) ?
+                    CamcorderProfile.QUALITY_480P :
+                CamcorderProfile.hasProfile(id, CamcorderProfile.QUALITY_QVGA) ?
+                    CamcorderProfile.QUALITY_QVGA :
+                CamcorderProfile.hasProfile(id, CamcorderProfile.QUALITY_CIF) ?
+                    CamcorderProfile.QUALITY_CIF :
+                CamcorderProfile.hasProfile(id, CamcorderProfile.QUALITY_QCIF) ?
+                    CamcorderProfile.QUALITY_QCIF :
+                    -1;
+
+        assertTrue("No recording supported for camera id " + cameraId, quality != -1);
+
+        CamcorderProfile maxProfile = CamcorderProfile.get(id, quality);
+        return new Size(maxProfile.videoFrameWidth, maxProfile.videoFrameHeight);
+    }
+
+    private static Size getMaxExternalRecordingSize(
+            String cameraId, StreamConfigurationMap config) {
+        final Size FULLHD = new Size(1920, 1080);
+
+        Size[] videoSizeArr = config.getOutputSizes(android.media.MediaRecorder.class);
+        List<Size> sizes = new ArrayList<Size>();
+        for (Size sz: videoSizeArr) {
+            if (sz.getWidth() <= FULLHD.getWidth() && sz.getHeight() <= FULLHD.getHeight()) {
+                sizes.add(sz);
+            }
+        }
+        List<Size> videoSizes = getAscendingOrderSizes(sizes, /*ascending*/false);
+        for (Size sz : videoSizes) {
+            long minFrameDuration = config.getOutputMinFrameDuration(
+                    android.media.MediaRecorder.class, sz);
+            // Give some margin for rounding error
+            if (minFrameDuration > (1e9 / 30.1)) {
+                Log.i(TAG, "External camera " + cameraId + " has max video size:" + sz);
+                return sz;
+            }
+        }
+        fail("Camera " + cameraId + " does not support any 30fps video output");
+        return FULLHD; // doesn't matter what size is returned here
+    }
+
+    /**
+     * Get maximum size in list that's equal or smaller to than the bound.
+     * Returns null if no size is smaller than or equal to the bound.
+     */
+    private static Size getMaxSize(Size[] sizes, Size bound) {
+        if (sizes == null || sizes.length == 0) {
+            throw new IllegalArgumentException("sizes was empty");
+        }
+
+        Size sz = null;
+        for (Size size : sizes) {
+            if (size.getWidth() <= bound.getWidth() && size.getHeight() <= bound.getHeight()) {
+
+                if (sz == null) {
+                    sz = size;
+                } else {
+                    long curArea = sz.getWidth() * (long) sz.getHeight();
+                    long newArea = size.getWidth() * (long) size.getHeight();
+                    if ( newArea > curArea ) {
+                        sz = size;
+                    }
+                }
+            }
+        }
+
+        assertTrue("No size under bound found: " + Arrays.toString(sizes) + " bound " + bound,
+                sz != null);
+
+        return sz;
+    }
+
+    private static Size getMaxPreviewSize(Context context, String cameraId) {
+        try {
+            WindowManager windowManager =
+                (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+            Display display = windowManager.getDefaultDisplay();
+
+            int width = display.getWidth();
+            int height = display.getHeight();
+
+            if (height > width) {
+                height = width;
+                width = display.getHeight();
+            }
+
+            CameraManager camMgr =
+                (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
+            List<Size> orderedPreviewSizes = CameraTestUtils.getSupportedPreviewSizes(
+                cameraId, camMgr, PREVIEW_SIZE_BOUND);
+
+            if (orderedPreviewSizes != null) {
+                for (Size size : orderedPreviewSizes) {
+                    if (width >= size.getWidth() &&
+                        height >= size.getHeight())
+                        return size;
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "getMaxPreviewSize Failed. "+e.toString());
+        }
+        return PREVIEW_SIZE_BOUND;
+    }
 }
