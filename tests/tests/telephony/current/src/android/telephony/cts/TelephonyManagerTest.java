@@ -467,6 +467,8 @@ public class TelephonyManagerTest {
         mTelephonyManager.isVoicemailVibrationEnabled(defaultAccount);
         mTelephonyManager.getSubscriptionId(defaultAccount);
         mTelephonyManager.getCarrierConfig();
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.isAnyRadioPoweredOn());
         TelephonyManager.getDefaultRespondViaMessageApplication(getContext(), false);
     }
 
