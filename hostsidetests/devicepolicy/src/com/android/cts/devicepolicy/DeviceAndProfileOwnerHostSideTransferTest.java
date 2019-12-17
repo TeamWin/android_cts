@@ -182,15 +182,7 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
 
     protected int setupManagedProfileOnDeviceOwner(String apkName, String adminReceiverClassName)
             throws Exception {
-        // Temporary disable the DISALLOW_ADD_MANAGED_PROFILE, so that we can create profile
-        // using adb command.
-        clearDisallowAddManagedProfileRestriction();
-        try {
-            return setupManagedProfile(apkName, adminReceiverClassName);
-        } finally {
-            // Adding back DISALLOW_ADD_MANAGED_PROFILE.
-            addDisallowAddManagedProfileRestriction();
-        }
+        return setupManagedProfile(apkName, adminReceiverClassName);
     }
 
     protected int setupManagedProfile(String apkName, String adminReceiverClassName)
@@ -205,28 +197,6 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
         }
         startUserAndWait(userId);
         return userId;
-    }
-
-    /**
-     * Clear {@link android.os.UserManager#DISALLOW_ADD_MANAGED_PROFILE}.
-     */
-    private void clearDisallowAddManagedProfileRestriction() throws Exception {
-        runDeviceTestsAsUser(
-                TRANSFER_OWNER_OUTGOING_PKG,
-                mOutgoingTestClassName,
-                "testClearDisallowAddManagedProfileRestriction",
-                mPrimaryUserId);
-    }
-
-    /**
-     * Add {@link android.os.UserManager#DISALLOW_ADD_MANAGED_PROFILE}.
-     */
-    private void addDisallowAddManagedProfileRestriction() throws Exception {
-        runDeviceTestsAsUser(
-                TRANSFER_OWNER_OUTGOING_PKG,
-                mOutgoingTestClassName,
-                "testAddDisallowAddManagedProfileRestriction",
-                mPrimaryUserId);
     }
 
     @Test
