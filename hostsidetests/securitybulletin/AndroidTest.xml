@@ -216,6 +216,7 @@
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="cleanup" value="true" />
 
+        <option name="push" value="Bug-12064465532->/data/local/tmp/Bug-120644655" />
         <option name="push" value="testhevc32->/data/local/tmp/testhevc" />
         <option name="push" value="testavc32->/data/local/tmp/testavc" />
         <option name="push" value="testmpeg232->/data/local/tmp/testmpeg2" />
