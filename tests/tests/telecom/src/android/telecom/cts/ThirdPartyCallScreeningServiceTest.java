@@ -52,6 +52,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class ThirdPartyCallScreeningServiceTest extends BaseTelecomTestWithMockServices {
+    public static final String EXTRA_NETWORK_IDENTIFIED_EMERGENCY_CALL = "identifiedEmergencyCall";
     private static final String TAG = ThirdPartyCallScreeningServiceTest.class.getSimpleName();
     private static final String TEST_APP_NAME = "CTSCSTest";
     private static final String TEST_APP_PACKAGE = "android.telecom.cts.screeningtestapp";
@@ -304,6 +305,67 @@ public class ThirdPartyCallScreeningServiceTest extends BaseTelecomTestWithMockS
                 true /* shouldRejectCall */, false /* shouldSilenceCall */,
                 false /* shouldSkipCallLog */, true /* shouldSkipNotification */);
         addIncomingAndVerifyBlocked(false /* addContact */);
+        assertFalse(mCallScreeningControl.waitForActivity());
+    }
+
+    public void testNoPostCallActivityWhenAudioProcessing() throws Exception {
+        if (!shouldTestTelecom(mContext)) {
+            return;
+        }
+
+        mCallScreeningControl.setCallResponse(false /* shouldDisallowCall */,
+                false /* shouldRejectCall */, false /* shouldSilenceCall */,
+                false /* shouldSkipCallLog */, false /* shouldSkipNotification */);
+        Uri testNumber = createRandomTestNumber();
+        Bundle extras = new Bundle();
+        extras.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, testNumber);
+        mTelecomManager.addNewIncomingCall(TestUtils.TEST_PHONE_ACCOUNT_HANDLE, extras);
+
+        // Wait until the new incoming call is processed.
+        waitOnAllHandlers(getInstrumentation());
+
+        assertEquals(1, mInCallCallbacks.getService().getCallCount());
+        Call call = mInCallCallbacks.getService().getLastCall();
+        call.enterBackgroundAudioProcessing();
+
+        waitOnAllHandlers(getInstrumentation());
+        mInCallCallbacks.getService().disconnectAllCalls();
+        assertFalse(mCallScreeningControl.waitForActivity());
+    }
+
+    public void testNoPostCallActivityForOutgoingEmergencyCall() throws Exception {
+        if (!shouldTestTelecom(mContext)) {
+            return;
+        }
+
+        setupForEmergencyCalling(TEST_EMERGENCY_NUMBER);
+        Bundle extras = new Bundle();
+        extras.putParcelable(TestUtils.EXTRA_PHONE_NUMBER, TEST_EMERGENCY_URI);
+        placeAndVerifyCall(extras);
+
+        // Wait until the new incoming call is processed.
+        waitOnAllHandlers(getInstrumentation());
+        mInCallCallbacks.getService().disconnectAllCalls();
+        assertFalse(mCallScreeningControl.waitForActivity());
+    }
+
+    public void testNoPostCallActivityForIncomingEmergencyCall() throws Exception {
+        if (!shouldTestTelecom(mContext)) {
+            return;
+        }
+        setupForEmergencyCalling(TEST_EMERGENCY_NUMBER);
+        mCallScreeningControl.setCallResponse(false /* shouldDisallowCall */,
+                false /* shouldRejectCall */, false /* shouldSilenceCall */,
+                false /* shouldSkipCallLog */, false /* shouldSkipNotification */);
+        Bundle extras = new Bundle();
+        extras.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, TEST_EMERGENCY_URI);
+        extras.putBoolean(EXTRA_NETWORK_IDENTIFIED_EMERGENCY_CALL, true);
+        mTelecomManager.addNewIncomingCall(TestUtils.TEST_PHONE_ACCOUNT_HANDLE, extras);
+
+        // Wait until the new incoming call is processed.
+        waitOnAllHandlers(getInstrumentation());
+        mInCallCallbacks.getService().disconnectAllCalls();
+
         assertFalse(mCallScreeningControl.waitForActivity());
     }
 

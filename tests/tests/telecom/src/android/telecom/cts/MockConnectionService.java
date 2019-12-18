@@ -16,6 +16,8 @@
 
 package android.telecom.cts;
 
+import static android.telecom.cts.ThirdPartyCallScreeningServiceTest.EXTRA_NETWORK_IDENTIFIED_EMERGENCY_CALL;
+
 import android.net.Uri;
 import android.os.Bundle;
 import android.telecom.Connection;
@@ -132,6 +134,11 @@ public class MockConnectionService extends ConnectionService {
                     Connection.VERIFICATION_STATUS_FAILED);
         }
 
+        Bundle requestExtra = request.getExtras();
+        if (requestExtra.getBoolean(EXTRA_NETWORK_IDENTIFIED_EMERGENCY_CALL, false)) {
+            connection.setConnectionProperties(
+                    Connection.PROPERTY_NETWORK_IDENTIFIED_EMERGENCY_CALL);
+        }
         incomingConnections.add(connection);
         lock.release();
         return connection;
