@@ -273,6 +273,32 @@ public class ThirdPartyCallScreeningServiceTest extends BaseTelecomTestWithMockS
         assertFalse(mCallScreeningControl.waitForBind());
     }
 
+    public void testNoPostCallActivityWithoutRole() throws Exception {
+        if (!shouldTestTelecom(mContext)) {
+            return;
+        }
+
+        removeRoleHolder(ROLE_CALL_SCREENING, CtsCallScreeningService.class.getPackage().getName());
+        addIncomingAndVerifyAllowed(false);
+        assertFalse(mCallScreeningControl.waitForActivity());
+    }
+
+    public void testAllowCall() throws Exception {
+        mCallScreeningControl.setCallResponse(false /* shouldDisallowCall */,
+                false /* shouldRejectCall */, false /* shouldSilenceCall */,
+                false /* shouldSkipCallLog */, false /* shouldSkipNotification */);
+        addIncomingAndVerifyAllowed(false /* addContact */);
+        assertTrue(mCallScreeningControl.waitForActivity());
+    }
+
+    public void testNoPostCallActivityWhenBlocked() throws Exception {
+        mCallScreeningControl.setCallResponse(true /* shouldDisallowCall */,
+                true /* shouldRejectCall */, false /* shouldSilenceCall */,
+                false /* shouldSkipCallLog */, true /* shouldSkipNotification */);
+        addIncomingAndVerifyBlocked(false /* addContact */);
+        assertFalse(mCallScreeningControl.waitForActivity());
+    }
+
     private void placeOutgoingCall(boolean addContact) throws Exception {
         // Setup content observer to notify us when we call log entry is added.
         CountDownLatch callLogEntryLatch = getCallLogEntryLatch();

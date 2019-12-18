@@ -52,6 +52,7 @@ public class CallScreeningServiceControl extends Service {
                             .setSkipNotification(false)
                             .build();
                     mBindingLatch = new CountDownLatch(1);
+                    CtsPostCallActivity.resetPostCallActivity();
                 }
 
                 @Override
@@ -77,6 +78,21 @@ public class CallScreeningServiceControl extends Service {
                     } catch (InterruptedException e) {
                         return false;
                     }
+                }
+
+                @Override
+                public boolean waitForActivity() {
+                    return CtsPostCallActivity.waitForActivity();
+                }
+
+                @Override
+                public String getCachedHandle() {
+                    return CtsPostCallActivity.getCachedHandle().getSchemeSpecificPart();
+                }
+
+                @Override
+                public int getCachedDisconnectCause() {
+                    return CtsPostCallActivity.getCachedDisconnectCause();
                 }
             };
 

@@ -33,5 +33,12 @@
                 <action android:name="android.telecom.cts.screeningtestapp.ACTION_CONTROL_CALL_SCREENING_SERVICE" />
             </intent-filter>
         </service>
+        <activity android:name=".CtsPostCallActivity"
+                  android:label="CtsPostCallActivity">
+            <intent-filter>
+                <action android:name="android.telecom.action.POST_CALL" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
     </application>
 </manifest>
