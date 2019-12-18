@@ -18,12 +18,16 @@ package android.app.stubs;
 
 import android.app.Activity;
 import android.app.Notification;
+import android.app.Notification.BubbleMetadata;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.Person;
+import android.app.RemoteInput;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Icon;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Log;
 
 /**
@@ -52,37 +56,75 @@ public class SendBubbleActivity extends Activity {
     }
 
     /**
-     * Sends a bubble notification that would only be allowed to bubble when the app is
-     * foreground.
+     * Sends a notification that has bubble metadata but the rest of the notification isn't
+     * configured correctly so the system won't allow it to bubble.
      */
-    public void sendBubble(int i, boolean autoExpand) {
+    public void sendInvalidBubble(int i, boolean autoExpand) {
         Context context = getApplicationContext();
 
-        final Intent intent = new Intent(context, BubbledActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP
-                | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        intent.setAction(Intent.ACTION_MAIN);
-        final PendingIntent pendingIntent =
-                PendingIntent.getActivity(context, 0, intent, 0);
-
-        Notification.BubbleMetadata data = new Notification.BubbleMetadata.Builder()
-                .setIcon(Icon.createWithResource(context, R.drawable.black))
-                .setIntent(pendingIntent)
-                .setAutoExpandBubble(autoExpand)
-                .build();
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, new Intent(), 0);
         Notification n = new Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.black)
                 .setWhen(System.currentTimeMillis())
                 .setContentTitle("notify#" + BUBBLE_NOTIF_ID)
                 .setContentText("This is #" + BUBBLE_NOTIF_ID + "notification  ")
                 .setContentIntent(pendingIntent)
-                .setBubbleMetadata(data)
+                .setBubbleMetadata(getBubbleMetadata(autoExpand))
                 .build();
 
         NotificationManager noMan = (NotificationManager) context.getSystemService(
                 Context.NOTIFICATION_SERVICE);
         noMan.notify(BUBBLE_NOTIF_ID, n);
         Log.d(TAG, "posting bubble: " + n + ", " + i);
+    }
+
+    /** Sends a notification that is properly configured to bubble. */
+    public void sendBubble(boolean autoExpand) {
+        Context context = getApplicationContext();
+        // Give it a person
+        Person person = new Person.Builder()
+                .setName("bubblebot")
+                .build();
+        // It needs remote input to be bubble-able
+        RemoteInput remoteInput = new RemoteInput.Builder("reply_key").setLabel("reply").build();
+        PendingIntent inputIntent = PendingIntent.getActivity(context, 0, new Intent(), 0);
+        Icon icon = Icon.createWithResource(context, android.R.drawable.sym_def_app_icon);
+        Notification.Action replyAction = new Notification.Action.Builder(icon, "Reply",
+                inputIntent).addRemoteInput(remoteInput)
+                .build();
+        // Make it messaging style
+        Notification n = new Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.black)
+                .setContentTitle("Bubble Chat")
+                .setStyle(new Notification.MessagingStyle(person)
+                        .setConversationTitle("Bubble Chat")
+                        .addMessage("Hello?",
+                                SystemClock.currentThreadTimeMillis() - 300000, person)
+                        .addMessage("Is it me you're looking for?",
+                                SystemClock.currentThreadTimeMillis(), person)
+                )
+                .setActions(replyAction)
+                .setBubbleMetadata(getBubbleMetadata(autoExpand))
+                .build();
+
+        NotificationManager noMan = (NotificationManager) context.getSystemService(
+                Context.NOTIFICATION_SERVICE);
+        noMan.notify(BUBBLE_NOTIF_ID, n);
+    }
+
+    private BubbleMetadata getBubbleMetadata(boolean autoExpand) {
+        Context context = getApplicationContext();
+        final Intent intent = new Intent(context, BubbledActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.setAction(Intent.ACTION_MAIN);
+        final PendingIntent pendingIntent =
+                PendingIntent.getActivity(context, 0, intent, 0);
+
+        return new Notification.BubbleMetadata.Builder()
+                .setIcon(Icon.createWithResource(context, R.drawable.black))
+                .setIntent(pendingIntent)
+                .setAutoExpandBubble(autoExpand)
+                .build();
     }
 
     /** Waits for the activity to be stopped. Do not call this method on main thread. */

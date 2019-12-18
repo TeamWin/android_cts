@@ -44,6 +44,7 @@ import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_SCREEN_OF
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_SCREEN_ON;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_STATUS_BAR;
 import static android.app.stubs.BubblesTestService.EXTRA_TEST_CASE;
+import static android.app.stubs.BubblesTestService.TEST_MESSAGING;
 import static android.app.stubs.BubblesTestService.TEST_NO_BUBBLE_METADATA;
 import static android.app.stubs.BubblesTestService.TEST_NO_CATEGORY;
 import static android.app.stubs.BubblesTestService.TEST_NO_PERSON;
@@ -2815,6 +2816,28 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
+    public void testNotificationManagerBubblePolicy_flagForMessagingWithService_fails()
+            throws Exception {
+        Intent serviceIntent = new Intent(mContext, BubblesTestService.class);
+        serviceIntent.putExtra(EXTRA_TEST_CASE, TEST_MESSAGING);
+
+        try {
+            // turn on bubbles globally
+            toggleBubbleSetting(true);
+            mContext.startService(serviceIntent);
+
+            if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
+                    true /* shouldExist */, false /* shouldBeBubble */)) {
+                fail("found bubble notification id=" + BUBBLE_NOTIF_ID
+                        + " when it should just be a notification");
+            }
+        } finally {
+            mContext.stopService(serviceIntent);
+            // turn off bubbles globally
+            toggleBubbleSetting(false);
+        }
+    }
+
     public void testNotificationManagerBubblePolicy_flagForPhonecall() throws InterruptedException {
         Intent serviceIntent = new Intent(mContext, BubblesTestService.class);
         serviceIntent.putExtra(EXTRA_TEST_CASE, TEST_SUCCESS);
@@ -2927,21 +2950,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testNotificationManagerBubblePolicy_noFlagForAppNotForeground()
-            throws InterruptedException {
-        try {
-            // turn on bubbles globally
-            toggleBubbleSetting(true);
-
-            sendAndVerifyBubble(1, null /* use default notif */, null /* use default metadata */,
-                    false /* shouldBeBubble */);
-        } finally {
-            // turn off bubbles globally
-            toggleBubbleSetting(false);
-        }
-    }
-
-    public void testNotificationManagerBubblePolicy_flagForAppForeground() throws Exception {
+    public void testNotificationManagerBubblePolicy_flagForAppForeground_fails() throws Exception {
         try {
             // turn on bubbles globally
             toggleBubbleSetting(true);
@@ -2949,38 +2958,13 @@ public class NotificationManagerTest extends AndroidTestCase {
             // Start & get the activity
             SendBubbleActivity a = startSendBubbleActivity();
 
-            // Send a bubble from foreground
-            a.sendBubble(4000, false /* autoExpand */);
+            // Send a bubble that doesn't fulfill policy from foreground
+            a.sendInvalidBubble(4000, false /* autoExpand */);
 
-            boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
-
-            if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
-                    true /* shouldExist */, shouldBeBubble)) {
-                fail("couldn't find posted notification bubble with id=" + BUBBLE_NOTIF_ID);
-            }
-
-            // Make ourselves not foreground
-            getContext().startActivity(new Intent(Intent.ACTION_MAIN)
-                    .addCategory(Intent.CATEGORY_HOME).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-            a.waitForStopped();
-
-            // The notif should be allowed to update as a bubble
-            a.sendBubble(4001, false /* autoExpand */);
-
-            if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
-                    true /* shouldExist */, shouldBeBubble)) {
-                fail("couldn't find posted notification bubble with id=" + BUBBLE_NOTIF_ID);
-            }
-
-            // Cancel the notif
-            cancelAndPoll(BUBBLE_NOTIF_ID);
-
-            // Send it again when not foreground, this should not be a bubble & just be a notif
-            a.sendBubble(4002, false /* autoExpand */);
+            // Just because app is foreground, doesn't mean they get to bubble
             if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
                     true /* shouldExist */, false /* shouldBeBubble */)) {
-                fail("couldn't find posted notification with id=" + BUBBLE_NOTIF_ID
-                        + " or it was a bubble when it shouldn't be");
+                fail("couldn't find posted notification bubble with id=" + BUBBLE_NOTIF_ID);
             }
 
             cleanupSendBubbleActivity();
@@ -3006,7 +2990,7 @@ public class NotificationManagerTest extends AndroidTestCase {
                     new Instrumentation.ActivityMonitor(clazz.getName(), result, false);
             InstrumentationRegistry.getInstrumentation().addMonitor(monitor);
 
-            a.sendBubble(4003, true /* autoExpand */);
+            a.sendBubble(true /* autoExpand */);
 
             boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
             if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
