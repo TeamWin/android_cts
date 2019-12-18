@@ -247,6 +247,14 @@ TEST_P(NdkBinderTest_Aidl, EnumToString) {
   EXPECT_EQ(toString(static_cast<IntEnum>(-1)), "-1");
 }
 
+TEST_P(NdkBinderTest_Aidl, EnumValues) {
+  auto range = ::ndk::enum_range<ByteEnum>();
+  auto iter = range.begin();
+  EXPECT_EQ(ByteEnum::FOO, *iter++);
+  EXPECT_EQ(ByteEnum::BAR, *iter++);
+  EXPECT_EQ(range.end(), iter);
+}
+
 TEST_P(NdkBinderTest_Aidl, RepeatBinder) {
   SpAIBinder binder = iface->asBinder();
   SpAIBinder ret;
