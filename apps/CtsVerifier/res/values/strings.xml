@@ -4339,25 +4339,6 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
     <string name="tv_microphone_device_test_no_input_devices">No input devices found.</string>
 
-    <!-- Common strings for the TV Display tests -->
-    <string name="tv_start_test">Start Test</string>
-
-    <!-- HDR Capabilities test -->
-    <string name="tv_hdr_capabilities_test">HDR Capabilities Test</string>
-    <string name="tv_hdr_capabilities_test_info">This test checks if
-        Display.getHdrCapabilities correctly reports the HDR capabilities of the display.
-    </string>
-    <string name="tv_hdr_connect_no_hdr_display">Connect a non-HDR display and then
-        press the "%s" button, below.
-    </string>
-    <string name="tv_hdr_connect_hdr_display">Connect an HDR display and press
-        the "%s" button, below.
-    </string>
-    <string name="tv_hdr_disconnect_display">Press the "%1$s" button
-        and disconnect the display within %2$d seconds. Wait at least %3$d seconds and then
-        reconnect the display.
-    </string>
-
     <string name="overlay_view_text">Overlay View Dummy Text</string>
     <string name="custom_rating">Example of input app specific custom rating.</string>
 

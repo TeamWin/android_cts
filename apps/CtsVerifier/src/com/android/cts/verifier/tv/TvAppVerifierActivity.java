@@ -37,7 +37,7 @@ public abstract class TvAppVerifierActivity extends PassFailButtons.Activity {
     private ViewGroup mItemList;
     private View mPostTarget;
 
-    public View getPostTarget() {
+    protected View getPostTarget() {
         return mPostTarget;
     }
 
@@ -57,14 +57,14 @@ public abstract class TvAppVerifierActivity extends PassFailButtons.Activity {
         getPassButton().setEnabled(false);
     }
 
-    public static void setButtonEnabled(View item, boolean enabled) {
+    protected void setButtonEnabled(View item, boolean enabled) {
         View button = item.findViewById(R.id.user_action_button);
         button.setFocusable(enabled);
         button.setClickable(enabled);
         button.setEnabled(enabled);
     }
 
-    public static void setPassState(View item, boolean passed) {
+    protected void setPassState(View item, boolean passed) {
         ImageView status = (ImageView) item.findViewById(R.id.status);
         status.setImageResource(passed ? R.drawable.fs_good : R.drawable.fs_error);
         setButtonEnabled(item, false);
@@ -78,7 +78,7 @@ public abstract class TvAppVerifierActivity extends PassFailButtons.Activity {
     /**
      * Call this to create a test step where the user must perform some action.
      */
-    public View createUserItem(int instructionTextId, int buttonTextId, View.OnClickListener l) {
+    protected View createUserItem(int instructionTextId, int buttonTextId, View.OnClickListener l) {
         View item = mInflater.inflate(R.layout.tv_item, mItemList, false);
         TextView instructions = (TextView) item.findViewById(R.id.instructions);
         instructions.setText(instructionTextId);
@@ -93,7 +93,7 @@ public abstract class TvAppVerifierActivity extends PassFailButtons.Activity {
     /**
      * Call this to create a test step where the user must perform some action.
      */
-    public View createUserItem(CharSequence instructionCharSequence,
+    protected View createUserItem(CharSequence instructionCharSequence,
                                   int buttonTextId, View.OnClickListener l) {
         View item = mInflater.inflate(R.layout.tv_item, mItemList, false);
         TextView instructions = (TextView) item.findViewById(R.id.instructions);
