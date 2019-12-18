@@ -582,13 +582,16 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        executeDeviceOwnerTest("SystemUpdatePolicyTest");
+        // Disabled due to 145932189
+        // executeDeviceOwnerTest("SystemUpdatePolicyTest");
     }
 
     public void testSetSystemUpdatePolicyLogged() throws Exception {
         if (!mHasFeature || !isStatsdEnabled(getDevice())) {
             return;
         }
+        // Disabled due to 145932189
+        /*
         assertMetricsLogged(getDevice(), () -> {
             executeDeviceTestMethod(".SystemUpdatePolicyTest", "testSetAutomaticInstallPolicy");
         }, new DevicePolicyEventWrapper.Builder(EventId.SET_SYSTEM_UPDATE_POLICY_VALUE)
@@ -613,6 +616,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                     .setAdminPackageName(DEVICE_OWNER_PKG)
                     .setInt(TYPE_NONE)
                     .build());
+        */
     }
 
     public void testWifiConfigLockdown() throws Exception {
