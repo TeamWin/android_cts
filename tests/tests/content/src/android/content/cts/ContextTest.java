@@ -16,7 +16,10 @@
 
 package android.content.cts;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.app.AppOpsManager;
+import android.app.WallpaperManager;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -778,6 +781,8 @@ public class ContextTest extends AndroidTestCase {
     }
 
     public void testAccessWallpaper() throws IOException, InterruptedException {
+        assumeWallpaperSupported();
+
         // set Wallpaper by context#setWallpaper(Bitmap)
         Bitmap bitmap = Bitmap.createBitmap(20, 30, Bitmap.Config.RGB_565);
         // Test getWallpaper
@@ -1004,6 +1009,8 @@ public class ContextTest extends AndroidTestCase {
     }
 
     public void testGetWallpaperDesiredMinimumHeightAndWidth() {
+        assumeWallpaperSupported();
+
         int height = mContext.getWallpaperDesiredMinimumHeight();
         int width = mContext.getWallpaperDesiredMinimumWidth();
 
@@ -1524,4 +1531,8 @@ public class ContextTest extends AndroidTestCase {
         }
     }
 
+    private void assumeWallpaperSupported() {
+        assumeTrue("Device does not support wallpapers",
+                WallpaperManager.getInstance(mContext).isWallpaperSupported());
+    }
 }
