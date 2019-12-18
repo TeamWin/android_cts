@@ -95,9 +95,9 @@ public class MediaStore_DownloadsTest {
         mExternalImages = MediaStore.Images.Media.getContentUri(mVolumeName);
         mExternalDownloads = MediaStore.Downloads.getContentUri(mVolumeName);
 
-        mDownloadsDir = new File(MediaStore.getVolumePath(resolveVolumeName(mVolumeName)),
+        mDownloadsDir = new File(ProviderTestUtils.getVolumePath(resolveVolumeName(mVolumeName)),
                 Environment.DIRECTORY_DOWNLOADS);
-        mPicturesDir = new File(MediaStore.getVolumePath(resolveVolumeName(mVolumeName)),
+        mPicturesDir = new File(ProviderTestUtils.getVolumePath(resolveVolumeName(mVolumeName)),
                 Environment.DIRECTORY_PICTURES);
         mDownloadsDir.mkdirs();
         mPicturesDir.mkdirs();

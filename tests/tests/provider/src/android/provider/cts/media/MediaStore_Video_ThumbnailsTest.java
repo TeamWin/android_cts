@@ -116,14 +116,14 @@ public class MediaStore_Video_ThumbnailsTest {
         // Don't run the test if the codec isn't supported.
         if (!hasCodec()) {
             // Calling getThumbnail should not generate a new thumbnail.
-            MediaStore.waitForIdle(mContext);
+            ProviderTestUtils.waitForIdle();
             assertNull(Thumbnails.getThumbnail(mResolver, videoId, Thumbnails.MINI_KIND, null));
             Log.i(TAG, "SKIPPING testGetThumbnail(): codec not supported");
             return;
         }
 
         // Calling getThumbnail should generate a new thumbnail.
-        MediaStore.waitForIdle(mContext);
+        ProviderTestUtils.waitForIdle();
         assertNotNull(Thumbnails.getThumbnail(mResolver, videoId, Thumbnails.MINI_KIND, null));
         assertNotNull(Thumbnails.getThumbnail(mResolver, videoId, Thumbnails.MICRO_KIND, null));
 
@@ -144,13 +144,13 @@ public class MediaStore_Video_ThumbnailsTest {
         Uri uri = insertVideo();
 
         // request thumbnail creation
-        MediaStore.waitForIdle(mContext);
+        ProviderTestUtils.waitForIdle();
         assertNotNull(Thumbnails.getThumbnail(mResolver, Long.valueOf(uri.getLastPathSegment()),
                 Thumbnails.MINI_KIND, null /* options */));
 
         // delete the source video and check that the thumbnail is gone too
         mResolver.delete(uri, null /* where clause */, null /* where args */);
-        MediaStore.waitForIdle(mContext);
+        ProviderTestUtils.waitForIdle();
         assertNull(Thumbnails.getThumbnail(mResolver, Long.valueOf(uri.getLastPathSegment()),
                 Thumbnails.MINI_KIND, null /* options */));
 
@@ -158,7 +158,7 @@ public class MediaStore_Video_ThumbnailsTest {
         uri = insertVideo();
 
         // request thumbnail creation
-        MediaStore.waitForIdle(mContext);
+        ProviderTestUtils.waitForIdle();
         assertNotNull(Thumbnails.getThumbnail(mResolver, Long.valueOf(uri.getLastPathSegment()),
                 Thumbnails.MINI_KIND, null));
 
@@ -169,7 +169,7 @@ public class MediaStore_Video_ThumbnailsTest {
                 1, mResolver.update(uri, values, null /* where */, null /* where args */));
 
         // video was marked as regular file in the database, which should have deleted its thumbnail
-        MediaStore.waitForIdle(mContext);
+        ProviderTestUtils.waitForIdle();
         assertNull(Thumbnails.getThumbnail(mResolver, Long.valueOf(uri.getLastPathSegment()),
                 Thumbnails.MINI_KIND, null /* options */));
 
@@ -224,7 +224,7 @@ public class MediaStore_Video_ThumbnailsTest {
         }
 
         // Thumbnail should be smaller
-        MediaStore.waitForIdle(mContext);
+        ProviderTestUtils.waitForIdle();
         final Bitmap beforeThumb = mResolver.loadThumbnail(finalUri, new Size(64, 64), null);
         assertTrue(beforeThumb.getWidth() < full.getWidth());
         assertTrue(beforeThumb.getHeight() < full.getHeight());
@@ -237,7 +237,7 @@ public class MediaStore_Video_ThumbnailsTest {
                     MediaStore.Video.Thumbnails.FULL_SCREEN_KIND,
                     MediaStore.Video.Thumbnails.MICRO_KIND
             }) {
-                MediaStore.waitForIdle(mContext);
+                ProviderTestUtils.waitForIdle();
                 assertNotNull(MediaStore.Video.Thumbnails.getThumbnail(mResolver,
                         ContentUris.parseId(finalUri), kind, null));
             }
@@ -250,7 +250,7 @@ public class MediaStore_Video_ThumbnailsTest {
         }
 
         // Thumbnail should match updated contents
-        MediaStore.waitForIdle(mContext);
+        ProviderTestUtils.waitForIdle();
         final Bitmap afterThumb = mResolver.loadThumbnail(finalUri, new Size(64, 64), null);
         final int afterColor = afterThumb.getPixel(32, 32);
         assertNotColorMostlyEquals(beforeColor, afterColor);
@@ -260,7 +260,7 @@ public class MediaStore_Video_ThumbnailsTest {
 
         // Thumbnail should no longer exist
         try {
-            MediaStore.waitForIdle(mContext);
+            ProviderTestUtils.waitForIdle();
             mResolver.loadThumbnail(finalUri, new Size(64, 64), null);
             fail("Funky; we somehow made a thumbnail out of nothing?");
         } catch (FileNotFoundException expected) {

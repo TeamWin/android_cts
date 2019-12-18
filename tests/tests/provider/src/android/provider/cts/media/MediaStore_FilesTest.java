@@ -213,7 +213,7 @@ public class MediaStore_FilesTest {
 
     @Test
     public void testAccess() throws Exception {
-        final String path = MediaStore.getVolumePath(resolveVolumeName(mVolumeName))
+        final String path = ProviderTestUtils.getVolumePath(resolveVolumeName(mVolumeName))
                 .getAbsolutePath();
         final Uri updateUri = ContentUris.withAppendedId(mExternalFiles,
                 ContentUris.parseId(ProviderTestUtils.stageMedia(R.raw.volantis, mExternalImages)));

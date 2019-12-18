@@ -209,7 +209,7 @@ public class MediaStorePlacementTest {
     public void testDirectory_InsideSandbox() throws Exception {
         Assume.assumeFalse(MediaStore.VOLUME_EXTERNAL.equals(mVolumeName));
 
-        final File dir = MediaStore.getVolumePath(mVolumeName);
+        final File dir = ProviderTestUtils.getVolumePath(mVolumeName);
         final File file = ProviderTestUtils.stageFile(R.drawable.scenery, Environment.buildPath(dir,
                 "Android", "media", "android.provider.cts", System.nanoTime() + ".jpg"));
         final Uri uri = ProviderTestUtils.scanFile(file);
@@ -301,7 +301,7 @@ public class MediaStorePlacementTest {
         Assume.assumeFalse(MediaStore.VOLUME_EXTERNAL.equals(mVolumeName));
 
         final String displayName = "cts" + System.nanoTime() + ".jpg";
-        final File file = Environment.buildPath(MediaStore.getVolumePath(mVolumeName),
+        final File file = Environment.buildPath(ProviderTestUtils.getVolumePath(mVolumeName),
                 Environment.DIRECTORY_ALARMS, displayName);
         return ProviderTestUtils.scanFileFromShell(
                 ProviderTestUtils.stageFile(R.raw.scenery, file));

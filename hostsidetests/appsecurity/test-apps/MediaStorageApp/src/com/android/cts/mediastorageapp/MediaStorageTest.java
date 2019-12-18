@@ -106,9 +106,9 @@ public class MediaStorageTest {
     @Test
     public void testClearFiles() throws Exception {
         TEST_JPG.delete();
-        assertNull(MediaStore.scanFileFromShell(mContext, TEST_JPG));
+        assertNull(MediaStore.scanFile(mContentResolver, TEST_JPG));
         TEST_PDF.delete();
-        assertNull(MediaStore.scanFileFromShell(mContext, TEST_PDF));
+        assertNull(MediaStore.scanFile(mContentResolver, TEST_PDF));
     }
 
     private void doSandboxed(boolean sandboxed) throws Exception {
@@ -140,8 +140,8 @@ public class MediaStorageTest {
         assertTrue(TEST_JPG.exists());
         assertTrue(TEST_PDF.exists());
 
-        final Uri jpgUri = MediaStore.scanFileFromShell(mContext, TEST_JPG);
-        final Uri pdfUri = MediaStore.scanFileFromShell(mContext, TEST_PDF);
+        final Uri jpgUri = MediaStore.scanFile(mContentResolver, TEST_JPG);
+        final Uri pdfUri = MediaStore.scanFile(mContentResolver, TEST_PDF);
 
         final HashSet<Long> seen = new HashSet<>();
         try (Cursor c = mContentResolver.query(
