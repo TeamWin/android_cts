@@ -35,10 +35,6 @@ import android.util.Log;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
 /**
  * Test class that is meant to be driven from the host and can't be run alone, which is required
  * for tests that include rebooting or other connection-breaking steps. For this reason, this class
@@ -46,7 +42,6 @@ import org.junit.runner.RunWith;
  * device. Therefore, the host is responsible for making sure the tests leave the device in a clean
  * state after running.
  */
-@RunWith(AndroidJUnit4.class)
 public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
 
     private static final String TAG = LockTaskHostDrivenTest.class.getName();
@@ -62,7 +57,6 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
     private TelecomManager mTelcomManager;
     private DevicePolicyManager mDevicePolicyManager;
 
-    @Before
     public void setUp() {
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mContext = InstrumentationRegistry.getContext();
@@ -72,7 +66,6 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
         mDevicePolicyManager = mContext.getSystemService(DevicePolicyManager.class);
     }
 
-    @Test
     public void startLockTask() throws Exception {
         Log.d(TAG, "startLockTask on host-driven test (no cleanup)");
         setLockTaskPackages(mContext.getPackageName());
@@ -81,7 +74,6 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
         mUiDevice.waitForIdle();
     }
 
-    @Test
     public void cleanupLockTask() {
         Log.d(TAG, "cleanupLockTask on host-driven test");
         mDevicePolicyManager.clearPackagePersistentPreferredActivities(
@@ -97,7 +89,6 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
      * On low-RAM devices, this test can take too long to finish, so the test runner can incorrectly
      * assume it's finished. Therefore, only use it once in a given test.
      */
-    @Test
     public void testLockTaskIsActiveAndCantBeInterrupted() throws Exception {
         Log.d(TAG, "testLockTaskIsActiveAndCantBeInterrupted on host-driven test");
         waitAndCheckLockedActivityIsResumed();
@@ -118,7 +109,6 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
         mUiDevice.waitForIdle();
     }
 
-    @Test
     public void testLockTaskIsExitedIfNotWhitelisted() throws Exception {
         Log.d(TAG, "testLockTaskIsExitedIfNotWhitelisted on host-driven test");
 
@@ -141,7 +131,6 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
         assertEquals(ActivityManager.LOCK_TASK_MODE_NONE, mActivityManager.getLockTaskModeState());
     }
 
-    @Test
     public void testLockTaskCanLaunchDefaultDialer() throws Exception {
         if (!hasTelephonyFeature()) {
             Log.d(TAG, "testLockTaskCanLaunchDefaultDialer skipped");
@@ -178,7 +167,6 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
                 mActivityManager.getLockTaskModeState());
     }
 
-    @Test
     public void testLockTaskCanLaunchEmergencyDialer() throws Exception {
         if (!hasTelephonyFeature()) {
             Log.d(TAG, "testLockTaskCanLaunchEmergencyDialer skipped");
