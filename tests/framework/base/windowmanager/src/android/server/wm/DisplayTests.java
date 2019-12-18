@@ -29,7 +29,7 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.hardware.display.DisplayManager;
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.ActivityManagerState.ActivityDisplay;
+import android.server.wm.ActivityManagerState.DisplayContent;
 import android.util.Size;
 import android.view.Display;
 
@@ -50,8 +50,8 @@ public class DisplayTests extends MultiDisplayTestBase {
      */
     @Test
     public void testDefaultDisplayOverrideConfiguration() throws Exception {
-        final List<ActivityDisplay> reportedDisplays = getDisplaysStates();
-        final ActivityDisplay primaryDisplay = getDisplayState(reportedDisplays, DEFAULT_DISPLAY);
+        final List<DisplayContent> reportedDisplays = getDisplaysStates();
+        final DisplayContent primaryDisplay = getDisplayState(reportedDisplays, DEFAULT_DISPLAY);
         assertEquals("Primary display's configuration should be equal to global configuration.",
                 primaryDisplay.mOverrideConfiguration, primaryDisplay.mFullConfiguration);
         assertEquals("Primary display's configuration should be equal to global configuration.",
@@ -63,7 +63,7 @@ public class DisplayTests extends MultiDisplayTestBase {
      */
     @Test
     public void testCreateVirtualDisplayWithCustomConfig() throws Exception {
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession().createDisplay();
 
         // Find the density of created display.
         final int newDensityDpi = newDisplay.mFullConfiguration.densityDpi;
@@ -99,7 +99,7 @@ public class DisplayTests extends MultiDisplayTestBase {
         assumeFalse(supportsMultiDisplay());
 
         // Create new virtual display.
-        final ActivityDisplay newDisplay = createManagedVirtualDisplaySession().createDisplay();
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession().createDisplay();
 
         // Launch activity on new secondary display.
         launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
@@ -121,7 +121,7 @@ public class DisplayTests extends MultiDisplayTestBase {
 
     @Test
     public void testCreateMultipleVirtualDisplays() throws Exception {
-        final List<ActivityDisplay> originalDs = getDisplaysStates();
+        final List<DisplayContent> originalDs = getDisplaysStates();
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new virtual displays
             virtualDisplaySession.createDisplays(3);
@@ -179,11 +179,11 @@ public class DisplayTests extends MultiDisplayTestBase {
                 (DisplayManager) context.getSystemService(Context.DISPLAY_SERVICE);
 
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
-            final ActivityDisplay activityDisplay = virtualDisplaySession
+            final DisplayContent displayContent = virtualDisplaySession
                     .setSimulateDisplay(true)
                     .setSimulationDisplaySize(displayWidth, displayHeight)
                     .createDisplay();
-            final Display display = displayManager.getDisplay(activityDisplay.mId);
+            final Display display = displayManager.getDisplay(displayContent.mId);
             Configuration config = context.createDisplayContext(display)
                     .getResources().getConfiguration();
             return config;

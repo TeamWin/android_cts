@@ -128,7 +128,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
 
         assumeTrue(supportsMultiDisplay());
         try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
-            final ActivityManagerState.ActivityDisplay display = displaySession
+            final ActivityManagerState.DisplayContent display = displaySession
                     .setPublicDisplay(true).setSimulateDisplay(true).createDisplay();
             final int secondaryDisplayId = display.mId;
             final SecondaryActivity secondaryActivity =
@@ -182,7 +182,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
                 DEFAULT_DISPLAY);
 
         try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
-            final ActivityManagerState.ActivityDisplay display = displaySession
+            final ActivityManagerState.DisplayContent display = displaySession
                     .setPublicDisplay(true).setSimulateDisplay(true).createDisplay();
             final int secondaryDisplayId = display.mId;
             final SecondaryActivity secondaryActivity =
@@ -228,7 +228,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
 
         assumeTrue(supportsMultiDisplay());
         try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
-            final ActivityManagerState.ActivityDisplay display = displaySession
+            final ActivityManagerState.DisplayContent display = displaySession
                     .setPublicDisplay(true).setSimulateDisplay(true).createDisplay();
             final int secondaryDisplayId = display.mId;
             final SecondaryActivity secondaryActivity =
@@ -260,7 +260,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
 
         final SecondaryActivity secondaryActivity;
         try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
-            final ActivityManagerState.ActivityDisplay display = displaySession
+            final ActivityManagerState.DisplayContent display = displaySession
                     .setPublicDisplay(true).createDisplay();
             final int secondaryDisplayId = display.mId;
             // For launching activity on untrusted display, by default the activity will not get
@@ -289,7 +289,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
         PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class, DEFAULT_DISPLAY);
 
         try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
-            final ActivityManagerState.ActivityDisplay display = displaySession
+            final ActivityManagerState.DisplayContent display = displaySession
                     .setPublicDisplay(true).setSimulateDisplay(true).createDisplay();
             final int secondaryDisplayId = display.mId;
             SecondaryActivity secondaryActivity = startActivity(SecondaryActivity.class,
@@ -314,7 +314,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
         PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class, DEFAULT_DISPLAY);
 
         try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
-            final ActivityManagerState.ActivityDisplay display = displaySession
+            final ActivityManagerState.DisplayContent display = displaySession
                     .setPublicDisplay(true).setSimulateDisplay(true).createDisplay();
             final int secondaryDisplayId = display.mId;
             SecondaryActivity secondaryActivity = startActivity(SecondaryActivity.class,

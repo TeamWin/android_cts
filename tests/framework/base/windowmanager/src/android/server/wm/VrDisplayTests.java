@@ -31,7 +31,7 @@ import static org.junit.Assume.assumeTrue;
 import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
-import android.server.wm.ActivityManagerState.ActivityDisplay;
+import android.server.wm.ActivityManagerState.DisplayContent;
 import android.server.wm.settings.SettingsSession;
 
 import com.android.cts.verifier.vr.MockVrListenerService;
@@ -140,8 +140,8 @@ public class VrDisplayTests extends MultiDisplayTestBase {
                 getActivityName(LAUNCHING_ACTIVITY), focusedStack.mResumedActivity);
 
         // Check if the launch activity is in Vr virtual display id.
-        final List<ActivityDisplay> reportedDisplays = getDisplaysStates();
-        final ActivityDisplay vrDisplay = getDisplayState(reportedDisplays,
+        final List<DisplayContent> reportedDisplays = getDisplaysStates();
+        final DisplayContent vrDisplay = getDisplayState(reportedDisplays,
                 VR_VIRTUAL_DISPLAY_WIDTH, VR_VIRTUAL_DISPLAY_HEIGHT, VR_VIRTUAL_DISPLAY_DPI);
         assertNotNull("Vr mode should have a virtual display", vrDisplay);
 
@@ -190,8 +190,8 @@ public class VrDisplayTests extends MultiDisplayTestBase {
                 getActivityName(LAUNCHING_ACTIVITY), focusedStack.mResumedActivity);
 
         // Check if the launch activity is in Vr virtual display id.
-        final List<ActivityDisplay> reportedDisplays = getDisplaysStates();
-        final ActivityDisplay vrDisplay = getDisplayState(reportedDisplays,
+        final List<DisplayContent> reportedDisplays = getDisplaysStates();
+        final DisplayContent vrDisplay = getDisplayState(reportedDisplays,
                 VR_VIRTUAL_DISPLAY_WIDTH, VR_VIRTUAL_DISPLAY_HEIGHT, VR_VIRTUAL_DISPLAY_DPI);
         assertNotNull("Vr mode should have a virtual display", vrDisplay);
 
@@ -240,8 +240,8 @@ public class VrDisplayTests extends MultiDisplayTestBase {
                     focusedStack.mResumedActivity);
 
             // Check if the launch activity is in Vr virtual display id.
-            final List<ActivityDisplay> reportedDisplays = getDisplaysStates();
-            final ActivityDisplay vrDisplay = getDisplayState(reportedDisplays,
+            final List<DisplayContent> reportedDisplays = getDisplaysStates();
+            final DisplayContent vrDisplay = getDisplayState(reportedDisplays,
                     VR_VIRTUAL_DISPLAY_WIDTH, VR_VIRTUAL_DISPLAY_HEIGHT,
                     VR_VIRTUAL_DISPLAY_DPI);
             assertNotNull("Vr mode should have a virtual display", vrDisplay);

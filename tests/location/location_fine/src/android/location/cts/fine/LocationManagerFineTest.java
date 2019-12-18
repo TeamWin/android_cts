@@ -861,12 +861,12 @@ public class LocationManagerFineTest {
 
         for (String provider : mManager.getAllProviders()) {
             if (TEST_PROVIDER.equals(provider)) {
-                try (GetCurrentLocationCapture capture = new GetCurrentLocationCapture()) {
-                    mManager.getCurrentLocation(provider, capture.getCancellationSignal(),
+                try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
+                    mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0,
                             Executors.newSingleThreadExecutor(), capture);
                     mManager.setTestProviderLocation(provider, loc1);
 
-                    Location received = capture.getLocation(TIMEOUT_MS);
+                    Location received = capture.getNextLocation(TIMEOUT_MS);
                     assertThat(received).isEqualTo(loc1);
                     assertThat(received.isFromMockProvider()).isTrue();
                     assertThat(mManager.getLastKnownLocation(provider)).isEqualTo(loc1);
@@ -874,7 +874,7 @@ public class LocationManagerFineTest {
                     setTestProviderEnabled(provider, false);
                     mManager.setTestProviderLocation(provider, loc2);
                     assertThat(mManager.getLastKnownLocation(provider)).isNull();
-                    assertThat(capture.getLocation(FAILURE_TIMEOUT_MS)).isNull();
+                    assertThat(capture.getNextLocation(FAILURE_TIMEOUT_MS)).isNull();
                 }
             } else {
                 try {

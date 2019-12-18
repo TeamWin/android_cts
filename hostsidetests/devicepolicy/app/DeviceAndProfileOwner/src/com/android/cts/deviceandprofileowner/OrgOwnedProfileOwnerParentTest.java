@@ -22,19 +22,22 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
+import android.os.Bundle;
+import android.os.UserManager;
 import android.test.InstrumentationTestCase;
 
 public class OrgOwnedProfileOwnerParentTest extends InstrumentationTestCase {
 
     protected Context mContext;
     private DevicePolicyManager mParentDevicePolicyManager;
+    private DevicePolicyManager mDevicePolicyManager;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         mContext = getInstrumentation().getContext();
 
-        DevicePolicyManager mDevicePolicyManager = (DevicePolicyManager)
+        mDevicePolicyManager = (DevicePolicyManager)
                 mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
         mParentDevicePolicyManager =
                 mDevicePolicyManager.getParentProfileInstance(ADMIN_RECEIVER_COMPONENT);
@@ -60,6 +63,24 @@ public class OrgOwnedProfileOwnerParentTest extends InstrumentationTestCase {
 
         assertThat(actualDisabled).isFalse();
         // TODO: (145604715) test camera is actually disabled
+    }
+
+    public void testAddGetAndClearUserRestriction_onParent() {
+        mParentDevicePolicyManager.addUserRestriction(ADMIN_RECEIVER_COMPONENT,
+                UserManager.DISALLOW_CONFIG_DATE_TIME);
+
+        Bundle restrictions = mParentDevicePolicyManager.getUserRestrictions(
+                ADMIN_RECEIVER_COMPONENT);
+        assertThat(restrictions.get(UserManager.DISALLOW_CONFIG_DATE_TIME)).isNotNull();
+
+        restrictions = mDevicePolicyManager.getUserRestrictions(ADMIN_RECEIVER_COMPONENT);
+        assertThat(restrictions.get(UserManager.DISALLOW_CONFIG_DATE_TIME)).isNull();
+
+        mParentDevicePolicyManager.clearUserRestriction(ADMIN_RECEIVER_COMPONENT,
+                UserManager.DISALLOW_CONFIG_DATE_TIME);
+
+        restrictions = mParentDevicePolicyManager.getUserRestrictions(ADMIN_RECEIVER_COMPONENT);
+        assertThat(restrictions.get(UserManager.DISALLOW_CONFIG_DATE_TIME)).isNull();
     }
 
 }

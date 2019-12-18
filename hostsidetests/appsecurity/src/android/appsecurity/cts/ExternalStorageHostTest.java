@@ -614,6 +614,11 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         runDeviceTests(config.pkg, config.clazz, "testMediaEscalation_Open", user);
         runDeviceTests(config.pkg, config.clazz, "testMediaEscalation_Update", user);
         runDeviceTests(config.pkg, config.clazz, "testMediaEscalation_Delete", user);
+
+        runDeviceTests(config.pkg, config.clazz, "testMediaEscalation_RequestWrite", user);
+        runDeviceTests(config.pkg, config.clazz, "testMediaEscalation_RequestTrash", user);
+        runDeviceTests(config.pkg, config.clazz, "testMediaEscalation_RequestFavorite", user);
+        runDeviceTests(config.pkg, config.clazz, "testMediaEscalation_RequestDelete", user);
     }
 
     @Test
