@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableList;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  * A BMP string is a string from the Basic Multilingual Plane of Unicode, i.e.
@@ -76,7 +77,7 @@ public class Asn1BMPString extends Asn1Object {
   }
 
   private Iterable<BitStream> encodePerImpl(boolean aligned) {
-    Preconditions.checkNotNull(value, "No value set.");
+    Objects.requireNonNull(value, "No value set.");
     int length = Character.codePointCount(value, 0, value.length());
     Preconditions.checkState(length >= minimumSize, "Value too short.");
     Preconditions.checkState(maximumSize == null || length <= maximumSize,

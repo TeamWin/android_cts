@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableList;
 import java.nio.ByteBuffer;
 import java.util.BitSet;
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  * Implements ASN.1 functionality.
@@ -65,13 +66,13 @@ public class Asn1BitString extends Asn1Object {
   }
 
   @Override int getBerValueLength() {
-    Preconditions.checkNotNull(value, "No value set.");
+    Objects.requireNonNull(value, "No value set.");
     // the +1 is for the extra leading octet indicating the number of unused bits in last octet
     return (value.length() + 7) / 8 + 1;
   }
 
   @Override void encodeBerValue(ByteBuffer buf) {
-    Preconditions.checkNotNull(value, "No value set.");
+    Objects.requireNonNull(value, "No value set.");
     Preconditions.checkState(
         maximumSize == null || value.length() <= maximumSize, "Too large %s",
         value.length());
@@ -98,7 +99,7 @@ public class Asn1BitString extends Asn1Object {
   }
 
   private Iterable<BitStream> encodePerImpl(boolean aligned) {
-    Preconditions.checkNotNull(value, "No value set.");
+    Objects.requireNonNull(value, "No value set.");
     Preconditions.checkState(
         maximumSize == null || value.length() <= maximumSize, "Too large %s",
         value.length());

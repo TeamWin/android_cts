@@ -16,12 +16,12 @@
 
 package android.location.cts.asn1.base;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  */
@@ -85,7 +85,7 @@ public abstract class Asn1Enumerated extends Asn1Object {
   }
 
   private Asn1Integer asAsn1Integer() {
-    Preconditions.checkNotNull(value, "No value set.");
+    Objects.requireNonNull(value, "No value set.");
     Asn1Integer ai = new Asn1Integer();
     ai.setInteger(BigInteger.valueOf(value.getAssignedValue()));
     return ai;

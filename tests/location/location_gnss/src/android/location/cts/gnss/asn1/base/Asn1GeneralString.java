@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableList;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  * A general string is any ISO 646 related 8-bit encoding, presumably agreed on
@@ -75,7 +76,7 @@ public class Asn1GeneralString extends Asn1Object {
   }
 
   private Iterable<BitStream> encodePerImpl(boolean aligned) {
-    Preconditions.checkNotNull(value, "No value set.");
+    Objects.requireNonNull(value, "No value set.");
     Preconditions.checkState(value.length >= minimumSize, "Value too short.");
     Preconditions.checkState(maximumSize == null || value.length <= maximumSize,
                              "Value too long.");

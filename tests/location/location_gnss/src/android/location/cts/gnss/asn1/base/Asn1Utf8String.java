@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  * Base class for representing ASN.1 objects of type UTF8String.
@@ -67,12 +68,12 @@ public class Asn1Utf8String extends Asn1Object {
   }
 
   @Override int getBerValueLength() {
-    Preconditions.checkNotNull(value, "No value set.");
+    Objects.requireNonNull(value, "No value set.");
     return getValueBytes().length;
   }
 
   @Override void encodeBerValue(ByteBuffer buf) {
-    Preconditions.checkNotNull(value, "No value set.");
+    Objects.requireNonNull(value, "No value set.");
     buf.put(getValueBytes());
   }
 
@@ -81,7 +82,7 @@ public class Asn1Utf8String extends Asn1Object {
   }
 
   private Iterable<BitStream> encodePerImpl(boolean aligned) {
-    Preconditions.checkNotNull(value, "No value set.");
+    Objects.requireNonNull(value, "No value set.");
     Preconditions.checkState(
         maximumSize == null || value.length() <= maximumSize, "Too large %s",
         value.length());
