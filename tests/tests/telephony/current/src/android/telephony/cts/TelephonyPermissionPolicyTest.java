@@ -34,6 +34,8 @@ public class TelephonyPermissionPolicyTest {
         KNOWN_TELEPHONY_PACKAGES.add("com.android.providers.telephony");
         KNOWN_TELEPHONY_PACKAGES.add("com.android.ons");
         KNOWN_TELEPHONY_PACKAGES.add("com.android.cellbroadcastservice");
+        KNOWN_TELEPHONY_PACKAGES.add("com.android.cellbroadcastreceiver");
+        KNOWN_TELEPHONY_PACKAGES.add("com.android.shell");
     }
 
     @Test

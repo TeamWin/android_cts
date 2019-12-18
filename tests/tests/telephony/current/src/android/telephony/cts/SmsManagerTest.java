@@ -366,24 +366,6 @@ public class SmsManagerTest {
     }
 
     @Test
-    public void testGetSmsMessagesForFinancialAppPermissionNotRequested() throws Exception {
-        final CountDownLatch latch = new CountDownLatch(1);
-
-        try {
-            getSmsManager().getSmsMessagesForFinancialApp(new Bundle(),
-                    getInstrumentation().getContext().getMainExecutor(),
-                    new SmsManager.FinancialSmsCallback() {
-                        public void onFinancialSmsMessages(CursorWindow msgs) {
-                            assertNull(msgs);
-                            latch.countDown();
-                    }});
-            assertTrue(latch.await(500, TimeUnit.MILLISECONDS));
-        } catch (Exception e) {
-            // do nothing
-        }
-    }
-
-    @Test
     public void testGetSmsMessagesForFinancialAppPermissionRequestedNotGranted() throws Exception {
         CompletableFuture<Bundle> callbackResult = new CompletableFuture<>();
 
