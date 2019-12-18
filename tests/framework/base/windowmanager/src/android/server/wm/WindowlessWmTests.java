@@ -111,9 +111,7 @@ public class WindowlessWmTests implements SurfaceHolder.Callback {
     private void addViewToSurfaceView(SurfaceView sv, View v, int width, int height) {
         mVr = new SurfaceControlViewHost(mActivity, mActivity.getDisplay(), sv.getInputToken());
 
-        final SurfaceControl.Transaction t = new SurfaceControl.Transaction();
-        t.reparent(mVr.getSurfacePackage().getSurfaceControl(), sv.getSurfaceControl())
-            .apply();
+        sv.setChildSurfacePackage(mVr.getSurfacePackage());
 
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(width, height,
                 WindowManager.LayoutParams.TYPE_APPLICATION, 0, PixelFormat.OPAQUE);
