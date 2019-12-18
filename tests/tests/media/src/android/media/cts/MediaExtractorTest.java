@@ -299,6 +299,7 @@ public class MediaExtractorTest extends AndroidTestCase {
     }
 
     // DolbyVisionMediaExtractor for profile-level (Dvav1 10.0/Uhd30)
+    @SmallTest
     public void testDolbyVisionMediaExtractorProfileDvav1() throws Exception {
         TestMediaDataSource dataSource = setDataSource(R.raw.video_dovi_3840x2160_30fps_dav1_10);
 
@@ -322,6 +323,7 @@ public class MediaExtractorTest extends AndroidTestCase {
     }
 
     // DolbyVisionMediaExtractor for profile-level (Dvav1 10.1/Uhd30)
+    @SmallTest
     public void testDolbyVisionMediaExtractorProfileDvav1_2() throws Exception {
         TestMediaDataSource dataSource = setDataSource(R.raw.video_dovi_3840x2160_30fps_dav1_10_2);
 
