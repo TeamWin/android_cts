@@ -47,4 +47,12 @@ public class Poc16_05 extends SecurityTestCase {
     public void testPocCVE_2015_1805() throws Exception {
       AdbUtils.runPoc("CVE-2015-1805", getDevice(), TIMEOUT_NONDETERMINISTIC);
     }
+
+    /**
+     *  b/27569635
+     */
+    @SecurityTest(minPatchLevel = "2016_05")
+    public void testPocCVE_2016_2450() throws Exception {
+        AdbUtils.runPocAssertNoCrashes("CVE-2016-2450", getDevice(), "mediaserver");
+    }
 }
