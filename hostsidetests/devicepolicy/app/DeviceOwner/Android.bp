@@ -28,6 +28,7 @@ android_test_helper_app {
         "junit",
         "android.test.base.stubs",
         "bouncycastle-unbundled",
+	"org.apache.http.legacy",
     ],
     static_libs: [
         "ctstestrunner-axt",
