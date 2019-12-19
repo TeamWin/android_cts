@@ -620,6 +620,11 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
 
+        if (!hasService("wallpaper")) {
+            CLog.d("testSetWallpaper_disallowed(): device does not support wallpapers");
+            return;
+        }
+
         installAppAsUser(CUSTOMIZATION_APP_APK, mUserId);
         try {
             changeUserRestrictionOrFail(DISALLOW_SET_WALLPAPER, true, mUserId);
@@ -634,6 +639,10 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     // inside. But these restrictions must have no effect on the device/profile owner behavior.
     public void testDisallowSetWallpaper_allowed() throws Exception {
         if (!mHasFeature) {
+            return;
+        }
+        if (!hasService("wallpaper")) {
+            CLog.d("testDisallowSetWallpaper_allowed(): device does not support wallpapers");
             return;
         }
         executeDeviceTestMethod(".CustomizationRestrictionsTest",
@@ -1143,5 +1152,20 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private void restoreRestrictBackgroundPolicyTo(boolean restricted) throws Exception {
         getDevice().executeShellCommand(
                 restricted ? RESTRICT_BACKGROUND_ON_CMD : RESTRICT_BACKGROUND_OFF_CMD);
+    }
+
+    // TODO: copied from RequiredServiceRule, which is on compatibility-device-util
+    // (and we use compatibility-host-util)
+    public boolean hasService(String service) {
+        // TODO: ideally should call SystemServiceManager directly, but we would need to open
+        // some @Testing APIs for that.
+        String command = "service check " + service;
+        try {
+            String commandOutput = getDevice().executeShellCommand(command);
+            return !commandOutput.contains("not found");
+        } catch (Exception e) {
+            CLog.w("Exception running '" + command + "': " + e);
+            return false;
+        }
     }
 }
