@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 public class ImsUtils {
-    public static final String TAG = "GtsImsServiceTests";
     public static final boolean VDBG = false;
 
     // ImsService rebind has an exponential backoff capping at 64 seconds. Wait for 70 seconds to
