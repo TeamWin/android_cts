@@ -49,8 +49,7 @@ public class TransferDeviceOwnerOutgoingTest extends DeviceAndProfileOwnerTransf
         mDevicePolicyManager.setKeepUninstalledPackages(mOutgoingComponentName,
                 Collections.singletonList("test.package"));
         mDevicePolicyManager.setSystemUpdatePolicy(mOutgoingComponentName,
-                SystemUpdatePolicy.createWindowedInstallPolicy(123, 456));
-
+                SystemUpdatePolicy.createPostponeInstallPolicy());
         PersistableBundle b = new PersistableBundle();
         mDevicePolicyManager.transferOwnership(mOutgoingComponentName, INCOMING_COMPONENT_NAME, b);
     }
