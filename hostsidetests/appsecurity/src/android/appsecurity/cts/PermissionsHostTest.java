@@ -63,6 +63,9 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     private static final String REVIEW_HELPER_TEST_CLASS = REVIEW_HELPER_PKG
             + ".ReviewPermissionsTest";
 
+    private static final String ASSUMPTION_METHOD_NAME =
+            "assumePermissionsNotIndividuallyControlled";
+
     private static final String SCREEN_OFF_TIMEOUT_NS = "system";
     private static final String SCREEN_OFF_TIMEOUT_KEY = "screen_off_timeout";
     private String mScreenTimeoutBeforeTest;
@@ -147,6 +150,10 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     public void testCompatDefault22() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22), false, false));
 
+        if (!checkAssumptionForIndividuallyControlled()) {
+            return;
+        }
+
         approveReviewPermissionDialog();
 
         runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest22",
@@ -156,6 +163,10 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     @AppModeFull(reason = "Instant applications must be at least SDK 26")
     public void testCompatRevoked22() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22), false, false));
+
+        if (!checkAssumptionForIndividuallyControlled()) {
+            return;
+        }
 
         approveReviewPermissionDialog();
 
@@ -168,6 +179,10 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     @AppModeFull(reason = "Instant applications must be at least SDK 26")
     public void testNoRuntimePrompt22() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22), false, false));
+
+        if (!checkAssumptionForIndividuallyControlled()) {
+            return;
+        }
 
         approveReviewPermissionDialog();
 
@@ -279,6 +294,10 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     public void testUpgradeKeepsPermissions() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22), false, false));
 
+        if (!checkAssumptionForIndividuallyControlled()) {
+            return;
+        }
+
         approveReviewPermissionDialog();
 
         runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest22",
@@ -306,6 +325,10 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
 
     public void testRevokePropagatedOnUpgradeOldToNewModel() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22), false, false));
+
+        if (!checkAssumptionForIndividuallyControlled()) {
+            return;
+        }
 
         approveReviewPermissionDialog();
 
@@ -441,6 +464,11 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     public void testDenyCalendarDuringReview() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22_ONLY_CALENDAR), false,
                 false));
+
+        if (!checkAssumptionForIndividuallyControlled()) {
+            return;
+        }
+
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(REVIEW_HELPER_APK), true,
                 true));
 
@@ -453,6 +481,11 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     public void testDenyGrantCalendarDuringReview() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22_ONLY_CALENDAR), false,
                 false));
+
+        if (!checkAssumptionForIndividuallyControlled()) {
+            return;
+        }
+
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(REVIEW_HELPER_APK), true,
                 true));
 
@@ -465,6 +498,11 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     public void testDenyGrantDenyCalendarDuringReview() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22_ONLY_CALENDAR), false,
                 false));
+
+        if (!checkAssumptionForIndividuallyControlled()) {
+            return;
+        }
+
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(REVIEW_HELPER_APK), true,
                 true));
 
@@ -478,6 +516,11 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     public void testCancelReview() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22_ONLY_CALENDAR), false,
                 false));
+
+        if (!checkAssumptionForIndividuallyControlled()) {
+            return;
+        }
+
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(REVIEW_HELPER_APK), true,
                 true));
 
@@ -495,6 +538,11 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     public void testReviewPermissionWhenServiceIsBound() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22), false,
                 false));
+
+        if (!checkAssumptionForIndividuallyControlled()) {
+            return;
+        }
+
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(REVIEW_HELPER_APK), true,
                 true));
 
@@ -512,5 +560,17 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
         assertThrows(
                 instanceOf(AssertionError.class, hasMessageThat(containsString("Process crashed"))),
                 () -> runDeviceTests(USES_PERMISSION_PKG, clazz, testMethod));
+    }
+
+    // Only call this method if APK_22 has been installed
+    private boolean checkAssumptionForIndividuallyControlled()
+            throws DeviceNotAvailableException {
+        try {
+            Utils.runDeviceTestsAsCurrentUser(getDevice(), USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest22",
+                    ASSUMPTION_METHOD_NAME);
+        } catch (AssertionError e) {
+            return false;
+        }
+        return true;
     }
 }

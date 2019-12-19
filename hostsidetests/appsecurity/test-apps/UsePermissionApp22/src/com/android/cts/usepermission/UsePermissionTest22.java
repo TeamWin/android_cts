@@ -28,6 +28,7 @@ import android.net.Uri;
 import android.os.Process;
 import android.provider.CalendarContract;
 
+import org.junit.Assume;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -167,6 +168,15 @@ public class UsePermissionTest22 extends BasePermissionsTest {
         final Uri uri = insertCalendarItem();
         try (Cursor c = mContext.getContentResolver().query(uri, null, null, null)) {
             assertEquals(1, c.getCount());
+        }
+    }
+
+    @Test
+    public void assumePermissionsNotIndividuallyControlled() {
+        try {
+            Assume.assumeFalse(mContext.getPackageManager().arePermissionsIndividuallyControlled());
+        } catch (Exception e) {
+            throw new AssertionError(e);
         }
     }
 
