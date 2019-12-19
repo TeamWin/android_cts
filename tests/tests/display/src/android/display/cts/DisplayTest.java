@@ -36,6 +36,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.Presubmit;
+import android.provider.Settings;
 import android.test.InstrumentationTestCase;
 import android.util.DisplayMetrics;
 import android.view.Display;
@@ -77,6 +78,8 @@ public class DisplayTest {
     // Matches com.android.internal.R.string.display_manager_overlay_display_name.
     private static final String OVERLAY_DISPLAY_NAME_PREFIX = "Overlay #";
     private static final String OVERLAY_DISPLAY_TYPE = "type OVERLAY";
+
+    private static final int BRIGHTNESS_MAX = 255;
 
     private DisplayManager mDisplayManager;
     private WindowManager mWindowManager;
@@ -388,6 +391,32 @@ public class DisplayTest {
         }
     }
 
+    @Test
+    public void testFailBrightnessChangeWithoutPermission() throws Exception {
+        final DisplayTestActivity activity = launchActivity(mDisplayTestActivity);
+        final int originalValue = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.SCREEN_BRIGHTNESS, BRIGHTNESS_MAX);
+
+        try {
+            final int valueToSet = originalValue > 128 ? 40 : 200;  // sufficiently different value
+            boolean wasSet = setBrightness(((float) valueToSet) / BRIGHTNESS_MAX);
+
+            assertFalse(wasSet);
+            int newValue = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.SCREEN_BRIGHTNESS, BRIGHTNESS_MAX);
+            assertEquals(originalValue, newValue);  // verify that setting the new value failed.
+        } finally {
+            try {
+                // Clean up just in case the test fails and we did actually manage to change the
+                // brightness.
+                Settings.System.putInt(mContext.getContentResolver(),
+                        Settings.System.SCREEN_BRIGHTNESS, originalValue);
+            } catch (Exception e) {
+            }
+        }
+
+    }
+
     /**
      * Used to force mode changes on a display.
      * <p>
@@ -434,8 +463,8 @@ public class DisplayTest {
         return monitor.waitForActivity();
     }
 
-    private Activity launchActivity(ActivityTestRule activityRule) {
-        final Activity activity = activityRule.launchActivity(null);
+    private <T extends Activity> T launchActivity(ActivityTestRule<T> activityRule) {
+        final T activity = activityRule.launchActivity(null);
         InstrumentationRegistry.getInstrumentation().waitForIdleSync();
         return activity;
     }
@@ -491,5 +520,13 @@ public class DisplayTest {
         T activity = (T) InstrumentationRegistry.getInstrumentation().startActivitySync(intent);
         InstrumentationRegistry.getInstrumentation().waitForIdleSync();
         return activity;
+    }
+
+    /**
+     * Sets the brightness via the shell cmd.
+     */
+    public boolean setBrightness(float value) throws Exception {
+        Process process = Runtime.getRuntime().exec("cmd display set-brightness " + value);
+        return 0 == process.waitFor();
     }
 }
