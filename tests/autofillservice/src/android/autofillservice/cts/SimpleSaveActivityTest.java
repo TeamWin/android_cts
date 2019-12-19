@@ -1795,12 +1795,16 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
             mActivity.mInput.setText("108");
             mActivity.mCommit.performClick();
         });
+        // Waits for the commit be processed
+        mUiBot.waitForIdle();
 
         mUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
 
         // Tapping URLSpan.
         final URLSpan span = mUiBot.findFirstUrlSpanWithText("Here is URLSpan");
         span.onClick(/* unused= */ null);
+        // Waits for the save UI hided
+        mUiBot.waitForIdle();
 
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
 
@@ -1821,6 +1825,8 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
 
         // ..then go back and save it.
         mUiBot.pressBack();
+        // Waits for all UI processes to complete
+        mUiBot.waitForIdle();
 
         // Make sure previous activity is back...
         mUiBot.assertShownByRelativeId(ID_INPUT);
