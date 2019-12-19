@@ -214,6 +214,19 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         }
     }
 
+    @Test
+    public void testFactoryResetProtectionPolicy() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        assertMetricsLogged(getDevice(), () -> {
+                runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".FactoryResetProtectionPolicyTest", mUserId);
+            }, new DevicePolicyEventWrapper.Builder(EventId.SET_FACTORY_RESET_PROTECTION_VALUE)
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .build());
+    }
+
     private int createSecondaryUserAsProfileOwner() throws Exception {
         final int userId = createUser();
         installAppAsUser(INTENT_RECEIVER_APK, userId);
