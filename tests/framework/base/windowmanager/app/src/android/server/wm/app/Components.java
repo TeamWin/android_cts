@@ -191,6 +191,15 @@ public class Components extends ComponentsBase {
     public static final ComponentName INPUT_METHOD_TEST_ACTIVITY =
             component("InputMethodTestActivity");
 
+    public static final ComponentName MPP_ACTIVITY =
+            component("MinimalPostProcessingActivity");
+
+    public static final ComponentName MPP_ACTIVITY2 =
+            component("MinimalPostProcessingActivity2");
+
+    public static final ComponentName POPUP_MPP_ACTIVITY =
+            component("PopupMinimalPostProcessingActivity");
+
     /**
      * Action and extra key constants for {@link #INPUT_METHOD_TEST_ACTIVITY}.
      */
@@ -283,6 +292,12 @@ public class Components extends ComponentsBase {
     public static class TurnScreenOnActivity {
         // Turn on screen by window flags or APIs.
         public static final String EXTRA_USE_WINDOW_FLAGS = "useWindowFlags";
+    }
+
+    /** Extra key constants for {@link android.server.wm.app.MinimalPostProcessingActivity}. */
+    public static class MinimalPostProcessingActivity {
+        // Turn on minimal post processing (if available).
+        public static final String EXTRA_PREFER_MPP = "preferMinimalPostProcessing";
     }
 
     /**
