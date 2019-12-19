@@ -28,6 +28,7 @@ import android.app.Instrumentation.ActivityResult;
 import android.app.PendingIntent;
 import android.app.stubs.ActivityManagerRecentOneActivity;
 import android.app.stubs.ActivityManagerRecentTwoActivity;
+import android.app.stubs.CommandReceiver;
 import android.app.stubs.MockApplicationActivity;
 import android.app.stubs.MockService;
 import android.app.stubs.ScreenOnActivity;
@@ -42,6 +43,7 @@ import android.support.test.uiautomator.UiDevice;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 
+import com.android.compatibility.common.util.AnrMonitor;
 import com.android.compatibility.common.util.SystemUtil;
 
 import java.io.IOException;
@@ -73,6 +75,9 @@ public class ActivityManagerTest extends InstrumentationTestCase {
             "com.android.cts.launchertests.LauncherAppsTests.CHAIN_EXIT_ACTION";
     // The action sent to identify the time track info.
     private static final String ACTIVITY_TIME_TRACK_INFO = "com.android.cts.TIME_TRACK_INFO";
+
+    private static final String PACKAGE_NAME_APP1 = "com.android.app1";
+
     // Return states of the ActivityReceiverFilter.
     public static final int RESULT_PASS = 1;
     public static final int RESULT_FAIL = 2;
@@ -684,5 +689,32 @@ public class ActivityManagerTest extends InstrumentationTestCase {
        } catch (NoSuchMethodException e) {
            // Patched devices should throw this exception since isAppForeground is removed.
        }
+    }
+
+    /**
+     * This test verifies the self-induced ANR by ActivityManager.appNotResponding().
+     */
+    public void testAppNotResponding() throws Exception {
+        // Setup the ANR monitor
+        AnrMonitor monitor = new AnrMonitor(mInstrumentation);
+
+        // Now tell it goto ANR
+        CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_SELF_INDUCED_ANR,
+                PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+
+        try {
+
+            // Verify we got the ANR
+            assertTrue(monitor.waitFor(WAITFOR_MSEC));
+
+            // Just kill the test app
+            monitor.sendCommand(AnrMonitor.CMD_KILL);
+        } finally {
+            // clean up
+            monitor.finish();
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                mActivityManager.forceStopPackage(PACKAGE_NAME_APP1);
+            });
+        }
     }
 }
