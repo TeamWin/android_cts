@@ -30,6 +30,7 @@ import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -573,6 +574,9 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
                 "testOppDisabledWhenRestrictionSet", mProfileUserId);
     }
 
+    //TODO(b/130844684): Re-enable once profile owner on personal device can no longer access
+    //identifiers.
+    @Ignore
     @Test
     public void testProfileOwnerOnPersonalDeviceCannotGetDeviceIdentifiers() throws Exception {
         // The Profile Owner should have access to all device identifiers.
