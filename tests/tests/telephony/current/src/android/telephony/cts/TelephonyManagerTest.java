@@ -74,6 +74,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -1281,8 +1282,24 @@ public class TelephonyManagerTest {
         }
     }
 
+    // Reference: packages/services/Telephony/ecc/input/eccdata.txt
+    private static final Map<String, String> EMERGENCY_NUMBERS_FOR_COUNTRIES =
+            new HashMap<String, String>() {{
+                put("au", "000");
+                put("ca", "911");
+                put("de", "112");
+                put("gb", "999");
+                put("in", "112");
+                put("jp", "110");
+                put("sg", "999");
+                put("tw", "110");
+                put("us", "911");
+            }};
+
     /**
      * Tests TelephonyManager.getEmergencyNumberList.
+     *
+     * Also enforce country-specific emergency number in CTS.
      */
     @Test
     public void testGetEmergencyNumberList() {
@@ -1290,65 +1307,37 @@ public class TelephonyManagerTest {
             return;
         }
         Map<Integer, List<EmergencyNumber>> emergencyNumberList
-          = mTelephonyManager.getEmergencyNumberList();
+                = mTelephonyManager.getEmergencyNumberList();
 
         assertFalse(emergencyNumberList == null);
 
         checkEmergencyNumberFormat(emergencyNumberList);
 
         int defaultSubId = mSubscriptionManager.getDefaultSubscriptionId();
-
-        // 112 and 911 should always be available
-        // Reference: 3gpp 22.101, Section 10 - Emergency Calls
-        assertTrue(checkIfEmergencyNumberListHasSpecificAddress(
-            emergencyNumberList.get(defaultSubId), "911"));
-        assertTrue(checkIfEmergencyNumberListHasSpecificAddress(
-            emergencyNumberList.get(defaultSubId), "112"));
-
-        // 000, 08, 110, 118, 119, and 999 should be always available when sim is absent
-        // Reference: 3gpp 22.101, Section 10 - Emergency Calls
-        if (mTelephonyManager.getPhoneCount() > 0
-                && mSubscriptionManager.getSimStateForSlotIndex(0)
-                    == TelephonyManager.SIM_STATE_ABSENT) {
+        String countryIso = mTelephonyManager.getNetworkCountryIso();
+        if (!TextUtils.isEmpty(countryIso) && EMERGENCY_NUMBERS_FOR_COUNTRIES.containsKey(
+                countryIso)) {
             assertTrue(checkIfEmergencyNumberListHasSpecificAddress(
-                emergencyNumberList.get(defaultSubId), "000"));
-            assertTrue(checkIfEmergencyNumberListHasSpecificAddress(
-                emergencyNumberList.get(defaultSubId), "08"));
-            assertTrue(checkIfEmergencyNumberListHasSpecificAddress(
-                emergencyNumberList.get(defaultSubId), "110"));
-            assertTrue(checkIfEmergencyNumberListHasSpecificAddress(
-                emergencyNumberList.get(defaultSubId), "118"));
-            assertTrue(checkIfEmergencyNumberListHasSpecificAddress(
-                emergencyNumberList.get(defaultSubId), "119"));
-            assertTrue(checkIfEmergencyNumberListHasSpecificAddress(
-                emergencyNumberList.get(defaultSubId), "999"));
+                    emergencyNumberList.get(defaultSubId),
+                    EMERGENCY_NUMBERS_FOR_COUNTRIES.get(countryIso)));
         }
     }
 
     /**
      * Tests TelephonyManager.isEmergencyNumber.
+     *
+     * Also enforce country-specific emergency number in CTS.
      */
     @Test
     public void testIsEmergencyNumber() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
         }
-        // 112 and 911 should always be available
-        // Reference: 3gpp 22.101, Section 10 - Emergency Calls
-        assertTrue(mTelephonyManager.isEmergencyNumber("911"));
-        assertTrue(mTelephonyManager.isEmergencyNumber("112"));
-
-        // 000, 08, 110, 118, 119, and 999 should be always available when sim is absent
-        // Reference: 3gpp 22.101, Section 10 - Emergency Calls
-        if (mTelephonyManager.getPhoneCount() > 0
-                && mSubscriptionManager.getSimStateForSlotIndex(0)
-                    == TelephonyManager.SIM_STATE_ABSENT) {
-            assertTrue(mTelephonyManager.isEmergencyNumber("000"));
-            assertTrue(mTelephonyManager.isEmergencyNumber("08"));
-            assertTrue(mTelephonyManager.isEmergencyNumber("110"));
-            assertTrue(mTelephonyManager.isEmergencyNumber("118"));
-            assertTrue(mTelephonyManager.isEmergencyNumber("119"));
-            assertTrue(mTelephonyManager.isEmergencyNumber("999"));
+        String countryIso = mTelephonyManager.getNetworkCountryIso();
+        if (!TextUtils.isEmpty(countryIso) && EMERGENCY_NUMBERS_FOR_COUNTRIES.containsKey(
+                countryIso)) {
+            assertTrue(mTelephonyManager.isEmergencyNumber(
+                    EMERGENCY_NUMBERS_FOR_COUNTRIES.get(countryIso)));
         }
     }
 
