@@ -24,6 +24,7 @@ import android.os.ParcelFileDescriptor;
 import android.provider.Telephony.Carriers;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
+import android.telephony.SubscriptionManager;
 import android.test.InstrumentationTestCase;
 
 import java.lang.reflect.Field;
@@ -93,6 +94,18 @@ public class TelephonyProviderTest extends InstrumentationTestCase {
                     APN_PROJECTION, selection, selectionArgs, null);
         } catch (SecurityException e) {
             fail("No access to current APN");
+        }
+    }
+
+    // The sim_info table contains sensitive IDs, and we don't want to expose these without at
+    // least the READ_PHONE_STATE permission (which this test doesn't have).
+    public void testNoAccessToSimInfo() {
+        try {
+            Cursor c = mContentResolver.query(SubscriptionManager.CONTENT_URI,
+                    new String[] { SubscriptionManager.ICC_ID }, null, null, null);
+            fail("SecurityException expected");
+        } catch (SecurityException e) {
+            // expected
         }
     }
 }
