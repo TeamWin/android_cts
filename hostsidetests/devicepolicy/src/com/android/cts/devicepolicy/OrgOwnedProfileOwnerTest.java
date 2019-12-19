@@ -217,6 +217,22 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
                 DEVICE_ADMIN_PKG, ".FactoryResetProtectionPolicyTest", mUserId);
     }
 
+    @Test
+    public void testIsDeviceOrganizationOwnedWithManagedProfile() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DeviceOwnershipTest",
+                "testCallingIsOrganizationOwnedWithManagedProfileExpectingTrue",
+                mUserId);
+
+        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DeviceOwnershipTest",
+                "testCallingIsOrganizationOwnedWithManagedProfileExpectingTrue",
+                mPrimaryUserId);
+    }
+
     private void removeOrgOwnedProfile() throws DeviceNotAvailableException {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, RELINQUISH_DEVICE_TEST_CLASS, mUserId);
     }
