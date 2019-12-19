@@ -17,6 +17,7 @@
 package android.accessibilityservice.cts;
 
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterForEventType;
+import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangTypesAndWindowId;
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangedWithChangeTypes;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen;
@@ -768,7 +769,8 @@ public class AccessibilityWindowQueryTest {
         final AccessibilityWindowInfo finalFocusTarget = focusTarget;
         sUiAutomation.executeAndWaitForEvent(() -> assertTrue(finalFocusTarget.getRoot()
                 .performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)),
-                filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_ACCESSIBILITY_FOCUSED),
+                filterWindowsChangTypesAndWindowId(finalFocusTarget.getId(),
+                        WINDOWS_CHANGE_ACCESSIBILITY_FOCUSED),
                 DEFAULT_TIMEOUT_MS);
 
         windows = sUiAutomation.getWindows();
