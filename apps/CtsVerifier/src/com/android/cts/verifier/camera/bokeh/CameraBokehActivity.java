@@ -43,7 +43,7 @@ import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
-import android.hardware.camera2.params.CapabilityAndMaxSize;
+import android.hardware.camera2.params.Capability;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.hardware.camera2.TotalCaptureResult;
 import android.media.Image;
@@ -126,7 +126,7 @@ public class CameraBokehActivity extends PassFailButtons.Activity
     private CaptureRequest.Builder mStillCaptureRequestBuilder;
     private CaptureRequest mStillCaptureRequest;
 
-    private HashMap<String, ArrayList<CapabilityAndMaxSize>> mTestCases = new HashMap<>();
+    private HashMap<String, ArrayList<Capability>> mTestCases = new HashMap<>();
     private int mCurrentCameraIndex = -1;
     private String mCameraId;
     private CameraCaptureSession mCaptureSession;
@@ -221,19 +221,16 @@ public class CameraBokehActivity extends PassFailButtons.Activity
             for (String id : mCameraIdList) {
                 CameraCharacteristics characteristics =
                         mCameraManager.getCameraCharacteristics(id);
-                Key<CapabilityAndMaxSize[]> key =
+                Key<Capability[]> key =
                         CameraCharacteristics.CONTROL_AVAILABLE_BOKEH_CAPABILITIES;
-                CapabilityAndMaxSize[] bokehCaps = characteristics.get(key);
+                Capability[] bokehCaps = characteristics.get(key);
 
                 if (bokehCaps == null) {
                     continue;
-                } else if (bokehCaps.length == 1 &&
-                        bokehCaps[0].getMode() == CameraMetadata.CONTROL_BOKEH_MODE_OFF) {
-                    continue;
                 }
 
-                ArrayList<CapabilityAndMaxSize> nonOffModes = new ArrayList<>();
-                for (CapabilityAndMaxSize bokehCap : bokehCaps) {
+                ArrayList<Capability> nonOffModes = new ArrayList<>();
+                for (Capability bokehCap : bokehCaps) {
                     int mode = bokehCap.getMode();
                     if (mode == CameraMetadata.CONTROL_BOKEH_MODE_STILL_CAPTURE ||
                             mode == CameraMetadata.CONTROL_BOKEH_MODE_CONTINUOUS) {
@@ -329,8 +326,8 @@ public class CameraBokehActivity extends PassFailButtons.Activity
         // There is untested combination for the current camera, set the next untested combination.
         mNextCombination = combination.get();
         int nextMode = mNextCombination.mMode;
-        ArrayList<CapabilityAndMaxSize> bokehCaps = mTestCases.get(mCameraId);
-        for (CapabilityAndMaxSize cap : bokehCaps) {
+        ArrayList<Capability> bokehCaps = mTestCases.get(mCameraId);
+        for (Capability cap : bokehCaps) {
             if (cap.getMode() == nextMode) {
                 mMaxBokehStreamingSize = cap.getMaxStreamingSize();
             }
@@ -619,8 +616,8 @@ public class CameraBokehActivity extends PassFailButtons.Activity
         }
 
         // Update untested entries
-        ArrayList<CapabilityAndMaxSize> currentTestCase = mTestCases.get(mCameraId);
-        for (CapabilityAndMaxSize bokehCap : currentTestCase) {
+        ArrayList<Capability> currentTestCase = mTestCases.get(mCameraId);
+        for (Capability bokehCap : currentTestCase) {
             Size maxStreamingSize = bokehCap.getMaxStreamingSize();
             Size previewSize;
             if ((maxStreamingSize.getWidth() == 0 && maxStreamingSize.getHeight() == 0) ||
