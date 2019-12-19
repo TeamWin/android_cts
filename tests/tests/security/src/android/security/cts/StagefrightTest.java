@@ -807,6 +807,11 @@ public class StagefrightTest extends InstrumentationTestCase {
      to prevent merge conflicts, add N tests below this comment,
      before any existing test methods
      ***********************************************************/
+    @SecurityTest(minPatchLevel = "2017-03")
+    public void testBug_33090864() throws Exception {
+        int[] frameSizes = getFrameSizes(R.raw.bug_33090864_framelen);
+        doStagefrightTestRawBlob(R.raw.bug_33090864_avc, "video/avc", 320, 240, frameSizes);
+    }
 
     @SecurityTest(minPatchLevel = "2017-07")
     public void testStagefright_bug_36279112() throws Exception {
