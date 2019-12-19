@@ -880,7 +880,7 @@ public final class CommandSession {
             onCallback(ActivityCallback.ON_MOVED_TO_DISPLAY);
         }
 
-        private void onCallback(ActivityCallback callback) {
+        public void onCallback(ActivityCallback callback) {
             if (mPrintCallbackLog) {
                 Log.i(getTag(), callback + " @ "
                         + Integer.toHexString(System.identityHashCode(this)));
@@ -928,7 +928,8 @@ public final class CommandSession {
         ON_CONFIGURATION_CHANGED,
         ON_MULTI_WINDOW_MODE_CHANGED,
         ON_PICTURE_IN_PICTURE_MODE_CHANGED,
-        ON_MOVED_TO_DISPLAY;
+        ON_MOVED_TO_DISPLAY,
+        ON_PICTURE_IN_PICTURE_REQUESTED;
 
         private static final ActivityCallback[] sValues = ActivityCallback.values();
         public static final int SIZE = sValues.length;
