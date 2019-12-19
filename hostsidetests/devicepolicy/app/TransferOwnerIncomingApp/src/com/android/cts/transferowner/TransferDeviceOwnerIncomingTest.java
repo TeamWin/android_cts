@@ -38,7 +38,7 @@ public class TransferDeviceOwnerIncomingTest extends DeviceAndProfileOwnerTransf
         assertEquals(Collections.singletonList("test.package"),
                 mDevicePolicyManager.getKeepUninstalledPackages(mIncomingComponentName));
         assertEquals(123, mDevicePolicyManager.getPasswordMinimumLength(mIncomingComponentName));
-        assertSystemPoliciesEqual(SystemUpdatePolicy.createWindowedInstallPolicy(123, 456),
+        assertSystemPoliciesEqual(SystemUpdatePolicy.createPostponeInstallPolicy(),
                 mDevicePolicyManager.getSystemUpdatePolicy());
         assertThrows(SecurityException.class, () -> {
             mDevicePolicyManager.getParentProfileInstance(mIncomingComponentName);
