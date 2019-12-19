@@ -15,10 +15,12 @@
  */
 package com.android.compatibility.common.deviceinfo;
 
+import android.icu.util.ULocale;
 import com.android.compatibility.common.util.DeviceInfoStore;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Locale device info collector.
@@ -34,5 +36,14 @@ public final class LocaleDeviceInfo extends DeviceInfo {
             locales.add("en_US");
         }
         store.addListResult("locale", locales);
+
+        List<String> icuLocales = Arrays.stream(ULocale.getAvailableLocales())
+            .map((uLocale -> uLocale.toLanguageTag()))
+            .collect(Collectors.toList());
+        if (icuLocales.isEmpty()) {
+            // default locale
+            icuLocales.add(ULocale.US.toLanguageTag());
+        }
+        store.addListResult("icu_locale", icuLocales);
     }
 }
