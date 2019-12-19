@@ -723,7 +723,8 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
                 for (int i = 0; i < TIMESTAMP_COUNT; i++) {
                     numparts[i] = assertInteger(parts[i]);
                 }
-                if (numparts[0] != 0) {
+                // Flags = 1 just means the first frame of the window
+                if (numparts[0] != 0 && numparts[0] != 1) {
                     continue;
                 }
                 // assert VSYNC >= INTENDED_VSYNC
