@@ -1947,6 +1947,11 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
                 WAITFOR_MSEC);
         uid3Listener.register();
 
+        UidImportanceListener uid3ServiceListener = new UidImportanceListener(mContext,
+                app3Info.uid, IMPORTANCE_CACHED,
+                WAITFOR_MSEC);
+        uid3ServiceListener.register();
+
         Activity activity = null;
 
         try {
@@ -2014,7 +2019,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             uid2ServiceListener.waitForValue(
                     IMPORTANCE_CACHED,
                     IMPORTANCE_CACHED);
-            uid3Listener.waitForValue(
+
+            uid3ServiceListener.waitForValue(
                     IMPORTANCE_CACHED,
                     IMPORTANCE_CACHED);
         } finally {
@@ -2031,6 +2037,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             uid2Listener.unregister();
             uid2ServiceListener.unregister();
             uid3Listener.unregister();
+            uid3ServiceListener.unregister();
             if (activity != null) {
                 activity.finish();
             }

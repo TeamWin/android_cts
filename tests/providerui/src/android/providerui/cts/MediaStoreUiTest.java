@@ -388,13 +388,18 @@ public class MediaStoreUiTest {
                 && !pm.hasSystemFeature("android.hardware.type.watch");
     }
 
+    public File getVolumePath(String volumeName) {
+        return mContext.getSystemService(StorageManager.class)
+                .getStorageVolume(MediaStore.Files.getContentUri(volumeName)).getDirectory();
+    }
+
     private void prepareFile() throws Exception {
-        final File dir = new File(MediaStore.getVolumePath(mVolumeName),
+        final File dir = new File(getVolumePath(mVolumeName),
                 Environment.DIRECTORY_DOCUMENTS);
         final File file = new File(dir, "cts" + System.nanoTime() + ".txt");
 
         mFile = stageFile(R.raw.text, file);
-        mMediaStoreUri = MediaStore.scanFile(mContext, mFile);
+        mMediaStoreUri = MediaStore.scanFile(mContext.getContentResolver(), mFile);
 
         Log.v(TAG, "Staged " + mFile + " as " + mMediaStoreUri);
     }

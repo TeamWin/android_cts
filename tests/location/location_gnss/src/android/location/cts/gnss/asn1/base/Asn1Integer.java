@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableList;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Collection;
+import java.util.Objects;
 
 import javax.annotation.Nullable;
 
@@ -79,7 +80,7 @@ public class Asn1Integer extends Asn1Object {
   }
 
   private void validateValue() {
-    Preconditions.checkNotNull(value, "No value set.");
+    Objects.requireNonNull(value, "No value set.");
     Preconditions.checkState(
         minimumValue == null || value.compareTo(minimumValue) >= 0,
         "Too small value %s", value);

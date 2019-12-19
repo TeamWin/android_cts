@@ -24,6 +24,7 @@ import com.google.common.io.BaseEncoding;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  * Implements ASN.1 functionality.
@@ -63,12 +64,12 @@ public class Asn1OctetString extends Asn1Object {
   }
 
   @Override int getBerValueLength() {
-    Preconditions.checkNotNull(value, "No value set.");
+    Objects.requireNonNull(value, "No value set.");
     return value.length;
   }
 
   @Override void encodeBerValue(ByteBuffer buf) {
-    Preconditions.checkNotNull(value, "No value set.");
+    Objects.requireNonNull(value, "No value set.");
     buf.put(value);
   }
 
@@ -77,7 +78,7 @@ public class Asn1OctetString extends Asn1Object {
   }
 
   private Iterable<BitStream> encodePerImpl(boolean aligned) {
-    Preconditions.checkNotNull(value, "No value set.");
+    Objects.requireNonNull(value, "No value set.");
     Preconditions.checkState(
         maximumSize == null || value.length <= maximumSize, "Too large %s",
         value.length);
