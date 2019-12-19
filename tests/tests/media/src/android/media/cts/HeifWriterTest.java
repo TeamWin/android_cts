@@ -40,6 +40,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresDevice;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.system.OsConstants;
@@ -49,6 +50,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.heifwriter.HeifWriter;
+import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.MediaUtils;
 
@@ -63,6 +65,8 @@ import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
 
+@SmallTest
+@RequiresDevice
 @AppModeFull(reason = "Instant apps cannot access the SD card")
 public class HeifWriterTest extends AndroidTestCase {
     private static final String TAG = HeifWriterTest.class.getSimpleName();
