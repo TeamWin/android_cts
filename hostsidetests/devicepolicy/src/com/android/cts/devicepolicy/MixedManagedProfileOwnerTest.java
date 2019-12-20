@@ -381,4 +381,16 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
         runDeviceTestsAsUser(
                 DEVICE_ADMIN_PKG, ".WifiTest", "testCannotGetWifiMacAddress", mUserId);
     }
+
+    //TODO(b/130844684): Remove when removing profile owner on personal device access to device
+    // identifiers.
+    @Test
+    public void testProfileOwnerCanGetDeviceIdentifiers() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DeviceIdentifiersTest",
+                "testProfileOwnerCanGetDeviceIdentifiersWithPermission", mUserId);
+    }
 }

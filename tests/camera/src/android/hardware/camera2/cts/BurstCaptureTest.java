@@ -26,7 +26,7 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
-import android.hardware.camera2.params.CapabilityAndMaxSize;
+import android.hardware.camera2.params.Capability;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.util.Log;
@@ -104,9 +104,9 @@ public class BurstCaptureTest extends Camera2SurfaceViewTestCase {
                     continue;
                 }
 
-                CapabilityAndMaxSize[] bokehCaps = staticInfo.getAvailableBokehCapsChecked();
+                Capability[] bokehCaps = staticInfo.getAvailableBokehCapsChecked();
                 boolean supportStillBokeh = false;
-                for (CapabilityAndMaxSize bokehCap : bokehCaps) {
+                for (Capability bokehCap : bokehCaps) {
                     if (bokehCap.getMode() == CameraMetadata.CONTROL_BOKEH_MODE_STILL_CAPTURE) {
                         supportStillBokeh = true;
                         break;

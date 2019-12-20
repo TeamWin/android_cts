@@ -33,7 +33,7 @@ import android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
 import android.hardware.camera2.params.BlackLevelPattern;
-import android.hardware.camera2.params.CapabilityAndMaxSize;
+import android.hardware.camera2.params.Capability;
 import android.hardware.camera2.params.ColorSpaceTransform;
 import android.hardware.camera2.params.Face;
 import android.hardware.camera2.params.LensShadingMap;
@@ -816,6 +816,27 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                 openDevice(id);
                 Size maxPreviewSize = mOrderedPreviewSizes.get(0);
                 digitalZoomTestByCamera(maxPreviewSize);
+            } finally {
+                closeDevice();
+            }
+        }
+    }
+
+    /**
+     * Test zoom using CONTROL_ZOOM_RATIO, validate the returned crop regions and zoom ratio.
+     * The max preview size is used for each camera.
+     */
+    @Test
+    public void testZoomRatio() throws Exception {
+        for (String id : mCameraIdsUnderTest) {
+            try {
+                if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
+                    continue;
+                }
+                openDevice(id);
+                Size maxPreviewSize = mOrderedPreviewSizes.get(0);
+                zoomRatioTestByCamera(maxPreviewSize);
             } finally {
                 closeDevice();
             }
@@ -2589,6 +2610,8 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
         }
 
         final Rect activeArraySize = mStaticInfo.getActiveArraySizeChecked();
+        final Rect defaultCropRegion = new Rect(0, 0,
+                activeArraySize.width(), activeArraySize.height());
         Rect[] cropRegions = new Rect[ZOOM_STEPS];
         MeteringRectangle[][] expectRegions = new MeteringRectangle[ZOOM_STEPS][];
         CaptureRequest.Builder requestBuilder =
@@ -2634,7 +2657,8 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                  * Submit capture request
                  */
                 float zoomFactor = (float) (1.0f + (maxZoom - 1.0) * i / ZOOM_STEPS);
-                cropRegions[i] = getCropRegionForZoom(zoomFactor, center, maxZoom, activeArraySize);
+                cropRegions[i] = getCropRegionForZoom(zoomFactor, center,
+                        maxZoom, defaultCropRegion);
                 if (VERBOSE) {
                     Log.v(TAG, "Testing Zoom for factor " + zoomFactor + " and center " +
                             center + " The cropRegion is " + cropRegions[i] +
@@ -2695,7 +2719,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
 
                 // Verify Output 3A region is intersection of input 3A region and crop region
                 for (int algo = 0; algo < NUM_ALGORITHMS; algo++) {
-                    validate3aRegion(result, algo, expectRegions[i]);
+                    validate3aRegion(result, algo, expectRegions[i], false/*scaleByZoomRatio*/);
                 }
 
                 previousCrop = cropRegion;
@@ -2710,6 +2734,120 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                             (previousCrop.width() < activeArraySize.width() &&
                              previousCrop.height() < activeArraySize.height()));
             }
+        }
+    }
+
+    private void zoomRatioTestByCamera(Size previewSize) throws Exception {
+        final int ZOOM_STEPS = 15;
+        final Range<Float> zoomRatioRange = mStaticInfo.getZoomRatioRangeChecked();
+        // The error margin is derive from a VGA size camera zoomed all the way to 10x, in which
+        // case the cropping error can be as large as 480/46 - 480/48 = 0.435.
+        final float ZOOM_ERROR_MARGIN = 0.05f;
+
+        final Rect activeArraySize = mStaticInfo.getActiveArraySizeChecked();
+        final Rect defaultCropRegion =
+                new Rect(0, 0, activeArraySize.width(), activeArraySize.height());
+        MeteringRectangle[][] expectRegions = new MeteringRectangle[ZOOM_STEPS][];
+        CaptureRequest.Builder requestBuilder =
+                mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+        requestBuilder.set(CaptureRequest.SCALER_CROP_REGION, defaultCropRegion);
+        SimpleCaptureCallback listener = new SimpleCaptureCallback();
+
+        updatePreviewSurface(previewSize);
+        configurePreviewOutput(requestBuilder);
+
+        // Set algorithm regions to full active region
+        final MeteringRectangle[] defaultMeteringRect = new MeteringRectangle[] {
+                new MeteringRectangle (
+                        /*x*/0, /*y*/0, activeArraySize.width(), activeArraySize.height(),
+                        /*meteringWeight*/1)
+        };
+
+        for (int algo = 0; algo < NUM_ALGORITHMS; algo++) {
+            update3aRegion(requestBuilder, algo,  defaultMeteringRect);
+        }
+
+        final int captureSubmitRepeat;
+        {
+            int maxLatency = mStaticInfo.getSyncMaxLatency();
+            if (maxLatency == CameraMetadata.SYNC_MAX_LATENCY_UNKNOWN) {
+                captureSubmitRepeat = NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY + 1;
+            } else {
+                captureSubmitRepeat = maxLatency + 1;
+            }
+        }
+
+        float previousRatio = zoomRatioRange.getLower();
+        for (int i = 0; i < ZOOM_STEPS; i++) {
+            /*
+             * Submit capture request
+             */
+            float zoomFactor = zoomRatioRange.getLower() + (zoomRatioRange.getUpper() -
+                    zoomRatioRange.getLower()) * i / ZOOM_STEPS;
+            if (VERBOSE) {
+                Log.v(TAG, "Testing Zoom ratio " + zoomFactor + " Preview size is " + previewSize);
+            }
+            requestBuilder.set(CaptureRequest.CONTROL_ZOOM_RATIO, zoomFactor);
+            CaptureRequest request = requestBuilder.build();
+            for (int j = 0; j < captureSubmitRepeat; ++j) {
+                mSession.capture(request, listener, mHandler);
+            }
+
+            /*
+             * Validate capture result
+             */
+            waitForNumResults(listener, captureSubmitRepeat - 1); // Drop first few frames
+            CaptureResult result = listener.getCaptureResultForRequest(
+                    request, NUM_RESULTS_WAIT_TIMEOUT);
+            float resultZoomRatio = getValueNotNull(result, CaptureResult.CONTROL_ZOOM_RATIO);
+            Rect cropRegion = getValueNotNull(result, CaptureResult.SCALER_CROP_REGION);
+
+            /*
+             * Validate resulting crop regions and zoom ratio
+             */
+            mCollector.expectTrue(String.format(
+                    "Zoom ratio should increase or stay the same " +
+                            "(previous = %f, current = %f)",
+                            previousRatio, resultZoomRatio),
+                    Math.abs(previousRatio - resultZoomRatio) < ZOOM_ERROR_MARGIN ||
+                        (previousRatio < resultZoomRatio));
+
+            mCollector.expectTrue(String.format(
+                    "Request and result zoom ratio should be similar " +
+                    "(requested = %f, result = %f", zoomFactor, resultZoomRatio),
+                    Math.abs(zoomFactor - resultZoomRatio)/zoomFactor <= ZOOM_ERROR_MARGIN);
+
+            //In case zoom ratio is converted to crop region at HAL, due to error magnification
+            //when converting to post-zoom crop region, scale the error threshold for crop region
+            //check.
+            float errorMultiplier = Math.max(1.0f, zoomFactor);
+            if (mStaticInfo.isHardwareLevelAtLeastLimited()) {
+                mCollector.expectRectsAreSimilar(
+                        "Request and result crop region should be similar",
+                        activeArraySize, cropRegion,
+                        CROP_REGION_ERROR_PERCENT_DELTA * errorMultiplier);
+            }
+
+            mCollector.expectRectCentered(
+                    "Result crop region should be centered inside the active array",
+                    new Size(activeArraySize.width(), activeArraySize.height()),
+                    cropRegion, CROP_REGION_ERROR_PERCENT_CENTERED * errorMultiplier);
+
+            /*
+             * Validate resulting metering regions
+             */
+            // Use the actual reported crop region to calculate the resulting metering region
+            expectRegions[i] = getExpectedOutputRegion(
+                    /*requestRegion*/defaultMeteringRect,
+                    /*cropRect*/     cropRegion);
+
+            // Verify Output 3A region is intersection of input 3A region and crop region
+            boolean scaleByZoomRatio = zoomFactor > 1.0f;
+            for (int algo = 0; algo < NUM_ALGORITHMS; algo++) {
+                validate3aRegion(result, algo, expectRegions[i], scaleByZoomRatio);
+            }
+
+            previousRatio = resultZoomRatio;
         }
     }
 
@@ -2798,7 +2936,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     }
 
     private void bokehModeTestByCamera(List<Range<Integer>> fpsRanges) throws Exception {
-        CapabilityAndMaxSize[] bokehCaps = mStaticInfo.getAvailableBokehCapsChecked();
+        Capability[] bokehCaps = mStaticInfo.getAvailableBokehCapsChecked();
         if (bokehCaps.length == 0) {
             return;
         }
@@ -2807,7 +2945,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
         CaptureRequest.Builder requestBuilder =
                 mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
 
-        for (CapabilityAndMaxSize bokehCap : bokehCaps) {
+        for (Capability bokehCap : bokehCaps) {
             int mode = bokehCap.getMode();
             requestBuilder.set(CaptureRequest.CONTROL_BOKEH_MODE, mode);
 
@@ -2817,13 +2955,19 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                 verifyFpsNotSlowDown(requestBuilder, NUM_FRAMES_VERIFIED, fpsRanges);
             }
 
-            SimpleCaptureCallback listener = new SimpleCaptureCallback();
-            startPreview(requestBuilder, maxPreviewSize, listener);
-            mSession.setRepeatingRequest(requestBuilder.build(), listener, mHandler);
-            waitForSettingsApplied(listener, NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY);
+            Range<Float> zoomRange = bokehCap.getZoomRatioRange();
+            float[] zoomRatios = new float[]{zoomRange.getLower(), zoomRange.getUpper()};
+            for (float ratio : zoomRatios) {
+                SimpleCaptureCallback listener = new SimpleCaptureCallback();
+                requestBuilder.set(CaptureRequest.CONTROL_ZOOM_RATIO, ratio);
+                startPreview(requestBuilder, maxPreviewSize, listener);
+                waitForSettingsApplied(listener, NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY);
 
-            verifyCaptureResultForKey(CaptureResult.CONTROL_BOKEH_MODE,
-                    mode, listener, NUM_FRAMES_VERIFIED);
+                verifyCaptureResultForKey(CaptureResult.CONTROL_BOKEH_MODE,
+                        mode, listener, NUM_FRAMES_VERIFIED);
+                verifyCaptureResultForKey(CaptureResult.CONTROL_ZOOM_RATIO,
+                        ratio, listener, NUM_FRAMES_VERIFIED);
+            }
         }
     }
 
@@ -3241,7 +3385,8 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      * @param expectRegions The 3A regions expected in capture result
      */
     private void validate3aRegion(
-            CaptureResult result, int algoIdx, MeteringRectangle[] expectRegions)
+            CaptureResult result, int algoIdx, MeteringRectangle[] expectRegions,
+            boolean scaleByZoomRatio)
     {
         final int maxCorrectionDist = 2;
         int maxRegions;
@@ -3269,30 +3414,35 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
         boolean correctionEnabled =
                 distortionCorrectionMode != null &&
                 distortionCorrectionMode != CaptureResult.DISTORTION_CORRECTION_MODE_OFF;
+        Float zoomRatio = result.get(CaptureResult.CONTROL_ZOOM_RATIO);
+        int maxDist = correctionEnabled ? maxCorrectionDist : 1;
+        if (scaleByZoomRatio) {
+            maxDist = (int)Math.ceil(maxDist * zoomRatio);
+        }
 
         if (maxRegions > 0)
         {
             actualRegion = getValueNotNull(result, key);
-            if (correctionEnabled) {
+            if (correctionEnabled || scaleByZoomRatio) {
                 for(int i = 0; i < actualRegion.length; i++) {
                     Rect a = actualRegion[i].getRect();
                     Rect e = expectRegions[i].getRect();
                     if (!mCollector.expectLessOrEqual(
                         "Expected 3A regions: " + Arrays.toString(expectRegions) +
                         " are not close enough to the actual one: " + Arrays.toString(actualRegion),
-                        maxCorrectionDist, Math.abs(a.left - e.left))) continue;
+                        maxDist, Math.abs(a.left - e.left))) continue;
                     if (!mCollector.expectLessOrEqual(
                         "Expected 3A regions: " + Arrays.toString(expectRegions) +
                         " are not close enough to the actual one: " + Arrays.toString(actualRegion),
-                        maxCorrectionDist, Math.abs(a.right - e.right))) continue;
+                        maxDist, Math.abs(a.right - e.right))) continue;
                     if (!mCollector.expectLessOrEqual(
                         "Expected 3A regions: " + Arrays.toString(expectRegions) +
                         " are not close enough to the actual one: " + Arrays.toString(actualRegion),
-                        maxCorrectionDist, Math.abs(a.top - e.top))) continue;
+                        maxDist, Math.abs(a.top - e.top))) continue;
                     if (!mCollector.expectLessOrEqual(
                         "Expected 3A regions: " + Arrays.toString(expectRegions) +
                         " are not close enough to the actual one: " + Arrays.toString(actualRegion),
-                        maxCorrectionDist, Math.abs(a.bottom - e.bottom))) continue;
+                        maxDist, Math.abs(a.bottom - e.bottom))) continue;
                 }
             } else {
                 mCollector.expectEquals(

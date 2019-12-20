@@ -31,6 +31,7 @@ import android.stats.devicepolicy.EventId;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper.Builder;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -239,19 +240,6 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
         verifyBindDeviceAdminServiceAsUser(secondaryUserId);
     }
 
-    @Test
-    public void testCannotRemoveProfileIfRestrictionSet() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-        int profileUserId = setupManagedProfile(COMP_DPC_APK2, COMP_DPC_PKG2, COMP_DPC_ADMIN2);
-        addDisallowRemoveManagedProfileRestriction();
-        assertFalse(getDevice().removeUser(profileUserId));
-
-        clearDisallowRemoveManagedProfileRestriction();
-        assertTrue(getDevice().removeUser(profileUserId));
-    }
-
     @FlakyTest(bugId = 141161038)
     @Test
     public void testCannotRemoveUserIfRestrictionSet() throws Exception {
@@ -285,7 +273,6 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
         }
         int profileUserId = setupManagedProfile(COMP_DPC_APK, COMP_DPC_PKG, COMP_DPC_ADMIN);
         addDisallowRemoveUserRestriction();
-        addDisallowRemoveManagedProfileRestriction();
 
         // The DO should be allowed to remove the managed profile, even though disallow remove user
         // and disallow remove managed profile restrictions are set.
@@ -297,7 +284,10 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
         assertUserGetsRemoved(profileUserId);
     }
 
+    //TODO(b/138709492) Re-enable once restriction on creating a work profile when there's
+    // a device owner is on by default.
     @Test
+    @Ignore
     public void testCannotAddProfileIfRestrictionSet() throws Exception {
         if (!mHasFeature) {
             return;
@@ -307,6 +297,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     /**
+     * TODO(b/138709492): Remove this test as a part of the COMP deprecation.
      * Both device owner and profile are the same package ({@link #COMP_DPC_PKG}).
      */
     @Test
@@ -315,26 +306,17 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         installAppAsUser(COMP_DPC_APK2, mPrimaryUserId);
-        // By default, disallow add managed profile is set, so provisioning a managed profile is
-        // not allowed for DPCs other than the device owner.
-        assertProvisionManagedProfileNotAllowed(COMP_DPC_PKG2);
-        // But the device owner can still provision a managed profile because it owns the
-        // restriction.
+        // Disallowing adding managed profile is no longer set by default, so every DPC can
+        // provision a work profile.
+        assertProvisionManagedProfileAllowed(COMP_DPC_PKG2);
+        // Including the device owner, which can still provision a managed profile.
         assertProvisionManagedProfileAllowed(COMP_DPC_PKG);
 
         setupManagedProfile(COMP_DPC_APK, COMP_DPC_PKG, COMP_DPC_ADMIN);
 
-        clearDisallowAddManagedProfileRestriction();
         // We've created a managed profile, but it's still possible to delete it to create a new
         // one.
         assertProvisionManagedProfileAllowed(COMP_DPC_PKG2);
-        assertProvisionManagedProfileAllowed(COMP_DPC_PKG);
-
-        addDisallowRemoveManagedProfileRestriction();
-        // Now we can't delete the managed profile any more to create a new one.
-        assertProvisionManagedProfileNotAllowed(COMP_DPC_PKG2);
-        // But if it is initiated by the device owner, it is still possible, because the device
-        // owner itself has set the restriction
         assertProvisionManagedProfileAllowed(COMP_DPC_PKG);
     }
 
@@ -344,7 +326,6 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         int profileUserId = setupManagedProfile(COMP_DPC_APK, COMP_DPC_PKG, COMP_DPC_ADMIN);
-        addDisallowRemoveManagedProfileRestriction();
         // The PO of the managed profile should be allowed to delete the managed profile, even
         // though the disallow remove profile restriction is set.
         runDeviceTestsAsUser(
@@ -361,7 +342,6 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         int profileUserId = setupManagedProfile(COMP_DPC_APK, COMP_DPC_PKG, COMP_DPC_ADMIN);
-        addDisallowRemoveManagedProfileRestriction();
         assertMetricsLogged(getDevice(), () -> {
             runDeviceTestsAsUser(COMP_DPC_PKG, MANAGEMENT_TEST, "testWipeData", profileUserId);
         }, WIPE_DATA_WITH_REASON_DEVICE_POLICY_EVENT);
@@ -624,24 +604,16 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
     /** Returns the user id of the newly created managed profile */
     private int setupManagedProfile(String apkName, String packageName,
             String adminReceiverClassName) throws Exception {
-        // Temporary disable the DISALLOW_ADD_MANAGED_PROFILE, so that we can create profile
-        // using adb command.
-        clearDisallowAddManagedProfileRestriction();
-        try {
-            final int userId = createManagedProfile(mPrimaryUserId);
-            installAppAsUser(apkName, userId);
-            setProfileOwnerOrFail(adminReceiverClassName, userId);
-            startUserAndWait(userId);
-            runDeviceTestsAsUser(
-                    packageName,
-                    MANAGEMENT_TEST,
-                    "testIsManagedProfile",
-                    userId);
-            return userId;
-        } finally {
-            // Adding back DISALLOW_ADD_MANAGED_PROFILE.
-            addDisallowAddManagedProfileRestriction();
-        }
+        final int userId = createManagedProfile(mPrimaryUserId);
+        installAppAsUser(apkName, userId);
+        setProfileOwnerOrFail(adminReceiverClassName, userId);
+        startUserAndWait(userId);
+        runDeviceTestsAsUser(
+                packageName,
+                MANAGEMENT_TEST,
+                "testIsManagedProfile",
+                userId);
+        return userId;
     }
 
     /** Returns the user id of the newly created secondary user */
@@ -668,50 +640,6 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
                 "testProvisioningCorpOwnedManagedProfile",
                 mPrimaryUserId);
         return getFirstManagedProfileUserId();
-    }
-
-    /**
-     * Clear {@link android.os.UserManager#DISALLOW_ADD_MANAGED_PROFILE}.
-     */
-    private void clearDisallowAddManagedProfileRestriction() throws Exception {
-        runDeviceTestsAsUser(
-                COMP_DPC_PKG,
-                USER_RESTRICTION_TEST,
-                "testClearDisallowAddManagedProfileRestriction",
-                mPrimaryUserId);
-    }
-
-    /**
-     * Add {@link android.os.UserManager#DISALLOW_ADD_MANAGED_PROFILE}.
-     */
-    private void addDisallowAddManagedProfileRestriction() throws Exception {
-        runDeviceTestsAsUser(
-                COMP_DPC_PKG,
-                USER_RESTRICTION_TEST,
-                "testAddDisallowAddManagedProfileRestriction",
-                mPrimaryUserId);
-    }
-
-    /**
-     * Clear {@link android.os.UserManager#DISALLOW_REMOVE_MANAGED_PROFILE}.
-     */
-    private void clearDisallowRemoveManagedProfileRestriction() throws Exception {
-        runDeviceTestsAsUser(
-                COMP_DPC_PKG,
-                USER_RESTRICTION_TEST,
-                "testClearDisallowRemoveManagedProfileRestriction",
-                mPrimaryUserId);
-    }
-
-    /**
-     * Add {@link android.os.UserManager#DISALLOW_REMOVE_MANAGED_PROFILE}.
-     */
-    private void addDisallowRemoveManagedProfileRestriction() throws Exception {
-        runDeviceTestsAsUser(
-                COMP_DPC_PKG,
-                USER_RESTRICTION_TEST,
-                "testAddDisallowRemoveManagedProfileRestriction",
-                mPrimaryUserId);
     }
 
     /**

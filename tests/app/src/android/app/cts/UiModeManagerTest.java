@@ -22,11 +22,18 @@ import android.app.UiModeManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.os.ParcelFileDescriptor;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
 import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.SettingsUtils;
+
+import junit.framework.Assert;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 public class UiModeManagerTest extends AndroidTestCase {
     private static final String TAG = "UiModeManagerTest";
@@ -69,6 +76,22 @@ public class UiModeManagerTest extends AndroidTestCase {
                 doTestUnlockedNightMode();
             }
         }
+    }
+
+    public void testNightModeYesPersisted() {
+        setNightMode(UiModeManager.MODE_NIGHT_NO);
+        assertStoredNightModeSetting(UiModeManager.MODE_NIGHT_NO);
+
+        setNightMode(UiModeManager.MODE_NIGHT_YES);
+        assertStoredNightModeSetting(UiModeManager.MODE_NIGHT_YES);
+    }
+
+    public void testNightModeAutoPersisted() {
+        setNightMode(UiModeManager.MODE_NIGHT_NO);
+        assertStoredNightModeSetting(UiModeManager.MODE_NIGHT_NO);
+
+        setNightMode(UiModeManager.MODE_NIGHT_AUTO);
+        assertStoredNightModeSetting(UiModeManager.MODE_NIGHT_AUTO);
     }
 
     public void testNightModeInCarModeIsTransient() {
@@ -276,5 +299,36 @@ public class UiModeManagerTest extends AndroidTestCase {
         String storedMode = SettingsUtils.getSecureSetting("ui_night_mode");
         int storedModeInt = Integer.parseInt(storedMode);
         assertEquals(mode, storedModeInt);
+    }
+
+    private void setNightMode(int mode) {
+        final UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
+        String modeString = "unknown";
+        switch (mode) {
+            case UiModeManager.MODE_NIGHT_AUTO:
+                modeString = "auto";
+                break;
+            case UiModeManager.MODE_NIGHT_NO:
+                modeString = "no";
+                break;
+            case UiModeManager.MODE_NIGHT_YES:
+                modeString = "yes";
+                break;
+        }
+        final String command = " cmd uimode night " + modeString;
+        try (ParcelFileDescriptor fd = uiAutomation.executeShellCommand(command)) {
+            Assert.assertNotNull("Failed to execute shell command: " + command, fd);
+            // Wait for the command to finish by reading until EOF
+            try (InputStream in = new FileInputStream(fd.getFileDescriptor())) {
+                byte[] buffer = new byte[4096];
+                while (in.read(buffer) > 0) continue;
+            } catch (IOException e) {
+                throw new IOException("Could not read stdout of command: " + command, e);
+            }
+        } catch (IOException e) {
+            fail();
+        } finally {
+            uiAutomation.destroy();
+        }
     }
 }

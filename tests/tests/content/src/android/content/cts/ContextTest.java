@@ -18,8 +18,6 @@ package android.content.cts;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
-import static org.junit.Assume.assumeTrue;
-
 import android.app.Activity;
 import android.app.AppOpsManager;
 import android.app.Instrumentation;
@@ -786,7 +784,7 @@ public class ContextTest extends AndroidTestCase {
     }
 
     public void testAccessWallpaper() throws IOException, InterruptedException {
-        assumeWallpaperSupported();
+        if (!isWallpaperSupported()) return;
 
         // set Wallpaper by context#setWallpaper(Bitmap)
         Bitmap bitmap = Bitmap.createBitmap(20, 30, Bitmap.Config.RGB_565);
@@ -1094,7 +1092,7 @@ public class ContextTest extends AndroidTestCase {
     }
 
     public void testGetWallpaperDesiredMinimumHeightAndWidth() {
-        assumeWallpaperSupported();
+        if (!isWallpaperSupported()) return;
 
         int height = mContext.getWallpaperDesiredMinimumHeight();
         int width = mContext.getWallpaperDesiredMinimumWidth();
@@ -1616,8 +1614,7 @@ public class ContextTest extends AndroidTestCase {
         }
     }
 
-    private void assumeWallpaperSupported() {
-        assumeTrue("Device does not support wallpapers",
-                WallpaperManager.getInstance(mContext).isWallpaperSupported());
+    private boolean isWallpaperSupported() {
+        return WallpaperManager.getInstance(mContext).isWallpaperSupported();
     }
 }

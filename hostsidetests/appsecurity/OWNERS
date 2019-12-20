@@ -1,6 +1,7 @@
 # Bug component: 533114
 toddke@google.com
 per-file AccessSerialNumberTest.java = moltmann@google.com
+per-file AdoptableFeatureConsistentTest.java = jsharkey@google.com
 per-file AdoptableHostTest.java = jsharkey@google.com
 per-file ApexSignatureVerificationTest.java = dariofreni@google.com
 per-file ApplicationVisibilityTest.java = toddke@google.com

@@ -34,6 +34,7 @@ import com.android.tradefed.device.DeviceNotAvailableException;
 
 import com.google.common.io.ByteStreams;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -604,6 +605,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
 
     @LargeTest
     @Test
+    @Ignore("b/145932189")
     public void testSystemUpdatePolicy() throws Exception {
         if (!mHasFeature) {
             return;
@@ -612,6 +614,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
+    @Ignore("b/145932189")
     public void testSetSystemUpdatePolicyLogged() throws Exception {
         if (!mHasFeature || !isStatsdEnabled(getDevice())) {
             return;

@@ -42,7 +42,7 @@ public class TransferDeviceOwnerIncomingTest extends DeviceAndProfileOwnerTransf
                 DevicePolicyManager.PASSWORD_QUALITY_NUMERIC,
                 mDevicePolicyManager.getPasswordQuality(mIncomingComponentName));
         assertEquals(123, mDevicePolicyManager.getPasswordMinimumLength(mIncomingComponentName));
-        assertSystemPoliciesEqual(SystemUpdatePolicy.createWindowedInstallPolicy(123, 456),
+        assertSystemPoliciesEqual(SystemUpdatePolicy.createPostponeInstallPolicy(),
                 mDevicePolicyManager.getSystemUpdatePolicy());
         assertThrows(SecurityException.class, () -> {
             mDevicePolicyManager.getParentProfileInstance(mIncomingComponentName);

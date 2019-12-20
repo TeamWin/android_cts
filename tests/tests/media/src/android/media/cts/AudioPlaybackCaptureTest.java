@@ -489,6 +489,8 @@ public class AudioPlaybackCaptureTest {
             // Stopping one AR must allow creating a new one
             audioRecords.peek().stop();
             audioRecords.pop().release();
+            final long SLEEP_AFTER_STOP_FOR_INACTIVITY_MS = 1000;
+            Thread.sleep(SLEEP_AFTER_STOP_FOR_INACTIVITY_MS);
             audioRecords.push(createDefaultPlaybackCaptureRecord());
 
             // That new one must still be able to capture
