@@ -17,6 +17,7 @@
 package android.app.cts;
 
 import static android.app.ActivityManager.PROCESS_CAPABILITY_ALL;
+import static android.app.ActivityManager.PROCESS_CAPABILITY_ALL_IMPLICIT;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_FOREGROUND_LOCATION;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_NONE;
 import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED;
@@ -54,7 +55,6 @@ import android.os.RemoteException;
 import android.os.SystemClock;
 import android.permission.cts.PermissionUtils;
 import android.server.wm.WindowManagerState;
-import androidx.test.filters.Suppress;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiSelector;
@@ -73,7 +73,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
     private static final String PACKAGE_NAME_APP3 = "com.android.app3";
 
     private static final String[] PACKAGE_NAMES = {
-        PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, PACKAGE_NAME_APP3
+            PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, PACKAGE_NAME_APP3
     };
 
     private static final int WAIT_TIME = 10000;
@@ -119,8 +119,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
     private Intent mAllProcesses[];
 
     private int mAppCount;
-    private ApplicationInfo [] mAppInfo;
-    private WatchUidRunner [] mWatchers;
+    private ApplicationInfo[] mAppInfo;
+    private WatchUidRunner[] mWatchers;
 
 
     @Override
@@ -151,7 +151,9 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         mAppCount = 0;
     }
 
-    /** Set up count app info objects and WatchUidRunners. */
+    /**
+     * Set up count app info objects and WatchUidRunners.
+     */
     private void setupWatchers(int count) throws Exception {
         mAppCount = count;
         mAppInfo = new ApplicationInfo[count];
@@ -164,7 +166,9 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         }
     }
 
-    /** Finish all started WatchUidRunners. */
+    /**
+     * Finish all started WatchUidRunners.
+     */
     private void shutdownWatchers() throws Exception {
         for (int i = 0; i < mAppCount; i++) {
             mWatchers[i].finish();
@@ -199,7 +203,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
             }
-        };
+        }
     }
 
     private void startActivityAndWaitForShow(final Intent intent) throws Exception {
@@ -216,11 +220,17 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
     }
 
     private void maybeClick(UiDevice device, UiSelector sel) {
-        try { device.findObject(sel).click(); } catch (Throwable ignored) { }
+        try {
+            device.findObject(sel).click();
+        } catch (Throwable ignored) {
+        }
     }
 
     private void maybeClick(UiDevice device, BySelector sel) {
-        try { device.findObject(sel).click(); } catch (Throwable ignored) { }
+        try {
+            device.findObject(sel).click();
+        } catch (Throwable ignored) {
+        }
     }
 
     /**
@@ -562,8 +572,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
     }
 
     /**
-     * Test that background check behaves correctly after a process is no longer foreground:
-     * first allowing a service to be started, then stopped by the system when idle.
+     * Test that background check behaves correctly after a process is no longer foreground: first
+     * allowing a service to be started, then stopped by the system when idle.
      */
     public void testBackgroundCheckStopsService() throws Exception {
         final Parcel data = Parcel.obtain();
@@ -733,8 +743,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
     }
 
     /**
-     * Test the background check doesn't allow services to be started from broadcasts except
-     * when in the correct states.
+     * Test the background check doesn't allow services to be started from broadcasts except when in
+     * the correct states.
      */
     public void testBackgroundCheckBroadcastService() throws Exception {
         final Intent broadcastIntent = new Intent();
@@ -774,16 +784,19 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             // Track the uid proc state changes from the broadcast (but not service execution)
             uidWatcher.waitFor(WatchUidRunner.CMD_IDLE, null, WAIT_TIME);
             uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null, WAIT_TIME);
-            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_RECEIVER, WAIT_TIME);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_RECEIVER,
+                    WAIT_TIME);
             uidWatcher.expect(WatchUidRunner.CMD_CACHED, null, WAIT_TIME);
-            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY, WAIT_TIME);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY,
+                    WAIT_TIME);
 
             // Put app on temporary whitelist to see if this allows the service start.
             controller.tempWhitelist(TEMP_WHITELIST_DURATION_MS);
 
             // Being on the whitelist means the uid is now active.
             uidWatcher.expect(WatchUidRunner.CMD_ACTIVE, null, WAIT_TIME);
-            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY, WAIT_TIME);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY,
+                    WAIT_TIME);
 
             // Try starting the service now that the app is whitelisted...  should work!
             br.sendAndWait(mContext, broadcastIntent, Activity.RESULT_OK, null, null, WAIT_TIME);
@@ -1114,8 +1127,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
     }
 
     /**
-     * Verify that an app under background restrictions has its foreground services
-     * demoted to ordinary service state when it is no longer the top app.
+     * Verify that an app under background restrictions has its foreground services demoted to
+     * ordinary service state when it is no longer the top app.
      */
     public void testBgRestrictedForegroundService() throws Exception {
         final Intent activityIntent = new Intent()
@@ -1206,8 +1219,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
     }
 
     /**
-     * Test that a single "can't save state" app has the proper process management
-     * semantics.
+     * Test that a single "can't save state" app has the proper process management semantics.
      */
     public void testCantSaveStateLaunchAndBackground() throws Exception {
         if (!supportsCantSaveState()) {
@@ -1244,7 +1256,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
                 WAIT_TIME);
         uidForegroundListener.register();
         UidImportanceListener uidBackgroundListener = new UidImportanceListener(mContext,
-                appInfo.uid, ActivityManager.RunningAppProcessInfo.IMPORTANCE_CANT_SAVE_STATE-1,
+                appInfo.uid, ActivityManager.RunningAppProcessInfo.IMPORTANCE_CANT_SAVE_STATE - 1,
                 WAIT_TIME);
         uidBackgroundListener.register();
         UidImportanceListener uidCachedListener = new UidImportanceListener(mContext,
@@ -1498,9 +1510,10 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
     }
 
     /**
-     * Test a service binding cycle between two apps, with one of them also running a
-     * foreground service. The other app should also get an FGS proc state. On stopping the
-     * foreground service, app should go back to cached state.
+     * Test a service binding cycle between two apps, with one of them also running a foreground
+     * service. The other app should also get an FGS proc state. On stopping the foreground service,
+     * app should go back to cached state.
+     *
      * @throws Exception
      */
     public void testCycleFgs() throws Exception {
@@ -1557,9 +1570,10 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
     }
 
     /**
-     * Test a service binding cycle between three apps, with one of them also running a
-     * foreground service. The other apps should also get an FGS proc state. On stopping the
-     * foreground service, app should go back to cached state.
+     * Test a service binding cycle between three apps, with one of them also running a foreground
+     * service. The other apps should also get an FGS proc state. On stopping the foreground
+     * service, app should go back to cached state.
+     *
      * @throws Exception
      */
     public void testCycleFgsTriangle() throws Exception {
@@ -1642,9 +1656,10 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
     }
 
     /**
-     * Test a service binding cycle between three apps, with one of them also running a
-     * foreground service. The other apps should also get an FGS proc state. On stopping the
-     * foreground service, app should go back to cached state.
+     * Test a service binding cycle between three apps, with one of them also running a foreground
+     * service. The other apps should also get an FGS proc state. On stopping the foreground
+     * service, app should go back to cached state.
+     *
      * @throws Exception
      */
     public void testCycleFgsTriangleBiDi() throws Exception {
@@ -1721,103 +1736,54 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
     }
 
     /**
-     * Test process states for foreground service with and without location type in the manifest.
-     * When running a foreground service with location type, the process will have
-     * PROCESS_CAPABILITY_FOREGROUND_LOCATION.
-     * @throws Exception
-     */
-    @Suppress
-    public void testFgsLocation() throws Exception {
-        ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
-                PACKAGE_NAME_APP1, 0);
-        WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
-            WAITFOR_MSEC);
-
-        try {
-            // First start a foreground service
-            CommandReceiver.sendCommand(mContext,
-                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
-                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
-            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
-                    WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_NONE));
-
-            // Try to elevate to foreground service location
-            Bundle bundle = new Bundle();
-            bundle.putInt(LocalForegroundServiceLocation.EXTRA_FOREGROUND_SERVICE_TYPE,
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
-            CommandReceiver.sendCommand(mContext,
-                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE_LOCATION,
-                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, bundle);
-            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
-                    WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_FOREGROUND_LOCATION));
-
-            // Back down to foreground service
-            CommandReceiver.sendCommand(mContext,
-                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE_LOCATION,
-                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
-            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
-                    WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_NONE));
-
-            try {
-                uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
-                        WatchUidRunner.STATE_CACHED_EMPTY, WAIT_TIME);
-                fail("App1 should not be demoted to cached");
-            } catch (IllegalStateException ise) {
-            }
-
-            // Remove foreground service as well
-            CommandReceiver.sendCommand(mContext,
-                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE,
-                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
-            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
-                    WatchUidRunner.STATE_CACHED_EMPTY,
-                    new Integer(PROCESS_CAPABILITY_NONE));
-        } finally {
-            uid1Watcher.finish();
-        }
-    }
-
-    /**
      * Test process states for foreground service binding to another app, with and without
-     * BIND_INCLUDE_CAPABILITIES.
-     * With BIND_INCLUDE_CAPABILITIES flag, PROCESS_CAPABILITY_FOREGROUND_LOCATION can be passed
-     * from client to service.
-     * Without BIND_INCLUDE_CAPABILITIES flag, PROCESS_CAPABILITY_FOREGROUND_LOCATION can not be
-     * passed from client to service.
+     * BIND_INCLUDE_CAPABILITIES. With BIND_INCLUDE_CAPABILITIES flag,
+     * PROCESS_CAPABILITY_FOREGROUND_LOCATION can be passed from client to service. Without
+     * BIND_INCLUDE_CAPABILITIES flag, PROCESS_CAPABILITY_FOREGROUND_LOCATION can not be passed from
+     * client to service.
      * @throws Exception
      */
-    @Suppress
     public void testFgsLocationBind() throws Exception {
         setupWatchers(3);
 
         try {
-            // First start a foreground service
+            // Put Package1 in TOP state, now it gets all capability (because the TOP process
+            // gets all while-in-use permission (not from FGSL).
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_ACTIVITY,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            mWatchers[0].waitFor(WatchUidRunner.CMD_PROCSTATE,
+                    WatchUidRunner.STATE_TOP,
+                    new Integer(PROCESS_CAPABILITY_FOREGROUND_LOCATION
+                            | PROCESS_CAPABILITY_ALL_IMPLICIT));
+
+            // Start a FGS
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
                     mAppInfo[0].packageName, mAppInfo[0].packageName, 0, null);
-            mWatchers[0].waitFor(WatchUidRunner.CMD_PROCSTATE,
-                    WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_NONE));
 
-            // Try to elevate to foreground service location
+            // Start a FGSL
             Bundle bundle = new Bundle();
             bundle.putInt(LocalForegroundServiceLocation.EXTRA_FOREGROUND_SERVICE_TYPE,
                     ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_START_FOREGROUND_SERVICE_LOCATION,
                     mAppInfo[0].packageName, mAppInfo[0].packageName, 0, bundle);
-            // Verify app0 has FOREGROUND_LOCATION capability.
+
+            // Stop the activity.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_ACTIVITY,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+
             mWatchers[0].waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_FOREGROUND_LOCATION));
+                    new Integer(PROCESS_CAPABILITY_FOREGROUND_LOCATION
+                            | PROCESS_CAPABILITY_ALL_IMPLICIT));
 
             // Bind App 0 -> App 1, verify doesn't include capability.
             CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_BIND_SERVICE,
                     mAppInfo[0].packageName, mAppInfo[1].packageName, 0, null);
-            // Verify app1 does NOT have FOREGROUND_LOCATION capability.
+            // Verify app1 does NOT have capability.
             mWatchers[1].waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_FG_SERVICE,
                     new Integer(PROCESS_CAPABILITY_NONE));
@@ -1830,7 +1796,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             // Verify app2 has FOREGROUND_LOCATION capability.
             mWatchers[2].waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_FOREGROUND_LOCATION));
+                    new Integer(PROCESS_CAPABILITY_FOREGROUND_LOCATION
+                            | PROCESS_CAPABILITY_ALL_IMPLICIT));
 
             // Back down to foreground service
             CommandReceiver.sendCommand(mContext,
@@ -1839,14 +1806,14 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             // Verify app0 does NOT have FOREGROUND_LOCATION capability.
             mWatchers[0].waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_NONE));
+                    new Integer(PROCESS_CAPABILITY_ALL_IMPLICIT));
 
             // Remove foreground service as well
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE,
                     mAppInfo[0].packageName, mAppInfo[0].packageName, 0, null);
             mWatchers[0].waitFor(WatchUidRunner.CMD_PROCSTATE,
-                    WatchUidRunner.STATE_CACHED_EMPTY,
+                    WatchUidRunner.STATE_CACHED_RECENT,
                     new Integer(PROCESS_CAPABILITY_NONE));
         } finally {
             // Clean up: unbind services to avoid from interferences with other tests
@@ -1864,7 +1831,6 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
      * Bound app should be TOP w/flag and BTOP without flag.
      * @throws Exception
      */
-    @Suppress
     public void testTopBind() throws Exception {
         setupWatchers(2);
 
@@ -1878,7 +1844,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_BIND_SERVICE,
                     STUB_PACKAGE_NAME, mAppInfo[0].packageName, 0, null);
             mWatchers[0].waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_BOUND_TOP,
-                    new Integer(0));
+                    new Integer(PROCESS_CAPABILITY_ALL_IMPLICIT));
 
             // Bind Stub -> App 1, include capability (TOP)
             Bundle bundle = new Bundle();

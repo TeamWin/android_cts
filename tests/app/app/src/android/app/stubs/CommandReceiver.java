@@ -17,6 +17,7 @@
 package android.app.stubs;
 
 import android.app.ActivityManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -43,6 +44,10 @@ public class CommandReceiver extends BroadcastReceiver {
     public static final int COMMAND_START_ALERT_SERVICE = 7;
     public static final int COMMAND_STOP_ALERT_SERVICE = 8;
     public static final int COMMAND_SELF_INDUCED_ANR = 9;
+    public static final int COMMAND_START_ACTIVITY = 10;
+    public static final int COMMAND_STOP_ACTIVITY = 11;
+    public static final int COMMAND_CREATE_FGSL_PENDING_INTENT = 12;
+    public static final int COMMAND_SEND_FGSL_PENDING_INTENT = 13;
 
     public static final String EXTRA_COMMAND = "android.app.stubs.extra.COMMAND";
     public static final String EXTRA_TARGET_PACKAGE = "android.app.stubs.extra.TARGET_PACKAGE";
@@ -53,7 +58,15 @@ public class CommandReceiver extends BroadcastReceiver {
     public static final String FG_LOCATION_SERVICE_NAME =
             "android.app.stubs.LocalForegroundServiceLocation";
 
+    public static final String ACTIVITY_NAME = "android.app.stubs.SimpleActivity";
+
     private static ArrayMap<String,ServiceConnection> sServiceMap = new ArrayMap<>();
+
+    // Map a packageName to a Intent that starts an Activity.
+    private static ArrayMap<String, Intent> sActivityIntent = new ArrayMap<>();
+
+    // Map a packageName to a PendingIntent.
+    private static ArrayMap<String, PendingIntent> sPendingIntent = new ArrayMap<>();
 
     /**
      * Handle the different types of binding/unbinding requests.
@@ -94,6 +107,18 @@ public class CommandReceiver extends BroadcastReceiver {
                 break;
             case COMMAND_SELF_INDUCED_ANR:
                 doSelfInducedAnr(context);
+                break;
+            case COMMAND_START_ACTIVITY:
+                doStartActivity(context, intent);
+                break;
+            case COMMAND_STOP_ACTIVITY:
+                doStopActivity(context, intent);
+                break;
+            case COMMAND_CREATE_FGSL_PENDING_INTENT:
+                doCreateFgslPendingIntent(context, intent);
+                break;
+            case COMMAND_SEND_FGSL_PENDING_INTENT:
+                doSendFgslPendingIntent(context, intent);
                 break;
         }
     }
@@ -157,6 +182,42 @@ public class CommandReceiver extends BroadcastReceiver {
     private void doSelfInducedAnr(Context context) {
         ActivityManager am = context.getSystemService(ActivityManager.class);
         am.appNotResponding("CTS - self induced");
+    }
+    private void doStartActivity(Context context, Intent commandIntent) {
+        String targetPackage = getTargetPackage(commandIntent);
+        Intent activityIntent = new Intent(Intent.ACTION_MAIN);
+        sActivityIntent.put(targetPackage, activityIntent);
+        activityIntent.setComponent(new ComponentName(targetPackage, ACTIVITY_NAME));
+        activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(activityIntent);
+    }
+
+    private void doStopActivity(Context context, Intent commandIntent) {
+        String targetPackage = getTargetPackage(commandIntent);
+        Intent activityIntent = sActivityIntent.remove(targetPackage);
+        activityIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        activityIntent.putExtra("finish", true);
+        context.startActivity(activityIntent);
+    }
+
+    private void doCreateFgslPendingIntent(Context context, Intent commandIntent) {
+        final String targetPackage = getTargetPackage(commandIntent);
+        final Intent intent = new Intent().setComponent(
+                new ComponentName(targetPackage, FG_LOCATION_SERVICE_NAME));
+        int command = LocalForegroundServiceLocation.COMMAND_START_FOREGROUND_WITH_TYPE;
+        intent.putExtras(LocalForegroundService.newCommand(new Binder(), command));
+        final PendingIntent pendingIntent = PendingIntent.getForegroundService(context, 0,
+                intent, 0);
+        sPendingIntent.put(targetPackage, pendingIntent);
+    }
+
+    private void doSendFgslPendingIntent(Context context, Intent commandIntent) {
+        final String targetPackage = getTargetPackage(commandIntent);
+        try {
+            ((PendingIntent) sPendingIntent.remove(targetPackage)).send();
+        } catch (PendingIntent.CanceledException e) {
+            Log.e(TAG, "Caugtht exception:", e);
+        }
     }
 
     private String getTargetPackage(Intent intent) {
