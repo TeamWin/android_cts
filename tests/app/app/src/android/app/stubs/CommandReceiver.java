@@ -16,6 +16,7 @@
 
 package android.app.stubs;
 
+import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -41,6 +42,7 @@ public class CommandReceiver extends BroadcastReceiver {
     public static final int COMMAND_STOP_FOREGROUND_SERVICE_LOCATION = 6;
     public static final int COMMAND_START_ALERT_SERVICE = 7;
     public static final int COMMAND_STOP_ALERT_SERVICE = 8;
+    public static final int COMMAND_SELF_INDUCED_ANR = 9;
 
     public static final String EXTRA_COMMAND = "android.app.stubs.extra.COMMAND";
     public static final String EXTRA_TARGET_PACKAGE = "android.app.stubs.extra.TARGET_PACKAGE";
@@ -89,6 +91,9 @@ public class CommandReceiver extends BroadcastReceiver {
                 break;
             case COMMAND_STOP_ALERT_SERVICE:
                 doStopAlertService(context);
+                break;
+            case COMMAND_SELF_INDUCED_ANR:
+                doSelfInducedAnr(context);
                 break;
         }
     }
@@ -147,6 +152,11 @@ public class CommandReceiver extends BroadcastReceiver {
         Intent intent = new Intent(context, LocalAlertService.class);
         intent.setAction(LocalAlertService.COMMAND_HIDE_ALERT);
         context.startService(intent);
+    }
+
+    private void doSelfInducedAnr(Context context) {
+        ActivityManager am = context.getSystemService(ActivityManager.class);
+        am.appNotResponding("CTS - self induced");
     }
 
     private String getTargetPackage(Intent intent) {
