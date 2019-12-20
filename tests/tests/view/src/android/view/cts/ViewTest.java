@@ -5057,6 +5057,24 @@ public class ViewTest {
         assertTrue(mMockParent.hasRequestLayout());
     }
 
+    @UiThreadTest
+    @Test
+    public void testIsShowingLayoutBounds() {
+        final View view = new View(mContext);
+
+        // detached view should not have debug enabled
+        assertFalse(view.isShowingLayoutBounds());
+
+        mActivity.setContentView(view);
+        view.setShowingLayoutBounds(true);
+
+        assertTrue(view.isShowingLayoutBounds());
+        mActivity.setContentView(new View(mContext));
+
+        // now that it is detached, it should be false.
+        assertFalse(view.isShowingLayoutBounds());
+    }
+
     private static class MockDrawable extends Drawable {
         private boolean mCalledSetTint = false;
 
