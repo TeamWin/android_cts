@@ -71,6 +71,7 @@ interface ITest {
     @nullable String RepeatNullableString(@nullable String value);
 
     RegularPolygon RepeatPolygon(in RegularPolygon value);
+    @nullable RegularPolygon RepeatNullablePolygon(in @nullable RegularPolygon value);
 
     // Testing inout
     void RenamePolygon(inout RegularPolygon value, String newName);
