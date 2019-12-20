@@ -27,6 +27,7 @@ interface ITest {
   String RepeatString(String value);
   @nullable String RepeatNullableString(@nullable String value);
   test_package.RegularPolygon RepeatPolygon(in test_package.RegularPolygon value);
+  @nullable test_package.RegularPolygon RepeatNullablePolygon(in @nullable test_package.RegularPolygon value);
   void RenamePolygon(inout test_package.RegularPolygon value, String newName);
   boolean[] RepeatBooleanArray(in boolean[] input, out boolean[] repeated);
   byte[] RepeatByteArray(in byte[] input, out byte[] repeated);
