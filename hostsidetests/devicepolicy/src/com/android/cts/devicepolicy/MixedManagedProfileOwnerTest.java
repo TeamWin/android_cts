@@ -198,6 +198,20 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
         // Managed profile owner cannot set currently whitelisted system settings.
     }
 
+    @Override
+    @Test
+    public void testSetAutoTime() {
+        // Managed profile owner cannot set auto time unless it is called by the profile owner of
+        // an organization-owned managed profile.
+    }
+
+    @Override
+    @Test
+    public void testSetAutoTimeZone() {
+        // Managed profile owner cannot set auto time zone unless it is called by the profile
+        // owner of an organization-owned managed profile.
+    }
+
     @Test
     public void testCannotClearProfileOwner() throws Exception {
         if (!mHasFeature) {
