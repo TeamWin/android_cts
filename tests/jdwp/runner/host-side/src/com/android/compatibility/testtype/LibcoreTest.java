@@ -20,6 +20,7 @@ import static java.util.stream.Collectors.toList;
 
 import com.android.tradefed.config.Option;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.testtype.AndroidJUnitTest;
@@ -55,7 +56,7 @@ public class LibcoreTest extends AndroidJUnitTest {
      * {@inheritDoc}
      */
     @Override
-    public void run(ITestInvocationListener listener) throws DeviceNotAvailableException {
+    public void run(TestInformation testInfo, ITestInvocationListener listener) throws DeviceNotAvailableException {
         List<String> coreExpectations = getCoreExpectations();
         if (!coreExpectations.isEmpty()) {
             addInstrumentationArg(INSTRUMENTATION_ARG_NAME, ArrayUtil.join(",", coreExpectations));
@@ -70,7 +71,7 @@ public class LibcoreTest extends AndroidJUnitTest {
                     "Setting --class and --method to null to avoid conflict with --test-package "
                             + "option.");
         }
-        super.run(listener);
+        super.run(testInfo, listener);
     }
 
     private List<String> getCoreExpectations() throws DeviceNotAvailableException {
