@@ -27,8 +27,6 @@ import android.telephony.TelephonyManager;
 import android.test.ServiceTestCase;
 import android.util.Log;
 
-import org.junit.Test;
-
 public class CarrierServiceTest extends ServiceTestCase<CarrierServiceTest.TestCarrierService> {
     private static final String TAG = CarrierServiceTest.class.getSimpleName();
 
@@ -54,14 +52,12 @@ public class CarrierServiceTest extends ServiceTestCase<CarrierServiceTest.TestC
                 && telephonyManager.getPhoneCount() > 0;
     }
 
-    @Test
     public void testNotifyCarrierNetworkChange_true() {
         if (!mHasCellular) return;
 
         notifyCarrierNetworkChange(true);
     }
 
-    @Test
     public void testNotifyCarrierNetworkChange_false() {
         if (!mHasCellular) return;
 
