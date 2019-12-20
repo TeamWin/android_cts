@@ -294,6 +294,36 @@ public class JavaClientTest {
     }
 
     @Test
+    public void testRepeatUnexpectedNullPolygon() throws RemoteException {
+        try {
+           RegularPolygon result = mInterface.RepeatPolygon(null);
+        } catch (NullPointerException e) {
+           // non-@nullable C++ result can't handle null Polygon
+           return;
+        }
+        // Java always works w/ nullptr
+        assertEquals("JAVA", mExpectedName);
+    }
+
+    @Test
+    public void testRepeatNullNullablePolygon() throws RemoteException {
+        RegularPolygon result = mInterface.RepeatNullablePolygon(null);
+        assertEquals(null, result);
+    }
+
+    @Test
+    public void testRepeatPresentNullablePolygon() throws RemoteException {
+        RegularPolygon polygon = new RegularPolygon();
+        polygon.name = "septagon";
+        polygon.numSides = 7;
+        polygon.sideLength = 9.0f;
+
+        RegularPolygon result = mInterface.RepeatNullablePolygon(polygon);
+
+        assertPolygonEquals(polygon, result);
+    }
+
+    @Test
     public void testInsAndOuts() throws RemoteException {
         RegularPolygon polygon = new RegularPolygon();
         mInterface.RenamePolygon(polygon, "Jerry");
