@@ -207,6 +207,11 @@ class MyTest : public ::aidl::test_package::BnTest,
     *_aidl_return = in_value;
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
+  ::ndk::ScopedAStatus RepeatNullablePolygon(const std::optional<RegularPolygon>& in_value,
+                                             std::optional<RegularPolygon>* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
   ::ndk::ScopedAStatus RenamePolygon(RegularPolygon* value,
                                      const std::string& newName) override {
     value->name = newName;

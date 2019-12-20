@@ -401,9 +401,22 @@ TEST_P(NdkBinderTest_Aidl, RepeatPolygon) {
   RegularPolygon defaultPolygon = {"hexagon", 6, 2.0f};
   RegularPolygon outputPolygon;
   ASSERT_OK(iface->RepeatPolygon(defaultPolygon, &outputPolygon));
-  EXPECT_EQ("hexagon", outputPolygon.name);
-  EXPECT_EQ(defaultPolygon.numSides, outputPolygon.numSides);
-  EXPECT_EQ(defaultPolygon.sideLength, outputPolygon.sideLength);
+  EXPECT_EQ(defaultPolygon, outputPolygon);
+}
+
+TEST_P(NdkBinderTest_Aidl, RepeatNullNullablePolygon) {
+  std::optional<RegularPolygon> defaultPolygon;
+  std::optional<RegularPolygon> outputPolygon;
+  ASSERT_OK(iface->RepeatNullablePolygon(defaultPolygon, &outputPolygon));
+  EXPECT_EQ(defaultPolygon, outputPolygon);
+}
+
+TEST_P(NdkBinderTest_Aidl, RepeatPresentNullablePolygon) {
+  std::optional<RegularPolygon> defaultPolygon =
+      std::optional<RegularPolygon>({"septagon", 7, 3.0f});
+  std::optional<RegularPolygon> outputPolygon;
+  ASSERT_OK(iface->RepeatNullablePolygon(defaultPolygon, &outputPolygon));
+  EXPECT_EQ(defaultPolygon, outputPolygon);
 }
 
 TEST_P(NdkBinderTest_Aidl, InsAndOuts) {
