@@ -178,6 +178,26 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
                 "testUserRestrictionAreNotPersisted", secondaryUserId);
     }
 
+    @Test
+    public void testSetTime() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".TimeManagementTest", "testSetTime", mUserId);
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".TimeManagementTest",
+                "testSetTime_failWhenAutoTimeEnabled", mUserId);
+    }
+
+    @Test
+    public void testSetTimeZone() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".TimeManagementTest", "testSetTimeZone", mUserId);
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".TimeManagementTest",
+                "testSetTimeZone_failIfAutoTimeZoneEnabled", mUserId);
+    }
+
     @FlakyTest(bugId = 137088260)
     @Test
     public void testWifi() throws Exception {

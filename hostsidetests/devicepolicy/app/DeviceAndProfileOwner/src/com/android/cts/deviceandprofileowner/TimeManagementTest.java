@@ -18,18 +18,78 @@ package com.android.cts.deviceandprofileowner;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import java.util.concurrent.TimeUnit;
+
 public class TimeManagementTest extends BaseDeviceAdminTest {
+
+    // Real world time to restore after the test.
+    private long mStartTimeWallClockMillis;
+    // Elapsed time to measure time taken by the test.
+    private long mStartTimeElapsedNanos;
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        saveTime();
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        restoreTime();
+        super.tearDown();
+    }
 
     public void testSetAutoTimeZone() {
         mDevicePolicyManager.setAutoTimeZone(ADMIN_RECEIVER_COMPONENT, true);
 
-        boolean autoTimeZone = mDevicePolicyManager.getAutoTimeZone(ADMIN_RECEIVER_COMPONENT);
-        assertThat(autoTimeZone).isTrue();
+        assertThat(mDevicePolicyManager.getAutoTimeZone(ADMIN_RECEIVER_COMPONENT)).isTrue();
 
         mDevicePolicyManager.setAutoTimeZone(ADMIN_RECEIVER_COMPONENT, false);
 
-        autoTimeZone = mDevicePolicyManager.getAutoTimeZone(ADMIN_RECEIVER_COMPONENT);
-        assertThat(autoTimeZone).isFalse();
+        assertThat(mDevicePolicyManager.getAutoTimeZone(ADMIN_RECEIVER_COMPONENT)).isFalse();
     }
 
+    public void testSetTime() {
+        mDevicePolicyManager.setAutoTime(ADMIN_RECEIVER_COMPONENT, false);
+
+        final long estimatedNow = mStartTimeWallClockMillis +
+                TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - mStartTimeElapsedNanos);
+        assertThat(mDevicePolicyManager.setTime(ADMIN_RECEIVER_COMPONENT,
+                estimatedNow - TimeUnit.HOURS.toMillis(1))).isTrue();
+    }
+
+    public void testSetTime_failWhenAutoTimeEnabled() {
+        mDevicePolicyManager.setAutoTime(ADMIN_RECEIVER_COMPONENT, true);
+
+        assertThat(mDevicePolicyManager.setTime(ADMIN_RECEIVER_COMPONENT, 0)).isFalse();
+    }
+
+    public void testSetTimeZone() {
+        mDevicePolicyManager.setAutoTimeZone(ADMIN_RECEIVER_COMPONENT, false);
+
+        assertThat(
+                mDevicePolicyManager.setTimeZone(ADMIN_RECEIVER_COMPONENT, "Singapore")).isTrue();
+    }
+
+    public void testSetTimeZone_failIfAutoTimeZoneEnabled() {
+        mDevicePolicyManager.setAutoTimeZone(ADMIN_RECEIVER_COMPONENT, true);
+
+        assertThat(
+                mDevicePolicyManager.setTimeZone(ADMIN_RECEIVER_COMPONENT, "Singapore")).isFalse();
+    }
+
+    private void saveTime() {
+        mStartTimeWallClockMillis = System.currentTimeMillis();
+        mStartTimeElapsedNanos = System.nanoTime();
+    }
+
+    private void restoreTime() {
+        mDevicePolicyManager.setAutoTime(ADMIN_RECEIVER_COMPONENT, false);
+
+        final long estimatedNow = mStartTimeWallClockMillis +
+                TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - mStartTimeElapsedNanos);
+        mDevicePolicyManager.setTime(ADMIN_RECEIVER_COMPONENT, estimatedNow);
+
+        mDevicePolicyManager.setAutoTime(ADMIN_RECEIVER_COMPONENT, true);
+    }
 }
