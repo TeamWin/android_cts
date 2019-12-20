@@ -24,11 +24,17 @@ import static org.junit.Assert.fail;
 
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ProviderInfo;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
+import android.provider.BaseColumns;
 import android.provider.MediaStore;
+import android.provider.MediaStore.MediaColumns;
 import android.provider.cts.ProviderTestUtils;
 import android.provider.cts.R;
 import android.util.Log;
@@ -165,6 +171,62 @@ public class MediaStoreTest {
             sm.getStorageVolume(Uri.parse("content://com.example/path/to/item/"));
             fail("getStorageVolume unrelated should throw exception");
         } catch (IllegalArgumentException expected) {
+        }
+    }
+
+    @Test
+    public void testRewriteToLegacy() throws Exception {
+        final Uri before = MediaStore.Images.Media
+                .getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+        final Uri after = MediaStore.rewriteToLegacy(before);
+
+        assertEquals(MediaStore.AUTHORITY, before.getAuthority());
+        assertEquals(MediaStore.AUTHORITY_LEGACY, after.getAuthority());
+    }
+
+    /**
+     * When upgrading from an older device, we really need our legacy provider
+     * to be present to ensure that we don't lose user data like
+     * {@link BaseColumns#_ID} and {@link MediaColumns#IS_FAVORITE}.
+     */
+    @Test
+    public void testLegacy() throws Exception {
+        final ProviderInfo legacy = getContext().getPackageManager()
+                .resolveContentProvider(MediaStore.AUTHORITY_LEGACY, 0);
+        if (legacy == null) {
+            if (Build.VERSION.FIRST_SDK_INT >= Build.VERSION_CODES.R) {
+                // If we're a brand new device, we don't require a legacy
+                // provider, since there's nothing to upgrade
+                return;
+            } else {
+                fail("Upgrading devices must have a legacy MediaProvider at "
+                        + "MediaStore.AUTHORITY_LEGACY to upgrade user data from");
+            }
+        }
+
+        // Verify that legacy provider is protected
+        assertEquals("Legacy provider at MediaStore.AUTHORITY_LEGACY must protect its data",
+                android.Manifest.permission.WRITE_MEDIA_STORAGE, legacy.readPermission);
+        assertEquals("Legacy provider at MediaStore.AUTHORITY_LEGACY must protect its data",
+                android.Manifest.permission.WRITE_MEDIA_STORAGE, legacy.writePermission);
+
+        // And finally verify that legacy provider is headless
+        final PackageInfo legacyPackage = getContext().getPackageManager().getPackageInfo(
+                legacy.packageName, PackageManager.GET_ACTIVITIES | PackageManager.GET_PROVIDERS
+                        | PackageManager.GET_RECEIVERS | PackageManager.GET_SERVICES);
+        assertEmpty("Headless legacy MediaProvider must have no activities",
+                legacyPackage.activities);
+        assertEquals("Headless legacy MediaProvider must have exactly one provider",
+                1, legacyPackage.providers.length);
+        assertEmpty("Headless legacy MediaProvider must have no receivers",
+                legacyPackage.receivers);
+        assertEmpty("Headless legacy MediaProvider must have no services",
+                legacyPackage.services);
+    }
+
+    private static <T> void assertEmpty(String message, T[] array) {
+        if (array != null && array.length > 0) {
+            fail(message);
         }
     }
 }
