@@ -815,6 +815,11 @@ public class StagefrightTest extends InstrumentationTestCase {
      to prevent merge conflicts, add N tests below this comment,
      before any existing test methods
      ***********************************************************/
+    @SecurityTest(minPatchLevel = "2017-03")
+    public void testBug_33090864() throws Exception {
+        int[] frameSizes = getFrameSizes(R.raw.bug_33090864_framelen);
+        doStagefrightTestRawBlob(R.raw.bug_33090864_avc, "video/avc", 320, 240, frameSizes);
+    }
 
     @SecurityTest(minPatchLevel = "2017-07")
     public void testStagefright_bug_36279112() throws Exception {
@@ -1114,6 +1119,11 @@ public class StagefrightTest extends InstrumentationTestCase {
     @SecurityTest(minPatchLevel = "2019-07")
     public void testStagefright_cve_2019_2334() throws Exception {
         doStagefrightTest(R.raw.cve_2019_2334);
+    }
+
+    public void testStagefright_cve_2017_13204() throws Exception {
+        int[] frameSizes = getFrameSizes(R.raw.cve_2017_13204_framelen);
+        doStagefrightTestRawBlob(R.raw.cve_2017_13204_avc, "video/avc", 16, 16, frameSizes);
     }
 
     @SecurityTest(minPatchLevel = "2018-03")
