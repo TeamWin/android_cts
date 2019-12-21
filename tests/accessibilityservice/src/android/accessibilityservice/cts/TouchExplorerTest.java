@@ -29,6 +29,7 @@ import static android.accessibilityservice.cts.utils.GestureUtils.doubleTap;
 import static android.accessibilityservice.cts.utils.GestureUtils.doubleTapAndHold;
 import static android.accessibilityservice.cts.utils.GestureUtils.isRawAtPoint;
 import static android.accessibilityservice.cts.utils.GestureUtils.multiTap;
+import static android.accessibilityservice.cts.utils.GestureUtils.secondFingerMultiTap;
 import static android.accessibilityservice.cts.utils.GestureUtils.swipe;
 import static android.accessibilityservice.cts.utils.GestureUtils.times;
 import static android.view.MotionEvent.ACTION_HOVER_ENTER;
@@ -343,6 +344,63 @@ public class TouchExplorerTest {
                 TYPE_TOUCH_INTERACTION_START, TYPE_TOUCH_INTERACTION_END);
         mService.clearEvents();
         mLongClickListener.assertNoneLongClicked();
+    }
+
+    /**
+     * Test the case where we want to double tap using a second finger while the first finger is
+     * touch exploring.
+     */
+    @Test
+    @AppModeFull
+    public void testSecondFingerDoubleTapTouchExploring_performsClick() {
+        if (!mHasTouchscreen || !mScreenBigEnough) return;
+        syncAccessibilityFocusToInputFocus();
+        // hold the first finger for long enough to trigger touch exploration before double-tapping.
+        // Touch exploration is triggered after the double tap timeout.
+        dispatch(
+                secondFingerMultiTap(
+                        mTapLocation,
+                        add(mTapLocation, mSwipeDistance, 0),
+                        2,
+                        ViewConfiguration.getDoubleTapTimeout() + 50));
+        mHoverListener.assertPropagated(ACTION_HOVER_ENTER, ACTION_HOVER_EXIT);
+        mTouchListener.assertNonePropagated();
+        mService.assertPropagated(
+                TYPE_VIEW_ACCESSIBILITY_FOCUSED,
+                TYPE_TOUCH_INTERACTION_START,
+                TYPE_TOUCH_EXPLORATION_GESTURE_START,
+                TYPE_TOUCH_EXPLORATION_GESTURE_END,
+                TYPE_TOUCH_INTERACTION_END,
+                TYPE_VIEW_CLICKED);
+        mClickListener.assertClicked(mView);
+    }
+
+    /**
+     * Test the case where we want to double tap using a second finger without triggering touch
+     * exploration.
+     */
+    @Test
+    @AppModeFull
+    public void testSecondFingerDoubleTapNotTouchExploring_performsClick() {
+        if (!mHasTouchscreen || !mScreenBigEnough) return;
+        syncAccessibilityFocusToInputFocus();
+        // Hold the first finger for less than the double tap timeout which will not trigger touch
+        // exploration.
+        // Touch exploration is triggered after the double tap timeout.
+        dispatch(
+                secondFingerMultiTap(
+                        mTapLocation,
+                        add(mTapLocation, mSwipeDistance, 0),
+                        2,
+                        ViewConfiguration.getDoubleTapTimeout() / 3));
+        mHoverListener.assertNonePropagated();
+        mTouchListener.assertNonePropagated();
+        mService.assertPropagated(
+                TYPE_VIEW_ACCESSIBILITY_FOCUSED,
+                TYPE_TOUCH_INTERACTION_START,
+                TYPE_TOUCH_INTERACTION_END,
+                TYPE_VIEW_CLICKED);
+        mClickListener.assertClicked(mView);
     }
 
     public void dispatch(StrokeDescription firstStroke, StrokeDescription... rest) {

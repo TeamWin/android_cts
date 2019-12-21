@@ -64,30 +64,30 @@ public class MediaMuxerTest extends AndroidTestCase {
      */
     public void testVideoAudio() throws Exception {
         int source = R.raw.video_176x144_3gp_h263_300kbps_25fps_aac_stereo_128kbps_11025hz;
-        String outputFile = File.createTempFile("MediaMuxerTest_testAudioVideo", ".mp4")
+        String outputFilePath = File.createTempFile("MediaMuxerTest_testAudioVideo", ".mp4")
                 .getAbsolutePath();
-        cloneAndVerify(source, outputFile, 2, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+        cloneAndVerify(source, outputFilePath, 2, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
     }
 
     public void testDualVideoTrack() throws Exception {
         int source = R.raw.video_176x144_h264_408kbps_30fps_352x288_h264_122kbps_30fps;
-        String outputFile = File.createTempFile("MediaMuxerTest_testDualVideo", ".mp4")
+        String outputFilePath = File.createTempFile("MediaMuxerTest_testDualVideo", ".mp4")
                 .getAbsolutePath();
-        cloneAndVerify(source, outputFile, 2, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+        cloneAndVerify(source, outputFilePath, 2, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
     }
 
     public void testDualAudioTrack() throws Exception {
         int source = R.raw.audio_aac_mono_70kbs_44100hz_aac_mono_70kbs_44100hz;
-        String outputFile = File.createTempFile("MediaMuxerTest_testDualAudio", ".mp4")
+        String outputFilePath = File.createTempFile("MediaMuxerTest_testDualAudio", ".mp4")
                 .getAbsolutePath();
-        cloneAndVerify(source, outputFile, 2, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+        cloneAndVerify(source, outputFilePath, 2, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
     }
 
     public void testDualVideoAndAudioTrack() throws Exception {
         int source = R.raw.video_h264_30fps_video_h264_30fps_aac_44100hz_aac_44100hz;
-        String outputFile = File.createTempFile("MediaMuxerTest_testDualVideoAudio", ".mp4")
+        String outputFilePath = File.createTempFile("MediaMuxerTest_testDualVideoAudio", ".mp4")
                 .getAbsolutePath();
-        cloneAndVerify(source, outputFile, 4, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+        cloneAndVerify(source, outputFilePath, 4, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
     }
 
     /**
@@ -101,9 +101,9 @@ public class MediaMuxerTest extends AndroidTestCase {
     public void testVideoAudioMedatadataWithNonCompliantMetadataTrack() throws Exception {
         int source =
                 R.raw.video_176x144_3gp_h263_300kbps_25fps_aac_stereo_128kbps_11025hz_metadata_gyro_non_compliant;
-        String outputFile = File.createTempFile("MediaMuxerTest_testAudioVideoMetadata", ".mp4")
+        String outputFilePath = File.createTempFile("MediaMuxerTest_testAudioVideoMetadata", ".mp4")
                 .getAbsolutePath();
-        cloneAndVerify(source, outputFile, 3, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+        cloneAndVerify(source, outputFilePath, 3, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
     }
 
     /**
@@ -117,9 +117,9 @@ public class MediaMuxerTest extends AndroidTestCase {
      public void testVideoAudioMedatadataWithCompliantMetadataTrack() throws Exception {
         int source =
                 R.raw.video_176x144_3gp_h263_300kbps_25fps_aac_stereo_128kbps_11025hz_metadata_gyro_compliant;
-        String outputFile = File.createTempFile("MediaMuxerTest_testAudioVideoMetadata", ".mp4")
+        String outputFilePath = File.createTempFile("MediaMuxerTest_testAudioVideoMetadata", ".mp4")
                 .getAbsolutePath();
-        cloneAndVerify(source, outputFile, 3, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+        cloneAndVerify(source, outputFilePath, 3, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
     }
 
     /**
@@ -127,9 +127,9 @@ public class MediaMuxerTest extends AndroidTestCase {
      */
     public void testAudioOnly() throws Exception {
         int source = R.raw.sinesweepm4a;
-        String outputFile = File.createTempFile("MediaMuxerTest_testAudioOnly", ".mp4")
+        String outputFilePath = File.createTempFile("MediaMuxerTest_testAudioOnly", ".mp4")
                 .getAbsolutePath();
-        cloneAndVerify(source, outputFile, 1, -1, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+        cloneAndVerify(source, outputFilePath, 1, -1, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
     }
 
     /**
@@ -137,23 +137,23 @@ public class MediaMuxerTest extends AndroidTestCase {
      */
     public void testVideoOnly() throws Exception {
         int source = R.raw.video_only_176x144_3gp_h263_25fps;
-        String outputFile = File.createTempFile("MediaMuxerTest_videoOnly", ".mp4")
+        String outputFilePath = File.createTempFile("MediaMuxerTest_videoOnly", ".mp4")
                 .getAbsolutePath();
-        cloneAndVerify(source, outputFile, 1, 180, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+        cloneAndVerify(source, outputFilePath, 1, 180, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
     }
 
     public void testWebmOutput() throws Exception {
         int source = R.raw.video_480x360_webm_vp9_333kbps_25fps_vorbis_stereo_128kbps_48000hz;
-        String outputFile = File.createTempFile("testWebmOutput", ".webm")
+        String outputFilePath = File.createTempFile("testWebmOutput", ".webm")
                 .getAbsolutePath();
-        cloneAndVerify(source, outputFile, 2, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM);
+        cloneAndVerify(source, outputFilePath, 2, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM);
     }
 
     public void testThreegppOutput() throws Exception {
         int source = R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_stereo_128kbps_22050hz;
-        String outputFile = File.createTempFile("testThreegppOutput", ".3gp")
+        String outputFilePath = File.createTempFile("testThreegppOutput", ".3gp")
                 .getAbsolutePath();
-        cloneAndVerify(source, outputFile, 2, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_3GPP);
+        cloneAndVerify(source, outputFilePath, 2, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_3GPP);
     }
 
     /**
@@ -166,12 +166,12 @@ public class MediaMuxerTest extends AndroidTestCase {
      * <br> Throws exception b/c a wrong format.
      */
     public void testIllegalStateExceptions() throws IOException {
-        String outputFile = File.createTempFile("MediaMuxerTest_testISEs", ".mp4")
+        String outputFilePath = File.createTempFile("MediaMuxerTest_testISEs", ".mp4")
                 .getAbsolutePath();
         MediaMuxer muxer;
 
         // Throws exception b/c start() is not called.
-        muxer = new MediaMuxer(outputFile, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+        muxer = new MediaMuxer(outputFilePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
         muxer.addTrack(MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 480, 320));
 
         try {
@@ -184,7 +184,7 @@ public class MediaMuxerTest extends AndroidTestCase {
         }
 
         // Should not throw exception when 2 video tracks were added.
-        muxer = new MediaMuxer(outputFile, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+        muxer = new MediaMuxer(outputFilePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
         muxer.addTrack(MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 480, 320));
 
         try {
@@ -196,7 +196,7 @@ public class MediaMuxerTest extends AndroidTestCase {
         }
 
         // Should not throw exception when 2 audio tracks were added.
-        muxer = new MediaMuxer(outputFile, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+        muxer = new MediaMuxer(outputFilePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
         muxer.addTrack(MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_AAC, 48000, 1));
         try {
             muxer.addTrack(MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_AAC, 48000, 1));
@@ -207,7 +207,7 @@ public class MediaMuxerTest extends AndroidTestCase {
         }
 
         // Should not throw exception when 3 tracks were added.
-        muxer = new MediaMuxer(outputFile, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+        muxer = new MediaMuxer(outputFilePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
         muxer.addTrack(MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 480, 320));
         muxer.addTrack(MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_AAC, 48000, 1));
         try {
@@ -219,7 +219,7 @@ public class MediaMuxerTest extends AndroidTestCase {
         }
 
         // Throws exception b/c no tracks was added.
-        muxer = new MediaMuxer(outputFile, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+        muxer = new MediaMuxer(outputFilePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
         try {
             muxer.start();
             fail("should throw IllegalStateException.");
@@ -230,7 +230,7 @@ public class MediaMuxerTest extends AndroidTestCase {
         }
 
         // Throws exception b/c a wrong format.
-        muxer = new MediaMuxer(outputFile, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+        muxer = new MediaMuxer(outputFilePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
         try {
             muxer.addTrack(MediaFormat.createVideoFormat("vidoe/mp4", 480, 320));
             fail("should throw IllegalStateException.");
@@ -243,7 +243,7 @@ public class MediaMuxerTest extends AndroidTestCase {
         // Test FileDescriptor Constructor expect sucess.
         RandomAccessFile file = null;
         try {
-            file = new RandomAccessFile(outputFile, "rws");
+            file = new RandomAccessFile(outputFilePath, "rws");
             muxer = new MediaMuxer(file.getFD(), MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
             muxer.addTrack(MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 480, 320));
         } finally {
@@ -254,7 +254,7 @@ public class MediaMuxerTest extends AndroidTestCase {
         // Test FileDescriptor Constructor expect exception with read only mode.
         RandomAccessFile file2 = null;
         try {
-            file2 = new RandomAccessFile(outputFile, "r");
+            file2 = new RandomAccessFile(outputFilePath, "r");
             muxer = new MediaMuxer(file2.getFD(), MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
             fail("should throw IOException.");
         } catch (IOException e) {
@@ -267,7 +267,7 @@ public class MediaMuxerTest extends AndroidTestCase {
         // Test FileDescriptor Constructor expect NO exception with write only mode.
         ParcelFileDescriptor out = null;
         try {
-            out = ParcelFileDescriptor.open(new File(outputFile),
+            out = ParcelFileDescriptor.open(new File(outputFilePath),
                     ParcelFileDescriptor.MODE_WRITE_ONLY | ParcelFileDescriptor.MODE_CREATE);
             muxer = new MediaMuxer(out.getFileDescriptor(), MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
         } catch (IllegalArgumentException e) {
@@ -279,7 +279,7 @@ public class MediaMuxerTest extends AndroidTestCase {
             muxer.release();
         }
 
-        new File(outputFile).delete();
+        new File(outputFilePath).delete();
     }
 
     /**
@@ -288,17 +288,17 @@ public class MediaMuxerTest extends AndroidTestCase {
      */
     public void testSimulateAudioBVideoFramesDropIssues() throws Exception {
         int sourceId = R.raw.video_h264_main_b_frames;
-        String outputFile = File.createTempFile(
+        String outputFilePath = File.createTempFile(
             "MediaMuxerTest_testSimulateAudioBVideoFramesDropIssues", ".mp4").getAbsolutePath();
         try {
-            simulateVideoFramesDropIssuesAndMux(sourceId, outputFile, 2 /* track index */,
+            simulateVideoFramesDropIssuesAndMux(sourceId, outputFilePath, 2 /* track index */,
                 MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-            verifyAFewSamplesTimestamp(sourceId, outputFile);
-            verifySamplesMatch(sourceId, outputFile, 66667 /* sample around 0 sec */, 0);
+            verifyAFewSamplesTimestamp(sourceId, outputFilePath);
+            verifySamplesMatch(sourceId, outputFilePath, 66667 /* sample around 0 sec */, 0);
             verifySamplesMatch(
-                    sourceId, outputFile, 8033333 /*  sample around 8 sec */, OFFSET_TIME_US);
+                    sourceId, outputFilePath, 8033333 /*  sample around 8 sec */, OFFSET_TIME_US);
         } finally {
-            new File(outputFile).delete();
+            new File(outputFilePath).delete();
         }
     }
 
@@ -418,22 +418,51 @@ public class MediaMuxerTest extends AndroidTestCase {
      * when video frames start later than audio.
      */
     public void testTimestampsAudioBVideoStartOffsetVideo() throws Exception {
-        int sourceId = R.raw.video_h264_main_b_frames;
-        String outputFilePath = File.createTempFile(
-            "MediaMuxerTest_testTimestampsAudioBVideoStartOffsetVideo", ".mp4").getAbsolutePath();
-        try {
-            Vector<Integer> startOffsetUsVect = new Vector<Integer>();
-            // Video starts at 400000us.
-            startOffsetUsVect.add(400000);
-            // Audio starts at 0us.
-            startOffsetUsVect.add(0);
-            cloneMediaWithSamplesDropAndStartOffsets(sourceId, outputFilePath,
-                MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4, null, startOffsetUsVect);
-            verifyTSWithSamplesDropAndStartOffset(
-                    sourceId, true /* has B frames */, outputFilePath, null, startOffsetUsVect);
-        } finally {
-            new File(outputFilePath).delete();
-        }
+        Vector<Integer> startOffsetUsVect = new Vector<Integer>();
+        // Video starts at 400000us.
+        startOffsetUsVect.add(400000);
+        // Audio starts at 0us.
+        startOffsetUsVect.add(0);
+        checkTimestampsAudioBVideoDiffStartOffsets(startOffsetUsVect);
+    }
+
+    /**
+     * Test: makes sure if audio/video muxing using MPEG4Writer works with B Frames
+     * when video and audio samples start after zero, video later than audio.
+     */
+    public void testTimestampsAudioBVideoStartOffsetVideoAudio() throws Exception {
+        Vector<Integer> startOffsetUsVect = new Vector<Integer>();
+        // Video starts at 400000us.
+        startOffsetUsVect.add(400000);
+        // Audio starts at 200000us.
+        startOffsetUsVect.add(200000);
+        checkTimestampsAudioBVideoDiffStartOffsets(startOffsetUsVect);
+    }
+
+    /**
+     * Test: makes sure if audio/video muxing using MPEG4Writer works with B Frames
+     * when video and audio samples start after zero, audio later than video.
+     */
+    public void testTimestampsAudioBVideoStartOffsetAudioVideo() throws Exception {
+        Vector<Integer> startOffsetUsVect = new Vector<Integer>();
+        // Video starts at 200000us.
+        startOffsetUsVect.add(200000);
+        // Audio starts at 400000us.
+        startOffsetUsVect.add(400000);
+        checkTimestampsAudioBVideoDiffStartOffsets(startOffsetUsVect);
+    }
+
+    /**
+     * Test: makes sure if audio/video muxing using MPEG4Writer works with B Frames
+     * when video starts after zero and audio starts before zero.
+     */
+    public void testTimestampsAudioBVideoStartOffsetNegativeAudioVideo() throws Exception {
+        Vector<Integer> startOffsetUsVect = new Vector<Integer>();
+        // Video starts at 200000us.
+        startOffsetUsVect.add(200000);
+        // Audio starts at -23220us, multiple of duration of one frame (1024/44100hz)
+        startOffsetUsVect.add(-23220);
+        checkTimestampsAudioBVideoDiffStartOffsets(startOffsetUsVect);
     }
 
     /**
@@ -441,87 +470,133 @@ public class MediaMuxerTest extends AndroidTestCase {
      * samples start later than video.
      */
     public void testTimestampsAudioBVideoStartOffsetAudio() throws Exception {
-        int sourceId = R.raw.video_h264_main_b_frames;
-        String outputFilePath = File.createTempFile(
-            "MediaMuxerTest_testTimestampsAudioBVideoStartOffsetAudio", ".mp4").getAbsolutePath();
-        try {
-            Vector<Integer> startOffsetUsVect = new Vector<Integer>();
-            // Video starts at 0us.
-            startOffsetUsVect.add(0);
-            // Audio starts at 400000us.
-            startOffsetUsVect.add(400000);
-            cloneMediaWithSamplesDropAndStartOffsets(sourceId, outputFilePath,
-                MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4, null, startOffsetUsVect);
-            verifyTSWithSamplesDropAndStartOffset(
-                    sourceId, true /* has B frames */, outputFilePath, null, startOffsetUsVect);
-        } finally {
-            new File(outputFilePath).delete();
-        }
+        Vector<Integer> startOffsetUsVect = new Vector<Integer>();
+        // Video starts at 0us.
+        startOffsetUsVect.add(0);
+        // Audio starts at 400000us.
+        startOffsetUsVect.add(400000);
+        checkTimestampsAudioBVideoDiffStartOffsets(startOffsetUsVect);
     }
 
     /**
-     * Test: make sure if audio/video muxing using MPEG4Writer works when audio
-     * samples start later than video.
+     * Test: make sure if audio/video muxing works good with different start offsets for
+     * audio and video, audio later than video at 0us.
      */
     public void testTimestampsStartOffsetAudio() throws Exception {
-        int sourceId = R.raw.video_480x360_mp4_h264_500kbps_30fps_aac_stereo_128kbps_44100hz;
-        String outputFilePath =
-                File.createTempFile("MediaMuxerTest_testTimestampsStartOffsetAudio", ".mp4")
-                        .getAbsolutePath();
-        try {
-            Vector<Integer> startOffsetUsVect = new Vector<Integer>();
-            // Video starts at 0us.
-            startOffsetUsVect.add(0);
-            // Audio starts at 50000us.
-            startOffsetUsVect.add(50000);
-            cloneMediaWithSamplesDropAndStartOffsets(sourceId, outputFilePath,
-                    MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4, null, startOffsetUsVect);
-            verifyTSWithSamplesDropAndStartOffset(
-                    sourceId, false /* no B frames */, outputFilePath, null, startOffsetUsVect);
-        } finally {
-            new File(outputFilePath).delete();
-        }
+        Vector<Integer> startOffsetUsVect = new Vector<Integer>();
+        // Video starts at 0us.
+        startOffsetUsVect.add(0);
+        // Audio starts at 500000us.
+        startOffsetUsVect.add(500000);
+        checkTimestampsWithStartOffsets(startOffsetUsVect);
     }
 
     /**
-     * Test: makes sure if audio/video muxing using MPEG4Writer works when video
-     * samples start later than audio.
+     * Test: make sure if audio/video muxing works good with different start offsets for
+     * audio and video, video later than audio at 0us.
      */
     public void testTimestampsStartOffsetVideo() throws Exception {
-        int sourceId = R.raw.video_480x360_mp4_h264_500kbps_30fps_aac_stereo_128kbps_44100hz;
-        String outputFilePath =
-                File.createTempFile("MediaMuxerTest_testTimestampsStartOffsetVideo", ".mp4")
-                        .getAbsolutePath();
-        try {
-            Vector<Integer> startOffsetUsVect = new Vector<Integer>();
-            // Video starts at 500000us.
-            startOffsetUsVect.add(500000);
-            // Audio starts at 0us.
-            startOffsetUsVect.add(0);
-            cloneMediaWithSamplesDropAndStartOffsets(sourceId, outputFilePath,
-                    MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4, null, startOffsetUsVect);
-            verifyTSWithSamplesDropAndStartOffset(
-                    sourceId, false /* no B frames */, outputFilePath, null, startOffsetUsVect);
-        } finally {
-            new File(outputFilePath).delete();
-        }
+        Vector<Integer> startOffsetUsVect = new Vector<Integer>();
+        // Video starts at 500000us.
+        startOffsetUsVect.add(500000);
+        // Audio starts at 0us.
+        startOffsetUsVect.add(0);
+        checkTimestampsWithStartOffsets(startOffsetUsVect);
     }
 
     /**
-     * Test: makes sure if audio/video muxing using MPEG4Writer works when audio and video
-     * tracks start at non-zero start offset and audio samples start later than video.
+     * Test: make sure if audio/video muxing works good with different start offsets for
+     * audio and video, audio later than video, positive offsets for both.
      */
     public void testTimestampsStartOffsetVideoAudio() throws Exception {
+        Vector<Integer> startOffsetUsVect = new Vector<Integer>();
+        // Video starts at 250000us.
+        startOffsetUsVect.add(250000);
+        // Audio starts at 500000us.
+        startOffsetUsVect.add(500000);
+        checkTimestampsWithStartOffsets(startOffsetUsVect);
+    }
+
+    /**
+     * Test: make sure if audio/video muxing works good with different start offsets for
+     * audio and video, video later than audio, positive offets for both.
+     */
+    public void testTimestampsStartOffsetAudioVideo() throws Exception {
+        Vector<Integer> startOffsetUsVect = new Vector<Integer>();
+        // Video starts at 500000us.
+        startOffsetUsVect.add(500000);
+        // Audio starts at 250000us.
+        startOffsetUsVect.add(250000);
+        checkTimestampsWithStartOffsets(startOffsetUsVect);
+    }
+
+    /**
+     * Test: make sure if audio/video muxing works good with different start offsets for
+     * audio and video, video later than audio, audio before zero.
+     */
+    public void testTimestampsStartOffsetNegativeAudioVideo() throws Exception {
+        Vector<Integer> startOffsetUsVect = new Vector<Integer>();
+        // Video starts at 50000us.
+        startOffsetUsVect.add(50000);
+        // Audio starts at -23220us, multiple of duration of one frame (1024/44100hz)
+        startOffsetUsVect.add(-23220);
+        checkTimestampsWithStartOffsets(startOffsetUsVect);
+    }
+
+    /**
+     * Test: makes sure if audio/video muxing using MPEG4Writer works with B Frames
+     * when video and audio samples start after different times.
+     */
+    private void checkTimestampsAudioBVideoDiffStartOffsets(Vector<Integer> startOffsetUs)
+            throws Exception {
+        MPEG4CheckTimestampsAudioBVideoDiffStartOffsets(startOffsetUs);
+        // TODO: uncomment webm testing once bugs related to timestamps in webmwriter are fixed.
+        // WebMCheckTimestampsAudioBVideoDiffStartOffsets(startOffsetUsVect);
+    }
+
+    private void MPEG4CheckTimestampsAudioBVideoDiffStartOffsets(Vector<Integer> startOffsetUs)
+            throws Exception {
+        if (VERBOSE) {
+            Log.v(TAG, "MPEG4CheckTimestampsAudioBVideoDiffStartOffsets");
+        }
+        int sourceId = R.raw.video_h264_main_b_frames;
+        String outputFilePath = File.createTempFile(
+            "MediaMuxerTest_testTimestampsAudioBVideoDiffStartOffsets", ".mp4").getAbsolutePath();
+        try {
+            cloneMediaWithSamplesDropAndStartOffsets(sourceId, outputFilePath,
+                MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4, null, startOffsetUs);
+            verifyTSWithSamplesDropAndStartOffset(
+                    sourceId, true /* has B frames */, outputFilePath, null, startOffsetUs);
+        } finally {
+            new File(outputFilePath).delete();
+        }
+    }
+
+    /*
+     * Check if timestamps are written consistently across all formats supported by MediaMuxer.
+     */
+    private void checkTimestampsWithStartOffsets(Vector<Integer> startOffsetUsVect)
+            throws Exception {
+        MPEG4CheckTimestampsWithStartOffsets(startOffsetUsVect);
+        // TODO: uncomment webm testing once bugs related to timestamps in webmwriter are fixed.
+        // WebMCheckTimestampsWithStartOffsets(startOffsetUsVect);
+        // TODO: need to add other formats, OGG, AAC, AMR
+    }
+
+    /**
+     * Make sure if audio/video muxing using MPEG4Writer works good with different start
+     * offsets for audio and video.
+     */
+    private void MPEG4CheckTimestampsWithStartOffsets(Vector<Integer> startOffsetUsVect)
+            throws Exception {
+        if (VERBOSE) {
+            Log.v(TAG, "MPEG4CheckTimestampsWithStartOffsets");
+        }
         int sourceId = R.raw.video_480x360_mp4_h264_500kbps_30fps_aac_stereo_128kbps_44100hz;
         String outputFilePath =
-                File.createTempFile("MediaMuxerTest_testTimestampsStartOffsetAudio", ".mp4")
-                        .getAbsolutePath();
+            File.createTempFile("MediaMuxerTest_MPEG4CheckTimestampsWithStartOffsets", ".mp4")
+                .getAbsolutePath();
         try {
-            Vector<Integer> startOffsetUsVect = new Vector<Integer>();
-            // Video starts at 250000us.
-            startOffsetUsVect.add(250000);
-            // Audio starts at 500000us.
-            startOffsetUsVect.add(500000);
             cloneMediaWithSamplesDropAndStartOffsets(sourceId, outputFilePath,
                     MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4, null, startOffsetUsVect);
             verifyTSWithSamplesDropAndStartOffset(
@@ -532,22 +607,21 @@ public class MediaMuxerTest extends AndroidTestCase {
     }
 
     /**
-     * Test: makes sure if audio/video muxing using MPEG4Writer works when audio and video
-     * tracks start at non-zero start offset and video samples start later than audio.
+     * Make sure if audio/video muxing using WebMWriter works good with different start
+     * offsets for audio and video.
      */
-    public void testTimestampsStartOffsetAudioVideo() throws Exception {
-        int sourceId = R.raw.video_480x360_mp4_h264_500kbps_30fps_aac_stereo_128kbps_44100hz;
+    private void WebMCheckTimestampsWithStartOffsets(Vector<Integer> startOffsetUsVect)
+            throws Exception {
+        if (VERBOSE) {
+            Log.v(TAG, "WebMCheckTimestampsWithStartOffsets");
+        }
+        int sourceId = R.raw.video_480x360_webm_vp9_333kbps_25fps_vorbis_stereo_128kbps_48000hz;
         String outputFilePath =
-                File.createTempFile("MediaMuxerTest_testTimestampsStartOffsetVideo", ".mp4")
-                        .getAbsolutePath();
+            File.createTempFile("MediaMuxerTest_WebMCheckTimestampsWithStartOffsets", ".webm")
+                .getAbsolutePath();
         try {
-            Vector<Integer> startOffsetUsVect = new Vector<Integer>();
-            // Video starts at 500000us.
-            startOffsetUsVect.add(500000);
-            // Audio starts at 250000us.
-            startOffsetUsVect.add(250000);
             cloneMediaWithSamplesDropAndStartOffsets(sourceId, outputFilePath,
-                    MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4, null, startOffsetUsVect);
+                    MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM, null, startOffsetUsVect);
             verifyTSWithSamplesDropAndStartOffset(
                     sourceId, false /* no B frames */, outputFilePath, null, startOffsetUsVect);
         } finally {
@@ -713,6 +787,7 @@ public class MediaMuxerTest extends AndroidTestCase {
         assertEquals("Different width", widthSrc,
                 widthTest);
 
+        //TODO: need to check each individual track's duration also.
         String durationSrc = retrieverSrc.extractMetadata(
                 MediaMetadataRetriever.METADATA_KEY_DURATION);
         String durationTest = retrieverTest.extractMetadata(
@@ -927,7 +1002,8 @@ public class MediaMuxerTest extends AndroidTestCase {
         return;
     }
 
-    /* Uses two MediaExtractor's and checks whether timestamps of first few and another few
+    /**
+     * Uses two MediaExtractor's and checks whether timestamps of first few and another few
      *  from last sync frame matches
      */
     private void verifyAFewSamplesTimestamp(int srcMediaId, String testMediaPath)
@@ -975,7 +1051,7 @@ public class MediaMuxerTest extends AndroidTestCase {
         while (numFrames-- > 0 ) {
             srcSampleTimeUs = extractorSrc.getSampleTime();
             testSampleTimeUs = extractorTest.getSampleTime();
-            if(srcSampleTimeUs == -1 || testSampleTimeUs == -1){
+            if (srcSampleTimeUs == -1 || testSampleTimeUs == -1) {
                 fail("either of tracks reached end of stream");
             }
             if ((srcSampleTimeUs + offsetTimeUs) != testSampleTimeUs) {
@@ -1127,13 +1203,25 @@ public class MediaMuxerTest extends AndroidTestCase {
         int minStartOffsetUs = Integer.MAX_VALUE;
         int trackCount = extractorSrc.getTrackCount();
 
-        // MPEG4Writer makes the start timestamp of an earliest track as zero and adjusts all
-        // other tracks' timestamp accordingly.
+        /*
+         * When all track's start offsets are positive, MPEG4Writer makes the start timestamp of the
+         * earliest track as zero and adjusts all other tracks' timestamp accordingly.
+         */
+        // TODO: need to confirm if the above logic holds good with all others writers we support.
         if (startOffsetUsVect != null) {
             for (int startOffsetUs : startOffsetUsVect) {
                 minStartOffsetUs = Math.min(startOffsetUs, minStartOffsetUs);
             }
         } else {
+            minStartOffsetUs = 0;
+        }
+
+        if (minStartOffsetUs < 0) {
+            /*
+             * Atleast one of the start offsets were negative. We have some test cases with negative
+             * offsets for audio, minStartOffset has to be reset as Writer won't adjust any of the
+             * track's timestamps.
+             */
             minStartOffsetUs = 0;
         }
 
@@ -1148,7 +1236,7 @@ public class MediaMuxerTest extends AndroidTestCase {
                 extractorSrc.selectTrack(videoTrackIndex);
                 extractorTest.selectTrack(videoTrackIndex);
                 checkVideoSamplesTimeStamps(extractorSrc, hasBframes, extractorTest, samplesDropSet,
-                        videoStartOffsetUs - minStartOffsetUs);
+                    videoStartOffsetUs - minStartOffsetUs);
                 extractorSrc.unselectTrack(videoTrackIndex);
                 extractorTest.unselectTrack(videoTrackIndex);
             }
@@ -1190,9 +1278,9 @@ public class MediaMuxerTest extends AndroidTestCase {
         extractorTest.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
 
         if (VERBOSE) {
-            Log.v(TAG, "videoSampleCount:" + videoSampleCount);
             Log.v(TAG, "srcTrackIndex:" + extractorSrc.getSampleTrackIndex() +
                         "  testTrackIndex:" + extractorTest.getSampleTrackIndex());
+            Log.v(TAG, "videoStartOffsetUs:" + videoStartOffsetUs);
         }
 
         do {
@@ -1200,50 +1288,33 @@ public class MediaMuxerTest extends AndroidTestCase {
             srcSampleTimeUs = extractorSrc.getSampleTime();
             testSampleTimeUs = extractorTest.getSampleTime();
             if (VERBOSE) {
+                Log.v(TAG, "videoSampleCount:" + videoSampleCount);
                 Log.i(TAG, "srcTSus:" + srcSampleTimeUs + " testTSus:" + testSampleTimeUs);
             }
             if (samplesDropSet == null || !samplesDropSet.contains(videoSampleCount)) {
                 if (srcSampleTimeUs == -1 || testSampleTimeUs == -1) {
-                  if (VERBOSE) {
-                      Log.v(TAG, "srcUs:" + srcSampleTimeUs + "testUs:" + testSampleTimeUs);
-                  }
-                  fail("either source or test track reached end of stream");
+                    if (VERBOSE) {
+                        Log.v(TAG, "srcUs:" + srcSampleTimeUs + "testUs:" + testSampleTimeUs);
+                    }
+                    fail("either source or test track reached end of stream");
                 }
-                // Stts values within 0.1ms(100us) difference are fudged to save too many
-                // stts entries in MPEG4Writer.
-                // If Bframes are not present, then we manage start offset of video track in the
-                // duration of the first video sample. Second sample onwards has original timestamp.
-                else if (!hasBFrames
-                        && ((videoSampleCount > 1
-                        && Math.abs(srcSampleTimeUs + videoStartOffsetUs - testSampleTimeUs) > 100)
-                        || (videoSampleCount == 1
-                        && Math.abs(srcSampleTimeUs - testSampleTimeUs) > 100))) {
+                /* Stts values within 0.1ms(100us) difference are fudged to save too many
+                 * stts entries in MPEG4Writer.
+                 */
+                else if (Math.abs(srcSampleTimeUs + videoStartOffsetUs - testSampleTimeUs) > 100) {
                     if (VERBOSE) {
                         Log.v(TAG, "Fail:video timestamps didn't match");
-                        Log.v(TAG, "srcTrackIndex:" + extractorSrc.getSampleTrackIndex() +
-                                    "  testTrackIndex:" + extractorTest.getSampleTrackIndex());
+                        Log.v(TAG,
+                            "srcTrackIndex:" + extractorSrc.getSampleTrackIndex()
+                                + "  testTrackIndex:" + extractorTest.getSampleTrackIndex());
                         Log.v(TAG, "srcTSus:" + srcSampleTimeUs + " testTSus:" + testSampleTimeUs);
-                    }
+                  }
                     fail("video timestamps didn't match");
                 }
-                // If Bframes are present, then we manage start offsert of a video track in the
-                // corresponding edit list entry.
-                else if (hasBFrames
-                        && Math.abs(srcSampleTimeUs + videoStartOffsetUs - testSampleTimeUs)
-                        > 100) {
-                    if (VERBOSE) {
-                        Log.v(TAG, "Fail:video timestamps with B frames didn't match");
-                        Log.v(TAG,  "srcTrackIndex:" + extractorSrc.getSampleTrackIndex() +
-                                    "  testTrackIndex:" + extractorTest.getSampleTrackIndex());
-                        Log.v(TAG, "srcTSus:" + srcSampleTimeUs + " testTSus:" + testSampleTimeUs);
-                    }
-                    fail("video timestamps with B frames didn't match");
-                }
-
                 testAdvance = extractorTest.advance();
             }
             srcAdvance = extractorSrc.advance();
-        } while(srcAdvance && testAdvance);
+        } while (srcAdvance && testAdvance);
         if (srcAdvance != testAdvance) {
             if (VERBOSE) {
                 Log.v(TAG, "videoSampleCount:" + videoSampleCount);
@@ -1261,9 +1332,15 @@ public class MediaMuxerTest extends AndroidTestCase {
         int audioSampleCount = 0;
 
         extractorSrc.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
-        extractorTest.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+        if (audioStartOffsetUs >= 0) {
+            // Added edit list support for maintaining only the diff in start offsets of tracks.
+            // TODO: Remove this once we add support for preserving absolute timestamps as well.
+            extractorTest.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+        } else {
+            extractorTest.seekTo(audioStartOffsetUs, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+        }
         if (VERBOSE) {
-            Log.v(TAG, "audioStartOffsetUs: " + audioStartOffsetUs);
+            Log.v(TAG, "audioStartOffsetUs:" + audioStartOffsetUs);
             Log.v(TAG, "srcTrackIndex:" + extractorSrc.getSampleTrackIndex() +
                         "  testTrackIndex:" + extractorTest.getSampleTrackIndex());
         }
@@ -1272,30 +1349,24 @@ public class MediaMuxerTest extends AndroidTestCase {
             ++audioSampleCount;
             srcSampleTimeUs = extractorSrc.getSampleTime();
             testSampleTimeUs = extractorTest.getSampleTime();
-            if(VERBOSE) {
+            if (VERBOSE) {
                 Log.v(TAG, "audioSampleCount:" + audioSampleCount);
                 Log.v(TAG, "srcTSus:" + srcSampleTimeUs + " testTSus:" + testSampleTimeUs);
             }
 
             if (srcSampleTimeUs == -1 || testSampleTimeUs == -1) {
-              if (VERBOSE) {
-                  Log.v(TAG, "srcTSus:" + srcSampleTimeUs + " testTSus:" + testSampleTimeUs);
-              }
-              fail("either source or test track reached end of stream");
-            }
-            // First audio sample would be at zero.  Audio track's start offset is implemented
-            // by assigning the first audio sample's duration as that of the offset. Second sample
-            // would play after the offset.  But video offset is achieved by edit list entry for
-            // video tracks with BFrames. Need to revert the conditional check for first
-            // audio sample once we implement empty edit list entry for audio.
-            else if ((audioSampleCount > 1 &&
-                (srcSampleTimeUs + audioStartOffsetUs) != testSampleTimeUs) ||
-                (audioSampleCount == 1 && srcSampleTimeUs != testSampleTimeUs)) {
-                    fail("audio timestamps didn't match");
+                if (VERBOSE) {
+                    Log.v(TAG, "srcTSus:" + srcSampleTimeUs + " testTSus:" + testSampleTimeUs);
                 }
+                fail("either source or test track reached end of stream");
+            }
+            // > 1us to ignore any round off errors.
+            else if (Math.abs(srcSampleTimeUs + audioStartOffsetUs - testSampleTimeUs) > 1) {
+                fail("audio timestamps didn't match");
+            }
             testAdvance = extractorTest.advance();
             srcAdvance = extractorSrc.advance();
-        } while(srcAdvance && testAdvance);
+        } while (srcAdvance && testAdvance);
         if (srcAdvance != testAdvance) {
             fail("either audio track has not reached its last sample");
         }

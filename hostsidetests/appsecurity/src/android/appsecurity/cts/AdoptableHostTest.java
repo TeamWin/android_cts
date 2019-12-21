@@ -23,6 +23,7 @@ import static android.appsecurity.cts.SplitTests.APK_xxhdpi;
 import static android.appsecurity.cts.SplitTests.CLASS;
 import static android.appsecurity.cts.SplitTests.PKG;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.platform.test.annotations.AppModeFull;
@@ -49,11 +50,20 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
 
     public static final String FEATURE_ADOPTABLE_STORAGE = "feature:android.software.adoptable_storage";
 
+    private boolean mHasAdoptableInitialState;
+
     @Before
     public void setUp() throws Exception {
         // Start all possible users to make sure their storage is unlocked
         Utils.prepareMultipleUsers(getDevice(), Integer.MAX_VALUE);
 
+        // TODO(b/146491109): Revert this change before shipping and find long-term solution.
+        // Caches the initial state of adoptable feature and sets it to true (if not already set)
+        mHasAdoptableInitialState = Boolean.parseBoolean(
+                getDevice().executeShellCommand("sm has-adoptable").trim());
+        if (!mHasAdoptableInitialState) {
+            setForceAdoptable();
+        }
         getDevice().uninstallPackage(PKG);
 
         // Enable a virtual disk to give us the best shot at being able to pass
@@ -71,19 +81,9 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
         if (isSupportedDevice()) {
             getDevice().executeShellCommand("sm set-virtual-disk false");
         }
-    }
-
-    /**
-     * Ensure that we have consistency between the feature flag and what we
-     * sniffed from the underlying fstab.
-     */
-    @Test
-    public void testFeatureConsistent() throws Exception {
-        final boolean hasFeature = hasFeature();
-        final boolean hasFstab = hasFstab();
-        if (hasFeature != hasFstab) {
-            fail("Inconsistent adoptable storage status; feature claims " + hasFeature
-                    + " but fstab claims " + hasFstab);
+        // Restores the initial cache value (if it is different)
+        if (!mHasAdoptableInitialState) {
+            getDevice().executeShellCommand("sm set-force-adoptable false");
         }
     }
 
@@ -156,6 +156,18 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
         } finally {
             cleanUp(diskId);
         }
+    }
+
+    private void setForceAdoptable() throws Exception {
+        getDevice().executeShellCommand("sm set-force-adoptable true");
+        int attempt = 0;
+        boolean hasAdoptable = false;
+        while (!hasAdoptable && attempt++ < 5) {
+            Thread.sleep(1000);
+            hasAdoptable = Boolean.parseBoolean(getDevice()
+                    .executeShellCommand("sm has-adoptable").trim());
+        }
+        assertTrue(hasAdoptable);
     }
 
     private void verifyPrimaryInternal(String diskId) throws Exception {

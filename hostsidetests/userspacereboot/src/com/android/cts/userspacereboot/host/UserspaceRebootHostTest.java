@@ -1,0 +1,43 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.android.cts.userspacereboot.host;
+
+import static com.google.common.truth.Truth.assertThat;
+
+import static org.junit.Assume.assumeTrue;
+
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(DeviceJUnit4ClassRunner.class)
+public class UserspaceRebootHostTest extends BaseHostJUnit4Test  {
+
+    @Test
+    public void testOnlyFbeDevicesSupportUserspaceReboot() throws Exception {
+        assumeTrue("Userspace reboot not supported on the device", isUserspaceRebootSupported());
+        assertThat(getDevice().getProperty("ro.crypto.state")).isEqualTo("encrypted");
+        assertThat(getDevice().getProperty("ro.crypto.type")).isEqualTo("file");
+    }
+
+    private boolean isUserspaceRebootSupported() throws Exception {
+        final String value = getDevice().getProperty("ro.init.userspace_reboot.is_supported");
+        return "1".equals(value) || "true".equals(value);
+    }
+}

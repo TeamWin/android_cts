@@ -91,7 +91,7 @@ public class WindowManager_LayoutParamsTest {
 
         new WindowManager.LayoutParams(parcel);
         assertTrue(WindowManager.LayoutParams.mayUseInputMethod(0));
-        assertFalse(WindowManager.LayoutParams.mayUseInputMethod(
+        assertTrue(WindowManager.LayoutParams.mayUseInputMethod(
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                     | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM));
         assertFalse(WindowManager.LayoutParams
