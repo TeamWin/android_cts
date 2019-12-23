@@ -722,11 +722,36 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                     EventId.RETRIEVE_PRE_REBOOT_SECURITY_LOGS_VALUE)
                     .setAdminPackageName(DEVICE_OWNER_PKG)
                     .build());
+
+            if (isLowRamDevice()) {
+                // Requesting a bug report (in AdminActionBookkeepingTest#testRequestBugreport)
+                // leaves a state where future bug report requests will fail - usually this is
+                // handled by a NotificationListenerService but on low ram devices this isn't
+                // available so we must reboot
+                rebootAndWaitUntilReady();
+            }
+
             assertMetricsLogged(getDevice(), () -> {
                 executeDeviceTestMethod(".AdminActionBookkeepingTest", "testRequestBugreport");
             }, new DevicePolicyEventWrapper.Builder(EventId.REQUEST_BUGREPORT_VALUE)
                     .setAdminPackageName(DEVICE_OWNER_PKG)
                     .build());
+
+            if (isLowRamDevice()) {
+                // Requesting a bug report (in AdminActionBookkeepingTest#testRequestBugreport)
+                // leaves a state where future bug report requests will fail - usually this is
+                // handled by a NotificationListenerService but on low ram devices this isn't
+                // available so we must reboot
+                rebootAndWaitUntilReady();
+            }
+        }
+    }
+
+    private boolean isLowRamDevice() {
+        try {
+            return getBooleanSystemProperty("ro.config.low_ram", false);
+        } catch (DeviceNotAvailableException e) {
+            return false;
         }
     }
 
