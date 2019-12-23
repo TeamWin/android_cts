@@ -345,6 +345,9 @@ public class Components extends ComponentsBase {
                 "android.server.wm.app.PipActivity.set_requested_orientation";
         // Intent action that will finish this activity
         public static final String ACTION_FINISH = "android.server.wm.app.PipActivity.finish";
+        // Intent action that will request that the activity enters picture-in-picture.
+        public static final String ACTION_ON_PIP_REQUESTED =
+                "android.server.wm.app.PipActivity.on_pip_requested";
 
         // Adds an assertion that we do not ever get onStop() before we enter picture in picture
         public static final String EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP =
@@ -359,6 +362,12 @@ public class Components extends ComponentsBase {
                 "enter_pip_aspect_ratio_denominator";
         // Calls requestAutoEnterPictureInPicture() with the value provided
         public static final String EXTRA_ENTER_PIP_ON_PAUSE = "enter_pip_on_pause";
+        // Calls requestAutoEnterPictureInPicture() with the value provided
+        public static final String EXTRA_ENTER_PIP_ON_USER_LEAVE_HINT =
+                "enter_pip_on_user_leave_hint";
+        // Calls requestAutoEnterPictureInPicture() with the value provided
+        public static final String EXTRA_ENTER_PIP_ON_PIP_REQUESTED =
+                "enter_pip_on_pip_requested";
         // Finishes the activity at the end of onResume (after EXTRA_START_ACTIVITY is handled)
         public static final String EXTRA_FINISH_SELF_ON_RESUME = "finish_self_on_resume";
         // Sets the fixed orientation (can be one of {@link ActivityInfo.ScreenOrientation}

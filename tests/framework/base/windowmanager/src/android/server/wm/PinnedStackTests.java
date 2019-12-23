@@ -42,11 +42,14 @@ import static android.server.wm.app.Components.PipActivity.ACTION_ENTER_PIP;
 import static android.server.wm.app.Components.PipActivity.ACTION_EXPAND_PIP;
 import static android.server.wm.app.Components.PipActivity.ACTION_FINISH;
 import static android.server.wm.app.Components.PipActivity.ACTION_MOVE_TO_BACK;
+import static android.server.wm.app.Components.PipActivity.ACTION_ON_PIP_REQUESTED;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ASPECT_RATIO_DENOMINATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ASPECT_RATIO_NUMERATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ON_PAUSE;
+import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ON_PIP_REQUESTED;
+import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ON_USER_LEAVE_HINT;
 import static android.server.wm.app.Components.PipActivity.EXTRA_FINISH_SELF_ON_RESUME;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ON_PAUSE_DELAY;
 import static android.server.wm.app.Components.PipActivity.EXTRA_PIP_ORIENTATION;
@@ -465,6 +468,75 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         launchHomeActivity();
         waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackExists();
+    }
+
+    @Test
+    public void testAutoEnterPictureInPictureOnUserLeaveHintWhenPipRequestedNotOverridden()
+            throws Exception {
+        // Launch a test activity so that we're not over home
+        launchActivity(TEST_ACTIVITY);
+
+        // Launch the PIP activity that enters PIP on user leave hint, not on PIP requested
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP_ON_USER_LEAVE_HINT, "true");
+        assertPinnedStackDoesNotExist();
+
+        // Go home and ensure that there is a pinned stack
+        separateTestJournal();
+        launchHomeActivity();
+        waitForEnterPip(PIP_ACTIVITY);
+        assertPinnedStackExists();
+
+        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(PIP_ACTIVITY);
+        // Check that onPictureInPictureRequested was called to try to enter pip from there
+        assertEquals("onPictureInPictureRequested", 1,
+                lifecycleCounts.getCount(ActivityCallback.ON_PICTURE_IN_PICTURE_REQUESTED));
+        // Check that onPause + onUserLeaveHint were called only once. These assertions verify that
+        // onPictureInPictureRequested doesn't attempt to trigger these callbacks because going
+        // home is already causing them to be called
+        assertEquals("onPause", 1, lifecycleCounts.getCount(ActivityCallback.ON_PAUSE));
+        assertEquals("onUserLeaveHint", 1,
+                lifecycleCounts.getCount(ActivityCallback.ON_USER_LEAVE_HINT));
+
+        final int lastUserLeaveHintIndex =
+                lifecycleCounts.getLastIndex(ActivityCallback.ON_USER_LEAVE_HINT);
+        final int lastPipRequestedIndex =
+                lifecycleCounts.getLastIndex(ActivityCallback.ON_PICTURE_IN_PICTURE_REQUESTED);
+        // Check that onPictureInPictureRequested was called first and onUserLeaveHint after
+        assertThat(lastPipRequestedIndex, lessThan(lastUserLeaveHintIndex));
+    }
+
+    @Test
+    public void testAutoEnterPictureInPictureOnPictureInPictureRequested() throws Exception {
+        // Launch a test activity so that we're not over home
+        launchActivity(TEST_ACTIVITY);
+
+        // Launch the PIP activity on pip requested
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP_ON_PIP_REQUESTED, "true");
+        assertPinnedStackDoesNotExist();
+
+        // Call onPictureInPictureRequested and verify activity enters pip
+        separateTestJournal();
+        mBroadcastActionTrigger.doAction(ACTION_ON_PIP_REQUESTED);
+        waitForEnterPip(PIP_ACTIVITY);
+        assertPinnedStackExists();
+
+        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(PIP_ACTIVITY);
+        // Check that onPictureInPictureRequested was called
+        assertEquals("onPictureInPictureRequested", 1,
+                lifecycleCounts.getCount(ActivityCallback.ON_PICTURE_IN_PICTURE_REQUESTED));
+        // Verify that cycling through userLeaveHint was not necessary since the activity overrode
+        // onPictureInPictureRequested and entered PIP mode from there
+        assertEquals("onUserLeaveHint", 0,
+                lifecycleCounts.getCount(ActivityCallback.ON_USER_LEAVE_HINT));
+        // Verify onPause does get called when the activity eventually enters PIP mode
+        assertEquals("onPause", 1, lifecycleCounts.getCount(ActivityCallback.ON_PAUSE));
+
+        final int lastOnPauseIndex =
+                lifecycleCounts.getLastIndex(ActivityCallback.ON_PAUSE);
+        final int lastPipRequestedIndex =
+                lifecycleCounts.getLastIndex(ActivityCallback.ON_PICTURE_IN_PICTURE_REQUESTED);
+        // Check that onPictureInPictureRequested was called first and onPause after
+        assertThat(lastPipRequestedIndex, lessThan(lastOnPauseIndex));
     }
 
     @Test
