@@ -18,6 +18,7 @@ package android.database.sqlite.cts;
 
 
 import android.content.Context;
+import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteCursor;
 import android.database.sqlite.SQLiteCursorDriver;
@@ -28,12 +29,15 @@ import android.os.CancellationSignal;
 import android.os.OperationCanceledException;
 import android.test.AndroidTestCase;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 
 public class SQLiteQueryBuilderTest extends AndroidTestCase {
     private SQLiteDatabase mDatabase;
+    private SQLiteQueryBuilder mStrictBuilder;
+
     private final String TEST_TABLE_NAME = "test";
     private final String EMPLOYEE_TABLE_NAME = "employee";
     private static final String DATABASE_FILE = "database_test.db";
@@ -45,6 +49,9 @@ public class SQLiteQueryBuilderTest extends AndroidTestCase {
         getContext().deleteDatabase(DATABASE_FILE);
         mDatabase = getContext().openOrCreateDatabase(DATABASE_FILE, Context.MODE_PRIVATE, null);
         assertNotNull(mDatabase);
+
+        createEmployeeTable();
+        createStrictQueryBuilder();
     }
 
     @Override
@@ -202,8 +209,6 @@ public class SQLiteQueryBuilderTest extends AndroidTestCase {
     }
 
     public void testQuery() {
-        createEmployeeTable();
-
         SQLiteQueryBuilder sqliteQueryBuilder = new SQLiteQueryBuilder();
         sqliteQueryBuilder.setTables("Employee");
         Cursor cursor = sqliteQueryBuilder.query(mDatabase,
@@ -276,8 +281,6 @@ public class SQLiteQueryBuilderTest extends AndroidTestCase {
     }
 
     public void testCancelableQuery_WhenNotCanceled_ReturnsResultSet() {
-        createEmployeeTable();
-
         CancellationSignal cancellationSignal = new CancellationSignal();
         SQLiteQueryBuilder sqliteQueryBuilder = new SQLiteQueryBuilder();
         sqliteQueryBuilder.setTables("Employee");
@@ -289,8 +292,6 @@ public class SQLiteQueryBuilderTest extends AndroidTestCase {
     }
 
     public void testCancelableQuery_WhenCanceledBeforeQuery_ThrowsImmediately() {
-        createEmployeeTable();
-
         CancellationSignal cancellationSignal = new CancellationSignal();
         SQLiteQueryBuilder sqliteQueryBuilder = new SQLiteQueryBuilder();
         sqliteQueryBuilder.setTables("Employee");
@@ -307,8 +308,6 @@ public class SQLiteQueryBuilderTest extends AndroidTestCase {
     }
 
     public void testCancelableQuery_WhenCanceledAfterQuery_ThrowsWhenExecuted() {
-        createEmployeeTable();
-
         CancellationSignal cancellationSignal = new CancellationSignal();
         SQLiteQueryBuilder sqliteQueryBuilder = new SQLiteQueryBuilder();
         sqliteQueryBuilder.setTables("Employee");
@@ -327,8 +326,6 @@ public class SQLiteQueryBuilderTest extends AndroidTestCase {
     }
 
     public void testCancelableQuery_WhenCanceledDueToContention_StopsWaitingAndThrows() {
-        createEmployeeTable();
-
         for (int i = 0; i < 5; i++) {
             final CancellationSignal cancellationSignal = new CancellationSignal();
             final Semaphore barrier1 = new Semaphore(0);
@@ -460,6 +457,152 @@ public class SQLiteQueryBuilderTest extends AndroidTestCase {
         fail("Could not prove that the query actually canceled midway during execution.");
     }
 
+    public void testStrictQuery() throws Exception {
+        final SQLiteQueryBuilder qb = mStrictBuilder;
+
+        // Should normally only be able to see one row
+        try (Cursor c = qb.query(mDatabase, null, null, null, null, null, null)) {
+            assertEquals(1, c.getCount());
+        }
+
+        // Trying sneaky queries should fail; even if they somehow succeed, we
+        // shouldn't get to see any other data.
+        try (Cursor c = qb.query(mDatabase, null, "1=1", null, null, null, null)) {
+            assertEquals(1, c.getCount());
+        } catch (Exception tolerated) {
+        }
+        try (Cursor c = qb.query(mDatabase, null, "1=1 --", null, null, null, null)) {
+            assertEquals(1, c.getCount());
+        } catch (Exception tolerated) {
+        }
+        try (Cursor c = qb.query(mDatabase, null, "1=1) OR (1=1", null, null, null, null)) {
+            assertEquals(1, c.getCount());
+        } catch (Exception tolerated) {
+        }
+        try (Cursor c = qb.query(mDatabase, null, "1=1)) OR ((1=1", null, null, null, null)) {
+            assertEquals(1, c.getCount());
+        } catch (Exception tolerated) {
+        }
+    }
+
+    private static final String[] COLUMNS_VALID = new String[] {
+            "_id",
+    };
+
+    private static final String[] COLUMNS_INVALID = new String[] {
+            "salary",
+            "MAX(salary)",
+            "undefined",
+            "(secret_column IN secret_table)",
+            "(SELECT secret_column FROM secret_table)",
+    };
+
+    public void testStrictQueryProjection() throws Exception {
+        for (String column : COLUMNS_VALID) {
+            assertStrictQueryValid(
+                    new String[] { column }, null, null, null, null, null, null);
+        }
+        for (String column : COLUMNS_INVALID) {
+            assertStrictQueryInvalid(
+                    new String[] { column }, null, null, null, null, null, null);
+        }
+    }
+
+    public void testStrictQueryWhere() throws Exception {
+        for (String column : COLUMNS_VALID) {
+            assertStrictQueryValid(
+                    null, column + ">0", null, null, null, null, null);
+            assertStrictQueryValid(
+                    null, "_id>" + column, null, null, null, null, null);
+        }
+        for (String column : COLUMNS_INVALID) {
+            assertStrictQueryInvalid(
+                    null, column + ">0", null, null, null, null, null);
+            assertStrictQueryInvalid(
+                    null, "_id>" + column, null, null, null, null, null);
+        }
+    }
+
+    public void testStrictQueryGroupBy() {
+        for (String column : COLUMNS_VALID) {
+            assertStrictQueryValid(
+                    null, null, null, column, null, null, null);
+            assertStrictQueryValid(
+                    null, null, null, "_id," + column, null, null, null);
+        }
+        for (String column : COLUMNS_INVALID) {
+            assertStrictQueryInvalid(
+                    null, null, null, column, null, null, null);
+            assertStrictQueryInvalid(
+                    null, null, null, "_id," + column, null, null, null);
+        }
+    }
+
+    public void testStrictQueryHaving() {
+        for (String column : COLUMNS_VALID) {
+            assertStrictQueryValid(
+                    null, null, null, "_id", column, null, null);
+        }
+        for (String column : COLUMNS_INVALID) {
+            assertStrictQueryInvalid(
+                    null, null, null, "_id", column, null, null);
+        }
+    }
+
+    public void testStrictQueryOrderBy() {
+        for (String column : COLUMNS_VALID) {
+            assertStrictQueryValid(
+                    null, null, null, null, null, column, null);
+            assertStrictQueryValid(
+                    null, null, null, null, null, column + " ASC", null);
+            assertStrictQueryValid(
+                    null, null, null, null, null, "_id COLLATE NOCASE ASC," + column, null);
+        }
+        for (String column : COLUMNS_INVALID) {
+            assertStrictQueryInvalid(
+                    null, null, null, null, null, column, null);
+            assertStrictQueryInvalid(
+                    null, null, null, null, null, column + " ASC", null);
+            assertStrictQueryInvalid(
+                    null, null, null, null, null, "_id COLLATE NOCASE ASC," + column, null);
+        }
+    }
+
+    public void testStrictQueryLimit() {
+        assertStrictQueryValid(
+                null, null, null, null, null, null, "32");
+        assertStrictQueryValid(
+                null, null, null, null, null, null, "0,32");
+        assertStrictQueryValid(
+                null, null, null, null, null, null, "32 OFFSET 0");
+
+        for (String column : COLUMNS_VALID) {
+            assertStrictQueryInvalid(
+                    null, null, null, null, null, null, column);
+        }
+        for (String column : COLUMNS_INVALID) {
+            assertStrictQueryInvalid(
+                    null, null, null, null, null, null, column);
+        }
+    }
+
+    private void assertStrictQueryValid(String[] projectionIn, String selection,
+            String[] selectionArgs, String groupBy, String having, String sortOrder, String limit) {
+        try (Cursor c = mStrictBuilder.query(mDatabase, projectionIn, selection, selectionArgs,
+                groupBy, having, sortOrder, limit, null)) {
+        }
+    }
+
+    private void assertStrictQueryInvalid(String[] projectionIn, String selection,
+            String[] selectionArgs, String groupBy, String having, String sortOrder, String limit) {
+        try (Cursor c = mStrictBuilder.query(mDatabase, projectionIn, selection, selectionArgs,
+                groupBy, having, sortOrder, limit, null)) {
+            fail(Arrays.asList(projectionIn, selection, selectionArgs,
+                    groupBy, having, sortOrder, limit).toString());
+        } catch (Exception expected) {
+        }
+    }
+
     private void createEmployeeTable() {
         mDatabase.execSQL("CREATE TABLE employee (_id INTEGER PRIMARY KEY, " +
                 "name TEXT, month INTEGER, salary INTEGER);");
@@ -475,5 +618,18 @@ public class SQLiteQueryBuilderTest extends AndroidTestCase {
                 "VALUES ('Jim', '1', '1000');");
         mDatabase.execSQL("INSERT INTO employee (name, month, salary) " +
                 "VALUES ('Jim', '3', '3500');");
+    }
+
+    private void createStrictQueryBuilder() {
+        mStrictBuilder = new SQLiteQueryBuilder();
+        mStrictBuilder.setTables("employee");
+        mStrictBuilder.setStrict(true);
+        mStrictBuilder.appendWhere("month=2");
+
+        final Map<String, String> projectionMap = new HashMap<>();
+        projectionMap.put("_id", "_id");
+        projectionMap.put("name", "name");
+        projectionMap.put("month", "month");
+        mStrictBuilder.setProjectionMap(projectionMap);
     }
 }
