@@ -80,6 +80,10 @@
             android:name="android.os.cts.ParcelExceptionService"
             android:process=":remote"
             android:exported="true" />
+        <service
+            android:name="android.os.cts.ParcelTest$ParcelObjectFreeService"
+            android:process=":remote"
+            android:exported="true" />
 
         <service android:name="android.os.cts.LocalService">
             <intent-filter>
