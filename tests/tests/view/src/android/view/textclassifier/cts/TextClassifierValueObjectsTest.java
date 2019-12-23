@@ -333,6 +333,7 @@ public class TextClassifierValueObjectsTest {
     public void testTextLinks_defaultValues() {
         final TextLinks textLinks = new TextLinks.Builder(TEXT).build();
 
+        assertEquals(TEXT, textLinks.getText());
         assertTrue(textLinks.getExtras().isEmpty());
         assertTrue(textLinks.getLinks().isEmpty());
     }
@@ -344,6 +345,7 @@ public class TextClassifierValueObjectsTest {
                 .addLink(START, END, Collections.singletonMap(TextClassifier.TYPE_ADDRESS, 1.0f))
                 .build();
 
+        assertEquals(TEXT, textLinks.getText());
         assertEquals(BUNDLE_VALUE, textLinks.getExtras().getString(BUNDLE_KEY));
         assertEquals(1, textLinks.getLinks().size());
         TextLinks.TextLink textLink = textLinks.getLinks().iterator().next();
