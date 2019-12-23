@@ -30,6 +30,7 @@ LOCAL_STATIC_JAVA_LIBRARIES += \
     ctstestrunner-axt \
     androidx.annotation_annotation \
     junit \
+    junit-params \
     testng
 
 LOCAL_STATIC_ANDROID_LIBRARIES += \
