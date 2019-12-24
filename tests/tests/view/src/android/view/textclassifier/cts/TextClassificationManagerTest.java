@@ -43,6 +43,8 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.google.common.collect.Range;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -299,8 +301,7 @@ public class TextClassificationManagerTest {
         for (ConversationAction conversationAction : conversationActionsList) {
             assertThat(conversationAction.getAction()).isNotNull();
             assertThat(conversationAction.getType()).isNotNull();
-            assertThat(conversationAction.getConfidenceScore()).isGreaterThan(0f);
-            assertThat(conversationAction.getConfidenceScore()).isLessThan(1.0f);
+            assertThat(conversationAction.getConfidenceScore()).isIn(Range.closed(0f, 1.0f));
         }
     }
 }

@@ -743,11 +743,8 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
             AttestedKeyPair individuallyAttestedPair = mDevicePolicyManager.generateKeyPair(
                     getWho(), KeyProperties.KEY_ALGORITHM_EC, specIndividualAtt,
                     ID_TYPE_INDIVIDUAL_ATTESTATION /* device id attestation flags */);
-            assertWithMessage(
-                    String.format("When unique attestation is not supported, key generation "
-                            + "should fail."))
-                    .that(individuallyAttestedPair)
-                    .isNull();
+            fail("When unique attestation is not supported, key generation should fail.");
+        }catch (UnsupportedOperationException expected) {
         } finally {
             mDevicePolicyManager.removeKeyPair(getWho(), someAlias);
         }

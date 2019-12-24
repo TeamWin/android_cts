@@ -81,6 +81,7 @@ public class BackupPreparer implements ITargetCleaner {
         waitForBroadcastIdle();
 
         if (mIsBackupSupported) {
+            BackupHostSideUtils.checkSetupComplete(mDevice);
             if (!isBackupActiveForSysytemUser()) {
                 throw new TargetSetupError("Cannot run test as backup is not active for system "
                         + "user", device.getDeviceDescriptor());
