@@ -107,6 +107,8 @@ public class MagneticFieldMeasurementTestActivity extends SensorCtsVerifierTestA
      * - the values representing the expectation of the test
      * - the values sampled from the sensor
      */
+// TODO: Re-enable when b/146757096 is fixed
+/*
     @SuppressWarnings("unused")
     public String testOffset() throws Throwable {
         getTestLogger().logMessage(R.string.snsr_mag_verify_offset);
@@ -116,12 +118,13 @@ public class MagneticFieldMeasurementTestActivity extends SensorCtsVerifierTestA
                 Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED,
                 SensorManager.SENSOR_DELAY_FASTEST);
         TestSensorOperation verifyOffset =
-                TestSensorOperation.createOperation(environment, 100 /* event count */);
+                TestSensorOperation.createOperation(environment, 100 /* event count );
 
         verifyOffset.addVerification(OffsetVerification.getDefault(environment));
         verifyOffset.execute(getCurrentTestNode());
         return null;
     }
+*/
 
     /**
      * This test verifies that the standard deviation of a set of sampled data from a particular
