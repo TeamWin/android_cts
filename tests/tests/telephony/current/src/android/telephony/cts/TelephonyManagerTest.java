@@ -320,6 +320,46 @@ public class TelephonyManagerTest {
     }
 
     @Test
+    public void testDevicePolicyApn() {
+        // These methods aren't accessible to anything except system and phone by design, so we just
+        // look for security exceptions here.
+        try {
+            List<ApnSetting> apns = mTelephonyManager.getDevicePolicyOverrideApns(getContext());
+            fail("SecurityException expected");
+        } catch (SecurityException e) {
+            // expected
+        }
+
+        try {
+            ApnSetting.Builder builder = new ApnSetting.Builder();
+
+            ApnSetting setting = builder
+                    .setEntryName("asdf")
+                    .setApnName("asdf")
+                    .setApnTypeBitmask(ApnSetting.TYPE_DEFAULT)
+                    .build();
+            int id = mTelephonyManager.addDevicePolicyOverrideApn(getContext(), setting);
+            fail("SecurityException expected");
+        } catch (SecurityException e) {
+            // expected
+        }
+
+        try {
+            ApnSetting.Builder builder = new ApnSetting.Builder();
+
+            ApnSetting setting = builder
+                    .setEntryName("asdf")
+                    .setApnName("asdf")
+                    .setApnTypeBitmask(ApnSetting.TYPE_DEFAULT)
+                    .build();
+            boolean success = mTelephonyManager.modifyDevicePolicyOverrideApn(
+                    getContext(), 0, setting);
+            fail("SecurityException expected");
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
+    @Test
     public void testListen() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
