@@ -1241,6 +1241,14 @@ public class StagefrightTest {
      ***********************************************************/
 
     @Test
+    @SecurityTest(minPatchLevel = "2019-09")
+    public void testStagefright_cve_2019_2108() throws Exception {
+        doStagefrightTestRawBlob(R.raw.cve_2019_2108_hevc, "video/hevc", 320, 240,
+            new CrashUtils.Config().setSignals(CrashUtils.SIGSEGV, CrashUtils.SIGBUS,
+                                               CrashUtils.SIGABRT));
+    }
+
+    @Test
     @SecurityTest(minPatchLevel = "2016-09")
     public void testStagefright_cve_2016_3880() throws Exception {
         Thread server = new Thread() {
