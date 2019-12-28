@@ -47,6 +47,7 @@ import android.telephony.SubscriptionManager;
 import android.telephony.SubscriptionManager.OnSubscriptionsChangedListener;
 import android.telephony.TelephonyManager;
 
+import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.TestThread;
 
 import org.junit.After;
@@ -195,6 +196,16 @@ public class CarrierConfigManagerTest {
             }
         } catch (SecurityException expected) {
         }
+    }
+
+    /**
+     * The following methods may return any value depending on the state of the device. Simply
+     * call them to make sure they do not throw any exceptions.
+     */
+    @Test
+    public void testCarrierConfigManagerResultDependentApi() {
+        assertNotNull(ShellIdentityUtils.invokeMethodWithShellPermissions(mConfigManager,
+                (cm) -> cm.getDefaultCarrierServicePackageName()));
     }
 
     /**

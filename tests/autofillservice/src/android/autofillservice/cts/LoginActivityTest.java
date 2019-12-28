@@ -385,6 +385,9 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
                 .setPresentation(createPresentation("The Dude"))
                 .build());
         mActivity.onUsername(View::requestFocus);
+        // Waits for the fill request to be sent to the autofill service
+        mUiBot.waitForIdle();
+
         sReplier.getNextFillRequest();
         mUiBot.assertDatasets("The Dude");
 
@@ -396,6 +399,8 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
                 .build());
 
         mActivity.forceAutofillOnUsername();
+        mUiBot.waitForIdle();
+
         final FillRequest secondRequest = sReplier.getNextFillRequest();
         assertHasFlags(secondRequest.flags, FLAG_MANUAL_REQUEST);
         mUiBot.assertDatasets("THE DUDE");

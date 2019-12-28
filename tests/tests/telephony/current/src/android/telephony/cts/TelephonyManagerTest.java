@@ -470,6 +470,16 @@ public class TelephonyManagerTest {
         mTelephonyManager.getCarrierConfig();
         ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.isAnyRadioPoweredOn());
+
+        // Verify TelephonyManager.getCarrierPrivilegedPackagesForAllActiveSubscriptions
+        List<String> resultForGetCarrierPrivilegedApis =
+                ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                        (tm) -> tm.getCarrierPrivilegedPackagesForAllActiveSubscriptions());
+        assertNotNull(resultForGetCarrierPrivilegedApis);
+        for (String result : resultForGetCarrierPrivilegedApis) {
+            assertFalse(TextUtils.isEmpty(result));
+        }
+
         TelephonyManager.getDefaultRespondViaMessageApplication(getContext(), false);
     }
 
