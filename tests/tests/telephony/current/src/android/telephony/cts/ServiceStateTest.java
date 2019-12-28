@@ -18,10 +18,10 @@ package android.telephony.cts;
 import static android.telephony.ServiceState.DUPLEX_MODE_FDD;
 import static android.telephony.ServiceState.DUPLEX_MODE_TDD;
 import static android.telephony.ServiceState.DUPLEX_MODE_UNKNOWN;
-import static android.telephony.ServiceState.STATE_OUT_OF_SERVICE;
-import static android.telephony.ServiceState.STATE_POWER_OFF;
 import static android.telephony.ServiceState.ROAMING_TYPE_DOMESTIC;
 import static android.telephony.ServiceState.ROAMING_TYPE_NOT_ROAMING;
+import static android.telephony.ServiceState.STATE_OUT_OF_SERVICE;
+import static android.telephony.ServiceState.STATE_POWER_OFF;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -206,6 +206,41 @@ public class ServiceStateTest {
         assertTrue(dataRoaming.getRoaming());
         assertTrue(voiceRoaming.getRoaming());
         assertTrue(dataVoiceRoaming.getRoaming());
+    }
+
+    @Test
+    public void testGetDataNetworkType() {
+        NetworkRegistrationInfo iwlanReg = new NetworkRegistrationInfo.Builder()
+                .setAccessNetworkTechnology(TelephonyManager.NETWORK_TYPE_IWLAN)
+                .setRegistrationState(NetworkRegistrationInfo.REGISTRATION_STATE_HOME)
+                .setTransportType(AccessNetworkConstants.TRANSPORT_TYPE_WLAN)
+                .setDomain(NetworkRegistrationInfo.DOMAIN_PS)
+                .build();
+
+        NetworkRegistrationInfo wwanReg = new NetworkRegistrationInfo.Builder()
+                .setAccessNetworkTechnology(TelephonyManager.NETWORK_TYPE_1xRTT)
+                .setRegistrationState(NetworkRegistrationInfo.REGISTRATION_STATE_HOME)
+                .setTransportType(AccessNetworkConstants.TRANSPORT_TYPE_WWAN)
+                .setDomain(NetworkRegistrationInfo.DOMAIN_PS)
+                .build();
+
+        NetworkRegistrationInfo outOfServiceWwanReg = new NetworkRegistrationInfo.Builder()
+                .setAccessNetworkTechnology(TelephonyManager.NETWORK_TYPE_1xRTT)
+                .setRegistrationState(
+                        NetworkRegistrationInfo.REGISTRATION_STATE_NOT_REGISTERED_OR_SEARCHING)
+                .setTransportType(AccessNetworkConstants.TRANSPORT_TYPE_WWAN)
+                .setDomain(NetworkRegistrationInfo.DOMAIN_PS)
+                .build();
+
+        serviceState = new ServiceState();
+        serviceState.addNetworkRegistrationInfo(iwlanReg);
+        serviceState.addNetworkRegistrationInfo(wwanReg);
+        assertEquals(TelephonyManager.NETWORK_TYPE_1xRTT, serviceState.getDataNetworkType());
+
+        serviceState = new ServiceState();
+        serviceState.addNetworkRegistrationInfo(iwlanReg);
+        serviceState.addNetworkRegistrationInfo(outOfServiceWwanReg);
+        assertEquals(TelephonyManager.NETWORK_TYPE_IWLAN, serviceState.getDataNetworkType());
     }
 
     @Test
