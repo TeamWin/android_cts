@@ -21,6 +21,14 @@ import android.platform.test.annotations.SecurityTest;
 @SecurityTest
 public class Poc17_01 extends SecurityTestCase {
 
+    /**
+     *  b/30148882
+     */
+    @SecurityTest
+    public void testPocCVE_2016_6758() throws Exception {
+        AdbUtils.runPocAssertNoCrashes("CVE-2016-6758", getDevice(), "mediaserver");
+    }
+
     //Criticals
     /**
      *  b/31797770
