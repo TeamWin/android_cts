@@ -2107,6 +2107,17 @@ public class TelephonyManagerTest {
         }
     }
 
+    @Test
+    public void testGetSubscriptionId() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        TelephonyManager tm = mTelephonyManager.createForSubscriptionId(1);
+        int subId = tm.getSubscriptionId();
+        assertEquals(1, subId);
+    }
+
     /**
      * Validate Emergency Number address that only contains the dialable character.
      *
