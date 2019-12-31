@@ -872,11 +872,11 @@ public class KeyAttestationTest extends AndroidTestCase {
     }
 
     private void checkRootOfTrust(Attestation attestation, boolean requireLocked) {
-        RootOfTrust rootOfTrust = attestation.getTeeEnforced().getRootOfTrust();
-        assertNotNull(rootOfTrust);
-        assertNotNull(rootOfTrust.getVerifiedBootKey());
-        assertTrue(rootOfTrust.getVerifiedBootKey().length >= 32);
         if (requireLocked) {
+            RootOfTrust rootOfTrust = attestation.getTeeEnforced().getRootOfTrust();
+            assertNotNull(rootOfTrust);
+            assertNotNull(rootOfTrust.getVerifiedBootKey());
+            assertTrue(rootOfTrust.getVerifiedBootKey().length >= 32);
             assertTrue(rootOfTrust.isDeviceLocked());
             assertEquals(KM_VERIFIED_BOOT_VERIFIED, rootOfTrust.getVerifiedBootState());
         }
