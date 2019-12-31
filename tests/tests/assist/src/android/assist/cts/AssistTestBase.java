@@ -610,12 +610,12 @@ abstract class AssistTestBase {
 
         if (parentView instanceof TextView) {
             if (parentView instanceof EditText) {
-                assertWithMessage("Text selection start does not match",
-                        parentNode.getTextSelectionStart(),
-                        ((EditText) parentView).getSelectionStart());
-                assertWithMessage("Text selection end does not match",
-                        parentNode.getTextSelectionEnd(),
-                        ((EditText) parentView).getSelectionEnd());
+              assertWithMessage("Text selection start does not match")
+                      .that(parentNode.getTextSelectionStart())
+                      .isEqualTo(((EditText) parentView).getSelectionStart());
+              assertWithMessage("Text selection end does not match")
+                .that(parentNode.getTextSelectionEnd())
+                      .isEqualTo(((EditText) parentView).getSelectionEnd());
             }
             TextView textView = (TextView) parentView;
             assertThat(parentNode.getTextSize()).isWithin(0.01F).of(textView.getTextSize());
