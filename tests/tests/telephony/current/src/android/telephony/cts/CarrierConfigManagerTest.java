@@ -138,6 +138,18 @@ public class CarrierConfigManagerTest {
                 config.getString(CarrierConfigManager.KEY_CARRIER_VVM_PACKAGE_NAME_STRING), "");
             assertFalse(CarrierConfigManager.isConfigForIdentifiedCarrier(config));
         }
+
+        // These key should return default values if not customized.
+        assertNotNull(config.getIntArray(
+                CarrierConfigManager.KEY_5G_NR_SSRSRP_THRESHOLDS_INT_ARRAY));
+        assertNotNull(config.getIntArray(
+                CarrierConfigManager.KEY_5G_NR_SSRSRQ_THRESHOLDS_INT_ARRAY));
+        assertNotNull(config.getIntArray(
+                CarrierConfigManager.KEY_5G_NR_SSSINR_THRESHOLDS_INT_ARRAY));
+        assertNotNull(config.getIntArray(
+                CarrierConfigManager.KEY_LTE_RSRQ_THRESHOLDS_INT_ARRAY));
+        assertNotNull(config.getIntArray(
+                CarrierConfigManager.KEY_LTE_RSSNR_THRESHOLDS_INT_ARRAY));
     }
 
     @Test
