@@ -16,22 +16,28 @@
 
 package android.telephonyprovider.cts;
 
+import static android.telephonyprovider.cts.DefaultSmsAppHelper.hasTelephony;
+
 import android.content.ContentResolver;
 import android.provider.Telephony;
 import android.test.InstrumentationTestCase;
 
 public class CellBroadcastProviderTest extends InstrumentationTestCase {
     private ContentResolver mContentResolver;
-    private static boolean sHasShellPermissionIdentity = false;
+    private boolean mHasTelephony;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         mContentResolver = getInstrumentation().getContext().getContentResolver();
+        mHasTelephony = hasTelephony();
     }
 
     // this is only allowed for privileged process
     public void testAccess() {
+        if (!mHasTelephony) {
+            return;
+        }
         try {
             mContentResolver.query(Telephony.CellBroadcasts.CONTENT_URI,
                     null, null, null, null);
@@ -42,6 +48,9 @@ public class CellBroadcastProviderTest extends InstrumentationTestCase {
     }
 
     public void testAccessMessageHistoryWithoutPermission() {
+        if (!mHasTelephony) {
+            return;
+        }
         try {
             mContentResolver.query(Telephony.CellBroadcasts.MESSAGE_HISTORY_URI,
                     null, null, null, null);
