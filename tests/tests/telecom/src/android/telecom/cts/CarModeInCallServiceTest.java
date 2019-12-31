@@ -86,6 +86,10 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
      * Verifies that a car mode InCallService can enter and exit car mode using a priority.
      */
     public void testSetCarMode() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
         enableAndVerifyCarMode(mCarModeIncallServiceControlOne, 1000);
         disableAndVerifyCarMode(mCarModeIncallServiceControlOne, Configuration.UI_MODE_TYPE_NORMAL);
     }
@@ -95,6 +99,10 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
      * already in car mode.
      */
     public void testStartCallInCarMode() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
         enableAndVerifyCarMode(mCarModeIncallServiceControlOne, 1000);
 
         // Place a call and verify we bound to the Car Mode InCallService
@@ -113,6 +121,10 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
      * and receives information about the call.
      */
     public void testStartCallInCarModeTwoServices() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
         enableAndVerifyCarMode(mCarModeIncallServiceControlOne, 1000);
         enableAndVerifyCarMode(mCarModeIncallServiceControlTwo, 999);
 
@@ -135,6 +147,10 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
      * enabled.
      */
     public void testSwitchToCarMode() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
         // Place a call and verify it went to the default dialer
         placeAndVerifyCall();
         verifyConnectionForOutgoingCall();
@@ -152,6 +168,10 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
      * Similar to {@link #testSwitchToCarMode}, except exits car mode before the call terminates.
      */
     public void testSwitchToCarModeAndBack() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
         // Place a call and verify it went to the default dialer
         placeAndVerifyCall();
         verifyConnectionForOutgoingCall();
@@ -184,6 +204,10 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
      * uses multiple car mode InCallServices.
      */
     public void testSwitchToCarModeMultiple() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
         // Place a call and verify it went to the default dialer
         placeAndVerifyCall();
         verifyConnectionForOutgoingCall();
