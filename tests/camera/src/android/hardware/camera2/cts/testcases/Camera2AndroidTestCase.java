@@ -140,12 +140,16 @@ public class Camera2AndroidTestCase extends Camera2ParameterizedTestCase {
 
     @Override
     public void tearDown() throws Exception {
-        mHandlerThread.quitSafely();
-        mHandler = null;
-        closeDefaultImageReader();
-
         try {
-            mCollector.verify();
+            if (mHandlerThread != null) {
+                mHandlerThread.quitSafely();
+            }
+            mHandler = null;
+            closeDefaultImageReader();
+
+            if (mCollector != null) {
+                mCollector.verify();
+            }
         } catch (Throwable e) {
             // When new Exception(e) is used, exception info will be printed twice.
             throw new Exception(e.getMessage());
