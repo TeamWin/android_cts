@@ -284,6 +284,10 @@ public class ThirdPartyCallScreeningServiceTest extends BaseTelecomTestWithMockS
     }
 
     public void testAllowCall() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
         mCallScreeningControl.setCallResponse(false /* shouldDisallowCall */,
                 false /* shouldRejectCall */, false /* shouldSilenceCall */,
                 false /* shouldSkipCallLog */, false /* shouldSkipNotification */);
@@ -292,6 +296,10 @@ public class ThirdPartyCallScreeningServiceTest extends BaseTelecomTestWithMockS
     }
 
     public void testNoPostCallActivityWhenBlocked() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
         mCallScreeningControl.setCallResponse(true /* shouldDisallowCall */,
                 true /* shouldRejectCall */, false /* shouldSilenceCall */,
                 false /* shouldSkipCallLog */, true /* shouldSkipNotification */);
