@@ -371,6 +371,10 @@ public class AccessibilityGestureDetectorTest {
     @Test
     @AppModeFull
     public void testDispatchGesture_privateDisplay_gestureCancelled() throws Exception{
+        if (!mHasTouchScreen || !mScreenBigEnough) {
+            return;
+        }
+
         try (final VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
             final int displayId = displaySession.createDisplayWithDefaultDisplayMetricsAndWait
                     (sInstrumentation.getTargetContext(),
