@@ -31,11 +31,12 @@ import android.graphics.Rect;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.SurfaceControl;
 import android.view.SurfaceHolder;
 import android.view.SurfaceHolder.Callback;
 import android.view.WindowInsets;
 import android.view.WindowManager;
-import android.view.WindowlessViewRoot;
+import android.view.SurfaceControlViewHost;
 import android.widget.FrameLayout;
 import android.widget.Button;
 
@@ -67,7 +68,7 @@ public class WindowlessWmTests implements SurfaceHolder.Callback {
     private Activity mActivity;
     private SurfaceView mSurfaceView;
 
-    private WindowlessViewRoot mVr;
+    private SurfaceControlViewHost mVr;
     private View mEmbeddedView;
 
     private boolean mClicked = false;
@@ -108,8 +109,12 @@ public class WindowlessWmTests implements SurfaceHolder.Callback {
     }
 
     private void addViewToSurfaceView(SurfaceView sv, View v, int width, int height) {
-        mVr = new WindowlessViewRoot(mActivity, mActivity.getDisplay(),
-                sv.getSurfaceControl(), sv.getInputToken());
+        mVr = new SurfaceControlViewHost(mActivity, mActivity.getDisplay(), sv.getInputToken());
+
+        final SurfaceControl.Transaction t = new SurfaceControl.Transaction();
+        t.reparent(mVr.getSurfacePackage().getSurfaceControl(), sv.getSurfaceControl())
+            .apply();
+
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(width, height,
                 WindowManager.LayoutParams.TYPE_APPLICATION, 0, PixelFormat.OPAQUE);
         mVr.addView(v, lp);
