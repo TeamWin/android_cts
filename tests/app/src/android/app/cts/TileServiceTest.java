@@ -16,6 +16,11 @@
 
 package android.app.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.stubs.TestTileService;
@@ -23,41 +28,48 @@ import android.os.Looper;
 import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
 
+import org.junit.Test;
+
 public class TileServiceTest extends BaseTileServiceTest {
     private final static String TAG = "TileServiceTest";
 
+    @Test
     public void testCreateTileService() {
         final TileService tileService = new TileService();
     }
 
-
+    @Test
     public void testListening() throws Exception {
-        if (!TileService.isQuickSettingsSupported()) return;
         initializeAndListen();
     }
 
+    @Test
     public void testListening_stopped() throws Exception {
         initializeAndListen();
         expandSettings(false);
         waitForListening(false);
     }
 
+    @Test
     public void testLocked_deviceNotLocked() throws Exception {
         initializeAndListen();
         assertFalse(mTileService.isLocked());
     }
 
+    @Test
     public void testSecure_deviceNotSecure() throws Exception {
         initializeAndListen();
         assertFalse(mTileService.isSecure());
     }
-    
+
+    @Test
     public void testTile_hasCorrectIcon() throws Exception {
         initializeAndListen();
         Tile tile = mTileService.getQsTile();
         assertEquals(TestTileService.ICON_ID, tile.getIcon().getResId());
     }
 
+    @Test
     public void testTile_hasCorrectSubtitle() throws Exception {
         initializeAndListen();
 
@@ -67,6 +79,7 @@ public class TileServiceTest extends BaseTileServiceTest {
         assertEquals("test_subtitle", tile.getSubtitle());
     }
 
+    @Test
     public void testShowDialog() throws Exception {
         Looper.prepare();
         Dialog dialog = new AlertDialog.Builder(mContext).create();
@@ -80,6 +93,7 @@ public class TileServiceTest extends BaseTileServiceTest {
         dialog.dismiss();
     }
 
+    @Test
     public void testUnlockAndRun_phoneIsUnlockedActivityIsRun() throws Exception {
         initializeAndListen();
         assertFalse(mTileService.isLocked());
@@ -91,6 +105,7 @@ public class TileServiceTest extends BaseTileServiceTest {
         waitForRun(testRunnable);
     }
 
+    @Test
     public void testTileInDumpAndHasState() throws Exception {
         initializeAndListen();
 
