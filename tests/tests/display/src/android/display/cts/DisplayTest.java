@@ -57,6 +57,8 @@ import org.junit.runner.RunWith;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -85,6 +87,7 @@ public class DisplayTest {
     private WindowManager mWindowManager;
     private UiModeManager mUiModeManager;
     private Context mContext;
+    private ColorSpace[] mSupportedWideGamuts;
 
     // To test display mode switches.
     private TestPresentation mPresentation;
@@ -103,6 +106,7 @@ public class DisplayTest {
         mDisplayManager = (DisplayManager)mContext.getSystemService(Context.DISPLAY_SERVICE);
         mWindowManager = (WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE);
         mUiModeManager = (UiModeManager)mContext.getSystemService(Context.UI_MODE_SERVICE);
+        mSupportedWideGamuts = mContext.getDisplay().getSupportedWideColorGamut();
     }
 
     @After
@@ -414,7 +418,22 @@ public class DisplayTest {
             } catch (Exception e) {
             }
         }
+    }
 
+    @Test
+    public void testGetSupportedWideColorGamut_shouldNotBeNull() {
+        assertNotNull(mSupportedWideGamuts);
+    }
+
+    @Test
+    public void testGetSupportWideColorGamut_displayIsWideColorGamut() {
+        final ColorSpace displayP3 = ColorSpace.get(ColorSpace.Named.DISPLAY_P3);
+        final ColorSpace dciP3 = ColorSpace.get(ColorSpace.Named.DCI_P3);
+        final List<ColorSpace> list = Arrays.asList(mSupportedWideGamuts);
+        final boolean supportsWideGamut = mContext.getDisplay().isWideColorGamut()
+                && mSupportedWideGamuts.length > 0;
+        final boolean supportsP3 = list.contains(displayP3) || list.contains(dciP3);
+        assertEquals(supportsWideGamut, supportsP3);
     }
 
     /**
