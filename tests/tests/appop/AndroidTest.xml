@@ -39,6 +39,8 @@
         <option name="push-file" key="AppWithFeatureInheritingFromExisting.apk" value="/data/local/tmp/cts/appops/AppWithFeatureInheritingFromExisting.apk" />
         <option name="push-file" key="AppWithFeatureInheritingFromSameAsOther.apk" value="/data/local/tmp/cts/appops/AppWithFeatureInheritingFromSameAsOther.apk" />
         <option name="push-file" key="AppWithFeatureInheritingFromSelf.apk" value="/data/local/tmp/cts/appops/AppWithFeatureInheritingFromSelf.apk" />
+        <option name="push-file" key="AppWithLongFeatureIdFeature.apk" value="/data/local/tmp/cts/appops/AppWithLongFeatureIdFeature.apk" />
+        <option name="push-file" key="AppWithTooManyFeatures.apk" value="/data/local/tmp/cts/appops/AppWithTooManyFeatures.apk" />
     </target_preparer>
 
     <!-- Remove additional apps if installed -->

@@ -117,4 +117,14 @@ class FeatureTest {
     fun cannotInheritFromSameAsOther() {
         installApk("AppWithFeatureInheritingFromSameAsOther.apk")
     }
+
+    @Test(expected = AssertionError::class)
+    fun cannotUseVeryLongFeatureIDs() {
+        installApk("AppWithLongFeatureIdFeature.apk")
+    }
+
+    @Test(expected = AssertionError::class)
+    fun cannotUseTooManyFeatures() {
+        installApk("AppWithTooManyFeatures.apk")
+    }
 }
