@@ -1658,6 +1658,7 @@ public class AudioRecordTest {
     /*
      * Microphone Direction API tests
      */
+    @Test
     public void testSetPreferredMicrophoneDirection() {
         if (!hasMicrophone()) {
             return;
@@ -1678,6 +1679,7 @@ public class AudioRecordTest {
         return;
     }
 
+    @Test
     public void testSetPreferredMicrophoneFieldDimension() {
         if (!hasMicrophone()) {
             return;

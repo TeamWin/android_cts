@@ -912,6 +912,7 @@ public class LocationManagerFineTest {
     }
 
     @Test
+    @SuppressWarnings("TryFailThrowable")
     public void testSetTestProviderLocation_B33091107() throws Exception {
         // test for b/33091107, where a malicious app could fool a real provider into providing a
         // mock location that isn't marked as being mock

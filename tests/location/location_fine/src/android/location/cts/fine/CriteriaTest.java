@@ -196,6 +196,7 @@ public class CriteriaTest {
         assertEquals(Criteria.NO_REQUIREMENT, criteria.getSpeedAccuracy());
     }
 
+    @Test
     public void testAccessSpeedRequired() {
         Criteria criteria = new Criteria();
 
