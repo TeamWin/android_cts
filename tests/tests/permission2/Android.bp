@@ -53,6 +53,7 @@ android_test {
         ":CtsLegacyStorageIsolatedWithSharedUid",
         ":CtsLegacyStorageRestrictedWithSharedUid",
         ":CtsLegacyStorageRestrictedSdk28WithSharedUid",
+        ":CtsStoragePermissionsUserOptOutSdk30",
         ":CtsSMSRestrictedWithSharedUid",
         ":CtsSMSNotRestrictedWithSharedUid",
     ],
