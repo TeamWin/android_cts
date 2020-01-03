@@ -37,11 +37,10 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.google.common.base.Preconditions;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -263,7 +262,7 @@ public final class CannedAugmentedFillResponse {
             private AutofillValue mOnlyFieldValue;
 
             public Builder(@NonNull String presentation) {
-                mPresentation = Preconditions.checkNotNull(presentation);
+                mPresentation = Objects.requireNonNull(presentation);
             }
 
             /**

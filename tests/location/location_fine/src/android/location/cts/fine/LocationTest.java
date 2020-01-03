@@ -399,6 +399,7 @@ public class LocationTest {
         assertTrue(location.hasSpeed());
     }
 
+    @Test
     public void testAccessTime() {
         Location location = new Location("");
 
