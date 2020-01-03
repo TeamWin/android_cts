@@ -194,6 +194,7 @@
         <!--__________________-->
         <!-- Bulletin 2018-10 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2018-9491->/data/local/tmp/CVE-2018-9491" />
         <option name="push" value="CVE-2018-9515->/data/local/tmp/CVE-2018-9515" />
 
         <!--__________________-->
@@ -224,7 +225,6 @@
         <option name="cleanup" value="true" />
 
         <!-- Please add 32-bit binary tests below to avoid merge conflict -->
-
 
         <!-- Please add 64-bit binary tests below to avoid merge conflict -->
 
