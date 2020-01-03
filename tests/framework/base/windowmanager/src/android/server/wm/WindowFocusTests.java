@@ -30,6 +30,7 @@ import static android.view.KeyEvent.KEYCODE_5;
 import static android.view.KeyEvent.KEYCODE_6;
 import static android.view.KeyEvent.KEYCODE_7;
 import static android.view.KeyEvent.KEYCODE_8;
+import static android.view.KeyEvent.keyCodeToString;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
@@ -431,7 +432,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
         }
 
         void assertAndConsumeKeyEvent(int action, int keyCode, int flags) {
-            assertNotNull(getLogTag() + " must receive key event.",
+            assertNotNull(getLogTag() + " must receive key event " + keyCodeToString(keyCode),
                     consumeKeyEvent(action, keyCode, flags));
         }
 
