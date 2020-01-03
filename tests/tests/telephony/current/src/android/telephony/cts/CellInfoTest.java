@@ -782,8 +782,8 @@ public class CellInfoTest {
         wcdma.getDbm();
 
         int asuLevel = wcdma.getAsuLevel();
-        assertTrue("getLevel() out of range [0,31] (or 99 is unknown), level=" + asuLevel,
-                asuLevel == 99 || (asuLevel >= 0 && asuLevel <= 31));
+        assertTrue("getAsuLevel() out of range 0..96, 255, asuLevel=" + asuLevel,
+                asuLevel == 255 || (asuLevel >= 0 && asuLevel <= 96));
 
         int level = wcdma.getLevel();
         assertTrue("getLevel() out of range [0,4], level=" + level, level >= 0 && level <= 4);
