@@ -49,12 +49,16 @@ public class ProcessUserData extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        try {
-            processUserData(context);
-            setResultCode(1);
-        } catch (UserDataException e) {
-            setResultCode(0);
-            setResultData(e.getMessage());
+        if (intent.getAction().equals("PROCESS_USER_DATA")) {
+            try {
+                processUserData(context);
+                setResultCode(1);
+            } catch (UserDataException e) {
+                setResultCode(0);
+                setResultData(e.getMessage());
+            }
+        } else if (intent.getAction().equals("GET_USER_DATA_VERSION")) {
+            setResultCode(getUserDataVersion(context));
         }
     }
 
@@ -118,6 +122,21 @@ public class ProcessUserData extends BroadcastReceiver {
             pw.close();
         } catch (IOException e) {
             throw new UserDataException("Unable to write user data.", e);
+        }
+    }
+
+    /**
+     * Return the app's user data version or -1 if userdata.txt doesn't exist.
+     */
+    private int getUserDataVersion(Context context) {
+        File versionFile = new File(context.getFilesDir(), "userdata.txt");
+        try (Scanner s = new Scanner(versionFile);) {
+            int dataVersion = s.nextInt();
+            return dataVersion;
+        } catch (FileNotFoundException e) {
+            // No problem. This is a fresh install of the app or the user data
+            // has been wiped.
+            return -1;
         }
     }
 }
