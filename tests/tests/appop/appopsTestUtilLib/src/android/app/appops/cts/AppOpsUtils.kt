@@ -16,10 +16,12 @@
 
 package android.app.appops.cts
 
+import android.app.AppOpsManager
 import android.app.AppOpsManager.MODE_ALLOWED
 import android.app.AppOpsManager.MODE_DEFAULT
 import android.app.AppOpsManager.MODE_ERRORED
 import android.app.AppOpsManager.MODE_IGNORED
+import android.app.AppOpsManager.OpEntry
 import android.util.Log
 import androidx.test.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil
@@ -119,7 +121,14 @@ private fun getOpState(packageName: String, opStr: String): String {
     return runCommand("appops get $packageName $opStr")
 }
 
-private fun runCommand(command: String): String {
+/**
+ * Run a shell command.
+ *
+ * @param command Command to run
+ *
+ * @return The output of the command
+ */
+fun runCommand(command: String): String {
     return SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(), command)
 }
 /**
@@ -150,4 +159,20 @@ fun <T> eventually(timeout: Long = TIMEOUT_MILLIS, r: () -> T): T {
             }
         }
     }
+}
+
+/**
+ * The the {@link AppOpsManager$OpEntry} for the package name and op
+ *
+ * @param uid UID of the package
+ * @param packageName name of the package
+ * @param op name of the op
+ *
+ * @return The entry for the op
+ */
+fun getOpEntry(uid: Int, packageName: String, op: String): OpEntry? {
+    return SystemUtil.callWithShellPermissionIdentity {
+        InstrumentationRegistry.getInstrumentation().targetContext
+                .getSystemService(AppOpsManager::class.java).getOpsForPackage(uid, packageName, op)
+    }[0].ops[0]
 }

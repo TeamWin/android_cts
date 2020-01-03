@@ -17,11 +17,11 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.app.appops.cts.appthatusesappops">
-  <feature android:featureId="testFeature" android:label="@string/dummyLabel" />
+    package="android.app.appops.cts.appwithfeatureinheritingfromself">
+  <feature android:featureId="feature1" android:label="@string/dummyLabel">
+      <inherit-from android:featureId="feature1" />
+  </feature>
 
-  <application>
-      <service android:name=".AppOpsUserService" android:exported="true" />
-  </application>
+  <application />
 
 </manifest>

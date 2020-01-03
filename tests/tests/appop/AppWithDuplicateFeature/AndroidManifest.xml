@@ -17,11 +17,10 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.app.appops.cts.appthatusesappops">
-  <feature android:featureId="testFeature" android:label="@string/dummyLabel" />
+    package="android.app.appops.cts.appwithduplicatefeature">
+  <feature android:featureId="feature1" android:label="@string/dummyLabel" />
+  <feature android:featureId="feature1" android:label="@string/dummyLabel" />
 
-  <application>
-      <service android:name=".AppOpsUserService" android:exported="true" />
-  </application>
+  <application />
 
 </manifest>
