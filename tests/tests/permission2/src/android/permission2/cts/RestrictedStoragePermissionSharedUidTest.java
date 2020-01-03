@@ -240,7 +240,7 @@ public class RestrictedStoragePermissionSharedUidTest {
             } else {
                 expectedState = ISOLATED;
             }
-        } else if (hasRequestedLegacyExternalStorage && targetSDK <= Build.VERSION_CODES.Q) {
+        } else if (hasRequestedLegacyExternalStorage) {
             expectedState = NON_ISOLATED;
         } else {
             expectedState = ISOLATED;
