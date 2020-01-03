@@ -56,10 +56,11 @@ public class SettingsPanelTest {
     private static final String RESOURCE_SEE_MORE = "see_more";
     private static final String RESOURCE_TITLE = "panel_title";
 
-    private String mSettingsPackage = "com.android.settings";
+    private String mSettingsPackage;
     private String mLauncherPackage;
 
     private Context mContext;
+    private boolean mHasTouchScreen;
 
     private UiDevice mDevice;
 
@@ -68,15 +69,19 @@ public class SettingsPanelTest {
         mContext = InstrumentationRegistry.getTargetContext();
         mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
 
-        PackageManager packageManager = mContext.getPackageManager();
+        final PackageManager packageManager = mContext.getPackageManager();
+
+        mHasTouchScreen = packageManager.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)
+                || packageManager.hasSystemFeature(PackageManager.FEATURE_FAKETOUCH);
+
         Intent launcherIntent = new Intent(Intent.ACTION_MAIN);
         launcherIntent.addCategory(Intent.CATEGORY_HOME);
         mLauncherPackage = packageManager.resolveActivity(launcherIntent,
                 PackageManager.MATCH_DEFAULT_ONLY).activityInfo.packageName;
 
-        if (packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
-            mSettingsPackage = "com.android.car.settings";
-        }
+        Intent settingsIntent = new Intent(android.provider.Settings.ACTION_SETTINGS);
+        mSettingsPackage = packageManager.resolveActivity(settingsIntent,
+                PackageManager.MATCH_DEFAULT_ONLY).activityInfo.packageName;
     }
 
     @After
@@ -131,8 +136,7 @@ public class SettingsPanelTest {
         assertThat(currentPackage).isEqualTo(mSettingsPackage);
 
         // Click the done button
-        mDevice.findObject(By.res(mSettingsPackage, RESOURCE_DONE)).click();
-        mDevice.wait(Until.hasObject(By.pkg(mLauncherPackage).depth(0)), TIMEOUT);
+        pressDone();
 
         // Assert that we have left the panel
         currentPackage = mDevice.getCurrentPackageName();
@@ -147,8 +151,7 @@ public class SettingsPanelTest {
         assertThat(currentPackage).isEqualTo(mSettingsPackage);
 
         // Click the done button
-        mDevice.findObject(By.res(mSettingsPackage, RESOURCE_DONE)).click();
-        mDevice.wait(Until.hasObject(By.pkg(mLauncherPackage).depth(0)), TIMEOUT);
+        pressDone();
 
         // Assert that we have left the panel
         currentPackage = mDevice.getCurrentPackageName();
@@ -163,8 +166,7 @@ public class SettingsPanelTest {
         assertThat(currentPackage).isEqualTo(mSettingsPackage);
 
         // Click the done button
-        mDevice.findObject(By.res(mSettingsPackage, RESOURCE_DONE)).click();
-        mDevice.wait(Until.hasObject(By.pkg(mLauncherPackage).depth(0)), TIMEOUT);
+        pressDone();
 
         // Assert that we have left the panel
         currentPackage = mDevice.getCurrentPackageName();
@@ -179,8 +181,7 @@ public class SettingsPanelTest {
         assertThat(currentPackage).isEqualTo(mSettingsPackage);
 
         // Click the done button
-        mDevice.findObject(By.res(mSettingsPackage, RESOURCE_DONE)).click();
-        mDevice.wait(Until.hasObject(By.pkg(mLauncherPackage).depth(0)), TIMEOUT);
+        pressDone();
 
         // Assert that we have left the panel
         currentPackage = mDevice.getCurrentPackageName();
@@ -195,6 +196,7 @@ public class SettingsPanelTest {
         assertThat(currentPackage).isEqualTo(mSettingsPackage);
 
         // Click the see more button
+        assumeTrue(mHasTouchScreen);
         mDevice.findObject(By.res(mSettingsPackage, RESOURCE_SEE_MORE)).click();
         mDevice.wait(Until.hasObject(By.pkg(mSettingsPackage).depth(0)), TIMEOUT);
 
@@ -213,8 +215,8 @@ public class SettingsPanelTest {
         assertThat(currentPackage).isEqualTo(mSettingsPackage);
 
         // Click the see more button
-        mDevice.findObject(By.res(mSettingsPackage, RESOURCE_SEE_MORE)).click();
-        mDevice.wait(Until.hasObject(By.pkg(mSettingsPackage).depth(0)), TIMEOUT);
+        assumeTrue(mHasTouchScreen);
+        pressSeeMore();
 
         // Assert that we're still in Settings, on a different page.
         currentPackage = mDevice.getCurrentPackageName();
@@ -231,8 +233,8 @@ public class SettingsPanelTest {
         assertThat(currentPackage).isEqualTo(mSettingsPackage);
 
         // Click the see more button
-        mDevice.findObject(By.res(mSettingsPackage, RESOURCE_SEE_MORE)).click();
-        mDevice.wait(Until.hasObject(By.pkg(mSettingsPackage).depth(0)), TIMEOUT);
+        assumeTrue(mHasTouchScreen);
+        pressSeeMore();
 
         // Assert that we're still in Settings, on a different page.
         currentPackage = mDevice.getCurrentPackageName();
@@ -249,8 +251,8 @@ public class SettingsPanelTest {
         assertThat(currentPackage).isEqualTo(mSettingsPackage);
 
         // Click the see more button
-        mDevice.findObject(By.res(mSettingsPackage, RESOURCE_SEE_MORE)).click();
-        mDevice.wait(Until.hasObject(By.pkg(mSettingsPackage).depth(0)), TIMEOUT);
+        assumeTrue(mHasTouchScreen);
+        pressSeeMore();
 
         // Assert that we're still in Settings, on a different page.
         currentPackage = mDevice.getCurrentPackageName();
@@ -268,11 +270,12 @@ public class SettingsPanelTest {
     }
 
     private void launchNfcPanel() {
-        assumeTrue("device does not support NFC", RequiredServiceRule.hasService("nfc"));
+        assumeTrue(mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_NFC));
         launchPanel(Settings.Panel.ACTION_NFC);
     }
 
     private void launchWifiPanel() {
+        assumeTrue(mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI));
         launchPanel(Settings.Panel.ACTION_WIFI);
     }
 
@@ -287,6 +290,20 @@ public class SettingsPanelTest {
         mContext.startActivity(intent);
 
         // Wait for the app to appear
+        mDevice.wait(Until.hasObject(By.pkg(mSettingsPackage).depth(0)), TIMEOUT);
+    }
+
+    private void pressDone() {
+        if (mHasTouchScreen) {
+            mDevice.findObject(By.res(mSettingsPackage, RESOURCE_DONE)).click();
+            mDevice.wait(Until.hasObject(By.pkg(mLauncherPackage).depth(0)), TIMEOUT);
+        } else {
+            mDevice.pressBack();
+        }
+    }
+
+    private void pressSeeMore() {
+        mDevice.findObject(By.res(mSettingsPackage, RESOURCE_SEE_MORE)).click();
         mDevice.wait(Until.hasObject(By.pkg(mSettingsPackage).depth(0)), TIMEOUT);
     }
 }
