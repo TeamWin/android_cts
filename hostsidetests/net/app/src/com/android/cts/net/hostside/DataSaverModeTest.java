@@ -36,6 +36,7 @@ public class DataSaverModeTest extends AbstractRestrictBackgroundNetworkTestCase
     public void setUp() throws Exception {
         super.setUp();
 
+        setRestrictBackground(false); // for assertMyRestrictBackgroundStatus
         mIsDataSaverSupported = isDataSaverSupported();
 
         // Set initial state.
@@ -204,7 +205,7 @@ public class DataSaverModeTest extends AbstractRestrictBackgroundNetworkTestCase
 
     @CddTest(requirement="7.4.7/C-2-2")
     public void testBroadcastNotSentOnUnsupportedDevices() throws Exception {
-        if (isSupported()) return;
+        if (mIsDataSaverSupported) return;
 
         setRestrictBackground(true);
         assertRestrictBackgroundChangedReceived(0);
