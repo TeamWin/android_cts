@@ -62,7 +62,10 @@ public class BusinessLogicTestCase {
     }
 
     protected void executeBusinessLogic() {
-        String methodName = mTestCase.getMethodName();
+        executeBusinessLogifForTest(mTestCase.getMethodName());
+    }
+
+    protected void executeBusinessLogifForTest(String methodName) {
         assertTrue(String.format("Test \"%s\" is unable to execute as it depends on the missing "
                 + "remote configuration.", methodName), mCanReadBusinessLogic);
         if (methodName.contains(PARAM_START)) {
