@@ -24,7 +24,6 @@ import android.app.AppOpsManager.OP_FLAG_TRUSTED_PROXIED
 import android.app.AppOpsManager.OP_FLAG_TRUSTED_PROXY
 import android.app.AppOpsManager.OP_FLAG_UNTRUSTED_PROXIED
 import android.app.AppOpsManager.OpEntry
-import android.app.Instrumentation
 import android.content.Intent
 import android.content.Intent.ACTION_APPLICATION_PREFERENCES
 import androidx.test.platform.app.InstrumentationRegistry
@@ -257,9 +256,9 @@ class AppOpEventCollectionTest {
 
     @Test
     fun startStopMultipleOpsAndVerifyLastAccess() {
-        val beforeNullFeatureStart = System.currentTimeMillis();
+        val beforeNullFeatureStart = System.currentTimeMillis()
         appOpsManager.startOp(OPSTR_WIFI_SCAN, myUid, myPackage, null, null)
-        val afterNullFeatureStart = System.currentTimeMillis();
+        val afterNullFeatureStart = System.currentTimeMillis()
 
         with(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!) {
             assertThat(features[null]!!.getLastAccessTime(OP_FLAGS_ALL))
@@ -271,9 +270,9 @@ class AppOpEventCollectionTest {
                     .isIn(beforeNullFeatureStart..afterNullFeatureStart)
         }
 
-        val beforeFirstFeatureStart = System.currentTimeMillis();
+        val beforeFirstFeatureStart = System.currentTimeMillis()
         appOpsManager.startOp(OPSTR_WIFI_SCAN, myUid, myPackage, TEST_FEATURE_ID, null)
-        val afterFirstFeatureStart = System.currentTimeMillis();
+        val afterFirstFeatureStart = System.currentTimeMillis()
 
         with(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!) {
             assertThat(features[null]!!.getLastAccessTime(OP_FLAGS_ALL))
@@ -303,14 +302,14 @@ class AppOpEventCollectionTest {
 
     @Test
     fun startStopMultipleOpsAndVerifyDuration() {
-        val beforeNullFeatureStart = System.currentTimeMillis();
+        val beforeNullFeatureStart = System.currentTimeMillis()
         appOpsManager.startOp(OPSTR_WIFI_SCAN, myUid, myPackage, null, null)
-        val afterNullFeatureStart = System.currentTimeMillis();
+        val afterNullFeatureStart = System.currentTimeMillis()
 
         run {
-            val beforeGetOp = System.currentTimeMillis();
+            val beforeGetOp = System.currentTimeMillis()
             with(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!) {
-                val afterGetOp = System.currentTimeMillis();
+                val afterGetOp = System.currentTimeMillis()
 
                 assertThat(features[null]!!.getLastDuration(OP_FLAGS_ALL))
                         .isIn(beforeGetOp - afterNullFeatureStart
@@ -321,14 +320,14 @@ class AppOpEventCollectionTest {
             }
         }
 
-        val beforeFeatureStart = System.currentTimeMillis();
+        val beforeFeatureStart = System.currentTimeMillis()
         appOpsManager.startOp(OPSTR_WIFI_SCAN, myUid, myPackage, TEST_FEATURE_ID, null)
-        val afterFeatureStart = System.currentTimeMillis();
+        val afterFeatureStart = System.currentTimeMillis()
 
         run {
-            val beforeGetOp = System.currentTimeMillis();
+            val beforeGetOp = System.currentTimeMillis()
             with(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!) {
-                val afterGetOp = System.currentTimeMillis();
+                val afterGetOp = System.currentTimeMillis()
 
                 assertThat(features[null]!!.getLastDuration(OP_FLAGS_ALL))
                         .isIn(beforeGetOp - afterNullFeatureStart
@@ -347,9 +346,9 @@ class AppOpEventCollectionTest {
         // Nested startOps do _not_ start another duration counting, hence the nested
         // startOp and finishOp calls have no affect
         run {
-            val beforeGetOp = System.currentTimeMillis();
+            val beforeGetOp = System.currentTimeMillis()
             with(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!) {
-                val afterGetOp = System.currentTimeMillis();
+                val afterGetOp = System.currentTimeMillis()
 
                 assertThat(features[null]!!.getLastDuration(OP_FLAGS_ALL))
                         .isIn(beforeGetOp - afterNullFeatureStart
@@ -364,9 +363,9 @@ class AppOpEventCollectionTest {
         appOpsManager.finishOp(OPSTR_WIFI_SCAN, myUid, myPackage, TEST_FEATURE_ID)
 
         run {
-            val beforeGetOp = System.currentTimeMillis();
+            val beforeGetOp = System.currentTimeMillis()
             with(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!) {
-                val afterGetOp = System.currentTimeMillis();
+                val afterGetOp = System.currentTimeMillis()
 
                 assertThat(features[null]!!.getLastDuration(OP_FLAGS_ALL))
                         .isIn(beforeGetOp - afterNullFeatureStart
@@ -378,14 +377,14 @@ class AppOpEventCollectionTest {
             }
         }
 
-        val beforeFeatureStop = System.currentTimeMillis();
+        val beforeFeatureStop = System.currentTimeMillis()
         appOpsManager.finishOp(OPSTR_WIFI_SCAN, myUid, myPackage, TEST_FEATURE_ID)
-        val afterFeatureStop = System.currentTimeMillis();
+        val afterFeatureStop = System.currentTimeMillis()
 
         run {
-            val beforeGetOp = System.currentTimeMillis();
+            val beforeGetOp = System.currentTimeMillis()
             with(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!) {
-                val afterGetOp = System.currentTimeMillis();
+                val afterGetOp = System.currentTimeMillis()
 
                 assertThat(features[null]!!.getLastDuration(OP_FLAGS_ALL))
                         .isIn(beforeGetOp - afterNullFeatureStart
@@ -394,14 +393,14 @@ class AppOpEventCollectionTest {
                         .isIn(beforeFeatureStop - afterFeatureStart
                                 ..afterFeatureStop - beforeFeatureStart)
                 assertThat(getLastDuration(OP_FLAGS_ALL))
-                        .isIn(beforeGetOp - afterFeatureStart
-                                ..afterGetOp - beforeFeatureStart)
+                        .isIn(beforeFeatureStop - afterFeatureStart
+                                ..afterFeatureStop - beforeFeatureStart)
             }
         }
 
-        val beforeNullFeatureStop = System.currentTimeMillis();
+        val beforeNullFeatureStop = System.currentTimeMillis()
         appOpsManager.finishOp(OPSTR_WIFI_SCAN, myUid, myPackage, null)
-        val afterNullFeatureStop = System.currentTimeMillis();
+        val afterNullFeatureStop = System.currentTimeMillis()
 
         with(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!) {
             assertThat(features[null]!!.getLastDuration(OP_FLAGS_ALL))

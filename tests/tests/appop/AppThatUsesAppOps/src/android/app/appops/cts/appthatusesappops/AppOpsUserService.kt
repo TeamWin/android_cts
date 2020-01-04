@@ -29,15 +29,17 @@ import android.app.appops.cts.TEST_FEATURE_ID
 import android.app.appops.cts.eventually
 import android.content.Intent
 import android.os.IBinder
-import android.os.Process.FIRST_APPLICATION_UID
 import com.google.common.truth.Truth.assertThat
 import java.io.PrintWriter
 import java.io.StringWriter
-import java.lang.IllegalArgumentException
 
 private external fun noteSyncOpFromNativeCode(binder: IBinder)
 
 class AppOpsUserService : Service() {
+    private val testUid by lazy {
+        packageManager.getPackageUid("android.app.appops.cts", 0)
+    }
+
     override fun onCreate() {
         super.onCreate()
 
@@ -197,9 +199,7 @@ class AppOpsUserService : Service() {
                     noteSyncOpFromNativeCode(client.asBinder())
 
                     eventually {
-                        assertThat(asyncNoted[0].notingPackageName).isEqualTo(
-                            "android.app.appops.cts")
-                        assertThat(asyncNoted[0].notingUid).isAtLeast(FIRST_APPLICATION_UID)
+                        assertThat(asyncNoted[0].notingUid).isEqualTo(testUid)
                         assertThat(asyncNoted[0].message).isNotEmpty()
                     }
                 }
@@ -362,9 +362,7 @@ class AppOpsUserService : Service() {
                     client.noteAsyncOp()
 
                     eventually {
-                        assertThat(asyncNoted[0].notingPackageName).isEqualTo(
-                                "android.app.appops.cts")
-                        assertThat(asyncNoted[0].notingUid).isAtLeast(FIRST_APPLICATION_UID)
+                        assertThat(asyncNoted[0].notingUid).isEqualTo(testUid)
                         assertThat(asyncNoted[0].message).contains(
                             "AppOpsLoggingTest\$AppOpsUserClient\$noteAsyncOp")
                     }
@@ -376,9 +374,7 @@ class AppOpsUserService : Service() {
                     client.noteAsyncOpWithCustomMessage()
 
                     eventually {
-                        assertThat(asyncNoted[0].notingPackageName).isEqualTo(
-                                "android.app.appops.cts")
-                        assertThat(asyncNoted[0].notingUid).isAtLeast(FIRST_APPLICATION_UID)
+                        assertThat(asyncNoted[0].notingUid).isEqualTo(testUid)
                         assertThat(asyncNoted[0].message).isEqualTo("custom msg")
                     }
                 }
@@ -391,8 +387,7 @@ class AppOpsUserService : Service() {
                     client.noteAsyncOpNativeWithCustomMessage()
 
                     eventually {
-                        assertThat(asyncNoted[0].notingPackageName).isNull()
-                        assertThat(asyncNoted[0].notingUid).isAtLeast(FIRST_APPLICATION_UID)
+                        assertThat(asyncNoted[0].notingUid).isEqualTo(testUid)
                         assertThat(asyncNoted[0].message).isEqualTo("native custom msg")
                     }
                 }

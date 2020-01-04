@@ -196,8 +196,6 @@ class AppOpsLoggingTest {
             assertThat(asyncNoted[0].message).isNotEqualTo(null)
             assertThat(asyncNoted[0].op).isEqualTo(OPSTR_COARSE_LOCATION)
             assertThat(asyncNoted[0].notingUid).isEqualTo(myUid)
-            // Noting package name is never set for native notes
-            assertThat(asyncNoted[0].notingPackageName).isEqualTo(null)
         }
     }
 
@@ -211,26 +209,6 @@ class AppOpsLoggingTest {
             assertThat(asyncNoted[0].featureId).isEqualTo(TEST_FEATURE_ID)
             assertThat(asyncNoted[0].message).isEqualTo("testMsg")
         }
-    }
-
-    @Test
-    fun selfNotesAreDeliveredAsAsyncOpsWhenCollectorIsRegistered() {
-        appOpsManager.setNotedAppOpsCollector(null)
-
-        appOpsManager.noteOpNoThrow(OPSTR_COARSE_LOCATION, myUid, myPackage, TEST_FEATURE_ID, null)
-        appOpsManager.noteOpNoThrow(OPSTR_COARSE_LOCATION, myUid, myPackage, null, "test msg")
-
-        assertThat(noted).isEmpty()
-        assertThat(selfNoted).isEmpty()
-        assertThat(asyncNoted).isEmpty()
-
-        setNotedAppOpsCollector()
-
-        assertThat(noted).isEmpty()
-        assertThat(selfNoted).isEmpty()
-        assertThat(asyncNoted.map { it.featureId to it.op }).containsExactly(
-            null to OPSTR_COARSE_LOCATION, TEST_FEATURE_ID to OPSTR_COARSE_LOCATION)
-        assertThat(asyncNoted.map { it.message }).contains("test msg")
     }
 
     @Test
