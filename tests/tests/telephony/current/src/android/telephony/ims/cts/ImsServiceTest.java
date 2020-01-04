@@ -707,6 +707,14 @@ public class ImsServiceTest {
         final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         // Latch will count down here (we callback on the state during registration).
         try {
+            ImsMmTelManager mmTelManager = ImsMmTelManager.createForSubscriptionId(sTestSub);
+            mmTelManager.registerImsRegistrationCallback(getContext().getMainExecutor(), callback);
+            fail("registerImsRegistrationCallback requires READ_PRECISE_PHONE_STATE permission.");
+        } catch (SecurityException e) {
+            //expected
+        }
+
+        try {
             automan.adoptShellPermissionIdentity();
             ImsMmTelManager mmTelManager = ImsMmTelManager.createForSubscriptionId(sTestSub);
             mmTelManager.registerImsRegistrationCallback(getContext().getMainExecutor(), callback);
@@ -741,6 +749,15 @@ public class ImsServiceTest {
         } finally {
             automan.dropShellPermissionIdentity();
         }
+
+        try {
+            ImsMmTelManager mmTelManager = ImsMmTelManager.createForSubscriptionId(sTestSub);
+            mmTelManager.unregisterImsRegistrationCallback(callback);
+            fail("unregisterImsRegistrationCallback requires READ_PRECISE_PHONE_STATE permission.");
+        } catch (SecurityException e) {
+            //expected
+        }
+
     }
 
     @Test
@@ -1056,6 +1073,13 @@ public class ImsServiceTest {
             automan.dropShellPermissionIdentity();
         }
 
+        try {
+            mmTelManager.registerMmTelCapabilityCallback(getContext().getMainExecutor(), callback);
+            fail("registerMmTelCapabilityCallback requires READ_PRECISE_PHONE_STATE permission.");
+        } catch (SecurityException e) {
+            //expected
+        }
+
         // We should not have voice availability here, we notified the framework earlier.
         MmTelFeature.MmTelCapabilities capCb = waitForResult(mQueue);
         assertNotNull(capCb);
@@ -1078,6 +1102,13 @@ public class ImsServiceTest {
             mmTelManager.unregisterMmTelCapabilityCallback(callback);
         } finally {
             automan.dropShellPermissionIdentity();
+        }
+
+        try {
+            mmTelManager.unregisterMmTelCapabilityCallback(callback);
+            fail("unregisterMmTelCapabilityCallback requires READ_PRECISE_PHONE_STATE permission.");
+        } catch (SecurityException e) {
+            //expected
         }
     }
 
