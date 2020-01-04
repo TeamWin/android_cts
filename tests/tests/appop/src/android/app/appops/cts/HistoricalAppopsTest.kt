@@ -346,18 +346,18 @@ class HistoricalAppopsTest {
     private fun createDataChunk(): HistoricalOps {
         val chunk = HistoricalOps(SNAPSHOT_INTERVAL_MILLIS / 4,
                 SNAPSHOT_INTERVAL_MILLIS / 2)
-        chunk.increaseAccessCount(AppOpsManager.OP_START_FOREGROUND, uid,
-                packageName, AppOpsManager.UID_STATE_TOP, AppOpsManager.OP_FLAG_SELF, 10)
-        chunk.increaseAccessCount(AppOpsManager.OP_START_FOREGROUND, uid,
-                packageName, AppOpsManager.UID_STATE_BACKGROUND, AppOpsManager.OP_FLAG_SELF, 10)
-        chunk.increaseRejectCount(AppOpsManager.OP_START_FOREGROUND, uid,
-                packageName, AppOpsManager.UID_STATE_TOP, AppOpsManager.OP_FLAG_SELF, 10)
-        chunk.increaseRejectCount(AppOpsManager.OP_START_FOREGROUND, uid,
-                packageName, AppOpsManager.UID_STATE_BACKGROUND, AppOpsManager.OP_FLAG_SELF, 10)
-        chunk.increaseAccessDuration(AppOpsManager.OP_START_FOREGROUND, uid,
-                packageName, AppOpsManager.UID_STATE_TOP, AppOpsManager.OP_FLAG_SELF, 10)
-        chunk.increaseAccessDuration(AppOpsManager.OP_START_FOREGROUND, uid,
-                packageName, AppOpsManager.UID_STATE_BACKGROUND, AppOpsManager.OP_FLAG_SELF, 10)
+        chunk.increaseAccessCount(AppOpsManager.OP_START_FOREGROUND, uid, packageName, null,
+                AppOpsManager.UID_STATE_TOP, AppOpsManager.OP_FLAG_SELF, 10)
+        chunk.increaseAccessCount(AppOpsManager.OP_START_FOREGROUND, uid, packageName, null,
+                AppOpsManager.UID_STATE_BACKGROUND, AppOpsManager.OP_FLAG_SELF, 10)
+        chunk.increaseRejectCount(AppOpsManager.OP_START_FOREGROUND, uid, packageName, null,
+                AppOpsManager.UID_STATE_TOP, AppOpsManager.OP_FLAG_SELF, 10)
+        chunk.increaseRejectCount(AppOpsManager.OP_START_FOREGROUND, uid, packageName, null,
+                AppOpsManager.UID_STATE_BACKGROUND, AppOpsManager.OP_FLAG_SELF, 10)
+        chunk.increaseAccessDuration(AppOpsManager.OP_START_FOREGROUND, uid, packageName, null,
+                AppOpsManager.UID_STATE_TOP, AppOpsManager.OP_FLAG_SELF, 10)
+        chunk.increaseAccessDuration(AppOpsManager.OP_START_FOREGROUND, uid, packageName, null,
+                AppOpsManager.UID_STATE_BACKGROUND, AppOpsManager.OP_FLAG_SELF, 10)
         return chunk
     }
 
