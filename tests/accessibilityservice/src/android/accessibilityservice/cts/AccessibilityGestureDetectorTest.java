@@ -15,11 +15,11 @@
 package android.accessibilityservice.cts;
 
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen;
+import static android.accessibilityservice.cts.utils.DisplayUtils.VirtualDisplaySession;
 import static android.accessibilityservice.cts.utils.GestureUtils.click;
 import static android.accessibilityservice.cts.utils.GestureUtils.endTimeOf;
 import static android.accessibilityservice.cts.utils.GestureUtils.longClick;
 import static android.accessibilityservice.cts.utils.GestureUtils.startingAt;
-import static android.accessibilityservice.cts.utils.DisplayUtils.VirtualDisplaySession;
 import static android.app.UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES;
 
 import static org.junit.Assert.assertEquals;
@@ -149,6 +149,10 @@ public class AccessibilityGestureDetectorTest {
         final int dy = mStrokeLenPxY;
 
         // Test recognizing various gestures.
+        testGesture(doubleTap(Display.DEFAULT_DISPLAY), AccessibilityService.GESTURE_DOUBLE_TAP);
+        testGesture(
+                doubleTapAndHold(Display.DEFAULT_DISPLAY),
+                AccessibilityService.GESTURE_DOUBLE_TAP_AND_HOLD);
         testPath(p(-dx, +0), AccessibilityService.GESTURE_SWIPE_LEFT);
         testPath(p(+dx, +0), AccessibilityService.GESTURE_SWIPE_RIGHT);
         testPath(p(+0, -dy), AccessibilityService.GESTURE_SWIPE_UP);
@@ -191,6 +195,14 @@ public class AccessibilityGestureDetectorTest {
 
             try {
                 // Test recognizing various gestures.
+                testGesture(
+                        doubleTap(displayId),
+                        AccessibilityService.GESTURE_DOUBLE_TAP,
+                        displayId);
+                testGesture(
+                        doubleTapAndHold(displayId),
+                        AccessibilityService.GESTURE_DOUBLE_TAP_AND_HOLD,
+                        displayId);
                 testPath(p(-dx, +0), AccessibilityService.GESTURE_SWIPE_LEFT, displayId);
                 testPath(p(+dx, +0), AccessibilityService.GESTURE_SWIPE_RIGHT, displayId);
                 testPath(p(+0, -dy), AccessibilityService.GESTURE_SWIPE_UP, displayId);
@@ -265,6 +277,11 @@ public class AccessibilityGestureDetectorTest {
                 .setDisplayId(displayId)
                 .build();
 
+        testGesture(gesture, gestureId, displayId);
+    }
+
+    /** Dispatch a gesture and make sure it is detected as the specified gesture id. */
+    private void testGesture(GestureDescription gesture, int gestureId, int displayId) {
         // Dispatch gesture motions to specified  display with GestureDescription..
         // Use AccessibilityService.dispatchGesture() instead of Instrumentation.sendPointerSync()
         // because accessibility services read gesture events upstream from the point where
@@ -286,6 +303,10 @@ public class AccessibilityGestureDetectorTest {
                 displayId);
         assertEquals(1, mService.getGestureInfoSize());
         assertEquals(expectedGestureEvent.toString(), mService.getGestureInfo(0).toString());
+    }
+
+    private void testGesture(GestureDescription gesture, int gestureId) {
+        testGesture(gesture, gestureId, Display.DEFAULT_DISPLAY);
     }
 
     /** Create a path from startPoint, moving by delta1, then delta2. (delta2 may be null.) */
