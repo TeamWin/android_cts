@@ -18,6 +18,7 @@ package android.content.cts;
 
 import android.content.cts.R;
 
+import android.app.WallpaperManager;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -265,6 +266,8 @@ public class ContextWrapperTest extends AndroidTestCase {
     }
 
     public void testAccessWallpaper() throws IOException, InterruptedException {
+        if (!isWallpaperSupported()) return;
+
         // set Wallpaper by contextWrapper#setWallpaper(Bitmap)
         Bitmap bitmap = Bitmap.createBitmap(20, 30, Bitmap.Config.RGB_565);
         // Test getWallpaper
@@ -499,6 +502,8 @@ public class ContextWrapperTest extends AndroidTestCase {
     }
 
     public void testGetWallpaperDesiredMinimumHeightAndWidth() {
+        if (!isWallpaperSupported()) return;
+
         int height = mContextWrapper.getWallpaperDesiredMinimumHeight();
         int width = mContextWrapper.getWallpaperDesiredMinimumWidth();
 
@@ -830,6 +835,10 @@ public class ContextWrapperTest extends AndroidTestCase {
         synchronized (mLockObj) {
             mLockObj.wait(BROADCAST_TIMEOUT);
         }
+    }
+
+    private boolean isWallpaperSupported() {
+        return WallpaperManager.getInstance(mContext).isWallpaperSupported();
     }
 
     private static final class MockContextWrapper extends ContextWrapper {
