@@ -112,10 +112,10 @@ public class AmProfileTests extends ActivityManagerTestBase {
 
         executeShellCommand(getStopProfileCmd(PROFILEABLE_APP_ACTIVITY));
 
-        // Sleep for 0.3 second (300 milliseconds) so the generation of the profiling
+        // Sleep for 1 second (1000 milliseconds) so the generation of the profiling
         // file is complete.
         try {
-            Thread.sleep(300);
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             //ignored
         }
