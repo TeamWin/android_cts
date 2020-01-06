@@ -82,7 +82,7 @@ public class ProtectedBroadcastsTest extends AndroidTestCase {
         "android.provider.Telephony.SPN_STRINGS_UPDATED",
         "android.intent.action.EMERGENCY_CALLBACK_MODE_CHANGED",
         "android.intent.action.SIM_STATE_CHANGED",
-        "android.intent.action.NETWORK_SET_TIME",
+        "android.telephony.action.NETWORK_SET_TIME",
         "android.telephony.action.SUBSCRIPTION_CARRIER_IDENTITY_CHANGED",
         "android.telephony.action.SUBSCRIPTION_SPECIFIC_CARRIER_IDENTITY_CHANGED",
         "com.android.internal.intent.action.ACTION_SHOW_NOTICE_ECM_BLOCK_OTHERS",
