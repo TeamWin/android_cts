@@ -346,6 +346,10 @@ public abstract class BasePermissionsTest {
     }
 
     private void scrollToBottom() throws Exception {
+        if (isTv()) {
+            // TV does not have ScrollView, skip
+            return;
+        }
         waitFindObject(By.clazz(ScrollView.class));
         UiScrollable scrollable =
                 new UiScrollable(new UiSelector().className(ScrollView.class));
@@ -427,7 +431,8 @@ public abstract class BasePermissionsTest {
                 }
                 waitForIdle();
 
-                if (wasGranted && legacyApp) {
+                // wasGrantedd always be false on TV, use flag 'granted'
+                if (!granted && legacyApp) {
                     scrollToBottom();
                     Context context = getInstrumentation().getContext();
                     String packageName = context.getPackageManager()
