@@ -87,6 +87,9 @@ public class ParentProfileTest extends BaseManagedProfileTest {
             .add("wipeData")
             .add("getAutoTime")
             .add("setAutoTime")
+            .add("addUserRestriction")
+            .add("clearUserRestriction")
+            .add("getUserRestrictions")
             .build();
 
     private static final String LOG_TAG = "ParentProfileTest";
