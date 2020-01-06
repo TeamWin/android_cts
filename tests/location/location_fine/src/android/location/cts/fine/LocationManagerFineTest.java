@@ -943,11 +943,14 @@ public class LocationManagerFineTest {
 
             Location realProvideLocation = mManager.getLastKnownLocation(realProvider);
             if (realProvideLocation != null) {
+                boolean passed = false;
                 try {
                     assertThat(realProvideLocation).isEqualTo(loc);
-                    fail("real provider saw " + TEST_PROVIDER + " location!");
                 } catch (AssertionError e) {
-                    // pass
+                    passed = true;
+                }
+                if (!passed) {
+                    fail("real provider saw " + TEST_PROVIDER + " location!");
                 }
             }
         }
