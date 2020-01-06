@@ -41,6 +41,7 @@ import android.provider.cts.R;
 import android.provider.cts.media.MediaStoreUtils.PendingParams;
 import android.provider.cts.media.MediaStoreUtils.PendingSession;
 import android.util.Log;
+import android.util.Size;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -75,6 +76,7 @@ public class MediaStore_DownloadsTest {
     private CountDownLatch mCountDownLatch;
     private int mInitialDownloadsCount;
 
+    private Uri mExternalFiles;
     private Uri mExternalImages;
     private Uri mExternalDownloads;
 
@@ -92,6 +94,7 @@ public class MediaStore_DownloadsTest {
         mContentResolver = mContext.getContentResolver();
 
         Log.d(TAG, "Using volume " + mVolumeName);
+        mExternalFiles = MediaStore.Files.getContentUri(mVolumeName);
         mExternalImages = MediaStore.Images.Media.getContentUri(mVolumeName);
         mExternalDownloads = MediaStore.Downloads.getContentUri(mVolumeName);
 
@@ -327,6 +330,21 @@ public class MediaStore_DownloadsTest {
         mCountDownLatch = new CountDownLatch(1);
         assertEquals(1, mContentResolver.delete(publishUri, null, null));
         mCountDownLatch.await(NOTIFY_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+    }
+
+    @Test
+    public void testThumbnails() throws Exception {
+        final Uri uri = ProviderTestUtils.stageMedia(R.raw.scenery, mExternalDownloads);
+        final long id = ContentUris.parseId(uri);
+
+        // Verify that we can get a thumbnail for this item regardless of which
+        // collection we reference it through
+        assertNotNull(mContentResolver.loadThumbnail(
+                ContentUris.withAppendedId(mExternalFiles, id), new Size(320, 240), null));
+        assertNotNull(mContentResolver.loadThumbnail(
+                ContentUris.withAppendedId(mExternalImages, id), new Size(320, 240), null));
+        assertNotNull(mContentResolver.loadThumbnail(
+                ContentUris.withAppendedId(mExternalDownloads, id), new Size(320, 240), null));
     }
 
     private int getInitialDownloadsCount() {
