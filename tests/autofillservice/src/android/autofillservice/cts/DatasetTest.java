@@ -21,10 +21,16 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.testng.Assert.assertThrows;
 
+import android.app.slice.Slice;
+import android.app.slice.SliceSpec;
+import android.net.Uri;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.Dataset;
+import android.service.autofill.InlinePresentation;
+import android.util.Size;
 import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillValue;
+import android.view.inline.InlinePresentationSpec;
 import android.widget.RemoteViews;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -41,12 +47,32 @@ public class DatasetTest {
     private final AutofillId mId = new AutofillId(42);
     private final AutofillValue mValue = AutofillValue.forText("ValuableLikeGold");
     private final Pattern mFilter = Pattern.compile("whatever");
+    private final InlinePresentation mInlinePresentation = new InlinePresentation(
+            new Slice.Builder(new Uri.Builder().appendPath("DatasetTest").build(),
+                    new SliceSpec("DatasetTest", 1)).build(),
+            new InlinePresentationSpec.Builder(new Size(10, 10), new Size(50, 50)).build());
 
     private final RemoteViews mPresentation = mock(RemoteViews.class);
 
     @Test
     public void testBuilder_nullPresentation() {
-        assertThrows(NullPointerException.class, () -> new Dataset.Builder(null));
+        assertThrows(NullPointerException.class, () -> new Dataset.Builder((RemoteViews) null));
+        assertThrows(NullPointerException.class, () -> new Dataset.Builder(null,
+                mInlinePresentation));
+    }
+
+    @Test
+    public void testBuilder_nullInlinePresentation() {
+        assertThrows(NullPointerException.class,
+                () -> new Dataset.Builder((InlinePresentation) null));
+        assertThrows(NullPointerException.class, () -> new Dataset.Builder(mPresentation, null));
+    }
+
+    @Test
+    public void testBuilder_validPresentations() {
+        assertThat(new Dataset.Builder(mPresentation)).isNotNull();
+        assertThat(new Dataset.Builder(mInlinePresentation)).isNotNull();
+        assertThat(new Dataset.Builder(mPresentation, mInlinePresentation)).isNotNull();
     }
 
     @Test
@@ -69,19 +95,40 @@ public class DatasetTest {
     }
 
     @Test
+    public void testBuilder_setValueWithBothPresentation_nullPresentation() {
+        final Dataset.Builder builder = new Dataset.Builder();
+        assertThrows(NullPointerException.class, () -> builder.setValue(mId, mValue,
+                null, mInlinePresentation));
+    }
+
+    @Test
+    public void testBuilder_setValueWithBothPresentation_nullInlinePresentation() {
+        final Dataset.Builder builder = new Dataset.Builder();
+        assertThrows(NullPointerException.class, () -> builder.setValue(mId, mValue,
+                mPresentation, null));
+    }
+
+    @Test
+    public void testBuilder_setValueWithBothPresentation_bothNull() {
+        final Dataset.Builder builder = new Dataset.Builder();
+        assertThrows(NullPointerException.class, () -> builder.setValue(mId, mValue,
+                (RemoteViews) null, null));
+    }
+
+    @Test
     public void testBuilder_setFilteredValueWithNullFilter() {
         assertThat(new Dataset.Builder(mPresentation).setValue(mId, mValue, (Pattern) null).build())
                 .isNotNull();
     }
 
     @Test
-    public void testBuilder_setFilteredValueWithPresentationNullFilter() {
+    public void testBuilder_setFilteredValueWithPresentation_nullFilter() {
         assertThat(new Dataset.Builder().setValue(mId, mValue, null, mPresentation).build())
                 .isNotNull();
     }
 
     @Test
-    public void testBuilder_setFilteredValueWithPresentationNullPresentation() {
+    public void testBuilder_setFilteredValueWithPresentation_nullPresentation() {
         final Dataset.Builder builder = new Dataset.Builder();
         assertThrows(NullPointerException.class, () -> builder.setValue(mId, mValue, mFilter,
                 null));
@@ -91,6 +138,33 @@ public class DatasetTest {
     public void testBuilder_setFilteredValueWithoutPresentation() {
         final Dataset.Builder builder = new Dataset.Builder();
         assertThrows(IllegalStateException.class, () -> builder.setValue(mId, mValue, mFilter));
+    }
+
+    @Test
+    public void testBuilder_setFilteredValueWithBothPresentation_nullPresentation() {
+        final Dataset.Builder builder = new Dataset.Builder();
+        assertThrows(NullPointerException.class, () -> builder.setValue(mId, mValue, mFilter,
+                null, mInlinePresentation));
+    }
+
+    @Test
+    public void testBuilder_setFilteredValueWithBothPresentation_nullInlinePresentation() {
+        final Dataset.Builder builder = new Dataset.Builder();
+        assertThrows(NullPointerException.class, () -> builder.setValue(mId, mValue, mFilter,
+                mPresentation, null));
+    }
+
+    @Test
+    public void testBuilder_setFilteredValueWithBothPresentation_bothNull() {
+        final Dataset.Builder builder = new Dataset.Builder();
+        assertThrows(NullPointerException.class, () -> builder.setValue(mId, mValue, mFilter,
+                null, null));
+    }
+
+    @Test
+    public void testBuilder_setInlinePresentations() {
+        assertThat(new Dataset.Builder().setInlinePresentation(mId, mValue, mFilter,
+                mInlinePresentation)).isNotNull();
     }
 
     @Test
@@ -112,5 +186,11 @@ public class DatasetTest {
                 () -> builder.setValue(mId, mValue, mFilter));
         assertThrows(IllegalStateException.class,
                 () -> builder.setValue(mId, mValue, mFilter, mPresentation));
+        assertThrows(IllegalStateException.class,
+                () -> builder.setValue(mId, mValue, mPresentation, mInlinePresentation));
+        assertThrows(IllegalStateException.class,
+                () -> builder.setValue(mId, mValue, mFilter, mPresentation, mInlinePresentation));
+        assertThrows(IllegalStateException.class,
+                () -> builder.setInlinePresentation(mId, mValue, mFilter, mInlinePresentation));
     }
 }
