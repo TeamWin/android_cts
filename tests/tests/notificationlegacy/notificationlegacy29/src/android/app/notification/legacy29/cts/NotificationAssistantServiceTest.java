@@ -30,6 +30,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.StatusBarManager;
 import android.app.UiAutomation;
 import android.content.ComponentName;
 import android.content.Context;
@@ -71,6 +72,7 @@ public class NotificationAssistantServiceTest {
     private TestNotificationListener mNotificationListenerService;
     private NotificationManager mNotificationManager;
     private ActivityManager mActivityManager;
+    private StatusBarManager mStatusBarManager;
     private Context mContext;
     private UiAutomation mUi;
 
@@ -83,6 +85,8 @@ public class NotificationAssistantServiceTest {
         mNotificationManager.createNotificationChannel(new NotificationChannel(
                 NOTIFICATION_CHANNEL_ID, "name", NotificationManager.IMPORTANCE_DEFAULT));
         mActivityManager = mContext.getSystemService(ActivityManager.class);
+        mStatusBarManager = (StatusBarManager) mContext.getSystemService(
+                Context.STATUS_BAR_SERVICE);
     }
 
     @After
@@ -418,13 +422,83 @@ public class NotificationAssistantServiceTest {
     }
 
     @Test
-    public void testOnNotificationsSeen_methodExists() throws Exception {
+    public void testOnNotificationVisibilityChanged() throws Exception {
         if (mActivityManager.isLowRamDevice()) {
             return;
         }
         setUpListeners();
-        // This method has to exist and the call cannot fail
-        mNotificationAssistantService.onNotificationsSeen(new ArrayList<>());
+
+        mUi.adoptShellPermissionIdentity("android.permission.EXPAND_STATUS_BAR");
+
+        mNotificationAssistantService.resetNotificationVisibilityCounts();
+
+        // Initialize as closed
+        mStatusBarManager.collapsePanels();
+
+        sendNotification(1, ICON_ID);
+        assertEquals(0, mNotificationAssistantService.notificationVisibleCount);
+        assertEquals(0, mNotificationAssistantService.notificationHiddenCount);
+
+        mStatusBarManager.expandNotificationsPanel();
+        Thread.sleep(SLEEP_TIME * 2);
+        assertTrue(mNotificationAssistantService.notificationVisibleCount > 0);
+        assertEquals(0, mNotificationAssistantService.notificationHiddenCount);
+
+        mStatusBarManager.collapsePanels();
+        Thread.sleep(SLEEP_TIME * 2);
+        assertTrue(mNotificationAssistantService.notificationVisibleCount > 0);
+        assertTrue(mNotificationAssistantService.notificationHiddenCount > 0);
+
+        mUi.dropShellPermissionIdentity();
+    }
+
+    @Test
+    public void testOnNotificationsSeen() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
+        setUpListeners();
+
+        mUi.adoptShellPermissionIdentity("android.permission.EXPAND_STATUS_BAR");
+
+        mNotificationAssistantService.resetNotificationVisibilityCounts();
+
+        // Initialize as closed
+        mStatusBarManager.collapsePanels();
+
+        sendNotification(1, ICON_ID);
+        assertEquals(0, mNotificationAssistantService.notificationSeenCount);
+
+        mStatusBarManager.expandNotificationsPanel();
+        Thread.sleep(SLEEP_TIME * 2);
+        assertTrue(mNotificationAssistantService.notificationSeenCount > 0);
+
+        mStatusBarManager.collapsePanels();
+        mUi.dropShellPermissionIdentity();
+    }
+
+    @Test
+    public void testOnPanelRevealedAndHidden() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
+        setUpListeners();
+
+        mUi.adoptShellPermissionIdentity("android.permission.EXPAND_STATUS_BAR");
+
+        // Initialize as closed
+        mStatusBarManager.collapsePanels();
+        assertFalse(mNotificationAssistantService.isPanelOpen);
+
+        mStatusBarManager.expandNotificationsPanel();
+        Thread.sleep(SLEEP_TIME * 2);
+        assertTrue(mNotificationAssistantService.isPanelOpen);
+
+        mStatusBarManager.collapsePanels();
+        Thread.sleep(SLEEP_TIME * 2);
+        assertFalse(mNotificationAssistantService.isPanelOpen);
+
+        mUi.dropShellPermissionIdentity();
     }
 
     @Test
