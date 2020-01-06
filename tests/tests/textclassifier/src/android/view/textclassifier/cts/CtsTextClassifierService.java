@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 public final class CtsTextClassifierService extends TextClassifierService {
 
     private static final String TAG = "CtsTextClassifierService";
-    public static final String MY_PACKAGE = "android.view.cts";
+    public static final String MY_PACKAGE = "android.view.textclassifier.cts";
 
     private final ArrayList<TextClassificationSessionId> mRequestSessions = new ArrayList<>();
     private final CountDownLatch mRequestLatch = new CountDownLatch(1);
