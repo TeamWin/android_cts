@@ -611,6 +611,8 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
             // display.
             final Display defDisplay = mAmWmState.getWmState().getDisplay(DEFAULT_DISPLAY);
             tapOnDisplayCenter(defDisplay.getDisplayId());
+            mAmWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
+            mAmWmState.assertSanity();
 
             // Reparent ImeTestActivity from virtual display to default display.
             getLaunchActivityBuilder()
