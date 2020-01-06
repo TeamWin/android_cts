@@ -849,6 +849,7 @@ public class StagedInstallTest {
         waitForIsReadyBroadcast(sessionId);
     }
 
+    // Should succeed in installing multiple staged sessions together
     @Test
     public void testMultipleStagedInstall_ApkOnly_Commit()
             throws Exception {
@@ -857,7 +858,7 @@ public class StagedInstallTest {
         int secondSessionId = stageSingleApk(TestApp.B1).assertSuccessful().getSessionId();
         waitForIsReadyBroadcast(secondSessionId);
         assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
-        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
+        assertThat(getInstalledVersion(TestApp.B)).isEqualTo(-1);
         storeSessionIds(Arrays.asList(firstSessionId, secondSessionId));
     }
 
@@ -870,6 +871,34 @@ public class StagedInstallTest {
         }
         assertThat(getInstalledVersion(TestApp.A)).isEqualTo(1);
         assertThat(getInstalledVersion(TestApp.B)).isEqualTo(1);
+    }
+
+    // If apk installation fails in one staged session, then all staged session should fail.
+    @Test
+    public void testInstallMultipleStagedSession_PartialFail_ApkOnly_Commit()
+            throws Exception {
+        int firstSessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
+        waitForIsReadyBroadcast(firstSessionId);
+        int secondSessionId = stageSingleApk(TestApp.B1).assertSuccessful().getSessionId();
+        waitForIsReadyBroadcast(secondSessionId);
+
+        // Install TestApp.A2 so that after reboot TestApp.A1 fails to install as it is downgrade
+        Install.single(TestApp.A2).commit();
+
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(2);
+        assertThat(getInstalledVersion(TestApp.B)).isEqualTo(-1);
+        storeSessionIds(Arrays.asList(firstSessionId, secondSessionId));
+    }
+
+    @Test
+    public void testInstallMultipleStagedSession_PartialFail_ApkOnly_VerifyPostReboot()
+            throws Exception {
+        List<Integer> sessionIds = retrieveLastSessionIds();
+        for (int sessionId: sessionIds) {
+            assertSessionFailed(sessionId);
+        }
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(2);
+        assertThat(getInstalledVersion(TestApp.B)).isEqualTo(-1);
     }
 
     @Test

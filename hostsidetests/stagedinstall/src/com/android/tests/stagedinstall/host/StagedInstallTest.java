@@ -453,6 +453,17 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testMultipleStagedInstall_ApkOnly_VerifyPostReboot");
     }
 
+    // If apk installation fails in one staged session, then all staged session should fail.
+    @Test
+    @LargeTest
+    public void testInstallMultipleStagedSession_PartialFail_ApkOnly() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
+        runPhase("testInstallMultipleStagedSession_PartialFail_ApkOnly_Commit");
+        getDevice().reboot();
+        runPhase("testInstallMultipleStagedSession_PartialFail_ApkOnly_VerifyPostReboot");
+    }
+
     @Test
     @LargeTest
     public void testSamegradeSystemApex() throws Exception {
