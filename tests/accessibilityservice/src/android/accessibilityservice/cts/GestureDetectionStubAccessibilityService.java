@@ -14,10 +14,12 @@
 
 package android.accessibilityservice.cts;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
 import android.accessibilityservice.AccessibilityGestureEvent;
+import android.view.Display;
 import android.view.accessibility.AccessibilityEvent;
 
 import java.util.ArrayList;
@@ -145,6 +147,24 @@ public class GestureDetectionStubAccessibilityService extends InstrumentedAccess
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
+        }
+    }
+
+    /** Ensure that the specified accessibility gesture event has been received. */
+    public void assertGestureReceived(int gestureId, int displayId) {
+        // Wait for gesture recognizer, and check recognized gesture.
+        waitUntilGestureInfo();
+        if(displayId == Display.DEFAULT_DISPLAY) {
+            assertEquals(1, getGesturesSize());
+            assertEquals(gestureId, getGesture(0));
+        }
+        assertEquals(1, getGestureInfoSize());
+        AccessibilityGestureEvent expectedGestureEvent =
+                new AccessibilityGestureEvent(gestureId, displayId);
+        AccessibilityGestureEvent actualGestureEvent = getGestureInfo(0);
+        if (!expectedGestureEvent.toString().equals(actualGestureEvent.toString())) {
+            fail("Unexpected gesture received, "
+                    + "Received " + actualGestureEvent + ", Expected " + expectedGestureEvent);
         }
     }
 
