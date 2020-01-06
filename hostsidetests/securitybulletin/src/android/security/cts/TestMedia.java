@@ -49,6 +49,17 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/69065651
+     * Vulnerability Behaviour: SIGSEGV in mediaserver or omx@1.0-service
+     */
+    @SecurityTest(minPatchLevel = "2018-02")
+    public void testPocCVE_2017_13241() throws Exception {
+        String processPatternStrings[] = {"mediaserver", "omx@\\d+?\\.\\d+?-service"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-13241", null, getDevice(),
+                processPatternStrings);
+    }
+
+    /**
      * b/30033990
      * Vulnerability Behaviour: SIGSEGV in mediaserver or omx@1.0-service
      */
