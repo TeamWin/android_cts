@@ -34,7 +34,9 @@ import java.util.Optional;
 @RunWith(DeviceJUnit4ClassRunner.class)
 @AppModeFull
 public class MultiUserBackupStateTest extends BaseMultiUserBackupHostSideTest {
-    private static final int TIMEOUT_SECONDS = 30;
+    // This value needs to be kept relatively high as backup deactivation is triggered
+    // asynchronously, so not guaranteed to happen immediately.
+    private static final int BACKUP_DEACTIVATION_TIMEOUT_SECONDS = 60;
 
     private Optional<Integer> mProfileUserId = Optional.empty();
 
@@ -81,6 +83,7 @@ public class MultiUserBackupStateTest extends BaseMultiUserBackupHostSideTest {
         mProfileUserId = Optional.empty();
 
         CommonTestUtils.waitUntil("wait for backup to be deactivated for removed user",
-                TIMEOUT_SECONDS, () -> !mBackupUtils.isBackupActivatedForUser(profileUserId));
+                BACKUP_DEACTIVATION_TIMEOUT_SECONDS,
+                () -> !mBackupUtils.isBackupActivatedForUser(profileUserId));
     }
 }
