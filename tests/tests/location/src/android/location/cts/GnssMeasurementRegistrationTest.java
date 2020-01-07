@@ -81,7 +81,7 @@ public class GnssMeasurementRegistrationTest extends GnssTestCase {
         // Checks if GPS hardware feature is present, skips test (pass) if not,
         // and hard asserts that Location/GPS (Provider) is turned on if is Cts Verifier.
         if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager,
-                isCtsVerifierTest())) {
+                TAG, MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED, isCtsVerifierTest())) {
             return;
         }
 
@@ -90,7 +90,7 @@ public class GnssMeasurementRegistrationTest extends GnssTestCase {
         mTestLocationManager.registerGnssMeasurementCallback(mMeasurementListener);
 
         mMeasurementListener.await();
-        if (!mMeasurementListener.verifyStatus()) {
+        if (!mMeasurementListener.verifyStatus(isMeasurementTestStrict())) {
             // If test is strict verifyStatus will assert conditions are good for further testing.
             // Else this returns false and, we arrive here, and then return from here (pass.)
             return;
@@ -121,10 +121,9 @@ public class GnssMeasurementRegistrationTest extends GnssTestCase {
         events = mMeasurementListener.getEvents();
         Log.i(TAG, "Number of GnssMeasurement events received = " + events.size());
 
-        SoftAssert softAssert = new SoftAssert(TAG);
-        softAssert.assertTrue(
+        // If no measurements found, fail if strict (Verifier + 2016+)
+        SoftAssert.failOrWarning(isMeasurementTestStrict(),
                 "Did not receive any GnssMeasurement events.  Retry outdoors?",
                 !events.isEmpty());
-        softAssert.assertAll();
     }
 }

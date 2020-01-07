@@ -75,7 +75,8 @@ public class GnssLocationUpdateIntervalTest extends GnssTestCase {
     }
 
     public void testLocationUpdatesAtVariousIntervals() throws Exception {
-        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager, true)) {
+        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager, TAG,
+                MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED, true)) {
             return;
         }
 

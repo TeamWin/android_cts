@@ -44,6 +44,7 @@ public class GnssMeasurementValuesTest extends GnssTestCase {
 
     private static final String TAG = "GnssMeasValuesTest";
     private static final int LOCATION_TO_COLLECT_COUNT = 20;
+    private static final int YEAR_2017 = 2017;
 
     private TestGnssMeasurementListener mMeasurementListener;
     private TestLocationListener mLocationListener;
@@ -78,8 +79,8 @@ public class GnssMeasurementValuesTest extends GnssTestCase {
     public void testListenForGnssMeasurements() throws Exception {
         // Checks if GPS hardware feature is present, skips test (pass) if not,
         // and hard asserts that Location/GPS (Provider) is turned on if is Cts Verifier.
-        if (!TestMeasurementUtil
-                .canTestRunOnCurrentDevice(mTestLocationManager, isCtsVerifierTest())) {
+        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager,
+                TAG, MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED, isCtsVerifierTest())) {
             return;
         }
 
@@ -95,9 +96,8 @@ public class GnssMeasurementValuesTest extends GnssTestCase {
         TestGnssStatusCallback gnssStatusCallback = new TestGnssStatusCallback(TAG, 0);
         mTestLocationManager.registerGnssStatusCallback(gnssStatusCallback);
 
-        SoftAssert softAssert = new SoftAssert(TAG);
         boolean success = mLocationListener.await();
-        softAssert.assertTrue(
+        SoftAssert.failOrWarning(isMeasurementTestStrict(),
                 "Time elapsed without getting enough location fixes."
                         + " Possibly, the test has been run deep indoors."
                         + " Consider retrying test outdoors.",
@@ -106,7 +106,7 @@ public class GnssMeasurementValuesTest extends GnssTestCase {
 
         Log.i(TAG, "Location status received = " + mLocationListener.isLocationReceived());
 
-        if (!mMeasurementListener.verifyStatus()) {
+        if (!mMeasurementListener.verifyStatus(isMeasurementTestStrict())) {
             // If test is strict and verifyStatus returns false, an assert exception happens and
             // test fails.   If test is not strict, we arrive here, and:
             return; // exit (with pass)
@@ -115,6 +115,8 @@ public class GnssMeasurementValuesTest extends GnssTestCase {
         List<GnssMeasurementsEvent> events = mMeasurementListener.getEvents();
         int eventCount = events.size();
         Log.i(TAG, "Number of Gps Event received = " + eventCount);
+
+        SoftAssert softAssert = new SoftAssert(TAG);
 
         softAssert.assertTrue("GnssMeasurementEvent count", "X > 0",
                 String.valueOf(eventCount), eventCount > 0);
@@ -147,25 +149,23 @@ public class GnssMeasurementValuesTest extends GnssTestCase {
         }
         TestMeasurementUtil.assertGnssClockHasConsistentFullBiasNanos(softAssert, events);
 
-        softAssert.assertTrue(
+        softAssert.assertOrWarnTrue(isMeasurementTestStrict(),
                 "GNSS Measurements PRRs with Carrier Phase "
                         + "level uncertainties.  If failed, retry near window or outdoors?",
                 carrierPhaseQualityPrrFound);
         Log.i(TAG, "Meas received for:" + mGnssMeasSvStringIds);
         Log.i(TAG, "Status Received for:" + gnssStatusCallback.getGnssUsedSvStringIds());
-
-        // Logging YEAR_2017 Capability.
-        // Get all SVs marked as USED in GnssStatus. Remove any SV for which measurement
-        // is received. The resulting list should ideally be empty (How can you use a SV
-        // with no measurement). To allow for race condition where the last GNSS Status
-        // has 1 SV with used flag set, but the corresponding measurement has not yet been
-        // received, the check is done as <= 1
-        Set<String> svDiff = gnssStatusCallback.getGnssUsedSvStringIds();
-        svDiff.removeAll(mGnssMeasSvStringIds);
-        softAssert.assertOrWarnTrue(/* strict= */ YEAR_2017_CAPABILITY_ENFORCED,
-                "Used Svs with no Meas: " + (svDiff.isEmpty() ? "None" : svDiff),
+        if (mTestLocationManager.getLocationManager().getGnssYearOfHardware() >= YEAR_2017) {
+            // Get all SVs marked as USED in GnssStatus. Remove any SV for which measurement
+            // is received. The resulting list should ideally be empty (How can you use a SV
+            // with no measurement). To allow for race condition where the last GNSS Status
+            // has 1 SV with used flag set, but the corresponding measurement has not yet been
+            // received, the check is done as <= 1
+            Set<String> svDiff = gnssStatusCallback.getGnssUsedSvStringIds();
+            svDiff.removeAll(mGnssMeasSvStringIds);
+            softAssert.assertTrue("Used Svs with no Meas: " + (svDiff.isEmpty() ? "None" : svDiff),
                 svDiff.size() <= 1);
-
+        }
         softAssert.assertAll();
     }
 }
