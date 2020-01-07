@@ -127,6 +127,8 @@ class AppOpsTest {
                     AppOpsManager.OPSTR_READ_EXTERNAL_STORAGE
             permissionToOpStr[permission.WRITE_EXTERNAL_STORAGE] =
                     AppOpsManager.OPSTR_WRITE_EXTERNAL_STORAGE
+            permissionToOpStr[permission.INTERACT_ACROSS_PROFILES] =
+                    AppOpsManager.OPSTR_INTERACT_ACROSS_PROFILES
         }
     }
 
