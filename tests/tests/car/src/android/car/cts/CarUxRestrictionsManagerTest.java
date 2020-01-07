@@ -16,12 +16,9 @@
 package android.car.cts;
 
 
-import static android.car.drivingstate.CarUxRestrictionsManager.UX_RESTRICTION_MODE_BASELINE;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import android.car.Car;
 import android.car.drivingstate.CarUxRestrictions;
@@ -30,8 +27,6 @@ import android.platform.test.annotations.RequiresDevice;
 import android.test.suitebuilder.annotation.SmallTest;
 
 import androidx.test.runner.AndroidJUnit4;
-
-import com.google.common.collect.ImmutableList;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -92,38 +87,5 @@ public class CarUxRestrictionsManagerTest extends CarApiTestBase {
     public void testRegisterListener_noCrash() {
         mManager.registerListener(restrictions -> {});
         mManager.unregisterListener();
-    }
-
-    @Test
-    public void testSetRestrictionMode_missingPermission_throwsException() {
-        try {
-            mManager.setRestrictionMode(UX_RESTRICTION_MODE_BASELINE);
-            fail("Expected SecurityException. App does not have the change UX Restrictions "
-                    + "permission.");
-        } catch (SecurityException e) {
-            // expected
-        }
-    }
-
-    @Test
-    public void testGetRestrictionMode_missingPermission_throwsException() {
-        try {
-            mManager.getRestrictionMode();
-            fail("Expected SecurityException. App does not have the change UX Restrictions "
-                    + "permission.");
-        } catch (SecurityException e) {
-            // expected
-        }
-    }
-
-    @Test
-    public void testSaveUxRestrictionsConfigurationForNextBoot_missingPermission_throwsException() {
-        try {
-            mManager.saveUxRestrictionsConfigurationForNextBoot(ImmutableList.of());
-            fail("Expected SecurityException. App does not have the change UX Restrictions "
-                    + "permission.");
-        } catch (SecurityException e) {
-            // expected
-        }
     }
 }
