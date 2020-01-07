@@ -150,4 +150,16 @@ public class TestMedia extends SecurityTestCase {
      * To prevent merge conflicts, add tests for Q below this comment, before any
      * existing test methods
      ******************************************************************************/
+
+    /**
+     * b/109891727
+     * Vulnerability Behaviour: SIGSEGV in media.codec
+     */
+    @SecurityTest(minPatchLevel = "2019-09")
+    @Test
+    public void testPocCVE_2019_9347() throws Exception {
+        String processPatternStrings[] = {"media\\.codec", "omx@\\d+?\\.\\d+?-service"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-9347", null, getDevice(),
+                processPatternStrings);
+    }
 }
