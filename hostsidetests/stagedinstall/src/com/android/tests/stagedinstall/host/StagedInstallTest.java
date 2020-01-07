@@ -488,6 +488,16 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         }
     }
 
+    @Test
+    @LargeTest
+    public void testInstallStagedNoHashtreeApex() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
+        runPhase("testInstallStagedNoHashtreeApex_Commit");
+        getDevice().reboot();
+        runPhase("testInstallStagedNoHashtreeApex_VerifyPostReboot");
+    }
+
     private boolean isUpdatingApexSupported() throws Exception {
         final String updatable = getDevice().getProperty("ro.apex.updatable");
         return updatable != null && updatable.equals("true");
