@@ -23,6 +23,7 @@ public final class HdmiCecConstants {
     public static final int REBOOT_TIMEOUT = 60000;
 
     public static final int PHYSICAL_ADDRESS = 0x1000;
+    public static final int TV_PHYSICAL_ADDRESS = 0x0000;
     public static final int PHYSICAL_ADDRESS_LENGTH = 4; /* Num nibbles in CEC message */
 
     public static final int PLAYBACK_DEVICE_TYPE = 0x04;
