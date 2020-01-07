@@ -160,6 +160,14 @@ public class SubscriptionManagerTest {
     }
 
     @Test
+    public void testGetActiveSubscriptionInfoForIcc() throws Exception {
+        if (!isSupported()) return;
+        SubscriptionInfo info = mSm.getActiveSubscriptionInfo(mSubId);
+        assertNotNull(ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                (sm) -> sm.getActiveSubscriptionInfoForIcc(info.getIccId())));
+    }
+
+    @Test
     public void testIsActiveSubscriptionId() throws Exception {
         if (!isSupported()) return;
         assertTrue(mSm.isActiveSubscriptionId(mSubId));
