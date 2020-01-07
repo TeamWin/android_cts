@@ -67,9 +67,6 @@ public class Rollback {
         }
 
         Rollback r = (Rollback) other;
-        return mFrom.getPackageName().equals(r.mFrom.getPackageName())
-            && mFrom.getLongVersionCode() == r.mFrom.getVersionCode()
-            && mTo.getPackageName().equals(r.mTo.getPackageName())
-            && mTo.getLongVersionCode() == r.mTo.getVersionCode();
+        return mFrom.equals(r.mFrom) && mTo.equals(r.mTo);
     }
 }

@@ -37,6 +37,7 @@ import java.util.ArrayList;
 public final class AnrMonitor {
     private static final String TAG = "AnrMonitor";
     private static final String WAIT_FOR_ANR = "Waiting after early ANR...  available commands:";
+    private static final String MONITOR_READY = "Monitoring activity manager...  available commands:";
 
     /**
      * Command for the {@link #sendCommand}: continue the process
@@ -79,6 +80,7 @@ public final class AnrMonitor {
         mWritePrinter = new PrintWriter(new BufferedOutputStream(mWriteStream));
         mReaderThread = new ReaderThread();
         mReaderThread.start();
+        waitFor(3600000L, MONITOR_READY);
     }
 
     /**
@@ -87,7 +89,15 @@ public final class AnrMonitor {
      * @return true if it was successful, false if it got a timeout.
      */
     public boolean waitFor(final long timeout) {
-        final String expected = WAIT_FOR_ANR;
+        return waitFor(timeout, WAIT_FOR_ANR);
+    }
+
+    /**
+     * Wait for the given output.
+     *
+     * @return true if it was successful, false if it got a timeout.
+     */
+    private boolean waitFor(final long timeout, final String expected) {
         final long waitUntil = SystemClock.uptimeMillis() + timeout;
         synchronized (mPendingLines) {
             while (true) {

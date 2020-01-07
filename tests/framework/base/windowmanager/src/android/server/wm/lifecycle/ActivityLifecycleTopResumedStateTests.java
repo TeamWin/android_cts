@@ -225,7 +225,6 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         assertEquals("Double launch sequence must match", expectedTransitions, observedTransitions);
     }
 
-    @FlakyTest(bugId=80414790)
     @Test
     public void testTopPositionSwitchOnDoubleLaunchAndTopFinish() throws Exception {
         final Activity baseActivity = launchActivityAndWait(CallbackTrackingActivity.class);

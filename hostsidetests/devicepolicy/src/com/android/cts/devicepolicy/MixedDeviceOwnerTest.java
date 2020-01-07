@@ -150,6 +150,24 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         }
     }
 
+    @Test
+    public void testSetTime() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceTestMethod(".TimeManagementTest", "testSetTime");
+        executeDeviceTestMethod(".TimeManagementTest", "testSetTime_failWhenAutoTimeEnabled");
+    }
+
+    @Test
+    public void testSetTimeZone() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceTestMethod(".TimeManagementTest", "testSetTimeZone");
+        executeDeviceTestMethod(".TimeManagementTest", "testSetTimeZone_failIfAutoTimeZoneEnabled");
+    }
+
     Map<String, DevicePolicyEventWrapper[]> getAdditionalDelegationTests() {
         final Map<String, DevicePolicyEventWrapper[]> result = new HashMap<>();
         DevicePolicyEventWrapper[] expectedMetrics = new DevicePolicyEventWrapper[] {

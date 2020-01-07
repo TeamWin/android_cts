@@ -13,23 +13,20 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Config for CTS Provider test cases">
+<configuration description="Config for TextClassifier CTS">
     <option name="test-suite-tag" value="cts" />
-
     <option name="config-descriptor:metadata" key="component" value="framework" />
-    <!-- Instant apps can't access the system providers. -->
+    <option name="config-descriptor:metadata" key="parameter" value="multi_abi" />
     <option name="config-descriptor:metadata" key="parameter" value="not_instant_app" />
-    <option name="config-descriptor:metadata" key="parameter" value="not_multi_abi" />
-    <option name="config-descriptor:metadata" key="parameter" value="secondary_user" />
-
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
-        <option name="test-file-name" value="CtsContactsProviderTestCases.apk" />
+        <option name="test-file-name" value="CtsQueryTextClassifierServiceActivity.apk" />
+        <option name="test-file-name" value="CtsTextClassifierTestCases.apk" />
     </target_preparer>
-
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
-        <option name="runner" value="androidx.test.runner.AndroidJUnitRunner" />
-        <option name="package" value="android.provider.cts.contacts" />
-        <option name="runtime-hint" value="10m00s" />
+        <option name="package" value="android.view.textclassifier.cts" />
+        <option name="runtime-hint" value="1m" />
+        <option name="hidden-api-checks" value="false" />
+        <option name="isolated-storage" value="false" />
     </test>
 </configuration>

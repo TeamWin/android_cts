@@ -352,13 +352,11 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         LifecycleVerifier.assertLaunchAndDestroySequence(FirstActivity.class, getLifecycleLog());
     }
 
-    @FlakyTest(bugId = 139808754)
     @Test
     public void testTrampoline() throws Exception {
         testTrampolineLifecycle(false /* newTask */);
     }
 
-    @FlakyTest(bugId = 139808754)
     @Test
     public void testTrampolineNewTask() throws Exception {
         testTrampolineLifecycle(true /* newTask */);

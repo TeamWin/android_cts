@@ -215,7 +215,8 @@ public class MmsTest {
         Uri mmsUri1 = saveMmsWithMessageBoxUri(MMS_SUBJECT_TWO, Sms.MESSAGE_TYPE_OUTBOX);
         assertThat(mmsUri1).isNotNull();
 
-        Cursor msgCursor = mContentResolver.query(Outbox.CONTENT_URI, null, null, null);
+        Cursor msgCursor = mContentResolver.query(Outbox.CONTENT_URI, null, null, null,
+                Telephony.Mms.DATE_SENT + " ASC");
         assertThat(msgCursor.getCount()).isEqualTo(2);
 
         assertThat(msgCursor.moveToFirst()).isEqualTo(true);
@@ -230,7 +231,8 @@ public class MmsTest {
         insertIntoMmsTableWithDifferentMessageBoxUriOfMms();
 
         Cursor cursor = mContentResolver
-                .query(Telephony.Mms.CONTENT_URI, null, null, null, null, null);
+                .query(Telephony.Mms.CONTENT_URI, null, null, null,
+                Telephony.Mms.DATE_SENT + " ASC");
 
         assertThat(cursor.getCount() >= 5).isEqualTo(true);
         assertThat(cursor.moveToFirst()).isEqualTo(true);
@@ -408,6 +410,7 @@ public class MmsTest {
         mmsValues.put(Telephony.Mms.TEXT_ONLY, 1);
         mmsValues.put(Telephony.Mms.MESSAGE_TYPE, messageType);
         mmsValues.put(Telephony.Mms.SUBJECT, subject);
+        mmsValues.put(Telephony.Mms.DATE_SENT, System.currentTimeMillis());
 
         switch (messageType) {
             case Sms.MESSAGE_TYPE_SENT:
