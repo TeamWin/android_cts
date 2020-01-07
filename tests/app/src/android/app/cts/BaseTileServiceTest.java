@@ -18,30 +18,40 @@ package android.app.cts;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
-import android.app.stubs.BooleanTestTileService;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assume.assumeTrue;
+
 import android.app.stubs.TestTileService;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.service.quicksettings.TileService;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.Until;
-import android.test.AndroidTestCase;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.SystemUtil;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.runner.RunWith;
+
 import java.io.IOException;
 
-public abstract class BaseTileServiceTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public abstract class BaseTileServiceTest {
 
     protected abstract String getTag();
     protected abstract String getComponentName();
     protected abstract TileService getTileServiceInstance();
     protected abstract void waitForConnected(boolean state) throws InterruptedException;
     protected abstract void waitForListening(boolean state) throws InterruptedException;
+    protected Context mContext;
 
     final static String DUMP_COMMAND =
             "dumpsys activity service com.android.systemui/.SystemUIService dependency "
@@ -59,10 +69,10 @@ public abstract class BaseTileServiceTest extends AndroidTestCase {
     private Intent homeIntent;
     private String mLauncherPackage;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        if (!TileService.isQuickSettingsSupported()) return;
+    @Before
+    public void setUp() throws Exception {
+        assumeTrue(TileService.isQuickSettingsSupported());
+        mContext = InstrumentationRegistry.getContext();
         homeIntent = new Intent(Intent.ACTION_MAIN);
         homeIntent.addCategory(Intent.CATEGORY_HOME);
 
@@ -75,8 +85,8 @@ public abstract class BaseTileServiceTest extends AndroidTestCase {
         device.wait(Until.hasObject(By.pkg(mLauncherPackage).depth(0)), TIMEOUT);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         expandSettings(false);
         toggleServiceAccess(getComponentName(), false);
         waitForConnected(false);
@@ -86,7 +96,7 @@ public abstract class BaseTileServiceTest extends AndroidTestCase {
     protected void startTileService() throws Exception {
         toggleServiceAccess(getComponentName(), true);
         waitForConnected(true); // wait for service to be bound
-        mTileService = BooleanTestTileService.getInstance();
+        mTileService = getTileServiceInstance();
         assertNotNull(mTileService);
     }
 
