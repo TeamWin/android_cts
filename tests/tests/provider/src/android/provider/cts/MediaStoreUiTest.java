@@ -16,54 +16,33 @@
 
 package android.provider.cts;
 
-import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
-import static android.Manifest.permission.ACCESS_FINE_LOCATION;
-import static android.Manifest.permission.CAMERA;
-import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
-import static android.Manifest.permission.RECORD_AUDIO;
-import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
-
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.UriPermission;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
-import android.media.ExifInterface;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
-import android.os.SystemClock;
 import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
-import android.provider.MediaStore;
 import android.provider.cts.GetResultActivity.Result;
+import android.provider.MediaStore;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
-import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
 import android.test.InstrumentationTestCase;
 import android.text.format.DateUtils;
-import android.util.Log;
-import android.view.KeyEvent;
-
-import androidx.core.content.FileProvider;
-import androidx.test.InstrumentationRegistry;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -141,127 +120,6 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
             fail("Expecting SecurityException.");
         } catch (SecurityException e) {
             // Expected
-        }
-    }
-
-    private void maybeClick(UiSelector sel) {
-        try { mDevice.findObject(sel).click(); } catch (Throwable ignored) { }
-    }
-
-    private void maybeClick(BySelector sel) {
-        try { mDevice.findObject(sel).click(); } catch (Throwable ignored) { }
-    }
-
-    private void maybeGrantRuntimePermission(String pkg, Set<String> requested, String permission) {
-        if (requested.contains(permission)) {
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .grantRuntimePermission(pkg, permission);
-        }
-    }
-
-    /**
-     * Verify that whoever handles {@link MediaStore#ACTION_IMAGE_CAPTURE} can
-     * correctly write the contents into a passed {@code content://} Uri.
-     */
-    public void testImageCapture() throws Exception {
-        final Context context = getInstrumentation().getContext();
-        if (!context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
-            Log.d(TAG, "Skipping due to lack of camera");
-            return;
-        }
-
-        final File targetDir = new File(context.getFilesDir(), "debug");
-        final File target = new File(targetDir, "capture.jpg");
-
-        targetDir.mkdirs();
-        assertFalse(target.exists());
-
-        final Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        intent.putExtra(MediaStore.EXTRA_OUTPUT,
-                FileProvider.getUriForFile(context, "android.provider.cts.fileprovider", target));
-
-        // Figure out who is going to answer the phone
-        final ResolveInfo ri = context.getPackageManager().resolveActivity(intent, 0);
-        final String pkg = ri.activityInfo.packageName;
-        Log.d(TAG, "We're probably launching " + ri);
-
-        final PackageInfo pi = context.getPackageManager().getPackageInfo(pkg,
-                PackageManager.GET_PERMISSIONS);
-        final Set<String> req = new HashSet<>();
-        req.addAll(Arrays.asList(pi.requestedPermissions));
-
-        // Grant them all the permissions they might want
-        maybeGrantRuntimePermission(pkg, req, CAMERA);
-        maybeGrantRuntimePermission(pkg, req, ACCESS_COARSE_LOCATION);
-        maybeGrantRuntimePermission(pkg, req, ACCESS_FINE_LOCATION);
-        maybeGrantRuntimePermission(pkg, req, RECORD_AUDIO);
-        maybeGrantRuntimePermission(pkg, req, READ_EXTERNAL_STORAGE);
-        maybeGrantRuntimePermission(pkg, req, WRITE_EXTERNAL_STORAGE);
-        SystemClock.sleep(DateUtils.SECOND_IN_MILLIS);
-
-        mActivity.startActivityForResult(intent, REQUEST_CODE);
-        mDevice.waitForIdle();
-
-        // To ensure camera app is launched
-        SystemClock.sleep(5 * DateUtils.SECOND_IN_MILLIS);
-
-        // Try a couple different strategies for taking a photo: first take a
-        // photo and confirm using hardware keys
-        mDevice.pressKeyCode(KeyEvent.KEYCODE_CAMERA);
-        mDevice.waitForIdle();
-        SystemClock.sleep(5 * DateUtils.SECOND_IN_MILLIS);
-        mDevice.pressKeyCode(KeyEvent.KEYCODE_DPAD_CENTER);
-        mDevice.waitForIdle();
-
-        // Maybe that gave us a result?
-        Result result = mActivity.getResult(15, TimeUnit.SECONDS);
-        Log.d(TAG, "First pass result was " + result);
-
-        // Hrm, that didn't work; let's try an alternative approach of digging
-        // around for a shutter button
-        if (result == null) {
-            maybeClick(new UiSelector().resourceId(pkg + ":id/shutter_button"));
-            mDevice.waitForIdle();
-            SystemClock.sleep(5 * DateUtils.SECOND_IN_MILLIS);
-            maybeClick(new UiSelector().resourceId(pkg + ":id/shutter_button"));
-            mDevice.waitForIdle();
-            maybeClick(new UiSelector().resourceId(pkg + ":id/done_button"));
-            mDevice.waitForIdle();
-
-            result = mActivity.getResult(15, TimeUnit.SECONDS);
-            Log.d(TAG, "Second pass result was " + result);
-        }
-
-        // Grr, let's try hunting around even more
-        if (result == null) {
-            maybeClick(By.pkg(pkg).descContains("Capture"));
-            mDevice.waitForIdle();
-            SystemClock.sleep(5 * DateUtils.SECOND_IN_MILLIS);
-            maybeClick(By.pkg(pkg).descContains("Done"));
-            mDevice.waitForIdle();
-
-            result = mActivity.getResult(15, TimeUnit.SECONDS);
-            Log.d(TAG, "Third pass result was " + result);
-        }
-
-        assertNotNull("Expected to get a IMAGE_CAPTURE result; your camera app should "
-                + "respond to the CAMERA and DPAD_CENTER keycodes", result);
-
-        assertTrue("exists", target.exists());
-        assertTrue("has data", target.length() > 65536);
-
-        // At the very least we expect photos generated by the device to have
-        // sane baseline EXIF data
-        final ExifInterface exif = new ExifInterface(new FileInputStream(target));
-        assertAttribute(exif, ExifInterface.TAG_MAKE);
-        assertAttribute(exif, ExifInterface.TAG_MODEL);
-        assertAttribute(exif, ExifInterface.TAG_DATETIME);
-    }
-
-    private static void assertAttribute(ExifInterface exif, String tag) {
-        final String res = exif.getAttribute(tag);
-        if (res == null || res.length() == 0) {
-            Log.d(TAG, "Expected valid EXIF tag for tag " + tag);
         }
     }
 
