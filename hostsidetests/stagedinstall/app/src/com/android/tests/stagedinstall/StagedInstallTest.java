@@ -56,7 +56,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -642,6 +647,45 @@ public class StagedInstallTest {
         int sessionId = retrieveLastSessionId();
         assertSessionApplied(sessionId);
         assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(2);
+    }
+
+    @Test
+    public void testInstallStagedNoHashtreeApex_Commit() throws Exception {
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(1);
+        int sessionId = stageSingleApk(TestApp.ApexNoHashtree2).assertSuccessful().getSessionId();
+        waitForIsReadyBroadcast(sessionId);
+        assertSessionReady(sessionId);
+        storeSessionId(sessionId);
+        // Version shouldn't change before reboot.
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(1);
+    }
+
+    @Test
+    public void testInstallStagedNoHashtreeApex_VerifyPostReboot() throws Exception {
+        int sessionId = retrieveLastSessionId();
+        assertSessionApplied(sessionId);
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(2);
+        // Read all files under /apex/com.android.apex.cts.shim to somewhat verify that hashtree
+        // is not corrupted
+        Files.walkFileTree(Paths.get("/apex/com.android.apex.cts.shim"),
+                new SimpleFileVisitor<Path>() {
+
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+                            throws IOException {
+                        Files.readAllBytes(file);
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFileFailed(Path file, IOException exc)
+                            throws IOException {
+                        if (file.endsWith("lost+found")) {
+                            return FileVisitResult.CONTINUE;
+                        }
+                        throw exc;
+                    }
+                });
     }
 
     private static long getInstalledVersion(String packageName) {
