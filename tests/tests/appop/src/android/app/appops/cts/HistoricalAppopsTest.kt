@@ -19,22 +19,24 @@ package android.app.appops.cts
 import android.app.AppOpsManager
 import android.app.AppOpsManager.HistoricalOp
 import android.app.AppOpsManager.HistoricalOps
+import android.app.AppOpsManager.OPSTR_START_FOREGROUND
+import android.app.AppOpsManager.OP_FLAGS_ALL
 import android.os.Process
 import android.os.SystemClock
 import android.provider.DeviceConfig
 import androidx.test.InstrumentationRegistry
+import androidx.test.rule.ActivityTestRule
 import androidx.test.runner.AndroidJUnit4
+import androidx.test.uiautomator.UiDevice
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import java.util.function.Consumer
-import androidx.test.rule.ActivityTestRule
-import androidx.test.uiautomator.UiDevice
-import org.junit.Rule
 
 const val PROPERTY_PERMISSIONS_HUB_ENABLED = "permissions_hub_enabled"
 
@@ -198,6 +200,39 @@ class HistoricalAppopsTest {
         assertHasCounts(fifthOps!!, 1703)
     }
 
+    @Test
+    fun testGetHistoricalAggregationOverFeatures() {
+        // Configure historical registry behavior.
+        appOpsManager.setHistoryParameters(
+                AppOpsManager.HISTORICAL_MODE_ENABLED_ACTIVE,
+                SNAPSHOT_INTERVAL_MILLIS,
+                INTERVAL_COMPRESSION_MULTIPLIER)
+
+        appOpsManager.setUidMode(OPSTR_START_FOREGROUND, uid, AppOpsManager.MODE_ALLOWED)
+
+        activityRule.activity.waitForResumed()
+
+        appOpsManager.noteOp(OPSTR_START_FOREGROUND, uid, packageName, "firstFeature", null)
+        appOpsManager.noteOp(OPSTR_START_FOREGROUND, uid, packageName, "secondFeature", null)
+
+        val memOps = getHistoricalOps(appOpsManager, uid = uid)!!
+
+        assertThat(memOps.getUidOpsAt(0).getPackageOpsAt(0).getOp(OPSTR_START_FOREGROUND)!!
+                .getForegroundAccessCount(OP_FLAGS_ALL)).isEqualTo(2)
+        assertThat(memOps.getUidOpsAt(0).getPackageOpsAt(0).getFeatureOps("firstFeature")!!
+                .getOp(OPSTR_START_FOREGROUND)!!.getForegroundAccessCount(OP_FLAGS_ALL))
+                .isEqualTo(1)
+        assertThat(memOps.getUidOpsAt(0).getPackageOpsAt(0).getFeatureOps("secondFeature")!!
+                .getOp(OPSTR_START_FOREGROUND)!!.getForegroundAccessCount(OP_FLAGS_ALL))
+                .isEqualTo(1)
+
+        // Wait until data is on disk and verify no entry got lost
+        Thread.sleep(SNAPSHOT_INTERVAL_MILLIS)
+
+        val diskOps = getHistoricalOps(appOpsManager, uid = uid)!!
+        assertThat(diskOps.getUidOpsAt(0)).isEqualTo(memOps.getUidOpsAt(0))
+    }
+
     private fun testHistoricalAggregationSomeLevelsDeep(depth: Int) {
         // Configure historical registry behavior.
         appOpsManager.setHistoryParameters(
@@ -346,28 +381,28 @@ class HistoricalAppopsTest {
     private fun createDataChunk(): HistoricalOps {
         val chunk = HistoricalOps(SNAPSHOT_INTERVAL_MILLIS / 4,
                 SNAPSHOT_INTERVAL_MILLIS / 2)
-        chunk.increaseAccessCount(AppOpsManager.OP_START_FOREGROUND, uid,
-                packageName, AppOpsManager.UID_STATE_TOP, AppOpsManager.OP_FLAG_SELF, 10)
-        chunk.increaseAccessCount(AppOpsManager.OP_START_FOREGROUND, uid,
-                packageName, AppOpsManager.UID_STATE_BACKGROUND, AppOpsManager.OP_FLAG_SELF, 10)
-        chunk.increaseRejectCount(AppOpsManager.OP_START_FOREGROUND, uid,
-                packageName, AppOpsManager.UID_STATE_TOP, AppOpsManager.OP_FLAG_SELF, 10)
-        chunk.increaseRejectCount(AppOpsManager.OP_START_FOREGROUND, uid,
-                packageName, AppOpsManager.UID_STATE_BACKGROUND, AppOpsManager.OP_FLAG_SELF, 10)
-        chunk.increaseAccessDuration(AppOpsManager.OP_START_FOREGROUND, uid,
-                packageName, AppOpsManager.UID_STATE_TOP, AppOpsManager.OP_FLAG_SELF, 10)
-        chunk.increaseAccessDuration(AppOpsManager.OP_START_FOREGROUND, uid,
-                packageName, AppOpsManager.UID_STATE_BACKGROUND, AppOpsManager.OP_FLAG_SELF, 10)
+        chunk.increaseAccessCount(AppOpsManager.OP_START_FOREGROUND, uid, packageName, null,
+                AppOpsManager.UID_STATE_TOP, AppOpsManager.OP_FLAG_SELF, 10)
+        chunk.increaseAccessCount(AppOpsManager.OP_START_FOREGROUND, uid, packageName, null,
+                AppOpsManager.UID_STATE_BACKGROUND, AppOpsManager.OP_FLAG_SELF, 10)
+        chunk.increaseRejectCount(AppOpsManager.OP_START_FOREGROUND, uid, packageName, null,
+                AppOpsManager.UID_STATE_TOP, AppOpsManager.OP_FLAG_SELF, 10)
+        chunk.increaseRejectCount(AppOpsManager.OP_START_FOREGROUND, uid, packageName, null,
+                AppOpsManager.UID_STATE_BACKGROUND, AppOpsManager.OP_FLAG_SELF, 10)
+        chunk.increaseAccessDuration(AppOpsManager.OP_START_FOREGROUND, uid, packageName, null,
+                AppOpsManager.UID_STATE_TOP, AppOpsManager.OP_FLAG_SELF, 10)
+        chunk.increaseAccessDuration(AppOpsManager.OP_START_FOREGROUND, uid, packageName, null,
+                AppOpsManager.UID_STATE_BACKGROUND, AppOpsManager.OP_FLAG_SELF, 10)
         return chunk
     }
 
     private fun getHistoricalOps(
         appOpsManager: AppOpsManager,
-        uid: Int,
-        packageName: String,
-        opNames: List<String>?,
-        beginTimeMillis: Long,
-        endTimeMillis: Long
+        uid: Int = Process.INVALID_UID,
+        packageName: String? = null,
+        opNames: List<String>? = null,
+        beginTimeMillis: Long = 0,
+        endTimeMillis: Long = Long.MAX_VALUE
     ): HistoricalOps? {
         val array = arrayOfNulls<HistoricalOps>(1)
         val lock = ReentrantLock()
