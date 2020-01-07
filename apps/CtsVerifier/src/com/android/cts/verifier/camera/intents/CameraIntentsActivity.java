@@ -91,13 +91,15 @@ implements OnClickListener, SurfaceHolder.Callback {
     private static final int STAGE_APP_PICTURE = 0;
     private static final int STAGE_APP_VIDEO = 1;
     private static final int STAGE_INTENT_PICTURE = 2;
-    private static final int STAGE_INTENT_VIDEO = 3;
-    private static final int NUM_STAGES = 4;
+    private static final int STAGE_INTENT_PICTURE_SECURE = 3;
+    private static final int STAGE_INTENT_VIDEO = 4;
+    private static final int NUM_STAGES = 5;
     private static final String STAGE_INDEX_EXTRA = "stageIndex";
 
     private static String[]  EXPECTED_INTENTS = new String[] {
         Camera.ACTION_NEW_PICTURE,
         Camera.ACTION_NEW_VIDEO,
+        null,
         null,
         Camera.ACTION_NEW_VIDEO
     };
@@ -135,6 +137,7 @@ implements OnClickListener, SurfaceHolder.Callback {
     private static int[] TEST_JOB_TYPES = new int[] {
         JOB_TYPE_IMAGE,
         JOB_TYPE_VIDEO,
+        JOB_TYPE_IMAGE,
         JOB_TYPE_IMAGE,
         JOB_TYPE_VIDEO
     };
@@ -230,6 +233,9 @@ implements OnClickListener, SurfaceHolder.Callback {
         if (stageIndex == STAGE_INTENT_PICTURE) {
             return "Intent Picture";
         }
+        if (stageIndex == STAGE_INTENT_PICTURE_SECURE) {
+            return "Intent Picture Secure";
+        }
         if (stageIndex == STAGE_INTENT_VIDEO) {
             return "Intent Video";
         }
@@ -248,6 +254,9 @@ implements OnClickListener, SurfaceHolder.Callback {
         if (stageIndex == STAGE_INTENT_PICTURE) {
             return android.hardware.Camera.ACTION_NEW_PICTURE;
         }
+        if (stageIndex == STAGE_INTENT_PICTURE_SECURE) {
+            return android.hardware.Camera.ACTION_NEW_PICTURE + " (Secure)";
+        }
         if (stageIndex == STAGE_INTENT_VIDEO) {
             return android.hardware.Camera.ACTION_NEW_VIDEO;
         }
@@ -265,6 +274,9 @@ implements OnClickListener, SurfaceHolder.Callback {
         }
         if (stageIndex == STAGE_INTENT_PICTURE) {
             return getString(R.string.ci_instruction_text_intent_picture_label);
+        }
+        if (stageIndex == STAGE_INTENT_PICTURE_SECURE) {
+            return getString(R.string.ci_instruction_text_intent_picture_secure_label);
         }
         if (stageIndex == STAGE_INTENT_VIDEO) {
             return getString(R.string.ci_instruction_text_intent_video_label);
@@ -405,6 +417,7 @@ implements OnClickListener, SurfaceHolder.Callback {
         the intents by taking a photo/video
         */
         if (getStageIndex() == STAGE_INTENT_PICTURE ||
+            getStageIndex() == STAGE_INTENT_PICTURE_SECURE ||
             getStageIndex() == STAGE_INTENT_VIDEO) {
 
             if (mActivityResult && mState == STATE_STARTED) {
@@ -426,6 +439,7 @@ implements OnClickListener, SurfaceHolder.Callback {
                 if (mState != STATE_FAILED) {
                     switch (stageIndex) {
                         case STAGE_INTENT_PICTURE:
+                        case STAGE_INTENT_PICTURE_SECURE:
                             handleIntentPictureResult();
                             break;
                         case STAGE_INTENT_VIDEO:
@@ -532,8 +546,9 @@ implements OnClickListener, SurfaceHolder.Callback {
 
                         // For STAGE_INTENT_PICTURE test, if EXTRA_OUTPUT is not assigned in intent,
                         // file should NOT be saved so triggering this is a test failure.
-                        if (getStageIndex() == STAGE_INTENT_PICTURE) {
-                            Log.e(TAG, "FAIL: STAGE_INTENT_PICTURE test should not create file");
+                        if (getStageIndex() == STAGE_INTENT_PICTURE ||
+                            getStageIndex() == STAGE_INTENT_PICTURE_SECURE) {
+                            Log.e(TAG, "FAIL: STAGE_INTENT_PICTURE or STAGE_INTENT_PICTURE_SECURE test should not create file");
                             mState = STATE_FAILED;
                         }
 
@@ -548,8 +563,9 @@ implements OnClickListener, SurfaceHolder.Callback {
                 e.printStackTrace();
             }
 
-            if (getStageIndex() == STAGE_INTENT_PICTURE) {
-                // STAGE_INTENT_PICTURE should timeout
+            if (getStageIndex() == STAGE_INTENT_PICTURE ||
+                getStageIndex() == STAGE_INTENT_PICTURE_SECURE) {
+                // STAGE_INTENT_PICTURE or STAGE_INTENT_PICTURE_SECURE should timeout
                 return true;
             } else {
                 Log.e(TAG, "FAIL: timeout waiting for URI trigger");
@@ -594,7 +610,9 @@ implements OnClickListener, SurfaceHolder.Callback {
              * Video intents do not need to wait on a ContentProvider broadcast since we're starting
              * the intent activity with EXTRA_OUTPUT set
              */
-            if (stageIndex != STAGE_INTENT_VIDEO && stageIndex != STAGE_INTENT_PICTURE) {
+            if (stageIndex != STAGE_INTENT_VIDEO &&
+                stageIndex != STAGE_INTENT_PICTURE &&
+                stageIndex != STAGE_INTENT_PICTURE_SECURE) {
                 JobInfo job = makeJobInfo(TEST_JOB_TYPES[stageIndex]);
                 jobScheduler.schedule(job);
                 new WaitForTriggerTask().execute();
@@ -613,6 +631,9 @@ implements OnClickListener, SurfaceHolder.Callback {
             Intent cameraIntent = null;
             if (stageIndex == STAGE_INTENT_PICTURE) {
                 intentStr = android.provider.MediaStore.ACTION_IMAGE_CAPTURE;
+            }
+            else if (stageIndex == STAGE_INTENT_PICTURE_SECURE) {
+                intentStr = android.provider.MediaStore.ACTION_IMAGE_CAPTURE_SECURE;
             }
             else if (stageIndex == STAGE_INTENT_VIDEO) {
                 intentStr = android.provider.MediaStore.ACTION_VIDEO_CAPTURE;
@@ -633,6 +654,7 @@ implements OnClickListener, SurfaceHolder.Callback {
                 String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
                 switch (stageIndex) {
                     case STAGE_INTENT_PICTURE:
+                    case STAGE_INTENT_PICTURE_SECURE:
                         mImageTarget = new File(mDebugFolder, timeStamp + "capture.jpg");
                         targetFile = mImageTarget;
                         break;
