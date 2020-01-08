@@ -527,10 +527,10 @@ public class AugmentedLoginActivityTest
                 .build());
         mActivity.onPassword(View::requestFocus);
         mUiBot.assertNoDatasetsEver();
-        final AugmentedFillRequest request2 = sAugmentedReplier.getNextFillRequest();
-        assertBasicRequestInfo(request2, mActivity, passwordId, passwordValue);
 
-        mAugmentedUiBot.assertUiShown(passwordId, "req2");
+        // (TODO: b/141703197) password request temp disabled.
+        mAugmentedUiBot.assertUiGone();
+        sAugmentedReplier.reset();
 
         // Tap on username again...
         sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
@@ -643,11 +643,11 @@ public class AugmentedLoginActivityTest
                 .build());
         mActivity.onPassword(View::requestFocus);
         mUiBot.assertNoDatasetsEver();
-        final AugmentedFillRequest request2 = sAugmentedReplier.getNextFillRequest();
-        assertBasicRequestInfo(request2, mActivity, passwordId, passwordValue);
 
-        callback.assertUiShownEvent(password);
-        mAugmentedUiBot.assertUiShown(passwordId, "req2");
+        // (TODO: b/141703197) password request temp disabled.
+        callback.assertNotCalled();
+        mAugmentedUiBot.assertUiGone();
+        sAugmentedReplier.reset();
 
         // Tap on username again...
         sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
@@ -661,13 +661,14 @@ public class AugmentedLoginActivityTest
         final AugmentedFillRequest request3 = sAugmentedReplier.getNextFillRequest();
         assertBasicRequestInfo(request3, mActivity, usernameId, usernameValue);
         final UiObject2 ui = mAugmentedUiBot.assertUiShown(usernameId, "Augment Me");
+        callback.assertUiShownEvent(username);
 
         // ...and autofill this time
         mActivity.expectAutoFill("dude", "sweet");
         ui.click();
         mActivity.assertAutoFilled();
         mAugmentedUiBot.assertUiGone();
-        callback.assertUiHiddenEvent(password);
+        callback.assertUiHiddenEvent(username);
     }
 
     @Test
