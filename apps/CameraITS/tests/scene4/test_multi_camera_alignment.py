@@ -30,6 +30,7 @@ ALIGN_TOL = 0.01  # multiplied by sensor diagonal to convert to pixels
 CHART_DISTANCE_CM = 22  # cm
 CIRCLE_RTOL = 0.1
 GYRO_REFERENCE = 1
+UNDEFINED_REFERENCE = 2
 NAME = os.path.basename(__file__).split('.')[0]
 TRANS_REF_MATRIX = np.array([0, 0, 0])
 
@@ -275,8 +276,11 @@ def main():
         for i in ids:
             # Find YUV capable physical cameras
             prop = cam.get_camera_properties_by_id(i)
+            sub_camera_pose_reference = prop['android.lens.poseReference']
+            if sub_camera_pose_reference == UNDEFINED_REFERENCE:
+                continue
             physical_ids.append(i)
-            props_physical[i] = cam.get_camera_properties_by_id(i)
+            props_physical[i] = prop
             # Find first 2 RAW+RGB capable physical cameras
             if (its.caps.raw16(prop) and not its.caps.mono_camera(props)
                         and len(physical_raw_ids) < 2):
