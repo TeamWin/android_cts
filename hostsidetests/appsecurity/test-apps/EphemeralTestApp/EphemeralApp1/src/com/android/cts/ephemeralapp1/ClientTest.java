@@ -28,6 +28,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
+import static org.testng.Assert.assertThrows;
 
 import android.Manifest;
 import android.app.NotificationChannel;
@@ -75,6 +76,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.testng.Assert;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -1177,9 +1179,9 @@ public class ClientTest {
     @Test
     public void testGetInstaller03() throws Exception {
         // test we can't read installer if they're not exposed to instant applications
-        final String installerPackageName = InstrumentationRegistry.getContext().getPackageManager()
-                .getInstallerPackageName("com.android.cts.unexposedapp");
-        assertThat(installerPackageName, is(nullValue()));
+        final PackageManager pm = InstrumentationRegistry.getContext().getPackageManager();
+        assertThrows(IllegalArgumentException.class,
+                () -> pm.getInstallerPackageName("com.android.cts.unexposedapp"));
     }
 
     @Test
