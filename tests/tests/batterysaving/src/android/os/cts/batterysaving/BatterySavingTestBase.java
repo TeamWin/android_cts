@@ -56,6 +56,7 @@ public class BatterySavingTestBase {
             runCommandAndPrintOnLogcat(TAG, "dumpsys alarm");
             runCommandAndPrintOnLogcat(TAG, "dumpsys jobscheduler");
             runCommandAndPrintOnLogcat(TAG, "dumpsys content");
+            runCommandAndPrintOnLogcat(TAG, "dumpsys battery");
         }
     };
 
