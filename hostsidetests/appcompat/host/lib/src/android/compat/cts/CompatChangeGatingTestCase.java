@@ -61,7 +61,6 @@ public class CompatChangeGatingTestCase extends DeviceTestCase implements IBuild
     private static final String DUMP_REPORT_CMD =
             "cmd stats dump-report %d --include_current_bucket --proto";
     private static final String REMOVE_CONFIG_CMD = "cmd stats config remove %d";
-    private static final long CONFIG_ID = 123456789;
 
     private static final String TEST_RUNNER = "androidx.test.runner.AndroidJUnitRunner";
 
@@ -92,7 +91,22 @@ public class CompatChangeGatingTestCase extends DeviceTestCase implements IBuild
     }
 
     /**
-     * Run a device side test.
+     * Uninstall a device side test package.
+     *
+     * @param appFileName      Apk file name, such as "CtsNetStatsApp.apk".
+     * @param shouldSucceed    Whether to assert on failure.
+     */
+    protected void uninstallPackage(String packageName, boolean shouldSucceed)
+            throws DeviceNotAvailableException {
+        final String result = getDevice().uninstallPackage(packageName);
+        if (shouldSucceed) {
+            assertWithMessage("uninstallPackage(%s) failed: %s", packageName, result)
+                .that(result).isNull();
+        }
+    }
+
+    /**
+     * Run a device side compat test.
      *
      * @param pkgName        Test package name, such as
      *                       "com.android.server.cts.netstats".
@@ -100,7 +114,7 @@ public class CompatChangeGatingTestCase extends DeviceTestCase implements IBuild
      *                       + a class name.
      * @param testMethodName Test method name.
      */
-    protected void runDeviceTest(@Nonnull String pkgName, @Nonnull String testClassName,
+    protected void runDeviceCompatTest(@Nonnull String pkgName, @Nonnull String testClassName,
             @Nonnull String testMethodName,
             Set<Long> enabledChanges, Set<Long> disabledChanges)
             throws DeviceNotAvailableException {
@@ -109,7 +123,8 @@ public class CompatChangeGatingTestCase extends DeviceTestCase implements IBuild
         setCompatConfig(enabledChanges, disabledChanges, pkgName);
 
         // Send statsd config
-        createAndUploadStatsdConfig(CONFIG_ID, pkgName);
+        final long configId = getClass().getCanonicalName().hashCode();
+        createAndUploadStatsdConfig(configId, pkgName);
 
         // Run device-side test
         if (testClassName.startsWith(".")) {
@@ -126,8 +141,8 @@ public class CompatChangeGatingTestCase extends DeviceTestCase implements IBuild
         resetCompatChanges(disabledChanges, pkgName);
 
         // Clear statsd report data and remove config
-        Map<Long, Boolean> reportedChanges = getReportedChanges(CONFIG_ID, pkgName);
-        removeStatsdConfig(CONFIG_ID);
+        Map<Long, Boolean> reportedChanges = getReportedChanges(configId, pkgName);
+        removeStatsdConfig(configId);
 
         // Check that device side test occurred as expected
         final TestRunResult result = listener.getCurrentRunResults();
@@ -157,10 +172,10 @@ public class CompatChangeGatingTestCase extends DeviceTestCase implements IBuild
     /**
      * Gets the statsd report. Note that this also deletes that report from statsd.
      */
-    private List<ConfigMetricsReport> getReportList() throws DeviceNotAvailableException {
+    private List<ConfigMetricsReport> getReportList(long configId) throws DeviceNotAvailableException {
         try {
             final CollectingByteOutputReceiver receiver = new CollectingByteOutputReceiver();
-            getDevice().executeShellCommand(String.format(DUMP_REPORT_CMD, CONFIG_ID), receiver);
+            getDevice().executeShellCommand(String.format(DUMP_REPORT_CMD, configId), receiver);
             return ConfigMetricsReportList.parser()
                     .parseFrom(receiver.getOutput())
                     .getReportsList();
@@ -207,7 +222,7 @@ public class CompatChangeGatingTestCase extends DeviceTestCase implements IBuild
             Files.write(config.toByteArray(), configFile);
             String remotePath = "/data/local/tmp/" + configFile.getName();
             device.pushFile(configFile, remotePath);
-            device.executeShellCommand(String.format(UPDATE_CONFIG_CMD, remotePath, CONFIG_ID));
+            device.executeShellCommand(String.format(UPDATE_CONFIG_CMD, remotePath, configId));
             device.executeShellCommand("rm " + remotePath);
         } catch (IOException e) {
             throw new RuntimeException("IO error when writing to temp file.", e);
@@ -241,10 +256,10 @@ public class CompatChangeGatingTestCase extends DeviceTestCase implements IBuild
     private void setCompatConfig(Set<Long> enabledChanges, Set<Long> disabledChanges,
             @Nonnull String packageName) throws DeviceNotAvailableException {
         for (Long enabledChange : enabledChanges) {
-            execCommandAndGet("am compat enable " + enabledChange + " " + packageName);
+            runCommand("am compat enable " + enabledChange + " " + packageName);
         }
         for (Long disabledChange : disabledChanges) {
-            execCommandAndGet("am compat disable " + disabledChange + " " + packageName);
+            runCommand("am compat disable " + disabledChange + " " + packageName);
         }
     }
 
@@ -254,7 +269,7 @@ public class CompatChangeGatingTestCase extends DeviceTestCase implements IBuild
     private void resetCompatChanges(Set<Long> changes, @Nonnull String packageName)
             throws DeviceNotAvailableException {
         for (Long change : changes) {
-            execCommandAndGet("am compat reset " + change + " " + packageName);
+            runCommand("am compat reset " + change + " " + packageName);
         }
     }
 
@@ -272,7 +287,7 @@ public class CompatChangeGatingTestCase extends DeviceTestCase implements IBuild
     private Map<Long, Boolean> getReportedChanges(long configId, String pkgName)
             throws DeviceNotAvailableException {
         final int packageUid = getUid(pkgName);
-        return getReportList().stream()
+        return getReportList(configId).stream()
                 .flatMap(report -> report.getMetricsList().stream())
                 .flatMap(metric -> metric.getEventMetrics().getDataList().stream())
                 .filter(eventMetricData -> eventMetricData.hasAtom())
@@ -304,7 +319,7 @@ public class CompatChangeGatingTestCase extends DeviceTestCase implements IBuild
     /**
      * Execute the given command, and returns the output.
      */
-    protected String execCommandAndGet(String command) throws DeviceNotAvailableException {
+    protected String runCommand(String command) throws DeviceNotAvailableException {
         final CollectingOutputReceiver receiver = new CollectingOutputReceiver();
         getDevice().executeShellCommand(command, receiver);
         return receiver.getOutput();
