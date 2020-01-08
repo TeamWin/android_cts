@@ -432,16 +432,33 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         launchActivity(NO_HISTORY_ACTIVITY);
 
         // Launch an activity that won't report idle.
+        launchNoIdleActivity();
+
+        pressBackButton();
+        mAmWmState.waitForHomeActivityVisible();
+        mAmWmState.assertHomeActivityVisible(true);
+    }
+
+    /**
+     *  If the next activity hasn't reported idle but it has drawn and the transition has done, the
+     *  previous activity should be stopped and invisible without waiting for idle timeout.
+     */
+    @Test
+    public void testActivityStoppedWhileNextActivityNotIdle() {
+        launchActivity(LAUNCHING_ACTIVITY);
+        launchNoIdleActivity();
+        waitAndAssertActivityState(LAUNCHING_ACTIVITY, STATE_STOPPED,
+                "Activity should be stopped before idle timeout");
+        mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, false);
+    }
+
+    private void launchNoIdleActivity() {
         getLaunchActivityBuilder()
                 .setUseInstrumentation()
                 .setIntentExtra(
                         extra -> extra.putBoolean(Components.TestActivity.EXTRA_NO_IDLE, true))
                 .setTargetActivity(TEST_ACTIVITY)
                 .execute();
-
-        pressBackButton();
-        mAmWmState.waitForHomeActivityVisible();
-        mAmWmState.assertHomeActivityVisible(true);
     }
 
     @Test

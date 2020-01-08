@@ -23,6 +23,7 @@ import static android.app.admin.SecurityLog.LEVEL_WARNING;
 import static android.app.admin.SecurityLog.TAG_ADB_SHELL_CMD;
 import static android.app.admin.SecurityLog.TAG_ADB_SHELL_INTERACTIVE;
 import static android.app.admin.SecurityLog.TAG_APP_PROCESS_START;
+import static android.app.admin.SecurityLog.TAG_CAMERA_POLICY_SET;
 import static android.app.admin.SecurityLog.TAG_CERT_AUTHORITY_INSTALLED;
 import static android.app.admin.SecurityLog.TAG_CERT_AUTHORITY_REMOVED;
 import static android.app.admin.SecurityLog.TAG_CERT_VALIDATION_FAILURE;
@@ -129,6 +130,7 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
                     .put(TAG_CRYPTO_SELF_TEST_COMPLETED, of(I))
                     .put(TAG_KEY_INTEGRITY_VIOLATION, of(S, I))
                     .put(TAG_CERT_VALIDATION_FAILURE, of(S))
+                    .put(TAG_CAMERA_POLICY_SET, of(S, I, I, I))
                     .build();
 
     private static final String GENERATED_KEY_ALIAS = "generated_key_alias";
@@ -186,6 +188,7 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
     private static final int MAX_PWD_ATTEMPTS_INDEX = 3;
     private static final int KEYGUARD_FEATURES_INDEX = 3;
     private static final int MAX_SCREEN_TIMEOUT_INDEX = 3;
+    private static final int CAMERA_DISABLED_INDEX = 3;
 
     // Value that indicates success in events that have corresponding field in their payload.
     private static final int SUCCESS_VALUE = 1;
@@ -259,6 +262,7 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
         }
         verifyLockingPolicyEventsPresent(events);
         verifyUserRestrictionEventsPresent(events);
+        verifyCameraPolicyEvents(events);
     }
 
     /**
@@ -288,6 +292,7 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
         }
         generateLockingPolicyEvents();
         generateUserRestrictionEvents();
+        generateCameraPolicyEvents();
     }
 
     /**
@@ -692,5 +697,28 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
                         getString(e, ADMIN_PKG_INDEX).equals(getWho().getPackageName()) &&
                         getInt(e, ADMIN_USER_INDEX) == userId &&
                         UserManager.DISALLOW_FUN.equals(getString(e, USER_RESTRICTION_INDEX)));
+    }
+
+    private void generateCameraPolicyEvents() {
+        mDevicePolicyManager.setCameraDisabled(getWho(), true);
+        mDevicePolicyManager.setCameraDisabled(getWho(), false);
+    }
+
+    private void verifyCameraPolicyEvents(List<SecurityEvent> events) {
+        final int userId = Process.myUserHandle().getIdentifier();
+
+        findEvent("set camera disabled", events,
+                e -> e.getTag() == TAG_CAMERA_POLICY_SET &&
+                        getString(e, ADMIN_PKG_INDEX).equals(getWho().getPackageName()) &&
+                        getInt(e, ADMIN_USER_INDEX) == userId &&
+                        getInt(e, TARGET_USER_INDEX) == userId &&
+                        getInt(e, CAMERA_DISABLED_INDEX) == 1);
+
+        findEvent("set camera enabled", events,
+                e -> e.getTag() == TAG_CAMERA_POLICY_SET &&
+                        getString(e, ADMIN_PKG_INDEX).equals(getWho().getPackageName()) &&
+                        getInt(e, ADMIN_USER_INDEX) == userId &&
+                        getInt(e, TARGET_USER_INDEX) == userId &&
+                        getInt(e, CAMERA_DISABLED_INDEX) == 0);
     }
 }

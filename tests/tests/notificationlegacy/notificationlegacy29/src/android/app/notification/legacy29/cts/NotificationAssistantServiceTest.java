@@ -200,6 +200,64 @@ public class NotificationAssistantServiceTest {
     }
 
     @Test
+    public void testAdjustNotification_rankingScoreKey() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
+        setUpListeners();
+
+        try {
+            mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE");
+            mNotificationManager.cancelAll();
+            mNotificationManager.allowAssistantAdjustment(Adjustment.KEY_RANKING_SCORE);
+            mUi.dropShellPermissionIdentity();
+
+            sendNotification(1, ICON_ID);
+            StatusBarNotification sbn1 = getFirstNotificationFromPackage(
+                    TestNotificationListener.PKG);
+            NotificationListenerService.Ranking out1 = new NotificationListenerService.Ranking();
+
+            sendNotification(2, ICON_ID);
+            StatusBarNotification sbn2 = getFirstNotificationFromPackage(
+                    TestNotificationListener.PKG);
+            NotificationListenerService.Ranking out2 = new NotificationListenerService.Ranking();
+
+            mNotificationListenerService.mRankingMap.getRanking(sbn1.getKey(), out1);
+            mNotificationListenerService.mRankingMap.getRanking(sbn2.getKey(), out2);
+
+            int currentRank1 = out1.getRank();
+            int currentRank2 = out2.getRank();
+            int newRank1 = out2.getRank();
+            int newRank2 = out1.getRank();
+
+            float rankingScore1 = (currentRank1 > currentRank2) ? 1f : 0;
+            float rankingScore2 = (currentRank1 > currentRank2) ? 0 : 1f;
+
+            Bundle signals = new Bundle();
+            signals.putFloat(Adjustment.KEY_RANKING_SCORE, rankingScore1);
+            Adjustment adjustment = new Adjustment(sbn1.getPackageName(), sbn1.getKey(), signals, "",
+                    sbn1.getUser());
+            mNotificationAssistantService.adjustNotification(adjustment);
+            signals = new Bundle();
+            signals.putFloat(Adjustment.KEY_RANKING_SCORE, rankingScore2);
+            adjustment = new Adjustment(sbn2.getPackageName(), sbn2.getKey(), signals, "",
+                    sbn2.getUser());
+            mNotificationAssistantService.adjustNotification(adjustment);
+            Thread.sleep(SLEEP_TIME); // wait for adjustments to be processed
+
+            mNotificationListenerService.mRankingMap.getRanking(sbn1.getKey(), out1);
+            mNotificationListenerService.mRankingMap.getRanking(sbn2.getKey(), out2);
+
+            assertEquals(newRank1, out1.getRank());
+            assertEquals(newRank2, out2.getRank());
+        } finally {
+            mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE");
+            mNotificationManager.disallowAssistantAdjustment(Adjustment.KEY_RANKING_SCORE);
+            mUi.dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
     public void testAdjustNotification_smartActionKey() throws Exception {
         if (mActivityManager.isLowRamDevice()) {
             return;
@@ -328,6 +386,54 @@ public class NotificationAssistantServiceTest {
 
         assertEquals(currentImportance, out.getImportance());
 
+    }
+
+    @Test
+    public void testAdjustNotification_rankingScoreKey_notAllowed() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
+        setUpListeners();
+
+        mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE");
+        mNotificationManager.cancelAll();
+        mNotificationManager.disallowAssistantAdjustment(Adjustment.KEY_RANKING_SCORE);
+        mUi.dropShellPermissionIdentity();
+
+        sendNotification(1, ICON_ID);
+        StatusBarNotification sbn1 = getFirstNotificationFromPackage(TestNotificationListener.PKG);
+        NotificationListenerService.Ranking out1 = new NotificationListenerService.Ranking();
+
+        sendNotification(2, ICON_ID);
+        StatusBarNotification sbn2 = getFirstNotificationFromPackage(TestNotificationListener.PKG);
+        NotificationListenerService.Ranking out2 = new NotificationListenerService.Ranking();
+
+        mNotificationListenerService.mRankingMap.getRanking(sbn1.getKey(), out1);
+        mNotificationListenerService.mRankingMap.getRanking(sbn2.getKey(), out2);
+
+        int currentRank1 = out1.getRank();
+        int currentRank2 = out2.getRank();
+
+        float rankingScore1 = (currentRank1 > currentRank2) ? 1f: 0;
+        float rankingScore2 = (currentRank1 > currentRank2) ? 0: 1f;
+
+        Bundle signals = new Bundle();
+        signals.putFloat(Adjustment.KEY_RANKING_SCORE, rankingScore1);
+        Adjustment adjustment = new Adjustment(sbn1.getPackageName(), sbn1.getKey(), signals, "",
+                sbn1.getUser());
+        mNotificationAssistantService.adjustNotification(adjustment);
+        signals = new Bundle();
+        signals.putFloat(Adjustment.KEY_RANKING_SCORE, rankingScore2);
+        adjustment = new Adjustment(sbn2.getPackageName(), sbn2.getKey(), signals, "",
+                sbn2.getUser());
+        mNotificationAssistantService.adjustNotification(adjustment);
+        Thread.sleep(SLEEP_TIME); // wait for adjustments to be processed
+
+        mNotificationListenerService.mRankingMap.getRanking(sbn1.getKey(), out1);
+        mNotificationListenerService.mRankingMap.getRanking(sbn2.getKey(), out2);
+
+        assertEquals(currentRank1, out1.getRank());
+        assertEquals(currentRank2, out2.getRank());
     }
 
     @Test

@@ -1363,6 +1363,13 @@
     4. Pass button will light up if intent and URI trigger were NOT received.\n
     5. Click "Pass" if possible, otherwise open settings app, allow location again and click "Fail".
     </string>
+    <string name="ci_instruction_text_intent_picture_secure_label">\n
+    1. Click Start Test.\n
+    2. Camera app will launch, prompting to take photo.\n
+    3. Capture/confirm photo using camera app controls within 1 minute.\n
+    4. Pass button will light up if intent and URI trigger were NOT received.\n
+    5. Click "Pass" if possible, otherwise open settings app, allow location again and click "Fail".
+    </string>
     <string name="ci_instruction_text_intent_video_label">\n
     1. Click Start Test.\n
     2. Camera app will launch, prompting to take video.\n
@@ -2831,8 +2838,8 @@ You should be prompted to select credentials; choose the ones you just installed
         (If this device has a separate app for work settings, ignore the Go button and open that app manually from the launcher).\n
         Navigate to Accounts and confirm that:\n
         \n
-        - Both Personal and Work categories exist.\n
-        - \"Remove work profile\" or \"Uninstall\" exists under the Work category.\n
+        - Both Personal and Work categories(or Personal and Work tabs) exist.\n
+        - \"Remove work profile\" or \"Uninstall\" exists under the Work category(or Work tab).\n
         \n
         Use the Back button (or navigate back to this app using Recents) to return to this page.
     </string>
@@ -2841,7 +2848,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Please press the Go button to open the Settings page.
         (If this device has a separate app for work settings, ignore the Go button and open that app manually from the launcher.)\n
         Navigate to Accounts and confirm that:\n
-        - There are two auto-sync options present, one for personal and one for work data (either on the screen or in the overflow menu).\n
+        - There are two auto-sync options present, one for personal and one for work data (on the screen or in the overflow menu or in differernt tab).\n
         - De-selecting either option prompts a warning dialog.\n
         \n
         Use the Back button (or navigate back to this app using Recents) to return to this page.
@@ -2873,7 +2880,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Please press the Go button to open Apps page in settings.
         (If this device has a separate app for work settings, ignore the Go button and open that app manually from the launcher).\n
         \n
-        Verify that work profile exists in the dropdown list and selecting it will
+        Verify that Personal and Work exists in the dropdown list(or UI has Personal and Work tab). When selecting Work it will
         bring up apps setting in the work profile.\n
         \n
         Then use the Back button (or navigate back to this app using Recents) to return to this test and mark accordingly.
@@ -2884,7 +2891,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Please press the Go button to open Location page in settings.
         (If this device has a separate app for work settings, ignore the Go button and navigate to that app manually, if necessary).\n
         \n
-        Verify that work profile entry exists in the page and it has a toggleable switch.\n
+        Verify that work profile entry exists in the page(or in Work tab) and it has a toggleable switch.\n
         Switch the main location switch at the top of the screen off. You should see the work profile location switch go disabled and into \'off\' state.\n
         Then switch the main location switch on again. You should see the work profile location switch go enabled and into its previous state.\n
         \n

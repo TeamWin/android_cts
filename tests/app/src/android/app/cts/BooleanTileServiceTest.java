@@ -17,19 +17,27 @@
 package android.app.cts;
 
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import android.app.stubs.BooleanTestTileService;
 import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
 
+import org.junit.Test;
+
 public class BooleanTileServiceTest extends BaseTileServiceTest {
     private final static String TAG = "BooleanTileServiceTest";
 
+    @Test
     public void testTileIsBoundAndListening() throws Exception {
         startTileService();
         expandSettings(true);
         waitForListening(true);
     }
 
+    @Test
     public void testTileInDumpAndHasBooleanState() throws Exception {
         initializeAndListen();
 
@@ -41,12 +49,14 @@ public class BooleanTileServiceTest extends BaseTileServiceTest {
         assertTrue(line.trim().startsWith("BooleanState"));
     }
 
+    @Test
     public void testTileStartsInactive() throws Exception {
         initializeAndListen();
 
         assertEquals(Tile.STATE_INACTIVE, mTileService.getQsTile().getState());
     }
 
+    @Test
     public void testValueTracksState() throws Exception {
         initializeAndListen();
 

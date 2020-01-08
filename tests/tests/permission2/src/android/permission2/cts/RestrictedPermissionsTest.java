@@ -106,6 +106,9 @@ public class RestrictedPermissionsTest {
     private static final String APK_USES_STORAGE_OPT_OUT_29 =
             "/data/local/tmp/cts/permissions2/CtsStoragePermissionsUserOptOutSdk29.apk";
 
+    private static final String APK_USES_STORAGE_OPT_OUT_30 =
+            "/data/local/tmp/cts/permissions2/CtsStoragePermissionsUserOptOutSdk30.apk";
+
     private static final String PKG = "android.permission2.cts.restrictedpermissionuser";
 
     private static final String APK_USES_SMS_RESTRICTED_SHARED_UID =
@@ -413,6 +416,16 @@ public class RestrictedPermissionsTest {
         installApp(APK_USES_STORAGE_DEFAULT_28, null);
 
         assertHasFullStorageAccess();
+    }
+
+    @Test
+    @AppModeFull
+    public void testStorageTargetingSdk30_cannotOptOut() throws Exception {
+        // Apps that target R and above cannot opt out of isolated storage.
+        installApp(APK_USES_STORAGE_OPT_OUT_30, null);
+
+        // Check expected storage mode
+        assertHasIsolatedStorageAccess();
     }
 
     @Test

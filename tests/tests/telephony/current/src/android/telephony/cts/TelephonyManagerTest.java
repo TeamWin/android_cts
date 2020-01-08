@@ -2158,6 +2158,28 @@ public class TelephonyManagerTest {
         assertEquals(1, subId);
     }
 
+    @Test
+    public void testSetPolicyDataEnabled() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        // test without permission: verify SecurityException
+        try {
+            mTelephonyManager.setPolicyDataEnabled(true);
+            fail("testSetPolicyDataEnabled: SecurityException expected");
+        } catch (SecurityException se) {
+            // expected
+        }
+        // test with permission
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mTelephonyManager,
+                    (tm) -> tm.setPolicyDataEnabled(true));
+        } catch (SecurityException se) {
+            fail("testSetPolicyDataEnabled: SecurityException not expected");
+        }
+    }
+
     /**
      * Validate Emergency Number address that only contains the dialable character.
      *
