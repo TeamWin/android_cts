@@ -26,6 +26,7 @@ android_test_helper_app {
         "androidx.test.rules",
         "ctsdeviceutillegacy-axt",
         "ctstestrunner-axt",
+        "testng",
     ],
     // tag this module as a cts test artifact
     test_suites: [
