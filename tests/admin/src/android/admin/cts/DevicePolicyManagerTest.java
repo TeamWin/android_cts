@@ -1109,4 +1109,31 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
             assertProfileOwnerMessage(e.getMessage());
         }
     }
+
+    public void testSetProtectedPackages_failIfNotDeviceOwner() {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testSetProtectedPackages_failIfNotDeviceOwner()");
+            return;
+        }
+        final String TEST_PACKAGE_NAME = "package1";
+        List<String> packages = new ArrayList<>();
+        packages.add(TEST_PACKAGE_NAME);
+        try {
+            mDevicePolicyManager.setProtectedPackages(mComponent, packages);
+            fail("setProtectedPackages did not throw expected SecurityException");
+        } catch(SecurityException e) {
+        }
+    }
+
+    public void testGetProtectedPackages_failIfNotDeviceOwner() {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testGetProtectedPackages_failIfNotDeviceOwner()");
+            return;
+        }
+        try {
+            mDevicePolicyManager.getProtectedPackages(mComponent);
+            fail("getProtectedPackages did not throw expected SecurityException");
+        } catch(SecurityException e) {
+        }
+    }
 }
