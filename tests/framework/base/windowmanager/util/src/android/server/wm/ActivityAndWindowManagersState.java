@@ -157,24 +157,6 @@ public class ActivityAndWindowManagersState {
         }
     }
 
-    /**
-     * Ensures all exiting windows have been removed.
-     */
-    void waitForAllExitingWindows() {
-        Condition.<List<WindowState>>waitForResult("all exiting windows to be removed",
-                condition -> condition
-                        .setResultSupplier(() -> {
-                            mWmState.computeState();
-                            return mWmState.getExitingWindows();
-                        })
-                        .setResultValidator(List<WindowState>::isEmpty)
-                        .setOnFailure(exitingWindows -> {
-                            fail("All exiting windows have been removed, actual="
-                                    + exitingWindows.stream().map(WindowState::getName)
-                                            .collect(Collectors.joining(",")));
-                        }));
-    }
-
     void waitForAllStoppedActivities() {
         if (!Condition.waitFor("all started activities have been removed", () -> {
             mAmState.computeState();
@@ -280,10 +262,14 @@ public class ActivityAndWindowManagersState {
     }
 
     public void waitForActivityRemoved(ComponentName activityName) {
-        waitForWithAmState((state) -> !state.containsActivity(activityName),
-                "activity to be removed");
-        waitForWithWmState((state) -> !state.containsWindow(getWindowName(activityName)),
-                "activity window to be gone");
+        waitFor((amState, wmState) -> !amState.containsActivity(activityName)
+                && !wmState.containsWindow(getWindowName(activityName)),
+                getActivityName(activityName) + " to be removed");
+    }
+
+    void waitAndAssertActivityRemoved(ComponentName activityName) {
+        waitForActivityRemoved(activityName);
+        assertNotExist(activityName);
     }
 
     void waitForFocusedStack(int windowingMode, int activityType) {
