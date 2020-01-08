@@ -25,8 +25,7 @@ public enum CecDevice {
     PLAYBACK_1(0x4),
     AUDIO_SYSTEM(0x5),
     PLAYBACK_2(0x8),
-    PLAYBACK_3(0x9),
-    PLAYBACK_4(0xb),
+    PLAYBACK_3(0xb),
     BROADCAST(0xf);
 
     private final int playerId;
@@ -48,7 +47,6 @@ public enum CecDevice {
             case PLAYBACK_1:
             case PLAYBACK_2:
             case PLAYBACK_3:
-            case PLAYBACK_4:
                 return Integer.toString(HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
             case TV:
                 return Integer.toString(HdmiCecConstants.CEC_DEVICE_TYPE_TV);
