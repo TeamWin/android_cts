@@ -24,11 +24,15 @@ import static org.junit.Assert.fail;
 
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.database.ContentObserver;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.Settings;
 import android.util.Log;
 
@@ -153,5 +157,40 @@ public abstract class BroadcastTestBase {
                 mLatch.countDown();
             }
         }
+    }
+
+    protected CountDownLatch registerForChanges(Uri uri) throws Exception {
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ContentResolver resolver = mActivity.getContentResolver();
+        mActivity.runOnUiThread(() -> {
+            resolver.registerContentObserver(uri, true,
+                    new ContentObserver(new Handler()) {
+                        @Override
+                        public void onChange(boolean selfChange) {
+                            latch.countDown();
+                            resolver.unregisterContentObserver(this);
+                        }
+                    });
+        });
+        return latch;
+    }
+
+    protected boolean startTestAndWaitForChange(BroadcastUtils.TestcaseType testCaseType, Uri uri,
+            String pkg, String cls)
+            throws Exception {
+        Log.i(TAG, "Begin Testing: " + testCaseType);
+
+        // We also wait for broadcast because some results are obtained by
+        // ActivityDoneReceiver#onReceive
+        registerBroadcastReceiver(testCaseType);
+
+        CountDownLatch latch = registerForChanges(uri);
+        mActivity.startTest(testCaseType.toString(), pkg, cls);
+        if (!mLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+                || !latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+            fail("Failed to change in " + TIMEOUT_MS + "msec");
+            return false;
+        }
+        return true;
     }
 }
