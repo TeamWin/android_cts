@@ -24,9 +24,11 @@ import javax.annotation.Nullable;
  * primary user to managed profile.
  *
  * Tests to verify
- * {@link android.content.pm.crossprofile.CrossProfileApps#canRequestInteractAcrossProfiles()} and
- * {@link android.content.pm.crossprofile.CrossProfileApps#canInteractAcrossProfiles()} can be
- * found in {@link CrossProfileAppsPermissionHostSideTest}.
+ * {@link android.content.pm.crossprofile.CrossProfileApps#canRequestInteractAcrossProfiles()},
+ * {@link android.content.pm.crossprofile.CrossProfileApps#canInteractAcrossProfiles()}, and
+ * {@link
+ * android.content.pm.crossprofile.CrossProfileApps#createRequestInteractAcrossProfilesIntent()}
+ * can be found in {@link CrossProfileAppsPermissionHostSideTest}.
  */
 public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
     private static final String TEST_PACKAGE = "com.android.cts.crossprofileappstest";
