@@ -18,10 +18,10 @@ package android.telephony.cts;
 import static android.telephony.ServiceState.DUPLEX_MODE_FDD;
 import static android.telephony.ServiceState.DUPLEX_MODE_TDD;
 import static android.telephony.ServiceState.DUPLEX_MODE_UNKNOWN;
-import static android.telephony.ServiceState.STATE_OUT_OF_SERVICE;
-import static android.telephony.ServiceState.STATE_POWER_OFF;
 import static android.telephony.ServiceState.ROAMING_TYPE_DOMESTIC;
 import static android.telephony.ServiceState.ROAMING_TYPE_NOT_ROAMING;
+import static android.telephony.ServiceState.STATE_OUT_OF_SERVICE;
+import static android.telephony.ServiceState.STATE_POWER_OFF;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -317,5 +317,30 @@ public class ServiceStateTest {
         assertEquals(ss.getNetworkRegistrationInfo(NetworkRegistrationInfo.DOMAIN_PS,
                 AccessNetworkConstants.TRANSPORT_TYPE_WWAN).getDataSpecificInfo().getLteVopsSupportInfo(),
             lteVopsSupportInfo);
+    }
+
+    @Test
+    public void testIsSearchingPs() {
+        NetworkRegistrationInfo nri = new NetworkRegistrationInfo.Builder()
+                .setAccessNetworkTechnology(TelephonyManager.NETWORK_TYPE_LTE)
+                .setRegistrationState(
+                    NetworkRegistrationInfo.REGISTRATION_STATE_NOT_REGISTERED_SEARCHING)
+                .setTransportType(AccessNetworkConstants.TRANSPORT_TYPE_WWAN)
+                .setDomain(NetworkRegistrationInfo.DOMAIN_PS)
+                .build();
+        serviceState.addNetworkRegistrationInfo(nri);
+        assertTrue(serviceState.isSearching());
+    }
+
+    @Test
+    public void testNotSearchingCs() {
+        NetworkRegistrationInfo nri = new NetworkRegistrationInfo.Builder()
+                .setAccessNetworkTechnology(TelephonyManager.NETWORK_TYPE_LTE)
+                .setRegistrationState(NetworkRegistrationInfo.REGISTRATION_STATE_HOME)
+                .setTransportType(AccessNetworkConstants.TRANSPORT_TYPE_WWAN)
+                .setDomain(NetworkRegistrationInfo.DOMAIN_CS)
+                .build();
+        serviceState.addNetworkRegistrationInfo(nri);
+        assertFalse(serviceState.isSearching());
     }
 }
