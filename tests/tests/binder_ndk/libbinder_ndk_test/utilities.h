@@ -171,3 +171,5 @@ class NdkBinderTest : public ::testing::Test {
 };
 
 JNIEnv* GetEnv();
+jobject callStaticJavaMethodForObject(JNIEnv* env, const std::string& clazz,
+                                      const std::string& method, const std::string& type);

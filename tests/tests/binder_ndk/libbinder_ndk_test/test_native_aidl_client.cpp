@@ -23,6 +23,7 @@
 #include <aidl/test_package/LongEnum.h>
 #include <aidl/test_package/RegularPolygon.h>
 #include <android/binder_ibinder_jni.h>
+#include <android/log.h>
 #include <gtest/gtest.h>
 
 #include "itest_impl.h"
@@ -812,7 +813,7 @@ std::shared_ptr<ITest> getProxyLocalService() {
 
   binder_status_t ret = AIBinder_setExtension(binder.get(), extBinder.get());
   if (ret != STATUS_OK) {
-    std::cout << "Could not set local extension" << std::endl;
+    __android_log_write(ANDROID_LOG_ERROR, LOG_TAG, "Could not set local extension");
   }
 
   // BpTest -> AIBinder -> test
@@ -825,28 +826,12 @@ std::shared_ptr<ITest> getProxyLocalService() {
 std::shared_ptr<ITest> getNdkBinderTestJavaService(const std::string& method) {
   JNIEnv* env = GetEnv();
   if (env == nullptr) {
-    std::cout << "No environment" << std::endl;
+    __android_log_write(ANDROID_LOG_ERROR, LOG_TAG, "No environment");
     return nullptr;
   }
 
-  jclass cl = env->FindClass("android/binder/cts/NdkBinderTest");
-  if (cl == nullptr) {
-    std::cout << "No class" << std::endl;
-    return nullptr;
-  }
-
-  jmethodID mid =
-      env->GetStaticMethodID(cl, method.c_str(), "()Landroid/os/IBinder;");
-  if (mid == nullptr) {
-    std::cout << "No method id" << std::endl;
-    return nullptr;
-  }
-
-  jobject object = env->CallStaticObjectMethod(cl, mid);
-  if (object == nullptr) {
-    std::cout << "Got null service from Java" << std::endl;
-    return nullptr;
-  }
+  jobject object = callStaticJavaMethodForObject(env, "android/binder/cts/NdkBinderTest", method,
+                                                 "()Landroid/os/IBinder;");
 
   SpAIBinder binder = SpAIBinder(AIBinder_fromJavaBinder(env, object));
 
