@@ -27,6 +27,7 @@ import android.app.AppOpsManager.MODE_ALLOWED
 import android.app.AppOpsManager.MODE_DEFAULT
 import android.app.AppOpsManager.MODE_ERRORED
 import android.app.AppOpsManager.MODE_IGNORED
+import android.app.AppOpsManager.OPSTR_CAMERA
 import android.app.AppOpsManager.OPSTR_READ_CALENDAR
 import android.app.AppOpsManager.OPSTR_RECORD_AUDIO
 import android.app.AppOpsManager.OPSTR_WRITE_CALENDAR
@@ -54,6 +55,7 @@ import java.util.HashMap
 import java.util.HashSet
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
+import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
@@ -268,6 +270,37 @@ class AppOpsTest {
                     "feature2")
                 assertFalse(mAppOps.isOpActive(OPSTR_WRITE_CALENDAR, mMyUid, mOpPackageName))
                 gotInActive.get(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+            } finally {
+                mAppOps.stopWatchingActive(activeWatcher)
+            }
+        }
+    }
+
+    @Test
+    fun startOpTwiceAndVerifyChangeListener() {
+        runWithShellPermissionIdentity {
+            val receivedActiveState = LinkedBlockingDeque<Boolean>()
+            val activeWatcher =
+                    AppOpsManager.OnOpActiveChangedListener { _, _, packageName, active ->
+                        if (packageName == mOpPackageName) {
+                            receivedActiveState.push(active)
+                        }
+                    }
+
+            mAppOps.startWatchingActive(arrayOf(OPSTR_CAMERA), Executor { it.run() },
+                    activeWatcher)
+            try {
+                mAppOps.startOp(OPSTR_CAMERA, mMyUid, mOpPackageName, null, null)
+                assertTrue(receivedActiveState.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)!!)
+
+                mAppOps.finishOp(OPSTR_CAMERA, mMyUid, mOpPackageName, null)
+                assertFalse(receivedActiveState.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)!!)
+
+                mAppOps.startOp(OPSTR_CAMERA, mMyUid, mOpPackageName, null, null)
+                assertTrue(receivedActiveState.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)!!)
+
+                mAppOps.finishOp(OPSTR_CAMERA, mMyUid, mOpPackageName, null)
+                assertFalse(receivedActiveState.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)!!)
             } finally {
                 mAppOps.stopWatchingActive(activeWatcher)
             }
