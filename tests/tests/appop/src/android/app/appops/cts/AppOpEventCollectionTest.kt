@@ -26,6 +26,7 @@ import android.app.AppOpsManager.OP_FLAG_UNTRUSTED_PROXIED
 import android.app.AppOpsManager.OpEntry
 import android.content.Intent
 import android.content.Intent.ACTION_APPLICATION_PREFERENCES
+import android.platform.test.annotations.AppModeFull
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
 import androidx.test.uiautomator.UiDevice
@@ -152,6 +153,7 @@ class AppOpEventCollectionTest {
         assertThat(opEntry.getLastAccessTime(OP_FLAG_SELF)).isIn(afterFirst..after)
     }
 
+    @AppModeFull(reason = "instant apps cannot see other packages")
     @Test
     fun noteFromTwoProxiesAndVerifyProxyInfo() {
         // Find another app to blame
