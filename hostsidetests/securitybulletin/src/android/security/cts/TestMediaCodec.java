@@ -257,6 +257,17 @@ public class TestMediaCodec extends SecurityTestCase {
      * before any existing test methods
      ******************************************************************************/
 
+    /**
+     * b/62887820
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     **/
+    @SecurityTest(minPatchLevel = "2017-11")
+    public void testPocCVE_2017_0832() throws Exception {
+        String inputFiles[] = {"cve_2017_0832.m2v"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0832",
+                "-i " + AdbUtils.TMP_PATH + inputFiles[0] + " --num_frames -1 --num_cores 2",
+                inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
 
     /**
      * Calls runPocAssertNoCrashesNotVulnerable with HEVC decoder binary name as
