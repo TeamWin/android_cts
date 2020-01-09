@@ -2500,7 +2500,7 @@
             <meta-data android:name="test_required_features"
                     android:value="android.software.app_widgets" />
             <meta-data android:name="test_excluded_features"
-                    android:value="android.hardware.type.automotive" />
+                    android:value="android.hardware.type.automotive:android.hardware.ram.low" />
         </activity>
 
         <activity android:name=".deskclock.DeskClockTestsActivity"
