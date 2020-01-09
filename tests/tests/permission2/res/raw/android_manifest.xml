@@ -3922,7 +3922,7 @@
          <p>Declaring the permission implies intention to use the API and the user of the
          device can grant permission through the Settings application. -->
     <permission android:name="android.permission.PACKAGE_USAGE_STATS"
-        android:protectionLevel="signature|privileged|development|appop" />
+        android:protectionLevel="signature|privileged|development|appop|retailDemo" />
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
 
     <!-- @hide @SystemApi Allows an application to observe usage time of apps. The app can register
