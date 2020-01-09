@@ -81,6 +81,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.OperationApplicationException;
 import android.content.pm.PackageManager;
+import android.content.pm.ShortcutInfo;
+import android.content.pm.ShortcutManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Icon;
@@ -140,6 +142,8 @@ public class NotificationManagerTest extends AndroidTestCase {
     private static final String REVOKE_CLASS = DELEGATOR + ".NotificationRevoker";
     private static final long SHORT_WAIT_TIME = 100;
     private static final long MAX_WAIT_TIME = 2000;
+    private static final String BUBBLE_SHORTCUT_ID_MANIFEST = "bubbleShortcutIdManifest";
+    private static final String BUBBLE_SHORTCUT_ID_DYNAMIC = "bubbleShortcutIdDynamic";
 
     private PackageManager mPackageManager;
     private AudioManager mAudioManager;
@@ -442,8 +446,8 @@ public class NotificationManagerTest extends AndroidTestCase {
 
         if (data == null) {
             data = new Notification.BubbleMetadata.Builder()
-                    .setIcon(Icon.createWithResource(mContext, R.drawable.black))
-                    .setIntent(pendingIntent)
+                    .createIntentBubble(pendingIntent,
+                            Icon.createWithResource(mContext, R.drawable.black))
                     .build();
         }
         if (builder == null) {
@@ -3008,6 +3012,241 @@ public class NotificationManagerTest extends AndroidTestCase {
         } finally {
             // turn off bubbles globally
             toggleBubbleSetting(false);
+        }
+    }
+
+    public void testNotificationManagerBubblePolicy_flagForShortcut_manifest_fails()
+            throws Exception {
+        try {
+            // turn on bubbles globally
+            toggleBubbleSetting(true);
+
+            // Message notif
+            Person person = new Person.Builder()
+                    .setName("bubblebot")
+                    .build();
+
+            RemoteInput remoteInput = new RemoteInput.Builder("reply_key").setLabel(
+                    "reply").build();
+            PendingIntent inputIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
+            Icon icon = Icon.createWithResource(mContext, android.R.drawable.sym_def_app_icon);
+            Notification.Action replyAction = new Notification.Action.Builder(icon, "Reply",
+                    inputIntent).addRemoteInput(remoteInput)
+                    .build();
+
+            Notification.Builder nb = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                    .setContentTitle("foo")
+                    .setStyle(new Notification.MessagingStyle(person)
+                            .setConversationTitle("Bubble Chat")
+                            .addMessage("Hello?",
+                                    SystemClock.currentThreadTimeMillis() - 300000, person)
+                            .addMessage("Is it me you're looking for?",
+                                    SystemClock.currentThreadTimeMillis(), person)
+                    )
+                    .setActions(replyAction)
+                    .setSmallIcon(android.R.drawable.sym_def_app_icon);
+
+            // BubbleMetadata with manifest shortcut
+            Notification.BubbleMetadata data = new Notification.BubbleMetadata.Builder()
+                    .createShortcutBubble(BUBBLE_SHORTCUT_ID_MANIFEST)
+                    .build();
+
+            sendAndVerifyBubble(1, nb, data, false /* shouldBeBubble */);
+
+        } finally {
+            // turn off bubbles globally
+            toggleBubbleSetting(false);
+        }
+    }
+
+    public void testNotificationManagerBubblePolicy_flagForShortcut_dynamic_succeeds()
+            throws Exception {
+
+        ShortcutManager scmanager = mContext.getSystemService(ShortcutManager.class);
+
+        try {
+            // turn on bubbles globally
+            toggleBubbleSetting(true);
+
+            // Make dynamic shortcut
+            Intent shortcutIntent = new Intent(mContext, SendBubbleActivity.class);
+            shortcutIntent.setAction(Intent.ACTION_VIEW);
+            ShortcutInfo shortcut = new ShortcutInfo.Builder(mContext, BUBBLE_SHORTCUT_ID_DYNAMIC)
+                    .setShortLabel(BUBBLE_SHORTCUT_ID_DYNAMIC)
+                    .setIcon(Icon.createWithResource(mContext, R.drawable.icon_black))
+                    .setIntent(shortcutIntent)
+                    .build();
+            scmanager.addDynamicShortcuts(Arrays.asList(shortcut));
+
+            // Message notif
+            Person person = new Person.Builder()
+                    .setName("bubblebot")
+                    .build();
+
+            RemoteInput remoteInput = new RemoteInput.Builder("reply_key").setLabel(
+                    "reply").build();
+            PendingIntent inputIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
+            Icon icon = Icon.createWithResource(mContext, android.R.drawable.sym_def_app_icon);
+            Notification.Action replyAction = new Notification.Action.Builder(icon, "Reply",
+                    inputIntent).addRemoteInput(remoteInput)
+                    .build();
+
+            Notification.Builder nb = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                    .setContentTitle("foo")
+                    .setStyle(new Notification.MessagingStyle(person)
+                            .setConversationTitle("Bubble Chat")
+                            .addMessage("Hello?",
+                                    SystemClock.currentThreadTimeMillis() - 300000, person)
+                            .addMessage("Is it me you're looking for?",
+                                    SystemClock.currentThreadTimeMillis(), person)
+                    )
+                    .setActions(replyAction)
+                    .setSmallIcon(android.R.drawable.sym_def_app_icon);
+
+            // BubbleMetadata with our dynamic shortcut ic
+            Notification.BubbleMetadata data = new Notification.BubbleMetadata.Builder()
+                    .createShortcutBubble(BUBBLE_SHORTCUT_ID_DYNAMIC)
+                    .build();
+
+            boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
+            sendAndVerifyBubble(1, nb, data, shouldBeBubble);
+
+        } finally {
+            // turn off bubbles globally
+            toggleBubbleSetting(false);
+
+            // remove the shortcut
+            scmanager.removeAllDynamicShortcuts();
+        }
+    }
+
+    public void testNotificationManagerBubblePolicy_flagForShortcut_fails_invalidShortcut()
+            throws Exception {
+        try {
+            // turn on bubbles globally
+            toggleBubbleSetting(true);
+
+            // Message notif
+            Person person = new Person.Builder()
+                    .setName("bubblebot")
+                    .build();
+
+            RemoteInput remoteInput = new RemoteInput.Builder("reply_key").setLabel(
+                    "reply").build();
+            PendingIntent inputIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
+            Icon icon = Icon.createWithResource(mContext, android.R.drawable.sym_def_app_icon);
+            Notification.Action replyAction = new Notification.Action.Builder(icon, "Reply",
+                    inputIntent).addRemoteInput(remoteInput)
+                    .build();
+
+            Notification.Builder nb = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                    .setContentTitle("foo")
+                    .setStyle(new Notification.MessagingStyle(person)
+                            .setConversationTitle("Bubble Chat")
+                            .addMessage("Hello?",
+                                    SystemClock.currentThreadTimeMillis() - 300000, person)
+                            .addMessage("Is it me you're looking for?",
+                                    SystemClock.currentThreadTimeMillis(), person)
+                    )
+                    .setActions(replyAction)
+                    .setSmallIcon(android.R.drawable.sym_def_app_icon);
+
+            // BubbleMetadata with shortcut that doesn't exist
+            Notification.BubbleMetadata data = new Notification.BubbleMetadata.Builder()
+                    .createShortcutBubble("shortcutDoesntExist")
+                    .build();
+
+            sendAndVerifyBubble(1, nb, data, false);
+
+        } finally {
+            // turn off bubbles globally
+            toggleBubbleSetting(false);
+        }
+    }
+
+    public void testNotificationManagerBubblePolicy_flagForShortcut_fails_invalidNotif()
+            throws Exception {
+        try {
+            // turn on bubbles globally
+            toggleBubbleSetting(true);
+
+            // BubbleMetadata with manifest shortcut
+            Notification.BubbleMetadata data = new Notification.BubbleMetadata.Builder()
+                    .createShortcutBubble(BUBBLE_SHORTCUT_ID_MANIFEST)
+                    .build();
+
+            sendAndVerifyBubble(1, null /* use default notif builder */, data,
+                    false /* shouldBeBubble */);
+        } finally {
+            // turn off bubbles globally
+            toggleBubbleSetting(false);
+        }
+    }
+
+    public void testNotificationManagerBubblePolicy_noFlag_shortcutRemoved()
+            throws Exception {
+
+        ShortcutManager scmanager = mContext.getSystemService(ShortcutManager.class);
+
+        try {
+            // turn on bubbles globally
+            toggleBubbleSetting(true);
+
+            // Make dynamic shortcut
+            Intent shortcutIntent = new Intent(mContext, SendBubbleActivity.class);
+            shortcutIntent.setAction(Intent.ACTION_VIEW);
+            ShortcutInfo shortcut = new ShortcutInfo.Builder(mContext, BUBBLE_SHORTCUT_ID_DYNAMIC)
+                    .setShortLabel(BUBBLE_SHORTCUT_ID_DYNAMIC)
+                    .setIcon(Icon.createWithResource(mContext, R.drawable.icon_black))
+                    .setIntent(shortcutIntent)
+                    .build();
+            scmanager.addDynamicShortcuts(Arrays.asList(shortcut));
+
+            // Message notif
+            Person person = new Person.Builder()
+                    .setName("bubblebot")
+                    .build();
+
+            RemoteInput remoteInput = new RemoteInput.Builder("reply_key").setLabel(
+                    "reply").build();
+            PendingIntent inputIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
+            Icon icon = Icon.createWithResource(mContext, android.R.drawable.sym_def_app_icon);
+            Notification.Action replyAction = new Notification.Action.Builder(icon, "Reply",
+                    inputIntent).addRemoteInput(remoteInput)
+                    .build();
+
+            Notification.Builder nb = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                    .setContentTitle("foo")
+                    .setStyle(new Notification.MessagingStyle(person)
+                            .setConversationTitle("Bubble Chat")
+                            .addMessage("Hello?",
+                                    SystemClock.currentThreadTimeMillis() - 300000, person)
+                            .addMessage("Is it me you're looking for?",
+                                    SystemClock.currentThreadTimeMillis(), person)
+                    )
+                    .setActions(replyAction)
+                    .setSmallIcon(android.R.drawable.sym_def_app_icon);
+
+            // BubbleMetadata with our dynamic shortcut ic
+            Notification.BubbleMetadata data = new Notification.BubbleMetadata.Builder()
+                    .createShortcutBubble(BUBBLE_SHORTCUT_ID_DYNAMIC)
+                    .build();
+
+            boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
+            sendAndVerifyBubble(1, nb, data, shouldBeBubble);
+
+            // Now lets delete the shortcut and make sure the notif has been updated to not
+            // be a bubble.
+            scmanager.removeAllDynamicShortcuts();
+
+            checkNotificationExistence(1, true /* should exist */, false /* should be bubble */);
+
+        } finally {
+            // turn off bubbles globally
+            toggleBubbleSetting(false);
+
+            // remove the shortcut
+            scmanager.removeAllDynamicShortcuts();
         }
     }
 
