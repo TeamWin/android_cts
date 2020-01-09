@@ -244,8 +244,8 @@ public class DialogFrameTests extends ParentChildTestBase<DialogFrameTestActivit
 
     @Test
     public void testMarginsArePercentagesOfContentFrame() throws Exception {
-        float horizontalMargin = .25f;
-        float verticalMargin = .35f;
+        float horizontalMargin = .10f;
+        float verticalMargin = .15f;
         doParentChildTest(TEST_WITH_MARGINS, (parent, dialog) -> {
             Rect frame = parent.getContentFrame();
             Rect expectedFrame = new Rect(
