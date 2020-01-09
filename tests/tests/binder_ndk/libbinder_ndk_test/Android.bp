@@ -97,6 +97,7 @@ cc_test_library {
         "test_ibinder_jni.cpp",
         "test_native_aidl_client.cpp",
         "test_parcel.cpp",
+        "test_parcel_jni.cpp",
         "test_status.cpp",
     ],
     shared_libs: [
