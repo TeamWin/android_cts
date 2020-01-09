@@ -25,13 +25,14 @@ import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.SystemClock;
+import android.telephony.CellSignalStrength;
 import android.telephony.CellSignalStrengthCdma;
 import android.telephony.CellSignalStrengthGsm;
 import android.telephony.CellSignalStrengthLte;
 import android.telephony.CellSignalStrengthNr;
 import android.telephony.CellSignalStrengthTdscdma;
 import android.telephony.CellSignalStrengthWcdma;
-import android.telephony.CellSignalStrength;
 import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
@@ -79,6 +80,11 @@ public class SignalStrengthTest {
 
         SignalStrength ss = mTm.getSignalStrength();
         assertNotNull("TelephonyManager.getSignalStrength() returned NULL!", ss);
+
+        long curTime = SystemClock.elapsedRealtimeNanos();
+        assertTrue("Invalid timestamp in SignalStrength: " + ss.getTimestampNanos(),
+                ss.getTimestampNanos() > 0 && ss.getTimestampNanos() < curTime);
+        Log.d(TAG, "Timestamp of SignalStrength: " + Long.toString(ss.getTimestampNanos()));
 
         List<CellSignalStrength> signalStrengths = ss.getCellSignalStrengths();
 

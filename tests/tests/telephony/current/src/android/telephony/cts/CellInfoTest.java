@@ -324,6 +324,9 @@ public class CellInfoTest {
         assertTrue("Invalid timestamp in CellInfo: " + info.getTimeStamp(),
                 info.getTimeStamp() > 0 && info.getTimeStamp() < Long.MAX_VALUE);
 
+        assertTrue("Invalid timestamp in CellInfo: " + info.getTimestampNanos(),
+                info.getTimestampNanos() > 0 && info.getTimestampNanos() < Long.MAX_VALUE);
+
         if (mRadioHalVersion >= RADIO_HAL_VERSION_1_2) {
             // In HAL 1.2 or greater, the connection status must be reported
             assertTrue(info.getCellConnectionStatus() != CellInfo.CONNECTION_UNKNOWN);
