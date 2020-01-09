@@ -66,7 +66,7 @@ public abstract class BaseManagedProfileTest extends BaseDevicePolicyTest {
         }
     }
 
-    private void waitForUserUnlock() throws Exception {
+    void waitForUserUnlock() throws Exception {
         final String command = String.format("am get-started-user-state %d", mProfileUserId);
         final long deadline = System.nanoTime() + USER_UNLOCK_TIMEOUT_NANO;
         while (System.nanoTime() <= deadline) {
