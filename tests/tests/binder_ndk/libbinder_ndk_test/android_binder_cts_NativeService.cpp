@@ -16,6 +16,7 @@
 #define LOG_TAG "Cts-NdkBinderTest"
 
 #include <android/binder_ibinder_jni.h>
+#include <android/log.h>
 
 #include "itest_impl.h"
 
@@ -34,7 +35,7 @@ Java_android_binder_cts_NativeService_getBinder_1native(JNIEnv* env) {
 
   binder_status_t ret = AIBinder_setExtension(binder.get(), extBinder.get());
   if (ret != STATUS_OK) {
-    std::cout << "Could not set local extension" << std::endl;
+    __android_log_write(ANDROID_LOG_ERROR, LOG_TAG, "Could not set local extension");
   }
 
   // And the Java object owns the binder
