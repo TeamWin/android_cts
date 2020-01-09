@@ -21,6 +21,7 @@ import static android.app.Notification.CATEGORY_CALL;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Person;
+import android.app.RemoteInput;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -42,6 +43,7 @@ public class BubblesTestService extends Service {
     public static final int TEST_NO_PERSON = 1;
     public static final int TEST_NO_CATEGORY = 2;
     public static final int TEST_NO_BUBBLE_METADATA = 3;
+    public static final int TEST_MESSAGING = 4;
 
     public static final int BUBBLE_NOTIF_ID = 1;
 
@@ -76,11 +78,22 @@ public class BubblesTestService extends Service {
         if (testCase != TEST_NO_PERSON) {
             nb.addPerson(person);
         }
-        if (testCase != TEST_NO_CATEGORY) {
+        if (testCase != TEST_NO_CATEGORY && testCase != TEST_MESSAGING) {
             nb.setCategory(CATEGORY_CALL);
         }
         if (testCase != TEST_NO_BUBBLE_METADATA) {
             nb.setBubbleMetadata(data);
+        }
+        if (testCase == TEST_MESSAGING) {
+            // For messaging policy we need inline reply action
+            RemoteInput remoteInput =
+                    new RemoteInput.Builder("reply_key").setLabel("reply").build();
+            PendingIntent inputIntent = PendingIntent.getActivity(context, 0, new Intent(), 0);
+            Icon icon = Icon.createWithResource(context, android.R.drawable.sym_def_app_icon);
+            Notification.Action replyAction = new Notification.Action.Builder(icon, "Reply",
+                    inputIntent).addRemoteInput(remoteInput)
+                    .build();
+            nb.setActions(replyAction);
         }
         return nb.build();
     }

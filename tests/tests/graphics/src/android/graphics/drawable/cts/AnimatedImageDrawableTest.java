@@ -45,7 +45,6 @@ import android.widget.ImageView;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.FlakyTest;
 import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.BitmapUtils;
 
@@ -62,7 +61,10 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.function.BiFunction;
 
-@RunWith(AndroidJUnit4.class)
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
+
+@RunWith(JUnitParamsRunner.class)
 public class AnimatedImageDrawableTest {
     private Resources mRes;
     private ContentResolver mContentResolver;
@@ -422,6 +424,24 @@ public class AnimatedImageDrawableTest {
         cb.waitForEnd(DURATION * 30);
         cb.assertEnded(false);
         assertTrue(drawable.isRunning());
+    }
+
+    private static Object[] parametersForTestEncodedRepeats() {
+        return new Object[] {
+            new Object[] { R.drawable.animated, AnimatedImageDrawable.REPEAT_INFINITE },
+            new Object[] { R.drawable.animated_one_loop, 1 },
+            new Object[] { R.drawable.webp_animated, AnimatedImageDrawable.REPEAT_INFINITE },
+            new Object[] { R.drawable.webp_animated_large, AnimatedImageDrawable.REPEAT_INFINITE },
+            new Object[] { R.drawable.webp_animated_icc_xmp, 31999 },
+            new Object[] { R.drawable.count_down_color_test, 0 },
+        };
+    }
+
+    @Test
+    @Parameters(method = "parametersForTestEncodedRepeats")
+    public void testEncodedRepeats(int resId, int expectedRepeatCount) {
+        AnimatedImageDrawable drawable = createFromImageDecoder(resId);
+        assertEquals(expectedRepeatCount, drawable.getRepeatCount());
     }
 
     @Test

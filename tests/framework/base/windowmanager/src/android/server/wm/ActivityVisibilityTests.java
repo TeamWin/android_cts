@@ -265,12 +265,11 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         // Finish activity in non-focused (docked) stack.
         mBroadcastActionTrigger.finishBroadcastReceiverActivity();
 
-        mAmWmState.waitForActivityState(LAUNCHING_ACTIVITY, STATE_PAUSED);
-        mAmWmState.waitForAllExitingWindows();
-
         mAmWmState.computeState(LAUNCHING_ACTIVITY);
+        // The testing activities support multiple resume (target SDK >= Q).
+        mAmWmState.waitForActivityState(LAUNCHING_ACTIVITY, STATE_RESUMED);
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true);
-        mAmWmState.assertNotExist(BROADCAST_RECEIVER_ACTIVITY);
+        mAmWmState.waitAndAssertActivityRemoved(BROADCAST_RECEIVER_ACTIVITY);
     }
 
     @Test

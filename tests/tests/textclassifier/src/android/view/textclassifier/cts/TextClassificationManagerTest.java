@@ -41,7 +41,6 @@ import android.view.textclassifier.TextSelection;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.google.common.collect.Range;
 
@@ -49,6 +48,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -56,8 +56,19 @@ import java.util.HashSet;
 import java.util.List;
 
 @SmallTest
-@RunWith(AndroidJUnit4.class)
+@RunWith(Parameterized.class)
 public class TextClassificationManagerTest {
+
+    private static final String DEFAULT = "default";
+    private static final String SESSION = "session";
+
+    @Parameterized.Parameters(name = "{0}")
+    public static Iterable<Object> textClassifierTypes() {
+        return Arrays.asList(DEFAULT, SESSION);
+    }
+
+    @Parameterized.Parameter
+    public String mTextClassifierType;
 
     private static final String BUNDLE_KEY = "key";
     private static final String BUNDLE_VALUE = "value";
@@ -104,11 +115,15 @@ public class TextClassificationManagerTest {
         mManager = InstrumentationRegistry.getTargetContext()
                 .getSystemService(TextClassificationManager.class);
         mManager.setTextClassifier(null); // Resets the classifier.
-        mClassifier = mManager.createTextClassificationSession(
-                new TextClassificationContext.Builder(
-                        InstrumentationRegistry.getTargetContext().getPackageName(),
-                        TextClassifier.WIDGET_TYPE_TEXTVIEW)
-                        .build());
+        if (mTextClassifierType.equals(DEFAULT)) {
+            mClassifier = mManager.getTextClassifier();
+        } else {
+            mClassifier = mManager.createTextClassificationSession(
+                    new TextClassificationContext.Builder(
+                            InstrumentationRegistry.getTargetContext().getPackageName(),
+                            TextClassifier.WIDGET_TYPE_TEXTVIEW)
+                            .build());
+        }
     }
 
     @After

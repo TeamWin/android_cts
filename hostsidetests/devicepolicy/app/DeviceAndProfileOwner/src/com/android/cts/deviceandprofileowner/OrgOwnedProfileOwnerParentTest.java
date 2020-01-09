@@ -22,7 +22,10 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
+import android.hardware.camera2.CameraManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.UserManager;
 import android.test.InstrumentationTestCase;
 
@@ -31,6 +34,15 @@ public class OrgOwnedProfileOwnerParentTest extends InstrumentationTestCase {
     protected Context mContext;
     private DevicePolicyManager mParentDevicePolicyManager;
     private DevicePolicyManager mDevicePolicyManager;
+
+    private CameraManager mCameraManager;
+
+    private HandlerThread mBackgroundThread;
+
+    /**
+     * A {@link Handler} for running tasks in the background.
+     */
+    private Handler mBackgroundHandler;
 
     @Override
     protected void setUp() throws Exception {
@@ -41,28 +53,38 @@ public class OrgOwnedProfileOwnerParentTest extends InstrumentationTestCase {
                 mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
         mParentDevicePolicyManager =
                 mDevicePolicyManager.getParentProfileInstance(ADMIN_RECEIVER_COMPONENT);
+        mCameraManager = (CameraManager) mContext.getSystemService(Context.CAMERA_SERVICE);
 
         assertNotNull(mDevicePolicyManager);
         assertNotNull(mParentDevicePolicyManager);
+        assertNotNull(mCameraManager);
 
         assertTrue(mDevicePolicyManager.isAdminActive(ADMIN_RECEIVER_COMPONENT));
         assertTrue(
                 mDevicePolicyManager.isProfileOwnerApp(ADMIN_RECEIVER_COMPONENT.getPackageName()));
         assertTrue(mDevicePolicyManager.isManagedProfile(ADMIN_RECEIVER_COMPONENT));
+        startBackgroundThread();
     }
 
-    public void testSetAndGetCameraDisabled_onParent() {
+    @Override
+    protected void tearDown() throws Exception {
+        stopBackgroundThread();
+        super.tearDown();
+    }
+
+    public void testSetAndGetCameraDisabled_onParent() throws Exception {
         mParentDevicePolicyManager.setCameraDisabled(ADMIN_RECEIVER_COMPONENT, true);
         boolean actualDisabled =
                 mParentDevicePolicyManager.getCameraDisabled(ADMIN_RECEIVER_COMPONENT);
 
         assertThat(actualDisabled).isTrue();
+        checkCanOpenCamera(false);
 
         mParentDevicePolicyManager.setCameraDisabled(ADMIN_RECEIVER_COMPONENT, false);
         actualDisabled = mParentDevicePolicyManager.getCameraDisabled(ADMIN_RECEIVER_COMPONENT);
 
         assertThat(actualDisabled).isFalse();
-        // TODO: (145604715) test camera is actually disabled
+        checkCanOpenCamera(true);
     }
 
     public void testAddGetAndClearUserRestriction_onParent() {
@@ -81,6 +103,47 @@ public class OrgOwnedProfileOwnerParentTest extends InstrumentationTestCase {
 
         restrictions = mParentDevicePolicyManager.getUserRestrictions(ADMIN_RECEIVER_COMPONENT);
         assertThat(restrictions.get(UserManager.DISALLOW_CONFIG_DATE_TIME)).isNull();
+    }
+
+    private void checkCanOpenCamera(boolean canOpen) throws Exception {
+        // If the device does not support a camera it will return an empty camera ID list.
+        if (mCameraManager.getCameraIdList() == null
+                || mCameraManager.getCameraIdList().length == 0) {
+            return;
+        }
+        int retries = 10;
+        boolean successToOpen = !canOpen;
+        while (successToOpen != canOpen && retries > 0) {
+            retries--;
+            Thread.sleep(500);
+            successToOpen = CameraUtils
+                    .blockUntilOpenCamera(mCameraManager, mBackgroundHandler);
+        }
+        assertEquals(String.format("Timed out waiting the value to change to %b (actual=%b)",
+                canOpen, successToOpen), canOpen, successToOpen);
+    }
+
+    /**
+     * Starts a background thread and its {@link Handler}.
+     */
+    private void startBackgroundThread() {
+        mBackgroundThread = new HandlerThread("CameraBackground");
+        mBackgroundThread.start();
+        mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
+    }
+
+    /**
+     * Stops the background thread and its {@link Handler}.
+     */
+    private void stopBackgroundThread() {
+        mBackgroundThread.quitSafely();
+        try {
+            mBackgroundThread.join();
+            mBackgroundThread = null;
+            mBackgroundHandler = null;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
 }

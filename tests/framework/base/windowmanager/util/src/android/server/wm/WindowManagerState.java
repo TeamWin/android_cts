@@ -370,11 +370,6 @@ public class WindowManagerState {
                 .collect(Collectors.toList());
     }
 
-    List<WindowState> getExitingWindows() {
-        return getMatchingWindows(WindowState::isExitingWindow)
-                .collect(Collectors.toList());
-    }
-
     private Stream<WindowState> getMatchingWindows(Predicate<WindowState> condition) {
         return mWindowStates.stream().filter(condition);
     }
