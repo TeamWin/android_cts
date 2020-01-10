@@ -1242,6 +1242,12 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         assertDomainZeroOrOne("u:r:permissioncontroller_app:s0", "com.google.android.permissioncontroller");
     }
 
+    /* vzwomatrigger may or may not be running */
+    @CddTest(requirement="9.7")
+    public void testVzwOmaTriggerDomain() throws DeviceNotAvailableException {
+        assertDomainZeroOrOne("u:r:vzwomatrigger_app:s0", "com.android.vzwomatrigger");
+    }
+
     /*
      * Nothing should be running in this domain, cardinality test is all thats
      * needed
