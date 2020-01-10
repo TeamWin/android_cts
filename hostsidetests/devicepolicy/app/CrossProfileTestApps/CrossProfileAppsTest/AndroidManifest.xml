@@ -43,4 +43,6 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="com.android.cts.crossprofileappstest"
                      android:label="Launcher Apps CTS Tests"/>
+
+    <uses-permission android:name="android.permission.INTERACT_ACROSS_PROFILES" />
 </manifest>
