@@ -114,6 +114,10 @@ static void testInfo(JNIEnv* env, jclass, jobject jbitmap, jint androidBitmapFor
     }
 }
 
+static jint getDataSpace(JNIEnv* env, jclass, jobject jbitmap) {
+    return AndroidBitmap_getDataSpace(env, jbitmap);
+}
+
 static JNINativeMethod gMethods[] = {
     { "nValidateBitmapInfo", "(Landroid/graphics/Bitmap;IIZ)V",
         (void*) validateBitmapInfo },
@@ -124,6 +128,7 @@ static JNINativeMethod gMethods[] = {
     { "nGetFormat", "(Landroid/graphics/Bitmap;)I", (void*) getFormat },
     { "nTestNullBitmap", "()V", (void*) testNullBitmap },
     { "nTestInfo", "(Landroid/graphics/Bitmap;IIIZZ)V", (void*) testInfo },
+    { "nGetDataSpace", "(Landroid/graphics/Bitmap;)I", (void*) getDataSpace },
 };
 
 int register_android_graphics_cts_BitmapTest(JNIEnv* env) {
