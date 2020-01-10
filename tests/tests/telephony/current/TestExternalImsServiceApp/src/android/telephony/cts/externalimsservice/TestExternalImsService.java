@@ -18,6 +18,7 @@ package android.telephony.cts.externalimsservice;
 
 import android.content.Intent;
 import android.os.IBinder;
+import android.telephony.ims.ImsReasonInfo;
 import android.telephony.ims.cts.ImsUtils;
 import android.telephony.ims.cts.TestImsService;
 import android.telephony.ims.feature.RcsFeature.RcsImsCapabilities;
@@ -59,9 +60,24 @@ public class TestExternalImsService extends TestImsService {
             TestExternalImsService.this.resetState();
         }
 
-        public void updateImsRegistration(int imsRadioTech) {
+        public void triggerImsOnRegistered(int imsRadioTech) {
             ImsRegistrationImplBase imsReg = TestExternalImsService.this.getImsRegistration();
             imsReg.onRegistered(imsRadioTech);
+        }
+
+        public void triggerImsOnRegistering(int imsRadioTech) {
+            ImsRegistrationImplBase imsReg = TestExternalImsService.this.getImsRegistration();
+            imsReg.onRegistering(imsRadioTech);
+        }
+
+        public void triggerImsOnDeregistered(ImsReasonInfo info) {
+            ImsRegistrationImplBase imsReg = TestExternalImsService.this.getImsRegistration();
+            imsReg.onDeregistered(info);
+        }
+
+        public void triggerImsOnTechnologyChangeFailed(int imsRadioTech, ImsReasonInfo info) {
+            ImsRegistrationImplBase imsReg = TestExternalImsService.this.getImsRegistration();
+            imsReg.onTechnologyChangeFailed(imsRadioTech, info);
         }
 
         public void notifyRcsCapabilitiesStatusChanged(int capability) {
