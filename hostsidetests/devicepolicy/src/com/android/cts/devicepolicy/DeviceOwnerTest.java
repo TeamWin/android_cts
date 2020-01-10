@@ -160,6 +160,22 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
+    public void testProxyStaticProxyTest() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceOwnerTest("proxy.StaticProxyTest");
+    }
+
+    @Test
+    public void testProxyPacProxyTest() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceOwnerTest("proxy.PacProxyTest");
+    }
+
+    @Test
     public void testRemoteBugreportWithTwoUsers() throws Exception {
         if (!mHasFeature || !canCreateAdditionalUsers(1)) {
             return;

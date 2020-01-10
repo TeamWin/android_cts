@@ -4675,6 +4675,9 @@
     <!-- Allows input events to be monitored. Very dangerous!  @hide -->
     <permission android:name="android.permission.MONITOR_INPUT"
                 android:protectionLevel="signature" />
+    <!-- Allows input device can change association. Very dangerous!  @hide -->
+    <permission android:name="android.permission.ASSOCIATE_INPUT_DEVICE_TO_DISPLAY_BY_PORT"
+                android:protectionLevel="signature" />
 
     <!-- Allows query of any normal app on the device, regardless of manifest declarations. -->
     <permission android:name="android.permission.QUERY_ALL_PACKAGES"
