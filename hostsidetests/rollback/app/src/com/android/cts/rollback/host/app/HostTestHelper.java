@@ -24,6 +24,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageInstaller;
 import android.content.rollback.RollbackInfo;
+import android.content.rollback.RollbackManager;
 import android.os.storage.StorageManager;
 import android.util.Log;
 
@@ -54,6 +55,8 @@ public class HostTestHelper {
     private static final TestApp Apex2SignedBobRotRollback = new TestApp(
             "Apex2SignedBobRotRollback", TestApp.Apex, 2, /*isApex*/true,
             "com.android.apex.cts.shim.v2_signed_bob_rot_rollback.apex");
+    private static final String ApkInShimApexPackageName = "com.android.cts.ctsshim";
+    private static final long ApkInShimApexVersion = 28;
 
     /**
      * Adopts common permissions needed to test rollbacks.
@@ -97,6 +100,11 @@ public class HostTestHelper {
 
         Uninstall.packages(TestApp.A);
         Uninstall.packages(TestApp.B);
+
+        // Remove all pending rollbacks
+        RollbackManager rm = RollbackUtils.getRollbackManager();
+        rm.getAvailableRollbacks().stream().flatMap(info -> info.getPackages().stream())
+                .map(info -> info.getPackageName()).forEach(rm::expireRollbackForPackage);
     }
 
     /**
@@ -322,7 +330,6 @@ public class HostTestHelper {
     @Test
     public void testApexOnlyStagedRollback_Phase1() throws Exception {
         assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(1);
-
         Install.single(TestApp.Apex2).setStaged().commit();
     }
 
@@ -346,14 +353,18 @@ public class HostTestHelper {
         RollbackInfo available = RollbackUtils.getAvailableRollback(TestApp.Apex);
         assertThat(available).isStaged();
         assertThat(available).packagesContainsExactly(
-                Rollback.from(TestApp.Apex3).to(TestApp.Apex2));
+                Rollback.from(TestApp.Apex3).to(TestApp.Apex2),
+                Rollback.from(ApkInShimApexPackageName, 0)
+                        .to(ApkInShimApexPackageName, ApkInShimApexVersion));
 
         RollbackUtils.rollback(available.getRollbackId(), TestApp.Apex3);
         RollbackInfo committed = RollbackUtils.getCommittedRollbackById(available.getRollbackId());
         assertThat(committed).isNotNull();
         assertThat(committed).isStaged();
         assertThat(committed).packagesContainsExactly(
-                Rollback.from(TestApp.Apex3).to(TestApp.Apex2));
+                Rollback.from(TestApp.Apex3).to(TestApp.Apex2),
+                Rollback.from(ApkInShimApexPackageName, 0)
+                        .to(ApkInShimApexPackageName, ApkInShimApexVersion));
         assertThat(committed).causePackagesContainsExactly(TestApp.Apex3);
         assertThat(committed.getCommittedSessionId()).isNotEqualTo(-1);
 
@@ -391,14 +402,18 @@ public class HostTestHelper {
         RollbackInfo available = RollbackUtils.getAvailableRollback(TestApp.Apex);
         assertThat(available).isStaged();
         assertThat(available).packagesContainsExactly(
-                Rollback.from(TestApp.Apex2).to(TestApp.Apex1));
+                Rollback.from(TestApp.Apex2).to(TestApp.Apex1),
+                Rollback.from(ApkInShimApexPackageName, 0)
+                        .to(ApkInShimApexPackageName, ApkInShimApexVersion));
 
         RollbackUtils.rollback(available.getRollbackId(), TestApp.Apex2);
         RollbackInfo committed = RollbackUtils.getCommittedRollbackById(available.getRollbackId());
         assertThat(committed).isNotNull();
         assertThat(committed).isStaged();
         assertThat(committed).packagesContainsExactly(
-                Rollback.from(TestApp.Apex2).to(TestApp.Apex1));
+                Rollback.from(TestApp.Apex2).to(TestApp.Apex1),
+                Rollback.from(ApkInShimApexPackageName, 0)
+                        .to(ApkInShimApexPackageName, ApkInShimApexVersion));
         assertThat(committed).causePackagesContainsExactly(TestApp.Apex2);
         assertThat(committed.getCommittedSessionId()).isNotEqualTo(-1);
 
@@ -450,7 +465,9 @@ public class HostTestHelper {
         assertThat(available).isStaged();
         assertThat(available).packagesContainsExactly(
                 Rollback.from(TestApp.Apex3).to(TestApp.Apex2),
-                Rollback.from(TestApp.A2).to(TestApp.A1));
+                Rollback.from(TestApp.A2).to(TestApp.A1),
+                Rollback.from(ApkInShimApexPackageName, 0)
+                        .to(ApkInShimApexPackageName, ApkInShimApexVersion));
 
         RollbackUtils.rollback(available.getRollbackId(), TestApp.Apex3, TestApp.A2);
         RollbackInfo committed = RollbackUtils.getCommittedRollback(TestApp.A);
@@ -458,7 +475,9 @@ public class HostTestHelper {
         assertThat(committed).isStaged();
         assertThat(committed).packagesContainsExactly(
                 Rollback.from(TestApp.Apex3).to(TestApp.Apex2),
-                Rollback.from(TestApp.A2).to(TestApp.A1));
+                Rollback.from(TestApp.A2).to(TestApp.A1),
+                Rollback.from(ApkInShimApexPackageName, 0)
+                        .to(ApkInShimApexPackageName, ApkInShimApexVersion));
         assertThat(committed).causePackagesContainsExactly(TestApp.Apex3, TestApp.A2);
         assertThat(committed.getCommittedSessionId()).isNotEqualTo(-1);
 
@@ -483,7 +502,9 @@ public class HostTestHelper {
         assertThat(committed).isStaged();
         assertThat(committed).packagesContainsExactly(
                 Rollback.from(TestApp.Apex3).to(TestApp.Apex2),
-                Rollback.from(TestApp.A2).to(TestApp.A1));
+                Rollback.from(TestApp.A2).to(TestApp.A1),
+                Rollback.from(ApkInShimApexPackageName, 0)
+                        .to(ApkInShimApexPackageName, ApkInShimApexVersion));
         assertThat(committed).causePackagesContainsExactly(TestApp.Apex3, TestApp.A2);
         assertThat(committed.getCommittedSessionId()).isNotEqualTo(-1);
 
@@ -539,14 +560,18 @@ public class HostTestHelper {
         RollbackInfo available = RollbackUtils.getAvailableRollback(TestApp.Apex);
         assertThat(available).isStaged();
         assertThat(available).packagesContainsExactly(
-                Rollback.from(Apex2SignedBobRotRollback).to(TestApp.Apex1));
+                Rollback.from(Apex2SignedBobRotRollback).to(TestApp.Apex1),
+                Rollback.from(ApkInShimApexPackageName, 0)
+                        .to(ApkInShimApexPackageName, ApkInShimApexVersion));
 
         RollbackUtils.rollback(available.getRollbackId(), Apex2SignedBobRotRollback);
         RollbackInfo committed = RollbackUtils.getCommittedRollbackById(available.getRollbackId());
         assertThat(committed).isNotNull();
         assertThat(committed).isStaged();
         assertThat(committed).packagesContainsExactly(
-                Rollback.from(Apex2SignedBobRotRollback).to(TestApp.Apex1));
+                Rollback.from(Apex2SignedBobRotRollback).to(TestApp.Apex1),
+                Rollback.from(ApkInShimApexPackageName, 0)
+                        .to(ApkInShimApexPackageName, ApkInShimApexVersion));
         assertThat(committed).causePackagesContainsExactly(Apex2SignedBobRotRollback);
         assertThat(committed.getCommittedSessionId()).isNotEqualTo(-1);
 
