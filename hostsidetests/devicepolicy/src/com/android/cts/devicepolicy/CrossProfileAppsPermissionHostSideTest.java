@@ -26,8 +26,10 @@ import java.util.Map;
 
 /**
  * Tests to verify
- * {@link android.content.pm.crossprofile.CrossProfileApps#canRequestInteractAcrossProfiles()} and
- * {@link android.content.pm.crossprofile.CrossProfileApps#canInteractAcrossProfiles()}.
+ * {@link android.content.pm.crossprofile.CrossProfileApps#canRequestInteractAcrossProfiles()},
+ * {@link android.content.pm.crossprofile.CrossProfileApps#canInteractAcrossProfiles()}, and
+ * {@link
+ * android.content.pm.crossprofile.CrossProfileApps#createRequestInteractAcrossProfilesIntent()}.
  *
  * The rest of the tests for {@link android.content.pm.crossprofile.CrossProfileApps}
  * can be found in {@link CrossProfileAppsHostSideTest}.
@@ -36,7 +38,7 @@ public class CrossProfileAppsPermissionHostSideTest extends BaseDevicePolicyTest
     private static final String TEST_WITH_REQUESTED_PERMISSION_PACKAGE =
             "com.android.cts.crossprofileappstest";
     private static final String TEST_WITH_REQUESTED_PERMISSION_CLASS =
-            ".CrossProfileAppsCanInteractOrRequestToInteract";
+            ".CrossProfileAppsPermissionToInteractTest";
     private static final String TEST_WITH_REQUESTED_PERMISSION_APK = "CtsCrossProfileAppsTests.apk";
 
     private static final String TEST_WITH_NO_REQUESTED_PERMISSION_PACKAGE =
@@ -227,6 +229,49 @@ public class CrossProfileAppsPermissionHostSideTest extends BaseDevicePolicyTest
                 TEST_WITH_REQUESTED_PERMISSION_CLASS,
                 "testCanInteractAcrossProfiles_withNoOtherProfile_returnsFalse",
                 mPrimaryUserId,
+                Collections.EMPTY_MAP);
+    }
+
+    @Test
+    public void testCreateRequestInteractAcrossProfilesIntent_canRequestInteraction_returnsIntent()
+            throws Exception {
+        installAppAsUser(TEST_WITH_REQUESTED_PERMISSION_APK, mPrimaryUserId);
+        addManagedProfileAndInstallRequiredPackages(TEST_WITH_REQUESTED_PERMISSION_APK);
+        addDefaultCrossProfilePackage(mProfileId, TEST_WITH_REQUESTED_PERMISSION_PACKAGE);
+
+        runDeviceTestsAsUser(
+                TEST_WITH_REQUESTED_PERMISSION_PACKAGE,
+                TEST_WITH_REQUESTED_PERMISSION_CLASS,
+                "testCreateRequestInteractAcrossProfilesIntent_canRequestInteraction_returnsIntent",
+                mPrimaryUserId,
+                Collections.EMPTY_MAP);
+    }
+
+    @Test
+    public void testCreateRequestInteractAcrossProfilesIntent_fromWorkProfile_returnsIntent()
+            throws Exception {
+        installAppAsUser(TEST_WITH_REQUESTED_PERMISSION_APK, mPrimaryUserId);
+        addManagedProfileAndInstallRequiredPackages(TEST_WITH_REQUESTED_PERMISSION_APK);
+        addDefaultCrossProfilePackage(mProfileId, TEST_WITH_REQUESTED_PERMISSION_PACKAGE);
+
+        runDeviceTestsAsUser(
+                TEST_WITH_REQUESTED_PERMISSION_PACKAGE,
+                TEST_WITH_REQUESTED_PERMISSION_CLASS,
+                "testCreateRequestInteractAcrossProfilesIntent_canRequestInteraction_returnsIntent",
+                mProfileId,
+                Collections.EMPTY_MAP);
+    }
+
+    @Test
+    public void testCreateRequestInteractAcrossProfilesIntent_canNotRequestInteraction_returnsNull()
+            throws Exception {
+        installAppAsUser(TEST_WITH_REQUESTED_PERMISSION_APK, mPrimaryUserId);
+
+        runDeviceTestsAsUser(
+                TEST_WITH_REQUESTED_PERMISSION_PACKAGE,
+                TEST_WITH_REQUESTED_PERMISSION_CLASS,
+                "testCreateRequestInteractAcrossProfilesIntent_canNotRequestInteraction_returnsNull",
+                mProfileId,
                 Collections.EMPTY_MAP);
     }
 

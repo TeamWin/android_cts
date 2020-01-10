@@ -20,8 +20,10 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.app.AppOpsManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.CrossProfileApps;
 import android.os.Binder;
+import android.provider.Settings;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -31,7 +33,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
-public class CrossProfileAppsCanInteractOrRequestToInteract {
+public class CrossProfileAppsPermissionToInteractTest {
     public static final String MANAGE_APP_OPS_MODES_PERMISSION =
             "android.permission.MANAGE_APP_OPS_MODES";
     public static final String INTERACT_ACROSS_PROFILES_PERMISSION =
@@ -115,4 +117,22 @@ public class CrossProfileAppsCanInteractOrRequestToInteract {
 
         assertThat(mCrossProfileApps.canInteractAcrossProfiles()).isFalse();
     }
+
+    @Test
+    public void testCreateRequestInteractAcrossProfilesIntent_canRequestInteraction_returnsIntent() {
+        Intent intent = mCrossProfileApps.createRequestInteractAcrossProfilesIntent();
+
+        assertThat(intent).isNotNull();
+        assertThat(intent.getAction()).isEqualTo(Settings.ACTION_MANAGE_CROSS_PROFILE_ACCESS);
+        assertThat(intent.getData()).isNotNull();
+        assertThat(intent.getData().getSchemeSpecificPart()).isEqualTo(mContext.getPackageName());
+    }
+
+    @Test
+    public void testCreateRequestInteractAcrossProfilesIntent_canNotRequestInteraction_returnsNull() {
+        Intent intent = mCrossProfileApps.createRequestInteractAcrossProfilesIntent();
+
+        assertThat(intent).isNull();
+    }
+
 }
