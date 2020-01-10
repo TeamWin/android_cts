@@ -69,7 +69,8 @@ public class SELinuxNeverallowRulesTest extends DeviceTestCase implements IBuild
     protected void setUp() throws Exception {
         super.setUp();
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mBuild);
-        sepolicyAnalyze = buildHelper.getTestFile("sepolicy-analyze");
+        File sepolicyAnalyzeDir = buildHelper.getTestFile("sepolicy-analyze");
+        sepolicyAnalyze = new File(sepolicyAnalyzeDir, "sepolicy-analyze");
         sepolicyAnalyze.setExecutable(true);
 
         devicePolicyFile = android.security.cts.SELinuxHostTest.getDevicePolicyFile(mDevice);
