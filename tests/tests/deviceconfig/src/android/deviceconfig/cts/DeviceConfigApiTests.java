@@ -138,6 +138,21 @@ public final class DeviceConfigApiTests {
     }
 
     /**
+     * Checks that setting and getting properties from the same namespace return correct values.
+     */
+    @Test
+    public void testSetAndGetProperties_sameNamespace() throws Exception {
+        Properties properties = new Properties.Builder(NAMESPACE1)
+                .setString(KEY1, VALUE1).setInt(KEY2, VALID_INT).build();
+        assertEquals(DEFAULT_VALUE, DeviceConfig.getString(NAMESPACE1, KEY1, DEFAULT_VALUE));
+        assertEquals(DEFAULT_INT, DeviceConfig.getInt(NAMESPACE1, KEY2, DEFAULT_INT));
+        DeviceConfig.setProperties(properties);
+
+        assertEquals(VALUE1, DeviceConfig.getString(NAMESPACE1, KEY1, DEFAULT_VALUE));
+        assertEquals(VALID_INT, DeviceConfig.getInt(NAMESPACE1, KEY2, DEFAULT_INT));
+    }
+
+    /**
      * Checks that setting a property in one namespace does not set the same property in a different
      * namespace.
      */
@@ -146,6 +161,20 @@ public final class DeviceConfigApiTests {
         DeviceConfig.setProperty(NAMESPACE1, KEY1, VALUE1, /*makeDefault=*/false);
         String result = DeviceConfig.getProperty(NAMESPACE2, KEY1);
         assertNull("Value for same keys written to different namespaces must not clash", result);
+    }
+
+    /**
+     * Checks that setting properties in one namespace does not set the same properties in a
+     * different namespace.
+     */
+    @Test
+    public void testSetAndGetProperties_differentNamespace() throws Exception {
+        Properties properties = new Properties.Builder(NAMESPACE1)
+                .setString(KEY1, VALUE1).setInt(KEY2, VALID_INT).build();
+        DeviceConfig.setProperties(properties);
+
+        assertEquals(DEFAULT_VALUE, DeviceConfig.getString(NAMESPACE2, KEY1, DEFAULT_VALUE));
+        assertEquals(DEFAULT_INT, DeviceConfig.getInt(NAMESPACE2, KEY2, DEFAULT_INT));
     }
 
     /**
@@ -164,6 +193,25 @@ public final class DeviceConfigApiTests {
     }
 
     /**
+     * Checks that different namespaces can keep different values for the same keys.
+     */
+    @Test
+    public void testSetAndGetProperties_multipleNamespaces() throws Exception {
+        int VALID_INT2 = VALID_INT + 2;
+        Properties properties1 = new Properties.Builder(NAMESPACE1)
+                .setString(KEY1, VALUE1).setInt(KEY2, VALID_INT).build();
+        Properties properties2 = new Properties.Builder(NAMESPACE2)
+                .setString(KEY1, VALUE2).setInt(KEY2, VALID_INT2).build();
+        DeviceConfig.setProperties(properties1);
+        DeviceConfig.setProperties(properties2);
+
+        assertEquals(VALUE1, DeviceConfig.getString(NAMESPACE1, KEY1, DEFAULT_VALUE));
+        assertEquals(VALID_INT, DeviceConfig.getInt(NAMESPACE1, KEY2, DEFAULT_INT));
+        assertEquals(VALUE2, DeviceConfig.getString(NAMESPACE2, KEY1, DEFAULT_VALUE));
+        assertEquals(VALID_INT2, DeviceConfig.getInt(NAMESPACE2, KEY2, DEFAULT_INT));
+    }
+
+    /**
      * Checks that saving value twice keeps the last value.
      */
     @Test
@@ -173,6 +221,23 @@ public final class DeviceConfigApiTests {
         String result = DeviceConfig.getProperty(NAMESPACE1, KEY1);
         assertEquals("New value written to the same namespace/key did not override previous"
                 + " value.", VALUE2, result);
+    }
+
+    /**
+     * Checks that saving values twice keeps the last values.
+     */
+    @Test
+    public void testSetAndGetProperties_overrideValue() throws Exception {
+        int VALID_INT2 = VALID_INT + 2;
+        Properties properties1 = new Properties.Builder(NAMESPACE1)
+                .setString(KEY1, VALUE1).setInt(KEY2, VALID_INT).build();
+        Properties properties2 = new Properties.Builder(NAMESPACE1)
+                .setString(KEY1, VALUE2).setInt(KEY2, VALID_INT2).build();
+        DeviceConfig.setProperties(properties1);
+        DeviceConfig.setProperties(properties2);
+
+        assertEquals(VALUE2, DeviceConfig.getString(NAMESPACE1, KEY1, DEFAULT_VALUE));
+        assertEquals(VALID_INT2, DeviceConfig.getInt(NAMESPACE1, KEY2, DEFAULT_INT));
     }
 
     /**
@@ -720,11 +785,22 @@ public final class DeviceConfigApiTests {
 
     /**
      * Test that properties listener is successfully registered and provides callbacks on value
-     * change.
+     * change when DeviceConfig.setProperty is called.
      */
     @Test
-    public void testPropertiesListener() {
+    public void testPropertiesListener_setProperty() {
         setPropertiesAndAssertSuccessfulChange(NAMESPACE1, KEY1, VALUE1);
+    }
+
+    /**
+     * Test that properties listener is successfully registered and provides callbacks on value
+     * change when DeviceConfig.setProperties is called.
+     */
+    @Test
+    public void testPropertiesListener_setProperties() throws Exception {
+        Properties properties = new Properties.Builder(NAMESPACE1)
+                .setString(KEY1, VALUE1).setInt(KEY2, VALID_INT).build();
+        setPropertiesAndAssertSuccessfulChange(properties);
     }
 
     /**
@@ -953,6 +1029,26 @@ public final class DeviceConfigApiTests {
         return propertiesUpdate.properties;
     }
 
+    private Properties setPropertiesAndAssertSuccessfulChange(Properties properties)
+            throws Exception {
+        final List<PropertyUpdate> receivedUpdates = new ArrayList<>();
+        OnPropertiesChangedListener changeListener
+                = createOnPropertiesChangedListener(receivedUpdates);
+        DeviceConfig.addOnPropertiesChangedListener(
+                properties.getNamespace(), EXECUTOR, changeListener);
+
+        DeviceConfig.setProperties(properties);
+        waitForListenerUpdateOrTimeout(receivedUpdates, 1);
+        DeviceConfig.removeOnPropertiesChangedListener(changeListener);
+
+        assertEquals("Failed to receive update to OnPropertiesChangedListener",
+                1, receivedUpdates.size());
+        PropertyUpdate propertiesUpdate = receivedUpdates.get(0);
+        propertiesUpdate.assertEqual(properties);
+
+        return propertiesUpdate.properties;
+    }
+
     private void nullifyProperty(String namespace, String key) {
         if (DeviceConfig.getString(namespace, key, null) != null) {
             setPropertiesAndAssertSuccessfulChange(namespace, key, null);
@@ -965,36 +1061,33 @@ public final class DeviceConfigApiTests {
     }
 
     private static class PropertyUpdate {
-        String namespace;
-        String name;
-        String value;
         Properties properties;
 
-        PropertyUpdate(String namespace, String name, String value) {
-            this.name = name;
-            this.namespace = namespace;
-            this.value = value;
-            this.properties = null;
-        }
-
         PropertyUpdate(Properties properties) {
-            if (properties.getKeyset().size() != 1) {
-                fail("Unexpected properties size.");
-            }
-            this.namespace = properties.getNamespace();
-            this.name = properties.getKeyset().iterator().next();
-            this.value = properties.getString(this.name, null);
             this.properties = properties;
         }
 
         void assertEqual(String namespace, String name, String value) {
-            assertEquals("Listener received update for unexpected namespace",
-                    namespace, this.namespace);
-            assertEquals("Listener received update for unexpected property",
-                    this.name, name);
-            assertEquals("Listener received update with unexpected value",
-                    this.value, value);
+            Properties properties =
+                    new Properties.Builder(namespace).setString(name, value).build();
+            assertEqual(properties);
         }
 
+        void assertEqual(Properties expected) {
+            assertEquals(expected.getNamespace(), properties.getNamespace());
+            assertEquals(expected.getKeyset().size(), properties.getKeyset().size());
+            for (String key : properties.getKeyset()) {
+                assertEquals(expected.getString(key, DEFAULT_VALUE),
+                        properties.getString(key, DEFAULT_VALUE));
+                assertEquals(expected.getBoolean(key, DEFAULT_BOOLEAN_FALSE),
+                        properties.getBoolean(key, DEFAULT_BOOLEAN_FALSE));
+                assertEquals(expected.getInt(key, DEFAULT_INT),
+                        properties.getInt(key, DEFAULT_INT));
+                assertEquals(expected.getFloat(key, DEFAULT_FLOAT),
+                        properties.getFloat(key, DEFAULT_FLOAT), 0);
+                assertEquals(expected.getLong(key, DEFAULT_LONG),
+                        properties.getLong(key, DEFAULT_LONG));
+            }
+        }
     }
 }
