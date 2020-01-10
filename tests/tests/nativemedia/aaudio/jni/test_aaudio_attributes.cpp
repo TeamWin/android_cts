@@ -126,7 +126,14 @@ static const aaudio_usage_t sUsages[] = {
     AAUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE,
     AAUDIO_USAGE_ASSISTANCE_SONIFICATION,
     AAUDIO_USAGE_GAME,
-    AAUDIO_USAGE_ASSISTANT
+    AAUDIO_USAGE_ASSISTANT,
+};
+
+static const aaudio_usage_t sSystemUsages[] = {
+    AAUDIO_SYSTEM_USAGE_EMERGENCY,
+    AAUDIO_SYSTEM_USAGE_SAFETY,
+    AAUDIO_SYSTEM_USAGE_VEHICLE_STATUS,
+    AAUDIO_SYSTEM_USAGE_ANNOUNCEMENT
 };
 
 static const aaudio_content_type_t sContentypes[] = {
@@ -224,4 +231,20 @@ TEST(test_attributes, aaudio_input_preset_lowlat) {
 
 TEST(test_attributes, aaudio_allowed_capture_policy_lowlat) {
     checkAttributesAllowedCapturePolicy(AAUDIO_PERFORMANCE_MODE_LOW_LATENCY);
+}
+
+TEST(test_attributes, aaudio_system_usages_rejected) {
+    for (aaudio_usage_t systemUsage : sSystemUsages) {
+        AAudioStreamBuilder *aaudioBuilder = nullptr;
+        AAudioStream *aaudioStream = nullptr;
+
+        // Use an AAudioStreamBuilder to contain requested parameters.
+        ASSERT_EQ(AAUDIO_OK, AAudio_createStreamBuilder(&aaudioBuilder));
+
+        AAudioStreamBuilder_setUsage(aaudioBuilder, systemUsage);
+
+        // Get failed status when trying to create an AAudioStream using the Builder.
+        ASSERT_EQ(AAUDIO_ERROR_ILLEGAL_ARGUMENT, AAudioStreamBuilder_openStream(aaudioBuilder, &aaudioStream));
+        AAudioStreamBuilder_delete(aaudioBuilder);
+    }
 }
