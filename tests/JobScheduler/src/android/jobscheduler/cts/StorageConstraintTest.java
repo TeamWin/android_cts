@@ -41,8 +41,8 @@ public class StorageConstraintTest extends BaseJobSchedulerTest {
 
     @Override
     public void tearDown() throws Exception {
-        super.tearDown();
         mJobScheduler.cancel(STORAGE_JOB_ID);
+        super.tearDown();
     }
 
     String getJobState() throws Exception {

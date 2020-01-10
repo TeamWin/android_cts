@@ -15,6 +15,7 @@
  */
 package android.jobscheduler.cts;
 
+import android.annotation.CallSuper;
 import android.annotation.TargetApi;
 import android.app.Instrumentation;
 import android.app.job.JobScheduler;
@@ -98,6 +99,7 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
         return mContext;
     }
 
+    @CallSuper
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -106,6 +108,7 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
         mJobScheduler.cancelAll();
     }
 
+    @CallSuper
     @Override
     public void tearDown() throws Exception {
         SystemUtil.runShellCommand(getInstrumentation(), "cmd battery reset");
