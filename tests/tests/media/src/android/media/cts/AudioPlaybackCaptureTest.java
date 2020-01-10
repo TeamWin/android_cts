@@ -42,6 +42,7 @@ import android.media.MediaPlayer;
 import android.media.projection.MediaProjection;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.UserHandle;
 import android.platform.test.annotations.Presubmit;
 
 import androidx.test.rule.ActivityTestRule;
@@ -77,6 +78,7 @@ public class AudioPlaybackCaptureTest {
     private AudioManager mAudioManager;
     private boolean mPlaybackBeforeCapture;
     private int mUid; //< UID of this test
+    private int mUserId; // userId of this test
     private AudioPlaybackCaptureActivity mActivity;
     private MediaProjection mMediaProjection;
     @Rule
@@ -88,6 +90,8 @@ public class AudioPlaybackCaptureTest {
         public @AttributeUsage int[] excludeUsages;
         public int[] matchingUids;
         public int[] excludeUids;
+        public int[] matchingUserIds;
+        public int[] excludeUserIds;
         private AudioPlaybackCaptureConfiguration build(MediaProjection projection)
                 throws Exception {
             AudioPlaybackCaptureConfiguration.Builder apccBuilder =
@@ -113,6 +117,16 @@ public class AudioPlaybackCaptureTest {
                     apccBuilder.excludeUid(uid);
                 }
             }
+            if (matchingUserIds != null) {
+                for (int userId : matchingUserIds) {
+                    apccBuilder.addMatchingUserId(userId);
+                }
+            }
+            if (excludeUserIds != null) {
+                for (int userId : excludeUserIds) {
+                    apccBuilder.excludeUserId(userId);
+                }
+            }
             AudioPlaybackCaptureConfiguration config = apccBuilder.build();
             assertCorreclyBuilt(config);
             return config;
@@ -123,6 +137,8 @@ public class AudioPlaybackCaptureTest {
             assertEqualNullIsEmpty("excludeUsages", excludeUsages, config.getExcludeUsages());
             assertEqualNullIsEmpty("matchingUids", matchingUids, config.getMatchingUids());
             assertEqualNullIsEmpty("excludeUids", excludeUids, config.getExcludeUids());
+            assertEqualNullIsEmpty("matchingUserIds", matchingUserIds, config.getMatchingUserIds());
+            assertEqualNullIsEmpty("excludeUserIds", excludeUserIds, config.getExcludeUserIds());
         }
 
         private void assertEqualNullIsEmpty(String msg, int[] expected, int[] found) {
@@ -142,6 +158,8 @@ public class AudioPlaybackCaptureTest {
         mActivity = mActivityRule.getActivity();
         mAudioManager = mActivity.getSystemService(AudioManager.class);
         mUid = mActivity.getApplicationInfo().uid;
+        mUserId = UserHandle.getUserHandleForUid(mActivity.getApplicationInfo().uid)
+                .getIdentifier();
         mMediaProjection = mActivity.waitForMediaProjection();
     }
 
@@ -321,6 +339,13 @@ public class AudioPlaybackCaptureTest {
         testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_UNKNOWN, EXPECT_SILENCE);
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testCombineUserId() throws Exception {
+        mAPCTestConfig.matchingUserIds = new int[]{ mUserId };
+        mAPCTestConfig.excludeUserIds = new int[]{ mUserId + 1 };
+        testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_UNKNOWN, EXPECT_SILENCE);
+    }
+
     @Test
     public void testCaptureMatchingAllowedUsage() throws Exception {
         for (int usage : ALLOWED_USAGES) {
@@ -371,6 +396,17 @@ public class AudioPlaybackCaptureTest {
     }
 
     @Test
+    public void testCaptureMatchingUserId() throws Exception {
+        mAPCTestConfig.matchingUserIds = new int[]{ mUserId };
+        testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_GAME, EXPECT_DATA);
+        testPlaybackCapture(OPT_OUT, AudioAttributes.USAGE_GAME, EXPECT_SILENCE);
+        testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_VOICE_COMMUNICATION, EXPECT_SILENCE);
+
+        mAPCTestConfig.matchingUserIds = new int[]{ mUserId + 1 };
+        testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_GAME, EXPECT_SILENCE);
+    }
+
+    @Test
     public void testCaptureExcludeUid() throws Exception {
         mAPCTestConfig.excludeUids = new int[]{ 0 };
         testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_GAME, EXPECT_DATA);
@@ -378,6 +414,17 @@ public class AudioPlaybackCaptureTest {
         testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_VOICE_COMMUNICATION, EXPECT_SILENCE);
 
         mAPCTestConfig.excludeUids = new int[]{ mUid };
+        testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_GAME, EXPECT_SILENCE);
+    }
+
+    @Test
+    public void testCaptureExcludeUserId() throws Exception {
+        mAPCTestConfig.excludeUserIds = new int[]{ mUserId + 1 };
+        testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_GAME, EXPECT_DATA);
+        testPlaybackCapture(OPT_OUT, AudioAttributes.USAGE_UNKNOWN, EXPECT_SILENCE);
+        testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_VOICE_COMMUNICATION, EXPECT_SILENCE);
+
+        mAPCTestConfig.excludeUserIds = new int[]{ mUserId };
         testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_GAME, EXPECT_SILENCE);
     }
 
