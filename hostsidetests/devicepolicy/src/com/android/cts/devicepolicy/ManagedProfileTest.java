@@ -1406,6 +1406,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         try {
             rebootAndWaitUntilReady();
             verifyUserCredential(password, mPrimaryUserId);
+            waitForUserUnlock();
             installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".SanityTest", mProfileUserId);
         } finally {
