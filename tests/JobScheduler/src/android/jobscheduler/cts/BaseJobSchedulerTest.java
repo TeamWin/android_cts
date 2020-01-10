@@ -40,7 +40,7 @@ import java.io.IOException;
  * Common functionality from which the other test case classes derive.
  */
 @TargetApi(21)
-public abstract class ConstraintTest extends InstrumentationTestCase {
+public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
     /** Environment that notifies of JobScheduler callbacks. */
     static MockJobService.TestEnvironment kTestEnvironment =
             MockJobService.TestEnvironment.getTestEnvironment();
