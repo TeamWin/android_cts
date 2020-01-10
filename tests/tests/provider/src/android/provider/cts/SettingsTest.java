@@ -35,6 +35,7 @@ import android.database.ContentObserver;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteException;
 import android.net.Uri;
+import android.os.Binder;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.RemoteException;
@@ -342,6 +343,33 @@ public class SettingsTest {
                     Settings.System.VIBRATE_WHEN_RINGING, initialValue);
             handlerThread.quit();
         }
+    }
+
+    @Test
+    public void testCheckWriteSettingsOperation() throws Exception {
+        final int myUid = Binder.getCallingUid();
+        final String callingPackage = InstrumentationRegistry.getTargetContext().getPackageName();
+        // Verify write settings permission.
+        Settings.checkAndNoteWriteSettingsOperation(getContext(), myUid, callingPackage,
+                true /* throwException */);
+
+        // Verify SecurityException throw if uid do not match callingPackage.
+        final int otherUid = myUid + 1;
+        try {
+            Settings.checkAndNoteWriteSettingsOperation(getContext(), otherUid, callingPackage,
+                    true /* throwException */);
+            fail("Expect SecurityException because uid " + otherUid + " do not belong to "
+                    + callingPackage);
+        } catch (SecurityException se) { }
+
+        // Verify SecurityException throw if calling package do not have WRITE_SETTINGS permission.
+        try {
+            final String fakeCallingPackage = "android.provider.cts.fakepackagename";
+            Settings.checkAndNoteWriteSettingsOperation(getContext(), myUid, fakeCallingPackage,
+                    true /* throwException */);
+            fail("Expect throwing SecurityException due to no WRITE_SETTINGS permission");
+        } catch (SecurityException se) { }
+
     }
 
     private Instrumentation getInstrumentation() {
