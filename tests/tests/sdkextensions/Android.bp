@@ -13,14 +13,14 @@
 // limitations under the License.
 
 android_test {
-    name: "CtsSdkExtTestCases",
+    name: "CtsSdkExtensionsTestCases",
     defaults: ["cts_defaults"],
     static_libs: [
         "androidx.test.rules",
         "ctstestrunner-axt",
     ],
     srcs: [ "src/**/*.java" ],
-    test_config: "CtsSdkExtTestCases.xml",
+    test_config: "CtsSdkExtensionsTestCases.xml",
     test_suites: [
         "cts",
         "mts",
