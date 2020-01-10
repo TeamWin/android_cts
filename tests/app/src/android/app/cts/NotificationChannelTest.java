@@ -28,6 +28,7 @@ import android.net.Uri;
 import android.os.Parcel;
 import android.provider.Settings;
 import android.test.AndroidTestCase;
+import android.text.TextUtils;
 
 public class NotificationChannelTest extends AndroidTestCase {
 
@@ -62,6 +63,8 @@ public class NotificationChannelTest extends AndroidTestCase {
         assertTrue(channel.canBubble());
         assertFalse(channel.isImportanceLockedByOEM());
         assertEquals(IMPORTANCE_UNSPECIFIED, channel.getOriginalImportance());
+        assertNull(channel.getConversationId());
+        assertNull(channel.getParentChannelId());
     }
 
     public void testWriteToParcel() {
@@ -80,6 +83,7 @@ public class NotificationChannelTest extends AndroidTestCase {
         channel.setFgServiceShown(true);
         channel.setVibrationPattern(new long[] {299, 4562});
         channel.setBlockableSystem(true);
+        channel.setConversationId("parent_channel", "conversation 1");
         Parcel parcel = Parcel.obtain();
         channel.writeToParcel(parcel, 0);
         parcel.setDataPosition(0);
@@ -199,5 +203,13 @@ public class NotificationChannelTest extends AndroidTestCase {
         NotificationChannel channel = new NotificationChannel("a", "ab", IMPORTANCE_DEFAULT);
         channel.setOriginalImportance(IMPORTANCE_HIGH);
         assertEquals(IMPORTANCE_HIGH, channel.getOriginalImportance());
+    }
+
+    public void testConversation() {
+        NotificationChannel channel = new NotificationChannel("a", "ab", IMPORTANCE_DEFAULT);
+        channel.setConversationId("parent", "conversation");
+
+        assertEquals("parent", channel.getParentChannelId());
+        assertEquals("conversation", channel.getConversationId());
     }
 }

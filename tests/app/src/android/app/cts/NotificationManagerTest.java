@@ -529,6 +529,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertEquals(expected.getDescription(), actual.getDescription());
         assertEquals(expected.shouldVibrate(), actual.shouldVibrate());
         assertEquals(expected.shouldShowLights(), actual.shouldShowLights());
+        assertEquals(expected.getLightColor(), actual.getLightColor());
         assertEquals(expected.getImportance(), actual.getImportance());
         if (expected.getSound() == null) {
             assertEquals(Settings.System.DEFAULT_NOTIFICATION_URI, actual.getSound());
@@ -539,6 +540,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
         assertTrue(Arrays.equals(expected.getVibrationPattern(), actual.getVibrationPattern()));
         assertEquals(expected.getGroup(), actual.getGroup());
+        assertEquals(expected.getConversationId(), actual.getConversationId());
+        assertEquals(expected.getParentChannelId(), actual.getParentChannelId());
     }
 
     private void toggleNotificationPolicyAccess(String packageName,
@@ -3029,5 +3032,23 @@ public class NotificationManagerTest extends AndroidTestCase {
         actual = mNotificationManager.getNotificationChannel(channel.getId());
         assertEquals(IMPORTANCE_DEFAULT, actual.getImportance());
         assertEquals(IMPORTANCE_HIGH, actual.getOriginalImportance());
+    }
+
+    public void testCreateConversationChannel() {
+        final NotificationChannel channel =
+                new NotificationChannel(mId, "Messages", IMPORTANCE_DEFAULT);
+
+        String conversationId = "person a";
+
+        final NotificationChannel conversationChannel =
+                new NotificationChannel(mId + "child",
+                        "Messages from " + conversationId, IMPORTANCE_DEFAULT);
+        conversationChannel.setConversationId(channel.getId(), conversationId);
+
+        mNotificationManager.createNotificationChannel(channel);
+        mNotificationManager.createNotificationChannel(conversationChannel);
+
+        compareChannels(conversationChannel,
+                mNotificationManager.getNotificationChannel(channel.getId(), conversationId));
     }
 }
