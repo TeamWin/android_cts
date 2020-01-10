@@ -30,7 +30,6 @@ import static org.junit.Assume.assumeTrue;
 import android.app.Activity;
 import android.platform.test.annotations.Presubmit;
 
-import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 
 import org.junit.Test;
@@ -82,7 +81,6 @@ public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestB
     }
 
     @Test
-    @FlakyTest(bugId=127741025)
     public void testKeyguardShowHideOverSplitScreen() throws Exception {
         assumeTrue(supportsSecureLock());
         assumeTrue(supportsSplitScreenMultiWindow());
