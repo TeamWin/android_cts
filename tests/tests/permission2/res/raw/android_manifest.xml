@@ -874,7 +874,7 @@
          <p>This protection level is temporary and will most likely be changed to |preinstalled -->
     <permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
         android:permissionGroup="android.permission-group.UNDEFINED"
-        android:protectionLevel="signature|appop" />
+        android:protectionLevel="signature|appop|preinstalled" />
 
     <!-- ====================================================================== -->
     <!-- Permissions for accessing the device location                          -->
