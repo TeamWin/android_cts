@@ -744,6 +744,91 @@ public class ImsServiceTest {
     }
 
     @Test
+    public void testRcsManagerRegistrationCallback() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        if (imsManager == null) {
+            fail("Cannot find IMS service");
+        }
+
+        // Connect to device ImsService with RcsFeature
+        triggerFrameworkConnectToDeviceImsServiceBindRcsFeature();
+        ImsRcsManager imsRcsManager = imsManager.getImsRcsManager(sTestSub);
+
+        ITestExternalImsService testImsService = sServiceConnector.getExternalService();
+        // Wait for the framework to set the capabilities on the ImsService
+        testImsService.waitForLatchCountdown(TestImsService.LATCH_RCS_CAP_SET);
+
+        // Start de-registered
+        sServiceConnector.getExternalService().triggerImsOnDeregistered(
+                new ImsReasonInfo(ImsReasonInfo.CODE_LOCAL_NOT_REGISTERED,
+                        ImsReasonInfo.CODE_UNSPECIFIED, ""));
+
+        LinkedBlockingQueue<Integer> mQueue = new LinkedBlockingQueue<>();
+        RegistrationManager.RegistrationCallback callback =
+                new RegistrationManager.RegistrationCallback() {
+            @Override
+            public void onRegistered(int imsTransportType) {
+                mQueue.offer(imsTransportType);
+            }
+
+            @Override
+            public void onRegistering(int imsTransportType) {
+                mQueue.offer(imsTransportType);
+            }
+
+            @Override
+            public void onUnregistered(ImsReasonInfo info) {
+                mQueue.offer(info.getCode());
+            }
+
+            @Override
+            public void onTechnologyChangeFailed(int imsTransportType, ImsReasonInfo info) {
+                mQueue.offer(imsTransportType);
+                mQueue.offer(info.getCode());
+            }
+        };
+
+        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            automan.adoptShellPermissionIdentity();
+            imsRcsManager.registerImsRegistrationCallback(getContext().getMainExecutor(), callback);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+        // Verify it's not registered
+        assertEquals(ImsReasonInfo.CODE_LOCAL_NOT_REGISTERED, waitForIntResult(mQueue));
+
+        // Start registration
+        sServiceConnector.getExternalService().triggerImsOnRegistering(
+                ImsRegistrationImplBase.REGISTRATION_TECH_LTE);
+        assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WWAN, waitForIntResult(mQueue));
+
+        // Complete registration
+        sServiceConnector.getExternalService().triggerImsOnRegistered(
+                ImsRegistrationImplBase.REGISTRATION_TECH_LTE);
+        assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WWAN, waitForIntResult(mQueue));
+
+        // Fail handover to IWLAN
+        sServiceConnector.getExternalService().triggerImsOnTechnologyChangeFailed(
+                ImsRegistrationImplBase.REGISTRATION_TECH_IWLAN,
+                new ImsReasonInfo(ImsReasonInfo.CODE_LOCAL_HO_NOT_FEASIBLE,
+                        ImsReasonInfo.CODE_UNSPECIFIED, ""));
+        assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WLAN, waitForIntResult(mQueue));
+        assertEquals(ImsReasonInfo.CODE_LOCAL_HO_NOT_FEASIBLE, waitForIntResult(mQueue));
+
+        try {
+            automan.adoptShellPermissionIdentity();
+            imsRcsManager.unregisterImsRegistrationCallback(callback);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
     public void testMmTelManagerRegistrationStateR() throws Exception {
         if (!ImsUtils.shouldTestImsService()) {
             return;
@@ -824,6 +909,96 @@ public class ImsServiceTest {
         verifyRegistrationTransportType(regManager, AccessNetworkConstants.TRANSPORT_TYPE_WLAN);
 
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mmTelManager,
+                (m) -> m.unregisterImsRegistrationCallback(callback));
+    }
+
+    @Test
+    public void testRcsManagerRegistrationState() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        if (imsManager == null) {
+            fail("Cannot find IMS service");
+        }
+
+        // Connect to device ImsService with RcsFeature
+        triggerFrameworkConnectToDeviceImsServiceBindRcsFeature();
+        ITestExternalImsService testImsService = sServiceConnector.getExternalService();
+        testImsService.waitForLatchCountdown(TestImsService.LATCH_RCS_CAP_SET);
+
+        // Start de-registered
+        sServiceConnector.getExternalService().triggerImsOnDeregistered(
+                new ImsReasonInfo(ImsReasonInfo.CODE_LOCAL_NOT_REGISTERED,
+                        ImsReasonInfo.CODE_UNSPECIFIED, ""));
+
+        LinkedBlockingQueue<Integer> mQueue = new LinkedBlockingQueue<>();
+        RegistrationManager.RegistrationCallback callback =
+                new RegistrationManager.RegistrationCallback() {
+                    @Override
+                    public void onRegistered(int imsTransportType) {
+                        mQueue.offer(imsTransportType);
+                    }
+
+                    @Override
+                    public void onRegistering(int imsTransportType) {
+                        mQueue.offer(imsTransportType);
+                    }
+
+                    @Override
+                    public void onUnregistered(ImsReasonInfo info) {
+                        mQueue.offer(info.getCode());
+                    }
+
+                    @Override
+                    public void onTechnologyChangeFailed(int imsTransportType, ImsReasonInfo info) {
+                        mQueue.offer(imsTransportType);
+                        mQueue.offer(info.getCode());
+                    }
+                };
+
+        ImsRcsManager imsRcsManager = imsManager.getImsRcsManager(sTestSub);
+        ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(imsRcsManager,
+                (m) -> m.registerImsRegistrationCallback(getContext().getMainExecutor(), callback),
+                ImsException.class);
+        assertEquals(ImsReasonInfo.CODE_LOCAL_NOT_REGISTERED, waitForIntResult(mQueue));
+
+        // Ensure that the Framework reports Deregistered correctly
+        verifyRegistrationState(imsRcsManager,
+                RegistrationManager.REGISTRATION_STATE_NOT_REGISTERED);
+        verifyRegistrationTransportType(imsRcsManager,
+                AccessNetworkConstants.TRANSPORT_TYPE_INVALID);
+
+        // Start registration
+        sServiceConnector.getExternalService().triggerImsOnRegistering(
+                ImsRegistrationImplBase.REGISTRATION_TECH_LTE);
+        assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WWAN, waitForIntResult(mQueue));
+        verifyRegistrationState(imsRcsManager, RegistrationManager.REGISTRATION_STATE_REGISTERING);
+        verifyRegistrationTransportType(imsRcsManager, AccessNetworkConstants.TRANSPORT_TYPE_WWAN);
+
+        // Complete registration
+        sServiceConnector.getExternalService().triggerImsOnRegistered(
+                ImsRegistrationImplBase.REGISTRATION_TECH_LTE);
+        assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WWAN, waitForIntResult(mQueue));
+        verifyRegistrationState(imsRcsManager, RegistrationManager.REGISTRATION_STATE_REGISTERED);
+        verifyRegistrationTransportType(imsRcsManager, AccessNetworkConstants.TRANSPORT_TYPE_WWAN);
+
+        // Fail handover to IWLAN
+        sServiceConnector.getExternalService().triggerImsOnTechnologyChangeFailed(
+                ImsRegistrationImplBase.REGISTRATION_TECH_IWLAN,
+                new ImsReasonInfo(ImsReasonInfo.CODE_LOCAL_HO_NOT_FEASIBLE,
+                        ImsReasonInfo.CODE_UNSPECIFIED, ""));
+        assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WLAN, waitForIntResult(mQueue));
+        assertEquals(ImsReasonInfo.CODE_LOCAL_HO_NOT_FEASIBLE, waitForIntResult(mQueue));
+        verifyRegistrationTransportType(imsRcsManager, AccessNetworkConstants.TRANSPORT_TYPE_WWAN);
+
+        // handover to IWLAN
+        sServiceConnector.getExternalService().triggerImsOnRegistered(
+                ImsRegistrationImplBase.REGISTRATION_TECH_IWLAN);
+        assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WLAN, waitForIntResult(mQueue));
+        verifyRegistrationTransportType(imsRcsManager, AccessNetworkConstants.TRANSPORT_TYPE_WLAN);
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(imsRcsManager,
                 (m) -> m.unregisterImsRegistrationCallback(callback));
     }
 
@@ -927,7 +1102,7 @@ public class ImsServiceTest {
         // Wait for the framework to set the capabilities on the ImsService
         testImsService.waitForLatchCountdown(TestImsService.LATCH_RCS_CAP_SET);
         // Make sure we start off with none-capability
-        testImsService.updateImsRegistration(ImsRegistrationImplBase.REGISTRATION_TECH_LTE);
+        testImsService.triggerImsOnRegistered(ImsRegistrationImplBase.REGISTRATION_TECH_LTE);
         testImsService.notifyRcsCapabilitiesStatusChanged(RCS_CAP_NONE);
 
         // Make sure the capabilities match the API getter for capabilities
