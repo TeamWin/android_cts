@@ -56,6 +56,7 @@ import android.os.IBinder
 import android.os.Looper
 import android.platform.test.annotations.AppModeFull
 import android.provider.ContactsContract
+import android.telecom.TelecomManager
 import android.telephony.TelephonyManager
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
@@ -646,6 +647,21 @@ class AppOpsLoggingTest {
         assertThat(noted[0].first.op).isEqualTo(OPSTR_READ_EXTERNAL_STORAGE)
         assertThat(noted[0].first.featureId).isEqualTo(TEST_FEATURE_ID)
         assertThat(noted[0].second.map { it.methodName }).contains("getWallpaper")
+    }
+
+    /**
+     * Realistic end-to-end test for checking if currently in call
+     */
+    @Test
+    fun isInCall() {
+        val telecomManager = context.createFeatureContext(TEST_FEATURE_ID)
+                .getSystemService(TelecomManager::class.java)
+
+        telecomManager.isInCall()
+
+        assertThat(noted[0].first.op).isEqualTo(OPSTR_READ_PHONE_STATE)
+        assertThat(noted[0].first.featureId).isEqualTo(TEST_FEATURE_ID)
+        assertThat(noted[0].second.map { it.methodName }).contains("isInCall")
     }
 
     @After
