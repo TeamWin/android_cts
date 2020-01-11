@@ -149,7 +149,8 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     protected void setUp() throws Exception {
         super.setUp();
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mBuild);
-        sepolicyAnalyze = buildHelper.getTestFile("sepolicy-analyze");
+        File sepolicyAnalyzeDir = buildHelper.getTestFile("sepolicy-analyze");
+        sepolicyAnalyze = new File(sepolicyAnalyzeDir, "sepolicy-analyze");
         sepolicyAnalyze.setExecutable(true);
 
         devicePolicyFile = getDevicePolicyFile(mDevice);
@@ -1240,6 +1241,12 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     @CddTest(requirement="9.7")
     public void testPermissionControllerDomain() throws DeviceNotAvailableException {
         assertDomainZeroOrOne("u:r:permissioncontroller_app:s0", "com.google.android.permissioncontroller");
+    }
+
+    /* vzwomatrigger may or may not be running */
+    @CddTest(requirement="9.7")
+    public void testVzwOmaTriggerDomain() throws DeviceNotAvailableException {
+        assertDomainZeroOrOne("u:r:vzwomatrigger_app:s0", "com.android.vzwomatrigger");
     }
 
     /*

@@ -10,18 +10,25 @@ import android.stats.devicepolicy.EventId;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
+import org.junit.Test;
+
 import java.io.FileNotFoundException;
 import java.util.Collections;
 import java.util.Map;
 
 import javax.annotation.Nullable;
 
-import org.junit.Test;
-
 /**
  * In the test, managed profile and secondary user are created. We then verify
  * {@link android.content.pm.crossprofile.CrossProfileApps} APIs in different directions, like
  * primary user to managed profile.
+ *
+ * Tests to verify
+ * {@link android.content.pm.crossprofile.CrossProfileApps#canRequestInteractAcrossProfiles()},
+ * {@link android.content.pm.crossprofile.CrossProfileApps#canInteractAcrossProfiles()}, and
+ * {@link
+ * android.content.pm.crossprofile.CrossProfileApps#createRequestInteractAcrossProfilesIntent()}
+ * can be found in {@link CrossProfileAppsPermissionHostSideTest}.
  */
 public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
     private static final String TEST_PACKAGE = "com.android.cts.crossprofileappstest";

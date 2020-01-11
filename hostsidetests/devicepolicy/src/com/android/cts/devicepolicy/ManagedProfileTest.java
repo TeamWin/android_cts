@@ -602,6 +602,19 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
                 .build());
     }
 
+    @Test
+    public void userManagerIsManagedProfileReturnsCorrectValues() throws Exception {
+        if (!mHasFeature) {
+            return ;
+        }
+
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".UserManagerTest",
+                "testIsManagedProfileReturnsTrue", mProfileUserId);
+
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".UserManagerTest",
+                "testIsManagedProfileReturnsFalse", mPrimaryUserId);
+    }
+
     private void changeUserRestrictionOrFail(String key, boolean value, int userId)
             throws DeviceNotAvailableException {
         changeUserRestrictionOrFail(key, value, userId, MANAGED_PROFILE_PKG);

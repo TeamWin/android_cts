@@ -98,4 +98,11 @@ public class MixedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     public void testLockTask_exitIfNoLongerWhitelisted() throws Exception {
         super.testLockTask_exitIfNoLongerWhitelisted();
     }
+
+    @Override
+    @Test
+    public void testSetAutoTimeZone() {
+        // Profile owner cannot set auto time zone unless it is called by the profile
+        // owner of an organization-owned managed profile or a profile owner on user 0.
+    }
 }

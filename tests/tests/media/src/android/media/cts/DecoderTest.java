@@ -184,6 +184,10 @@ public class DecoderTest extends MediaPlayerTestBase {
         decode(R.raw.sinesweepflac, 0.0f);
         testTimeStampOrdering(R.raw.sinesweepflac);
     }
+    public void testDecodeFlac24() throws Exception {
+        decode(R.raw.sinesweepflac24, 0.0f);
+        testTimeStampOrdering(R.raw.sinesweepflac24);
+    }
     public void testDecodeFlacMp4() throws Exception {
         decode(R.raw.sinesweepflacmp4, 0.0f);
         testTimeStampOrdering(R.raw.sinesweepflacmp4);
