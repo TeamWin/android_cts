@@ -34,9 +34,13 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Audio;
 import android.provider.MediaStore.Audio.Media;
+import android.provider.MediaStore.Files.FileColumns;
+import android.provider.MediaStore.MediaColumns;
 import android.provider.cts.ProviderTestUtils;
 import android.provider.cts.R;
 import android.provider.cts.media.MediaStoreAudioTestHelper.Audio1;
+import android.provider.cts.media.MediaStoreUtils.PendingParams;
+import android.provider.cts.media.MediaStoreUtils.PendingSession;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -49,6 +53,7 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
+import java.io.OutputStream;
 
 @RunWith(Parameterized.class)
 public class MediaStore_Audio_MediaTest {
@@ -56,6 +61,7 @@ public class MediaStore_Audio_MediaTest {
     private ContentResolver mContentResolver;
 
     private Uri mExternalAudio;
+    private Uri mExternalFiles;
 
     @Parameter(0)
     public String mVolumeName;
@@ -72,6 +78,7 @@ public class MediaStore_Audio_MediaTest {
 
         Log.d(TAG, "Using volume " + mVolumeName);
         mExternalAudio = MediaStore.Audio.Media.getContentUri(mVolumeName);
+        mExternalFiles = MediaStore.Files.getContentUri(mVolumeName);
     }
 
     @Test
@@ -235,6 +242,61 @@ public class MediaStore_Audio_MediaTest {
             // The media file is technically disc "1/2" and track "2/10", but we
             // parse it into a funky format that has been around for years.
             assertEquals(1002, c.getInt(c.getColumnIndex(MediaStore.Audio.Media.TRACK)));
+        }
+    }
+
+    /**
+     * Confirm that we can place both media and subtitles together in the same
+     * location on disk.
+     */
+    @Test
+    public void testMediaWithSubtitles() throws Exception {
+        final String displayName = "cts" + System.nanoTime();
+
+        final String mediaDisplayName = displayName + ".mp3";
+        final String subDisplayName = displayName + ".lrc";
+
+        final PendingParams media = new PendingParams(
+                mExternalAudio, mediaDisplayName, "audio/mpeg");
+        final PendingParams sub = new PendingParams(
+                mExternalFiles, subDisplayName, "application/lrc");
+
+        media.setPath(Environment.DIRECTORY_MUSIC);
+        sub.setPath(Environment.DIRECTORY_MUSIC);
+
+        final Uri mediaUri = ContentUris.withAppendedId(mExternalFiles,
+                ContentUris.parseId(execPending(media)));
+        final Uri subUri = ContentUris.withAppendedId(mExternalFiles,
+                ContentUris.parseId(execPending(sub)));
+
+        final String[] projection = new String[] {
+                FileColumns.RELATIVE_PATH,
+                FileColumns.DISPLAY_NAME,
+                FileColumns.MEDIA_TYPE
+        };
+
+        // Confirm both files landed in same path
+        try (Cursor c = mContentResolver.query(mediaUri, projection, null, null)) {
+            assertTrue(c.moveToFirst());
+            assertEquals(Environment.DIRECTORY_MUSIC + '/', c.getString(0));
+            assertEquals(mediaDisplayName, c.getString(1));
+            assertEquals(FileColumns.MEDIA_TYPE_AUDIO, c.getInt(2));
+        }
+        try (Cursor c = mContentResolver.query(subUri, projection, null, null)) {
+            assertTrue(c.moveToFirst());
+            assertEquals(Environment.DIRECTORY_MUSIC + '/', c.getString(0));
+            assertEquals(subDisplayName, c.getString(1));
+            assertEquals(FileColumns.MEDIA_TYPE_SUBTITLE, c.getInt(2));
+        }
+    }
+
+    private Uri execPending(PendingParams params) throws Exception {
+        final Uri pendingUri = MediaStoreUtils.createPending(mContext, params);
+        try (PendingSession session = MediaStoreUtils.openPending(mContext, pendingUri)) {
+            try (OutputStream out = session.openOutputStream()) {
+                out.write((int) 42);
+            }
+            return session.publish();
         }
     }
 }

@@ -36,11 +36,13 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
+import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.storage.StorageManager;
 import android.provider.MediaStore;
+import android.provider.MediaStore.Files.FileColumns;
 import android.provider.MediaStore.Video.Media;
 import android.provider.MediaStore.Video.VideoColumns;
 import android.provider.cts.ProviderTestUtils;
@@ -72,6 +74,7 @@ public class MediaStore_Video_MediaTest {
     private ContentResolver mContentResolver;
 
     private Uri mExternalVideo;
+    private Uri mExternalFiles;
 
     @Parameter(0)
     public String mVolumeName;
@@ -88,6 +91,7 @@ public class MediaStore_Video_MediaTest {
 
         Log.d(TAG, "Using volume " + mVolumeName);
         mExternalVideo = MediaStore.Video.Media.getContentUri(mVolumeName);
+        mExternalFiles = MediaStore.Files.getContentUri(mVolumeName);
     }
 
     @Test
@@ -422,6 +426,61 @@ public class MediaStore_Video_MediaTest {
             final String displayName = c.getString(c.getColumnIndex(VideoColumns.DISPLAY_NAME));
             assertTrue("Invalid display name " + displayName, displayName.startsWith("cts"));
             assertTrue("Invalid display name " + displayName, displayName.endsWith(".mp4"));
+        }
+    }
+
+    /**
+     * Confirm that we can place both media and subtitles together in the same
+     * location on disk.
+     */
+    @Test
+    public void testMediaWithSubtitles() throws Exception {
+        final String displayName = "cts" + System.nanoTime();
+
+        final String mediaDisplayName = displayName + ".mp4";
+        final String subDisplayName = displayName + ".srt";
+
+        final PendingParams media = new PendingParams(
+                mExternalVideo, mediaDisplayName, "video/mp4");
+        final PendingParams sub = new PendingParams(
+                mExternalFiles, subDisplayName, "application/x-subrip");
+
+        media.setPath(Environment.DIRECTORY_MOVIES);
+        sub.setPath(Environment.DIRECTORY_MOVIES);
+
+        final Uri mediaUri = ContentUris.withAppendedId(mExternalFiles,
+                ContentUris.parseId(execPending(media)));
+        final Uri subUri = ContentUris.withAppendedId(mExternalFiles,
+                ContentUris.parseId(execPending(sub)));
+
+        final String[] projection = new String[] {
+                FileColumns.RELATIVE_PATH,
+                FileColumns.DISPLAY_NAME,
+                FileColumns.MEDIA_TYPE
+        };
+
+        // Confirm both files landed in same path
+        try (Cursor c = mContentResolver.query(mediaUri, projection, null, null)) {
+            assertTrue(c.moveToFirst());
+            assertEquals(Environment.DIRECTORY_MOVIES + '/', c.getString(0));
+            assertEquals(mediaDisplayName, c.getString(1));
+            assertEquals(FileColumns.MEDIA_TYPE_VIDEO, c.getInt(2));
+        }
+        try (Cursor c = mContentResolver.query(subUri, projection, null, null)) {
+            assertTrue(c.moveToFirst());
+            assertEquals(Environment.DIRECTORY_MOVIES + '/', c.getString(0));
+            assertEquals(subDisplayName, c.getString(1));
+            assertEquals(FileColumns.MEDIA_TYPE_SUBTITLE, c.getInt(2));
+        }
+    }
+
+    private Uri execPending(PendingParams params) throws Exception {
+        final Uri pendingUri = MediaStoreUtils.createPending(mContext, params);
+        try (PendingSession session = MediaStoreUtils.openPending(mContext, pendingUri)) {
+            try (OutputStream out = session.openOutputStream()) {
+                out.write((int) 42);
+            }
+            return session.publish();
         }
     }
 }
