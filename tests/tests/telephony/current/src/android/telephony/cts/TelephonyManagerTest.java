@@ -1252,6 +1252,26 @@ public class TelephonyManagerTest {
     }
 
     /**
+     * Verifies that {@link TelephonyManager#getIsimImpu()} does not throw any exception when called
+     * and has the correct permissions.
+     */
+    @Test
+    public void testGetIsimImpu() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                TelephonyManager::getIsimImpu);
+        // Try without the correct permissions and ensure it fails.
+        try {
+            mTelephonyManager.getIsimImpu();
+            fail();
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
+
+    /**
      * Basic test to ensure {@link NetworkRegistrationInfo#isRoaming()} does not throw any
      * exception.
      */
