@@ -18,7 +18,6 @@ package android.extractnativelibs.cts;
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.testtype.IDeviceTest;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.After;
@@ -31,7 +30,7 @@ import org.junit.runner.RunWith;
  * TODO(b/147496159): add more tests.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class CtsExtractNativeLibsHostTest extends BaseHostJUnit4Test implements IDeviceTest {
+public class CtsExtractNativeLibsHostTest extends BaseHostJUnit4Test {
     private static final String TEST_NO_EXTRACT_PKG =
             "com.android.cts.extractnativelibs.app.noextract";
     private static final String TEST_NO_EXTRACT_CLASS =
