@@ -298,6 +298,11 @@
         <activity android:name="android.server.wm.DisplayCutoutTests$TestActivity"
                   android:turnScreenOn="true"
                   android:showWhenLocked="true"/>
+        <activity android:name="android.server.wm.ShowWhenLockedActivity"
+                  android:exported="true"
+                  android:configChanges="orientation"
+                  android:showWhenLocked="true"
+        />
         <activity android:name="android.server.wm.WindowInsetsPolicyTest$TestActivity"
                   android:turnScreenOn="true"
                   android:showWhenLocked="true"/>
