@@ -308,7 +308,7 @@ public class TextureViewTest {
         float[][] matrices = {
             {1, 0, 0, 0, 1, 0, 0, 0, 1},        // identity matrix
             {1, 0, 0, 0, 1, 10.3f, 0, 0, 1},    // translation matrix with a fractional offset
-            {1, 0, 0, 0, 0.75f, 0, 0, 0, 1},    // scaling matrix
+            {1, 0, 0, 0, 1.25f, 0, 0, 0, 1},    // scaling matrix
             {1, 0, 0, 0, 1, 10f, 0, 0, 1}       // translation matrix with an integer offset
         };
         boolean[] nearestSampling = {
@@ -367,7 +367,7 @@ public class TextureViewTest {
                     }
                 }
             } else {
-                // Check that a third of pixels are not black nor white, because bilerp sampling
+                // Check that a significant percentage of pixels are not black nor white, because bilerp sampling
                 // changed pure black/white to a variety of gray intermediates.
                 int nonBlackWhitePixels = 0;
                 for (int j = 0; j < pixels.length; j++) {
@@ -377,7 +377,7 @@ public class TextureViewTest {
                         failPosition = j;
                     }
                 }
-                if (nonBlackWhitePixels < pixels.length / 3) {
+                if (nonBlackWhitePixels < pixels.length / 5) {
                     success = false;
                 }
             }
@@ -517,7 +517,7 @@ public class TextureViewTest {
     }
 
     private static void drawGlBlackWhiteLines(int width, int height) {
-        final int lineHeight = 1;
+        final int lineHeight = 4;
         glEnable(GL_SCISSOR_TEST);
         for (int y = 0; y < height / lineHeight; y++) {
             glScissor(0, lineHeight * y, width, lineHeight);
