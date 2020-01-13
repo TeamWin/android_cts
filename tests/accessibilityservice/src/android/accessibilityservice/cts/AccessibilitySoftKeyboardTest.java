@@ -20,19 +20,26 @@ import static android.accessibilityservice.AccessibilityService.SHOW_MODE_HIDDEN
 import static android.accessibilityservice.AccessibilityService.SHOW_MODE_IGNORE_HARD_KEYBOARD;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
-import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
+import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
+import android.accessibility.cts.common.ShellCommandBuilder;
 import android.accessibilityservice.AccessibilityService.SoftKeyboardController;
 import android.accessibilityservice.AccessibilityService.SoftKeyboardController.OnShowModeChangedListener;
 import android.accessibilityservice.cts.activities.AccessibilityTestActivity;
 import android.accessibilityservice.cts.utils.AsyncUtils;
+import android.app.Instrumentation;
+import android.inputmethodservice.cts.common.Ime1Constants;
+import android.inputmethodservice.cts.common.test.ShellCommandUtils;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.provider.Settings;
 
+import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
@@ -42,11 +49,13 @@ import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 /**
- * Test cases for testing the accessibility APIs for interacting with the soft keyboard show mode.
+ * Test cases for {@code SoftKeyboardController}. It tests the accessibility APIs for interacting
+ * with the soft keyboard show mode.
  */
 @RunWith(AndroidJUnit4.class)
 @AppModeFull
-public class AccessibilitySoftKeyboardModesTest {
+public class AccessibilitySoftKeyboardTest {
+    private Instrumentation mInstrumentation;
     private int mLastCallbackValue;
 
     private InstrumentedAccessibilityService mService;
@@ -72,6 +81,7 @@ public class AccessibilitySoftKeyboardModesTest {
 
     @Before
     public void setUp() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mService = mServiceRule.getService();
     }
 
@@ -120,6 +130,25 @@ public class AccessibilitySoftKeyboardModesTest {
         assertEquals(SHOW_MODE_AUTO, showMode);
     }
 
+    @Test
+    public void testSwitchToInputMethod() throws Exception {
+        final SoftKeyboardController controller = mService.getSoftKeyboardController();
+        String currentIME = Settings.Secure.getString(
+                mService.getContentResolver(), Settings.Secure.DEFAULT_INPUT_METHOD);
+        assertNotEquals(Ime1Constants.IME_ID, currentIME);
+        // Enable a dummy IME for this test.
+        try (TestImeSession imeSession = new TestImeSession(Ime1Constants.IME_ID)) {
+            // Switch to the dummy IME.
+            final boolean success = controller.switchToInputMethod(Ime1Constants.IME_ID);
+            currentIME = Settings.Secure.getString(
+                    mService.getContentResolver(), Settings.Secure.DEFAULT_INPUT_METHOD);
+
+            // The current IME should be set to the dummy IME successfully.
+            assertTrue(success);
+            assertEquals(Ime1Constants.IME_ID, currentIME);
+        }
+    }
+
     private void assertCanSetAndGetShowModeAndCallbackHappens(
             int mode, InstrumentedAccessibilityService service)
             throws Exception  {
@@ -164,6 +193,24 @@ public class AccessibilitySoftKeyboardModesTest {
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             setContentView(R.layout.accessibility_soft_keyboard_modes_test);
+        }
+    }
+
+    private class TestImeSession implements AutoCloseable {
+        TestImeSession(String imeId) {
+            // Enable the dummy IME by shell command.
+            final String enableImeCommand = ShellCommandUtils.enableIme(imeId);
+            ShellCommandBuilder.create(mInstrumentation)
+                    .addCommand(enableImeCommand)
+                    .run();
+        }
+
+        @Override
+        public void close() throws Exception {
+            // Reset IMEs by shell command.
+            ShellCommandBuilder.create(mInstrumentation)
+                    .addCommand(ShellCommandUtils.resetImes())
+                    .run();
         }
     }
 }
