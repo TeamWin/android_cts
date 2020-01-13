@@ -1,9 +1,14 @@
 package com.android.cts.devicepolicy;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import android.platform.test.annotations.LargeTest;
+
+import com.android.tradefed.device.DeviceNotAvailableException;
 
 import org.junit.Test;
 
+import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,6 +25,17 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
 
     private static final String TEST_LAUNCHER_PACKAGE = "com.android.cts.launchertests.support";
     private static final String TEST_LAUNCHER_APK = "CtsLauncherAppsTestsSupport.apk";
+    private static final String ENABLED_TEST_APK = "CtsCrossProfileEnabledApp.apk";
+    private static final String USER_ENABLED_TEST_APK = "CtsCrossProfileUserEnabledApp.apk";
+    private static final String ENABLED_NO_PERMS_TEST_APK = "CtsCrossProfileEnabledNoPermsApp.apk";
+    private static final String NOT_ENABLED_TEST_APK = "CtsCrossProfileNotEnabledApp.apk";
+    private static final String ENABLED_TEST_PACKAGE = "com.android.cts.crossprofileenabledapp";
+    private static final String USER_ENABLED_TEST_PACKAGE =
+            "com.android.cts.crossprofileuserenabledapp";
+    private static final String ENABLED_NO_PERMS_TEST_PACKAGE =
+            "com.android.cts.crossprofileenablednopermsapp";
+    private static final String NOT_ENABLED_TEST_PACKAGE =
+            "com.android.cts.crossprofilenotenabledapp";
 
     private int mProfileId;
     private String mOriginalLauncher;
@@ -30,11 +46,13 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
 
         mHasFeature = mHasFeature & hasDeviceFeature("android.software.managed_users");
 
-        if(mHasFeature) {
+        if (mHasFeature) {
             mOriginalLauncher = getDefaultLauncher();
 
             installAppAsUser(TEST_APK, mPrimaryUserId);
             installAppAsUser(TEST_LAUNCHER_APK, mPrimaryUserId);
+
+            waitForBroadcastIdle();
 
             createAndStartManagedProfile();
             installAppAsUser(TEST_APK, mProfileId);
@@ -47,7 +65,7 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
     @Override
     public void tearDown() throws Exception {
         if (mHasFeature) {
-            getDevice().uninstallPackage(TEST_PACKAGE);
+            uninstallRequiredApps();
             getDevice().uninstallPackage(TEST_LAUNCHER_PACKAGE);
         }
         super.tearDown();
@@ -57,7 +75,7 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
     @Test
     public void testQuietMode_defaultForegroundLauncher() throws Exception {
         if (!mHasFeature) {
-          return;
+            return;
         }
         // Add a lockscreen to test the case that profile with unified challenge can still
         // be turned on without asking the user to enter the lockscreen password.
@@ -83,11 +101,11 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
             return;
         }
         runDeviceTestsAsUser(
-            TEST_PACKAGE,
-            TEST_CLASS,
-            "testTryEnableQuietMode_notForegroundLauncher",
-            mPrimaryUserId,
-            createParams(mProfileId));
+                TEST_PACKAGE,
+                TEST_CLASS,
+                "testTryEnableQuietMode_notForegroundLauncher",
+                mPrimaryUserId,
+                createParams(mProfileId));
     }
 
     @LargeTest
@@ -97,11 +115,89 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
             return;
         }
         runDeviceTestsAsUser(
-            TEST_PACKAGE,
-            TEST_CLASS,
-            "testTryEnableQuietMode_notDefaultLauncher",
-            mPrimaryUserId,
-            createParams(mProfileId));
+                TEST_PACKAGE,
+                TEST_CLASS,
+                "testTryEnableQuietMode_notDefaultLauncher",
+                mPrimaryUserId,
+                createParams(mProfileId));
+    }
+
+    @LargeTest
+    @Test
+    public void testBroadcastManagedProfileAvailable_withoutCrossProfileAppsOp() throws Exception {
+        checkBroadcastManagedProfileAvailable(/* withCrossProfileAppOps= */ false);
+    }
+
+
+    @LargeTest
+    @Test
+    public void testBroadcastManagedProfileAvailable_withCrossProfileAppsOp() throws Exception {
+        checkBroadcastManagedProfileAvailable(/* withCrossProfileAppOps= */ true);
+    }
+
+    private void checkBroadcastManagedProfileAvailable(boolean withCrossProfileAppOps)
+            throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        installCrossProfileApps();
+        if (withCrossProfileAppOps) {
+            enableCrossProfileAppsOp();
+        }
+        clearLogcat();
+        runDeviceTestsAsUser(
+                TEST_PACKAGE,
+                TEST_CLASS,
+                "testTryEnableQuietMode",
+                mPrimaryUserId,
+                createParams(mProfileId));
+        waitForBroadcastIdle();
+        verifyBroadcastSent("android.intent.action.MANAGED_PROFILE_UNAVAILABLE",
+                /* needPermissions= */ !withCrossProfileAppOps);
+
+        clearLogcat();
+        runDeviceTestsAsUser(
+                TEST_PACKAGE,
+                TEST_CLASS,
+                "testTryDisableQuietMode",
+                mPrimaryUserId,
+                createParams(mProfileId));
+        waitForBroadcastIdle();
+        verifyBroadcastSent("android.intent.action.MANAGED_PROFILE_AVAILABLE",
+                /* needPermissions= */ !withCrossProfileAppOps);
+
+        clearLogcat();
+        removeUser(mProfileId);
+        waitForBroadcastIdle();
+        verifyBroadcastSent("android.intent.action.MANAGED_PROFILE_REMOVED",
+                /* needPermissions= */ false);
+    }
+
+    private void clearLogcat() throws DeviceNotAvailableException {
+        getDevice().executeAdbCommand("logcat", "-c");
+    }
+
+    private void verifyBroadcastSent(String actionName, boolean needPermissions)
+            throws DeviceNotAvailableException {
+        final String result = getDevice().executeAdbCommand("logcat", "-d");
+        assertThat(result).contains(
+                buildReceivedBroadcastRegex(actionName, "CrossProfileEnabledAppReceiver"));
+        assertThat(result).contains(
+                buildReceivedBroadcastRegex(actionName, "CrossProfileUserEnabledAppReceiver"));
+        String noPermsString = buildReceivedBroadcastRegex(actionName,
+                "CrossProfileEnabledNoPermsAppReceiver");
+        if (needPermissions) {
+            assertThat(result).doesNotContain(noPermsString);
+        } else {
+            assertThat(result).contains(noPermsString);
+        }
+        assertThat(result).doesNotContain(
+                buildReceivedBroadcastRegex(actionName,
+                        "CrossProfileNotEnabledAppReceiver"));
+    }
+
+    private String buildReceivedBroadcastRegex(String actionName, String className) {
+        return String.format("%s: onReceive(%s)", className, actionName);
     }
 
     @LargeTest
@@ -126,6 +222,46 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
         mProfileId = createManagedProfile(mPrimaryUserId);
         switchUser(mPrimaryUserId);
         startUser(mProfileId);
+    }
+
+    private void uninstallRequiredApps()
+            throws DeviceNotAvailableException {
+        getDevice().uninstallPackage(TEST_PACKAGE);
+        getDevice().uninstallPackage(ENABLED_TEST_PACKAGE);
+        getDevice().uninstallPackage(USER_ENABLED_TEST_PACKAGE);
+        getDevice().uninstallPackage(ENABLED_NO_PERMS_TEST_PACKAGE);
+        getDevice().uninstallPackage(NOT_ENABLED_TEST_PACKAGE);
+    }
+
+    private void installCrossProfileApps()
+            throws FileNotFoundException, DeviceNotAvailableException {
+        installCrossProfileApp(ENABLED_TEST_APK);
+        installCrossProfileApp(USER_ENABLED_TEST_APK);
+        installCrossProfileApp(NOT_ENABLED_TEST_APK);
+        installCrossProfileApp(ENABLED_NO_PERMS_TEST_APK);
+    }
+
+    private void enableCrossProfileAppsOp() throws DeviceNotAvailableException {
+        enableCrossProfileAppsOp(ENABLED_TEST_PACKAGE, mPrimaryUserId);
+        enableCrossProfileAppsOp(USER_ENABLED_TEST_PACKAGE, mPrimaryUserId);
+        enableCrossProfileAppsOp(NOT_ENABLED_TEST_PACKAGE, mPrimaryUserId);
+        enableCrossProfileAppsOp(ENABLED_NO_PERMS_TEST_PACKAGE, mPrimaryUserId);
+    }
+
+    private void installCrossProfileApp(String apkName)
+            throws FileNotFoundException, DeviceNotAvailableException {
+        installAppAsUser(apkName, mPrimaryUserId);
+        installAppAsUser(apkName, mProfileId);
+    }
+
+    private void enableCrossProfileAppsOp(String packageName, int userId)
+            throws DeviceNotAvailableException {
+        getDevice().executeShellCommand(
+                String.format("appops set --user %s %s android:interact_across_profiles 0",
+                userId, packageName));
+        assertThat(getDevice().executeShellCommand(
+                String.format("appops get --user %s %s android:interact_across_profiles",
+                userId, packageName))).contains("INTERACT_ACROSS_PROFILES: allow");
     }
 
     private Map<String, String> createParams(int targetUserId) throws Exception {
