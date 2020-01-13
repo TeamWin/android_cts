@@ -601,6 +601,13 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
              final MockImeSession mockImeSession = MockImeSession.create(
                      mContext, getInstrumentation().getUiAutomation(), new ImeSettings.Builder())) {
 
+             final TestActivitySession<TestActivity> testActivitySession = new
+                     TestActivitySession<>();
+             testActivitySession.launchTestActivityOnDisplaySync(TestActivity.class,
+                     DEFAULT_DISPLAY);
+             waitAndAssertTopResumedActivity(testActivitySession.getActivity().getComponentName(),
+                     DEFAULT_DISPLAY, "Wait for the TestActivity to be resumed");
+
             // Create a virtual display and launch an activity on virtual display.
             final ActivityDisplay newDisplay = virtualDisplaySession.setSimulateDisplay(true)
                     .createDisplay();
@@ -611,8 +618,6 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
             // display.
             final Display defDisplay = mAmWmState.getWmState().getDisplay(DEFAULT_DISPLAY);
             tapOnDisplayCenter(defDisplay.getDisplayId());
-            mAmWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
-            mAmWmState.assertSanity();
 
             // Reparent ImeTestActivity from virtual display to default display.
             getLaunchActivityBuilder()
@@ -660,6 +665,8 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
             mEditText.scheduleShowSoftInput();
         }
     }
+
+    public static class TestActivity extends Activity { }
 
     public static class ImeTestActivity2 extends ImeTestActivity { }
 

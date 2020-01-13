@@ -157,6 +157,7 @@
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen" />
         <activity android:name="android.server.wm.MultiDisplaySystemDecorationTests$ImeTestActivity2" />
         <activity android:name="android.server.wm.MultiDisplaySystemDecorationTests$ImeTestActivityWithBrokenContextWrapper" />
+        <activity android:name="android.server.wm.MultiDisplaySystemDecorationTests$TestActivity" />
 
         <activity android:name="android.server.wm.MultiDisplayClientTests$ClientTestActivity" />
         <activity android:name="android.server.wm.MultiDisplayClientTests$NoRelaunchActivity"
