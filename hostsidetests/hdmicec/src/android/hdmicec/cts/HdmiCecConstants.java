@@ -16,34 +16,34 @@
 
 package android.hdmicec.cts;
 
-final class HdmiCecConstants {
+public final class HdmiCecConstants {
 
     private HdmiCecConstants() {}
 
-    static final int REBOOT_TIMEOUT = 60000;
+    public static final int REBOOT_TIMEOUT = 60000;
 
-    static final int PHYSICAL_ADDRESS = 0x1000;
-    static final int PHYSICAL_ADDRESS_LENGTH = 4; /* Num nibbles in CEC message */
+    public static final int PHYSICAL_ADDRESS = 0x1000;
+    public static final int PHYSICAL_ADDRESS_LENGTH = 4; /* Num nibbles in CEC message */
 
-    static final int PLAYBACK_DEVICE_TYPE = 0x04;
+    public static final int PLAYBACK_DEVICE_TYPE = 0x04;
 
-    static final int CEC_CONTROL_SELECT = 0x0;
-    static final int CEC_CONTROL_UP = 0x1;
-    static final int CEC_CONTROL_DOWN = 0x2;
-    static final int CEC_CONTROL_LEFT = 0x3;
-    static final int CEC_CONTROL_RIGHT = 0x4;
-    static final int CEC_CONTROL_BACK = 0xd;
-    static final int CEC_CONTROL_VOLUME_UP = 0x41;
-    static final int CEC_CONTROL_VOLUME_DOWN = 0x42;
-    static final int CEC_CONTROL_MUTE = 0x43;
+    public static final int CEC_CONTROL_SELECT = 0x0;
+    public static final int CEC_CONTROL_UP = 0x1;
+    public static final int CEC_CONTROL_DOWN = 0x2;
+    public static final int CEC_CONTROL_LEFT = 0x3;
+    public static final int CEC_CONTROL_RIGHT = 0x4;
+    public static final int CEC_CONTROL_BACK = 0xd;
+    public static final int CEC_CONTROL_VOLUME_UP = 0x41;
+    public static final int CEC_CONTROL_VOLUME_DOWN = 0x42;
+    public static final int CEC_CONTROL_MUTE = 0x43;
 
-    static final int UNRECOGNIZED_OPCODE = 0x0;
+    public static final int UNRECOGNIZED_OPCODE = 0x0;
 
-    static final int CEC_DEVICE_TYPE_TV = 0;
-    static final int CEC_DEVICE_TYPE_RECORDING_DEVICE = 1;
-    static final int CEC_DEVICE_TYPE_RESERVED = 2;
-    static final int CEC_DEVICE_TYPE_TUNER = 3;
-    static final int CEC_DEVICE_TYPE_PLAYBACK_DEVICE = 4;
-    static final int CEC_DEVICE_TYPE_AUDIO_SYSTEM = 5;
+    public static final int CEC_DEVICE_TYPE_TV = 0;
+    public static final int CEC_DEVICE_TYPE_RECORDING_DEVICE = 1;
+    public static final int CEC_DEVICE_TYPE_RESERVED = 2;
+    public static final int CEC_DEVICE_TYPE_TUNER = 3;
+    public static final int CEC_DEVICE_TYPE_PLAYBACK_DEVICE = 4;
+    public static final int CEC_DEVICE_TYPE_AUDIO_SYSTEM = 5;
 
 }

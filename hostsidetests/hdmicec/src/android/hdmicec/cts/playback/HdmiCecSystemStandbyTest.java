@@ -14,9 +14,14 @@
  * limitations under the License.
  */
 
-package android.hdmicec.cts;
+package android.hdmicec.cts.playback;
 
 import static org.junit.Assert.assertEquals;
+
+import android.hdmicec.cts.CecDevice;
+import android.hdmicec.cts.CecMessage;
+import android.hdmicec.cts.HdmiCecClientWrapper;
+import android.hdmicec.cts.HdmiCecConstants;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.device.TestDeviceState;
