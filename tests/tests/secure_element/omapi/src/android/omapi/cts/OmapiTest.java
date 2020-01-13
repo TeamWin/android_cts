@@ -190,7 +190,6 @@ public class OmapiTest {
     public void setUp() throws Exception {
         assumeTrue(PropertyUtil.getFirstApiLevel() > Build.VERSION_CODES.O_MR1);
         assumeTrue(supportsHardware());
-        assumeTrue(supportOMAPIReaders());
         seService = new SEService(InstrumentationRegistry.getContext(), new SynchronousExecutor(), mListener);
         connectionTimer = new Timer();
         connectionTimer.schedule(mTimerTask, SERVICE_CONNECTION_TIME_OUT);
@@ -279,6 +278,7 @@ public class OmapiTest {
     /** Tests getATR API */
     @Test
     public void testATR() {
+        assumeTrue(supportOMAPIReaders());
         try {
             waitForConnection();
             Reader[] readers = seService.getReaders();
@@ -311,6 +311,7 @@ public class OmapiTest {
     /** Tests OpenBasicChannel API when aid is null */
     @Test
     public void testOpenBasicChannelNullAid() {
+        assumeTrue(supportOMAPIReaders());
         try {
             waitForConnection();
             Reader[] readers = seService.getReaders();
@@ -340,6 +341,7 @@ public class OmapiTest {
     /** Tests OpenBasicChannel API when aid is provided */
     @Test
     public void testOpenBasicChannelNonNullAid() {
+        assumeTrue(supportOMAPIReaders());
         try {
             waitForConnection();
             Reader[] readers = seService.getReaders();
@@ -369,6 +371,7 @@ public class OmapiTest {
     /** Tests Select API */
     @Test
     public void testSelectableAid() {
+        assumeTrue(supportOMAPIReaders());
         try {
             waitForConnection();
             Reader[] readers = seService.getReaders();
@@ -382,6 +385,7 @@ public class OmapiTest {
 
     @Test
     public void testLongSelectResponse() {
+        assumeTrue(supportOMAPIReaders());
         try {
             waitForConnection();
             Reader[] readers = seService.getReaders();
@@ -419,6 +423,7 @@ public class OmapiTest {
     /** Tests if NoSuchElementException in Select */
     @Test
     public void testWrongAid() {
+        assumeTrue(supportOMAPIReaders());
         try {
             waitForConnection();
             Reader[] readers = seService.getReaders();
@@ -450,6 +455,7 @@ public class OmapiTest {
     /** Tests if Security Exception in Transmit */
     @Test
     public void testSecurityExceptionInTransmit() {
+        assumeTrue(supportOMAPIReaders());
         try {
             waitForConnection();
             Reader[] readers = seService.getReaders();
@@ -536,6 +542,7 @@ public class OmapiTest {
      */
     @Test
     public void testTransmitApdu() {
+        assumeTrue(supportOMAPIReaders());
         try {
             waitForConnection();
             Reader[] readers = seService.getReaders();
@@ -571,6 +578,7 @@ public class OmapiTest {
      */
     @Test
     public void testStatusWordTransmit() {
+        assumeTrue(supportOMAPIReaders());
         try {
             waitForConnection();
             Reader[] readers = seService.getReaders();
@@ -618,6 +626,7 @@ public class OmapiTest {
     /** Test if the responses are segmented by the underlying implementation */
     @Test
     public void testSegmentedResponseTransmit() {
+        assumeTrue(supportOMAPIReaders());
         try {
             waitForConnection();
             Reader[] readers = seService.getReaders();
@@ -646,6 +655,7 @@ public class OmapiTest {
      */
     @Test
     public void testP2Value() {
+        assumeTrue(supportOMAPIReaders());
         try {
             waitForConnection();
             Reader[] readers = seService.getReaders();
