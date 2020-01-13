@@ -34,6 +34,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include <android-base/file.h>
 #include <android-base/properties.h>
 #include <android-base/strings.h>
 #include <nativehelper/JNIHelp.h>
@@ -186,7 +187,18 @@ static bool check_lib(JNIEnv* env,
 
   std::string baselib = basename(path.c_str());
   bool is_public = public_library_basenames.find(baselib) != public_library_basenames.end();
-  bool is_in_search_path = is_library_on_path(library_search_paths, baselib, path);
+
+  // Special casing for symlinks in APEXes. For bundled APEXes, some files in
+  // the APEXes could be symlinks pointing to libraries in /system/lib to save
+  // storage. In that case, use the realpath so that `is_in_search_path` is
+  // correctly determined
+  bool is_in_search_path;
+  std::string realpath;
+  if (android::base::StartsWith(path, "/apex/") && android::base::Realpath(path, &realpath)) {
+    is_in_search_path = is_library_on_path(library_search_paths, baselib, realpath);
+  } else {
+    is_in_search_path = is_library_on_path(library_search_paths, baselib, path);
+  }
 
   if (is_public) {
     if (is_in_search_path) {
