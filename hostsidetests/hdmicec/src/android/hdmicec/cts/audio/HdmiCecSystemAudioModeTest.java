@@ -16,6 +16,9 @@
 
 package android.hdmicec.cts.audio;
 
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.CoreMatchers.is;
 
@@ -24,6 +27,7 @@ import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
 
+import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
@@ -31,14 +35,83 @@ import org.junit.Rule;
 import org.junit.runner.RunWith;
 import org.junit.Test;
 
+import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
+
 /** HDMI CEC test to test system audio mode (Section 11.2.15) */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
+
+    /** The package name of the APK. */
+    private static final String PACKAGE = "android.hdmicec.app";
+
+    /** The class name of the main activity in the APK. */
+    private static final String CLASS = "HdmiCecAudioManager";
+
+    /** The command to launch the main activity. */
+    private static final String START_COMMAND = String.format(
+            "am start -n %s/%s.%s -a ", PACKAGE, PACKAGE, CLASS);
+
+    /** The command to clear the main activity. */
+    private static final String CLEAR_COMMAND = String.format("pm clear %s", PACKAGE);
+
+    private static final int WAIT_TIME = 10;
     private static final CecDevice AUDIO_DEVICE = CecDevice.AUDIO_SYSTEM;
     private static final int ON = 0x1;
 
     @Rule
     public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(AUDIO_DEVICE, this);
+
+    private void lookForLog(String expectedOut) throws Exception {
+        ITestDevice device = getDevice();
+        TimeUnit.SECONDS.sleep(WAIT_TIME);
+        String logs = device.executeAdbCommand("logcat", "-v", "brief", "-d", CLASS + ":I", "*:S");
+        // Search for string.
+        String testString = "";
+        Scanner in = new Scanner(logs);
+        while (in.hasNextLine()) {
+            String line = in.nextLine();
+            if(line.startsWith("I/" + CLASS)) {
+                testString = line.split(":")[1].trim();
+                break;
+            }
+        }
+        device.executeAdbCommand("logcat", "-c");
+        assertThat(testString).isEqualTo(expectedOut);
+    }
+
+    private void unmuteDevice() throws Exception {
+        ITestDevice device = getDevice();
+        // Clear activity
+        device.executeShellCommand(CLEAR_COMMAND);
+        // Start the APK and wait for it to complete.
+        device.executeShellCommand(START_COMMAND + "android.hdmicec.app.UNMUTE");
+    }
+
+    public boolean isDeviceMuted() throws Exception {
+        ITestDevice device = getDevice();
+        // Clear activity
+        device.executeShellCommand(CLEAR_COMMAND);
+        // Clear logcat.
+        device.executeAdbCommand("logcat", "-c");
+        // Start the APK and wait for it to complete.
+        device.executeShellCommand(START_COMMAND + "android.hdmicec.app.REPORT_VOLUME");
+        try {
+            lookForLog("Device muted.");
+            return true;
+        } catch(Exception e) {
+            return false;
+        }
+    }
+
+    public void setDeviceVolume(int percentVolume) throws Exception {
+        ITestDevice device = getDevice();
+        // Clear activity
+        device.executeShellCommand(CLEAR_COMMAND);
+        // Start the APK and wait for it to complete.
+        device.executeShellCommand(START_COMMAND + "android.hdmicec.app.SET_VOLUME --ei " +
+                "\"volumePercent\" " + percentVolume);
+    }
 
     /**
      * Test 11.2.15-1
@@ -59,5 +132,22 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
                 hdmiCecClient.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS));
         message = hdmiCecClient.checkExpectedOutput(CecMessage.SET_SYSTEM_AUDIO_MODE);
         assertThat(hdmiCecClient.getParamsFromMessage(message), is(ON));
+    }
+
+    /**
+     * Test 11.2.15-8
+     * Tests that the device handles <User Controlled Pressed> ["Mute"]
+     * correctly when System Audio Mode is "On".
+     */
+    @Test
+    public void cect_11_2_15_8_HandleUcpMute() throws Exception {
+        unmuteDevice();
+        hdmiCecClient.sendCecMessage(CecDevice.TV, AUDIO_DEVICE,
+                CecMessage.SYSTEM_AUDIO_MODE_REQUEST,
+                hdmiCecClient.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS));
+        hdmiCecClient.sendUserControlPressAndRelease(CecDevice.TV, AUDIO_DEVICE,
+                HdmiCecConstants.CEC_CONTROL_MUTE, false);
+        assertWithMessage("Device is not muted").that(isDeviceMuted()).isTrue();
+        setDeviceVolume(20);
     }
 }
