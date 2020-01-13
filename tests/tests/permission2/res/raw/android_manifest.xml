@@ -353,7 +353,7 @@
     <protected-broadcast android:name="android.net.wifi.WIFI_STATE_CHANGED" />
     <protected-broadcast android:name="android.net.wifi.WIFI_AP_STATE_CHANGED" />
     <protected-broadcast android:name="android.net.wifi.WIFI_CREDENTIAL_CHANGED" />
-    <protected-broadcast android:name="android.net.wifi.WIFI_SCAN_AVAILABLE" />
+    <protected-broadcast android:name="android.net.wifi.ACTION_WIFI_SCAN_AVAILABLE" />
     <protected-broadcast android:name="android.net.wifi.aware.action.WIFI_AWARE_STATE_CHANGED" />
     <protected-broadcast android:name="android.net.wifi.rtt.action.WIFI_RTT_STATE_CHANGED" />
     <protected-broadcast android:name="android.net.wifi.SCAN_RESULTS" />
@@ -511,7 +511,6 @@
     <protected-broadcast android:name="ScheduleConditionProvider.EVALUATE" />
     <protected-broadcast android:name="EventConditionProvider.EVALUATE" />
     <protected-broadcast android:name="SnoozeHelper.EVALUATE" />
-    <protected-broadcast android:name="wifi_scan_available" />
 
     <protected-broadcast android:name="action.cne.started" />
     <protected-broadcast android:name="android.content.jobscheduler.JOB_DEADLINE_EXPIRED" />
