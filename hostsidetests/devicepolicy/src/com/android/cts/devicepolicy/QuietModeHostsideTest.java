@@ -95,6 +95,27 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
             createParams(mProfileId));
     }
 
+    @LargeTest
+    @Test
+    public void testQuietMode_noCredentialRequest() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        changeUserCredential(/* newCredential= */ "1111", /* oldCredential= */ null,
+                mPrimaryUserId);
+        try {
+            runDeviceTestsAsUser(
+                    TEST_PACKAGE,
+                    TEST_CLASS,
+                    "testTryEnableQuiteMore_noCredentialRequest",
+                    mPrimaryUserId,
+                    createParams(mProfileId));
+        } finally {
+            changeUserCredential(/* newCredential= */ null, /* oldCredential= */ "1111",
+                    mPrimaryUserId);
+        }
+    }
+
     private void createAndStartManagedProfile() throws Exception {
         mProfileId = createManagedProfile(mPrimaryUserId);
         switchUser(mPrimaryUserId);
