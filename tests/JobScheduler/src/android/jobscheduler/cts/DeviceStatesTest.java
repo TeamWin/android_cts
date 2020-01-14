@@ -30,7 +30,7 @@ import androidx.test.InstrumentationRegistry;
  * Make sure the state of {@link android.app.job.JobScheduler} is correct.
  */
 @TargetApi(28)
-public class DeviceStatesTest extends ConstraintTest {
+public class DeviceStatesTest extends BaseJobSchedulerTest {
     /** Unique identifier for the job scheduled by this suite of tests. */
     public static final int STATE_JOB_ID = DeviceStatesTest.class.hashCode();
     private static final String TAG = "DeviceStatesTest";

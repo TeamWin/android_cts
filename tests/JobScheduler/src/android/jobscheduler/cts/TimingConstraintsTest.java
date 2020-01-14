@@ -24,7 +24,7 @@ import android.app.job.JobParameters;
  * appropriate.
  */
 @TargetApi(21)
-public class TimingConstraintsTest extends ConstraintTest {
+public class TimingConstraintsTest extends BaseJobSchedulerTest {
     private static final int TIMING_JOB_ID = TimingConstraintsTest.class.hashCode() + 0;
     private static final int CANCEL_JOB_ID = TimingConstraintsTest.class.hashCode() + 1;
     private static final int EXPIRED_JOB_ID = TimingConstraintsTest.class.hashCode() + 2;

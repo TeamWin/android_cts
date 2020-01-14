@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit;
  * Similarly, requires that the phone be connected to a wifi hotspot, or else the test will fail.
  */
 @TargetApi(21)
-public class ConnectivityConstraintTest extends ConstraintTest {
+public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
     private static final String TAG = "ConnectivityConstraintTest";
     private static final String RESTRICT_BACKGROUND_GET_CMD =
             "cmd netpolicy get restrict-background";

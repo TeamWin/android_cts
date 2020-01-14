@@ -17,17 +17,10 @@
 package android.jobscheduler.cts;
 
 
-import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.job.JobInfo;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.net.wifi.WifiManager;
 import android.os.BatteryManager;
 import android.os.SystemClock;
 import android.provider.Settings;
@@ -35,14 +28,11 @@ import android.util.Log;
 
 import com.android.compatibility.common.util.SystemUtil;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
 /**
  * Schedules jobs with the {@link android.app.job.JobScheduler} that have battery constraints.
  */
 @TargetApi(26)
-public class BatteryConstraintTest extends ConstraintTest {
+public class BatteryConstraintTest extends BaseJobSchedulerTest {
     private static final String TAG = "BatteryConstraintTest";
 
     private String FEATURE_WATCH = "android.hardware.type.watch";
