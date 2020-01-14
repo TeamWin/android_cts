@@ -19,7 +19,7 @@
 
 #include <gtest/gtest.h>
 #include <utils/Log.h>
-#include <MediaMetrics.h>
+#include <media/MediaMetrics.h>
 
 //-----------------------------------------------------------------
 class MediaMetricsTest : public ::testing::Test {
