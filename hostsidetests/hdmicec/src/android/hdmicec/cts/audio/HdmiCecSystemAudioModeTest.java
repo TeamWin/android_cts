@@ -150,4 +150,20 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
         assertWithMessage("Device is not muted").that(isDeviceMuted()).isTrue();
         setDeviceVolume(20);
     }
+
+    /**
+     * Test 11.2.15-9
+     * Tests that the device responds with a <Report Audio Status> message to a
+     * <Give Audio Status> message.
+     */
+    @Test
+    public void cect_11_2_15_9_ReportAudioStatus() throws Exception {
+        hdmiCecClient.sendCecMessage(CecDevice.TV, AUDIO_DEVICE,
+                CecMessage.SYSTEM_AUDIO_MODE_REQUEST,
+                hdmiCecClient.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS,
+                HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH));
+        hdmiCecClient.sendCecMessage(CecDevice.TV, AUDIO_DEVICE,
+                CecMessage.GIVE_AUDIO_STATUS);
+        hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecMessage.REPORT_AUDIO_STATUS);
+    }
 }

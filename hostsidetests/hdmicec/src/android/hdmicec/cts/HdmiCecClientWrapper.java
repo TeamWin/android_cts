@@ -162,6 +162,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
             CecMessage message, String params) throws Exception {
         checkCecClient();
         mOutputConsole.write("tx " + source + destination + ":" + message + params);
+        mOutputConsole.newLine();
         mOutputConsole.flush();
     }
 
@@ -383,6 +384,20 @@ public final class HdmiCecClientWrapper extends ExternalResource {
             params.insert(0, ":" + String.format("%02x", rawParam % 256));
             rawParam >>= 8;
         } while (rawParam > 0);
+
+        return params.toString();
+    }
+
+    /** Formats the rawParam into CEC message parameters. The parameters will be at least
+     * minimumNibbles long. */
+    public String formatParams(long rawParam, int minimumNibbles) {
+        StringBuilder params = new StringBuilder("");
+
+        do {
+            params.insert(0, ":" + String.format("%02x", rawParam % 256));
+            rawParam >>= 8;
+            minimumNibbles -= 2;
+        } while (rawParam > 0 || minimumNibbles > 0);
 
         return params.toString();
     }
