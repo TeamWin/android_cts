@@ -20,7 +20,6 @@ import static android.angle.cts.CtsAngleCommon.*;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.testtype.IDeviceTest;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.After;
@@ -34,7 +33,7 @@ import org.junit.runner.RunWith;
  * Tests ANGLE Developer Option Opt-In/Out functionality.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test implements IDeviceTest {
+public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
 
     private static final String TAG = CtsAngleDeveloperOptionHostTest.class.getSimpleName();
 
