@@ -114,7 +114,6 @@ public class MediaStoreNotificationTest {
     }
 
     @Test
-    @Ignore("b/139110347")
     public void testCursor() throws Exception {
         try (Cursor si = mResolver.query(mSpecificImages, null, null, null);
                 Cursor sf = mResolver.query(mSpecificFiles, null, null, null);
