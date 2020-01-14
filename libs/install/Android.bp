@@ -19,6 +19,7 @@ android_test_helper_app {
     sdk_version: "current",
     srcs: ["testapp/src/**/*.java"],
     resource_dirs: ["testapp/res_v1"],
+    apex_available: [ "com.android.apex.apkrollback.test_v1" ],
 }
 
 android_test_helper_app {
@@ -27,6 +28,7 @@ android_test_helper_app {
     sdk_version: "current",
     srcs: ["testapp/src/**/*.java"],
     resource_dirs: ["testapp/res_v2"],
+    apex_available: [ "com.android.apex.apkrollback.test_v2" ],
 }
 
 android_test_helper_app {
