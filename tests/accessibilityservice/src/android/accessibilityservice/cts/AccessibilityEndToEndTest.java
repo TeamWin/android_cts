@@ -119,10 +119,10 @@ public class AccessibilityEndToEndTest {
     private static final String LOG_TAG = "AccessibilityEndToEndTest";
 
     private static final String GRANT_BIND_APP_WIDGET_PERMISSION_COMMAND =
-            "appwidget grantbind --package android.accessibilityservice.cts --user 0";
+            "appwidget grantbind --package android.accessibilityservice.cts --user ";
 
     private static final String REVOKE_BIND_APP_WIDGET_PERMISSION_COMMAND =
-            "appwidget revokebind --package android.accessibilityservice.cts --user 0";
+            "appwidget revokebind --package android.accessibilityservice.cts --user ";
 
     private static final String APP_WIDGET_PROVIDER_PACKAGE = "foo.bar.baz";
 
@@ -1053,12 +1053,12 @@ public class AccessibilityEndToEndTest {
 
     private void grantBindAppWidgetPermission() throws Exception {
         ShellCommandBuilder.execShellCommand(sUiAutomation,
-                GRANT_BIND_APP_WIDGET_PERMISSION_COMMAND);
+                GRANT_BIND_APP_WIDGET_PERMISSION_COMMAND + getCurrentUser());
     }
 
     private void revokeBindAppWidgetPermission() throws Exception {
         ShellCommandBuilder.execShellCommand(sUiAutomation,
-                REVOKE_BIND_APP_WIDGET_PERMISSION_COMMAND);
+                REVOKE_BIND_APP_WIDGET_PERMISSION_COMMAND + getCurrentUser());
     }
 
     private AppWidgetManager getAppWidgetManager() {
@@ -1141,5 +1141,9 @@ public class AccessibilityEndToEndTest {
             final View tooltipView = viewWithTooltip.getTooltipView();
             return (tooltipView != null) && (tooltipView.getParent() != null);
         });
+    }
+
+    private static int getCurrentUser() {
+        return android.os.Process.myUserHandle().getIdentifier();
     }
 }
