@@ -207,6 +207,16 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".WifiTest", "testGetWifiMacAddress", mUserId);
     }
 
+    @Test
+    public void testFactoryResetProtectionPolicy() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        runDeviceTestsAsUser(
+                DEVICE_ADMIN_PKG, ".FactoryResetProtectionPolicyTest", mUserId);
+    }
+
     private void removeOrgOwnedProfile() throws DeviceNotAvailableException {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, RELINQUISH_DEVICE_TEST_CLASS, mUserId);
     }

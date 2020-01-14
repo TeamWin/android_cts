@@ -353,7 +353,7 @@
     <protected-broadcast android:name="android.net.wifi.WIFI_STATE_CHANGED" />
     <protected-broadcast android:name="android.net.wifi.WIFI_AP_STATE_CHANGED" />
     <protected-broadcast android:name="android.net.wifi.WIFI_CREDENTIAL_CHANGED" />
-    <protected-broadcast android:name="android.net.wifi.WIFI_SCAN_AVAILABLE" />
+    <protected-broadcast android:name="android.net.wifi.ACTION_WIFI_SCAN_AVAILABLE" />
     <protected-broadcast android:name="android.net.wifi.aware.action.WIFI_AWARE_STATE_CHANGED" />
     <protected-broadcast android:name="android.net.wifi.rtt.action.WIFI_RTT_STATE_CHANGED" />
     <protected-broadcast android:name="android.net.wifi.SCAN_RESULTS" />
@@ -511,7 +511,6 @@
     <protected-broadcast android:name="ScheduleConditionProvider.EVALUATE" />
     <protected-broadcast android:name="EventConditionProvider.EVALUATE" />
     <protected-broadcast android:name="SnoozeHelper.EVALUATE" />
-    <protected-broadcast android:name="wifi_scan_available" />
 
     <protected-broadcast android:name="action.cne.started" />
     <protected-broadcast android:name="android.content.jobscheduler.JOB_DEADLINE_EXPIRED" />
@@ -1719,6 +1718,11 @@
         android:description="@string/permdesc_preferredPaymentInfo"
         android:label="@string/permlab_preferredPaymentInfo"
         android:protectionLevel="normal" />
+
+    <!-- @SystemApi Allows an internal user to use privileged SecureElement APIs.
+         @hide -->
+    <permission android:name="android.permission.SECURE_ELEMENT_PRIVILEGED"
+        android:protectionLevel="signature|privileged" />
 
     <!-- @SystemApi Allows an internal user to use privileged ConnectivityManager APIs.
          @hide -->
@@ -3297,6 +3301,14 @@
          @hide -->
     <permission android:name="android.permission.NOTIFY_TV_INPUTS"
         android:protectionLevel="signature|privileged" />
+
+      <!-- @SystemApi Allows an application to interact with tuner resources through
+         Tuner Resource Manager.
+         <p>Protection level: signature|privileged
+         <p>Not for use by third-party applications.
+         @hide -->
+    <permission android:name="android.permission.TUNER_RESOURCE_ACCESS"
+         android:protectionLevel="signature|privileged" />
 
     <!-- Must be required by a {@link android.media.routing.MediaRouteService}
          to ensure that only the system can interact with it.

@@ -22,6 +22,7 @@ android_test {
         "compatibility-device-util-axt",
         "platform-test-annotations",
         "CtsAccessibilityCommon",
+        "CtsInputMethodServiceCommon",
     ],
     libs: [
         "android.test.runner.stubs",
