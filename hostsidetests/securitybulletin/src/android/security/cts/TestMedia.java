@@ -57,6 +57,25 @@ public class TestMedia extends SecurityTestCase {
     }
 
     /**
+     * b/23247055
+     * Vulnerability Behaviour: SIGABRT in self
+     **/
+    @SecurityTest(minPatchLevel = "2015-10")
+    @Test
+    public void testPocCVE_2015_3873() throws Exception {
+        String inputFiles[] = {"cve_2015_3873.mp4"};
+        String binaryName = "CVE-2015-3873";
+        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
+        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
+        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
+        testConfig.config.setSignals(signals);
+        testConfig.arguments = AdbUtils.TMP_PATH + inputFiles[0];
+        testConfig.inputFiles = Arrays.asList(inputFiles);
+        testConfig.inputFilesDestination  = AdbUtils.TMP_PATH;
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
+    }
+
+    /**
      * b/66969193
      * Vulnerability Behaviour: SIGSEGV in self
      */
