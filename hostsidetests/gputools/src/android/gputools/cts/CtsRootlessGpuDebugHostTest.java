@@ -17,7 +17,6 @@ package android.gputools.cts;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.testtype.IDeviceTest;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import java.util.Scanner;
@@ -32,7 +31,7 @@ import org.junit.runner.RunWith;
  * Tests that exercise Rootless GPU Debug functionality supported by the loader.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class CtsRootlessGpuDebugHostTest extends BaseHostJUnit4Test implements IDeviceTest {
+public class CtsRootlessGpuDebugHostTest extends BaseHostJUnit4Test {
 
     public static final String TAG = "RootlessGpuDebugDeviceActivity";
 
