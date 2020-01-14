@@ -27,6 +27,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.content.ContentProviderOperation;
+import android.content.ContentProviderResult;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -53,6 +55,8 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 @RunWith(Parameterized.class)
 public class MediaStore_FilesTest {
@@ -325,6 +329,41 @@ public class MediaStore_FilesTest {
         assertEquals(1, updateRows);
         // Only interested in update not throwing exception. No need in checking whenever values
         // were actually updates, as it is not in the scope of this test.
+    }
+
+    @Test
+    public void testGeneration() throws Exception {
+        final ContentProviderOperation redOp = ContentProviderOperation.newInsert(mExternalImages)
+                .withValue(MediaColumns.DISPLAY_NAME, "red" + System.nanoTime() + ".png")
+                .withValue(MediaColumns.MIME_TYPE, "image/png")
+                .build();
+        final ContentProviderOperation greenOp = ContentProviderOperation.newInsert(mExternalImages)
+                .withValue(MediaColumns.DISPLAY_NAME, "green" + System.nanoTime() + ".png")
+                .withValue(MediaColumns.MIME_TYPE, "image/png")
+                .build();
+        final ContentProviderOperation blueOp = ContentProviderOperation.newInsert(mExternalImages)
+                .withValue(MediaColumns.DISPLAY_NAME, "blue" + System.nanoTime() + ".png")
+                .withValue(MediaColumns.MIME_TYPE, "image/png")
+                .build();
+
+        final long before = MediaStore.getGeneration(mContext, mVolumeName);
+        final ContentProviderResult[] first = mResolver.applyBatch(mExternalImages.getAuthority(),
+                new ArrayList<>(Arrays.asList(redOp)));
+        final ContentProviderResult[] second = mResolver.applyBatch(mExternalImages.getAuthority(),
+                new ArrayList<>(Arrays.asList(greenOp, blueOp)));
+        final long after = MediaStore.getGeneration(mContext, mVolumeName);
+
+        final long red = queryLong(first[0].uri, MediaColumns.GENERATION);
+        final long green = queryLong(second[0].uri, MediaColumns.GENERATION);
+        final long blue = queryLong(second[1].uri, MediaColumns.GENERATION);
+
+        assertEquals("green == blue", green, blue);
+
+        assertTrue("before < red", before < red);
+        assertTrue("red < green", red < green);
+        assertTrue("red < blue", red < blue);
+        assertTrue("green <= after", green <= after);
+        assertTrue("blue <= after", blue <= after);
     }
 
     private long queryLong(Uri uri, String columnName) {
