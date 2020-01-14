@@ -18,6 +18,7 @@ package com.android.cts.deviceandprofileowner;
 import static android.Manifest.permission.READ_CONTACTS;
 import static android.Manifest.permission.WRITE_CONTACTS;
 
+import android.Manifest.permission;
 import android.app.AppOpsManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
@@ -36,6 +37,9 @@ import android.support.test.uiautomator.Until;
 import android.test.suitebuilder.annotation.Suppress;
 import android.util.Log;
 
+import com.google.android.collect.Sets;
+
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -75,6 +79,11 @@ public class PermissionsTest extends BaseDeviceAdminTest {
             .clazz(android.widget.TextView.class.getName())
             .pkg("android");
     private static final String CRASH_WATCHER_ID = "CRASH";
+
+    private static final Set<String> LOCATION_PERMISSIONS = Sets.newHashSet(
+            permission.ACCESS_FINE_LOCATION,
+            permission.ACCESS_BACKGROUND_LOCATION,
+            permission.ACCESS_COARSE_LOCATION);
 
     private PermissionBroadcastReceiver mReceiver;
     private PackageManager mPackageManager;
@@ -297,6 +306,25 @@ public class PermissionsTest extends BaseDeviceAdminTest {
                 DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED);
     }
 
+    public void testLocationPermissionsCannotBeGranted() throws Exception {
+        for (String locationPermission: LOCATION_PERMISSIONS) {
+            // A location permission cannot be granted.
+            assertFailedToSetPermissionGrantState(
+                    locationPermission, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED);
+            // But can be denied.
+            assertTrue(mDevicePolicyManager.setPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
+                    PERMISSION_APP_PACKAGE_NAME, locationPermission,
+                    DevicePolicyManager.PERMISSION_GRANT_STATE_DENIED));
+            assertPermissionRequest(locationPermission, PackageManager.PERMISSION_DENIED);
+            //TODO(b/148197098): Figure out if it's right for getPermissionGrantState to return
+            // PERMISSION_GRANT_STATE_DEFAULT even though the state was set to denied.
+            // Then set to default.
+            assertTrue(mDevicePolicyManager.setPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
+                    PERMISSION_APP_PACKAGE_NAME, locationPermission,
+                    DevicePolicyManager.PERMISSION_GRANT_STATE_DEFAULT));
+        }
+    }
+
     private void assertPermissionRequest(int expected) throws Exception {
         assertPermissionRequest(READ_CONTACTS, expected);
     }
@@ -371,12 +399,16 @@ public class PermissionsTest extends BaseDeviceAdminTest {
     }
 
     private void assertFailedToSetDevelopmentPermissionGrantState(int value) throws Exception {
+        assertFailedToSetPermissionGrantState(DEVELOPMENT_PERMISSION, value);
+    }
+
+    private void assertFailedToSetPermissionGrantState(String permission, int value) throws Exception {
         assertFalse(mDevicePolicyManager.setPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
-                PERMISSION_APP_PACKAGE_NAME, DEVELOPMENT_PERMISSION, value));
+                PERMISSION_APP_PACKAGE_NAME, permission, value));
         assertEquals(mDevicePolicyManager.getPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
-                PERMISSION_APP_PACKAGE_NAME, DEVELOPMENT_PERMISSION),
+                PERMISSION_APP_PACKAGE_NAME, permission),
                 DevicePolicyManager.PERMISSION_GRANT_STATE_DEFAULT);
-        assertEquals(mPackageManager.checkPermission(DEVELOPMENT_PERMISSION,
+        assertEquals(mPackageManager.checkPermission(permission,
                 PERMISSION_APP_PACKAGE_NAME),
                 PackageManager.PERMISSION_DENIED);
     }
