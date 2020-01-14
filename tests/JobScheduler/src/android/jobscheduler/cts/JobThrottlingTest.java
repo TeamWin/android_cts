@@ -37,6 +37,7 @@ import android.net.wifi.WifiManager;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.os.Temperature;
+import android.provider.Settings;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
@@ -53,6 +54,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.io.IOException;
 
 /**
  * Tests related to job throttling -- device idle, app standby and battery saver.
@@ -71,6 +74,7 @@ public class JobThrottlingTest {
         WORKING_SET,
         FREQUENT,
         RARE,
+        RESTRICTED,
         NEVER
     }
 
@@ -87,6 +91,8 @@ public class JobThrottlingTest {
     private boolean mHasWifi;
     /** Track whether WiFi was enabled in case we turn it off. */
     private boolean mInitialWiFiState;
+    private boolean mInitialAirplaneModeState;
+    private String mInitialJobSchedulerConstants;
 
     private TestAppInterface mTestAppInterface;
 
@@ -137,6 +143,9 @@ public class JobThrottlingTest {
         mCm = mContext.getSystemService(ConnectivityManager.class);
         mHasWifi = mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI);
         mInitialWiFiState = mWifiManager.isWifiEnabled();
+        mInitialAirplaneModeState = isAirplaneModeOn();
+        mInitialJobSchedulerConstants = Settings.Global.getString(mContext.getContentResolver(),
+                Settings.Global.JOB_SCHEDULER_CONSTANTS);
     }
 
     @Test
@@ -242,6 +251,103 @@ public class JobThrottlingTest {
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
     }
 
+    /** Tests that apps in the RESTRICTED bucket still get their one parole session per day. */
+    @Test
+    public void testJobsInRestrictedBucket_ParoleSession() throws Exception {
+        assumeTrue("app standby not enabled", mAppStandbyEnabled);
+
+        // Disable coalescing
+        Settings.Global.putString(mContext.getContentResolver(),
+                Settings.Global.JOB_SCHEDULER_QUOTA_CONTROLLER_CONSTANTS,
+                "timing_session_coalescing_duration_ms=0");
+
+        setAirplaneMode(false);
+        setScreenState(true);
+
+        BatteryUtils.runDumpsysBatteryUnplug();
+        setTestPackageStandbyBucket(Bucket.RESTRICTED);
+        Thread.sleep(DEFAULT_WAIT_TIMEOUT);
+        sendScheduleJobBroadcast(false);
+        assertTrue("Parole job didn't start in RESTRICTED bucket",
+                mTestAppInterface.awaitJobStart(3_000));
+
+        sendScheduleJobBroadcast(false);
+        assertFalse("New job started in RESTRICTED bucket", mTestAppInterface.awaitJobStart(3_000));
+    }
+
+    @Test
+    public void testJobsInRestrictedBucket_NoRequiredNetwork() throws Exception {
+        assumeTrue("app standby not enabled", mAppStandbyEnabled);
+
+        // Disable coalescing and the parole session
+        Settings.Global.putString(mContext.getContentResolver(),
+                Settings.Global.JOB_SCHEDULER_QUOTA_CONTROLLER_CONSTANTS,
+                "timing_session_coalescing_duration_ms=0,max_session_count_restricted=0");
+
+        setAirplaneMode(false);
+        setScreenState(true);
+
+        BatteryUtils.runDumpsysBatteryUnplug();
+        setTestPackageStandbyBucket(Bucket.RESTRICTED);
+        Thread.sleep(DEFAULT_WAIT_TIMEOUT);
+        sendScheduleJobBroadcast(false);
+        assertFalse("New job started in RESTRICTED bucket", mTestAppInterface.awaitJobStart(3_000));
+
+        // Slowly add back required bucket constraints.
+
+        // Battery charging and high.
+        BatteryUtils.runDumpsysBatterySetPluggedIn(true);
+        assertFalse("New job started in RESTRICTED bucket", mTestAppInterface.awaitJobStart(3_000));
+        BatteryUtils.runDumpsysBatterySetLevel(100);
+        assertFalse("New job started in RESTRICTED bucket", mTestAppInterface.awaitJobStart(3_000));
+
+        // Device is idle.
+        setScreenState(false);
+        assertFalse("New job started in RESTRICTED bucket", mTestAppInterface.awaitJobStart(3_000));
+        triggerJobIdle();
+        assertTrue("New job didn't start in RESTRICTED bucket",
+                mTestAppInterface.awaitJobStart(3_000));
+    }
+
+    @Test
+    public void testJobsInRestrictedBucket_WithRequiredNetwork() throws Exception {
+        assumeTrue("app standby not enabled", mAppStandbyEnabled);
+        assumeTrue(mHasWifi);
+
+        // Disable coalescing and the parole session
+        Settings.Global.putString(mContext.getContentResolver(),
+                Settings.Global.JOB_SCHEDULER_QUOTA_CONTROLLER_CONSTANTS,
+                "timing_session_coalescing_duration_ms=0,max_session_count_restricted=0");
+
+        setAirplaneMode(false);
+        setScreenState(true);
+
+        BatteryUtils.runDumpsysBatteryUnplug();
+        setTestPackageStandbyBucket(Bucket.RESTRICTED);
+        Thread.sleep(DEFAULT_WAIT_TIMEOUT);
+        mTestAppInterface.scheduleJob(false, true);
+        assertFalse("New job started in RESTRICTED bucket", mTestAppInterface.awaitJobStart(3_000));
+
+        // Slowly add back required bucket constraints.
+
+        // Battery charging and high.
+        BatteryUtils.runDumpsysBatterySetPluggedIn(true);
+        assertFalse("New job started in RESTRICTED bucket", mTestAppInterface.awaitJobStart(3_000));
+        BatteryUtils.runDumpsysBatterySetLevel(100);
+        assertFalse("New job started in RESTRICTED bucket", mTestAppInterface.awaitJobStart(3_000));
+
+        // Device is idle.
+        setScreenState(false);
+        assertFalse("New job started in RESTRICTED bucket", mTestAppInterface.awaitJobStart(3_000));
+        triggerJobIdle();
+        assertFalse("New job started in RESTRICTED bucket", mTestAppInterface.awaitJobStart(3_000));
+
+        // Add network
+        setWifiState(true, mContext, mCm, mWifiManager);
+        assertTrue("New job didn't start in RESTRICTED bucket",
+                mTestAppInterface.awaitJobStart(3_000));
+    }
+
     @Test
     public void testJobsInNeverApp() throws Exception {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);
@@ -250,7 +356,7 @@ public class JobThrottlingTest {
         setTestPackageStandbyBucket(Bucket.NEVER);
         Thread.sleep(DEFAULT_WAIT_TIMEOUT);
         sendScheduleJobBroadcast(false);
-        assertFalse("New job started in NEVER standby", mTestAppInterface.awaitJobStart(3_000));
+        assertFalse("New job started in NEVER bucket", mTestAppInterface.awaitJobStart(3_000));
     }
 
     @Test
@@ -332,6 +438,11 @@ public class JobThrottlingTest {
         if (mWifiManager.isWifiEnabled() != mInitialWiFiState) {
             setWifiState(mInitialWiFiState, mContext, mCm, mWifiManager);
         }
+        Settings.Global.putString(mContext.getContentResolver(),
+                Settings.Global.JOB_SCHEDULER_CONSTANTS, mInitialJobSchedulerConstants);
+        if (isAirplaneModeOn() != mInitialAirplaneModeState) {
+            setAirplaneMode(mInitialAirplaneModeState);
+        }
     }
 
     private void setTestPackageRestricted(boolean restricted) throws Exception {
@@ -387,6 +498,9 @@ public class JobThrottlingTest {
             case RARE:
                 bucketName = "rare";
                 break;
+            case RESTRICTED:
+                bucketName = "restricted";
+                break;
             case NEVER:
                 bucketName = "never";
                 break;
@@ -400,6 +514,42 @@ public class JobThrottlingTest {
     private boolean removeTestAppFromTempWhitelist() throws Exception {
         mUiDevice.executeShellCommand("cmd deviceidle tempwhitelist -r " + TEST_APP_PACKAGE);
         return waitUntilTrue(SHELL_TIMEOUT, () -> !isTestAppTempWhitelisted());
+    }
+
+    /**
+     * Set the screen state.
+     */
+    private void setScreenState(boolean on) throws Exception {
+        if (on) {
+            mUiDevice.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        } else {
+            mUiDevice.executeShellCommand("input keyevent KEYCODE_SLEEP");
+        }
+        // Wait a little bit to make sure the screen state has changed.
+        Thread.sleep(2_000);
+    }
+
+    /**
+     * Trigger job idle (not device idle);
+     */
+    private void triggerJobIdle() throws Exception {
+        mUiDevice.executeShellCommand("cmd activity idle-maintenance");
+        // Wait a moment to let that happen before proceeding.
+        Thread.sleep(2_000);
+    }
+
+    private boolean isAirplaneModeOn() throws IOException {
+        final String output =
+                mUiDevice.executeShellCommand("cmd connectivity airplane-mode").trim();
+        return "enabled".equals(output);
+    }
+
+    private void setAirplaneMode(boolean on) throws IOException {
+        if (on) {
+            mUiDevice.executeShellCommand("cmd connectivity airplane-mode enable");
+        } else {
+            mUiDevice.executeShellCommand("cmd connectivity airplane-mode disable");
+        }
     }
 
     private boolean waitUntilTrue(long maxWait, Condition condition) throws Exception {
