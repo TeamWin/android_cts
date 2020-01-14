@@ -13,20 +13,20 @@
 // limitations under the License.
 
 android_test {
-  name: "CtsAppSearchTestCases",
-  defaults: ["cts_defaults"],
-  static_libs: [
-    "androidx.test.ext.junit",
-    "androidx.test.rules",
-    "compatibility-device-util-axt",
-  ],
-  srcs: [
-    "src/**/*.java",
-  ],
-  test_suites: [
-    "cts",
-    "vts",
-    "general-tests",
-  ],
-  platform_apis: true,
+    name: "CtsAppSearchTestCases",
+    defaults: ["cts_defaults"],
+    static_libs: [
+      "androidx.test.ext.junit",
+      "androidx.test.rules",
+      "compatibility-device-util-axt",
+    ],
+    srcs: [
+      "src/**/*.java",
+    ],
+    test_suites: [
+      "cts",
+      "vts",
+      "general-tests",
+    ],
+    platform_apis: true,
 }
