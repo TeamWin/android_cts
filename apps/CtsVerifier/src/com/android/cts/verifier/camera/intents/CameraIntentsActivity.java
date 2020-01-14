@@ -459,8 +459,8 @@ implements OnClickListener, SurfaceHolder.Callback {
             return;
         }
         try {
-            if (!mImageTarget.exists() || mImageTarget.length() <= 65536) {
-                Log.d(TAG, "Image target does not exist or it is too small");
+            if (!mImageTarget.exists() || mImageTarget.length() == 0) {
+                Log.d(TAG, "Image target does not exist or is empty");
                 mState = STATE_FAILED;
                 return;
             }
