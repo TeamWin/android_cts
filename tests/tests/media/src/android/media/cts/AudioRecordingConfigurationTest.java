@@ -39,6 +39,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.Iterator;
 import java.util.List;
 
+@NonMediaMainlineTest
 public class AudioRecordingConfigurationTest extends CtsAndroidTestCase {
     private static final String TAG = "AudioRecordingConfigurationTest";
 
@@ -221,6 +222,7 @@ public class AudioRecordingConfigurationTest extends CtsAndroidTestCase {
         }
     }
 
+    @NonMediaMainlineTest
     public void testParcel() throws Exception {
         if (!hasMicrophone()) {
             return;

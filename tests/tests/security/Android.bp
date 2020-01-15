@@ -43,6 +43,7 @@ android_test {
         "libc++",
         "libpcre2",
         "libpackagelistparser",
+        "libcve_2019_2213_jni",
     ],
     srcs: [
         "src/**/*.java",

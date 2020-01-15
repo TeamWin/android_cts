@@ -74,6 +74,13 @@ public class BusinessLogicTestCase {
             Log.i(TAG, "Finding business logic for test case: " + testName);
             BusinessLogicExecutor executor = new BusinessLogicDeviceExecutor(getContext(), this);
             mBusinessLogic.applyLogicFor(testName, executor);
+        } else {
+            /* There are cases in which this is an acceptable outcome, and we do not want to fail.
+             * For instance, some business logic rule lists are only sent from the server
+             * for certain devices (see go/aes-gts).  Devices exempt from those rules will
+             * receive no BL config for some tests, and this should result in a pass.
+             */
+            Log.d(TAG, "No business logic found for test: " + testName);
         }
     }
 

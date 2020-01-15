@@ -42,6 +42,7 @@ import java.util.Random;
 // a few seconds of audio. The playback is verified by measuring the output
 // sample rate based on the AudioTimestamps.
 
+@NonMediaMainlineTest
 public class AudioTrackSurroundTest extends CtsAndroidTestCase {
     private static final String TAG = "AudioTrackSurroundTest";
 

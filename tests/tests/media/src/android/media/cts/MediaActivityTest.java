@@ -48,6 +48,7 @@ import java.util.Map;
 /**
  * Test media activity which has called {@link Activity#setMediaController}.
  */
+@NonMediaMainlineTest
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class MediaActivityTest {
