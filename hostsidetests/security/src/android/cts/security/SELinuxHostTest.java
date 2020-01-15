@@ -1124,7 +1124,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * @param domains
      *  The list of allowed domains.
      */
-    private void assertExecutableHasDomain(String executable, String... domains)
+    private void assertExecutableExistsAndHasDomain(String executable, String... domains)
         throws DeviceNotAvailableException {
         List<ProcessDetails> exeProcs = ProcessDetails.getExeMap(mDevice).get(executable);
         Set<String> domainList = new HashSet<String>(Arrays.asList(domains));
@@ -1139,12 +1139,34 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         }
     }
 
+    /**
+     * Asserts that an executable, if it exists, is only running in the listed domains.
+     *
+     * @param executable
+     *  The path of the executable to check.
+     * @param domains
+     *  The list of allowed domains.
+     */
+    private void assertExecutableHasDomain(String executable, String... domains)
+        throws DeviceNotAvailableException {
+        List<ProcessDetails> exeProcs = ProcessDetails.getExeMap(mDevice).get(executable);
+        Set<String> domainList = new HashSet<String>(Arrays.asList(domains));
+
+        if (exeProcs != null) {
+            for (ProcessDetails p : exeProcs) {
+                String msg = "Expected one of  \"" + domainList + "\" for executable \"" + executable
+                    + "\"" + " Found: \"" + p.label + "\"";
+                assertTrue(msg, domainList.contains(p.label));
+            }
+        }
+    }
+
     /* Init is always there */
     @CddTest(requirement="9.7")
     public void testInitDomain() throws DeviceNotAvailableException {
         assertDomainHasExecutable("u:r:init:s0", "/system/bin/init");
         assertDomainHasExecutable("u:r:vendor_init:s0", "/system/bin/init");
-        assertExecutableHasDomain("/system/bin/init", "u:r:init:s0", "u:r:vendor_init:s0");
+        assertExecutableExistsAndHasDomain("/system/bin/init", "u:r:init:s0", "u:r:vendor_init:s0");
     }
 
     /* Ueventd is always there */
@@ -1247,6 +1269,15 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     @CddTest(requirement="9.7")
     public void testVzwOmaTriggerDomain() throws DeviceNotAvailableException {
         assertDomainZeroOrOne("u:r:vzwomatrigger_app:s0", "com.android.vzwomatrigger");
+    }
+
+    /* gmscore, if running, always runs in gmscore_app */
+    @CddTest(requirement="9.7")
+    public void testGMSCoreDomain() throws DeviceNotAvailableException {
+        assertExecutableHasDomain("com.google.android.gms", "u:r:gmscore_app:s0");
+        assertExecutableHasDomain("com.google.android.gms.ui", "u:r:gmscore_app:s0");
+        assertExecutableHasDomain("com.google.android.gms.persistent", "u:r:gmscore_app:s0");
+        assertExecutableHasDomain("com.google.android.gms:snet", "u:r:gmscore_app:s0");
     }
 
     /*
