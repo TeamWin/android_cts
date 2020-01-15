@@ -19,6 +19,7 @@ package com.android.cts.userspacereboot.host;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -73,6 +74,14 @@ public class UserspaceRebootHostTest extends BaseHostJUnit4Test  {
         assertThat(getDevice().getProperty("ro.crypto.type")).isEqualTo("file");
         // Also verify that PowerManager.isRebootingUserspaceSupported will return true
         runDeviceTest("testUserspaceRebootIsSupported");
+    }
+
+    @Test
+    public void testDeviceDoesNotSupportUserspaceReboot() throws Exception {
+        assumeFalse("Userspace reboot supported on the device",
+                getDevice().getBooleanProperty(USERSPACE_REBOOT_SUPPORTED_PROP, false));
+        // Also verify that PowerManager.isRebootingUserspaceSupported will return true
+        runDeviceTest("testUserspaceRebootIsNotSupported");
     }
 
     @Test
