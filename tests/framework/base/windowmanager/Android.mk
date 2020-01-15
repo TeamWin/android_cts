@@ -35,6 +35,7 @@ LOCAL_JAVA_LIBRARIES := android.test.runner.stubs
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util-axt \
+    androidx.test.ext.junit \
     androidx.test.rules \
     hamcrest-library \
     platform-test-annotations \

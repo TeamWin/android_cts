@@ -271,8 +271,6 @@
         />
         <activity android:name=".ShowWhenLockedActivity"
                   android:exported="true"
-                  android:showWhenLocked="true"
-                  android:configChanges="orientation"
         />
         <activity android:name=".ShowWhenLockedWithDialogActivity"
                   android:exported="true"
