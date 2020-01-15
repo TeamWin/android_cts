@@ -198,7 +198,7 @@ public class TestImsService extends Service {
         }
     }
 
-    ImsService getImsService() {
+    protected ImsService getImsService() {
         synchronized (mLock) {
             if (mTestImsService != null) {
                 return mTestImsService;

@@ -32,6 +32,7 @@ interface ITestExternalImsService {
     void notifyRcsCapabilitiesStatusChanged(int capability);
     boolean isRcsCapable(int capability, int radioTech);
     boolean isRcsAvailable(int capability);
+    String getConfigString(int subId, int item);
 
     // IMS registration status changed
     void triggerImsOnRegistered(int radioTech);
