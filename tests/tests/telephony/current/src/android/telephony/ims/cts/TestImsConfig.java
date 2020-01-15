@@ -47,4 +47,10 @@ public class TestImsConfig extends ImsConfigImplBase {
     public String getConfigString(int item) {
         return mStringHashMap.get(item);
     }
+
+    @Override
+    public void notifyRcsAutoConfigurationReceived(byte[] content, boolean isCompressed) {
+        int item = isCompressed ? ImsUtils.ITEM_COMPRESSED : ImsUtils.ITEM_NON_COMPRESSED;
+        setConfig(item, new String(content));
+    }
 }
