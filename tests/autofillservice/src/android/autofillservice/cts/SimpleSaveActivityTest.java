@@ -765,15 +765,25 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         mUiBot.assertNoDatasets();
         callback.assertUiHiddenEvent(mActivity.mInput);
 
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_INPUT, "id")
+                        .setField(ID_PASSWORD, "pass")
+                        .setPresentation(createPresentation("YO2"))
+                        .build())
+                .build());
+
         // Switch back to the activity.
         restartActivity();
         mUiBot.assertShownByText(TEXT_LABEL, Timeouts.ACTIVITY_RESURRECTION);
-        final UiObject2 datasetPicker = mUiBot.assertDatasets("YO");
+        sReplier.getNextFillRequest();
+        final UiObject2 datasetPicker = mUiBot.assertDatasets("YO2");
         callback.assertUiShownEvent(mActivity.mInput);
 
         // Now autofill it.
         final FillExpectation autofillExpecation = mActivity.expectAutoFill("id", "pass");
-        mUiBot.selectDataset(datasetPicker, "YO");
+        mUiBot.selectDataset(datasetPicker, "YO2");
         autofillExpecation.assertAutoFilled();
     }
 
