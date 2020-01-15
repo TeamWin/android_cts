@@ -333,37 +333,49 @@ public class MediaStore_FilesTest {
 
     @Test
     public void testGeneration() throws Exception {
-        final ContentProviderOperation redOp = ContentProviderOperation.newInsert(mExternalImages)
-                .withValue(MediaColumns.DISPLAY_NAME, "red" + System.nanoTime() + ".png")
-                .withValue(MediaColumns.MIME_TYPE, "image/png")
-                .build();
-        final ContentProviderOperation greenOp = ContentProviderOperation.newInsert(mExternalImages)
-                .withValue(MediaColumns.DISPLAY_NAME, "green" + System.nanoTime() + ".png")
-                .withValue(MediaColumns.MIME_TYPE, "image/png")
-                .build();
-        final ContentProviderOperation blueOp = ContentProviderOperation.newInsert(mExternalImages)
-                .withValue(MediaColumns.DISPLAY_NAME, "blue" + System.nanoTime() + ".png")
-                .withValue(MediaColumns.MIME_TYPE, "image/png")
-                .build();
-
         final long before = MediaStore.getGeneration(mContext, mVolumeName);
+
+        final ContentProviderOperation redAdd = ContentProviderOperation.newInsert(mExternalImages)
+                .withValue(MediaColumns.DISPLAY_NAME, "red" + System.nanoTime() + ".png")
+                .withValue(MediaColumns.MIME_TYPE, "image/png").build();
+        final ContentProviderOperation greAdd = ContentProviderOperation.newInsert(mExternalImages)
+                .withValue(MediaColumns.DISPLAY_NAME, "green" + System.nanoTime() + ".png")
+                .withValue(MediaColumns.MIME_TYPE, "image/png").build();
+        final ContentProviderOperation bluAdd = ContentProviderOperation.newInsert(mExternalImages)
+                .withValue(MediaColumns.DISPLAY_NAME, "blue" + System.nanoTime() + ".png")
+                .withValue(MediaColumns.MIME_TYPE, "image/png").build();
         final ContentProviderResult[] first = mResolver.applyBatch(mExternalImages.getAuthority(),
-                new ArrayList<>(Arrays.asList(redOp)));
+                new ArrayList<>(Arrays.asList(redAdd)));
         final ContentProviderResult[] second = mResolver.applyBatch(mExternalImages.getAuthority(),
-                new ArrayList<>(Arrays.asList(greenOp, blueOp)));
-        final long after = MediaStore.getGeneration(mContext, mVolumeName);
+                new ArrayList<>(Arrays.asList(greAdd, bluAdd)));
+        final long afterAdd = MediaStore.getGeneration(mContext, mVolumeName);
 
-        final long red = queryLong(first[0].uri, MediaColumns.GENERATION);
-        final long green = queryLong(second[0].uri, MediaColumns.GENERATION);
-        final long blue = queryLong(second[1].uri, MediaColumns.GENERATION);
+        final Uri red = first[0].uri;
+        final Uri gre = second[0].uri;
+        final Uri blu = second[1].uri;
 
-        assertEquals("green == blue", green, blue);
+        final ContentProviderOperation redMod = ContentProviderOperation.newUpdate(red)
+                .withValue(MediaColumns.IS_FAVORITE, 1).build();
+        final ContentProviderOperation greMod = ContentProviderOperation.newUpdate(gre)
+                .withValue(MediaColumns.IS_FAVORITE, 1).build();
+        final ContentProviderResult[] third = mResolver.applyBatch(mExternalImages.getAuthority(),
+                new ArrayList<>(Arrays.asList(redMod, greMod)));
+        final long afterMod = MediaStore.getGeneration(mContext, mVolumeName);
 
-        assertTrue("before < red", before < red);
-        assertTrue("red < green", red < green);
-        assertTrue("red < blue", red < blue);
-        assertTrue("green <= after", green <= after);
-        assertTrue("blue <= after", blue <= after);
+        final long radd = queryLong(red, MediaColumns.GENERATION_ADDED);
+        final long rmod = queryLong(red, MediaColumns.GENERATION_MODIFIED);
+        final long gadd = queryLong(gre, MediaColumns.GENERATION_ADDED);
+        final long gmod = queryLong(gre, MediaColumns.GENERATION_MODIFIED);
+        final long badd = queryLong(blu, MediaColumns.GENERATION_ADDED);
+        final long bmod = queryLong(blu, MediaColumns.GENERATION_MODIFIED);
+
+        assertTrue("before < radd", before < radd);
+        assertTrue("radd < gadd", radd < gadd);
+        assertTrue("gadd == badd", gadd == badd);
+        assertTrue("badd <= afterAdd", badd <= afterAdd);
+        assertTrue("afterAdd < rmod", afterAdd < rmod);
+        assertTrue("rmod == gmod", rmod == gmod);
+        assertTrue("gmod <= afterMod", gmod <= afterMod);
     }
 
     private long queryLong(Uri uri, String columnName) {
