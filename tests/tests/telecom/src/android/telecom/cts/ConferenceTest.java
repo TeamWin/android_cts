@@ -151,6 +151,8 @@ public class ConferenceTest extends BaseTelecomTestWithMockServices {
         conf.mergeConference();
         assertCallDisplayName(mCall1, TestUtils.MERGE_CALLER_NAME);
         assertCallDisplayName(mCall2, TestUtils.MERGE_CALLER_NAME);
+        Call activeChild = conf.getGenericConferenceActiveChildCall();
+        assertNotNull(activeChild);
         assertConnectionCallDisplayName(mConferenceObject.getConnections().get(0),
                 TestUtils.MERGE_CALLER_NAME);
         assertConnectionCallDisplayName(mConferenceObject.getConnections().get(1),
@@ -159,6 +161,8 @@ public class ConferenceTest extends BaseTelecomTestWithMockServices {
         conf.swapConference();
         assertCallDisplayName(mCall1, TestUtils.SWAP_CALLER_NAME);
         assertCallDisplayName(mCall2, TestUtils.SWAP_CALLER_NAME);
+        Call activeChildAfterSwap = conf.getGenericConferenceActiveChildCall();
+        assertNotSame(activeChild, activeChildAfterSwap);
         assertConnectionCallDisplayName(mConferenceObject.getConnections().get(0),
                 TestUtils.SWAP_CALLER_NAME);
         assertConnectionCallDisplayName(mConferenceObject.getConnections().get(1),

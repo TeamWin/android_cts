@@ -43,6 +43,7 @@ import android.telecom.PhoneAccountHandle;
 import android.telecom.StatusHints;
 import android.telecom.TelecomManager;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 
 import java.util.Arrays;
 import java.util.List;
@@ -315,6 +316,18 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
 
         assertThat(mCall.getDetails().getCallerDisplayNamePresentation(), instanceOf(Integer.class));
         assertEquals(CALLER_DISPLAY_NAME_PRESENTATION, mCall.getDetails().getCallerDisplayNamePresentation());
+    }
+
+    /**
+     * Test the contacts display name. We don't have anything set up in contacts, so expect it to
+     * be null
+     */
+    public void testContactDisplayName() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        assertTrue(TextUtils.isEmpty(mCall.getDetails().getContactDisplayName()));
     }
 
     /**
