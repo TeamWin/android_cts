@@ -53,12 +53,26 @@ public class UserspaceRebootHostTest extends BaseHostJUnit4Test  {
         }
     }
 
+    /**
+     * Runs the given {@code testName} of
+     * {@link com.android.cts.userspacereboot.UserspaceRebootTest}.
+     *
+     * @throws Exception if test phase fails.
+     */
+    private void runDeviceTest(String testName) throws Exception {
+        assertThat(runDeviceTests("com.android.cts.userspacereboot",
+                "com.android.cts.userspacereboot.UserspaceRebootTest",
+                testName)).isTrue();
+    }
+
     @Test
     public void testOnlyFbeDevicesSupportUserspaceReboot() throws Exception {
         assumeTrue("Userspace reboot not supported on the device",
                 getDevice().getBooleanProperty(USERSPACE_REBOOT_SUPPORTED_PROP, false));
         assertThat(getDevice().getProperty("ro.crypto.state")).isEqualTo("encrypted");
         assertThat(getDevice().getProperty("ro.crypto.type")).isEqualTo("file");
+        // Also verify that PowerManager.isRebootingUserspaceSupported will return true
+        runDeviceTest("testUserspaceRebootIsSupported");
     }
 
     @Test
