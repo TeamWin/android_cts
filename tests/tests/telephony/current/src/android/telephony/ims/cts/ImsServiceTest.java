@@ -101,6 +101,13 @@ public class ImsServiceTest {
     private static final int TEST_CONFIG_KEY = 1000;
     private static final int TEST_CONFIG_VALUE_INT = 0xDEADBEEF;
     private static final String TEST_CONFIG_VALUE_STRING = "DEADBEEF";
+    private static final String TEST_AUTOCONFIG_CONTENT = "<?xml version=\"1.0\"?>\n"
+            + "<wap-provisioningdoc version=\"1.1\">\n"
+            + "<characteristic type=\"VERS\">\n"
+            + "<parm name=\"version\" value=\"1\"/>\n"
+            + "<parm name=\"validity\" value=\"1728000\"/>\n"
+            + "</characteristic>"
+            + "</wap-provisioningdoc>";
 
     private static CarrierConfigReceiver sReceiver;
 
@@ -1076,6 +1083,32 @@ public class ImsServiceTest {
                     ImsRegistrationImplBase.REGISTRATION_TECH_LTE)));
 
             mmTelManager.unregisterMmTelCapabilityCallback(callback);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testProvisioningManagerNotifyAutoConfig() throws Exception {
+        triggerFrameworkConnectToDeviceImsServiceBindRcsFeature();
+
+        ProvisioningManager provisioningManager =
+                ProvisioningManager.createForSubscriptionId(sTestSub);
+
+        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            automan.adoptShellPermissionIdentity();
+            provisioningManager.notifyRcsAutoConfigurationReceived(
+                    TEST_AUTOCONFIG_CONTENT.getBytes(), false);
+            assertEquals(TEST_AUTOCONFIG_CONTENT,
+                    sServiceConnector.getExternalService().getConfigString(sTestSlot,
+                            ImsUtils.ITEM_NON_COMPRESSED));
+
+            provisioningManager.notifyRcsAutoConfigurationReceived(
+                    TEST_AUTOCONFIG_CONTENT.getBytes(), true);
+            assertEquals(TEST_AUTOCONFIG_CONTENT,
+                    sServiceConnector.getExternalService().getConfigString(sTestSlot,
+                            ImsUtils.ITEM_COMPRESSED));
         } finally {
             automan.dropShellPermissionIdentity();
         }

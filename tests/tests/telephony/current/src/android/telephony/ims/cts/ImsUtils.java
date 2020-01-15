@@ -39,6 +39,11 @@ public class ImsUtils {
     // allow for the new poll to happen in the framework.
     public static final int TEST_TIMEOUT_MS = 70000;
 
+    // Id for non compressed auto configuration xml.
+    public static final int ITEM_NON_COMPRESSED = 2000;
+    // Id for compressed auto configuration xml.
+    public static final int ITEM_COMPRESSED = 2001;
+
     public static boolean shouldTestImsService() {
         final PackageManager pm = InstrumentationRegistry.getInstrumentation().getContext()
                 .getPackageManager();
