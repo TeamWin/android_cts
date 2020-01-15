@@ -28,7 +28,6 @@ import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.MediaDescription;
 import android.media.MediaMetadata;
-import android.media.MediaSession2;
 import android.media.Rating;
 import android.media.VolumeProvider;
 import android.media.session.MediaController;
@@ -44,6 +43,7 @@ import android.os.Parcel;
 import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
+import android.text.TextUtils;
 import android.view.KeyEvent;
 
 import java.util.ArrayList;
@@ -63,6 +63,7 @@ public class MediaSessionTest extends AndroidTestCase {
     private static final String TEST_KEY = "test-key";
     private static final String TEST_VALUE = "test-val";
     private static final String TEST_SESSION_EVENT = "test-session-event";
+    private static final String TEST_VOLUME_CONTROL_ID = "test-volume-control-id";
     private static final int TEST_CURRENT_VOLUME = 10;
     private static final int TEST_MAX_VOLUME = 11;
     private static final long TEST_QUEUE_ID = 12L;
@@ -283,7 +284,7 @@ public class MediaSessionTest extends AndroidTestCase {
                 // expected
             }
             VolumeProvider vp = new VolumeProvider(VolumeProvider.VOLUME_CONTROL_FIXED,
-                    TEST_MAX_VOLUME, TEST_CURRENT_VOLUME) {};
+                    TEST_MAX_VOLUME, TEST_CURRENT_VOLUME, TEST_VOLUME_CONTROL_ID) {};
             mSession.setPlaybackToRemote(vp);
 
             MediaController.PlaybackInfo info = null;
@@ -296,7 +297,8 @@ public class MediaSessionTest extends AndroidTestCase {
                         && info.getMaxVolume() == TEST_MAX_VOLUME
                         && info.getVolumeControl() == VolumeProvider.VOLUME_CONTROL_FIXED
                         && info.getPlaybackType()
-                                == MediaController.PlaybackInfo.PLAYBACK_TYPE_REMOTE) {
+                                == MediaController.PlaybackInfo.PLAYBACK_TYPE_REMOTE
+                        && TextUtils.equals(info.getVolumeControlId(),TEST_VOLUME_CONTROL_ID)) {
                     break;
                 }
             }
@@ -305,6 +307,7 @@ public class MediaSessionTest extends AndroidTestCase {
             assertEquals(TEST_MAX_VOLUME, info.getMaxVolume());
             assertEquals(TEST_CURRENT_VOLUME, info.getCurrentVolume());
             assertEquals(VolumeProvider.VOLUME_CONTROL_FIXED, info.getVolumeControl());
+            assertEquals(TEST_VOLUME_CONTROL_ID, info.getVolumeControlId());
 
             info = controller.getPlaybackInfo();
             assertNotNull(info);
@@ -312,6 +315,7 @@ public class MediaSessionTest extends AndroidTestCase {
             assertEquals(TEST_MAX_VOLUME, info.getMaxVolume());
             assertEquals(TEST_CURRENT_VOLUME, info.getCurrentVolume());
             assertEquals(VolumeProvider.VOLUME_CONTROL_FIXED, info.getVolumeControl());
+            assertEquals(TEST_VOLUME_CONTROL_ID, info.getVolumeControlId());
 
             // test setPlaybackToLocal
             AudioAttributes attrs = new AudioAttributes.Builder().setUsage(USAGE_GAME).build();
@@ -321,6 +325,7 @@ public class MediaSessionTest extends AndroidTestCase {
             assertNotNull(info);
             assertEquals(MediaController.PlaybackInfo.PLAYBACK_TYPE_LOCAL, info.getPlaybackType());
             assertEquals(attrs, info.getAudioAttributes());
+            assertNull(info.getVolumeControlId());
         }
     }
 
