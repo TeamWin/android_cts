@@ -28,6 +28,7 @@ import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.graphics.Region;
+import android.os.Binder;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.platform.test.annotations.Presubmit;
@@ -45,6 +46,7 @@ import android.view.accessibility.AccessibilityNodeInfo.CollectionInfo;
 import android.view.accessibility.AccessibilityNodeInfo.CollectionItemInfo;
 import android.view.accessibility.AccessibilityNodeInfo.RangeInfo;
 import android.view.accessibility.AccessibilityNodeInfo.TouchDelegateInfo;
+import android.view.accessibility.AccessibilityWindowInfo;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
@@ -270,11 +272,15 @@ public class AccessibilityNodeInfoTest {
         info.setStateDescription("state description");
         info.setTooltipText("tooltip");
         info.setPackageName("foo.bar.baz");
+        // setText is 2 fields
         info.setText("text");
         info.setHintText("hint");
+
         // 2 children = 1 field
         info.addChild(new View(getContext()));
         info.addChild(new View(getContext()), 1);
+        // Leashed child = 1 field
+        info.addChild(new MockBinder());
         // 2 built-in actions and 2 custom actions, but all are in 1 field
         info.addAction(AccessibilityNodeInfo.ACTION_FOCUS);
         info.addAction(AccessibilityNodeInfo.ACTION_CLEAR_FOCUS);
@@ -294,7 +300,7 @@ public class AccessibilityNodeInfoTest {
         info.setTextSelection(3, 7);
         info.setLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
 
-        // Populate 10 fields
+        // Populate 11 fields
         Bundle extras = info.getExtras();
         extras.putBoolean("areCassowariesAwesome", true);
         info.setInputType(InputType.TYPE_CLASS_TEXT);
@@ -304,6 +310,7 @@ public class AccessibilityNodeInfoTest {
         info.setCollectionItemInfo(CollectionItemInfo.obtain(1, 2, 3, 4, true, true));
         info.setParent(new View(getContext()));
         info.setSource(new View(getContext())); // Populates 2 fields: source and window id
+        info.setLeashedParent(new MockBinder(), 1); // Populates 2 fields
         info.setTraversalBefore(new View(getContext()));
         info.setTraversalAfter(new View(getContext()));
 
@@ -312,7 +319,7 @@ public class AccessibilityNodeInfoTest {
         info.setLabelFor(new View(getContext()));
         populateTouchDelegateTargetMap(info);
 
-        // And Boolean properties are another field. Total is 34
+        // And Boolean properties are another field. Total is 38
 
         // 10 Boolean properties
         info.setCheckable(true);
@@ -338,7 +345,7 @@ public class AccessibilityNodeInfoTest {
         info.setImportantForAccessibility(true);
         info.setScreenReaderFocusable(true);
 
-        // 3 Boolean properties, for a total of 23
+        // 3 Boolean properties
         info.setShowingHintText(true);
         info.setHeading(true);
         info.setTextEntryKey(true);
@@ -388,7 +395,7 @@ public class AccessibilityNodeInfoTest {
      */
     public static void assertEqualsAccessibilityNodeInfo(AccessibilityNodeInfo expectedInfo,
             AccessibilityNodeInfo receivedInfo) {
-        // Check 10 fields
+        // Check 9 fields
         Rect expectedBounds = new Rect();
         Rect receivedBounds = new Rect();
         expectedInfo.getBoundsInParent(expectedBounds);
@@ -410,6 +417,8 @@ public class AccessibilityNodeInfoTest {
         assertEquals("text has incorrect value", expectedInfo.getText(), receivedInfo.getText());
         assertEquals("Hint text has incorrect value",
                 expectedInfo.getHintText(), receivedInfo.getHintText());
+
+        // Check 2 fields
         assertSame("childCount has incorrect value", expectedInfo.getChildCount(),
                 receivedInfo.getChildCount());
         // Actions is just 1 field, but we check it 2 ways
@@ -499,11 +508,12 @@ public class AccessibilityNodeInfoTest {
                     receivedItemInfo.getRowSpan());
         }
 
+        // Check 1 field
         assertEqualsTouchDelegateInfo("TouchDelegate target map has incorrect value",
                 expectedInfo.getTouchDelegateInfo(),
                 receivedInfo.getTouchDelegateInfo());
 
-        // And the boolean properties are another field, for a total of 26
+        // And the boolean properties are another field, for a total of 28
         // Missing parent: Tested end-to-end in AccessibilityWindowTraversalTest#testObjectContract
         //                 (getting a child is also checked there)
         //         traversalbefore: AccessibilityEndToEndTest
@@ -514,7 +524,11 @@ public class AccessibilityNodeInfoTest {
         //         labeledby: AccessibilityEndToEndTest#testLabelForReportedToAccessibility
         //         windowid: Not directly observable
         //         sourceid: Not directly observable
-        // Which brings us to a total of 33
+        //         TODO(b/147393134): Need to test if we could get leashed child/parent properly.
+        //         leashedChild: Not directly accessible
+        //         leashedParent: Not directly accessible
+        //         leashedParentNodeId: Not directly accessible
+        // Which brings us to a total of 38
 
         // 10 Boolean properties
         assertSame("checkable has incorrect value", expectedInfo.isCheckable(),
@@ -562,7 +576,7 @@ public class AccessibilityNodeInfoTest {
         assertSame("isScreenReaderFocusable has incorrect value",
                 expectedInfo.isScreenReaderFocusable(), receivedInfo.isScreenReaderFocusable());
 
-        // 3 Boolean properties, for a total of 23
+        // 3 Boolean properties
         assertSame("isShowingHint has incorrect value",
                 expectedInfo.isShowingHintText(), receivedInfo.isShowingHintText());
         assertSame("isHeading has incorrect value",
@@ -577,7 +591,7 @@ public class AccessibilityNodeInfoTest {
      * @param info The node info to check.
      */
     public static void assertAccessibilityNodeInfoCleared(AccessibilityNodeInfo info) {
-        // Check 10 fields
+        // Check 11 fields
         Rect bounds = new Rect();
         info.getBoundsInParent(bounds);
         assertTrue("boundsInParent not properly recycled", bounds.isEmpty());
@@ -617,7 +631,7 @@ public class AccessibilityNodeInfoTest {
         assertNull("Collection item info not properly recycled", info.getCollectionItemInfo());
         assertNull("TouchDelegate target map not recycled", info.getTouchDelegateInfo());
 
-        // And Boolean properties brings up to 26 fields
+        // And Boolean properties brings up to 28 fields
         // Missing:
         //  parent (can't be performed on sealed instance, even if null)
         //  traversalbefore (can't be performed on sealed instance, even if null)
@@ -626,7 +640,11 @@ public class AccessibilityNodeInfoTest {
         //  labeledby (can't be performed on sealed instance, even if null)
         //  sourceId (not directly observable)
         //  windowId (not directly observable)
-        // a total of 33
+        //  TODO(b/147393134): Need to test if we could get leashed child/parent properly.
+        //  leashedChild (not directly observable)
+        //  leashedParent (not directly observable)
+        //  leashedParentNodeId (not directly observable)
+        // a total of 38
 
         // 10 Boolean properties
         assertFalse("checkable not properly recycled", info.isCheckable());
@@ -657,5 +675,9 @@ public class AccessibilityNodeInfoTest {
         assertFalse("isShowingHint not properly reset", info.isShowingHintText());
         assertFalse("isHeading not properly reset", info.isHeading());
         assertFalse("isTextEntryKey not properly reset", info.isTextEntryKey());
+    }
+
+
+    private static class MockBinder extends Binder {
     }
 }
