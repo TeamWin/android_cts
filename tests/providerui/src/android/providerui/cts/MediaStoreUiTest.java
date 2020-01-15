@@ -243,14 +243,15 @@ public class MediaStoreUiTest {
         perms.add(ACCESS_COARSE_LOCATION);
         perms.add(ACCESS_BACKGROUND_LOCATION);
         perms.add(ACCESS_MEDIA_LOCATION);
-        testImageCaptureWithoutLocation(perms);
+        testImageCaptureWithoutLocation(perms, MediaStore.ACTION_IMAGE_CAPTURE);
+        testImageCaptureWithoutLocation(perms, MediaStore.ACTION_IMAGE_CAPTURE_SECURE);
     }
      /**
      * Helper function to verify that whoever handles {@link MediaStore#ACTION_IMAGE_CAPTURE} can
      * correctly write the contents into a passed {@code content://} Uri, without location
      * information, necessarily, when ACCESS_FINE_LOCATION permissions aren't given.
      */
-    private void testImageCaptureWithoutLocation(Set<String> locationPermissions)
+    private void testImageCaptureWithoutLocation(Set<String> locationPermissions, String intentStr)
             throws Exception {
         assertFalse("testImageCaptureWithoutLocation should not be passed ACCESS_FINE_LOCATION",
                 locationPermissions.contains(ACCESS_FINE_LOCATION));
@@ -267,7 +268,7 @@ public class MediaStoreUiTest {
         targetDir.mkdirs();
         assertFalse(target.exists());
 
-        final Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        final Intent intent = new Intent(intentStr);
         intent.putExtra(MediaStore.EXTRA_OUTPUT,
                 FileProvider.getUriForFile(mContext, "android.providerui.cts.fileprovider", target));
 
