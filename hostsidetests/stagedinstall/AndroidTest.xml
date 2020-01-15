@@ -19,6 +19,11 @@
     <!-- Instant apps can't have INSTALL_PACKAGES permission. -->
     <option name="config-descriptor:metadata" key="parameter" value="not_instant_app" />
     <option name="config-descriptor:metadata" key="parameter" value="not_multi_abi" />
+
+    <!-- Module reboots the device making it inelligible for running in secondary users. -->
+    <!-- TODO: Revisit secondary user eligibility once b/137885984 is resolved. -->
+    <option name="config-descriptor:metadata" key="parameter" value="not_secondary_user" />
+
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="StagedInstallTest.apk" />
