@@ -15,9 +15,7 @@
 java_test_host {
     name: "CtsUserspaceRebootHostSideTestCases",
     defaults: ["cts_defaults"],
-
     srcs:  ["src/**/*.java"],
-
     libs: [
         "cts-tradefed",
         "tradefed",
@@ -25,9 +23,23 @@ java_test_host {
         "hamcrest",
         "hamcrest-library",
     ],
-
+    data: [
+        ":UserspaceRebootTest",
+    ],
     test_suites: [
         "cts",
         "general-tests",
     ],
+}
+
+android_test_helper_app {
+    name: "UserspaceRebootTest",
+    srcs:  ["app/src/**/*.java"],
+    manifest : "app/AndroidManifest.xml",
+    static_libs: [
+        "androidx.test.runner",
+        "androidx.test.core",
+        "truth-prebuilt",
+    ],
+    sdk_version: "test_current",
 }
