@@ -19,15 +19,12 @@ package android.jobscheduler.cts;
 
 import android.annotation.TargetApi;
 import android.app.job.JobInfo;
-import android.os.SystemClock;
-
-import com.android.compatibility.common.util.SystemUtil;
 
 /**
  * Schedules jobs with the {@link android.app.job.JobScheduler} that have storage constraints.
  */
 @TargetApi(26)
-public class StorageConstraintTest extends ConstraintTest {
+public class StorageConstraintTest extends BaseJobSchedulerTest {
     private static final String TAG = "StorageConstraintTest";
 
     /** Unique identifier for the job scheduled by this suite of tests. */

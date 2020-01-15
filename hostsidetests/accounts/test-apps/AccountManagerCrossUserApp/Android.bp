@@ -12,21 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test {
-    name: "CtsAppSearchTestCases",
+android_test_helper_app {
+    name: "CtsAccountManagerCrossUserApp",
     defaults: ["cts_defaults"],
     static_libs: [
-      "androidx.test.ext.junit",
-      "androidx.test.rules",
-      "compatibility-device-util-axt",
-    ],
-    srcs: [
-      "src/**/*.java",
-    ],
+        "androidx.test.rules",
+        "truth-prebuilt",],
+    srcs: ["src/**/*.java"],
+    // tag this module as a cts test artifact
     test_suites: [
-      "cts",
-      "vts",
-      "general-tests",
+        "cts",
+        "vts",
+        "general-tests",
     ],
-    platform_apis: true,
+    sdk_version: "test_current",
 }

@@ -754,7 +754,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         executeDeviceTestMethod(".PreDeviceOwnerTest",
-                "testIsProvisioningAllowedTrueForManagedProfileAction");
+                "testIsProvisioningNotAllowedForManagedProfileAction");
     }
 
     @FlakyTest(bugId = 137096267)

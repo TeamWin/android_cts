@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
  * Schedules jobs that look for content URI changes and ensures they are triggered correctly.
  */
 @TargetApi(23)
-public class TriggerContentTest extends ConstraintTest {
+public class TriggerContentTest extends BaseJobSchedulerTest {
     public static final int TRIGGER_CONTENT_JOB_ID = TriggerContentTest.class.hashCode();
 
     // The root URI of the media provider, to monitor for generic changes to its content.

@@ -12,21 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test {
-    name: "CtsAppSearchTestCases",
+java_test_host {
+    name: "CtsAccountsHostTestCases",
     defaults: ["cts_defaults"],
-    static_libs: [
-      "androidx.test.ext.junit",
-      "androidx.test.rules",
-      "compatibility-device-util-axt",
+    srcs: ["src/**/*.java"],
+    libs: [
+        "tools-common-prebuilt",
+        "cts-tradefed",
+        "tradefed",
+        "platform-test-annotations-host",
+        "compatibility-host-util",
+        "truth-prebuilt",
     ],
-    srcs: [
-      "src/**/*.java",
-    ],
+    // tag this module as a cts test artifact
     test_suites: [
-      "cts",
-      "vts",
-      "general-tests",
+        "cts",
+        "vts",
+        "general-tests",
     ],
-    platform_apis: true,
 }

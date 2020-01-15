@@ -356,7 +356,10 @@ public class LegacyNotificationManagerTest {
     private void toggleNotificationPolicyAccess(String packageName,
             Instrumentation instrumentation, boolean on) throws IOException {
 
-        String command = " cmd notification " + (on ? "allow_dnd " : "disallow_dnd ") + packageName;
+        String command = " cmd notification"
+                       + " " + (on ? "allow_dnd" : "disallow_dnd")
+                       + " " + packageName
+                       + " " + mContext.getUserId();
 
         runCommand(command, instrumentation);
 
@@ -368,8 +371,10 @@ public class LegacyNotificationManagerTest {
 
     private void suspendPackage(String packageName,
             Instrumentation instrumentation, boolean suspend) throws IOException {
-        String command = " cmd package " + (suspend ? "suspend "
-                : "unsuspend ") + packageName;
+        String command = " cmd package"
+                       + " " + (suspend ? "suspend" : "unsuspend")
+                       + " --user " + mContext.getUserId()
+                       + " " + packageName;
 
         runCommand(command, instrumentation);
     }
@@ -377,8 +382,10 @@ public class LegacyNotificationManagerTest {
     private void toggleListenerAccess(String componentName, Instrumentation instrumentation,
             boolean on) throws IOException {
 
-        String command = " cmd notification " + (on ? "allow_listener " : "disallow_listener ")
-                + componentName;
+        String command = " cmd notification"
+                       + " " + (on ? "allow_listener" : "disallow_listener")
+                       + " " + componentName
+                       + " " + mContext.getUserId();
 
         runCommand(command, instrumentation);
 
