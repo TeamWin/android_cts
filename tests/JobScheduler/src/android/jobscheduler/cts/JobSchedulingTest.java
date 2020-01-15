@@ -58,6 +58,7 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
     public void testMinSuccessfulSchedulingQuota() {
         JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setMinimumLatency(60 * 60 * 1000L)
+                .setPersisted(true)
                 .build();
 
         for (int i = 0; i < MIN_SCHEDULE_QUOTA; ++i) {
@@ -76,12 +77,32 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
 
         JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setMinimumLatency(60 * 60 * 1000L)
+                .setPersisted(true)
                 .build();
 
         for (int i = 0; i < 500; ++i) {
             final int expected =
                     i < 300 ? JobScheduler.RESULT_SUCCESS : JobScheduler.RESULT_FAILURE;
             assertEquals(expected, mJobScheduler.schedule(jobInfo));
+        }
+    }
+
+    /**
+     * Test that non-persisted jobs aren't limited by quota.
+     */
+    public void testNonPersistedJobsNotLimited() {
+        Settings.Global.putString(getContext().getContentResolver(),
+                Settings.Global.JOB_SCHEDULER_CONSTANTS,
+                "enable_api_quotas=true,aq_schedule_count=300,aq_schedule_window_ms=60000,"
+                        + "aq_schedule_throw_exception=false");
+
+        JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setMinimumLatency(60 * 60 * 1000L)
+                .setPersisted(false)
+                .build();
+
+        for (int i = 0; i < 500; ++i) {
+            assertEquals(JobScheduler.RESULT_SUCCESS, mJobScheduler.schedule(jobInfo));
         }
     }
 }
