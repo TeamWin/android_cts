@@ -57,6 +57,8 @@ public class DeviceStatesTest extends BaseJobSchedulerTest {
         if (mWakeLock != null && mWakeLock.isHeld()) {
             mWakeLock.release();
         }
+
+        super.tearDown();
     }
 
     void assertJobReady() throws Exception {

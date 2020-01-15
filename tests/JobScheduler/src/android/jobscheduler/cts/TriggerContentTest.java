@@ -114,10 +114,10 @@ public class TriggerContentTest extends BaseJobSchedulerTest {
 
     @Override
     public void tearDown() throws Exception {
-        super.tearDown();
         for (int i=0; i<mActiveFiles.length; i++) {
             cleanupActive(i);
         }
+        super.tearDown();
     }
 
     private JobInfo makeJobInfo(Uri uri, int flags) {
