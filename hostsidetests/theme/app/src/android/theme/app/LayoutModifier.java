@@ -23,12 +23,19 @@ import android.view.View;
  */
 public interface LayoutModifier {
 
-    /** Actions to take before inflating the view. */
-    void prepare();
+    /**
+     * Modifies the view before it has been added to a parent. Useful for avoiding animations in
+     * response to setter calls.
+     *
+     * @param view the view inflated by the test activity
+     */
+    void modifyViewBeforeAdd(View view);
 
     /**
-     * @param view inflated by the test activity
-     * @return the same view or another view that will be snapshotted by the test
+     * Modifies the view after it has been added to a parent. Useful for running animations in
+     * response to setter calls.
+     *
+     * @param view the view inflated by the test activity
      */
-    View modifyView(View view);
+    void modifyViewAfterAdd(View view);
 }

@@ -16,7 +16,9 @@
 
 package android.theme.app;
 
+import android.animation.ValueAnimator;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Build;
@@ -28,6 +30,7 @@ import android.theme.app.modifiers.TimePickerModifier;
 import android.theme.app.modifiers.ViewCheckedModifier;
 import android.theme.app.modifiers.ViewPressedModifier;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager.LayoutParams;
 import android.widget.DatePicker;
@@ -76,15 +79,20 @@ public class ThemeDeviceActivity extends Activity {
         mOutputDir = new File(outputDir);
         mTheme = THEMES[themeIndex];
 
-        setTheme(mTheme.id);
+        // Disable animations.
+        ValueAnimator.setDurationScale(0);
 
         // Force text scaling to 1.0 regardless of system default.
         Configuration config = new Configuration();
         config.fontScale = 1.0f;
-        getResources().updateConfiguration(config, null);
-        setContentView(R.layout.theme_test);
 
-        mViewGroup = (ReferenceViewGroup) findViewById(R.id.reference_view_group);
+        Context inflationContext = createConfigurationContext(config);
+        inflationContext.setTheme(mTheme.id);
+
+        LayoutInflater layoutInflater = LayoutInflater.from(inflationContext);
+        setContentView(layoutInflater.inflate(R.layout.theme_test, null));
+
+        mViewGroup = findViewById(R.id.reference_view_group);
 
         getWindow().addFlags(LayoutParams.FLAG_KEEP_SCREEN_ON
                 | LayoutParams.FLAG_TURN_SCREEN_ON
@@ -139,24 +147,26 @@ public class ThemeDeviceActivity extends Activity {
         mViewGroup.removeAllViews();
 
         final Layout layout = LAYOUTS[mLayoutIndex++];
+        final LayoutModifier modifier = layout.modifier;
         final String layoutName = String.format("%s_%s", mTheme.name, layout.name);
-        final View view = getLayoutInflater().inflate(layout.id, mViewGroup, false);
-        if (layout.modifier != null) {
-            layout.modifier.modifyView(view);
+        final LayoutInflater layoutInflater = LayoutInflater.from(mViewGroup.getContext());
+        final View view = layoutInflater.inflate(layout.id, mViewGroup, false);
+        if (modifier != null) {
+            modifier.modifyViewBeforeAdd(view);
         }
+        view.setFocusable(false);
 
         mViewGroup.addView(view);
-        view.setFocusable(false);
+
+        if (modifier != null) {
+            modifier.modifyViewAfterAdd(view);
+        }
 
         Log.v(TAG, "Rendering layout " + layoutName
                 + " (" + mLayoutIndex + "/" + LAYOUTS.length + ")");
 
-        final Runnable generateBitmapRunnable = new Runnable() {
-            @Override
-            public void run() {
-                new BitmapTask(view, layoutName).execute();
-            }
-        };
+        final Runnable generateBitmapRunnable = () ->
+            new BitmapTask(view, layoutName, modifier).execute();
 
         if (view instanceof DatePicker && mTheme.spec == Theme.HOLO) {
             // The Holo-styled DatePicker uses a CalendarView that has a
@@ -168,8 +178,12 @@ public class ThemeDeviceActivity extends Activity {
     }
 
     private class BitmapTask extends GenerateBitmapTask {
-        public BitmapTask(View view, String name) {
+        private final LayoutModifier mLayoutModifier;
+
+        public BitmapTask(View view, String name, LayoutModifier modifier) {
             super(view, mOutputDir, name);
+
+            mLayoutModifier = modifier;
         }
 
         @Override
@@ -205,6 +219,7 @@ public class ThemeDeviceActivity extends Activity {
     }
 
     // List of themes to verify.
+    @SuppressWarnings("deprecation")
     static final Theme[] THEMES = {
             // Holo
             new Theme(Theme.HOLO, android.R.style.Theme_Holo,
