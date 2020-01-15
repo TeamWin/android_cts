@@ -16,6 +16,8 @@
 
 package android.app.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -35,6 +37,7 @@ import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorSpace;
 import android.graphics.Point;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -71,6 +74,7 @@ public class WallpaperManagerTest {
     private Handler mHandler;
     private BroadcastReceiver mBroadcastReceiver;
     private CountDownLatch mCountDownLatch;
+    private boolean mEnableWcg;
 
     @Before
     public void setUp() throws Exception {
@@ -93,6 +97,7 @@ public class WallpaperManagerTest {
         };
         mContext.registerReceiver(mBroadcastReceiver,
                 new IntentFilter(Intent.ACTION_WALLPAPER_CHANGED));
+        mEnableWcg = mWallpaperManager.shouldEnableWideColorGamut();
     }
 
     @After
@@ -351,6 +356,49 @@ public class WallpaperManagerTest {
             Assert.assertTrue(sysuiPid.contentEquals(getSysuiPid()));
         } finally {
             highResolutionWallpaper.recycle();
+        }
+    }
+
+    @Test
+    public void testWideGamutWallpaper() throws IOException {
+        final ColorSpace srgb = ColorSpace.get(ColorSpace.Named.SRGB);
+        final ColorSpace p3 = ColorSpace.get(ColorSpace.Named.DISPLAY_P3);
+        final Bitmap.Config config = Bitmap.Config.ARGB_8888;
+        final Bitmap srgbBitmap = Bitmap.createBitmap(100, 100, config);
+        final Bitmap p3Bitmap = Bitmap.createBitmap(100, 100, config, false, p3);
+
+        try {
+            // SRGB is the default color space.
+            mWallpaperManager.setBitmap(srgbBitmap);
+            assertThat(mWallpaperManager.getBitmap().getColorSpace()).isEqualTo(srgb);
+
+            // If wide gamut is enabled, Display-P3 should be supported.
+            mWallpaperManager.setBitmap(p3Bitmap);
+            assertThat(mWallpaperManager.getBitmap().getColorSpace())
+                    .isEqualTo(mEnableWcg ? p3 : srgb);
+        } finally {
+            srgbBitmap.recycle();
+            p3Bitmap.recycle();
+        }
+    }
+
+    @Test
+    public void testWallpaperSupportsWcg() throws IOException {
+        final int sysWallpaper = WallpaperManager.FLAG_SYSTEM;
+
+        final Bitmap srgbBitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
+        final Bitmap p3Bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888, false,
+                ColorSpace.get(ColorSpace.Named.DISPLAY_P3));
+
+        try {
+            mWallpaperManager.setBitmap(srgbBitmap);
+            assertThat(mWallpaperManager.wallpaperSupportsWcg(sysWallpaper)).isFalse();
+
+            mWallpaperManager.setBitmap(p3Bitmap);
+            assertThat(mWallpaperManager.wallpaperSupportsWcg(sysWallpaper)).isEqualTo(mEnableWcg);
+        } finally {
+            srgbBitmap.recycle();
+            p3Bitmap.recycle();
         }
     }
 
