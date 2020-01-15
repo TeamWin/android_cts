@@ -37,7 +37,6 @@ import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.result.TestResult;
 import com.android.tradefed.result.TestRunResult;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.FileUtil;
 import com.android.tradefed.util.TarUtil;
@@ -68,7 +67,7 @@ import javax.annotation.Nullable;
  * owner, etc.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
-public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test implements IBuildReceiver {
+public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
     @Option(
             name = "skip-device-admin-feature-check",
