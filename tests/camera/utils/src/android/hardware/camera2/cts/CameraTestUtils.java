@@ -1913,8 +1913,8 @@ public class CameraTestUtils extends Assert {
         return new Rect(
                 /*left*/cropCenterX - cropWidth / 2,
                 /*top*/cropCenterY - cropHeight / 2,
-                /*right*/ cropCenterX + cropWidth / 2 - 1,
-                /*bottom*/cropCenterY + cropHeight / 2 - 1);
+                /*right*/ cropCenterX + cropWidth / 2,
+                /*bottom*/cropCenterY + cropHeight / 2);
     }
 
     /**
@@ -1980,11 +1980,10 @@ public class CameraTestUtils extends Assert {
         for (int i = 0; i < requestRegions.length; i++) {
             Rect requestRect = requestRegions[i].getRect();
             Rect resultRect = new Rect();
-            assertTrue("Input 3A region must intersect cropped region",
-                        resultRect.setIntersect(requestRect, cropRect));
+            boolean intersect = resultRect.setIntersect(requestRect, cropRect);
             resultRegions[i] = new MeteringRectangle(
                     resultRect,
-                    requestRegions[i].getMeteringWeight());
+                    intersect ? requestRegions[i].getMeteringWeight() : 0);
         }
         return resultRegions;
     }
