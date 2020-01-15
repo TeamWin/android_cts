@@ -54,17 +54,18 @@ VGA_WIDTH = 640
 #   scene*_1/2/... are same scene split to load balance run times for scenes
 #   scene*_a/b/... are similar scenes that share one or more tests
 ALL_SCENES = ['scene0', 'scene1_1', 'scene1_2', 'scene2_a', 'scene2_b',
-              'scene2_c', 'scene3', 'scene4', 'scene5', 'sensor_fusion']
+              'scene2_c', 'scene2_d', 'scene2_e', 'scene3', 'scene4',
+              'scene5', 'sensor_fusion']
 
 # Scenes that are logically grouped and can be called as group
 GROUPED_SCENES = {
         'scene1': ['scene1_1', 'scene1_2'],
-        'scene2': ['scene2_a', 'scene2_b', 'scene2_c']
+        'scene2': ['scene2_a', 'scene2_b', 'scene2_c', 'scene2_d', 'scene2_e']
 }
 
 # Scenes that can be automated through tablet display
 AUTO_SCENES = ['scene0', 'scene1_1', 'scene1_2', 'scene2_a', 'scene2_b',
-               'scene2_c', 'scene3', 'scene4']
+               'scene2_c', 'scene2_d', 'scene2_e', 'scene3', 'scene4']
 
 SCENE_REQ = {
         'scene0': None,
@@ -73,6 +74,8 @@ SCENE_REQ = {
         'scene2_a': 'The picture in tests/scene2_a.pdf with 3 faces',
         'scene2_b': 'The picture in tests/scene2_b.pdf with 3 faces',
         'scene2_c': 'The picture in tests/scene2_c.pdf with 3 faces',
+        'scene2_d': 'The picture in tests/scene2_d.pdf with 3 faces',
+        'scene2_e': 'The picture in tests/scene2_e.pdf with 3 faces',
         'scene3': 'The ISO 12233 chart',
         'scene4': 'A specific test page of a circle covering at least the '
                   'middle 50% of the scene. See CameraITS.pdf section 2.3.4 '
@@ -106,6 +109,12 @@ NOT_YET_MANDATED = {
         ],
         'scene2_b': [],
         'scene2_c': [],
+        'scene2_d': [
+                ['test_num_faces', 30]
+        ],
+        'scene2_e': [
+                ['test_num_faces', 30]
+        ],
         'scene3': [],
         'scene4': [],
         'scene5': [],
@@ -136,6 +145,8 @@ HIDDEN_PHYSICAL_CAMERA_TESTS = {
         ],
         'scene2_b': [],
         'scene2_c': [],
+        'scene2_d': [],
+        'scene2_e': [],
         'scene3': [],
         'scene4': [
                 'test_aspect_ratio_and_crop'
@@ -158,6 +169,12 @@ REPEATED_TESTS = {
                 ['scene2_a', 'test_num_faces']
         ],
         'scene2_c': [
+                ['scene2_a', 'test_num_faces']
+        ],
+        'scene2_d': [
+                ['scene2_a', 'test_num_faces']
+        ],
+        'scene2_e': [
                 ['scene2_a', 'test_num_faces']
         ],
         'scene3': [],
