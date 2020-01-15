@@ -19,6 +19,8 @@ package android.appsecurity.cts;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.platform.test.annotations.RestrictedBuildTest;
+
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -129,9 +131,18 @@ public class ApexSignatureVerificationTest extends BaseHostJUnit4Test {
         }
     }
 
+    /**
+     * Assert that the preloaded apexes are secure, not signed with wellknown keys.
+     *
+     * Debuggable aosp or gsi rom could not preload official apexes module allowing.
+     *
+     * Note: This test will fail on userdebug / eng devices, but should pass
+     * on production (user) builds.
+     */
+    @SuppressWarnings("productionOnly")
+    @RestrictedBuildTest
     @Test
     public void testApexPubKeyIsNotWellKnownKey() {
-
         for (Map.Entry<String, File> entry : mExtractedTestDirMap.entrySet()) {
             final File pubKeyFile = FileUtil.findFile(entry.getValue(), APEX_PUB_KEY_NAME);
             final Iterator it = mWellKnownKeyFileList.iterator();
