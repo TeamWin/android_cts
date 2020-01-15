@@ -29,6 +29,10 @@ import android.os.HandlerThread;
 import android.os.UserManager;
 import android.test.InstrumentationTestCase;
 
+import org.mockito.internal.util.collections.Sets;
+
+import java.util.Set;
+
 public class OrgOwnedProfileOwnerParentTest extends InstrumentationTestCase {
 
     protected Context mContext;
@@ -87,22 +91,46 @@ public class OrgOwnedProfileOwnerParentTest extends InstrumentationTestCase {
         checkCanOpenCamera(true);
     }
 
+    private static final Set<String> PROFILE_OWNER_ORGANIZATION_OWNED_GLOBAL_RESTRICTIONS =
+            Sets.newSet(
+                    UserManager.DISALLOW_CONFIG_DATE_TIME,
+                    UserManager.DISALLOW_ADD_USER,
+                    UserManager.DISALLOW_BLUETOOTH,
+                    UserManager.DISALLOW_BLUETOOTH_SHARING,
+                    UserManager.DISALLOW_CONFIG_BLUETOOTH,
+                    UserManager.DISALLOW_CONFIG_CELL_BROADCASTS,
+                    UserManager.DISALLOW_CONFIG_LOCATION,
+                    UserManager.DISALLOW_CONFIG_MOBILE_NETWORKS,
+                    UserManager.DISALLOW_CONFIG_PRIVATE_DNS,
+                    UserManager.DISALLOW_CONFIG_TETHERING,
+                    UserManager.DISALLOW_CONFIG_WIFI,
+                    UserManager.DISALLOW_CONTENT_CAPTURE,
+                    UserManager.DISALLOW_CONTENT_SUGGESTIONS,
+                    UserManager.DISALLOW_DATA_ROAMING,
+                    UserManager.DISALLOW_DEBUGGING_FEATURES,
+                    UserManager.DISALLOW_SAFE_BOOT,
+                    UserManager.DISALLOW_SHARE_LOCATION,
+                    UserManager.DISALLOW_SMS,
+                    UserManager.DISALLOW_USB_FILE_TRANSFER
+            );
+
     public void testAddGetAndClearUserRestriction_onParent() {
-        mParentDevicePolicyManager.addUserRestriction(ADMIN_RECEIVER_COMPONENT,
-                UserManager.DISALLOW_CONFIG_DATE_TIME);
+        for (String restriction : PROFILE_OWNER_ORGANIZATION_OWNED_GLOBAL_RESTRICTIONS) {
+            testAddGetAndClearUserRestriction_onParent(restriction);
+        }
+    }
+
+    private void testAddGetAndClearUserRestriction_onParent(String restriction) {
+        mParentDevicePolicyManager.addUserRestriction(ADMIN_RECEIVER_COMPONENT, restriction);
 
         Bundle restrictions = mParentDevicePolicyManager.getUserRestrictions(
                 ADMIN_RECEIVER_COMPONENT);
-        assertThat(restrictions.get(UserManager.DISALLOW_CONFIG_DATE_TIME)).isNotNull();
+        assertThat(restrictions.get(restriction)).isNotNull();
 
-        restrictions = mDevicePolicyManager.getUserRestrictions(ADMIN_RECEIVER_COMPONENT);
-        assertThat(restrictions.get(UserManager.DISALLOW_CONFIG_DATE_TIME)).isNull();
-
-        mParentDevicePolicyManager.clearUserRestriction(ADMIN_RECEIVER_COMPONENT,
-                UserManager.DISALLOW_CONFIG_DATE_TIME);
+        mParentDevicePolicyManager.clearUserRestriction(ADMIN_RECEIVER_COMPONENT, restriction);
 
         restrictions = mParentDevicePolicyManager.getUserRestrictions(ADMIN_RECEIVER_COMPONENT);
-        assertThat(restrictions.get(UserManager.DISALLOW_CONFIG_DATE_TIME)).isNull();
+        assertThat(restrictions.get(restriction)).isNull();
     }
 
     private void checkCanOpenCamera(boolean canOpen) throws Exception {
