@@ -299,7 +299,6 @@ public class TextClassificationManagerTest {
                 conversationActions.getConversationActions();
         assertNotNull(conversationActionsList);
         for (ConversationAction conversationAction : conversationActionsList) {
-            assertThat(conversationAction.getAction()).isNotNull();
             assertThat(conversationAction.getType()).isNotNull();
             assertThat(conversationAction.getConfidenceScore()).isIn(Range.closed(0f, 1.0f));
         }
