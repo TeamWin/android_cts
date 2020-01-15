@@ -26,8 +26,6 @@ import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.CommandResult;
 import com.android.tradefed.util.CommandStatus;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -38,20 +36,6 @@ public class UserspaceRebootHostTest extends BaseHostJUnit4Test  {
 
     private static final String USERSPACE_REBOOT_SUPPORTED_PROP =
             "ro.init.userspace_reboot.is_supported";
-
-    private boolean mWasRoot = false;
-
-    @Before
-    public void setUp() throws Exception {
-        mWasRoot = getDevice().isAdbRoot();
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        if (!mWasRoot && getDevice().isAdbRoot()) {
-            getDevice().disableAdbRoot();
-        }
-    }
 
     /**
      * Runs the given {@code testName} of
@@ -92,10 +76,8 @@ public class UserspaceRebootHostTest extends BaseHostJUnit4Test  {
     public void testUserspaceRebootWithCheckpoint() throws Exception {
         assumeTrue("Userspace reboot not supported on the device",
                 getDevice().getBooleanProperty(USERSPACE_REBOOT_SUPPORTED_PROP, false));
-        // TODO(b/135984674): rewrite this test in a way that doesn't require a call to vdc.
-        assumeTrue("This test requires root access", getDevice().enableAdbRoot());
-        CommandResult result = getDevice().executeShellV2Command(
-                "/system/bin/vdc checkpoint startCheckpoint 1");
+        assumeTrue("Device doesn't support fs checkpointing", isFsCheckpointingSupported());
+        CommandResult result = getDevice().executeShellV2Command("sm start-checkpoint 1");
         Thread.sleep(500);
         assertWithMessage("Failed to start checkpoint : %s", result.getStderr()).that(
                 result.getStatus()).isEqualTo(CommandStatus.SUCCESS);
@@ -109,4 +91,11 @@ public class UserspaceRebootHostTest extends BaseHostJUnit4Test  {
     }
 
     // TODO(b/135984674): add test case that forces unmount of f2fs userdata.
+
+    private boolean isFsCheckpointingSupported() throws Exception {
+        CommandResult result = getDevice().executeShellV2Command("sm supports-checkpoint");
+        assertWithMessage("Failed to check if fs checkpointing is supported : %s",
+                result.getStderr()).that(result.getStatus()).isEqualTo(CommandStatus.SUCCESS);
+        return "true".equals(result.getStdout().trim());
+    }
 }
