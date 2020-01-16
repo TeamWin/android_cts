@@ -424,7 +424,8 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        executeDeviceOwnerTest("SystemUpdatePolicyTest");
+        // Disabled due to 145932189
+        // executeDeviceOwnerTest("SystemUpdatePolicyTest");
     }
 
     public void testWifiConfigLockdown() throws Exception {
