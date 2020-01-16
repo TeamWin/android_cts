@@ -1496,6 +1496,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                 CameraCharacteristics.SENSOR_INFO_PRE_CORRECTION_ACTIVE_ARRAY_SIZE);
             Rect activeArray = c.get(
                 CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+            Integer facing = c.get(CameraCharacteristics.LENS_FACING);
             float jpegAspectRatioThreshold = .01f;
             boolean jpegSizeMatch = false;
 
@@ -1630,7 +1631,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                         depthIsExclusive != null);
 
                 verifyLensCalibration(poseRotation, poseTranslation, poseReference,
-                        cameraIntrinsics, distortion, precorrectionArray);
+                        cameraIntrinsics, distortion, precorrectionArray, facing);
 
             } else {
                 boolean hasFields =
@@ -1664,7 +1665,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
 
     private void verifyLensCalibration(float[] poseRotation, float[] poseTranslation,
             Integer poseReference, float[] cameraIntrinsics, float[] distortion,
-            Rect precorrectionArray) {
+            Rect precorrectionArray, Integer facing) {
 
         mCollector.expectTrue(
             "LENS_POSE_ROTATION not right size",
@@ -1692,7 +1693,54 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                 "LENS_POSE_ROTATION quarternion must be unit-length",
                 0.9999f < normSq && normSq < 1.0001f);
 
-            // TODO: Cross-validate orientation/facing and poseRotation
+            if (facing.intValue() == CameraMetadata.LENS_FACING_FRONT ||
+                    facing.intValue() == CameraMetadata.LENS_FACING_BACK) {
+                // Use the screen's natural facing to test pose rotation
+                int[] facingSensor = new int[]{0, 0, 1};
+                float[][] r = new float[][] {
+                        { 1.0f - 2 * poseRotation[1] * poseRotation[1]
+                              - 2 * poseRotation[2] * poseRotation[2],
+                          2 * poseRotation[0] * poseRotation[1]
+                              - 2 * poseRotation[2] * poseRotation[3],
+                          2 * poseRotation[0] * poseRotation[2]
+                              + 2 * poseRotation[1] * poseRotation[3] },
+                        { 2 * poseRotation[0] * poseRotation[1]
+                              + 2 * poseRotation[2] * poseRotation[3],
+                          1.0f - 2 * poseRotation[0] * poseRotation[0]
+                              - 2 * poseRotation[2] * poseRotation[2],
+                          2 * poseRotation[1] * poseRotation[2]
+                              - 2 * poseRotation[0] * poseRotation[3] },
+                        { 2 * poseRotation[0] * poseRotation[2]
+                              - 2 * poseRotation[1] * poseRotation[3],
+                          2 * poseRotation[1] * poseRotation[2]
+                              + 2 * poseRotation[0] * poseRotation[3],
+                          1.0f - 2 * poseRotation[0] * poseRotation[0]
+                              - 2 * poseRotation[1] * poseRotation[1] }
+                      };
+                // The screen natural facing in camera's coordinate system
+                float facingCameraX = r[0][0] * facingSensor[0] + r[0][1] * facingSensor[1] +
+                        r[0][2] * facingSensor[2];
+                float facingCameraY = r[1][0] * facingSensor[0] + r[1][1] * facingSensor[1] +
+                        r[1][2] * facingSensor[2];
+                float facingCameraZ = r[2][0] * facingSensor[0] + r[2][1] * facingSensor[1] +
+                        r[2][2] * facingSensor[2];
+
+                mCollector.expectTrue("LENS_POSE_ROTATION must be consistent with lens facing",
+                        (facingCameraZ > 0) ^
+                        (facing.intValue() == CameraMetadata.LENS_FACING_BACK));
+
+                if (poseReference == CameraCharacteristics.LENS_POSE_REFERENCE_UNDEFINED) {
+                    mCollector.expectTrue(
+                            "LENS_POSE_ROTATION quarternion must be consistent with camera's " +
+                            "default facing",
+                            Math.abs(facingCameraX) < 0.00001f &&
+                            Math.abs(facingCameraY) < 0.00001f &&
+                            Math.abs(facingCameraZ) > 0.99999f &&
+                            Math.abs(facingCameraZ) < 1.00001f);
+                }
+            }
+
+            // TODO: Cross-validate orientation and poseRotation
         }
 
         if (poseTranslation != null && poseTranslation.length == 3) {
@@ -1702,6 +1750,13 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                     poseTranslation[2] * poseTranslation[2];
             mCollector.expectTrue("Pose translation is larger than 1 m",
                     normSq < 1.f);
+
+            // Pose translation should be all 0s for UNDEFINED pose reference.
+            if (poseReference != null && poseReference ==
+                    CameraCharacteristics.LENS_POSE_REFERENCE_UNDEFINED) {
+                mCollector.expectTrue("Pose translation aren't all 0s ",
+                        normSq < 0.00001f);
+            }
         }
 
         if (poseReference != null) {
@@ -1710,6 +1765,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             switch (ref) {
                 case CameraCharacteristics.LENS_POSE_REFERENCE_PRIMARY_CAMERA:
                 case CameraCharacteristics.LENS_POSE_REFERENCE_GYROSCOPE:
+                case CameraCharacteristics.LENS_POSE_REFERENCE_UNDEFINED:
                     // Allowed values
                     validReference = true;
                     break;
@@ -2145,11 +2201,12 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                     float[] cameraIntrinsics = pc.get(
                             CameraCharacteristics.LENS_INTRINSIC_CALIBRATION);
                     float[] distortion = getLensDistortion(pc);
+                    Integer facing = pc.get(CameraCharacteristics.LENS_FACING);
                     Rect precorrectionArray = pc.get(
                             CameraCharacteristics.SENSOR_INFO_PRE_CORRECTION_ACTIVE_ARRAY_SIZE);
 
                     verifyLensCalibration(poseRotation, poseTranslation, poseReference,
-                            cameraIntrinsics, distortion, precorrectionArray);
+                            cameraIntrinsics, distortion, precorrectionArray, facing);
 
                     Integer timestampSourcePhysical =
                             pc.get(CameraCharacteristics.SENSOR_INFO_TIMESTAMP_SOURCE);
