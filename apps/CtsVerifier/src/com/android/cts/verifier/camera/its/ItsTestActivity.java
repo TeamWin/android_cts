@@ -353,6 +353,7 @@ public class ItsTestActivity extends DialogTestListActivity {
                             + e, Toast.LENGTH_SHORT).show();
         }
 
+        super.onCreate(savedInstanceState);
         if (mToBeTestedCameraIds.size() == 0) {
             showToast(R.string.all_exempted_devices);
             ItsTestActivity.this.getReportLog().setSummary(
@@ -360,7 +361,6 @@ public class ItsTestActivity extends DialogTestListActivity {
                     , 1.0, ResultType.NEUTRAL, ResultUnit.NONE);
             setTestResultAndFinish(true);
         }
-        super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
