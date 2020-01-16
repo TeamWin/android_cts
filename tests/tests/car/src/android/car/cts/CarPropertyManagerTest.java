@@ -15,40 +15,38 @@
  */
 package android.car.cts;
 
-import static java.lang.Integer.toHexString;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import static java.lang.Integer.toHexString;
 
 import android.car.Car;
 import android.car.VehicleAreaSeat;
-import android.car.VehicleAreaType;
 import android.car.VehiclePropertyIds;
 import android.car.hardware.CarPropertyConfig;
 import android.car.hardware.CarPropertyValue;
 import android.car.hardware.property.CarPropertyManager;
 import android.car.hardware.property.CarPropertyManager.CarPropertyEventCallback;
 import android.platform.test.annotations.RequiresDevice;
-
-import androidx.test.runner.AndroidJUnit4;
-
-import com.android.compatibility.common.util.CddTest;
-
-import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.assertTrue;
-
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.ArraySet;
 import android.util.Log;
 import android.util.SparseArray;
-import com.android.internal.annotations.GuardedBy;
-import java.util.List;
+
+import androidx.annotation.GuardedBy;
+import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.List;
 
 @SmallTest
 @RequiresDevice

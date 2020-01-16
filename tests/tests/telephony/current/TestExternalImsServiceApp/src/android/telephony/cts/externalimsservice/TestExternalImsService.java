@@ -22,6 +22,7 @@ import android.telephony.ims.ImsReasonInfo;
 import android.telephony.ims.cts.ImsUtils;
 import android.telephony.ims.cts.TestImsService;
 import android.telephony.ims.feature.RcsFeature.RcsImsCapabilities;
+import android.telephony.ims.stub.ImsConfigImplBase;
 import android.telephony.ims.stub.ImsFeatureConfiguration;
 import android.telephony.ims.stub.ImsRegistrationImplBase;
 import android.util.Log;
@@ -58,6 +59,15 @@ public class TestExternalImsService extends TestImsService {
 
         public void resetState() {
             TestExternalImsService.this.resetState();
+        }
+
+        public String getConfigString(int subId, int item) {
+            ImsConfigImplBase imsConfig = TestExternalImsService.this.getImsService().getConfig(
+                    subId);
+            if (imsConfig != null) {
+                return imsConfig.getConfigString(item);
+            }
+            return null;
         }
 
         public void triggerImsOnRegistered(int imsRadioTech) {

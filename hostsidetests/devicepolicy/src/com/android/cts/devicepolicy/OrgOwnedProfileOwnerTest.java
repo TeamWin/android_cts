@@ -18,6 +18,7 @@ package com.android.cts.devicepolicy;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.FlakyTest;
@@ -161,11 +162,11 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         mHasSecondaryProfileToRemove = true;
 
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
-                "testAddUserRestriction_onParent", mUserId);
+                "testAddUserRestrictionDisallowConfigDateTime_onParent", mUserId);
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
-                "testHasUserRestriction", mUserId);
+                "testHasUserRestrictionDisallowConfigDateTime", mUserId);
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
-                "testHasUserRestriction", secondaryUserId);
+                "testHasUserRestrictionDisallowConfigDateTime", secondaryUserId);
         removeOrgOwnedProfile();
         assertHasNoUser(mUserId);
         mHasProfileToRemove = false;
@@ -175,7 +176,57 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
         // User restrictions are not persist after organization-owned profile owner is removed
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
-                "testUserRestrictionAreNotPersisted", secondaryUserId);
+                "testUserRestrictionDisallowConfigDateTimeIsNotPersisted", secondaryUserId);
+    }
+
+    @Test
+    public void testUserRestrictionsSetOnParentAreEnforced() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        int userId = createUser();
+        removeUser(userId);
+
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
+                "testAddUserRestrictionDisallowAddUser_onParent", mUserId);
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
+                "testHasUserRestrictionDisallowAddUser", mUserId);
+
+        // Make sure the user restriction is enforced
+        failToCreateUser();
+
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
+                "testHasUserRestrictionDisallowAddUser", mUserId);
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
+                "testClearUserRestrictionDisallowAddUser", mUserId);
+    }
+
+    private void failToCreateUser() throws Exception {
+        String command ="pm create-user " + "TestUser_" + System.currentTimeMillis();
+        String commandOutput = getDevice().executeShellCommand(command);
+
+        String[] tokens = commandOutput.split("\\s+");
+        assertTrue(tokens.length > 0);
+        assertEquals("Error:", tokens[0]);
+    }
+
+    protected int createUser() throws Exception {
+        String command ="pm create-user " + "TestUser_" + System.currentTimeMillis();
+        String commandOutput = getDevice().executeShellCommand(command);
+
+        String[] tokens = commandOutput.split("\\s+");
+        assertTrue(tokens.length > 0);
+        assertEquals("Success:", tokens[0]);
+        int userId = Integer.parseInt(tokens[tokens.length-1]);
+        startUser(userId);
+        return userId;
+    }
+
+    protected void removeUser(int userId) throws Exception  {
+        if (listUsers().contains(userId) && userId != USER_SYSTEM) {
+            String command = "am stop-user -w -f " + userId;
+            getDevice().executeShellCommand(command);
+        }
     }
 
     @Test

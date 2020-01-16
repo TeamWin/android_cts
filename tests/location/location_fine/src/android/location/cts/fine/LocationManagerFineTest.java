@@ -1097,6 +1097,12 @@ public class LocationManagerFineTest {
     public void testGetGnssHardwareModelName() {
         // model name should be longer than 4 characters
         String gnssHardwareModelName = mManager.getGnssHardwareModelName();
+
+        // Hardware model name was added in HAL 1.1. HAL 1.0 and earlier do not have this set.
+        if (gnssHardwareModelName == null) {
+            Log.w(TAG, "gnssHardwareModelName is null. Skipping test.");
+            return;
+        }
         assertThat(gnssHardwareModelName.length()).isGreaterThan(3);
     }
 

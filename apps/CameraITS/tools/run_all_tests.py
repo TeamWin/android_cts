@@ -28,6 +28,7 @@ import its.cv2image
 import its.device
 from its.device import ItsSession
 import its.image
+import rotation_rig as rot
 
 # For sanity checking the installed APK's target SDK version
 MIN_SUPPORTED_SDK_VERSION = 28  # P
@@ -54,17 +55,18 @@ VGA_WIDTH = 640
 #   scene*_1/2/... are same scene split to load balance run times for scenes
 #   scene*_a/b/... are similar scenes that share one or more tests
 ALL_SCENES = ['scene0', 'scene1_1', 'scene1_2', 'scene2_a', 'scene2_b',
-              'scene2_c', 'scene3', 'scene4', 'scene5', 'sensor_fusion']
+              'scene2_c', 'scene2_d', 'scene2_e', 'scene3', 'scene4',
+              'scene5', 'sensor_fusion']
 
 # Scenes that are logically grouped and can be called as group
 GROUPED_SCENES = {
         'scene1': ['scene1_1', 'scene1_2'],
-        'scene2': ['scene2_a', 'scene2_b', 'scene2_c']
+        'scene2': ['scene2_a', 'scene2_b', 'scene2_c', 'scene2_d', 'scene2_e']
 }
 
 # Scenes that can be automated through tablet display
 AUTO_SCENES = ['scene0', 'scene1_1', 'scene1_2', 'scene2_a', 'scene2_b',
-               'scene2_c', 'scene3', 'scene4']
+               'scene2_c', 'scene2_d', 'scene2_e', 'scene3', 'scene4']
 
 SCENE_REQ = {
         'scene0': None,
@@ -73,6 +75,8 @@ SCENE_REQ = {
         'scene2_a': 'The picture in tests/scene2_a.pdf with 3 faces',
         'scene2_b': 'The picture in tests/scene2_b.pdf with 3 faces',
         'scene2_c': 'The picture in tests/scene2_c.pdf with 3 faces',
+        'scene2_d': 'The picture in tests/scene2_d.pdf with 3 faces',
+        'scene2_e': 'The picture in tests/scene2_e.pdf with 3 faces',
         'scene3': 'The ISO 12233 chart',
         'scene4': 'A specific test page of a circle covering at least the '
                   'middle 50% of the scene. See CameraITS.pdf section 2.3.4 '
@@ -106,6 +110,12 @@ NOT_YET_MANDATED = {
         ],
         'scene2_b': [],
         'scene2_c': [],
+        'scene2_d': [
+                ['test_num_faces', 30]
+        ],
+        'scene2_e': [
+                ['test_num_faces', 30]
+        ],
         'scene3': [],
         'scene4': [],
         'scene5': [],
@@ -136,6 +146,8 @@ HIDDEN_PHYSICAL_CAMERA_TESTS = {
         ],
         'scene2_b': [],
         'scene2_c': [],
+        'scene2_d': [],
+        'scene2_e': [],
         'scene3': [],
         'scene4': [
                 'test_aspect_ratio_and_crop'
@@ -158,6 +170,12 @@ REPEATED_TESTS = {
                 ['scene2_a', 'test_num_faces']
         ],
         'scene2_c': [
+                ['scene2_a', 'test_num_faces']
+        ],
+        'scene2_d': [
+                ['scene2_a', 'test_num_faces']
+        ],
+        'scene2_e': [
                 ['scene2_a', 'test_num_faces']
         ],
         'scene3': [],
@@ -277,11 +295,11 @@ def run_rotations(camera_id, test_name):
     with ItsSession(camera_id) as cam:
         props = cam.get_camera_properties()
         method = {'test_sensor_fusion': {
-                        'flag': its.caps.sensor_fusion_capable(props),
-                        'runs': 10},
+                          'flag': its.caps.sensor_fusion_capable(props),
+                          'runs': 10},
                   'test_multi_camera_frame_sync': {
-                        'flag': its.caps.multi_camera_frame_sync_capable(props),
-                        'runs': 5}
+                          'flag': its.caps.multi_camera_frame_sync_capable(props),
+                          'runs': 5}
                  }
         return method[test_name]
 
@@ -308,7 +326,9 @@ def main():
         result:  Device ID to forward results to (in addition to the device
                  that the tests are running on).
         rot_rig: ID of the rotation rig being used (formatted as
-                 "<vendor ID>:<product ID>:<channel #>" or "default")
+                 "<vendor ID>:<product ID>:<channel #>" or "default" for
+                 Canakit-based rotators or "arduino:<channel #>" for
+                 Arduino-based rotators)
         tmp_dir: location of temp directory for output files
         skip_scene_validation: force skip scene validation. Used when test scene
                  is setup up front and don't require tester validation.
@@ -327,19 +347,19 @@ def main():
     one_camera_argv = sys.argv[1:]
 
     for s in list(sys.argv[1:]):
-        if s[:7] == "camera=" and len(s) > 7:
+        if s[:7] == 'camera=' and len(s) > 7:
             camera_ids = s[7:].split(',')
             camera_id_combos = its.device.parse_camera_ids(camera_ids)
             one_camera_argv.remove(s)
-        elif s[:7] == "scenes=" and len(s) > 7:
+        elif s[:7] == 'scenes=' and len(s) > 7:
             scenes = s[7:].split(',')
         elif s[:6] == 'chart=' and len(s) > 6:
             chart_host_id = s[6:]
         elif s[:7] == 'result=' and len(s) > 7:
             result_device_id = s[7:]
         elif s[:8] == 'rot_rig=' and len(s) > 8:
-            rot_rig_id = s[8:]  # valid values: 'default' or '$VID:$PID:$CH'
-            # The default '$VID:$PID:$CH' is '04d8:fc73:1'
+            rot_rig_id = s[8:]  # valid values: 'default', '$VID:$PID:$CH',
+            # or 'arduino:$CH'. The default '$VID:$PID:$CH' is '04d8:fc73:1'
         elif s[:8] == 'tmp_dir=' and len(s) > 8:
             tmp_dir = s[8:]
         elif s == 'skip_scene_validation':
@@ -459,7 +479,7 @@ def main():
     if not camera_id_combos:
         with its.device.ItsSession() as cam:
             camera_ids = cam.get_camera_ids()
-            camera_id_combos = its.device.parse_camera_ids(camera_ids);
+            camera_id_combos = its.device.parse_camera_ids(camera_ids)
 
     print "Running ITS on camera: %s, scene %s" % (camera_id_combos, scenes)
 
@@ -581,6 +601,7 @@ def main():
                                % chart_host_id)
                         subprocess.call(cmd.split())
                 t0 = time.time()
+                t_rotate = 0.0  # time in seconds
                 for num_try in range(NUM_TRYS):
                     outdir = os.path.join(topdir, id_combo_string, scene)
                     outpath = os.path.join(outdir, testname+'_stdout.txt')
@@ -594,6 +615,9 @@ def main():
                                 rig = 'python tools/rotation_rig.py rotator=%s num_rotations=%s' % (
                                         rot_rig_id, rotation_props['runs'])
                                 subprocess.Popen(rig.split())
+                                t_rotate = (rotation_props['runs'] *
+                                            len(rot.ARDUINO_ANGLES) *
+                                            rot.ARDUINO_MOVE_TIME) + 2  # 2s slop
                             else:
                                 print 'Rotate phone 15s as shown in SensorFusion.pdf'
                         else:
@@ -616,7 +640,16 @@ def main():
                                 break
                         else:
                             break
-                t1 = time.time()
+                t_test = time.time() - t0
+
+                # define rotator_type
+                rotator_type = 'canakit'
+                if 'arduino' in rot_rig_id.split(':'):
+                    rotator_type = 'arduino'
+
+                # if arduino, wait for rotations to stop
+                if (rotator_type == 'arduino' and t_rotate > t_test):
+                    time.sleep(t_rotate - t_test)
 
                 test_failed = False
                 if test_code == 0:
@@ -633,10 +666,14 @@ def main():
                     numfail += 1
                     test_failed = True
 
-                msg = "%s %s/%s [%.1fs]" % (retstr, scene, testname, t1-t0)
+                msg = '%s %s/%s' % (retstr, scene, testname)
+                if rotator_type == 'arduino':
+                    msg += ' [%.1fs]' % t_rotate
+                else:
+                    msg += ' [%.1fs]' % t_test
                 print msg
                 its.device.adb_log(device_id, msg)
-                msg_short = "%s %s [%.1fs]" % (retstr, testname, t1-t0)
+                msg_short = '%s %s [%.1fs]' % (retstr, testname, t_test)
                 if test_failed:
                     summary += msg_short + "\n"
 
