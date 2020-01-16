@@ -20,6 +20,7 @@
 #include <jni.h>
 #include <android/asset_manager.h>
 #include <android/asset_manager_jni.h>
+#include <android/data_space.h>
 #include <android/bitmap.h>
 #include <android/imagedecoder.h>
 #include <android/rect.h>
@@ -146,6 +147,7 @@ static void testNullDecoder(JNIEnv* env, jclass, jobject jAssets, jstring jFile)
     ASSERT_EQ(0, AImageDecoderHeaderInfo_getHeight(nullptr));
     ASSERT_EQ(nullptr, AImageDecoderHeaderInfo_getMimeType(nullptr));
     ASSERT_EQ(false, AImageDecoderHeaderInfo_isAnimated(nullptr));
+    ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, AImageDecoderHeaderInfo_getDataSpace(nullptr));
 
     {
         int result = AImageDecoder_setTargetSize(nullptr, 1, 1);
@@ -156,10 +158,18 @@ static void testNullDecoder(JNIEnv* env, jclass, jobject jAssets, jstring jFile)
         int result = AImageDecoder_setCrop(nullptr, rect);
         ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, result);
     }
+
+    for (ADataSpace dataSpace : { ADATASPACE_UNKNOWN, ADATASPACE_SCRGB_LINEAR, ADATASPACE_SRGB,
+                                  ADATASPACE_SCRGB, ADATASPACE_DISPLAY_P3, ADATASPACE_BT2020_PQ,
+                                  ADATASPACE_ADOBE_RGB, ADATASPACE_BT2020, ADATASPACE_BT709,
+                                  ADATASPACE_DCI_P3, ADATASPACE_SRGB_LINEAR }) {
+        int result = AImageDecoder_setDataSpace(nullptr, dataSpace);
+        ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, result);
+    }
 }
 
 static void testInfo(JNIEnv* env, jclass, jlong imageDecoderPtr, jint width, jint height,
-                     jstring jMimeType, jboolean isAnimated, jboolean isF16) {
+                     jstring jMimeType, jboolean isAnimated, jboolean isF16, jint dataSpace) {
     AImageDecoder* decoder = reinterpret_cast<AImageDecoder*>(imageDecoderPtr);
     ASSERT_NE(decoder, nullptr);
     DecoderDeleter decoderDeleter(decoder, AImageDecoder_delete);
@@ -182,6 +192,8 @@ static void testInfo(JNIEnv* env, jclass, jlong imageDecoderPtr, jint width, jin
     } else {
         ASSERT_EQ(ANDROID_BITMAP_FORMAT_RGBA_8888, format);
     }
+
+    ASSERT_EQ(dataSpace, AImageDecoderHeaderInfo_getDataSpace(info));
 }
 
 static jlong openAssetNative(JNIEnv* env, jclass, jobject jAssets, jstring jFile) {
@@ -540,27 +552,54 @@ static void testDecode(JNIEnv* env, jclass, jlong imageDecoderPtr,
     ASSERT_TRUE(bitmapsEqual(env, jbitmap, (AndroidBitmapFormat) androidBitmapFormat,
                              width, height, alphaFlags, minStride, pixels, minStride));
 
+    // Setting to an invalid data space is unsupported, and has no effect on the
+    // decodes below.
+    for (int32_t dataSpace : std::initializer_list<int32_t>{ -1, ADATASPACE_UNKNOWN, 400 }) {
+        result = AImageDecoder_setDataSpace(decoder, dataSpace);
+        ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, result);
+    }
+
     // Used for subsequent decodes, to ensure they are identical to the
     // original. For opaque images, this verifies that using PREMUL or UNPREMUL
     // look the same. For all images, this verifies that decodeImage can be
     // called multiple times.
     auto decodeAgain = [=](bool unpremultipliedRequired) {
         int r = AImageDecoder_setUnpremultipliedRequired(decoder, unpremultipliedRequired);
-        ASSERT_EQ(ANDROID_IMAGE_DECODER_SUCCESS, r);
+        if (ANDROID_IMAGE_DECODER_SUCCESS != r) {
+            fail(env, "Failed to set alpha");
+            return false;
+        }
 
         void* otherPixels = malloc(size);
         r = AImageDecoder_decodeImage(decoder, otherPixels, minStride, size);
-        ASSERT_EQ(ANDROID_IMAGE_DECODER_SUCCESS, r);
+        if (ANDROID_IMAGE_DECODER_SUCCESS != r) {
+            fail(env, "Failed to decode again with different settings");
+            return false;
+        }
 
-        ASSERT_TRUE(bitmapsEqual(minStride, height, pixels, minStride, otherPixels, minStride));
+        if (!bitmapsEqual(minStride, height, pixels, minStride, otherPixels, minStride)) {
+            free(otherPixels);
+            fail(env, "Decoding again with different settings did not match!");
+            return false;
+        }
         free(otherPixels);
+        return true;
     };
     if (alphaFlags == ANDROID_BITMAP_FLAGS_ALPHA_OPAQUE) {
         for (bool unpremultipliedRequired: { true, false }) {
-            decodeAgain(unpremultipliedRequired);
+            if (!decodeAgain(unpremultipliedRequired)) return;
         }
     } else {
-        decodeAgain(unpremul);
+        if (!decodeAgain(unpremul)) return;
+    }
+
+    if (androidBitmapFormat == ANDROID_BITMAP_FORMAT_A_8) {
+        // Attempting to set an ADataSpace is ignored by an A_8 decode.
+        for (ADataSpace dataSpace : { ADATASPACE_DCI_P3, ADATASPACE_ADOBE_RGB }) {
+            result = AImageDecoder_setDataSpace(decoder, dataSpace);
+            ASSERT_EQ(ANDROID_IMAGE_DECODER_SUCCESS, result);
+            if (!decodeAgain(alphaFlags)) return;
+        }
     }
 
     free(pixels);
@@ -1007,6 +1046,42 @@ static void testScalePlusUnpremul(JNIEnv* env, jclass, jlong imageDecoderPtr) {
     }
 }
 
+static void testDecodeSetDataSpace(JNIEnv* env, jclass, jlong imageDecoderPtr,
+                                   jobject jbitmap, jint dataSpace) {
+    AImageDecoder* decoder = reinterpret_cast<AImageDecoder*>(imageDecoderPtr);
+    DecoderDeleter decoderDeleter(decoder, AImageDecoder_delete);
+
+    ASSERT_EQ(dataSpace, AndroidBitmap_getDataSpace(env, jbitmap));
+
+    int result = AImageDecoder_setDataSpace(decoder, dataSpace);
+    ASSERT_EQ(ANDROID_IMAGE_DECODER_SUCCESS, result);
+
+    AndroidBitmapInfo jInfo;
+    int bitmapResult = AndroidBitmap_getInfo(env, jbitmap, &jInfo);
+    ASSERT_EQ(ANDROID_BITMAP_RESULT_SUCCESS, bitmapResult);
+
+    result = AImageDecoder_setAndroidBitmapFormat(decoder, jInfo.format);
+    ASSERT_EQ(ANDROID_IMAGE_DECODER_SUCCESS, result);
+
+    const AImageDecoderHeaderInfo* info = AImageDecoder_getHeaderInfo(decoder);
+    ASSERT_NE(info, nullptr);
+
+    const int32_t width = AImageDecoderHeaderInfo_getWidth(info);
+    const int32_t height = AImageDecoderHeaderInfo_getHeight(info);
+    int alphaFlags = AImageDecoderHeaderInfo_getAlphaFlags(info);
+
+    size_t minStride = AImageDecoder_getMinimumStride(decoder);
+    size_t size = minStride * height;
+    void* pixels = malloc(size);
+
+    result = AImageDecoder_decodeImage(decoder, pixels, minStride, size);
+    ASSERT_EQ(ANDROID_IMAGE_DECODER_SUCCESS, result);
+
+    ASSERT_TRUE(bitmapsEqual(env, jbitmap, (AndroidBitmapFormat) jInfo.format,
+                             width, height, alphaFlags, minStride, pixels, minStride));
+    free(pixels);
+}
+
 #define ASSET_MANAGER "Landroid/content/res/AssetManager;"
 #define STRING "Ljava/lang/String;"
 #define BITMAP "Landroid/graphics/Bitmap;"
@@ -1014,7 +1089,7 @@ static void testScalePlusUnpremul(JNIEnv* env, jclass, jlong imageDecoderPtr) {
 static JNINativeMethod gMethods[] = {
     { "nTestEmptyCreate", "()V", (void*) testEmptyCreate },
     { "nTestNullDecoder", "(" ASSET_MANAGER STRING ")V", (void*) testNullDecoder },
-    { "nTestInfo", "(JII" STRING "ZZ)V", (void*) testInfo },
+    { "nTestInfo", "(JII" STRING "ZZI)V", (void*) testInfo },
     { "nOpenAsset", "(" ASSET_MANAGER STRING ")J", (void*) openAssetNative },
     { "nCloseAsset", "(J)V", (void*) closeAsset },
     { "nCreateFromAsset", "(J)J", (void*) createFromAsset },
@@ -1033,6 +1108,7 @@ static JNINativeMethod gMethods[] = {
     { "nTestSetCrop", "(" ASSET_MANAGER STRING ")V", (void*) testSetCrop },
     { "nTestDecodeCrop", "(J" BITMAP "IIIIII)V", (void*) testDecodeCrop },
     { "nTestScalePlusUnpremul", "(J)V", (void*) testScalePlusUnpremul },
+    { "nTestDecode", "(J" BITMAP "I)V", (void*) testDecodeSetDataSpace },
 };
 
 int register_android_graphics_cts_AImageDecoderTest(JNIEnv* env) {

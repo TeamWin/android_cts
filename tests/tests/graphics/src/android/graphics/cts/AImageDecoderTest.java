@@ -28,6 +28,9 @@ import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.ColorSpace;
+import android.graphics.ColorSpace.Named;
 import android.graphics.ImageDecoder;
 import android.graphics.Rect;
 import android.net.Uri;
@@ -43,6 +46,7 @@ import org.junit.runner.RunWith;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -111,6 +115,13 @@ public class AImageDecoderTest {
         nTestNullDecoder(getAssetManager(), record.name);
     }
 
+    private static int nativeDataSpace(ColorSpace cs) {
+        if (cs == null) {
+            return DataSpace.ADATASPACE_UNKNOWN;
+        }
+        return DataSpace.fromColorSpace(cs);
+    }
+
     @Test
     @Parameters(method = "getAssetRecords")
     public void testCreateBuffer(ImageDecoderTest.AssetRecord record) {
@@ -120,7 +131,8 @@ public class AImageDecoderTest {
         long aimagedecoder = nCreateFromAssetBuffer(asset);
 
         nTestInfo(aimagedecoder, record.width, record.height, "image/png",
-                false /* isAnimated */, record.isF16);
+                false /* isAnimated */, record.isF16,
+                nativeDataSpace(record.getColorSpace()));
         nCloseAsset(asset);
     }
 
@@ -133,7 +145,8 @@ public class AImageDecoderTest {
         long aimagedecoder = nCreateFromAssetFd(asset);
 
         nTestInfo(aimagedecoder, record.width, record.height, "image/png",
-                false /* isAnimated */, record.isF16);
+                false /* isAnimated */, record.isF16,
+                nativeDataSpace(record.getColorSpace()));
         nCloseAsset(asset);
     }
 
@@ -144,7 +157,8 @@ public class AImageDecoderTest {
         long aimagedecoder = nCreateFromAsset(asset);
 
         nTestInfo(aimagedecoder, record.width, record.height, "image/png",
-                false /* isAnimated */, record.isF16);
+                false /* isAnimated */, record.isF16,
+                nativeDataSpace(record.getColorSpace()));
         nCloseAsset(asset);
     }
 
@@ -169,7 +183,8 @@ public class AImageDecoderTest {
             long aimagedecoder = nCreateFromFd(pfd.getFd());
 
             nTestInfo(aimagedecoder, record.width, record.height, record.mimeType,
-                    false /* isAnimated */, false /*isF16*/);
+                    false /* isAnimated */, false /*isF16*/,
+                    nativeDataSpace(record.colorSpace));
         } catch (FileNotFoundException e) {
             fail("Could not open " + Utils.getAsResourceUri(record.resId));
         }
@@ -186,7 +201,8 @@ public class AImageDecoderTest {
             long aimagedecoder = nCreateFromFd(pfd.getFd());
 
             nTestInfo(aimagedecoder, record.width, record.height, record.mimeType,
-                    false /* isAnimated */, false /*isF16*/);
+                    false /* isAnimated */, false /*isF16*/,
+                    nativeDataSpace(record.colorSpace));
         } catch (FileNotFoundException e) {
             fail("Could not open " + Utils.getAsResourceUri(record.resId));
         } catch (ErrnoException err) {
@@ -849,6 +865,123 @@ public class AImageDecoderTest {
         nCloseAsset(asset);
     }
 
+    private static File createCompressedBitmap(int width, int height, ColorSpace colorSpace,
+            Bitmap.CompressFormat format) {
+        File dir = InstrumentationRegistry.getTargetContext().getFilesDir();
+        dir.mkdirs();
+
+        File file = new File(dir, colorSpace.getName());
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+            // If the file does not exist it will be handled below.
+        }
+        if (!file.exists()) {
+            fail("Failed to create new File for " + file + "!");
+        }
+
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888, true,
+                colorSpace);
+        bitmap.eraseColor(Color.BLUE);
+
+        try (FileOutputStream fOutput = new FileOutputStream(file)) {
+            bitmap.compress(format, 80, fOutput);
+            return file;
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail("Failed to create file \"" + file + "\" with exception " + e);
+            return null;
+        }
+    }
+
+    private static Object[] rgbColorSpaces() {
+        return BitmapTest.getRgbColorSpaces().toArray();
+    }
+
+    private static Object[] rgbColorSpacesAndCompressFormats() {
+        return ImageDecoderTest.crossProduct(rgbColorSpaces(), Bitmap.CompressFormat.values());
+    }
+
+    String toMimeType(Bitmap.CompressFormat format) {
+        switch (format) {
+            case JPEG:
+                return "image/jpeg";
+            case PNG:
+                return "image/png";
+            case WEBP:
+            case WEBP_LOSSY:
+            case WEBP_LOSSLESS:
+                return "image/webp";
+            default:
+                return "";
+        }
+    }
+
+    @Test
+    @Parameters(method = "rgbColorSpacesAndCompressFormats")
+    public void testGetDataSpace(ColorSpace colorSpace, Bitmap.CompressFormat format) {
+        if (colorSpace == ColorSpace.get(Named.EXTENDED_SRGB)
+                || colorSpace == ColorSpace.get(Named.LINEAR_EXTENDED_SRGB)) {
+            // These will only be reported when the default AndroidBitmapFormat is F16.
+            // Bitmap.compress will not compress to an image that will be decoded as F16 by default,
+            // so these are covered by the AssetRecord tests.
+            return;
+        }
+
+        final int width = 10;
+        final int height = 10;
+        File file = createCompressedBitmap(width, height, colorSpace, format);
+        assertNotNull(file);
+
+        int dataSpace = DataSpace.fromColorSpace(colorSpace);
+
+        try (ParcelFileDescriptor pfd = ParcelFileDescriptor.open(file,
+                ParcelFileDescriptor.MODE_READ_ONLY)) {
+            long aimagedecoder = nCreateFromFd(pfd.getFd());
+            nTestInfo(aimagedecoder, width, height, toMimeType(format), false, false, dataSpace);
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail("Could not read " + file);
+        }
+    }
+
+    private static Bitmap decode(ImageDecoder.Source src, ColorSpace colorSpace) {
+        try {
+            return ImageDecoder.decodeBitmap(src, (decoder, info, source) -> {
+                // So we can compare pixels to the native decode.
+                decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+
+                decoder.setTargetColorSpace(colorSpace);
+            });
+        } catch (IOException e) {
+            fail("Failed to decode in Java with " + e);
+            return null;
+        }
+    }
+
+    @Test
+    @Parameters(method = "rgbColorSpaces")
+    public void testSetDataSpace(ColorSpace colorSpace) {
+        int dataSpace = DataSpace.fromColorSpace(colorSpace);
+        if (dataSpace == DataSpace.ADATASPACE_UNKNOWN) {
+            // AImageDecoder cannot decode to these ADATASPACEs
+            return;
+        }
+
+        String name = "translucent-green-p3.png";
+        AssetManager assets = getAssetManager();
+        ImageDecoder.Source src = ImageDecoder.createSource(assets, name);
+        Bitmap bm = decode(src, colorSpace);
+        assertEquals(colorSpace, bm.getColorSpace());
+
+        long asset = nOpenAsset(assets, name);
+        long aimagedecoder = nCreateFromAsset(asset);
+
+        nTestDecode(aimagedecoder, bm, dataSpace);
+        nCloseAsset(asset);
+    }
+
     // Return a pointer to the native AAsset named |file|. Must be closed with nCloseAsset.
     // Throws an Exception on failure.
     private static native long nOpenAsset(AssetManager assets, String file);
@@ -870,7 +1003,7 @@ public class AImageDecoderTest {
     // For convenience, all methods that take aimagedecoder as a parameter delete
     // it.
     private static native void nTestInfo(long aimagedecoder, int width, int height,
-            String mimeType, boolean isAnimated, boolean isF16);
+            String mimeType, boolean isAnimated, boolean isF16, int dataspace);
     private static native void nTestSetFormat(long aimagedecoder, boolean isF16, boolean isGray);
     private static native void nTestSetUnpremul(long aimagedecoder, boolean hasAlpha);
     private static native void nTestGetMinimumStride(long aimagedecoder,
@@ -888,4 +1021,5 @@ public class AImageDecoderTest {
             Bitmap bitmap, int targetWidth, int targetHeight,
             int cropLeft, int cropTop, int cropRight, int cropBottom);
     private static native void nTestScalePlusUnpremul(long aimagedecoder);
+    private static native void nTestDecode(long aimagedecoder, Bitmap bm, int dataSpace);
 }
