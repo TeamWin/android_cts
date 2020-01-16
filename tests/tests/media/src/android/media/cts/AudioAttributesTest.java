@@ -22,6 +22,7 @@ import android.os.Parcel;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
 
+@NonMediaMainlineTest
 public class AudioAttributesTest extends CtsAndroidTestCase {
 
     // -----------------------------------------------------------------

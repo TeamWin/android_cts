@@ -27,7 +27,7 @@ public class Poc17_03 extends SecurityTestCase {
     @SecurityTest(minPatchLevel = "2017-03")
     public void testPocCVE_2016_8479() throws Exception {
         if (containsDriver(getDevice(), "/dev/kgsl-3d0")) {
-             AdbUtils.runPocNoOutput("CVE-2016-8479", getDevice(), 180);
+             AdbUtils.runPocNoOutput("CVE-2016-8479", getDevice(), TIMEOUT_NONDETERMINISTIC);
             // CTS begins the next test before device finishes rebooting,
             // sleep to allow time for device to reboot.
             Thread.sleep(70000);

@@ -64,10 +64,12 @@
         <!--__________________-->
         <!-- Bulletin 2016-06 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2016-2482->/data/local/tmp/CVE-2016-2482" />
 
         <!--__________________-->
         <!-- Bulletin 2016-07 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2016-3747->/data/local/tmp/CVE-2016-3747" />
         <option name="push" value="CVE-2014-9803->/data/local/tmp/CVE-2014-9803" />
         <option name="push" value="CVE-2016-3746->/data/local/tmp/CVE-2016-3746" />
         <option name="push" value="CVE-2016-3818->/data/local/tmp/CVE-2016-3818" />
@@ -121,6 +123,8 @@
         <!--__________________-->
         <!-- Bulletin 2017-05 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2016-5862->/data/local/tmp/CVE-2016-5862"/>
+        <option name="push" value="CVE-2016-5867->/data/local/tmp/CVE-2016-5867"/>
 
         <!--__________________-->
         <!-- Bulletin 2017-06 -->
@@ -181,7 +185,6 @@
         <!--__________________-->
         <!-- Bulletin 2018-10 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
-        <option name="push" value="CVE-2018-9490->/data/local/tmp/CVE-2018-9490" />
         <option name="push" value="CVE-2018-9515->/data/local/tmp/CVE-2018-9515" />
 
         <!--__________________-->
@@ -207,6 +210,7 @@
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="OomCatcher.apk" />
         <option name="test-file-name" value="MainlineModuleDetector.apk" />
+        <option name="test-file-name" value="hotspot.apk" />
     </target_preparer>
 
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
