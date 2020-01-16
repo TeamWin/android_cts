@@ -184,4 +184,7 @@
     <!-- String title of accessibility embedded display test activity -->
     <string name="accessibility_embedded_display_test_activity">Embedded display test</string>
 
+    <!-- String the default label of AccessibilityAction ACTION_IME_ENTER -->
+    <string name="accessibility_action_ime_enter_label">Enter</string>
+
 </resources>
