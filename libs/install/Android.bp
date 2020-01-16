@@ -43,6 +43,7 @@ android_test_helper_app {
     sdk_version: "current",
     srcs: ["testapp/src/**/*.java"],
     resource_dirs: ["testapp/res_v2"],
+    apex_available: [ "com.android.apex.apkrollback.test_v2Crashing" ],
 }
 
 android_test_helper_app {
