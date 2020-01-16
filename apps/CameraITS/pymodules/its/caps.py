@@ -572,6 +572,18 @@ def multi_camera_frame_sync_capable(props):
             sensor_fusion(props)])
 
 
+def continuous_picture(props):
+    """Returns whether a device supports CONTINUOUS_PICTURE."""
+    return props.has_key('android.control.afAvailableModes') and \
+              4 in props['android.control.afAvailableModes']
+
+
+def af_scene_change(props):
+    """Returns whether a device supports afSceneChange."""
+    return props.has_key('camera.characteristics.resultKeys') and \
+              'android.control.afSceneChange' in props['camera.characteristics.resultKeys']
+
+
 class __UnitTest(unittest.TestCase):
     """Run a suite of unit tests on this module.
     """
