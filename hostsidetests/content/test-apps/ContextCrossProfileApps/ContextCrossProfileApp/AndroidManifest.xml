@@ -18,6 +18,10 @@
           package="com.android.cts.context">
     <application>
         <uses-library android:name="android.test.runner" />
+        <service
+            android:name="com.android.cts.context.ContextCrossProfileSamePackageTestService"
+            android:exported="true">
+        </service>
     </application>
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="com.android.cts.context"
