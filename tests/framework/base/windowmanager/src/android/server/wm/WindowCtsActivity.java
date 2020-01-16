@@ -20,9 +20,11 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.Menu;
+import android.view.View;
 import android.view.Window;
 
 import android.server.wm.cts.R;
+import android.view.WindowInsets;
 
 public class WindowCtsActivity extends Activity {
 
@@ -30,11 +32,17 @@ public class WindowCtsActivity extends Activity {
     private static boolean mIsOnOptionsMenuClosedCalled;
     private static boolean mIsOnKeyDownCalled;
 
+    private WindowInsets mLastInsets;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().requestFeature(Window.FEATURE_LEFT_ICON);
         setContentView(R.layout.windowstub_layout);
+        getContentView().setOnApplyWindowInsetsListener((v, insets) -> {
+            mLastInsets = insets;
+            return insets;
+        });
     }
 
     @Override
@@ -55,6 +63,14 @@ public class WindowCtsActivity extends Activity {
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         mIsOnKeyDownCalled = true;
         return super.onKeyDown(keyCode, event);
+    }
+
+    public View getContentView() {
+        return findViewById(R.id.listview_window);
+    }
+
+    public WindowInsets getLastInsets() {
+        return mLastInsets;
     }
 
     public boolean isOnCreateOptionsMenuCalled() {
