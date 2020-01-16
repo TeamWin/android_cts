@@ -75,11 +75,9 @@ public class AppSearchManagerTest {
                                 ).build()
                         ).build()
                 ).build();
+
         CompletableFuture<Throwable> result = new CompletableFuture<>();
         mAppSearch.setSchema(schema, mExecutor, result::complete);
-
-        // TODO(b/142567528): Once setSchema is implemented, this result should be 'null'.
-        Throwable ex = result.get();
-        assertThat(ex).isInstanceOf(UnsupportedOperationException.class);
+        assertThat(result.get()).isEqualTo(null);
     }
 }
