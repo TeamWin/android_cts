@@ -23,6 +23,7 @@ import static org.junit.Assume.assumeThat;
 
 import android.platform.test.annotations.LargeTest;
 
+import com.android.tradefed.device.PackageInfo;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
@@ -48,6 +49,8 @@ import org.junit.runner.RunWith;
 public class ApexShimValidationTest extends BaseHostJUnit4Test {
 
     private static final String SHIM_APEX_PACKAGE_NAME = "com.android.apex.cts.shim";
+    private static final String SHIM_APK_PACKAGE_NAME = "com.android.cts.ctsshim";
+    private static final String SHIM_PRIV_APK_PACKAGE_NAME = "com.android.cts.priv.ctsshim";
 
     /**
      * Runs the given phase of a test by calling into the device.
@@ -86,6 +89,26 @@ public class ApexShimValidationTest extends BaseHostJUnit4Test {
                         apex -> apex.name.equals(SHIM_APEX_PACKAGE_NAME));
         assertWithMessage("Shim APEX is not pre-installed").that(
                 isShimApexPreInstalled).isTrue();
+    }
+
+    @Test
+    public void testShimApkIsPreInstalledInShimApex() throws Exception {
+        PackageInfo shimApkPackageInfo = getDevice().getAppPackageInfo(SHIM_APK_PACKAGE_NAME);
+        assertWithMessage("CTSShim APK is not pre-installed").that(
+                shimApkPackageInfo).isNotNull();
+        boolean isShimApkInShimApex = shimApkPackageInfo.getCodePath()
+                .startsWith("/apex/" + SHIM_APEX_PACKAGE_NAME + "/app/");
+        assertWithMessage("The active version of CTSShim APK does not come from "
+                + "Shim APEX").that(isShimApkInShimApex).isTrue();
+
+        PackageInfo shimPrivApkPackageInfo = getDevice()
+                .getAppPackageInfo(SHIM_PRIV_APK_PACKAGE_NAME);
+        assertWithMessage("CTSPrivShim APK is not pre-installed").that(
+                shimPrivApkPackageInfo).isNotNull();
+        boolean isPrivShimApkInShimApex = shimPrivApkPackageInfo.getCodePath()
+                .startsWith("/apex/" + SHIM_APEX_PACKAGE_NAME + "/priv-app/");
+        assertWithMessage("The active version of CTSPrivShim APK does not come "
+                + "from Shim APEX").that(isPrivShimApkInShimApex).isTrue();
     }
 
     @Test
