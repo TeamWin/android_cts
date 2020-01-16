@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -73,8 +73,8 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
         mApkFile = buildHelper.getTestFile(TEST_WITH_PERMISSION_APK);
 
         getDevice().installPackageForUser(
-                mApkFile, /*reinstall= */true, /*grantPermissions= */true,
-                mParentUserId, /*extraArgs= */"-t");
+                mApkFile, /* reinstall= */true, /* grantPermissions= */true,
+                mParentUserId, /* extraArgs= */"-t");
     }
 
     @After
@@ -94,17 +94,17 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
     public void testBindServiceAsUser_differentUser_bindsServiceToCorrectUser()
             throws Exception {
         int userInSameProfileGroup = createProfile(mParentUserId);
-        getDevice().startUser(userInSameProfileGroup, /*waitFlag= */true);
+        getDevice().startUser(userInSameProfileGroup, /* waitFlag= */true);
         mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
         getDevice().installPackageForUser(
-                mApkFile, /*reinstall= */true, /*grantPermissions= */true,
-                userInSameProfileGroup, /*extraArgs= */"-t");
+                mApkFile, /* reinstall= */true, /* grantPermissions= */true,
+                userInSameProfileGroup, /* extraArgs= */"-t");
 
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         File testServiceApkFile = buildHelper.getTestFile(TEST_SERVICE_WITH_PERMISSION_APK);
         getDevice().installPackageForUser(
-                testServiceApkFile, /*reinstall= */true, /*grantPermissions= */true,
-                userInSameProfileGroup, /*extraArgs= */"-t");
+                testServiceApkFile, /* reinstall= */true, /* grantPermissions= */true,
+                userInSameProfileGroup, /* extraArgs= */"-t");
 
         runDeviceTests(
                 getDevice(),
@@ -113,7 +113,7 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
                 "testBindServiceAsUser_differentUser_bindsServiceToCorrectUser",
                 mParentUserId,
                 mTestArgs,
-                /*timeout= */60L,
+                /* timeout= */60L,
                 TimeUnit.SECONDS);
     }
 
@@ -121,17 +121,17 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
     public void testBindServiceAsUser_sameProfileGroup_withInteractAcrossUsersPermission_bindsService()
             throws Exception {
         int userInSameProfileGroup = createProfile(mParentUserId);
-        getDevice().startUser(userInSameProfileGroup, /*waitFlag= */true);
+        getDevice().startUser(userInSameProfileGroup, /* waitFlag= */true);
         mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
         getDevice().installPackageForUser(
-                mApkFile, /*reinstall= */true, /*grantPermissions= */true,
-                userInSameProfileGroup, /*extraArgs= */"-t");
+                mApkFile, /* reinstall= */true, /* grantPermissions= */true,
+                userInSameProfileGroup, /* extraArgs= */"-t");
 
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         File testServiceApkFile = buildHelper.getTestFile(TEST_SERVICE_WITH_PERMISSION_APK);
         getDevice().installPackageForUser(
-                testServiceApkFile, /*reinstall= */true, /*grantPermissions= */true,
-                userInSameProfileGroup, /*extraArgs= */"-t");
+                testServiceApkFile, /* reinstall= */true, /* grantPermissions= */true,
+                userInSameProfileGroup, /* extraArgs= */"-t");
 
         runDeviceTests(
                 getDevice(),
@@ -140,7 +140,7 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
                 "testBindServiceAsUser_sameProfileGroup_withInteractAcrossUsersPermission_bindsService",
                 mParentUserId,
                 mTestArgs,
-                /*timeout= */60L,
+                /* timeout= */60L,
                 TimeUnit.SECONDS);
     }
 
@@ -148,17 +148,17 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
     public void testBindServiceAsUser_sameProfileGroup_withInteractAcrossProfilesPermission_bindsService()
             throws Exception {
         int userInSameProfileGroup = createProfile(mParentUserId);
-        getDevice().startUser(userInSameProfileGroup, /*waitFlag= */true);
+        getDevice().startUser(userInSameProfileGroup, /* waitFlag= */true);
         mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
         getDevice().installPackageForUser(
-                mApkFile, /*reinstall= */true, /*grantPermissions= */true,
-                userInSameProfileGroup, /*extraArgs= */"-t");
+                mApkFile, /* reinstall= */true, /* grantPermissions= */true,
+                userInSameProfileGroup, /* extraArgs= */"-t");
 
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         File testServiceApkFile = buildHelper.getTestFile(TEST_SERVICE_WITH_PERMISSION_APK);
         getDevice().installPackageForUser(
-                testServiceApkFile, /*reinstall= */true, /*grantPermissions= */true,
-                userInSameProfileGroup, /*extraArgs= */"-t");
+                testServiceApkFile, /* reinstall= */true, /* grantPermissions= */true,
+                userInSameProfileGroup, /* extraArgs= */"-t");
 
         runDeviceTests(
                 getDevice(),
@@ -167,7 +167,34 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
                 "testBindServiceAsUser_sameProfileGroup_withInteractAcrossProfilesPermission_bindsService",
                 mParentUserId,
                 mTestArgs,
-                /*timeout= */60L,
+                /* timeout= */60L,
+                TimeUnit.SECONDS);
+    }
+
+    @Test
+    public void testBindServiceAsUser_sameProfileGroup_withInteractAcrossProfilesAppOp_bindsService()
+            throws Exception {
+        int userInSameProfileGroup = createProfile(mParentUserId);
+        getDevice().startUser(userInSameProfileGroup, /* waitFlag= */true);
+        mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
+        getDevice().installPackageForUser(
+                mApkFile, /* reinstall= */true, /* grantPermissions= */true,
+                userInSameProfileGroup, /* extraArgs= */"-t");
+
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
+        File testServiceApkFile = buildHelper.getTestFile(TEST_SERVICE_WITH_PERMISSION_APK);
+        getDevice().installPackageForUser(
+                testServiceApkFile, /* reinstall= */true, /* grantPermissions= */true,
+                userInSameProfileGroup, /* extraArgs= */"-t");
+
+        runDeviceTests(
+                getDevice(),
+                TEST_WITH_PERMISSION_PKG,
+                ".ContextCrossProfileDeviceTest",
+                "testBindServiceAsUser_sameProfileGroup_withInteractAcrossProfilesAppOp_bindsService",
+                mParentUserId,
+                mTestArgs,
+                /* timeout= */60L,
                 TimeUnit.SECONDS);
     }
 
@@ -175,17 +202,17 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
     public void testBindServiceAsUser_differentProfileGroup_withInteractAcrossUsersPermission_throwsException()
             throws Exception {
         int userInDifferentProfileGroup = createUser();
-        getDevice().startUser(userInDifferentProfileGroup, /*waitFlag= */true);
+        getDevice().startUser(userInDifferentProfileGroup, /* waitFlag= */true);
         mTestArgs.put("testUser", Integer.toString(userInDifferentProfileGroup));
         getDevice().installPackageForUser(
-                mApkFile, /*reinstall= */true, /*grantPermissions= */true,
-                userInDifferentProfileGroup, /*extraArgs= */"-t");
+                mApkFile, /* reinstall= */true, /* grantPermissions= */true,
+                userInDifferentProfileGroup, /* extraArgs= */"-t");
 
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         File testServiceApkFile = buildHelper.getTestFile(TEST_SERVICE_WITH_PERMISSION_APK);
         getDevice().installPackageForUser(
-                testServiceApkFile, /*reinstall= */true, /*grantPermissions= */true,
-                userInDifferentProfileGroup, /*extraArgs= */"-t");
+                testServiceApkFile, /* reinstall= */true, /* grantPermissions= */true,
+                userInDifferentProfileGroup, /* extraArgs= */"-t");
 
         runDeviceTests(
                 getDevice(),
@@ -194,7 +221,34 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
                 "testBindServiceAsUser_differentProfileGroup_withInteractAcrossUsersPermission_throwsException",
                 mParentUserId,
                 mTestArgs,
-                /*timeout= */60L,
+                /* timeout= */60L,
+                TimeUnit.SECONDS);
+    }
+
+    @Test
+    public void testBindServiceAsUser_differentProfileGroup_withInteractAcrossProfilesAppOp_throwsException()
+            throws Exception {
+        int userInDifferentProfileGroup = createUser();
+        getDevice().startUser(userInDifferentProfileGroup, /* waitFlag= */true);
+        mTestArgs.put("testUser", Integer.toString(userInDifferentProfileGroup));
+        getDevice().installPackageForUser(
+                mApkFile, /* reinstall= */true, /* grantPermissions= */true,
+                userInDifferentProfileGroup, /* extraArgs= */"-t");
+
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
+        File testServiceApkFile = buildHelper.getTestFile(TEST_SERVICE_WITH_PERMISSION_APK);
+        getDevice().installPackageForUser(
+                testServiceApkFile, /* reinstall= */true, /* grantPermissions= */true,
+                userInDifferentProfileGroup, /* extraArgs= */"-t");
+
+        runDeviceTests(
+                getDevice(),
+                TEST_WITH_PERMISSION_PKG,
+                ".ContextCrossProfileDeviceTest",
+                "testBindServiceAsUser_differentProfileGroup_withInteractAcrossProfilesAppOp_throwsException",
+                mParentUserId,
+                mTestArgs,
+                /* timeout= */60L,
                 TimeUnit.SECONDS);
     }
 
@@ -202,17 +256,17 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
     public void testBindServiceAsUser_differentProfileGroup_withInteractAcrossProfilesPermission_throwsException()
             throws Exception {
         int userInDifferentProfileGroup = createUser();
-        getDevice().startUser(userInDifferentProfileGroup, /*waitFlag= */true);
+        getDevice().startUser(userInDifferentProfileGroup, /* waitFlag= */true);
         mTestArgs.put("testUser", Integer.toString(userInDifferentProfileGroup));
         getDevice().installPackageForUser(
-                mApkFile, /*reinstall= */true, /*grantPermissions= */true,
-                userInDifferentProfileGroup, /*extraArgs= */"-t");
+                mApkFile, /* reinstall= */true, /* grantPermissions= */true,
+                userInDifferentProfileGroup, /* extraArgs= */"-t");
 
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         File testServiceApkFile = buildHelper.getTestFile(TEST_SERVICE_WITH_PERMISSION_APK);
         getDevice().installPackageForUser(
-                testServiceApkFile, /*reinstall= */true, /*grantPermissions= */true,
-                userInDifferentProfileGroup, /*extraArgs= */"-t");
+                testServiceApkFile, /* reinstall= */true, /* grantPermissions= */true,
+                userInDifferentProfileGroup, /* extraArgs= */"-t");
 
         runDeviceTests(
                 getDevice(),
@@ -221,7 +275,7 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
                 "testBindServiceAsUser_differentProfileGroup_withInteractAcrossProfilesPermission_throwsException",
                 mParentUserId,
                 mTestArgs,
-                /*timeout= */60L,
+                /* timeout= */60L,
                 TimeUnit.SECONDS);
     }
 
@@ -229,17 +283,17 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
     public void testBindServiceAsUser_sameProfileGroup_withNoPermissions_throwsException()
             throws Exception {
         int userInSameProfileGroup = createProfile(mParentUserId);
-        getDevice().startUser(userInSameProfileGroup, /*waitFlag= */true);
+        getDevice().startUser(userInSameProfileGroup, /* waitFlag= */true);
         mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
         getDevice().installPackageForUser(
-                mApkFile, /*reinstall= */true, /*grantPermissions= */true,
-                userInSameProfileGroup, /*extraArgs= */"-t");
+                mApkFile, /* reinstall= */true, /* grantPermissions= */true,
+                userInSameProfileGroup, /* extraArgs= */"-t");
 
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         File testServiceApkFile = buildHelper.getTestFile(TEST_SERVICE_WITH_PERMISSION_APK);
         getDevice().installPackageForUser(
-                testServiceApkFile, /*reinstall= */true, /*grantPermissions= */true,
-                userInSameProfileGroup, /*extraArgs= */"-t");
+                testServiceApkFile, /* reinstall= */true, /* grantPermissions= */true,
+                userInSameProfileGroup, /* extraArgs= */"-t");
 
         runDeviceTests(
                 getDevice(),
@@ -248,7 +302,7 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
                 "testBindServiceAsUser_sameProfileGroup_withNoPermissions_throwsException",
                 mParentUserId,
                 mTestArgs,
-                /*timeout= */60L,
+                /* timeout= */60L,
                 TimeUnit.SECONDS);
     }
 
@@ -256,17 +310,17 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
     public void testCreateContextAsUser_sameProfileGroup_withInteractAcrossProfilesPermission_throwsException()
             throws Exception {
         int userInSameProfileGroup = createProfile(mParentUserId);
-        getDevice().startUser(userInSameProfileGroup, /*waitFlag= */true);
+        getDevice().startUser(userInSameProfileGroup, /* waitFlag= */true);
         mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
         getDevice().installPackageForUser(
-                mApkFile, /*reinstall= */true, /*grantPermissions= */true,
-                userInSameProfileGroup, /*extraArgs= */"-t");
+                mApkFile, /* reinstall= */true, /* grantPermissions= */true,
+                userInSameProfileGroup, /* extraArgs= */"-t");
 
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         File testServiceApkFile = buildHelper.getTestFile(TEST_SERVICE_WITH_PERMISSION_APK);
         getDevice().installPackageForUser(
-                testServiceApkFile, /*reinstall= */true, /*grantPermissions= */true,
-                userInSameProfileGroup, /*extraArgs= */"-t");
+                testServiceApkFile, /* reinstall= */true, /* grantPermissions= */true,
+                userInSameProfileGroup, /* extraArgs= */"-t");
 
         runDeviceTests(
                 getDevice(),
@@ -275,7 +329,7 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
                 "testCreateContextAsUser_sameProfileGroup_withInteractAcrossProfilesPermission_throwsException",
                 mParentUserId,
                 mTestArgs,
-                /*timeout= */60L,
+                /* timeout= */60L,
                 TimeUnit.SECONDS);
     }
 
@@ -283,17 +337,17 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
     public void testCreateContextAsUser_sameProfileGroup_withInteractAcrossUsersPermission_createsContext()
             throws Exception {
         int userInSameProfileGroup = createProfile(mParentUserId);
-        getDevice().startUser(userInSameProfileGroup, /*waitFlag= */true);
+        getDevice().startUser(userInSameProfileGroup, /* waitFlag= */true);
         mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
         getDevice().installPackageForUser(
-                mApkFile, /*reinstall= */true, /*grantPermissions= */true,
-                userInSameProfileGroup, /*extraArgs= */"-t");
+                mApkFile, /* reinstall= */true, /* grantPermissions= */true,
+                userInSameProfileGroup, /* extraArgs= */"-t");
 
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         File testServiceApkFile = buildHelper.getTestFile(TEST_SERVICE_WITH_PERMISSION_APK);
         getDevice().installPackageForUser(
-                testServiceApkFile, /*reinstall= */true, /*grantPermissions= */true,
-                userInSameProfileGroup, /*extraArgs= */"-t");
+                testServiceApkFile, /* reinstall= */true, /* grantPermissions= */true,
+                userInSameProfileGroup, /* extraArgs= */"-t");
 
         runDeviceTests(
                 getDevice(),
@@ -302,7 +356,7 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
                 "testCreateContextAsUser_sameProfileGroup_withInteractAcrossUsersPermission_createsContext",
                 mParentUserId,
                 mTestArgs,
-                /*timeout= */60L,
+                /* timeout= */60L,
                 TimeUnit.SECONDS);
     }
 }
