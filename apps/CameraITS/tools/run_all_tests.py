@@ -644,12 +644,11 @@ def main():
 
                 # define rotator_type
                 rotator_type = 'canakit'
-                if 'arduino' in rot_rig_id.split(':'):
+                if rot_rig_id and 'arduino' in rot_rig_id.split(':'):
                     rotator_type = 'arduino'
-
-                # if arduino, wait for rotations to stop
-                if (rotator_type == 'arduino' and t_rotate > t_test):
-                    time.sleep(t_rotate - t_test)
+                    # if arduino, wait for rotations to stop
+                    if t_rotate > t_test:
+                        time.sleep(t_rotate - t_test)
 
                 test_failed = False
                 if test_code == 0:

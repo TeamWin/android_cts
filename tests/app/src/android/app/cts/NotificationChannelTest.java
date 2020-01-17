@@ -185,6 +185,13 @@ public class NotificationChannelTest extends AndroidTestCase {
         assertEquals(false, channel.canBubble());
     }
 
+    public void testIsBlockableSystem() {
+        NotificationChannel channel =
+                new NotificationChannel("1", "one", IMPORTANCE_DEFAULT);
+        channel.setBlockableSystem(true);
+        assertTrue(channel.isBlockableSystem());
+    }
+
     public void testIsImportanceLockedByOEM() {
         NotificationChannel channel =
                 new NotificationChannel("1", "one", IMPORTANCE_DEFAULT);

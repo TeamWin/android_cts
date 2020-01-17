@@ -31,7 +31,8 @@ android_test {
     libs: [
         "telephony-common",
         "android.test.runner.stubs",
-        "android.test.base.stubs"
+        "android.test.base.stubs",
+        "framework-telephony-stubs"
     ],
     // uncomment when EuiccService tests do not use hidden APIs (Binder instances)
     //sdk_version: "test_current",

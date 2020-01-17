@@ -370,8 +370,9 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
      *    <li>Activity B is launched.
      *    <li>Activity B triggers autofill.
      *    <li>User goes back to Activity A.
+     *    <li>Activity A triggers autofill.
      *    <li>User triggers save on Activity A - at this point, service should have stats of
-     *        activity B, and stats for activity A should have beeen discarded.
+     *        activity A.
      * </ol>
      */
     @Test
@@ -413,6 +414,12 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
         assertDeprecatedClientState(selectionB, "activity", "B");
         assertFillEventForDatasetShown(selectionB.getEvents().get(0), "activity", "B");
 
+        // Set response for back to activity A
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setExtras(getBundle("activity", "A"))
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
+                .build());
+
         // Now switch back to A...
         mUiBot.pressBack(); // dismiss autofill
         mUiBot.pressBack(); // dismiss keyboard (or task, if there was no keyboard)
@@ -424,6 +431,8 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
         mUiBot.assertShownByRelativeId(ID_USERNAME);
         assertWithMessage("root window has no focus")
                 .that(mActivity.getWindow().getDecorView().hasWindowFocus()).isTrue();
+
+        sReplier.getNextFillRequest();
 
         // ...and trigger save
         // Set credentials...
@@ -437,8 +446,9 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
 
         // Finally, make sure history is right
         final FillEventHistory finalSelection = InstrumentedAutoFillService.getFillEventHistory(1);
-        assertDeprecatedClientState(finalSelection, "activity", "B");
-        assertFillEventForDatasetShown(finalSelection.getEvents().get(0), "activity", "B");
+        assertDeprecatedClientState(finalSelection, "activity", "A");
+        assertFillEventForSaveShown(finalSelection.getEvents().get(0), NULL_DATASET_ID, "activity",
+                "A");
     }
 
     @Test

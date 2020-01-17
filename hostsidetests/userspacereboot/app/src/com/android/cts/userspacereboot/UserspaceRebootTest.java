@@ -18,6 +18,9 @@ package com.android.cts.userspacereboot;
 
 import static com.google.common.truth.Truth.assertThat;
 
+
+import static org.testng.Assert.assertThrows;
+
 import android.content.Context;
 import android.os.PowerManager;
 
@@ -36,5 +39,13 @@ public class UserspaceRebootTest {
     public void testUserspaceRebootIsSupported() {
         PowerManager powerManager = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
         assertThat(powerManager.isRebootingUserspaceSupported()).isTrue();
+    }
+
+    @Test
+    public void testUserspaceRebootIsNotSupported() {
+        PowerManager powerManager = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+        assertThat(powerManager.isRebootingUserspaceSupported()).isFalse();
+        assertThrows(UnsupportedOperationException.class,
+                () -> powerManager.reboot("userspace"));
     }
 }

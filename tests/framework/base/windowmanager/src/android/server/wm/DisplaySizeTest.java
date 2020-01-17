@@ -16,12 +16,8 @@
 
 package android.server.wm;
 
-import static android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP;
-import static android.server.wm.ComponentNameUtils.getActivityName;
-import static android.server.wm.UiDeviceUtils.pressBackButton;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.displaysize.Components.SMALLEST_WIDTH_ACTIVITY;
-import static android.server.wm.displaysize.Components.SmallestWidthActivity.EXTRA_LAUNCH_ANOTHER_ACTIVITY;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -90,17 +86,16 @@ public class DisplaySizeTest extends ActivityManagerTestBase {
         launchActivity(SMALLEST_WIDTH_ACTIVITY);
         mAmWmState.assertActivityDisplayed(SMALLEST_WIDTH_ACTIVITY);
         // Launch another activity.
-        final String startActivityOnTop = String.format("%s -f 0x%x --es %s %s",
-                getAmStartCmd(SMALLEST_WIDTH_ACTIVITY), FLAG_ACTIVITY_SINGLE_TOP,
-                EXTRA_LAUNCH_ANOTHER_ACTIVITY, getActivityName(TEST_ACTIVITY));
-        executeShellCommand(startActivityOnTop);
+        final CommandSession.ActivitySession activity = createManagedActivityClientSession()
+                .startActivity(getLaunchActivityBuilder().setUseInstrumentation()
+                        .setTargetActivity(TEST_ACTIVITY));
         mAmWmState.assertActivityDisplayed(TEST_ACTIVITY);
         separateTestJournal();
 
         createManagedScreenDensitySession().setUnsupportedDensity();
 
         assertActivityLifecycle(TEST_ACTIVITY, true /* relaunched */);
-        pressBackButton();
+        activity.finish();
 
         mAmWmState.assertActivityDisplayed(SMALLEST_WIDTH_ACTIVITY);
         mAmWmState.assertWindowDisplayed(UNSUPPORTED_DISPLAY_SIZE_DIALOG_NAME);

@@ -2022,6 +2022,16 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestClass(".RandomizedWifiMacAddressTest");
     }
 
+    @Test
+    public void testIsDeviceOrganizationOwnedWithManagedProfile() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        executeDeviceTestMethod(".DeviceOwnershipTest",
+                "testCallingIsOrganizationOwnedWithManagedProfileExpectingFalse");
+    }
+
     private String getLaunchableSystemPackage() throws DeviceNotAvailableException {
         final List<String> enabledSystemPackageNames = getEnabledSystemPackageNames();
         for (String enabledSystemPackage : enabledSystemPackageNames) {
