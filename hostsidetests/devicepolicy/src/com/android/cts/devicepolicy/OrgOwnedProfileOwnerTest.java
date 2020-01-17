@@ -302,6 +302,15 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".AdminConfiguredNetworksTest", mUserId);
     }
 
+    @Test
+    public void testApplicationHidden() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".ApplicationHiddenParentTest", mUserId);
+    }
+
     private void removeOrgOwnedProfile() throws DeviceNotAvailableException {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, RELINQUISH_DEVICE_TEST_CLASS, mUserId);
     }
