@@ -230,14 +230,16 @@ public class KeyAttestationTest extends AndroidTestCase {
         KeyGenParameterSpec.Builder builder =
             new KeyGenParameterSpec.Builder(keystoreAlias, PURPOSE_SIGN)
                     .setAlgorithmParameterSpec(new ECGenParameterSpec("secp256r1"))
-                    .setDigests(DIGEST_NONE, DIGEST_SHA256, DIGEST_SHA512)
                     .setAttestationChallenge(new byte[128])
                     .setKeyValidityStart(now)
                     .setKeyValidityForOriginationEnd(originationEnd)
                     .setKeyValidityForConsumptionEnd(consumptionEnd);
 
         if (TestUtils.hasStrongBox(getContext())) {
+            builder.setDigests(DIGEST_NONE, DIGEST_SHA256);
             builder.setIsStrongBoxBacked(true);
+        } else {
+            builder.setDigests(DIGEST_NONE, DIGEST_SHA256, DIGEST_SHA512);
         }
 
         generateKeyPair(KEY_ALGORITHM_EC, builder.build());
@@ -388,7 +390,10 @@ public class KeyAttestationTest extends AndroidTestCase {
                     .setKeyValidityForConsumptionEnd(consumptionEnd);
 
         if (TestUtils.hasStrongBox(getContext())) {
+            builder.setDigests(DIGEST_NONE, DIGEST_SHA256);
             builder.setIsStrongBoxBacked(true);
+        } else {
+            builder.setDigests(DIGEST_NONE, DIGEST_SHA256, DIGEST_SHA512);
         }
 
         generateKeyPair(KEY_ALGORITHM_RSA, builder.build());
