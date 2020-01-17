@@ -641,7 +641,9 @@ public class ImsServiceTest {
 
         Integer result = getFeatureState();
         assertNotNull(result);
-
+        assertEquals("ImsService state should be STATE_READY",
+                sServiceConnector.getCarrierService().getMmTelFeature().getFeatureState(),
+                ImsFeature.STATE_READY);
         assertTrue("ImsService state is ready, but STATE_READY is not reported.",
                 ImsUtils.retryUntilTrue(() -> (getFeatureState() == ImsFeature.STATE_READY)));
 
@@ -649,6 +651,9 @@ public class ImsServiceTest {
                 ImsFeature.STATE_INITIALIZING);
         result = getFeatureState();
         assertNotNull(result);
+        assertEquals("ImsService state should be STATE_INITIALIZING",
+                sServiceConnector.getCarrierService().getMmTelFeature().getFeatureState(),
+                ImsFeature.STATE_INITIALIZING);
         assertTrue("ImsService state is initializing, but STATE_INITIALIZING is not reported.",
                 ImsUtils.retryUntilTrue(
                         () -> (getFeatureState() == ImsFeature.STATE_INITIALIZING)));
@@ -657,6 +662,9 @@ public class ImsServiceTest {
                 ImsFeature.STATE_UNAVAILABLE);
         result = getFeatureState();
         assertNotNull(result);
+        assertEquals("ImsService state should be STATE_UNAVAILABLE",
+                sServiceConnector.getCarrierService().getMmTelFeature().getFeatureState(),
+                ImsFeature.STATE_UNAVAILABLE);
         assertTrue("ImsService state is unavailable, but STATE_UNAVAILABLE is not reported.",
                 ImsUtils.retryUntilTrue(
                         () -> (getFeatureState() == ImsFeature.STATE_UNAVAILABLE)));
