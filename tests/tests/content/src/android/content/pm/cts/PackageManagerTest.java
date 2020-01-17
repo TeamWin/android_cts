@@ -25,6 +25,7 @@ import static android.content.pm.PackageManager.GET_PERMISSIONS;
 import static android.content.pm.PackageManager.GET_PROVIDERS;
 import static android.content.pm.PackageManager.GET_RECEIVERS;
 import static android.content.pm.PackageManager.GET_SERVICES;
+import static android.content.pm.cts.ApplicationInfoTest.DIRECT_BOOT_UNAWARE_PACKAGE_NAME;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -461,7 +462,17 @@ public class PackageManagerTest {
         assertNotNull(mPackageManager
                 .getActivityIcon(new ComponentName(PACKAGE_NAME, ACTIVITY_NAME)));
         assertNotNull(mPackageManager.getActivityIcon(new Intent(MAIN_ACTION_NAME)));
+
         assertNotNull(mPackageManager.getDefaultActivityIcon());
+        assertTrue(mPackageManager.isDefaultApplicationIcon(
+                mPackageManager.getDefaultActivityIcon()));
+        assertTrue(mPackageManager.isDefaultApplicationIcon(mPackageManager.getDefaultActivityIcon()
+                .getConstantState().newDrawable()));
+
+        assertFalse(mPackageManager.isDefaultApplicationIcon(mPackageManager.getActivityIcon(
+                new ComponentName(PACKAGE_NAME, ACTIVITY_NAME))));
+        assertTrue(mPackageManager.isDefaultApplicationIcon(mPackageManager.getActivityIcon(
+                new ComponentName(DIRECT_BOOT_UNAWARE_PACKAGE_NAME, ACTIVITY_NAME))));
 
         // getDrawable is called by ComponentInfo.loadIcon() which called by getActivityIcon()
         // method of PackageMaganer. Here is just assurance for its functionality.
