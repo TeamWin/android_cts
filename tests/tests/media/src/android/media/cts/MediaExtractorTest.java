@@ -23,6 +23,7 @@ import android.content.res.Resources;
 import android.icu.util.ULocale;
 import android.media.AudioFormat;
 import android.media.AudioPresentation;
+import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaDataSource;
 import android.media.MediaExtractor;
@@ -782,6 +783,75 @@ public class MediaExtractorTest extends AndroidTestCase {
             }
         }
         assertTrue("could not read alac mov", totalSize > 0);
+    }
+
+    public void testProgramStreamExtraction() throws Exception {
+        AssetFileDescriptor testFd = mResources.openRawResourceFd(R.raw.programstream);
+
+        MediaExtractor extractor = new MediaExtractor();
+        extractor.setDataSource(testFd.getFileDescriptor(), testFd.getStartOffset(),
+                testFd.getLength());
+        testFd.close();
+        assertEquals("There must be 2 tracks", 2, extractor.getTrackCount());
+        extractor.selectTrack(0);
+        extractor.selectTrack(1);
+        boolean lastAdvanceResult = true;
+        boolean lastReadResult = true;
+        int [] bytesRead = new int[2];
+        MediaCodec [] codecs = { null, null };
+
+        try {
+            MediaFormat f = extractor.getTrackFormat(0);
+            codecs[0] = MediaCodec.createDecoderByType(f.getString(MediaFormat.KEY_MIME));
+            codecs[0].configure(f, null /* surface */, null /* crypto */, 0 /* flags */);
+            codecs[0].start();
+        } catch (IOException | IllegalArgumentException e) {
+            // ignore
+        }
+        try {
+            MediaFormat f = extractor.getTrackFormat(1);
+            codecs[1] = MediaCodec.createDecoderByType(f.getString(MediaFormat.KEY_MIME));
+            codecs[1].configure(f, null /* surface */, null /* crypto */, 0 /* flags */);
+            codecs[1].start();
+        } catch (IOException | IllegalArgumentException e) {
+            // ignore
+        }
+
+        ByteBuffer buf = ByteBuffer.allocate(2*1024*1024);
+        MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
+        while(true) {
+            for (MediaCodec codec : codecs) {
+                if (codec != null) {
+                    int idx = codec.dequeueOutputBuffer(info, 5);
+                    if (idx >= 0) {
+                        codec.releaseOutputBuffer(idx, false);
+                    }
+                }
+            }
+            int trackIdx = extractor.getSampleTrackIndex();
+            MediaCodec codec = codecs[trackIdx];
+            ByteBuffer b = buf;
+            int bufIdx = -1;
+            if (codec != null) {
+                bufIdx = codec.dequeueInputBuffer(-1);
+                b = codec.getInputBuffer(bufIdx);
+            }
+            int n = extractor.readSampleData(b, 0);
+            if (n > 0) {
+                bytesRead[trackIdx] += n;
+            }
+            if (codec != null) {
+                int sampleFlags = extractor.getSampleFlags();
+                long sampleTime = extractor.getSampleTime();
+                codec.queueInputBuffer(bufIdx, 0, n, sampleTime, sampleFlags);
+            }
+            if (!extractor.advance()) {
+                break;
+            }
+        }
+        assertTrue("did not read from track 0", bytesRead[0] > 0);
+        assertTrue("did not read from track 1", bytesRead[1] > 0);
+        extractor.release();
     }
 
     private void doTestAdvance(int res) throws Exception {
