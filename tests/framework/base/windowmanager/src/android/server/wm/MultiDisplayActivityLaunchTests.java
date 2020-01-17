@@ -47,8 +47,6 @@ import static android.server.wm.second.Components.SECOND_LAUNCH_BROADCAST_RECEIV
 import static android.server.wm.third.Components.THIRD_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
 
-import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -68,8 +66,6 @@ import android.server.wm.ActivityManagerState.DisplayContent;
 import android.server.wm.ActivityManagerState.ActivityStack;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.SizeInfo;
-
-import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -492,7 +488,6 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
 
     /** Tests that launching app from pending activity queue on external display is allowed. */
     @Test
-    @FlakyTest(bugId = 148740267)
     public void testLaunchPendingActivityOnSecondaryDisplay() {
         pressHomeButton();
         // Create new simulated display.

@@ -639,8 +639,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
         final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setPublicDisplay(true)
                 .setCanShowWithInsecureKeyguard(true)
-                .setMustBeCreated(false)
-                .createDisplay();
+                .createDisplay(false /* mustBeCreated */);
 
         // Check that the display is not created.
         assertNull(newDisplay);
