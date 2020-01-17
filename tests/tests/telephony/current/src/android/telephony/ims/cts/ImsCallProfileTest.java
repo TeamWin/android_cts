@@ -18,6 +18,7 @@ package android.telephony.ims.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.os.Bundle;
@@ -45,6 +46,9 @@ public class ImsCallProfileTest {
         }
         Bundle testBundle = new Bundle();
         testBundle.putString("testString", "testResult");
+        Bundle testProprietaryBundle = new Bundle();
+        testProprietaryBundle.putString("proprietaryString", "proprietaryValue");
+        testBundle.putBundle(ImsCallProfile.EXTRA_OEM_EXTRAS, testProprietaryBundle);
         ImsStreamMediaProfile testProfile = new ImsStreamMediaProfile(1, 1, 1, 1, 1);
         ImsCallProfile data = new ImsCallProfile(ImsCallProfile.SERVICE_TYPE_NORMAL,
                 ImsCallProfile.CALL_TYPE_VOICE_N_VIDEO, testBundle, testProfile);
@@ -91,6 +95,10 @@ public class ImsCallProfileTest {
         assertEquals(testProfile.getVideoQuality(), resultProfile.getVideoQuality());
         // bundle
         assertEquals(testBundle.getString("testString"), unparceledData.getCallExtra("testString"));
+        Bundle unparceledProprietaryBundle = unparceledData.getProprietaryCallExtras();
+        assertNotNull(unparceledProprietaryBundle);
+        assertEquals(testProprietaryBundle.getString("proprietaryString"),
+                unparceledProprietaryBundle.getString("proprietaryString"));
         // number verification
         assertEquals(ImsCallProfile.VERIFICATION_STATUS_PASSED,
                 unparceledData.getCallerNumberVerificationStatus());
