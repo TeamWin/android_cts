@@ -22,6 +22,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "vts",
+        "mts"
     ],
     compile_multilib: "both",
     static_libs: [
