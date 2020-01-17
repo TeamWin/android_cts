@@ -16,13 +16,15 @@ package android.accessibilityservice.cts;
 
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.DisplayUtils.VirtualDisplaySession;
-import static android.accessibilityservice.cts.utils.GestureUtils.diff;
+import static android.accessibilityservice.cts.utils.GestureUtils.add;
 import static android.accessibilityservice.cts.utils.GestureUtils.click;
+import static android.accessibilityservice.cts.utils.GestureUtils.diff;
 import static android.accessibilityservice.cts.utils.GestureUtils.endTimeOf;
 import static android.accessibilityservice.cts.utils.GestureUtils.getGestureBuilder;
 import static android.accessibilityservice.cts.utils.GestureUtils.longClick;
 import static android.accessibilityservice.cts.utils.GestureUtils.path;
 import static android.accessibilityservice.cts.utils.GestureUtils.startingAt;
+import static android.accessibilityservice.cts.utils.GestureUtils.swipe;
 import static android.accessibilityservice.cts.utils.GestureUtils.times;
 import static android.app.UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES;
 
@@ -229,6 +231,9 @@ public class AccessibilityGestureDetectorTest {
     }
 
     private void runMultiFingerGestureDetectionTestOnDisplay(int displayId) {
+        // Compute gesture stroke lengths, in pixels.
+        final int dx = mStrokeLenPxX;
+        final int dy = mStrokeLenPxY;
         testGesture(
                 twoFingerSingleTap(displayId),
                 AccessibilityService.GESTURE_2_FINGER_SINGLE_TAP,
@@ -254,6 +259,32 @@ public class AccessibilityGestureDetectorTest {
                 threeFingerTripleTap(displayId),
                 AccessibilityService.GESTURE_3_FINGER_TRIPLE_TAP,
                 displayId);
+
+                testGesture(
+                        MultiFingerSwipe(displayId, 2, 0, dy),
+                        AccessibilityService.GESTURE_2_FINGER_SWIPE_DOWN, displayId);
+                testGesture(
+                        MultiFingerSwipe(displayId, 2, -dx, 0),
+                        AccessibilityService.GESTURE_2_FINGER_SWIPE_LEFT, displayId);
+                testGesture(
+                        MultiFingerSwipe(displayId, 2, dx, 0),
+                        AccessibilityService.GESTURE_2_FINGER_SWIPE_RIGHT, displayId);
+                testGesture(
+                        MultiFingerSwipe(displayId, 2, 0, -dy),
+                        AccessibilityService.GESTURE_2_FINGER_SWIPE_UP, displayId);
+
+                testGesture(
+                        MultiFingerSwipe(displayId, 3, 0, dy),
+                        AccessibilityService.GESTURE_3_FINGER_SWIPE_DOWN, displayId);
+                testGesture(
+                        MultiFingerSwipe(displayId, 3, -dx, 0),
+                        AccessibilityService.GESTURE_3_FINGER_SWIPE_LEFT, displayId);
+                testGesture(
+                        MultiFingerSwipe(displayId, 3, dx, 0),
+                        AccessibilityService.GESTURE_3_FINGER_SWIPE_RIGHT, displayId);
+                testGesture(
+                        MultiFingerSwipe(displayId, 3, 0, -dy),
+                        AccessibilityService.GESTURE_3_FINGER_SWIPE_UP, displayId);
     }
 
     /** Convenient short alias to make a Point. */
@@ -307,11 +338,6 @@ public class AccessibilityGestureDetectorTest {
         // Wait for gesture recognizer, and check recognized gesture.
         mService.assertGestureReceived(gestureId, displayId);
     }
-
-    private void testGesture(GestureDescription gesture, int gestureId) {
-        testGesture(gesture, gestureId, Display.DEFAULT_DISPLAY);
-    }
-
     /** Create a path from startPoint, moving by delta1, then delta2. (delta2 may be null.) */
     Path linePath(Point startPoint, Point delta1, Point delta2) {
         Path path = new Path();
@@ -490,5 +516,20 @@ public class AccessibilityGestureDetectorTest {
         final PointF delta = times(2, HALF_FINGER_OFFSET);
         return GestureUtils.multiFingerMultiTap(
                 base, delta, fingerCount, tapCount, /* slop */ 0, displayId);
+    }
+
+    private GestureDescription MultiFingerSwipe(
+            int displayId, int fingerCount, float dx, float dy) {
+        float fingerOffset = 10f;
+        GestureDescription.Builder builder = new GestureDescription.Builder();
+        builder.setDisplayId(displayId);
+        for (int currentFinger = 0; currentFinger < fingerCount; ++currentFinger) {
+            builder.addStroke(
+                    GestureUtils.swipe(
+                            add(mTapLocation, fingerOffset * currentFinger, 0),
+                            add(mTapLocation, dx + (fingerOffset * currentFinger), dy),
+                            STROKE_MS));
+        }
+        return builder.build();
     }
 }
