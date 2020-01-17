@@ -19,6 +19,7 @@ package android.server.wm;
 import static android.app.ActivityTaskManager.INVALID_STACK_ID;
 import static android.server.wm.app.Components.MPP_ACTIVITY;
 import static android.server.wm.app.Components.MPP_ACTIVITY2;
+import static android.server.wm.app.Components.MPP_ACTIVITY3;
 import static android.server.wm.app.Components.MinimalPostProcessingActivity.EXTRA_PREFER_MPP;
 import static android.server.wm.app.Components.POPUP_MPP_ACTIVITY;
 
@@ -88,6 +89,18 @@ public class MinimalPostProcessingTests extends ActivityManagerTestBase {
     public void testNotPreferMinimalPostProcessingSimple() throws Exception {
         launchMppActivity(MPP_ACTIVITY, NOT_PREFER_MPP);
         assertDisplayRequestedMinimalPostProcessing(MPP_ACTIVITY, NOT_PREFER_MPP);
+    }
+
+    @Test
+    public void testAttrPreferMinimalPostProcessingDefault() throws Exception {
+        launchMppActivity(MPP_ACTIVITY, NOT_PREFER_MPP);
+        assertDisplayRequestedMinimalPostProcessing(MPP_ACTIVITY, NOT_PREFER_MPP);
+    }
+
+    @Test
+    public void testAttrPreferMinimalPostProcessingSimple() throws Exception {
+        launchMppActivity(MPP_ACTIVITY3, NOT_PREFER_MPP);
+        assertDisplayRequestedMinimalPostProcessing(MPP_ACTIVITY3, PREFER_MPP);
     }
 
     @Test
