@@ -573,6 +573,10 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             // Reboot while in kiosk mode and then unlock the device
             rebootAndWaitUntilReady();
 
+            // Make sure that the LockTaskUtilityActivityIfWhitelisted was started.
+            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".LockTaskHostDrivenTest",
+                    "testLockTaskIsActive", mPrimaryUserId);
+
             // Try to open settings via adb
             executeShellCommand("am start -a android.settings.SETTINGS");
 
