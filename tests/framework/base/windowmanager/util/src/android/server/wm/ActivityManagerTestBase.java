@@ -57,6 +57,7 @@ import static android.server.wm.ActivityLauncher.KEY_REORDER_TO_FRONT;
 import static android.server.wm.ActivityLauncher.KEY_SUPPRESS_EXCEPTIONS;
 import static android.server.wm.ActivityLauncher.KEY_TARGET_COMPONENT;
 import static android.server.wm.ActivityLauncher.KEY_USE_APPLICATION_CONTEXT;
+import static android.server.wm.ActivityLauncher.KEY_WINDOWING_MODE;
 import static android.server.wm.ActivityLauncher.launchActivityFromExtras;
 import static android.server.wm.ActivityManagerState.STATE_RESUMED;
 import static android.server.wm.CommandSession.KEY_FORWARD;
@@ -1864,6 +1865,7 @@ public abstract class ActivityManagerTestBase {
         private boolean mAllowMultipleInstances = true;
         private boolean mLaunchTaskBehind;
         private int mDisplayId = INVALID_DISPLAY;
+        private int mWindowingMode = -1;
         private int mActivityType = ACTIVITY_TYPE_UNDEFINED;
         // A proxy activity that launches other activities including mTargetActivityName
         private ComponentName mLaunchingActivity = LAUNCHING_ACTIVITY;
@@ -1946,6 +1948,11 @@ public abstract class ActivityManagerTestBase {
 
         public LaunchActivityBuilder setDisplayId(int id) {
             mDisplayId = id;
+            return this;
+        }
+
+        public LaunchActivityBuilder setWindowingMode(int windowingMode) {
+            mWindowingMode = windowingMode;
             return this;
         }
 
@@ -2053,6 +2060,7 @@ public abstract class ActivityManagerTestBase {
             b.putBoolean(KEY_LAUNCH_TASK_BEHIND, mLaunchTaskBehind);
             b.putBoolean(KEY_REORDER_TO_FRONT, mReorderToFront);
             b.putInt(KEY_DISPLAY_ID, mDisplayId);
+            b.putInt(KEY_WINDOWING_MODE, mWindowingMode);
             b.putInt(KEY_ACTIVITY_TYPE, mActivityType);
             b.putBoolean(KEY_USE_APPLICATION_CONTEXT, mUseApplicationContext);
             b.putString(KEY_TARGET_COMPONENT, getActivityName(mTargetActivity));
@@ -2101,6 +2109,9 @@ public abstract class ActivityManagerTestBase {
             }
             if (mDisplayId != INVALID_DISPLAY) {
                 commandBuilder.append(" --ei " + KEY_DISPLAY_ID + " ").append(mDisplayId);
+            }
+            if (mWindowingMode != -1) {
+                commandBuilder.append(" --ei " + KEY_WINDOWING_MODE + " ").append(mWindowingMode);
             }
             if (mActivityType != ACTIVITY_TYPE_UNDEFINED) {
                 commandBuilder.append(" --ei " + KEY_ACTIVITY_TYPE + " ").append(mActivityType);

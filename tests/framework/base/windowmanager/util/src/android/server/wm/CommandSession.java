@@ -17,6 +17,7 @@
 package android.server.wm;
 
 import android.app.Activity;
+import android.app.Application;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -80,6 +81,7 @@ public final class CommandSession {
     private static final String KEY_CLIENT_ID = EXTRA_PREFIX + "key_client_id";
     private static final String KEY_COMMAND = EXTRA_PREFIX + "key_command";
     private static final String KEY_CONFIG_INFO = EXTRA_PREFIX + "key_config_info";
+    private static final String KEY_APP_CONFIG_INFO = EXTRA_PREFIX + "key_app_config_info";
     private static final String KEY_HOST_ID = EXTRA_PREFIX + "key_host_id";
     private static final String KEY_ORIENTATION = EXTRA_PREFIX + "key_orientation";
     private static final String KEY_REQUEST_TOKEN = EXTRA_PREFIX + "key_request_id";
@@ -88,6 +90,7 @@ public final class CommandSession {
 
     private static final String COMMAND_FINISH = EXTRA_PREFIX + "command_finish";
     private static final String COMMAND_GET_CONFIG = EXTRA_PREFIX + "command_get_config";
+    private static final String COMMAND_GET_APP_CONFIG = EXTRA_PREFIX + "command_get_app_config";
     private static final String COMMAND_ORIENTATION = EXTRA_PREFIX + "command_orientation";
     private static final String COMMAND_TAKE_CALLBACK_HISTORY = EXTRA_PREFIX
             + "command_take_callback_history";
@@ -103,6 +106,11 @@ public final class CommandSession {
     /** Get {@link ConfigInfo} from bundle. */
     public static ConfigInfo getConfigInfo(Bundle data) {
         return data.getParcelable(KEY_CONFIG_INFO);
+    }
+
+    /** Get application {@link ConfigInfo} from bundle. */
+    public static ConfigInfo getAppConfigInfo(Bundle data) {
+        return data.getParcelable(KEY_APP_CONFIG_INFO);
     }
 
     /** Get list of {@link ActivityCallback} from bundle. */
@@ -201,6 +209,11 @@ public final class CommandSession {
         /** Get {@link ConfigInfo} of the associated activity. */
         public ConfigInfo getConfigInfo() {
             return CommandSession.getConfigInfo(sendCommandAndWaitReply(COMMAND_GET_CONFIG));
+        }
+
+        /** Get {@link ConfigInfo} of the Application of the associated activity. */
+        public ConfigInfo getAppConfigInfo() {
+            return CommandSession.getAppConfigInfo(sendCommandAndWaitReply(COMMAND_GET_APP_CONFIG));
         }
 
         /**
@@ -741,6 +754,14 @@ public final class CommandSession {
                     });
                     break;
 
+                case COMMAND_GET_APP_CONFIG:
+                    runWhenIdle(() -> {
+                        final Bundle replyData = new Bundle();
+                        replyData.putParcelable(KEY_APP_CONFIG_INFO, getAppConfigInfo());
+                        reply(COMMAND_GET_APP_CONFIG, replyData);
+                    });
+                    break;
+
                 case COMMAND_FINISH:
                     if (!isFinishing()) {
                         finish();
@@ -910,7 +931,13 @@ public final class CommandSession {
             if (!view.isAttachedToWindow()) {
                 Log.w(getTag(), "Decor view has not attached");
             }
-            return new ConfigInfo(view);
+            return new ConfigInfo(view.getContext(), view.getDisplay());
+        }
+
+        /** Same as {@link #getConfigInfo()}, but for Application. */
+        private ConfigInfo getAppConfigInfo() {
+            final Application application = (Application) getApplicationContext();
+            return new ConfigInfo(application, application.getDisplay());
         }
     }
 
@@ -965,11 +992,10 @@ public final class CommandSession {
         ConfigInfo() {
         }
 
-        public ConfigInfo(View view) {
-            final Resources res = view.getContext().getResources();
+        public ConfigInfo(Context context, Display display) {
+            final Resources res = context.getResources();
             final DisplayMetrics metrics = res.getDisplayMetrics();
             final Configuration config = res.getConfiguration();
-            final Display display = view.getDisplay();
 
             if (display != null) {
                 displayId = display.getDisplayId();
