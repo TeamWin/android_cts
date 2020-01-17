@@ -33,6 +33,7 @@ import android.service.euicc.IDeleteSubscriptionCallback;
 import android.service.euicc.IDownloadSubscriptionCallback;
 import android.service.euicc.IEraseSubscriptionsCallback;
 import android.service.euicc.IEuiccService;
+import android.service.euicc.IEuiccServiceDumpResultCallback;
 import android.service.euicc.IGetDefaultDownloadableSubscriptionListCallback;
 import android.service.euicc.IGetDownloadableSubscriptionMetadataCallback;
 import android.service.euicc.IGetEidCallback;
@@ -423,6 +424,27 @@ public class EuiccServiceTest {
                         assertEquals(EuiccService.RESULT_OK, result);
                     }
                 });
+
+        try {
+            mCountDownLatch.await(CALLBACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            fail(e.toString());
+        }
+
+        assertTrue(mCallback.isMethodCalled());
+    }
+
+    @Test
+    public void testDump() throws Exception {
+        mCountDownLatch = new CountDownLatch(1);
+
+        mEuiccServiceBinder.dump(new IEuiccServiceDumpResultCallback.Stub() {
+            @Override
+            public void onComplete(String logs) {
+                assertEquals(MockEuiccService.MOCK_DUMPED_LOG, logs);
+                mCountDownLatch.countDown();
+            }
+        });
 
         try {
             mCountDownLatch.await(CALLBACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
