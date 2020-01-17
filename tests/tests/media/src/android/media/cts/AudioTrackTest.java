@@ -2693,6 +2693,73 @@ public class AudioTrackTest {
             n < MAX_TRACKS);
     }
 
+    @Test
+    public void testTunerConfiguration() throws Exception {
+        if (!hasAudioOutput()) {
+            return;
+        }
+
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> {
+                final AudioTrack.TunerConfiguration badConfig =
+                    new AudioTrack.TunerConfiguration.Builder()
+                        .setContentId(0)
+                        .setSyncId(1)
+                        .build();
+            });
+
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> {
+                final AudioTrack.TunerConfiguration badConfig =
+                    new AudioTrack.TunerConfiguration.Builder()
+                        .setContentId(1)
+                        .setSyncId(0)
+                        .build();
+            });
+
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> {
+                final AudioTrack track = new AudioTrack.Builder()
+                    .setEncapsulationMode(-1)
+                    .build();
+                track.release();
+            });
+
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> {
+                final AudioTrack track = new AudioTrack.Builder()
+                    .setTunerConfiguration(null)
+                    .build();
+                track.release();
+            });
+
+        // this should work.
+        final AudioTrack.TunerConfiguration tunerConfiguration =
+            new AudioTrack.TunerConfiguration.Builder()
+                .setContentId(1)
+                .setSyncId(2)
+                .build();
+
+        assertEquals("contentId must be set", 1, tunerConfiguration.getContentId());
+        assertEquals("syncId must be set", 2, tunerConfiguration.getSyncId());
+
+        // this may fail on creation, not in any setters.
+        try {
+            final AudioTrack track = new AudioTrack.Builder()
+                .setEncapsulationMode(AudioTrack.ENCAPSULATION_MODE_NONE)
+                .setTunerConfiguration(tunerConfiguration)
+                .build();
+            track.release();
+        } catch (UnsupportedOperationException e) {
+            ; // creation failure is OK as TunerConfiguration requires HW support,
+              // however other exception failures are not OK.
+        }
+    }
+
 /* Do not run in JB-MR1. will be re-opened in the next platform release.
     public void testResourceLeakage() throws Exception {
         final int BUFFER_SIZE = 600 * 1024;
