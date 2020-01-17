@@ -837,30 +837,50 @@ public class AudioRecordTest {
     }
 
     @Test
-    public void testVoiceCallAudioSourcePermissions() throws Exception {
-        if (!hasMicrophone()) {
-            return;
-        }
-
-        // Make sure that VOICE_CALL, VOICE_DOWNLINK and VOICE_UPLINK audio sources cannot
-        // be used by apps that don't have the CAPTURE_AUDIO_OUTPUT permissions
-        final int[] voiceCallAudioSources = new int [] {MediaRecorder.AudioSource.VOICE_CALL,
+    public void testRestrictedAudioSourcePermissions() throws Exception {
+        // Make sure that the following audio sources cannot be used by apps that
+        // don't have the CAPTURE_AUDIO_OUTPUT permissions:
+        // - VOICE_CALL,
+        // - VOICE_DOWNLINK
+        // - VOICE_UPLINK
+        // - REMOTE_SUBMIX
+        // - ECHO_REFERENCE  - 1997
+        // - RADIO_TUNER - 1998
+        // - HOTWORD - 1999
+        // The attempt to build an AudioRecord with those sources should throw either
+        // UnsupportedOperationException or IllegalArgumentException exception.
+        final int[] restrictedAudioSources = new int [] {
+            MediaRecorder.AudioSource.VOICE_CALL,
             MediaRecorder.AudioSource.VOICE_DOWNLINK,
-            MediaRecorder.AudioSource.VOICE_UPLINK};
+            MediaRecorder.AudioSource.VOICE_UPLINK,
+            MediaRecorder.AudioSource.REMOTE_SUBMIX,
+            1997,
+            1998,
+            1999
+        };
 
-        for (int source : voiceCallAudioSources) {
+        for (int source : restrictedAudioSources) {
             // AudioRecord.Builder should fail when trying to use
             // one of the voice call audio sources.
-            assertThrows(UnsupportedOperationException.class,
-                            () -> {
-                                new AudioRecord.Builder()
-                                 .setAudioSource(source)
-                                 .setAudioFormat(new AudioFormat.Builder()
-                                         .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                                         .setSampleRate(8000)
-                                         .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
-                                         .build())
-                                 .build(); });
+            try {
+                AudioRecord ar = new AudioRecord.Builder()
+                 .setAudioSource(source)
+                 .setAudioFormat(new AudioFormat.Builder()
+                         .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                         .setSampleRate(8000)
+                         .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
+                         .build())
+                 .build();
+                fail("testRestrictedAudioSourcePermissions: no exception thrown for source: "
+                        + source);
+            } catch (Exception e) {
+                Log.i(TAG, "Exception: " + e);
+                if (!UnsupportedOperationException.class.isInstance(e)
+                        && !IllegalArgumentException.class.isInstance(e)) {
+                    fail("testRestrictedAudioSourcePermissions: no exception thrown for source: "
+                        + source + " Exception:" + e);
+                }
+            }
         }
     }
 
