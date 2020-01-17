@@ -31,7 +31,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -48,7 +47,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.database.CursorWindow;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -56,7 +54,6 @@ import android.os.ParcelFileDescriptor;
 import android.os.RemoteCallback;
 import android.os.SystemClock;
 import android.provider.Telephony;
-import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
@@ -77,7 +74,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -130,6 +126,7 @@ public class SmsManagerTest {
     private static boolean mReceivedDataSms;
     private static String mReceivedText;
     private static boolean sHasShellPermissionIdentity = false;
+    private static long sMessageId = 0L;
 
     private static final int TIME_OUT = 1000 * 60 * 4;
     private static final int NO_CALLS_TIMEOUT_MILLIS = 1000; // 1 second
@@ -242,21 +239,16 @@ public class SmsManagerTest {
                 mSmsRetrieverReceiver.waitForCalls(1, TIME_OUT));
     }
 
-    @Test
-    public void testSendAndReceiveMessages() throws Exception {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            return;
-        }
-
-        assertFalse("[RERUN] SIM card does not provide phone number. Use a suitable SIM Card.",
-                TextUtils.isEmpty(mDestAddr));
-
-        String mccmnc = mTelephonyManager.getSimOperator();
-        setupBroadcastReceivers();
-
+    private void sendAndReceiveSms(boolean addMessageId) throws Exception {
         // send single text sms
         init();
-        sendTextMessage(mDestAddr, mDestAddr, mSentIntent, mDeliveredIntent);
+        if (addMessageId) {
+            long fakeMessageId = 19812L;
+            sendTextMessageWithMessageId(mDestAddr, mDestAddr, mSentIntent, mDeliveredIntent,
+                    fakeMessageId);
+        } else {
+            sendTextMessage(mDestAddr, mDestAddr, mSentIntent, mDeliveredIntent);
+        }
         assertTrue("[RERUN] Could not send SMS. Check signal.",
                 mSendReceiver.waitForCalls(1, TIME_OUT));
         if (mDeliveryReportSupported) {
@@ -265,17 +257,33 @@ public class SmsManagerTest {
         }
         // non-default app should receive only SMS_RECEIVED_ACTION
         assertTrue(mSmsReceivedReceiver.waitForCalls(1, TIME_OUT));
+        // Received SMS should always contain a generated messageId
+        assertNotEquals(0L, sMessageId);
         assertTrue(mSmsDeliverReceiver.waitForCalls(0, 0));
+    }
 
-        // due to permission restrictions, currently there is no way to make this test app the
-        // default SMS app
-
-        if (mTelephonyManager.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
-            // TODO: temp workaround, OCTET encoding for EMS not properly supported
-            return;
+    private void sendAndReceiveMultipartSms(String mccmnc, boolean addMessageId) throws Exception {
+        sMessageId = 0L;
+        int numPartsSent = sendMultipartTextMessageIfSupported(mccmnc, addMessageId);
+        if (numPartsSent > 0) {
+            assertTrue("[RERUN] Could not send multi part SMS. Check signal.",
+                    mSendReceiver.waitForCalls(numPartsSent, TIME_OUT));
+            if (mDeliveryReportSupported) {
+                assertTrue("[RERUN] Multi part SMS message delivery notification not received. "
+                        + "Check signal.", mDeliveryReceiver.waitForCalls(numPartsSent, TIME_OUT));
+            }
+            // non-default app should receive only SMS_RECEIVED_ACTION
+            assertTrue(mSmsReceivedReceiver.waitForCalls(1, TIME_OUT));
+            assertTrue(mSmsDeliverReceiver.waitForCalls(0, 0));
+            // Received SMS should contain a generated messageId
+            assertNotEquals(0L, sMessageId);
+        } else {
+            // This GSM network doesn't support Multipart SMS message.
+            // Skip the test.
         }
+    }
 
-        // send data sms
+    private void sendDataSms(String mccmnc) throws Exception {
         if (sendDataMessageIfSupported(mccmnc)) {
             assertTrue("[RERUN] Could not send data SMS. Check signal.",
                     mSendReceiver.waitForCalls(1, TIME_OUT));
@@ -290,23 +298,38 @@ public class SmsManagerTest {
             // This GSM network doesn't support Data(binary) SMS message.
             // Skip the test.
         }
+    }
 
-        // send multi parts text sms
-        int numPartsSent = sendMultipartTextMessageIfSupported(mccmnc);
-        if (numPartsSent > 0) {
-            assertTrue("[RERUN] Could not send multi part SMS. Check signal.",
-                    mSendReceiver.waitForCalls(numPartsSent, TIME_OUT));
-            if (mDeliveryReportSupported) {
-                assertTrue("[RERUN] Multi part SMS message delivery notification not received. " +
-                        "Check signal.", mDeliveryReceiver.waitForCalls(numPartsSent, TIME_OUT));
-            }
-            // non-default app should receive only SMS_RECEIVED_ACTION
-            assertTrue(mSmsReceivedReceiver.waitForCalls(1, TIME_OUT));
-            assertTrue(mSmsDeliverReceiver.waitForCalls(0, 0));
-        } else {
-            // This GSM network doesn't support Multipart SMS message.
-            // Skip the test.
+    @Test
+    public void testSendAndReceiveMessages() throws Exception {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
         }
+
+        assertFalse("[RERUN] SIM card does not provide phone number. Use a suitable SIM Card.",
+                TextUtils.isEmpty(mDestAddr));
+
+        String mccmnc = mTelephonyManager.getSimOperator();
+        setupBroadcastReceivers();
+
+        // send/receive single text sms with and without messageId
+        sendAndReceiveSms(/* addMessageId= */ true);
+        sendAndReceiveSms(/* addMessageId= */ false);
+
+        // due to permission restrictions, currently there is no way to make this test app the
+        // default SMS app
+
+        if (mTelephonyManager.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
+            // TODO: temp workaround, OCTET encoding for EMS not properly supported
+            return;
+        }
+
+        // send/receive data sms
+        sendDataSms(mccmnc);
+
+        // send/receive multi part text sms with and without messageId
+        sendAndReceiveMultipartSms(mccmnc, /* addMessageId= */ true);
+        sendAndReceiveMultipartSms(mccmnc, /* addMessageId= */ false);
     }
 
     @Test
@@ -350,7 +373,7 @@ public class SmsManagerTest {
         }
 
         // multi-part SMS blocking
-        int numPartsSent = sendMultipartTextMessageIfSupported(mccmnc);
+        int numPartsSent = sendMultipartTextMessageIfSupported(mccmnc, /* addMessageId= */ false);
         if (numPartsSent > 0) {
             assertTrue("[RERUN] Could not send multi part SMS. Check signal.",
                     mSendReceiver.waitForCalls(numPartsSent, TIME_OUT));
@@ -570,6 +593,7 @@ public class SmsManagerTest {
         mSmsReceivedReceiver.reset();
         mSmsRetrieverReceiver.reset();
         mReceivedDataSms = false;
+        sMessageId = 0L;
         mSentIntent = PendingIntent.getBroadcast(mContext, 0, mSendIntent,
                 PendingIntent.FLAG_ONE_SHOT);
         mDeliveredIntent = PendingIntent.getBroadcast(mContext, 0, mDeliveryIntent,
@@ -609,7 +633,7 @@ public class SmsManagerTest {
      * Returns the number of parts sent in the message. If Multi-part SMS is not supported,
      * returns 0.
      */
-    private int sendMultipartTextMessageIfSupported(String mccmnc) {
+    private int sendMultipartTextMessageIfSupported(String mccmnc, boolean addMessageId) {
         int numPartsSent = 0;
         if (!CarrierCapability.UNSUPPORT_MULTIPART_SMS_MESSAGES.contains(mccmnc)) {
             init();
@@ -621,7 +645,7 @@ public class SmsManagerTest {
                 sentIntents.add(PendingIntent.getBroadcast(mContext, 0, mSendIntent, 0));
                 deliveryIntents.add(PendingIntent.getBroadcast(mContext, 0, mDeliveryIntent, 0));
             }
-            sendMultiPartTextMessage(mDestAddr, parts, sentIntents, deliveryIntents);
+            sendMultiPartTextMessage(mDestAddr, parts, sentIntents, deliveryIntents, addMessageId);
         }
         return numPartsSent;
     }
@@ -652,8 +676,13 @@ public class SmsManagerTest {
     }
 
     protected void sendMultiPartTextMessage(String destAddr, ArrayList<String> parts,
-            ArrayList<PendingIntent> sentIntents, ArrayList<PendingIntent> deliveryIntents) {
-        if (mContext.getOpPackageName() != null) {
+            ArrayList<PendingIntent> sentIntents, ArrayList<PendingIntent> deliveryIntents,
+            boolean addMessageId) {
+        if (addMessageId) {
+            long fakeMessageId = 1278;
+            getSmsManager().sendMultipartTextMessage(destAddr, null, parts, sentIntents,
+                    deliveryIntents, fakeMessageId);
+        } else if (mContext.getOpPackageName() != null) {
             getSmsManager().sendMultipartTextMessage(destAddr, null, parts, sentIntents,
                     deliveryIntents, mContext.getOpPackageName());
         } else {
@@ -666,8 +695,15 @@ public class SmsManagerTest {
         getSmsManager().sendDataMessage(destAddr, null, port, data, sentIntent, deliveredIntent);
     }
 
-    protected void sendTextMessage(String destAddr, String text, PendingIntent sentIntent, PendingIntent deliveredIntent) {
+    protected void sendTextMessage(String destAddr, String text, PendingIntent sentIntent,
+            PendingIntent deliveredIntent) {
         getSmsManager().sendTextMessage(destAddr, null, text, sentIntent, deliveredIntent);
+    }
+
+    protected void sendTextMessageWithMessageId(String destAddr, String text,
+            PendingIntent sentIntent, PendingIntent deliveredIntent, long messageId) {
+        getSmsManager().sendTextMessage(destAddr, null, text, sentIntent, deliveredIntent,
+                messageId);
     }
 
     private void blockNumber(String number) {
@@ -750,6 +786,9 @@ public class SmsManagerTest {
                 }
                 mReceivedDataSms = true;
                 mReceivedText=sb.toString();
+            }
+            if (mAction.equals(Telephony.Sms.Intents.SMS_RECEIVED_ACTION)) {
+                sMessageId = intent.getLongExtra("messageId", 0L);
             }
             Log.i(TAG, "onReceive " + intent.getAction());
             if (intent.getAction().equals(mAction)) {
