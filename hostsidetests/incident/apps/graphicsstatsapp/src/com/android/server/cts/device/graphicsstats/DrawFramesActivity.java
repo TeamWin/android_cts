@@ -123,6 +123,7 @@ public class DrawFramesActivity extends Activity implements Window.OnFrameMetric
     }
 
     private void scheduleDraw() {
+        mColorView.invalidate();
         mChoreographer.postFrameCallback((long timestamp) -> {
             setupFrame();
             jankIf(FRAME_JANK_ANIMATION);
