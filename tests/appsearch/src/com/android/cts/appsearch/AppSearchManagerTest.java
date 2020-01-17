@@ -19,7 +19,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.app.appsearch.AppSearchManager;
 import android.app.appsearch.AppSearchSchema;
-import android.app.appsearch.AppSearchSchema.IndexingConfig;
 import android.app.appsearch.AppSearchSchema.PropertyConfig;
 import android.content.Context;
 
@@ -49,35 +48,23 @@ public class AppSearchManagerTest {
 
     @Test
     public void testSetSchema() throws Exception {
-        AppSearchSchema schema = AppSearchSchema.newBuilder()
-                .addType(AppSearchSchema.newSchemaTypeBuilder("Email")
-                        .addProperty(AppSearchSchema.newPropertyBuilder("subject")
-                                .setDataType(PropertyConfig.DATA_TYPE_STRING)
-                                .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
-                                .setIndexingConfig(
-                                        AppSearchSchema.newIndexingConfigBuilder()
-                                                .setTokenizerType(
-                                                        IndexingConfig.TOKENIZER_TYPE_PLAIN)
-                                                .setTermMatchType(
-                                                        IndexingConfig.TERM_MATCH_TYPE_PREFIX)
-                                                .build()
-                                ).build()
-                        ).addProperty(AppSearchSchema.newPropertyBuilder("body")
-                                .setDataType(PropertyConfig.DATA_TYPE_STRING)
-                                .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
-                                .setIndexingConfig(
-                                        AppSearchSchema.newIndexingConfigBuilder()
-                                                .setTokenizerType(
-                                                        IndexingConfig.TOKENIZER_TYPE_PLAIN)
-                                                .setTermMatchType(
-                                                        IndexingConfig.TERM_MATCH_TYPE_PREFIX)
-                                                .build()
-                                ).build()
-                        ).build()
+        AppSearchSchema emailSchema = AppSearchSchema.newBuilder("Email")
+                .addProperty(AppSearchSchema.newPropertyBuilder("subject")
+                        .setDataType(PropertyConfig.DATA_TYPE_STRING)
+                        .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
+                        .setIndexingType(PropertyConfig.INDEXING_TYPE_PREFIXES)
+                        .setTokenizerType(PropertyConfig.TOKENIZER_TYPE_PLAIN)
+                        .build()
+                ).addProperty(AppSearchSchema.newPropertyBuilder("body")
+                        .setDataType(PropertyConfig.DATA_TYPE_STRING)
+                        .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
+                        .setIndexingType(PropertyConfig.INDEXING_TYPE_PREFIXES)
+                        .setTokenizerType(PropertyConfig.TOKENIZER_TYPE_PLAIN)
+                        .build()
                 ).build();
 
         CompletableFuture<Throwable> result = new CompletableFuture<>();
-        mAppSearch.setSchema(schema, mExecutor, result::complete);
+        mAppSearch.setSchema(mExecutor, result::complete, emailSchema);
         assertThat(result.get()).isEqualTo(null);
     }
 }
