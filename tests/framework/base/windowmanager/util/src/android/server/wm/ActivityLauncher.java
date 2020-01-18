@@ -122,6 +122,11 @@ public class ActivityLauncher {
      */
     public static final String KEY_INTENT_EXTRAS = "intent_extras";
 
+    /**
+     * Key for int extra, indicates the requested windowing mode.
+     */
+    public static final String KEY_WINDOWING_MODE = "windowing_mode";
+
 
     /** Perform an activity launch configured by provided extras. */
     public static void launchActivityFromExtras(final Context context, Bundle extras) {
@@ -176,6 +181,13 @@ public class ActivityLauncher {
             if (extras.getBoolean(KEY_MULTIPLE_INSTANCES)) {
                 newIntent.addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
             }
+        }
+        final int windowingMode = extras.getInt(KEY_WINDOWING_MODE, -1);
+        if (windowingMode != -1) {
+            if (options == null) {
+                options = ActivityOptions.makeBasic();
+            }
+            options.setLaunchWindowingMode(windowingMode);
         }
         if (launchInjector != null) {
             launchInjector.setupIntent(newIntent);

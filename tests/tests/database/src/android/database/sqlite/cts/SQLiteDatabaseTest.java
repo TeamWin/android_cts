@@ -45,6 +45,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Semaphore;
+import java.util.function.BinaryOperator;
+import java.util.function.UnaryOperator;
 
 public class SQLiteDatabaseTest extends AndroidTestCase {
 
@@ -856,6 +858,210 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         assertEquals("Jim", cursor.getString(COLUMN_NAME_INDEX));
         assertEquals(3, cursor.getInt(COLUMN_MONTH_INDEX));
         cursor.close();
+    }
+
+    private static UnaryOperator<String> sReverse = (arg) -> {
+        if (arg == null) return null;
+        final StringBuilder sb = new StringBuilder(arg.length());
+        for (int i = arg.length() - 1; i >= 0; i--) {
+            sb.append(arg.charAt(i));
+        }
+        return sb.toString();
+    };
+
+    public void testCustomScalarFunction() {
+        mDatabase.execSQL("CREATE TABLE employee (_id INTEGER PRIMARY KEY, " +
+                "name TEXT, month INTEGER, salary INTEGER);");
+        mDatabase.execSQL("INSERT INTO employee (name, month, salary) " +
+                "VALUES ('Mike', '1', '1000');");
+        mDatabase.execSQL("INSERT INTO employee (name, month, salary) " +
+                "VALUES ('Jim', '2', '3000');");
+
+        mDatabase.setCustomScalarFunction("CTS_REVERSE", sReverse);
+        try (Cursor c = mDatabase.query(true, "employee", new String[] {
+                "CTS_REVERSE(name)", "salary"
+        }, null, null, null, null, "salary", null)) {
+            assertTrue(c.moveToNext());
+            assertEquals("ekiM", c.getString(0));
+            assertEquals(1000, c.getLong(1));
+
+            assertTrue(c.moveToNext());
+            assertEquals("miJ", c.getString(0));
+            assertEquals(3000, c.getLong(1));
+        }
+    }
+
+    public void testCustomScalarFunction_Null() {
+        mDatabase.execSQL("CREATE TABLE employee (_id INTEGER PRIMARY KEY, " +
+                "name TEXT, month INTEGER, salary INTEGER);");
+        mDatabase.execSQL("INSERT INTO employee (name, month, salary) " +
+                "VALUES (NULL, '2', '2000');");
+        mDatabase.execSQL("INSERT INTO employee (name, month, salary) " +
+                "VALUES (NULL, '3', '3000');");
+        mDatabase.execSQL("INSERT INTO employee (name, month, salary) " +
+                "VALUES (NULL, '4', '4000');");
+
+        mDatabase.setCustomScalarFunction("CTS_REVERSE", sReverse);
+        try (Cursor c = mDatabase.query(true, "employee", new String[] {
+                "CTS_REVERSE(name)", "salary"
+        }, null, null, null, null, "salary", null)) {
+            assertEquals(3, c.getCount());
+            while (c.moveToNext()) {
+                assertTrue(c.isNull(0));
+            }
+        }
+    }
+
+    public void testCustomScalarFunction_Throws() {
+        mDatabase.execSQL("CREATE TABLE employee (_id INTEGER PRIMARY KEY, " +
+                "name TEXT, month INTEGER, salary INTEGER);");
+        mDatabase.execSQL("INSERT INTO employee (name, month, salary) " +
+                "VALUES ('Mike', '1', '1000');");
+
+        mDatabase.setCustomScalarFunction("CTS_THROWS", (arg) -> {
+            // Anything thrown from Java is translated into a SQLITE_ERROR
+            throw new IllegalArgumentException();
+        });
+        try (Cursor c = mDatabase.query(true, "employee", new String[] {
+                "CTS_THROWS(name)", "salary"
+        }, null, null, null, null, "salary", null)) {
+            c.moveToFirst();
+            fail();
+        } catch (SQLException expected) {
+        }
+    }
+
+    private static BinaryOperator<String> sLongest = (arg0, arg1) -> {
+        if (arg0 == null) {
+            return arg1;
+        } else if (arg1 == null) {
+            return arg0;
+        } else {
+            return (arg0.length() >= arg1.length()) ? arg0 : arg1;
+        }
+    };
+
+    public void testCustomAggregateFunction() {
+        mDatabase.execSQL("CREATE TABLE employee (_id INTEGER PRIMARY KEY, " +
+                "name TEXT, month INTEGER, salary INTEGER);");
+        mDatabase.execSQL("INSERT INTO employee (name, month, salary) " +
+                "VALUES ('Mike', '1', '1000');");
+        mDatabase.execSQL("INSERT INTO employee (name, month, salary) " +
+                "VALUES ('Jim', '2', '2000');");
+        mDatabase.execSQL("INSERT INTO employee (name, month, salary) " +
+                "VALUES ('Robert', '3', '3000');");
+
+        mDatabase.setCustomAggregateFunction("CTS_LONGEST", sLongest);
+        try (Cursor c = mDatabase.query(true, "employee", new String[] {
+                "CTS_LONGEST(name)",
+        }, null, null, null, null, null, null)) {
+            assertEquals(1, c.getCount());
+            assertTrue(c.moveToFirst());
+            assertEquals("Robert", c.getString(0));
+        }
+    }
+
+    public void testCustomAggregateFunction_Zero() {
+        mDatabase.execSQL("CREATE TABLE employee (_id INTEGER PRIMARY KEY, " +
+                "name TEXT, month INTEGER, salary INTEGER);");
+
+        mDatabase.setCustomAggregateFunction("CTS_LONGEST", sLongest);
+        try (Cursor c = mDatabase.query(true, "employee", new String[] {
+                "CTS_LONGEST(name)",
+        }, null, null, null, null, null, null)) {
+            assertEquals(1, c.getCount());
+            assertTrue(c.moveToFirst());
+            assertTrue(c.isNull(0));
+        }
+    }
+
+    public void testCustomAggregateFunction_One() {
+        mDatabase.execSQL("CREATE TABLE employee (_id INTEGER PRIMARY KEY, " +
+                "name TEXT, month INTEGER, salary INTEGER);");
+        mDatabase.execSQL("INSERT INTO employee (name, month, salary) " +
+                "VALUES ('Mike', '1', '1000');");
+
+        mDatabase.setCustomAggregateFunction("CTS_LONGEST", sLongest);
+        try (Cursor c = mDatabase.query(true, "employee", new String[] {
+                "CTS_LONGEST(name)",
+        }, null, null, null, null, null, null)) {
+            assertEquals(1, c.getCount());
+            assertTrue(c.moveToFirst());
+            assertEquals("Mike", c.getString(0));
+        }
+    }
+
+    public void testCustomAggregateFunction_OneNull() {
+        mDatabase.execSQL("CREATE TABLE employee (_id INTEGER PRIMARY KEY, " +
+                "name TEXT, month INTEGER, salary INTEGER);");
+        mDatabase.execSQL("INSERT INTO employee (name, month, salary) " +
+                "VALUES (NULL, '1', '1000');");
+
+        mDatabase.setCustomAggregateFunction("CTS_LONGEST", sLongest);
+        try (Cursor c = mDatabase.query(true, "employee", new String[] {
+                "CTS_LONGEST(name)",
+        }, null, null, null, null, null, null)) {
+            assertEquals(1, c.getCount());
+            assertTrue(c.moveToFirst());
+            assertTrue(c.isNull(0));
+        }
+    }
+
+    public void testCustomAggregateFunction_Two() {
+        mDatabase.execSQL("CREATE TABLE employee (_id INTEGER PRIMARY KEY, " +
+                "name TEXT, month INTEGER, salary INTEGER);");
+        mDatabase.execSQL("INSERT INTO employee (name, month, salary) " +
+                "VALUES ('Mike', '1', '1000');");
+        mDatabase.execSQL("INSERT INTO employee (name, month, salary) " +
+                "VALUES ('Bob', '1', '1000');");
+
+        mDatabase.setCustomAggregateFunction("CTS_LONGEST", sLongest);
+        try (Cursor c = mDatabase.query(true, "employee", new String[] {
+                "CTS_LONGEST(name)",
+        }, null, null, null, null, null, null)) {
+            assertEquals(1, c.getCount());
+            assertTrue(c.moveToFirst());
+            assertEquals("Mike", c.getString(0));
+        }
+    }
+
+    public void testCustomAggregateFunction_TwoNull() {
+        mDatabase.execSQL("CREATE TABLE employee (_id INTEGER PRIMARY KEY, " +
+                "name TEXT, month INTEGER, salary INTEGER);");
+        mDatabase.execSQL("INSERT INTO employee (name, month, salary) " +
+                "VALUES (NULL, '1', '1000');");
+        mDatabase.execSQL("INSERT INTO employee (name, month, salary) " +
+                "VALUES (NULL, '1', '1000');");
+
+        mDatabase.setCustomAggregateFunction("CTS_LONGEST", sLongest);
+        try (Cursor c = mDatabase.query(true, "employee", new String[] {
+                "CTS_LONGEST(name)",
+        }, null, null, null, null, null, null)) {
+            assertEquals(1, c.getCount());
+            assertTrue(c.moveToFirst());
+            assertTrue(c.isNull(0));
+        }
+    }
+
+    public void testCustomAggregateFunction_Throws() {
+        mDatabase.execSQL("CREATE TABLE employee (_id INTEGER PRIMARY KEY, " +
+                "name TEXT, month INTEGER, salary INTEGER);");
+        mDatabase.execSQL("INSERT INTO employee (name, month, salary) " +
+                "VALUES ('Mike', '1', '1000');");
+        mDatabase.execSQL("INSERT INTO employee (name, month, salary) " +
+                "VALUES ('Bob', '1', '1000');");
+
+        mDatabase.setCustomAggregateFunction("CTS_THROWS", (arg0, arg1) -> {
+            // Anything thrown from Java is translated into a SQLITE_ERROR
+            throw new IllegalArgumentException();
+        });
+        try (Cursor c = mDatabase.query(true, "employee", new String[] {
+                "CTS_THROWS(name)", "salary"
+        }, null, null, null, null, "salary", null)) {
+            c.moveToFirst();
+            fail();
+        } catch (SQLException expected) {
+        }
     }
 
     public void testReplace() {

@@ -231,21 +231,21 @@ public class AImageDecoderTest {
 
     @Test
     @Parameters(method = "getAssetRecords")
-    public void testSetAlpha(ImageDecoderTest.AssetRecord record) {
+    public void testSetUnpremul(ImageDecoderTest.AssetRecord record) {
         long asset = nOpenAsset(getAssetManager(), record.name);
         long aimagedecoder = nCreateFromAsset(asset);
 
-        nTestSetAlpha(aimagedecoder, record.hasAlpha);
+        nTestSetUnpremul(aimagedecoder, record.hasAlpha);
         nCloseAsset(asset);
     }
 
     @Test
     @Parameters(method = "getRecords")
-    public void testSetAlphaResources(ImageDecoderTest.Record record) throws IOException {
+    public void testSetUnpremulResources(ImageDecoderTest.Record record) throws IOException {
         try (ParcelFileDescriptor pfd = open(record.resId)) {
             long aimagedecoder = nCreateFromFd(pfd.getFd());
 
-            nTestSetAlpha(aimagedecoder, record.hasAlpha);
+            nTestSetUnpremul(aimagedecoder, record.hasAlpha);
         } catch (FileNotFoundException e) {
             fail("Could not open " + Utils.getAsResourceUri(record.resId));
         }
@@ -872,7 +872,7 @@ public class AImageDecoderTest {
     private static native void nTestInfo(long aimagedecoder, int width, int height,
             String mimeType, boolean isAnimated, boolean isF16);
     private static native void nTestSetFormat(long aimagedecoder, boolean isF16, boolean isGray);
-    private static native void nTestSetAlpha(long aimagedecoder, boolean hasAlpha);
+    private static native void nTestSetUnpremul(long aimagedecoder, boolean hasAlpha);
     private static native void nTestGetMinimumStride(long aimagedecoder,
             boolean isF16, boolean isGray);
     private static native void nTestDecode(long aimagedecoder,

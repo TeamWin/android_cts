@@ -284,6 +284,14 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
                 mPrimaryUserId);
     }
 
+    @Test
+    public void testCommonCriteriaMode() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".CommonCriteriaModeTest", mUserId);
+    }
+
     private void removeOrgOwnedProfile() throws DeviceNotAvailableException {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, RELINQUISH_DEVICE_TEST_CLASS, mUserId);
     }

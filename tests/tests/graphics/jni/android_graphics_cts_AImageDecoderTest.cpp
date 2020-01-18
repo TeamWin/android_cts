@@ -135,7 +135,7 @@ static void testNullDecoder(JNIEnv* env, jclass, jobject jAssets, jstring jFile)
     }
 
     {
-        int result = AImageDecoder_setAlphaFlags(nullptr, ANDROID_BITMAP_FLAGS_ALPHA_PREMUL);
+        int result = AImageDecoder_setUnpremultipliedRequired(nullptr, true);
         ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, result);
 
         int alpha = AImageDecoderHeaderInfo_getAlphaFlags(nullptr);
@@ -332,7 +332,7 @@ static void testSetFormat(JNIEnv* env, jclass, jlong imageDecoderPtr,
     }
 }
 
-static void testSetAlpha(JNIEnv* env, jclass, jlong imageDecoderPtr, jboolean hasAlpha) {
+static void testSetUnpremul(JNIEnv* env, jclass, jlong imageDecoderPtr, jboolean hasAlpha) {
     AImageDecoder* decoder = reinterpret_cast<AImageDecoder*>(imageDecoderPtr);
     DecoderDeleter decoderDeleter(decoder, AImageDecoder_delete);
 
@@ -340,7 +340,7 @@ static void testSetAlpha(JNIEnv* env, jclass, jlong imageDecoderPtr, jboolean ha
     ASSERT_NE(info, nullptr);
 
     // Store the alpha so we can ensure that it doesn't change when we call
-    // AImageDecoder_setAlphaFlags.
+    // AImageDecoder_setUnpremultipliedRequired.
     const int alpha = AImageDecoderHeaderInfo_getAlphaFlags(info);
     if (hasAlpha) {
         ASSERT_EQ(ANDROID_BITMAP_FLAGS_ALPHA_PREMUL, alpha);
@@ -348,24 +348,9 @@ static void testSetAlpha(JNIEnv* env, jclass, jlong imageDecoderPtr, jboolean ha
         ASSERT_EQ(ANDROID_BITMAP_FLAGS_ALPHA_OPAQUE, alpha);
     }
 
-    int result = AImageDecoder_setAlphaFlags(decoder, ANDROID_BITMAP_FLAGS_ALPHA_OPAQUE);
-    if (hasAlpha) {
-        ASSERT_EQ(ANDROID_IMAGE_DECODER_INVALID_CONVERSION, result);
-    } else {
+    for (bool required : { true, false }) {
+        int result = AImageDecoder_setUnpremultipliedRequired(decoder, required);
         ASSERT_EQ(ANDROID_IMAGE_DECODER_SUCCESS, result);
-    }
-    ASSERT_EQ(alpha, AImageDecoderHeaderInfo_getAlphaFlags(info));
-
-    for (int newAlpha : { ANDROID_BITMAP_FLAGS_ALPHA_UNPREMUL, ANDROID_BITMAP_FLAGS_ALPHA_PREMUL }){
-        result = AImageDecoder_setAlphaFlags(decoder, newAlpha);
-        ASSERT_EQ(ANDROID_IMAGE_DECODER_SUCCESS, result);
-        ASSERT_EQ(alpha, AImageDecoderHeaderInfo_getAlphaFlags(info));
-    }
-
-    for (int invalidAlpha : std::initializer_list<int>{
-            ANDROID_BITMAP_FLAGS_ALPHA_MASK, -1, 3, 5, 16 }) {
-        result = AImageDecoder_setAlphaFlags(decoder, invalidAlpha);
-        ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, result);
         ASSERT_EQ(alpha, AImageDecoderHeaderInfo_getAlphaFlags(info));
     }
 }
@@ -472,8 +457,9 @@ static bool bitmapsEqual(JNIEnv* env, jobject jbitmap, AndroidBitmapFormat forma
     // the AImageDecoder requested PREMUL/UNPREMUL. In that case, it is okay for
     // the two to disagree. We must ensure that we don't end up with one PREMUL
     // and the other UNPREMUL, though.
-    auto jAlphaFlags = jInfo.flags & ANDROID_BITMAP_FLAGS_ALPHA_MASK;
-    if (jAlphaFlags != ANDROID_BITMAP_FLAGS_ALPHA_OPAQUE) {
+    int jAlphaFlags = jInfo.flags & ANDROID_BITMAP_FLAGS_ALPHA_MASK;
+    if (jAlphaFlags != ANDROID_BITMAP_FLAGS_ALPHA_OPAQUE
+            && alphaFlags != ANDROID_BITMAP_FLAGS_ALPHA_OPAQUE) {
         EXPECT_EQ("Wrong alpha type", jAlphaFlags, alphaFlags);
     }
 
@@ -521,7 +507,7 @@ static void testDecode(JNIEnv* env, jclass, jlong imageDecoderPtr,
     }
 
     if (unpremul) {
-        result = AImageDecoder_setAlphaFlags(decoder, ANDROID_BITMAP_FLAGS_ALPHA_UNPREMUL);
+        result = AImageDecoder_setUnpremultipliedRequired(decoder, true);
         ASSERT_EQ(ANDROID_IMAGE_DECODER_SUCCESS, result);
         alphaFlags = ANDROID_BITMAP_FLAGS_ALPHA_UNPREMUL;
     }
@@ -559,8 +545,8 @@ static void testDecode(JNIEnv* env, jclass, jlong imageDecoderPtr,
     // original. For opaque images, this verifies that using PREMUL or UNPREMUL
     // look the same. For all images, this verifies that decodeImage can be
     // called multiple times.
-    auto decodeAgain = [=](int alpha) {
-        int r = AImageDecoder_setAlphaFlags(decoder, alpha);
+    auto decodeAgain = [=](bool unpremultipliedRequired) {
+        int r = AImageDecoder_setUnpremultipliedRequired(decoder, unpremultipliedRequired);
         ASSERT_EQ(ANDROID_IMAGE_DECODER_SUCCESS, r);
 
         void* otherPixels = malloc(size);
@@ -571,12 +557,11 @@ static void testDecode(JNIEnv* env, jclass, jlong imageDecoderPtr,
         free(otherPixels);
     };
     if (alphaFlags == ANDROID_BITMAP_FLAGS_ALPHA_OPAQUE) {
-        for (int otherAlpha : { ANDROID_BITMAP_FLAGS_ALPHA_PREMUL,
-                                ANDROID_BITMAP_FLAGS_ALPHA_UNPREMUL }) {
-            decodeAgain(otherAlpha);
+        for (bool unpremultipliedRequired: { true, false }) {
+            decodeAgain(unpremultipliedRequired);
         }
     } else {
-        decodeAgain(alphaFlags);
+        decodeAgain(unpremul);
     }
 
     free(pixels);
@@ -962,8 +947,8 @@ static void testScalePlusUnpremul(JNIEnv* env, jclass, jlong imageDecoderPtr) {
     const int alpha = AImageDecoderHeaderInfo_getAlphaFlags(info);
 
     if (alpha == ANDROID_BITMAP_FLAGS_ALPHA_OPAQUE) {
-        // Set alpha, then scale. This succeeds for an opaque image.
-        int result = AImageDecoder_setAlphaFlags(decoder, ANDROID_BITMAP_FLAGS_ALPHA_UNPREMUL);
+        // Set unpremul, then scale. This succeeds for an opaque image.
+        int result = AImageDecoder_setUnpremultipliedRequired(decoder, true);
         ASSERT_EQ(ANDROID_IMAGE_DECODER_SUCCESS, result);
 
         result = AImageDecoder_setTargetSize(decoder, width * 2, height * 2);
@@ -978,7 +963,7 @@ static void testScalePlusUnpremul(JNIEnv* env, jclass, jlong imageDecoderPtr) {
         }
 
         // Reset to the original settings to test the other order.
-        result = AImageDecoder_setAlphaFlags(decoder, ANDROID_BITMAP_FLAGS_ALPHA_PREMUL);
+        result = AImageDecoder_setUnpremultipliedRequired(decoder, false);
         ASSERT_EQ(ANDROID_IMAGE_DECODER_SUCCESS, result);
 
         result = AImageDecoder_setTargetSize(decoder, width, height);
@@ -993,12 +978,12 @@ static void testScalePlusUnpremul(JNIEnv* env, jclass, jlong imageDecoderPtr) {
         }
         ASSERT_EQ(ANDROID_IMAGE_DECODER_SUCCESS, result);
 
-        result = AImageDecoder_setAlphaFlags(decoder, ANDROID_BITMAP_FLAGS_ALPHA_UNPREMUL);
+        result = AImageDecoder_setUnpremultipliedRequired(decoder, true);
         ASSERT_EQ(ANDROID_IMAGE_DECODER_SUCCESS, result);
     } else {
         // Use unpremul and then scale. Setting to unpremul is successful, but
         // later calls to change the scale fail.
-        int result = AImageDecoder_setAlphaFlags(decoder, ANDROID_BITMAP_FLAGS_ALPHA_UNPREMUL);
+        int result = AImageDecoder_setUnpremultipliedRequired(decoder, true);
         ASSERT_EQ(ANDROID_IMAGE_DECODER_SUCCESS, result);
 
         result = AImageDecoder_setTargetSize(decoder, width * 2, height * 2);
@@ -1008,17 +993,17 @@ static void testScalePlusUnpremul(JNIEnv* env, jclass, jlong imageDecoderPtr) {
         ASSERT_EQ(ANDROID_IMAGE_DECODER_INVALID_SCALE, result);
 
         // Set back to premul to verify that the opposite order also fails.
-        result = AImageDecoder_setAlphaFlags(decoder, ANDROID_BITMAP_FLAGS_ALPHA_PREMUL);
+        result = AImageDecoder_setUnpremultipliedRequired(decoder, false);
         ASSERT_EQ(ANDROID_IMAGE_DECODER_SUCCESS, result);
 
         result = AImageDecoder_setTargetSize(decoder, width * 2, height * 2);
         ASSERT_EQ(ANDROID_IMAGE_DECODER_SUCCESS, result);
-        result = AImageDecoder_setAlphaFlags(decoder, ANDROID_BITMAP_FLAGS_ALPHA_UNPREMUL);
+        result = AImageDecoder_setUnpremultipliedRequired(decoder, true);
         ASSERT_EQ(ANDROID_IMAGE_DECODER_INVALID_CONVERSION, result);
 
         result = AImageDecoder_setTargetSize(decoder, width * 2/3, height * 2/3);
         ASSERT_EQ(ANDROID_IMAGE_DECODER_SUCCESS, result);
-        result = AImageDecoder_setAlphaFlags(decoder, ANDROID_BITMAP_FLAGS_ALPHA_UNPREMUL);
+        result = AImageDecoder_setUnpremultipliedRequired(decoder, true);
         ASSERT_EQ(ANDROID_IMAGE_DECODER_INVALID_CONVERSION, result);
     }
 }
@@ -1040,7 +1025,7 @@ static JNINativeMethod gMethods[] = {
     { "nTestCreateIncomplete", "(" ASSET_MANAGER STRING "I)V", (void*) testCreateIncomplete },
     { "nTestCreateUnsupported", "(" ASSET_MANAGER STRING ")V", (void*) testCreateUnsupported },
     { "nTestSetFormat", "(JZZ)V", (void*) testSetFormat },
-    { "nTestSetAlpha", "(JZ)V", (void*) testSetAlpha },
+    { "nTestSetUnpremul", "(JZ)V", (void*) testSetUnpremul },
     { "nTestGetMinimumStride", "(JZZ)V", (void*) testGetMinimumStride },
     { "nTestDecode", "(JIZ" BITMAP ")V", (void*) testDecode },
     { "nTestDecodeStride", "(J)V", (void*) testDecodeStride },

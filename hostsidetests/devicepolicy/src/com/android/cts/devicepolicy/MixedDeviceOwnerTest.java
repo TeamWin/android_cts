@@ -227,6 +227,14 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
                 .build());
     }
 
+    @Test
+    public void testCommonCriteriaMode() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".CommonCriteriaModeTest", mUserId);
+    }
+
     private int createSecondaryUserAsProfileOwner() throws Exception {
         final int userId = createUser();
         installAppAsUser(INTENT_RECEIVER_APK, userId);
