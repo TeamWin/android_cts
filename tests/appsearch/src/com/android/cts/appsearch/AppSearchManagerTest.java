@@ -27,6 +27,8 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.internal.util.ConcurrentUtils;
 
+import com.google.common.collect.ImmutableList;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -64,7 +66,8 @@ public class AppSearchManagerTest {
                 ).build();
 
         CompletableFuture<Throwable> result = new CompletableFuture<>();
-        mAppSearch.setSchema(mExecutor, result::complete, emailSchema);
+        mAppSearch.setSchema(
+                ImmutableList.of(emailSchema), /*force=*/false, mExecutor, result::complete);
         assertThat(result.get()).isEqualTo(null);
     }
 }
