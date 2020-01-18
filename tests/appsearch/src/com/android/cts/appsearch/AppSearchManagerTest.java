@@ -25,19 +25,11 @@ import android.content.Context;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.internal.util.ConcurrentUtils;
-
-import com.google.common.collect.ImmutableList;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-
 @RunWith(AndroidJUnit4.class)
 public class AppSearchManagerTest {
-    private final Executor mExecutor = ConcurrentUtils.DIRECT_EXECUTOR;
     private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
     private final AppSearchManager mAppSearch = mContext.getSystemService(AppSearchManager.class);
 
@@ -49,7 +41,7 @@ public class AppSearchManagerTest {
     }
 
     @Test
-    public void testSetSchema() throws Exception {
+    public void testSetSchema() {
         AppSearchSchema emailSchema = AppSearchSchema.newBuilder("Email")
                 .addProperty(AppSearchSchema.newPropertyBuilder("subject")
                         .setDataType(PropertyConfig.DATA_TYPE_STRING)
@@ -64,10 +56,6 @@ public class AppSearchManagerTest {
                         .setTokenizerType(PropertyConfig.TOKENIZER_TYPE_PLAIN)
                         .build()
                 ).build();
-
-        CompletableFuture<Throwable> result = new CompletableFuture<>();
-        mAppSearch.setSchema(
-                ImmutableList.of(emailSchema), /*force=*/false, mExecutor, result::complete);
-        assertThat(result.get()).isEqualTo(null);
+        mAppSearch.setSchema(emailSchema);
     }
 }
