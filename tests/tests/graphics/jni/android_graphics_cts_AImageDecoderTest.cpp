@@ -139,8 +139,7 @@ static void testNullDecoder(JNIEnv* env, jclass, jobject jAssets, jstring jFile)
         ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, result);
 
         int alpha = AImageDecoderHeaderInfo_getAlphaFlags(nullptr);
-        // FIXME: Better invalid value?
-        ASSERT_EQ(-1, alpha);
+        ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, alpha);
     }
 
     ASSERT_EQ(0, AImageDecoderHeaderInfo_getWidth(nullptr));
