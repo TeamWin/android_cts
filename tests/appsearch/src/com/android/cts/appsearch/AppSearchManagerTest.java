@@ -18,6 +18,7 @@ package com.android.cts.appsearch;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.appsearch.AppSearch;
+import android.app.appsearch.AppSearchBatchResult;
 import android.app.appsearch.AppSearchManager;
 import android.app.appsearch.AppSearchSchema;
 import android.app.appsearch.AppSearchSchema.PropertyConfig;
@@ -26,19 +27,13 @@ import android.content.Context;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.internal.util.ConcurrentUtils;
-
 import com.google.common.collect.ImmutableList;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-
 @RunWith(AndroidJUnit4.class)
 public class AppSearchManagerTest {
-    private final Executor mExecutor = ConcurrentUtils.DIRECT_EXECUTOR;
     private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
     private final AppSearchManager mAppSearch = mContext.getSystemService(AppSearchManager.class);
 
@@ -82,8 +77,9 @@ public class AppSearchManagerTest {
                 .setBody("This is the body of the testPut email")
                 .build();
 
-        CompletableFuture<Throwable> result = new CompletableFuture<>();
-        mAppSearch.putDocuments(ImmutableList.of(email), mExecutor, result::complete);
-        assertThat(result.get()).isNull();
+        AppSearchBatchResult result = mAppSearch.putDocuments(ImmutableList.of(email));
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(result.getResults()).containsExactly("uri1", null);
+        assertThat(result.getFailures()).isEmpty();
     }
 }
