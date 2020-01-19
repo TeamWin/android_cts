@@ -40,7 +40,8 @@ class CompanionDeviceManagerTest : InstrumentationTestCase() {
         val packageName = context.packageName
         val isAssociated = {
             runWithShellPermissionIdentity<Boolean> {
-                cdm.isDeviceAssociated(packageName, MacAddress.fromString(DUMMY_MAC_ADDRESS), user)
+                cdm.isDeviceAssociatedForWifiConnection(packageName,
+                        MacAddress.fromString(DUMMY_MAC_ADDRESS), user)
             }
         }
         val shellIsAssociated = {
