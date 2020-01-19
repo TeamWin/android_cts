@@ -113,3 +113,30 @@ android_test {
     manifest: "DownloadManagerLegacyTest/AndroidManifest.xml",
     test_config: "DownloadManagerLegacyTest/AndroidTest.xml",
 }
+
+android_test {
+    name: "CtsAppExitTestCases",
+    defaults: ["cts_defaults"],
+    libs: [
+        "android.test.runner.stubs",
+        "org.apache.http.legacy",
+        "android.test.base.stubs",
+    ],
+    static_libs: [
+        "ub-uiautomator",
+        "androidx.test.rules",
+        "compatibility-device-util-axt",
+    ],
+    srcs: [
+        "AppExitTest/src/**/*.java",
+        "src/android/app/cts/android/app/cts/tools/WatchUidRunner.java",
+    ],
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ],
+    manifest: "AppExitTest/AndroidManifest.xml",
+    test_config: "AppExitTest/AndroidTest.xml",
+    platform_apis: true,
+}
