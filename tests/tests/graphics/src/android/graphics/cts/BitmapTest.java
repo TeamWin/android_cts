@@ -2040,9 +2040,15 @@ public class BitmapTest {
     @Test
     public void testNdkAccessAfterRecycle() {
         Bitmap bitmap = Bitmap.createBitmap(10, 20, Config.RGB_565);
+        Bitmap hardware = bitmap.copy(Config.HARDWARE, false);
         nValidateBitmapInfo(bitmap, 10, 20, true);
+        nValidateBitmapInfo(hardware, 10, 20, true);
+
         bitmap.recycle();
+        hardware.recycle();
+
         nValidateBitmapInfo(bitmap, 10, 20, true);
+        nValidateBitmapInfo(hardware, 10, 20, true);
         nValidateNdkAccessFails(bitmap);
     }
 
@@ -2278,14 +2284,13 @@ public class BitmapTest {
             } else {
                 assertEquals("Config: " + pair.config, pair.format, nativeFormat);
             }
-
-            nValidateNdkAccessFails(bm);
         }
     }
 
     @Test
     public void testNullBitmapNdk() {
-        nTestNullBitmap();
+        Bitmap bitmap = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888);
+        nTestNullBitmap(bitmap);
     }
 
     private Object[] parametersForTestNdkInfo() {
@@ -2309,7 +2314,7 @@ public class BitmapTest {
                 Bitmap bm = Bitmap.createBitmap(width, height, config, hasAlpha);
                 bm.setPremultiplied(premultiplied);
                 nTestInfo(bm, androidBitmapFormat, width, height, bm.hasAlpha(),
-                        bm.isPremultiplied());
+                        bm.isPremultiplied(), false);
                 bm = bm.copy(Bitmap.Config.HARDWARE, false);
                 if (config == Bitmap.Config.ALPHA_8) {
                     // ALPHA_8 is not supported in HARDWARE. b/141480329
@@ -2317,7 +2322,7 @@ public class BitmapTest {
                 } else {
                     assertNotNull(bm);
                     nTestInfo(bm, androidBitmapFormat, width, height, bm.hasAlpha(),
-                            bm.isPremultiplied());
+                            bm.isPremultiplied(), true);
                 }
             }
         }
@@ -2612,7 +2617,7 @@ public class BitmapTest {
     private static native void nValidateNdkAccessFails(Bitmap bitmap);
 
     private static native void nFillRgbaHwBuffer(HardwareBuffer hwBuffer);
-    private static native void nTestNullBitmap();
+    private static native void nTestNullBitmap(Bitmap bitmap);
 
     static final int ANDROID_BITMAP_FORMAT_RGBA_8888 = 1;
     private static final int ANDROID_BITMAP_FORMAT_RGB_565 = 4;
@@ -2641,7 +2646,7 @@ public class BitmapTest {
     static native int nGetFormat(Bitmap bitmap);
 
     private static native void nTestInfo(Bitmap bm, int androidBitmapFormat, int width, int height,
-            boolean hasAlpha, boolean premultiplied);
+            boolean hasAlpha, boolean premultiplied, boolean hardware);
 
     private static HardwareBuffer createTestBuffer(int width, int height, boolean cpuAccess) {
         long usage = HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE;
