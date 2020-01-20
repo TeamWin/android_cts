@@ -218,4 +218,15 @@ public class ShellIdentityUtils {
             uiAutomation.dropShellPermissionIdentity();
         }
     }
+
+    /**
+     * Drop the shell permission identity adopted by a previous call to
+     * {@link UiAutomation#adoptShellPermissionIdentity()}.
+     */
+    public static void dropShellPermissionIdentity() {
+        final UiAutomation uiAutomation =
+                InstrumentationRegistry.getInstrumentation().getUiAutomation();
+
+        uiAutomation.dropShellPermissionIdentity();
+    }
 }

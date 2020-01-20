@@ -22,7 +22,6 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.Process;
 import android.os.UserManager;
-import android.util.Log;
 import android.widget.TextView;
 
 import java.lang.Override;
