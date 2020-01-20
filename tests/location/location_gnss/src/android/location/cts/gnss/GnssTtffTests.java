@@ -47,6 +47,10 @@ public class GnssTtffTests extends GnssTestCase {
    */
   @CddTest(requirement="7.3.3")
   public void testTtffWithNetwork() throws Exception {
+    if (!TestUtils.deviceHasGpsFeature(getContext())) {
+      return;
+    }
+
     ensureNetworkStatus();
     if (hasCellularData()) {
       checkTtffWarmWithWifiOn(TTFF_WITH_WIFI_CELLUAR_WARM_TH_SECS);
