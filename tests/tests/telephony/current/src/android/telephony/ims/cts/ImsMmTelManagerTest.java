@@ -137,6 +137,17 @@ public class ImsMmTelManagerTest {
         }
     }
 
+    @Test
+    public void testGetVoWiFiSetting_noPermission() {
+        try {
+            ImsMmTelManager mMmTelManager = ImsMmTelManager.createForSubscriptionId(sTestSub);
+            boolean isEnabled = mMmTelManager.isVoWiFiSettingEnabled();
+            fail("Expected SecurityException for missing permissoins");
+        } catch (SecurityException ex) {
+            /* Expected */
+        }
+    }
+
     /**
      * Given the advanced calling setting is editable and not hidden
      * (see {@link CarrierConfigManager#KEY_EDITABLE_ENHANCED_4G_LTE_BOOL}, and
@@ -285,6 +296,43 @@ public class ImsMmTelManagerTest {
     }
 
     /**
+     * Expect to fail when Set the VoWiFi Mode setting withour proper permission
+     */
+    @Test
+    public void testGetVoWiFiModeSetting_noPermission() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        try {
+            ImsMmTelManager mMmTelManager = ImsMmTelManager.createForSubscriptionId(sTestSub);
+            int oldMode = mMmTelManager.getVoWiFiModeSetting();
+            fail("Expected SecurityException for missing permissoins");
+        } catch (SecurityException ex) {
+            /* Expected */
+        }
+
+    }
+
+    /**
+     * Expect to fail when Set the VoWiFi Mode setting withour proper permission
+     */
+    @Test
+    public void testGetVoWiFiRoamingModeSetting_noPermission() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        try {
+            ImsMmTelManager mMmTelManager = ImsMmTelManager.createForSubscriptionId(sTestSub);
+            int oldMode = mMmTelManager.getVoWiFiRoamingModeSetting();
+            fail("Expected SecurityException for missing permissoins");
+        } catch (SecurityException ex) {
+            /* Expected */
+        }
+
+    }
+
+
+    /**
      * Set the VoWiFi Mode setting and ensure the ContentResolver is triggered as well.
      */
     @Test
@@ -403,6 +451,34 @@ public class ImsMmTelManagerTest {
         }
 
         try {
+            mMmTelManager.isVtSettingEnabled();
+            fail("isVtSettingEnabled requires READ_PRECISE_PHONE_STATE permission.");
+        } catch (SecurityException e) {
+            //expected
+        }
+
+        try {
+            mMmTelManager.isAdvancedCallingSettingEnabled();
+            fail("isAdvancedCallingSettingEnabled requires READ_PRECISE_PHONE_STATE.");
+        } catch (SecurityException e) {
+            //expected
+        }
+
+        try {
+            mMmTelManager.isVoWiFiRoamingSettingEnabled();
+            fail("isVoWiFiRoamingSettingEnabled requires READ_PRECISE_PHONE_STATE permission.");
+        } catch (SecurityException e) {
+            //expected
+        }
+
+        try {
+            mMmTelManager.isVoWiFiSettingEnabled();
+            fail("isVoWiFiSettingEnabled requires READ_PRECISE_PHONE_STATE permission.");
+        } catch (SecurityException e) {
+            //expected
+        }
+
+        try {
             mMmTelManager.isTtyOverVolteEnabled();
             fail("isTtyOverVolteEnabled requires READ_PRIVILEGED_PHONE_STATE permission.");
         } catch (SecurityException e) {
@@ -417,7 +493,7 @@ public class ImsMmTelManagerTest {
         }
         try {
             mMmTelManager.getRegistrationState(Runnable::run, (result) -> { });
-            fail("getRegistrationState requires READ_PRIVILEGED_PHONE_STATE permission.");
+            fail("getRegistrationState requires READ_PRECISE_PHONE_STATE permission.");
         } catch (SecurityException e) {
             //expected
         }
