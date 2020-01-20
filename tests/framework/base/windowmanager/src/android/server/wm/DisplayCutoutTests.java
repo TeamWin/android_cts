@@ -20,6 +20,7 @@ import static android.server.wm.DisplayCutoutTests.TestActivity.EXTRA_CUTOUT_MOD
 import static android.server.wm.DisplayCutoutTests.TestDef.Which.DISPATCHED;
 import static android.server.wm.DisplayCutoutTests.TestDef.Which.ROOT;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
@@ -176,6 +177,16 @@ public class DisplayCutoutTests {
         });
     }
 
+    @Test
+    public void testDisplayCutout_always_portrait() {
+        runTest(LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS, (a, insets, displayCutout, which) -> {
+            if (which == ROOT) {
+                assertThat("Display.getCutout() must equal view root cutout",
+                        a.getDisplay().getCutout(), equalTo(displayCutout));
+            }
+        });
+    }
+
     private void runTest(int cutoutMode, TestDef test) {
         final TestActivity activity = launchAndWait(mDisplayCutoutActivity,
                 cutoutMode);
@@ -188,15 +199,20 @@ public class DisplayCutoutTests {
 
         final DisplayCutout displayCutout = insets.getDisplayCutout();
         final DisplayCutout dispatchedDisplayCutout = dispatchedInsets.getDisplayCutout();
-
         if (displayCutout != null) {
             commonAsserts(activity, insets, displayCutout);
+            if (cutoutMode != LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS) {
+                shortEdgeAsserts(activity, insets, displayCutout);
+            }
             assertCutoutsAreConsistentWithInsets(displayCutout);
         }
         test.run(activity, insets, displayCutout, ROOT);
 
         if (dispatchedDisplayCutout != null) {
             commonAsserts(activity, dispatchedInsets, dispatchedDisplayCutout);
+            if (cutoutMode != LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS) {
+                shortEdgeAsserts(activity, insets, displayCutout);
+            }
             assertCutoutsAreConsistentWithInsets(dispatchedDisplayCutout);
         }
         test.run(activity, dispatchedInsets, dispatchedDisplayCutout, DISPATCHED);
@@ -207,11 +223,15 @@ public class DisplayCutoutTests {
         assertThat("systemWindowInsets (also known as content insets) must be at least as large as "
                         + "cutout safe insets",
                 safeInsets(cutout), insetsLessThanOrEqualTo(systemWindowInsets(insets)));
-        assertOnlyShortEdgeHasInsets(activity, cutout);
-        assertOnlyShortEdgeHasBounds(activity, insets, cutout);
         assertCutoutsAreWithinSafeInsets(activity, cutout);
         assertBoundsAreNonEmpty(cutout);
         assertAtMostOneCutoutPerEdge(activity, cutout);
+    }
+
+    private void shortEdgeAsserts(
+            TestActivity activity, WindowInsets insets, DisplayCutout cutout) {
+        assertOnlyShortEdgeHasInsets(activity, cutout);
+        assertOnlyShortEdgeHasBounds(activity, insets, cutout);
     }
 
     private void assertCutoutIsConsistentWithInset(String position, int insetSize, Rect bound) {
