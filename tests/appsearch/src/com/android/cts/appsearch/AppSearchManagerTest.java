@@ -17,6 +17,7 @@ package com.android.cts.appsearch;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.app.appsearch.AppSearch;
 import android.app.appsearch.AppSearchManager;
 import android.app.appsearch.AppSearchSchema;
 import android.app.appsearch.AppSearchSchema.PropertyConfig;
@@ -49,7 +50,7 @@ public class AppSearchManagerTest {
     }
 
     @Test
-    public void testSetSchema() throws Exception {
+    public void testSetSchema() {
         AppSearchSchema emailSchema = AppSearchSchema.newBuilder("Email")
                 .addProperty(AppSearchSchema.newPropertyBuilder("subject")
                         .setDataType(PropertyConfig.DATA_TYPE_STRING)
@@ -64,10 +65,25 @@ public class AppSearchManagerTest {
                         .setTokenizerType(PropertyConfig.TOKENIZER_TYPE_PLAIN)
                         .build()
                 ).build();
+        mAppSearch.setSchema(emailSchema);
+    }
+
+    @Test
+    public void testPutDocuments() throws Exception {
+        // Schema registration
+        mAppSearch.setSchema(AppSearch.Email.SCHEMA);
+
+        // Index a document
+        AppSearch.Email email =
+                AppSearch.Email.newBuilder("uri1")
+                .setFrom("from@example.com")
+                .setTo("to1@example.com", "to2@example.com")
+                .setSubject("testPut example")
+                .setBody("This is the body of the testPut email")
+                .build();
 
         CompletableFuture<Throwable> result = new CompletableFuture<>();
-        mAppSearch.setSchema(
-                ImmutableList.of(emailSchema), /*force=*/false, mExecutor, result::complete);
-        assertThat(result.get()).isEqualTo(null);
+        mAppSearch.putDocuments(ImmutableList.of(email), mExecutor, result::complete);
+        assertThat(result.get()).isNull();
     }
 }
