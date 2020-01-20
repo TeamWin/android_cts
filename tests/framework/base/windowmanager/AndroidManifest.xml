@@ -324,6 +324,8 @@
         <activity android:name="android.server.wm.WindowMetricsTests$MetricsActivity"
                   android:exported="true" />
         <activity android:name="android.app.Activity"/>
+        <activity android:name="android.server.wm.WindowInsetsLayoutTests$TestActivity" />
+        <activity android:name="android.server.wm.WindowInsetsControllerTests$TestActivity" />
 
         <activity android:name="android.server.wm.DragDropTest$DragDropActivity"
                   android:screenOrientation="locked"
