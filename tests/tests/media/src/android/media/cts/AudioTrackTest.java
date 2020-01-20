@@ -2787,6 +2787,64 @@ public class AudioTrackTest {
         audioTrack.release();
     }
 
+    @Test
+    public void testDualMonoMode() throws Exception {
+        if (!hasAudioOutput()) {
+            return;
+        }
+
+        final AudioTrack audioTrack = new AudioTrack.Builder().build();
+
+        // Note that the output device may not support Dual Mono mode.
+        // The following path should always succeed.
+        audioTrack.setDualMonoMode(AudioTrack.DUAL_MONO_MODE_OFF);
+        assertEquals(AudioTrack.DUAL_MONO_MODE_OFF, audioTrack.getDualMonoMode());
+
+        // throws IAE on invalid argument.
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> { audioTrack.setDualMonoMode(-1); }
+        );
+
+        // check behavior after release.
+        audioTrack.release();
+        assertThrows(
+            IllegalStateException.class,
+            () -> { audioTrack.setDualMonoMode(AudioTrack.DUAL_MONO_MODE_OFF); }
+        );
+        assertEquals(AudioTrack.DUAL_MONO_MODE_OFF, audioTrack.getDualMonoMode());
+    }
+
+    @Test
+    public void testAudioDescriptionMixLevel() throws Exception {
+        if (!hasAudioOutput()) {
+            return;
+        }
+
+        final AudioTrack audioTrack = new AudioTrack.Builder().build();
+
+        // Note that the output device may not support Audio Description Mix Level.
+        // The following path should always succeed.
+        audioTrack.setAudioDescriptionMixLeveldB(Float.NEGATIVE_INFINITY);
+        assertEquals(Float.NEGATIVE_INFINITY,
+                audioTrack.getAudioDescriptionMixLeveldB(), 0.f /*delta*/);
+
+        // throws IAE on invalid argument.
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> { audioTrack.setAudioDescriptionMixLeveldB(1e6f); }
+        );
+
+        // check behavior after release.
+        audioTrack.release();
+        assertThrows(
+            IllegalStateException.class,
+            () -> { audioTrack.setAudioDescriptionMixLeveldB(0.f); }
+        );
+        assertEquals(Float.NEGATIVE_INFINITY,
+            audioTrack.getAudioDescriptionMixLeveldB(), 0.f /*delta*/);
+    }
+
 /* Do not run in JB-MR1. will be re-opened in the next platform release.
     public void testResourceLeakage() throws Exception {
         final int BUFFER_SIZE = 600 * 1024;
