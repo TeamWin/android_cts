@@ -55,14 +55,14 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Ensure end-to-end functionality of the WindowlessWindowManager.
+ * Ensure end-to-end functionality of SurfaceControlViewHost.
  *
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:WindowlessWmTests
+ *     atest CtsWindowManagerDeviceTestCases:SurfaceControlViewHostTests
  */
 @Presubmit
 @FlakyTest
-public class WindowlessWmTests implements SurfaceHolder.Callback {
+public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
     private final ActivityTestRule<Activity> mActivityRule = new ActivityTestRule<>(Activity.class);
 
     private Instrumentation mInstrumentation;
