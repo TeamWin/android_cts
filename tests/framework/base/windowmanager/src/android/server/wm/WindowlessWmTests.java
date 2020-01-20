@@ -109,13 +109,11 @@ public class WindowlessWmTests implements SurfaceHolder.Callback {
     }
 
     private void addViewToSurfaceView(SurfaceView sv, View v, int width, int height) {
-        mVr = new SurfaceControlViewHost(mActivity, mActivity.getDisplay(), sv.getInputToken());
+        mVr = new SurfaceControlViewHost(mActivity, mActivity.getDisplay(), sv.getHostToken());
 
         sv.setChildSurfacePackage(mVr.getSurfacePackage());
 
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams(width, height,
-                WindowManager.LayoutParams.TYPE_APPLICATION, 0, PixelFormat.OPAQUE);
-        mVr.addView(v, lp);
+        mVr.addView(v, width, height);
     }
 
     @Override
@@ -166,15 +164,33 @@ public class WindowlessWmTests implements SurfaceHolder.Callback {
         assertFalse(mClicked);
 
         mActivityRule.runOnUiThread(() -> {
-                WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
-                        bigEdgeLength, bigEdgeLength,
-                        WindowManager.LayoutParams.TYPE_APPLICATION, 0, PixelFormat.OPAQUE);
-                mVr.relayout(lp);
+                mVr.relayout(bigEdgeLength, bigEdgeLength);
         });
         mInstrumentation.waitForIdleSync();
 
         // But after the click should hit.
         CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         assertTrue(mClicked);
+    }
+
+    @Test
+    public void testEmbeddedViewReleases() throws Throwable {
+        mEmbeddedView = new Button(mActivity);
+        mEmbeddedView.setOnClickListener((View v) -> {
+            mClicked = true;
+        });
+
+        addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT);
+        mInstrumentation.waitForIdleSync();
+
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        assertTrue(mClicked);
+
+        mVr.release();
+        mInstrumentation.waitForIdleSync();
+
+        mClicked = false;
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        assertFalse(mClicked);
     }
 }
