@@ -225,10 +225,10 @@ public class MediaStore_Video_ThumbnailsTest {
 
         // Thumbnail should be smaller
         MediaStore.waitForIdle(mContext);
-        final Bitmap beforeThumb = mResolver.loadThumbnail(finalUri, new Size(32, 32), null);
+        final Bitmap beforeThumb = mResolver.loadThumbnail(finalUri, new Size(64, 64), null);
         assertTrue(beforeThumb.getWidth() < full.getWidth());
         assertTrue(beforeThumb.getHeight() < full.getHeight());
-        final int beforeColor = beforeThumb.getPixel(16, 16);
+        final int beforeColor = beforeThumb.getPixel(32, 32);
 
         // Verify legacy APIs still work
         if (MediaStore.VOLUME_EXTERNAL.equals(mVolumeName)) {
@@ -251,8 +251,8 @@ public class MediaStore_Video_ThumbnailsTest {
 
         // Thumbnail should match updated contents
         MediaStore.waitForIdle(mContext);
-        final Bitmap afterThumb = mResolver.loadThumbnail(finalUri, new Size(32, 32), null);
-        final int afterColor = afterThumb.getPixel(16, 16);
+        final Bitmap afterThumb = mResolver.loadThumbnail(finalUri, new Size(64, 64), null);
+        final int afterColor = afterThumb.getPixel(32, 32);
         assertNotColorMostlyEquals(beforeColor, afterColor);
 
         // Delete video contents
@@ -261,7 +261,7 @@ public class MediaStore_Video_ThumbnailsTest {
         // Thumbnail should no longer exist
         try {
             MediaStore.waitForIdle(mContext);
-            mResolver.loadThumbnail(finalUri, new Size(32, 32), null);
+            mResolver.loadThumbnail(finalUri, new Size(64, 64), null);
             fail("Funky; we somehow made a thumbnail out of nothing?");
         } catch (FileNotFoundException expected) {
         }
