@@ -561,6 +561,29 @@ public class AImageDecoderTest {
     }
     */
 
+    @Test
+    @Parameters(method = "getRecordsSample")
+    public void testComputeSampledSize(ImageDecoderTest.Record record, int sampleSize)
+            throws IOException {
+        if (record.mimeType.equals("image/x-adobe-dng")) {
+            // SkRawCodec does not support sampling.
+            return;
+        }
+        ImageDecoder.Source src = ImageDecoder.createSource(getResources(),
+                record.resId);
+        String name = Utils.getAsResourceUri(record.resId).toString();
+        Bitmap bm = decodeSampled(name, src, sampleSize);
+        assertNotNull(bm);
+
+        try (ParcelFileDescriptor pfd = open(record.resId)) {
+            long aimagedecoder = nCreateFromFd(pfd.getFd());
+
+            nTestComputeSampledSize(aimagedecoder, bm, sampleSize);
+        } catch (FileNotFoundException e) {
+            fail("Could not open " + name + ": " + e);
+        }
+    }
+
     private Bitmap decodeScaled(String name, ImageDecoder.Source src) {
         try {
             return ImageDecoder.decodeBitmap(src, (decoder, info, source) -> {
@@ -881,6 +904,8 @@ public class AImageDecoderTest {
     private static native void nTestSetTargetSize(long aimagedecoder);
     // Decode with the target width and height to match |bitmap|.
     private static native void nTestDecodeScaled(long aimagedecoder, Bitmap bitmap);
+    private static native void nTestComputeSampledSize(long aimagedecoder, Bitmap bm,
+            int sampleSize);
     private static native void nTestSetCrop(AssetManager assets, String file);
     // Decode and compare to |bitmap|, where they both use the specified target
     // size and crop rect. target size of 0 means to skip scaling.
