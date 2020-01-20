@@ -324,7 +324,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         assertScreenOn();
         // Ble scan time in BatteryStatsBgVsFgActions is 2 seconds, but be lenient.
         final int minTime = 1500; // min single scan time in ms
-        final int maxTime = 3000; // max single scan time in ms
+        final int maxTime = 3500; // max single scan time in ms
 
         // Optimized - Background.
         executeBackground(ACTION_BLE_SCAN_OPTIMIZED, 40_000);
