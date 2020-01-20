@@ -19,10 +19,11 @@
 #include <log/log.h>
 
 #include <chrono>
+#include <cinttypes>
 #include <condition_variable>
-#include <string>
 #include <map>
 #include <mutex>
+#include <string>
 #include <vector>
 #include <unistd.h>
 #include <assert.h>
@@ -35,6 +36,7 @@
 
 #include "camera/NdkCameraError.h"
 #include "camera/NdkCameraManager.h"
+#include "camera/NdkCameraMetadata.h"
 #include "camera/NdkCameraDevice.h"
 #include "camera/NdkCameraCaptureSession.h"
 #include "media/NdkImage.h"
@@ -3895,3 +3897,98 @@ cleanup:
     return pass;
 }
 
+extern "C" jboolean
+Java_android_hardware_camera2_cts_CaptureResultTest_\
+validateACameraMetadataFromCameraMetadataCriticalTagsNative(
+        JNIEnv* env, jclass /*clazz*/, jobject captureResult,
+        jlong javaTimestamp) {
+    ALOGV("%s", __FUNCTION__);
+    ACameraMetadata* ndkResult =
+        ACameraMetadata_fromCameraMetadata(env, captureResult);
+    if (!ndkResult) {
+        ALOGE("validateCriticalTags failed: "
+              "ACameraMetadata_fromCameraMetadata returned nullptr.");
+        return false;
+    }
+
+    camera_status_t ret;
+    ACameraMetadata_const_entry entry;
+
+    ret = ACameraMetadata_getConstEntry(ndkResult, ACAMERA_SENSOR_TIMESTAMP,
+        &entry);
+    ACameraMetadata_free(ndkResult);
+
+    if (ret != ACAMERA_OK) {
+        ALOGE("validateCriticalTags failed: "
+              "ACameraMetadata_getConstEntry returned %d.", ret);
+        return false;
+    }
+    if (entry.type != ACAMERA_TYPE_INT64) {
+        ALOGE("validateCriticalTags failed: entry.type is %u but should be %u.",
+              entry.type, ACAMERA_TYPE_INT64);
+        return false;
+    }
+    if (entry.count != 1) {
+        ALOGE("validateCriticalTags failed: entry.count is %u but should be %u.",
+              entry.count, 1);
+        return false;
+    }
+    if (entry.data.i64 == nullptr) {
+        ALOGE("validateCriticalTags failed: entry.data.i64 is nullptr.");
+        return false;
+    }
+
+    const int64_t javaTimestampI64 = static_cast<int64_t>(javaTimestamp);
+    const int64_t ndkTimestampI64 = *(entry.data.i64);
+    ALOGV("javaTimestampI64 = %" PRId64 ", ndkTimestampI64 = %" PRId64,
+          javaTimestampI64, ndkTimestampI64);
+    return (javaTimestampI64 == ndkTimestampI64);
+}
+
+extern "C" jboolean
+Java_android_hardware_camera2_cts_CameraManagerTest_\
+validateACameraMetadataFromCameraMetadataCriticalTagsNative(
+        JNIEnv* env, jclass /*clazz*/, jobject cameraCharacteristics,
+        jint javaLensFacing) {
+    ALOGV("%s", __FUNCTION__);
+    ACameraMetadata* ndkCharacteristics =
+        ACameraMetadata_fromCameraMetadata(env, cameraCharacteristics);
+    if (!ndkCharacteristics) {
+        ALOGE("validateCriticalTags failed: "
+              "ACameraMetadata_fromCameraMetadata returned nullptr.");
+        return false;
+    }
+
+    camera_status_t ret;
+    ACameraMetadata_const_entry entry;
+
+    ret = ACameraMetadata_getConstEntry(ndkCharacteristics,
+        ACAMERA_LENS_FACING, &entry);
+    ACameraMetadata_free(ndkCharacteristics);
+
+    if (ret != ACAMERA_OK) {
+        ALOGE("validateCriticalTags failed: "
+              "ACameraMetadata_getConstEntry returned %d", ret);
+        return false;
+    }
+    if (entry.type != ACAMERA_TYPE_BYTE) {
+        ALOGE("validateCriticalTags failed: entry.type is %u but should be %u.",
+              entry.type, ACAMERA_TYPE_BYTE);
+        return false;
+    }
+    if (entry.count != 1) {
+        ALOGE("validateCriticalTags failed: entry.count is %u but should be %u.",
+              entry.count, 1);
+        return false;
+    }
+    if (entry.data.u8 == nullptr) {
+        ALOGE("validateCriticalTags failed: entry.data.u8 is nullptr.");
+        return false;
+    }
+
+    const uint8_t javaLensFacingU8 = static_cast<uint8_t>(javaLensFacing);
+    const uint8_t ndkLensFacingU8 = *(entry.data.u8);
+    ALOGV("javaLensFacingU8 = %d, ndkLensFacingU8 = %d",
+          javaLensFacingU8, ndkLensFacingU8);
+    return (javaLensFacingU8 == ndkLensFacingU8);
+}
