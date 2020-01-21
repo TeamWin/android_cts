@@ -539,6 +539,16 @@
         <activity
             android:name=".ClickableToastActivity"
             android:exported="true" />
+        <activity
+            android:name=".MinimalPostProcessingActivity"
+            android:exported="true" />
+        <activity
+            android:name=".MinimalPostProcessingActivity2"
+            android:exported="true"/>
+        <activity
+            android:name=".PopupMinimalPostProcessingActivity"
+            android:theme="@android:style/Theme.Holo.Dialog.NoActionBar"
+            android:exported="true" />
     </application>
 </manifest>
 

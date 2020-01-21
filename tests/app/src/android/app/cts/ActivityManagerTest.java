@@ -38,6 +38,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ConfigurationInfo;
 import android.content.res.Resources;
+import android.os.SystemClock;
 import android.platform.test.annotations.RestrictedBuildTest;
 import android.support.test.uiautomator.UiDevice;
 import android.test.InstrumentationTestCase;
@@ -50,6 +51,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 public class ActivityManagerTest extends InstrumentationTestCase {
     private static final String TAG = ActivityManagerTest.class.getSimpleName();
@@ -716,5 +718,156 @@ public class ActivityManagerTest extends InstrumentationTestCase {
                 mActivityManager.forceStopPackage(PACKAGE_NAME_APP1);
             });
         }
+    }
+
+    /*
+     * Verifies the {@link android.app.ActivityManager#killProcessesWhenImperceptible}.
+     */
+    public void testKillingPidsOnImperceptible() throws Exception {
+        // Start remote service process
+        final String remoteProcessName = STUB_PACKAGE_NAME + ":remote";
+        Intent intent = new Intent("android.app.REMOTESERVICE");
+        intent.setPackage(STUB_PACKAGE_NAME);
+        mContext.startService(intent);
+        Thread.sleep(WAITFOR_MSEC);
+
+        RunningAppProcessInfo remote = getRunningAppProcessInfo(remoteProcessName);
+        assertNotNull(remote);
+
+        ActivityReceiverFilter appStartedReceiver = new ActivityReceiverFilter(
+                ACTIVITY_LAUNCHED_ACTION);
+        try {
+            intent = new Intent(Intent.ACTION_MAIN);
+            intent.setClassName(SIMPLE_PACKAGE_NAME, SIMPLE_PACKAGE_NAME + SIMPLE_ACTIVITY);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mContext.startActivity(intent);
+            assertEquals(RESULT_PASS, appStartedReceiver.waitForActivity());
+
+            RunningAppProcessInfo proc = getRunningAppProcessInfo(SIMPLE_PACKAGE_NAME);
+            assertNotNull(proc);
+
+            final String reason = "cts";
+
+            try {
+                mActivityManager.killProcessesWhenImperceptible(new int[]{proc.pid}, reason);
+                fail("Shouldn't have the permission");
+            } catch (SecurityException e) {
+                // expected
+            }
+
+            final long defaultWaitForKillTimeout = 5_000;
+
+            // Keep the device awake
+            toggleScreenOn(true);
+
+            // Kill the remote process
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                mActivityManager.killProcessesWhenImperceptible(new int[]{remote.pid}, reason);
+            });
+
+            // Kill the activity process
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                mActivityManager.killProcessesWhenImperceptible(new int[]{proc.pid}, reason);
+            });
+
+            // The processes should be still alive because device isn't in idle
+            assertFalse(waitUntilTrue(defaultWaitForKillTimeout, () -> isProcessGone(
+                    remote.pid, remoteProcessName)));
+            assertFalse(waitUntilTrue(defaultWaitForKillTimeout, () -> isProcessGone(
+                    proc.pid, SIMPLE_PACKAGE_NAME)));
+
+            // force device idle
+            toggleScreenOn(false);
+            triggerIdle(true);
+
+            // Now the remote process should have been killed.
+            assertTrue(waitUntilTrue(defaultWaitForKillTimeout, () -> isProcessGone(
+                    remote.pid, remoteProcessName)));
+
+            // The activity process should be still alive because it's is on the top (perceptible)
+            assertFalse(waitUntilTrue(defaultWaitForKillTimeout, () -> isProcessGone(
+                    proc.pid, SIMPLE_PACKAGE_NAME)));
+
+            triggerIdle(false);
+            // Toogle screen ON
+            toggleScreenOn(true);
+
+            // Now launch home
+            executeAndLogShellCommand("input keyevent KEYCODE_HOME");
+
+            // force device idle again
+            toggleScreenOn(false);
+            triggerIdle(true);
+
+            // Now the activity process should be gone.
+            assertTrue(waitUntilTrue(defaultWaitForKillTimeout, () -> isProcessGone(
+                    proc.pid, SIMPLE_PACKAGE_NAME)));
+
+        } finally {
+            // Clean up code
+            triggerIdle(false);
+            toggleScreenOn(true);
+            appStartedReceiver.close();
+
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                mActivityManager.forceStopPackage(SIMPLE_PACKAGE_NAME);
+            });
+        }
+    }
+
+    private RunningAppProcessInfo getRunningAppProcessInfo(String processName) {
+        try {
+            return SystemUtil.callWithShellPermissionIdentity(()-> {
+                return mActivityManager.getRunningAppProcesses().stream().filter(
+                        (ra) -> processName.equals(ra.processName)).findFirst().orElse(null);
+            });
+        } catch (Exception e) {
+        }
+        return null;
+    }
+
+    private boolean isProcessGone(int pid, String processName) {
+        RunningAppProcessInfo info = getRunningAppProcessInfo(processName);
+        return info == null || info.pid != pid;
+    }
+
+    // Copied from DeviceStatesTest
+    /**
+     * Make sure the screen state.
+     */
+    private void toggleScreenOn(final boolean screenon) throws Exception {
+        if (screenon) {
+            executeAndLogShellCommand("input keyevent KEYCODE_WAKEUP");
+            executeAndLogShellCommand("wm dismiss-keyguard");
+        } else {
+            executeAndLogShellCommand("input keyevent KEYCODE_SLEEP");
+        }
+        // Since the screen on/off intent is ordered, they will not be sent right now.
+        SystemClock.sleep(2_000);
+    }
+
+    /**
+     * Simulated for idle, and then perform idle maintenance now.
+     */
+    private void triggerIdle(boolean idle) throws Exception {
+        if (idle) {
+            executeAndLogShellCommand("cmd deviceidle force-idle light");
+        } else {
+            executeAndLogShellCommand("cmd deviceidle unforce");
+        }
+        // Wait a moment to let that happen before proceeding.
+        SystemClock.sleep(2_000);
+    }
+
+    /**
+     * Return true if the given supplier says it's true
+     */
+    private boolean waitUntilTrue(long maxWait, Supplier<Boolean> supplier) throws Exception {
+        final long deadLine = SystemClock.uptimeMillis() + maxWait;
+        boolean result = false;
+        do {
+            Thread.sleep(500);
+        } while (!(result = supplier.get()) && SystemClock.uptimeMillis() < deadLine);
+        return result;
     }
 }

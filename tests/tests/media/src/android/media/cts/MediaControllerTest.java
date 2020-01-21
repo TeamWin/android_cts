@@ -130,12 +130,7 @@ public class MediaControllerTest extends AndroidTestCase {
     }
 
     public void testGetTag() {
-        try {
-            String tag = mController.getTag();
-            fail();
-        } catch (SecurityException e) {
-            // expected
-        }
+        assertEquals(SESSION_TAG, mController.getTag());
     }
 
     public void testSendCommand() throws Exception {

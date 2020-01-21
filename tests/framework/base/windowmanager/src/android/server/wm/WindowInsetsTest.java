@@ -192,7 +192,7 @@ public class WindowInsetsTest {
         final WindowInsets consumed = insets.consumeSystemWindowInsets();
 
         assertEquals(Insets.NONE, consumed.getSystemWindowInsets());
-        assertEquals(insets.getStableInsets(), consumed.getStableInsets());
+        assertEquals(Insets.NONE, consumed.getStableInsets());
         assertEquals(insets.getDisplayCutout(), consumed.getDisplayCutout());
         assertEquals(Insets.NONE, consumed.getSystemGestureInsets());
         assertEquals(Insets.NONE, consumed.getMandatorySystemGestureInsets());
@@ -211,12 +211,12 @@ public class WindowInsetsTest {
 
         final WindowInsets consumed = insets.consumeStableInsets();
 
-        assertEquals(insets.getSystemWindowInsets(), consumed.getSystemWindowInsets());
+        assertEquals(Insets.NONE, consumed.getSystemWindowInsets());
         assertEquals(Insets.NONE, consumed.getStableInsets());
         assertEquals(insets.getDisplayCutout(), consumed.getDisplayCutout());
-        assertEquals(insets.getSystemGestureInsets(), consumed.getSystemGestureInsets());
-        assertEquals(insets.getMandatorySystemGestureInsets(), consumed.getMandatorySystemGestureInsets());
-        assertEquals(insets.getTappableElementInsets(), consumed.getTappableElementInsets());
+        assertEquals(Insets.NONE, consumed.getSystemGestureInsets());
+        assertEquals(Insets.NONE, consumed.getMandatorySystemGestureInsets());
+        assertEquals(Insets.NONE, consumed.getTappableElementInsets());
     }
 
     @Test
