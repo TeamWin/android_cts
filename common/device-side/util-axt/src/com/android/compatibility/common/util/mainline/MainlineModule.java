@@ -50,7 +50,7 @@ public enum MainlineModule {
             "9A:4B:85:34:44:86:EC:F5:1F:F8:05:EB:9D:23:17:97:79:BE:B7:EC:81:91:93:5A:CA:67:F0"
                     + ":F4:09:02:52:97"),
     // Consistency
-    TZDATA("com.google.android.tzdata",
+    TZDATA("com.google.android.tzdata2",
             true, ModuleType.APEX,
             "55:93:DD:78:CB:26:EC:9B:00:59:2A:6A:F5:94:E4:16:1F:FD:B5:E9:F3:71:A7:43:54:5F:93"
                     + ":F2:A0:F6:53:89"),
