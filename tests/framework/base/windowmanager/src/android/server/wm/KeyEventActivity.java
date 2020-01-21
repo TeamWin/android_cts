@@ -17,6 +17,21 @@
 package android.server.wm;
 
 import android.app.Activity;
+import android.view.KeyEvent;
 
-public class ShowWhenLockedActivity extends Activity {
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
+
+public class KeyEventActivity extends Activity {
+    private final BlockingQueue<KeyEvent> mKeys = new LinkedBlockingDeque<>();
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        mKeys.add(event);
+        return true;
+    }
+
+    public KeyEvent popKey() {
+        return mKeys.poll();
+    }
 }
