@@ -25,6 +25,7 @@ int32_t mLastMsgGeneration;
 int32_t mCurGeneration;
 List<omx_message> mMessageQueue;
 bool mUseTreble;
+int numCallbackEmptyBufferDone;
 
 struct CodecObserver : public BnOMXObserver {
  public:
@@ -39,11 +40,33 @@ struct CodecObserver : public BnOMXObserver {
     virtual ~CodecObserver() {
     }
 };
+struct DeathNotifier : public IBinder::DeathRecipient,
+        public ::android::hardware::hidl_death_recipient {
+    explicit DeathNotifier() {
+    }
+
+    virtual void binderDied(const wp<IBinder> &) {
+        ALOGE("Binder Died");
+        exit (EXIT_FAILURE);
+    }
+
+    virtual void serviceDied(
+            uint64_t /* cookie */,
+            const wp<::android::hidl::base::V1_0::IBase>& /* who */) {
+        ALOGE("Service Died");
+        exit (EXIT_FAILURE);
+    }
+};
+sp<DeathNotifier> mDeathNotifier;
 void handleMessages(int32_t gen, const std::list<omx_message> &messages) {
     Mutex::Autolock autoLock(mLock);
     for (std::list<omx_message>::const_iterator it = messages.cbegin();
             it != messages.cend();) {
-        mMessageQueue.push_back(*it++);
+        mMessageQueue.push_back(*it);
+        const omx_message &msg = *it++;
+        if (msg.type == omx_message::EMPTY_BUFFER_DONE) {
+            numCallbackEmptyBufferDone++;
+        }
         mLastMsgGeneration = gen;
     }
     mMessageAddedCondition.signal();
@@ -115,7 +138,23 @@ status_t omxUtilsInit(char *codecName) {
         mUseTreble = false;
     }
     sp<CodecObserver> observer = new CodecObserver(++mCurGeneration);
-    return mOMX->allocateNode(codecName, observer, &mOMXNode);
+    status_t ret = mOMX->allocateNode(codecName, observer, &mOMXNode);
+    if (ret == OK) {
+        mDeathNotifier = new DeathNotifier();
+        if (mUseTreble) {
+            auto tOmxNode = mOMXNode->getHalInterface();
+            if (tOmxNode != NULL) {
+                tOmxNode->linkToDeath(mDeathNotifier, 0);
+            } else {
+                ALOGE("No HAL Interface");
+                exit (EXIT_FAILURE);
+            }
+        } else {
+            IInterface::asBinder(mOMXNode)->linkToDeath(mDeathNotifier);
+        }
+    }
+    numCallbackEmptyBufferDone = 0;
+    return ret;
 }
 status_t omxUtilsGetParameter(int portIndex,
                               OMX_PARAM_PORTDEFINITIONTYPE *params) {
