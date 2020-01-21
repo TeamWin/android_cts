@@ -33,9 +33,6 @@ public class SELinuxTargetSdkTest extends SELinuxTargetSdkTestBase
         noDns();
     }
 
-    public void testNoNetlinkRouteBind() throws IOException {
-        noNetlinkRouteBind();
-    }
 
     public void testCanNotExecuteFromHomeDir() throws Exception {
         assertFalse(canExecuteFromHomeDir());
