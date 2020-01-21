@@ -27,6 +27,7 @@ import static org.mockito.Mockito.mock;
 import android.icu.util.ULocale;
 import android.os.Bundle;
 import android.os.LocaleList;
+import android.service.textclassifier.TextClassifierService;
 import android.view.textclassifier.ConversationAction;
 import android.view.textclassifier.ConversationActions;
 import android.view.textclassifier.SelectionEvent;
@@ -59,12 +60,13 @@ import java.util.List;
 @RunWith(Parameterized.class)
 public class TextClassificationManagerTest {
 
-    private static final String DEFAULT = "default";
+    private static final String CURRENT = "current";
     private static final String SESSION = "session";
+    private static final String DEFAULT = "default";
 
     @Parameterized.Parameters(name = "{0}")
     public static Iterable<Object> textClassifierTypes() {
-        return Arrays.asList(DEFAULT, SESSION);
+        return Arrays.asList(CURRENT, SESSION, DEFAULT);
     }
 
     @Parameterized.Parameter
@@ -115,14 +117,17 @@ public class TextClassificationManagerTest {
         mManager = InstrumentationRegistry.getTargetContext()
                 .getSystemService(TextClassificationManager.class);
         mManager.setTextClassifier(null); // Resets the classifier.
-        if (mTextClassifierType.equals(DEFAULT)) {
+        if (mTextClassifierType.equals(CURRENT)) {
             mClassifier = mManager.getTextClassifier();
-        } else {
+        } else if (mTextClassifierType.equals(SESSION)) {
             mClassifier = mManager.createTextClassificationSession(
                     new TextClassificationContext.Builder(
                             InstrumentationRegistry.getTargetContext().getPackageName(),
                             TextClassifier.WIDGET_TYPE_TEXTVIEW)
                             .build());
+        } else {
+            mClassifier = TextClassifierService.getDefaultTextClassifierImplementation(
+                    InstrumentationRegistry.getTargetContext());
         }
     }
 
@@ -134,10 +139,7 @@ public class TextClassificationManagerTest {
     @Test
     public void testTextClassifierDestroy() {
         mClassifier.destroy();
-        if (mTextClassifierType.equals(DEFAULT)) {
-            // non-session TC is not destroyable.
-            assertEquals(false, mClassifier.isDestroyed());
-        } else {
+        if (mTextClassifierType.equals(SESSION)) {
             assertEquals(true, mClassifier.isDestroyed());
         }
     }
