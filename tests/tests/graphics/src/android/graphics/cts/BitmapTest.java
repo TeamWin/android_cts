@@ -2323,28 +2323,6 @@ public class BitmapTest {
         }
     }
 
-    private static class CStoDS {
-        public final ColorSpace colorSpace;
-        public final int dataSpace;
-
-        // Matches data_space.h
-        private static final int ADATASPACE_UNKNOWN = 0;
-        private static final int ADATASPACE_SRGB = 142671872;
-        private static final int ADATASPACE_SCRGB = 411107328;
-        private static final int ADATASPACE_SRGB_LINEAR = 138477568;
-        private static final int ADATASPACE_SCRGB_LINEAR = 406913024;
-        private static final int ADATASPACE_DISPLAY_P3 = 143261696;
-        private static final int ADATASPACE_BT2020 = 147193856;
-        private static final int ADATASPACE_ADOBE_RGB = 151715840;
-        private static final int ADATASPACE_DCI_P3 = 155844608;
-        private static final int ADATASPACE_BT709 = 281083904;
-
-        CStoDS(ColorSpace cs, int dataSpace) {
-            this.colorSpace = cs;
-            this.dataSpace = dataSpace;
-        }
-    }
-
     @Test
     public void testNdkDataSpaceF16Extended() {
         // In RGBA_F16 we force EXTENDED in these cases.
@@ -2356,7 +2334,7 @@ public class BitmapTest {
             assertNotNull(bm);
 
             assertEquals(ColorSpace.get(Named.EXTENDED_SRGB), bm.getColorSpace());
-            assertEquals(CStoDS.ADATASPACE_SCRGB, nGetDataSpace(bm));
+            assertEquals(DataSpace.ADATASPACE_SCRGB, nGetDataSpace(bm));
         }
 
         for (ColorSpace colorSpace : new ColorSpace[] {
@@ -2367,7 +2345,7 @@ public class BitmapTest {
             assertNotNull(bm);
 
             assertEquals(ColorSpace.get(Named.LINEAR_EXTENDED_SRGB), bm.getColorSpace());
-            assertEquals(CStoDS.ADATASPACE_SCRGB_LINEAR, nGetDataSpace(bm));
+            assertEquals(DataSpace.ADATASPACE_SCRGB_LINEAR, nGetDataSpace(bm));
         }
     }
 
@@ -2383,7 +2361,7 @@ public class BitmapTest {
                 assertNotNull(bm);
 
                 assertEquals(ColorSpace.get(Named.SRGB), bm.getColorSpace());
-                assertEquals(CStoDS.ADATASPACE_SRGB, nGetDataSpace(bm));
+                assertEquals(DataSpace.ADATASPACE_SRGB, nGetDataSpace(bm));
             }
         }
 
@@ -2396,36 +2374,37 @@ public class BitmapTest {
                 assertNotNull(bm);
 
                 assertEquals(ColorSpace.get(Named.LINEAR_SRGB), bm.getColorSpace());
-                assertEquals(CStoDS.ADATASPACE_SRGB_LINEAR, nGetDataSpace(bm));
+                assertEquals(DataSpace.ADATASPACE_SRGB_LINEAR, nGetDataSpace(bm));
             }
         }
     }
 
     @Test
     public void testNdkDataSpace() {
-        // CStoDS.ADATASPACEs that do not depend on the Config.
-        for (CStoDS pair : new CStoDS[] {
-                // These have corresponding CStoDS.ADATASPACEs that are independent of the Config.
-                new CStoDS(ColorSpace.get(Named.DISPLAY_P3), CStoDS.ADATASPACE_DISPLAY_P3),
-                new CStoDS(ColorSpace.get(Named.BT2020), CStoDS.ADATASPACE_BT2020),
-                new CStoDS(ColorSpace.get(Named.ADOBE_RGB), CStoDS.ADATASPACE_ADOBE_RGB),
-                new CStoDS(ColorSpace.get(Named.BT709), CStoDS.ADATASPACE_BT709),
-                new CStoDS(ColorSpace.get(Named.DCI_P3), CStoDS.ADATASPACE_DCI_P3),
+        // DataSpace.ADATASPACEs that do not depend on the Config.
+        for (ColorSpace colorSpace : new ColorSpace[] {
+                // These have corresponding DataSpace.ADATASPACEs that are independent of the Config
+                ColorSpace.get(Named.DISPLAY_P3),
+                ColorSpace.get(Named.BT2020),
+                ColorSpace.get(Named.ADOBE_RGB),
+                ColorSpace.get(Named.BT709),
+                ColorSpace.get(Named.DCI_P3),
 
                 // These have no public ADATASPACE.
-                new CStoDS(ColorSpace.get(Named.ACES), CStoDS.ADATASPACE_UNKNOWN),
-                new CStoDS(ColorSpace.get(Named.ACESCG), CStoDS.ADATASPACE_UNKNOWN),
-                new CStoDS(ColorSpace.get(Named.NTSC_1953), CStoDS.ADATASPACE_UNKNOWN),
-                new CStoDS(ColorSpace.get(Named.PRO_PHOTO_RGB), CStoDS.ADATASPACE_UNKNOWN),
-                new CStoDS(ColorSpace.get(Named.SMPTE_C), CStoDS.ADATASPACE_UNKNOWN),
+                ColorSpace.get(Named.ACES),
+                ColorSpace.get(Named.ACESCG),
+                ColorSpace.get(Named.NTSC_1953),
+                ColorSpace.get(Named.PRO_PHOTO_RGB),
+                ColorSpace.get(Named.SMPTE_C),
         }) {
             for (Config c: new Config[] { Config.ARGB_8888, Config.RGB_565, Config.RGBA_F16 }) {
-                Bitmap bm = Bitmap.createBitmap(10, 10, c, false, pair.colorSpace);
+                Bitmap bm = Bitmap.createBitmap(10, 10, c, false, colorSpace);
                 assertNotNull(bm);
 
                 int dataSpace = nGetDataSpace(bm);
                 assertEquals("Bitmap with " + c + " and " + bm.getColorSpace()
-                        + " has unexpected data space", pair.dataSpace, dataSpace);
+                        + " has unexpected data space", DataSpace.fromColorSpace(colorSpace),
+                        dataSpace);
             }
         }
     }
@@ -2437,12 +2416,12 @@ public class BitmapTest {
         assertNotNull(bm);
         assertNull(bm.getColorSpace());
         int dataSpace = nGetDataSpace(bm);
-        assertEquals(CStoDS.ADATASPACE_UNKNOWN, dataSpace);
+        assertEquals(DataSpace.ADATASPACE_UNKNOWN, dataSpace);
     }
 
     @Test
     public void testNdkDataSpaceNullBitmap() {
-        assertEquals(CStoDS.ADATASPACE_UNKNOWN, nGetDataSpace(null));
+        assertEquals(DataSpace.ADATASPACE_UNKNOWN, nGetDataSpace(null));
     }
 
     private static native int nGetDataSpace(Bitmap bm);
