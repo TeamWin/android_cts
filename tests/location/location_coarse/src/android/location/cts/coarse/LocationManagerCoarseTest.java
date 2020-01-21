@@ -66,8 +66,7 @@ public class LocationManagerCoarseTest {
     // 2000m is the default grid size used by location fudger
     private static final float MAX_COARSE_FUDGE_DISTANCE_M = 2500f;
 
-    private static final String COARSE_TEST_PROVIDER = "coarse_test_provider";
-    private static final String FINE_TEST_PROVIDER = "fine_test_provider";
+    private static final String TEST_PROVIDER = "test_provider";
 
     private Random mRandom;
     private Context mContext;
@@ -91,7 +90,7 @@ public class LocationManagerCoarseTest {
             mManager.removeTestProvider(provider);
         }
 
-        mManager.addTestProvider(COARSE_TEST_PROVIDER,
+        mManager.addTestProvider(TEST_PROVIDER,
                 true,
                 false,
                 true,
@@ -101,19 +100,7 @@ public class LocationManagerCoarseTest {
                 false,
                 Criteria.POWER_MEDIUM,
                 Criteria.ACCURACY_COARSE);
-        mManager.setTestProviderEnabled(COARSE_TEST_PROVIDER, true);
-
-        mManager.addTestProvider(FINE_TEST_PROVIDER,
-                false,
-                true,
-                false,
-                false,
-                false,
-                false,
-                false,
-                Criteria.POWER_LOW,
-                Criteria.ACCURACY_FINE);
-        mManager.setTestProviderEnabled(FINE_TEST_PROVIDER, true);
+        mManager.setTestProviderEnabled(TEST_PROVIDER, true);
     }
 
     @After
@@ -128,65 +115,43 @@ public class LocationManagerCoarseTest {
 
     @Test
     public void testGetLastKnownLocation() {
-        Location loc = createLocation(COARSE_TEST_PROVIDER, mRandom);
+        Location loc = createLocation(TEST_PROVIDER, mRandom);
         loc.setExtraLocation(Location.EXTRA_NO_GPS_LOCATION, new Location(loc));
 
-        mManager.setTestProviderLocation(COARSE_TEST_PROVIDER, loc);
-        assertThat(mManager.getLastKnownLocation(COARSE_TEST_PROVIDER)).isNearby(loc, MAX_COARSE_FUDGE_DISTANCE_M);
-
-        try {
-            mManager.getLastKnownLocation(FINE_TEST_PROVIDER);
-            fail("Should throw SecurityException for " + FINE_TEST_PROVIDER);
-        } catch (SecurityException e) {
-            // pass
-        }
+        mManager.setTestProviderLocation(TEST_PROVIDER, loc);
+        assertThat(mManager.getLastKnownLocation(TEST_PROVIDER)).isNearby(loc, MAX_COARSE_FUDGE_DISTANCE_M);
     }
 
     @Test
     public void testRequestLocationUpdates() throws Exception {
-        Location loc = createLocation(COARSE_TEST_PROVIDER, mRandom);
+        Location loc = createLocation(TEST_PROVIDER, mRandom);
         loc.setExtraLocation(Location.EXTRA_NO_GPS_LOCATION, new Location(loc));
 
         try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
-            mManager.requestLocationUpdates(COARSE_TEST_PROVIDER, 0, 0, directExecutor(), capture);
-            mManager.setTestProviderLocation(COARSE_TEST_PROVIDER, loc);
+            mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0, directExecutor(), capture);
+            mManager.setTestProviderLocation(TEST_PROVIDER, loc);
             assertThat(capture.getNextLocation(TIMEOUT_MS)).isNearby(loc, MAX_COARSE_FUDGE_DISTANCE_M);
-        }
-
-        try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
-            mManager.requestLocationUpdates(FINE_TEST_PROVIDER, 0, 0, directExecutor(), capture);
-            fail("Should throw SecurityException for " + FINE_TEST_PROVIDER);
-        } catch (SecurityException e) {
-            // pass
         }
     }
 
     @Test
     public void testRequestLocationUpdates_PendingIntent() throws Exception {
-        Location loc = createLocation(COARSE_TEST_PROVIDER, mRandom);
+        Location loc = createLocation(TEST_PROVIDER, mRandom);
         loc.setExtraLocation(Location.EXTRA_NO_GPS_LOCATION, new Location(loc));
 
         try (LocationPendingIntentCapture capture = new LocationPendingIntentCapture(mContext)) {
-            mManager.requestLocationUpdates(COARSE_TEST_PROVIDER, 0, 0, capture.getPendingIntent());
-            mManager.setTestProviderLocation(COARSE_TEST_PROVIDER, loc);
+            mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0, capture.getPendingIntent());
+            mManager.setTestProviderLocation(TEST_PROVIDER, loc);
             assertThat(capture.getNextLocation(TIMEOUT_MS)).isNearby(loc, MAX_COARSE_FUDGE_DISTANCE_M);
-        }
-
-        try (LocationPendingIntentCapture capture = new LocationPendingIntentCapture(mContext)) {
-            mManager.requestLocationUpdates(FINE_TEST_PROVIDER, 0, 0, capture.getPendingIntent());
-            fail("Should throw SecurityException for " + FINE_TEST_PROVIDER);
-        } catch (SecurityException e) {
-            // pass
         }
     }
 
     @Test
     public void testGetProviders() {
         List<String> providers = mManager.getProviders(false);
-        assertTrue(providers.contains(COARSE_TEST_PROVIDER));
-        assertFalse(providers.contains(FINE_TEST_PROVIDER));
-        assertFalse(providers.contains(GPS_PROVIDER));
-        assertFalse(providers.contains(PASSIVE_PROVIDER));
+        assertTrue(providers.contains(TEST_PROVIDER));
+        assertTrue(providers.contains(GPS_PROVIDER));
+        assertTrue(providers.contains(PASSIVE_PROVIDER));
     }
 
     @Test
@@ -208,24 +173,17 @@ public class LocationManagerCoarseTest {
         criteria.setPowerRequirement(Criteria.POWER_MEDIUM);
 
         String bestProvider = mManager.getBestProvider(criteria, false);
-        assertEquals(COARSE_TEST_PROVIDER, bestProvider);
+        assertEquals(TEST_PROVIDER, bestProvider);
 
         criteria.setAccuracy(Criteria.ACCURACY_FINE);
         criteria.setPowerRequirement(Criteria.POWER_LOW);
-        assertNotEquals(COARSE_TEST_PROVIDER, mManager.getBestProvider(criteria, false));
+        assertNotEquals(TEST_PROVIDER, mManager.getBestProvider(criteria, false));
     }
 
     @Test
     @AppModeFull(reason = "Instant apps can't hold ACCESS_LOCATION_EXTRA_COMMANDS")
     public void testSendExtraCommand() {
-        mManager.sendExtraCommand(COARSE_TEST_PROVIDER, "command", null);
-
-        try {
-            mManager.sendExtraCommand(FINE_TEST_PROVIDER, "command", null);
-            fail("Should throw SecurityException for " + FINE_TEST_PROVIDER);
-        } catch (SecurityException expected) {
-            // pass
-        }
+        mManager.sendExtraCommand(TEST_PROVIDER, "command", null);
     }
 
     // TODO: this test should probably not be in the location module
