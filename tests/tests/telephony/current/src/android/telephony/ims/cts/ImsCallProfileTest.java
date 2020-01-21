@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.telecom.VideoProfile;
+import android.telephony.TelephonyManager;
 import android.telephony.emergency.EmergencyNumber;
 import android.telephony.ims.ImsCallProfile;
 import android.telephony.ims.ImsStreamMediaProfile;
@@ -274,5 +275,26 @@ public class ImsCallProfileTest {
         data.updateCallType(data2);
 
         assertFalse(data.isVideoCall());
+    }
+
+    @Test
+    public void testParcelUnparcelExtraNetworkType() {
+        Bundle testBundle = new Bundle();
+        ImsStreamMediaProfile testProfile = new ImsStreamMediaProfile(1, 1, 1, 1, 1);
+        ImsCallProfile data = new ImsCallProfile(ImsCallProfile.SERVICE_TYPE_NORMAL,
+                ImsCallProfile.CALL_TYPE_VOICE_N_VIDEO, testBundle, testProfile);
+        data.setCallExtraInt(ImsCallProfile.EXTRA_CALL_NETWORK_TYPE,
+                TelephonyManager.NETWORK_TYPE_LTE);
+
+        Parcel dataParceled = Parcel.obtain();
+        data.writeToParcel(dataParceled, 0);
+        dataParceled.setDataPosition(0);
+        ImsCallProfile unparceledData =
+                ImsCallProfile.CREATOR.createFromParcel(dataParceled);
+        dataParceled.recycle();
+
+        assertEquals("unparceled data for EXTRA_CALL_NETWORK_TYPE is not valid!",
+                data.getCallExtraInt(ImsCallProfile.EXTRA_CALL_NETWORK_TYPE),
+                unparceledData.getCallExtraInt(ImsCallProfile.EXTRA_CALL_NETWORK_TYPE));
     }
 }
