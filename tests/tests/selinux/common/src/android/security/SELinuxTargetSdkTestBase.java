@@ -78,12 +78,6 @@ abstract class SELinuxTargetSdkTestBase extends AndroidTestCase
         }
     }
 
-
-    protected static void noNetlinkRouteBind() throws IOException {
-        assertEquals("Bind() is not allowed on a netlink route sockets",
-                13, checkNetlinkRouteBind());
-    }
-
     /**
      * Check expectations of being able to read/execute dex2oat.
      */
@@ -161,6 +155,5 @@ abstract class SELinuxTargetSdkTestBase extends AndroidTestCase
         return true;
     }
 
-    private static final native int checkNetlinkRouteBind();
     private static final native String getFileContext(String path);
 }
