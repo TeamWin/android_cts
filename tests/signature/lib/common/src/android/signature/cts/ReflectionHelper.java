@@ -18,6 +18,7 @@ package android.signature.cts;
 import android.signature.cts.JDiffClassDescription.JDiffConstructor;
 import android.signature.cts.JDiffClassDescription.JDiffMethod;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
@@ -420,33 +421,24 @@ public class ReflectionHelper {
         }
     }
 
-    /**
-     * Returns a Class representing an annotation type of the given name.
-     */
-    @SuppressWarnings("unchecked")
-    public static Class<? extends Annotation> getAnnotationClass(String name) {
-        try {
-            Class<?> clazz = Class.forName(
-                    name, false, ReflectionHelper.class.getClassLoader());
-            if (clazz.isAnnotation()) {
-                return (Class<? extends Annotation>) clazz;
-            } else {
-                return null;
+    public static boolean hasMatchingAnnotation(AnnotatedElement elem, String annotationSpec) {
+        for (Annotation a : elem.getAnnotations()) {
+            if (a.toString().equals(annotationSpec)) {
+                return true;
             }
-        } catch (ClassNotFoundException e) {
-            return null;
         }
+        return false;
     }
 
     /**
      * Returns a list of constructors which are annotated with the given annotation class.
      */
     public static Set<Constructor<?>> getAnnotatedConstructors(Class<?> clazz,
-            Class<? extends Annotation> annotation) {
+            String annotationSpec) {
         Set<Constructor<?>> result = new HashSet<>();
-        if (annotation != null) {
+        if (annotationSpec != null) {
             for (Constructor<?> c : clazz.getDeclaredConstructors()) {
-                if (c.isAnnotationPresent(annotation)) {
+                if (hasMatchingAnnotation(c, annotationSpec)) {
                     // TODO(b/71630695): currently, some API members are not annotated, because
                     // a member is automatically added to the API set if it is in a class with
                     // annotation and it is not @hide. <member>.getDeclaringClass().
@@ -464,12 +456,11 @@ public class ReflectionHelper {
     /**
      * Returns a list of methods which are annotated with the given annotation class.
      */
-    public static Set<Method> getAnnotatedMethods(Class<?> clazz,
-            Class<? extends Annotation> annotation) {
+    public static Set<Method> getAnnotatedMethods(Class<?> clazz, String annotationSpec) {
         Set<Method> result = new HashSet<>();
-        if (annotation != null) {
+        if (annotationSpec != null) {
             for (Method m : clazz.getDeclaredMethods()) {
-                if (m.isAnnotationPresent(annotation)) {
+                if (hasMatchingAnnotation(m, annotationSpec)) {
                     // TODO(b/71630695): see getAnnotatedConstructors for details
                     result.add(m);
                 }
@@ -481,12 +472,11 @@ public class ReflectionHelper {
     /**
      * Returns a list of fields which are annotated with the given annotation class.
      */
-    public static Set<Field> getAnnotatedFields(Class<?> clazz,
-            Class<? extends Annotation> annotation) {
+    public static Set<Field> getAnnotatedFields(Class<?> clazz, String annotationSpec) {
         Set<Field> result = new HashSet<>();
-        if (annotation != null) {
+        if (annotationSpec != null) {
             for (Field f : clazz.getDeclaredFields()) {
-                if (f.isAnnotationPresent(annotation)) {
+                if (hasMatchingAnnotation(f, annotationSpec)) {
                     // TODO(b/71630695): see getAnnotatedConstructors for details
                     result.add(f);
                 }
@@ -495,46 +485,42 @@ public class ReflectionHelper {
         return result;
     }
 
-    private static boolean isInAnnotatedClass(Member m,
-            Class<? extends Annotation> annotationClass) {
+    private static boolean isInAnnotatedClass(Member m, String annotationSpec) {
         Class<?> clazz = m.getDeclaringClass();
         do {
-            if (clazz.isAnnotationPresent(annotationClass)) {
+            if (hasMatchingAnnotation(clazz, annotationSpec)) {
                 return true;
             }
         } while ((clazz = clazz.getDeclaringClass()) != null);
         return false;
     }
 
-    public static boolean isAnnotatedOrInAnnotatedClass(Field field,
-            Class<? extends Annotation> annotationClass) {
-        if (annotationClass == null) {
+    public static boolean isAnnotatedOrInAnnotatedClass(Field field, String annotationSpec) {
+        if (annotationSpec == null) {
             return true;
         }
-        return field.isAnnotationPresent(annotationClass)
-                || isInAnnotatedClass(field, annotationClass);
+        return hasMatchingAnnotation(field, annotationSpec)
+                || isInAnnotatedClass(field, annotationSpec);
     }
 
     public static boolean isAnnotatedOrInAnnotatedClass(Constructor<?> constructor,
-            Class<? extends Annotation> annotationClass) {
-        if (annotationClass == null) {
+            String annotationSpec) {
+        if (annotationSpec == null) {
             return true;
         }
-        return constructor.isAnnotationPresent(annotationClass)
-                || isInAnnotatedClass(constructor, annotationClass);
+        return hasMatchingAnnotation(constructor, annotationSpec)
+                || isInAnnotatedClass(constructor, annotationSpec);
     }
 
-    public static boolean isAnnotatedOrInAnnotatedClass(Method method,
-            Class<? extends Annotation> annotationClass) {
-        if (annotationClass == null) {
+    public static boolean isAnnotatedOrInAnnotatedClass(Method method, String annotationSpec) {
+        if (annotationSpec == null) {
             return true;
         }
-        return method.isAnnotationPresent(annotationClass)
-                || isInAnnotatedClass(method, annotationClass);
+        return hasMatchingAnnotation(method, annotationSpec)
+                || isInAnnotatedClass(method, annotationSpec);
     }
 
-    public static boolean isOverridingAnnotatedMethod(Method method,
-            Class<? extends Annotation> annotationClass) {
+    public static boolean isOverridingAnnotatedMethod(Method method, String annotationSpec) {
         Class<?> clazz = method.getDeclaringClass();
         while (!(clazz = clazz.getSuperclass()).equals(Object.class)) {
             try {
@@ -542,7 +528,7 @@ public class ReflectionHelper {
                 overriddenMethod = clazz.getDeclaredMethod(method.getName(),
                         method.getParameterTypes());
                 if (overriddenMethod != null) {
-                    return isAnnotatedOrInAnnotatedClass(overriddenMethod, annotationClass);
+                    return isAnnotatedOrInAnnotatedClass(overriddenMethod, annotationSpec);
                 }
             } catch (NoSuchMethodException e) {
                 continue;
