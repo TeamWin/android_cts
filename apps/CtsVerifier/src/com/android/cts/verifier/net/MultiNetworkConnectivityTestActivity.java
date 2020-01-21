@@ -79,7 +79,6 @@ import java.util.List;
  */
 public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activity {
     public static final String TAG = "MultinetworkTest";
-    public static final int ENABLE_DISABLE_WIFI_DELAY_MS = 3000;
     public static final int WIFI_NETWORK_CONNECT_TIMEOUT_MS = 45000;
     public static final int WIFI_NETWORK_CONNECT_TO_BE_ACTIVE_MS = 25000;
     public static final int CELLULAR_NETWORK_CONNECT_TIMEOUT_MS = 45000;
@@ -278,6 +277,44 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
         }
 
         return hadPermission;
+    }
+
+    private void requestUserEnableWifiAsync(boolean enableWifi, SetWifiCallback callback) {
+        if (isWifiEnabled() == enableWifi) {
+          callback.onComplete(/* isSuccess = */ true);
+          return;
+        }
+
+        int wifiEnableMessage = enableWifi ? R.string.multinetwork_connectivity_turn_wifi_on :
+                                             R.string.multinetwork_connectivity_turn_wifi_off;
+
+        AlertDialog alertDialog = new AlertDialog.Builder(this)
+            .setMessage(wifiEnableMessage)
+            .setPositiveButton(R.string.multinetwork_connectivity_turn_wifi_positive,
+                (a, b) -> requestUserEnableWifiAsync(enableWifi, callback))
+            .setNegativeButton(R.string.multinetwork_connectivity_turn_wifi_negative,
+                (a, b) -> callback.onComplete(/* isSuccess = */ false))
+            .create();
+        alertDialog.show();
+    }
+
+    private void toggleWifiAsync(SetWifiCallback callback) {
+        // Turn off WiFi.
+        requestUserEnableWifiAsync(false, (isSuccess) -> {
+          if (isSuccess) {
+              // Turn on WiFi.
+              requestUserEnableWifiAsync(true, callback);
+          } else {
+              callback.onComplete(/* isSuccess = */ false);
+          }
+        });
+    }
+
+    private boolean isWifiEnabled() {
+      WifiManager wifiManager = (WifiManager)getSystemService(Context.WIFI_SERVICE);
+      int wifiState = wifiManager.getWifiState();
+      return wifiState == WifiManager.WIFI_STATE_ENABLED
+          || wifiState == WifiManager.WIFI_STATE_ENABLING;
     }
 
     private void setupUserInterface() {
@@ -664,17 +701,18 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
 
         /** Start test if not started. */
         void startTest() {
+            Handler uiThreadHandler = new Handler(Looper.getMainLooper());
             if (mValidatorState == NOT_STARTED) {
                 mTestCallback.testStarted();
-                WifiManager wifiManager = (WifiManager) getApplicationContext()
-                        .getSystemService(Context.WIFI_SERVICE);
-                wifiManager.setWifiEnabled(false);
-                mMainHandler.postDelayed(() -> {
-                    wifiManager.setWifiEnabled(true);
+                toggleWifiAsync(hasToggled -> {
+                    if (!hasToggled) {
+                        onUnableToSetWifi();
+                        return;
+                    }
                     mTestCallback.testProgress(
-                            R.string.multinetwork_connectivity_test_connect_cellular);
+                        R.string.multinetwork_connectivity_test_connect_cellular);
                     mConnectivityState.connectToCellularNetwork();
-                }, ENABLE_DISABLE_WIFI_DELAY_MS);
+                });
             }
         }
 
@@ -692,6 +730,10 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
 
         void onCellularNetworkUnavailable() {
             endTest(false, R.string.multinetwork_status_mobile_connect_timed_out);
+        }
+
+        void onUnableToSetWifi() {
+            endTest(false, R.string.multinetwork_status_unable_to_toggle_wifi);
         }
 
         void endTest(boolean status, int messageResId) {
@@ -995,5 +1037,9 @@ public class MultiNetworkConnectivityTestActivity extends PassFailButtons.Activi
                 endTest(false, R.string.multinetwork_status_wifi_connect_wrong_ap);
             }
         }
+    }
+
+    private interface SetWifiCallback {
+        void onComplete(boolean isSuccess);
     }
 }
