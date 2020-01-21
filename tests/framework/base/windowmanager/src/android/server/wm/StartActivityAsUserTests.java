@@ -34,36 +34,35 @@ import android.os.UserManager;
 import android.platform.test.annotations.Presubmit;
 
 import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 @Presubmit
-@RunWith(AndroidJUnit4.class)
 public class StartActivityAsUserTests {
     static final String EXTRA_CALLBACK = "callback";
     static final String KEY_USER_ID = "user id";
 
     private static final String PACKAGE = "android.server.wm.cts";
     private static final String CLASS = "android.server.wm.StartActivityAsUserActivity";
-    private static final Context sContext = InstrumentationRegistry.getInstrumentation()
-            .getContext();
-    private static final ActivityManager sAm = sContext.getSystemService(ActivityManager.class);
     private static final int INVALID_STACK = -1;
+    private static final boolean SUPPORTS_MULTIPLE_USERS = UserManager.supportsMultipleUsers();
+
+    private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
+    private final ActivityManager mAm = mContext.getSystemService(ActivityManager.class);
 
     private int mSecondUserId;
     private ActivityAndWindowManagersState mAmWmState = new ActivityAndWindowManagersState();
 
     @Before
     public void createSecondUser() {
-        String output = runShellCommand("pm create-user --profileOf " + sContext.getUserId()
+        assumeTrue(SUPPORTS_MULTIPLE_USERS);
+
+        final String output = runShellCommand("pm create-user --profileOf " + mContext.getUserId()
                 + " user2");
         mSecondUserId = Integer.parseInt(output.substring(output.lastIndexOf(" ")).trim());
         assertThat(mSecondUserId).isNotEqualTo(0);
@@ -75,11 +74,6 @@ public class StartActivityAsUserTests {
         runShellCommand("pm remove-user " + mSecondUserId);
     }
 
-    @BeforeClass
-    public static void assumeMultiUser() {
-        assumeTrue(UserManager.supportsMultipleUsers());
-    }
-
     @Test
     public void startActivityValidUser() throws Throwable {
         int[] secondUser= {-1};
@@ -89,7 +83,7 @@ public class StartActivityAsUserTests {
             latch.countDown();
         });
 
-        Intent intent = new Intent(sContext, StartActivityAsUserActivity.class);
+        final Intent intent = new Intent(mContext, StartActivityAsUserActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra(EXTRA_CALLBACK, cb);
 
@@ -97,12 +91,12 @@ public class StartActivityAsUserTests {
 
         try {
             runWithShellPermissionIdentity(() -> {
-                sContext.startActivityAsUser(intent, secondUserHandle);
-                sAm.switchUser(secondUserHandle);
+                mContext.startActivityAsUser(intent, secondUserHandle);
+                mAm.switchUser(secondUserHandle);
                 try {
                     latch.await(5, TimeUnit.SECONDS);
                 } finally {
-                    sAm.switchUser(sContext.getUser());
+                    mAm.switchUser(mContext.getUser());
                 }
             });
         } catch (RuntimeException e) {
@@ -117,11 +111,11 @@ public class StartActivityAsUserTests {
         UserHandle secondUserHandle = UserHandle.of(mSecondUserId * 100);
         int[] stackId = {-1};
 
-        Intent intent = new Intent(sContext, StartActivityAsUserActivity.class);
+        final Intent intent = new Intent(mContext, StartActivityAsUserActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
         runWithShellPermissionIdentity(() -> {
-            sContext.startActivityAsUser(intent, secondUserHandle);
+            mContext.startActivityAsUser(intent, secondUserHandle);
             ActivityManagerState amState = mAmWmState.getAmState();
             amState.computeState();
             ComponentName componentName = ComponentName.createRelative(PACKAGE, CLASS);
