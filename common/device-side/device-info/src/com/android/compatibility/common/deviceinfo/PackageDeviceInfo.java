@@ -15,12 +15,13 @@
  */
 package com.android.compatibility.common.deviceinfo;
 
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.os.Bundle;
-
-import com.android.compatibility.common.deviceinfo.DeviceInfo;
+import android.content.pm.PermissionInfo;
 import com.android.compatibility.common.util.DeviceInfoStore;
+
+import java.util.*;
 
 /**
  * PackageDeviceInfo collector.
@@ -35,24 +36,97 @@ public class PackageDeviceInfo extends DeviceInfo {
     private static final String MIN_SDK = "min_sdk";
     private static final String TARGET_SDK = "target_sdk";
 
+    private static final String REQUESTED_PERMISSIONS = "requested_permissions";
+    private static final String PERMISSION_NAME = "name";
+    private static final String PERMISSION_FLAGS = "flags";
+    private static final String PERMISSION_GROUP = "permission_group";
+    private static final String PERMISSION_PROTECTION = "protection_level";
+    private static final String PERMISSION_PROTECTION_FLAGS = "protection_level_flags";
+
+    private static final String HAS_SYSTEM_UID = "has_system_uid";
+
+    private static final String SHARES_INSTALL_PERMISSION = "shares_install_packages_permission";
+    private static final String INSTALL_PACKAGES_PERMISSION = "android.permission.INSTALL_PACKAGES";
+
     @Override
     protected void collectDeviceInfo(DeviceInfoStore store) throws Exception {
-        PackageManager pm = getContext().getPackageManager();
+        final PackageManager pm = getContext().getPackageManager();
+        final ApplicationInfo system = pm.getApplicationInfo("android", 0);
+
         store.startArray(PACKAGE);
-        for (PackageInfo pkg : pm.getInstalledPackages(0)) {
+        for (PackageInfo pkg : pm.getInstalledPackages(PackageManager.GET_PERMISSIONS)) {
             store.startGroup();
+
             store.addResult(NAME, pkg.packageName);
             store.addResult(VERSION_NAME, pkg.versionName);
 
-            if (pkg.applicationInfo != null) {
-                String dir = pkg.applicationInfo.sourceDir;
+            if (pkg.requestedPermissions != null && pkg.requestedPermissions.length > 0) {
+                store.startArray(REQUESTED_PERMISSIONS);
+                for (String permission : pkg.requestedPermissions) {
+                    store.startGroup();
+                    store.addResult(PERMISSION_NAME, permission);
+
+                    try {
+                        final PermissionInfo pi = pm.getPermissionInfo(permission, 0);
+
+                        store.addResult(PERMISSION_FLAGS, pi.flags);
+                        store.addResult(PERMISSION_GROUP, pi.group);
+                        store.addResult(PERMISSION_PROTECTION, pi.getProtection());
+                        store.addResult(PERMISSION_PROTECTION_FLAGS, pi.getProtectionFlags());
+                    } catch (PackageManager.NameNotFoundException e) {
+                        // ignore future permission, end group and continue
+                    }
+                    store.endGroup();
+                }
+                store.endArray();
+            }
+
+            final ApplicationInfo appInfo = pkg.applicationInfo;
+            if (appInfo != null) {
+                String dir = appInfo.sourceDir;
                 store.addResult(SYSTEM_PRIV, dir != null && dir.startsWith(PRIV_APP_DIR));
 
-                store.addResult(MIN_SDK, pkg.applicationInfo.minSdkVersion);
-                store.addResult(TARGET_SDK, pkg.applicationInfo.targetSdkVersion);
+                store.addResult(MIN_SDK, appInfo.minSdkVersion);
+                store.addResult(TARGET_SDK, appInfo.targetSdkVersion);
+
+                store.addResult(HAS_SYSTEM_UID, appInfo.uid == system.uid);
+
+                final boolean canInstall = sharesUidWithPackageHolding(pm, appInfo.uid, INSTALL_PACKAGES_PERMISSION);
+                store.addResult(SHARES_INSTALL_PERMISSION, canInstall);
             }
+
             store.endGroup();
         }
         store.endArray(); // Package
+    }
+
+    private static boolean sharesUidWithPackageHolding(PackageManager pm, int uid, String permission) {
+        final String[] sharesUidWith = pm.getPackagesForUid(uid);
+
+        if (sharesUidWith == null) {
+            return false;
+        }
+
+        // Approx 20 permissions per package for rough estimate of sizing
+        final List<String> sharedPermissions = new ArrayList<>(sharesUidWith.length * 20);
+        for (String pkg :sharesUidWith){
+            try {
+                final PackageInfo info = pm.getPackageInfo(pkg, PackageManager.GET_PERMISSIONS);
+
+                if (info.requestedPermissions == null) {
+                    continue;
+                }
+
+                for (String p : info.requestedPermissions) {
+                    if (p != null) {
+                        sharedPermissions.add(p);
+                    }
+                }
+            } catch (PackageManager.NameNotFoundException e) {
+                // ignore, continue
+            }
+        }
+
+        return sharedPermissions.contains(permission);
     }
 }
