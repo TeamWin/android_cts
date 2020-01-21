@@ -578,6 +578,24 @@ public class MediaSessionTest extends AndroidTestCase {
         }
     }
 
+    public void testSessionCreationLimit() {
+        // An app should not be able to create too many sessions.
+        // See MediaSessionService#SESSION_CREATION_LIMIT_PER_UID
+        List<MediaSession> sessions = new ArrayList<>();
+        try {
+            for (int i = 0; i < 1000; i++) {
+                sessions.add(new MediaSession(mContext, "testSessionCreationLimit"));
+            }
+            fail("The number of session should be limited!");
+        } catch (RuntimeException e) {
+            // Expected
+        } finally {
+            for (MediaSession session : sessions) {
+                session.release();
+            }
+        }
+    }
+
     /**
      * Verifies that a new session hasn't had any configuration bits set yet.
      *
