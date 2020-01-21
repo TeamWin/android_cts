@@ -803,6 +803,17 @@ TEST_P(NdkBinderTest_Aidl, GetInterfaceVersion) {
   }
 }
 
+TEST_P(NdkBinderTest_Aidl, GetInterfaceHash) {
+  std::string res;
+  EXPECT_OK(iface->getInterfaceHash(&res));
+  if (GetParam().shouldBeOld) {
+    // aidl_api/libbinder_ndk_test_interface/1/.hash
+    EXPECT_EQ("8d903ce236a40b41624907c4d1d7a651eca9f763", res);
+  } else {
+    EXPECT_EQ("notfrozen", res);
+  }
+}
+
 std::shared_ptr<ITest> getProxyLocalService() {
   std::shared_ptr<MyTest> test = SharedRefBase::make<MyTest>();
   SpAIBinder binder = test->asBinder();

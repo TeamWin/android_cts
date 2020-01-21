@@ -177,6 +177,9 @@ public class JavaClientTest {
     private static class Empty extends IEmpty.Stub {
         @Override
         public int getInterfaceVersion() { return Empty.VERSION; }
+
+        @Override
+        public String getInterfaceHash() { return Empty.HASH; }
     }
 
     @Test
