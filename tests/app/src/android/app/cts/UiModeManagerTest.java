@@ -30,6 +30,7 @@ import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.SettingsUtils;
 
 import junit.framework.Assert;
+import org.junit.Ignore;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -78,7 +79,7 @@ public class UiModeManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testNightModeYesPersisted() {
+    public void testNightModeYesPersisted() throws InterruptedException {
         setNightMode(UiModeManager.MODE_NIGHT_NO);
         assertStoredNightModeSetting(UiModeManager.MODE_NIGHT_NO);
 
@@ -86,7 +87,7 @@ public class UiModeManagerTest extends AndroidTestCase {
         assertStoredNightModeSetting(UiModeManager.MODE_NIGHT_YES);
     }
 
-    public void testNightModeAutoPersisted() {
+    public void testNightModeAutoPersisted() throws InterruptedException {
         setNightMode(UiModeManager.MODE_NIGHT_NO);
         assertStoredNightModeSetting(UiModeManager.MODE_NIGHT_NO);
 
