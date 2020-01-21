@@ -259,7 +259,7 @@ public final class CannedFillResponse {
             Log.d(TAG, "Visiting " + builder);
             mVisitor.visit(contexts, builder);
         }
-        builder.setCancelTargetIds(mCancelIds);
+        builder.setPresentationCancelIds(mCancelIds);
 
         final FillResponse response = builder.build();
         Log.v(TAG, "Response: " + response);
@@ -534,7 +534,7 @@ public final class CannedFillResponse {
         /**
          * Sets targets that cancel current session
          */
-        public Builder setCancelTargetIds(int[] ids) {
+        public Builder setPresentationCancelIds(int[] ids) {
             mCancelIds = ids;
             return this;
         }

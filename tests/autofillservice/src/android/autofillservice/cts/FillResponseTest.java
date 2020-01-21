@@ -259,6 +259,6 @@ public class FillResponseTest {
         assertThrows(IllegalStateException.class, () -> mBuilder.setHeader(mHeader));
         assertThrows(IllegalStateException.class, () -> mBuilder.setFooter(mFooter));
         assertThrows(IllegalStateException.class, () -> mBuilder.setUserData(mUserData));
-        assertThrows(IllegalStateException.class, () -> mBuilder.setCancelTargetIds(null));
+        assertThrows(IllegalStateException.class, () -> mBuilder.setPresentationCancelIds(null));
     }
 }

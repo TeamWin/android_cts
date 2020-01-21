@@ -2863,7 +2863,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
                         .setField(ID_PASSWORD, "sweet")
                         .setPresentation(createPresentationWithCancel("The Dude"))
                         .build())
-                .setCancelTargetIds(new int[]{R.id.cancel_fill});
+                .setPresentationCancelIds(new int[]{R.id.cancel_fill});
         sReplier.addResponse(builder.build());
 
         // Trigger auto-fill.
@@ -2900,7 +2900,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
                         .setField(ID_PASSWORD, "sweet")
                         .setPresentation(createPresentationWithCancel("The Dude"))
                         .build())
-                .setCancelTargetIds(new int[]{R.id.cancel});
+                .setPresentationCancelIds(new int[]{R.id.cancel});
         sReplier.addResponse(builder2.build());
 
         // Trigger auto-fill.
