@@ -579,7 +579,7 @@ static void testDecodeStride(JNIEnv* env, jclass, jlong imageDecoderPtr) {
     void* pixels = nullptr;
 
     // The code in this loop relies on minStride being used first.
-    for (size_t stride : { minStride, (size_t) (minStride * 1.5), minStride * 3 }) {
+    for (size_t stride : { minStride, minStride * 2, minStride * 3 }) {
         size_t size = stride * (height - 1) + minStride;
         void* decodePixels = malloc(size);
         int result = AImageDecoder_decodeImage(decoder, decodePixels, stride, size);
@@ -704,7 +704,7 @@ static void testDecodeScaled(JNIEnv* env, jclass, jlong imageDecoderPtr,
                              minStride, pixels, minStride));
 
     // Verify that larger strides still behave as expected.
-    for (size_t stride : { (size_t) (minStride * 1.5), minStride * 3 }) {
+    for (size_t stride : { minStride * 2, minStride * 3 }) {
         size_t size = stride * (jInfo.height - 1) + minStride;
         void* decodePixels = malloc(size);
         result = AImageDecoder_decodeImage(decoder, decodePixels, stride, size);
@@ -921,7 +921,7 @@ static void testDecodeCrop(JNIEnv* env, jclass, jlong imageDecoderPtr,
                              minStride, pixels, minStride));
 
     // Verify that larger strides still behave as expected.
-    for (size_t stride : { (size_t) (minStride * 1.5), minStride * 3 }) {
+    for (size_t stride : { minStride * 2, minStride * 3 }) {
         size_t size = stride * (height - 1) + minStride;
         void* decodePixels = malloc(size);
         result = AImageDecoder_decodeImage(decoder, decodePixels, stride, size);
