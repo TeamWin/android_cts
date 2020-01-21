@@ -1261,6 +1261,148 @@ public class ImsServiceTest {
             assertEquals(TEST_CONFIG_VALUE_STRING,
                     provisioningManager.getProvisioningStringValue(TEST_CONFIG_KEY));
 
+            verifyStringKey(provisioningManager, mStringQueue,
+                    ProvisioningManager.KEY_AMR_CODEC_MODE_SET_VALUES, "1,2");
+            verifyStringKey(provisioningManager, mStringQueue,
+                    ProvisioningManager.KEY_AMR_WB_CODEC_MODE_SET_VALUES, "1,2");
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_SIP_SESSION_TIMER_SEC, 5);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_MINIMUM_SIP_SESSION_EXPIRATION_TIMER_SEC, 5);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_SIP_INVITE_CANCELLATION_TIMER_MS, 5);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_TRANSITION_TO_LTE_DELAY_MS, 5);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_ENABLE_SILENT_REDIAL, 0);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_T1_TIMER_VALUE_MS, 500);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_T2_TIMER_VALUE_MS, 500);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_TF_TIMER_VALUE_MS, 500);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_VOLTE_PROVISIONING_STATUS, 0);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_VT_PROVISIONING_STATUS, 0);
+            verifyStringKey(provisioningManager, mStringQueue,
+                    ProvisioningManager.KEY_REGISTRATION_DOMAIN_NAME, "test.com");
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_SMS_FORMAT, ProvisioningManager.SMS_FORMAT_3GPP);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_SMS_FORMAT, ProvisioningManager.SMS_FORMAT_3GPP2);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_SMS_OVER_IP_ENABLED, 0);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_RCS_PUBLISH_TIMER_SEC, 5);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_RCS_PUBLISH_TIMER_EXTENDED_SEC, 5);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_RCS_CAPABILITY_DISCOVERY_ENABLED, 0);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_RCS_CAPABILITIES_CACHE_EXPIRATION_SEC, 5);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_RCS_CAPABILITIES_CACHE_EXPIRATION_SEC, 5);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_RCS_AVAILABILITY_CACHE_EXPIRATION_SEC, 5);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_RCS_CAPABILITIES_POLL_INTERVAL_SEC, 5);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_RCS_PUBLISH_SOURCE_THROTTLE_MS, 1000);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_RCS_MAX_NUM_ENTRIES_IN_RCL, 50);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_RCS_CAPABILITY_POLL_LIST_SUB_EXP_SEC, 5);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_USE_GZIP_FOR_LIST_SUBSCRIPTION, 0);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_EAB_PROVISIONING_STATUS, 0);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_VOICE_OVER_WIFI_ROAMING_ENABLED_OVERRIDE, 0);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_VOICE_OVER_WIFI_MODE_OVERRIDE, 0);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_VOICE_OVER_WIFI_ENABLED_OVERRIDE, 0);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_MOBILE_DATA_ENABLED, 0);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_VOLTE_USER_OPT_IN_STATUS, 0);
+            verifyStringKey(provisioningManager, mStringQueue,
+                    ProvisioningManager.KEY_LOCAL_BREAKOUT_PCSCF_ADDRESS, "local.fun.com");
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_SIP_KEEP_ALIVE_ENABLED, 0);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_REGISTRATION_RETRY_BASE_TIME_SEC, 0);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_REGISTRATION_RETRY_MAX_TIME_SEC, 5);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_RTP_SPEECH_START_PORT, 500);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_RTP_SPEECH_END_PORT, 600);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_SIP_INVITE_REQUEST_TRANSMIT_INTERVAL_MS, 500);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_SIP_INVITE_ACK_WAIT_TIME_MS, 500);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_SIP_INVITE_RESPONSE_RETRANSMIT_WAIT_TIME_MS, 500);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_SIP_NON_INVITE_TRANSACTION_TIMEOUT_TIMER_MS, 500);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_SIP_INVITE_RESPONSE_RETRANSMIT_INTERVAL_MS, 500);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_SIP_ACK_RECEIPT_WAIT_TIME_MS, 500);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_SIP_ACK_RETRANSMIT_WAIT_TIME_MS, 500);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_SIP_NON_INVITE_REQUEST_RETRANSMISSION_WAIT_TIME_MS, 500);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_SIP_NON_INVITE_RESPONSE_RETRANSMISSION_WAIT_TIME_MS,
+                    500);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_AMR_WB_OCTET_ALIGNED_PAYLOAD_TYPE, 0);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_AMR_WB_BANDWIDTH_EFFICIENT_PAYLOAD_TYPE, 0);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_AMR_OCTET_ALIGNED_PAYLOAD_TYPE, 0);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_AMR_BANDWIDTH_EFFICIENT_PAYLOAD_TYPE, 0);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_DTMF_WB_PAYLOAD_TYPE, 0);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_DTMF_NB_PAYLOAD_TYPE, 0);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_AMR_DEFAULT_ENCODING_MODE, 0);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_SMS_PUBLIC_SERVICE_IDENTITY, 0);
+            verifyStringKey(provisioningManager, mStringQueue,
+                    ProvisioningManager.KEY_SMS_PUBLIC_SERVICE_IDENTITY, "local.fun.com");
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_VIDEO_QUALITY, ProvisioningManager.VIDEO_QUALITY_HIGH);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_VIDEO_QUALITY, ProvisioningManager.VIDEO_QUALITY_LOW);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_LTE_THRESHOLD_1, 0);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_LTE_THRESHOLD_2, 0);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_LTE_THRESHOLD_3, 0);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_1X_THRESHOLD, 0);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_WIFI_THRESHOLD_A, 0);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_WIFI_THRESHOLD_B, 0);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_LTE_EPDG_TIMER_SEC, 5);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_WIFI_EPDG_TIMER_SEC, 5);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_1X_EPDG_TIMER_SEC, 5);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_MULTIENDPOINT_ENABLED, 0);
+            verifyIntKey(provisioningManager, mIntQueue,
+                    ProvisioningManager.KEY_RTT_ENABLED, 0);
+
             automan.adoptShellPermissionIdentity();
             provisioningManager.unregisterProvisioningChangedCallback(callback);
         } finally {
@@ -1310,6 +1452,22 @@ public class ImsServiceTest {
         }
 
         overrideCarrierConfig(null);
+    }
+
+    private void verifyIntKey(ProvisioningManager pm,
+            LinkedBlockingQueue<Pair<Integer, Integer>> intQueue, int key, int value)
+            throws Exception {
+        pm.setProvisioningIntValue(key, value);
+        assertTrue(waitForParam(intQueue, new Pair<>(key, value)));
+        assertEquals(value, pm.getProvisioningIntValue(key));
+    }
+
+    private void verifyStringKey(ProvisioningManager pm,
+            LinkedBlockingQueue<Pair<Integer, String>> strQueue, int key, String value)
+            throws Exception {
+        pm.setProvisioningStringValue(key, value);
+        assertTrue(waitForParam(strQueue, new Pair<>(key, value)));
+        assertEquals(value, pm.getProvisioningStringValue(key));
     }
 
     private void setupImsServiceForSms() throws Exception {
