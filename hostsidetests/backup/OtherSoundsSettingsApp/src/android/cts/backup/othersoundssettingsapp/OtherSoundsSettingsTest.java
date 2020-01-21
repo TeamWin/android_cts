@@ -23,7 +23,9 @@ import static com.android.compatibility.common.util.BackupUtils.LOCAL_TRANSPORT_
 import static org.junit.Assert.assertTrue;
 
 import android.content.ContentResolver;
+import android.content.Context;
 import android.os.ParcelFileDescriptor;
+import android.os.Vibrator;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
 
@@ -143,6 +145,9 @@ public class OtherSoundsSettingsTest {
      */
     @Test
     public void testOtherSoundsSettings_touchVibration() throws Exception {
+        Vibrator mVibrator = (Vibrator) getInstrumentation().getTargetContext().getSystemService(Context.VIBRATOR_SERVICE);
+        if (!mVibrator.hasVibrator()) return;
+
         int originalValue =
                 Settings.System.getInt(
                         mContentResolver, Settings.System.HAPTIC_FEEDBACK_ENABLED, -1);
