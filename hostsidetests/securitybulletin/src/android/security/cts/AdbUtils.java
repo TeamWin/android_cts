@@ -34,6 +34,8 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.concurrent.TimeUnit;
 import java.util.Scanner;
+import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.regex.Pattern;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -42,6 +44,10 @@ import org.json.JSONObject;
 import static org.junit.Assert.*;
 
 public class AdbUtils {
+
+    final static String TMP_PATH = "/data/local/tmp/";
+    final static int TIMEOUT_SEC = 9 * 60;
+    final static String RESOURCE_ROOT = "/";
 
     /** Runs a commandline on the specified device
      *
@@ -214,6 +220,40 @@ public class AdbUtils {
         }
     }
 
+    /**
+     * Pushes the specified files to the specified destination directory
+     *
+     * @param inputFiles files required as input
+     * @param inputFilesDestination destination directory to which input files are
+     *        pushed
+     * @param device device to be run on
+     */
+    public static void pushResources(String[] inputFiles, String inputFilesDestination,
+            ITestDevice device) throws Exception {
+        if ( (inputFiles != null) && (inputFilesDestination != null)) {
+            for (String tempFile : inputFiles) {
+                pushResource(RESOURCE_ROOT + tempFile, inputFilesDestination + tempFile, device);
+            }
+        }
+    }
+
+    /**
+     * Removes the specified files from the specified destination directory
+     *
+     * @param inputFiles files required as input
+     * @param inputFilesDestination destination directory where input files are
+     *        present
+     * @param device device to be run on
+     */
+    public static void removeResources(String[] inputFiles, String inputFilesDestination,
+            ITestDevice device) throws Exception {
+        if ( (inputFiles != null) && (inputFilesDestination != null)) {
+            for (String tempFile : inputFiles) {
+                runCommandLine("rm " + inputFilesDestination + tempFile, device);
+            }
+        }
+    }
+
    /**
      * Extracts the binary data from a resource and writes it to a temp file
      */
@@ -274,9 +314,22 @@ public class AdbUtils {
      */
     public static int runPocGetExitStatus(String pocName, ITestDevice device, int timeout)
             throws Exception {
-        device.executeShellCommand("chmod +x /data/local/tmp/" + pocName);
+       return runPocGetExitStatus(pocName, null, device, timeout);
+    }
+
+    /**
+     * Pushes and runs a binary to the device and returns the exit status.
+     * @param pocName a string path to poc from the /res folder
+     * @param arguments input arguments for the poc
+     * @param device device to be ran on
+     * @param timeout time to wait for output in seconds
+
+     */
+    public static int runPocGetExitStatus(String pocName, String arguments, ITestDevice device,
+            int timeout) throws Exception {
+        device.executeShellCommand("chmod +x " + TMP_PATH + pocName);
         CollectingOutputReceiver receiver = new CollectingOutputReceiver();
-        String cmd = "/data/local/tmp/" + pocName + " > /dev/null 2>&1; echo $?";
+        String cmd = TMP_PATH + pocName + " " + arguments + " > /dev/null 2>&1; echo $?";
         long time = System.currentTimeMillis();
         device.executeShellCommand(cmd, receiver, timeout, TimeUnit.SECONDS, 0);
         time = System.currentTimeMillis() - time;
@@ -298,8 +351,20 @@ public class AdbUtils {
      */
     public static void runPocAssertExitStatusNotVulnerable(
             String pocName, ITestDevice device, int timeout) throws Exception {
+        runPocAssertExitStatusNotVulnerable(pocName, null, device, timeout);
+    }
+
+    /**
+     * Pushes and runs a binary and asserts that the exit status isn't 113: vulnerable.
+     * @param pocName a string path to poc from the /res folder
+     * @param arguments input arguments for the poc
+     * @param device device to be ran on
+     * @param timeout time to wait for output in seconds
+     */
+    public static void runPocAssertExitStatusNotVulnerable(String pocName, String arguments,
+            ITestDevice device, int timeout) throws Exception {
         assertTrue("PoC returned exit status 113: vulnerable",
-                runPocGetExitStatus(pocName, device, timeout) != 113);
+                runPocGetExitStatus(pocName, arguments, device, timeout) != 113);
     }
 
     public static int runProxyAutoConfig(String pacName, ITestDevice device) throws Exception {
@@ -323,6 +388,99 @@ public class AdbUtils {
         AdbUtils.runCommandLine("logcat -c", device);
         AdbUtils.runPocNoOutput(pocName, device, SecurityTestCase.TIMEOUT_NONDETERMINISTIC);
         assertNoCrashes(device, processPatternStrings);
+    }
+
+    /**
+     * Runs the poc binary and asserts following 2 conditions.
+     *  1. There are no security crashes in the binary.
+     *  2. The exit status isn't 113 (Code 113 is used to indicate the vulnerability condition).
+     *
+     * @param binaryName name of the binary
+     * @param arguments arguments for running the binary
+     * @param device device to be run on
+     */
+    public static void runPocAssertNoCrashesNotVulnerable(String binaryName, String arguments,
+            ITestDevice device) throws Exception {
+        runPocAssertNoCrashesNotVulnerable(binaryName, arguments, null, null, device, null);
+    }
+
+    /**
+     * Runs the poc binary and asserts following 2 conditions.
+     *  1. There are no security crashes in the binary.
+     *  2. The exit status isn't 113 (Code 113 is used to indicate the vulnerability condition).
+     *
+     * @param binaryName name of the binary
+     * @param arguments arguments for running the binary
+     * @param device device to be run on
+     * @param processPatternStrings a Pattern string to match the crash tombstone
+     *        process
+     */
+    public static void runPocAssertNoCrashesNotVulnerable(String binaryName, String arguments,
+            ITestDevice device, String processPatternStrings[]) throws Exception {
+        runPocAssertNoCrashesNotVulnerable(binaryName, arguments, null, null, device,
+                processPatternStrings);
+    }
+
+    /**
+     * Runs the poc binary and asserts following 2 conditions.
+     *  1. There are no security crashes in the binary.
+     *  2. The exit status isn't 113 (Code 113 is used to indicate the vulnerability condition).
+     *
+     * @param binaryName name of the binary
+     * @param arguments arguments for running the binary
+     * @param inputFiles files required as input
+     * @param inputFilesDestination destination directory to which input files are
+     *        pushed
+     * @param device device to be run on
+     */
+    public static void runPocAssertNoCrashesNotVulnerable(String binaryName, String arguments,
+            String inputFiles[], String inputFilesDestination, ITestDevice device)
+            throws Exception {
+        runPocAssertNoCrashesNotVulnerable(binaryName, arguments, inputFiles, inputFilesDestination,
+                device, null);
+    }
+
+    /**
+     * Runs the poc binary and asserts following 3 conditions.
+     *  1. There are no security crashes in the binary.
+     *  2. There are no security crashes that match the expected process pattern.
+     *  3. The exit status isn't 113 (Code 113 is used to indicate the vulnerability condition).
+     *
+     * @param binaryName name of the binary
+     * @param arguments arguments for running the binary
+     * @param inputFiles files required as input
+     * @param inputFilesDestination destination directory to which input files are
+     *        pushed
+     * @param device device to be run on
+     * @param processPatternStrings a Pattern string to match the crash tombstone
+     *        process
+     */
+    public static void runPocAssertNoCrashesNotVulnerable(String binaryName, String arguments,
+            String inputFiles[], String inputFilesDestination, ITestDevice device,
+            String processPatternStrings[]) throws Exception {
+        pushResources(inputFiles, inputFilesDestination, device);
+        runCommandLine("logcat -c", device);
+        try {
+            runPocAssertExitStatusNotVulnerable(binaryName, arguments, device, TIMEOUT_SEC);
+        } catch (IllegalArgumentException e) {
+            /*
+             * Since 'runPocGetExitStatus' method raises IllegalArgumentException upon
+             * hang/timeout, catching the exception here and ignoring it. Hangs are of
+             * Moderate severity and hence patches may not be ported. This piece of code can
+             * be removed once 'runPocGetExitStatus' is updated to handle hangs.
+             */
+            CLog.w("Ignoring IllegalArgumentException: " + e);
+        } finally {
+            removeResources(inputFiles, inputFilesDestination, device);
+        }
+        List<String> processPatternList = new ArrayList<>();
+        if (processPatternStrings != null) {
+            processPatternList.addAll(Arrays.asList(processPatternStrings));
+        }
+        processPatternList.add(binaryName);
+        String[] processPatternStringsWithSelf = new String[processPatternList.size()];
+        processPatternList.toArray(processPatternStringsWithSelf);
+        assertNoCrashes(device, processPatternStringsWithSelf);
     }
 
     /**
@@ -374,40 +532,5 @@ public class AdbUtils {
             } catch (JSONException e) {}
         }
         fail(error.toString());
-    }
-
-    /**
-     * Executes a given poc within a given timeout. Returns error if the
-     * given poc doesnt complete its execution within timeout. It also deletes
-     * the list of files provided.
-     *
-     * @param runner the thread which will be run
-     * @param timeout the timeout within which the thread's execution should
-     *        complete
-     * @param device device to be ran on
-     * @param inputFiles list of files to be deleted
-     */
-    public static void runWithTimeoutDeleteFiles(Runnable runner, int timeout, ITestDevice device,
-            String[] inputFiles) throws Exception {
-        Thread t = new Thread(runner);
-        t.start();
-        boolean test_failed = false;
-        try {
-            t.join(timeout);
-        } catch (InterruptedException e) {
-            test_failed = true;
-        } finally {
-            if (inputFiles != null) {
-                for (String tempFile : inputFiles) {
-                    AdbUtils.runCommandLine("rm /data/local/tmp/" + tempFile, device);
-                }
-            }
-            if (test_failed) {
-                fail("PoC was interrupted");
-            }
-        }
-        if (t.isAlive()) {
-            fail("PoC not completed within timeout of " + timeout + " ms");
-        }
     }
 }
