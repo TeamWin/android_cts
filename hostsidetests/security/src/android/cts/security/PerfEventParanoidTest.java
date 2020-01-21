@@ -27,6 +27,7 @@ public class PerfEventParanoidTest extends DeviceTestCase {
     private ITestDevice mDevice;
 
     private static final String PERF_EVENT_PARANOID_PATH = "/proc/sys/kernel/perf_event_paranoid";
+    private static final String PERF_EVENT_LSM_SYSPROP = "sys.init.perf_lsm_hooks";
 
     @Override
     protected void setUp() throws Exception {
@@ -35,13 +36,22 @@ public class PerfEventParanoidTest extends DeviceTestCase {
     }
 
     public void testPerfEventRestricted() throws DeviceNotAvailableException {
-        String cmd = "cat " + PERF_EVENT_PARANOID_PATH;
-        String output = mDevice.executeShellCommand(cmd);
-        assertTrue("\n/proc/sys/kernel/perf_event_paranoid=3 is required.\n"
-                   + "Please add CONFIG_SECURITY_PERF_EVENTS_RESTRICT=y\n"
-                   + "to your device kernel's defconfig and apply the\n"
-                   + "appropriate patches for your kernel located here:\n"
-                   + "https://android-review.googlesource.com/#/q/topic:CONFIG_SECURITY_PERF_EVENTS_RESTRICT",
-                   output.equals("3\n"));
+      // Property set to "1" if init detected that the kernel has the perf_event_open SELinux hooks,
+      // otherwise left unset.
+      long lsmHookPropValue = mDevice.getIntProperty(PERF_EVENT_LSM_SYSPROP, 0);
+
+      String paranoidCmd = "cat " + PERF_EVENT_PARANOID_PATH;
+      String paranoidOut = mDevice.executeShellCommand(paranoidCmd);
+
+      if (lsmHookPropValue != 1 && !paranoidOut.equals("3\n")) {
+        fail("\nDevice required to have either:\n"
+            + " (a) SELinux hooks for the perf_event_open(2) syscall\n"
+            + " (b) /proc/sys/kernel/perf_event_paranoid=3\n"
+            + "For (a), apply the relevant patch for your kernel located here:\n"
+            + "https://android-review.googlesource.com/q/hashtag:perf_event_lsm\n"
+            + "For (b), apply the relevant patch for your kernel located here:\n"
+            + "https://android-review.googlesource.com/#/q/topic:CONFIG_SECURITY_PERF_EVENTS_RESTRICT\n"
+            + "Device values: SELinux=" + lsmHookPropValue + ", paranoid=" + paranoidOut);
+      }
     }
 }
