@@ -30,6 +30,7 @@ import static android.autofillservice.cts.augmented.AugmentedHelper.assertBasicR
 import static android.autofillservice.cts.augmented.AugmentedTimeouts.AUGMENTED_FILL_TIMEOUT;
 import static android.autofillservice.cts.augmented.CannedAugmentedFillResponse.DO_NOT_REPLY_AUGMENTED_RESPONSE;
 import static android.autofillservice.cts.augmented.CannedAugmentedFillResponse.NO_AUGMENTED_RESPONSE;
+import static android.os.Build.VERSION.SECURITY_PATCH;
 import static android.service.autofill.FillRequest.FLAG_MANUAL_REQUEST;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 
@@ -63,10 +64,15 @@ import android.widget.EditText;
 
 import org.junit.Test;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Set;
 
 public class AugmentedLoginActivityTest
         extends AugmentedAutofillAutoActivityLaunchTestCase<AugmentedLoginActivity> {
+
+    private static final Date HIDE_AUGMENTED_ON_PASSWORD_PATCH_DATE = parseDate("2020-03-01");
 
     protected AugmentedLoginActivity mActivity;
 
@@ -527,10 +533,17 @@ public class AugmentedLoginActivityTest
                 .build());
         mActivity.onPassword(View::requestFocus);
         mUiBot.assertNoDatasetsEver();
-        final AugmentedFillRequest request2 = sAugmentedReplier.getNextFillRequest();
-        assertBasicRequestInfo(request2, mActivity, passwordId, passwordValue);
 
-        mAugmentedUiBot.assertUiShown(passwordId, "req2");
+        if (shouldShowAugmentedOnPassword()) {
+            final AugmentedFillRequest request2 = sAugmentedReplier.getNextFillRequest();
+            assertBasicRequestInfo(request2, mActivity, passwordId, passwordValue);
+
+            mAugmentedUiBot.assertUiShown(passwordId, "req2");
+        } else {
+            // (TODO: b/141703197) password request temp disabled.
+            mAugmentedUiBot.assertUiGone();
+            sAugmentedReplier.reset();
+        }
 
         // Tap on username again...
         sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
@@ -643,11 +656,20 @@ public class AugmentedLoginActivityTest
                 .build());
         mActivity.onPassword(View::requestFocus);
         mUiBot.assertNoDatasetsEver();
-        final AugmentedFillRequest request2 = sAugmentedReplier.getNextFillRequest();
-        assertBasicRequestInfo(request2, mActivity, passwordId, passwordValue);
 
-        callback.assertUiShownEvent(password);
-        mAugmentedUiBot.assertUiShown(passwordId, "req2");
+        final boolean show = shouldShowAugmentedOnPassword();
+        if (show) {
+            final AugmentedFillRequest request2 = sAugmentedReplier.getNextFillRequest();
+            assertBasicRequestInfo(request2, mActivity, passwordId, passwordValue);
+
+            callback.assertUiShownEvent(password);
+            mAugmentedUiBot.assertUiShown(passwordId, "req2");
+        } else {
+            // (TODO: b/141703197) password request temp disabled.
+            callback.assertNotCalled();
+            mAugmentedUiBot.assertUiGone();
+            sAugmentedReplier.reset();
+        }
 
         // Tap on username again...
         sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
@@ -661,13 +683,20 @@ public class AugmentedLoginActivityTest
         final AugmentedFillRequest request3 = sAugmentedReplier.getNextFillRequest();
         assertBasicRequestInfo(request3, mActivity, usernameId, usernameValue);
         final UiObject2 ui = mAugmentedUiBot.assertUiShown(usernameId, "Augment Me");
+        if (!show) {
+            callback.assertUiShownEvent(username);
+        }
 
         // ...and autofill this time
         mActivity.expectAutoFill("dude", "sweet");
         ui.click();
         mActivity.assertAutoFilled();
         mAugmentedUiBot.assertUiGone();
-        callback.assertUiHiddenEvent(password);
+        if (show) {
+            callback.assertUiHiddenEvent(password);
+        } else {
+            callback.assertUiHiddenEvent(username);
+        }
     }
 
     @Test
@@ -1007,6 +1036,21 @@ public class AugmentedLoginActivityTest
 
         // Make sure Augmented Autofill UI is not shown.
         mAugmentedUiBot.assertUiNeverShown();
+    }
+
+    private static Date parseDate(String date) {
+        Date patchDate = new Date();
+        try {
+            SimpleDateFormat template = new SimpleDateFormat("yyyy-MM-dd");
+            patchDate = template.parse(date);
+        } catch (ParseException e) {
+        }
+
+        return patchDate;
+    }
+
+    private boolean shouldShowAugmentedOnPassword() {
+        return parseDate(SECURITY_PATCH).before(HIDE_AUGMENTED_ON_PASSWORD_PATCH_DATE);
     }
 
     /*
