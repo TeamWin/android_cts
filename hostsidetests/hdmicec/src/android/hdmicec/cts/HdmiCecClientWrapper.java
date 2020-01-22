@@ -171,6 +171,21 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      */
     public void sendUserControlPressAndRelease(CecDevice source, CecDevice destination,
             int keycode, boolean holdKey) throws Exception {
+        sendUserControlPress(source, destination, keycode, holdKey);
+        /* Sleep less than 200ms between press and release */
+        TimeUnit.MILLISECONDS.sleep(100);
+        mOutputConsole.write("tx " + source + destination + ":" +
+                              CecMessage.USER_CONTROL_RELEASED);
+        mOutputConsole.flush();
+    }
+
+    /**
+     * Sends a <UCP> message from source to destination through the output console of the
+     * cec-communication channel with the mentioned keycode. If holdKey is true, the method will
+     * send multiple <UCP> messages to simulate a long press. No <UCR> will be sent.
+     */
+    public void sendUserControlPress(CecDevice source, CecDevice destination,
+            int keycode, boolean holdKey) throws Exception {
         checkCecClient();
         String key = String.format("%02x", keycode);
         String command = "tx " + source + destination + ":" +
@@ -182,6 +197,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
             int repeat = 16;
             for (int i = 0; i < repeat; i++) {
                 mOutputConsole.write(command);
+                mOutputConsole.newLine();
                 mOutputConsole.flush();
                 TimeUnit.MILLISECONDS.sleep(300);
             }
@@ -189,10 +205,6 @@ public final class HdmiCecClientWrapper extends ExternalResource {
 
         mOutputConsole.write(command);
         mOutputConsole.newLine();
-        /* Sleep less than 200ms between press and release */
-        TimeUnit.MILLISECONDS.sleep(100);
-        mOutputConsole.write("tx " + source + destination + ":" +
-                              CecMessage.USER_CONTROL_RELEASED);
         mOutputConsole.flush();
     }
 
