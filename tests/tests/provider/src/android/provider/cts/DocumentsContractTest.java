@@ -51,6 +51,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 
 import android.app.PendingIntent;
+import android.content.ContentProvider;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -103,6 +104,7 @@ public class DocumentsContractTest {
 
     private static final String MIME_TYPE = "application/octet-stream";
     private static final String DISPLAY_NAME = "My Test";
+    private static final UserHandle TEST_USER_HANDLE = UserHandle.of(57);
 
     private Context mContext;
     private DocumentsProvider mProvider;
@@ -214,7 +216,7 @@ public class DocumentsContractTest {
         final String auth = "com.example";
         final String docId = "doc:12";
 
-        final Uri uri = DocumentsContract.buildDocumentUriAsUser(auth, docId, UserHandle.of(57));
+        final Uri uri = DocumentsContract.buildDocumentUriAsUser(auth, docId, TEST_USER_HANDLE);
 
         assertTrue(uri.getAuthority().contains(auth));
     }
@@ -224,9 +226,19 @@ public class DocumentsContractTest {
         final String auth = "com.example";
         final String docId = "doc:12";
 
-        final Uri uri = DocumentsContract.buildDocumentUriAsUser(auth, docId, UserHandle.of(57));
+        final Uri uri = DocumentsContract.buildDocumentUriAsUser(auth, docId, TEST_USER_HANDLE);
 
         assertEquals(docId, DocumentsContract.getDocumentId(uri));
+    }
+
+    @Test
+    public void testBuildDocumentUriAsUser_setsUserInfo() {
+        final String auth = "com.example";
+        final String docId = "doc:12";
+
+        final Uri uri = DocumentsContract.buildDocumentUriAsUser(auth, docId, TEST_USER_HANDLE);
+
+        assertEquals(TEST_USER_HANDLE, ContentProvider.getUserHandleFromUri(uri));
     }
 
     @Test
