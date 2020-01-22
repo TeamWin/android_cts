@@ -287,6 +287,25 @@ public class MediaStore_FilesTest {
     }
 
     @Test
+    public void testInsertDocumentFile() throws Exception {
+        final File file = new File(ProviderTestUtils.stageDir(mVolumeName),
+                "test" + System.nanoTime() + ".txt");
+
+        Uri allFilesUri = mExternalFiles;
+        ContentValues values = new ContentValues();
+        values.put(MediaColumns.DATA, file.getAbsolutePath());
+        values.put(FileColumns.MEDIA_TYPE, FileColumns.MEDIA_TYPE_NONE);
+        Uri fileUri = mResolver.insert(allFilesUri, values);
+
+        try (Cursor c = mResolver.query(
+                fileUri, new String[] { FileColumns.MEDIA_TYPE }, null, null, null)) {
+            c.moveToNext();
+            assertEquals(FileColumns.MEDIA_TYPE_DOCUMENT,
+                    c.getInt(c.getColumnIndex(FileColumns.MEDIA_TYPE)));
+        }
+    }
+
+    @Test
     public void testDateAddedFrozen() throws Exception {
         final long startTime = (System.currentTimeMillis() / 1000);
         final File file = new File(ProviderTestUtils.stageDir(mVolumeName),
