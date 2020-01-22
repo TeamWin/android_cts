@@ -429,8 +429,8 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
      * that we are in the state.
      * Taken from {@link android.net.http.cts.ApacheHttpClientTest}.
      */
-    static void setWifiState(boolean enable, Context context, ConnectivityManager cm,
-            WifiManager wm) throws InterruptedException  {
+    static void setWifiState(final boolean enable, final Context context,
+            final ConnectivityManager cm, final WifiManager wm) throws InterruptedException {
         if (enable != wm.isWifiEnabled()) {
             NetworkInfo.State expectedState = enable ?
                     NetworkInfo.State.CONNECTED : NetworkInfo.State.DISCONNECTED;
@@ -448,7 +448,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
             }
             assertTrue("Wifi must be configured to " + (enable ? "connect" : "disconnect")
                             + " to an access point for this test.",
-                    receiver.waitForStateChange());
+                    receiver.waitForStateChange() || enable == wm.isWifiEnabled());
 
             context.unregisterReceiver(receiver);
         }
