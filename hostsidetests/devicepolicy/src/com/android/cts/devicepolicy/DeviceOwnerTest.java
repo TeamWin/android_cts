@@ -64,6 +64,9 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     private static final String INTENT_RECEIVER_PKG = "com.android.cts.intent.receiver";
     private static final String INTENT_RECEIVER_APK = "CtsIntentReceiverApp.apk";
 
+    private static final String SIMPLE_APP_APK ="CtsSimpleApp.apk";
+    private static final String SIMPLE_APP_PKG = "com.android.cts.launcherapps.simpleapp";
+
     private static final String WIFI_CONFIG_CREATOR_PKG =
             "com.android.cts.deviceowner.wificonfigcreator";
     private static final String WIFI_CONFIG_CREATOR_APK = "CtsWifiConfigCreator.apk";
@@ -1125,6 +1128,34 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                 .setAdminPackageName(DEVICE_OWNER_PKG)
                 .setStrings(GLOBAL_SETTING_USB_MASS_STORAGE_ENABLED, "1")
                 .build());
+    }
+
+    @Test
+    public void testSetProtectedPackages() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        try {
+            installAppAsUser(SIMPLE_APP_APK, mPrimaryUserId);
+            assertMetricsLogged(getDevice(),
+                    () -> executeDeviceTestMethod(".ProtectedPackagesTest",
+                            "testSetProtectedPackages"),
+                    new DevicePolicyEventWrapper.Builder(EventId.SET_PACKAGES_PROTECTED_VALUE)
+                            .setAdminPackageName(DEVICE_OWNER_PKG)
+                            .setStrings(new String[] {SIMPLE_APP_PKG})
+                            .build());
+            forceStopPackageForUser(SIMPLE_APP_PKG, mPrimaryUserId);
+            executeDeviceTestMethod(".ProtectedPackagesTest", "testForceStopForProtectedPackages");
+            // Reboot and verify protected packages are persisted
+            rebootAndWaitUntilReady();
+            executeDeviceTestMethod(".ProtectedPackagesTest", "testForceStopForProtectedPackages");
+            executeDeviceTestMethod(".ProtectedPackagesTest", "testClearProtectedPackages");
+            forceStopPackageForUser(SIMPLE_APP_PKG, mPrimaryUserId);
+            executeDeviceTestMethod(".ProtectedPackagesTest",
+                    "testForceStopForUnprotectedPackages");
+        } finally {
+            getDevice().uninstallPackage(SIMPLE_APP_APK);
+        }
     }
 
     private void executeDeviceOwnerTest(String testClassName) throws Exception {
