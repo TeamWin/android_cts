@@ -2189,6 +2189,10 @@ public class ImageDecoderTest {
             mColorSpace = colorSpace;
         }
 
+        public ColorSpace getColorSpace() {
+            return mColorSpace;
+        }
+
         public void checkColorSpace(ColorSpace requested, ColorSpace actual) {
             assertNotNull("Null ColorSpace for " + this.name, actual);
             if (this.isF16 && requested != null) {
@@ -2229,6 +2233,8 @@ public class ImageDecoderTest {
                     ColorSpace.get(ColorSpace.Named.DISPLAY_P3)),
             new AssetRecord("grayscale-linearSrgb.png", 32, 32, false, true, false,
                     ColorSpace.get(ColorSpace.Named.LINEAR_SRGB)),
+            new AssetRecord("grayscale-16bit-linearSrgb.png", 32, 32, true, false, true,
+                    ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB)),
         };
     }
 
