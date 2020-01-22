@@ -21,6 +21,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
 import com.android.compatibility.common.util.DeviceInfoStore;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -29,6 +30,7 @@ import java.util.*;
 public class PackageDeviceInfo extends DeviceInfo {
 
     private static final String PACKAGE = "package";
+
     private static final String NAME = "name";
     private static final String VERSION_NAME = "version_name";
     private static final String SYSTEM_PRIV = "system_priv";
@@ -53,33 +55,34 @@ public class PackageDeviceInfo extends DeviceInfo {
         final PackageManager pm = getContext().getPackageManager();
         final ApplicationInfo system = pm.getApplicationInfo("android", 0);
 
+        final List<PackageInfo> allPackages = pm.getInstalledPackages(PackageManager.GET_PERMISSIONS);
+
         store.startArray(PACKAGE);
-        for (PackageInfo pkg : pm.getInstalledPackages(PackageManager.GET_PERMISSIONS)) {
+        for (PackageInfo pkg : allPackages) {
             store.startGroup();
 
             store.addResult(NAME, pkg.packageName);
             store.addResult(VERSION_NAME, pkg.versionName);
 
+            store.startArray(REQUESTED_PERMISSIONS);
             if (pkg.requestedPermissions != null && pkg.requestedPermissions.length > 0) {
-                store.startArray(REQUESTED_PERMISSIONS);
                 for (String permission : pkg.requestedPermissions) {
-                    store.startGroup();
-                    store.addResult(PERMISSION_NAME, permission);
-
                     try {
                         final PermissionInfo pi = pm.getPermissionInfo(permission, 0);
 
+                        store.startGroup();
+                        store.addResult(PERMISSION_NAME, permission);
                         store.addResult(PERMISSION_FLAGS, pi.flags);
                         store.addResult(PERMISSION_GROUP, pi.group);
                         store.addResult(PERMISSION_PROTECTION, pi.getProtection());
                         store.addResult(PERMISSION_PROTECTION_FLAGS, pi.getProtectionFlags());
+                        store.endGroup();
                     } catch (PackageManager.NameNotFoundException e) {
-                        // ignore future permission, end group and continue
+                        // ignore unrecognized permission and continue
                     }
-                    store.endGroup();
                 }
-                store.endArray();
             }
+            store.endArray();
 
             final ApplicationInfo appInfo = pkg.applicationInfo;
             if (appInfo != null) {
@@ -97,9 +100,8 @@ public class PackageDeviceInfo extends DeviceInfo {
 
             store.endGroup();
         }
-        store.endArray(); // Package
+        store.endArray(); // "package"
     }
-
     private static boolean sharesUidWithPackageHolding(PackageManager pm, int uid, String permission) {
         final String[] sharesUidWith = pm.getPackagesForUid(uid);
 
