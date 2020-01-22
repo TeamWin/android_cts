@@ -34,6 +34,7 @@
 #include <memory>
 #include <stdio.h>
 #include <unistd.h>
+#include <vector>
 
 #define ALOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
 
@@ -613,26 +614,62 @@ static void testDecodeStride(JNIEnv* env, jclass, jlong imageDecoderPtr) {
     ASSERT_NE(info, nullptr);
 
     const int height = AImageDecoderHeaderInfo_getHeight(info);
-    size_t minStride = AImageDecoder_getMinimumStride(decoder);
+    const int origWidth = AImageDecoderHeaderInfo_getWidth(info);
 
-    void* pixels = nullptr;
-
-    // The code in this loop relies on minStride being used first.
-    for (size_t stride : { minStride, minStride * 2, minStride * 3 }) {
-        size_t size = stride * (height - 1) + minStride;
-        void* decodePixels = malloc(size);
-        int result = AImageDecoder_decodeImage(decoder, decodePixels, stride, size);
+    for (int width : { origWidth, origWidth / 3 }) {
+        if (width == 0) {
+            // The 1 x 1 image cannot be downscaled.
+            continue;
+        }
+        int result = AImageDecoder_setTargetSize(decoder, width, height);
         ASSERT_EQ(ANDROID_IMAGE_DECODER_SUCCESS, result);
+        for (AndroidBitmapFormat format : {
+            ANDROID_BITMAP_FORMAT_RGBA_8888,
+            ANDROID_BITMAP_FORMAT_RGB_565,
+            ANDROID_BITMAP_FORMAT_A_8,
+            ANDROID_BITMAP_FORMAT_RGBA_F16,
+        }) {
+            result = AImageDecoder_setAndroidBitmapFormat(decoder, format);
+            if (result != ANDROID_IMAGE_DECODER_SUCCESS) {
+                // Not all images can be decoded to all formats. This is okay, and
+                // we've tested that we can decode to the expected formats elsewhere.
+                continue;
+            }
 
-        if (pixels == nullptr) {
-            pixels = decodePixels;
-        } else {
-            ASSERT_TRUE(bitmapsEqual(minStride, height, pixels, minStride, decodePixels, stride));
-            free(decodePixels);
+            size_t minStride = AImageDecoder_getMinimumStride(decoder);
+            void* pixels = nullptr;
+
+            // The code in the below loop relies on minStride being used first.
+            std::vector<size_t> strides;
+            strides.push_back(minStride);
+            for (int i = 1; i <= 16; i++) {
+                strides.push_back(i + minStride);
+            }
+            strides.push_back(minStride * 2);
+            strides.push_back(minStride * 3);
+            for (size_t stride : strides) {
+                size_t size = stride * (height - 1) + minStride;
+                void* decodePixels = malloc(size);
+                result = AImageDecoder_decodeImage(decoder, decodePixels, stride, size);
+                if ((stride - minStride) % bytesPerPixel(format) != 0) {
+                    // The stride is not pixel aligned.
+                    ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, result);
+                    continue;
+                }
+                ASSERT_EQ(ANDROID_IMAGE_DECODER_SUCCESS, result);
+
+                if (pixels == nullptr) {
+                    pixels = decodePixels;
+                } else {
+                    ASSERT_TRUE(bitmapsEqual(minStride, height, pixels, minStride, decodePixels,
+                                             stride));
+                    free(decodePixels);
+                }
+            }
+
+            free(pixels);
         }
     }
-
-    free(pixels);
 }
 
 static void testSetTargetSize(JNIEnv* env, jclass, jlong imageDecoderPtr) {
