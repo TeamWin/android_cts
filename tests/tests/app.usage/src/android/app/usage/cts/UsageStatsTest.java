@@ -24,7 +24,14 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
-import android.app.*;
+import android.app.Activity;
+import android.app.ActivityManager;
+import android.app.AppOpsManager;
+import android.app.KeyguardManager;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.usage.EventStats;
 import android.app.usage.UsageEvents;
 import android.app.usage.UsageEvents.Event;
@@ -51,8 +58,8 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AppStandbyUtils;
-
 import com.android.compatibility.common.util.SystemUtil;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -599,6 +606,34 @@ public class UsageStatsTest {
             }
         }
         fail("Couldn't find a user unlocked event.");
+    }
+
+    @Test
+    public void testUserForceIntoRestricted() throws IOException {
+        launchSubActivity(TaskRootActivity.class);
+        assertEquals("Activity launch didn't bring app up to ACTIVE bucket",
+                UsageStatsManager.STANDBY_BUCKET_ACTIVE,
+                mUsageStatsManager.getAppStandbyBucket(mTargetPackage));
+
+        // User force shouldn't have to deal with the timeout.
+        mUiDevice.executeShellCommand("am set-standby-bucket " + mTargetPackage + " restricted");
+        assertEquals("User was unable to force an ACTIVE app down into RESTRICTED bucket",
+                UsageStatsManager.STANDBY_BUCKET_RESTRICTED,
+                mUsageStatsManager.getAppStandbyBucket(mTargetPackage));
+
+    }
+
+    @Test
+    public void testUserLaunchRemovesFromRestricted() throws IOException {
+        mUiDevice.executeShellCommand("am set-standby-bucket " + mTargetPackage + " restricted");
+        assertEquals("User was unable to force an app into RESTRICTED bucket",
+                UsageStatsManager.STANDBY_BUCKET_RESTRICTED,
+                mUsageStatsManager.getAppStandbyBucket(mTargetPackage));
+
+        launchSubActivity(TaskRootActivity.class);
+        assertEquals("Activity launch didn't bring RESTRICTED app into ACTIVE bucket",
+                UsageStatsManager.STANDBY_BUCKET_ACTIVE,
+                mUsageStatsManager.getAppStandbyBucket(mTargetPackage));
     }
 
     static final int[] INTERACTIVE_EVENTS = new int[] {
@@ -1157,8 +1192,6 @@ public class UsageStatsTest {
         assertEquals("Unexpected number of activity pauses", 2, pauses);
         assertEquals("Unexpected number of activity stops", 2, stops);
     }
-
-
 
     @AppModeFull(reason = "No usage events access in instant apps")
     @Test
