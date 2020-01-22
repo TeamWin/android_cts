@@ -45,7 +45,7 @@ public class BackgroundPermissionButtonLabelTest {
                     "com.android.permissioncontroller");
 //                    mPermissionController); STOPSHIP b/147434671
 
-            Assert.assertEquals(mContext.getPackageManager().getBackgroundPermissionButtonLabel(),
+            Assert.assertEquals(mContext.getPackageManager().getBackgroundPermissionOptionLabel(),
                     permissionControllerContext.getString(stringId));
         } catch (PackageManager.NameNotFoundException e) {
             throw new RuntimeException(e);
