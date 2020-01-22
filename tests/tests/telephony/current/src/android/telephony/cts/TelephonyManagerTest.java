@@ -88,6 +88,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -949,6 +950,19 @@ public class TelephonyManagerTest {
             }
         } else {
             // Non-telephony may still have the property defined if it has a SIM.
+        }
+    }
+
+    @Test
+    public void testSetSystemSelectionChannels() {
+        LinkedBlockingQueue<Boolean> queue = new LinkedBlockingQueue<>(1);
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                (tm) -> tm.setSystemSelectionChannels(Collections.emptyList(),
+                        getContext().getMainExecutor(), queue::offer));
+        try {
+            assertTrue(queue.poll(1000, TimeUnit.MILLISECONDS));
+        } catch (InterruptedException e) {
+            fail("interrupted");
         }
     }
 
