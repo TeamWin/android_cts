@@ -1754,4 +1754,30 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         return;
     }
 
+    public void testPrivacySensitive() throws Exception {
+        if (!hasMicrophone() || !hasAac()) {
+            MediaUtils.skipTest("no audio codecs or microphone");
+            return;
+        }
+        for (final boolean privacyOn : new boolean[] { false, true} ) {
+            mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+            mMediaRecorder.setPrivacySensitive(privacyOn);
+            assertEquals(privacyOn, mMediaRecorder.isPrivacySensitive());
+            mMediaRecorder.reset();
+        }
+    }
+
+    public void testPrivacySensitiveDefaults() throws Exception {
+        if (!hasMicrophone() || !hasAac()) {
+            MediaUtils.skipTest("no audio codecs or microphone");
+            return;
+        }
+        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        assertFalse(mMediaRecorder.isPrivacySensitive());
+        mMediaRecorder.reset();
+
+        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION);
+        assertTrue(mMediaRecorder.isPrivacySensitive());
+    }
+
 }

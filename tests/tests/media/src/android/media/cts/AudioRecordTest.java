@@ -1718,4 +1718,52 @@ public class AudioRecordTest {
         return;
     }
 
+    @Test
+    public void testPrivacySensitiveBuilder() throws Exception {
+        if (!hasMicrophone()) {
+            return;
+        }
+
+        for (final boolean privacyOn : new boolean[] { false, true} ) {
+            AudioRecord record = new AudioRecord.Builder()
+            .setAudioFormat(new AudioFormat.Builder()
+                    .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                    .setSampleRate(8000)
+                    .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
+                    .build())
+            .setPrivacySensitive(privacyOn)
+            .build();
+            assertEquals(privacyOn, record.isPrivacySensitive());
+            record.release();
+        }
+    }
+
+    @Test
+    public void testPrivacySensitiveDefaults() throws Exception {
+        if (!hasMicrophone()) {
+            return;
+        }
+
+        AudioRecord record = new AudioRecord.Builder()
+            .setAudioSource(MediaRecorder.AudioSource.MIC)
+            .setAudioFormat(new AudioFormat.Builder()
+                 .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                 .setSampleRate(8000)
+                 .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
+                 .build())
+            .build();
+        assertFalse(record.isPrivacySensitive());
+        record.release();
+
+        record = new AudioRecord.Builder()
+            .setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION)
+            .setAudioFormat(new AudioFormat.Builder()
+                 .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                 .setSampleRate(8000)
+                 .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
+                 .build())
+            .build();
+        assertTrue(record.isPrivacySensitive());
+        record.release();
+    }
 }
