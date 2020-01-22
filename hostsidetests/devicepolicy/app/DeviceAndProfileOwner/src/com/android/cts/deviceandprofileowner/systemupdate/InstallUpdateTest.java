@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.deviceowner;
+package com.android.cts.deviceandprofileowner.systemupdate;
 
 import static android.app.admin.DevicePolicyManager.InstallSystemUpdateCallback.UPDATE_ERROR_UPDATE_FILE_INVALID;
 
@@ -27,6 +27,7 @@ import android.os.SystemClock;
 import android.os.SystemProperties;
 
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.cts.deviceandprofileowner.BaseDeviceAdminTest;
 
 import java.io.File;
 import java.util.concurrent.CountDownLatch;
@@ -35,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Test {@link android.app.admin.DevicePolicyManager#installSystemUpdate}
  */
-public class InstallUpdateTest extends BaseDeviceOwnerTest {
+public class InstallUpdateTest extends BaseDeviceAdminTest {
     private static final int BATTERY_STATE_CHANGE_TIMEOUT_MS = 5000;
     private static final int BATTERY_STATE_CHANGE_SLEEP_PER_CHECK_MS = 50;
     private static final int TEST_BATTERY_THRESHOLD = 10;
@@ -150,7 +151,7 @@ public class InstallUpdateTest extends BaseDeviceOwnerTest {
             throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
         Uri uri = Uri.fromFile(new File(TEST_SYSTEM_UPDATES_DIR, fileName));
-        mDevicePolicyManager.installSystemUpdate(getWho(), uri,
+        mDevicePolicyManager.installSystemUpdate(ADMIN_RECEIVER_COMPONENT, uri,
                 Runnable::run, new InstallSystemUpdateCallback() {
                     @Override
                     public void onInstallUpdateError(int errorCode, String errorMessage) {
@@ -163,7 +164,7 @@ public class InstallUpdateTest extends BaseDeviceOwnerTest {
     }
 
     private void setNonChargingBatteryThreshold(int threshold) {
-        SystemUtil.runShellCommand(
+        runShellCommand(
                 "settings put global device_policy_constants battery_threshold_not_charging="
                         + threshold);
     }
@@ -173,7 +174,7 @@ public class InstallUpdateTest extends BaseDeviceOwnerTest {
     }
 
     private void setChargingBatteryThreshold(int threshold) {
-        SystemUtil.runShellCommand(
+        runShellCommand(
                 "settings put global device_policy_constants battery_threshold_charging="
                         + threshold);
     }
@@ -184,8 +185,8 @@ public class InstallUpdateTest extends BaseDeviceOwnerTest {
 
     /** Should be paired with {@link #resetBatteryState()} in a {@code finally} block. */
     private void setBatteryStateAndWait(boolean plugged, int level) throws Exception {
-        SystemUtil.runShellCommand(plugged ? "cmd battery set ac 1" : "cmd battery unplug");
-        SystemUtil.runShellCommand("cmd battery set -f level " + level);
+        runShellCommand(plugged ? "cmd battery set ac 1" : "cmd battery unplug");
+        runShellCommand("cmd battery set -f level " + level);
         long startTime = SystemClock.elapsedRealtime();
         while (!isBatteryState(plugged, level)
                 && SystemClock.elapsedRealtime() <= startTime + BATTERY_STATE_CHANGE_TIMEOUT_MS) {
@@ -211,11 +212,11 @@ public class InstallUpdateTest extends BaseDeviceOwnerTest {
     }
 
     private void resetBatteryState() {
-        SystemUtil.runShellCommand("dumpsys battery reset");
+        runShellCommand("dumpsys battery reset");
     }
 
     private void resetDevicePolicyConstants() {
-        SystemUtil.runShellCommand("settings delete global device_policy_constants");
+        runShellCommand("settings delete global device_policy_constants");
     }
 
     private boolean isDeviceAB() {

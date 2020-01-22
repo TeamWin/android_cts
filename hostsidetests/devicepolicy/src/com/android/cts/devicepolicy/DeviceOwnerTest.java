@@ -32,8 +32,6 @@ import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
-import com.google.common.io.ByteStreams;
-
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -81,16 +79,9 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     private static final int SECURITY_EVENTS_BATCH_SIZE = 100;
 
     private static final String ARG_NETWORK_LOGGING_BATCH_COUNT = "batchCount";
-    private static final String TEST_UPDATE_LOCATION = "/data/local/tmp/cts/deviceowner";
 
     private static final String LAUNCHER_TESTS_HAS_LAUNCHER_ACTIVITY_APK =
             "CtsHasLauncherActivityApp.apk";
-
-    /**
-     * Copied from {@link android.app.admin.DevicePolicyManager
-     * .InstallSystemUpdateCallback#UPDATE_ERROR_UPDATE_FILE_INVALID}
-     */
-    private static final int UPDATE_ERROR_UPDATE_FILE_INVALID = 3;
 
     private static final int TYPE_NONE = 0;
 
@@ -132,7 +123,6 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                 fail("Failed to set device owner");
             }
 
-            getDevice().executeShellCommand(" mkdir " + TEST_UPDATE_LOCATION);
             // Enable the notification listener
             getDevice().executeShellCommand("cmd notification allow_listener com.android.cts.deviceowner/com.android.cts.deviceowner.NotificationListener");
         }
@@ -148,7 +138,6 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             getDevice().uninstallPackage(DEVICE_OWNER_PKG);
             switchUser(USER_SYSTEM);
             removeTestUsers();
-            getDevice().executeShellCommand(" rm -r " + TEST_UPDATE_LOCATION);
         }
 
         super.tearDown();
@@ -619,16 +608,6 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestMethod(".AffiliationTest", "testSetAffiliationId_containsEmptyString");
     }
 
-    @LargeTest
-    @Test
-    @Ignore("b/145932189")
-    public void testSystemUpdatePolicy() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-        executeDeviceOwnerTest("SystemUpdatePolicyTest");
-    }
-
     @Test
     @Ignore("b/145932189")
     public void testSetSystemUpdatePolicyLogged() throws Exception {
@@ -997,55 +976,6 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         executeDeviceOwnerTest("PrivateDnsPolicyTest");
-    }
-
-    @Test
-    public void testInstallUpdate() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
-        pushUpdateFileToDevice("notZip.zi");
-        pushUpdateFileToDevice("empty.zip");
-        pushUpdateFileToDevice("wrongPayload.zip");
-        pushUpdateFileToDevice("wrongHash.zip");
-        pushUpdateFileToDevice("wrongSize.zip");
-        executeDeviceOwnerTest("InstallUpdateTest");
-    }
-
-    @Test
-    public void testInstallUpdateLogged() throws Exception {
-        if (!mHasFeature || !isDeviceAb() || !isStatsdEnabled(getDevice())) {
-            return;
-        }
-        pushUpdateFileToDevice("wrongHash.zip");
-        assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".InstallUpdateTest", "testInstallUpdate_failWrongHash");
-        }, new DevicePolicyEventWrapper.Builder(EventId.INSTALL_SYSTEM_UPDATE_VALUE)
-                    .setAdminPackageName(DEVICE_OWNER_PKG)
-                    .setBoolean(/* isDeviceAb */ true)
-                    .build(),
-            new DevicePolicyEventWrapper.Builder(EventId.INSTALL_SYSTEM_UPDATE_ERROR_VALUE)
-                    .setInt(UPDATE_ERROR_UPDATE_FILE_INVALID)
-                    .build());
-    }
-
-    private boolean isDeviceAb() throws DeviceNotAvailableException {
-        final String result = getDevice().executeShellCommand("getprop ro.build.ab_update").trim();
-        return "true".equalsIgnoreCase(result);
-    }
-
-    private void pushUpdateFileToDevice(String fileName)
-            throws IOException, DeviceNotAvailableException {
-        File file = File.createTempFile(
-                fileName.split("\\.")[0], "." + fileName.split("\\.")[1]);
-        try (OutputStream outputStream = new FileOutputStream(file)) {
-            InputStream inputStream = getClass().getResourceAsStream("/" + fileName);
-            ByteStreams.copy(inputStream, outputStream);
-        }
-
-        getDevice().pushFile(file, TEST_UPDATE_LOCATION + "/" + fileName);
-        file.delete();
     }
 
     @Test

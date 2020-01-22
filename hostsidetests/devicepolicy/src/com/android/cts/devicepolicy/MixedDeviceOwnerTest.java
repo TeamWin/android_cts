@@ -23,12 +23,19 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.platform.test.annotations.FlakyTest;
+import android.platform.test.annotations.LargeTest;
 import android.stats.devicepolicy.EventId;
 
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -233,6 +240,48 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
             return;
         }
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".CommonCriteriaModeTest", mUserId);
+    }
+
+    @LargeTest
+    @Test
+    @Ignore("b/145932189")
+    public void testSystemUpdatePolicy() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".systemupdate.SystemUpdatePolicyTest", mUserId);
+    }
+
+    @Test
+    public void testInstallUpdate() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        pushUpdateFileToDevice("notZip.zi");
+        pushUpdateFileToDevice("empty.zip");
+        pushUpdateFileToDevice("wrongPayload.zip");
+        pushUpdateFileToDevice("wrongHash.zip");
+        pushUpdateFileToDevice("wrongSize.zip");
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".systemupdate.InstallUpdateTest", mUserId);
+    }
+
+    @Test
+    public void testInstallUpdateLogged() throws Exception {
+        if (!mHasFeature || !isDeviceAb() || !isStatsdEnabled(getDevice())) {
+            return;
+        }
+        pushUpdateFileToDevice("wrongHash.zip");
+        assertMetricsLogged(getDevice(), () -> {
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".systemupdate.InstallUpdateTest",
+                    "testInstallUpdate_failWrongHash", mUserId);
+        }, new DevicePolicyEventWrapper.Builder(EventId.INSTALL_SYSTEM_UPDATE_VALUE)
+                    .setAdminPackageName(DEVICE_ADMIN_PKG)
+                    .setBoolean(/* isDeviceAb */ true)
+                    .build(),
+            new DevicePolicyEventWrapper.Builder(EventId.INSTALL_SYSTEM_UPDATE_ERROR_VALUE)
+                    .setInt(UPDATE_ERROR_UPDATE_FILE_INVALID)
+                    .build());
     }
 
     private int createSecondaryUserAsProfileOwner() throws Exception {
