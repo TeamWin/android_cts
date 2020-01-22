@@ -21,7 +21,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_MODULE := CtsAppSecurityHostTestCases
 
-LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util
+LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util truth-prebuilt
 
 LOCAL_JAVA_RESOURCE_DIRS := res
 
