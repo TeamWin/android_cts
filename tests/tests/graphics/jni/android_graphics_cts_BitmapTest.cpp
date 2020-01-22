@@ -48,6 +48,10 @@ static void validateNdkAccessFails(JNIEnv* env, jclass, jobject jbitmap) {
     void* pixels = nullptr;
     int err = AndroidBitmap_lockPixels(env, jbitmap, &pixels);
     ASSERT_EQ(err, ANDROID_BITMAP_RESULT_JNI_EXCEPTION);
+
+    AHardwareBuffer* buffer;
+    err = AndroidBitmap_getHardwareBuffer(env, jbitmap, &buffer);
+    ASSERT_EQ(err, ANDROID_BITMAP_RESULT_JNI_EXCEPTION);
 }
 
 static void fillRgbaHardwareBuffer(JNIEnv* env, jclass, jobject hwBuffer) {
@@ -86,22 +90,54 @@ static jint getFormat(JNIEnv* env, jclass, jobject jbitmap) {
     return info.format;
 }
 
-static void testNullBitmap(JNIEnv* env, jclass) {
+static void testNullBitmap(JNIEnv* env, jclass, jobject jbitmap) {
     ASSERT_NE(nullptr, env);
     AndroidBitmapInfo info;
     int err = AndroidBitmap_getInfo(env, nullptr, &info);
+    ASSERT_EQ(err, ANDROID_BITMAP_RESULT_BAD_PARAMETER);
+
+    err = AndroidBitmap_getInfo(env, jbitmap, nullptr);
+    ASSERT_EQ(err, ANDROID_BITMAP_RESULT_SUCCESS);
+
+    err = AndroidBitmap_getInfo(nullptr, jbitmap, &info);
     ASSERT_EQ(err, ANDROID_BITMAP_RESULT_BAD_PARAMETER);
 
     void* pixels = nullptr;
     err = AndroidBitmap_lockPixels(env, nullptr, &pixels);
     ASSERT_EQ(err, ANDROID_BITMAP_RESULT_BAD_PARAMETER);
 
+    err = AndroidBitmap_lockPixels(env, jbitmap, nullptr);
+    ASSERT_EQ(err, ANDROID_BITMAP_RESULT_SUCCESS);
+
+    err = AndroidBitmap_lockPixels(nullptr, jbitmap, &pixels);
+    ASSERT_EQ(err, ANDROID_BITMAP_RESULT_BAD_PARAMETER);
+
     err = AndroidBitmap_unlockPixels(env, nullptr);
+    ASSERT_EQ(err, ANDROID_BITMAP_RESULT_BAD_PARAMETER);
+
+    err = AndroidBitmap_unlockPixels(nullptr, jbitmap);
+    ASSERT_EQ(err, ANDROID_BITMAP_RESULT_BAD_PARAMETER);
+
+    int32_t dataSpace = AndroidBitmap_getDataSpace(env, nullptr);
+    ASSERT_EQ(dataSpace, ADATASPACE_UNKNOWN);
+
+    dataSpace = AndroidBitmap_getDataSpace(nullptr, jbitmap);
+    ASSERT_EQ(dataSpace, ADATASPACE_UNKNOWN);
+
+    err = AndroidBitmap_getHardwareBuffer(env, jbitmap, nullptr);
+    ASSERT_EQ(err, ANDROID_BITMAP_RESULT_BAD_PARAMETER);
+
+    AHardwareBuffer* buffer;
+    err = AndroidBitmap_getHardwareBuffer(env, nullptr, &buffer);
+    ASSERT_EQ(err, ANDROID_BITMAP_RESULT_BAD_PARAMETER);
+
+    err = AndroidBitmap_getHardwareBuffer(nullptr, jbitmap, &buffer);
     ASSERT_EQ(err, ANDROID_BITMAP_RESULT_BAD_PARAMETER);
 }
 
 static void testInfo(JNIEnv* env, jclass, jobject jbitmap, jint androidBitmapFormat,
-                     jint width, jint height, jboolean hasAlpha, jboolean premultiplied) {
+                     jint width, jint height, jboolean hasAlpha, jboolean premultiplied,
+                     jboolean hardware) {
     AndroidBitmapInfo info;
     int err = AndroidBitmap_getInfo(env, jbitmap, &info);
     ASSERT_EQ(err, ANDROID_BITMAP_RESULT_SUCCESS);
@@ -118,6 +154,30 @@ static void testInfo(JNIEnv* env, jclass, jobject jbitmap, jint androidBitmapFor
         ASSERT_EQ(ndkAlpha, ANDROID_BITMAP_FLAGS_ALPHA_PREMUL);
     } else {
         ASSERT_EQ(ndkAlpha, ANDROID_BITMAP_FLAGS_ALPHA_UNPREMUL);
+    }
+
+    bool ndkHardware = info.flags & ANDROID_BITMAP_FLAGS_IS_HARDWARE;
+    ASSERT_EQ(ndkHardware, hardware);
+
+    AHardwareBuffer* buffer;
+    err = AndroidBitmap_getHardwareBuffer(env, jbitmap, &buffer);
+    if (hardware) {
+        ASSERT_EQ(err, ANDROID_BITMAP_RESULT_SUCCESS);
+        ASSERT_NE(buffer, nullptr);
+        AHardwareBuffer_release(buffer);
+    } else {
+        ASSERT_EQ(err, ANDROID_BITMAP_RESULT_BAD_PARAMETER);
+        ASSERT_EQ(buffer, nullptr);
+    }
+
+    void* pixels = nullptr;
+    err = AndroidBitmap_lockPixels(env, jbitmap, &pixels);
+    if (hardware) {
+        ASSERT_EQ(err, ANDROID_BITMAP_RESULT_JNI_EXCEPTION);
+    } else {
+        ASSERT_EQ(err, ANDROID_BITMAP_RESULT_SUCCESS);
+        err = AndroidBitmap_unlockPixels(env, jbitmap);
+        ASSERT_EQ(err, ANDROID_BITMAP_RESULT_SUCCESS);
     }
 }
 
@@ -397,8 +457,8 @@ static JNINativeMethod gMethods[] = {
     { "nFillRgbaHwBuffer", "(Landroid/hardware/HardwareBuffer;)V",
         (void*) fillRgbaHardwareBuffer },
     { "nGetFormat", "(Landroid/graphics/Bitmap;)I", (void*) getFormat },
-    { "nTestNullBitmap", "()V", (void*) testNullBitmap },
-    { "nTestInfo", "(Landroid/graphics/Bitmap;IIIZZ)V", (void*) testInfo },
+    { "nTestNullBitmap", "(Landroid/graphics/Bitmap;)V", (void*) testNullBitmap },
+    { "nTestInfo", "(Landroid/graphics/Bitmap;IIIZZZ)V", (void*) testInfo },
     { "nGetDataSpace", "(Landroid/graphics/Bitmap;)I", (void*) getDataSpace },
     { "nCompress", "(Landroid/graphics/Bitmap;IILjava/io/OutputStream;[B)Z", (void*) compress },
     { "nTestNdkCompressBadParameter", "(Landroid/graphics/Bitmap;Ljava/io/OutputStream;[B)V",
