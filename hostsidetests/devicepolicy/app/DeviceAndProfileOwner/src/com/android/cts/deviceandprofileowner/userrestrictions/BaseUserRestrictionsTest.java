@@ -55,8 +55,9 @@ public abstract class BaseUserRestrictionsTest extends BaseDeviceAdminTest {
             UserManager.DISALLOW_MOUNT_PHYSICAL_MEDIA,
             UserManager.DISALLOW_UNMUTE_MICROPHONE,
             UserManager.DISALLOW_ADJUST_VOLUME,
-            UserManager.DISALLOW_OUTGOING_CALLS,
-            UserManager.DISALLOW_SMS,
+            // STOPSHIP (b/147111703): Uncomment the following lines once the bug has been fixed
+            // UserManager.DISALLOW_OUTGOING_CALLS,
+            // UserManager.DISALLOW_SMS,
             UserManager.DISALLOW_FUN,
             UserManager.DISALLOW_CREATE_WINDOWS,
             UserManager.DISALLOW_SYSTEM_ERROR_DIALOGS,
