@@ -234,6 +234,13 @@
     <string name="sec_protected_confirmation_tee_test">Start Tee Test</string>
     <string name="sec_protected_confirmation_strongbox_test">Start Strongbox Test</string>
 
+    <!-- Strings for IdentityAuthPerPresenation -->
+    <string name="sec_identity_credential_authentication_test">Identity Credential Authentication</string>
+    <string name="sec_identity_credential_authentication_test_info">
+        This test ensures that data elements in Identity Credential documents protected by user
+        authentication with timeout 0 can only be accessed once per reader session.
+    </string>
+
     <!-- Strings for BluetoothActivity -->
     <string name="bluetooth_test">Bluetooth Test</string>
     <string name="bluetooth_test_info">
