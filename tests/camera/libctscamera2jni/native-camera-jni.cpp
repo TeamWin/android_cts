@@ -57,6 +57,8 @@ struct std::default_delete<ACameraMetadata> {
 
 class CameraServiceListener {
   public:
+    typedef std::set<std::pair<std::string, std::string>> StringPairSet;
+
     static void onAvailable(void* obj, const char* cameraId) {
         ALOGV("Camera %s onAvailable", cameraId);
         if (obj == nullptr) {
@@ -93,11 +95,38 @@ class CameraServiceListener {
         return;
     }
 
+    static void onPhysicalCameraAvailable(void* obj, const char* cameraId,
+            const char* physicalCameraId) {
+        ALOGV("Camera %s : %s onAvailable", cameraId, physicalCameraId);
+        if (obj == nullptr) {
+            return;
+        }
+        CameraServiceListener* thiz = reinterpret_cast<CameraServiceListener*>(obj);
+        std::lock_guard<std::mutex> lock(thiz->mMutex);
+        thiz->mOnPhysicalCameraAvailableCount++;
+        return;
+    }
+
+    static void onPhysicalCameraUnavailable(void* obj, const char* cameraId,
+            const char* physicalCameraId) {
+        ALOGV("Camera %s : %s onUnavailable", cameraId, physicalCameraId);
+        if (obj == nullptr) {
+            return;
+        }
+        CameraServiceListener* thiz = reinterpret_cast<CameraServiceListener*>(obj);
+        std::lock_guard<std::mutex> lock(thiz->mMutex);
+        thiz->mUnavailablePhysicalCameras.emplace(cameraId, physicalCameraId);
+        return;
+    }
+
+
     void resetCount() {
         std::lock_guard<std::mutex> lock(mMutex);
         mOnAvailableCount = 0;
         mOnUnavailableCount = 0;
         mOnCameraAccessPrioritiesChangedCount = 0;
+        mOnPhysicalCameraAvailableCount = 0;
+        mUnavailablePhysicalCameras.clear();
         return;
     }
 
@@ -116,6 +145,16 @@ class CameraServiceListener {
         return mOnCameraAccessPrioritiesChangedCount;
     }
 
+    int getPhysicalCameraAvailableCount() {
+        std::lock_guard<std::mutex> lock(mMutex);
+        return mOnPhysicalCameraAvailableCount;
+    }
+
+    StringPairSet getUnavailablePhysicalCameras() {
+        std::lock_guard<std::mutex> lock(mMutex);
+        return mUnavailablePhysicalCameras;
+    }
+
     bool isAvailable(const char* cameraId) {
         std::lock_guard<std::mutex> lock(mMutex);
         if (mAvailableMap.count(cameraId) == 0) {
@@ -129,7 +168,9 @@ class CameraServiceListener {
     int mOnAvailableCount = 0;
     int mOnUnavailableCount = 0;
     int mOnCameraAccessPrioritiesChangedCount = 0;
+    int mOnPhysicalCameraAvailableCount = 0;
     std::map<std::string, bool> mAvailableMap;
+    StringPairSet mUnavailablePhysicalCameras;
 };
 
 class CameraDeviceListener {
@@ -1679,6 +1720,113 @@ cleanup:
         ACameraManager_deleteCameraIdList(cameraIdList);
     }
     ALOGI("%s %s", __FUNCTION__, pass ? "pass" : "fail");
+    if (!pass) {
+        throwAssertionError(env, errorString);
+    }
+    return pass;
+}
+
+extern "C" jboolean
+Java_android_hardware_camera2_cts_NativeCameraManagerTest_\
+testCameraManagerExtendedAvailabilityCallbackNative(
+        JNIEnv* env, jclass /*clazz*/) {
+    ALOGV("%s", __FUNCTION__);
+    bool pass = false;
+    ACameraManager* mgr = ACameraManager_create();
+    ACameraIdList *cameraIdList = nullptr;
+    camera_status_t ret = ACameraManager_getCameraIdList(mgr, &cameraIdList);
+    int numCameras = cameraIdList->numCameras;
+    CameraServiceListener listener;
+    CameraServiceListener::StringPairSet unavailablePhysicalCameras;
+    CameraServiceListener::StringPairSet physicalCameraIdPairs;
+    ACameraManager_ExtendedAvailabilityCallbacks cbs {
+            {
+                &listener,
+                CameraServiceListener::onAvailable,
+                CameraServiceListener::onUnavailable
+            },
+            CameraServiceListener::onCameraAccessPrioritiesChanged,
+            CameraServiceListener::onPhysicalCameraAvailable,
+            CameraServiceListener::onPhysicalCameraUnavailable,
+            {}
+    };
+
+    ret = ACameraManager_registerExtendedAvailabilityCallback(mgr, &cbs);
+    if (ret != ACAMERA_OK) {
+        LOG_ERROR(errorString, "Register extended availability callback failed: ret %d", ret);
+        goto cleanup;
+    }
+    sleep(1); // sleep a second to give some time for callbacks to happen
+
+    // Should at least get onAvailable for each camera once
+    if (listener.getAvailableCount() < numCameras) {
+        LOG_ERROR(errorString, "Expect at least %d available callback but only got %d",
+                numCameras, listener.getAvailableCount());
+        goto cleanup;
+    }
+
+    {
+        int availablePhysicalCamera = listener.getPhysicalCameraAvailableCount();
+        if (availablePhysicalCamera > 0) {
+            LOG_ERROR(errorString, "Expect no available callback, but got %d",
+                    availablePhysicalCamera);
+        }
+    }
+
+    unavailablePhysicalCameras = listener.getUnavailablePhysicalCameras();
+    for (int i = 0; i < numCameras; i++) {
+        const char* cameraId = cameraIdList->cameraIds[i];
+        if (cameraId == nullptr) {
+            LOG_ERROR(errorString, "Testcase returned null camera id for camera %d", i);
+            goto cleanup;
+        }
+        ACameraMetadata* c;
+        ret = ACameraManager_getCameraCharacteristics(mgr, cameraId, &c);
+        if (ret != ACAMERA_OK || c == nullptr) {
+            LOG_ERROR(errorString, "Get camera %s characteristics failure", cameraId);
+            goto cleanup;
+        }
+        std::unique_ptr<ACameraMetadata> chars(c);
+
+        size_t physicalCameraCnt = 0;
+        const char *const* physicalCameraIds = nullptr;
+        if (!ACameraMetadata_isLogicalMultiCamera(
+                chars.get(), &physicalCameraCnt, &physicalCameraIds)) {
+            continue;
+        }
+        for (size_t j = 0; j < physicalCameraCnt; j++) {
+            physicalCameraIdPairs.emplace(cameraId, physicalCameraIds[j]);
+        }
+    }
+    for (const auto& unavailIdPair : unavailablePhysicalCameras) {
+        bool validPair = false;
+        for (const auto& idPair : physicalCameraIdPairs) {
+            if (idPair.first == unavailIdPair.first && idPair.second == unavailIdPair.second) {
+                validPair = true;
+                break;
+            }
+        }
+        if (!validPair) {
+            LOG_ERROR(errorString, "Expect valid unavailable physical cameras, but got %s : %s",
+                    unavailIdPair.first.c_str(), unavailIdPair.second.c_str());
+            goto cleanup;
+        }
+    }
+
+    ret = ACameraManager_unregisterExtendedAvailabilityCallback(mgr, &cbs);
+    if (ret != ACAMERA_OK) {
+        LOG_ERROR(errorString, "Unregister extended availability callback failed: ret %d", ret);
+        goto cleanup;
+    }
+    pass = true;
+cleanup:
+    if (cameraIdList) {
+        ACameraManager_deleteCameraIdList(cameraIdList);
+    }
+    if (mgr) {
+        ACameraManager_delete(mgr);
+    }
+    ALOGI("%s %s", __FUNCTION__, pass ? "pass" : "failed");
     if (!pass) {
         throwAssertionError(env, errorString);
     }
@@ -3620,6 +3768,10 @@ AvailabilityContext::AvailabilityContext() :
                 CameraServiceListener::onUnavailable;
         mServiceCb->onCameraAccessPrioritiesChanged =
                 CameraServiceListener::onCameraAccessPrioritiesChanged;
+        mServiceCb->onPhysicalCameraAvailable =
+                CameraServiceListener::onPhysicalCameraAvailable;
+        mServiceCb->onPhysicalCameraUnavailable =
+                CameraServiceListener::onPhysicalCameraUnavailable;
 }
 
 camera_status_t AvailabilityContext::initialize() {
