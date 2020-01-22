@@ -24,7 +24,8 @@
     <application>
         <activity android:name=".RequestPermission" android:exported="true"
                   android:visibleToInstantApps="true" />
-        <service android:name=".KeepAliveForegroundService" android:exported="true" />
+        <service android:name=".KeepAliveForegroundService" android:exported="true"
+                 android:visibleToInstantApps="true" />
     </application>
 </manifest>
 
