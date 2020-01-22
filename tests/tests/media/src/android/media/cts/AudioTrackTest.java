@@ -29,6 +29,7 @@ import android.content.pm.PackageManager;
 import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
+import android.media.AudioMetadata;
 import android.media.AudioPresentation;
 import android.media.AudioTimestamp;
 import android.media.AudioTrack;
@@ -2758,6 +2759,32 @@ public class AudioTrackTest {
             ; // creation failure is OK as TunerConfiguration requires HW support,
               // however other exception failures are not OK.
         }
+    }
+
+    @Test
+    public void testCodecFormatChangedListener() throws Exception {
+        if (!hasAudioOutput()) {
+            return;
+        }
+
+        final AudioTrack audioTrack = new AudioTrack.Builder().build();
+
+        assertThrows(
+            NullPointerException.class,
+            () -> { audioTrack.addOnCodecFormatChangedListener(
+                    null /* executor */, null /* listener */); });
+
+        assertThrows(
+            NullPointerException.class,
+            () -> { audioTrack.removeOnCodecFormatChangedListener(null /* listener */); });
+
+
+        final AudioTrack.OnCodecFormatChangedListener listener =
+            (AudioTrack track, AudioMetadata.ReadMap readMap) -> {};
+
+        audioTrack.addOnCodecFormatChangedListener(null /* executor */, listener);
+        audioTrack.removeOnCodecFormatChangedListener(listener);
+        audioTrack.release();
     }
 
 /* Do not run in JB-MR1. will be re-opened in the next platform release.
