@@ -25,11 +25,19 @@ public abstract class BaseManagedProfileTest extends BaseDevicePolicyTest {
     protected static final String MANAGED_PROFILE_PKG = "com.android.cts.managedprofile";
     protected static final String INTENT_SENDER_PKG = "com.android.cts.intent.sender";
     protected static final String INTENT_RECEIVER_PKG = "com.android.cts.intent.receiver";
+    protected static final String DUMMY_APP_1_PKG = "com.android.cts.dummyapps.dummyapp1";
+    protected static final String DUMMY_APP_2_PKG = "com.android.cts.dummyapps.dummyapp2";
+    protected static final String DUMMY_APP_3_PKG = "com.android.cts.dummyapps.dummyapp3";
+    protected static final String DUMMY_APP_4_PKG = "com.android.cts.dummyapps.dummyapp4";
     protected static final String ADMIN_RECEIVER_TEST_CLASS =
             MANAGED_PROFILE_PKG + ".BaseManagedProfileTest$BasicAdminReceiver";
     protected static final String INTENT_SENDER_APK = "CtsIntentSenderApp.apk";
     protected static final String INTENT_RECEIVER_APK = "CtsIntentReceiverApp.apk";
     protected static final String SIMPLE_APP_APK = "CtsSimpleApp.apk";
+    protected static final String DUMMY_APP_1_APK = "DummyApp1.apk";
+    protected static final String DUMMY_APP_2_APK = "DummyApp2.apk";
+    protected static final String DUMMY_APP_3_APK = "DummyApp3.apk";
+    protected static final String DUMMY_APP_4_APK = "DummyApp4.apk";
     private static final String MANAGED_PROFILE_APK = "CtsManagedProfileApp.apk";
     private static final String NOTIFICATION_PKG =
             "com.android.cts.managedprofiletests.notificationsender";
@@ -86,6 +94,10 @@ public abstract class BaseManagedProfileTest extends BaseDevicePolicyTest {
             getDevice().uninstallPackage(INTENT_SENDER_PKG);
             getDevice().uninstallPackage(INTENT_RECEIVER_PKG);
             getDevice().uninstallPackage(NOTIFICATION_PKG);
+            getDevice().uninstallPackage(DUMMY_APP_1_APK);
+            getDevice().uninstallPackage(DUMMY_APP_2_APK);
+            getDevice().uninstallPackage(DUMMY_APP_3_APK);
+            getDevice().uninstallPackage(DUMMY_APP_4_APK);
         }
         super.tearDown();
     }
