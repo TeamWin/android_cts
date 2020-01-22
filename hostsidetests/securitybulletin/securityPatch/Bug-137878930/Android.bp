@@ -12,23 +12,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test {
-    name: "CtsBlobStoreTestCases",
-    defaults: ["cts_defaults"],
-    static_libs: [
-        "androidx.test.ext.junit",
-        "androidx.test.rules",
-        "compatibility-device-util-axt",
-        "truth-prebuilt",
-        "testng",
+cc_test {
+    name: "Bug-137878930",
+    srcs: ["poc.cpp"],
+    compile_multilib: "both",
+    multilib: {
+        lib32: {
+            suffix: "32",
+        },
+        lib64: {
+            suffix: "64",
+        },
+    },
+    test_suites: ["cts"],
+    shared_libs: [
+        "android.hardware.drm@1.0",
+        "android.hardware.drm@1.1",
+        "libhidlbase",
+        "liblog",
+        "libutils",
     ],
-    srcs: [
-        "src/**/*.java",
+    arch: {
+        arm: {
+            instruction_set: "arm",
+        },
+    },
+    cflags: [
+        "-Wall",
+        "-Werror",
+        "-Wno-unused-parameter",
+        "-Wno-unused-variable",
     ],
-    test_suites: [
-        "cts",
-        "vts",
-        "general-tests",
-    ],
-    platform_apis: true,
 }

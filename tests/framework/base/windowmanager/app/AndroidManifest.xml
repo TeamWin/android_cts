@@ -271,8 +271,6 @@
         />
         <activity android:name=".ShowWhenLockedActivity"
                   android:exported="true"
-                  android:showWhenLocked="true"
-                  android:configChanges="orientation"
         />
         <activity android:name=".ShowWhenLockedWithDialogActivity"
                   android:exported="true"
@@ -544,6 +542,10 @@
             android:exported="true" />
         <activity
             android:name=".MinimalPostProcessingActivity2"
+            android:exported="true"/>
+        <activity
+            android:name=".MinimalPostProcessingManifestActivity"
+            android:preferMinimalPostProcessing="true"
             android:exported="true"/>
         <activity
             android:name=".PopupMinimalPostProcessingActivity"

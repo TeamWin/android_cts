@@ -539,8 +539,6 @@ public class AImageDecoderTest {
         nCloseAsset(asset);
     }
 
-    /**
-     * Disabled temporarily to work around b/147749998.
     @Test
     @Parameters(method = "getRecordsSample")
     public void testDecodeResourceSampled(ImageDecoderTest.Record record, int sampleSize)
@@ -559,7 +557,6 @@ public class AImageDecoderTest {
             fail("Could not open " + name + ": " + e);
         }
     }
-    */
 
     private Bitmap decodeScaled(String name, ImageDecoder.Source src) {
         try {

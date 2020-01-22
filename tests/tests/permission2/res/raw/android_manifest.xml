@@ -2005,6 +2005,11 @@
     <permission android:name="android.permission.READ_PRECISE_PHONE_STATE"
         android:protectionLevel="signature|privileged" />
 
+    <!-- @SystemApi Allows listen permission to always reported signal strength.
+         @hide Used internally. -->
+    <permission android:name="android.permission.LISTEN_ALWAYS_REPORTED_SIGNAL_STRENGTH"
+        android:protectionLevel="signature|telephony" />
+
     <!-- @SystemApi Allows read access to emergency number information for ongoing calls or SMS
          sessions.
          @hide -->
@@ -2127,21 +2132,21 @@
 
     <!-- Must be required by a telephony data service to ensure that only the
          system can bind to it.
-         <p>Protection level: signature
+         <p>Protection level: signature|telephony
          @SystemApi
          @hide
     -->
     <permission android:name="android.permission.BIND_TELEPHONY_DATA_SERVICE"
         android:protectionLevel="signature|telephony" />
 
-    <!-- Must be required by a NetworkService to ensure that only the
+    <!-- Must be required by a telephony network service to ensure that only the
          system can bind to it.
-         <p>Protection level: signature
+         <p>Protection level: signature|telephony
          @SystemApi
          @hide
     -->
     <permission android:name="android.permission.BIND_TELEPHONY_NETWORK_SERVICE"
-        android:protectionLevel="signature" />
+        android:protectionLevel="signature|telephony" />
 
     <!-- @SystemApi Allows an application to manage embedded subscriptions (those on a eUICC)
          through EuiccManager APIs.

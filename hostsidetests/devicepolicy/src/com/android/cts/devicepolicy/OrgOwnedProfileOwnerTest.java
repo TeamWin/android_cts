@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 import android.platform.test.annotations.FlakyTest;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.log.LogUtil;
 
 import org.junit.Test;
 
@@ -260,7 +261,8 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testFactoryResetProtectionPolicy() throws Exception {
-        if (!mHasFeature) {
+        boolean hasPersistentDataBlock = hasService("persistent_data_block");
+        if (!mHasFeature || !hasPersistentDataBlock) {
             return;
         }
 
@@ -292,6 +294,14 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".CommonCriteriaModeTest", mUserId);
     }
 
+    @Test
+    public void testAdminConfiguredNetworks() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".AdminConfiguredNetworksTest", mUserId);
+    }
+
     private void removeOrgOwnedProfile() throws DeviceNotAvailableException {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, RELINQUISH_DEVICE_TEST_CLASS, mUserId);
     }
@@ -318,4 +328,14 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
                         userId, /* expectFailure */ false));
     }
 
+    public boolean hasService(String service) {
+        String command = "service check " + service;
+        try {
+            String commandOutput = getDevice().executeShellCommand(command);
+            return !commandOutput.contains("not found");
+        } catch (Exception e) {
+            LogUtil.CLog.w("Exception running '" + command + "': " + e);
+            return false;
+        }
+    }
 }

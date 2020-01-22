@@ -18,11 +18,9 @@ package android.server.wm;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
-import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
 import static android.server.wm.ComponentNameUtils.getWindowName;
-import static android.server.wm.UiDeviceUtils.pressBackButton;
 import static android.server.wm.app.Components.BROADCAST_RECEIVER_ACTIVITY;
 import static android.server.wm.app.Components.DISMISS_KEYGUARD_ACTIVITY;
 import static android.server.wm.app.Components.DISMISS_KEYGUARD_METHOD_ACTIVITY;
@@ -45,16 +43,12 @@ import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Surface.ROTATION_90;
 import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
 
-import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
-import android.app.Activity;
 import android.content.ComponentName;
-import android.content.Intent;
 import android.content.res.Configuration;
 import android.hardware.display.AmbientDisplayConfiguration;
 import android.platform.test.annotations.Presubmit;
@@ -66,11 +60,8 @@ import android.server.wm.settings.SettingsSession;
 
 import androidx.test.filters.FlakyTest;
 
-import com.android.compatibility.common.util.PollingCheck;
-
 import org.junit.Before;
 import org.junit.Test;
-
 
 /**
  * Build/Install/Run:
@@ -518,24 +509,12 @@ public class KeyguardTests extends KeyguardTestBase {
         mAmWmState.assertKeyguardShowingAndNotOccluded();
     }
 
-    /**
-     * Start a new activity and wait until it has focus.
-     *
-     * @param cls The class of the activity to start. Must be in the same package.
-     */
-    private static void startActivity(Class cls) {
-        Intent intent = new Intent(getInstrumentation().getTargetContext(), cls);
-        intent.addFlags(FLAG_ACTIVITY_NEW_TASK);
-
-        Activity activity = getInstrumentation().startActivitySync(intent);
-        PollingCheck.waitFor(activity::hasWindowFocus);
-    }
-
     @Test
     /*
       Turn on keyguard, and launch an activity on top of the keyguard.
       Next, change the orientation of the device to rotate the activity.
-      Press the back button to dismiss the activity.
+      The activity should still remain above keyguard at this point.
+      Send the 'finish' broadcast to dismiss the activity.
       Ensure that the activity is gone, and the keyguard is visible.
      */
     public void testUnoccludedRotationChange() {
@@ -545,23 +524,21 @@ public class KeyguardTests extends KeyguardTestBase {
         final RotationSession rotationSession = createManagedRotationSession();
         lockScreenSession.gotoKeyguard();
         mAmWmState.assertKeyguardShowingAndNotOccluded();
-        final ComponentName SHOW_WHEN_LOCKED = new ComponentName("android.server.wm.cts",
-                "android.server.wm.ShowWhenLockedActivity");
-        startActivity(ShowWhenLockedActivity.class);
 
-        mAmWmState.computeState(SHOW_WHEN_LOCKED);
-        mAmWmState.assertVisibility(SHOW_WHEN_LOCKED, true);
+        launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
+        mAmWmState.computeState(SHOW_WHEN_LOCKED_ACTIVITY);
+        mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
 
         rotationSession.set(ROTATION_90);
-        pressBackButton();
+        mBroadcastActionTrigger.finishBroadcastReceiverActivity();
         mAmWmState.waitForKeyguardShowingAndNotOccluded();
         mAmWmState.waitForDisplayUnfrozen();
         mAmWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
         mAmWmState.assertSanity();
         mAmWmState.assertHomeActivityVisible(false);
         mAmWmState.assertKeyguardShowingAndNotOccluded();
-        // The {@link SHOW_WHEN_LOCKED} has gone because of {@link pressBackButton()}.
-        mAmWmState.waitAndAssertActivityRemoved(SHOW_WHEN_LOCKED);
+        // The {@link SHOW_WHEN_LOCKED_ACTIVITY} has gone because of the 'finish' broadcast.
+        mAmWmState.waitAndAssertActivityRemoved(SHOW_WHEN_LOCKED_ACTIVITY);
     }
 
     private void assertWallpaperShowing() {

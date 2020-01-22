@@ -429,6 +429,11 @@ public class WindowInsetsTest {
         assertTrue(copy.isConsumed());
     }
 
+    @Test
+    public void testConsumedInstance() {
+        assertTrue(WindowInsets.CONSUMED.isConsumed());
+    }
+
     private static Insets applyInset(Insets res) {
         return Insets.of(Math.max(0, res.left - INSET_LEFT),
                 Math.max(0, res.top - INSET_TOP),

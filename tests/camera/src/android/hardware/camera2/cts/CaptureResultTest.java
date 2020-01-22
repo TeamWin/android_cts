@@ -65,6 +65,11 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
     private static final int NUM_FRAMES_VERIFIED = 30;
     private static final long WAIT_FOR_RESULT_TIMEOUT_MS = 3000;
 
+    /** Load validation jni on initialization. */
+    static {
+        System.loadLibrary("ctscamera2_jni");
+    }
+
     // List tracking the failed test keys.
 
     @Override
@@ -539,6 +544,11 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
                 }
             }
         }
+
+        errorCollector.expectTrue(
+            "validateACameraMetadataFromCameraMetadataCriticalTagsNative failed",
+            validateACameraMetadataFromCameraMetadataCriticalTagsNative(result,
+                result.get(CaptureResult.SENSOR_TIMESTAMP)));
     }
 
     /*
@@ -903,6 +913,11 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
             return errorCode;
         }
     }
+
+    // Returns true if `result` has timestamp `sensorTimestamp` when queried from the NDK via
+    // ACameraMetadata_fromCameraMetadata().
+    private static native boolean validateACameraMetadataFromCameraMetadataCriticalTagsNative(
+        CaptureResult result, long sensorTimestamp);
 
     /**
      * TODO: Use CameraCharacteristics.getAvailableCaptureResultKeys() once we can filter out

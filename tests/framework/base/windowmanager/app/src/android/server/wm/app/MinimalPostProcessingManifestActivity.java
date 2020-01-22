@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,7 @@
 
 package android.server.wm.app;
 
-import android.os.Bundle;
-import android.view.WindowManager;
+import android.app.Activity;
 
-public class ShowWhenLockedActivity extends BroadcastReceiverActivity {
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
-    }
+public class MinimalPostProcessingManifestActivity extends Activity {
 }

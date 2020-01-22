@@ -80,6 +80,11 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
     private BlockingStateCallback mCameraListener;
     private CameraErrorCollector mCollector;
 
+    /** Load validation jni on initialization. */
+    static {
+        System.loadLibrary("ctscamera2_jni");
+    }
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -205,6 +210,25 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
                     String.format("Can't get camera characteristics from: ID %s", ids[i]), props);
         }
     }
+
+    // Test: that properties queried between the Java SDK and the C++ NDK are equivalent.
+    @Test
+    public void testCameraCharacteristicsNdkFromSdk() throws Exception {
+        String[] ids = mCameraIdsUnderTest;
+        for (int i = 0; i < ids.length; i++) {
+            CameraCharacteristics props = mCameraManager.getCameraCharacteristics(ids[i]);
+            Integer lensFacing = props.get(CameraCharacteristics.LENS_FACING);
+            assertNotNull("Can't get lens facing info", lensFacing);
+
+            assertTrue(validateACameraMetadataFromCameraMetadataCriticalTagsNative(
+                props, lensFacing.intValue()));
+        }
+    }
+
+    // Returns true if `props` has lens facing `lensFacing` when queried from the NDK via
+    // ACameraMetadata_fromCameraMetadata().
+    private static native boolean validateACameraMetadataFromCameraMetadataCriticalTagsNative(
+        CameraCharacteristics props, int lensFacing);
 
     // Test: that an exception is thrown if an invalid device id is passed down.
     @Test

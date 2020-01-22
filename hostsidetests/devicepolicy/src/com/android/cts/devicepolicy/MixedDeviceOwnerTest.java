@@ -151,6 +151,14 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @Test
+    public void testAdminConfiguredNetworks() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".AdminConfiguredNetworksTest", mPrimaryUserId);
+    }
+
+    @Test
     public void testSetTime() throws Exception {
         if (!mHasFeature) {
             return;

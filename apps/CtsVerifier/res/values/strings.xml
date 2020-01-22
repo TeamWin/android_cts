@@ -863,6 +863,7 @@
     <string name="multinetwork_status_mobile_connect_success">Mobile net connect success.</string>
     <string name="multinetwork_status_wifi_connect_timed_out">Wi-Fi connect timed out.</string>
     <string name="multinetwork_status_wifi_connect_wrong_ap">Wi-Fi connected to wrong access point.</string>
+    <string name="multinetwork_status_unable_to_toggle_wifi">User did not toggle wifi on and off.</string>
     <string name="multinetwork_status_mobile_connect_timed_out">Mobile network connect timed out.</string>
     <string name="multinetwork_status_mobile_restore_success">Mobile restore succeeded.</string>
     <string name="multinetwork_status_mobile_restore_failed">Mobile restore failed.</string>
@@ -875,6 +876,10 @@
     <string name="multinetwork_connectivity_overlay_permission_message">This test requires the CTS verifier to have the system overlay permission, please locate CTS Verifier app in the next screen, then enable it.</string>
     <string name="multinetwork_connectivity_overlay_permission_positive">Settings</string>
     <string name="multinetwork_connectivity_overlay_permission_negative">Cancel</string>
+    <string name="multinetwork_connectivity_turn_wifi_on">Please turn Wi-Fi on.</string>
+    <string name="multinetwork_connectivity_turn_wifi_off">Please turn Wi-Fi off.</string>
+    <string name="multinetwork_connectivity_turn_wifi_positive">OK</string>
+    <string name="multinetwork_connectivity_turn_wifi_negative">Cancel</string>
     <!-- Strings for NfcTestActivity -->
     <string name="nfc_test">NFC Test</string>
     <string name="nfc_test_info">The Peer-to-Peer Data Exchange tests require two devices with

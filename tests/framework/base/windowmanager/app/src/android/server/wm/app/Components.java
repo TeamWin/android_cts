@@ -197,6 +197,9 @@ public class Components extends ComponentsBase {
     public static final ComponentName MPP_ACTIVITY2 =
             component("MinimalPostProcessingActivity2");
 
+    public static final ComponentName MPP_ACTIVITY3 =
+            component("MinimalPostProcessingManifestActivity");
+
     public static final ComponentName POPUP_MPP_ACTIVITY =
             component("PopupMinimalPostProcessingActivity");
 

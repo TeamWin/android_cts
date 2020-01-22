@@ -42,6 +42,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RunWith(Parameterized.class)
 @AppModeFull // TODO(Instant) Figure out which APIs should work.
@@ -356,8 +357,8 @@ public class PackageManagerShellCommandTest {
         for (String splitName : splitNames) {
             File file = new File(splitName);
             assertEquals("Success: streamed " + file.length() + " bytes\n", executeShellCommand(
-                    "pm install-write -S " + file.length() + " " + sessionId + " "
-                            + file.getName() + " " + args, file));
+                    "pm install-write -S " + file.length() + " " + sessionId + " " + file.getName()
+                            + " " + args, file));
         }
     }
 
@@ -374,10 +375,6 @@ public class PackageManagerShellCommandTest {
     }
 
     private void commitSession(String sessionId) throws IOException {
-        assertEquals("Success\n", executeShellCommand("pm install-commit " + sessionId));
-    }
-
-    private void commitSessionStdIn(String sessionId, String[] splitNames) throws IOException {
         assertEquals("Success\n", executeShellCommand("pm install-commit " + sessionId));
     }
 
@@ -418,6 +415,10 @@ public class PackageManagerShellCommandTest {
     }
 
     private void installSplits(String[] baseNames) throws IOException {
+        if (mStreaming) {
+            installSplitsBatch(baseNames);
+            return;
+        }
         String[] splits = Arrays.stream(baseNames).map(
                 baseName -> createApkPath(baseName)).toArray(String[]::new);
         String sessionId = createSession(TEST_APP_PACKAGE);
@@ -425,12 +426,23 @@ public class PackageManagerShellCommandTest {
         commitSession(sessionId);
     }
 
+    private void installSplitsStdInStreaming(String[] splits) throws IOException {
+        File[] files = Arrays.stream(splits).map(split -> new File(split)).toArray(File[]::new);
+        String param = Arrays.stream(files).map(
+                file -> file.getName() + ":" + file.length()).collect(Collectors.joining(" "));
+        assertEquals("Success\n", executeShellCommand("pm install-streaming " + param, files));
+    }
+
     private void installSplitsStdIn(String[] baseNames, String args) throws IOException {
         String[] splits = Arrays.stream(baseNames).map(
                 baseName -> createApkPath(baseName)).toArray(String[]::new);
+        if (mStreaming) {
+            installSplitsStdInStreaming(splits);
+            return;
+        }
         String sessionId = createSession(TEST_APP_PACKAGE);
         addSplitsStdIn(sessionId, splits, args);
-        commitSessionStdIn(sessionId, splits);
+        commitSession(sessionId);
     }
 
     private void installSplitsBatch(String[] baseNames) throws IOException {
@@ -442,10 +454,6 @@ public class PackageManagerShellCommandTest {
 
     private String uninstallPackageSilently(String packageName) throws IOException {
         return executeShellCommand("pm uninstall " + packageName);
-    }
-
-    private void uninstallPackage(String packageName) throws IOException {
-        assertEquals("Success\n", uninstallPackageSilently(packageName));
     }
 
     private void uninstallSplits(String packageName, String[] splitNames) throws IOException {
