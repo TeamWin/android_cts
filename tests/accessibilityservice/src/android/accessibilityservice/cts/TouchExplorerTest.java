@@ -32,9 +32,14 @@ import static android.accessibilityservice.cts.utils.GestureUtils.multiTap;
 import static android.accessibilityservice.cts.utils.GestureUtils.secondFingerMultiTap;
 import static android.accessibilityservice.cts.utils.GestureUtils.swipe;
 import static android.accessibilityservice.cts.utils.GestureUtils.times;
+import static android.view.MotionEvent.ACTION_DOWN;
 import static android.view.MotionEvent.ACTION_HOVER_ENTER;
 import static android.view.MotionEvent.ACTION_HOVER_EXIT;
 import static android.view.MotionEvent.ACTION_HOVER_MOVE;
+import static android.view.MotionEvent.ACTION_MOVE;
+import static android.view.MotionEvent.ACTION_POINTER_DOWN;
+import static android.view.MotionEvent.ACTION_POINTER_UP;
+import static android.view.MotionEvent.ACTION_UP;
 import static android.view.accessibility.AccessibilityEvent.TYPE_GESTURE_DETECTION_END;
 import static android.view.accessibility.AccessibilityEvent.TYPE_GESTURE_DETECTION_START;
 import static android.view.accessibility.AccessibilityEvent.TYPE_TOUCH_EXPLORATION_GESTURE_END;
@@ -401,6 +406,60 @@ public class TouchExplorerTest {
                 TYPE_TOUCH_INTERACTION_END,
                 TYPE_VIEW_CLICKED);
         mClickListener.assertClicked(mView);
+    }
+
+    /**
+     * This method tests a three-finger swipe. The gesture will be delegated to the view as-is. This
+     * is distinct from dragging, where two fingers are delegated to the view as one finger. Note
+     * that because multi-finger gestures are disabled this gesture will not be handled by the
+     * gesture detector.
+     */
+    @Test
+    @AppModeFull
+    public void testThreeFingerMovement_shouldDelegate() {
+        if (!mHasTouchscreen || !mScreenBigEnough) return;
+        // Move three fingers down the screen slowly.
+        PointF finger1Start = add(mTapLocation, -mSwipeDistance, 0);
+        PointF finger1End = add(mTapLocation, -mSwipeDistance, mSwipeDistance);
+        PointF finger2Start = mTapLocation;
+        PointF finger2End = add(mTapLocation, 0, mSwipeDistance);
+        PointF finger3Start = add(mTapLocation, mSwipeDistance, 0);
+        PointF finger3End = add(mTapLocation, mSwipeDistance, mSwipeDistance);
+        StrokeDescription swipe1 = swipe(finger1Start, finger1End, SWIPE_TIME_MILLIS);
+        StrokeDescription swipe2 = swipe(finger2Start, finger2End, SWIPE_TIME_MILLIS);
+        StrokeDescription swipe3 = swipe(finger3Start, finger3End, SWIPE_TIME_MILLIS);
+        dispatch(swipe1, swipe2, swipe3);
+        mHoverListener.assertNonePropagated();
+        mTouchListener.assertPropagated(
+                ACTION_DOWN,
+                ACTION_POINTER_DOWN,
+                ACTION_POINTER_DOWN,
+                ACTION_MOVE,
+                ACTION_POINTER_UP,
+                ACTION_POINTER_UP,
+                ACTION_UP);
+    }
+
+    /**
+     * This method tests the case where two fingers are moving independently. The gesture will be
+     * delegated to the view as-is. This is distinct from dragging, where two fingers are delegated
+     * to the view as one finger.
+     */
+    @Test
+    @AppModeFull
+    public void testTwoFingersMovingIndependently_shouldDelegate() {
+        if (!mHasTouchscreen || !mScreenBigEnough) return;
+        // Move two fingers towards eacher slowly.
+        PointF finger1Start = add(mTapLocation, -mSwipeDistance, 0);
+        PointF finger1End = add(mTapLocation, -10, 0);
+        StrokeDescription swipe1 = swipe(finger1Start, finger1End, SWIPE_TIME_MILLIS);
+        PointF finger2Start = add(mTapLocation, mSwipeDistance, 0);
+        PointF finger2End = add(mTapLocation, 10, 0);
+        StrokeDescription swipe2 = swipe(finger2Start, finger2End, SWIPE_TIME_MILLIS);
+        dispatch(swipe1, swipe2);
+        mHoverListener.assertNonePropagated();
+        mTouchListener.assertPropagated(
+                ACTION_DOWN, ACTION_POINTER_DOWN, ACTION_MOVE, ACTION_POINTER_UP, ACTION_UP);
     }
 
     public void dispatch(StrokeDescription firstStroke, StrokeDescription... rest) {
