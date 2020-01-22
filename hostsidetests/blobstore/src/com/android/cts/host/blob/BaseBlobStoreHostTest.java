@@ -18,14 +18,30 @@ package com.android.cts.host.blob;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
+
+import java.util.Map;
 
 abstract class BaseBlobStoreHostTest extends BaseHostJUnit4Test {
     private static final long TIMEOUT_BOOT_COMPLETE_MS = 120_000;
 
     protected void runDeviceTest(String testPkg, String testClass, String testMethod)
             throws Exception {
+        runDeviceTest(testPkg, testClass, testMethod, null);
+    }
+
+    protected void runDeviceTest(String testPkg, String testClass, String testMethod,
+            Map<String, String> instrumentationArgs) throws Exception {
+        final DeviceTestRunOptions deviceTestRunOptions = new DeviceTestRunOptions(testPkg)
+                .setTestClassName(testClass)
+                .setTestMethodName(testMethod);
+        if (instrumentationArgs != null) {
+            for (Map.Entry<String, String> entry : instrumentationArgs.entrySet()) {
+                deviceTestRunOptions.addInstrumentationArg(entry.getKey(), entry.getValue());
+            }
+        }
         assertWithMessage(testMethod + " failed").that(
-                runDeviceTests(testPkg, testClass, testMethod)).isTrue();
+                runDeviceTests(deviceTestRunOptions)).isTrue();
     }
 
     protected void rebootAndWaitUntilReady() throws Exception {

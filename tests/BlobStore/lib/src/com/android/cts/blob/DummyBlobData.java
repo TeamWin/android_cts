@@ -44,23 +44,30 @@ public class DummyBlobData {
     private final Random mRandom;
     private final File mFile;
     private final long mFileSize;
+    private final String mLabel;
 
     byte[] mFileDigest;
     long mExpiryTimeMs;
 
     public DummyBlobData(Context context) {
-        this(context, DEFAULT_SIZE_BYTES, new Random(0), "blob_" + System.nanoTime());
+        this(context, new Random(0), "blob_" + System.nanoTime());
     }
 
     public DummyBlobData(Context context, Random random, String fileName) {
-        this(context, DEFAULT_SIZE_BYTES, random, fileName);
+        this(context, DEFAULT_SIZE_BYTES, random, fileName, "Test label");
     }
 
-    public DummyBlobData(Context context, long fileSize, Random random, String fileName) {
+    public DummyBlobData(Context context, Random random, String fileName, String label) {
+        this(context, DEFAULT_SIZE_BYTES, random, fileName, label);
+    }
+
+    public DummyBlobData(Context context, long fileSize, Random random, String fileName,
+            String label) {
         mContext = context;
         mRandom = random;
         mFile = new File(mContext.getFilesDir(), fileName);
         mFileSize = fileSize;
+        mLabel = label;
     }
 
     public void prepare() throws Exception {
@@ -72,7 +79,7 @@ public class DummyBlobData {
     }
 
     public BlobHandle getBlobHandle() throws Exception {
-        return BlobHandle.createWithSha256(createSha256Digest(mFile), "Test blob",
+        return BlobHandle.createWithSha256(createSha256Digest(mFile), mLabel,
                 mExpiryTimeMs, "test_tag");
     }
 

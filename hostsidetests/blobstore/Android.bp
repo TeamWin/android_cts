@@ -20,25 +20,26 @@ java_test_host {
         "tools-common-prebuilt",
         "cts-tradefed",
         "tradefed",
-        "truth-prebuilt",
+        "truth-prebuilt"
     ],
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
         "vts",
-        "general-tests",
-    ],
+        "general-tests"
+    ]
 }
 
 android_test_helper_app {
   name: "CtsBlobStoreHelperApp",
   srcs:  ["test-apps/BlobStoreHelperApp/src/**/*.java"],
-  libs: ["truth-prebuilt"],
   static_libs: [
       "compatibility-device-util-axt",
       "androidx.test.ext.junit",
       "androidx.test.rules",
-      "BlobStoreTestUtils"
+      "BlobStoreTestUtils",
+      "truth-prebuilt",
+      "testng",
   ],
   manifest : "test-apps/BlobStoreHelperApp/AndroidManifest.xml",
   platform_apis: true,
@@ -46,6 +47,6 @@ android_test_helper_app {
   test_suites: [
     "cts",
     "vts",
-    "general-tests",
-  ],
+    "general-tests"
+  ]
 }
