@@ -98,11 +98,39 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
 
     @LargeTest
     @Test
-    public void testStartActivity() throws Exception {
+    public void testStartActivityComponent() throws Exception {
         if (!mHasManagedUserFeature) {
             return;
         }
-        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS);
+        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS, "testCanStartMainActivityByComponent");
+        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS, "testCanStartNonMainActivityByComponent");
+        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS, "testCannotStartNotExportedActivityByComponent");
+        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS, "testCannotStartActivityInOtherPackageByComponent");
+    }
+
+    @LargeTest
+    @Test
+    public void testStartActivityIntent() throws Exception {
+        if (!mHasManagedUserFeature) {
+            return;
+        }
+        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS, "testCannotStartActivityWithImplicitIntent");
+        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS, "testCanStartMainActivityByIntent");
+        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS, "testCanStartNonMainActivityByIntent");
+        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS, "testCanStartNotExportedActivityByIntent");
+        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS, "testCannotStartActivityInOtherPackageByIntent");
+    }
+
+    @LargeTest
+    @Test
+    public void testStartActivityIntentPermissions() throws Exception {
+        if (!mHasManagedUserFeature) {
+            return;
+        }
+        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS, "testCannotStartActivityByIntentWithNoPermissions");
+        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS, "testCanStartActivityByIntentWithInteractAcrossProfilesPermission");
+        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS, "testCanStartActivityByIntentWithInteractAcrossUsersPermission");
+        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS, "testCanStartActivityByIntentWithInteractAcrossUsersFullPermission");
     }
 
     @LargeTest
@@ -177,7 +205,12 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
 
     private void verifyCrossProfileAppsApi(int fromUserId, int targetUserId, String testClass)
             throws Exception {
-        runDeviceTest(fromUserId, targetUserId, testClass, /* testMethod= */ null);
+        verifyCrossProfileAppsApi(fromUserId, targetUserId, testClass, /* testMethod= */ null);
+    }
+
+    private void verifyCrossProfileAppsApi(int fromUserId, int targetUserId, String testClass, String testMethod)
+            throws Exception {
+        runDeviceTest(fromUserId, targetUserId, testClass, testMethod);
     }
 
     private void runDeviceTest(
