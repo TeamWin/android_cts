@@ -664,6 +664,99 @@ static void testSetTargetSize(JNIEnv* env, jclass, jlong imageDecoderPtr) {
     }
 }
 
+struct SampledSizeParams {
+    AImageDecoder* decoder;
+    int sampleSize;
+    int* width;
+    int* height;
+};
+
+static void testComputeSampledSize(JNIEnv* env, jclass, jlong imageDecoderPtr,
+                                   jobject jbitmap, jint sampleSize) {
+    AImageDecoder* decoder = reinterpret_cast<AImageDecoder*>(imageDecoderPtr);
+    DecoderDeleter decoderDeleter(decoder, AImageDecoder_delete);
+
+    const AImageDecoderHeaderInfo* info = AImageDecoder_getHeaderInfo(decoder);
+    ASSERT_NE(info, nullptr);
+    const int32_t origWidth = AImageDecoderHeaderInfo_getWidth(info);
+    const int32_t origHeight = AImageDecoderHeaderInfo_getHeight(info);
+
+    int width, height;
+    // Test some bad parameters.
+    for (SampledSizeParams p : std::initializer_list<SampledSizeParams>{
+        { nullptr, 2, &width, &height },
+        { decoder, 0, &width, &height },
+        { decoder, -1, &width, &height },
+        { decoder, 2, nullptr, &height },
+        { decoder, 2, &width, nullptr },
+    }) {
+        int result = AImageDecoder_computeSampledSize(p.decoder, p.sampleSize, p.width, p.height);
+        ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, result);
+    }
+
+    // Verify that width and height will never be less than one.
+    for (SampledSizeParams p : std::initializer_list<SampledSizeParams>{
+        { decoder, origWidth, &width, &height },
+        { decoder, origWidth + 5, &width, &height },
+        { decoder, origWidth * 2, &width, &height },
+        { decoder, origHeight, &width, &height },
+        { decoder, origHeight + 5, &width, &height },
+        { decoder, origHeight * 2, &width, &height },
+    }) {
+        width = height = 0;
+        int result = AImageDecoder_computeSampledSize(p.decoder, p.sampleSize, p.width, p.height);
+        if (ANDROID_IMAGE_DECODER_SUCCESS != result) {
+            fail(env, "computeSampledSize(%i) failed on image with dims %i x %i",
+                 p.sampleSize, origWidth, origHeight);
+            return;
+        }
+
+        ASSERT_GE(width, 1);
+        ASSERT_GE(height, 1);
+    }
+
+    // jbitmap was created with the same sampleSize. Verify that AImageDecoder
+    // computes the same output dimensions, that using those dimensions succeeds
+    // with AImageDecoder, and the output matches.
+    AndroidBitmapInfo jInfo;
+    int bitmapResult = AndroidBitmap_getInfo(env, jbitmap, &jInfo);
+    ASSERT_EQ(ANDROID_BITMAP_RESULT_SUCCESS, bitmapResult);
+
+    width = height = 0;
+    int result = AImageDecoder_computeSampledSize(decoder, sampleSize, &width, &height);
+    ASSERT_EQ(ANDROID_IMAGE_DECODER_SUCCESS, result);
+
+    if (jInfo.width != width) {
+        fail(env, "Orig image: %i x %i sampled by %i yields %i x %i expected %i x %i",
+             origWidth, origHeight, sampleSize, width, height, jInfo.width, jInfo.height);
+        return;
+    }
+    ASSERT_EQ(jInfo.width, width);
+    ASSERT_EQ(jInfo.height, height);
+    {
+
+        ASSERT_LT(width, origWidth);
+        ASSERT_LT(height, origHeight);
+
+        ASSERT_LT(width, origWidth / sampleSize + sampleSize);
+        ASSERT_LT(height, origHeight / sampleSize + sampleSize);
+    }
+
+    result = AImageDecoder_setTargetSize(decoder, width, height);
+    ASSERT_EQ(ANDROID_IMAGE_DECODER_SUCCESS, result);
+
+    size_t minStride = AImageDecoder_getMinimumStride(decoder);
+    size_t size = minStride * height;
+    void* pixels = malloc(size);
+    result = AImageDecoder_decodeImage(decoder, pixels, minStride, size);
+    ASSERT_EQ(ANDROID_IMAGE_DECODER_SUCCESS, result);
+
+    ASSERT_TRUE(bitmapsEqual(env, jbitmap, AImageDecoderHeaderInfo_getAndroidBitmapFormat(info),
+                             width, height, AImageDecoderHeaderInfo_getAlphaFlags(info),
+                             minStride, pixels, minStride));
+    free(pixels);
+}
+
 static void testDecodeScaled(JNIEnv* env, jclass, jlong imageDecoderPtr,
                              jobject jbitmap) {
     AImageDecoder* decoder = reinterpret_cast<AImageDecoder*>(imageDecoderPtr);
@@ -1029,6 +1122,7 @@ static JNINativeMethod gMethods[] = {
     { "nTestDecode", "(JIZ" BITMAP ")V", (void*) testDecode },
     { "nTestDecodeStride", "(J)V", (void*) testDecodeStride },
     { "nTestSetTargetSize", "(J)V", (void*) testSetTargetSize },
+    { "nTestComputeSampledSize", "(J" BITMAP "I)V", (void*) testComputeSampledSize },
     { "nTestDecodeScaled", "(J" BITMAP ")V", (void*) testDecodeScaled },
     { "nTestSetCrop", "(" ASSET_MANAGER STRING ")V", (void*) testSetCrop },
     { "nTestDecodeCrop", "(J" BITMAP "IIIIII)V", (void*) testDecodeCrop },
