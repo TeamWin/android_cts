@@ -509,14 +509,15 @@ public class KeyguardTests extends KeyguardTestBase {
         mAmWmState.assertKeyguardShowingAndNotOccluded();
     }
 
-    @Test
-    /*
-      Turn on keyguard, and launch an activity on top of the keyguard.
-      Next, change the orientation of the device to rotate the activity.
-      The activity should still remain above keyguard at this point.
-      Send the 'finish' broadcast to dismiss the activity.
-      Ensure that the activity is gone, and the keyguard is visible.
+
+    /**
+     * Turn on keyguard, and launch an activity on top of the keyguard.
+     * Next, change the orientation of the device to rotate the activity.
+     * The activity should still remain above keyguard at this point.
+     * Send the 'finish' broadcast to dismiss the activity.
+     * Ensure that the activity is gone, and the keyguard is visible.
      */
+    @Test
     public void testUnoccludedRotationChange() {
         // Go home now to make sure Home is behind Keyguard.
         launchHomeActivity();
