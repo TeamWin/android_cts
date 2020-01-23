@@ -41,13 +41,18 @@ import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.FileUtil;
 import com.android.tradefed.util.TarUtil;
 
+import com.google.common.io.ByteStreams;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -129,6 +134,14 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
      */
     protected static final int USER_ALL = -1;
 
+    private static final String TEST_UPDATE_LOCATION = "/data/local/tmp/cts/deviceowner";
+
+    /**
+     * Copied from {@link android.app.admin.DevicePolicyManager
+     * .InstallSystemUpdateCallback#UPDATE_ERROR_UPDATE_FILE_INVALID}
+     */
+    protected static final int UPDATE_ERROR_UPDATE_FILE_INVALID = 3;
+
     protected CompatibilityBuildHelper mBuildHelper;
     private String mPackageVerifier;
     private HashSet<String> mAvailableFeatures;
@@ -202,6 +215,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
                 mFixedUsers.add(getDevice().getCurrentUser());
             }
         }
+        getDevice().executeShellCommand(" mkdir " + TEST_UPDATE_LOCATION);
 
         removeOwners();
         switchUser(USER_SYSTEM);
@@ -226,6 +240,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         }
         removeTestUsers();
         removeTestPackages();
+        getDevice().executeShellCommand(" rm -r " + TEST_UPDATE_LOCATION);
     }
 
     protected void installAppAsUser(String appFileName, int userId) throws FileNotFoundException,
@@ -951,5 +966,23 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
             }
         }
         throw new Exception("Default launcher not found");
+    }
+
+    boolean isDeviceAb() throws DeviceNotAvailableException {
+        final String result = getDevice().executeShellCommand("getprop ro.build.ab_update").trim();
+        return "true".equalsIgnoreCase(result);
+    }
+
+    void pushUpdateFileToDevice(String fileName)
+            throws IOException, DeviceNotAvailableException {
+        File file = File.createTempFile(
+                fileName.split("\\.")[0], "." + fileName.split("\\.")[1]);
+        try (OutputStream outputStream = new FileOutputStream(file)) {
+            InputStream inputStream = getClass().getResourceAsStream("/" + fileName);
+            ByteStreams.copy(inputStream, outputStream);
+        }
+
+        getDevice().pushFile(file, TEST_UPDATE_LOCATION + "/" + fileName);
+        file.delete();
     }
 }
