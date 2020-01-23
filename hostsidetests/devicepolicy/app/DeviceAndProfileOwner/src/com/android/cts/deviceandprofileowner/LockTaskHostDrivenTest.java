@@ -66,16 +66,16 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
         mDevicePolicyManager = mContext.getSystemService(DevicePolicyManager.class);
     }
 
-    public void startLockTask() throws Exception {
-        Log.d(TAG, "startLockTask on host-driven test (no cleanup)");
+    public void testStartLockTask_noAsserts() throws Exception {
+        Log.d(TAG, "testStartLockTask_noAsserts on host-driven test (no cleanup)");
         setLockTaskPackages(mContext.getPackageName());
         setDefaultHomeIntentReceiver();
         launchLockTaskActivity();
         mUiDevice.waitForIdle();
     }
 
-    public void cleanupLockTask() {
-        Log.d(TAG, "cleanupLockTask on host-driven test");
+    public void testCleanupLockTask_noAsserts() {
+        Log.d(TAG, "testCleanupLockTask_noAsserts on host-driven test");
         mDevicePolicyManager.clearPackagePersistentPreferredActivities(
                 ADMIN_RECEIVER_COMPONENT,
                 mContext.getPackageName());
