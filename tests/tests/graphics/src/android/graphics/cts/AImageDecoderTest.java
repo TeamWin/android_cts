@@ -93,20 +93,20 @@ public class AImageDecoderTest {
 
     // For testing all of the assets as premul and unpremul.
     private static Object[] getAssetRecordsUnpremul() {
-        return ImageDecoderTest.crossProduct(getAssetRecords(), new Object[] { true, false });
+        return Utils.crossProduct(getAssetRecords(), new Object[] { true, false });
     }
 
     private static Object[] getRecordsUnpremul() {
-        return ImageDecoderTest.crossProduct(getRecords(), new Object[] { true, false });
+        return Utils.crossProduct(getRecords(), new Object[] { true, false });
     }
 
     // For testing all of the assets at different sample sizes.
     private static Object[] getAssetRecordsSample() {
-        return ImageDecoderTest.crossProduct(getAssetRecords(), new Object[] { 2, 3, 4, 8, 16 });
+        return Utils.crossProduct(getAssetRecords(), new Object[] { 2, 3, 4, 8, 16 });
     }
 
     private static Object[] getRecordsSample() {
-        return ImageDecoderTest.crossProduct(getRecords(), new Object[] { 2, 3, 4, 8, 16 });
+        return Utils.crossProduct(getRecords(), new Object[] { 2, 3, 4, 8, 16 });
     }
 
     @Test
@@ -920,7 +920,7 @@ public class AImageDecoderTest {
     }
 
     private static Object[] rgbColorSpacesAndCompressFormats() {
-        return ImageDecoderTest.crossProduct(rgbColorSpaces(), Bitmap.CompressFormat.values());
+        return Utils.crossProduct(rgbColorSpaces(), Bitmap.CompressFormat.values());
     }
 
     String toMimeType(Bitmap.CompressFormat format) {
