@@ -30,3 +30,21 @@ cc_test_library {
     ],
     gtest: false,
 }
+
+cc_test_library {
+    name: "libctsmediav2extractor_jni",
+    srcs: [
+        "NativeMediaConstants.cpp",
+        "NativeExtractorTest.cpp",
+    ],
+    shared_libs: [
+        "libmediandk",
+        "liblog",
+    ],
+    stl: "libc++_static",
+    cflags: [
+        "-Werror",
+        "-Wall",
+    ],
+    gtest: false,
+}
