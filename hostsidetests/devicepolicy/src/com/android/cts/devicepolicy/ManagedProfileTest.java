@@ -117,7 +117,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             removeTestUsers();
             mParentUserId = mPrimaryUserId;
             mProfileUserId = createManagedProfile(mParentUserId);
-            startUser(mProfileUserId);
+            startUserAndWait(mProfileUserId);
 
             // Install the APK on both primary and profile user in one single transaction.
             // If they were installed separately, the second installation would become an app
