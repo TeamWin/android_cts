@@ -23,6 +23,7 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
 import android.graphics.ImageFormat;
+import android.hardware.display.DisplayManager;
 import android.media.cts.CodecUtils;
 import android.media.Image;
 import android.media.AudioFormat;
@@ -36,6 +37,7 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
+import android.view.Display;
 import android.view.Surface;
 import android.net.Uri;
 
@@ -89,6 +91,7 @@ public class DecoderTest extends MediaPlayerTestBase {
     private static final String VIDEO_URL_KEY = "decoder_test_video_url";
     private static final String MODULE_NAME = "CtsMediaTestCases";
     private DynamicConfigDeviceSide dynamicConfig;
+    private DisplayManager mDisplayManager;
 
     @Override
     protected void setUp() throws Exception {
@@ -114,6 +117,7 @@ public class DecoderTest extends MediaPlayerTestBase {
         masterFd.close();
 
         dynamicConfig = new DynamicConfigDeviceSide(MODULE_NAME);
+        mDisplayManager = (DisplayManager) mContext.getSystemService(Context.DISPLAY_SERVICE);
     }
 
     @Override
@@ -924,7 +928,12 @@ public class DecoderTest extends MediaPlayerTestBase {
             }
             String[] decoderNames = MediaUtils.getDecoderNames(format);
 
-            if (decoderNames == null || decoderNames.length == 0) {
+            int numberOfSupportedHdrTypes =
+                    mDisplayManager.getDisplay(Display.DEFAULT_DISPLAY).getHdrCapabilities()
+                            .getSupportedHdrTypes().length;
+
+            if (decoderNames == null || decoderNames.length == 0
+                    || numberOfSupportedHdrTypes == 0) {
                 MediaUtils.skipTest("No video codecs supports HDR");
                 return;
             }
