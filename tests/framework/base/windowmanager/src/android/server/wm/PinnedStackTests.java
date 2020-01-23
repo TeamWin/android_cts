@@ -782,6 +782,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackExists();
     }
 
+    @Ignore("b/145094530")
     @Test
     public void testDisallowEnterPipActivityLocked() throws Exception {
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP_ON_PAUSE, "true");
