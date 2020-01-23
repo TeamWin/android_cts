@@ -239,6 +239,44 @@ public class EuiccManagerTest {
                 mCallbackReceiver.getResultCode());
     }
 
+    @Test
+    public void testOperationCode() {
+        // Ensure if platform source code is updated, these constants stays the same.
+        assertEquals(EuiccManager.OPERATION_SYSTEM, 1);
+        assertEquals(EuiccManager.OPERATION_SIM_SLOT, 2);
+        assertEquals(EuiccManager.OPERATION_EUICC_CARD, 3);
+        assertEquals(EuiccManager.OPERATION_SWITCH, 4);
+        assertEquals(EuiccManager.OPERATION_DOWNLOAD, 5);
+        assertEquals(EuiccManager.OPERATION_METADATA, 6);
+        assertEquals(EuiccManager.OPERATION_EUICC_GSMA, 7);
+        assertEquals(EuiccManager.OPERATION_APDU, 8);
+        assertEquals(EuiccManager.OPERATION_SMDX, 9);
+        assertEquals(EuiccManager.OPERATION_SMDX_SUBJECT_REASON_CODE, 10);
+        assertEquals(EuiccManager.OPERATION_HTTP, 11);
+    }
+
+    @Test
+    public void testErrorCode() {
+        // Ensure if platform source code is updated, these constants stays the same.
+        assertEquals(EuiccManager.ERROR_CARRIER_LOCKED, 10000);
+        assertEquals(EuiccManager.ERROR_INVALID_ACTIVATION_CODE, 10001);
+        assertEquals(EuiccManager.ERROR_INVALID_CONFIRMATION_CODE, 10002);
+        assertEquals(EuiccManager.ERROR_INCOMPATIBLE_CARRIER, 10003);
+        assertEquals(EuiccManager.ERROR_EUICC_INSUFFICIENT_MEMORY, 10004);
+        assertEquals(EuiccManager.ERROR_TIME_OUT, 10005);
+        assertEquals(EuiccManager.ERROR_EUICC_MISSING, 10006);
+        assertEquals(EuiccManager.ERROR_UNSUPPORTED_VERSION, 10007);
+        assertEquals(EuiccManager.ERROR_SIM_MISSING, 10008);
+        assertEquals(EuiccManager.ERROR_EUICC_GSMA_INSTALL_ERROR, 10009);
+        assertEquals(EuiccManager.ERROR_DISALLOWED_BY_PPR, 10010);
+        assertEquals(EuiccManager.ERROR_ADDRESS_MISSING, 10011);
+        assertEquals(EuiccManager.ERROR_CERTIFICATE_ERROR, 10012);
+        assertEquals(EuiccManager.ERROR_NO_PROFILES_AVAILABLE, 10013);
+        assertEquals(EuiccManager.ERROR_CONNECTION_ERROR, 10014);
+        assertEquals(EuiccManager.ERROR_INVALID_RESPONSE, 10015);
+        assertEquals(EuiccManager.ERROR_OPERATION_BUSY, 10016);
+    }
+
     private Context getContext() {
         return InstrumentationRegistry.getContext();
     }
