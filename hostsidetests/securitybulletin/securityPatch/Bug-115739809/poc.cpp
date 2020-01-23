@@ -57,6 +57,8 @@ static void sanitizeMessage(const InputMessage& msg, InputMessage* outMsg) {
             outMsg->body.key.source = msg.body.key.source;
             // int32_t displayId
             outMsg->body.key.displayId = msg.body.key.displayId;
+            // std::array<uint8_t, 32> hmac
+            outMsg->body.key.hmac = msg.body.key.hmac;
             // int32_t action
             outMsg->body.key.action = msg.body.key.action;
             // int32_t flags
@@ -84,6 +86,8 @@ static void sanitizeMessage(const InputMessage& msg, InputMessage* outMsg) {
             outMsg->body.motion.source = msg.body.motion.source;
             // int32_t displayId
             outMsg->body.motion.displayId = msg.body.motion.displayId;
+            // std::array<uint8_t, 32> hmac
+            outMsg->body.motion.hmac = msg.body.motion.hmac;
             // int32_t action
             outMsg->body.motion.action = msg.body.motion.action;
             // int32_t actionButton
@@ -100,6 +104,10 @@ static void sanitizeMessage(const InputMessage& msg, InputMessage* outMsg) {
             outMsg->body.motion.edgeFlags = msg.body.motion.edgeFlags;
             // nsecs_t downTime
             outMsg->body.motion.downTime = msg.body.motion.downTime;
+            // float xScale
+            outMsg->body.motion.xScale = msg.body.motion.xScale;
+            // float yScale
+            outMsg->body.motion.yScale = msg.body.motion.yScale;
             // float xOffset
             outMsg->body.motion.xOffset = msg.body.motion.xOffset;
             // float yOffset
