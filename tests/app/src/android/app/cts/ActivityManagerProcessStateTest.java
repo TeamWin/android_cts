@@ -54,6 +54,7 @@ import android.os.RemoteException;
 import android.os.SystemClock;
 import android.permission.cts.PermissionUtils;
 import android.server.wm.WindowManagerState;
+import androidx.test.filters.Suppress;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiSelector;
@@ -1725,6 +1726,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
      * PROCESS_CAPABILITY_FOREGROUND_LOCATION.
      * @throws Exception
      */
+    @Suppress
     public void testFgsLocation() throws Exception {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP1, 0);
@@ -1787,6 +1789,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
      * passed from client to service.
      * @throws Exception
      */
+    @Suppress
     public void testFgsLocationBind() throws Exception {
         setupWatchers(3);
 
@@ -1861,6 +1864,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
      * Bound app should be TOP w/flag and BTOP without flag.
      * @throws Exception
      */
+    @Suppress
     public void testTopBind() throws Exception {
         setupWatchers(2);
 

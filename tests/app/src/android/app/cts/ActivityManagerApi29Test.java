@@ -40,6 +40,7 @@ import android.permission.cts.PermissionUtils;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
 
+import androidx.test.filters.Suppress;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -61,6 +62,7 @@ import org.junit.runner.RunWith;
  * one of the foreground state (including foreground_service state), this operation will be denied
  * when the process is in background state.
  */
+@Suppress
 @RunWith(AndroidJUnit4.class)
 public class ActivityManagerApi29Test {
     private static final String PACKAGE_NAME = "android.app.cts.activitymanager.api29";

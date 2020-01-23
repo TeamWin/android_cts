@@ -26,6 +26,8 @@ import android.os.ParcelFileDescriptor;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+import androidx.test.filters.Suppress;
+
 import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.SettingsUtils;
 
@@ -79,6 +81,7 @@ public class UiModeManagerTest extends AndroidTestCase {
         }
     }
 
+    @Suppress //("b/146764875")
     public void testNightModeYesPersisted() throws InterruptedException {
         setNightMode(UiModeManager.MODE_NIGHT_NO);
         assertStoredNightModeSetting(UiModeManager.MODE_NIGHT_NO);
@@ -87,6 +90,7 @@ public class UiModeManagerTest extends AndroidTestCase {
         assertStoredNightModeSetting(UiModeManager.MODE_NIGHT_YES);
     }
 
+    @Suppress //("b/146764875")
     public void testNightModeAutoPersisted() throws InterruptedException {
         setNightMode(UiModeManager.MODE_NIGHT_NO);
         assertStoredNightModeSetting(UiModeManager.MODE_NIGHT_NO);
