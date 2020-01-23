@@ -12,6 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+
+java_library {
+    name: "cts-keystore-user-auth-helper-library",
+
+    srcs: ["src/android/server/**/*.java"],
+
+    static_libs: [
+        "androidx.test.rules",
+        "compatibility-device-util-axt",
+        "hamcrest-library",
+        "junit",
+        "platformprotosnano",
+    ],
+
+    platform_apis: true,
+}
+
 android_test {
     name: "CtsKeystoreTestCases",
     defaults: ["cts_defaults"],
@@ -35,9 +52,10 @@ android_test {
         "guava",
         "junit",
         "cts-security-test-support-library",
+        "cts-keystore-user-auth-helper-library",
         "platformprotosnano",
     ],
-    srcs: ["src/**/*.java"],
+    srcs: ["src/android/keystore/**/*.java"],
     // Can't use public/test API only because some tests use hidden API
     // (e.g. device-provided Bouncy Castle).
     //

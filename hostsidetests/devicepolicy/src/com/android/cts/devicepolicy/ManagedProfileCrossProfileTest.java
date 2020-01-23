@@ -20,6 +20,7 @@ import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
@@ -28,16 +29,23 @@ import android.stats.devicepolicy.EventId;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil;
+import com.android.tradefed.result.InputStreamSource;
+import com.android.tradefed.util.StreamUtil;
+
+import com.google.common.collect.Sets;
 
 import org.junit.Test;
 
 import java.util.Collections;
+import java.util.Set;
 
 public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
     private static final String NOTIFICATION_APK = "CtsNotificationSenderApp.apk";
     private static final String WIDGET_PROVIDER_APK = "CtsWidgetProviderApp.apk";
     private static final String WIDGET_PROVIDER_PKG = "com.android.cts.widgetprovider";
     private static final String PARAM_PROFILE_ID = "profile-id";
+    private static final String ACTION_CAN_INTERACT_ACROSS_PROFILES_CHANGED =
+            "android.content.pm.action.CAN_INTERACT_ACROSS_PROFILES_CHANGED";
 
     @LargeTest
     @Test
@@ -424,6 +432,95 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
                 "testSharingFromPersonalSucceeds", mParentUserId);
     }
 
+    @Test
+    public void testSetCrossProfilePackages_resetsAppOps() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        installAllDummyApps();
+        runWorkProfileDeviceTest(
+                ".CrossProfileTest",
+                "testSetCrossProfilePackages_firstTime_doesNotResetAnyAppOps");
+        runWorkProfileDeviceTest(
+                ".CrossProfileTest",
+                "testSetCrossProfilePackages_unchanged_doesNotResetAnyAppOps");
+        runWorkProfileDeviceTest(
+                ".CrossProfileTest",
+                "testSetCrossProfilePackages_noPackagesUnset_doesNotResetAnyAppOps");
+        runWorkProfileDeviceTest(
+                ".CrossProfileTest",
+                "testSetCrossProfilePackages_somePackagesUnset_doesNotResetAppOpsIfStillSet");
+        runWorkProfileDeviceTest(
+                ".CrossProfileTest",
+                "testSetCrossProfilePackages_resetsAppOpOfUnsetPackages");
+        runWorkProfileDeviceTest(
+                ".CrossProfileTest",
+                "testSetCrossProfilePackages_resetsAppOpOfUnsetPackagesOnOtherProfile");
+    }
+
+    @Test
+    public void testSetCrossProfilePackages_sendsBroadcastWhenResettingAppOps() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        installAllDummyApps();
+        getDevice().clearLogcat();
+
+        runWorkProfileDeviceTest(
+                ".CrossProfileTest",
+                "testSetCrossProfilePackages_sendsBroadcastWhenResettingAppOps_noAsserts");
+        waitForBroadcastIdle();
+
+        // The apps whose app-ops are maintained and unset are defined by the device-side test.
+        final Set<String> unsetCrossProfilePackages =
+                Sets.newHashSet(
+                        DUMMY_APP_3_PKG,
+                       DUMMY_APP_4_PKG);
+        final Set<String> maintainedCrossProfilePackages =
+                Sets.newHashSet(
+                        DUMMY_APP_1_PKG,
+                        DUMMY_APP_2_PKG);
+        assertDummyAppsReceivedCanInteractAcrossProfilesChangedBroadcast(
+                unsetCrossProfilePackages);
+        assertDummyAppsDidNotReceiveCanInteractAcrossProfilesChangedBroadcast(
+                maintainedCrossProfilePackages);
+    }
+
+    /** Assumes that logcat is clear before running the test. */
+    private void assertDummyAppsReceivedCanInteractAcrossProfilesChangedBroadcast(
+            Set<String> packageNames)
+            throws Exception {
+        for (String packageName : packageNames) {
+            assertTrue(didDummyAppReceiveCanInteractAcrossProfilesChangedBroadcast(
+                    packageName, mProfileUserId));
+            assertTrue(didDummyAppReceiveCanInteractAcrossProfilesChangedBroadcast(
+                    packageName, mParentUserId));
+        }
+    }
+
+    /** Assumes that logcat is clear before running the test. */
+    private void assertDummyAppsDidNotReceiveCanInteractAcrossProfilesChangedBroadcast(
+            Set<String> packageNames)
+            throws Exception {
+        for (String packageName : packageNames) {
+            assertFalse(didDummyAppReceiveCanInteractAcrossProfilesChangedBroadcast(
+                    packageName, mProfileUserId));
+            assertFalse(didDummyAppReceiveCanInteractAcrossProfilesChangedBroadcast(
+                    packageName, mParentUserId));
+        }
+    }
+
+    /** Assumes that logcat is clear before running the test. */
+    private boolean didDummyAppReceiveCanInteractAcrossProfilesChangedBroadcast(
+            String packageName, int userId)
+            throws Exception {
+        // The expected string is defined in the broadcast receiver of the dummy apps to be
+        // packageName#action#userId.
+        final String expectedSubstring =
+                packageName + "#" + ACTION_CAN_INTERACT_ACROSS_PROFILES_CHANGED + "#" + userId;
+        return readLogcat().contains(expectedSubstring);
+    }
+
     private void runCrossProfileCalendarTestsWhenWhitelistedAndEnabled() throws Exception {
         try {
             // Setup. Add the test package into cross-profile calendar whitelist, enable
@@ -589,5 +686,30 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
                 + " " + WIDGET_PROVIDER_PKG + "/.SimpleAppWidgetHostService";
         LogUtil.CLog.d("Output for command " + command + ": "
                 + getDevice().executeShellCommand(command));
+    }
+
+    private void installAllDummyApps() throws Exception {
+        installAppAsUser(DUMMY_APP_1_APK, USER_ALL);
+        installAppAsUser(DUMMY_APP_2_APK, USER_ALL);
+        installAppAsUser(DUMMY_APP_3_APK, USER_ALL);
+        installAppAsUser(DUMMY_APP_4_APK, USER_ALL);
+    }
+
+    private void runWorkProfileDeviceTest(String className, String methodName) throws Exception {
+        runDeviceTestsAsUser(
+                MANAGED_PROFILE_PKG,
+                className,
+                methodName,
+                mProfileUserId);
+    }
+
+    private String readLogcat() throws Exception {
+        getDevice().stopLogcat();
+        final String logcat;
+        try (InputStreamSource logcatStream = getDevice().getLogcat()) {
+            logcat = StreamUtil.getStringFromSource(logcatStream);
+        }
+        getDevice().startLogcat();
+        return logcat;
     }
 }

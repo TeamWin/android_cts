@@ -46,7 +46,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := android-ex-camera2 \
                                compatibility-device-util-axt \
                                platform-test-annotations \
                                cts-security-test-support-library \
-                               cts-midi-lib
+                               cts-midi-lib \
+                               cbor-java
 
 LOCAL_STATIC_ANDROID_LIBRARIES := \
     androidx.legacy_legacy-support-v4

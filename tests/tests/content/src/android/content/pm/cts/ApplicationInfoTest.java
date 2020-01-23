@@ -53,7 +53,7 @@ import org.junit.runner.RunWith;
 @AppModeFull // TODO(Instant) Figure out which APIs should work.
 public class ApplicationInfoTest {
     private static final String SYNC_ACCOUNT_ACCESS_STUB_PACKAGE_NAME = "com.android.cts.stub";
-    private static final String DIRECT_BOOT_UNAWARE_PACKAGE_NAME =
+    public static final String DIRECT_BOOT_UNAWARE_PACKAGE_NAME =
             "android.content.cts.directbootunaware";
     private static final String PARTIALLY_DIRECT_BOOT_AWARE_PACKAGE_NAME =
             "android.content.cts.partiallydirectbootaware";

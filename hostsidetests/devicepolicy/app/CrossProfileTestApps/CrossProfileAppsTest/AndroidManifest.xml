@@ -29,7 +29,11 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".NonMainActivity" android:exported="true"/>
+        <activity android:name=".NonMainActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="nonMainActivity" />
+            </intent-filter>
+        </activity>
 
         <activity android:name=".NonExportedActivity" android:exported="false">
             <intent-filter>

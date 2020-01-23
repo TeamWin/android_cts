@@ -40,4 +40,5 @@ android_test_helper_app {
         "vts",
         "general-tests",
     ],
+    platform_apis: true,
 }

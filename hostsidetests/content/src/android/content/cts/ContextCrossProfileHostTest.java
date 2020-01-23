@@ -118,7 +118,7 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
     }
 
     @Test
-    public void testBindServiceAsUser_sameProfileGroup_withInteractAcrossUsersPermission_bindsService()
+    public void testBindServiceAsUser_sameProfileGroup_samePackage_withAcrossUsersPermission_bindsService()
             throws Exception {
         int userInSameProfileGroup = createProfile(mParentUserId);
         getDevice().startUser(userInSameProfileGroup, /* waitFlag= */true);
@@ -137,7 +137,7 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
                 getDevice(),
                 TEST_WITH_PERMISSION_PKG,
                 ".ContextCrossProfileDeviceTest",
-                "testBindServiceAsUser_sameProfileGroup_withInteractAcrossUsersPermission_bindsService",
+                "testBindServiceAsUser_sameProfileGroup_samePackage_withAcrossUsersPermission_bindsService",
                 mParentUserId,
                 mTestArgs,
                 /* timeout= */60L,
@@ -145,7 +145,7 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
     }
 
     @Test
-    public void testBindServiceAsUser_sameProfileGroup_withInteractAcrossProfilesPermission_bindsService()
+    public void testBindServiceAsUser_sameProfileGroup_differentPackage_withAcrossUsersPermission_bindsService()
             throws Exception {
         int userInSameProfileGroup = createProfile(mParentUserId);
         getDevice().startUser(userInSameProfileGroup, /* waitFlag= */true);
@@ -164,7 +164,7 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
                 getDevice(),
                 TEST_WITH_PERMISSION_PKG,
                 ".ContextCrossProfileDeviceTest",
-                "testBindServiceAsUser_sameProfileGroup_withInteractAcrossProfilesPermission_bindsService",
+                "testBindServiceAsUser_sameProfileGroup_differentPackage_withAcrossUsersPermission_bindsService",
                 mParentUserId,
                 mTestArgs,
                 /* timeout= */60L,
@@ -172,7 +172,7 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
     }
 
     @Test
-    public void testBindServiceAsUser_sameProfileGroup_withInteractAcrossProfilesAppOp_bindsService()
+    public void testBindServiceAsUser_sameProfileGroup_samePackage_withAcrossProfilesPermission_bindsService()
             throws Exception {
         int userInSameProfileGroup = createProfile(mParentUserId);
         getDevice().startUser(userInSameProfileGroup, /* waitFlag= */true);
@@ -191,7 +191,88 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
                 getDevice(),
                 TEST_WITH_PERMISSION_PKG,
                 ".ContextCrossProfileDeviceTest",
-                "testBindServiceAsUser_sameProfileGroup_withInteractAcrossProfilesAppOp_bindsService",
+                "testBindServiceAsUser_sameProfileGroup_samePackage_withAcrossProfilesPermission_bindsService",
+                mParentUserId,
+                mTestArgs,
+                /* timeout= */60L,
+                TimeUnit.SECONDS);
+    }
+
+    @Test
+    public void testBindServiceAsUser_sameProfileGroup_differentPackage_withAcrossProfilesPermission_throwsException()
+            throws Exception {
+        int userInSameProfileGroup = createProfile(mParentUserId);
+        getDevice().startUser(userInSameProfileGroup, /* waitFlag= */true);
+        mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
+        getDevice().installPackageForUser(
+                mApkFile, /* reinstall= */true, /* grantPermissions= */true,
+                userInSameProfileGroup, /* extraArgs= */"-t");
+
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
+        File testServiceApkFile = buildHelper.getTestFile(TEST_SERVICE_WITH_PERMISSION_APK);
+        getDevice().installPackageForUser(
+                testServiceApkFile, /* reinstall= */true, /* grantPermissions= */true,
+                userInSameProfileGroup, /* extraArgs= */"-t");
+
+        runDeviceTests(
+                getDevice(),
+                TEST_WITH_PERMISSION_PKG,
+                ".ContextCrossProfileDeviceTest",
+                "testBindServiceAsUser_sameProfileGroup_differentPackage_withAcrossProfilesPermission_throwsException",
+                mParentUserId,
+                mTestArgs,
+                /* timeout= */60L,
+                TimeUnit.SECONDS);
+    }
+
+    @Test
+    public void testBindServiceAsUser_sameProfileGroup_samePackage_withAcrossProfilesAppOp_bindsService()
+            throws Exception {
+        int userInSameProfileGroup = createProfile(mParentUserId);
+        getDevice().startUser(userInSameProfileGroup, /* waitFlag= */true);
+        mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
+        getDevice().installPackageForUser(
+                mApkFile, /* reinstall= */true, /* grantPermissions= */true,
+                userInSameProfileGroup, /* extraArgs= */"-t");
+
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
+        File testServiceApkFile = buildHelper.getTestFile(TEST_SERVICE_WITH_PERMISSION_APK);
+        getDevice().installPackageForUser(
+                testServiceApkFile, /* reinstall= */true, /* grantPermissions= */true,
+                userInSameProfileGroup, /* extraArgs= */"-t");
+
+        runDeviceTests(
+                getDevice(),
+                TEST_WITH_PERMISSION_PKG,
+                ".ContextCrossProfileDeviceTest",
+                "testBindServiceAsUser_sameProfileGroup_samePackage_withAcrossProfilesAppOp_bindsService",
+                mParentUserId,
+                mTestArgs,
+                /* timeout= */60L,
+                TimeUnit.SECONDS);
+    }
+
+    @Test
+    public void testBindServiceAsUser_sameProfileGroup_differentPackage_withAcrossProfilesAppOp_throwsException()
+            throws Exception {
+        int userInSameProfileGroup = createProfile(mParentUserId);
+        getDevice().startUser(userInSameProfileGroup, /* waitFlag= */true);
+        mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
+        getDevice().installPackageForUser(
+                mApkFile, /* reinstall= */true, /* grantPermissions= */true,
+                userInSameProfileGroup, /* extraArgs= */"-t");
+
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
+        File testServiceApkFile = buildHelper.getTestFile(TEST_SERVICE_WITH_PERMISSION_APK);
+        getDevice().installPackageForUser(
+                testServiceApkFile, /* reinstall= */true, /* grantPermissions= */true,
+                userInSameProfileGroup, /* extraArgs= */"-t");
+
+        runDeviceTests(
+                getDevice(),
+                TEST_WITH_PERMISSION_PKG,
+                ".ContextCrossProfileDeviceTest",
+                "testBindServiceAsUser_sameProfileGroup_differentPackage_withAcrossProfilesAppOp_throwsException",
                 mParentUserId,
                 mTestArgs,
                 /* timeout= */60L,
