@@ -20,12 +20,14 @@ import android.test.AndroidTestCase;
 import android.platform.test.annotations.SecurityTest;
 import android.support.test.InstrumentationRegistry;
 
+import android.content.pm.ActivityInfo;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -115,17 +117,25 @@ public class NanoAppBundleTest extends AndroidTestCase {
         private void trigger() {
             Log.i(TAG, "start...");
 
+            String pkg = isCar(mContext) ? "com.android.car.settings" : "com.android.settings";
+            String cls = isCar(mContext)
+                    ? "com.android.car.settings.accounts.AddAccountActivity"
+                    : "com.android.settings.accounts.AddAccountSettings";
             Intent intent = new Intent();
-            intent.setComponent(new ComponentName(
-                    "com.android.settings",
-                    "com.android.settings.accounts.AddAccountSettings"));
+            intent.setComponent(new ComponentName(pkg, cls));
             intent.setAction(Intent.ACTION_RUN);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             String authTypes[] = { SECURITY_CTS_PACKAGE_NAME };
             intent.putExtra("account_types", authTypes);
 
-            mContext.startActivity(intent);
-
+            ActivityInfo info = intent.resolveActivityInfo(
+                    mContext.getPackageManager(), intent.getFlags());
+            // Will throw NullPointerException if activity not found.
+            if (info.exported) {
+                mContext.startActivity(intent);
+            } else {
+                Log.i(TAG, "Activity is not exported");
+            }
             Log.i(TAG, "finsihed.");
         }
 
@@ -356,5 +366,10 @@ public class NanoAppBundleTest extends AndroidTestCase {
 
             return data;
         }
+    }
+
+    private static boolean isCar(Context context) {
+        PackageManager pm = context.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 }
