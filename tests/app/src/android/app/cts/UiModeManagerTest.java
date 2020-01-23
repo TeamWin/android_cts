@@ -30,7 +30,6 @@ import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.SettingsUtils;
 
 import junit.framework.Assert;
-import org.junit.Ignore;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -38,6 +37,9 @@ import java.io.InputStream;
 
 public class UiModeManagerTest extends AndroidTestCase {
     private static final String TAG = "UiModeManagerTest";
+    private static final long MAX_WAIT_TIME = 2 * 1000;
+
+    private static final long WAIT_TIME_INCR = 100;
 
     private UiModeManager mUiModeManager;
 
@@ -80,16 +82,16 @@ public class UiModeManagerTest extends AndroidTestCase {
     }
 
     public void testNightModeYesPersisted() throws InterruptedException {
+        // Reset the mode to no if it is set to another value
         setNightMode(UiModeManager.MODE_NIGHT_NO);
-        assertStoredNightModeSetting(UiModeManager.MODE_NIGHT_NO);
 
         setNightMode(UiModeManager.MODE_NIGHT_YES);
         assertStoredNightModeSetting(UiModeManager.MODE_NIGHT_YES);
     }
 
     public void testNightModeAutoPersisted() throws InterruptedException {
+        // Reset the mode to no if it is set to another value
         setNightMode(UiModeManager.MODE_NIGHT_NO);
-        assertStoredNightModeSetting(UiModeManager.MODE_NIGHT_NO);
 
         setNightMode(UiModeManager.MODE_NIGHT_AUTO);
         assertStoredNightModeSetting(UiModeManager.MODE_NIGHT_AUTO);
@@ -296,9 +298,18 @@ public class UiModeManagerTest extends AndroidTestCase {
     }
 
     private void assertStoredNightModeSetting(int mode) {
+        int storedModeInt = -1;
         // Settings.Secure.UI_NIGHT_MODE
-        String storedMode = SettingsUtils.getSecureSetting("ui_night_mode");
-        int storedModeInt = Integer.parseInt(storedMode);
+        for (int i = 0; i < MAX_WAIT_TIME; i += WAIT_TIME_INCR) {
+            String storedMode = SettingsUtils.getSecureSetting("ui_night_mode");
+            storedModeInt = Integer.parseInt(storedMode);
+            if (mode == storedModeInt) break;
+            try {
+                Thread.sleep(WAIT_TIME_INCR);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
         assertEquals(mode, storedModeInt);
     }
 
