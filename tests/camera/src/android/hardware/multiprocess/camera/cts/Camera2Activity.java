@@ -88,6 +88,22 @@ public class Camera2Activity extends Activity {
                             cameraId);
                     Log.i(TAG, "Camera " + cameraId + " is unavailable");
                 }
+
+                @Override
+                public void onPhysicalCameraAvailable(String cameraId, String physicalCameraId) {
+                    super.onPhysicalCameraAvailable(cameraId, physicalCameraId);
+                    mErrorServiceConnection.logAsync(TestConstants.EVENT_CAMERA_AVAILABLE,
+                            cameraId + " : " + physicalCameraId);
+                    Log.i(TAG, "Camera " + cameraId + " : " + physicalCameraId + " is available");
+                }
+
+                @Override
+                public void onPhysicalCameraUnavailable(String cameraId, String physicalCameraId) {
+                    super.onPhysicalCameraUnavailable(cameraId, physicalCameraId);
+                    mErrorServiceConnection.logAsync(TestConstants.EVENT_CAMERA_UNAVAILABLE,
+                            cameraId + " : " + physicalCameraId);
+                    Log.i(TAG, "Camera " + cameraId + " : " + physicalCameraId + " is unavailable");
+                }
             }, null);
 
             final String chosen = cameraIds[0];

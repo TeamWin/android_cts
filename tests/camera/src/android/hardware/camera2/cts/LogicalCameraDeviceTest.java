@@ -48,6 +48,7 @@ import android.os.BatteryManager;
 import android.util.ArraySet;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.Pair;
 import android.util.Range;
 import android.util.Size;
 import android.util.SizeF;
@@ -61,7 +62,9 @@ import com.android.ex.camera2.blocking.BlockingSessionCallback;
 
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -711,6 +714,29 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testActivePhysicalId() throws Exception {
+        final int AVAILABILITY_TIMEOUT_MS = 10;
+        final LinkedBlockingQueue<Pair<String, String>> unavailablePhysicalCamEventQueue =
+                new LinkedBlockingQueue<>();
+        CameraManager.AvailabilityCallback ac = new CameraManager.AvailabilityCallback() {
+             @Override
+            public void onPhysicalCameraUnavailable(String cameraId, String physicalCameraId) {
+                unavailablePhysicalCamEventQueue.offer(new Pair<>(cameraId, physicalCameraId));
+            }
+        };
+
+        mCameraManager.registerAvailabilityCallback(ac, mHandler);
+        Set<Pair<String, String>> unavailablePhysicalCameras = new HashSet<Pair<String, String>>();
+        Pair<String, String> candidatePhysicalIds =
+                unavailablePhysicalCamEventQueue.poll(AVAILABILITY_TIMEOUT_MS,
+                java.util.concurrent.TimeUnit.MILLISECONDS);
+        while (candidatePhysicalIds != null) {
+            unavailablePhysicalCameras.add(candidatePhysicalIds);
+            candidatePhysicalIds =
+                unavailablePhysicalCamEventQueue.poll(AVAILABILITY_TIMEOUT_MS,
+                java.util.concurrent.TimeUnit.MILLISECONDS);
+        }
+        mCameraManager.unregisterAvailabilityCallback(ac);
+
         for (String id : mCameraIdsUnderTest) {
             try {
                 Log.i(TAG, "Testing Camera " + id);
@@ -777,10 +803,18 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                         }
                     }
                 }
+
+                // Query unavailable physical cameras, and make sure the active physical id
+                // isn't an unavailable physical camera.
+                for (Pair<String, String> unavailPhysicalCamera: unavailablePhysicalCameras) {
+                    assertFalse(unavailPhysicalCamera.first.equals(id) &&
+                           unavailPhysicalCamera.second.equals(storedActiveId));
+                }
             } finally {
                 closeDevice();
             }
         }
+
     }
 
     /**

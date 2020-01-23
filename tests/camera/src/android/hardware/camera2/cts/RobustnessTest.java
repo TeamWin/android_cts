@@ -55,6 +55,8 @@ import com.android.ex.camera2.blocking.BlockingSessionCallback;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -174,6 +176,29 @@ public class RobustnessTest extends Camera2AndroidTestCase {
      */
     @Test
     public void testMandatoryOutputCombinations() throws Exception {
+        final int AVAILABILITY_TIMEOUT_MS = 10;
+        final LinkedBlockingQueue<Pair<String, String>> unavailablePhysicalCamEventQueue =
+                new LinkedBlockingQueue<>();
+        CameraManager.AvailabilityCallback ac = new CameraManager.AvailabilityCallback() {
+             @Override
+            public void onPhysicalCameraUnavailable(String cameraId, String physicalCameraId) {
+                unavailablePhysicalCamEventQueue.offer(new Pair<>(cameraId, physicalCameraId));
+            }
+        };
+
+        mCameraManager.registerAvailabilityCallback(ac, mHandler);
+        Set<Pair<String, String>> unavailablePhysicalCameras = new HashSet<Pair<String, String>>();
+        Pair<String, String> candidatePhysicalIds =
+                unavailablePhysicalCamEventQueue.poll(AVAILABILITY_TIMEOUT_MS,
+                java.util.concurrent.TimeUnit.MILLISECONDS);
+        while (candidatePhysicalIds != null) {
+            unavailablePhysicalCameras.add(candidatePhysicalIds);
+            candidatePhysicalIds =
+                unavailablePhysicalCamEventQueue.poll(AVAILABILITY_TIMEOUT_MS,
+                java.util.concurrent.TimeUnit.MILLISECONDS);
+        }
+        mCameraManager.unregisterAvailabilityCallback(ac);
+
         for (String id : mCameraIdsUnderTest) {
             openDevice(id);
             MandatoryStreamCombination[] combinations =
@@ -203,6 +228,13 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                             // If physicalId is advertised in camera ID list, do not need to test
                             // its stream combination through logical camera.
                             continue;
+                        }
+                        for (Pair<String, String> unavailPhysicalCam : unavailablePhysicalCameras) {
+                            if (unavailPhysicalCam.first.equals(id) ||
+                                    unavailPhysicalCam.second.equals(physicalId)) {
+                                // This particular physical camera isn't available. Skip.
+                                continue;
+                            }
                         }
                         StaticMetadata physicalStaticInfo = mAllStaticInfo.get(physicalId);
                         MandatoryStreamCombination[] phyCombinations =
