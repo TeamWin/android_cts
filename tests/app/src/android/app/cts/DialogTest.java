@@ -485,7 +485,7 @@ public class DialogTest {
         d.getWindow().getDecorView().getRootView().getLocationOnScreen(dialogLocation);
 
         final int touchSlop = ViewConfiguration.get(mActivity).getScaledWindowTouchSlop();
-        final int x = dialogLocation[0] - (touchSlop + 1);
+        final int x = dialogLocation[0];
         final int y = dialogLocation[1] - (touchSlop + 1);
 
         assertNull(d.onTouchEvent);
