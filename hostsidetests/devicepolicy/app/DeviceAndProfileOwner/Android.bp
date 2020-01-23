@@ -27,10 +27,10 @@ android_test_helper_app {
         "ub-uiautomator",
         "cts-security-test-support-library",
         "androidx.legacy_legacy-support-v4",
+        "cts-devicepolicy-suspensionchecker",
     ],
     resource_dirs: ["res"],
     asset_dirs: ["assets"],
-    min_sdk_version: "23",
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
@@ -55,10 +55,10 @@ android_test_helper_app {
         "ub-uiautomator",
         "cts-security-test-support-library",
         "androidx.legacy_legacy-support-v4",
+        "cts-devicepolicy-suspensionchecker",
     ],
     resource_dirs: ["res"],
     asset_dirs: ["assets"],
-    min_sdk_version: "23",
     // tag this module as a cts test artifact
     test_suites: [
         "arcts",
@@ -84,10 +84,10 @@ android_test_helper_app {
         "ub-uiautomator",
         "cts-security-test-support-library",
         "androidx.legacy_legacy-support-v4",
+        "cts-devicepolicy-suspensionchecker",
     ],
     resource_dirs: ["res"],
     asset_dirs: ["assets"],
-    min_sdk_version: "23",
     // tag this module as a cts test artifact
     test_suites: [
         "arcts",
