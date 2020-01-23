@@ -38,9 +38,9 @@ import java.util.Set;
 @RunWith(AndroidJUnit4.class)
 // These tests are disabled for now because selinux doesn't allow CTS to access
 // system_config_service. Re-enable once the appropriate changes are in.
-@Ignore
 public class SystemConfigTest {
     @Test
+    @Ignore
     public void testGetDisabledUntilUsedPreinstalledCarrierApps() throws Exception {
         SystemConfigManager systemConfigManager =
                 InstrumentationRegistry.getContext().getSystemService(SystemConfigManager.class);
@@ -56,6 +56,7 @@ public class SystemConfigTest {
     }
 
     @Test
+    @Ignore
     public void testGetDisabledUntilUsedPreinstalledCarrierAssociatedApps() throws Exception {
         SystemConfigManager systemConfigManager =
                 InstrumentationRegistry.getContext().getSystemService(SystemConfigManager.class);
