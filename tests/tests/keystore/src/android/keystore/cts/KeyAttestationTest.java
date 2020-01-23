@@ -885,9 +885,9 @@ public class KeyAttestationTest extends AndroidTestCase {
         assertNotNull(rootOfTrust.getVerifiedBootKey());
         assertTrue("Verified boot key is only " + rootOfTrust.getVerifiedBootKey().length +
                    " bytes long", rootOfTrust.getVerifiedBootKey().length >= 32);
-        checkEntropy(rootOfTrust.getVerifiedBootKey());
         if (requireLocked) {
             assertTrue(rootOfTrust.isDeviceLocked());
+            checkEntropy(rootOfTrust.getVerifiedBootKey());
             assertEquals(KM_VERIFIED_BOOT_VERIFIED, rootOfTrust.getVerifiedBootState());
         }
     }
