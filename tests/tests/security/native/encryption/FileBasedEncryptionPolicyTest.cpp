@@ -15,7 +15,7 @@
  */
 
 #include <fcntl.h>
-#include <linux/fs.h>
+#include <linux/fscrypt.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <string.h>
@@ -25,55 +25,6 @@
 #include <android-base/unique_fd.h>
 #include <cutils/properties.h>
 #include <gtest/gtest.h>
-
-// Define the latest fscrypt definitions if needed.
-// TODO: delete this once Bionic has updated its headers to Linux v5.4.
-#ifndef FS_IOC_GET_ENCRYPTION_POLICY_EX
-
-#define FSCRYPT_POLICY_FLAGS_PAD_4 0x00
-#define FSCRYPT_POLICY_FLAGS_PAD_8 0x01
-#define FSCRYPT_POLICY_FLAGS_PAD_16 0x02
-#define FSCRYPT_POLICY_FLAGS_PAD_32 0x03
-#define FSCRYPT_POLICY_FLAGS_PAD_MASK 0x03
-#define FSCRYPT_POLICY_FLAG_DIRECT_KEY 0x04
-
-#define FSCRYPT_MODE_AES_256_XTS 1
-#define FSCRYPT_MODE_AES_256_CTS 4
-#define FSCRYPT_MODE_AES_128_CBC 5
-#define FSCRYPT_MODE_AES_128_CTS 6
-#define FSCRYPT_MODE_ADIANTUM 9
-
-#define FSCRYPT_POLICY_V1 0
-#define FSCRYPT_KEY_DESCRIPTOR_SIZE 8
-struct fscrypt_policy_v1 {
-    __u8 version;
-    __u8 contents_encryption_mode;
-    __u8 filenames_encryption_mode;
-    __u8 flags;
-    __u8 master_key_descriptor[FSCRYPT_KEY_DESCRIPTOR_SIZE];
-};
-
-#define FSCRYPT_POLICY_V2 2
-#define FSCRYPT_KEY_IDENTIFIER_SIZE 16
-struct fscrypt_policy_v2 {
-    __u8 version;
-    __u8 contents_encryption_mode;
-    __u8 filenames_encryption_mode;
-    __u8 flags;
-    __u8 __reserved[4];
-    __u8 master_key_identifier[FSCRYPT_KEY_IDENTIFIER_SIZE];
-};
-
-#define FS_IOC_GET_ENCRYPTION_POLICY_EX _IOWR('f', 22, __u8[9])
-struct fscrypt_get_policy_ex_arg {
-    __u64 policy_size;
-    union {
-        __u8 version;
-        struct fscrypt_policy_v1 v1;
-        struct fscrypt_policy_v2 v2;
-    } policy;
-};
-#endif  // FS_IOC_GET_ENCRYPTION_POLICY_EX
 
 // Non-upstream encryption modes that are used on some devices.
 #define FSCRYPT_MODE_AES_256_HEH 126
