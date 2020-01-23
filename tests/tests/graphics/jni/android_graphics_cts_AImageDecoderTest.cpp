@@ -146,7 +146,6 @@ static void testNullDecoder(JNIEnv* env, jclass, jobject jAssets, jstring jFile)
     ASSERT_EQ(0, AImageDecoderHeaderInfo_getWidth(nullptr));
     ASSERT_EQ(0, AImageDecoderHeaderInfo_getHeight(nullptr));
     ASSERT_EQ(nullptr, AImageDecoderHeaderInfo_getMimeType(nullptr));
-    ASSERT_EQ(false, AImageDecoderHeaderInfo_isAnimated(nullptr));
     ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, AImageDecoderHeaderInfo_getDataSpace(nullptr));
 
     {
@@ -169,7 +168,7 @@ static void testNullDecoder(JNIEnv* env, jclass, jobject jAssets, jstring jFile)
 }
 
 static void testInfo(JNIEnv* env, jclass, jlong imageDecoderPtr, jint width, jint height,
-                     jstring jMimeType, jboolean isAnimated, jboolean isF16, jint dataSpace) {
+                     jstring jMimeType, jboolean isF16, jint dataSpace) {
     AImageDecoder* decoder = reinterpret_cast<AImageDecoder*>(imageDecoderPtr);
     ASSERT_NE(decoder, nullptr);
     DecoderDeleter decoderDeleter(decoder, AImageDecoder_delete);
@@ -185,7 +184,6 @@ static void testInfo(JNIEnv* env, jclass, jlong imageDecoderPtr, jint width, jin
     ASSERT_NE(mimeType, nullptr);
     ASSERT_EQ(0, strcmp(mimeType, AImageDecoderHeaderInfo_getMimeType(info)));
     env->ReleaseStringUTFChars(jMimeType, mimeType);
-    ASSERT_EQ(isAnimated, AImageDecoderHeaderInfo_isAnimated(info));
     auto format = AImageDecoderHeaderInfo_getAndroidBitmapFormat(info);
     if (isF16) {
         ASSERT_EQ(ANDROID_BITMAP_FORMAT_RGBA_F16, format);
@@ -366,7 +364,7 @@ static void testSetUnpremul(JNIEnv* env, jclass, jlong imageDecoderPtr, jboolean
     }
 }
 
-static int bytesPerPixel(AndroidBitmapFormat format) {
+static int bytesPerPixel(int32_t format) {
     switch (format) {
         case ANDROID_BITMAP_FORMAT_RGBA_8888:
             return 4;
@@ -378,6 +376,7 @@ static int bytesPerPixel(AndroidBitmapFormat format) {
             return 8;
         case ANDROID_BITMAP_FORMAT_NONE:
         case ANDROID_BITMAP_FORMAT_RGBA_4444:
+        default:
             return 0;
     }
 }
@@ -455,14 +454,14 @@ static bool bitmapsEqual(size_t minStride, int height,
         return false;           \
     }
 
-static bool bitmapsEqual(JNIEnv* env, jobject jbitmap, AndroidBitmapFormat format,
+static bool bitmapsEqual(JNIEnv* env, jobject jbitmap, int32_t androidBitmapFormat,
                          int width, int height, int alphaFlags, size_t minStride,
                          void* pixelsA, size_t strideA) {
     AndroidBitmapInfo jInfo;
     int bitmapResult = AndroidBitmap_getInfo(env, jbitmap, &jInfo);
     EXPECT_EQ("Failed to getInfo on Bitmap", ANDROID_BITMAP_RESULT_SUCCESS, bitmapResult);
 
-    EXPECT_EQ("Wrong format", jInfo.format, format);
+    EXPECT_EQ("Wrong format", jInfo.format, androidBitmapFormat);
 
     // If the image is truly opaque, the Java Bitmap will report OPAQUE, even if
     // the AImageDecoder requested PREMUL/UNPREMUL. In that case, it is okay for
@@ -641,14 +640,14 @@ static void testSetTargetSize(JNIEnv* env, jclass, jlong imageDecoderPtr) {
 
     const size_t defaultStride = AImageDecoder_getMinimumStride(decoder);
 
-    for (int width : { -1, 0, -500 }) {
+    for (int32_t width : { -1, 0, -500 }) {
         int result = AImageDecoder_setTargetSize(decoder, width, 100);
         ASSERT_EQ(ANDROID_IMAGE_DECODER_INVALID_SCALE, result);
         // stride is unchanged, as the target size did not change.
         ASSERT_EQ(defaultStride, AImageDecoder_getMinimumStride(decoder));
     }
 
-    for (int height : { -1, 0, -300 }) {
+    for (int32_t height : { -1, 0, -300 }) {
         int result = AImageDecoder_setTargetSize(decoder, 100, height);
         ASSERT_EQ(ANDROID_IMAGE_DECODER_INVALID_SCALE, result);
         // stride is unchanged, as the target size did not change.
@@ -659,7 +658,7 @@ static void testSetTargetSize(JNIEnv* env, jclass, jlong imageDecoderPtr) {
     ASSERT_NE(info, nullptr);
     const int bpp = bytesPerPixel(AImageDecoderHeaderInfo_getAndroidBitmapFormat(info));
 
-    for (int width : { 7, 100, 275, 300 }) {
+    for (int32_t width : { 7, 100, 275, 300 }) {
         int result = AImageDecoder_setTargetSize(decoder, width, 100);
         ASSERT_EQ(ANDROID_IMAGE_DECODER_SUCCESS, result);
 
@@ -706,8 +705,8 @@ static void testSetTargetSize(JNIEnv* env, jclass, jlong imageDecoderPtr) {
 struct SampledSizeParams {
     AImageDecoder* decoder;
     int sampleSize;
-    int* width;
-    int* height;
+    int32_t* width;
+    int32_t* height;
 };
 
 static void testComputeSampledSize(JNIEnv* env, jclass, jlong imageDecoderPtr,
@@ -720,7 +719,7 @@ static void testComputeSampledSize(JNIEnv* env, jclass, jlong imageDecoderPtr,
     const int32_t origWidth = AImageDecoderHeaderInfo_getWidth(info);
     const int32_t origHeight = AImageDecoderHeaderInfo_getHeight(info);
 
-    int width, height;
+    int32_t width, height;
     // Test some bad parameters.
     for (SampledSizeParams p : std::initializer_list<SampledSizeParams>{
         { nullptr, 2, &width, &height },
@@ -865,7 +864,7 @@ static void testSetCrop(JNIEnv* env, jclass, jobject jAssets, jstring jFile) {
 
     const int32_t width = AImageDecoderHeaderInfo_getWidth(info);
     const int32_t height = AImageDecoderHeaderInfo_getHeight(info);
-    const AndroidBitmapFormat format = AImageDecoderHeaderInfo_getAndroidBitmapFormat(info);
+    const auto format = AImageDecoderHeaderInfo_getAndroidBitmapFormat(info);
     const size_t defaultStride = AImageDecoder_getMinimumStride(decoder);
 
     if (width == 1 && height == 1) {
@@ -930,7 +929,7 @@ static void testSetCrop(JNIEnv* env, jclass, jobject jAssets, jstring jFile) {
     ASSERT_EQ(ANDROID_IMAGE_DECODER_SUCCESS, result);
     ASSERT_EQ(defaultStride, AImageDecoder_getMinimumStride(decoder));
 
-    int newWidth = width / 2, newHeight = height / 2;
+    int32_t newWidth = width / 2, newHeight = height / 2;
     result = AImageDecoder_setTargetSize(decoder, newWidth, newHeight);
     ASSERT_EQ(ANDROID_IMAGE_DECODER_SUCCESS, result);
     const size_t halfStride = AImageDecoder_getMinimumStride(decoder);
@@ -1182,7 +1181,7 @@ static void testDecodeSetDataSpace(JNIEnv* env, jclass, jlong imageDecoderPtr,
 static JNINativeMethod gMethods[] = {
     { "nTestEmptyCreate", "()V", (void*) testEmptyCreate },
     { "nTestNullDecoder", "(" ASSET_MANAGER STRING ")V", (void*) testNullDecoder },
-    { "nTestInfo", "(JII" STRING "ZZI)V", (void*) testInfo },
+    { "nTestInfo", "(JII" STRING "ZI)V", (void*) testInfo },
     { "nOpenAsset", "(" ASSET_MANAGER STRING ")J", (void*) openAssetNative },
     { "nCloseAsset", "(J)V", (void*) closeAsset },
     { "nCreateFromAsset", "(J)J", (void*) createFromAsset },
