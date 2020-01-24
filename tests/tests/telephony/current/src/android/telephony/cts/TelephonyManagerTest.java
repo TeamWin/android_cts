@@ -53,6 +53,7 @@ import android.telephony.AccessNetworkConstants;
 import android.telephony.Annotation.RadioPowerState;
 import android.telephony.AvailableNetworkInfo;
 import android.telephony.CallAttributes;
+import android.telephony.CallForwardingInfo;
 import android.telephony.CallQuality;
 import android.telephony.CarrierConfigManager;
 import android.telephony.CellLocation;
@@ -163,6 +164,8 @@ public class TelephonyManagerTest {
     private static final List<String> FPLMN_TEST = Arrays.asList(PLMN_A, PLMN_B);
     private static final int MAX_FPLMN_NUM = 100;
     private static final int MIN_FPLMN_NUM = 3;
+
+    private static final String TEST_FORWARD_NUMBER = "54321";
 
     static {
         EMERGENCY_NUMBER_SOURCE_SET = new HashSet<Integer>();
@@ -529,6 +532,99 @@ public class TelephonyManagerTest {
         TelephonyManager.getDefaultRespondViaMessageApplication(getContext(), false);
         ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.getPhoneCapability());
+    }
+
+    @Test
+    public void testGetCallForwarding() {
+        List<Integer> callForwardingReasons = new ArrayList<>();
+        callForwardingReasons.add(CallForwardingInfo.REASON_UNCONDITIONAL);
+        callForwardingReasons.add(CallForwardingInfo.REASON_BUSY);
+        callForwardingReasons.add(CallForwardingInfo.REASON_NO_REPLY);
+        callForwardingReasons.add(CallForwardingInfo.REASON_NOT_REACHABLE);
+        callForwardingReasons.add(CallForwardingInfo.REASON_ALL);
+        callForwardingReasons.add(CallForwardingInfo.REASON_ALL_CONDITIONAL);
+
+        Set<Integer> callForwardingStatus = new HashSet<Integer>();
+        callForwardingStatus.add(CallForwardingInfo.STATUS_INACTIVE);
+        callForwardingStatus.add(CallForwardingInfo.STATUS_ACTIVE);
+        callForwardingStatus.add(CallForwardingInfo.STATUS_FDN_CHECK_FAILURE);
+        callForwardingStatus.add(CallForwardingInfo.STATUS_UNKNOWN_ERROR);
+        callForwardingStatus.add(CallForwardingInfo.STATUS_NOT_SUPPORTED);
+
+        for (int callForwardingReasonToGet : callForwardingReasons) {
+            Log.d(TAG, "[testGetCallForwarding] callForwardingReasonToGet: "
+                    + callForwardingReasonToGet);
+            CallForwardingInfo callForwardingInfo =
+                    ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                            (tm) -> tm.getCallForwarding(callForwardingReasonToGet));
+
+            assertNotNull(callForwardingInfo);
+            assertTrue(callForwardingStatus.contains(callForwardingInfo.getStatus()));
+            assertTrue(callForwardingReasons.contains(callForwardingInfo.getReason()));
+            callForwardingInfo.getNumber();
+            assertTrue(callForwardingInfo.getTimeoutSeconds() >= 0);
+        }
+    }
+
+    @Test
+    public void testSetCallForwarding() {
+        List<Integer> callForwardingReasons = new ArrayList<>();
+        callForwardingReasons.add(CallForwardingInfo.REASON_UNCONDITIONAL);
+        callForwardingReasons.add(CallForwardingInfo.REASON_BUSY);
+        callForwardingReasons.add(CallForwardingInfo.REASON_NO_REPLY);
+        callForwardingReasons.add(CallForwardingInfo.REASON_NOT_REACHABLE);
+        callForwardingReasons.add(CallForwardingInfo.REASON_ALL);
+        callForwardingReasons.add(CallForwardingInfo.REASON_ALL_CONDITIONAL);
+
+        // Enable Call Forwarding
+        for (int callForwardingReasonToEnable : callForwardingReasons) {
+            final CallForwardingInfo callForwardingInfoToEnable = new CallForwardingInfo(
+                    CallForwardingInfo.STATUS_ACTIVE,
+                    callForwardingReasonToEnable,
+                    TEST_FORWARD_NUMBER,
+                    1 /** time seconds */);
+            Log.d(TAG, "[testSetCallForwarding] Enable Call Forwarding. Status: "
+                    + CallForwardingInfo.STATUS_ACTIVE + " Reason: " + callForwardingReasonToEnable
+                    + " Number: " + TEST_FORWARD_NUMBER + " Time Seconds: 1");
+            ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                    (tm) -> tm.setCallForwarding(callForwardingInfoToEnable));
+        }
+
+        // Disable Call Forwarding
+        for (int callForwardingReasonToDisable : callForwardingReasons) {
+            final CallForwardingInfo callForwardingInfoToDisable = new CallForwardingInfo(
+                    CallForwardingInfo.STATUS_INACTIVE,
+                    callForwardingReasonToDisable,
+                    TEST_FORWARD_NUMBER,
+                    1 /** time seconds */);
+            Log.d(TAG, "[testSetCallForwarding] Disable Call Forwarding. Status: "
+                    + CallForwardingInfo.STATUS_INACTIVE + " Reason: "
+                    + callForwardingReasonToDisable + " Number: " + TEST_FORWARD_NUMBER
+                    + " Time Seconds: 1");
+            ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                    (tm) -> tm.setCallForwarding(callForwardingInfoToDisable));
+        }
+    }
+
+    @Test
+    public void testGetCallWaitingStatus() {
+        Set<Integer> callWaitingStatus = new HashSet<Integer>();
+        callWaitingStatus.add(TelephonyManager.CALL_WAITING_STATUS_ACTIVE);
+        callWaitingStatus.add(TelephonyManager.CALL_WAITING_STATUS_INACTIVE);
+        callWaitingStatus.add(TelephonyManager.CALL_WAITING_STATUS_UNKNOWN_ERROR);
+        callWaitingStatus.add(TelephonyManager.CALL_WAITING_STATUS_NOT_SUPPORTED);
+
+        int status = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.getCallWaitingStatus());
+        assertTrue(callWaitingStatus.contains(status));
+    }
+
+    @Test
+    public void testSetCallWaitingStatus() {
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.setCallWaitingStatus(true));
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.setCallWaitingStatus(false));
     }
 
     @Test
