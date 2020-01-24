@@ -205,6 +205,19 @@ public class SensorTest extends SensorTestCase {
             assertEquals(Sensor.TYPE_TEMPERATURE, sensor.getType());
             assertSensorValues(sensor);
         }
+
+        sensor = mSensorManager.getDefaultSensor(Sensor.TYPE_HINGE_ANGLE);
+        boolean hasHingeAngle = getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_SENSOR_HINGE_ANGLE);
+
+        if (hasHingeAngle) {
+            assertEquals(Sensor.TYPE_HINGE_ANGLE, sensor.getType());
+            assertSensorValues(sensor);
+            assertTrue("Max range must not be larger than 360. Range=" + sensor.getMaximumRange()
+                + " " + sensor.getName(), sensor.getMaximumRange() <= 360);
+        } else {
+            assertNull(sensor);
+        }
     }
 
     @AppModeFull(reason = "Instant apps cannot access body sensors")
@@ -237,6 +250,19 @@ public class SensorTest extends SensorTestCase {
                 sensors.get(0).isWakeUpSensor());
     }
 
+    private void hasAtLeastOneWakeupSensorOrEmpty(List<Sensor> sensors, String sensorName) {
+        if (sensors == null || sensors.isEmpty()) return;
+        boolean foundWakeup = false;
+        for (Sensor sensor : sensors) {
+            if (sensor.isWakeUpSensor()) {
+                foundWakeup = true;
+                break;
+            }
+        }
+
+        assertTrue("No wake-up " + sensorName + " sensors implemented", foundWakeup);
+    }
+
     // Some sensors like proximity, significant motion etc. are defined as wake-up sensors by
     // default. Check if the wake-up flag is set correctly.
     @Presubmit
@@ -250,16 +276,8 @@ public class SensorTest extends SensorTestCase {
         hasOnlyOneWakeUpSensorOrEmpty(mSensorManager.getSensorList(TYPE_GLANCE_GESTURE));
         hasOnlyOneWakeUpSensorOrEmpty(mSensorManager.getSensorList(TYPE_PICK_UP_GESTURE));
 
-        List<Sensor> proximity_sensors = mSensorManager.getSensorList(Sensor.TYPE_PROXIMITY);
-        if (proximity_sensors.isEmpty()) return;
-        boolean hasWakeUpProximitySensor = false;
-        for (Sensor sensor : proximity_sensors) {
-            if (sensor.isWakeUpSensor()) {
-                hasWakeUpProximitySensor = true;
-                break;
-            }
-        }
-        assertTrue("No wake-up proximity sensors implemented", hasWakeUpProximitySensor);
+        hasAtLeastOneWakeupSensorOrEmpty(mSensorManager.getSensorList(Sensor.TYPE_PROXIMITY), "proximity");
+        hasAtLeastOneWakeupSensorOrEmpty(mSensorManager.getSensorList(Sensor.TYPE_HINGE_ANGLE), "hinge");
     }
 
     public void testGetDefaultSensorWithWakeUpFlag() {
