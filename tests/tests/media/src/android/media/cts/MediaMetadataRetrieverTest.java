@@ -323,6 +323,29 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
                 mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_WRITER));
     }
 
+    public void testGenreParsing() {
+        Object [][] genres = {
+            { R.raw.id3test0, null },
+            { R.raw.id3test1, "Country" },
+            { R.raw.id3test2, "Classic Rock, Android" },
+            { R.raw.id3test3, null },
+            { R.raw.id3test4, "Classic Rock, (Android)" },
+            { R.raw.id3test5, null },
+            { R.raw.id3test6, "Funk, Grunge, Hip-Hop" },
+            { R.raw.id3test7, null },
+            { R.raw.id3test8, "Disco" },
+            { R.raw.id3test9, "Cover" },
+            { R.raw.id3test10, "Pop, Remix" },
+            { R.raw.id3test11, "Remix" },
+        };
+        for (Object [] genre: genres) {
+            setDataSourceFd((Integer)genre[0] /* resource id */);
+            assertEquals("Unexpected genre: ",
+                    genre[1] /* genre */,
+                    mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_GENRE));
+        }
+    }
+
     public void testBitsPerSampleAndSampleRate() {
         setDataSourceFd(R.raw.testwav_16bit_44100hz);
 
