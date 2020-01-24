@@ -45,6 +45,7 @@ public class PackageDeviceInfo extends DeviceInfo {
     private static final String PERMISSION_PROTECTION = "protection_level";
     private static final String PERMISSION_PROTECTION_FLAGS = "protection_level_flags";
 
+    private static final int SYS_UID_MAX = 10000;
     private static final String HAS_SYSTEM_UID = "has_system_uid";
 
     private static final String SHARES_INSTALL_PERMISSION = "shares_install_packages_permission";
@@ -53,7 +54,6 @@ public class PackageDeviceInfo extends DeviceInfo {
     @Override
     protected void collectDeviceInfo(DeviceInfoStore store) throws Exception {
         final PackageManager pm = getContext().getPackageManager();
-        final ApplicationInfo system = pm.getApplicationInfo("android", 0);
 
         final List<PackageInfo> allPackages = pm.getInstalledPackages(PackageManager.GET_PERMISSIONS);
 
@@ -92,7 +92,7 @@ public class PackageDeviceInfo extends DeviceInfo {
                 store.addResult(MIN_SDK, appInfo.minSdkVersion);
                 store.addResult(TARGET_SDK, appInfo.targetSdkVersion);
 
-                store.addResult(HAS_SYSTEM_UID, appInfo.uid == system.uid);
+                store.addResult(HAS_SYSTEM_UID, appInfo.uid < SYS_UID_MAX);
 
                 final boolean canInstall = sharesUidWithPackageHolding(pm, appInfo.uid, INSTALL_PACKAGES_PERMISSION);
                 store.addResult(SHARES_INSTALL_PERMISSION, canInstall);
