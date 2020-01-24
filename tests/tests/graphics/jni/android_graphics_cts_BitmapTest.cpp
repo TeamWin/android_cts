@@ -49,6 +49,9 @@ static void validateNdkAccessFails(JNIEnv* env, jclass, jobject jbitmap) {
     int err = AndroidBitmap_lockPixels(env, jbitmap, &pixels);
     ASSERT_EQ(err, ANDROID_BITMAP_RESULT_JNI_EXCEPTION);
 
+    int32_t dataSpace = AndroidBitmap_getDataSpace(env, jbitmap);
+    ASSERT_EQ(ADATASPACE_UNKNOWN, dataSpace);
+
     AHardwareBuffer* buffer;
     err = AndroidBitmap_getHardwareBuffer(env, jbitmap, &buffer);
     ASSERT_EQ(err, ANDROID_BITMAP_RESULT_JNI_EXCEPTION);

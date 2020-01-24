@@ -774,6 +774,11 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
                 || message.contains("can only be called by the device owner"));
     }
 
+    private void assertOrganizationOwnedProfileOwnerMessage(String message) {
+        assertTrue("message is: "+ message,
+                message.contains("is not the profile owner on organization-owned device"));
+    }
+
     private void assertDeviceOwnerOrManageUsersMessage(String message) {
         assertTrue("message is: "+ message, message.contains("does not own the device")
                 || message.contains("can only be called by the device owner")
@@ -811,16 +816,16 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testSetSystemUpdatePolicy_failIfNotDeviceOwner() {
+    public void testSetSystemUpdatePolicy_failIfNotOrganizationOwnedProfileOwner() {
         if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping testSetSystemUpdatePolicy_failIfNotDeviceOwner");
+            Log.w(TAG, "Skipping testSetSystemUpdatePolicy_failIfNotOrganizationOwnedProfileOwner");
             return;
         }
         try {
             mDevicePolicyManager.setSystemUpdatePolicy(mComponent, null);
             fail("did not throw expected SecurityException");
         } catch (SecurityException e) {
-            assertDeviceOwnerMessage(e.getMessage());
+            assertOrganizationOwnedProfileOwnerMessage(e.getMessage());
         }
     }
 

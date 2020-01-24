@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.location.GnssClock;
+import android.location.GnssStatus;
 import android.os.Parcel;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -81,6 +82,14 @@ public class GnssClockTest {
         clock.resetDriftUncertaintyNanosPerSecond();
         assertFalse(clock.hasDriftUncertaintyNanosPerSecond());
 
+        assertTrue(clock.hasElapsedRealtimeNanos());
+        clock.resetElapsedRealtimeNanos();
+        assertFalse(clock.hasElapsedRealtimeNanos());
+
+        assertTrue(clock.hasElapsedRealtimeUncertaintyNanos());
+        clock.resetElapsedRealtimeUncertaintyNanos();
+        assertFalse(clock.hasElapsedRealtimeUncertaintyNanos());
+
         assertTrue(clock.hasFullBiasNanos());
         clock.resetFullBiasNanos();
         assertFalse(clock.hasFullBiasNanos());
@@ -89,17 +98,21 @@ public class GnssClockTest {
         clock.resetLeapSecond();
         assertFalse(clock.hasLeapSecond());
 
+        assertTrue(clock.hasReferenceConstellationTypeForIsb());
+        clock.resetReferenceConstellationTypeForIsb();
+        assertFalse(clock.hasReferenceConstellationTypeForIsb());
+
+        assertTrue(clock.hasReferenceCarrierFrequencyHzForIsb());
+        clock.resetReferenceCarrierFrequencyHzForIsb();
+        assertFalse(clock.hasReferenceCarrierFrequencyHzForIsb());
+
+        assertTrue(clock.hasReferenceCodeTypeForIsb());
+        clock.resetReferenceCodeTypeForIsb();
+        assertFalse(clock.hasReferenceCodeTypeForIsb());
+
         assertTrue(clock.hasTimeUncertaintyNanos());
         clock.resetTimeUncertaintyNanos();
         assertFalse(clock.hasTimeUncertaintyNanos());
-
-        assertTrue(clock.hasElapsedRealtimeNanos());
-        clock.resetElapsedRealtimeNanos();
-        assertFalse(clock.hasElapsedRealtimeNanos());
-
-        assertTrue(clock.hasElapsedRealtimeUncertaintyNanos());
-        clock.resetElapsedRealtimeUncertaintyNanos();
-        assertFalse(clock.hasElapsedRealtimeUncertaintyNanos());
     }
 
     private static void setTestValues(GnssClock clock) {
@@ -107,13 +120,16 @@ public class GnssClockTest {
         clock.setBiasUncertaintyNanos(2.0);
         clock.setDriftNanosPerSecond(3.0);
         clock.setDriftUncertaintyNanosPerSecond(4.0);
+        clock.setElapsedRealtimeNanos(10987732253L);
+        clock.setElapsedRealtimeUncertaintyNanos(3943523.0);
         clock.setFullBiasNanos(5);
         clock.setHardwareClockDiscontinuityCount(6);
         clock.setLeapSecond(7);
+        clock.setReferenceConstellationTypeForIsb(GnssStatus.CONSTELLATION_GPS);
+        clock.setReferenceCarrierFrequencyHzForIsb(1.59975e+09);
+        clock.setReferenceCodeTypeForIsb("C");
         clock.setTimeNanos(8);
         clock.setTimeUncertaintyNanos(9.0);
-        clock.setElapsedRealtimeNanos(10987732253L);
-        clock.setElapsedRealtimeUncertaintyNanos(3943523.0);
     }
 
     private static void verifyTestValues(GnssClock clock) {
@@ -121,12 +137,15 @@ public class GnssClockTest {
         assertEquals(2.0, clock.getBiasUncertaintyNanos(), DELTA);
         assertEquals(3.0, clock.getDriftNanosPerSecond(), DELTA);
         assertEquals(4.0, clock.getDriftUncertaintyNanosPerSecond(), DELTA);
+        assertEquals(10987732253L, clock.getElapsedRealtimeNanos());
+        assertEquals(3943523.0, clock.getElapsedRealtimeUncertaintyNanos(), DELTA);
         assertEquals(5, clock.getFullBiasNanos());
         assertEquals(6, clock.getHardwareClockDiscontinuityCount());
         assertEquals(7, clock.getLeapSecond());
+        assertEquals(GnssStatus.CONSTELLATION_GPS, clock.getReferenceConstellationTypeForIsb());
+        assertEquals(1.59975e+09, clock.getReferenceCarrierFrequencyHzForIsb(), DELTA);
+        assertEquals("C", clock.getReferenceCodeTypeForIsb());
         assertEquals(8, clock.getTimeNanos());
         assertEquals(9.0, clock.getTimeUncertaintyNanos(), DELTA);
-        assertEquals(10987732253L, clock.getElapsedRealtimeNanos());
-        assertEquals(3943523.0, clock.getElapsedRealtimeUncertaintyNanos(), DELTA);
     }
 }

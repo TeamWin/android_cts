@@ -16,16 +16,21 @@
 
 package com.android.cts.devicepolicy;
 
+import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
+import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.FlakyTest;
+import android.platform.test.annotations.LargeTest;
 
+import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -266,8 +271,31 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
 
-        runDeviceTestsAsUser(
-                DEVICE_ADMIN_PKG, ".FactoryResetProtectionPolicyTest", mUserId);
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".FactoryResetProtectionPolicyTest", mUserId);
+    }
+
+    @LargeTest
+    @Test
+    @Ignore("b/145932189")
+    public void testSystemUpdatePolicy() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".systemupdate.SystemUpdatePolicyTest", mUserId);
+    }
+
+    @Test
+    public void testInstallUpdate() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        pushUpdateFileToDevice("notZip.zi");
+        pushUpdateFileToDevice("empty.zip");
+        pushUpdateFileToDevice("wrongPayload.zip");
+        pushUpdateFileToDevice("wrongHash.zip");
+        pushUpdateFileToDevice("wrongSize.zip");
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".systemupdate.InstallUpdateTest", mUserId);
     }
 
     @Test
@@ -300,6 +328,15 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".AdminConfiguredNetworksTest", mUserId);
+    }
+
+    @Test
+    public void testApplicationHidden() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".ApplicationHiddenParentTest", mUserId);
     }
 
     private void removeOrgOwnedProfile() throws DeviceNotAvailableException {

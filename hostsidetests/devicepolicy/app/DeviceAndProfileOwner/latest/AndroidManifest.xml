@@ -34,6 +34,7 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <!-- Needed to read the serial number during Device ID attestation tests -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
 
     <!-- Add a network security config that trusts user added CAs for tests -->
     <application android:networkSecurityConfig="@xml/network_security_config"

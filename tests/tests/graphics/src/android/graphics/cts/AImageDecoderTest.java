@@ -131,8 +131,7 @@ public class AImageDecoderTest {
         long aimagedecoder = nCreateFromAssetBuffer(asset);
 
         nTestInfo(aimagedecoder, record.width, record.height, "image/png",
-                false /* isAnimated */, record.isF16,
-                nativeDataSpace(record.getColorSpace()));
+                record.isF16, nativeDataSpace(record.getColorSpace()));
         nCloseAsset(asset);
     }
 
@@ -145,8 +144,7 @@ public class AImageDecoderTest {
         long aimagedecoder = nCreateFromAssetFd(asset);
 
         nTestInfo(aimagedecoder, record.width, record.height, "image/png",
-                false /* isAnimated */, record.isF16,
-                nativeDataSpace(record.getColorSpace()));
+                record.isF16, nativeDataSpace(record.getColorSpace()));
         nCloseAsset(asset);
     }
 
@@ -157,8 +155,7 @@ public class AImageDecoderTest {
         long aimagedecoder = nCreateFromAsset(asset);
 
         nTestInfo(aimagedecoder, record.width, record.height, "image/png",
-                false /* isAnimated */, record.isF16,
-                nativeDataSpace(record.getColorSpace()));
+                record.isF16, nativeDataSpace(record.getColorSpace()));
         nCloseAsset(asset);
     }
 
@@ -183,8 +180,7 @@ public class AImageDecoderTest {
             long aimagedecoder = nCreateFromFd(pfd.getFd());
 
             nTestInfo(aimagedecoder, record.width, record.height, record.mimeType,
-                    false /* isAnimated */, false /*isF16*/,
-                    nativeDataSpace(record.colorSpace));
+                    false /*isF16*/, nativeDataSpace(record.colorSpace));
         } catch (FileNotFoundException e) {
             fail("Could not open " + Utils.getAsResourceUri(record.resId));
         }
@@ -201,8 +197,7 @@ public class AImageDecoderTest {
             long aimagedecoder = nCreateFromFd(pfd.getFd());
 
             nTestInfo(aimagedecoder, record.width, record.height, record.mimeType,
-                    false /* isAnimated */, false /*isF16*/,
-                    nativeDataSpace(record.colorSpace));
+                    false /*isF16*/, nativeDataSpace(record.colorSpace));
         } catch (FileNotFoundException e) {
             fail("Could not open " + Utils.getAsResourceUri(record.resId));
         } catch (ErrnoException err) {
@@ -959,7 +954,7 @@ public class AImageDecoderTest {
         try (ParcelFileDescriptor pfd = ParcelFileDescriptor.open(file,
                 ParcelFileDescriptor.MODE_READ_ONLY)) {
             long aimagedecoder = nCreateFromFd(pfd.getFd());
-            nTestInfo(aimagedecoder, width, height, toMimeType(format), false, false, dataSpace);
+            nTestInfo(aimagedecoder, width, height, toMimeType(format), false, dataSpace);
         } catch (IOException e) {
             e.printStackTrace();
             fail("Could not read " + file);
@@ -1023,7 +1018,7 @@ public class AImageDecoderTest {
     // For convenience, all methods that take aimagedecoder as a parameter delete
     // it.
     private static native void nTestInfo(long aimagedecoder, int width, int height,
-            String mimeType, boolean isAnimated, boolean isF16, int dataspace);
+            String mimeType, boolean isF16, int dataspace);
     private static native void nTestSetFormat(long aimagedecoder, boolean isF16, boolean isGray);
     private static native void nTestSetUnpremul(long aimagedecoder, boolean hasAlpha);
     private static native void nTestGetMinimumStride(long aimagedecoder,

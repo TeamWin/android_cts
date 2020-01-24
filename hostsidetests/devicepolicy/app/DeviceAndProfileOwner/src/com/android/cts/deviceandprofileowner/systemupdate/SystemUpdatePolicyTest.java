@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.cts.deviceowner;
+package com.android.cts.deviceandprofileowner.systemupdate;
 
 import static android.provider.Settings.Global.AIRPLANE_MODE_ON;
 
@@ -33,9 +33,8 @@ import android.provider.Settings;
 import android.provider.Settings.Global;
 import android.util.Log;
 import android.util.Pair;
-import android.provider.Settings;
-import android.provider.Settings.Global;
 
+import com.android.cts.deviceandprofileowner.BaseDeviceAdminTest;
 import com.google.common.collect.ImmutableList;
 import java.time.LocalDate;
 import java.time.MonthDay;
@@ -50,7 +49,7 @@ import java.util.concurrent.TimeUnit;
  * Test {@link SystemUpdatePolicy}, {@link DevicePolicyManager#setSystemUpdatePolicy} and
  * {@link DevicePolicyManager#getSystemUpdatePolicy}
  */
-public class SystemUpdatePolicyTest extends BaseDeviceOwnerTest {
+public class SystemUpdatePolicyTest extends BaseDeviceAdminTest {
 
     private static final String TAG = "SystemUpdatePolicyTest";
 
@@ -86,7 +85,7 @@ public class SystemUpdatePolicyTest extends BaseDeviceOwnerTest {
         clearFreezeRecord();
         mSavedAutoTimeConfig = Settings.Global.getInt(mContext.getContentResolver(),
                 Global.AUTO_TIME, 0);
-        executeShellCommand("settings put global auto_time 0");
+        runShellCommand("settings put global auto_time 0");
         mSavedSystemDate = LocalDate.now();
         mRestoreDate = false;
         mSavedAirplaneMode = getAirplaneMode();
@@ -99,12 +98,12 @@ public class SystemUpdatePolicyTest extends BaseDeviceOwnerTest {
 
     @Override
     protected void tearDown() throws Exception {
-        mDevicePolicyManager.setSystemUpdatePolicy(getWho(), null);
+        mDevicePolicyManager.setSystemUpdatePolicy(ADMIN_RECEIVER_COMPONENT, null);
         clearFreezeRecord();
         if (mRestoreDate) {
             setSystemDate(mSavedSystemDate);
         }
-        executeShellCommand("settings put global auto_time",
+        runShellCommand("settings put global auto_time",
                 Integer.toString(mSavedAutoTimeConfig));
         // This needs to happen last since setSystemDate() relies on the receiver for
         // synchronization.
@@ -213,7 +212,7 @@ public class SystemUpdatePolicyTest extends BaseDeviceOwnerTest {
         setSystemDate(LocalDate.of(2018, 2, 28));
         setPolicyWithFreezePeriod("01-01", "03-01", "06-01", "06-30");
         // Clear policy
-        mDevicePolicyManager.setSystemUpdatePolicy(getWho(), null);
+        mDevicePolicyManager.setSystemUpdatePolicy(ADMIN_RECEIVER_COMPONENT, null);
         // Set to a conflict period (too close with previous period [2-28, 2-28]) should fail,
         // despite the previous policy was cleared from the system just now.
         try {
@@ -363,7 +362,7 @@ public class SystemUpdatePolicyTest extends BaseDeviceOwnerTest {
     }
 
     private void testPolicy(SystemUpdatePolicy policy) {
-        mDevicePolicyManager.setSystemUpdatePolicy(getWho(), policy);
+        mDevicePolicyManager.setSystemUpdatePolicy(ADMIN_RECEIVER_COMPONENT, policy);
         waitForPolicyChangedBroadcast();
         SystemUpdatePolicy newPolicy = mDevicePolicyManager.getSystemUpdatePolicy();
         if (policy == null) {
@@ -382,7 +381,7 @@ public class SystemUpdatePolicyTest extends BaseDeviceOwnerTest {
     private void setPolicyWithFreezePeriod(String...dates) {
         SystemUpdatePolicy policy = SystemUpdatePolicy.createPostponeInstallPolicy();
         setFreezePeriods(policy, dates);
-        mDevicePolicyManager.setSystemUpdatePolicy(getWho(), policy);
+        mDevicePolicyManager.setSystemUpdatePolicy(ADMIN_RECEIVER_COMPONENT, policy);
 
         List<FreezePeriod> loadedFreezePeriods = mDevicePolicyManager
                 .getSystemUpdatePolicy().getFreezePeriods();
@@ -438,7 +437,7 @@ public class SystemUpdatePolicyTest extends BaseDeviceOwnerTest {
     }
 
     private void clearFreezeRecord() throws Exception {
-        executeShellCommand("dpm", "clear-freeze-period-record");
+        runShellCommand("dpm", "clear-freeze-period-record");
     }
 
     private void setSystemDate(LocalDate date) throws Exception {
@@ -447,11 +446,16 @@ public class SystemUpdatePolicyTest extends BaseDeviceOwnerTest {
         c.set(Calendar.YEAR, date.getYear());
         c.set(Calendar.MONTH, date.getMonthValue() - 1);
         c.set(Calendar.DAY_OF_MONTH, date.getDayOfMonth());
-        mDevicePolicyManager.setTime(getWho(), c.getTimeInMillis());
+        mDevicePolicyManager.setTime(ADMIN_RECEIVER_COMPONENT, c.getTimeInMillis());
         waitForTimeChangedBroadcast();
     }
 
     private void waitForPolicyChangedBroadcast() {
+        if (!isDeviceOwner()) {
+            // ACTION_SYSTEM_UPDATE_POLICY_CHANGED is always sent to system user, skip
+            // waiting for it if we are inside a managed profile.
+            return;
+        }
         try {
             assertTrue("Timeout while waiting for broadcast.",
                     mPolicyChangedSemaphore.tryAcquire(TIMEOUT_MS, TimeUnit.MILLISECONDS));
@@ -469,8 +473,8 @@ public class SystemUpdatePolicyTest extends BaseDeviceOwnerTest {
         }
     }
 
-    private int getAirplaneMode() throws Settings.SettingNotFoundException {
-        int airplaneMode = 0xFF;
+    private int getAirplaneMode() {
+        int airplaneMode;
         try {
             airplaneMode = Settings.Global.getInt(mContext.getContentResolver(),
                 Settings.Global.AIRPLANE_MODE_ON);
@@ -478,9 +482,8 @@ public class SystemUpdatePolicyTest extends BaseDeviceOwnerTest {
             airplaneMode = 0xFF;
             // if the mode is not supported, return a non zero value.
             Log.i(TAG, "Airplane mode is not found in Settings. Skipping AirplaneMode update");
-        } finally {
-            return airplaneMode;
         }
+        return airplaneMode;
     }
 
     private boolean setAirplaneModeAndWaitBroadcast (int state) throws Exception {

@@ -137,7 +137,7 @@ public class AccountManagerCrossUserTest {
                 Context.ACCOUNT_SERVICE);
         assertThat(accountManager.getAccountsByType(MockAuthenticator.ACCOUNT_TYPE)).isEmpty();
         MockAuthenticator.addTestAccount(mContext);
-        assertThat(accountManager.getAccountsByType(MockAuthenticator.ACCOUNT_TYPE)).isEmpty();
+        assertThat(accountManager.getAccountsByType(MockAuthenticator.ACCOUNT_TYPE)).hasLength(1);
     }
 
     @Test

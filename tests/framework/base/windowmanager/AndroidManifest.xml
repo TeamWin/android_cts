@@ -319,6 +319,8 @@
         <activity android:name="android.server.wm.WindowFocusTests$SecondaryActivity"
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density" />
         <activity android:name="android.server.wm.WindowFocusTests$LosingFocusActivity" />
+        <activity android:name="android.server.wm.WindowMetricsTests$MetricsActivity"
+                  android:exported="true" />
         <activity android:name="android.app.Activity"/>
 
         <activity android:name="android.server.wm.DragDropTest$DragDropActivity"
@@ -333,7 +335,7 @@
         </activity>
 
         <activity android:name="android.server.wm.WindowCtsActivity"
-                  android:theme="@android:style/Theme.Holo.NoActionBar"
+                  android:theme="@android:style/Theme.Material.NoActionBar"
                   android:screenOrientation="locked"
                   android:turnScreenOn="true"
                   android:showWhenLocked="true"

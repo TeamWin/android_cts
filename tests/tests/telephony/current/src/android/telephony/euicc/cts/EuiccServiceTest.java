@@ -74,15 +74,83 @@ public class EuiccServiceTest {
 
     private IEuiccService mEuiccServiceBinder;
     private IMockEuiccServiceCallback mCallback;
+    private TestEuiccService mEuiccService;
 
     private CountDownLatch mCountDownLatch;
 
     @Rule public ServiceTestRule mServiceTestRule = new ServiceTestRule();
 
+    private static class TestEuiccService extends EuiccService {
+        @Override
+        public String onGetEid(int slotId) {
+            return null;
+        }
+
+        @Override
+        public int onGetOtaStatus(int slotId) {
+            return 0;
+        }
+
+        @Override
+        public void onStartOtaIfNecessary(int slotId,
+                OtaStatusChangedCallback statusChangedCallback) {
+        }
+
+        @Override
+        public GetDownloadableSubscriptionMetadataResult onGetDownloadableSubscriptionMetadata(
+                int slotId, DownloadableSubscription subscription, boolean forceDeactivateSim) {
+            return null;
+        }
+
+        @Override
+        public GetDefaultDownloadableSubscriptionListResult
+                onGetDefaultDownloadableSubscriptionList(
+                int slotId, boolean forceDeactivateSim) {
+            return null;
+        }
+
+        @Override
+        public GetEuiccProfileInfoListResult onGetEuiccProfileInfoList(int slotId) {
+            return null;
+        }
+
+        @Override
+        public EuiccInfo onGetEuiccInfo(int slotId) {
+            return null;
+        }
+
+        @Override
+        public int onDeleteSubscription(int slotId, String iccid) {
+            return 0;
+        }
+
+        @Override
+        public int onSwitchToSubscription(int slotId, String iccid, boolean forceDeactivateSim) {
+            return 0;
+        }
+
+        @Override
+        public int onUpdateSubscriptionNickname(int slotId, String iccid, String nickname) {
+            return 0;
+        }
+
+        @Override
+        public int onEraseSubscriptions(int slotId) {
+            return 0;
+        }
+
+        @Override
+        public int onRetainSubscriptionsForFactoryReset(int slotId) {
+            return 0;
+        }
+    }
+
     @Before
     public void setUp() throws Exception {
         mCallback = new MockEuiccServiceCallback();
         MockEuiccService.setCallback(mCallback);
+
+        mEuiccService = new TestEuiccService();
 
         Intent mockServiceIntent = new Intent(getContext(), MockEuiccService.class);
         IBinder binder = mServiceTestRule.bindService(mockServiceIntent);
@@ -453,5 +521,13 @@ public class EuiccServiceTest {
         }
 
         assertTrue(mCallback.isMethodCalled());
+    }
+
+    @Test
+    public void testEncodeSmdxSubjectAndReasonCode() {
+        assertEquals(mEuiccService.encodeSmdxSubjectAndReasonCode("8.11.1", "5.1.1"), 0xA8B1511);
+        assertEquals(mEuiccService.encodeSmdxSubjectAndReasonCode("1", "1"), 0xA001001);
+        assertEquals(mEuiccService.encodeSmdxSubjectAndReasonCode("3.0.1", "5.1"), 0xA301051);
+        assertEquals(mEuiccService.encodeSmdxSubjectAndReasonCode("8.1", "5"), 0xA081005);
     }
 }

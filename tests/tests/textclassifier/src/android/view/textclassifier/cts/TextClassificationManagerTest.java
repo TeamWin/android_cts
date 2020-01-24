@@ -132,6 +132,23 @@ public class TextClassificationManagerTest {
     }
 
     @Test
+    public void testTextClassifierDestroy() {
+        mClassifier.destroy();
+        if (mTextClassifierType.equals(DEFAULT)) {
+            // non-session TC is not destroyable.
+            assertEquals(false, mClassifier.isDestroyed());
+        } else {
+            assertEquals(true, mClassifier.isDestroyed());
+        }
+    }
+
+    @Test
+    public void testGetMaxGenerateLinksTextLength() {
+        // TODO(b/143249163): Verify the value get from TextClassificationConstants
+        assertTrue(mClassifier.getMaxGenerateLinksTextLength() >= 0);
+    }
+
+    @Test
     public void testSetTextClassifier() {
         final TextClassifier classifier = mock(TextClassifier.class);
         mManager.setTextClassifier(classifier);
