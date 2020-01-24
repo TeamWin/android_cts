@@ -59,6 +59,7 @@ import android.telephony.CellLocation;
 import android.telephony.NetworkRegistrationInfo;
 import android.telephony.PhoneStateListener;
 import android.telephony.PreciseCallState;
+import android.telephony.RadioAccessFamily;
 import android.telephony.ServiceState;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
@@ -2169,6 +2170,81 @@ public class TelephonyManagerTest {
                     (tm) -> tm.isInEmergencySmsMode());
         } catch (SecurityException se) {
             fail("testIsInEmergencySmsMode: SecurityException not expected");
+        }
+    }
+
+    @Test
+    public void testSetAllowedNetworkTypes() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        // test without permission: verify SecurityException
+        long allowedNetworkTypes = TelephonyManager.NETWORK_TYPE_BITMASK_NR;
+        try {
+            mTelephonyManager.setAllowedNetworkTypes(allowedNetworkTypes);
+            fail("testSetPolicyDataEnabled: SecurityException expected");
+        } catch (SecurityException se) {
+            // expected
+        }
+
+        // test with permission
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mTelephonyManager,
+                    (tm) -> tm.setAllowedNetworkTypes(allowedNetworkTypes));
+
+            long deviceAllowedNetworkTypes = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> {
+                        return tm.getAllowedNetworkTypes();
+                    }
+            );
+            assertEquals(allowedNetworkTypes, deviceAllowedNetworkTypes);
+        } catch (SecurityException se) {
+            fail("testSetAllowedNetworkTypes: SecurityException not expected");
+        }
+    }
+
+    @Test
+    public void testDisAllowedNetworkTypes() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        long allowedNetworkTypes = -1 & (~TelephonyManager.NETWORK_TYPE_BITMASK_NR);
+        long networkTypeBitmask = TelephonyManager.NETWORK_TYPE_BITMASK_NR
+                | TelephonyManager.NETWORK_TYPE_BITMASK_LTE
+                | TelephonyManager.NETWORK_TYPE_BITMASK_LTE_CA;
+
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mTelephonyManager,
+                    (tm) -> tm.setAllowedNetworkTypes(allowedNetworkTypes));
+
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mTelephonyManager,
+                    (tm) -> tm.setPreferredNetworkTypeBitmask(networkTypeBitmask));
+
+            long modemNetworkTypeBitmask = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> {
+                        return tm.getPreferredNetworkTypeBitmask();
+                    }
+            );
+            long radioAccessFamily = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> {
+                        return tm.getSupportedRadioAccessFamily();
+                    }
+            );
+
+            // RadioAccessFamily won't include all bits of RAFs group, so transfer to preferred
+            // network type instead of using bitmask directly
+            int modemPreferredNetworkType = RadioAccessFamily.getNetworkTypeFromRaf(
+                    (int) modemNetworkTypeBitmask);
+            int preferredNetworkType = RadioAccessFamily.getNetworkTypeFromRaf(
+                    (int) (networkTypeBitmask & allowedNetworkTypes & radioAccessFamily));
+            assertEquals(preferredNetworkType, modemPreferredNetworkType);
+        } catch (SecurityException se) {
+            fail("testDisAllowedNetworkTypes: SecurityException not expected");
         }
     }
 
