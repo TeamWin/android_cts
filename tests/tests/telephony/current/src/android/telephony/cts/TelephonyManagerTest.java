@@ -517,6 +517,8 @@ public class TelephonyManagerTest {
                 (tm) -> tm.isDataConnectionEnabled());
         ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.isAnyRadioPoweredOn());
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                (tm) -> tm.resetIms(tm.getSlotIndex()));
 
         // Verify TelephonyManager.getCarrierPrivilegedPackagesForAllActiveSubscriptions
         List<String> resultForGetCarrierPrivilegedApis =
