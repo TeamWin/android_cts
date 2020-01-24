@@ -83,8 +83,8 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
             "com.android.cts.mediastorageapp", MEDIA_CLAZZ);
     private static final Config MEDIA_28 = new Config("CtsMediaStorageApp28.apk",
             "com.android.cts.mediastorageapp28", MEDIA_CLAZZ);
-    private static final Config MEDIA_FULL = new Config("CtsMediaStorageAppFull.apk",
-            "com.android.cts.mediastorageappfull", MEDIA_CLAZZ);
+    private static final Config MEDIA_29 = new Config("CtsMediaStorageApp29.apk",
+            "com.android.cts.mediastorageapp29", MEDIA_CLAZZ);
 
     private static final String PERM_READ_EXTERNAL_STORAGE = "android.permission.READ_EXTERNAL_STORAGE";
     private static final String PERM_WRITE_EXTERNAL_STORAGE = "android.permission.WRITE_EXTERNAL_STORAGE";
@@ -478,26 +478,26 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         doMediaSandboxed(MEDIA_28, false);
     }
     @Test
-    public void testMediaSandboxedFull() throws Exception {
-        doMediaSandboxed(MEDIA_FULL, false);
+    public void testMediaSandboxed29() throws Exception {
+        doMediaSandboxed(MEDIA_29, false);
     }
 
     private void doMediaSandboxed(Config config, boolean sandboxed) throws Exception {
         installPackage(config.apk);
-        installPackage(MEDIA_FULL.apk);
+        installPackage(MEDIA_29.apk);
         for (int user : mUsers) {
             updatePermissions(config.pkg, user, new String[] {
                     PERM_READ_EXTERNAL_STORAGE,
                     PERM_WRITE_EXTERNAL_STORAGE,
             }, true);
-            updatePermissions(MEDIA_FULL.pkg, user, new String[] {
+            updatePermissions(MEDIA_29.pkg, user, new String[] {
                     PERM_READ_EXTERNAL_STORAGE,
                     PERM_WRITE_EXTERNAL_STORAGE,
             }, true);
 
-            // Create the files needed for the test from MEDIA_FULL pkg since shell
+            // Create the files needed for the test from MEDIA_29 pkg since shell
             // can't access secondary user's storage.
-            runDeviceTests(MEDIA_FULL.pkg, MEDIA_FULL.clazz, "testStageFiles", user);
+            runDeviceTests(MEDIA_29.pkg, MEDIA_29.clazz, "testStageFiles", user);
 
             if (sandboxed) {
                 runDeviceTests(config.pkg, config.clazz, "testSandboxed", user);
@@ -505,7 +505,7 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
                 runDeviceTests(config.pkg, config.clazz, "testNotSandboxed", user);
             }
 
-            runDeviceTests(MEDIA_FULL.pkg, MEDIA_FULL.clazz, "testClearFiles", user);
+            runDeviceTests(MEDIA_29.pkg, MEDIA_29.clazz, "testClearFiles", user);
         }
     }
 
@@ -518,8 +518,8 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         doMediaNone(MEDIA_28);
     }
     @Test
-    public void testMediaNoneFull() throws Exception {
-        doMediaNone(MEDIA_FULL);
+    public void testMediaNone29() throws Exception {
+        doMediaNone(MEDIA_29);
     }
 
     private void doMediaNone(Config config) throws Exception {
@@ -543,8 +543,8 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         doMediaRead(MEDIA_28);
     }
     @Test
-    public void testMediaReadFull() throws Exception {
-        doMediaRead(MEDIA_FULL);
+    public void testMediaRead29() throws Exception {
+        doMediaRead(MEDIA_29);
     }
 
     private void doMediaRead(Config config) throws Exception {
@@ -570,8 +570,8 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         doMediaWrite(MEDIA_28);
     }
     @Test
-    public void testMediaWriteFull() throws Exception {
-        doMediaWrite(MEDIA_FULL);
+    public void testMediaWrite29() throws Exception {
+        doMediaWrite(MEDIA_29);
     }
 
     private void doMediaWrite(Config config) throws Exception {
@@ -595,8 +595,8 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         doMediaEscalation(MEDIA_28);
     }
     @Test
-    public void testMediaEscalationFull() throws Exception {
-        doMediaEscalation(MEDIA_FULL);
+    public void testMediaEscalation29() throws Exception {
+        doMediaEscalation(MEDIA_29);
     }
 
     private void doMediaEscalation(Config config) throws Exception {
