@@ -16,7 +16,6 @@
 
 package android.location.cts;
 
-import android.content.pm.PackageManager;
 import android.location.GnssClock;
 import android.location.GnssMeasurement;
 import android.location.GnssMeasurementsEvent;
@@ -86,8 +85,8 @@ public final class TestMeasurementUtil {
      * Check if test can be run on the current device.
      *
      * @param  testLocationManager TestLocationManager
-     * @return true if Build.VERSION &gt;=  Build.VERSION_CODES.N, device does not have AUTOMOTIVE
-     *         feature, and Location GPS present on device.
+     * @return true if Build.VERSION &gt;=  Build.VERSION_CODES.N and Location GPS present on
+     *         device.
      */
     public static boolean canTestRunOnCurrentDevice(TestLocationManager testLocationManager,
             boolean isCtsVerifier) {
@@ -95,12 +94,6 @@ public final class TestMeasurementUtil {
             Log.i(TAG, "This test is designed to work on N or newer. " +
                     "Test is being skipped because the platform version is being run in " +
                     ApiLevelUtil.getApiLevel());
-            return false;
-        }
-
-        if (testLocationManager.getContext().getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_AUTOMOTIVE)) {
-            Log.i(TAG, "Test is being skipped because the system has the AUTOMOTIVE feature.");
             return false;
         }
 
