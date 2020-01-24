@@ -42,6 +42,7 @@ android_test {
     static_libs: [
         "appops-test-util-lib",
         "AppOpsUserServiceAidl",
+        "AppOpsForegroundControlServiceAidl",
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "androidx.legacy_legacy-support-v4",
