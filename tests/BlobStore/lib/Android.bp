@@ -1,4 +1,4 @@
-// Copyright (C) 2019 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,24 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test {
-    name: "CtsBlobStoreTestCases",
-    defaults: ["cts_defaults"],
-    static_libs: [
-        "androidx.test.ext.junit",
-        "androidx.test.rules",
-        "compatibility-device-util-axt",
-        "truth-prebuilt",
-        "testng",
-        "BlobStoreTestUtils",
-    ],
-    srcs: [
-        "src/**/*.java",
-    ],
-    test_suites: [
-        "cts",
-        "vts",
-        "general-tests",
-    ],
-    platform_apis: true,
+java_library {
+  name: "BlobStoreTestUtils",
+  srcs: ["src/**/*.java"],
+  static_libs: ["truth-prebuilt"],
+  platform_apis: true
 }

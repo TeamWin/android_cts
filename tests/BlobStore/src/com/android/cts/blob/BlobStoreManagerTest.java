@@ -22,7 +22,6 @@ import static org.testng.Assert.assertThrows;
 import android.app.blob.BlobHandle;
 import android.app.blob.BlobStoreManager;
 import android.content.Context;
-import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 
 import com.android.cts.blob.R;
@@ -32,19 +31,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileDescriptor;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.RandomAccessFile;
-import java.nio.file.Files;
-import java.security.MessageDigest;
 import java.util.ArrayList;
-import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -57,7 +45,6 @@ public class BlobStoreManagerTest {
 
     private Context mContext;
     private BlobStoreManager mBlobStoreManager;
-    private Random mRandom;
 
     private final ArrayList<Long> mCreatedSessionIds = new ArrayList<>();
 
@@ -66,7 +53,6 @@ public class BlobStoreManagerTest {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mBlobStoreManager = (BlobStoreManager) mContext.getSystemService(
                 Context.BLOB_STORE_SERVICE);
-        mRandom = new Random(0);
         mCreatedSessionIds.clear();
     }
 
@@ -83,7 +69,7 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testGetCreateSession() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData();
+        final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
             final long sessionId = createSession(blobData.getBlobHandle());
@@ -96,7 +82,7 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testDeleteSession() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData();
+        final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
             final long sessionId = createSession(blobData.getBlobHandle());
@@ -114,13 +100,13 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testOpenReadWriteSession() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData();
+        final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
             final long sessionId = createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
             try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
-                blobData.writeToSession(session, 0, blobData.mFileSize);
+                blobData.writeToSession(session, 0, blobData.getFileSize());
                 blobData.readFromSessionAndVerifyDigest(session);
                 blobData.readFromSessionAndVerifyBytes(session,
                         101 /* offset */, 1001 /* length */);
@@ -136,7 +122,7 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testAbandonSession() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData();
+        final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
             final long sessionId = createSession(blobData.getBlobHandle());
@@ -161,7 +147,7 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testCloseSession() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData();
+        final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
             final long sessionId = createSession(blobData.getBlobHandle());
@@ -197,7 +183,7 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testAllowPublicAccess() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData();
+        final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
             final long sessionId = createSession(blobData.getBlobHandle());
@@ -220,7 +206,7 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testAllowSameSignatureAccess() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData();
+        final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
             final long sessionId = createSession(blobData.getBlobHandle());
@@ -243,7 +229,7 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testAllowPackageAccess() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData();
+        final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
             final long sessionId = createSession(blobData.getBlobHandle());
@@ -269,7 +255,7 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testMixedAccessType() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData();
+        final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
             final long sessionId = createSession(blobData.getBlobHandle());
@@ -294,7 +280,7 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testSessionCommit() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData();
+        final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
             final long sessionId = createSession(blobData.getBlobHandle());
@@ -325,7 +311,7 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testOpenBlob() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData();
+        final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
             final long sessionId = createSession(blobData.getBlobHandle());
@@ -357,7 +343,7 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testAcquireReleaseLease() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData();
+        final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
             final long sessionId = createSession(blobData.getBlobHandle());
@@ -390,168 +376,5 @@ public class BlobStoreManagerTest {
         final long sessionId = mBlobStoreManager.createSession(blobHandle);
         mCreatedSessionIds.add(sessionId);
         return sessionId;
-    }
-
-    class DummyBlobData {
-        private static final long DEFAULT_SIZE_BYTES = 10 * 1024L * 1024L;
-        private static final int BUFFER_SIZE_BYTES = 16 * 1024;
-
-        final File mFile;
-        final long mFileSize;
-
-        byte[] mFileDigest;
-        long mExpiryTimeMs;
-
-        DummyBlobData() {
-            this(DEFAULT_SIZE_BYTES);
-        }
-
-        DummyBlobData(long fileSize) {
-            mFile = new File(mContext.getFilesDir(), "blob_" + System.nanoTime());
-            mFileSize = fileSize;
-        }
-
-        void prepare() throws Exception {
-            try (RandomAccessFile file = new RandomAccessFile(mFile, "rw")) {
-                writeRandomData(file, mFileSize);
-            }
-            mFileDigest = FileUtils.digest(mFile, "SHA-256");
-            mExpiryTimeMs = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1);
-        }
-
-        BlobHandle getBlobHandle() throws Exception {
-            return BlobHandle.createWithSha256(createSha256Digest(mFile), "Test blob",
-                    mExpiryTimeMs, "test_tag");
-        }
-
-        void delete() {
-            mFile.delete();
-        }
-
-        void writeToSession(BlobStoreManager.Session session) throws Exception {
-            writeToSession(session, 0, mFileSize);
-        }
-
-        void writeToSession(BlobStoreManager.Session session, long offsetBytes, long lengthBytes)
-                throws Exception {
-            try (FileInputStream in = new FileInputStream(mFile)) {
-                in.getChannel().position(offsetBytes);
-                try (FileOutputStream out = new ParcelFileDescriptor.AutoCloseOutputStream(
-                        session.openWrite(offsetBytes, lengthBytes))) {
-                    copy(in, out, lengthBytes);
-                }
-            }
-        }
-
-        void writeToFd(FileDescriptor fd, long offsetBytes, long lengthBytes) throws Exception {
-            try (FileInputStream in = new FileInputStream(mFile)) {
-                in.getChannel().position(offsetBytes);
-                try (FileOutputStream out = new FileOutputStream(fd)) {
-                    copy(in, out, lengthBytes);
-                }
-            }
-        }
-
-        void copy(InputStream in, OutputStream out, long lengthBytes) throws Exception {
-            final byte[] buffer = new byte[BUFFER_SIZE_BYTES];
-            long bytesWrittern = 0;
-            while (bytesWrittern < lengthBytes) {
-                final int toWrite = (bytesWrittern + buffer.length <= lengthBytes)
-                        ? buffer.length : (int) (lengthBytes - bytesWrittern);
-                in.read(buffer, 0, toWrite);
-                out.write(buffer, 0, toWrite);
-                bytesWrittern += toWrite;
-            }
-        }
-
-        void readFromSessionAndVerifyBytes(BlobStoreManager.Session session,
-                long offsetBytes, int lengthBytes) throws Exception {
-            final byte[] expectedBytes = new byte[lengthBytes];
-            try (FileInputStream in = new FileInputStream(mFile)) {
-                read(in, expectedBytes, offsetBytes, lengthBytes);
-            }
-
-            final byte[] actualBytes = new byte[lengthBytes];
-            try (FileInputStream in = new ParcelFileDescriptor.AutoCloseInputStream(
-                    session.openRead())) {
-                read(in, actualBytes, offsetBytes, lengthBytes);
-            }
-
-            assertThat(actualBytes).isEqualTo(expectedBytes);
-
-        }
-
-        private void read(FileInputStream in, byte[] buffer,
-                long offsetBytes, int lengthBytes) throws Exception {
-            in.getChannel().position(offsetBytes);
-            in.read(buffer, 0, lengthBytes);
-        }
-
-        void readFromSessionAndVerifyDigest(BlobStoreManager.Session session)
-                throws Exception {
-            readFromSessionAndVerifyDigest(session, 0, mFile.length());
-        }
-
-        void readFromSessionAndVerifyDigest(BlobStoreManager.Session session,
-                long offsetBytes, long lengthBytes) throws Exception {
-            final byte[] actualDigest;
-            try (FileInputStream in = new ParcelFileDescriptor.AutoCloseInputStream(
-                    session.openRead())) {
-                actualDigest = createSha256Digest(in, offsetBytes, lengthBytes);
-            }
-
-            assertThat(actualDigest).isEqualTo(mFileDigest);
-        }
-
-        void verifyBlob(ParcelFileDescriptor pfd) throws Exception {
-            final byte[] actualDigest;
-            try (FileInputStream in = new ParcelFileDescriptor.AutoCloseInputStream(pfd)) {
-                actualDigest = FileUtils.digest(in, "SHA-256");
-            }
-            assertThat(actualDigest).isEqualTo(mFileDigest);
-        }
-
-        private byte[] createSha256Digest(FileInputStream in, long offsetBytes, long lengthBytes)
-                throws Exception {
-            final MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            in.getChannel().position(offsetBytes);
-            final byte[] buffer = new byte[BUFFER_SIZE_BYTES];
-            long bytesRead = 0;
-            while (bytesRead < lengthBytes) {
-                int toRead = (bytesRead + buffer.length <= lengthBytes)
-                        ? buffer.length : (int) (lengthBytes - bytesRead);
-                toRead = in.read(buffer, 0, toRead);
-                digest.update(buffer, 0, toRead);
-                bytesRead += toRead;
-            }
-            return digest.digest();
-        }
-
-        private byte[] createSha256Digest(File file) throws Exception {
-            final MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            try (BufferedInputStream in = new BufferedInputStream(
-                    Files.newInputStream(file.toPath()))) {
-                final byte[] buffer = new byte[BUFFER_SIZE_BYTES];
-                int bytesRead;
-                while ((bytesRead = in.read(buffer)) > 0) {
-                    digest.update(buffer, 0, bytesRead);
-                }
-            }
-            return digest.digest();
-        }
-
-        private void writeRandomData(RandomAccessFile file, long fileSize)
-                throws Exception {
-            long bytesWritten = 0;
-            final byte[] buffer = new byte[BUFFER_SIZE_BYTES];
-            while (bytesWritten < fileSize) {
-                mRandom.nextBytes(buffer);
-                final int toWrite = (bytesWritten + buffer.length <= fileSize)
-                        ? buffer.length : (int) (fileSize - bytesWritten);
-                file.seek(bytesWritten);
-                file.write(buffer, 0, toWrite);
-                bytesWritten += toWrite;
-            }
-        }
     }
 }
