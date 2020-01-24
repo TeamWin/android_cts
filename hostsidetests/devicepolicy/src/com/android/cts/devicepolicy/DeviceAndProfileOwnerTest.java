@@ -1196,7 +1196,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
         try {
             // Just start kiosk mode
-            executeDeviceTestMethod(".LockTaskHostDrivenTest", "startLockTask");
+            executeDeviceTestMethod(
+                    ".LockTaskHostDrivenTest", "testStartLockTask_noAsserts");
 
             // Reboot while in kiosk mode and then unlock the device
             rebootAndWaitUntilReady();
@@ -1205,7 +1206,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             executeDeviceTestMethod(".LockTaskHostDrivenTest",
                     "testLockTaskIsActiveAndCantBeInterrupted");
         } finally {
-            executeDeviceTestMethod(".LockTaskHostDrivenTest", "cleanupLockTask");
+            executeDeviceTestMethod(".LockTaskHostDrivenTest", "testCleanupLockTask_noAsserts");
         }
     }
 
@@ -1218,7 +1219,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
         try {
             // Just start kiosk mode
-            executeDeviceTestMethod(".LockTaskHostDrivenTest", "startLockTask");
+            executeDeviceTestMethod(
+                    ".LockTaskHostDrivenTest", "testStartLockTask_noAsserts");
 
             // Reboot while in kiosk mode and then unlock the device
             rebootAndWaitUntilReady();
@@ -1230,7 +1232,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             executeDeviceTestMethod(".LockTaskHostDrivenTest",
                     "testLockTaskIsActiveAndCantBeInterrupted");
         } finally {
-            executeDeviceTestMethod(".LockTaskHostDrivenTest", "cleanupLockTask");
+            executeDeviceTestMethod(".LockTaskHostDrivenTest", "testCleanupLockTask_noAsserts");
         }
     }
 
@@ -1243,7 +1245,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             executeDeviceTestMethod(".LockTaskHostDrivenTest",
                     "testLockTaskCanLaunchDefaultDialer");
         } finally {
-            executeDeviceTestMethod(".LockTaskHostDrivenTest", "cleanupLockTask");
+            executeDeviceTestMethod(".LockTaskHostDrivenTest", "testCleanupLockTask_noAsserts");
         }
     }
 
@@ -1256,7 +1258,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             executeDeviceTestMethod(".LockTaskHostDrivenTest",
                     "testLockTaskCanLaunchEmergencyDialer");
         } finally {
-            executeDeviceTestMethod(".LockTaskHostDrivenTest", "cleanupLockTask");
+            executeDeviceTestMethod(".LockTaskHostDrivenTest", "testCleanupLockTask_noAsserts");
         }
     }
 
@@ -1269,7 +1271,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             executeDeviceTestMethod(".LockTaskHostDrivenTest",
                     "testLockTaskIsExitedIfNotWhitelisted");
         } finally {
-            executeDeviceTestMethod(".LockTaskHostDrivenTest", "cleanupLockTask");
+            executeDeviceTestMethod(".LockTaskHostDrivenTest", "testCleanupLockTask_noAsserts");
         }
     }
 
