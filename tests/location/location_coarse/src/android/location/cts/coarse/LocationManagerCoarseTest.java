@@ -37,6 +37,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.location.cts.common.LocationListenerCapture;
 import android.location.cts.common.LocationPendingIntentCapture;
+import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
@@ -116,7 +117,9 @@ public class LocationManagerCoarseTest {
     @Test
     public void testGetLastKnownLocation() {
         Location loc = createLocation(TEST_PROVIDER, mRandom);
-        loc.setExtraLocation(Location.EXTRA_NO_GPS_LOCATION, new Location(loc));
+        Bundle extras = new Bundle();
+        extras.putParcelable(Location.EXTRA_NO_GPS_LOCATION, new Location(loc));
+        loc.setExtras(extras);
 
         mManager.setTestProviderLocation(TEST_PROVIDER, loc);
         assertThat(mManager.getLastKnownLocation(TEST_PROVIDER)).isNearby(loc, MAX_COARSE_FUDGE_DISTANCE_M);
@@ -125,7 +128,9 @@ public class LocationManagerCoarseTest {
     @Test
     public void testRequestLocationUpdates() throws Exception {
         Location loc = createLocation(TEST_PROVIDER, mRandom);
-        loc.setExtraLocation(Location.EXTRA_NO_GPS_LOCATION, new Location(loc));
+        Bundle extras = new Bundle();
+        extras.putParcelable(Location.EXTRA_NO_GPS_LOCATION, new Location(loc));
+        loc.setExtras(extras);
 
         try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
             mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0, directExecutor(), capture);
@@ -137,7 +142,9 @@ public class LocationManagerCoarseTest {
     @Test
     public void testRequestLocationUpdates_PendingIntent() throws Exception {
         Location loc = createLocation(TEST_PROVIDER, mRandom);
-        loc.setExtraLocation(Location.EXTRA_NO_GPS_LOCATION, new Location(loc));
+        Bundle extras = new Bundle();
+        extras.putParcelable(Location.EXTRA_NO_GPS_LOCATION, new Location(loc));
+        loc.setExtras(extras);
 
         try (LocationPendingIntentCapture capture = new LocationPendingIntentCapture(mContext)) {
             mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0, capture.getPendingIntent());
