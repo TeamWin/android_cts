@@ -1038,22 +1038,37 @@ public class BitmapColorSpaceTest {
         assertTrue(pass);
     }
 
-    private Object[] compressFormats() {
-        return Bitmap.CompressFormat.values();
+    private Object[] compressFormatsAndColorSpaces() {
+        return Utils.crossProduct(Bitmap.CompressFormat.values(),
+                BitmapTest.getRgbColorSpaces().toArray());
     }
 
     @Test
-    @Parameters(method = "compressFormats")
-    public void testEncodeP3(Bitmap.CompressFormat format) {
+    @Parameters(method = "compressFormatsAndColorSpaces")
+    public void testEncodeColorSpace(Bitmap.CompressFormat format, ColorSpace colorSpace) {
         Bitmap b = null;
+        ColorSpace decodedColorSpace = null;
         ImageDecoder.Source src = ImageDecoder.createSource(mResources.getAssets(),
                 "blue-16bit-srgb.png");
         try {
             b = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
                 decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+                decoder.setTargetColorSpace(colorSpace);
             });
             assertNotNull(b);
             assertEquals(Bitmap.Config.RGBA_F16, b.getConfig());
+            decodedColorSpace = b.getColorSpace();
+
+            // Requesting a ColorSpace with an EXTENDED variant will use the EXTENDED one because
+            // the image is 16-bit.
+            if (colorSpace == ColorSpace.get(ColorSpace.Named.SRGB)) {
+                assertSame(ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB), decodedColorSpace);
+            } else if (colorSpace == ColorSpace.get(ColorSpace.Named.LINEAR_SRGB)) {
+                assertSame(ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB),
+                          decodedColorSpace);
+            } else {
+                assertSame(colorSpace, decodedColorSpace);
+            }
         } catch (IOException e) {
             fail("Failed with " + e);
         }
@@ -1065,9 +1080,28 @@ public class BitmapColorSpaceTest {
         src = ImageDecoder.createSource(ByteBuffer.wrap(array));
 
         try {
-            Bitmap b2 = ImageDecoder.decodeBitmap(src);
-            assertEquals("Wrong color space for " + format,
-                    ColorSpace.get(ColorSpace.Named.DISPLAY_P3), b2.getColorSpace());
+            Bitmap b2 = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
+                decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+            });
+            ColorSpace encodedColorSpace = b2.getColorSpace();
+            if (format == Bitmap.CompressFormat.PNG) {
+                assertEquals(Bitmap.Config.RGBA_F16, b2.getConfig());
+                assertSame(decodedColorSpace, encodedColorSpace);
+            } else {
+                // Compressing to the other formats does not support creating a compressed version
+                // that we will decode to F16.
+                assertEquals(Bitmap.Config.ARGB_8888, b2.getConfig());
+
+                // Decoding an EXTENDED variant to 8888 results in the non-extended variant.
+                if (decodedColorSpace == ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB)) {
+                    assertSame(ColorSpace.get(ColorSpace.Named.SRGB), encodedColorSpace);
+                } else if (decodedColorSpace
+                        == ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB)) {
+                    assertSame(ColorSpace.get(ColorSpace.Named.LINEAR_SRGB), encodedColorSpace);
+                } else {
+                    assertSame(decodedColorSpace, encodedColorSpace);
+                }
+            }
         } catch (IOException e) {
             fail("Failed with " + e);
         }
