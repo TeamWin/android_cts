@@ -811,15 +811,20 @@ public abstract class ActivityManagerTestBase {
                 .execute();
     }
 
-    protected void setActivityTaskWindowingMode(ComponentName activityName, int windowingMode) {
+    protected boolean setActivityTaskWindowingMode(ComponentName activityName, int windowingMode) {
         mWmState.computeState(activityName);
         final int taskId = mWmState.getTaskByActivity(activityName).mTaskId;
-        SystemUtil.runWithShellPermissionIdentity(
-                () -> mAtm.setTaskWindowingMode(taskId, windowingMode, true /* toTop */));
-        mWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
-                .setActivityType(ACTIVITY_TYPE_STANDARD)
-                .setWindowingMode(windowingMode)
-                .build());
+        boolean[] result = new boolean[1];
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            result[0] = mAtm.setTaskWindowingMode(taskId, windowingMode, true /* toTop */);
+        });
+        if (result[0]) {
+            mWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
+                    .setActivityType(ACTIVITY_TYPE_STANDARD)
+                    .setWindowingMode(windowingMode)
+                    .build());
+        }
+        return result[0];
     }
 
     protected void moveActivityToStack(ComponentName activityName, int stackId) {

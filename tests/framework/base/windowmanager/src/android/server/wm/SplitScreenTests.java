@@ -16,11 +16,13 @@
 
 package android.server.wm;
 
+import static android.app.ActivityManager.LOCK_TASK_MODE_NONE;
 import static android.app.ActivityTaskManager.SPLIT_SCREEN_CREATE_MODE_BOTTOM_OR_RIGHT;
 import static android.app.ActivityTaskManager.SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
@@ -60,6 +62,8 @@ import android.platform.test.annotations.Presubmit;
 import android.server.wm.CommandSession.ActivityCallback;
 
 import androidx.test.filters.FlakyTest;
+
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -602,6 +606,31 @@ public class SplitScreenTests extends ActivityManagerTestBase {
         mWmState.computeState(TEST_ACTIVITY, NO_RELAUNCH_ACTIVITY);
         assertActivityLifecycle(TEST_ACTIVITY, true /* relaunched */);
         assertActivityLifecycle(NO_RELAUNCH_ACTIVITY, false /* relaunched */);
+    }
+
+    @Test
+    public void testDisallowEnterSplitscreenWhenInLockedTask() throws Exception {
+        launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
+        WindowManagerState.ActivityTask task =
+                mWmState.getStandardRootTaskByWindowingMode(
+                        WINDOWING_MODE_FULLSCREEN).getTopTask();
+
+        // Lock the task and ensure that we can't enter split screen
+        try {
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                mAtm.startSystemLockTaskMode(task.mTaskId);
+            });
+            waitForOrFail("Task in lock mode", () -> {
+                return mAm.getLockTaskModeState() != LOCK_TASK_MODE_NONE;
+            });
+
+            assertFalse(setActivityTaskWindowingMode(TEST_ACTIVITY,
+                    WINDOWING_MODE_SPLIT_SCREEN_PRIMARY));
+        } finally {
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                mAtm.stopSystemLockTaskMode();
+            });
+        }
     }
 
     private Rect computeNewDockBounds(
