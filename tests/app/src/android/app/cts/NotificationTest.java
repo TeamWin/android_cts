@@ -765,6 +765,40 @@ public class NotificationTest extends AndroidTestCase {
         assertNotNull(metadata.getBubbleIntent());
     }
 
+    public void testBubbleMetadataBuilder_notifBubbleShortcutIds_match_noThrow() {
+        Notification.BubbleMetadata metadata = new Notification.BubbleMetadata.Builder()
+                        .createShortcutBubble(BUBBLE_SHORTCUT_ID).build();
+
+        mNotification = new Notification.Builder(mContext, CHANNEL.getId())
+                .setSmallIcon(1)
+                .setContentTitle(CONTENT_TITLE)
+                .setShortcutId(BUBBLE_SHORTCUT_ID)
+                .setBubbleMetadata(metadata)
+                .build();
+        assertEquals(mNotification.getShortcutId(), BUBBLE_SHORTCUT_ID);
+        assertEquals(mNotification.getBubbleMetadata().getShortcutId(),
+                mNotification.getShortcutId());
+    }
+
+    public void testBubbleMetadataBuilder_notifBubbleShortcutIds_different_throw() {
+        Notification.BubbleMetadata metadata = new Notification.BubbleMetadata.Builder()
+                .createShortcutBubble(BUBBLE_SHORTCUT_ID).build();
+
+        Notification.Builder nb = new Notification.Builder(mContext, CHANNEL.getId())
+                .setSmallIcon(1)
+                .setContentTitle(CONTENT_TITLE)
+                .setShortcutId("a different shortcut id")
+                .setBubbleMetadata(metadata);
+
+        try {
+            nb.build();
+            fail("Should have thrown IllegalArgumentException, "
+                    + "notif & bubble shortcutIds mismatch");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+    }
+
     public void testBubbleMetadataBuilder_noThrowForAdaptiveBitmapIcon() {
         Bitmap b = Bitmap.createBitmap(50, 25, Bitmap.Config.ARGB_8888);
         new Canvas(b).drawColor(0xffff0000);
