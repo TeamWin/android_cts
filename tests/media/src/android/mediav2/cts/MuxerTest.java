@@ -367,6 +367,10 @@ public class MuxerTest {
         private static final float TOLERANCE = 0.0002f;
         private static final int currRotation = 180;
 
+        static {
+            System.loadLibrary("ctsmediav2muxer_jni");
+        }
+
         @Before
         public void prologue() throws IOException {
             mInpPath = WorkDir.getMediaDirString() + mSrcFile;
@@ -392,6 +396,11 @@ public class MuxerTest {
             mOutFormat = outFormat;
             mSrcFile = srcFile;
         }
+
+        private native boolean nativeTestSetLocation(int format, String srcPath, String outPath);
+
+        private native boolean nativeTestSetOrientationHint(int format, String srcPath,
+                String outPath);
 
         private void verifyLocationInFile(String fileName) {
             if (mOutFormat != MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4 &&
@@ -606,6 +615,19 @@ public class MuxerTest {
             }
         }
 
+        @Test
+        public void testSetLocationNative() {
+            Assume.assumeTrue(shouldRunTest(mOutFormat));
+            assertTrue(nativeTestSetLocation(mOutFormat, mInpPath, mOutPath));
+            verifyLocationInFile(mOutPath);
+        }
+
+        @Test
+        public void testSetOrientationHintNative() {
+            Assume.assumeTrue(shouldRunTest(mOutFormat));
+            assertTrue(nativeTestSetOrientationHint(mOutFormat, mInpPath, mOutPath));
+            verifyOrientation(mOutPath);
+        }
     }
 
     /**
@@ -621,6 +643,10 @@ public class MuxerTest {
         private String mInpPathB;
         private String mRefPath;
         private String mOutPath;
+
+        static {
+            System.loadLibrary("ctsmediav2muxer_jni");
+        }
 
         @Before
         public void prologue() throws IOException {
@@ -670,6 +696,10 @@ public class MuxerTest {
             mSrcFileA = srcFileA;
             mSrcFileB = srcFileB;
         }
+
+        private native boolean nativeTestMultiTrack(int format, String fileA, String fileB,
+                String fileR, String fileO);
+
         @Test
         public void testMultiTrack() throws IOException {
             Assume.assumeTrue(shouldRunTest(mOutFormat));
@@ -726,6 +756,14 @@ public class MuxerTest {
                 }
             }
         }
+
+        @Test
+        public void testMultiTrackNative() {
+            Assume.assumeTrue(shouldRunTest(mOutFormat));
+            Assume.assumeTrue("TODO(b/146423022)",
+                    mOutFormat != MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM);
+            assertTrue(nativeTestMultiTrack(mOutFormat, mInpPathA, mInpPathB, mRefPath, mOutPath));
+        }
     }
 
     /**
@@ -741,6 +779,10 @@ public class MuxerTest {
         private int[] mOffsetIndices;
         private String mInpPath;
         private String mOutPath;
+
+        static {
+            System.loadLibrary("ctsmediav2muxer_jni");
+        }
 
         @Before
         public void prologue() throws IOException {
@@ -780,6 +822,9 @@ public class MuxerTest {
             mOffsetIndices = offsetIndices;
         }
 
+        private native boolean nativeTestOffsetPts(int format, String srcFile, String dstFile,
+                int[] offsetIndices);
+
         @Test
         public void testOffsetPresentationTime() throws IOException {
             final int OFFSET_TS = 111000;
@@ -808,6 +853,16 @@ public class MuxerTest {
                     mediaInfo.offsetTimeStamp(trackID, -OFFSET_TS, mOffsetIndices[i]);
                 }
             }
+        }
+
+        @Test
+        public void testOffsetPresentationTimeNative() {
+            Assume.assumeTrue(shouldRunTest(mOutFormat));
+            Assume.assumeTrue("TODO(b/146423022)",
+                    mOutFormat != MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM);
+            Assume.assumeTrue("TODO(b/146421018)",
+                    mOutFormat != MediaMuxer.OutputFormat.MUXER_OUTPUT_OGG);
+            assertTrue(nativeTestOffsetPts(mOutFormat, mInpPath, mOutPath, mOffsetIndices));
         }
     }
 
@@ -838,6 +893,10 @@ public class MuxerTest {
         private String mInpPath;
         private String mOutPath;
 
+        static {
+            System.loadLibrary("ctsmediav2muxer_jni");
+        }
+
         public TestSimpleMux(String mime, String srcFile) {
             mMime = mime;
             mSrcFile = srcFile;
@@ -867,6 +926,9 @@ public class MuxerTest {
             }
             return result;
         }
+
+        private native boolean nativeTestSimpleMux(String srcPath, String outPath, String mime,
+                String selector);
 
         @Parameterized.Parameters
         public static Collection<Object[]> input() {
@@ -932,6 +994,15 @@ public class MuxerTest {
                     muxer.release();
                 }
             }
+        }
+
+        @Test
+        public void testSimpleMuxNative() {
+            Assume.assumeTrue("TODO(b/146421018)",
+                    !mMime.equals(MediaFormat.MIMETYPE_AUDIO_OPUS));
+            Assume.assumeTrue("TODO(b/146923287)",
+                    !mMime.equals(MediaFormat.MIMETYPE_AUDIO_VORBIS));
+            assertTrue(nativeTestSimpleMux(mInpPath, mOutPath, mMime, selector));
         }
     }
 }
