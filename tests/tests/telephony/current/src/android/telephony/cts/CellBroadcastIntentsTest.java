@@ -44,6 +44,7 @@ public class CellBroadcastIntentsTest {
     private static final SmsCbLocation TEST_LOCATION = new SmsCbLocation(TEST_PLMN, -1, -1);
     private static final int TEST_SERVICE_CATEGORY = 4097;
     private static final String TEST_LANGUAGE = "en";
+    private static final int TEST_DCS = 0;
     private static final String TEST_BODY = "test body";
     private static final int TEST_PRIORITY = 0;
     private static final int TEST_ETWS_WARNING_TYPE =
@@ -61,9 +62,9 @@ public class CellBroadcastIntentsTest {
     public void testGetIntentForBackgroundReceivers() {
         try {
             SmsCbMessage message = new SmsCbMessage(TEST_MESSAGE_FORMAT, TEST_GEO_SCOPE,
-                    TEST_SERIAL, TEST_LOCATION, TEST_SERVICE_CATEGORY, TEST_LANGUAGE, TEST_BODY,
-                    TEST_PRIORITY, TEST_ETWS_INFO, null, TEST_MAX_WAIT_TIME, TEST_GEOS,
-                    TEST_RECEIVED_TIME, TEST_SLOT, TEST_SUB_ID);
+                    TEST_SERIAL, TEST_LOCATION, TEST_SERVICE_CATEGORY, TEST_LANGUAGE, TEST_DCS,
+                    TEST_BODY, TEST_PRIORITY, TEST_ETWS_INFO, null,
+                    TEST_MAX_WAIT_TIME, TEST_GEOS, TEST_RECEIVED_TIME, TEST_SLOT, TEST_SUB_ID);
 
             CellBroadcastIntents.sendSmsCbReceivedBroadcast(
                     InstrumentationRegistry.getContext(), UserHandle.ALL, message,

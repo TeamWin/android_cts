@@ -74,7 +74,7 @@ public class SmsCbMessageTest {
             }
         });
         mSmsCbMessage = new SmsCbMessage(TEST_MESSAGE_FORMAT, TEST_GEO_SCOPE, TEST_SERIAL,
-                TEST_LOCATION, TEST_SERVICE_CATEGORY, TEST_LANGUAGE, TEST_BODY, TEST_PRIORITY,
+                TEST_LOCATION, TEST_SERVICE_CATEGORY, TEST_LANGUAGE, 0, TEST_BODY, TEST_PRIORITY,
                 TEST_ETWS_INFO, null, TEST_MAX_WAIT_TIME, TEST_GEOS, TEST_RECEIVED_TIME,
                 TEST_SLOT, TEST_SUB_ID);
     }
@@ -154,7 +154,7 @@ public class SmsCbMessageTest {
                         SmsCbCmasInfo.CMAS_URGENCY_EXPECTED, SmsCbCmasInfo.CMAS_CERTAINTY_LIKELY);
 
         mSmsCbMessage = new SmsCbMessage(TEST_MESSAGE_FORMAT, TEST_GEO_SCOPE, TEST_SERIAL,
-                TEST_LOCATION, TEST_SERVICE_CATEGORY, TEST_LANGUAGE, TEST_BODY, TEST_PRIORITY,
+                TEST_LOCATION, TEST_SERVICE_CATEGORY, TEST_LANGUAGE, 0, TEST_BODY, TEST_PRIORITY,
                 null, info, TEST_MAX_WAIT_TIME, TEST_GEOS, TEST_RECEIVED_TIME,
                 TEST_SLOT, TEST_SUB_ID);
         assertEquals(info, mSmsCbMessage.getCmasWarningInfo());
@@ -163,14 +163,14 @@ public class SmsCbMessageTest {
     @Test
     public void testEmergency() {
         mSmsCbMessage = new SmsCbMessage(TEST_MESSAGE_FORMAT, TEST_GEO_SCOPE, TEST_SERIAL,
-                TEST_LOCATION, TEST_SERVICE_CATEGORY, TEST_LANGUAGE, TEST_BODY,
+                TEST_LOCATION, TEST_SERVICE_CATEGORY, TEST_LANGUAGE, 0, TEST_BODY,
                 SmsCbMessage.MESSAGE_PRIORITY_EMERGENCY,
                 TEST_ETWS_INFO, null, TEST_MAX_WAIT_TIME, TEST_GEOS, TEST_RECEIVED_TIME,
                 TEST_SLOT, TEST_SUB_ID);
         assertEquals(true, mSmsCbMessage.isEmergencyMessage());
 
         mSmsCbMessage = new SmsCbMessage(TEST_MESSAGE_FORMAT, TEST_GEO_SCOPE, TEST_SERIAL,
-                TEST_LOCATION, TEST_SERVICE_CATEGORY, TEST_LANGUAGE, TEST_BODY,
+                TEST_LOCATION, TEST_SERVICE_CATEGORY, TEST_LANGUAGE, 0, TEST_BODY,
                 SmsCbMessage.MESSAGE_PRIORITY_NORMAL,
                 TEST_ETWS_INFO, null, TEST_MAX_WAIT_TIME, TEST_GEOS, TEST_RECEIVED_TIME,
                 TEST_SLOT, TEST_SUB_ID);
@@ -180,14 +180,14 @@ public class SmsCbMessageTest {
     @Test
     public void testIsEtws() {
         mSmsCbMessage = new SmsCbMessage(TEST_MESSAGE_FORMAT, TEST_GEO_SCOPE, TEST_SERIAL,
-                TEST_LOCATION, TEST_SERVICE_CATEGORY, TEST_LANGUAGE, TEST_BODY,
+                TEST_LOCATION, TEST_SERVICE_CATEGORY, TEST_LANGUAGE, 0, TEST_BODY,
                 SmsCbMessage.MESSAGE_PRIORITY_EMERGENCY,
                 null, TEST_CMAS_INFO, TEST_MAX_WAIT_TIME, TEST_GEOS, TEST_RECEIVED_TIME,
                 TEST_SLOT, TEST_SUB_ID);
         assertEquals(false, mSmsCbMessage.isEtwsMessage());
 
         mSmsCbMessage = new SmsCbMessage(TEST_MESSAGE_FORMAT, TEST_GEO_SCOPE, TEST_SERIAL,
-                TEST_LOCATION, TEST_SERVICE_CATEGORY, TEST_LANGUAGE, TEST_BODY,
+                TEST_LOCATION, TEST_SERVICE_CATEGORY, TEST_LANGUAGE, 0, TEST_BODY,
                 SmsCbMessage.MESSAGE_PRIORITY_EMERGENCY,
                 TEST_ETWS_INFO, null, TEST_MAX_WAIT_TIME, TEST_GEOS, TEST_RECEIVED_TIME,
                 TEST_SLOT, TEST_SUB_ID);
@@ -197,14 +197,14 @@ public class SmsCbMessageTest {
     @Test
     public void testIsCmas() {
         mSmsCbMessage = new SmsCbMessage(TEST_MESSAGE_FORMAT, TEST_GEO_SCOPE, TEST_SERIAL,
-                TEST_LOCATION, TEST_SERVICE_CATEGORY, TEST_LANGUAGE, TEST_BODY,
+                TEST_LOCATION, TEST_SERVICE_CATEGORY, TEST_LANGUAGE, 0, TEST_BODY,
                 SmsCbMessage.MESSAGE_PRIORITY_EMERGENCY,
                 TEST_ETWS_INFO, null, TEST_MAX_WAIT_TIME, TEST_GEOS, TEST_RECEIVED_TIME,
                 TEST_SLOT, TEST_SUB_ID);
         assertEquals(false, mSmsCbMessage.isCmasMessage());
 
         mSmsCbMessage = new SmsCbMessage(TEST_MESSAGE_FORMAT, TEST_GEO_SCOPE, TEST_SERIAL,
-                TEST_LOCATION, TEST_SERVICE_CATEGORY, TEST_LANGUAGE, TEST_BODY,
+                TEST_LOCATION, TEST_SERVICE_CATEGORY, TEST_LANGUAGE, 0, TEST_BODY,
                 SmsCbMessage.MESSAGE_PRIORITY_EMERGENCY,
                 null, TEST_CMAS_INFO, TEST_MAX_WAIT_TIME, TEST_GEOS, TEST_RECEIVED_TIME,
                 TEST_SLOT, TEST_SUB_ID);
@@ -216,7 +216,7 @@ public class SmsCbMessageTest {
         assertEquals(false, mSmsCbMessage.needGeoFencingCheck());
 
         mSmsCbMessage = new SmsCbMessage(TEST_MESSAGE_FORMAT, TEST_GEO_SCOPE, TEST_SERIAL,
-                TEST_LOCATION, TEST_SERVICE_CATEGORY, TEST_LANGUAGE, TEST_BODY,
+                TEST_LOCATION, TEST_SERVICE_CATEGORY, TEST_LANGUAGE, 0, TEST_BODY,
                 SmsCbMessage.MESSAGE_PRIORITY_EMERGENCY,
                 null, TEST_CMAS_INFO, 100, TEST_GEOS, TEST_RECEIVED_TIME,
                 TEST_SLOT, TEST_SUB_ID);
