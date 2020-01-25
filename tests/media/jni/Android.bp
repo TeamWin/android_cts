@@ -12,27 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test {
-    name: "CtsMediaV2TestCases",
-    defaults: ["cts_defaults"],
-    compile_multilib: "both",
-    static_libs: [
-        "compatibility-device-util-axt",
-        "ctstestrunner-axt",
+cc_test_library {
+    name: "libctsmediav2muxer_jni",
+    srcs: [
+        "NativeMediaConstants.cpp",
+        "NativeMuxerTest.cpp",
     ],
-    libs: [
-        "android.test.runner.stubs",
-        "android.test.base.stubs",
+    shared_libs: [
+        "libmediandk",
+        "liblog",
     ],
-    jni_libs: [
-        "libctsmediav2muxer_jni",
+    stl: "libc++_static",
+    cflags: [
+        "-Werror",
+        "-Wall",
     ],
-    srcs: ["src/**/*.java"],
-    // Tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "vts",
-        "general-tests",
-    ],
-    sdk_version: "test_current",
+    gtest: false,
 }
