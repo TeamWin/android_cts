@@ -50,10 +50,10 @@ public enum MainlineModule {
             "9A:4B:85:34:44:86:EC:F5:1F:F8:05:EB:9D:23:17:97:79:BE:B7:EC:81:91:93:5A:CA:67:F0"
                     + ":F4:09:02:52:97"),
     // Consistency
-    TZDATA("com.google.android.tzdata2",
+    TZDATA2("com.google.android.tzdata2",
             true, ModuleType.APEX,
-            "55:93:DD:78:CB:26:EC:9B:00:59:2A:6A:F5:94:E4:16:1F:FD:B5:E9:F3:71:A7:43:54:5F:93"
-                    + ":F2:A0:F6:53:89"),
+            "48:F3:A2:98:76:1B:6D:46:75:7C:EE:62:43:66:6A:25:B9:15:B9:42:18:A6:C2:82:72:99:BE"
+                    + ":DA:C9:92:AB:E7"),
     NETWORK_STACK("com.google.android.networkstack",
             true, ModuleType.APK,
             "5F:A4:22:12:AD:40:3E:22:DD:6E:FE:75:F3:F3:11:84:05:1F:EF:74:4C:0B:05:BE:5C:73:ED"

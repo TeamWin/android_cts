@@ -107,6 +107,8 @@ public class GraphicsStatsValidationTest extends ProtoDumpTestCase {
         int veryJankyDelta = countFramesAbove(statsAfter, 60) - countFramesAbove(statsBefore, 60);
         // The 1st frame could be >40ms, but nothing after that should be
         assertTrue(veryJankyDelta <= 2);
+        int noGPUJank = countGPUFramesAbove(statsAfter, 60) - countGPUFramesAbove(statsBefore, 60);
+        assertTrue(noGPUJank == 0);
     }
 
     public void testDaveyDrawFrame() throws Exception {
@@ -181,6 +183,9 @@ public class GraphicsStatsValidationTest extends ProtoDumpTestCase {
         assertTrue(summary.getSlowBitmapUploadCount() <= summary.getJankyFrames());
         assertTrue(summary.getSlowDrawCount() <= summary.getJankyFrames());
         assertTrue(proto.getHistogramCount() > 0);
+        assertTrue(proto.getGpuHistogramCount() > 0);
+        assertTrue(proto.getPipeline() == GraphicsStatsProto.PipelineType.GL
+            || proto.getPipeline() == GraphicsStatsProto.PipelineType.VULKAN);
 
         int histogramTotal = countTotalFrames(proto);
         assertEquals(summary.getTotalFrames(), histogramTotal);
@@ -189,6 +194,16 @@ public class GraphicsStatsValidationTest extends ProtoDumpTestCase {
     private int countFramesAbove(GraphicsStatsProto proto, int thresholdMs) {
         int totalFrames = 0;
         for (GraphicsStatsHistogramBucketProto bucket : proto.getHistogramList()) {
+            if (bucket.getRenderMillis() >= thresholdMs) {
+                totalFrames += bucket.getFrameCount();
+            }
+        }
+        return totalFrames;
+    }
+
+    private int countGPUFramesAbove(GraphicsStatsProto proto, int thresholdMs) {
+        int totalFrames = 0;
+        for (GraphicsStatsHistogramBucketProto bucket : proto.getGpuHistogramList()) {
             if (bucket.getRenderMillis() >= thresholdMs) {
                 totalFrames += bucket.getFrameCount();
             }

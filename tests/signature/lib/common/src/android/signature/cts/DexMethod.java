@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 
 public class DexMethod extends DexMember {
   private final List<String> mParamTypeList;
+  private static final Pattern REGEX_SIGNATURE = Pattern.compile("^\\((.*)\\)(.*)$");
 
   public DexMethod(String className, String name, String signature, String[] flags) {
       super(className, name, parseDexReturnType(signature), flags);
@@ -52,7 +53,7 @@ public class DexMethod extends DexMember {
   }
 
   private static Matcher matchSignature(String signature) {
-      Matcher m = Pattern.compile("^\\((.*)\\)(.*)$").matcher(signature);
+      Matcher m = REGEX_SIGNATURE.matcher(signature);
       if (!m.matches()) {
           throw new RuntimeException("Could not parse method signature: " + signature);
       }

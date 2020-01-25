@@ -2480,24 +2480,9 @@ public class ImageDecoderTest {
         }
     }
 
-
-    static Object[] crossProduct(Object[] a, Object[] b) {
-        final int length = a.length * b.length;
-        Object[] ret = new Object[length];
-        for (int i = 0; i < a.length; i++) {
-            for (int j = 0; j < b.length; j++) {
-                int index = i * b.length + j;
-                assertNull(ret[index]);
-                ret[index] = new Object[] { a[i], b[j] };
-            }
-        }
-        return ret;
-    }
-
     private Object[] getRecordsAsSources() {
-        return crossProduct(getRecords(), mCreators);
+        return Utils.crossProduct(getRecords(), mCreators);
     }
-
 
     @Test
     @LargeTest
@@ -2530,7 +2515,7 @@ public class ImageDecoderTest {
     }
 
     private Object[] getRecordsAsUris() {
-        return crossProduct(getRecords(), mUriCreators);
+        return Utils.crossProduct(getRecords(), mUriCreators);
     }
 
 

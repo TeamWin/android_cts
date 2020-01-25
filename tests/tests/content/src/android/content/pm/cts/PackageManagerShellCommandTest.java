@@ -42,6 +42,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 @RunWith(Parameterized.class)
@@ -148,9 +149,32 @@ public class PackageManagerShellCommandTest {
     }
 
     @Test
+    public void testAppInstallErr() throws Exception {
+        if (!mStreaming) {
+            return;
+        }
+        File file = new File(createApkPath(TEST_HW5));
+        String command = "pm " + mInstall + " -t -g " + file.getPath() + (new Random()).nextLong();
+        String commandResult = executeShellCommand(command);
+        assertEquals("Failure [INSTALL_FAILED_MEDIA_UNAVAILABLE: Failed to prepare image.]\n",
+                commandResult);
+        assertFalse(isAppInstalled(TEST_APP_PACKAGE));
+    }
+
+    @Test
     public void testAppInstallStdIn() throws Exception {
         installPackageStdIn(TEST_HW5);
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+    }
+
+    @Test
+    public void testAppInstallStdInErr() throws Exception {
+        File file = new File(createApkPath(TEST_HW5));
+        String commandResult = executeShellCommand("pm " + mInstall + " -t -g -S " + file.length(),
+                new File[]{});
+        assertTrue(commandResult,
+                commandResult.startsWith("Failure [INSTALL_PARSE_FAILED_NOT_APK"));
+        assertFalse(isAppInstalled(TEST_APP_PACKAGE));
     }
 
     @Test

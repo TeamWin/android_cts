@@ -50,7 +50,8 @@ public class DatasetTest {
     private final InlinePresentation mInlinePresentation = new InlinePresentation(
             new Slice.Builder(new Uri.Builder().appendPath("DatasetTest").build(),
                     new SliceSpec("DatasetTest", 1)).build(),
-            new InlinePresentationSpec.Builder(new Size(10, 10), new Size(50, 50)).build());
+            new InlinePresentationSpec.Builder(new Size(10, 10),
+                    new Size(50, 50)).build(), /* pinned= */ false);
 
     private final RemoteViews mPresentation = mock(RemoteViews.class);
 

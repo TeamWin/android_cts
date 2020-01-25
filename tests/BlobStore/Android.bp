@@ -21,6 +21,7 @@ android_test {
         "compatibility-device-util-axt",
         "truth-prebuilt",
         "testng",
+        "BlobStoreTestUtils",
     ],
     srcs: [
         "src/**/*.java",
