@@ -27,6 +27,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 abstract class BaseBlobStoreHostTest extends BaseHostJUnit4Test {
+    protected static final String TARGET_APK = "CtsBlobStoreHostTestHelper.apk";
+    protected static final String TARGET_PKG = "com.android.cts.device.blob";
+
     private static final long TIMEOUT_BOOT_COMPLETE_MS = 120_000;
 
     protected static final String KEY_SESSION_ID = "session";
