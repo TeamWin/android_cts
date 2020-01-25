@@ -22,6 +22,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
+import org.junit.Assume.assumeTrue
 
 import android.app.AppOpsManager.MODE_ALLOWED
 import android.app.AppOpsManager.MODE_DEFAULT
@@ -487,8 +488,8 @@ class AppOpsTest {
         // that other test methods in this class don't affect this test method, here we use
         // operations that are not used by any other test cases.
         val mustNotBeLogged = "Operation mustn't be logged before the test runs"
-        assertFalse(mustNotBeLogged, allowedOperationLogged(mOpPackageName, OPSTR_RECORD_AUDIO))
-        assertFalse(mustNotBeLogged, allowedOperationLogged(mOpPackageName, OPSTR_READ_CALENDAR))
+        assumeTrue(mustNotBeLogged, !allowedOperationLogged(mOpPackageName, OPSTR_RECORD_AUDIO))
+        assumeTrue(mustNotBeLogged, !allowedOperationLogged(mOpPackageName, OPSTR_READ_CALENDAR))
 
         setOpMode(mOpPackageName, OPSTR_RECORD_AUDIO, MODE_ALLOWED)
         setOpMode(mOpPackageName, OPSTR_READ_CALENDAR, MODE_ERRORED)

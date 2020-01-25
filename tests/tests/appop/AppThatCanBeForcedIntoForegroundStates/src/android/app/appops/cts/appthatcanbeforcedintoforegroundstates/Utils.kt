@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-package android.app.appops.cts;
+package android.app.appops.cts.appthatcanbeforcedintoforegroundstates
 
-interface IAppOpsForegroundControlService {
-    void waitUntilCreated();
-    void waitUntilBackground();
-    void waitUntilForeground();
-    void finishActivity();
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
 
-    void waitUntilForegroundServiceStarted();
-    void stopForegroundService();
+const val NOTIFICATION_CHANNEL_ID = "fgsvc"
 
-    void waitUntilLocationForegroundServiceStarted();
-    void stopLocationForegroundService();
+fun ensureNotificationChannel(context: Context) {
+    val notificationManager = context.getSystemService(NotificationManager::class.java)!!
 
-    void cleanup();
+    notificationManager.createNotificationChannel(NotificationChannel(NOTIFICATION_CHANNEL_ID,
+            "Foreground Services", NotificationManager.IMPORTANCE_HIGH))
 }

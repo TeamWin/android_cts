@@ -19,11 +19,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="android.app.appops.cts.appthatcanbeforcedintoforegroundstates">
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
     <application>
         <service android:name=".AppOpsForegroundControlService" android:exported="true"/>
 
+        <service android:name=".AppOpsForegroundControlLocationForegroundService"
+                 android:exported="true"
+                 android:foregroundServiceType="location"/>
+        <service android:name=".AppOpsForegroundControlForegroundService" android:exported="true"/>
         <activity android:name=".AppOpsForegroundControlActivity" android:exported="true"/>
     </application>
 </manifest>

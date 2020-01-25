@@ -16,21 +16,27 @@
 
 package android.app.appops.cts
 
-import android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
+import android.app.Activity
 import android.app.AppOpsManager
+import android.app.AppOpsManager.KEY_BG_STATE_SETTLE_TIME
+import android.app.AppOpsManager.KEY_FG_SERVICE_STATE_SETTLE_TIME
+import android.app.AppOpsManager.KEY_TOP_STATE_SETTLE_TIME
 import android.app.AppOpsManager.MODE_ALLOWED
-import android.app.AppOpsManager.MODE_FOREGROUND
 import android.app.AppOpsManager.MODE_IGNORED
 import android.app.AppOpsManager.OPSTR_FINE_LOCATION
 import android.app.AppOpsManager.WATCH_FOREGROUND_CHANGES
 import android.content.ComponentName
+import android.content.Context
 import android.content.Context.BIND_AUTO_CREATE
 import android.content.Context.BIND_NOT_FOREGROUND
 import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.ServiceConnection
 import android.os.IBinder
+import android.provider.Settings
+import android.provider.Settings.Global.APP_OPS_CONSTANTS
 import android.support.test.uiautomator.UiDevice
+import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
 import com.google.common.truth.Truth.assertThat
@@ -45,6 +51,8 @@ private const val TEST_SERVICE_PKG = "android.app.appops.cts.appthatcanbeforcedi
 private const val TIMEOUT_MILLIS = 45000L
 
 class ForegroundModeTest {
+    private var previousAppOpsConstants: String? = null
+
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context = instrumentation.targetContext
     private val appopsManager = context.getSystemService(AppOpsManager::class.java)!!
@@ -65,19 +73,28 @@ class ForegroundModeTest {
         val uiDevice = UiDevice.getInstance(instrumentation)
         uiDevice.wakeUp()
         uiDevice.executeShellCommand("wm dismiss-keyguard")
+        uiDevice.executeShellCommand("input keyevent KEYCODE_HOME")
     }
 
     @Before
-    fun setTestPkgPermissionState() {
-        instrumentation.uiAutomation.revokeRuntimePermission(
-                TEST_SERVICE_PKG, ACCESS_BACKGROUND_LOCATION)
+    fun setup() {
+        Log.i("Test", "uid=$testPkgUid")
+
         runWithShellPermissionIdentity {
-            appopsManager.setUidMode(OPSTR_FINE_LOCATION, testPkgUid, MODE_FOREGROUND)
-        }
-    }
+            previousAppOpsConstants = Settings.Global.getString(context.contentResolver,
+                    APP_OPS_CONSTANTS)
 
-    @Before
-    fun connectToService() {
+            // Speed up app-ops service proc state transitions
+            Settings.Global.putString(context.contentResolver, APP_OPS_CONSTANTS,
+                    "$KEY_TOP_STATE_SETTLE_TIME=300,$KEY_FG_SERVICE_STATE_SETTLE_TIME=100," +
+                            "$KEY_BG_STATE_SETTLE_TIME=10")
+        }
+
+        // Wait until app counts as background
+        eventually {
+            assertThat(testPkgAppOpMode).isEqualTo(MODE_IGNORED)
+        }
+
         val serviceIntent = Intent().setComponent(ComponentName(TEST_SERVICE_PKG,
                 "$TEST_SERVICE_PKG.AppOpsForegroundControlService"))
 
@@ -108,26 +125,56 @@ class ForegroundModeTest {
 
         // Sometimes it can take some time for the lock screen to disappear. Use eval'ed appop mode
         // as a proxy
-        eventually(timeout = TIMEOUT_MILLIS) {
+        eventually {
             assertThat(testPkgAppOpMode).isEqualTo(MODE_ALLOWED)
         }
     }
 
+    private fun withTopActivity(code: (Activity) -> Unit) {
+        wakeUpScreen()
+
+        context.startActivity(Intent(context, UidStateForceActivity::class.java)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK))
+
+        UidStateForceActivity.waitForResumed()
+        try {
+            code(UidStateForceActivity.instance!!)
+        } finally {
+            UidStateForceActivity.instance?.finish()
+        }
+    }
+
+    private fun startForegroundService(startingContext: Context) {
+        startingContext.startForegroundService(Intent().setComponent(
+                ComponentName(TEST_SERVICE_PKG,
+                        "$TEST_SERVICE_PKG.AppOpsForegroundControlForegroundService")))
+        foregroundControlService.waitUntilForegroundServiceStarted()
+    }
+
+    private fun startLocationForegroundService(startingContext: Context) {
+        startingContext.startForegroundService(Intent().setComponent(
+                ComponentName(TEST_SERVICE_PKG,
+                        "$TEST_SERVICE_PKG.AppOpsForegroundControlLocationForegroundService")))
+        foregroundControlService.waitUntilLocationForegroundServiceStarted()
+    }
+
     private fun makeBackground() {
         foregroundControlService.finishActivity()
+        foregroundControlService.stopForegroundService()
+        foregroundControlService.stopLocationForegroundService()
     }
 
     @Test
     fun modeIsIgnoredWhenAppIsBackground() {
-        eventually(timeout = TIMEOUT_MILLIS) {
-            assertThat(testPkgAppOpMode).isEqualTo(MODE_IGNORED)
-        }
+        assertThat(testPkgAppOpMode).isEqualTo(MODE_IGNORED)
     }
 
     @Test
     fun modeIsAllowedWhenForeground() {
         makeTop()
-        assertThat(testPkgAppOpMode).isEqualTo(MODE_ALLOWED)
+        eventually {
+            assertThat(testPkgAppOpMode).isEqualTo(MODE_ALLOWED)
+        }
     }
 
     @Test
@@ -136,17 +183,13 @@ class ForegroundModeTest {
         assertThat(testPkgAppOpMode).isEqualTo(MODE_ALLOWED)
 
         makeBackground()
-        eventually(timeout = TIMEOUT_MILLIS) {
+        eventually {
             assertThat(testPkgAppOpMode).isEqualTo(MODE_IGNORED)
         }
     }
 
     @Test
     fun modeChangeCallbackWhenEnteringForeground() {
-        eventually(timeout = TIMEOUT_MILLIS) {
-            assertThat(testPkgAppOpMode).isEqualTo(MODE_IGNORED)
-        }
-
         val gotCallback = CompletableFuture<Unit>()
         appopsManager.startWatchingMode(OPSTR_FINE_LOCATION, TEST_SERVICE_PKG,
                 WATCH_FOREGROUND_CHANGES) { op, packageName ->
@@ -175,12 +218,162 @@ class ForegroundModeTest {
         gotCallback.get(TIMEOUT_MILLIS, MILLISECONDS)
     }
 
+    @Test
+    fun modeIsIgnoredWhenAppHasNonLocationForegroundService() {
+        withTopActivity { fgActivity ->
+            startForegroundService(fgActivity)
+        }
+        assertThat(testPkgAppOpMode).isEqualTo(MODE_IGNORED)
+    }
+
+    @Test
+    fun modeIsAllowedWhenAppHasLocationForegroundService() {
+        withTopActivity { fgActivity ->
+            startLocationForegroundService(fgActivity)
+        }
+
+        eventually {
+            assertThat(testPkgAppOpMode).isEqualTo(MODE_ALLOWED)
+        }
+    }
+
+    @Test
+    fun modeBecomesIgnoredAfterLocationForegroundIsStopped() {
+        withTopActivity { fgActivity ->
+            startLocationForegroundService(fgActivity)
+        }
+
+        foregroundControlService.stopLocationForegroundService()
+        eventually {
+            assertThat(testPkgAppOpMode).isEqualTo(MODE_IGNORED)
+        }
+    }
+
+    @Test
+    fun modeBecomesAllowedAfterLocationForegroundIsAdded() {
+        withTopActivity { fgActivity ->
+            startForegroundService(fgActivity)
+            startLocationForegroundService(fgActivity)
+        }
+
+        eventually {
+            assertThat(testPkgAppOpMode).isEqualTo(MODE_ALLOWED)
+        }
+    }
+
+    @Test
+    fun modeBecomesIgnoredAfterLocationForegroundIsRemoved() {
+        withTopActivity { fgActivity ->
+            startForegroundService(fgActivity)
+            startLocationForegroundService(fgActivity)
+        }
+
+        foregroundControlService.stopLocationForegroundService()
+
+        eventually {
+            assertThat(testPkgAppOpMode).isEqualTo(MODE_IGNORED)
+        }
+    }
+
+    @Test
+    fun modeChangeCallbackWhenStartingLocationForegroundService() {
+        val gotCallback = CompletableFuture<Unit>()
+        appopsManager.startWatchingMode(OPSTR_FINE_LOCATION, TEST_SERVICE_PKG,
+                WATCH_FOREGROUND_CHANGES) { op, packageName ->
+            if (op == OPSTR_FINE_LOCATION && packageName == TEST_SERVICE_PKG) {
+                gotCallback.complete(Unit)
+            }
+        }
+
+        withTopActivity { fgActivity ->
+            startLocationForegroundService(fgActivity)
+        }
+
+        gotCallback.get(TIMEOUT_MILLIS, MILLISECONDS)
+    }
+
+    @Test
+    fun modeChangeCallbackAfterLocationForegroundIsStopped() {
+        withTopActivity { fgActivity ->
+            startLocationForegroundService(fgActivity)
+        }
+
+        eventually {
+            assertThat(testPkgAppOpMode).isEqualTo(MODE_ALLOWED)
+        }
+
+        val gotCallback = CompletableFuture<Unit>()
+        appopsManager.startWatchingMode(OPSTR_FINE_LOCATION, TEST_SERVICE_PKG,
+                WATCH_FOREGROUND_CHANGES) { op, packageName ->
+            if (op == OPSTR_FINE_LOCATION && packageName == TEST_SERVICE_PKG) {
+                gotCallback.complete(Unit)
+            }
+        }
+
+        foregroundControlService.stopLocationForegroundService()
+        gotCallback.get(TIMEOUT_MILLIS, MILLISECONDS)
+    }
+
+    @Test
+    fun modeChangeCallbackAfterLocationForegroundIsAdded() {
+        withTopActivity { fgActivity ->
+            startForegroundService(fgActivity)
+        }
+
+        val gotCallback = CompletableFuture<Unit>()
+        appopsManager.startWatchingMode(OPSTR_FINE_LOCATION, TEST_SERVICE_PKG,
+                WATCH_FOREGROUND_CHANGES) { op, packageName ->
+            if (op == OPSTR_FINE_LOCATION && packageName == TEST_SERVICE_PKG) {
+                gotCallback.complete(Unit)
+            }
+        }
+
+        withTopActivity { fgActivity ->
+            startLocationForegroundService(fgActivity)
+        }
+
+        gotCallback.get(TIMEOUT_MILLIS, MILLISECONDS)
+    }
+
+    @Test
+    fun modeChangeCallbackAfterLocationForegroundIsRemoved() {
+        withTopActivity { fgActivity ->
+            startForegroundService(fgActivity)
+            startLocationForegroundService(fgActivity)
+        }
+
+        eventually {
+            assertThat(testPkgAppOpMode).isEqualTo(MODE_ALLOWED)
+        }
+
+        val gotCallback = CompletableFuture<Unit>()
+        appopsManager.startWatchingMode(OPSTR_FINE_LOCATION, TEST_SERVICE_PKG,
+                WATCH_FOREGROUND_CHANGES) { op, packageName ->
+            if (op == OPSTR_FINE_LOCATION && packageName == TEST_SERVICE_PKG) {
+                gotCallback.complete(Unit)
+            }
+        }
+
+        foregroundControlService.stopLocationForegroundService()
+
+        gotCallback.get(TIMEOUT_MILLIS, MILLISECONDS)
+    }
+
     @After
-    fun disconnectFromService() {
-        try {
-            foregroundControlService.cleanup()
-            context.unbindService(serviceConnection)
-        } catch (ignored: Throwable) {
+    fun cleanup() {
+        foregroundControlService.cleanup()
+        context.unbindService(serviceConnection)
+
+        // Wait until app counts as background
+        eventually {
+            assertThat(testPkgAppOpMode).isEqualTo(MODE_IGNORED)
+        }
+
+        runWithShellPermissionIdentity {
+            if (previousAppOpsConstants != null) {
+                Settings.Global.putString(context.contentResolver,
+                        APP_OPS_CONSTANTS, previousAppOpsConstants)
+            }
         }
     }
 }

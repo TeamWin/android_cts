@@ -40,8 +40,26 @@ class AppOpsForegroundControlService : Service() {
                 AppOpsForegroundControlActivity.finish()
             }
 
+            override fun waitUntilForegroundServiceStarted() {
+                AppOpsForegroundControlForegroundService.waitUntilStarted()
+            }
+
+            override fun stopForegroundService() {
+                AppOpsForegroundControlForegroundService.stop()
+            }
+
+            override fun waitUntilLocationForegroundServiceStarted() {
+                AppOpsForegroundControlLocationForegroundService.waitUntilStarted()
+            }
+
+            override fun stopLocationForegroundService() {
+                AppOpsForegroundControlLocationForegroundService.stop()
+            }
+
             override fun cleanup() {
                 AppOpsForegroundControlActivity.finish()
+                AppOpsForegroundControlForegroundService.stop()
+                AppOpsForegroundControlLocationForegroundService.stop()
             }
         }
     }
