@@ -42,6 +42,7 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.PersistableBundle;
@@ -186,6 +187,12 @@ public class TelephonyManagerTest {
         EMERGENCY_SERVICE_CATEGORY_SET.add(EmergencyNumber.EMERGENCY_SERVICE_CATEGORY_MIEC);
         EMERGENCY_SERVICE_CATEGORY_SET.add(EmergencyNumber.EMERGENCY_SERVICE_CATEGORY_AIEC);
     }
+
+    private static final String LOCATION_ACCESS_APP_CURRENT_PACKAGE =
+            CtsLocationAccessService.class.getPackage().getName();
+
+    private static final String LOCATION_ACCESS_APP_SDK28_PACKAGE =
+            CtsLocationAccessService.class.getPackage().getName() + ".sdk28";
 
     private int mTestSub;
     private TelephonyManagerTest.CarrierConfigReceiver mReceiver;
@@ -534,10 +541,12 @@ public class TelephonyManagerTest {
 
     @Test
     public void testCellLocationFinePermission() {
-        withRevokedPermission(() -> {
+        withRevokedPermission(LOCATION_ACCESS_APP_CURRENT_PACKAGE, () -> {
             try {
-                CellLocation cellLocation = (CellLocation) performLocationAccessCommand(
+                Bundle cellLocationBundle = (Bundle) performLocationAccessCommand(
                         CtsLocationAccessService.COMMAND_GET_CELL_LOCATION);
+                CellLocation cellLocation = cellLocationBundle == null ? null :
+                        CellLocation.newFromBundle(cellLocationBundle);
                 assertTrue(cellLocation == null || cellLocation.isEmpty());
             } catch (SecurityException e) {
                 // expected
@@ -555,12 +564,12 @@ public class TelephonyManagerTest {
 
     @Test
     public void testServiceStateLocationSanitization() {
-        withRevokedPermission(() -> {
+        withRevokedPermission(LOCATION_ACCESS_APP_CURRENT_PACKAGE, () -> {
                     ServiceState ss = (ServiceState) performLocationAccessCommand(
                             CtsLocationAccessService.COMMAND_GET_SERVICE_STATE);
                     assertServiceStateSanitization(ss, true);
 
-                    withRevokedPermission(() -> {
+                    withRevokedPermission(LOCATION_ACCESS_APP_CURRENT_PACKAGE, () -> {
                                 ServiceState ss1 = (ServiceState) performLocationAccessCommand(
                                         CtsLocationAccessService.COMMAND_GET_SERVICE_STATE);
                                 assertServiceStateSanitization(ss1, false);
@@ -574,12 +583,12 @@ public class TelephonyManagerTest {
     public void testServiceStateListeningWithoutPermissions() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) return;
 
-        withRevokedPermission(() -> {
+        withRevokedPermission(LOCATION_ACCESS_APP_CURRENT_PACKAGE, () -> {
                     ServiceState ss = (ServiceState) performLocationAccessCommand(
                             CtsLocationAccessService.COMMAND_GET_SERVICE_STATE_FROM_LISTENER);
                     assertServiceStateSanitization(ss, true);
 
-                    withRevokedPermission(() -> {
+                    withRevokedPermission(LOCATION_ACCESS_APP_CURRENT_PACKAGE, () -> {
                                 ServiceState ss1 = (ServiceState) performLocationAccessCommand(
                                         CtsLocationAccessService
                                                 .COMMAND_GET_SERVICE_STATE_FROM_LISTENER);
@@ -592,7 +601,7 @@ public class TelephonyManagerTest {
 
     @Test
     public void testRegistryPermissionsForCellLocation() {
-        withRevokedPermission(() -> {
+        withRevokedPermission(LOCATION_ACCESS_APP_CURRENT_PACKAGE, () -> {
                     CellLocation cellLocation = (CellLocation) performLocationAccessCommand(
                             CtsLocationAccessService.COMMAND_LISTEN_CELL_LOCATION);
                     assertNull(cellLocation);
@@ -602,7 +611,7 @@ public class TelephonyManagerTest {
 
     @Test
     public void testRegistryPermissionsForCellInfo() {
-        withRevokedPermission(() -> {
+        withRevokedPermission(LOCATION_ACCESS_APP_CURRENT_PACKAGE, () -> {
                     CellLocation cellLocation = (CellLocation) performLocationAccessCommand(
                             CtsLocationAccessService.COMMAND_LISTEN_CELL_INFO);
                     assertNull(cellLocation);
@@ -610,11 +619,51 @@ public class TelephonyManagerTest {
                 Manifest.permission.ACCESS_FINE_LOCATION);
     }
 
+    @Test
+    public void testSdk28CellLocation() {
+        // Verify that a target-sdk 28 app can access cell location with ACCESS_COARSE_LOCATION, but
+        // not with no location permissions at all.
+        withRevokedPermission(LOCATION_ACCESS_APP_SDK28_PACKAGE, () -> {
+            try {
+                performLocationAccessCommandSdk28(
+                        CtsLocationAccessService.COMMAND_GET_CELL_LOCATION);
+            } catch (SecurityException e) {
+                fail("SDK28 should have access to cell location with coarse permission");
+            }
+
+            withRevokedPermission(LOCATION_ACCESS_APP_SDK28_PACKAGE, () -> {
+                try {
+                    Bundle cellLocationBundle = (Bundle) performLocationAccessCommandSdk28(
+                            CtsLocationAccessService.COMMAND_GET_CELL_LOCATION);
+                    CellLocation cellLocation = cellLocationBundle == null ? null :
+                            CellLocation.newFromBundle(cellLocationBundle);
+                    assertTrue(cellLocation == null || cellLocation.isEmpty());
+                } catch (SecurityException e) {
+                    // expected
+                }
+            }, Manifest.permission.ACCESS_COARSE_LOCATION);
+        }, Manifest.permission.ACCESS_FINE_LOCATION);
+
+    }
     private ICtsLocationAccessControl getLocationAccessAppControl() {
         Intent bindIntent = new Intent(CtsLocationAccessService.CONTROL_ACTION);
-        bindIntent.setComponent(new ComponentName(CtsLocationAccessService.class.getPackageName$(),
+        bindIntent.setComponent(new ComponentName(
+                LOCATION_ACCESS_APP_CURRENT_PACKAGE,
                 CtsLocationAccessService.class.getName()));
 
+        return bindLocationAccessControl(bindIntent);
+    }
+
+    private ICtsLocationAccessControl getLocationAccessAppControlSdk28() {
+        Intent bindIntent = new Intent(CtsLocationAccessService.CONTROL_ACTION);
+        bindIntent.setComponent(new ComponentName(
+                LOCATION_ACCESS_APP_SDK28_PACKAGE,
+                CtsLocationAccessService.class.getName()));
+
+        return bindLocationAccessControl(bindIntent);
+    }
+
+    private ICtsLocationAccessControl bindLocationAccessControl(Intent bindIntent) {
         LinkedBlockingQueue<ICtsLocationAccessControl> pipe =
                 new LinkedBlockingQueue<>();
         getContext().bindService(bindIntent, new ServiceConnection() {
@@ -649,16 +698,25 @@ public class TelephonyManagerTest {
         return null;
     }
 
-    private void withRevokedPermission(Runnable r, String permission) {
+    private Object performLocationAccessCommandSdk28(String command) {
+        ICtsLocationAccessControl control = getLocationAccessAppControlSdk28();
+        try {
+            List ret = control.performCommand(command);
+            if (!ret.isEmpty()) return ret.get(0);
+        } catch (RemoteException e) {
+            fail("Remote exception");
+        }
+        return null;
+    }
+
+    private void withRevokedPermission(String packageName, Runnable r, String permission) {
         InstrumentationRegistry.getInstrumentation()
-                .getUiAutomation().revokeRuntimePermission(
-                CtsLocationAccessService.class.getPackageName$(), permission);
+                .getUiAutomation().revokeRuntimePermission(packageName, permission);
         try {
             r.run();
         } finally {
             InstrumentationRegistry.getInstrumentation()
-                    .getUiAutomation().grantRuntimePermission(
-                    CtsLocationAccessService.class.getPackageName$(), permission);
+                    .getUiAutomation().grantRuntimePermission(packageName, permission);
         }
     }
 
