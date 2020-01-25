@@ -763,6 +763,18 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-1_P_and_2_Qplus.apk");
     }
 
+    public void testInstallTargetRWithV1Signer() throws Exception {
+        // An app targeting R must have at least a V2 signature; this test verifies that an app
+        // targeting R with only a V1 signature fails to install.
+        assertInstallFails("v1-only-target-r.apk");
+    }
+
+    public void testInstallTargetRWithV2V2Signers() throws Exception {
+        // An app targeting R must have at least a V2 signature; this test verifies that an app
+        // targeting R with both a V1 and V2 signature installs successfully.
+        assertInstallSucceeds("v1v2-target-r.apk");
+    }
+
     private void assertInstallSucceeds(String apkFilenameInResources) throws Exception {
         String installResult = installPackageFromResource(apkFilenameInResources);
         if (installResult != null) {
