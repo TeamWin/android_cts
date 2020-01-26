@@ -20,7 +20,6 @@ import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
@@ -28,12 +27,6 @@ public class DataCleanupTest extends BaseBlobStoreHostTest {
     private static final String TARGET_APK = "CtsBlobStoreHelperApp.apk";
     private static final String TARGET_PKG = "com.android.cts.blob.helper";
     private static final String TEST_CLASS = TARGET_PKG + ".DataCleanupTest";
-
-    private static final String KEY_SESSION_ID = "session";
-    private static final String KEY_DIGEST = "digest";
-    private static final String KEY_EXPIRY = "expiry";
-    private static final String KEY_LABEL = "label";
-    private static final String KEY_TAG = "tag";
 
     @Test
     public void testPackageUninstall_openSession() throws Exception {
@@ -89,22 +82,5 @@ public class DataCleanupTest extends BaseBlobStoreHostTest {
         installPackage(TARGET_APK);
         // Verify that the new package cannot access the blob.
         runDeviceTest(TARGET_PKG, TEST_CLASS, "testOpenBlob_shouldThrow", args);
-    }
-
-    private Map<String, String> createArgsFromLastTestRun() {
-        final Map<String, String> args = new HashMap<>();
-        for (String key : new String[] {
-                KEY_SESSION_ID,
-                KEY_DIGEST,
-                KEY_EXPIRY,
-                KEY_LABEL,
-                KEY_TAG
-        }) {
-            final String value = getLastDeviceRunResults().getRunMetrics().get(key);
-            if (value != null) {
-                args.put(key, value);
-            }
-        }
-        return args;
     }
 }

@@ -48,10 +48,13 @@ public class DataCleanupTest {
     private static final long PARTIAL_FILE_LENGTH_BYTES = 2002;
 
     private static final String KEY_SESSION_ID = "session";
+
     private static final String KEY_DIGEST = "digest";
     private static final String KEY_EXPIRY = "expiry";
     private static final String KEY_LABEL = "label";
     private static final String KEY_TAG = "tag";
+
+    private static final String KEY_ALLOW_PUBLIC = "public";
 
     private Context mContext;
     private Instrumentation mInstrumentation;
@@ -111,6 +114,9 @@ public class DataCleanupTest {
         assertThat(sessionId).isGreaterThan(0L);
         try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
             blobData.writeToSession(session);
+            if (getShouldAllowPublicFromArgs()) {
+                session.allowPublicAccess();
+            }
             final CompletableFuture<Integer> callback = new CompletableFuture<>();
             session.commit(mContext.getMainExecutor(), callback::complete);
             assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_MS, TimeUnit.MILLISECONDS))
@@ -167,5 +173,10 @@ public class DataCleanupTest {
         final long expiryTimeMillis = Long.parseLong(args.getString(KEY_EXPIRY));
         final String tag = args.getString(KEY_TAG);
         return BlobHandle.createWithSha256(digest, label, expiryTimeMillis, tag);
+    }
+
+    private boolean getShouldAllowPublicFromArgs() {
+        final Bundle args = InstrumentationRegistry.getArguments();
+        return "1".equals(args.getString(KEY_ALLOW_PUBLIC));
     }
 }
