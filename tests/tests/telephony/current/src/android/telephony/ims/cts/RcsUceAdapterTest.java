@@ -21,7 +21,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 import android.content.Context;
+import android.net.Uri;
 import android.os.Looper;
+import android.telecom.PhoneAccount;
 import android.telephony.SubscriptionManager;
 import android.telephony.ims.ImsException;
 import android.telephony.ims.ImsManager;
@@ -37,10 +39,14 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
+
 @RunWith(AndroidJUnit4.class)
 public class RcsUceAdapterTest {
 
     private static int sTestSub = SubscriptionManager.INVALID_SUBSCRIPTION_ID;
+    private static final Uri TEST_NUMBER_URI =
+            Uri.fromParts(PhoneAccount.SCHEME_TEL, "6505551212", null);
 
     @BeforeClass
     public static void beforeAllTests() {
@@ -106,6 +112,111 @@ public class RcsUceAdapterTest {
                         adapter, a -> a.setUceSettingEnabled(userSetIsEnabled), ImsException.class,
                         "android.permission.MODIFY_PHONE_STATE");
             }
+        }
+    }
+
+    @Test
+    public void testMethodPermissions() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        RcsUceAdapter uceAdapter = imsManager.getImsRcsManager(sTestSub).getUceAdapter();
+        assertNotNull("UCE adapter should not be null!", uceAdapter);
+
+        // requestCapabilities
+        ArrayList<Uri> numbers = new ArrayList<>(1);
+        numbers.add(TEST_NUMBER_URI);
+        try {
+            ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(uceAdapter,
+                    (m) -> m.requestCapabilities(Runnable::run, numbers,
+                            new RcsUceAdapter.CapabilitiesCallback() {
+                            }), ImsException.class,
+                    "android.permission.READ_PRIVILEGED_PHONE_STATE");
+        } catch (SecurityException e) {
+            fail("requestCapabilities should succeed with READ_PRIVILEGED_PHONE_STATE.");
+        } catch (ImsException e) {
+            // unsupported is a valid fail cause.
+            if (e.getCode() != ImsException.CODE_ERROR_UNSUPPORTED_OPERATION) {
+                fail("request capabilities failed with code " + e.getCode());
+            }
+        }
+
+        try {
+            uceAdapter.requestCapabilities(Runnable::run, numbers,
+                    new RcsUceAdapter.CapabilitiesCallback() {});
+            fail("requestCapabilities should require READ_PRIVILEGED_PHONE_STATE.");
+        } catch (SecurityException e) {
+            //expected
+        }
+
+        // getUcePublishState
+        try {
+            Integer result = ShellIdentityUtils.invokeThrowableMethodWithShellPermissions(
+                    uceAdapter, RcsUceAdapter::getUcePublishState, ImsException.class,
+                    "android.permission.READ_PRIVILEGED_PHONE_STATE");
+            assertNotNull("result from getUcePublishState should not be null", result);
+        } catch (SecurityException e) {
+            fail("getUcePublishState should succeed with READ_PRIVILEGED_PHONE_STATE.");
+        } catch (ImsException e) {
+            // unsupported is a valid fail cause.
+            if (e.getCode() != ImsException.CODE_ERROR_UNSUPPORTED_OPERATION) {
+                fail("getUcePublishState failed with code " + e.getCode());
+            }
+        }
+        try {
+            uceAdapter.getUcePublishState();
+            fail("requestCapabilities should require READ_PRIVILEGED_PHONE_STATE.");
+        } catch (SecurityException e) {
+            //expected
+        }
+
+        //isUceSettingEnabled
+        Boolean isUceSettingEnabledResult = null;
+        try {
+            isUceSettingEnabledResult =
+                    ShellIdentityUtils.invokeThrowableMethodWithShellPermissions(
+                    uceAdapter, RcsUceAdapter::isUceSettingEnabled, ImsException.class,
+                    "android.permission.READ_PRIVILEGED_PHONE_STATE");
+            assertNotNull("result from isUceSettingEnabled should not be null",
+                    isUceSettingEnabledResult);
+        } catch (SecurityException e) {
+            fail("isUceSettingEnabled should succeed with READ_PRIVILEGED_PHONE_STATE.");
+        } catch (ImsException e) {
+            // unsupported is a valid fail cause.
+            if (e.getCode() != ImsException.CODE_ERROR_UNSUPPORTED_OPERATION) {
+                fail("isUceSettingEnabled failed with code " + e.getCode());
+            }
+        }
+        try {
+            uceAdapter.getUcePublishState();
+            fail("isUceSettingEnabled should require READ_PRIVILEGED_PHONE_STATE.");
+        } catch (SecurityException e) {
+            //expected
+        }
+
+        //setUceSettingEnabled
+        boolean isUceSettingEnabled =
+                (isUceSettingEnabledResult == null ? false : isUceSettingEnabledResult);
+        try {
+            ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(uceAdapter,
+                    (m) -> m.setUceSettingEnabled(isUceSettingEnabled), ImsException.class,
+                    "android.permission.MODIFY_PHONE_STATE");
+        } catch (SecurityException e) {
+            fail("setUceSettingEnabled should succeed with MODIFY_PHONE_STATE.");
+        } catch (ImsException e) {
+            // unsupported is a valid fail cause.
+            if (e.getCode() != ImsException.CODE_ERROR_UNSUPPORTED_OPERATION) {
+                fail("setUceSettingEnabled failed with code " + e.getCode());
+            }
+        }
+
+        try {
+            uceAdapter.requestCapabilities(Runnable::run, numbers,
+                    new RcsUceAdapter.CapabilitiesCallback() {});
+            fail("setUceSettingEnabled should require MODIFY_PHONE_STATE.");
+        } catch (SecurityException e) {
+            //expected
         }
     }
 
