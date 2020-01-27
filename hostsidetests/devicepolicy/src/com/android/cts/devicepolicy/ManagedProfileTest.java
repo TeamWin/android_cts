@@ -85,7 +85,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
 
     private static final String PROFILE_CREDENTIAL = "1234";
     // This should be sufficiently larger than ProfileTimeoutTestHelper.TIMEOUT_MS
-    private static final int PROFILE_TIMEOUT_DELAY_MS = 10_000;
+    private static final int PROFILE_TIMEOUT_DELAY_MS = 60_000;
 
     //The maximum time to wait for user to be unlocked.
     private static final long USER_UNLOCK_TIMEOUT_NANO = 30_000_000_000L;

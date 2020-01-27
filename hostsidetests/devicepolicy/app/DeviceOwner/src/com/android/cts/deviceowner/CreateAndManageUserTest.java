@@ -59,7 +59,7 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     private static final String SERIAL_EXTRA = "serialExtra";
     private static final String PROFILE_OWNER_EXTRA = "profileOwnerExtra";
     private static final String SETUP_COMPLETE_EXTRA = "setupCompleteExtra";
-    private static final int BROADCAST_TIMEOUT = 15_000;
+    private static final int BROADCAST_TIMEOUT = 60_000;
     private static final int USER_SWITCH_DELAY = 10_000;
 
     private static final String AFFILIATION_ID = "affiliation.id";
