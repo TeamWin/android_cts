@@ -27,20 +27,13 @@ import android.content.Context;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.internal.util.ConcurrentUtils;
-
 import com.google.common.collect.ImmutableList;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-
 @RunWith(AndroidJUnit4.class)
 public class AppSearchManagerTest {
-    private final Executor mExecutor = ConcurrentUtils.DIRECT_EXECUTOR;
     private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
     private final AppSearchManager mAppSearch = mContext.getSystemService(AppSearchManager.class);
 
@@ -87,35 +80,5 @@ public class AppSearchManagerTest {
         assertThat(result.isSuccess()).isTrue();
         assertThat(result.getResults()).containsExactly("uri1", null);
         assertThat(result.getFailures()).isEmpty();
-    }
-
-    @Test
-    public void testGetDocuments() throws Exception {
-        // Schema registration
-        mAppSearch.setSchema(AppSearch.Email.SCHEMA);
-
-        // Index a document
-        AppSearch.Email inEmail =
-                AppSearch.Email.newBuilder("uri1")
-                        .setFrom("from@example.com")
-                        .setTo("to1@example.com", "to2@example.com")
-                        .setSubject("testPut example")
-                        .setBody("This is the body of the testPut email")
-                        .build();
-        assertThat(mAppSearch.putDocuments(ImmutableList.of(inEmail)).isSuccess()).isTrue();
-
-        // Get the document
-        CompletableFuture<List<AppSearch.Document>> getFuture = new CompletableFuture<>();
-        mAppSearch.getDocuments(ImmutableList.of("uri1"), mExecutor, (list, err) -> {
-            if (list != null) {
-                getFuture.complete(list);
-            } else {
-                getFuture.completeExceptionally(err);
-            }
-        });
-        List<AppSearch.Document> outDocuments = getFuture.get();
-        assertThat(outDocuments).hasSize(1);
-        AppSearch.Email outEmail = new AppSearch.Email(outDocuments.get(0));
-        assertThat(outEmail).isEqualTo(inEmail);
     }
 }
