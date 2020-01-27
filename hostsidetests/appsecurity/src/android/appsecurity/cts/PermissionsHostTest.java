@@ -23,6 +23,7 @@ import static android.appsecurity.cts.MatcherUtils.instanceOf;
 import static org.hamcrest.CoreMatchers.containsString;
 
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
@@ -501,12 +502,14 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
                 "reviewPermissionWhenServiceIsBound");
     }
 
+    @FlakyTest
     public void testGrantDialogToSettingsNoOp() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_29), true, false));
         runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest29",
                 "openSettingsFromGrantNoOp");
     }
 
+    @FlakyTest
     public void testGrantDialogToSettingsDowngrade() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_29), false, false));
         runThrowingTest("com.android.cts.usepermission.UsePermissionTest29",
