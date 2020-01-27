@@ -17,8 +17,8 @@ package com.android.cts.appsearch;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.app.appsearch.AppSearch;
 import android.app.appsearch.AppSearchBatchResult;
+import android.app.appsearch.AppSearchEmail;
 import android.app.appsearch.AppSearchManager;
 import android.app.appsearch.AppSearchSchema;
 import android.app.appsearch.AppSearchSchema.PropertyConfig;
@@ -66,11 +66,10 @@ public class AppSearchManagerTest {
     @Test
     public void testPutDocuments() throws Exception {
         // Schema registration
-        mAppSearch.setSchema(AppSearch.Email.SCHEMA);
+        mAppSearch.setSchema(AppSearchEmail.SCHEMA);
 
         // Index a document
-        AppSearch.Email email =
-                AppSearch.Email.newBuilder("uri1")
+        AppSearchEmail email = new AppSearchEmail.Builder("uri1")
                 .setFrom("from@example.com")
                 .setTo("to1@example.com", "to2@example.com")
                 .setSubject("testPut example")
