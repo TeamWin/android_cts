@@ -55,6 +55,7 @@ public class VideoCodecTest extends VideoCodecTestBase {
     // List of bitrates used in quality and basic bitrate tests.
     private static final int[] TEST_BITRATES_SET = { 300000, 500000, 700000, 900000 };
     // Maximum allowed bitrate variation from the target value.
+    // Keep in sync with the variation at libmediandkjni/native_media_utils.h
     private static final double MAX_BITRATE_VARIATION = 0.2;
     // Average PSNR values for reference Google Video codec for the above bitrates.
     private static final double[] REFERENCE_AVERAGE_PSNR = { 33.1, 35.2, 36.6, 37.8 };
