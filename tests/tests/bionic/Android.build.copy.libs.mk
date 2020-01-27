@@ -43,6 +43,9 @@ my_bionic_testlib_files := \
   libdlext_test_runpath_zip/libdlext_test_runpath_zip_zipaligned.zip \
   libdlext_test_zip/libdlext_test_zip.so \
   libdlext_test_zip/libdlext_test_zip_zipaligned.zip \
+  libgnu-hash-table-library.so \
+  librelr-new.so \
+  librelr-old.so \
   libsegment_gap_inner.so \
   libsegment_gap_outer.so \
   libsysv-hash-table-library.so \
@@ -88,6 +91,9 @@ my_bionic_testlib_files := \
   libtest_elftls_shared_var_ie.so \
   libtest_elftls_tprel.so \
   libtest_empty.so \
+  libtest_ifunc.so \
+  libtest_ifunc_variable.so \
+  libtest_ifunc_variable_impl.so \
   libtest_indirect_thread_local_dtor.so \
   libtest_init_fini_order_child.so \
   libtest_init_fini_order_grand_child.so \
@@ -150,13 +156,6 @@ my_bionic_testlib_files := \
   public_namespace_libs/libtest_missing_symbol.so \
   public_namespace_libs/libtest_missing_symbol_child_public.so \
 
-# These libraries are not built for mips.
-my_bionic_testlib_files_non_mips := \
-  libgnu-hash-table-library.so \
-  libtest_ifunc.so \
-  libtest_ifunc_variable.so \
-  libtest_ifunc_variable_impl.so \
-
 my_bionic_testlibs_src_dir := \
   $($(cts_bionic_tests_2nd_arch_prefix)TARGET_OUT_DATA_NATIVE_TESTS)/bionic-loader-test-libs
 my_bionic_testlibs_out_dir := $(cts_bionic_tests_dir)/bionic-loader-test-libs
@@ -164,12 +163,6 @@ my_bionic_testlibs_out_dir := $(cts_bionic_tests_dir)/bionic-loader-test-libs
 LOCAL_COMPATIBILITY_SUPPORT_FILES += \
   $(foreach lib, $(my_bionic_testlib_files), \
     $(my_bionic_testlibs_src_dir)/$(lib):$(my_bionic_testlibs_out_dir)/$(lib))
-
-ifneq ($(TARGET_ARCH),$(filter $(TARGET_ARCH),mips mips64))
-LOCAL_COMPATIBILITY_SUPPORT_FILES += \
-  $(foreach lib, $(my_bionic_testlib_files_non_mips), \
-    $(my_bionic_testlibs_src_dir)/$(lib):$(my_bionic_testlibs_out_dir)/$(lib))
-endif
 
 # Special casing for libtest_dt_runpath_y.so. Since we use the standard ARM CTS
 # to test ARM-on-x86 devices where ${LIB} is expanded to lib/arm, the lib
@@ -186,7 +179,6 @@ dst := $(my_bionic_testlibs_out_dir)/dt_runpath_y/$(lib_or_lib64)/$(archname)/li
 LOCAL_COMPATIBILITY_SUPPORT_FILES += $(src):$(dst)
 
 my_bionic_testlib_files :=
-my_bionic_testlib_files_non_mips :=
 my_bionic_testlibs_src_dir :=
 my_bionic_testlibs_out_dir :=
 cts_bionic_tests_dir :=
