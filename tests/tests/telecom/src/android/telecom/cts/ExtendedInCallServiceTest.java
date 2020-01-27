@@ -455,6 +455,56 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
         assertConnectionState(connection, Connection.STATE_DISCONNECTED);
     }
 
+    public void testRejectIncomingCallWithUnwantedReason() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        addAndVerifyNewIncomingCall(createTestNumber(), null);
+        final MockConnection connection = verifyConnectionForIncomingCall();
+
+        final MockInCallService inCallService = mInCallCallbacks.getService();
+
+        final Call call = inCallService.getLastCall();
+
+        assertCallState(call, Call.STATE_RINGING);
+        assertConnectionState(connection, Connection.STATE_RINGING);
+
+        call.reject(Call.REJECT_REASON_UNWANTED);
+
+        assertCallState(call, Call.STATE_DISCONNECTED);
+        assertConnectionState(connection, Connection.STATE_DISCONNECTED);
+        // The mock connection just stashes the reject reason in the disconnect cause string reason
+        // for tracking purposes.
+        assertEquals(Integer.toString(Call.REJECT_REASON_UNWANTED),
+                connection.getDisconnectCause().getReason());
+    }
+
+    public void testRejectIncomingCallWithDeclinedReason() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        addAndVerifyNewIncomingCall(createTestNumber(), null);
+        final MockConnection connection = verifyConnectionForIncomingCall();
+
+        final MockInCallService inCallService = mInCallCallbacks.getService();
+
+        final Call call = inCallService.getLastCall();
+
+        assertCallState(call, Call.STATE_RINGING);
+        assertConnectionState(connection, Connection.STATE_RINGING);
+
+        call.reject(Call.REJECT_REASON_DECLINED);
+
+        assertCallState(call, Call.STATE_DISCONNECTED);
+        assertConnectionState(connection, Connection.STATE_DISCONNECTED);
+        // The mock connection just stashes the reject reason in the disconnect cause string reason
+        // for tracking purposes.
+        assertEquals(Integer.toString(Call.REJECT_REASON_DECLINED),
+                connection.getDisconnectCause().getReason());
+    }
+
     public void testRejectIncomingCallWithMessage() {
         if (!mShouldTestTelecom) {
             return;
