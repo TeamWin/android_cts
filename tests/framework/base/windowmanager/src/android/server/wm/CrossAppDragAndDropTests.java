@@ -21,6 +21,7 @@ import static android.server.wm.UiDeviceUtils.dragPointer;
 import static android.server.wm.dndsourceapp.Components.DRAG_SOURCE;
 import static android.server.wm.dndtargetapp.Components.DROP_TARGET;
 import static android.server.wm.dndtargetappsdk23.Components.DROP_TARGET_SDK23;
+import static android.view.Display.DEFAULT_DISPLAY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -144,6 +145,8 @@ public class CrossAppDragAndDropTests extends ActivityManagerTestBase {
         Point topLeft = new Point(leftSide ? 0 : displaySize.x / 2, 0);
         Point bottomRight = new Point(leftSide ? displaySize.x / 2 : displaySize.x, displaySize.y);
         resizeActivityTask(componentName, topLeft.x, topLeft.y, bottomRight.x, bottomRight.y);
+        waitAndAssertTopResumedActivity(componentName, DEFAULT_DISPLAY,
+                "Activity launched as freeform should be resumed");
     }
 
     private void injectInput(Point from, Point to, int steps) throws Exception {
