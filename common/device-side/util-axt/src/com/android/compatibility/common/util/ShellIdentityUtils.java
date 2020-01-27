@@ -60,6 +60,21 @@ public class ShellIdentityUtils {
      *
      * @param <U> the type of the object against which the method is invoked.
      */
+    public interface ShellPermissionThrowableMethodHelper<T, U, E extends Throwable> {
+        /**
+         * Invokes the method against the target object.
+         *
+         * @param targetObject the object against which the method should be invoked.
+         * @return the result of the target method.
+         */
+        T callMethod(U targetObject) throws E;
+    }
+
+    /**
+     * Utility interface to invoke a method against the target object that may throw an Exception.
+     *
+     * @param <U> the type of the object against which the method is invoked.
+     */
     public interface ShellPermissionThrowableMethodHelperNoReturn<U, E extends Throwable> {
         /**
          * Invokes the method against the target object.
@@ -97,6 +112,27 @@ public class ShellIdentityUtils {
      */
     public static <T, U> T invokeMethodWithShellPermissions(U targetObject,
             ShellPermissionMethodHelper<T, U> methodHelper, String... permissions) {
+        final UiAutomation uiAutomation =
+                InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity(permissions);
+            return methodHelper.callMethod(targetObject);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Invokes the specified method on the targetObject as the shell user with only the subset of
+     * permissions specified. The method can be invoked as follows:
+     *
+     * {@code ShellIdentityUtils.invokeMethodWithShellPermissions(mRcsUceAdapter,
+     *        (m) -> RcsUceAdapter::getUcePublishState, ImsException.class,
+     *                     "android.permission.READ_PRIVILEGED_PHONE_STATE")}
+     */
+    public static <T, U, E extends Throwable> T invokeThrowableMethodWithShellPermissions(
+            U targetObject, ShellPermissionThrowableMethodHelper<T, U, E> methodHelper,
+            Class<E> clazz, String... permissions) throws E {
         final UiAutomation uiAutomation =
                 InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
