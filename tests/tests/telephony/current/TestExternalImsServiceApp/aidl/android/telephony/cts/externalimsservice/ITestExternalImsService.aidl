@@ -29,14 +29,4 @@ interface ITestExternalImsService {
     boolean isRcsFeatureCreated();
     boolean isMmTelFeatureCreated();
     void resetState();
-    void notifyRcsCapabilitiesStatusChanged(int capability);
-    boolean isRcsCapable(int capability, int radioTech);
-    boolean isRcsAvailable(int capability);
-    String getConfigString(int subId, int item);
-
-    // IMS registration status changed
-    void triggerImsOnRegistered(int radioTech);
-    void triggerImsOnRegistering(int radioTech);
-    void triggerImsOnDeregistered(in ImsReasonInfo info);
-    void triggerImsOnTechnologyChangeFailed(int imsRadioTech, in ImsReasonInfo info);
 }

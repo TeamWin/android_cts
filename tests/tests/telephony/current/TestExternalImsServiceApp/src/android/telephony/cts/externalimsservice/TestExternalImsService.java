@@ -18,13 +18,9 @@ package android.telephony.cts.externalimsservice;
 
 import android.content.Intent;
 import android.os.IBinder;
-import android.telephony.ims.ImsReasonInfo;
 import android.telephony.ims.cts.ImsUtils;
 import android.telephony.ims.cts.TestImsService;
-import android.telephony.ims.feature.RcsFeature.RcsImsCapabilities;
-import android.telephony.ims.stub.ImsConfigImplBase;
 import android.telephony.ims.stub.ImsFeatureConfiguration;
-import android.telephony.ims.stub.ImsRegistrationImplBase;
 import android.util.Log;
 
 /**
@@ -59,49 +55,6 @@ public class TestExternalImsService extends TestImsService {
 
         public void resetState() {
             TestExternalImsService.this.resetState();
-        }
-
-        public String getConfigString(int subId, int item) {
-            ImsConfigImplBase imsConfig = TestExternalImsService.this.getImsService().getConfig(
-                    subId);
-            if (imsConfig != null) {
-                return imsConfig.getConfigString(item);
-            }
-            return null;
-        }
-
-        public void triggerImsOnRegistered(int imsRadioTech) {
-            ImsRegistrationImplBase imsReg = TestExternalImsService.this.getImsRegistration();
-            imsReg.onRegistered(imsRadioTech);
-        }
-
-        public void triggerImsOnRegistering(int imsRadioTech) {
-            ImsRegistrationImplBase imsReg = TestExternalImsService.this.getImsRegistration();
-            imsReg.onRegistering(imsRadioTech);
-        }
-
-        public void triggerImsOnDeregistered(ImsReasonInfo info) {
-            ImsRegistrationImplBase imsReg = TestExternalImsService.this.getImsRegistration();
-            imsReg.onDeregistered(info);
-        }
-
-        public void triggerImsOnTechnologyChangeFailed(int imsRadioTech, ImsReasonInfo info) {
-            ImsRegistrationImplBase imsReg = TestExternalImsService.this.getImsRegistration();
-            imsReg.onTechnologyChangeFailed(imsRadioTech, info);
-        }
-
-        public void notifyRcsCapabilitiesStatusChanged(int capability) {
-            RcsImsCapabilities capabilities = new RcsImsCapabilities(capability);
-            getRcsFeature().notifyCapabilitiesStatusChanged(capabilities);
-        }
-
-        public boolean isRcsCapable(int capability, int radioTech) {
-            return getRcsFeature().queryCapabilityConfiguration(capability, radioTech);
-        }
-
-        public boolean isRcsAvailable(int capability) {
-            RcsImsCapabilities capabilityStatus = getRcsFeature().queryCapabilityStatus();
-            return capabilityStatus.isCapable(capability);
         }
     }
 
