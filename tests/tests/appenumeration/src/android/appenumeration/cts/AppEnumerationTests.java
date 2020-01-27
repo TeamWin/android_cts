@@ -106,7 +106,6 @@ public class AppEnumerationTests {
             QUERIES_NOTHING_SHARED_USER
     };
 
-    private static Context sContext;
     private static Handler sResponseHandler;
     private static HandlerThread sResponseThread;
 
@@ -138,10 +137,6 @@ public class AppEnumerationTests {
     @Before
     public void setupTest() {
         if (!sGlobalFeatureEnabled) return;
-
-        if (sContext == null) {
-            sContext = InstrumentationRegistry.getInstrumentation().getContext();
-        }
         setFeatureEnabledForAll(true);
     }
 
@@ -319,7 +314,7 @@ public class AppEnumerationTests {
                 },
                 sResponseHandler);
         intent.putExtra("remoteCallback", callback);
-        sContext.startActivity(intent);
+        InstrumentationRegistry.getInstrumentation().getContext().startActivity(intent);
         if (!latch.block(TimeUnit.SECONDS.toMillis(10))) {
             throw new TimeoutException(
                     "Latch timed out while awiating a response from " + targetPackageName);
