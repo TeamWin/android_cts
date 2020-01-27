@@ -51,6 +51,15 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/127702368
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     */
+    @SecurityTest(minPatchLevel = "2019-08")
+    public void testPocCVE_2019_2126() throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2126", null, getDevice());
+    }
+
+    /**
      * b/36389123
      * Vulnerability Behaviour: EXIT_VULNERABLE (113)
      */
