@@ -46,14 +46,14 @@ public class AppSearchManagerTest {
 
     @Test
     public void testSetSchema() {
-        AppSearchSchema emailSchema = AppSearchSchema.newBuilder("Email")
-                .addProperty(AppSearchSchema.newPropertyBuilder("subject")
+        AppSearchSchema emailSchema = new AppSearchSchema.Builder("Email")
+                .addProperty(new AppSearchSchema.PropertyConfig.Builder("subject")
                         .setDataType(PropertyConfig.DATA_TYPE_STRING)
                         .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
                         .setIndexingType(PropertyConfig.INDEXING_TYPE_PREFIXES)
                         .setTokenizerType(PropertyConfig.TOKENIZER_TYPE_PLAIN)
                         .build()
-                ).addProperty(AppSearchSchema.newPropertyBuilder("body")
+                ).addProperty(new AppSearchSchema.PropertyConfig.Builder("body")
                         .setDataType(PropertyConfig.DATA_TYPE_STRING)
                         .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
                         .setIndexingType(PropertyConfig.INDEXING_TYPE_PREFIXES)
