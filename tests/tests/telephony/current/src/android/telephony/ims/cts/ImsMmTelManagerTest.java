@@ -34,6 +34,7 @@ import android.telephony.AccessNetworkConstants;
 import android.telephony.CarrierConfigManager;
 import android.telephony.SubscriptionManager;
 import android.telephony.ims.ImsException;
+import android.telephony.ims.ImsManager;
 import android.telephony.ims.ImsMmTelManager;
 import android.telephony.ims.feature.MmTelFeature;
 
@@ -140,9 +141,10 @@ public class ImsMmTelManagerTest {
     @Test
     public void testGetVoWiFiSetting_noPermission() {
         try {
-            ImsMmTelManager mMmTelManager = ImsMmTelManager.createForSubscriptionId(sTestSub);
+            ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+            ImsMmTelManager mMmTelManager = imsManager.getImsMmTelManager(sTestSub);
             boolean isEnabled = mMmTelManager.isVoWiFiSettingEnabled();
-            fail("Expected SecurityException for missing permissoins");
+            fail("Expected SecurityException for missing permissions");
         } catch (SecurityException ex) {
             /* Expected */
         }
@@ -171,7 +173,8 @@ public class ImsMmTelManagerTest {
         CountDownLatch contentObservedLatch = new CountDownLatch(1);
         ContentObserver observer = createObserver(callingUri, contentObservedLatch);
 
-        ImsMmTelManager mMmTelManager = ImsMmTelManager.createForSubscriptionId(sTestSub);
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        ImsMmTelManager mMmTelManager = imsManager.getImsMmTelManager(sTestSub);
         boolean isEnabled = ShellIdentityUtils.invokeMethodWithShellPermissions(mMmTelManager,
                 ImsMmTelManager::isAdvancedCallingSettingEnabled);
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mMmTelManager,
@@ -206,7 +209,8 @@ public class ImsMmTelManagerTest {
         CountDownLatch contentObservedLatch = new CountDownLatch(1);
         ContentObserver observer = createObserver(callingUri, contentObservedLatch);
 
-        ImsMmTelManager mMmTelManager = ImsMmTelManager.createForSubscriptionId(sTestSub);
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        ImsMmTelManager mMmTelManager = imsManager.getImsMmTelManager(sTestSub);
         boolean isEnabled = ShellIdentityUtils.invokeMethodWithShellPermissions(mMmTelManager,
                 ImsMmTelManager::isVtSettingEnabled);
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mMmTelManager,
@@ -244,7 +248,8 @@ public class ImsMmTelManagerTest {
         CountDownLatch contentObservedLatch = new CountDownLatch(1);
         ContentObserver observer = createObserver(callingUri, contentObservedLatch);
 
-        ImsMmTelManager mMmTelManager = ImsMmTelManager.createForSubscriptionId(sTestSub);
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        ImsMmTelManager mMmTelManager = imsManager.getImsMmTelManager(sTestSub);
 
         boolean isEnabled = ShellIdentityUtils.invokeMethodWithShellPermissions(mMmTelManager,
                 ImsMmTelManager::isVoWiFiSettingEnabled);
@@ -278,7 +283,8 @@ public class ImsMmTelManagerTest {
         CountDownLatch contentObservedLatch = new CountDownLatch(1);
         ContentObserver observer = createObserver(callingUri, contentObservedLatch);
 
-        ImsMmTelManager mMmTelManager = ImsMmTelManager.createForSubscriptionId(sTestSub);
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        ImsMmTelManager mMmTelManager = imsManager.getImsMmTelManager(sTestSub);
         boolean isEnabled = ShellIdentityUtils.invokeMethodWithShellPermissions(mMmTelManager,
                 ImsMmTelManager::isVoWiFiRoamingSettingEnabled);
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mMmTelManager,
@@ -304,7 +310,8 @@ public class ImsMmTelManagerTest {
             return;
         }
         try {
-            ImsMmTelManager mMmTelManager = ImsMmTelManager.createForSubscriptionId(sTestSub);
+            ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+            ImsMmTelManager mMmTelManager = imsManager.getImsMmTelManager(sTestSub);
             int oldMode = mMmTelManager.getVoWiFiModeSetting();
             fail("Expected SecurityException for missing permissoins");
         } catch (SecurityException ex) {
@@ -322,7 +329,8 @@ public class ImsMmTelManagerTest {
             return;
         }
         try {
-            ImsMmTelManager mMmTelManager = ImsMmTelManager.createForSubscriptionId(sTestSub);
+            ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+            ImsMmTelManager mMmTelManager = imsManager.getImsMmTelManager(sTestSub);
             int oldMode = mMmTelManager.getVoWiFiRoamingModeSetting();
             fail("Expected SecurityException for missing permissoins");
         } catch (SecurityException ex) {
@@ -350,7 +358,8 @@ public class ImsMmTelManagerTest {
         CountDownLatch contentObservedLatch = new CountDownLatch(1);
         ContentObserver observer = createObserver(callingUri, contentObservedLatch);
 
-        ImsMmTelManager mMmTelManager = ImsMmTelManager.createForSubscriptionId(sTestSub);
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        ImsMmTelManager mMmTelManager = imsManager.getImsMmTelManager(sTestSub);
         int oldMode = ShellIdentityUtils.invokeMethodWithShellPermissions(mMmTelManager,
                 ImsMmTelManager::getVoWiFiModeSetting);
         // Keep the mode in the bounds 0-2
@@ -389,7 +398,8 @@ public class ImsMmTelManagerTest {
         CountDownLatch contentObservedLatch = new CountDownLatch(1);
         ContentObserver observer = createObserver(callingUri, contentObservedLatch);
 
-        ImsMmTelManager mMmTelManager = ImsMmTelManager.createForSubscriptionId(sTestSub);
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        ImsMmTelManager mMmTelManager = imsManager.getImsMmTelManager(sTestSub);
         int oldMode = ShellIdentityUtils.invokeMethodWithShellPermissions(mMmTelManager,
                 ImsMmTelManager::getVoWiFiRoamingModeSetting);
         // Keep the mode in the bounds 0-2
@@ -418,7 +428,8 @@ public class ImsMmTelManagerTest {
             return;
         }
 
-        ImsMmTelManager mMmTelManager = ImsMmTelManager.createForSubscriptionId(sTestSub);
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        ImsMmTelManager mMmTelManager = imsManager.getImsMmTelManager(sTestSub);
         // setRttCapabilitySetting
         try {
             mMmTelManager.setRttCapabilitySetting(false);
