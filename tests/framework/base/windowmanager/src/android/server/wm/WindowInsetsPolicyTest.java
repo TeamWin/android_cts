@@ -30,10 +30,13 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.content.ComponentName;
+import android.content.pm.PackageManager;
 import android.graphics.Insets;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
@@ -156,6 +159,20 @@ public class WindowInsetsPolicyTest extends ActivityManagerTestBase {
                 0, insets.getSystemWindowInsetTop());
     }
 
+    @Test
+    public void testNonAutomotiveFullScreenNotBlockedBySystemComponents() {
+        assumeFalse("Skipping test: Automotive is allowed to partially block fullscreen "
+                        + "applications with system bars.", isAutomotive());
+
+        final TestActivity fullscreenActivity = launchAndWait(mFullscreenTestActivity);
+        View decorView = fullscreenActivity.getDecorView();
+        View contentView = decorView.findViewById(android.R.id.content);
+        boolean hasFullWidth = decorView.getMeasuredWidth() == contentView.getMeasuredWidth();
+        boolean hasFullHeight = decorView.getMeasuredHeight() == contentView.getMeasuredHeight();
+
+        assertTrue(hasFullWidth && hasFullHeight);
+    }
+
     private void commonAsserts(WindowInsets insets) {
         assertForAllInsets("must be non-negative", insets, insetsGreaterThanOrEqualTo(Insets.NONE));
 
@@ -210,6 +227,10 @@ public class WindowInsetsPolicyTest extends ActivityManagerTestBase {
         return activity;
     }
 
+    private boolean isAutomotive() {
+        return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+    }
+
     private static Matcher<Insets> insetsLessThanOrEqualTo(Insets max) {
         return new CustomTypeSafeMatcher<Insets>("must be smaller on each side than " + max) {
             @Override
@@ -241,7 +262,7 @@ public class WindowInsetsPolicyTest extends ActivityManagerTestBase {
             View view = new View(this);
             view.setLayoutParams(new ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT));
             getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
+                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
             view.setOnApplyWindowInsetsListener((v, insets) -> mDispatchedInsets = insets);
             setContentView(view);
         }
