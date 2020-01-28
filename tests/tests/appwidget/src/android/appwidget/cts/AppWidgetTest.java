@@ -811,6 +811,14 @@ public class AppWidgetTest extends AppWidgetTestCase {
             waitForCallCount(onAppWidgetRemovedCounter, 2);
             verify(callback).accept(eq(secondAppWidgetId));
 
+            // Reenable disabled items
+            packageManager.setComponentEnabledSetting(secondProviderInfo.provider,
+                    PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                    PackageManager.DONT_KILL_APP);
+            packageManager.setComponentEnabledSetting(firstProviderInfo.provider,
+                    PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                    PackageManager.DONT_KILL_APP);
+
         } finally {
             // Clean up.
             host.deleteAppWidgetId(firstAppWidgetId);
