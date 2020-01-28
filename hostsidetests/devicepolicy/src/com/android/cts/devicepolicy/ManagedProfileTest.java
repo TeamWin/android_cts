@@ -297,10 +297,12 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     }
 
     private void simulateUserInteraction(int timeMs) throws Exception {
+        final long endTime = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeMs);
         final UserActivityEmulator helper = new UserActivityEmulator(getDevice());
-        for (int i = 0; i < timeMs; i += timeMs/10) {
-            Thread.sleep(timeMs/10);
+        while (System.nanoTime() < endTime) {
             helper.tapScreenCenter();
+            // Just in case to prevent busy loop.
+            Thread.sleep(100);
         }
     }
 
