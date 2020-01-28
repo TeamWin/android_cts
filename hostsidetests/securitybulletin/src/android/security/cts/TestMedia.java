@@ -51,6 +51,17 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/36389123
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     */
+    @SecurityTest(minPatchLevel = "2017-08")
+    public void testPocCVE_2017_0726() throws Exception {
+        String inputFiles[] = {"cve_2017_0726.mp4"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0726",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
      * b/37239013
      * Vulnerability Behaviour: EXIT_VULNERABLE (113)
      */

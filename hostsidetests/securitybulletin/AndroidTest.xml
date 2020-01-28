@@ -153,6 +153,7 @@
         <!--__________________-->
         <!-- Bulletin 2017-08 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2017-0726->/data/local/tmp/CVE-2017-0726"/>
         <option name="push" value="CVE-2017-0713->/data/local/tmp/CVE-2017-0713"/>
 
         <!--__________________-->
