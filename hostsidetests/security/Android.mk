@@ -32,12 +32,6 @@ LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util
 
 LOCAL_CTS_TEST_PACKAGE := android.host.security
 
-ifeq ($(HOST_OS),darwin)
-SHAREDLIB_EXT=dylib
-else
-SHAREDLIB_EXT=so
-endif
-
 selinux_plat_seapp_contexts := $(call intermediates-dir-for,ETC,plat_seapp_contexts)/plat_seapp_contexts
 
 selinux_plat_seapp_neverallows := $(call intermediates-dir-for,ETC,plat_seapp_neverallows)/plat_seapp_neverallows
@@ -54,10 +48,11 @@ LOCAL_JAVA_RESOURCE_FILES := \
     $(HOST_OUT_EXECUTABLES)/property_info_checker \
     $(HOST_OUT_EXECUTABLES)/searchpolicy \
     $(HOST_OUT_EXECUTABLES)/secilc \
+    $(HOST_OUT_EXECUTABLES)/sepolicy-analyze \
     $(HOST_OUT_EXECUTABLES)/sepolicy_tests \
     $(HOST_OUT_EXECUTABLES)/treble_sepolicy_tests \
-    $(HOST_OUT)/lib64/libsepolwrap.$(SHAREDLIB_EXT) \
-    $(HOST_OUT)/lib64/libc++.$(SHAREDLIB_EXT) \
+    $(HOST_OUT_SHARED_LIBRARIES)/libsepolwrap$(HOST_SHLIB_SUFFIX) \
+    $(HOST_OUT_SHARED_LIBRARIES)/libc++$(HOST_SHLIB_SUFFIX) \
     $(selinux_plat_seapp_contexts) \
     $(selinux_plat_seapp_neverallows) \
     $(selinux_plat_file_contexts) \
@@ -69,8 +64,6 @@ selinux_general_policy := $(call intermediates-dir-for,ETC,general_sepolicy.conf
 selinux_neverallow_gen := cts/tools/selinux/SELinuxNeverallowTestGen.py
 
 selinux_neverallow_gen_data := cts/tools/selinux/SELinuxNeverallowTestFrame.py
-
-LOCAL_ADDITIONAL_DEPENDENCIES := $(COMPATIBILITY_TESTCASES_OUT_cts)/sepolicy-analyze
 
 LOCAL_GENERATED_SOURCES := $(call local-generated-sources-dir)/android/cts/security/SELinuxNeverallowRulesTest.java
 
