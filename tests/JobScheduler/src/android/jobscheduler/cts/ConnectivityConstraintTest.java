@@ -15,17 +15,19 @@
  */
 package android.jobscheduler.cts;
 
-
 import android.annotation.TargetApi;
 import android.app.job.JobInfo;
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
+import android.net.LinkProperties;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.NetworkRequest;
 import android.net.wifi.WifiManager;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.util.Log;
 
 import com.android.compatibility.common.util.SystemUtil;
@@ -100,7 +102,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
 
         // Ensure that we leave WiFi in its previous state.
         if (mWifiManager.isWifiEnabled() != mInitialWiFiState) {
-            setWifiState(mInitialWiFiState, mContext, mCm, mWifiManager);
+            setWifiState(mInitialWiFiState, mCm, mWifiManager);
         }
 
         super.tearDown();
@@ -361,7 +363,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
 
     /**
      * Schedule a job that requires a metered connection, and verify that it does not run when
-     * the device is connected to a WiFi provider.
+     * the device is connected to an unmetered WiFi provider.
      * This test assumes that if the device supports a mobile data connection, then this connection
      * will be available.
      */
@@ -386,6 +388,30 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
                 kTestEnvironment.awaitTimeout());
     }
 
+    /**
+     * Schedule a job that requires a cellular connection, and verify that it does not run when
+     * the device is connected to a WiFi provider.
+     */
+    public void testCellularConstraintFails_withWiFi() throws Exception {
+        if (!mHasWifi) {
+            Log.d(TAG, "Skipping test that requires the device be WiFi enabled.");
+            return;
+        }
+        if (!checkDeviceSupportsMobileData()) {
+            Log.d(TAG, "Skipping test that requires the device be mobile data enabled.");
+            return;
+        }
+        connectToWifi();
+
+        kTestEnvironment.setExpectedExecutions(0);
+        mJobScheduler.schedule(
+                mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_CELLULAR).build());
+        sendExpediteStableChargingBroadcast();
+
+        assertTrue("Job requiring cellular connectivity still executed on WiFi.",
+                kTestEnvironment.awaitTimeout());
+    }
+
     // --------------------------------------------------------------------------------------------
     // Utility methods
     // --------------------------------------------------------------------------------------------
@@ -401,11 +427,15 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
                     " device");
             return false;
         }
-        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
-            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
-            return false;
+        Network[] networks = mCm.getAllNetworks();
+        for (Network network : networks) {
+            if (mCm.getNetworkCapabilities(network)
+                    .hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
+                return true;
+            }
         }
-        return true;
+        Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
+        return false;
     }
 
     /**
@@ -413,7 +443,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
      */
     private void connectToWifi()
             throws InterruptedException {
-        setWifiState(true, mContext, mCm, mWifiManager);
+        setWifiState(true, mCm, mWifiManager);
     }
 
     /**
@@ -421,7 +451,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
      */
     private void disconnectFromWifi()
             throws InterruptedException {
-        setWifiState(false, mContext, mCm, mWifiManager);
+        setWifiState(false, mCm, mWifiManager);
     }
 
     /**
@@ -429,28 +459,25 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
      * that we are in the state.
      * Taken from {@link android.net.http.cts.ApacheHttpClientTest}.
      */
-    static void setWifiState(final boolean enable, final Context context,
+    static void setWifiState(final boolean enable,
             final ConnectivityManager cm, final WifiManager wm) throws InterruptedException {
         if (enable != wm.isWifiEnabled()) {
-            NetworkInfo.State expectedState = enable ?
-                    NetworkInfo.State.CONNECTED : NetworkInfo.State.DISCONNECTED;
-            ConnectivityActionReceiver receiver =
-                    new ConnectivityActionReceiver(ConnectivityManager.TYPE_WIFI,
-                            expectedState, cm);
-            IntentFilter filter = new IntentFilter();
-            filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-            context.registerReceiver(receiver, filter);
+            NetworkRequest nr = new NetworkRequest.Builder().addCapability(
+                    NetworkCapabilities.NET_CAPABILITY_NOT_METERED).build();
+            NetworkTracker tracker = new NetworkTracker(false, enable, cm);
+            cm.registerNetworkCallback(nr, tracker);
 
             if (enable) {
                 SystemUtil.runShellCommand("svc wifi enable");
             } else {
                 SystemUtil.runShellCommand("svc wifi disable");
             }
-            assertTrue("Wifi must be configured to " + (enable ? "connect" : "disconnect")
-                            + " to an access point for this test.",
-                    receiver.waitForStateChange() || enable == wm.isWifiEnabled());
+            assertTrue("Wifi must be " + (enable ? "connected to" : "disconnected from")
+                            + " an access point for this test.",
+                    tracker.waitForStateChange() || enable == wm.isWifiEnabled());
+            assertEquals(enable, !cm.isActiveNetworkMetered());
 
-            context.unregisterReceiver(receiver);
+            cm.unregisterNetworkCallback(tracker);
         }
     }
 
@@ -464,18 +491,16 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
      */
     private void disconnectWifiToConnectToMobile() throws InterruptedException {
         if (mHasWifi && mWifiManager.isWifiEnabled()) {
-            disconnectFromWifi();
-            ConnectivityActionReceiver connectMobileReceiver =
-                    new ConnectivityActionReceiver(ConnectivityManager.TYPE_MOBILE,
-                            NetworkInfo.State.CONNECTED, mCm);
-            IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-            mContext.registerReceiver(connectMobileReceiver, filter);
+            NetworkRequest nr = new NetworkRequest.Builder().build();
+            NetworkTracker tracker = new NetworkTracker(true, true, mCm);
+            mCm.registerNetworkCallback(nr, tracker);
 
+            disconnectFromWifi();
 
             assertTrue("Device must have access to a metered network for this test.",
-                    connectMobileReceiver.waitForStateChange());
+                    tracker.waitForStateChange());
 
-            mContext.unregisterReceiver(connectMobileReceiver);
+            mCm.unregisterNetworkCallback(tracker);
         }
     }
 
@@ -488,67 +513,72 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
                 enabled ? RESTRICT_BACKGROUND_ON_CMD : RESTRICT_BACKGROUND_OFF_CMD);
     }
 
-    /** Capture the last connectivity change's network type and state. */
-    private static class ConnectivityActionReceiver extends BroadcastReceiver {
+    private static class NetworkTracker extends ConnectivityManager.NetworkCallback {
+        private final ConnectivityManager mCm;
 
         private final CountDownLatch mReceiveLatch = new CountDownLatch(1);
 
-        private final int mNetworkType;
+        private final boolean mNetworkMetered;
 
-        private final NetworkInfo.State mExpectedState;
+        private final boolean mExpectedConnected;
 
-        private final ConnectivityManager mCm;
+        private final THandler mHandler = new THandler(Looper.getMainLooper());
 
-        ConnectivityActionReceiver(int networkType, NetworkInfo.State expectedState,
+        private class THandler extends Handler {
+            private static final int MSG_CHECK_ACTIVE_NETWORK = 1;
+
+            THandler(Looper looper) {
+                super(looper);
+            }
+
+            @Override
+            public void handleMessage(Message msg) {
+                checkActiveNetwork();
+            }
+
+            void checkActiveNetwork() {
+                if (mExpectedConnected) {
+                    if (mNetworkMetered == mCm.isActiveNetworkMetered()) {
+                        mReceiveLatch.countDown();
+                    } else {
+                        postCheckActiveNetwork();
+                    }
+                } else if (mNetworkMetered == mCm.isActiveNetworkMetered()) {
+                    postCheckActiveNetwork();
+                } else {
+                    mReceiveLatch.countDown();
+                }
+            }
+
+            void postCheckActiveNetwork() {
+                if (mReceiveLatch.getCount() > 0) {
+                    sendEmptyMessageDelayed(MSG_CHECK_ACTIVE_NETWORK, 5000);
+                }
+            }
+        }
+
+
+        private NetworkTracker(boolean networkMetered, boolean expectedConnected,
                 ConnectivityManager cm) {
-            mNetworkType = networkType;
-            mExpectedState = expectedState;
+            mNetworkMetered = networkMetered;
+            mExpectedConnected = expectedConnected;
             mCm = cm;
         }
 
-        public void onReceive(Context context, Intent intent) {
-            // Dealing with a connectivity changed event for this network type.
-            final int networkTypeChanged =
-                    intent.getIntExtra(ConnectivityManager.EXTRA_NETWORK_TYPE, -1);
-            if (networkTypeChanged == -1) {
-                Log.e(TAG, "No network type provided in intent");
-                return;
-            }
-
-            if (networkTypeChanged != mNetworkType) {
-                // Only track changes for the connectivity event that we are interested in.
-                return;
-            }
-            // Pull out the NetworkState object that we're interested in. Necessary because
-            // the ConnectivityManager will filter on uid for background connectivity.
-            NetworkInfo[] allNetworkInfo = mCm.getAllNetworkInfo();
-            NetworkInfo networkInfo = null;
-            for (int i=0; i<allNetworkInfo.length; i++) {
-                NetworkInfo ni = allNetworkInfo[i];
-                if (ni.getType() == mNetworkType) {
-                    networkInfo =  ni;
-                    break;
-                }
-            }
-            if (networkInfo == null) {
-                Log.e(TAG, "Could not find correct network type.");
-                return;
-            }
-
-            NetworkInfo.State networkState = networkInfo.getState();
-            Log.i(TAG, "Network type: " + mNetworkType + " State: " + networkState);
-            if (networkState == mExpectedState) {
-                mReceiveLatch.countDown();
-            }
+        @Override
+        public void onAvailable(Network network, NetworkCapabilities networkCapabilities,
+                LinkProperties linkProperties, boolean blocked) {
+            // Available doesn't mean it's the active network. We need to check that separately.
+            mHandler.checkActiveNetwork();
         }
 
-        public boolean waitForStateChange() throws InterruptedException {
-            return mReceiveLatch.await(30, TimeUnit.SECONDS) || hasExpectedState();
+        @Override
+        public void onLost(Network network) {
+            mHandler.checkActiveNetwork();
         }
 
-        private boolean hasExpectedState() {
-            return mExpectedState == mCm.getNetworkInfo(mNetworkType).getState();
+        boolean waitForStateChange() throws InterruptedException {
+            return mReceiveLatch.await(30, TimeUnit.SECONDS);
         }
     }
-
 }
