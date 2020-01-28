@@ -85,7 +85,7 @@ public class VibrationAttributesTest {
     public void testNotEqualsDifferentFlags() {
         AudioAttributes tmp = new AudioAttributes.Builder().setUsage(TEST_USAGE).build();
         VibrationAttributes attr = new VibrationAttributes.Builder(tmp, null).build();
-        VibrationAttributes attr2 = new VibrationAttributes.Builder(tmp, null).replaceFlags(1)
+        VibrationAttributes attr2 = new VibrationAttributes.Builder(tmp, null).setFlags(1, 1)
                 .build();
         assertNotEquals(attr, attr2);
     }
