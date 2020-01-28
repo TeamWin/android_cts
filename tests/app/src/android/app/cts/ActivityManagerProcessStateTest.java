@@ -108,6 +108,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
     private static final int TEMP_WHITELIST_DURATION_MS = 2000;
 
     private Context mContext;
+    private Context mTargetContext;
     private Instrumentation mInstrumentation;
     private Intent mServiceIntent;
     private Intent mServiceStartForegroundIntent;
@@ -128,6 +129,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         super.setUp();
         mInstrumentation = getInstrumentation();
         mContext = mInstrumentation.getContext();
+        mTargetContext = mInstrumentation.getTargetContext();
         mServiceIntent = new Intent();
         mServiceIntent.setClassName(SIMPLE_PACKAGE_NAME, SIMPLE_PACKAGE_NAME + SIMPLE_SERVICE);
         mServiceStartForegroundIntent = new Intent(mServiceIntent);
@@ -210,7 +212,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         mInstrumentation.getUiAutomation().executeAndWaitForEvent(
                 () -> {
                     try {
-                        mContext.startActivity(intent);
+                        mTargetContext.startActivity(intent);
                     } catch (Exception e) {
                         fail("Cannot start activity: " + intent);
                     }
@@ -911,7 +913,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             WaitForBroadcast waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
             waiter.prepare(ACTION_SIMPLE_ACTIVITY_START_SERVICE_RESULT);
             activityIntent.putExtra("service", mServiceIntent);
-            mContext.startActivity(activityIntent);
+            mTargetContext.startActivity(activityIntent);
             Intent resultIntent = waiter.doWait(WAIT_TIME * 2);
             int brCode = resultIntent.getIntExtra("result", Activity.RESULT_CANCELED);
             if (brCode != Activity.RESULT_FIRST_USER) {
@@ -1169,7 +1171,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             waiter.prepare(ACTION_SIMPLE_ACTIVITY_START_FG_SERVICE_RESULT);
 
             activityIntent.setAction(ACTION_SIMPLE_ACTIVITY_START_FG);
-            mContext.startActivity(activityIntent);
+            mTargetContext.startActivity(activityIntent);
             activityStarted = true;
 
             Intent resultIntent = waiter.doWait(WAIT_TIME);
@@ -1186,13 +1188,13 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
             // Switch to the home app; make sure the test app drops all the way
             // down to SERVICE, not FG_SERVICE
-            mContext.startActivity(homeIntent);
+            mTargetContext.startActivity(homeIntent);
             uidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_SERVICE);
         } finally {
             // tear down everything and we're done
             if (activityStarted) {
                 activityIntent.setAction(ACTION_FINISH_EVERYTHING);
-                mContext.startActivity(activityIntent);
+                mTargetContext.startActivity(activityIntent);
             }
 
             controller.cleanup();
@@ -1271,7 +1273,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
         try {
             // Start the heavy-weight app, should launch like a normal app.
-            mContext.startActivity(activityIntent);
+            mTargetContext.startActivity(activityIntent);
             waitForAppFocus(CANT_SAVE_STATE_1_PACKAGE_NAME, WAIT_TIME);
             device.waitForIdle();
 
@@ -1288,7 +1290,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP);
 
             // Now go to home, leaving the app.  It should be put in the heavy weight state.
-            mContext.startActivity(homeIntent);
+            mTargetContext.startActivity(homeIntent);
 
             final int expectedImportance =
                     (mContext.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.O)
@@ -1309,7 +1311,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             uidWatcher.expect(WatchUidRunner.CMD_IDLE, null);
 
             // Switch back to heavy-weight app to see if it correctly returns to foreground.
-            mContext.startActivity(activityIntent);
+            mTargetContext.startActivity(activityIntent);
 
             // Wait for process state to reflect running activity.
             uidForegroundListener.waitForValue(
@@ -1403,7 +1405,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
         try {
             // Start the first heavy-weight app, should launch like a normal app.
-            mContext.startActivity(activity1Intent);
+            mTargetContext.startActivity(activity1Intent);
             waitForAppFocus(CANT_SAVE_STATE_1_PACKAGE_NAME, WAIT_TIME);
             device.waitForIdle();
 
@@ -1413,7 +1415,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP);
 
             // Now go to home, leaving the app.  It should be put in the heavy weight state.
-            mContext.startActivity(homeIntent);
+            mTargetContext.startActivity(homeIntent);
 
             // Wait for process to go down to background heavy-weight.
             uid1Watcher.expect(WatchUidRunner.CMD_CACHED, null);
@@ -1432,7 +1434,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP);
 
             // Return to home.
-            mContext.startActivity(homeIntent);
+            mTargetContext.startActivity(homeIntent);
             uid1Watcher.expect(WatchUidRunner.CMD_CACHED, null);
             uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_HEAVY_WEIGHT);
 
@@ -1458,7 +1460,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             uid1Watcher.expect(WatchUidRunner.CMD_IDLE, null);
 
             // Return to home.
-            mContext.startActivity(homeIntent);
+            mTargetContext.startActivity(homeIntent);
             uid2Watcher.waitFor(WatchUidRunner.CMD_CACHED, null);
             uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_HEAVY_WEIGHT);
 
@@ -1471,7 +1473,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP);
 
             // Return to home.
-            mContext.startActivity(homeIntent);
+            mTargetContext.startActivity(homeIntent);
             uid2Watcher.waitFor(WatchUidRunner.CMD_CACHED, null);
             uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_HEAVY_WEIGHT);
 
