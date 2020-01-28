@@ -49,7 +49,6 @@ import com.android.server.wm.nano.ConfigurationContainerProto;
 import com.android.server.wm.nano.DisplayContentProto;
 import com.android.server.wm.nano.DisplayFramesProto;
 import com.android.server.wm.nano.IdentifierProto;
-import com.android.server.wm.nano.PinnedStackControllerProto;
 import com.android.server.wm.nano.StackProto;
 import com.android.server.wm.nano.TaskProto;
 import com.android.server.wm.nano.WindowContainerProto;
@@ -122,8 +121,6 @@ public class WindowManagerState {
     private String mFocusedApp = null;
     private int mFocusedDisplayId = DEFAULT_DISPLAY;
     private String mInputMethodWindowAppToken = null;
-    private Rect mDefaultPinnedStackBounds = new Rect();
-    private Rect mPinnedStackMovementBounds = new Rect();
     private final LinkedList<String> mSysDump = new LinkedList();
     private int mRotation;
     private int mLastOrientation;
@@ -217,11 +214,6 @@ public class WindowManagerState {
                 if (displayProto.dockedStackDividerController != null) {
                     mIsDockedStackMinimized =
                             displayProto.dockedStackDividerController.minimizedDock;
-                }
-                PinnedStackControllerProto pinnedStackProto = displayProto.pinnedStackController;
-                if (pinnedStackProto != null) {
-                    mDefaultPinnedStackBounds = extract(pinnedStackProto.defaultBounds);
-                    mPinnedStackMovementBounds = extract(pinnedStackProto.movementBounds);
                 }
             }
         }
@@ -556,14 +548,6 @@ public class WindowManagerState {
         return getDisplay(DEFAULT_DISPLAY).mStableBounds;
     }
 
-    Rect getDefaultPinnedStackBounds() {
-        return new Rect(mDefaultPinnedStackBounds);
-    }
-
-    Rect getPinnedStackMovementBounds() {
-        return new Rect(mPinnedStackMovementBounds);
-    }
-
     WindowState findFirstWindowWithType(int type) {
         for (WindowState window : mWindowStates) {
             if (window.getType() == type) {
@@ -595,8 +579,6 @@ public class WindowManagerState {
         mFocusedApp = null;
         mInputMethodWindowAppToken = null;
         mIsDockedStackMinimized = false;
-        mDefaultPinnedStackBounds.setEmpty();
-        mPinnedStackMovementBounds.setEmpty();
         mRotation = 0;
         mLastOrientation = 0;
         mFocusedDisplayId = DEFAULT_DISPLAY;
