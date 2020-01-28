@@ -468,6 +468,27 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
+    private StatusBarNotification getNotification(int id) {
+        // notification is a bit asynchronous so it may take a few ms to appear in
+        // getActiveNotifications()
+        // we will check for it for up to 300ms before giving up
+        for (int tries = 3; tries-- > 0;) {
+            // Need reset flag.
+            final StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
+            for (StatusBarNotification sbn : sbns) {
+                if (sbn.getId() == id) {
+                    return sbn;
+                }
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ex) {
+                // pass
+            }
+        }
+        return null;
+    }
+
     private boolean checkNotificationExistence(int id, boolean shouldExist) {
         return checkNotificationExistence(id, shouldExist, false /* shouldBeBubble */);
     }
@@ -2997,7 +3018,7 @@ public class NotificationManagerTest extends AndroidTestCase {
                     new Instrumentation.ActivityMonitor(clazz.getName(), result, false);
             InstrumentationRegistry.getInstrumentation().addMonitor(monitor);
 
-            a.sendBubble(true /* autoExpand */);
+            a.sendBubble(true /* autoExpand */, false /* suppressNotif */);
 
             boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
             if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
@@ -3250,6 +3271,44 @@ public class NotificationManagerTest extends AndroidTestCase {
 
             // remove the shortcut
             scmanager.removeAllDynamicShortcuts();
+        }
+    }
+
+    public void testNotificationManagerBubbleNotificationSuppression() throws Exception {
+        try {
+            // turn on bubbles globally
+            toggleBubbleSetting(true);
+
+            // make ourselves foreground so we can specify suppress notification flag
+            SendBubbleActivity a = startSendBubbleActivity();
+
+            // send the bubble with notification suppressed
+            a.sendBubble(false /* autoExpand */, true /* suppressNotif */);
+
+            // check for the notification
+            StatusBarNotification sbnSuppressed = getNotification(BUBBLE_NOTIF_ID);
+            assertNotNull(sbnSuppressed);
+            // check for suppression state
+            Notification.BubbleMetadata metadata =
+                    sbnSuppressed.getNotification().getBubbleMetadata();
+            assertNotNull(metadata);
+            assertTrue(metadata.isNotificationSuppressed());
+
+            // send the bubble with notification NOT suppressed
+            a.sendBubble(false /* autoExpand */, false /* suppressNotif */);
+
+            // check for the notification
+            StatusBarNotification sbnNotSuppressed = getNotification(BUBBLE_NOTIF_ID);
+            assertNotNull(sbnNotSuppressed);
+            // check for suppression state
+            metadata = sbnNotSuppressed.getNotification().getBubbleMetadata();
+            assertNotNull(metadata);
+            assertFalse(metadata.isNotificationSuppressed());
+        } finally {
+            cleanupSendBubbleActivity();
+
+            // turn off bubbles globally
+            toggleBubbleSetting(false);
         }
     }
 
