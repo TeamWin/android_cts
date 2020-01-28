@@ -23,6 +23,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.hardware.Camera;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -34,13 +35,21 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.core.content.FileProvider;
 
 import com.android.cts.verifier.camera.intents.CameraContentJobService;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.TestResult;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.TreeSet;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 
 /**
  * Tests for manual verification of uri trigger being fired.
@@ -80,6 +89,8 @@ implements OnClickListener, SurfaceHolder.Callback {
     private ImageButton mPassButton;
     private ImageButton mFailButton;
     private Button mStartTestButton;
+    private File mDebugFolder = null;
+    private File mImageTarget = null;
 
     private int mState = STATE_OFF;
 
@@ -271,25 +282,64 @@ implements OnClickListener, SurfaceHolder.Callback {
     @Override
     protected void onActivityResult(
         int requestCode, int resultCode, Intent data) {
-        if (requestCode == 1337 + getStageIndex()) {
+        int stageIndex = getStageIndex();
+        if (requestCode == 1337 + stageIndex) {
             Log.v(TAG, "Activity we launched was finished");
             mActivityResult = true;
 
             if (mState != STATE_FAILED
                 && getStageIndex() == STAGE_INTENT_PICTURE) {
-                mPassButton.setEnabled(true);
-                mFailButton.setEnabled(false);
-
-                mState = STATE_SUCCESSFUL;
-                /* successful, unless we get the URI trigger back
-                 at some point later on */
+                handleIntentPictureResult();
             }
         }
+    }
+
+    private void handleIntentPictureResult() {
+        if (mImageTarget == null) {
+            Log.d(TAG, "Image target was not set");
+            return;
+        }
+        try {
+            if (!mImageTarget.exists() || mImageTarget.length() == 0) {
+                Log.d(TAG, "Image target does not exist or it is empty");
+                mState = STATE_FAILED;
+                return;
+            }
+
+            try {
+                final ExifInterface exif = new ExifInterface(new FileInputStream(mImageTarget));
+                if (!checkExifAttribute(exif, ExifInterface.TAG_MAKE)
+                    || !checkExifAttribute(exif, ExifInterface.TAG_MODEL)
+                    || !checkExifAttribute(exif, ExifInterface.TAG_DATETIME)) {
+                    Log.d(TAG, "The required tag does not appear in the exif");
+                    mState = STATE_FAILED;
+                    return;
+                }
+                mState = STATE_SUCCESSFUL;
+                setPassButton(true);
+            } catch (IOException ex) {
+                Log.e(TAG, "Failed to verify Exif", ex);
+                mState = STATE_FAILED;
+                return;
+            }
+        } finally {
+            mImageTarget.delete();
+        }
+    }
+
+    private boolean checkExifAttribute(ExifInterface exif, String tag) {
+        final String res = exif.getAttribute(tag);
+        return res != null && res.length() > 0;
     }
 
     @Override
     public String getTestDetails() {
         return mReportBuilder.toString();
+    }
+
+    private void setPassButton(Boolean pass) {
+        mPassButton.setEnabled(pass);
+        mFailButton.setEnabled(!pass);
     }
 
     private class WaitForTriggerTask extends AsyncTask<Void, Void, Boolean> {
@@ -387,7 +437,33 @@ implements OnClickListener, SurfaceHolder.Callback {
 
             if (intentStr != null) {
                 cameraIntent = new Intent(intentStr);
-                startActivityForResult(cameraIntent, 1337 + getStageIndex());
+                switch (stageIndex) {
+                    case STAGE_INTENT_PICTURE:
+                        mDebugFolder = new File(this.getFilesDir(), "debug");
+                        mDebugFolder.mkdirs();
+                        if (!mDebugFolder.exists()) {
+                            Toast.makeText(this, R.string.ci_directory_creation_error,
+                                    Toast.LENGTH_SHORT).show();
+                            Log.v(TAG, "Could not create directory");
+                            return;
+                        }
+
+                        File targetFile;
+                        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+                        mImageTarget = new File(mDebugFolder, timeStamp + "capture.jpg");
+                        targetFile = mImageTarget;
+                        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, FileProvider.getUriForFile(this,
+                              "com.android.cts.verifier.managedprovisioning.fileprovider",
+                              targetFile));
+                        startActivityForResult(cameraIntent, 1337 + getStageIndex());
+                        break;
+                    case STAGE_INTENT_VIDEO:
+                        startActivityForResult(cameraIntent, 1337 + getStageIndex());
+                        break;
+                    default:
+                        Log.wtf(TAG, "Unexpected stage index to send intent");
+                        return;
+                }
             }
 
             mStartTestButton.setEnabled(false);
