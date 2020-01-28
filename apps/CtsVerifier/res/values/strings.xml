@@ -1142,6 +1142,7 @@
     <string name="ci_intents_label">Intents Test</string>
     <string name="ci_intents_direction_label">clockwise</string>
     <string name="ci_instruction_heading_label">Instructions:</string>
+    <string name="ci_directory_creation_error">CTS Verifier debug directory could not be created, please try again</string>
     <string name="ci_instruction_text_photo_label">READ BEFORE STARTING TEST</string>
     <string name="ci_instruction_text_passfail_label">Choose \"Pass\" if the right intent is fired after taking a photo from the camera app. Otherwise, choose \"Fail\".</string>
     <string name="ci_instruction_text_app_picture_label">\n
