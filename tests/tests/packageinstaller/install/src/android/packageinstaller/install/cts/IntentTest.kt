@@ -21,13 +21,20 @@ import android.app.AppOpsManager.MODE_ALLOWED
 import android.content.Intent
 import android.net.Uri
 import android.platform.test.annotations.AppModeFull
+
 import androidx.test.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
+
 import com.android.compatibility.common.util.AppOpsUtils
+import com.android.compatibility.common.util.SystemUtil.runShellCommand
+import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
+
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+
 import java.util.concurrent.TimeUnit
 
 private const val INSTALL_BUTTON_ID = "button1"
@@ -38,9 +45,20 @@ private const val CANCEL_BUTTON_ID = "button2"
 class IntentTest : PackageInstallerTestBase() {
     private val context = InstrumentationRegistry.getTargetContext()
 
+    private fun setSecureFrp(secureFrp: Boolean) {
+        runWithShellPermissionIdentity {
+            runShellCommand("settings put secure secure_frp_mode ${if (secureFrp) 1 else 0}")
+        }
+    }
+
     @Before
     fun allowToInstallPackages() {
         AppOpsUtils.setOpMode(context.packageName, APP_OP_STR, MODE_ALLOWED)
+    }
+
+    @After
+    fun disableSecureFrp() {
+        setSecureFrp(false)
     }
 
     /**
@@ -91,5 +109,23 @@ class IntentTest : PackageInstallerTestBase() {
         // Install should have succeeded
         assertEquals(RESULT_OK, reinstall.get(TIMEOUT, TimeUnit.MILLISECONDS))
         assertInstalled()
+    }
+
+    /**
+     * Check that we can't install an app via a package-installer intent if Secure FRP is enabled
+     */
+    @Test
+    fun packageNotInstalledSecureFrp() {
+        setSecureFrp(true)
+        try {
+            val installation = startInstallationViaIntent()
+            clickInstallerUIButton(INSTALL_BUTTON_ID)
+
+            // Install should not have succeeded
+            assertEquals(RESULT_CANCELED, installation.get(TIMEOUT, TimeUnit.MILLISECONDS))
+            assertNotInstalled()
+        } finally {
+            setSecureFrp(false)
+        }
     }
 }

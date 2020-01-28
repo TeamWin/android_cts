@@ -299,4 +299,8 @@ public class TestImsService extends Service {
             return sImsRegistrationImplBase;
         }
     }
+
+    public ImsConfigImplBase getConfig() {
+        return mTestImsConfig;
+    }
 }

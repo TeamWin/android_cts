@@ -258,7 +258,9 @@ public class TouchExplorerTest {
     /**
      * Test the case where we execute a "sloppy" double tap, meaning that the second tap isn't
      * exactly in the same location as the first but still within tolerances. It should behave the
-     * same as a standard double tap.
+     * same as a standard double tap. Note that this test does not request that double tap be
+     * dispatched to the accessibility service, meaning that it will be handled by the framework and
+     * the view will be clicked.
      */
     @Test
     @AppModeFull
@@ -280,7 +282,9 @@ public class TouchExplorerTest {
 
     /**
      * Test the case where we want to click on the item that has accessibility focus by using
-     * AccessibilityNodeInfo.performAction.
+     * AccessibilityNodeInfo.performAction. Note that this test does not request that double tap be
+     * dispatched to the accessibility service, meaning that it will be handled by the framework and
+     * the view will be clicked.
      */
     @Test
     @AppModeFull
@@ -316,7 +320,11 @@ public class TouchExplorerTest {
         mClickListener.assertNoneClicked();
     }
 
-    /** Test the case where we want to long click on the item that has accessibility focus. */
+    /**
+     * Test the case where we want to long click on the item that has accessibility focus. Note that
+     * this test does not request that double tap and hold be dispatched to the accessibility
+     * service, meaning that it will be handled by the framework and the view will be long clicked.
+     */
     @Test
     @AppModeFull
     public void testDoubleTapAndHoldAccessibilityFocus_performsLongClick() {
