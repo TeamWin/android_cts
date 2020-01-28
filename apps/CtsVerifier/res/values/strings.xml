@@ -227,19 +227,52 @@
     <string name="fs_force_stop_verification_pending">Verifying... Please wait.</string>
 
     <!-- Strings for BiometricTest -->
-    <string name="biometric_test">Biometric Test</string>
-    <string name="biometric_test_info">
-        This test ensures that biometrics can be authenticated when templates are enrolled.
-    </string>
-    <string name="biometric_enroll">Enroll</string>
-    <string name="biometric_start_test1">Start Test 1</string>
-    <string name="biometric_start_test2">Start Test 2</string>
-    <string name="biometric_start_test3">Start Test 3</string>
-    <string name="biometric_start_test4">Start Test 4</string>
-    <string name="biometric_start_test5">Start Test 5</string>
-    <string name="biometric_test_strings_title">Instructions</string>
-    <string name="biometric_test_strings_instructions">For the next test, please write down the numbers shown in the title, subtitle, description, and negative button fields. After authenticating, please enter the strings in the appropriate box.</string>
-    <string name="biometric_test_strings_verify_title">Please enter the numbers you recorded</string>
+    <string name="biometric_test">Biometric Tests</string>
+
+    <string name="biometric_test_category_credential">Credential Tests</string>
+    <string name="biometric_test_category_strong">Strong Biometric Tests</string>
+
+    <string name="biometric_test_credential_not_enrolled_label">1) Credential Not Enrolled Tests</string>
+    <string name="biometric_test_credential_not_enrolled_instructions">This test checks that the BiometricManager/BiometricPrompt
+        APIs return results consistent with credential (PIN/Pattern/Password) state. Before starting this test, please ensure that you do
+        NOT have a credential set up.</string>
+    <string name="biometric_test_credential_not_enrolled_bm_button">Check BiometricManager</string>
+    <string name="biometric_test_credential_not_enrolled_bp_setAllowedAuthenticators_button">Check BiometricPrompt setAllowedAuthenticators(DEVICE_CREDENTIAL)</string>
+    <string name="biometric_test_credential_not_enrolled_bp_setDeviceCredentialAllowed_button">Check BiometricPrompt setDeviceCredentialAllowed(true)</string>
+
+    <string name="biometric_test_credential_enrolled_label">2) Credential Enrolled Tests</string>
+    <string name="biometric_test_credential_enrolled_instructions">This test checks that the BiometricManager/BiometricPrompt
+        APIs return results consistent with credential (PIN/Pattern/Password) state. Before starting this test, please ensure that you DO
+        have a credential set up.</string>
+    <string name="biometric_test_credential_enrolled_bm_button">Check BiometricManager</string>
+    <string name="biometric_test_credential_enrolled_bp_setAllowedAuthenticators_button">Check BiometricPrompt setAllowedAuthenticators(DEVICE_CREDENTIAL)</string>
+    <string name="biometric_test_credential_enrolled_bp_setDeviceCredentialAllowed_button">Check BiometricPrompt setDeviceCredentialAllowed(true)</string>
+
+    <string name="biometric_test_credential_crypto_label">3) Credential Crypto</string>
+    <string name="biometric_test_credential_crypto_instructions">This test checks that PIN/Pattern/Password successfully unlocks the relevant KeyStore operations. Please
+        ensure that you have a PIN/Pattern/Password set up.</string>
+    <string name="biometric_test_credential_crypto_timed_key_strongbox">Create and unlock timed key (StrongBox)</string>
+    <string name="biometric_test_credential_crypto_timed_key_no_strongbox">Create and unlock timed key</string>
+
+    <string name="biometric_test_ui_instruction_dialog_title">Instructions</string>
+    <string name="biometric_test_ui_instruction_dialog_contents">For the following test, please remember or write down the numbers presented in the BiometricPrompt. After authenticating, please enter the contents in the test dialog.</string>
+    <string name="biometric_test_ui_instruction_dialog_continue">Continue</string>
+    <string name="biometric_test_ui_verification_dialog_title">Please enter your recorded contents</string>
+    <string name="biometric_test_ui_verification_dialog_check">Check</string>
+
+    <string name="biometric_test_strong_label">4) Strong Biometrics + Crypto</string>
+    <string name="biometric_test_strong_instructions">This test checks that the Settings.ACTION_BIOMETRIC_ENROLL and its corresponding
+        EXTRA_BIOMETRIC_MINIMUM_STRENGTH_REQUIRED APIs enroll only a STRONG biometric. Please ensure that the device
+        does NOT have ANY biometrics enrolled before starting this test. After passing the first part of the test, it will check various use cases
+        when authentication is invoked with the STRONG biometric.</string>
+    <string name="biometric_test_strong_check_and_enroll_button">Start enrollment</string>
+    <string name="biometric_test_strong_authenticate_no_strongbox_button">Authenticate Crypto (without StrongBox)</string>
+    <string name="biometric_test_strong_authenticate_strongbox_button">Authenticate Crypto (with StrongBox)</string>
+    <string name="biometric_test_strong_authenticate_ui_button">Authenticate Crypto UI</string>
+    <string name="biometric_test_strong_authenticate_invalidated_button">Authenticate Key Invalidated</string>
+    <string name="biometric_test_strong_authenticate_invalidated_instruction_title">Instructions</string>
+    <string name="biometric_test_strong_authenticate_invalidated_instruction_contents">Before starting the next test, please add another enrollment to your strong biometric sensor. If only one enrollment is supported, please remove the current enrollment, then enroll.</string>
+    <string name="biometric_test_strong_authenticate_invalidated_instruction_continue">Continue</string>
 
     <!-- Strings for lock bound keys test -->
     <string name="sec_lock_bound_key_test">Lock Bound Keys Test</string>
