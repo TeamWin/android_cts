@@ -19,10 +19,7 @@
     package="android.appenumeration.queries.provider.authority.unexported">
 
     <queries>
-        <intent>
-            <data android:scheme="content"
-                  android:host="android.appenumeration.testapp.unexported" />
-        </intent>
+        <provider android:authorities="android.appenumeration.testapp.unexported" />
     </queries>
 
     <application>
