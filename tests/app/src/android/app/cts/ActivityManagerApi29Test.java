@@ -17,10 +17,16 @@ package android.app.cts;
 
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_ALL;
-import static android.app.ActivityManager.PROCESS_CAPABILITY_FOREGROUND_LOCATION;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_NONE;
+import static android.app.AppOpsManager.MODE_ALLOWED;
+import static android.app.AppOpsManager.MODE_FOREGROUND;
+import static android.app.AppOpsManager.MODE_IGNORED;
+import static android.app.AppOpsManager.OPSTR_CAMERA;
+import static android.app.AppOpsManager.OPSTR_COARSE_LOCATION;
+import static android.app.AppOpsManager.OPSTR_RECORD_AUDIO;
 import static android.app.AppOpsManager.OP_FLAGS_ALL;
 import static android.app.AppOpsManager.UID_STATE_FOREGROUND_SERVICE;
+import static android.app.AppOpsManager.UID_STATE_TOP;
 
 import static com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
@@ -44,16 +50,16 @@ import androidx.test.filters.Suppress;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
 /**
  * AppOpsManager.MODE_FOREGROUND is introduced in API level 29. This test class specifically tests
@@ -62,8 +68,8 @@ import org.junit.runner.RunWith;
  * one of the foreground state (including foreground_service state), this operation will be denied
  * when the process is in background state.
  */
-@Suppress
 @RunWith(AndroidJUnit4.class)
+@Suppress
 public class ActivityManagerApi29Test {
     private static final String PACKAGE_NAME = "android.app.cts.activitymanager.api29";
     private static final String SIMPLE_ACTIVITY = ".SimpleActivity";
@@ -75,6 +81,7 @@ public class ActivityManagerApi29Test {
     private static Context sContext = sInstrumentation.getContext();
     private static AppOpsManager sAppOps =
             (AppOpsManager) sContext.getSystemService(AppOpsManager.class);
+    private static Intent sActivityIntent;
     private static Intent sServiceIntent = new Intent().setClassName(
             PACKAGE_NAME, PACKAGE_NAME + SERVICE_NAME);
     private static int sUid;
@@ -93,9 +100,10 @@ public class ActivityManagerApi29Test {
     @Before
     public void setUp() throws Exception {
         CtsAppTestUtils.turnScreenOn(sInstrumentation, sContext);
+        CtsAppTestUtils.makeUidIdle(sInstrumentation, PACKAGE_NAME);
         // PACKAGE_NAME's targetSdkVersion is 29, when ACCESS_COARSE_LOCATION is granted, appOp is
         // MODE_FOREGROUND (In API level lower than 29, appOp is MODE_ALLOWED).
-        assertEquals(AppOpsManager.MODE_FOREGROUND,
+        assertEquals(MODE_FOREGROUND,
                 PermissionUtils.getAppOp(PACKAGE_NAME, ACCESS_COARSE_LOCATION));
         runWithShellPermissionIdentity(()-> {
             mOldAppOpsSettings = Settings.Global.getString(sContext.getContentResolver(),
@@ -115,7 +123,8 @@ public class ActivityManagerApi29Test {
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws Exception {
+        CtsAppTestUtils.makeUidIdle(sInstrumentation, PACKAGE_NAME);
         runWithShellPermissionIdentity(() -> {
             // restore old AppOps settings.
             Settings.Global.putString(sContext.getContentResolver(),
@@ -129,6 +138,27 @@ public class ActivityManagerApi29Test {
         mUidWatcher.finish();
     }
 
+    private void startSimpleActivity() {
+        sActivityIntent = new Intent(Intent.ACTION_MAIN)
+                .setClassName(PACKAGE_NAME, PACKAGE_NAME + SIMPLE_ACTIVITY)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        sContext.startActivity(sActivityIntent);
+    }
+
+    private void stopSimpleActivity() {
+        sActivityIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                .putExtra("finish", true);
+        sContext.startActivity(sActivityIntent);
+    }
+
+    private void startSimpleService() {
+        sContext.startForegroundService(sServiceIntent);
+    }
+
+    private void stopSimpleService() {
+        sContext.stopService(sServiceIntent);
+    }
+
     /**
      * This tests app in PROCESS_STATE_TOP state can have location access.
      * The app's permission is AppOpsManager.MODE_FOREGROUND. If the process is in PROCESS_STATE_TOP
@@ -137,26 +167,19 @@ public class ActivityManagerApi29Test {
      */
     @Test
     public void testTopActivityWithAppOps() throws Exception {
-        Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.setClassName(PACKAGE_NAME, PACKAGE_NAME + SIMPLE_ACTIVITY);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        sContext.startActivity(intent);
-        // TOP process has all capabilities.
+        startSimpleActivity();
         mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP,
                 new Integer(PROCESS_CAPABILITY_ALL));
 
         // AppOps location access should be allowed.
-        assertEquals(AppOpsManager.MODE_ALLOWED, noteOp());
+        assertEquals(MODE_ALLOWED, noteOp(OPSTR_COARSE_LOCATION));
 
-        // Tell the activity to finalize.
-        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        intent.putExtra("finish", true);
-        sContext.startActivity(intent);
+        stopSimpleActivity();
         mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_RECENT,
                 new Integer(PROCESS_CAPABILITY_NONE));
 
         // AppOps location access should be denied.
-        assertEquals(AppOpsManager.MODE_IGNORED, noteOp());
+        assertEquals(MODE_IGNORED, noteOp(OPSTR_COARSE_LOCATION));
     }
 
     /**
@@ -171,22 +194,32 @@ public class ActivityManagerApi29Test {
     @Test
     public void testFgsLocationWithAppOps() throws Exception {
         // Start a foreground service with location
-        sContext.startForegroundService(sServiceIntent);
+        startSimpleService();
         // Wait for state and capability change.
+        // BG started FGS does not have location capability.
         mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE,
-                new Integer(PROCESS_CAPABILITY_FOREGROUND_LOCATION));
+                new Integer(PROCESS_CAPABILITY_NONE));
+
+        startSimpleActivity();
+        mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP,
+                new Integer(PROCESS_CAPABILITY_ALL));
 
         // AppOps location access should be allowed.
-        assertEquals(AppOpsManager.MODE_ALLOWED,  noteOp());
+        assertEquals(MODE_ALLOWED, noteOp(OPSTR_COARSE_LOCATION));
 
-        // Stop the foreground service.
-        sContext.stopService(sServiceIntent);
-        // Wait for proc state and capability change.
-        mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY,
+        stopSimpleActivity();
+        mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE,
                 new Integer(PROCESS_CAPABILITY_NONE));
 
         // AppOps location access should be denied.
-        assertEquals(AppOpsManager.MODE_IGNORED, noteOp());
+        assertEquals(MODE_IGNORED, noteOp(OPSTR_COARSE_LOCATION));
+
+        stopSimpleService();
+        mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_RECENT,
+                new Integer(PROCESS_CAPABILITY_NONE));
+
+        // AppOps location access should be denied.
+        assertEquals(MODE_IGNORED, noteOp(OPSTR_COARSE_LOCATION));
     }
 
     /**
@@ -198,28 +231,29 @@ public class ActivityManagerApi29Test {
      */
     @Test
     public void testAppOpsHistoricalOps() throws Exception {
-        // Start a foreground service with location
-        sContext.startForegroundService(sServiceIntent);
+        startSimpleActivity();
+        startSimpleService();
         // Wait for state and capability change.
-        mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE,
-                new Integer(PROCESS_CAPABILITY_FOREGROUND_LOCATION));
+        mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP,
+                new Integer(PROCESS_CAPABILITY_ALL));
 
         runWithShellPermissionIdentity(
                 () ->  sAppOps.setHistoryParameters(AppOpsManager.HISTORICAL_MODE_ENABLED_ACTIVE,
                         1000, 10)
         );
         for (int i = 0; i < NOTEOP_COUNT; i++) {
-            noteOp();
+            noteOp(OPSTR_COARSE_LOCATION);
         }
 
-        // Stop the foreground service.
-        sContext.stopService(sServiceIntent);
-        // Wait for proc state and capability change.
-        mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY,
+        stopSimpleActivity();
+        mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE,
+                new Integer(PROCESS_CAPABILITY_NONE));
+        stopSimpleService();
+        mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_RECENT,
                 new Integer(PROCESS_CAPABILITY_NONE));
 
         for (int i = 0; i < NOTEOP_COUNT; i++) {
-            noteOp();
+            noteOp(OPSTR_COARSE_LOCATION);
         }
         runWithShellPermissionIdentity(() -> {
             CompletableFuture<HistoricalOps> ops = new CompletableFuture<>();
@@ -228,27 +262,70 @@ public class ActivityManagerApi29Test {
                     Long.MAX_VALUE)
                     .setUid(sUid)
                     .setPackageName(PACKAGE_NAME)
-                    .setOpNames(Arrays.asList(AppOpsManager.OPSTR_COARSE_LOCATION))
+                    .setOpNames(Arrays.asList(OPSTR_COARSE_LOCATION))
                     .setFlags(OP_FLAGS_ALL)
                     .build();
             sAppOps.getHistoricalOps(histOpsRequest, sContext.getMainExecutor(), ops::complete);
             HistoricalOp hOp = ops.get(5000, TimeUnit.MILLISECONDS)
                     .getUidOps(sUid).getPackageOps(PACKAGE_NAME)
-                    .getOp(AppOpsManager.OPSTR_COARSE_LOCATION);
-            // granted access one time in UID_STATE_FOREGROUND_SERVICE.
-            assertEquals(NOTEOP_COUNT, hOp.getAccessCount(UID_STATE_FOREGROUND_SERVICE,
+                    .getOp(OPSTR_COARSE_LOCATION);
+            assertEquals(NOTEOP_COUNT, hOp.getAccessCount(UID_STATE_TOP,
                     UID_STATE_FOREGROUND_SERVICE, AppOpsManager.OP_FLAGS_ALL));
-            assertEquals(NOTEOP_COUNT, hOp.getForegroundAccessCount(AppOpsManager.OP_FLAGS_ALL));
-            assertEquals(0, hOp.getForegroundRejectCount(AppOpsManager.OP_FLAGS_ALL));
-            assertEquals(0, hOp.getBackgroundAccessCount(AppOpsManager.OP_FLAGS_ALL));
+            assertEquals(NOTEOP_COUNT, hOp.getForegroundAccessCount(OP_FLAGS_ALL));
+            assertEquals(0, hOp.getForegroundRejectCount(OP_FLAGS_ALL));
+            assertEquals(0, hOp.getBackgroundAccessCount(OP_FLAGS_ALL));
             // denied access one time in background.
-            assertEquals(NOTEOP_COUNT, hOp.getBackgroundRejectCount(AppOpsManager.OP_FLAGS_ALL)); }
+            assertEquals(NOTEOP_COUNT, hOp.getBackgroundRejectCount(OP_FLAGS_ALL)); }
         );
     }
 
-    private int noteOp() throws Exception {
+    /**
+     * Only FGS started by TOP app can have OP_CAMERA and OP_RECORD_AUDIO.
+     * @throws Exception
+     */
+    @Test
+    public void testCameraWithAppOps() throws Exception {
+        startSimpleService();
+        // Wait for state and capability change.
+        mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE,
+                new Integer(PROCESS_CAPABILITY_NONE));
+
+        // Non-Top started FGS do not have while-in-use permission, camera/microphone access is
+        // denied.
+        assertEquals(MODE_IGNORED, noteOp(OPSTR_CAMERA));
+        assertEquals(MODE_IGNORED, noteOp(OPSTR_RECORD_AUDIO));
+
+        // Start an activity, put app in TOP.
+        startSimpleActivity();
+        // TOP process has all capabilities.
+        mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP,
+                new Integer(PROCESS_CAPABILITY_ALL));
+
+        // Camera/microphone access is allowed because the app is TOP.
+        assertEquals(MODE_ALLOWED, noteOp(OPSTR_CAMERA));
+        assertEquals(MODE_ALLOWED, noteOp(OPSTR_RECORD_AUDIO));
+
+        // Tell the activity to finalize.
+        stopSimpleActivity();
+        mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE,
+                new Integer(PROCESS_CAPABILITY_NONE));
+
+        // App not in Top, camera/microphone access should be denied.
+        assertEquals(MODE_IGNORED, noteOp(OPSTR_CAMERA));
+        assertEquals(MODE_IGNORED, noteOp(OPSTR_RECORD_AUDIO));
+
+        // Stop the foreground service.
+        stopSimpleService();
+        mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_RECENT,
+                new Integer(PROCESS_CAPABILITY_NONE));
+
+        assertEquals(MODE_IGNORED, noteOp(OPSTR_CAMERA));
+        assertEquals(MODE_IGNORED, noteOp(OPSTR_RECORD_AUDIO));
+    }
+
+    private int noteOp(String opStr) throws Exception {
         return callWithShellPermissionIdentity(
-                () -> sAppOps.noteOp(AppOpsManager.OPSTR_COARSE_LOCATION, sUid, PACKAGE_NAME,
-                        "Op OPSTR_COARSE_LOCATION", ""));
+                () -> sAppOps.noteOp(opStr, sUid, PACKAGE_NAME,
+                        opStr, ""));
     }
 }

@@ -418,6 +418,14 @@
         </service>
 
         <service android:name="android.app.stubs.LocalAlertService" />
+
+        <activity android:name=".SimpleActivity" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
     </application>
 
 </manifest>
