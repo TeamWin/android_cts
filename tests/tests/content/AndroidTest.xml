@@ -22,6 +22,8 @@
     <!-- The framework has some native code involved. -->
     <option name="config-descriptor:metadata" key="parameter" value="multi_abi" />
 
+    <option name="config-descriptor:metadata" key="parameter" value="secondary_user" />
+
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="mkdir -p /data/local/tmp/cts/content" />
         <option name="teardown-command" value="rm -rf /data/local/tmp/cts"/>
