@@ -76,9 +76,4 @@
         <option name="package" value="android.permission.cts" />
         <option name="runtime-hint" value="13m" />
     </test>
-
-    <object type="module_controller"
-            class="com.android.tradefed.testtype.suite.module.TestFailureModuleController">
-        <option name="bugreportz-on-failure" value="true" />
-    </object>
 </configuration>
