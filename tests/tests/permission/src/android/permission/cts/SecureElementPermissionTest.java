@@ -18,23 +18,19 @@ package android.permission.cts;
 
 import static org.junit.Assert.fail;
 
-import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Process;
 
 import androidx.test.InstrumentationRegistry;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import android.util.Log;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 @RunWith(JUnit4.class)
 public final class SecureElementPermissionTest {
     // Needed because SECURE_ELEMENT_PRIVILEGED_PERMISSION is a systemapi

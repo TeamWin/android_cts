@@ -32,10 +32,10 @@ import android.app.WallpaperManager;
 import android.content.Context;
 import android.platform.test.annotations.AppModeInstant;
 
-import com.android.compatibility.common.util.RequiredServiceRule;
-
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.RequiredServiceRule;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

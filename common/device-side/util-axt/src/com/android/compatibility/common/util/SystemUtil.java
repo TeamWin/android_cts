@@ -40,6 +40,7 @@ import java.util.function.Predicate;
 
 public class SystemUtil {
     private static final String TAG = "CtsSystemUtil";
+    private static final long TIMEOUT_MILLIS = 10000;
 
     public static long getFreeDiskSize(Context context) {
         final StatFs statFs = new StatFs(context.getFilesDir().getAbsolutePath());
@@ -236,6 +237,57 @@ public class SystemUtil {
             return callable.call();
         } finally {
             automan.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Make sure that a {@link Runnable} eventually finishes without throwing a {@link
+     * Exception}.
+     *
+     * @param r The {@link Runnable} to run.
+     */
+    public static void eventually(@NonNull ThrowingRunnable r) {
+        eventually(r, TIMEOUT_MILLIS);
+    }
+
+    /**
+     * Make sure that a {@link Runnable} eventually finishes without throwing a {@link
+     * Exception}.
+     *
+     * @param r The {@link Runnable} to run.
+     * @param r The number of milliseconds to wait for r to not throw
+     */
+    public static void eventually(@NonNull ThrowingRunnable r, long timeoutMillis) {
+        long start = System.currentTimeMillis();
+
+        while (true) {
+            try {
+                r.run();
+                return;
+            } catch (Throwable e) {
+                if (System.currentTimeMillis() - start < timeoutMillis) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException ignored) {
+                        throw new RuntimeException(e);
+                    }
+                } else {
+                    throw e;
+                }
+            }
+        }
+    }
+
+    public interface ThrowingRunnable extends Runnable {
+        void runOrThrow() throws Exception;
+
+        @Override
+        default void run() {
+            try {
+                runOrThrow();
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 }

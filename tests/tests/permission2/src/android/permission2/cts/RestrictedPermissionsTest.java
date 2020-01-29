@@ -19,10 +19,10 @@ package android.permission2.cts;
 import static android.Manifest.permission.ACCESS_BACKGROUND_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.Manifest.permission.READ_SMS;
-import static android.permission.cts.PermissionUtils.eventually;
 import static android.permission.cts.PermissionUtils.isGranted;
 import static android.permission.cts.PermissionUtils.isPermissionGranted;
 
+import static com.android.compatibility.common.util.SystemUtil.eventually;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -44,12 +44,13 @@ import android.content.pm.PackageInstaller.Session;
 import android.content.pm.PackageInstaller.SessionParams;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
-import android.permission.cts.PermissionUtils.ThrowingRunnable;
 import android.platform.test.annotations.AppModeFull;
 import android.util.ArraySet;
 
 import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.SystemUtil.ThrowingRunnable;
 
 import org.junit.After;
 import org.junit.AfterClass;

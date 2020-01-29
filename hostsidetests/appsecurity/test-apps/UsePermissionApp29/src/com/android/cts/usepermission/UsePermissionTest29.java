@@ -21,6 +21,7 @@ import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
+import static com.android.compatibility.common.util.SystemUtil.eventually;
 import static com.android.compatibility.common.util.UiAutomatorUtils.getUiDevice;
 import static com.android.compatibility.common.util.UiAutomatorUtils.waitFindObject;
 
@@ -28,6 +29,8 @@ import static junit.framework.Assert.assertEquals;
 
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiObjectNotFoundException;
+
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -188,14 +191,7 @@ public class UsePermissionTest29 extends BasePermissionsTest {
 
         BasePermissionActivity.Result result = requestPermissions(permissions,
                 () -> {
-                    clickSettingsLink();
-                    getUiDevice().waitForIdle();
-                    getUiDevice().pressBack();
-                    try {
-                        waitFindObject(By.res("com.android.permissioncontroller:id/grant_dialog"));
-                    } catch (UiObjectNotFoundException e) {
-                        throw new AssertionError("Permission grant dialog didn't resume", e);
-                    }
+                    openSettingsThenDoNothingThenLeave();
                     assertPermissionsNotGranted();
                     clickAllowForegroundButton();
                 });
@@ -204,19 +200,27 @@ public class UsePermissionTest29 extends BasePermissionsTest {
         // Step 2: Upgrade foreground to background, go to settings, do nothing
         requestPermissions(permissions,
                 () -> {
-                    clickSettingsLink();
-                    getUiDevice().waitForIdle();
-                    getUiDevice().pressBack();
-                    getUiDevice().waitForIdle();
-                    try {
-                        waitFindObject(By.res("com.android.permissioncontroller:id/grant_dialog"));
-                    } catch (UiObjectNotFoundException e) {
-                        throw new AssertionError("Permission grant dialog didn't resume", e);
-                    }
+                    openSettingsThenDoNothingThenLeave();
                     assertDenied(ACCESS_BACKGROUND_LOCATION);
                     clickNoUpgradeAndDontAskAgainButton();
                 });
         assertPermissionRequestResult(result, permissions, true, false);
+    }
+
+    private void openSettingsThenDoNothingThenLeave() {
+        clickSettingsLink();
+        getUiDevice().waitForIdle();
+        eventually(() -> {
+            getUiDevice().pressBack();
+            getUiDevice().waitForIdle();
+            try {
+                waitFindObject(
+                        By.res("com.android.permissioncontroller:id/grant_dialog"),
+                        100);
+            } catch (UiObjectNotFoundException e) {
+                throw new AssertionError("Permission grant dialog didn't resume", e);
+            }
+        });
     }
 
     @Test
