@@ -1104,6 +1104,21 @@ public final class CommandSession {
         }
 
         @Override
+        public int hashCode() {
+            int result = 0;
+            result = 31 * result + widthDp;
+            result = 31 * result + heightDp;
+            result = 31 * result + displayWidth;
+            result = 31 * result + displayHeight;
+            result = 31 * result + metricsWidth;
+            result = 31 * result + metricsHeight;
+            result = 31 * result + smallestWidthDp;
+            result = 31 * result + densityDpi;
+            result = 31 * result + orientation;
+            return result;
+        }
+
+        @Override
         public int describeContents() {
             return 0;
         }

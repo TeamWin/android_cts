@@ -25,7 +25,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.ActivityManagerState.DisplayContent;
+import android.server.wm.WindowManagerState.DisplayContent;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -61,11 +61,11 @@ public class MultiDisplayKeyguardTests extends MultiDisplayTestBase {
         final DisplayContent newDisplay = createManagedVirtualDisplaySession().createDisplay();
 
         lockScreenSession.gotoKeyguard();
-        mAmWmState.assertKeyguardShowingAndNotOccluded();
+        mWmState.assertKeyguardShowingAndNotOccluded();
         launchActivityOnDisplay(DISMISS_KEYGUARD_ACTIVITY, newDisplay.mId);
-        mAmWmState.waitForKeyguardShowingAndNotOccluded();
-        mAmWmState.assertKeyguardShowingAndNotOccluded();
-        mAmWmState.assertVisibility(DISMISS_KEYGUARD_ACTIVITY, true);
+        mWmState.waitForKeyguardShowingAndNotOccluded();
+        mWmState.assertKeyguardShowingAndNotOccluded();
+        mWmState.assertVisibility(DISMISS_KEYGUARD_ACTIVITY, true);
     }
 
     /**
@@ -81,15 +81,15 @@ public class MultiDisplayKeyguardTests extends MultiDisplayTestBase {
 
         lockScreenSession.gotoKeyguard();
         assertTrue("KeyguardDialog must show on external public display",
-                mAmWmState.waitForWithWmState(
+                mWmState.waitForWithAmState(
                         state -> isKeyguardOnDisplay(state, publicDisplay.mId),
                         "keyguard window to show"));
 
         // Keyguard dialog mustn't be removed when press back key
         pressBackButton();
-        mAmWmState.computeState(true);
+        mWmState.computeState();
         assertTrue("KeyguardDialog must not be removed when press back key",
-                isKeyguardOnDisplay(mAmWmState.getWmState(), publicDisplay.mId));
+                isKeyguardOnDisplay(mWmState, publicDisplay.mId));
     }
 
     /**
@@ -108,12 +108,12 @@ public class MultiDisplayKeyguardTests extends MultiDisplayTestBase {
 
         lockScreenSession.gotoKeyguard();
         assertTrue("KeyguardDialog must show on external public display",
-                mAmWmState.waitForWithWmState(
+                mWmState.waitForWithAmState(
                         state -> isKeyguardOnDisplay(state, publicDisplay.mId),
                         "keyguard window to show"));
 
         assertFalse("KeyguardDialog must not show on external private display",
-                isKeyguardOnDisplay(mAmWmState.getWmState(), privateDisplay.mId));
+                isKeyguardOnDisplay(mWmState, privateDisplay.mId));
     }
 
     private boolean isKeyguardOnDisplay(WindowManagerState windowManagerState, int displayId) {

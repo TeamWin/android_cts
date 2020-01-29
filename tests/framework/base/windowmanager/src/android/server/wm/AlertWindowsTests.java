@@ -125,8 +125,8 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
         setAlertWindowPermission(activityName, hasAlertWindowPermission);
 
         executeShellCommand(getAmStartCmd(activityName));
-        mAmWmState.computeState(new WaitForValidActivityState(activityName));
-        mAmWmState.assertVisibility(activityName, true);
+        mWmState.computeState(new WaitForValidActivityState(activityName));
+        mWmState.assertVisibility(activityName, true);
 
         assertAlertWindows(activityName, hasAlertWindowPermission, atLeastO);
     }
@@ -143,7 +143,7 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
     private void assertAlertWindows(final ComponentName activityName,
             final boolean hasAlertWindowPermission, final boolean atLeastO) throws Exception {
         final String packageName = activityName.getPackageName();
-        final WindowManagerState wmState = mAmWmState.getWmState();
+        final WindowManagerState wmState = mWmState;
 
         final List<WindowManagerState.WindowState> alertWindows =
                 wmState.getWindowsByPackageName(packageName, ALERT_WINDOW_TYPES);

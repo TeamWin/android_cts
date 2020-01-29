@@ -17,7 +17,7 @@
 package android.server.wm;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
-import static android.server.wm.ActivityManagerState.STATE_RESUMED;
+import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.app.Components.HOME_ACTIVITY;
 import static android.server.wm.app.Components.SECONDARY_HOME_ACTIVITY;
 import static android.server.wm.app.Components.SINGLE_HOME_ACTIVITY;
@@ -54,9 +54,8 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.ActivityManagerState.DisplayContent;
+import android.server.wm.WindowManagerState.DisplayContent;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
-import android.server.wm.WindowManagerState.Display;
 import android.server.wm.WindowManagerState.WindowState;
 import android.server.wm.intent.Activities;
 import android.text.TextUtils;
@@ -142,12 +141,12 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         wallpaperSession.setImageWallpaper(tmpWallpaper);
 
         assertTrue("Wallpaper must be displayed on system owned display with system decor flag",
-                mAmWmState.waitForWithWmState(
+                mWmState.waitForWithAmState(
                         state -> isWallpaperOnDisplay(state, decoredSystemDisplay.mId),
                         "wallpaper window to show"));
 
         assertFalse("Wallpaper must not be displayed on the untrusted display",
-                isWallpaperOnDisplay(mAmWmState.getWmState(), untrustedDisplay.mId));
+                isWallpaperOnDisplay(mWmState, untrustedDisplay.mId));
     }
 
     private ChangeWallpaperSession createManagedChangeWallpaperSession() {
@@ -206,7 +205,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         final DisplayContent newDisplay = createManagedExternalDisplaySession()
                 .setPublicDisplay(true).setShowSystemDecorations(true).createVirtualDisplay();
 
-        mAmWmState.waitAndAssertNavBarShownOnDisplay(newDisplay.mId);
+        mWmState.waitAndAssertNavBarShownOnDisplay(newDisplay.mId);
     }
 
     /**
@@ -216,8 +215,8 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     public void testNavBarNotShowingOnDisplayWithoutDecor() {
         assumeHasBars();
         // Wait for system decoration showing and record current nav states.
-        mAmWmState.waitForHomeActivityVisible();
-        final List<WindowState> expected = mAmWmState.getWmState().getAllNavigationBarStates();
+        mWmState.waitForHomeActivityVisible();
+        final List<WindowState> expected = mWmState.getAllNavigationBarStates();
 
         createManagedExternalDisplaySession().setPublicDisplay(true)
                 .setShowSystemDecorations(false).createVirtualDisplay();
@@ -233,8 +232,8 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     public void testNavBarNotShowingOnPrivateDisplay() {
         assumeHasBars();
         // Wait for system decoration showing and record current nav states.
-        mAmWmState.waitForHomeActivityVisible();
-        final List<WindowState> expected = mAmWmState.getWmState().getAllNavigationBarStates();
+        mWmState.waitForHomeActivityVisible();
+        final List<WindowState> expected = mWmState.getAllNavigationBarStates();
 
         createManagedExternalDisplaySession().setPublicDisplay(false)
                 .setShowSystemDecorations(true).createVirtualDisplay();
@@ -254,19 +253,19 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         try (final ExternalDisplaySession secondDisplaySession = new ExternalDisplaySession()) {
             final DisplayContent supportsSysDecorDisplay = secondDisplaySession
                     .setPublicDisplay(true).setShowSystemDecorations(true).createVirtualDisplay();
-            mAmWmState.waitAndAssertNavBarShownOnDisplay(supportsSysDecorDisplay.mId);
+            mWmState.waitAndAssertNavBarShownOnDisplay(supportsSysDecorDisplay.mId);
             // This display has finished his task. Just close it.
         }
 
-        mAmWmState.computeState(true);
-        final List<WindowState> result = mAmWmState.getWmState().getAllNavigationBarStates();
+        mWmState.computeState();
+        final List<WindowState> result = mWmState.getAllNavigationBarStates();
 
         assertEquals("The number of nav bars should be the same", expected.size(), result.size());
 
         // Nav bars should show on the same displays
         for (int i = 0; i < expected.size(); i++) {
             final int expectedDisplayId = expected.get(i).getDisplayId();
-            mAmWmState.waitAndAssertNavBarShownOnDisplay(expectedDisplayId);
+            mWmState.waitAndAssertNavBarShownOnDisplay(expectedDisplayId);
         }
     }
 
@@ -284,7 +283,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
         // Secondary home activity can't be launched on the display without system decoration
         // support.
-        assertEquals("No stacks on newly launched virtual display", 0, newDisplay.mStacks.size());
+        assertEquals("No stacks on newly launched virtual display", 0, newDisplay.mRootTasks.size());
     }
 
     /**
@@ -307,7 +306,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
         tapOnDisplayCenter(newDisplay.mId);
         assertEquals("Top activity must be home type", ACTIVITY_TYPE_HOME,
-                mAmWmState.getAmState().getFrontStackActivityType(newDisplay.mId));
+                mWmState.getFrontStackActivityType(newDisplay.mId));
     }
 
     /**
@@ -330,7 +329,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
         tapOnDisplayCenter(newDisplay.mId);
         assertEquals("Top activity must be home type", ACTIVITY_TYPE_HOME,
-                mAmWmState.getAmState().getFrontStackActivityType(newDisplay.mId));
+                mWmState.getFrontStackActivityType(newDisplay.mId));
     }
 
     /**
@@ -354,7 +353,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
         tapOnDisplayCenter(newDisplay.mId);
         assertEquals("Top activity must be home type", ACTIVITY_TYPE_HOME,
-                mAmWmState.getAmState().getFrontStackActivityType(newDisplay.mId));
+                mWmState.getFrontStackActivityType(newDisplay.mId));
     }
 
     /**
@@ -377,7 +376,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
         tapOnDisplayCenter(newDisplay.mId);
         assertEquals("Top activity must be home type", ACTIVITY_TYPE_HOME,
-                mAmWmState.getAmState().getFrontStackActivityType(newDisplay.mId));
+                mWmState.getFrontStackActivityType(newDisplay.mId));
     }
 
     // IME related tests
@@ -408,7 +407,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
         // Assert the configuration of the IME window is the same as the configuration of the
         // virtual display.
-        assertImeWindowAndDisplayConfiguration(mAmWmState.getImeWindowState(), newDisplay);
+        assertImeWindowAndDisplayConfiguration(mWmState.getImeWindowState(), newDisplay);
 
         // Launch another activity on the default display.
         imeTestActivitySession2.launchTestActivityOnDisplaySync(
@@ -424,8 +423,8 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
         // Assert the configuration of the IME window is the same as the configuration of the
         // default display.
-        assertImeWindowAndDisplayConfiguration(mAmWmState.getImeWindowState(),
-                mAmWmState.getAmState().getDisplay(DEFAULT_DISPLAY));
+        assertImeWindowAndDisplayConfiguration(mWmState.getImeWindowState(),
+                mWmState.getDisplay(DEFAULT_DISPLAY));
     }
 
     @Test
@@ -485,15 +484,15 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         imeTestActivitySession2.launchTestActivityOnDisplaySync(ImeTestActivity2.class,
                 newDisplay.mId);
 
-        final Display defDisplay = mAmWmState.getWmState().getDisplay(DEFAULT_DISPLAY);
+        final DisplayContent defDisplay = mWmState.getDisplay(DEFAULT_DISPLAY);
         final ImeEventStream stream = mockImeSession.openEventStream();
 
         // Tap default display as top focused display & request focus on EditText to show
         // soft input.
-        tapOnDisplayCenter(defDisplay.getDisplayId());
+        tapOnDisplayCenter(defDisplay.mId);
         imeTestActivitySession.runOnMainSyncAndWait(
                 imeTestActivitySession.getActivity()::showSoftInput);
-        waitOrderedImeEventsThenAssertImeShown(stream, defDisplay.getDisplayId(),
+        waitOrderedImeEventsThenAssertImeShown(stream, defDisplay.mId,
                 editorMatcher("onStartInput",
                         imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()),
                 event -> "showSoftInput".equals(event.getEventName()));
@@ -509,10 +508,10 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
                 event -> "showSoftInput".equals(event.getEventName()));
 
         // Tap default display again to make sure the IME window will come back.
-        tapOnDisplayCenter(defDisplay.getDisplayId());
+        tapOnDisplayCenter(defDisplay.mId);
         imeTestActivitySession.runOnMainSyncAndWait(
                 imeTestActivitySession.getActivity()::showSoftInput);
-        waitOrderedImeEventsThenAssertImeShown(stream, defDisplay.getDisplayId(),
+        waitOrderedImeEventsThenAssertImeShown(stream, defDisplay.mId,
                 editorMatcher("onStartInput",
                         imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()),
                 event -> "showSoftInput".equals(event.getEventName()));
@@ -599,8 +598,8 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
         // Tap default display, assume a pointer-out-side event will happened to change the top
         // display.
-        final Display defDisplay = mAmWmState.getWmState().getDisplay(DEFAULT_DISPLAY);
-        tapOnDisplayCenter(defDisplay.getDisplayId());
+        final DisplayContent defDisplay = mWmState.getDisplay(DEFAULT_DISPLAY);
+        tapOnDisplayCenter(defDisplay.mId);
 
         // Reparent ImeTestActivity from virtual display to default display.
         getLaunchActivityBuilder()
@@ -612,14 +611,14 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         waitAndAssertTopResumedActivity(imeTestActivitySession.getActivity().getComponentName(),
                 DEFAULT_DISPLAY, "Activity launched on default display and on top");
         assertEquals("No stacks on virtual display", 0,
-                mAmWmState.getAmState().getDisplay(newDisplay.mId).mStacks.size());
+                mWmState.getDisplay(newDisplay.mId).getRootTasks().size());
 
         // Verify if tapping default display to request focus on EditText can show soft input.
         final ImeEventStream stream = mockImeSession.openEventStream();
-        tapOnDisplayCenter(defDisplay.getDisplayId());
+        tapOnDisplayCenter(defDisplay.mId);
         imeTestActivitySession.runOnMainSyncAndWait(
                 imeTestActivitySession.getActivity()::showSoftInput);
-        waitOrderedImeEventsThenAssertImeShown(stream, defDisplay.getDisplayId(),
+        waitOrderedImeEventsThenAssertImeShown(stream, defDisplay.mId,
                 editorMatcher("onStartInput",
                         imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()),
                 event -> "showSoftInput".equals(event.getEventName()));
@@ -704,7 +703,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     }
 
     void assertImeWindowAndDisplayConfiguration(
-            WindowManagerState.WindowState imeWinState, DisplayContent display) {
+            WindowState imeWinState, DisplayContent display) {
         final Configuration configurationForIme = imeWinState.mMergedOverrideConfiguration;
         final Configuration configurationForDisplay =  display.mMergedOverrideConfiguration;
         final int displayDensityDpiForIme = configurationForIme.densityDpi;

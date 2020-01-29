@@ -32,8 +32,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.SystemClock;
-import android.server.wm.ActivityAndWindowManagersState;
-import android.server.wm.ActivityManagerState;
+import android.server.wm.WindowManagerStateHelper;
+import android.server.wm.WindowManagerState;
 import android.server.wm.intent.LaunchSequence.LaunchSequenceExecutionInfo;
 import android.server.wm.intent.Persistence.GenerationIntent;
 import android.server.wm.intent.Persistence.LaunchFromIntent;
@@ -71,7 +71,7 @@ public class LaunchRunner {
      * The activities that were already present in the system when the test started.
      * So they can be removed form the outputs, otherwise our tests would be system dependent.
      */
-    private List<ActivityManagerState.ActivityStack> mBaseStacks;
+    private List<WindowManagerState.ActivityTask> mBaseStacks;
 
     public LaunchRunner(IntentTestBase testBase) {
         mTestBase = testBase;
@@ -289,13 +289,13 @@ public class LaunchRunner {
      * life cycle transition.
      */
     public StateDump waitDumpAndTrim(Activity activity) {
-        mTestBase.getAmWmState().waitForValidState(activity.getComponentName());
+        mTestBase.getWmState().waitForValidState(activity.getComponentName());
         // The last activity that was launched before the dump could still be in an intermediate
         // lifecycle state. wait an extra 3 seconds for it to settle
         SystemClock.sleep(BEFORE_DUMP_TIMEOUT);
-        mTestBase.getAmWmState().computeState(activity.getComponentName());
-        List<ActivityManagerState.ActivityStack> endStateStacks =
-                mTestBase.getAmWmState().getAmState().getStacks();
+        mTestBase.getWmState().computeState(activity.getComponentName());
+        List<WindowManagerState.ActivityTask> endStateStacks =
+                mTestBase.getWmState().getRootTasks();
         return StateDump.fromStacks(endStateStacks, mBaseStacks);
     }
 
@@ -311,24 +311,24 @@ public class LaunchRunner {
      * life cycle transition.
      */
     public StateDump waitDumpAndTrimForVerification(Activity activity, StateDump expected) {
-        mTestBase.getAmWmState().waitForValidState(activity.getComponentName());
+        mTestBase.getWmState().waitForValidState(activity.getComponentName());
         // The last activity that was launched before the dump could still be in an intermediate
         // lifecycle state. wait an extra 3 seconds for it to settle
         SystemClock.sleep(BEFORE_DUMP_TIMEOUT);
-        mTestBase.getAmWmState().waitForWithAmState(
-                am -> StateDump.fromStacks(am.getStacks(), mBaseStacks).equals(expected),
+        mTestBase.getWmState().waitForWithAmState(
+                am -> StateDump.fromStacks(am.getRootTasks(), mBaseStacks).equals(expected),
                 "the activity states match up with what we recorded");
-        mTestBase.getAmWmState().computeState(activity.getComponentName());
+        mTestBase.getWmState().computeState(activity.getComponentName());
 
-        List<ActivityManagerState.ActivityStack> endStateStacks =
-                mTestBase.getAmWmState().getAmState().getStacks();
+        List<WindowManagerState.ActivityTask> endStateStacks =
+                mTestBase.getWmState().getRootTasks();
 
         return StateDump.fromStacks(endStateStacks, mBaseStacks);
     }
 
-    private List<ActivityManagerState.ActivityStack> getBaseStacks() {
-        ActivityAndWindowManagersState amWmState = mTestBase.getAmWmState();
+    private List<WindowManagerState.ActivityTask> getBaseStacks() {
+        WindowManagerStateHelper amWmState = mTestBase.getWmState();
         amWmState.computeState(new ComponentName[]{});
-        return amWmState.getAmState().getStacks();
+        return amWmState.getRootTasks();
     }
 }

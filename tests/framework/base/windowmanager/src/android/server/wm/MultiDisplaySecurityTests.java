@@ -16,7 +16,7 @@
 
 package android.server.wm;
 
-import static android.server.wm.ActivityManagerState.STATE_RESUMED;
+import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.MockImeHelper.createManagedMockImeSession;
 import static android.server.wm.MultiDisplaySystemDecorationTests.ImeTestActivity;
@@ -63,8 +63,8 @@ import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.ActivityManagerState.DisplayContent;
-import android.server.wm.ActivityManagerState.ActivityStack;
+import android.server.wm.WindowManagerState.DisplayContent;
+import android.server.wm.WindowManagerState.ActivityTask;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
 import android.view.Display;
@@ -116,14 +116,14 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
                 .setTargetActivity(TEST_ACTIVITY)
                 .execute();
 
-        mAmWmState.waitForValidState(TEST_ACTIVITY);
+        mWmState.waitForValidState(TEST_ACTIVITY);
 
         waitAndAssertActivityStateOnDisplay(TEST_ACTIVITY, STATE_RESUMED, newDisplay.mId,
                 "The Activity should be able to launch by virtual display owner");
 
-        final int focusedStackId = mAmWmState.getAmState().getFocusedStackId();
-        final ActivityStack focusedStack =
-                mAmWmState.getAmState().getStackById(focusedStackId);
+        final int focusedStackId = mWmState.getFocusedStackId();
+        final ActivityTask focusedStack =
+                mWmState.getRootTask(focusedStackId);
         assertEquals("Focused stack must be on default display",DEFAULT_DISPLAY,
                 focusedStack.mDisplayId);
     }
@@ -149,9 +149,9 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
 
         assertSecurityExceptionFromActivityLauncher();
 
-        mAmWmState.computeState(TEST_ACTIVITY);
+        mWmState.computeState(TEST_ACTIVITY);
         assertFalse("Restricted activity must not be launched",
-                mAmWmState.getAmState().containsActivity(TEST_ACTIVITY));
+                mWmState.containsActivity(TEST_ACTIVITY));
     }
 
     /**
@@ -474,11 +474,11 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
     public void testPermissionLaunchFromShell(){
         // Create new virtual display.
         final DisplayContent newDisplay = createManagedVirtualDisplaySession().createDisplay();
-        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
-        mAmWmState.assertFocusedActivity("Virtual display activity must be on top",
+        mWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+        mWmState.assertFocusedActivity("Virtual display activity must be on top",
                 VIRTUAL_DISPLAY_ACTIVITY);
-        final int defaultDisplayFocusedStackId = mAmWmState.getAmState().getFocusedStackId();
-        ActivityStack frontStack = mAmWmState.getAmState().getStackById(
+        final int defaultDisplayFocusedStackId = mWmState.getFocusedStackId();
+        ActivityTask frontStack = mWmState.getRootTask(
                 defaultDisplayFocusedStackId);
         assertEquals("Top stack must remain on primary display",
                 DEFAULT_DISPLAY, frontStack.mDisplayId);
@@ -540,21 +540,21 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
                 .createDisplay();
 
         launchActivityOnDisplay(LAUNCHING_ACTIVITY, newDisplay.mId);
-        mAmWmState.computeState(LAUNCHING_ACTIVITY);
+        mWmState.computeState(LAUNCHING_ACTIVITY);
 
         // Check that the first activity is launched onto the secondary display.
-        final int frontStackId = mAmWmState.getAmState().getFrontStackId(newDisplay.mId);
-        ActivityStack frontStack = mAmWmState.getAmState().getStackById(frontStackId);
+        final int frontStackId = mWmState.getFrontRootTaskId(newDisplay.mId);
+        ActivityTask frontStack = mWmState.getRootTask(frontStackId);
         assertEquals("Activity launched on secondary display must be resumed",
                 getActivityName(LAUNCHING_ACTIVITY), frontStack.mResumedActivity);
-        mAmWmState.assertFocusedStack("Top stack must be on secondary display", frontStackId);
+        mWmState.assertFocusedStack("Top stack must be on secondary display", frontStackId);
 
         // Launch an activity from a different UID into the first activity's task.
         getLaunchActivityBuilder().setTargetActivity(SECOND_ACTIVITY).execute();
 
         waitAndAssertTopResumedActivity(SECOND_ACTIVITY, newDisplay.mId,
                 "Top activity must be the newly launched one");
-        frontStack = mAmWmState.getAmState().getStackById(frontStackId);
+        frontStack = mWmState.getRootTask(frontStackId);
         assertEquals("Secondary display must contain 1 task", 1, frontStack.getTasks().size());
     }
 
@@ -566,12 +566,12 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
     public void testPermissionLaunchFromOwner() {
         // Create new virtual display.
         final DisplayContent newDisplay = createManagedVirtualDisplaySession().createDisplay();
-        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
-        mAmWmState.assertFocusedActivity("Virtual display activity must be focused",
+        mWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+        mWmState.assertFocusedActivity("Virtual display activity must be focused",
                 VIRTUAL_DISPLAY_ACTIVITY);
-        final int defaultDisplayFocusedStackId = mAmWmState.getAmState().getFocusedStackId();
-        ActivityStack frontStack =
-                mAmWmState.getAmState().getStackById(defaultDisplayFocusedStackId);
+        final int defaultDisplayFocusedStackId = mWmState.getFocusedStackId();
+        ActivityTask frontStack =
+                mWmState.getRootTask(defaultDisplayFocusedStackId);
         assertEquals("Top stack must remain on primary display",
                 DEFAULT_DISPLAY, frontStack.mDisplayId);
 
@@ -603,11 +603,11 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
     public void testPermissionLaunchFromDifferentApp() {
         // Create new virtual display.
         final DisplayContent newDisplay = createManagedVirtualDisplaySession().createDisplay();
-        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
-        mAmWmState.assertFocusedActivity("Virtual display activity must be focused",
+        mWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+        mWmState.assertFocusedActivity("Virtual display activity must be focused",
                 VIRTUAL_DISPLAY_ACTIVITY);
-        final int defaultDisplayFocusedStackId = mAmWmState.getAmState().getFocusedStackId();
-        ActivityStack frontStack = mAmWmState.getAmState().getStackById(
+        final int defaultDisplayFocusedStackId = mWmState.getFocusedStackId();
+        ActivityTask frontStack = mWmState.getRootTask(
                 defaultDisplayFocusedStackId);
         assertEquals("Top stack must remain on primary display",
                 DEFAULT_DISPLAY, frontStack.mDisplayId);
@@ -850,7 +850,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
                 newDisplay.mId);
         // Verify that activity which lives in untrusted display should not be focused.
         assertNotEquals("ImeTestActivity should not be focused",
-                mAmWmState.getAmState().getFocusedActivity(),
+                mWmState.getFocusedActivity(),
                 imeTestActivitySession.getActivity().getComponentName().toString());
 
         // Expect onStartInput won't executed in the IME client.
@@ -875,8 +875,8 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
         // Switch focus to top focused display as default display, verify onStartInput won't
         // be called since the untrusted display should no longer get focus.
         tapOnDisplayCenter(DEFAULT_DISPLAY);
-        mAmWmState.computeState(true);
-        assertEquals(DEFAULT_DISPLAY, mAmWmState.getWmState().getFocusedDisplayId());
+        mWmState.computeState();
+        assertEquals(DEFAULT_DISPLAY, mWmState.getFocusedDisplayId());
         imeTestActivitySession.getActivity().resetPrivateImeOptionsIdentifier();
         imeTestActivitySession.runOnMainSyncAndWait(
                 imeTestActivitySession.getActivity()::showSoftInput);

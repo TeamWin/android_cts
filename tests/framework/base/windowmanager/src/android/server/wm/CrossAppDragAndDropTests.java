@@ -35,7 +35,7 @@ import android.hardware.display.DisplayManager;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.ActivityManagerState.ActivityTask;
+import android.server.wm.WindowManagerState.ActivityTask;
 import android.util.Log;
 import android.view.Display;
 import java.util.Map;
@@ -158,7 +158,7 @@ public class CrossAppDragAndDropTests extends ActivityManagerTestBase {
     }
 
     private Point getWindowCenter(ComponentName name) throws Exception {
-        final ActivityTask sideTask = mAmWmState.getAmState().getTaskByActivity(name);
+        final ActivityTask sideTask = mWmState.getTaskByActivity(name);
         Rect bounds = sideTask.getBounds();
         if (bounds != null) {
             return new Point(bounds.centerX(), bounds.centerY());

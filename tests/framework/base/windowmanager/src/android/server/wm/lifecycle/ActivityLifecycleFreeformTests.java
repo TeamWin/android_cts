@@ -19,9 +19,9 @@ package android.server.wm.lifecycle;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-import static android.server.wm.ActivityManagerState.STATE_PAUSED;
-import static android.server.wm.ActivityManagerState.STATE_RESUMED;
-import static android.server.wm.ActivityManagerState.STATE_STOPPED;
+import static android.server.wm.WindowManagerState.STATE_PAUSED;
+import static android.server.wm.WindowManagerState.STATE_RESUMED;
+import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.ComponentNameUtils.getWindowName;
 import static android.server.wm.app27.Components.SDK_27_LAUNCHING_ACTIVITY;
 import static android.server.wm.app27.Components.SDK_27_TEST_ACTIVITY;
@@ -161,14 +161,14 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
         secondActivity.finish();
 
         // Wait and assert the lifecycle
-        mAmWmState.waitForActivityRemoved(getComponentName(SecondActivity.class));
+        mWmState.waitForActivityRemoved(getComponentName(SecondActivity.class));
         waitAndAssertActivityState(getComponentName(FirstActivity.class), STATE_RESUMED,
                 "Activity must be resumed after occluding finished");
 
         assertFalse("Activity must be destroyed",
-                mAmWmState.getAmState().containsActivity(getComponentName(SecondActivity.class)));
+                mWmState.containsActivity(getComponentName(SecondActivity.class)));
         assertFalse("Activity must be destroyed",
-                mAmWmState.getWmState().containsWindow(
+                mWmState.containsWindow(
                         getWindowName(getComponentName(SecondActivity.class))));
         LifecycleVerifier.assertRestartAndResumeSequence(FirstActivity.class, getLifecycleLog());
         LifecycleVerifier.assertResumeToDestroySequence(SecondActivity.class, getLifecycleLog());
@@ -220,16 +220,16 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
         transparentActivity.finish();
 
         // Wait and assert the lifecycle
-        mAmWmState.waitForActivityRemoved(getComponentName(TranslucentActivity.class));
+        mWmState.waitForActivityRemoved(getComponentName(TranslucentActivity.class));
         waitAndAssertActivityState(getComponentName(FirstActivity.class), STATE_RESUMED,
                 "Activity must be resumed after occluding finished");
 
 
         assertFalse("Activity must be destroyed",
-                mAmWmState.getAmState().containsActivity(
+                mWmState.containsActivity(
                         getComponentName(TranslucentActivity.class)));
         assertFalse("Activity must be destroyed",
-                mAmWmState.getWmState().containsWindow(
+                mWmState.containsWindow(
                         getWindowName(getComponentName(TranslucentActivity.class))));
         LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
                 Arrays.asList(ON_RESUME), "finishTranslucentOnTop");

@@ -18,7 +18,7 @@ package android.server.wm;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
-import static android.server.wm.ActivityAndWindowManagersState.dpToPx;
+import static android.server.wm.WindowManagerState.dpToPx;
 import static android.server.wm.ComponentNameUtils.getWindowName;
 import static android.server.wm.app.Components.BOTTOM_LEFT_LAYOUT_ACTIVITY;
 import static android.server.wm.app.Components.BOTTOM_RIGHT_LAYOUT_ACTIVITY;
@@ -33,7 +33,6 @@ import static org.junit.Assume.assumeTrue;
 import android.content.ComponentName;
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.WindowManagerState.Display;
 import android.server.wm.WindowManagerState.WindowState;
 
 import org.junit.Test;
@@ -62,7 +61,7 @@ public class ManifestLayoutTests extends ActivityManagerTestBase {
     private static final int GRAVITY_HOR_LEFT   = 0x20;
     private static final int GRAVITY_HOR_RIGHT  = 0x40;
 
-    private Display mDisplay;
+    private WindowManagerState.DisplayContent mDisplay;
     private WindowState mWindowState;
 
     @Test
@@ -163,16 +162,16 @@ public class ManifestLayoutTests extends ActivityManagerTestBase {
             throws Exception {
         final String windowName = getWindowName(activityName);
 
-        mAmWmState.computeState(activityName);
+        mWmState.computeState(activityName);
 
         if (checkFocus) {
-            mAmWmState.assertFocusedWindow("Test window must be the front window.", windowName);
+            mWmState.assertFocusedWindow("Test window must be the front window.", windowName);
         } else {
-            mAmWmState.assertVisibility(activityName, true);
+            mWmState.assertVisibility(activityName, true);
         }
 
         final List<WindowState> windowList =
-                mAmWmState.getWmState().getMatchingVisibleWindowState(windowName);
+                mWmState.getMatchingVisibleWindowState(windowName);
 
         assertEquals("Should have exactly one window state for the activity.",
                 1, windowList.size());
@@ -180,7 +179,7 @@ public class ManifestLayoutTests extends ActivityManagerTestBase {
         mWindowState = windowList.get(0);
         assertNotNull("Should have a valid window", mWindowState);
 
-        mDisplay = mAmWmState.getWmState().getDisplay(mWindowState.getDisplayId());
+        mDisplay = mWmState.getDisplay(mWindowState.getDisplayId());
         assertNotNull("Should be on a display", mDisplay);
     }
 

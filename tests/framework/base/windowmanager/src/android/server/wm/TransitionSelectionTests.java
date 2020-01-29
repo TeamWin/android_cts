@@ -36,11 +36,8 @@ import static android.server.wm.app.Components.TopActivity.EXTRA_TOP_WALLPAPER;
 import static org.junit.Assert.assertEquals;
 
 import android.content.ComponentName;
-import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 
-import org.junit.Assume;
-import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -274,7 +271,7 @@ public class TransitionSelectionTests extends ActivityManagerTestBase {
         }
         executeShellCommand(bottomStartCmd);
 
-        mAmWmState.computeState(BOTTOM_ACTIVITY);
+        mWmState.computeState(BOTTOM_ACTIVITY);
 
         final ComponentName topActivity = topTranslucent ? TRANSLUCENT_TOP_ACTIVITY : TOP_ACTIVITY;
         String topStartCmd = getAmStartCmd(topActivity);
@@ -291,14 +288,14 @@ public class TransitionSelectionTests extends ActivityManagerTestBase {
 
         Condition.waitFor("Retrieving correct transition", () -> {
             if (testOpen) {
-                mAmWmState.computeState(topActivity);
+                mWmState.computeState(topActivity);
             } else {
-                mAmWmState.computeState(BOTTOM_ACTIVITY);
+                mWmState.computeState(BOTTOM_ACTIVITY);
             }
             return expectedTransit.equals(
-                    mAmWmState.getWmState().getDefaultDisplayLastTransition());
+                    mWmState.getDefaultDisplayLastTransition());
         });
         assertEquals("Picked wrong transition", expectedTransit,
-                mAmWmState.getWmState().getDefaultDisplayLastTransition());
+                mWmState.getDefaultDisplayLastTransition());
     }
 }

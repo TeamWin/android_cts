@@ -16,7 +16,7 @@
 
 package android.server.wm;
 
-import static android.server.wm.ActivityManagerState.STATE_RESUMED;
+import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.StateLogger.log;
 import static android.server.wm.StateLogger.logE;
 import static android.server.wm.app.Components.FONT_SCALE_ACTIVITY;
@@ -148,7 +148,7 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
     private void testRotation180WithCutout(ComponentName activityName, @TestMode int testMode)
             throws Exception {
         launchActivity(activityName);
-        mAmWmState.computeState(activityName);
+        mWmState.computeState(activityName);
 
         final RotationSession rotationSession = createManagedRotationSession();
         final StateCount count1 = getStateCountForRotation(activityName, rotationSession,
@@ -192,7 +192,7 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
         session.set(before);
         separateTestJournal();
         session.set(after);
-        mAmWmState.computeState(activityName);
+        mWmState.computeState(activityName);
         final ActivityLifecycleCounts counter = new ActivityLifecycleCounts(activityName);
 
         int configChangeCount = counter.getCount(ActivityCallback.ON_CONFIGURATION_CHANGED);
@@ -230,15 +230,15 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
             int numConfigChange) {
         launchActivity(activityName);
 
-        mAmWmState.computeState(activityName);
+        mWmState.computeState(activityName);
 
         final int initialRotation = 4 - rotationStep;
         final RotationSession rotationSession = createManagedRotationSession();
         rotationSession.set(initialRotation);
-        mAmWmState.computeState(activityName);
+        mWmState.computeState(activityName);
         final int actualStackId =
-                mAmWmState.getAmState().getTaskByActivity(activityName).mStackId;
-        final int displayId = mAmWmState.getAmState().getStackById(actualStackId).mDisplayId;
+                mWmState.getTaskByActivity(activityName).mRootTaskId;
+        final int displayId = mWmState.getRootTask(actualStackId).mDisplayId;
         final int newDeviceRotation = getDeviceRotation(displayId);
         if (newDeviceRotation == INVALID_DEVICE_ROTATION) {
             logE("Got an invalid device rotation value. "
@@ -252,7 +252,7 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
         for (int rotation = 0; rotation < 4; rotation += rotationStep) {
             separateTestJournal();
             rotationSession.set(rotation);
-            mAmWmState.computeState(activityName);
+            mWmState.computeState(activityName);
             assertRelaunchOrConfigChanged(activityName, numRelaunch, numConfigChange);
         }
     }
@@ -271,7 +271,7 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
         fontScaleSession.set(1.0f);
         separateTestJournal();
         launchActivity(activityName);
-        mAmWmState.computeState(activityName);
+        mWmState.computeState(activityName);
 
         final Bundle extras = TestJournalContainer.get(activityName).extras;
         if (!extras.containsKey(EXTRA_FONT_ACTIVITY_DPI)) {
@@ -282,7 +282,7 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
         for (float fontScale = 0.85f; fontScale <= 1.3f; fontScale += 0.15f) {
             separateTestJournal();
             fontScaleSession.set(fontScale);
-            mAmWmState.computeState(activityName);
+            mWmState.computeState(activityName);
             assertRelaunchOrConfigChanged(activityName, relaunch ? 1 : 0, relaunch ? 0 : 1);
 
             // Verify that the display metrics are updated, and therefore the text size is also
@@ -312,7 +312,7 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
         separateTestJournal();
         // Update package info.
         updateApplicationInfo(Arrays.asList(TEST_ACTIVITY.getPackageName()));
-        mAmWmState.waitForWithAmState((amState) -> {
+        mWmState.waitForWithAmState((amState) -> {
             // Wait for activity to be resumed and asset seq number to be updated.
             try {
                 return getAssetSeqNumber(TEST_ACTIVITY) == assetSeq + 1
