@@ -16,24 +16,27 @@ package android.accessibilityservice.cts;
 
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.DisplayUtils.VirtualDisplaySession;
+import static android.accessibilityservice.cts.utils.GestureUtils.diff;
 import static android.accessibilityservice.cts.utils.GestureUtils.click;
 import static android.accessibilityservice.cts.utils.GestureUtils.endTimeOf;
+import static android.accessibilityservice.cts.utils.GestureUtils.getGestureBuilder;
 import static android.accessibilityservice.cts.utils.GestureUtils.longClick;
+import static android.accessibilityservice.cts.utils.GestureUtils.path;
 import static android.accessibilityservice.cts.utils.GestureUtils.startingAt;
+import static android.accessibilityservice.cts.utils.GestureUtils.times;
 import static android.app.UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES;
 
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
-import android.accessibilityservice.AccessibilityGestureEvent;
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.GestureDescription;
 import android.accessibilityservice.GestureDescription.StrokeDescription;
 import android.accessibilityservice.cts.activities.AccessibilityWindowQueryActivity;
+import android.accessibilityservice.cts.utils.GestureUtils;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
@@ -45,6 +48,7 @@ import android.graphics.PointF;
 import android.platform.test.annotations.AppModeFull;
 import android.util.DisplayMetrics;
 import android.view.Display;
+import android.view.ViewConfiguration;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 
@@ -66,6 +70,7 @@ import org.mockito.MockitoAnnotations;
 public class AccessibilityGestureDetectorTest {
 
     // Constants
+    private static final PointF HALF_FINGER_OFFSET = new PointF(120f, -50f);
     private static final float GESTURE_LENGTH_INCHES = 1.0f;
     private static final long STROKE_MS = 400;
     private static final long GESTURE_DISPATCH_TIMEOUT_MS = 3000;
@@ -144,35 +149,8 @@ public class AccessibilityGestureDetectorTest {
             return;
         }
 
-        // Compute gesture stroke lengths, in pixels.
-        final int dx = mStrokeLenPxX;
-        final int dy = mStrokeLenPxY;
-
-        // Test recognizing various gestures.
-        testGesture(doubleTap(Display.DEFAULT_DISPLAY), AccessibilityService.GESTURE_DOUBLE_TAP);
-        testGesture(
-                doubleTapAndHold(Display.DEFAULT_DISPLAY),
-                AccessibilityService.GESTURE_DOUBLE_TAP_AND_HOLD);
-        testPath(p(-dx, +0), AccessibilityService.GESTURE_SWIPE_LEFT);
-        testPath(p(+dx, +0), AccessibilityService.GESTURE_SWIPE_RIGHT);
-        testPath(p(+0, -dy), AccessibilityService.GESTURE_SWIPE_UP);
-        testPath(p(+0, +dy), AccessibilityService.GESTURE_SWIPE_DOWN);
-
-        testPath(p(-dx, +0), p(+0, +0), AccessibilityService.GESTURE_SWIPE_LEFT_AND_RIGHT);
-        testPath(p(-dx, +0), p(-dx, -dy), AccessibilityService.GESTURE_SWIPE_LEFT_AND_UP);
-        testPath(p(-dx, +0), p(-dx, +dy), AccessibilityService.GESTURE_SWIPE_LEFT_AND_DOWN);
-
-        testPath(p(+dx, +0), p(+0, +0), AccessibilityService.GESTURE_SWIPE_RIGHT_AND_LEFT);
-        testPath(p(+dx, +0), p(+dx, -dy), AccessibilityService.GESTURE_SWIPE_RIGHT_AND_UP);
-        testPath(p(+dx, +0), p(+dx, +dy), AccessibilityService.GESTURE_SWIPE_RIGHT_AND_DOWN);
-
-        testPath(p(+0, -dy), p(-dx, -dy), AccessibilityService.GESTURE_SWIPE_UP_AND_LEFT);
-        testPath(p(+0, -dy), p(+dx, -dy), AccessibilityService.GESTURE_SWIPE_UP_AND_RIGHT);
-        testPath(p(+0, -dy), p(+0, +0), AccessibilityService.GESTURE_SWIPE_UP_AND_DOWN);
-
-        testPath(p(+0, +dy), p(-dx, +dy), AccessibilityService.GESTURE_SWIPE_DOWN_AND_LEFT);
-        testPath(p(+0, +dy), p(+dx, +dy), AccessibilityService.GESTURE_SWIPE_DOWN_AND_RIGHT);
-        testPath(p(+0, +dy), p(+0, +0), AccessibilityService.GESTURE_SWIPE_DOWN_AND_UP);
+        runGestureDetectionTestOnDisplay(Display.DEFAULT_DISPLAY);
+        runMultiFingerGestureDetectionTestOnDisplay(Display.DEFAULT_DISPLAY);
     }
 
     @Test
@@ -189,52 +167,10 @@ public class AccessibilityGestureDetectorTest {
             final Activity activity = launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen(
                     sInstrumentation, sUiAutomation, AccessibilityWindowQueryActivity.class,
                     displayId);
-            // Compute gesture stroke lengths, in pixels.
-            final int dx = mStrokeLenPxX;
-            final int dy = mStrokeLenPxY;
 
             try {
-                // Test recognizing various gestures.
-                testGesture(
-                        doubleTap(displayId),
-                        AccessibilityService.GESTURE_DOUBLE_TAP,
-                        displayId);
-                testGesture(
-                        doubleTapAndHold(displayId),
-                        AccessibilityService.GESTURE_DOUBLE_TAP_AND_HOLD,
-                        displayId);
-                testPath(p(-dx, +0), AccessibilityService.GESTURE_SWIPE_LEFT, displayId);
-                testPath(p(+dx, +0), AccessibilityService.GESTURE_SWIPE_RIGHT, displayId);
-                testPath(p(+0, -dy), AccessibilityService.GESTURE_SWIPE_UP, displayId);
-                testPath(p(+0, +dy), AccessibilityService.GESTURE_SWIPE_DOWN, displayId);
-
-                testPath(p(-dx, +0), p(+0, +0), AccessibilityService.GESTURE_SWIPE_LEFT_AND_RIGHT,
-                        displayId);
-                testPath(p(-dx, +0), p(-dx, -dy), AccessibilityService.GESTURE_SWIPE_LEFT_AND_UP,
-                        displayId);
-                testPath(p(-dx, +0), p(-dx, +dy), AccessibilityService.GESTURE_SWIPE_LEFT_AND_DOWN,
-                        displayId);
-
-                testPath(p(+dx, +0), p(+0, +0), AccessibilityService.GESTURE_SWIPE_RIGHT_AND_LEFT,
-                        displayId);
-                testPath(p(+dx, +0), p(+dx, -dy), AccessibilityService.GESTURE_SWIPE_RIGHT_AND_UP,
-                        displayId);
-                testPath(p(+dx, +0), p(+dx, +dy), AccessibilityService.GESTURE_SWIPE_RIGHT_AND_DOWN,
-                        displayId);
-
-                testPath(p(+0, -dy), p(-dx, -dy), AccessibilityService.GESTURE_SWIPE_UP_AND_LEFT,
-                        displayId);
-                testPath(p(+0, -dy), p(+dx, -dy), AccessibilityService.GESTURE_SWIPE_UP_AND_RIGHT,
-                        displayId);
-                testPath(p(+0, -dy), p(+0, +0), AccessibilityService.GESTURE_SWIPE_UP_AND_DOWN,
-                        displayId);
-
-                testPath(p(+0, +dy), p(-dx, +dy), AccessibilityService.GESTURE_SWIPE_DOWN_AND_LEFT,
-                        displayId);
-                testPath(p(+0, +dy), p(+dx, +dy), AccessibilityService.GESTURE_SWIPE_DOWN_AND_RIGHT,
-                        displayId);
-                testPath(p(+0, +dy), p(+0, +0), AccessibilityService.GESTURE_SWIPE_DOWN_AND_UP,
-                        displayId);
+                runGestureDetectionTestOnDisplay(displayId);
+                runMultiFingerGestureDetectionTestOnDisplay(displayId);
             } finally {
                 sInstrumentation.runOnMainSync(() -> {
                     activity.finish();
@@ -242,6 +178,82 @@ public class AccessibilityGestureDetectorTest {
                 sInstrumentation.waitForIdleSync();
             }
         }
+    }
+
+    private void runGestureDetectionTestOnDisplay(int displayId) {
+        // Compute gesture stroke lengths, in pixels.
+        final int dx = mStrokeLenPxX;
+        final int dy = mStrokeLenPxY;
+
+        // Test recognizing various gestures.
+        testGesture(
+                doubleTap(displayId),
+                AccessibilityService.GESTURE_DOUBLE_TAP,
+                displayId);
+        testGesture(
+                doubleTapAndHold(displayId),
+                AccessibilityService.GESTURE_DOUBLE_TAP_AND_HOLD,
+                displayId);
+        testPath(p(-dx, +0), AccessibilityService.GESTURE_SWIPE_LEFT, displayId);
+        testPath(p(+dx, +0), AccessibilityService.GESTURE_SWIPE_RIGHT, displayId);
+        testPath(p(+0, -dy), AccessibilityService.GESTURE_SWIPE_UP, displayId);
+        testPath(p(+0, +dy), AccessibilityService.GESTURE_SWIPE_DOWN, displayId);
+
+        testPath(p(-dx, +0), p(+0, +0), AccessibilityService.GESTURE_SWIPE_LEFT_AND_RIGHT,
+                displayId);
+        testPath(p(-dx, +0), p(-dx, -dy), AccessibilityService.GESTURE_SWIPE_LEFT_AND_UP,
+                displayId);
+        testPath(p(-dx, +0), p(-dx, +dy), AccessibilityService.GESTURE_SWIPE_LEFT_AND_DOWN,
+                displayId);
+
+        testPath(p(+dx, +0), p(+0, +0), AccessibilityService.GESTURE_SWIPE_RIGHT_AND_LEFT,
+                displayId);
+        testPath(p(+dx, +0), p(+dx, -dy), AccessibilityService.GESTURE_SWIPE_RIGHT_AND_UP,
+                displayId);
+        testPath(p(+dx, +0), p(+dx, +dy), AccessibilityService.GESTURE_SWIPE_RIGHT_AND_DOWN,
+                displayId);
+
+        testPath(p(+0, -dy), p(-dx, -dy), AccessibilityService.GESTURE_SWIPE_UP_AND_LEFT,
+                displayId);
+        testPath(p(+0, -dy), p(+dx, -dy), AccessibilityService.GESTURE_SWIPE_UP_AND_RIGHT,
+                displayId);
+        testPath(p(+0, -dy), p(+0, +0), AccessibilityService.GESTURE_SWIPE_UP_AND_DOWN,
+                displayId);
+
+        testPath(p(+0, +dy), p(-dx, +dy), AccessibilityService.GESTURE_SWIPE_DOWN_AND_LEFT,
+                displayId);
+        testPath(p(+0, +dy), p(+dx, +dy), AccessibilityService.GESTURE_SWIPE_DOWN_AND_RIGHT,
+                displayId);
+        testPath(p(+0, +dy), p(+0, +0), AccessibilityService.GESTURE_SWIPE_DOWN_AND_UP,
+                displayId);
+    }
+
+    private void runMultiFingerGestureDetectionTestOnDisplay(int displayId) {
+        testGesture(
+                twoFingerSingleTap(displayId),
+                AccessibilityService.GESTURE_2_FINGER_SINGLE_TAP,
+                displayId);
+        testGesture(
+                twoFingerDoubleTap(displayId),
+                AccessibilityService.GESTURE_2_FINGER_DOUBLE_TAP,
+                displayId);
+        testGesture(
+                twoFingerTripleTap(displayId),
+                AccessibilityService.GESTURE_2_FINGER_TRIPLE_TAP,
+                displayId);
+
+        testGesture(
+                threeFingerSingleTap(displayId),
+                AccessibilityService.GESTURE_3_FINGER_SINGLE_TAP,
+                displayId);
+        testGesture(
+                threeFingerDoubleTap(displayId),
+                AccessibilityService.GESTURE_3_FINGER_DOUBLE_TAP,
+                displayId);
+        testGesture(
+                threeFingerTripleTap(displayId),
+                AccessibilityService.GESTURE_3_FINGER_TRIPLE_TAP,
+                displayId);
     }
 
     /** Convenient short alias to make a Point. */
@@ -293,16 +305,7 @@ public class AccessibilityGestureDetectorTest {
                 .onCompleted(any());
 
         // Wait for gesture recognizer, and check recognized gesture.
-        mService.waitUntilGestureInfo();
-        if(displayId == Display.DEFAULT_DISPLAY) {
-            assertEquals(1, mService.getGesturesSize());
-            assertEquals(gestureId, mService.getGesture(0));
-        }
-
-        AccessibilityGestureEvent expectedGestureEvent = new AccessibilityGestureEvent(gestureId,
-                displayId);
-        assertEquals(1, mService.getGestureInfoSize());
-        assertEquals(expectedGestureEvent.toString(), mService.getGestureInfo(0).toString());
+        mService.assertGestureReceived(gestureId, displayId);
     }
 
     private void testGesture(GestureDescription gesture, int gestureId) {
@@ -327,23 +330,8 @@ public class AccessibilityGestureDetectorTest {
             return;
         }
 
-        assertEventAfterGesture(swipe(Display.DEFAULT_DISPLAY),
-                AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
-                AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
-
-        assertEventAfterGesture(tap(Display.DEFAULT_DISPLAY),
-                AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
-                AccessibilityEvent.TYPE_TOUCH_EXPLORATION_GESTURE_START,
-                AccessibilityEvent.TYPE_TOUCH_EXPLORATION_GESTURE_END,
-                AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
-
-        assertEventAfterGesture(doubleTap(Display.DEFAULT_DISPLAY),
-                AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
-                AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
-
-        assertEventAfterGesture(doubleTapAndHold(Display.DEFAULT_DISPLAY),
-                AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
-                AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
+        verifyGestureTouchEventOnDisplay(Display.DEFAULT_DISPLAY);
+        verifyMultiFingerGestureTouchEventOnDisplay(Display.DEFAULT_DISPLAY);
     }
 
     @Test
@@ -363,23 +351,8 @@ public class AccessibilityGestureDetectorTest {
                     sInstrumentation, sUiAutomation, AccessibilityWindowQueryActivity.class,
                     displayId);
             try {
-                assertEventAfterGesture(swipe(displayId),
-                        AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
-                        AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
-
-                assertEventAfterGesture(tap(displayId),
-                        AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
-                        AccessibilityEvent.TYPE_TOUCH_EXPLORATION_GESTURE_START,
-                        AccessibilityEvent.TYPE_TOUCH_EXPLORATION_GESTURE_END,
-                        AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
-
-                assertEventAfterGesture(doubleTap(displayId),
-                        AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
-                        AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
-
-                assertEventAfterGesture(doubleTapAndHold(displayId),
-                        AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
-                        AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
+                verifyGestureTouchEventOnDisplay(displayId);
+                verifyMultiFingerGestureTouchEventOnDisplay(displayId);
             } finally {
                 sInstrumentation.runOnMainSync(() -> {
                     activity.finish();
@@ -387,6 +360,48 @@ public class AccessibilityGestureDetectorTest {
                 sInstrumentation.waitForIdleSync();
             }
         }
+    }
+
+    private void verifyGestureTouchEventOnDisplay(int displayId) {
+        assertEventAfterGesture(swipe(Display.DEFAULT_DISPLAY),
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
+
+        assertEventAfterGesture(tap(Display.DEFAULT_DISPLAY),
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
+                AccessibilityEvent.TYPE_TOUCH_EXPLORATION_GESTURE_START,
+                AccessibilityEvent.TYPE_TOUCH_EXPLORATION_GESTURE_END,
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
+
+        assertEventAfterGesture(doubleTap(Display.DEFAULT_DISPLAY),
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
+
+        assertEventAfterGesture(doubleTapAndHold(Display.DEFAULT_DISPLAY),
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
+    }
+
+    private void verifyMultiFingerGestureTouchEventOnDisplay(int displayId) {
+        assertEventAfterGesture(twoFingerSingleTap(displayId),
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
+        assertEventAfterGesture(twoFingerDoubleTap(displayId),
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
+        assertEventAfterGesture(twoFingerTripleTap(displayId),
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
+
+        assertEventAfterGesture(threeFingerSingleTap(displayId),
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
+        assertEventAfterGesture(threeFingerDoubleTap(displayId),
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
+        assertEventAfterGesture(threeFingerTripleTap(displayId),
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
     }
 
     @Test
@@ -417,48 +432,63 @@ public class AccessibilityGestureDetectorTest {
         verify(mGestureDispatchCallback, timeout(EVENT_DISPATCH_TIMEOUT_MS).atLeastOnce())
                 .onCompleted(any());
 
-        mService.waitUntilEvent(events.length);
-        assertEquals(events.length, mService.getEventsSize());
-        for (int i = 0; i < events.length; i++) {
-            assertEquals(AccessibilityEvent.eventTypeToString(events[i]),
-                    AccessibilityEvent.eventTypeToString(mService.getEvent(i)));
-        }
+        mService.assertPropagated(events);
     }
 
     private GestureDescription swipe(int displayId) {
-        GestureDescription.Builder builder = new GestureDescription.Builder();
         StrokeDescription swipe = new StrokeDescription(
                 linePath(mCenter, p(0, mStrokeLenPxY), null), 0, STROKE_MS, false);
-        builder.addStroke(swipe);
-        builder.setDisplayId(displayId);
-        return builder.build();
+        return getGestureBuilder(displayId, swipe).build();
     }
 
     private GestureDescription tap(int displayId) {
-        GestureDescription.Builder builder = new GestureDescription.Builder();
         StrokeDescription tap = click(mTapLocation);
-        builder.addStroke(tap);
-        builder.setDisplayId(displayId);
-        return builder.build();
+        return getGestureBuilder(displayId, tap).build();
     }
 
     private GestureDescription doubleTap(int displayId) {
-        GestureDescription.Builder builder = new GestureDescription.Builder();
         StrokeDescription tap1 = click(mTapLocation);
         StrokeDescription tap2 = startingAt(endTimeOf(tap1) + 20, click(mTapLocation));
-        builder.addStroke(tap1);
-        builder.addStroke(tap2);
-        builder.setDisplayId(displayId);
-        return builder.build();
+        return getGestureBuilder(displayId, tap1, tap2).build();
     }
 
     private GestureDescription doubleTapAndHold(int displayId) {
-        GestureDescription.Builder builder = new GestureDescription.Builder();
         StrokeDescription tap1 = click(mTapLocation);
         StrokeDescription tap2 = startingAt(endTimeOf(tap1) + 20, longClick(mTapLocation));
-        builder.addStroke(tap1);
-        builder.addStroke(tap2);
-        builder.setDisplayId(displayId);
-        return builder.build();
+        return getGestureBuilder(displayId, tap1, tap2).build();
+    }
+
+    private GestureDescription twoFingerSingleTap(int displayId) {
+        return multiFingerMultiTap(2, 1, displayId);
+    }
+
+    private GestureDescription twoFingerDoubleTap(int displayId) {
+        return multiFingerMultiTap(2, 2, displayId);
+    }
+
+    private GestureDescription twoFingerTripleTap(int displayId) {
+        return multiFingerMultiTap(2, 3, displayId);
+    }
+
+    private GestureDescription threeFingerSingleTap(int displayId) {
+        return multiFingerMultiTap(3, 1, displayId);
+    }
+
+    private GestureDescription threeFingerDoubleTap(int displayId) {
+        return multiFingerMultiTap(3, 2, displayId);
+    }
+
+    private GestureDescription threeFingerTripleTap(int displayId) {
+        return multiFingerMultiTap(3, 3, displayId);
+    }
+
+    private GestureDescription multiFingerMultiTap(int fingerCount, int tapCount, int displayId) {
+        // We dispatch the first finger, base, placed at left down side by half offset
+        // from the center of the display and the second one at right up side by delta
+        // from the base and so for third one.
+        final PointF base = diff(mTapLocation, HALF_FINGER_OFFSET);
+        final PointF delta = times(2, HALF_FINGER_OFFSET);
+        return GestureUtils.multiFingerMultiTap(
+                base, delta, fingerCount, tapCount, /* slop */ 0, displayId);
     }
 }
