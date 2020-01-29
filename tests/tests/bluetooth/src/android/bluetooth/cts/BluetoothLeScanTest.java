@@ -74,7 +74,7 @@ public class BluetoothLeScanTest extends AndroidTestCase {
 
     @Override
     public void setUp() {
-        if (!isBleSupported()) {
+        if (!TestUtils.isBleSupported(getContext())) {
             return;
         }
         BluetoothManager manager = (BluetoothManager) mContext.getSystemService(
@@ -84,7 +84,7 @@ public class BluetoothLeScanTest extends AndroidTestCase {
             // Note it's not reliable to listen for Adapter.ACTION_STATE_CHANGED broadcast and check
             // bluetooth state.
             mBluetoothAdapter.enable();
-            sleep(ADAPTER_ENABLE_TIMEOUT);
+            TestUtils.sleep(ADAPTER_ENABLE_TIMEOUT);
         }
         mScanner = mBluetoothAdapter.getBluetoothLeScanner();
         mLocationOn = TestUtils.isLocationOn(getContext());
@@ -97,7 +97,7 @@ public class BluetoothLeScanTest extends AndroidTestCase {
 
     @Override
     public void tearDown() {
-        if (!isBleSupported()) {
+        if (!TestUtils.isBleSupported(getContext())) {
           // mBluetoothAdapter == null.
           return;
         }
@@ -106,7 +106,7 @@ public class BluetoothLeScanTest extends AndroidTestCase {
             TestUtils.disableLocation(getContext());
         }
         mBluetoothAdapter.disable();
-        sleep(ADAPTER_ENABLE_TIMEOUT);
+        TestUtils.sleep(ADAPTER_ENABLE_TIMEOUT);
     }
 
     /**
@@ -114,7 +114,7 @@ public class BluetoothLeScanTest extends AndroidTestCase {
      */
     @MediumTest
     public void testBasicBleScan() {
-        if (!isBleSupported()) {
+        if (!TestUtils.isBleSupported(getContext())) {
             return;
         }
         long scanStartMillis = SystemClock.elapsedRealtime();
@@ -131,7 +131,7 @@ public class BluetoothLeScanTest extends AndroidTestCase {
      */
     @MediumTest
     public void testScanFilter() {
-        if (!isBleSupported()) {
+        if (!TestUtils.isBleSupported(getContext())) {
             return;
         }
 
@@ -147,9 +147,9 @@ public class BluetoothLeScanTest extends AndroidTestCase {
         ScanSettings settings = new ScanSettings.Builder().setScanMode(
                 ScanSettings.SCAN_MODE_LOW_LATENCY).build();
         mScanner.startScan(filters, settings, filterLeScanCallback);
-        sleep(SCAN_DURATION_MILLIS);
+        TestUtils.sleep(SCAN_DURATION_MILLIS);
         mScanner.stopScan(filterLeScanCallback);
-        sleep(SCAN_STOP_TIMEOUT);
+        TestUtils.sleep(SCAN_STOP_TIMEOUT);
         Collection<ScanResult> scanResults = filterLeScanCallback.getScanResults();
         for (ScanResult result : scanResults) {
             assertTrue(filter.matches(result));
@@ -195,7 +195,7 @@ public class BluetoothLeScanTest extends AndroidTestCase {
 //     */
 //    @MediumTest
 //    public void testOpportunisticScan() {
-//        if (!isBleSupported()) {
+//        if (!TestUtils.isBleSupported(getContext())) {
 //            return;
 //        }
 //        ScanSettings opportunisticScanSettings = new ScanSettings.Builder()
@@ -245,7 +245,7 @@ public class BluetoothLeScanTest extends AndroidTestCase {
      */
     @MediumTest
     public void testBatchScan() {
-        if (!isBleSupported() || !isBleBatchScanSupported()) {
+        if (!TestUtils.isBleSupported(getContext()) || !isBleBatchScanSupported()) {
             Log.d(TAG, "BLE or BLE batching not suppported");
             return;
         }
@@ -255,7 +255,7 @@ public class BluetoothLeScanTest extends AndroidTestCase {
         BleScanCallback batchScanCallback = new BleScanCallback();
         mScanner.startScan(Collections.<ScanFilter>emptyList(), batchScanSettings,
                 batchScanCallback);
-        sleep(SCAN_DURATION_MILLIS);
+        TestUtils.sleep(SCAN_DURATION_MILLIS);
         mScanner.flushPendingScanResults(batchScanCallback);
         mFlushBatchScanLatch = new CountDownLatch(1);
         List<ScanResult> results = batchScanCallback.getBatchScanResults();
@@ -276,7 +276,7 @@ public class BluetoothLeScanTest extends AndroidTestCase {
      */
     @MediumTest
     public void testStartScanPendingIntent_nullnull() throws Exception {
-        if (!isBleSupported() || !isBleBatchScanSupported()) {
+        if (!TestUtils.isBleSupported(getContext()) || !isBleBatchScanSupported()) {
             Log.d(TAG, "BLE or BLE batching not suppported");
             return;
         }
@@ -295,7 +295,7 @@ public class BluetoothLeScanTest extends AndroidTestCase {
      */
     @MediumTest
     public void testStartScanPendingIntent() throws Exception {
-        if (!isBleSupported() || !isBleBatchScanSupported()) {
+        if (!TestUtils.isBleSupported(getContext()) || !isBleBatchScanSupported()) {
             Log.d(TAG, "BLE or BLE batching not suppported");
             return;
         }
@@ -384,25 +384,10 @@ public class BluetoothLeScanTest extends AndroidTestCase {
     private Set<ScanResult> scan() {
         BleScanCallback regularLeScanCallback = new BleScanCallback();
         mScanner.startScan(regularLeScanCallback);
-        sleep(SCAN_DURATION_MILLIS);
+        TestUtils.sleep(SCAN_DURATION_MILLIS);
         mScanner.stopScan(regularLeScanCallback);
-        sleep(SCAN_STOP_TIMEOUT);
+        TestUtils.sleep(SCAN_STOP_TIMEOUT);
         return regularLeScanCallback.getScanResults();
-    }
-
-    // Put the current thread to sleep.
-    private void sleep(int sleepMillis) {
-        try {
-            Thread.sleep(sleepMillis);
-        } catch (InterruptedException e) {
-            Log.e(TAG, "interrupted", e);
-        }
-    }
-
-    // Check if Bluetooth LE feature is supported on DUT.
-    private boolean isBleSupported() {
-        return getContext().getPackageManager()
-                .hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE);
     }
 
     // Returns whether offloaded scan batching is supported.

@@ -18,7 +18,9 @@ package android.bluetooth.cts;
 
 import android.bluetooth.le.ScanRecord;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.provider.Settings;
+import android.util.Log;
 
 import junit.framework.Assert;
 
@@ -90,5 +92,26 @@ class TestUtils {
      */
     static void disableLocation(Context context) {
         setLocationMode(context, Settings.Secure.LOCATION_MODE_OFF);
+    }
+
+    /**
+     * Check if BLE is supported by this platform
+     * @param context current device context
+     * @return true if BLE is supported, false otherwise
+     */
+    static boolean isBleSupported(Context context) {
+        return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE);
+    }
+
+    /**
+     * Put the current thread to sleep.
+     * @param sleepMillis number of milliseconds to sleep for
+     */
+    static void sleep(int sleepMillis) {
+        try {
+            Thread.sleep(sleepMillis);
+        } catch (InterruptedException e) {
+            Log.e(TestUtils.class.getSimpleName(), "interrupted", e);
+        }
     }
 }
