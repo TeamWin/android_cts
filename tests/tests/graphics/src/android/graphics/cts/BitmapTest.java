@@ -218,6 +218,25 @@ public class BitmapTest {
                 BitmapUtils.compareBitmaps(mBitmap, result));
     }
 
+    @Test
+    @Parameters(method = "compressFormats")
+    public void testCompressAlpha8Fails(CompressFormat format) {
+        Bitmap bitmap = Bitmap.createBitmap(1, 1, Config.ALPHA_8);
+        assertFalse("Incorrectly compressed ALPHA_8 to " + format,
+                bitmap.compress(format, 50, new ByteArrayOutputStream()));
+
+        if (format == CompressFormat.WEBP) {
+            // Skip the native test, since the NDK just has equivalents for
+            // WEBP_LOSSY and WEBP_LOSSLESS.
+            return;
+        }
+
+        byte[] storage = new byte[16 * 1024];
+        OutputStream stream = new ByteArrayOutputStream();
+        assertFalse("Incorrectly compressed ALPHA_8 with the NDK to " + format,
+                nCompress(bitmap, nativeCompressFormat(format), 50, stream, storage));
+    }
+
     @Test(expected=IllegalStateException.class)
     public void testCopyRecycled() {
         mBitmap.recycle();
