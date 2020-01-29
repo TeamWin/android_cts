@@ -330,7 +330,7 @@ public class ServiceStateTest {
 
         NetworkRegistrationInfo wwanDataRegState = new NetworkRegistrationInfo(
                 NetworkRegistrationInfo.DOMAIN_PS, AccessNetworkConstants.TRANSPORT_TYPE_WWAN,
-                0, 0, 0, true, null, null, 0, false, false, false, lteVopsSupportInfo, false);
+                0, 0, 0, true, null, null, "", 0, false, false, false, lteVopsSupportInfo, false);
 
         ServiceState ss = new ServiceState();
 
@@ -345,7 +345,7 @@ public class ServiceStateTest {
 
         wwanDataRegState = new NetworkRegistrationInfo(
                 NetworkRegistrationInfo.DOMAIN_PS, AccessNetworkConstants.TRANSPORT_TYPE_WWAN,
-                0, 0, 0, true, null, null, 0, false, false, false, lteVopsSupportInfo, false);
+                0, 0, 0, true, null, null, "", 0, false, false, false, lteVopsSupportInfo, false);
         ss.addNetworkRegistrationInfo(wwanDataRegState);
         assertEquals(ss.getNetworkRegistrationInfo(NetworkRegistrationInfo.DOMAIN_PS,
                 AccessNetworkConstants.TRANSPORT_TYPE_WWAN), wwanDataRegState);
