@@ -37,6 +37,9 @@ public class TestImpl extends ITest.Stub {
   public int getInterfaceVersion() { return TestImpl.VERSION; }
 
   @Override
+  public String getInterfaceHash() { return TestImpl.HASH; }
+
+  @Override
   protected void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
     for (String arg : args) {
       pw.print(arg);
