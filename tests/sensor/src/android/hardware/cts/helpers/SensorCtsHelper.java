@@ -336,6 +336,7 @@ public class SensorCtsHelper {
             case Sensor.TYPE_GYROSCOPE_UNCALIBRATED:
             case Sensor.TYPE_MAGNETIC_FIELD:
             case Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED:
+            case Sensor.TYPE_HINGE_ANGLE:
                 return true;
 
             case Sensor.TYPE_PRESSURE:
@@ -368,6 +369,10 @@ public class SensorCtsHelper {
                 // equivalent to 0.0125 hPa / LSB. Allow for a small margin of
                 // error due to rounding errors.
                 return 1.01f * (1.0f / 80.0f);
+            case Sensor.TYPE_HINGE_ANGLE:
+                // Hinge angle sensor must have a resolution the same or smaller
+                // than 360 degrees.
+                return 360f;
         }
         return 0.0f;
     }

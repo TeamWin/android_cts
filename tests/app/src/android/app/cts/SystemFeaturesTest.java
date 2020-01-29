@@ -54,16 +54,16 @@ import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.PropertyUtil;
 import com.android.compatibility.common.util.SystemUtil;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 /**
  * Test for checking that the {@link PackageManager} is reporting the correct features.
@@ -379,6 +379,8 @@ public class SystemFeaturesTest {
                 Sensor.TYPE_AMBIENT_TEMPERATURE);
         assertFeatureForSensor(featuresLeft, PackageManager.FEATURE_SENSOR_RELATIVE_HUMIDITY,
                 Sensor.TYPE_RELATIVE_HUMIDITY);
+        assertFeatureForSensor(featuresLeft, PackageManager.FEATURE_SENSOR_HINGE_ANGLE,
+                Sensor.TYPE_HINGE_ANGLE);
 
 
         /*
