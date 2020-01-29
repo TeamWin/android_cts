@@ -44,8 +44,10 @@ my_bionic_testlib_files := \
   libdlext_test_zip/libdlext_test_zip.so \
   libdlext_test_zip/libdlext_test_zip_zipaligned.zip \
   libgnu-hash-table-library.so \
-  librelr-new.so \
-  librelr-old.so \
+  librelocations-fat.so \
+  librelocations-ANDROID_RELR.so \
+  librelocations-ANDROID_REL.so \
+  librelocations-RELR.so \
   libsegment_gap_inner.so \
   libsegment_gap_outer.so \
   libsysv-hash-table-library.so \
