@@ -122,7 +122,6 @@ public class RestoreSessionTest {
 
                     assertEquals(
                             "Restore finished with error: " + error, BackupManager.SUCCESS, error);
-                    mRestoreSession.endRestoreSession();
                     mRestoreObserverLatch.countDown();
                 }
             };
@@ -136,11 +135,13 @@ public class RestoreSessionTest {
 
         mUiAutomation = getInstrumentation().getUiAutomation();
         mUiAutomation.adoptShellPermissionIdentity();
+        mRestoreSession = mBackupManager.beginRestoreSession();
     }
 
     @After
     public void tearDown() {
         mUiAutomation.dropShellPermissionIdentity();
+        mRestoreSession.endRestoreSession();
     }
 
     /**
@@ -228,9 +229,7 @@ public class RestoreSessionTest {
 
     private void loadAvailableRestoreSets(@Nullable BackupManagerMonitor monitor)
             throws InterruptedException {
-        // Wait for getAvailableRestoreSets to finish and the callback to be fired.
         mRestoreSetsLatch = new CountDownLatch(1);
-        mRestoreSession = mBackupManager.beginRestoreSession();
         assertEquals(
                 BackupManager.SUCCESS, monitor == null
                 ? mRestoreSession.getAvailableRestoreSets(mRestoreObserver)
