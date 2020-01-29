@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <!--
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +17,16 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.selinuxtargetsdkcurrent.cts">
+        package="android.media.mediaparser.cts">
 
-    <!-- This app tests that apps with current targetSdkValue are placed in the
-         untrusted_app selinux domain -->
-    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="10000" />
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <application>
         <uses-library android:name="android.test.runner" />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="android.selinuxtargetsdkcurrent.cts"
-                     android:label="CTS tests for permissions enforce by selinux based on targetSdkVersion">
+            android:targetPackage="android.media.mediaparser.cts"
+            android:label="Tests for MediaParser.">
         <meta-data android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
+                android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
-
 </manifest>
-

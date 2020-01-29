@@ -614,6 +614,7 @@ public class LocationManagerFineTest {
     }
 
     @Test
+    @AppModeFull(reason = "Instant apps can only receive whitelisted broadcasts")
     public void testListenProviderEnable_Broadcast() throws Exception {
         try (BroadcastCapture capture = new BroadcastCapture(mContext, PROVIDERS_CHANGED_ACTION)) {
             mManager.setTestProviderEnabled(TEST_PROVIDER, false);

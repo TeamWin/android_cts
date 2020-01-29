@@ -237,7 +237,7 @@ public class JobThrottlingTest {
             Log.d(TAG, "Skipping test that requires the device be WiFi enabled.");
             return;
         }
-        setWifiState(true, mContext, mCm, mWifiManager);
+        setWifiState(true, mCm, mWifiManager);
         assumeTrue("device idle not enabled", mDeviceIdleEnabled);
         mTestAppInterface.scheduleJob(false, true);
         assertTrue("Job did not start after scheduling",
@@ -343,7 +343,7 @@ public class JobThrottlingTest {
         assertFalse("New job started in RESTRICTED bucket", mTestAppInterface.awaitJobStart(3_000));
 
         // Add network
-        setWifiState(true, mContext, mCm, mWifiManager);
+        setWifiState(true, mCm, mWifiManager);
         assertTrue("New job didn't start in RESTRICTED bucket",
                 mTestAppInterface.awaitJobStart(3_000));
     }
@@ -436,7 +436,7 @@ public class JobThrottlingTest {
 
         // Ensure that we leave WiFi in its previous state.
         if (mWifiManager.isWifiEnabled() != mInitialWiFiState) {
-            setWifiState(mInitialWiFiState, mContext, mCm, mWifiManager);
+            setWifiState(mInitialWiFiState, mCm, mWifiManager);
         }
         Settings.Global.putString(mContext.getContentResolver(),
                 Settings.Global.JOB_SCHEDULER_CONSTANTS, mInitialJobSchedulerConstants);

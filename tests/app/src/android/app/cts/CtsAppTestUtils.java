@@ -57,4 +57,11 @@ class CtsAppTestUtils {
                             && !isKeyguardLocked(context);
                 });
     }
+
+    public static String makeUidIdle(Instrumentation instrumentation, String packageName)
+            throws Exception {
+        // Force app to go idle now
+        String cmd = "am make-uid-idle " + packageName;
+        return executeShellCmd(instrumentation, cmd);
+    }
 }

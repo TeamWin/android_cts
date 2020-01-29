@@ -277,6 +277,7 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
         verifyCommandTuneForRecordingWithBundle();
         verifyCallbackTuned();
         verifyCommandStartRecording();
+        verifyCommandStartRecordingWithBundle();
         verifyCommandStopRecording();
         verifyCommandSendAppPrivateCommandForRecording();
         verifyCallbackRecordingStopped();
@@ -342,6 +343,24 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
                 return session != null
                         && session.mStartRecordingCount > 0
                         && Objects.equals(session.mProgramHint, fakeChannelUri);
+            }
+        }.run();
+    }
+
+    public void verifyCommandStartRecordingWithBundle() {
+        resetCounts();
+        resetPassedValues();
+        final Uri fakeChannelUri = TvContract.buildChannelUri(0);
+        mTvRecordingClient.startRecording(fakeChannelUri, sDummyBundle);
+        new PollingCheck(TIME_OUT) {
+            @Override
+            protected boolean check() {
+                final CountingRecordingSession session = CountingTvInputService.sRecordingSession;
+                return session != null
+                        && session.mStartRecordingCount > 0
+                        && session.mStartRecordingWithBundleCount > 0
+                        && Objects.equals(session.mProgramHint, fakeChannelUri)
+                        && bundleEquals(session.mStartRecordingWithBundleData, sDummyBundle);
             }
         }.run();
     }
@@ -1320,12 +1339,14 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
             public volatile int mTuneWithBundleCount;
             public volatile int mReleaseCount;
             public volatile int mStartRecordingCount;
+            public volatile int mStartRecordingWithBundleCount;
             public volatile int mStopRecordingCount;
             public volatile int mAppPrivateCommandCount;
 
             public volatile Uri mTunedChannelUri;
             public volatile Bundle mTuneWithBundleData;
             public volatile Uri mProgramHint;
+            public volatile Bundle mStartRecordingWithBundleData;
             public volatile String mAppPrivateCommandAction;
             public volatile Bundle mAppPrivateCommandData;
 
@@ -1338,6 +1359,7 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
                 mTuneWithBundleCount = 0;
                 mReleaseCount = 0;
                 mStartRecordingCount = 0;
+                mStartRecordingWithBundleCount = 0;
                 mStopRecordingCount = 0;
                 mAppPrivateCommandCount = 0;
             }
@@ -1346,6 +1368,7 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
                 mTunedChannelUri = null;
                 mTuneWithBundleData = null;
                 mProgramHint = null;
+                mStartRecordingWithBundleData = null;
                 mAppPrivateCommandAction = null;
                 mAppPrivateCommandData = null;
             }
@@ -1374,6 +1397,16 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
             public void onStartRecording(Uri programHint) {
                 mStartRecordingCount++;
                 mProgramHint = programHint;
+            }
+
+            @Override
+            public void onStartRecording(Uri programHint, Bundle data) {
+                mStartRecordingWithBundleCount++;
+                mProgramHint = programHint;
+                mStartRecordingWithBundleData = data;
+                // Also calls {@link #onStartRecording(Uri)} since it will never be called if the
+                // implementation overrides {@link #onStartRecording(Uri, Bundle)}.
+                onStartRecording(programHint);
             }
 
             @Override

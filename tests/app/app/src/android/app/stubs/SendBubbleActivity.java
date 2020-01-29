@@ -69,7 +69,7 @@ public class SendBubbleActivity extends Activity {
                 .setContentTitle("notify#" + BUBBLE_NOTIF_ID)
                 .setContentText("This is #" + BUBBLE_NOTIF_ID + "notification  ")
                 .setContentIntent(pendingIntent)
-                .setBubbleMetadata(getBubbleMetadata(autoExpand))
+                .setBubbleMetadata(getBubbleMetadata(autoExpand, false /* suppressNotification */))
                 .build();
 
         NotificationManager noMan = (NotificationManager) context.getSystemService(
@@ -79,7 +79,7 @@ public class SendBubbleActivity extends Activity {
     }
 
     /** Sends a notification that is properly configured to bubble. */
-    public void sendBubble(boolean autoExpand) {
+    public void sendBubble(boolean autoExpand, boolean suppressNotification) {
         Context context = getApplicationContext();
         // Give it a person
         Person person = new Person.Builder()
@@ -104,7 +104,7 @@ public class SendBubbleActivity extends Activity {
                                 SystemClock.currentThreadTimeMillis(), person)
                 )
                 .setActions(replyAction)
-                .setBubbleMetadata(getBubbleMetadata(autoExpand))
+                .setBubbleMetadata(getBubbleMetadata(autoExpand, suppressNotification))
                 .build();
 
         NotificationManager noMan = (NotificationManager) context.getSystemService(
@@ -112,7 +112,7 @@ public class SendBubbleActivity extends Activity {
         noMan.notify(BUBBLE_NOTIF_ID, n);
     }
 
-    private BubbleMetadata getBubbleMetadata(boolean autoExpand) {
+    private BubbleMetadata getBubbleMetadata(boolean autoExpand, boolean suppressNotification) {
         Context context = getApplicationContext();
         final Intent intent = new Intent(context, BubbledActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -124,6 +124,7 @@ public class SendBubbleActivity extends Activity {
                 .setIcon(Icon.createWithResource(context, R.drawable.black))
                 .setIntent(pendingIntent)
                 .setAutoExpandBubble(autoExpand)
+                .setSuppressNotification(suppressNotification)
                 .build();
     }
 

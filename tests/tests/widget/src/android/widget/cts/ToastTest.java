@@ -516,19 +516,19 @@ public class ToastTest {
         assertNotNull(toast);
         assertEquals(Toast.LENGTH_SHORT, toast.getDuration());
         View view = toast.getView();
-        assertNotNull(view);
+        assertNull(view);
 
         toast = Toast.makeText(mContext, "cts", Toast.LENGTH_LONG);
         assertNotNull(toast);
         assertEquals(Toast.LENGTH_LONG, toast.getDuration());
         view = toast.getView();
-        assertNotNull(view);
+        assertNull(view);
 
         toast = Toast.makeText(mContext, null, Toast.LENGTH_LONG);
         assertNotNull(toast);
         assertEquals(Toast.LENGTH_LONG, toast.getDuration());
         view = toast.getView();
-        assertNotNull(view);
+        assertNull(view);
     }
 
     @UiThreadTest
@@ -545,13 +545,13 @@ public class ToastTest {
         assertNotNull(toast);
         assertEquals(Toast.LENGTH_LONG, toast.getDuration());
         View view = toast.getView();
-        assertNotNull(view);
+        assertNull(view);
 
         toast = Toast.makeText(mContext, R.string.hello_android, Toast.LENGTH_SHORT);
         assertNotNull(toast);
         assertEquals(Toast.LENGTH_SHORT, toast.getDuration());
         view = toast.getView();
-        assertNotNull(view);
+        assertNull(view);
     }
 
     @UiThreadTest
@@ -592,10 +592,10 @@ public class ToastTest {
     }
 
     @UiThreadTest
-    @Test(expected=RuntimeException.class)
-    public void testSetTextFromStringNullView() {
+    @Test(expected = IllegalStateException.class)
+    public void testSetTextFromStringNonNullView() {
         Toast toast = Toast.makeText(mContext, R.string.text, Toast.LENGTH_LONG);
-        toast.setView(null);
+        toast.setView(new TextView(mContext));
         toast.setText(null);
     }
 
