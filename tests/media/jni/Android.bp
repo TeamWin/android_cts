@@ -17,6 +17,7 @@ cc_test_library {
     srcs: [
         "NativeMediaConstants.cpp",
         "NativeMuxerTest.cpp",
+        "NativeMuxerUnitTest.cpp",
     ],
     shared_libs: [
         "libmediandk",
