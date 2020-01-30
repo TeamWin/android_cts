@@ -608,6 +608,8 @@ public class UsageStatsTest {
         fail("Couldn't find a user unlocked event.");
     }
 
+    // TODO(148887416): get this test to work for instant apps
+    @AppModeFull(reason = "Test APK Activity not found when installed as an instant app")
     @Test
     public void testUserForceIntoRestricted() throws IOException {
         launchSubActivity(TaskRootActivity.class);
@@ -623,6 +625,8 @@ public class UsageStatsTest {
 
     }
 
+    // TODO(148887416): get this test to work for instant apps
+    @AppModeFull(reason = "Test APK Activity not found when installed as an instant app")
     @Test
     public void testUserLaunchRemovesFromRestricted() throws IOException {
         mUiDevice.executeShellCommand("am set-standby-bucket " + mTargetPackage + " restricted");
