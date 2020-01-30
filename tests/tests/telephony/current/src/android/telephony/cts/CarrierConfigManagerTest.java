@@ -35,6 +35,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+
 import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -52,7 +53,6 @@ import com.android.compatibility.common.util.TestThread;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -84,7 +84,7 @@ public class CarrierConfigManagerTest {
     @After
     public void tearDown() throws Exception {
         try {
-            setOpMode("android.telephony.cts", OPSTR_READ_PHONE_STATE, MODE_ALLOWED);
+            setOpMode("--uid android.telephony.cts", OPSTR_READ_PHONE_STATE, MODE_ALLOWED);
         } catch (IOException e) {
             fail();
         }
@@ -159,7 +159,6 @@ public class CarrierConfigManagerTest {
     }
 
     @SecurityTest
-    @Ignore // TODO(b/146238285) -- Appop commands not working.
     @Test
     public void testRevokePermission() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
@@ -168,7 +167,7 @@ public class CarrierConfigManagerTest {
         PersistableBundle config;
 
         try {
-            setOpMode("android.telephony.cts", OPSTR_READ_PHONE_STATE, MODE_IGNORED);
+            setOpMode("--uid android.telephony.cts", OPSTR_READ_PHONE_STATE, MODE_IGNORED);
         } catch (IOException e) {
             fail();
         }
@@ -177,7 +176,7 @@ public class CarrierConfigManagerTest {
         assertTrue(config.isEmptyParcel());
 
         try {
-            setOpMode("android.telephony.cts", OPSTR_READ_PHONE_STATE, MODE_ALLOWED);
+            setOpMode("--uid android.telephony.cts", OPSTR_READ_PHONE_STATE, MODE_ALLOWED);
         } catch (IOException e) {
             fail();
         }
