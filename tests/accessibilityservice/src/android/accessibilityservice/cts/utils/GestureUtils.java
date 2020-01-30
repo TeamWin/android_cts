@@ -16,6 +16,8 @@
 
 package android.accessibilityservice.cts.utils;
 
+import static org.junit.Assert.assertTrue;
+
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
 import android.accessibilityservice.AccessibilityService.GestureResultCallback;
 import android.accessibilityservice.GestureDescription;
@@ -29,6 +31,7 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
+import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 
 public class GestureUtils {
@@ -200,6 +203,14 @@ public class GestureUtils {
         return builder.build();
     }
 
+    public static GestureDescription.Builder getGestureBuilder(
+            int displayId, StrokeDescription... strokes) {
+        GestureDescription.Builder builder = new GestureDescription.Builder();
+        builder.setDisplayId(displayId);
+        for (StrokeDescription s : strokes) builder.addStroke(s);
+        return builder;
+    }
+
     private static class MotionEventActionMatcher extends TypeSafeMatcher<MotionEvent> {
         int mAction;
 
@@ -278,5 +289,46 @@ public class GestureUtils {
         }
         builder.addStroke(swipe(explorePoint, explorePoint, time));
         return builder.build();
+    }
+
+    /**
+     * Simulates a user placing multiple fingers on the specified screen
+     * and then multi-tapping with these fingers.
+     *
+     * The location of fingers based on <code>basePoint<code/> are shifted by <code>delta<code/>.
+     * Like (baseX, baseY), (baseX + deltaX, baseY + deltaY), and so on.
+     *
+     * @param basePoint Where to place the first finger.
+     * @param delta Offset to basePoint where to place the 2nd or 3rd finger.
+     * @param fingerCount The number of fingers.
+     * @param tapCount The number of taps to fingers.
+     * @param slop Slop range the finger tapped.
+     * @param displayId Which display to dispatch the gesture.
+     */
+    public static GestureDescription multiFingerMultiTap(PointF basePoint, PointF delta,
+            int fingerCount, int tapCount, int slop, int displayId) {
+        assertTrue(fingerCount >= 2);
+        assertTrue(tapCount > 0);
+        final int strokeCount = fingerCount * tapCount;
+        final PointF[] pointers = new PointF[fingerCount];
+        final ArrayList<StrokeDescription> strokes = new ArrayList<>(strokeCount);
+
+        // The first tap
+        for (int i = 0; i < fingerCount; i++) {
+            pointers[i] = add(basePoint, times(i, delta));
+            strokes.add(click(pointers[i]));
+        }
+        // The rest of taps
+        for (int tapIndex = 0; tapIndex + 1 < tapCount; tapIndex++) {
+            for (int i = 0; i < fingerCount; i++) {
+                final StrokeDescription s = strokes.get(tapIndex * fingerCount + i);
+                final long nextStartTime = endTimeOf(s) + 20;
+                final PointF nextSloppyPoint = getPointWithinSlop(pointers[i], slop);
+                pointers[i] = nextSloppyPoint;
+                strokes.add(startingAt(nextStartTime, click(nextSloppyPoint)));
+            }
+        }
+        return getGestureBuilder(displayId,
+                strokes.toArray(new StrokeDescription[strokeCount])).build();
     }
 }

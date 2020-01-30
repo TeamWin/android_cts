@@ -985,8 +985,11 @@ public class StagefrightTest extends InstrumentationTestCase {
       Thread server = new Thread() {
         @Override
         public void run(){
-          try (ServerSocket serverSocket = new ServerSocket(8080);
-            Socket conn = serverSocket.accept()){
+          try (ServerSocket serverSocket = new ServerSocket(8080) {
+                  {setSoTimeout(10_000);} // time out after 10 seconds
+              };
+              Socket conn = serverSocket.accept()
+          ) {
               OutputStream stream = conn.getOutputStream();
               byte http[] = ("HTTP/1.0 200 OK\r\nContent-Type: application/x-mpegURL\r\n\r\n"
                            + "#EXTM3U\n#EXT-X-STREAM-INF:\n").getBytes();
@@ -1085,11 +1088,6 @@ public class StagefrightTest extends InstrumentationTestCase {
      to prevent merge conflicts, add O tests below this comment,
      before any existing test methods
      ***********************************************************/
-
-    @SecurityTest(minPatchLevel = "2018-09")
-    public void testStagefrightANR_cve_2018_11285() throws Exception {
-        doStagefrightTestANR(R.raw.cve_2018_11285);
-    }
 
     @SecurityTest(minPatchLevel = "2019-09")
     public void testStagefright_cve_2019_10534() throws Exception {

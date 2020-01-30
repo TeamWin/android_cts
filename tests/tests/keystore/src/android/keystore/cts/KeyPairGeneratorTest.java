@@ -35,6 +35,7 @@ import java.security.NoSuchProviderException;
 import java.security.Principal;
 import java.security.PrivateKey;
 import java.security.Provider;
+import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.security.Provider.Service;
@@ -707,6 +708,64 @@ public class KeyPairGeneratorTest extends AndroidTestCase {
                 TEST_SERIAL_1,
                 NOW,
                 NOW_PLUS_10_YEARS);
+    }
+
+    public void testGenerate_EC_Different_Keys() throws Exception {
+        testGenerate_EC_Different_KeysHelper(false /* useStrongbox */);
+        if (TestUtils.hasStrongBox(getContext())) {
+            testGenerate_EC_Different_KeysHelper(true /* useStrongbox */);
+        }
+    }
+
+    private void testGenerate_EC_Different_KeysHelper(boolean useStrongbox) throws Exception {
+        KeyPairGenerator generator = getEcGenerator();
+        generator.initialize(new KeyGenParameterSpec.Builder(
+                TEST_ALIAS_1,
+                KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
+                .setIsStrongBoxBacked(useStrongbox)
+                .build());
+        KeyPair keyPair1 = generator.generateKeyPair();
+        PublicKey pub1 = keyPair1.getPublic();
+
+        generator.initialize(new KeyGenParameterSpec.Builder(
+                TEST_ALIAS_2,
+                KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
+                .setIsStrongBoxBacked(useStrongbox)
+                .build());
+        KeyPair keyPair2 = generator.generateKeyPair();
+        PublicKey pub2 = keyPair2.getPublic();
+        if(Arrays.equals(pub1.getEncoded(), pub2.getEncoded())) {
+            fail("The same EC key pair was generated twice");
+        }
+    }
+
+    public void testGenerate_RSA_Different_Keys() throws Exception {
+        testGenerate_RSA_Different_KeysHelper(false /* useStrongbox */);
+        if (TestUtils.hasStrongBox(getContext())) {
+            testGenerate_RSA_Different_KeysHelper(true /* useStrongbox */);
+        }
+    }
+
+    private void testGenerate_RSA_Different_KeysHelper(boolean useStrongbox) throws Exception {
+        KeyPairGenerator generator = getRsaGenerator();
+        generator.initialize(new KeyGenParameterSpec.Builder(
+                TEST_ALIAS_1,
+                KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
+                .setIsStrongBoxBacked(useStrongbox)
+                .build());
+        KeyPair keyPair1 = generator.generateKeyPair();
+        PublicKey pub1 = keyPair1.getPublic();
+
+        generator.initialize(new KeyGenParameterSpec.Builder(
+                TEST_ALIAS_2,
+                KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
+                .setIsStrongBoxBacked(useStrongbox)
+                .build());
+        KeyPair keyPair2 = generator.generateKeyPair();
+        PublicKey pub2 = keyPair2.getPublic();
+        if(Arrays.equals(pub1.getEncoded(), pub2.getEncoded())) {
+            fail("The same RSA key pair was generated twice");
+        }
     }
 
     public void testGenerate_EC_ModernSpec_Defaults() throws Exception {

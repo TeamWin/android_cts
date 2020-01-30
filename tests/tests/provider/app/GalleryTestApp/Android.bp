@@ -1,4 +1,4 @@
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,19 +13,16 @@
 // limitations under the License.
 
 android_test_helper_app {
-    name: "CtsKeyValueBackupRestoreApp",
-    defaults: ["cts_defaults"],
-    static_libs: [
-        "androidx.test.rules",
-        "compatibility-device-util-axt",
-        "platform-test-annotations",
-    ],
-    srcs: ["src/**/*.java"],
-    // tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "vts",
-        "general-tests",
-    ],
-    platform_apis: true,
+    name: "CtsProviderGalleryTestApp",
+
+    sdk_version: "current",
+
+    srcs: ["**/*.java"],
+
+    dex_preopt: {
+        enabled: false,
+    },
+    optimize: {
+        enabled: false,
+    },
 }

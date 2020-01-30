@@ -40,6 +40,7 @@ import android.util.Log;
 import android.view.Display;
 import android.view.Surface;
 import android.net.Uri;
+import android.os.Bundle;
 
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.DeviceReportLog;
@@ -877,10 +878,81 @@ public class DecoderTest extends MediaPlayerTestBase {
                 staticInfo, false /*metadataInContainer*/);
     }
 
-    private void testHdrStaticMetadata(int res, String pattern, boolean metadataInContainer)
+    public void testVp9Hdr10PlusMetadata() throws Exception {
+        final String staticInfo =
+                "00 4c 1d b8 0b d0 84 80  3e c0 33 c4 86 12 3d 42" +
+                "40 e8 03 32 00 e8 03 c8  00                     " ;
+
+        // TODO: Use some manually extracted metadata for now.
+        // MediaExtractor currently doesn't have an API for extracting
+        // the dynamic metadata. Get the metadata from extractor when
+        // it's supported.
+        final String[] dynamicInfo = {
+                "b5 00 3c 00 01 04 00 40  00 0c 80 4e 20 27 10 00" +
+                "0a 00 00 24 08 00 00 28  00 00 50 00 28 c8 00 c9" +
+                "90 02 aa 58 05 ca d0 0c  0a f8 16 83 18 9c 18 00" +
+                "40 78 13 64 d5 7c 2e 2c  c3 59 de 79 6e c3 c2 00" ,
+
+                "b5 00 3c 00 01 04 00 40  00 0c 80 4e 20 27 10 00" +
+                "0a 00 00 24 08 00 00 28  00 00 50 00 28 c8 00 c9" +
+                "90 02 aa 58 05 ca d0 0c  0a f8 16 83 18 9c 18 00" +
+                "40 78 13 64 d5 7c 2e 2c  c3 59 de 79 6e c3 c2 00" ,
+
+                "b5 00 3c 00 01 04 00 40  00 0c 80 4e 20 27 10 00" +
+                "0e 80 00 24 08 00 00 28  00 00 50 00 28 c8 00 c9" +
+                "90 02 aa 58 05 ca d0 0c  0a f8 16 83 18 9c 18 00" +
+                "40 78 13 64 d5 7c 2e 2c  c3 59 de 79 6e c3 c2 00" ,
+
+                "b5 00 3c 00 01 04 00 40  00 0c 80 4e 20 27 10 00" +
+                "0e 80 00 24 08 00 00 28  00 00 50 00 28 c8 00 c9" +
+                "90 02 aa 58 05 ca d0 0c  0a f8 16 83 18 9c 18 00" +
+                "40 78 13 64 d5 7c 2e 2c  c3 59 de 79 6e c3 c2 00" ,
+        };
+        testHdrMetadata(R.raw.video_bikes_hdr10plus,
+                staticInfo, dynamicInfo, true /*metadataInContainer*/);
+    }
+
+    public void testH265Hdr10PlusMetadata() throws Exception {
+        final String staticInfo =
+                "00 4c 1d b8 0b d0 84 80  3e c2 33 c4 86 13 3d 42" +
+                "40 e8 03 32 00 e8 03 c8  00                     " ;
+
+        final String[] dynamicInfo = {
+                "b5 00 3c 00 01 04 00 40  00 0c 80 4e 20 27 10 00" +
+                "0f 00 00 24 08 00 00 28  00 00 50 00 28 c8 00 a1" +
+                "90 03 9a 58 0b 6a d0 23  2a f8 40 8b 18 9c 18 00" +
+                "40 78 13 64 cf 78 ed cc  bf 5a de f9 8e c7 c3 00" ,
+
+                "b5 00 3c 00 01 04 00 40  00 0c 80 4e 20 27 10 00" +
+                "0a 00 00 24 08 00 00 28  00 00 50 00 28 c8 00 a1" +
+                "90 03 9a 58 0b 6a d0 23  2a f8 40 8b 18 9c 18 00" +
+                "40 78 13 64 cf 78 ed cc  bf 5a de f9 8e c7 c3 00" ,
+
+                "b5 00 3c 00 01 04 00 40  00 0c 80 4e 20 27 10 00" +
+                "0f 00 00 24 08 00 00 28  00 00 50 00 28 c8 00 a1" +
+                "90 03 9a 58 0b 6a d0 23  2a f8 40 8b 18 9c 18 00" +
+                "40 78 13 64 cf 78 ed cc  bf 5a de f9 8e c7 c3 00" ,
+
+                "b5 00 3c 00 01 04 00 40  00 0c 80 4e 20 27 10 00" +
+                "0a 00 00 24 08 00 00 28  00 00 50 00 28 c8 00 a1" +
+                "90 03 9a 58 0b 6a d0 23  2a f8 40 8b 18 9c 18 00" +
+                "40 78 13 64 cf 78 ed cc  bf 5a de f9 8e c7 c3 00"
+        };
+        testHdrMetadata(R.raw.video_h265_hdr10plus,
+                staticInfo, dynamicInfo, false /*metadataInContainer*/);
+    }
+
+    private void testHdrStaticMetadata(int res, String staticInfo, boolean metadataInContainer)
+        throws Exception {
+        testHdrMetadata(res, staticInfo, null /*dynamicInfo*/, metadataInContainer);
+    }
+
+    private void testHdrMetadata(int res,
+            String staticInfo, String[] dynamicInfo, boolean metadataInContainer)
             throws Exception {
         AssetFileDescriptor infd = null;
         MediaExtractor extractor = null;
+        final boolean dynamic = dynamicInfo != null;
 
         try {
             infd = mResources.openRawResourceFd(res);
@@ -901,7 +973,7 @@ public class DecoderTest extends MediaPlayerTestBase {
             assertTrue("Extractor failed to extract video track",
                     format != null && trackIndex >= 0);
             if (metadataInContainer) {
-                verifyHdrStaticInfo("Extractor failed to extract static info", format, pattern);
+                verifyHdrStaticInfo("Extractor failed to extract static info", format, staticInfo);
             }
 
             extractor.selectTrack(trackIndex);
@@ -910,14 +982,21 @@ public class DecoderTest extends MediaPlayerTestBase {
             String mime = format.getString(MediaFormat.KEY_MIME);
             // setting profile and level
             if (MediaFormat.MIMETYPE_VIDEO_HEVC.equals(mime)) {
-                assertEquals("Extractor set wrong profile",
+                if (!dynamic) {
+                    assertEquals("Extractor set wrong profile",
                         MediaCodecInfo.CodecProfileLevel.HEVCProfileMain10HDR10,
                         format.getInteger(MediaFormat.KEY_PROFILE));
+                } else {
+                    // Extractor currently doesn't detect HDR10+, set to HDR10+ manually
+                    format.setInteger(MediaFormat.KEY_PROFILE,
+                            MediaCodecInfo.CodecProfileLevel.HEVCProfileMain10HDR10Plus);
+                }
             } else if (MediaFormat.MIMETYPE_VIDEO_VP9.equals(mime)) {
                 // The muxer might not have put VP9 CSD in the mkv, we manually patch
                 // it here so that we only test HDR when decoder supports it.
                 format.setInteger(MediaFormat.KEY_PROFILE,
-                        MediaCodecInfo.CodecProfileLevel.VP9Profile2HDR);
+                        dynamic ? MediaCodecInfo.CodecProfileLevel.VP9Profile2HDR10Plus
+                                : MediaCodecInfo.CodecProfileLevel.VP9Profile2HDR);
             } else if (MediaFormat.MIMETYPE_VIDEO_AV1.equals(mime)) {
                 // The muxer might not have put AV1 CSD in the webm, we manually patch
                 // it here so that we only test HDR when decoder supports it.
@@ -950,6 +1029,8 @@ public class DecoderTest extends MediaPlayerTestBase {
                 decoder.setCallback(new MediaCodec.Callback() {
                     boolean mInputEOS;
                     boolean mOutputReceived;
+                    int mInputCount;
+                    int mOutputCount;
 
                     @Override
                     public void onOutputBufferAvailable(
@@ -961,11 +1042,31 @@ public class DecoderTest extends MediaPlayerTestBase {
                         MediaFormat bufferFormat = codec.getOutputFormat(index);
                         Log.i(TAG, "got output buffer: format " + bufferFormat);
 
-                        codec.releaseOutputBuffer(index,  false);
                         verifyHdrStaticInfo("Output buffer has wrong static info",
-                                bufferFormat, pattern);
-                        mOutputReceived = true;
-                        latch.countDown();
+                                bufferFormat, staticInfo);
+
+                        if (!dynamic) {
+                            codec.releaseOutputBuffer(index,  true);
+
+                            mOutputReceived = true;
+                            latch.countDown();
+                        } else {
+                            ByteBuffer hdr10plus =
+                                    bufferFormat.containsKey(MediaFormat.KEY_HDR10_PLUS_INFO)
+                                    ? bufferFormat.getByteBuffer(MediaFormat.KEY_HDR10_PLUS_INFO)
+                                    : null;
+
+                            verifyHdrDynamicInfo("Output buffer has wrong hdr10+ info",
+                                    bufferFormat, dynamicInfo[mOutputCount]);
+
+                            codec.releaseOutputBuffer(index,  true);
+
+                            mOutputCount++;
+                            if (mOutputCount >= dynamicInfo.length) {
+                                mOutputReceived = true;
+                                latch.countDown();
+                            }
+                        }
                     }
 
                     @Override
@@ -985,6 +1086,19 @@ public class DecoderTest extends MediaPlayerTestBase {
                             int size = finalExtractor.readSampleData(inputBuffer, 0);
                             long timestamp = finalExtractor.getSampleTime();
                             finalExtractor.advance();
+
+                            if (dynamic && metadataInContainer) {
+                                final Bundle params = new Bundle();
+                                // TODO: extractor currently doesn't extract the dynamic metadata.
+                                // Send in the test pattern for now to test the metadata propagation.
+                                byte[] info = loadByteArrayFromString(dynamicInfo[mInputCount]);
+                                params.putByteArray(MediaFormat.KEY_HDR10_PLUS_INFO, info);
+                                codec.setParameters(params);
+                                mInputCount++;
+                                if (mInputCount >= dynamicInfo.length) {
+                                    mInputEOS = true;
+                                }
+                            }
                             codec.queueInputBuffer(index, 0, size, timestamp, 0);
                         }
                     }
@@ -999,7 +1113,7 @@ public class DecoderTest extends MediaPlayerTestBase {
                     public void onOutputFormatChanged(MediaCodec codec, MediaFormat format) {
                         Log.i(TAG, "got output format: " + format);
                         verifyHdrStaticInfo("Output format has wrong static info",
-                                format, pattern);
+                                format, staticInfo);
                     }
                 });
                 decoder.configure(format, surface, null/*crypto*/, 0/*flags*/);
@@ -1029,6 +1143,15 @@ public class DecoderTest extends MediaPlayerTestBase {
                 staticMetadataBuffer != null && staticMetadataBuffer.remaining() > 0);
         assertTrue(reason + ": mismatch",
                 Arrays.equals(loadByteArrayFromString(pattern), staticMetadataBuffer.array()));
+    }
+
+    private void verifyHdrDynamicInfo(String reason, MediaFormat format, String pattern) {
+        ByteBuffer hdr10PlusInfoBuffer = format.containsKey(MediaFormat.KEY_HDR10_PLUS_INFO) ?
+                format.getByteBuffer(MediaFormat.KEY_HDR10_PLUS_INFO) : null;
+        assertTrue(reason + ":empty",
+                hdr10PlusInfoBuffer != null && hdr10PlusInfoBuffer.remaining() > 0);
+        assertTrue(reason + ": mismatch",
+                Arrays.equals(loadByteArrayFromString(pattern), hdr10PlusInfoBuffer.array()));
     }
 
     // helper to load byte[] from a String

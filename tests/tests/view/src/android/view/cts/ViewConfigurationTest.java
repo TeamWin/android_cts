@@ -133,6 +133,13 @@ public class ViewConfigurationTest {
     }
 
     @Test
+    public void testGetScaledAmbiguousGestureMultiplier() {
+        ViewConfiguration vc = ViewConfiguration.get(InstrumentationRegistry.getTargetContext());
+        final float instanceMultiplier = vc.getScaledAmbiguousGestureMultiplier();
+        assertTrue(instanceMultiplier >= 1);
+    }
+
+    @Test
     public void testGetMaximumDrawingCacheSize() {
         Context context = InstrumentationRegistry.getTargetContext();
         ViewConfiguration vc = ViewConfiguration.get(context);
