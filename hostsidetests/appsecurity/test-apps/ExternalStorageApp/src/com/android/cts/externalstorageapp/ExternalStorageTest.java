@@ -70,12 +70,6 @@ public class ExternalStorageTest extends AndroidTestCase {
                 assertDirReadWriteAccess(path);
                 path = path.getParentFile();
             }
-
-            // Keep walking up until we leave device
-            while (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState(path))) {
-                assertDirNoAccess(path);
-                path = path.getParentFile();
-            }
         }
     }
 
