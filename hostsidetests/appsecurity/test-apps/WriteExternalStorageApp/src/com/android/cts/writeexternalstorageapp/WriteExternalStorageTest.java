@@ -109,7 +109,13 @@ public class WriteExternalStorageTest extends AndroidTestCase {
         assertFalse(probe.exists());
         assertTrue(probe.mkdirs());
 
-        assertDirReadWriteAccess(probe);
+        try {
+            assertDirReadWriteAccess(probe);
+        }
+        finally {
+            probe.delete();
+            assertFalse(probe.exists());
+        }
     }
 
     /**
