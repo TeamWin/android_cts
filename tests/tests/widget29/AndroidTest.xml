@@ -22,11 +22,6 @@
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsWidgetTestCases29.apk" />
     </target_preparer>
-    <!-- TODO(b/144152069): Remove this when feature is gated on targetSdk -->
-    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
-        <option name="run-command" value="am compat disable CHANGE_TEXT_TOASTS_IN_THE_SYSTEM android.widget.cts29" />
-        <option name="teardown-command" value="am compat reset CHANGE_TEXT_TOASTS_IN_THE_SYSTEM android.widget.cts29" />
-    </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.widget.cts29" />
         <option name="runtime-hint" value="11m55s" />
