@@ -67,6 +67,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
@@ -103,7 +104,19 @@ public class MediaRouter2Test {
     public void testGetRoutes() throws Exception {
         Map<String, MediaRoute2Info> routes = waitAndGetRoutes(FEATURES_SPECIAL);
 
-        assertEquals(1, routes.size());
+        int systemRouteCount = 0;
+        int remoteRouteCount = 0;
+        for (MediaRoute2Info route : routes.values()) {
+            if (route.isSystemRoute()) {
+                systemRouteCount++;
+            } else {
+                remoteRouteCount++;
+            }
+        }
+
+        // Can be greater than 1 if BT devices are connected.
+        assertTrue(systemRouteCount > 0);
+        assertEquals(1, remoteRouteCount);
         assertNotNull(routes.get(ROUTE_ID_SPECIAL_FEATURE));
     }
 
@@ -180,6 +193,17 @@ public class MediaRouter2Test {
     public void testRequestCreateControllerWithNullRoute() {
         assertThrows(NullPointerException.class,
                 () -> mRouter2.requestCreateController(null));
+    }
+
+    @Test
+    public void testRequestCreateControllerWithSystemRoute() {
+        List<MediaRoute2Info> systemRoutes =
+            mRouter2.getRoutes().stream().filter(r -> r.isSystemRoute())
+                    .collect(Collectors.toList());
+
+        assertFalse(systemRoutes.isEmpty());
+        assertThrows(IllegalArgumentException.class,
+                () -> mRouter2.requestCreateController(systemRoutes.get(0)));
     }
 
     @Test
@@ -700,6 +724,10 @@ public class MediaRouter2Test {
         final RoutingController systemController = mRouter2.getSystemController();
         assertNotNull(systemController);
         assertFalse(systemController.isReleased());
+
+        for (MediaRoute2Info route : systemController.getSelectedRoutes()) {
+            assertTrue(route.isSystemRoute());
+        }
     }
 
     @Test
