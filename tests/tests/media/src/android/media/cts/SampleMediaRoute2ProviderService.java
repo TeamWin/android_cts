@@ -18,6 +18,7 @@ package android.media.cts;
 
 import static android.media.MediaRoute2Info.DEVICE_TYPE_REMOTE_SPEAKER;
 import static android.media.MediaRoute2Info.DEVICE_TYPE_REMOTE_TV;
+import static android.media.MediaRoute2Info.FEATURE_LIVE_AUDIO;
 
 import android.annotation.Nullable;
 import android.content.Intent;
@@ -28,7 +29,9 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.text.TextUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class SampleMediaRoute2ProviderService extends MediaRoute2ProviderService {
@@ -63,6 +66,22 @@ public class SampleMediaRoute2ProviderService extends MediaRoute2ProviderService
             "com.android.mediarouteprovider.FEATURE_SAMPLE";
     public static final String FEATURE_SPECIAL =
             "com.android.mediarouteprovider.FEATURE_SPECIAL";
+
+    // TODO: We shouldn't depend on this constant.
+    //       Remove this when MediaRoute2Info#isSystem() is introduced.
+    public static final String SYSTEM_PROVIDER_ID =
+            "com.android.server.media/.SystemMediaRoute2Provider";
+
+    public static final List<String> FEATURES_ALL = new ArrayList();
+    public static final List<String> FEATURES_SPECIAL = new ArrayList();
+
+    static {
+        FEATURES_ALL.add(FEATURE_SAMPLE);
+        FEATURES_ALL.add(FEATURE_SPECIAL);
+        FEATURES_ALL.add(FEATURE_LIVE_AUDIO);
+
+        FEATURES_SPECIAL.add(FEATURE_SPECIAL);
+    }
 
     Map<String, MediaRoute2Info> mRoutes = new HashMap<>();
     Map<String, String> mRouteIdToSessionId = new HashMap<>();
