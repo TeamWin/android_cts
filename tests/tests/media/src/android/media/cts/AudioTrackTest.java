@@ -49,6 +49,7 @@ import com.android.compatibility.common.util.ResultUnit;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
+import java.util.concurrent.Executor;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -2782,7 +2783,13 @@ public class AudioTrackTest {
         final AudioTrack.OnCodecFormatChangedListener listener =
             (AudioTrack track, AudioMetadata.ReadMap readMap) -> {};
 
-        audioTrack.addOnCodecFormatChangedListener(null /* executor */, listener);
+        // add a synchronous executor.
+        audioTrack.addOnCodecFormatChangedListener(new Executor() {
+                @Override
+                public void execute(Runnable r) {
+                    r.run();
+                }
+            }, listener);
         audioTrack.removeOnCodecFormatChangedListener(listener);
         audioTrack.release();
     }
