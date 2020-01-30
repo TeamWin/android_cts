@@ -18,11 +18,16 @@ package android.server.wm;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 
 import android.app.Activity;
+import android.graphics.Insets;
+import android.graphics.Point;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.util.Size;
+import android.view.Display;
+import android.view.DisplayCutout;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowMetrics;
@@ -34,14 +39,23 @@ import org.junit.Test;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Tests that verify the behavior of {@link WindowMetrics} and {@link android.app.WindowContext} API
+ *
+ * Build/Install/Run:
+ *     atest CtsWindowManagerDeviceTestCases:WindowMetricsTests
+ */
 @Presubmit
 public class WindowMetricsTests extends WindowManagerTestBase {
 
-    ActivityTestRule<MetricsActivity> mMetricsActivity =
+    private ActivityTestRule<MetricsActivity> mMetricsActivity =
             new ActivityTestRule<>(MetricsActivity.class);
 
     @Test
-    public void test_metrics() {
+    public void testMetricsSanity() {
+        // TODO(b/149668895): handle device with cutout.
+        assumeFalse(hasDisplayCutout());
+
         final MetricsActivity activity = mMetricsActivity.launchActivity(null);
         activity.waitForLayout();
 
@@ -57,7 +71,58 @@ public class WindowMetricsTests extends WindowManagerTestBase {
                 activity.mOnCreateCurrentMetrics.getWindowInsets().getStableInsets());
         assertEquals(activity.mOnLayoutInsets.getDisplayCutout(),
                 activity.mOnCreateCurrentMetrics.getWindowInsets().getDisplayCutout());
+    }
 
+    @Test
+    public void testMetricsMatchesDisplay() {
+        final MetricsActivity activity = mMetricsActivity.launchActivity(null);
+        activity.waitForLayout();
+
+        final Display display = activity.getDisplay();
+
+        // Check window size
+        final Point displaySize = new Point();
+        display.getSize(displaySize);
+        final WindowMetrics windowMetrics = activity.getWindowManager().getCurrentWindowMetrics();
+        final Size size = getLegacySize(windowMetrics);
+        assertEquals("Reported display width must match window width",
+                displaySize.x, size.getWidth());
+        assertEquals("Reported display height must match window height",
+                displaySize.y, size.getHeight());
+
+        // Check max window size
+        final Point realDisplaySize = new Point();
+        display.getRealSize(realDisplaySize);
+        final WindowMetrics maxWindowMetrics = activity.getWindowManager()
+                .getMaximumWindowMetrics();
+        assertEquals("Reported real display width must match max window size",
+                realDisplaySize.x, maxWindowMetrics.getSize().getWidth());
+        assertEquals("Reported real display height must match max window size",
+                realDisplaySize.y, maxWindowMetrics.getSize().getHeight());
+    }
+
+    private static Size getLegacySize(WindowMetrics windowMetrics) {
+        WindowInsets windowInsets = windowMetrics.getWindowInsets();
+        final Insets insetsWithCutout = getProperInsetsWithCutout(windowInsets.getStableInsets(),
+                windowInsets.getDisplayCutout());
+        final int insetsInWidth = insetsWithCutout.left + insetsWithCutout.right;
+        final int insetsInHeight = insetsWithCutout.top + insetsWithCutout.bottom;
+
+        Size size = windowMetrics.getSize();
+        return new Size(size.getWidth() - insetsInWidth, size.getHeight() - insetsInHeight);
+    }
+
+    private static Insets getProperInsetsWithCutout(Insets stableInsets, DisplayCutout cutout) {
+        final Insets excludingStatusBar = Insets.of(stableInsets.left, 0,
+                stableInsets.right, stableInsets.bottom);
+        if (cutout == null) {
+            return excludingStatusBar;
+        } else {
+            final Insets unionInsetsWithCutout = Insets.max(excludingStatusBar,
+                    Insets.of(cutout.getSafeInsetLeft(), cutout.getSafeInsetTop(),
+                            cutout.getSafeInsetRight(), cutout.getSafeInsetBottom()));
+            return unionInsetsWithCutout;
+        }
     }
 
     public static class MetricsActivity extends Activity implements View.OnLayoutChangeListener {
@@ -78,7 +143,6 @@ public class WindowMetricsTests extends WindowManagerTestBase {
             getWindow().getDecorView().addOnLayoutChangeListener(this);
         }
 
-
         @Override
         public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft,
                 int oldTop, int oldRight, int oldBottom) {
@@ -88,7 +152,7 @@ public class WindowMetricsTests extends WindowManagerTestBase {
             mLayoutLatch.countDown();
         }
 
-        public void waitForLayout() {
+        void waitForLayout() {
             try {
                 assertTrue("timed out waiting for activity to layout",
                         mLayoutLatch.await(4, TimeUnit.SECONDS));

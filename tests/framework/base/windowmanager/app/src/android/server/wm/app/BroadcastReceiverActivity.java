@@ -41,6 +41,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowInsets;
 
 import java.lang.ref.WeakReference;
 
@@ -73,14 +74,13 @@ public class BroadcastReceiverActivity extends Activity {
         view.setLayoutParams(new ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT));
         view.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                 | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
-        view.setOnApplyWindowInsetsListener((v, insets) -> {
-            final boolean cutoutExists = (insets.getDisplayCutout() != null);
-            Log.i(TAG, "cutout=" + cutoutExists);
-            TestJournalProvider.putExtras(BroadcastReceiverActivity.this,
-                    bundle -> bundle.putBoolean(EXTRA_CUTOUT_EXISTS, cutoutExists));
-            return insets;
-        });
         setContentView(view);
+
+        WindowInsets insets = getWindowManager().getCurrentWindowMetrics().getWindowInsets();
+        final boolean cutoutExists = (insets.getDisplayCutout() != null);
+        Log.i(TAG, "cutout=" + cutoutExists);
+        TestJournalProvider.putExtras(BroadcastReceiverActivity.this,
+                bundle -> bundle.putBoolean(EXTRA_CUTOUT_EXISTS, cutoutExists));
     }
 
     @Override
