@@ -74,7 +74,6 @@ public class UsePermissionTest29 extends BasePermissionsTest {
         BasePermissionsTest.assertPermissionRequestResult(result, permissions, granted);
     }
 
-    @Test
     @Before
     public void assertPermissionsNotGranted() {
         assertDenied(ACCESS_FINE_LOCATION);
@@ -224,7 +223,7 @@ public class UsePermissionTest29 extends BasePermissionsTest {
     }
 
     @Test
-    public void openSettingsFromGrantDowngrade() throws Exception {
+    public void openSettingsFromGrantDowngrade_part1() throws Exception {
         // Request upgrade, downgrade permission to denied in settings
         String[] permissions = {ACCESS_FINE_LOCATION, ACCESS_BACKGROUND_LOCATION};
 
@@ -232,5 +231,11 @@ public class UsePermissionTest29 extends BasePermissionsTest {
 
         requestPermissions(permissions, this::clickSettingsDenyFromGrantDialog);
         // Expect process to get killed
+    }
+
+    @Test
+    public void openSettingsFromGrantDowngrade_part2() throws Exception {
+        getUiDevice().pressBack();
+        assertPermissionsNotGranted();
     }
 }
