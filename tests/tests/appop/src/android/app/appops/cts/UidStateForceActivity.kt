@@ -24,6 +24,7 @@ class UidStateForceActivity : Activity() {
     private val lock = ReentrantLock()
     private val condition = lock.newCondition()
     private var isActivityResumed = false
+    private var isActivityDestroyed = false;
 
     override fun onResume() {
         super.onResume()
@@ -42,9 +43,27 @@ class UidStateForceActivity : Activity() {
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+
+        lock.withLock {
+            isActivityDestroyed = true
+            condition.signalAll()
+        }
+    }
+
+
     fun waitForResumed() {
         lock.withLock {
             while (!isActivityResumed) {
+                condition.await()
+            }
+        }
+    }
+
+    fun waitForDestroyed() {
+        lock.withLock {
+            while (!isActivityDestroyed) {
                 condition.await()
             }
         }
