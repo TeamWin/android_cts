@@ -51,4 +51,20 @@ public final class HdmiCecAudioReturnChannelControlTest extends BaseHostJUnit4Te
         getDevice().waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
         hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecMessage.INITIATE_ARC);
     }
+
+    /**
+     * Test 11.2.17-3
+     * Tests that the device sends a directly addressed <Initiate ARC>
+     * message when it is requested to initiate ARC.
+     */
+    @Test
+    public void cect_11_2_17_3_RequestToInitiateArc() throws Exception {
+        hdmiCecClient.sendCecMessage(CecDevice.TV, CecDevice.BROADCAST,
+                CecMessage.REPORT_PHYSICAL_ADDRESS,
+                hdmiCecClient.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS,
+                HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH));
+        hdmiCecClient.sendCecMessage(CecDevice.TV, AUDIO_DEVICE,
+                CecMessage.REQUEST_ARC_INITIATION);
+        hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecMessage.INITIATE_ARC);
+    }
 }
