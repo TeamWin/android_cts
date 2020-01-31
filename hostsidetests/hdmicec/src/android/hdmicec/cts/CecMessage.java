@@ -44,6 +44,7 @@ public enum CecMessage {
     INACTIVE_SOURCE(0x9d),
     CEC_VERSION(0x9e),
     GET_CEC_VERSION(0x9f),
+    INITIATE_ARC(0xc0),
     ABORT(0xff);
 
     private final int messageId;
