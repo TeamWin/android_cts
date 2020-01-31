@@ -141,7 +141,7 @@ public final class AlertWindowService extends Service {
         super.onCreate();
         final Display display = getSystemService(DisplayManager.class).getDisplay(DEFAULT_DISPLAY);
         mWindowContext = createDisplayContext(display)
-                .createWindowContext(TYPE_APPLICATION_OVERLAY);
+                .createWindowContext(TYPE_APPLICATION_OVERLAY, null /* options */);
         mWindowManager = mWindowContext.getSystemService(WindowManager.class);
     }
 
