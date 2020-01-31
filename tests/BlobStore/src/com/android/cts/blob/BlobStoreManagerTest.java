@@ -48,6 +48,8 @@ public class BlobStoreManagerTest {
 
     private final ArrayList<Long> mCreatedSessionIds = new ArrayList<>();
 
+    private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
+
     @Before
     public void setUp() {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
@@ -78,6 +80,42 @@ public class BlobStoreManagerTest {
         } finally {
             blobData.delete();
         }
+    }
+
+    @Test
+    public void testCreateBlobHandle_invalidArguments() throws Exception {
+        final DummyBlobData blobData = new DummyBlobData(mContext);
+        blobData.prepare();
+        final BlobHandle handle = blobData.getBlobHandle();
+        try {
+            assertThrows(IllegalArgumentException.class, () -> BlobHandle.createWithSha256(
+                    handle.getSha256Digest(), null, handle.getExpiryTimeMillis(), handle.getTag()));
+            assertThrows(IllegalArgumentException.class, () -> BlobHandle.createWithSha256(
+                    handle.getSha256Digest(), handle.getLabel(), handle.getExpiryTimeMillis(),
+                    null));
+            assertThrows(IllegalArgumentException.class, () -> BlobHandle.createWithSha256(
+                    handle.getSha256Digest(), handle.getLabel(), -1, handle.getTag()));
+            assertThrows(IllegalArgumentException.class, () -> BlobHandle.createWithSha256(
+                    EMPTY_BYTE_ARRAY, handle.getLabel(), handle.getExpiryTimeMillis(),
+                    handle.getTag()));
+        } finally {
+            blobData.delete();
+        }
+    }
+
+    @Test
+    public void testGetCreateSession_invalidArguments() throws Exception {
+        assertThrows(NullPointerException.class, () -> mBlobStoreManager.createSession(null));
+    }
+
+    @Test
+    public void testOpenSession_invalidArguments() throws Exception {
+        assertThrows(IllegalArgumentException.class, () -> mBlobStoreManager.openSession(-1));
+    }
+
+    @Test
+    public void testDeleteSession_invalidArguments() throws Exception {
+        assertThrows(IllegalArgumentException.class, () -> mBlobStoreManager.openSession(-1));
     }
 
     @Test
@@ -342,6 +380,11 @@ public class BlobStoreManagerTest {
     }
 
     @Test
+    public void testOpenBlob_invalidArguments() throws Exception {
+        assertThrows(NullPointerException.class, () -> mBlobStoreManager.openBlob(null));
+    }
+
+    @Test
     public void testAcquireReleaseLease() throws Exception {
         final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
@@ -370,6 +413,24 @@ public class BlobStoreManagerTest {
         } finally {
             blobData.delete();
         }
+    }
+
+    @Test
+    public void testAcquireReleaseLease_invalidArguments() throws Exception {
+        final DummyBlobData blobData = new DummyBlobData(mContext);
+        blobData.prepare();
+        try {
+            assertThrows(NullPointerException.class, () -> mBlobStoreManager.acquireLease(
+                    null, R.string.test_desc, blobData.mExpiryTimeMs));
+            assertThrows(IllegalArgumentException.class, () -> mBlobStoreManager.acquireLease(
+                    blobData.getBlobHandle(), R.string.test_desc, -1));
+            assertThrows(IllegalArgumentException.class, () -> mBlobStoreManager.acquireLease(
+                    blobData.getBlobHandle(), -1));
+        } finally {
+            blobData.delete();
+        }
+
+        assertThrows(NullPointerException.class, () -> mBlobStoreManager.releaseLease(null));
     }
 
     private long createSession(BlobHandle blobHandle) throws Exception {
