@@ -97,6 +97,9 @@ public class PowerManager_ThermalTest {
         }
         // Add listener2 on main thread.
         mPowerManager.addThermalStatusListener(mListener2);
+        verify(mListener2, timeout(CALLBACK_TIMEOUT_MILLI_SEC)
+            .times(1)).onThermalStatusChanged(status);
+        reset(mListener2);
         status = PowerManager.THERMAL_STATUS_MODERATE;
         ThermalUtils.overrideThermalStatus(status);
         verify(mListener1, timeout(CALLBACK_TIMEOUT_MILLI_SEC)
