@@ -16,10 +16,15 @@
 
 package android.media.cts;
 
+import static org.junit.Assert.fail;
+
 import android.app.Activity;
+import android.app.KeyguardManager;
+import android.content.Context;
 import android.media.session.MediaController;
 import android.media.session.MediaSession;
-import android.view.KeyEvent;
+import android.os.Bundle;
+import android.view.WindowManager;
 
 /**
  * Activity for testing foreground activity behavior with the
@@ -27,6 +32,32 @@ import android.view.KeyEvent;
  */
 public class MediaSessionTestActivity extends Activity {
     public static final String KEY_SESSION_TOKEN = "KEY_SESSION_TOKEN";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        setTurnScreenOn(true);
+        setShowWhenLocked(true);
+
+        KeyguardManager keyguardManager =
+                (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+        if (keyguardManager.isKeyguardLocked()) {
+            keyguardManager.requestDismissKeyguard(this,
+                    new KeyguardManager.KeyguardDismissCallback() {
+                        @Override
+                        public void onDismissError() {
+                            fail("Failed to dismiss keyguard.");
+                        }
+
+                        @Override
+                        public void onDismissCancelled() {
+                            fail("Dismissing keyguard is canceled");
+                        }
+                    });
+        }
+    }
 
     @Override
     protected void onResume() {

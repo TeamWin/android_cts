@@ -52,6 +52,7 @@ import androidx.annotation.Nullable;
 import androidx.heifwriter.HeifWriter;
 import androidx.test.filters.SmallTest;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.Closeable;
@@ -230,6 +231,7 @@ public class HeifWriterTest extends AndroidTestCase {
      * could be implemented for image resolutions that's not supported by the
      * {@link MediaFormat#MIMETYPE_IMAGE_ANDROID_HEIC} encoder.
      */
+    @CddTest(requirement="5.1.4/C-1-1")
     public void testHeicFallbackAvailable() throws Throwable {
         if (!MediaUtils.hasEncoder(MediaFormat.MIMETYPE_IMAGE_ANDROID_HEIC)) {
             MediaUtils.skipTest("HEIC full-frame image encoder is not supported on this device");
