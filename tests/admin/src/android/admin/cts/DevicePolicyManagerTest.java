@@ -1013,10 +1013,8 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
             Log.w(TAG, "Skipping testNotificationPolicyAccess_failIfNotProfileOwner");
             return;
         }
+        NotificationManager.Policy origPolicy = mNotificationManager.getNotificationPolicy();
         try {
-            NotificationManager notificationManager =
-                    (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
-
             assertTrue("Notification policy access was not granted ",
                     mNotificationManager.isNotificationPolicyAccessGranted());
 
@@ -1031,19 +1029,17 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
             assertNotEquals(mNotificationManager.getNotificationPolicy(), expected);
 
             mNotificationManager.setNotificationPolicy(expected);
-            assertNotificationPolicyEquals(mNotificationManager.getNotificationPolicy(), expected);
+
+            NotificationManager.Policy actual = mNotificationManager.getNotificationPolicy();
+            assertTrue((actual.priorityCategories & Policy.PRIORITY_CATEGORY_CALLS) != 0);
+            assertEquals(expected.priorityCallSenders, actual.priorityCallSenders);
+            assertEquals(expected.priorityMessageSenders, actual.priorityMessageSenders);
+            assertEquals(expected.suppressedVisualEffects, actual.suppressedVisualEffects);
         } catch (SecurityException e) {
             assertProfileOwnerMessage(e.getMessage());
+        } finally {
+            mNotificationManager.setNotificationPolicy(origPolicy);
         }
-    }
-
-    private void assertNotificationPolicyEquals(NotificationManager.Policy actual,
-            NotificationManager.Policy expected) {
-        assertEquals(actual.priorityCategories, expected.priorityCategories);
-        assertEquals(actual.priorityCallSenders, expected.priorityCallSenders);
-        assertEquals(actual.priorityMessageSenders, expected.priorityMessageSenders);
-        assertEquals(actual.suppressedVisualEffects, expected.suppressedVisualEffects);
-        // NOTE: we cannot set the NotificationPolicy's state
     }
 
     private void setInterruptionFilter(int interruptionFilter) throws Exception {
