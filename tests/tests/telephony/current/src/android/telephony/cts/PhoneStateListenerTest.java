@@ -292,6 +292,105 @@ public class PhoneStateListenerTest {
     }
 
     @Test
+    public void testOnAlwaysReportedSignalStrengthChanged() throws Throwable {
+        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
+            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
+            return;
+        }
+
+        TestThread t = new TestThread(new Runnable() {
+            public void run() {
+                Looper.prepare();
+
+                mListener = new PhoneStateListener() {
+                    @Override
+                    public void onSignalStrengthsChanged(SignalStrength signalStrength) {
+                        synchronized (mLock) {
+                            mSignalStrength = signalStrength;
+                            mLock.notify();
+                        }
+                    }
+                };
+                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                        (tm) -> tm.listen(mListener,
+                                PhoneStateListener.LISTEN_ALWAYS_REPORTED_SIGNAL_STRENGTH));
+
+                Looper.loop();
+            }
+        });
+
+        assertTrue(mSignalStrength == null);
+        t.start();
+
+        synchronized (mLock) {
+            if (mSignalStrength == null) {
+                mLock.wait(WAIT_TIME);
+            }
+        }
+        t.checkException();
+        assertTrue(mSignalStrength != null);
+
+        // Call SignalStrength methods to make sure they do not throw any exceptions
+        mSignalStrength.getCdmaDbm();
+        mSignalStrength.getCdmaEcio();
+        mSignalStrength.getEvdoDbm();
+        mSignalStrength.getEvdoEcio();
+        mSignalStrength.getEvdoSnr();
+        mSignalStrength.getGsmBitErrorRate();
+        mSignalStrength.getGsmSignalStrength();
+        mSignalStrength.isGsm();
+        mSignalStrength.getLevel();
+    }
+
+    /**
+     * Validate that SecurityException should be thrown when listen
+     * with LISTEN_ALWAYS_REPORTED_SIGNAL_STRENGTH without LISTEN_ALWAYS_REPORTED_SIGNAL_STRENGTH
+     * permission.
+     */
+    @Test
+    public void testOnAlwaysReportedSignalStrengthChangedWithoutPermission() throws Throwable {
+        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
+            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
+            return;
+        }
+
+        TestThread t = new TestThread(new Runnable() {
+            public void run() {
+                Looper.prepare();
+
+                mListener = new PhoneStateListener() {
+                    @Override
+                    public void onSignalStrengthsChanged(SignalStrength signalStrength) {
+                        synchronized (mLock) {
+                            mSignalStrength = signalStrength;
+                            mLock.notify();
+                        }
+                    }
+                };
+                try {
+                    mTelephonyManager.listen(mListener,
+                            PhoneStateListener.LISTEN_ALWAYS_REPORTED_SIGNAL_STRENGTH);
+                } catch (SecurityException se) {
+                    mSecurityExceptionThrown = true;
+                    mLock.notify();
+                }
+                Looper.loop();
+            }
+        });
+
+        assertTrue(mSignalStrength == null);
+        t.start();
+
+        synchronized (mLock) {
+            if (!mSecurityExceptionThrown) {
+                mLock.wait(WAIT_TIME);
+            }
+        }
+        assertThat(mSecurityExceptionThrown).isTrue();
+        assertTrue(mSignalStrength == null);
+    }
+
+    @Test
     public void testOnSignalStrengthsChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
