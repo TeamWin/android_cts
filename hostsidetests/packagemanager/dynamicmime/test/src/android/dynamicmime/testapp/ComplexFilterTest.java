@@ -36,7 +36,8 @@ import org.junit.Test;
  */
 public class ComplexFilterTest extends BaseDynamicMimeTest {
     public ComplexFilterTest() {
-        super(MimeGroupCommands.testApp(context()), AssertionsByIntentResolution.testApp(context()));
+        super(MimeGroupCommands.testApp(context()),
+                AssertionsByIntentResolution.testApp(context()));
     }
 
     @Test

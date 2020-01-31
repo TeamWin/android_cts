@@ -75,4 +75,21 @@ public interface MimeGroupCommands {
     static MimeGroupCommands appWithUpdates(Context context) {
         return new AppCommands(context, PACKAGE_UPDATE_APP);
     }
+
+    static MimeGroupCommands noOp() {
+        return new MimeGroupCommands() {
+            @Override
+            public void setMimeGroup(String mimeGroup, Set<String> mimeTypes) {
+            }
+
+            @Override
+            public void clearMimeGroup(String mimeGroup) {
+            }
+
+            @Override
+            public Set<String> getMimeGroupInternal(String mimeGroup) {
+                return null;
+            }
+        };
+    }
 }
