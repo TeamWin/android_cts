@@ -68,7 +68,7 @@ public class Camera2AndroidTestCase extends Camera2ParameterizedTestCase {
 
     // Default capture size: VGA size is required by CDD.
     protected static final Size DEFAULT_CAPTURE_SIZE = new Size(640, 480);
-    protected static final int CAPTURE_WAIT_TIMEOUT_MS = 5000;
+    protected static final int CAPTURE_WAIT_TIMEOUT_MS = 7000;
 
     protected CameraDevice mCamera;
     protected CameraCaptureSession mCameraSession;

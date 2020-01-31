@@ -592,7 +592,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             MandatoryStreamCombination combination, boolean substituteY8,
             boolean substituteHeic) {
 
-        final int TIMEOUT_FOR_RESULT_MS = 3000;
+        final int TIMEOUT_FOR_RESULT_MS = 5000;
         final int NUM_REPROCESS_CAPTURES_PER_CONFIG = 3;
 
         List<SurfaceTexture> privTargets = new ArrayList<>();
