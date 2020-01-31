@@ -32,6 +32,7 @@ import android.util.Log;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -335,8 +336,16 @@ public class AudioRecordingConfigurationTest extends CtsAndroidTestCase {
         try {
             final Method getClientUidMethod = confClass.getDeclaredMethod("getClientUid");
             final Method getClientPackageName = confClass.getDeclaredMethod("getClientPackageName");
-            Integer uid = (Integer) getClientUidMethod.invoke(config, (Object[]) null);
-            assertEquals("client uid isn't protected", -1 /*expected*/, uid.intValue());
+            try {
+                getClientUidMethod.invoke(config, (Object[]) null);
+                fail("InvocationTargetException expected during reflection for getClientUid " +
+                    "without permission");
+            } catch (InvocationTargetException ex) {
+                assertEquals(
+                    "SecurityException cause expected for getClientUid without permission",
+                    SecurityException.class /*expected*/,
+                    ex.getCause().getClass());
+            }
             String name = (String) getClientPackageName.invoke(config, (Object[]) null);
             assertNotNull("client package name is null", name);
             assertEquals("client package name isn't protected", 0 /*expected*/, name.length());
