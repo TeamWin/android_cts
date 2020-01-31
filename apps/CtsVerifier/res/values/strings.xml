@@ -293,12 +293,6 @@
     <string name="sec_fp_auth_failed">Authentication failed</string>
     <string name="sec_start_test">Start Test</string>
 
-    <string name="sec_biometric_prompt_bound_key_test">Biometric Prompt Bound Keys Test</string>
-    <string name="sec_biometric_prompt_bound_key_test_info">
-        This test ensures that Keystore cryptographic keys that are bound to biometric authentication
-        are unusable without an authentication.
-    </string>
-
     <!-- Strings for protected confirmation test -->
     <string name="sec_protected_confirmation_test">Android Protected Confirmation Test</string>
     <string name="sec_protected_confirmation_test_info">
