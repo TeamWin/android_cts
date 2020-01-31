@@ -18,8 +18,8 @@ package android.permission.cts;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-import static android.permission.cts.PermissionUtils.eventually;
 
+import static com.android.compatibility.common.util.SystemUtil.eventually;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
