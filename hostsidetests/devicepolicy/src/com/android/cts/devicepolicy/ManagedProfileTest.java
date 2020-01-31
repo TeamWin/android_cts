@@ -33,6 +33,9 @@ import com.android.tradefed.log.LogUtil.CLog;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Set of tests for Managed Profile use cases.
  */
@@ -613,6 +616,49 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
 
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".UserManagerTest",
                 "testIsManagedProfileReturnsFalse", mPrimaryUserId);
+    }
+
+    @Test
+    public void testCanGetWorkShortcutIconDrawableFromPersonalProfile()
+            throws DeviceNotAvailableException {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".LauncherAppsTest",
+                "addDynamicShortcuts", mProfileUserId);
+        try {
+            Map<String, String> params = new HashMap<>();
+            params.put("otherProfileUserId", String.valueOf(mProfileUserId));
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".LauncherAppsTest",
+                    "shortcutIconDrawable_currentToOtherProfile_withUsersFullPermission_isNotNull",
+                    mPrimaryUserId, params);
+        } finally {
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".LauncherAppsTest",
+                    "removeAllDynamicShortcuts", mProfileUserId);
+        }
+    }
+
+    @Test
+    public void testCanGetPersonalShortcutIconDrawableFromWorkProfile()
+            throws DeviceNotAvailableException {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".LauncherAppsTest",
+                "addDynamicShortcuts", mPrimaryUserId);
+        try {
+            Map<String, String> params = new HashMap<>();
+            params.put("otherProfileUserId", String.valueOf(mPrimaryUserId));
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".LauncherAppsTest",
+                    "shortcutIconDrawable_currentToOtherProfile_withUsersFullPermission_isNotNull",
+                    mProfileUserId, params);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".LauncherAppsTest",
+                    "shortcutIconDrawable_currentToOtherProfile_withoutUsersFullPermission_isNull",
+                    mProfileUserId, params);
+        } finally {
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".LauncherAppsTest",
+                    "removeAllDynamicShortcuts", mPrimaryUserId);
+        }
     }
 
     private void changeUserRestrictionOrFail(String key, boolean value, int userId)
