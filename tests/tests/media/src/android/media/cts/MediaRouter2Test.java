@@ -104,7 +104,7 @@ public class MediaRouter2Test {
         Map<String, MediaRoute2Info> routes = waitAndGetRoutes(FEATURES_SPECIAL);
 
         assertEquals(1, routes.size());
-        assertNotNull(routes.get(toUniqueId(ROUTE_ID_SPECIAL_FEATURE)));
+        assertNotNull(routes.get(ROUTE_ID_SPECIAL_FEATURE));
     }
 
     @Test
@@ -136,7 +136,7 @@ public class MediaRouter2Test {
     public void testControlVolumeWithRouter() throws Exception {
         Map<String, MediaRoute2Info> routes = waitAndGetRoutes(FEATURES_ALL);
 
-        MediaRoute2Info volRoute = routes.get(toUniqueId(ROUTE_ID_VARIABLE_VOLUME));
+        MediaRoute2Info volRoute = routes.get(ROUTE_ID_VARIABLE_VOLUME);
         assertNotNull(volRoute);
 
         int originalVolume = volRoute.getVolume();
@@ -144,13 +144,13 @@ public class MediaRouter2Test {
 
         awaitOnRouteChanged(
                 () -> mRouter2.requestUpdateVolume(volRoute, deltaVolume),
-                toUniqueId(ROUTE_ID_VARIABLE_VOLUME),
+                ROUTE_ID_VARIABLE_VOLUME,
                 (route -> route.getVolume() == originalVolume + deltaVolume),
                 FEATURES_ALL);
 
         awaitOnRouteChanged(
                 () -> mRouter2.requestSetVolume(volRoute, originalVolume),
-                toUniqueId(ROUTE_ID_VARIABLE_VOLUME),
+                ROUTE_ID_VARIABLE_VOLUME,
                 (route -> route.getVolume() == originalVolume),
                 FEATURES_ALL);
     }
@@ -188,7 +188,7 @@ public class MediaRouter2Test {
         sampleRouteFeature.add(FEATURE_SAMPLE);
 
         Map<String, MediaRoute2Info> routes = waitAndGetRoutes(sampleRouteFeature);
-        MediaRoute2Info route = routes.get(toUniqueId(ROUTE_ID1));
+        MediaRoute2Info route = routes.get(ROUTE_ID1);
         assertNotNull(route);
 
         final CountDownLatch successLatch = new CountDownLatch(1);
@@ -201,7 +201,7 @@ public class MediaRouter2Test {
             public void onControllerCreated(RoutingController controller) {
                 assertNotNull(controller);
                 assertTrue(createRouteMap(controller.getSelectedRoutes()).containsKey(
-                        toUniqueId(ROUTE_ID1)));
+                        ROUTE_ID1));
                 controllers.add(controller);
                 successLatch.countDown();
             }
@@ -236,7 +236,7 @@ public class MediaRouter2Test {
         sampleRouteType.add(FEATURE_SAMPLE);
 
         Map<String, MediaRoute2Info> routes = waitAndGetRoutes(sampleRouteType);
-        MediaRoute2Info route = routes.get(toUniqueId(ROUTE_ID3_SESSION_CREATION_FAILED));
+        MediaRoute2Info route = routes.get(ROUTE_ID3_SESSION_CREATION_FAILED);
         assertNotNull(route);
 
         final CountDownLatch successLatch = new CountDownLatch(1);
@@ -300,8 +300,8 @@ public class MediaRouter2Test {
         };
 
         Map<String, MediaRoute2Info> routes = waitAndGetRoutes(sampleRouteType);
-        MediaRoute2Info route1 = routes.get(toUniqueId(ROUTE_ID1));
-        MediaRoute2Info route2 = routes.get(toUniqueId(ROUTE_ID2));
+        MediaRoute2Info route1 = routes.get(ROUTE_ID1);
+        MediaRoute2Info route2 = routes.get(ROUTE_ID2);
         assertNotNull(route1);
         assertNotNull(route2);
 
@@ -325,9 +325,9 @@ public class MediaRouter2Test {
 
             assertNotEquals(controller1.getId(), controller2.getId());
             assertTrue(createRouteMap(controller1.getSelectedRoutes()).containsKey(
-                    toUniqueId(ROUTE_ID1)));
+                    ROUTE_ID1));
             assertTrue(createRouteMap(controller2.getSelectedRoutes()).containsKey(
-                    toUniqueId(ROUTE_ID2)));
+                    ROUTE_ID2));
 
         } finally {
             releaseControllers(createdControllers);
@@ -342,7 +342,7 @@ public class MediaRouter2Test {
         sampleRouteFeature.add(FEATURE_SAMPLE);
 
         Map<String, MediaRoute2Info> routes = waitAndGetRoutes(sampleRouteFeature);
-        MediaRoute2Info route = routes.get(toUniqueId(ROUTE_ID1));
+        MediaRoute2Info route = routes.get(ROUTE_ID1);
         assertNotNull(route);
 
         final Bundle createSessionHints = new Bundle();
@@ -364,7 +364,7 @@ public class MediaRouter2Test {
             public void onControllerCreated(RoutingController controller) {
                 assertNotNull(controller);
                 assertTrue(createRouteMap(controller.getSelectedRoutes()).containsKey(
-                        toUniqueId(ROUTE_ID1)));
+                        ROUTE_ID1));
 
                 // The SampleMediaRoute2ProviderService supposed to set control hints
                 // with the given creationSessionHints.
@@ -411,7 +411,7 @@ public class MediaRouter2Test {
         sampleRouteType.add(FEATURE_SAMPLE);
 
         Map<String, MediaRoute2Info> routes = waitAndGetRoutes(sampleRouteType);
-        MediaRoute2Info route = routes.get(toUniqueId(ROUTE_ID1));
+        MediaRoute2Info route = routes.get(ROUTE_ID1);
         assertNotNull(route);
 
         final CountDownLatch successLatch = new CountDownLatch(1);
@@ -460,7 +460,7 @@ public class MediaRouter2Test {
         sampleRouteType.add(FEATURE_SAMPLE);
 
         Map<String, MediaRoute2Info> routes = waitAndGetRoutes(sampleRouteType);
-        MediaRoute2Info routeToCreateSessionWith = routes.get(toUniqueId(ROUTE_ID1));
+        MediaRoute2Info routeToCreateSessionWith = routes.get(ROUTE_ID1);
         assertNotNull(routeToCreateSessionWith);
 
         final CountDownLatch onControllerCreatedLatch = new CountDownLatch(1);
@@ -473,8 +473,8 @@ public class MediaRouter2Test {
             @Override
             public void onControllerCreated(RoutingController controller) {
                 assertNotNull(controller);
-                assertTrue(getRouteIds(controller.getSelectedRoutes()).contains(
-                        toUniqueId(ROUTE_ID1)));
+                assertTrue(getOriginalRouteIds(controller.getSelectedRoutes()).contains(
+                        ROUTE_ID1));
                 controllers.add(controller);
                 onControllerCreatedLatch.countDown();
             }
@@ -489,22 +489,22 @@ public class MediaRouter2Test {
 
                 if (onControllerUpdatedLatchForSelect.getCount() != 0) {
                     assertEquals(2, controller.getSelectedRoutes().size());
-                    assertTrue(getRouteIds(controller.getSelectedRoutes())
-                            .contains(toUniqueId(ROUTE_ID1)));
-                    assertTrue(getRouteIds(controller.getSelectedRoutes())
-                            .contains(toUniqueId(ROUTE_ID4_TO_SELECT_AND_DESELECT)));
-                    assertFalse(getRouteIds(controller.getSelectableRoutes())
-                            .contains(toUniqueId(ROUTE_ID4_TO_SELECT_AND_DESELECT)));
+                    assertTrue(getOriginalRouteIds(controller.getSelectedRoutes())
+                            .contains(ROUTE_ID1));
+                    assertTrue(getOriginalRouteIds(controller.getSelectedRoutes())
+                            .contains(ROUTE_ID4_TO_SELECT_AND_DESELECT));
+                    assertFalse(getOriginalRouteIds(controller.getSelectableRoutes())
+                            .contains(ROUTE_ID4_TO_SELECT_AND_DESELECT));
 
                     onControllerUpdatedLatchForSelect.countDown();
                 } else {
                     assertEquals(1, controller.getSelectedRoutes().size());
-                    assertTrue(getRouteIds(controller.getSelectedRoutes())
-                            .contains(toUniqueId(ROUTE_ID1)));
-                    assertFalse(getRouteIds(controller.getSelectedRoutes())
-                            .contains(toUniqueId(ROUTE_ID4_TO_SELECT_AND_DESELECT)));
-                    assertTrue(getRouteIds(controller.getSelectableRoutes())
-                            .contains(toUniqueId(ROUTE_ID4_TO_SELECT_AND_DESELECT)));
+                    assertTrue(getOriginalRouteIds(controller.getSelectedRoutes())
+                            .contains(ROUTE_ID1));
+                    assertFalse(getOriginalRouteIds(controller.getSelectedRoutes())
+                            .contains(ROUTE_ID4_TO_SELECT_AND_DESELECT));
+                    assertTrue(getOriginalRouteIds(controller.getSelectableRoutes())
+                            .contains(ROUTE_ID4_TO_SELECT_AND_DESELECT));
 
                     onControllerUpdatedLatchForDeselect.countDown();
                 }
@@ -522,12 +522,12 @@ public class MediaRouter2Test {
 
             assertEquals(1, controllers.size());
             RoutingController controller = controllers.get(0);
-            assertTrue(getRouteIds(controller.getSelectableRoutes())
-                    .contains(toUniqueId(ROUTE_ID4_TO_SELECT_AND_DESELECT)));
+            assertTrue(getOriginalRouteIds(controller.getSelectableRoutes())
+                    .contains(ROUTE_ID4_TO_SELECT_AND_DESELECT));
 
             // Select ROUTE_ID4_TO_SELECT_AND_DESELECT
             MediaRoute2Info routeToSelectAndDeselect = routes.get(
-                    toUniqueId(ROUTE_ID4_TO_SELECT_AND_DESELECT));
+                    ROUTE_ID4_TO_SELECT_AND_DESELECT);
             assertNotNull(routeToSelectAndDeselect);
 
             controller.selectRoute(routeToSelectAndDeselect);
@@ -549,7 +549,7 @@ public class MediaRouter2Test {
         sampleRouteType.add(FEATURE_SAMPLE);
 
         Map<String, MediaRoute2Info> routes = waitAndGetRoutes(sampleRouteType);
-        MediaRoute2Info routeToCreateSessionWith = routes.get(toUniqueId(ROUTE_ID1));
+        MediaRoute2Info routeToCreateSessionWith = routes.get(ROUTE_ID1);
         assertNotNull(routeToCreateSessionWith);
 
         final CountDownLatch onControllerCreatedLatch = new CountDownLatch(1);
@@ -561,8 +561,8 @@ public class MediaRouter2Test {
             @Override
             public void onControllerCreated(RoutingController controller) {
                 assertNotNull(controller);
-                assertTrue(getRouteIds(controller.getSelectedRoutes()).contains(
-                        toUniqueId(ROUTE_ID1)));
+                assertTrue(getOriginalRouteIds(controller.getSelectedRoutes()).contains(
+                        ROUTE_ID1));
                 controllers.add(controller);
                 onControllerCreatedLatch.countDown();
             }
@@ -575,12 +575,12 @@ public class MediaRouter2Test {
                     return;
                 }
                 assertEquals(1, controller.getSelectedRoutes().size());
-                assertFalse(getRouteIds(controller.getSelectedRoutes()).contains(
-                        toUniqueId(ROUTE_ID1)));
-                assertTrue(getRouteIds(controller.getSelectedRoutes())
-                        .contains(toUniqueId(ROUTE_ID5_TO_TRANSFER_TO)));
-                assertFalse(getRouteIds(controller.getTransferrableRoutes())
-                        .contains(toUniqueId(ROUTE_ID5_TO_TRANSFER_TO)));
+                assertFalse(getOriginalRouteIds(controller.getSelectedRoutes()).contains(
+                        ROUTE_ID1));
+                assertTrue(getOriginalRouteIds(controller.getSelectedRoutes())
+                        .contains(ROUTE_ID5_TO_TRANSFER_TO));
+                assertFalse(getOriginalRouteIds(controller.getTransferrableRoutes())
+                        .contains(ROUTE_ID5_TO_TRANSFER_TO));
 
                 onControllerUpdatedLatch.countDown();
             }
@@ -597,11 +597,11 @@ public class MediaRouter2Test {
 
             assertEquals(1, controllers.size());
             RoutingController controller = controllers.get(0);
-            assertTrue(getRouteIds(controller.getTransferrableRoutes())
-                    .contains(toUniqueId(ROUTE_ID5_TO_TRANSFER_TO)));
+            assertTrue(getOriginalRouteIds(controller.getTransferrableRoutes())
+                    .contains(ROUTE_ID5_TO_TRANSFER_TO));
 
             // Transfer to ROUTE_ID5_TO_TRANSFER_TO
-            MediaRoute2Info routeToTransferTo = routes.get(toUniqueId(ROUTE_ID5_TO_TRANSFER_TO));
+            MediaRoute2Info routeToTransferTo = routes.get(ROUTE_ID5_TO_TRANSFER_TO);
             assertNotNull(routeToTransferTo);
 
             controller.transferToRoute(routeToTransferTo);
@@ -621,7 +621,7 @@ public class MediaRouter2Test {
         sampleRouteType.add(FEATURE_SAMPLE);
 
         Map<String, MediaRoute2Info> routes = waitAndGetRoutes(sampleRouteType);
-        MediaRoute2Info routeToCreateSessionWith = routes.get(toUniqueId(ROUTE_ID1));
+        MediaRoute2Info routeToCreateSessionWith = routes.get(ROUTE_ID1);
         assertNotNull(routeToCreateSessionWith);
 
         final CountDownLatch onControllerCreatedLatch = new CountDownLatch(1);
@@ -634,8 +634,8 @@ public class MediaRouter2Test {
             @Override
             public void onControllerCreated(RoutingController controller) {
                 assertNotNull(controller);
-                assertTrue(getRouteIds(controller.getSelectedRoutes()).contains(
-                        toUniqueId(ROUTE_ID1)));
+                assertTrue(getOriginalRouteIds(controller.getSelectedRoutes()).contains(
+                        ROUTE_ID1));
                 controllers.add(controller);
                 onControllerCreatedLatch.countDown();
             }
@@ -670,14 +670,14 @@ public class MediaRouter2Test {
 
             assertEquals(1, controllers.size());
             RoutingController controller = controllers.get(0);
-            assertTrue(getRouteIds(controller.getTransferrableRoutes())
-                    .contains(toUniqueId(ROUTE_ID5_TO_TRANSFER_TO)));
+            assertTrue(getOriginalRouteIds(controller.getTransferrableRoutes())
+                    .contains(ROUTE_ID5_TO_TRANSFER_TO));
 
             // Release controller. Future calls should be ignored.
             controller.release();
 
             // Transfer to ROUTE_ID5_TO_TRANSFER_TO
-            MediaRoute2Info routeToTransferTo = routes.get(toUniqueId(ROUTE_ID5_TO_TRANSFER_TO));
+            MediaRoute2Info routeToTransferTo = routes.get(ROUTE_ID5_TO_TRANSFER_TO);
             assertNotNull(routeToTransferTo);
 
             // This call should be ignored.
@@ -710,11 +710,11 @@ public class MediaRouter2Test {
         assertSame(mRouter2.getSystemController(), controllers.get(0));
     }
 
-    // Helper for getting routes easily
+    // Helper for getting routes easily. Uses original ID as a key
     static Map<String, MediaRoute2Info> createRouteMap(List<MediaRoute2Info> routes) {
         Map<String, MediaRoute2Info> routeMap = new HashMap<>();
         for (MediaRoute2Info route : routes) {
-            routeMap.put(route.getId(), route);
+            routeMap.put(route.getOriginalId(), route);
         }
         return routeMap;
     }
@@ -753,24 +753,24 @@ public class MediaRouter2Test {
     }
 
     /**
-     * Returns a list of IDs of the given route list.
+     * Returns a list of original route IDs of the given route list.
      */
-    List<String> getRouteIds(@NonNull List<MediaRoute2Info> routes) {
+    List<String> getOriginalRouteIds(@NonNull List<MediaRoute2Info> routes) {
         List<String> result = new ArrayList<>();
         for (MediaRoute2Info route : routes) {
-            result.add(route.getId());
+            result.add(route.getOriginalId());
         }
         return result;
     }
 
-    void awaitOnRouteChanged(Runnable task, String routeId,
+    void awaitOnRouteChanged(Runnable task, String originalRouteId,
             Predicate<MediaRoute2Info> predicate,
             List<String> routeTypes) throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
         RouteCallback routeCallback = new RouteCallback() {
             @Override
             public void onRoutesChanged(List<MediaRoute2Info> changed) {
-                MediaRoute2Info route = createRouteMap(changed).get(routeId);
+                MediaRoute2Info route = createRouteMap(changed).get(originalRouteId);
                 if (route != null && predicate.test(route)) {
                     latch.countDown();
                 }
@@ -784,10 +784,5 @@ public class MediaRouter2Test {
         } finally {
             mRouter2.unregisterRouteCallback(routeCallback);
         }
-    }
-
-    @NonNull
-    String toUniqueId(String originalId) {
-        return "android.media.cts/.SampleMediaRoute2ProviderService:" + originalId;
     }
 }
