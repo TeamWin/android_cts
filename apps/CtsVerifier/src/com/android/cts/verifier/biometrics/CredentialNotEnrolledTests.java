@@ -17,6 +17,7 @@
 package com.android.cts.verifier.biometrics;
 
 import android.hardware.biometrics.BiometricManager;
+import android.hardware.biometrics.BiometricManager.Authenticators;
 import android.hardware.biometrics.BiometricPrompt;
 import android.os.Bundle;
 import android.os.CancellationSignal;
@@ -56,8 +57,7 @@ public class CredentialNotEnrolledTests extends PassFailButtons.Activity {
         final Button bmButton = findViewById(R.id.bm_button);
         bmButton.setOnClickListener((view) -> {
             final BiometricManager bm = getSystemService(BiometricManager.class);
-            final int result = bm.canAuthenticate(
-                    BiometricManager.Authenticators.DEVICE_CREDENTIAL);
+            final int result = bm.canAuthenticate(Authenticators.DEVICE_CREDENTIAL);
             if (result == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED) {
                 bmButton.setEnabled(false);
                 mBiometricManagerPass = true;
@@ -76,7 +76,7 @@ public class CredentialNotEnrolledTests extends PassFailButtons.Activity {
             builder.setTitle("Title");
             builder.setSubtitle("Subtitle");
             builder.setDescription("Description");
-            builder.setAllowedAuthenticators(BiometricManager.Authenticators.DEVICE_CREDENTIAL);
+            builder.setAllowedAuthenticators(Authenticators.DEVICE_CREDENTIAL);
             BiometricPrompt bp = builder.build();
             bp.authenticate(new CancellationSignal(), mExecutor,
                     new BiometricPrompt.AuthenticationCallback() {
@@ -119,7 +119,7 @@ public class CredentialNotEnrolledTests extends PassFailButtons.Activity {
     private void updatePassButton() {
         if (mBiometricManagerPass && mBiometricPromptSetAllowedAuthenticatorsPass
                 && mBiometricPromptSetDeviceCredentialAllowedPass) {
-            showToastAndLog("Pass!");
+            showToastAndLog("All tests passed");
             getPassButton().setEnabled(true);
         }
     }

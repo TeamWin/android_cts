@@ -17,6 +17,7 @@
 package com.android.cts.verifier.biometrics;
 
 import android.hardware.biometrics.BiometricManager;
+import android.hardware.biometrics.BiometricManager.Authenticators;
 import android.hardware.biometrics.BiometricPrompt;
 import android.os.Bundle;
 import android.os.CancellationSignal;
@@ -57,16 +58,14 @@ public class CredentialEnrolledTests extends PassFailButtons.Activity {
         bmButton.setOnClickListener((view) -> {
             final BiometricManager bm = getSystemService(BiometricManager.class);
 
-            final int biometricResult = bm.canAuthenticate(
-                    BiometricManager.Authenticators.BIOMETRIC_WEAK);
+            final int biometricResult = bm.canAuthenticate(Authenticators.BIOMETRIC_WEAK);
             if (biometricResult != BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED) {
                 showToastAndLog("Unexpected result: " + biometricResult +
                         ". Please make sure the device does not have a biometric enrolled");
                 return;
             }
 
-            final int credentialResult = bm.canAuthenticate(
-                    BiometricManager.Authenticators.DEVICE_CREDENTIAL);
+            final int credentialResult = bm.canAuthenticate(Authenticators.DEVICE_CREDENTIAL);
             if (credentialResult == BiometricManager.BIOMETRIC_SUCCESS) {
                 bmButton.setEnabled(false);
                 mBiometricManagerPass = true;
@@ -86,7 +85,7 @@ public class CredentialEnrolledTests extends PassFailButtons.Activity {
             builder.setTitle("Title");
             builder.setSubtitle("Subtitle");
             builder.setDescription("Description");
-            builder.setAllowedAuthenticators(BiometricManager.Authenticators.DEVICE_CREDENTIAL);
+            builder.setAllowedAuthenticators(Authenticators.DEVICE_CREDENTIAL);
             BiometricPrompt bp = builder.build();
             bp.authenticate(new CancellationSignal(), mExecutor,
                     new BiometricPrompt.AuthenticationCallback() {
@@ -155,7 +154,7 @@ public class CredentialEnrolledTests extends PassFailButtons.Activity {
     private void updatePassButton() {
         if (mBiometricManagerPass && mBiometricPromptSetAllowedAuthenticatorsPass
                 && mBiometricPromptSetDeviceCredentialAllowedPass) {
-            showToastAndLog("Pass!");
+            showToastAndLog("All tests passed");
             getPassButton().setEnabled(true);
         }
     }

@@ -35,6 +35,7 @@ import android.widget.Toast;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
+import java.util.Arrays;
 import java.util.concurrent.Executor;
 
 import javax.crypto.Cipher;
@@ -62,8 +63,6 @@ public class CredentialCryptoTests extends PassFailButtons.Activity {
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
 
-
-
         final BiometricManager biometricManager = getSystemService(BiometricManager.class);
 
         mCredentialTimedKeyStrongBoxButton =
@@ -83,7 +82,8 @@ public class CredentialCryptoTests extends PassFailButtons.Activity {
             // Ensure credential is set up
             final int result = biometricManager.canAuthenticate(Authenticators.DEVICE_CREDENTIAL);
             if (result != BiometricManager.BIOMETRIC_SUCCESS) {
-                showToastAndLog("Unexpected result: " + result);
+                showToastAndLog("Unexpected result: " + result + ", please ensure that you have"
+                        + " set up a PIN/Pattern/Password");
                 return;
             }
 
@@ -94,7 +94,8 @@ public class CredentialCryptoTests extends PassFailButtons.Activity {
             // Ensure credential is set up
             final int result = biometricManager.canAuthenticate(Authenticators.DEVICE_CREDENTIAL);
             if (result != BiometricManager.BIOMETRIC_SUCCESS) {
-                showToastAndLog("Unexpected result: " + result);
+                showToastAndLog("Unexpected result: " + result + ", please ensure that you have"
+                        + " set up a PIN/Pattern/Password");
                 return;
             }
 
@@ -139,7 +140,7 @@ public class CredentialCryptoTests extends PassFailButtons.Activity {
                 try {
                     final Cipher cipher = Utils.initCipher(keyName);
                     byte[] encrypted = Utils.doEncrypt(cipher, SECRET_BYTE_ARRAY);
-                    showToastAndLog("Encrypted: " + encrypted);
+                    showToastAndLog("Encrypted: " + Arrays.toString(encrypted));
 
                     if (useStrongBox) {
                         mCredentialTimedKeyStrongBoxPassed = true;
@@ -158,7 +159,7 @@ public class CredentialCryptoTests extends PassFailButtons.Activity {
 
     private void updateButton() {
         if (mCredentialTimedKeyStrongBoxPassed && mCredentialTimedKeyNoStrongBoxPassed) {
-            showToastAndLog("Pass!");
+            showToastAndLog("All tests passed");
             getPassButton().setEnabled(true);
         }
     }

@@ -19,6 +19,7 @@ package com.android.cts.verifier.biometrics;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.hardware.biometrics.BiometricManager;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.text.InputType;
@@ -184,6 +185,20 @@ public class Utils {
         AlertDialog dialog = builder.create();
         dialog.setView(layout);
         dialog.show();
+    }
+
+    static boolean deviceConfigContains(Context context, int authenticator) {
+        final String config[] = context.getResources()
+                .getStringArray(com.android.internal.R.array.config_biometric_sensors);
+        for (String s : config) {
+            Log.d(TAG, s);
+            final String[] elems = s.split(":");
+            final int strength = Integer.parseInt(elems[2]);
+            if (strength == authenticator) {
+                return true;
+            }
+        }
+        return false;
     }
 
     static void showToastAndLog(Context context, String s) {
