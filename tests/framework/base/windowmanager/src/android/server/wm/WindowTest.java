@@ -39,7 +39,6 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.graphics.Color;
-import android.graphics.Insets;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -53,7 +52,6 @@ import android.os.SystemClock;
 import android.server.wm.cts.R;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.util.Pair;
 import android.view.ContextThemeWrapper;
 import android.view.Display;
 import android.view.Gravity;
@@ -68,7 +66,6 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.view.WindowInsets.Type;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
@@ -641,22 +638,15 @@ public class WindowTest {
     }
 
     @Test
-    public void testSetOnContentApplyWindowInsetsListener() throws Throwable {
-        Insets[] navBarInsets = new Insets[1];
-        mActivityRule.runOnUiThread(() -> mWindow.setOnContentApplyWindowInsetsListener(insets -> {
-            Insets statusBarInset = insets.getInsets(Type.statusBars());
-            navBarInsets[0] = insets.getInsets(Type.navigationBars());
-            insets = insets.inset(statusBarInset.left, statusBarInset.top,
-                    statusBarInset.right, statusBarInset.bottom);
-            return new Pair<>(statusBarInset, insets);
-        }));
+    public void testSetFitsContentForInsets_false() throws Throwable {
+        mActivityRule.runOnUiThread(() -> mWindow.setDecorFitsSystemWindows(false));
         mInstrumentation.waitForIdleSync();
-        assertEquals(Insets.NONE, mActivity.getLastInsets().getInsets(Type.statusBars()));
-        assertEquals(navBarInsets[0], mActivity.getLastInsets().getInsets(Type.navigationBars()));
+        assertEquals(mActivity.getContentView().getRootWindowInsets().getSystemWindowInsets(),
+                mActivity.getLastInsets().getSystemWindowInsets());
     }
 
     @Test
-    public void testSetOnContentApplyWindowInsetsListener_defaultLegacy_sysuiFlags()
+    public void testSetFitsContentForInsets_defaultLegacy_sysuiFlags()
             throws Throwable {
         mActivityRule.runOnUiThread(() -> {
             mWindow.getDecorView().setSystemUiVisibility(SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
@@ -667,10 +657,24 @@ public class WindowTest {
     }
 
     @Test
-    public void testSetOnContentApplyWindowInsetsListener_defaultLegacy_none()
+    public void testSetFitsContentForInsets_defaultLegacy_none()
             throws Throwable {
         mInstrumentation.waitForIdleSync();
-        assertEquals(Insets.NONE, mActivity.getLastInsets().getInsets(Type.systemBars()));
+
+        // We don't expect that we even got called.
+        assertNull(mActivity.getLastInsets());
+    }
+
+    @Test
+    public void testSetFitsContentForInsets_true()
+            throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            mWindow.setDecorFitsSystemWindows(true);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        // We don't expect that we even got called.
+        assertNull(mActivity.getLastInsets());
     }
 
     /**
@@ -1017,16 +1021,6 @@ public class WindowTest {
         @Override
         public int getNavigationBarColor() {
             return 0;
-        }
-
-        @Override
-        public void setOnContentApplyWindowInsetsListener(
-                OnContentApplyWindowInsetsListener onContentApplyWindowInsetsListener) {
-        }
-
-        @Override
-        public void resetOnContentApplyWindowInsetsListener() {
-
         }
     }
 }
