@@ -287,8 +287,8 @@ abstract class SoundPoolTest extends AndroidTestCase {
             }
 
             // wait for all sounds to load,
-            // it usually takes about 33 seconds and 50 seconds is used to have some headroom.
-            final long LOAD_TIMEOUT_IN_MS = 50000;
+            // it usually takes about 33 seconds and 100 seconds is used to have some headroom.
+            final long LOAD_TIMEOUT_IN_MS = 100000;
             final long startTime = System.currentTimeMillis();
             synchronized(done) {
                 while (loaded[0] != soundIds.length) {

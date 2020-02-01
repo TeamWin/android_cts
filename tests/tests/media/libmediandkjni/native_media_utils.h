@@ -42,7 +42,8 @@ static const int32_t kBitrateModeConstant = 2;
 static const int32_t kColorFormatSurface = 0x7f000789;
 
 // tolerances
-static const float kBitrateDeviationPercentMax = 10.0;
+// Keep in sync with the variation at src/android/media/cts/VideoCodecTest.java
+static const float kBitrateDeviationPercentMax = 20.0;
 static const int32_t kSyncFrameDeviationFramesMax = 5;
 
 enum Status : int32_t {

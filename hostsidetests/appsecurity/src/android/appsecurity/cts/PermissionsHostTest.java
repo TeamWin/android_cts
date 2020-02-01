@@ -513,9 +513,9 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     public void testGrantDialogToSettingsDowngrade() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_29), false, false));
         runThrowingTest("com.android.cts.usepermission.UsePermissionTest29",
-                "openSettingsFromGrantDowngrade");
+                "openSettingsFromGrantDowngrade_part1");
         runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest29",
-                "assertPermissionsNotGranted");
+                "openSettingsFromGrantDowngrade_part2");
     }
 
     private void runDeviceTests(String packageName, String testClassName, String testMethodName)
