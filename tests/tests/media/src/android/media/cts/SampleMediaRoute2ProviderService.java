@@ -24,6 +24,7 @@ import android.annotation.Nullable;
 import android.content.Intent;
 import android.media.MediaRoute2Info;
 import android.media.MediaRoute2ProviderService;
+import android.media.RouteDiscoveryPreference;
 import android.media.RoutingSessionInfo;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -34,8 +35,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.concurrent.GuardedBy;
+
 public class SampleMediaRoute2ProviderService extends MediaRoute2ProviderService {
     private static final String TAG = "SampleMR2ProviderSvc";
+    private static final Object sLock = new Object();
 
     public static final String ROUTE_ID1 = "route_id1";
     public static final String ROUTE_NAME1 = "Sample Route 1";
@@ -87,6 +91,10 @@ public class SampleMediaRoute2ProviderService extends MediaRoute2ProviderService
     Map<String, String> mRouteIdToSessionId = new HashMap<>();
     private int mNextSessionId = 1000;
 
+    @GuardedBy("sLock")
+    private static SampleMediaRoute2ProviderService sInstance;
+    private Proxy mProxy;
+
     private void initializeRoutes() {
         MediaRoute2Info route1 = new MediaRoute2Info.Builder(ROUTE_ID1, ROUTE_NAME1)
                 .addFeature(FEATURE_SAMPLE)
@@ -135,9 +143,33 @@ public class SampleMediaRoute2ProviderService extends MediaRoute2ProviderService
         mRoutes.put(variableVolumeRoute.getId(), variableVolumeRoute);
     }
 
+    public static SampleMediaRoute2ProviderService getInstance() {
+        synchronized (sLock) {
+            return sInstance;
+        }
+    }
+
+    public void setProxy(@Nullable Proxy proxy) {
+        mProxy = proxy;
+    }
+
     @Override
     public void onCreate() {
+        super.onCreate();
+        synchronized (sLock) {
+            sInstance = this;
+        }
         initializeRoutes();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        synchronized (sLock) {
+            if (sInstance == this) {
+                sInstance = null;
+            }
+        }
     }
 
     @Override
@@ -174,7 +206,6 @@ public class SampleMediaRoute2ProviderService extends MediaRoute2ProviderService
 
     @Override
     public void onUpdateVolume(String routeId, int delta) {
-        android.util.Log.d(TAG, "onUpdateVolume routeId= " + routeId + "delta=" + delta);
         MediaRoute2Info route = mRoutes.get(routeId);
         if (route == null) {
             return;
@@ -235,6 +266,14 @@ public class SampleMediaRoute2ProviderService extends MediaRoute2ProviderService
         }
         notifySessionReleased(sessionId);
         publishRoutes();
+    }
+
+    @Override
+    public void onDiscoveryPreferenceChanged(RouteDiscoveryPreference preference) {
+        Proxy proxy = mProxy;
+        if (proxy != null) {
+            proxy.onDiscoveryPreferenceChanged(preference);
+        }
     }
 
     @Override
@@ -332,5 +371,9 @@ public class SampleMediaRoute2ProviderService extends MediaRoute2ProviderService
 
     void publishRoutes() {
         notifyRoutes(mRoutes.values());
+    }
+
+    public static class Proxy {
+        public void onDiscoveryPreferenceChanged(RouteDiscoveryPreference preference) {}
     }
 }
