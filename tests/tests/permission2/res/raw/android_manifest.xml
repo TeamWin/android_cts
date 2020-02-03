@@ -353,7 +353,7 @@
     <protected-broadcast android:name="android.net.wifi.WIFI_STATE_CHANGED" />
     <protected-broadcast android:name="android.net.wifi.WIFI_AP_STATE_CHANGED" />
     <protected-broadcast android:name="android.net.wifi.WIFI_CREDENTIAL_CHANGED" />
-    <protected-broadcast android:name="android.net.wifi.ACTION_WIFI_SCAN_AVAILABLE" />
+    <protected-broadcast android:name="android.net.wifi.action.WIFI_SCAN_AVAILABILITY_CHANGED" />
     <protected-broadcast android:name="android.net.wifi.aware.action.WIFI_AWARE_STATE_CHANGED" />
     <protected-broadcast android:name="android.net.wifi.rtt.action.WIFI_RTT_STATE_CHANGED" />
     <protected-broadcast android:name="android.net.wifi.SCAN_RESULTS" />
