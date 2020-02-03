@@ -18,11 +18,9 @@ package com.android.cts.externalstorageapp;
 
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.PACKAGE_NONE;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.PACKAGE_READ;
-import static com.android.cts.externalstorageapp.CommonExternalStorageTest.PACKAGE_WRITE;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertFileNoAccess;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertFileNotPresent;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertFileReadWriteAccess;
-import static com.android.cts.externalstorageapp.CommonExternalStorageTest.getAllPackageSpecificGiftPaths;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.getAllPackageSpecificObbGiftPaths;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.readInt;
 
@@ -33,23 +31,12 @@ import java.util.List;
 
 public class GiftTest extends AndroidTestCase {
     /**
-     * Verify we can read only our gifts.
+     * Verify we can't read other obb dirs.
      */
-    public void testGifts() throws Exception {
-        final List<File> noneList = getAllPackageSpecificGiftPaths(getContext(), PACKAGE_NONE);
-        for (File none : noneList) {
-            assertFileReadWriteAccess(none);
-            assertEquals(100, readInt(none));
-        }
-
-        final List<File> readList = getAllPackageSpecificGiftPaths(getContext(), PACKAGE_READ);
+    public void testCantAccessOtherObbDirs() throws Exception {
+        final List<File> readList = getAllPackageSpecificObbGiftPaths(getContext(), PACKAGE_READ);
         for (File read : readList) {
             assertFileNoAccess(read);
-        }
-
-        final List<File> writeList = getAllPackageSpecificGiftPaths(getContext(), PACKAGE_WRITE);
-        for (File write : writeList) {
-            assertFileNoAccess(write);
         }
     }
 
