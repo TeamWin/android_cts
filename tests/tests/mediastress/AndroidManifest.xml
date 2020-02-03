@@ -41,6 +41,9 @@
         <activity android:name="android.mediastress.cts.NativeMediaActivity"
                   android:label="NativeMedia" />
     </application>
+
+    <uses-sdk android:minSdkVersion="29"   android:targetSdkVersion="29" />
+
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
             android:targetPackage="android.mediastress.cts"
             android:label="Media stress tests InstrumentationRunner" >
