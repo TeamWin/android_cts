@@ -79,14 +79,14 @@ public class DialogFrameTests extends ParentChildTestBase<DialogFrameTestActivit
 
     private WindowState getSingleWindow(final String windowName) {
         final List<WindowState> windowList =
-                mAmWmState.getWmState().getMatchingVisibleWindowState(windowName);
+                mWmState.getMatchingVisibleWindowState(windowName);
         assertThat(windowList.size(), greaterThan(0));
         return windowList.get(0);
     }
 
     @Override
     void doSingleTest(ParentChildTest t) throws Exception {
-        mAmWmState.computeState(WaitForValidActivityState.forWindow(DIALOG_WINDOW_NAME));
+        mWmState.computeState(WaitForValidActivityState.forWindow(DIALOG_WINDOW_NAME));
         WindowState dialog = getSingleWindow(DIALOG_WINDOW_NAME);
         WindowState parent = getSingleWindow(getWindowName(activityName()));
 
@@ -202,14 +202,14 @@ public class DialogFrameTests extends ParentChildTestBase<DialogFrameTestActivit
     @Test
     public void testDialogReceivesFocus() throws Exception {
         doFullscreenTest(TEST_MATCH_PARENT, (parent, dialog) ->
-                assertEquals(dialog.getName(), mAmWmState.getWmState().getFocusedWindow())
+                assertEquals(dialog.getName(), mWmState.getFocusedWindow())
         );
     }
 
     @Test
     public void testNoFocusDialog() throws Exception {
         doFullscreenTest(TEST_NO_FOCUS, (parent, dialog) ->
-                assertEquals(parent.getName(), mAmWmState.getWmState().getFocusedWindow())
+                assertEquals(parent.getName(), mWmState.getFocusedWindow())
         );
     }
 
@@ -230,7 +230,7 @@ public class DialogFrameTests extends ParentChildTestBase<DialogFrameTestActivit
 
     @Test
     public void testDialogPlacedAboveParent() throws Exception {
-        final WindowManagerState wmState = mAmWmState.getWmState();
+        final WindowManagerState wmState = mWmState;
         doParentChildTest(TEST_MATCH_PARENT, (parent, dialog) ->
                 // Not only should the dialog be higher, but it should be leave multiple layers of
                 // space in between for DimLayers, etc...

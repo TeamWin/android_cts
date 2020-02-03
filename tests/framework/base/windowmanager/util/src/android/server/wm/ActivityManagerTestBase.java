@@ -59,7 +59,7 @@ import static android.server.wm.ActivityLauncher.KEY_TARGET_COMPONENT;
 import static android.server.wm.ActivityLauncher.KEY_USE_APPLICATION_CONTEXT;
 import static android.server.wm.ActivityLauncher.KEY_WINDOWING_MODE;
 import static android.server.wm.ActivityLauncher.launchActivityFromExtras;
-import static android.server.wm.ActivityManagerState.STATE_RESUMED;
+import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.CommandSession.KEY_FORWARD;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.ComponentNameUtils.getLogTag;
@@ -283,10 +283,10 @@ public abstract class ActivityManagerTestBase {
         return "am start --activity-task-on-home -n " + getActivityName(activityName);
     }
 
-    protected ActivityAndWindowManagersState mAmWmState = new ActivityAndWindowManagersState();
+    protected WindowManagerStateHelper mWmState = new WindowManagerStateHelper();
 
-    public ActivityAndWindowManagersState getAmWmState() {
-        return mAmWmState;
+    public WindowManagerStateHelper getWmState() {
+        return mWmState;
     }
 
     protected BroadcastActionTrigger mBroadcastActionTrigger = new BroadcastActionTrigger();
@@ -297,19 +297,16 @@ public abstract class ActivityManagerTestBase {
     protected boolean waitForActivityFocused(int timeoutMs, ComponentName componentName) {
         long endTime = System.currentTimeMillis() + timeoutMs;
         while (endTime > System.currentTimeMillis()) {
-            mAmWmState.getAmState().computeState();
-            mAmWmState.getWmState().computeState();
-            if (mAmWmState.getAmState().hasActivityState(componentName, STATE_RESUMED)) {
+            mWmState.computeState();
+            if (mWmState.hasActivityState(componentName, STATE_RESUMED)) {
                 SystemClock.sleep(200);
-                mAmWmState.getAmState().computeState();
-                mAmWmState.getWmState().computeState();
+                mWmState.computeState();
                 break;
             }
             SystemClock.sleep(200);
-            mAmWmState.getAmState().computeState();
-            mAmWmState.getWmState().computeState();
+            mWmState.computeState();
         }
-        return getActivityName(componentName).equals(mAmWmState.getAmState().getFocusedActivity());
+        return getActivityName(componentName).equals(mWmState.getFocusedActivity());
     }
 
     /**
@@ -544,7 +541,7 @@ public abstract class ActivityManagerTestBase {
         final long upTime = SystemClock.uptimeMillis();
         injectMotion(downTime, upTime, MotionEvent.ACTION_UP, x, y, displayId, sync);
 
-        mAmWmState.waitForWithWmState(state -> state.getFocusedDisplayId() == displayId,
+        mWmState.waitForWithAmState(state -> state.getFocusedDisplayId() == displayId,
                 "top focused displayId: " + displayId);
         // This is needed after a tap in multi-display to ensure that the display focus has really
         // changed, if needed. The call to syncInputTransaction will wait until focus change has
@@ -558,17 +555,17 @@ public abstract class ActivityManagerTestBase {
         tapOnDisplaySync(tapX, tapY, displayId);
     }
 
-    protected void tapOnStackCenter(ActivityManagerState.ActivityStack stack) {
+    protected void tapOnStackCenter(WindowManagerState.ActivityTask stack) {
         tapOnCenter(stack.getBounds(), stack.mDisplayId);
     }
 
     protected void tapOnDisplayCenter(int displayId) {
-        final Rect bounds = mAmWmState.getWmState().getDisplay(displayId).getDisplayRect();
+        final Rect bounds = mWmState.getDisplay(displayId).getDisplayRect();
         tapOnDisplaySync(bounds.centerX(), bounds.centerY(), displayId);
     }
 
     protected void tapOnDisplayCenterAsync(int displayId) {
-        final Rect bounds = mAmWmState.getWmState().getDisplay(displayId).getDisplayRect();
+        final Rect bounds = mWmState.getDisplay(displayId).getDisplayRect();
         tapOnDisplay(bounds.centerX(), bounds.centerY(), displayId, false /* sync */);
     }
 
@@ -628,7 +625,7 @@ public abstract class ActivityManagerTestBase {
 
     protected void launchActivity(final ComponentName activityName, final String... keyValuePairs) {
         launchActivityNoWait(activityName, keyValuePairs);
-        mAmWmState.waitForValidState(activityName);
+        mWmState.waitForValidState(activityName);
     }
 
     protected void launchActivityNoWait(final ComponentName activityName,
@@ -638,7 +635,7 @@ public abstract class ActivityManagerTestBase {
 
     protected void launchActivityInNewTask(final ComponentName activityName) {
         executeShellCommand(getAmStartCmdInNewTask(activityName));
-        mAmWmState.waitForValidState(activityName);
+        mWmState.waitForValidState(activityName);
     }
 
     protected static void waitForIdle() {
@@ -653,11 +650,11 @@ public abstract class ActivityManagerTestBase {
     }
 
     /** Returns the stack that contains the provided task. */
-    protected ActivityManagerState.ActivityStack getStackForTaskId(int taskId) {
-        mAmWmState.computeState(true);
-        final List<ActivityManagerState.ActivityStack> stacks = mAmWmState.getAmState().getStacks();
-        for (ActivityManagerState.ActivityStack stack : stacks) {
-            for (ActivityManagerState.ActivityTask task : stack.mTasks) {
+    protected WindowManagerState.ActivityTask getStackForTaskId(int taskId) {
+        mWmState.computeState();
+        final List<WindowManagerState.ActivityTask> stacks = mWmState.getRootTasks();
+        for (WindowManagerState.ActivityTask stack : stacks) {
+            for (WindowManagerState.ActivityTask task : stack.mTasks) {
                 if (task.mTaskId == taskId) {
                     return stack;
                 }
@@ -677,14 +674,14 @@ public abstract class ActivityManagerTestBase {
     /** Launches the home activity directly with waiting for it to be visible. */
     protected void launchHomeActivity() {
         launchHomeActivityNoWait();
-        mAmWmState.waitForHomeActivityVisible();
+        mWmState.waitForHomeActivityVisible();
     }
 
     protected void launchActivity(ComponentName activityName, int windowingMode,
             final String... keyValuePairs) {
         executeShellCommand(getAmStartCmd(activityName, keyValuePairs)
                 + " --windowingMode " + windowingMode);
-        mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
+        mWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
                 .setWindowingMode(windowingMode)
                 .build());
     }
@@ -693,7 +690,7 @@ public abstract class ActivityManagerTestBase {
             int displayId, final String... keyValuePairs) {
         executeShellCommand(getAmStartCmd(activityName, displayId, keyValuePairs)
                 + " --windowingMode " + windowingMode);
-        mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
+        mWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
                 .setWindowingMode(windowingMode)
                 .build());
     }
@@ -701,7 +698,7 @@ public abstract class ActivityManagerTestBase {
     protected void launchActivityOnDisplay(ComponentName activityName, int displayId,
             String... keyValuePairs) {
         launchActivityOnDisplayNoWait(activityName, displayId, keyValuePairs);
-        mAmWmState.waitForValidState(activityName);
+        mWmState.waitForValidState(activityName);
     }
 
     protected void launchActivityOnDisplayNoWait(ComponentName activityName, int displayId,
@@ -713,7 +710,7 @@ public abstract class ActivityManagerTestBase {
      * Launches {@param activityName} into split-screen primary windowing mode and also makes
      * the recents activity visible to the side of it.
      * NOTE: Recents view may be combined with home screen on some devices, so using this to wait
-     * for Recents only makes sense when {@link ActivityManagerState#isHomeRecentsComponent()} is
+     * for Recents only makes sense when {@link WindowManagerState#isHomeRecentsComponent()} is
      * {@code false}.
      */
     protected void launchActivityInSplitScreenWithRecents(ComponentName activityName) {
@@ -724,17 +721,17 @@ public abstract class ActivityManagerTestBase {
             int createMode) {
         SystemUtil.runWithShellPermissionIdentity(() -> {
             launchActivity(activityName);
-            final int taskId = mAmWmState.getAmState().getTaskByActivity(activityName).mTaskId;
+            final int taskId = mWmState.getTaskByActivity(activityName).mTaskId;
             mAtm.setTaskWindowingModeSplitScreenPrimary(taskId, createMode,
                     true /* onTop */, false /* animate */,
                     null /* initialBounds */, true /* showRecents */);
 
-            mAmWmState.waitForValidState(
+            mWmState.waitForValidState(
                     new WaitForValidActivityState.Builder(activityName)
                             .setWindowingMode(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY)
                             .setActivityType(ACTIVITY_TYPE_STANDARD)
                             .build());
-            mAmWmState.waitForRecentsActivityVisible();
+            mWmState.waitForRecentsActivityVisible();
         });
     }
 
@@ -751,13 +748,13 @@ public abstract class ActivityManagerTestBase {
      *                           split-screen stack to be resumed.
      */
     public void moveTaskToPrimarySplitScreen(int taskId, boolean showSideActivity) {
-        final boolean isHomeRecentsComponent = mAmWmState.getAmState().isHomeRecentsComponent();
+        final boolean isHomeRecentsComponent = mWmState.isHomeRecentsComponent();
         SystemUtil.runWithShellPermissionIdentity(() -> {
             mAtm.setTaskWindowingModeSplitScreenPrimary(taskId,
                     SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT, true /* onTop */,
                     false /* animate */,
                     null /* initialBounds */, showSideActivity && !isHomeRecentsComponent);
-            mAmWmState.waitForRecentsActivityVisible();
+            mWmState.waitForRecentsActivityVisible();
 
             if (showSideActivity) {
                 if (isHomeRecentsComponent) {
@@ -766,7 +763,7 @@ public abstract class ActivityManagerTestBase {
                             new ComponentName(mContext, SideActivity.class);
                     mContext.startActivity(new Intent().setComponent(sideActivityName)
                             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-                    mAmWmState.waitForActivityState(sideActivityName, STATE_RESUMED);
+                    mWmState.waitForActivityState(sideActivityName, STATE_RESUMED);
                 }
 
                 // There are two cases when showSideActivity == true:
@@ -778,8 +775,8 @@ public abstract class ActivityManagerTestBase {
                 // minimized dock.
                 // In both cases, we shall wait for the state of the activity on primary split
                 // screen to resumed, so the LifecycleLog won't affect the following tests.
-                mAmWmState.waitForWithAmState(state -> {
-                    final ActivityManagerState.ActivityStack stack =
+                mWmState.waitForWithAmState(state -> {
+                    final WindowManagerState.ActivityTask stack =
                             state.getStandardStackByWindowingMode(
                                     WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
                     return stack != null && stack.getResumedActivity() != null;
@@ -800,7 +797,7 @@ public abstract class ActivityManagerTestBase {
                 .setWaitForLaunched(true)
                 .execute();
 
-        final int taskId = mAmWmState.getAmState().getTaskByActivity(
+        final int taskId = mWmState.getTaskByActivity(
                 primaryActivity.mTargetActivity).mTaskId;
         moveTaskToPrimarySplitScreen(taskId);
 
@@ -815,31 +812,31 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected void setActivityTaskWindowingMode(ComponentName activityName, int windowingMode) {
-        mAmWmState.computeState(activityName);
-        final int taskId = mAmWmState.getAmState().getTaskByActivity(activityName).mTaskId;
+        mWmState.computeState(activityName);
+        final int taskId = mWmState.getTaskByActivity(activityName).mTaskId;
         SystemUtil.runWithShellPermissionIdentity(
                 () -> mAtm.setTaskWindowingMode(taskId, windowingMode, true /* toTop */));
-        mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
+        mWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
                 .setActivityType(ACTIVITY_TYPE_STANDARD)
                 .setWindowingMode(windowingMode)
                 .build());
     }
 
     protected void moveActivityToStack(ComponentName activityName, int stackId) {
-        mAmWmState.computeState(activityName);
-        final int taskId = mAmWmState.getAmState().getTaskByActivity(activityName).mTaskId;
+        mWmState.computeState(activityName);
+        final int taskId = mWmState.getTaskByActivity(activityName).mTaskId;
         SystemUtil.runWithShellPermissionIdentity(
                 () -> mAtm.moveTaskToStack(taskId, stackId, true));
 
-        mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
+        mWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
                 .setStackId(stackId)
                 .build());
     }
 
     protected void resizeActivityTask(
             ComponentName activityName, int left, int top, int right, int bottom) {
-        mAmWmState.computeState(activityName);
-        final int taskId = mAmWmState.getAmState().getTaskByActivity(activityName).mTaskId;
+        mWmState.computeState(activityName);
+        final int taskId = mWmState.getTaskByActivity(activityName).mTaskId;
         SystemUtil.runWithShellPermissionIdentity(
                 () -> mAtm.resizeTask(taskId, new Rect(left, top, right, bottom)));
     }
@@ -859,8 +856,8 @@ public abstract class ActivityManagerTestBase {
 
     protected void pressAppSwitchButtonAndWaitForRecents() {
         pressAppSwitchButton();
-        mAmWmState.waitForRecentsActivityVisible();
-        mAmWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
+        mWmState.waitForRecentsActivityVisible();
+        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
     }
 
     // Utility method for debugging, not used directly here, but useful, so kept around.
@@ -912,37 +909,37 @@ public abstract class ActivityManagerTestBase {
 
     protected void waitAndAssertActivityState(ComponentName activityName,
             String state, String message) {
-        mAmWmState.waitForActivityState(activityName, state);
+        mWmState.waitForActivityState(activityName, state);
 
-        assertTrue(message, mAmWmState.getAmState().hasActivityState(activityName, state));
+        assertTrue(message, mWmState.hasActivityState(activityName, state));
     }
 
     protected void waitAndAssertActivityStateOnDisplay(ComponentName activityName, String state,
             int displayId, String message) {
         waitAndAssertActivityState(activityName, state, message);
-        assertEquals(message, mAmWmState.getAmState().getDisplayByActivity(activityName),
+        assertEquals(message, mWmState.getDisplayByActivity(activityName),
                 displayId);
     }
 
     public void waitAndAssertTopResumedActivity(ComponentName activityName, int displayId,
             String message) {
-        mAmWmState.waitForValidState(activityName);
-        mAmWmState.waitForActivityState(activityName, STATE_RESUMED);
+        mWmState.waitForValidState(activityName);
+        mWmState.waitForActivityState(activityName, STATE_RESUMED);
         final String activityClassName = getActivityName(activityName);
-        mAmWmState.waitForWithAmState(state -> activityClassName.equals(state.getFocusedActivity()),
+        mWmState.waitForWithAmState(state -> activityClassName.equals(state.getFocusedActivity()),
                 "activity to be on top");
 
-        mAmWmState.assertSanity();
-        mAmWmState.assertFocusedActivity(message, activityName);
+        mWmState.assertSanity();
+        mWmState.assertFocusedActivity(message, activityName);
         assertTrue("Activity must be resumed",
-                mAmWmState.getAmState().hasActivityState(activityName, STATE_RESUMED));
-        final int frontStackId = mAmWmState.getAmState().getFrontStackId(displayId);
-        ActivityManagerState.ActivityStack frontStackOnDisplay =
-                mAmWmState.getAmState().getStackById(frontStackId);
+                mWmState.hasActivityState(activityName, STATE_RESUMED));
+        final int frontStackId = mWmState.getFrontRootTaskId(displayId);
+        WindowManagerState.ActivityTask frontStackOnDisplay =
+                mWmState.getRootTask(frontStackId);
         assertEquals("Resumed activity of front stack of the target display must match. " + message,
                 activityClassName, frontStackOnDisplay.mResumedActivity);
-        mAmWmState.assertFocusedStack("Top activity's stack must also be on top", frontStackId);
-        mAmWmState.assertVisibility(activityName, true /* visible */);
+        mWmState.assertFocusedStack("Top activity's stack must also be on top", frontStackId);
+        mWmState.assertVisibility(activityName, true /* visible */);
     }
 
     // TODO: Switch to using a feature flag, when available.
@@ -1148,7 +1145,7 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
-    protected class LockScreenSession implements AutoCloseable {
+    public class LockScreenSession implements AutoCloseable {
         private static final boolean DEBUG = false;
 
         private final boolean mIsLockDisabled;
@@ -1201,7 +1198,7 @@ public abstract class ActivityManagerTestBase {
             return this;
         }
 
-        LockScreenSession sleepDevice() {
+        public LockScreenSession sleepDevice() {
             pressSleepButton();
             // Not all device variants lock when we go to sleep, so we need to explicitly lock the
             // device. Note that pressSleepButton() above is redundant because the action also
@@ -1210,7 +1207,7 @@ public abstract class ActivityManagerTestBase {
                     AccessibilityService.GLOBAL_ACTION_LOCK_SCREEN);
             if (mAmbientDisplayConfiguration.alwaysOnEnabled(
                     android.os.Process.myUserHandle().getIdentifier())) {
-                mAmWmState.waitForAodShowing();
+                mWmState.waitForAodShowing();
             } else {
                 Condition.waitFor("display to turn off", () -> !isDisplayOn(DEFAULT_DISPLAY));
             }
@@ -1237,9 +1234,9 @@ public abstract class ActivityManagerTestBase {
             sleepDevice();
             wakeUpDevice();
             if (showWhenLockedActivities.length == 0) {
-                mAmWmState.waitForKeyguardShowingAndNotOccluded();
+                mWmState.waitForKeyguardShowingAndNotOccluded();
             } else {
-                mAmWmState.waitForValidState(showWhenLockedActivities);
+                mWmState.waitForValidState(showWhenLockedActivities);
             }
             return this;
         }
@@ -1354,7 +1351,7 @@ public abstract class ActivityManagerTestBase {
 
             if (waitDeviceRotation) {
                 // Wait for the display to apply the rotation.
-                mAmWmState.waitForRotation(value);
+                mWmState.waitForRotation(value);
             } else {
                 // Wait for the settings have been changed.
                 Condition.waitFor(new Condition<>("rotation setting changed",
@@ -1736,7 +1733,7 @@ public abstract class ActivityManagerTestBase {
 
         // Finish activity
         mBroadcastActionTrigger.finishBroadcastReceiverActivity();
-        mAmWmState.waitForWithAmState(
+        mWmState.waitForWithAmState(
                 (state) -> !state.containsActivity(BROADCAST_RECEIVER_ACTIVITY),
                 "activity to be removed");
 
@@ -1849,11 +1846,11 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected LaunchActivityBuilder getLaunchActivityBuilder() {
-        return new LaunchActivityBuilder(mAmWmState);
+        return new LaunchActivityBuilder(mWmState);
     }
 
     protected static class LaunchActivityBuilder implements LaunchProxy {
-        private final ActivityAndWindowManagersState mAmWmState;
+        private final WindowManagerStateHelper mAmWmState;
 
         // The activity to be launched
         private ComponentName mTargetActivity = TEST_ACTIVITY;
@@ -1887,7 +1884,7 @@ public abstract class ActivityManagerTestBase {
 
         private LauncherType mLauncherType = LauncherType.LAUNCHING_ACTIVITY;
 
-        public LaunchActivityBuilder(ActivityAndWindowManagersState amWmState) {
+        public LaunchActivityBuilder(WindowManagerStateHelper amWmState) {
             mAmWmState = amWmState;
             mWaitForLaunched = true;
             mWithShellPermission = true;
@@ -1938,7 +1935,7 @@ public abstract class ActivityManagerTestBase {
         }
 
         public boolean isTargetActivityTranslucent() {
-            return mAmWmState.getAmState().isActivityTranslucent(mTargetActivity);
+            return mAmWmState.isActivityTranslucent(mTargetActivity);
         }
 
         public LaunchActivityBuilder setTargetActivity(ComponentName targetActivity) {
@@ -2191,7 +2188,7 @@ public abstract class ActivityManagerTestBase {
                 // all tests afterward would also fail (since the leakage is always there) and fire
                 // unnecessary false alarms.
                 try {
-                    mAmWmState.assertEmptyStackOrTask();
+                    mWmState.assertEmptyStackOrTask();
                 } catch (Throwable t) {
                     sStackTaskLeakFound = true;
                     addError(t);

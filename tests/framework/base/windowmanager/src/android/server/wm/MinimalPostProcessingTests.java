@@ -46,13 +46,13 @@ public class MinimalPostProcessingTests extends ActivityManagerTestBase {
         } else {
             launchActivity(name);
         }
-        mAmWmState.waitForValidState(name);
+        mWmState.waitForValidState(name);
 
-        final int stackId = mAmWmState.getAmState().getStackIdByActivity(name);
+        final int stackId = mWmState.getStackIdByActivity(name);
 
         assertNotEquals(stackId, INVALID_STACK_ID);
 
-        mAmWmState.assertVisibility(name, true);
+        mWmState.assertVisibility(name, true);
     }
 
     private boolean isMinimalPostProcessingSupported(int displayId) {
@@ -67,7 +67,7 @@ public class MinimalPostProcessingTests extends ActivityManagerTestBase {
     }
 
     private int getDisplayId(ComponentName name) {
-        return mAmWmState.getAmState().getDisplayByActivity(name);
+        return mWmState.getDisplayByActivity(name);
     }
 
     private void assertDisplayRequestedMinimalPostProcessing(ComponentName name, boolean on) {
@@ -108,8 +108,8 @@ public class MinimalPostProcessingTests extends ActivityManagerTestBase {
         launchMppActivity(MPP_ACTIVITY, NOT_PREFER_MPP);
         launchMppActivity(POPUP_MPP_ACTIVITY, NOT_PREFER_MPP);
 
-        mAmWmState.assertVisibility(MPP_ACTIVITY, true);
-        mAmWmState.assertVisibility(POPUP_MPP_ACTIVITY, true);
+        mWmState.assertVisibility(MPP_ACTIVITY, true);
+        mWmState.assertVisibility(POPUP_MPP_ACTIVITY, true);
 
         assertDisplayRequestedMinimalPostProcessing(MPP_ACTIVITY, NOT_PREFER_MPP);
     }
@@ -119,8 +119,8 @@ public class MinimalPostProcessingTests extends ActivityManagerTestBase {
         launchMppActivity(MPP_ACTIVITY, PREFER_MPP);
         launchMppActivity(POPUP_MPP_ACTIVITY, NOT_PREFER_MPP);
 
-        mAmWmState.assertVisibility(MPP_ACTIVITY, true);
-        mAmWmState.assertVisibility(POPUP_MPP_ACTIVITY, true);
+        mWmState.assertVisibility(MPP_ACTIVITY, true);
+        mWmState.assertVisibility(POPUP_MPP_ACTIVITY, true);
 
         assertDisplayRequestedMinimalPostProcessing(MPP_ACTIVITY, PREFER_MPP);
     }
@@ -130,8 +130,8 @@ public class MinimalPostProcessingTests extends ActivityManagerTestBase {
         launchMppActivity(MPP_ACTIVITY, NOT_PREFER_MPP);
         launchMppActivity(POPUP_MPP_ACTIVITY, PREFER_MPP);
 
-        mAmWmState.assertVisibility(MPP_ACTIVITY, true);
-        mAmWmState.assertVisibility(POPUP_MPP_ACTIVITY, true);
+        mWmState.assertVisibility(MPP_ACTIVITY, true);
+        mWmState.assertVisibility(POPUP_MPP_ACTIVITY, true);
 
         assertDisplayRequestedMinimalPostProcessing(MPP_ACTIVITY, PREFER_MPP);
     }
@@ -141,8 +141,8 @@ public class MinimalPostProcessingTests extends ActivityManagerTestBase {
         launchMppActivity(MPP_ACTIVITY, PREFER_MPP);
         launchMppActivity(POPUP_MPP_ACTIVITY, PREFER_MPP);
 
-        mAmWmState.assertVisibility(MPP_ACTIVITY, true);
-        mAmWmState.assertVisibility(POPUP_MPP_ACTIVITY, true);
+        mWmState.assertVisibility(MPP_ACTIVITY, true);
+        mWmState.assertVisibility(POPUP_MPP_ACTIVITY, true);
 
         assertDisplayRequestedMinimalPostProcessing(MPP_ACTIVITY, PREFER_MPP);
     }
@@ -152,8 +152,8 @@ public class MinimalPostProcessingTests extends ActivityManagerTestBase {
         launchMppActivity(MPP_ACTIVITY, PREFER_MPP);
         launchMppActivity(MPP_ACTIVITY2, NOT_PREFER_MPP);
 
-        mAmWmState.assertVisibility(MPP_ACTIVITY, false);
-        mAmWmState.assertVisibility(MPP_ACTIVITY2, true);
+        mWmState.assertVisibility(MPP_ACTIVITY, false);
+        mWmState.assertVisibility(MPP_ACTIVITY2, true);
 
         assertDisplayRequestedMinimalPostProcessing(MPP_ACTIVITY, NOT_PREFER_MPP);
     }

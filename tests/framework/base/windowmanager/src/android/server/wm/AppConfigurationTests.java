@@ -23,8 +23,8 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
-import static android.server.wm.ActivityAndWindowManagersState.dpToPx;
-import static android.server.wm.ActivityManagerState.STATE_RESUMED;
+import static android.server.wm.WindowManagerState.dpToPx;
+import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.ComponentNameUtils.getWindowName;
 import static android.server.wm.StateLogger.logE;
 import static android.server.wm.app.Components.BROADCAST_RECEIVER_ACTIVITY;
@@ -181,9 +181,9 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
     }
 
     private void rotateAndCheckSizes(RotationSession rotationSession, SizeInfo prevSizes) {
-        final ActivityManagerState.ActivityTask task =
-                mAmWmState.getAmState().getTaskByActivity(RESIZEABLE_ACTIVITY);
-        final int displayId = mAmWmState.getAmState().getStackById(task.mStackId).mDisplayId;
+        final WindowManagerState.ActivityTask task =
+                mWmState.getTaskByActivity(RESIZEABLE_ACTIVITY);
+        final int displayId = mWmState.getRootTask(task.mRootTaskId).mDisplayId;
 
         assumeTrue(supportsLockedUserRotation(rotationSession, displayId));
 
@@ -290,16 +290,16 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
         launchActivity(DIALOG_WHEN_LARGE_ACTIVITY, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
-        final ActivityManagerState.ActivityStack stack = mAmWmState.getAmState()
+        final WindowManagerState.ActivityTask stack = mWmState
                 .getStandardStackByWindowingMode(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
-        final WindowManagerState.Display display =
-                mAmWmState.getWmState().getDisplay(stack.mDisplayId);
+        final WindowManagerState.DisplayContent display =
+                mWmState.getDisplay(stack.mDisplayId);
         final int density = display.getDpi();
         final int smallWidthPx = dpToPx(SMALL_WIDTH_DP, density);
         final int smallHeightPx = dpToPx(SMALL_HEIGHT_DP, density);
 
         resizeDockedStack(0, 0, smallWidthPx, smallHeightPx);
-        mAmWmState.waitForValidState(
+        mWmState.waitForValidState(
                 new WaitForValidActivityState.Builder(DIALOG_WHEN_LARGE_ACTIVITY)
                         .setWindowingMode(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY)
                         .setActivityType(ACTIVITY_TYPE_STANDARD)
@@ -315,21 +315,21 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
 
         separateTestJournal();
         launchActivity(PORTRAIT_ORIENTATION_ACTIVITY);
-        mAmWmState.assertVisibility(PORTRAIT_ORIENTATION_ACTIVITY, true /* visible */);
+        mWmState.assertVisibility(PORTRAIT_ORIENTATION_ACTIVITY, true /* visible */);
         SizeInfo reportedSizes = getLastReportedSizesForActivity(PORTRAIT_ORIENTATION_ACTIVITY);
         assertEquals("portrait activity should be in portrait",
                 1 /* portrait */, reportedSizes.orientation);
         separateTestJournal();
 
         launchActivity(LANDSCAPE_ORIENTATION_ACTIVITY);
-        mAmWmState.assertVisibility(LANDSCAPE_ORIENTATION_ACTIVITY, true /* visible */);
+        mWmState.assertVisibility(LANDSCAPE_ORIENTATION_ACTIVITY, true /* visible */);
         reportedSizes = getLastReportedSizesForActivity(LANDSCAPE_ORIENTATION_ACTIVITY);
         assertEquals("landscape activity should be in landscape",
                 2 /* landscape */, reportedSizes.orientation);
         separateTestJournal();
 
         launchActivity(PORTRAIT_ORIENTATION_ACTIVITY);
-        mAmWmState.assertVisibility(PORTRAIT_ORIENTATION_ACTIVITY, true /* visible */);
+        mWmState.assertVisibility(PORTRAIT_ORIENTATION_ACTIVITY, true /* visible */);
         reportedSizes = getLastReportedSizesForActivity(PORTRAIT_ORIENTATION_ACTIVITY);
         assertEquals("portrait activity should be in portrait",
                 1 /* portrait */, reportedSizes.orientation);
@@ -349,7 +349,7 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
 
         launchActivity(SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         assertEquals("Legacy non-fullscreen activity requested landscape orientation",
-                0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
+                0 /* landscape */, mWmState.getLastOrientation());
 
         // TODO(b/36897968): uncomment once we can suppress unsupported configurations
         // final ReportedSizes updatedReportedSizes =
@@ -368,14 +368,14 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
 
         separateTestJournal();
         launchActivity(PORTRAIT_ORIENTATION_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
-        mAmWmState.assertVisibility(PORTRAIT_ORIENTATION_ACTIVITY, true /* visible */);
+        mWmState.assertVisibility(PORTRAIT_ORIENTATION_ACTIVITY, true /* visible */);
 
         assertLifecycleCounts(PORTRAIT_ORIENTATION_ACTIVITY,
                 1 /* create */, 1 /* start */, 1 /* resume */,
                 0 /* pause */, 0 /* stop */, 0 /* destroy */, 0 /* config */);
 
         launchActivity(LANDSCAPE_ORIENTATION_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
-        mAmWmState.assertVisibility(LANDSCAPE_ORIENTATION_ACTIVITY, true /* visible */);
+        mWmState.assertVisibility(LANDSCAPE_ORIENTATION_ACTIVITY, true /* visible */);
 
         assertLifecycleCounts(PORTRAIT_ORIENTATION_ACTIVITY,
                 1 /* create */, 1 /* start */, 1 /* resume */,
@@ -385,7 +385,7 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
                 0 /* pause */, 0 /* stop */, 0 /* destroy */, 0 /* config */);
 
         launchActivity(PORTRAIT_ORIENTATION_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
-        mAmWmState.assertVisibility(PORTRAIT_ORIENTATION_ACTIVITY, true /* visible */);
+        mWmState.assertVisibility(PORTRAIT_ORIENTATION_ACTIVITY, true /* visible */);
 
         assertLifecycleCounts(PORTRAIT_ORIENTATION_ACTIVITY,
                 2 /* create */, 2 /* start */, 2 /* resume */,
@@ -408,7 +408,7 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
 
         separateTestJournal();
         launchActivity(TEST_ACTIVITY);
-        mAmWmState.assertVisibility(TEST_ACTIVITY, true /* visible */);
+        mWmState.assertVisibility(TEST_ACTIVITY, true /* visible */);
         final SizeInfo initialReportedSizes = getLastReportedSizesForActivity(TEST_ACTIVITY);
         final int initialOrientation = initialReportedSizes.orientation;
 
@@ -426,7 +426,7 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
                 ? PORTRAIT_ORIENTATION_ACTIVITY : LANDSCAPE_ORIENTATION_ACTIVITY;
         separateTestJournal();
         launchActivity(differentOrientationActivity);
-        mAmWmState.assertVisibility(differentOrientationActivity, true /* visible */);
+        mWmState.assertVisibility(differentOrientationActivity, true /* visible */);
         final SizeInfo rotatedReportedSizes =
                 getLastReportedSizesForActivity(differentOrientationActivity);
         assertEquals("Applied orientation must correspond to activity request",
@@ -436,7 +436,7 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
         // activity.
         separateTestJournal();
         launchActivity(RESIZEABLE_ACTIVITY);
-        mAmWmState.assertVisibility(RESIZEABLE_ACTIVITY, true /* visible */);
+        mWmState.assertVisibility(RESIZEABLE_ACTIVITY, true /* visible */);
         final SizeInfo finalReportedSizes = getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY);
         assertEquals("Applied orientation must not be influenced by previously visible activity",
                 initialOrientation, finalReportedSizes.orientation);
@@ -453,7 +453,7 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
         launchActivity(PORTRAIT_ORIENTATION_ACTIVITY);
 
         assertFalse("target SDK > 26 non-fullscreen activity should not reach onResume",
-                mAmWmState.getAmState().containsActivity(TRANSLUCENT_LANDSCAPE_ACTIVITY));
+                mWmState.containsActivity(TRANSLUCENT_LANDSCAPE_ACTIVITY));
     }
 
     @Test
@@ -467,11 +467,11 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
         rotationSession.set(ROTATION_0);
 
         launchActivity(SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY);
-        mAmWmState.assertResumedActivity(
+        mWmState.assertResumedActivity(
                 "target SDK <= 26 non-fullscreen activity should be allowed to launch",
                 SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY);
         assertEquals("non-fullscreen activity requested landscape orientation",
-                0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
+                0 /* landscape */, mWmState.getLastOrientation());
     }
 
     /**
@@ -483,25 +483,25 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
 
         // Start landscape activity.
         launchActivity(LANDSCAPE_ORIENTATION_ACTIVITY);
-        mAmWmState.assertVisibility(LANDSCAPE_ORIENTATION_ACTIVITY, true /* visible */);
+        mWmState.assertVisibility(LANDSCAPE_ORIENTATION_ACTIVITY, true /* visible */);
         assertEquals("Fullscreen app requested landscape orientation",
-                0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
+                0 /* landscape */, mWmState.getLastOrientation());
 
         // Start another activity in a different task.
         launchActivityInNewTask(BROADCAST_RECEIVER_ACTIVITY);
 
         // Request portrait
         mBroadcastActionTrigger.requestOrientation(SCREEN_ORIENTATION_PORTRAIT);
-        mAmWmState.waitForLastOrientation(SCREEN_ORIENTATION_PORTRAIT);
+        mWmState.waitForLastOrientation(SCREEN_ORIENTATION_PORTRAIT);
         waitForBroadcastActivityReady(Configuration.ORIENTATION_PORTRAIT);
 
         // Finish activity
         mBroadcastActionTrigger.finishBroadcastReceiverActivity();
 
         // Verify that activity brought to front is in originally requested orientation.
-        mAmWmState.computeState(LANDSCAPE_ORIENTATION_ACTIVITY);
+        mWmState.computeState(LANDSCAPE_ORIENTATION_ACTIVITY);
         assertEquals("Should return to app in landscape orientation",
-                0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
+                0 /* landscape */, mWmState.getLastOrientation());
     }
 
     /**
@@ -516,23 +516,23 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
 
         // Start landscape activity.
         launchActivity(RESIZEABLE_ACTIVITY);
-        mAmWmState.assertVisibility(RESIZEABLE_ACTIVITY, true /* visible */);
-        final int initialServerOrientation = mAmWmState.getWmState().getLastOrientation();
+        mWmState.assertVisibility(RESIZEABLE_ACTIVITY, true /* visible */);
+        final int initialServerOrientation = mWmState.getLastOrientation();
 
         // Verify fixed-landscape
         separateTestJournal();
         launchActivityInNewTask(BROADCAST_RECEIVER_ACTIVITY);
         mBroadcastActionTrigger.requestOrientation(SCREEN_ORIENTATION_LANDSCAPE);
-        mAmWmState.waitForLastOrientation(SCREEN_ORIENTATION_LANDSCAPE);
+        mWmState.waitForLastOrientation(SCREEN_ORIENTATION_LANDSCAPE);
         waitForBroadcastActivityReady(Configuration.ORIENTATION_LANDSCAPE);
         mBroadcastActionTrigger.finishBroadcastReceiverActivity();
 
         // Verify that activity brought to front is in originally requested orientation.
-        mAmWmState.waitForActivityState(RESIZEABLE_ACTIVITY, STATE_RESUMED);
+        mWmState.waitForActivityState(RESIZEABLE_ACTIVITY, STATE_RESUMED);
         SizeInfo reportedSizes = getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY);
         assertNull("Should come back in original orientation", reportedSizes);
         assertEquals("Should come back in original server orientation",
-                initialServerOrientation, mAmWmState.getWmState().getLastOrientation());
+                initialServerOrientation, mWmState.getLastOrientation());
         assertRelaunchOrConfigChanged(RESIZEABLE_ACTIVITY, 0 /* numRelaunch */,
                 0 /* numConfigChange */);
 
@@ -540,16 +540,16 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
         separateTestJournal();
         launchActivityInNewTask(BROADCAST_RECEIVER_ACTIVITY);
         mBroadcastActionTrigger.requestOrientation(SCREEN_ORIENTATION_PORTRAIT);
-        mAmWmState.waitForLastOrientation(SCREEN_ORIENTATION_PORTRAIT);
+        mWmState.waitForLastOrientation(SCREEN_ORIENTATION_PORTRAIT);
         waitForBroadcastActivityReady(Configuration.ORIENTATION_PORTRAIT);
         mBroadcastActionTrigger.finishBroadcastReceiverActivity();
 
         // Verify that activity brought to front is in originally requested orientation.
-        mAmWmState.waitForActivityState(RESIZEABLE_ACTIVITY, STATE_RESUMED);
+        mWmState.waitForActivityState(RESIZEABLE_ACTIVITY, STATE_RESUMED);
         reportedSizes = getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY);
         assertNull("Should come back in original orientation", reportedSizes);
         assertEquals("Should come back in original server orientation",
-                initialServerOrientation, mAmWmState.getWmState().getLastOrientation());
+                initialServerOrientation, mWmState.getLastOrientation());
         assertRelaunchOrConfigChanged(RESIZEABLE_ACTIVITY, 0 /* numRelaunch */,
                 0 /* numConfigChange */);
     }
@@ -566,9 +566,9 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
         separateTestJournal();
         launchActivity(TEST_ACTIVITY);
         launchActivity(RESIZEABLE_ACTIVITY);
-        mAmWmState.assertVisibility(RESIZEABLE_ACTIVITY, true /* visible */);
+        mWmState.assertVisibility(RESIZEABLE_ACTIVITY, true /* visible */);
 
-        final int displayId = mAmWmState.getAmState().getDisplayByActivity(RESIZEABLE_ACTIVITY);
+        final int displayId = mWmState.getDisplayByActivity(RESIZEABLE_ACTIVITY);
 
         // Rotate the activity and check that it receives configuration changes with a different
         // orientation each time.
@@ -613,9 +613,9 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
         separateTestJournal();
         launchActivity(RESIZEABLE_ACTIVITY);
         launchActivity(PORTRAIT_ORIENTATION_ACTIVITY);
-        mAmWmState.assertVisibility(PORTRAIT_ORIENTATION_ACTIVITY, true /* visible */);
+        mWmState.assertVisibility(PORTRAIT_ORIENTATION_ACTIVITY, true /* visible */);
 
-        final int displayId = mAmWmState.getAmState()
+        final int displayId = mWmState
                 .getDisplayByActivity(PORTRAIT_ORIENTATION_ACTIVITY);
 
         // Rotate the activity and check that the orientation doesn't change
@@ -650,25 +650,25 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
 
         // Start landscape activity.
         launchActivity(LANDSCAPE_ORIENTATION_ACTIVITY);
-        mAmWmState.assertVisibility(LANDSCAPE_ORIENTATION_ACTIVITY, true /* visible */);
+        mWmState.assertVisibility(LANDSCAPE_ORIENTATION_ACTIVITY, true /* visible */);
         assertEquals("Fullscreen app requested landscape orientation",
-                0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
+                0 /* landscape */, mWmState.getLastOrientation());
 
         // Start another activity in a different task.
         launchActivityInNewTask(BROADCAST_RECEIVER_ACTIVITY);
 
         // Request portrait
         mBroadcastActionTrigger.requestOrientation(SCREEN_ORIENTATION_PORTRAIT);
-        mAmWmState.waitForLastOrientation(SCREEN_ORIENTATION_PORTRAIT);
+        mWmState.waitForLastOrientation(SCREEN_ORIENTATION_PORTRAIT);
         waitForBroadcastActivityReady(Configuration.ORIENTATION_PORTRAIT);
 
         // Finish activity
         mBroadcastActionTrigger.moveTopTaskToBack();
 
         // Verify that activity brought to front is in originally requested orientation.
-        mAmWmState.waitForValidState(LANDSCAPE_ORIENTATION_ACTIVITY);
+        mWmState.waitForValidState(LANDSCAPE_ORIENTATION_ACTIVITY);
         assertEquals("Should return to app in landscape orientation",
-                0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
+                0 /* landscape */, mWmState.getLastOrientation());
     }
 
     /**
@@ -710,15 +710,15 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
                 getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
                 getLaunchActivityBuilder().setTargetActivity(activity).setMultipleTask(true));
 
-        mAmWmState.assertVisibility(activity, true /* visible */);
+        mWmState.assertVisibility(activity, true /* visible */);
         assertEquals("Split-screen apps shouldn't influence device orientation",
-                orientation, mAmWmState.getWmState().getRotation());
+                orientation, mWmState.getRotation());
 
         getLaunchActivityBuilder().setMultipleTask(true).setTargetActivity(activity).execute();
-        mAmWmState.computeState(activity);
-        mAmWmState.assertVisibility(activity, true /* visible */);
+        mWmState.computeState(activity);
+        mWmState.assertVisibility(activity, true /* visible */);
         assertEquals("Split-screen apps shouldn't influence device orientation",
-                orientation, mAmWmState.getWmState().getRotation());
+                orientation, mWmState.getRotation());
     }
 
     /**
@@ -735,7 +735,7 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
         // Make sure docked stack is focused. This way when we dismiss it later fullscreen stack
         // will come up.
         launchActivity(activityName, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
-        mAmWmState.computeState(false /* compareTaskAndStackBounds */,
+        mWmState.computeState(
                 new WaitForValidActivityState.Builder(activityName).build());
 
         // Move to fullscreen stack.
@@ -812,7 +812,7 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
     }
 
     private SizeInfo getActivityDisplaySize(ComponentName activityName) {
-        mAmWmState.computeState(false /* compareTaskAndStackBounds */,
+        mWmState.computeState(
                 new WaitForValidActivityState(activityName));
         final SizeInfo details = getLastReportedSizesForActivity(activityName);
         assertNotNull(details);
@@ -822,11 +822,11 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
     private Rect getDisplayRect(ComponentName activityName) {
         final String windowName = getWindowName(activityName);
 
-        mAmWmState.computeState(activityName);
-        mAmWmState.assertFocusedWindow("Test window must be the front window.", windowName);
+        mWmState.computeState(activityName);
+        mWmState.assertFocusedWindow("Test window must be the front window.", windowName);
 
         final List<WindowManagerState.WindowState> windowList =
-                mAmWmState.getWmState().getMatchingVisibleWindowState(windowName);
+                mWmState.getMatchingVisibleWindowState(windowName);
 
         assertEquals("Should have exactly one window state for the activity.", 1,
                 windowList.size());
@@ -834,7 +834,7 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
         WindowManagerState.WindowState windowState = windowList.get(0);
         assertNotNull("Should have a valid window", windowState);
 
-        WindowManagerState.Display display = mAmWmState.getWmState()
+        WindowManagerState.DisplayContent display = mWmState
                 .getDisplay(windowState.getDisplayId());
         assertNotNull("Should be on a display", display);
 
@@ -842,8 +842,8 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
     }
 
     private void waitForBroadcastActivityReady(int orientation) {
-        mAmWmState.waitForActivityOrientation(BROADCAST_RECEIVER_ACTIVITY, orientation);
-        mAmWmState.waitForActivityState(BROADCAST_RECEIVER_ACTIVITY, STATE_RESUMED);
+        mWmState.waitForActivityOrientation(BROADCAST_RECEIVER_ACTIVITY, orientation);
+        mWmState.waitForActivityState(BROADCAST_RECEIVER_ACTIVITY, STATE_RESUMED);
     }
 
     /**
@@ -853,13 +853,13 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
     public void testLaunchWithUiModeChange() {
         // Launch activity that changes UI mode and handles this configuration change.
         launchActivity(NIGHT_MODE_ACTIVITY);
-        mAmWmState.waitForActivityState(NIGHT_MODE_ACTIVITY, STATE_RESUMED);
+        mWmState.waitForActivityState(NIGHT_MODE_ACTIVITY, STATE_RESUMED);
 
         // Check if activity is launched successfully.
-        mAmWmState.assertVisibility(NIGHT_MODE_ACTIVITY, true /* visible */);
-        mAmWmState.assertFocusedActivity("Launched activity should be focused",
+        mWmState.assertVisibility(NIGHT_MODE_ACTIVITY, true /* visible */);
+        mWmState.assertFocusedActivity("Launched activity should be focused",
                 NIGHT_MODE_ACTIVITY);
-        mAmWmState.assertResumedActivity("Launched activity must be resumed", NIGHT_MODE_ACTIVITY);
+        mWmState.assertResumedActivity("Launched activity must be resumed", NIGHT_MODE_ACTIVITY);
     }
 
     @Test

@@ -29,6 +29,7 @@ import com.android.server.power.PowerManagerServiceDumpProto;
 import com.android.server.power.PowerServiceSettingsAndConfigurationDumpProto;
 import com.android.server.wm.IdentifierProto;
 import com.android.server.wm.WindowManagerServiceDumpProto;
+import com.android.server.wm.WindowStateProto;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
@@ -231,9 +232,10 @@ public class InattentiveSleepTests extends BaseHostJUnit4Test {
         WindowManagerServiceDumpProto windowManagerDump = ProtoUtils.getProto(getDevice(),
                 WindowManagerServiceDumpProto.parser(), CMD_GET_WINDOW_TOKENS);
 
-        List<IdentifierProto> windows = windowManagerDump.getRootWindowContainer().getWindowsList();
-        for (IdentifierProto identifierProto : windows) {
-            if (WARNING_WINDOW_TOKEN_TITLE.equals(identifierProto.getTitle())) {
+        List<WindowStateProto> windows =
+                windowManagerDump.getRootWindowContainer().getWindowsList();
+        for (WindowStateProto window : windows) {
+            if (WARNING_WINDOW_TOKEN_TITLE.equals(window.getIdentifier().getTitle())) {
                 return true;
             }
         }

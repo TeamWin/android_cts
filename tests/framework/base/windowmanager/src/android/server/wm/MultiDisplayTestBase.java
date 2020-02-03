@@ -52,7 +52,7 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.server.wm.ActivityManagerState.DisplayContent;
+import android.server.wm.WindowManagerState.DisplayContent;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.ActivitySessionClient;
 import android.server.wm.settings.SettingsSession;
@@ -129,8 +129,8 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
     }
 
     List<DisplayContent> getDisplaysStates() {
-        mAmWmState.getAmState().computeState();
-        return mAmWmState.getAmState().getDisplays();
+        mWmState.computeState();
+        return mWmState.getDisplays();
     }
 
     /** Find the display that was not originally reported in oldDisplays and added in newDisplays */
@@ -241,10 +241,10 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         }
     }
 
-    void waitForDisplayGone(Predicate<WindowManagerState.Display> displayPredicate) {
+    void waitForDisplayGone(Predicate<DisplayContent> displayPredicate) {
         waitForOrFail("displays to be removed", () -> {
-            mAmWmState.computeState(true);
-            return mAmWmState.getWmState().getDisplays().stream().noneMatch(displayPredicate);
+            mWmState.computeState();
+            return mWmState.getDisplays().stream().noneMatch(displayPredicate);
         });
     }
 
@@ -419,10 +419,10 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             } else {
                 launchActivity(VIRTUAL_DISPLAY_ACTIVITY);
             }
-            mAmWmState.computeState(false /* compareTaskAndStackBounds */,
+            mWmState.computeState(
                     new WaitForValidActivityState(VIRTUAL_DISPLAY_ACTIVITY));
-            mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
-            mAmWmState.assertFocusedActivity("Focus must be on virtual display host activity",
+            mWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+            mWmState.assertFocusedActivity("Focus must be on virtual display host activity",
                     VIRTUAL_DISPLAY_ACTIVITY);
             final List<DisplayContent> originalDS = getDisplaysStates();
 
@@ -577,7 +577,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             super.close();
             // Waiting for restoring to the state before this session was created.
             waitForDisplayGone(display -> mDisplays.stream()
-                    .anyMatch(createdDisplay -> createdDisplay.mId == display.getDisplayId()));
+                    .anyMatch(createdDisplay -> createdDisplay.mId == display.mId));
         }
 
         private void removeExisting() {
@@ -663,7 +663,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
 
     protected void assertBothDisplaysHaveResumedActivities(
             Pair<Integer, ComponentName> firstPair, Pair<Integer, ComponentName> secondPair) {
-        mAmWmState.assertResumedActivities("Both displays must have resumed activities",
+        mWmState.assertResumedActivities("Both displays must have resumed activities",
                 mapping -> {
                     mapping.put(firstPair.first, firstPair.second);
                     mapping.put(secondPair.first, secondPair.second);
@@ -687,7 +687,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             expectEvent(stream, condition, TimeUnit.SECONDS.toMillis(5) /* eventTimeout */);
         }
         // Assert the IME is shown on the expected display.
-        mAmWmState.waitAndAssertImeWindowShownOnDisplay(displayId);
+        mWmState.waitAndAssertImeWindowShownOnDisplay(displayId);
     }
 
     /**
@@ -767,7 +767,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
                 mExternalDisplayHelper.releaseDisplay();
                 mExternalDisplayHelper = null;
 
-                waitForDisplayGone(d -> d.getDisplayId() == mDisplayId);
+                waitForDisplayGone(d -> d.mId == mDisplayId);
                 mDisplayId = INVALID_DISPLAY;
             }
         }

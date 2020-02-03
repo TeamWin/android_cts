@@ -20,7 +20,7 @@ import static java.util.stream.Collectors.toList;
 
 import android.content.ComponentName;
 import android.content.Intent;
-import android.server.wm.ActivityManagerState;
+import android.server.wm.WindowManagerState;
 
 import com.google.common.collect.Lists;
 
@@ -442,10 +442,10 @@ public class Persistence {
     public static class StateDump {
         final List<StackState> mStacks;
 
-        public static StateDump fromStacks(List<ActivityManagerState.ActivityStack> activityStacks,
-                List<ActivityManagerState.ActivityStack> baseStacks) {
+        public static StateDump fromStacks(List<WindowManagerState.ActivityTask> activityTasks,
+                List<WindowManagerState.ActivityTask> baseStacks) {
             List<StackState> stacks = new ArrayList<>();
-            for (ActivityManagerState.ActivityStack stack : trimStacks(activityStacks,
+            for (WindowManagerState.ActivityTask stack : trimStacks(activityTasks,
                     baseStacks)) {
                 stacks.add(new StackState(stack));
             }
@@ -482,12 +482,12 @@ public class Persistence {
          * in the system before recording, by their ID. For example a stack containing the launcher
          * activity.
          */
-        public static List<ActivityManagerState.ActivityStack> trimStacks(
-                List<ActivityManagerState.ActivityStack> toTrim,
-                List<ActivityManagerState.ActivityStack> trimFrom) {
+        public static List<WindowManagerState.ActivityTask> trimStacks(
+                List<WindowManagerState.ActivityTask> toTrim,
+                List<WindowManagerState.ActivityTask> trimFrom) {
 
-            for (ActivityManagerState.ActivityStack stack : trimFrom) {
-                toTrim.removeIf(t -> t.getStackId() == stack.getStackId());
+            for (WindowManagerState.ActivityTask stack : trimFrom) {
+                toTrim.removeIf(t -> t.getRootTaskId() == stack.getRootTaskId());
             }
 
             return toTrim;
@@ -508,7 +508,7 @@ public class Persistence {
     }
 
     /**
-     * A simplified JSON version of the information in {@link ActivityManagerState.ActivityStack}
+     * A simplified JSON version of the information in {@link WindowManagerState.ActivityTask}
      */
     public static class StackState {
         private static final String TASKS_KEY = "tasks";
@@ -528,10 +528,10 @@ public class Persistence {
             mTasks = tasks;
         }
 
-        public StackState(ActivityManagerState.ActivityStack stack) {
+        public StackState(WindowManagerState.ActivityTask stack) {
             this.mResumedActivity = stack.getResumedActivity();
             mTasks = new ArrayList<>();
-            for (ActivityManagerState.ActivityTask task : stack.getTasks()) {
+            for (WindowManagerState.ActivityTask task : stack.getTasks()) {
                 this.mTasks.add(new TaskState(task));
             }
         }
@@ -594,8 +594,8 @@ public class Persistence {
             mActivities = activities;
         }
 
-        public TaskState(ActivityManagerState.ActivityTask state) {
-            for (ActivityManagerState.Activity activity : state.getActivities()) {
+        public TaskState(WindowManagerState.ActivityTask state) {
+            for (WindowManagerState.Activity activity : state.getActivities()) {
                 this.mActivities.add(new ActivityState(activity));
             }
         }
@@ -658,7 +658,7 @@ public class Persistence {
             mLifeCycleState = state;
         }
 
-        public ActivityState(ActivityManagerState.Activity activity) {
+        public ActivityState(WindowManagerState.Activity activity) {
             mComponentName = activity.getName();
             mLifeCycleState = activity.getState();
         }

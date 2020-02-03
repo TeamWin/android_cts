@@ -72,8 +72,8 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
         // Move activity to Picture-In-Picture
         getLifecycleLog().clear();
         final ComponentName pipActivityName = getComponentName(PipActivity.class);
-        mAmWmState.computeState(pipActivityName);
-        final int stackId = mAmWmState.getAmState().getStackIdByActivity(pipActivityName);
+        mWmState.computeState(pipActivityName);
+        final int stackId = mWmState.getStackIdByActivity(pipActivityName);
         assertNotEquals(stackId, INVALID_STACK_ID);
         moveTopActivityToPinnedStack(stackId);
 

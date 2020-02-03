@@ -50,8 +50,8 @@ public class AmStartOptionsTests extends ActivityManagerTestBase {
         for (int i = 0; i < 2; i++) {
             executeShellCommand("am start -n " + getActivityName(TEST_ACTIVITY) + " -D");
 
-            mAmWmState.waitForDebuggerWindowVisible(TEST_ACTIVITY);
-            int procId = mAmWmState.getAmState().getActivityProcId(TEST_ACTIVITY);
+            mWmState.waitForDebuggerWindowVisible(TEST_ACTIVITY);
+            int procId = mWmState.getActivityProcId(TEST_ACTIVITY);
 
             assertThat("Invalid ProcId.", procId, greaterThanOrEqualTo(0));
             if (i > 0) {
@@ -104,7 +104,7 @@ public class AmStartOptionsTests extends ActivityManagerTestBase {
 
     private void startActivityAndVerifyResult(final ComponentName entryActivity,
             final ComponentName actualActivity, boolean shouldStart) {
-        mAmWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
+        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
 
         // Pass in different data only when cold starting. This is to make the intent
         // different in subsequent warm/hot launches, so that the entrypoint alias

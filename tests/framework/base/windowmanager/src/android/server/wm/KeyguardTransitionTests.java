@@ -16,7 +16,7 @@
 
 package android.server.wm;
 
-import static android.server.wm.ActivityManagerState.STATE_STOPPED;
+import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.WindowManagerState.TRANSIT_ACTIVITY_OPEN;
 import static android.server.wm.WindowManagerState.TRANSIT_KEYGUARD_GOING_AWAY;
 import static android.server.wm.WindowManagerState.TRANSIT_KEYGUARD_GOING_AWAY_ON_WALLPAPER;
@@ -60,9 +60,9 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
         launchActivity(TEST_ACTIVITY);
         lockScreenSession.gotoKeyguard().unlockDevice();
-        mAmWmState.computeState(TEST_ACTIVITY);
+        mWmState.computeState(TEST_ACTIVITY);
         assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_GOING_AWAY,
-                mAmWmState.getWmState().getDefaultDisplayLastTransition());
+                mWmState.getDefaultDisplayLastTransition());
     }
 
     @Test
@@ -70,18 +70,18 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
         launchActivity(WALLPAPAER_ACTIVITY);
         lockScreenSession.gotoKeyguard().unlockDevice();
-        mAmWmState.computeState(WALLPAPAER_ACTIVITY);
+        mWmState.computeState(WALLPAPAER_ACTIVITY);
         assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_GOING_AWAY_ON_WALLPAPER,
-                mAmWmState.getWmState().getDefaultDisplayLastTransition());
+                mWmState.getDefaultDisplayLastTransition());
     }
 
     @Test
     public void testOcclude() {
         createManagedLockScreenSession().gotoKeyguard();
         launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
-        mAmWmState.computeState(SHOW_WHEN_LOCKED_ACTIVITY);
+        mWmState.computeState(SHOW_WHEN_LOCKED_ACTIVITY);
         assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_OCCLUDE,
-                mAmWmState.getWmState().getDefaultDisplayLastTransition());
+                mWmState.getDefaultDisplayLastTransition());
     }
 
     @Test
@@ -89,10 +89,10 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
         createManagedLockScreenSession().gotoKeyguard();
         launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
         launchActivity(TEST_ACTIVITY);
-        mAmWmState.waitForKeyguardShowingAndNotOccluded();
-        mAmWmState.computeState(true);
+        mWmState.waitForKeyguardShowingAndNotOccluded();
+        mWmState.computeState();
         assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_UNOCCLUDE,
-                mAmWmState.getWmState().getDefaultDisplayLastTransition());
+                mWmState.getDefaultDisplayLastTransition());
     }
 
     @Test
@@ -101,9 +101,9 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
         launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
         lockScreenSession.gotoKeyguard(SHOW_WHEN_LOCKED_ACTIVITY);
         launchActivity(SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY);
-        mAmWmState.computeState(SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY);
+        mWmState.computeState(SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY);
         assertEquals("Picked wrong transition", TRANSIT_ACTIVITY_OPEN,
-                mAmWmState.getWmState().getDefaultDisplayLastTransition());
+                mWmState.getDefaultDisplayLastTransition());
     }
 
     @Test
@@ -112,9 +112,9 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
         lockScreenSession.gotoKeyguard();
         separateTestJournal();
         launchActivity(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
-        mAmWmState.computeState(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
+        mWmState.computeState(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
         assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_OCCLUDE,
-                mAmWmState.getWmState().getDefaultDisplayLastTransition());
+                mWmState.getDefaultDisplayLastTransition());
         assertSingleLaunch(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
     }
 
@@ -124,9 +124,9 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
         lockScreenSession.gotoKeyguard();
         separateTestJournal();
         launchActivity(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY);
-        mAmWmState.computeState(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY);
+        mWmState.computeState(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY);
         assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_OCCLUDE,
-                mAmWmState.getWmState().getDefaultDisplayLastTransition());
+                mWmState.getDefaultDisplayLastTransition());
         assertSingleLaunch(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY);
 
         // Waiting for the standard keyguard since
@@ -137,7 +137,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
         // Waiting for {@link SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY} stopped since it
         // already lost show-when-locked attribute.
         launchActivityNoWait(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY);
-        mAmWmState.waitForActivityState(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY, STATE_STOPPED);
+        mWmState.waitForActivityState(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY, STATE_STOPPED);
         assertSingleStartAndStop(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY);
     }
 
@@ -147,8 +147,8 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
         launchActivity(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
         lockScreenSession.gotoKeyguard(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
         launchActivity(SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY);
-        mAmWmState.computeState(SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY);
+        mWmState.computeState(SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY);
         assertEquals("Picked wrong transition", TRANSIT_ACTIVITY_OPEN,
-                mAmWmState.getWmState().getDefaultDisplayLastTransition());
+                mWmState.getDefaultDisplayLastTransition());
     }
 }

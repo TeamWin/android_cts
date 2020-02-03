@@ -81,7 +81,7 @@ public class AnrTests extends ActivityManagerTestBase {
     public void slowOnCreateWithKeyEventTriggersAnr() {
         startUnresponsiveActivity(EXTRA_ON_CREATE_DELAY_MS, false /* waitForCompletion */);
         // wait for app to be focused
-        mAmWmState.waitAndAssertAppFocus(UNRESPONSIVE_ACTIVITY.getPackageName(),
+        mWmState.waitAndAssertAppFocus(UNRESPONSIVE_ACTIVITY.getPackageName(),
                 2000 /* waitTime_ms */);
         // wait for input manager to get the new focus app. This sleep can be removed once we start
         // listing to input about the focused app.
@@ -112,7 +112,7 @@ public class AnrTests extends ActivityManagerTestBase {
         startUnresponsiveActivity(EXTRA_ON_MOTIONEVENT_DELAY_MS, true /* waitForCompletion */);
 
         // TODO(b/143566069) investigate why we need multiple taps on display to trigger anr.
-        mAmWmState.getWmState().computeState();
+        mWmState.computeState();
         tapOnDisplayCenterAsync(DEFAULT_DISPLAY);
         SystemClock.sleep(1000);
         tapOnDisplayCenterAsync(DEFAULT_DISPLAY);

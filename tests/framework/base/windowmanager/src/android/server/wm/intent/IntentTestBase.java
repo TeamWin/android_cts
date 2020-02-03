@@ -18,7 +18,6 @@ package android.server.wm.intent;
 
 import android.content.ComponentName;
 import android.server.wm.ActivityManagerTestBase;
-import android.server.wm.UiDeviceUtils;
 import android.server.wm.intent.Persistence.TestCase;
 
 import org.junit.After;
@@ -39,7 +38,7 @@ public abstract class IntentTestBase extends ActivityManagerTestBase {
         launchHomeActivityNoWait();
         removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
 
-        this.getAmWmState().waitForWithAmState(
+        this.getWmState().waitForWithAmState(
                 state -> state.containsNoneOf(activitiesInUsedInTest),
                 "activity to be removed");
     }
