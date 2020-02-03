@@ -359,8 +359,7 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     }
 
     /**
-     * Test that apps with read permissions see the appropriate permissions
-     * when apps with r/w permission levels move around their files.
+     * Test that apps with read permissions see the appropriate permissions.
      */
     @Test
     public void testMultiViewMoveConsistency() throws Exception {
@@ -369,10 +368,8 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
 
             getDevice().uninstallPackage(NONE_PKG);
             getDevice().uninstallPackage(READ_PKG);
-            getDevice().uninstallPackage(WRITE_PKG);
             final String[] options = {AbiUtils.createAbiFlag(getAbi().getName())};
 
-            assertNull(getDevice().installPackage(getTestAppFile(WRITE_APK), false, options));
             assertNull(getDevice().installPackage(getTestAppFile(READ_APK), false, options));
 
             for (int user : mUsers) {
@@ -382,25 +379,14 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
                 runDeviceTests(READ_PKG, READ_PKG + ".ReadMultiViewTest", "testRWAccess", user);
             }
 
-            for (int user : mUsers) {
-                runDeviceTests(WRITE_PKG, WRITE_PKG + ".WriteMultiViewTest", "testMoveAway", user);
-            }
-            for (int user : mUsers) {
-                runDeviceTests(READ_PKG, READ_PKG + ".ReadMultiViewTest", "testROAccess", user);
-            }
-
             // for fuse file system
             Thread.sleep(10000);
-            for (int user : mUsers) {
-                runDeviceTests(WRITE_PKG, WRITE_PKG + ".WriteMultiViewTest", "testMoveBack", user);
-            }
             for (int user : mUsers) {
                 runDeviceTests(READ_PKG, READ_PKG + ".ReadMultiViewTest", "testRWAccess", user);
             }
         } finally {
             getDevice().uninstallPackage(NONE_PKG);
             getDevice().uninstallPackage(READ_PKG);
-            getDevice().uninstallPackage(WRITE_PKG);
         }
     }
 
