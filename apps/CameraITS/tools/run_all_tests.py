@@ -34,12 +34,7 @@ import rotation_rig as rot
 MIN_SUPPORTED_SDK_VERSION = 28  # P
 
 CHART_DELAY = 1  # seconds
-CHART_DISTANCE = 30.0  # cm
-CHART_HEIGHT = 13.5  # cm
 CHART_LEVEL = 96
-CHART_SCALE_START = 0.65
-CHART_SCALE_STOP = 1.35
-CHART_SCALE_STEP = 0.025
 NOT_YET_MANDATED_ALL = 100
 NUM_TRYS = 2
 PROC_TIMEOUT_CODE = -101  # terminated process return -process_id
@@ -356,7 +351,7 @@ def main():
     rot_rig_id = None
     tmp_dir = None
     skip_scene_validation = False
-    chart_distance = CHART_DISTANCE
+    chart_distance = its.cv2image.CHART_DISTANCE_RFOV
     chart_level = CHART_LEVEL
     one_camera_argv = sys.argv[1:]
 
@@ -586,13 +581,15 @@ def main():
                     id_combo_string, scene)
             # Extract chart from scene for scene3 once up front
             chart_loc_arg = ''
-            chart_height = CHART_HEIGHT
+            chart_height = its.cv2image.CHART_HEIGHT
             if scene == 'scene3':
                 chart_height *= its.cv2image.calc_chart_scaling(
                         chart_distance, camera_fov)
                 chart = its.cv2image.Chart(SCENE3_FILE, chart_height,
-                                           chart_distance, CHART_SCALE_START,
-                                           CHART_SCALE_STOP, CHART_SCALE_STEP,
+                                           chart_distance,
+                                           its.cv2image.CHART_SCALE_START,
+                                           its.cv2image.CHART_SCALE_STOP,
+                                           its.cv2image.CHART_SCALE_STEP,
                                            id_combo.id)
                 chart_loc_arg = 'chart_loc=%.2f,%.2f,%.2f,%.2f,%.3f' % (
                         chart.xnorm, chart.ynorm, chart.wnorm, chart.hnorm,

@@ -25,7 +25,7 @@ import numpy
 CHART_FILE = os.path.join(os.environ['CAMERA_ITS_TOP'], 'pymodules', 'its',
                           'test_images', 'ISO12233.png')
 CHART_HEIGHT = 13.5  # cm
-CHART_DISTANCE_RFOV = 30.0  # cm
+CHART_DISTANCE_RFOV = 31.0  # cm
 CHART_DISTANCE_WFOV = 22.0  # cm
 CHART_SCALE_START = 0.65
 CHART_SCALE_STOP = 1.35
