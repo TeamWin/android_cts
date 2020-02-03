@@ -1,9 +1,7 @@
 {
   "presubmit" : [
     {
-      "name": "CtsUserspaceRebootHostSideTestCases",
-      // TODO(b/147726967): remove once cuttlefish supports userspace reboot
-      "keywords": ["primary-device"]
+      "name": "CtsUserspaceRebootHostSideTestCases"
     }
   ]
 }

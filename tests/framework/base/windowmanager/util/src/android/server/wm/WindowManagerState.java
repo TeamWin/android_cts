@@ -46,6 +46,8 @@ import androidx.annotation.Nullable;
 import com.android.server.wm.nano.ActivityRecordProto;
 import com.android.server.wm.nano.AppTransitionProto;
 import com.android.server.wm.nano.ConfigurationContainerProto;
+import com.android.server.wm.nano.DisplayAreaChildProto;
+import com.android.server.wm.nano.DisplayAreaProto;
 import com.android.server.wm.nano.DisplayContentProto;
 import com.android.server.wm.nano.DisplayFramesProto;
 import com.android.server.wm.nano.IdentifierProto;
@@ -734,15 +736,7 @@ public class WindowManagerState {
         public Display(DisplayContentProto proto) {
             super(proto.windowContainer);
             mDisplayId = proto.id;
-            for (int i = 0; i < proto.aboveAppWindows.length; i++) {
-                addWindowsFromTokenProto(proto.aboveAppWindows[i]);
-            }
-            for (int i = 0; i < proto.belowAppWindows.length; i++) {
-                addWindowsFromTokenProto(proto.belowAppWindows[i]);
-            }
-            for (int i = 0; i < proto.imeWindows.length; i++) {
-                addWindowsFromTokenProto(proto.imeWindows[i]);
-            }
+            addWindowsFromDisplayAreaProto(proto.rootDisplayArea);
             mDpi = proto.dpi;
             DisplayInfoProto infoProto = proto.displayInfo;
             if (infoProto != null) {
@@ -775,6 +769,17 @@ public class WindowManagerState {
                 WindowState childWindow = new WindowState(windowProto);
                 mSubWindows.add(childWindow);
                 mSubWindows.addAll(childWindow.getWindows());
+            }
+        }
+
+        private void addWindowsFromDisplayAreaProto(DisplayAreaProto proto) {
+            for (DisplayAreaChildProto child : proto.children) {
+                if (child.displayArea != null) {
+                    addWindowsFromDisplayAreaProto(child.displayArea);
+                }
+                if (child.window != null) {
+                    addWindowsFromTokenProto(child.window);
+                }
             }
         }
 

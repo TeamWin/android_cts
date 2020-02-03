@@ -69,6 +69,8 @@ import android.server.wm.ActivityManagerState.ActivityStack;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.SizeInfo;
 
+import androidx.test.filters.FlakyTest;
+
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Before;
@@ -490,6 +492,7 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
 
     /** Tests that launching app from pending activity queue on external display is allowed. */
     @Test
+    @FlakyTest(bugId = 148740267)
     public void testLaunchPendingActivityOnSecondaryDisplay() {
         pressHomeButton();
         // Create new simulated display.
