@@ -138,7 +138,7 @@ public class QuietModeTest {
     }
 
     @Test
-    public void testTryEnableQuiteMore_noCredentialRequest() throws Exception {
+    public void testTryEnableQuietMode_noCredentialRequest() throws Exception {
         setTestAppAsDefaultLauncher();
         startLauncherActivityInTestApp();
 
