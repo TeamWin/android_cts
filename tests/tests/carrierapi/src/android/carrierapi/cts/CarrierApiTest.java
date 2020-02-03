@@ -131,6 +131,7 @@ public class CarrierApiTest extends AndroidTestCase {
     private static final String ALPHA_TAG_B = "tagB";
     private static final String NUMBER_A = "1234567890";
     private static final String NUMBER_B = "0987654321";
+    private static final String TESTING_PLMN = "12345";
 
     private static final int DSDS_PHONE_COUNT = 2;
 
@@ -485,6 +486,7 @@ public class CarrierApiTest extends AndroidTestCase {
             mTelephonyManager.getVoiceMailAlphaTag();
             mTelephonyManager.getForbiddenPlmns();
             mTelephonyManager.getServiceState();
+            mTelephonyManager.getManualNetworkSelectionPlmn();
             mTelephonyManager.setForbiddenPlmns(new ArrayList<String>());
         } catch (SecurityException e) {
             failMessage();
@@ -552,6 +554,19 @@ public class CarrierApiTest extends AndroidTestCase {
 
     static final int CARRIER_PRIVILEGE_LISTENERS =
             READ_PHONE_STATE_LISTENERS | READ_PRECISE_PHONE_STATE_LISTENERS;
+
+    public void testGetManualNetworkSelectionPlmnPersisted() throws Exception {
+        if (!hasCellular) return;
+
+        try {
+            mTelephonyManager.setNetworkSelectionModeManual(
+                     TESTING_PLMN/* operatorNumeric */, true /* persistSelection */);
+            String plmn = mTelephonyManager.getManualNetworkSelectionPlmn();
+            assertEquals(TESTING_PLMN, plmn);
+        } finally {
+            mTelephonyManager.setNetworkSelectionModeAutomatic();
+        }
+    }
 
     public void testPhoneStateListener() throws Exception {
         if (!hasCellular) return;

@@ -201,6 +201,22 @@ public class TelephonyManagerPermissionTest {
     }
 
     /**
+     * Tests that getManualNetworkSelectionPlmn requires permission
+     * Expects a security exception since the caller does not have carrier privileges.
+     */
+    @Test
+    public void testGetManualNetworkSelectionPlmnWithoutPermission() {
+        if (!mHasTelephony) {
+            return;
+        }
+        try {
+            mTelephonyManager.getManualNetworkSelectionPlmn();
+            fail("Expected SecurityException. App does not have carrier privileges.");
+        } catch (SecurityException expected) {
+        }
+    }
+
+    /**
      * Verify that Telephony related broadcasts are protected.
      */
     @Test
