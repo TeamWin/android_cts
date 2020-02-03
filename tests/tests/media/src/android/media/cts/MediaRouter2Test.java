@@ -82,6 +82,7 @@ public class MediaRouter2Test {
     private Executor mExecutor;
 
     private static final int TIMEOUT_MS = 5000;
+    private static final int WAIT_MS = 2000;
 
     private static final String TEST_KEY = "test_key";
     private static final String TEST_VALUE = "test_value";
@@ -118,54 +119,6 @@ public class MediaRouter2Test {
         assertTrue(systemRouteCount > 0);
         assertEquals(1, remoteRouteCount);
         assertNotNull(routes.get(ROUTE_ID_SPECIAL_FEATURE));
-    }
-
-    @Test
-    public void testRouteInfoEquality() {
-        MediaRoute2Info routeInfo = new MediaRoute2Info.Builder("id", "name")
-                .setDescription("description")
-                .setClientPackageName("android.media.cts")
-                .setConnectionState(CONNECTION_STATE_CONNECTING)
-                .setIconUri(new Uri.Builder().path("icon").build())
-                .setVolume(5)
-                .setVolumeMax(20)
-                .addFeature(FEATURE_SAMPLE)
-                .setVolumeHandling(PLAYBACK_VOLUME_VARIABLE)
-                .setDeviceType(DEVICE_TYPE_REMOTE_SPEAKER)
-                .build();
-
-        MediaRoute2Info routeInfoRebuilt = new MediaRoute2Info.Builder(routeInfo).build();
-        assertEquals(routeInfo, routeInfoRebuilt);
-
-        Parcel parcel = Parcel.obtain();
-        parcel.writeParcelable(routeInfo, 0);
-        parcel.setDataPosition(0);
-        MediaRoute2Info routeInfoFromParcel = parcel.readParcelable(null);
-
-        assertEquals(routeInfo, routeInfoFromParcel);
-    }
-
-    @Test
-    public void testControlVolumeWithRouter() throws Exception {
-        Map<String, MediaRoute2Info> routes = waitAndGetRoutes(FEATURES_ALL);
-
-        MediaRoute2Info volRoute = routes.get(ROUTE_ID_VARIABLE_VOLUME);
-        assertNotNull(volRoute);
-
-        int originalVolume = volRoute.getVolume();
-        int deltaVolume = (originalVolume == volRoute.getVolumeMax() ? -1 : 1);
-
-        awaitOnRouteChanged(
-                () -> mRouter2.requestUpdateVolume(volRoute, deltaVolume),
-                ROUTE_ID_VARIABLE_VOLUME,
-                (route -> route.getVolume() == originalVolume + deltaVolume),
-                FEATURES_ALL);
-
-        awaitOnRouteChanged(
-                () -> mRouter2.requestSetVolume(volRoute, originalVolume),
-                ROUTE_ID_VARIABLE_VOLUME,
-                (route -> route.getVolume() == originalVolume),
-                FEATURES_ALL);
     }
 
     @Test
@@ -246,7 +199,7 @@ public class MediaRouter2Test {
             assertTrue(successLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
 
             // onSessionCreationFailed should not be called.
-            assertFalse(failureLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            assertFalse(failureLatch.await(WAIT_MS, TimeUnit.MILLISECONDS));
         } finally {
             releaseControllers(controllers);
             mRouter2.unregisterRouteCallback(routeCallback);
@@ -292,7 +245,7 @@ public class MediaRouter2Test {
             assertTrue(failureLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
 
             // onSessionCreated should not be called.
-            assertFalse(successLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            assertFalse(successLatch.await(WAIT_MS, TimeUnit.MILLISECONDS));
         } finally {
             releaseControllers(controllers);
             mRouter2.unregisterRouteCallback(routeCallback);
@@ -340,7 +293,7 @@ public class MediaRouter2Test {
             assertTrue(successLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
 
             // onSessionCreationFailed should not be called.
-            assertFalse(failureLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            assertFalse(failureLatch.await(WAIT_MS, TimeUnit.MILLISECONDS));
 
             // Created controllers should have proper info
             assertEquals(2, createdControllers.size());
@@ -421,7 +374,7 @@ public class MediaRouter2Test {
             assertTrue(successLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
 
             // onSessionCreationFailed should not be called.
-            assertFalse(failureLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            assertFalse(failureLatch.await(WAIT_MS, TimeUnit.MILLISECONDS));
         } finally {
             releaseControllers(controllers);
             mRouter2.unregisterRouteCallback(routeCallback);
@@ -468,8 +421,8 @@ public class MediaRouter2Test {
             mRouter2.unregisterControllerCallback(controllerCallback);
 
             // No session callback methods should be called.
-            assertFalse(successLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
-            assertFalse(failureLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            assertFalse(successLatch.await(WAIT_MS, TimeUnit.MILLISECONDS));
+            assertFalse(failureLatch.await(WAIT_MS, TimeUnit.MILLISECONDS));
         } finally {
             releaseControllers(controllers);
             mRouter2.unregisterRouteCallback(routeCallback);
@@ -707,7 +660,7 @@ public class MediaRouter2Test {
             // This call should be ignored.
             // The onSessionInfoChanged() shouldn't be called.
             controller.transferToRoute(routeToTransferTo);
-            assertFalse(onControllerUpdatedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            assertFalse(onControllerUpdatedLatch.await(WAIT_MS, TimeUnit.MILLISECONDS));
 
             // onControllerReleased should be called.
             assertTrue(onControllerReleasedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
