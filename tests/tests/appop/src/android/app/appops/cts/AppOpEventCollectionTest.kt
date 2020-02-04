@@ -17,13 +17,15 @@
 package android.app.appops.cts
 
 import android.app.AppOpsManager
+import android.app.AppOpsManager.MAX_PRIORITY_UID_STATE
+import android.app.AppOpsManager.MIN_PRIORITY_UID_STATE
 import android.app.AppOpsManager.OPSTR_WIFI_SCAN
 import android.app.AppOpsManager.OP_FLAGS_ALL
 import android.app.AppOpsManager.OP_FLAG_SELF
 import android.app.AppOpsManager.OP_FLAG_TRUSTED_PROXIED
 import android.app.AppOpsManager.OP_FLAG_TRUSTED_PROXY
 import android.app.AppOpsManager.OP_FLAG_UNTRUSTED_PROXIED
-import android.app.AppOpsManager.OpEntry
+import android.app.AppOpsManager.UID_STATE_TOP
 import android.content.Intent
 import android.content.Intent.ACTION_APPLICATION_PREFERENCES
 import android.os.SystemClock
@@ -31,7 +33,6 @@ import android.platform.test.annotations.AppModeFull
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
 import androidx.test.uiautomator.UiDevice
-import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
 import org.junit.Rule
@@ -61,6 +62,33 @@ class AppOpEventCollectionTest {
     @Before
     fun makeSureTimeStampsAreDistinct() {
         sleep(1)
+    }
+
+    @Test
+    fun switchUidStateWhileOpsAreRunning() {
+        val before = System.currentTimeMillis()
+
+        // Start twice to also test switching uid state with nested starts running
+        appOpsManager.startOp(OPSTR_WIFI_SCAN, myUid, myPackage, null, null)
+        appOpsManager.startOp(OPSTR_WIFI_SCAN, myUid, myPackage, null, null)
+
+        val beforeUidChange = System.currentTimeMillis()
+        sleep(1)
+
+        try {
+            activityRule.activity.finish()
+            activityRule.activity.waitForDestroyed()
+        } finally {
+            appOpsManager.finishOp(OPSTR_WIFI_SCAN, myUid, myPackage, null)
+            appOpsManager.finishOp(OPSTR_WIFI_SCAN, myUid, myPackage, null)
+        }
+
+        // The system remembers the time before and after the uid change as separate events
+        val opEntry = getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!
+        assertThat(opEntry.getLastAccessTime(MAX_PRIORITY_UID_STATE, UID_STATE_TOP, OP_FLAGS_ALL))
+                .isIn(before..beforeUidChange)
+        assertThat(opEntry.getLastAccessTime(UID_STATE_TOP + 1, MIN_PRIORITY_UID_STATE,
+                OP_FLAGS_ALL)).isAtLeast(beforeUidChange)
     }
 
     @Test
