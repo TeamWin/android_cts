@@ -25,6 +25,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
+import android.util.FeatureFlagUtils;
 
 import androidx.test.runner.AndroidJUnit4;
 
@@ -49,21 +50,24 @@ public class PreservedSettingsRestoreTest {
             Settings.Secure.ACCESSIBILITY_CAPTIONING_WINDOW_COLOR;
     private static final String NON_OVERRIDEABLE_SETTING =
             Settings.Secure.ACCESSIBILITY_CAPTIONING_FONT_SCALE;
-    private static final String OVERRIDEABLE_SETTING_VALUE = "123";
-    private static final String NON_OVERRIDEABLE_SETTING_VALUE = "124";
+    private static final String OVERRIDEABLE_SETTING_OLD_VALUE = "121";
+    private static final String NON_OVERRIDEABLE_SETTING_OLD_VALUE = "0.6";
+    private static final String OVERRIDEABLE_SETTING_NEW_VALUE = "123";
+    private static final String NON_OVERRIDEABLE_SETTING_NEW_VALUE = "0.7";
     private static final String DEFAULT_SETTING_VALUE = "";
 
+    private Context mContext;
     private ContentResolver mContentResolver;
     private File mSharedPreferencesFile;
     private SharedPreferences mSharedPreferences;
 
     @Before
     public void setUp() throws Exception {
-        Context context = getInstrumentation().getTargetContext();
-        mContentResolver = context.getContentResolver();
-        mSharedPreferencesFile = new File(context.getDataDir(), SHARED_PREFS_NAME);
+        mContext = getInstrumentation().getTargetContext();
+        mContentResolver = mContext.getContentResolver();
+        mSharedPreferencesFile = new File(mContext.getDataDir(), SHARED_PREFS_NAME);
         mSharedPreferencesFile.createNewFile();
-        mSharedPreferences = context.getSharedPreferences(mSharedPreferencesFile,
+        mSharedPreferences = mContext.getSharedPreferences(mSharedPreferencesFile,
                 Context.MODE_PRIVATE);
     }
 
@@ -71,20 +75,20 @@ public class PreservedSettingsRestoreTest {
     public void testOnlyOverrideableSettingsAreOverridden() {
         // The overrideable setting should have its original value that was backed up.
         assertThat(Settings.Secure.getString(mContentResolver, OVERRIDEABLE_SETTING)).isEqualTo(
-                getOriginalSettingValue(OVERRIDEABLE_SETTING));
+                OVERRIDEABLE_SETTING_OLD_VALUE);
         // The non-overrideable setting should keep it current value and be unaffected by restore.
         assertThat(Settings.Secure.getString(mContentResolver, NON_OVERRIDEABLE_SETTING)).isEqualTo(
-                NON_OVERRIDEABLE_SETTING_VALUE);
+                NON_OVERRIDEABLE_SETTING_NEW_VALUE);
     }
 
     @Test
     public void modifySettings() {
         SystemUtil.runWithShellPermissionIdentity(() -> {
                 Settings.Secure.putString(mContentResolver, OVERRIDEABLE_SETTING,
-                        OVERRIDEABLE_SETTING_VALUE, /* overrideableByRestore */ true);
+                        OVERRIDEABLE_SETTING_NEW_VALUE, /* overrideableByRestore */ true);
         });
         Settings.Secure.putString(mContentResolver, NON_OVERRIDEABLE_SETTING,
-                NON_OVERRIDEABLE_SETTING_VALUE);
+                NON_OVERRIDEABLE_SETTING_NEW_VALUE);
     }
 
     @Test
@@ -93,6 +97,18 @@ public class PreservedSettingsRestoreTest {
                 OVERRIDEABLE_SETTING));
         setOriginalSettingValue(NON_OVERRIDEABLE_SETTING,
                 Settings.Secure.getString(mContentResolver, NON_OVERRIDEABLE_SETTING));
+
+        // Enable the preserve settings feature.
+        setOriginalSettingValue(FeatureFlagUtils.SETTINGS_DO_NOT_RESTORE_PRESERVED,
+                String.valueOf(FeatureFlagUtils.isEnabled(mContext,
+                        FeatureFlagUtils.SETTINGS_DO_NOT_RESTORE_PRESERVED)));
+        Settings.Global.putString(mContentResolver,
+                FeatureFlagUtils.SETTINGS_DO_NOT_RESTORE_PRESERVED, Boolean.TRUE.toString());
+
+        Settings.Secure.putString(mContentResolver, OVERRIDEABLE_SETTING,
+                OVERRIDEABLE_SETTING_OLD_VALUE, /* overrideableByRestore */ true);
+        Settings.Secure.putString(mContentResolver, NON_OVERRIDEABLE_SETTING,
+                NON_OVERRIDEABLE_SETTING_OLD_VALUE);
     }
 
     @Test
@@ -105,6 +121,10 @@ public class PreservedSettingsRestoreTest {
                     getOriginalSettingValue(NON_OVERRIDEABLE_SETTING),
                     /* overrideableByRestore */ true);
         });
+
+        Settings.Global.putString(mContentResolver,
+                FeatureFlagUtils.SETTINGS_DO_NOT_RESTORE_PRESERVED,
+                getOriginalSettingValue(FeatureFlagUtils.SETTINGS_DO_NOT_RESTORE_PRESERVED));
 
         mSharedPreferencesFile.delete();
     }
