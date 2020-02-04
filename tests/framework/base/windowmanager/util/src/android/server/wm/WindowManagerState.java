@@ -76,6 +76,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -412,11 +413,9 @@ public class WindowManagerState {
     public String getTopActivityName(int displayId) {
         if (!getDisplay(displayId).mRootTasks.isEmpty()) {
             final ActivityTask topStack = getDisplay(displayId).mRootTasks.get(0);
-            if (!topStack.mTasks.isEmpty()) {
-                final ActivityTask topTask = topStack.mTasks.get(0);
-                if (!topTask.mActivities.isEmpty()) {
-                    return topTask.mActivities.get(0).name;
-                }
+            final ActivityTask topTask = topStack.getTopTask();
+            if (!topTask.mActivities.isEmpty()) {
+                return topTask.mActivities.get(0).name;
             }
         }
         return null;
@@ -519,7 +518,7 @@ public class WindowManagerState {
                 continue;
             }
             if (stack.getWindowingMode() == windowingMode) {
-                count += stack.mTasks.size();
+                count += stack.mTasks.isEmpty() ? 1 : stack.mTasks.size();
             }
         }
         return count;
@@ -673,16 +672,16 @@ public class WindowManagerState {
 
     ActivityTask getHomeTask() {
         final ActivityTask homeStack = getStackByActivityType(ACTIVITY_TYPE_HOME);
-        if (homeStack != null && !homeStack.mTasks.isEmpty()) {
-            return homeStack.mTasks.get(0);
+        if (homeStack != null) {
+            return homeStack.getTopTask();
         }
         return null;
     }
 
     private ActivityTask getRecentsTask() {
         final ActivityTask recentsStack = getStackByActivityType(ACTIVITY_TYPE_RECENTS);
-        if (recentsStack != null && !recentsStack.mTasks.isEmpty()) {
-            return recentsStack.mTasks.get(0);
+        if (recentsStack != null) {
+            return recentsStack.getTopTask();
         }
         return null;
     }
@@ -704,24 +703,15 @@ public class WindowManagerState {
     }
 
     public ActivityTask getTaskByActivity(ComponentName activityName) {
-        return getTaskByActivityInternal(getActivityName(activityName), WINDOWING_MODE_UNDEFINED);
+        return getTaskByActivity(activityName, WINDOWING_MODE_UNDEFINED);
     }
 
     ActivityTask getTaskByActivity(ComponentName activityName, int windowingMode) {
-        return getTaskByActivityInternal(getActivityName(activityName), windowingMode);
-    }
-
-    private ActivityTask getTaskByActivityInternal(String fullName, int windowingMode) {
         for (ActivityTask stack : mRootTasks) {
             if (windowingMode == WINDOWING_MODE_UNDEFINED
                     || windowingMode == stack.getWindowingMode()) {
-                for (ActivityTask task : stack.mTasks) {
-                    for (Activity activity : task.mActivities) {
-                        if (activity.name.equals(fullName)) {
-                            return task;
-                        }
-                    }
-                }
+                Activity activity = stack.getActivity(activityName);
+                if (activity != null) return activity.task;
             }
         }
         return null;
@@ -739,21 +729,20 @@ public class WindowManagerState {
         // If activityName is null, count all activities in the task.
         // Otherwise count activities that have specified name.
         for (ActivityTask stack : mRootTasks) {
-            for (ActivityTask task : stack.mTasks) {
-                if (task.mTaskId == taskId) {
-                    if (activityName == null) {
-                        return task.mActivities.size();
-                    }
-                    final String fullName = getActivityName(activityName);
-                    int count = 0;
-                    for (Activity activity : task.mActivities) {
-                        if (activity.name.equals(fullName)) {
-                            count++;
-                        }
-                    }
-                    return count;
+            final ActivityTask task = stack.getTask(taskId);
+            if (task == null) continue;
+
+            if (activityName == null) {
+                return task.mActivities.size();
+            }
+            final String fullName = getActivityName(activityName);
+            int count = 0;
+            for (Activity activity : task.mActivities) {
+                if (activity.name.equals(fullName)) {
+                    count++;
                 }
             }
+            return count;
         }
         return 0;
     }
@@ -1102,7 +1091,7 @@ public class WindowManagerState {
                 mTasks.add(new ActivityTask(proto.tasks[i]));
             }
             for (int i = 0;  i < proto.activities.length; i++) {
-                mActivities.add(new Activity(proto.activities[i]));
+                mActivities.add(new Activity(proto.activities[i], this));
             }
         }
 
@@ -1130,33 +1119,37 @@ public class WindowManagerState {
             return mActivities;
         }
 
-        /**
-         * @return the top task in the stack.
-         */
+        /** @return the top task in the stack. */
         ActivityTask getTopTask() {
-            if (!mTasks.isEmpty()) {
-                // NOTE: Unlike the ActivityManager internals, we dump the state from top to bottom,
-                //       so the indices are inverted
-                return mTasks.get(0);
-            }
-            return null;
+            // NOTE: Unlike the WindowManager internals, we dump the state from top to bottom,
+            //       so the indices are inverted
+            return getTask((t) -> true);
+        }
+
+        public String getResumedActivity() {
+            return mResumedActivity;
         }
 
         public List<ActivityTask> getTasks() {
             return new ArrayList<>(mTasks);
         }
 
-        ActivityTask getTask(int taskId) {
+        ActivityTask getTask(Predicate<ActivityTask> predicate) {
             for (ActivityTask task : mTasks) {
-                if (taskId == task.mTaskId) {
-                    return task;
-                }
+                if (predicate.test(task)) return task;
             }
-            return null;
+            return predicate.test(this) ? this : null;
         }
 
-        public String getResumedActivity() {
-            return mResumedActivity;
+        ActivityTask getTask(int taskId) {
+            return getTask((t) -> t.mTaskId == taskId);
+        }
+
+        void forAllTasks(Consumer<ActivityTask> consumer) {
+            for (ActivityTask task : mTasks) {
+                consumer.accept(task);
+            }
+            consumer.accept(this);
         }
 
         Activity getActivity(Predicate<Activity> predicate) {
@@ -1188,9 +1181,11 @@ public class WindowManagerState {
         boolean frontOfTask;
         int procId = -1;
         public boolean translucent;
+        ActivityTask task;
 
-        Activity(ActivityRecordProto proto) {
+        Activity(ActivityRecordProto proto, ActivityTask parent) {
             super(proto.windowToken.windowContainer);
+            task = parent;
             name = proto.name;
             state = proto.state;
             visible = proto.visible;

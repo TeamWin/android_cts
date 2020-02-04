@@ -112,7 +112,7 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
     }
 
     @Test
-    public void testOccludingMovedBetweenStacks() throws Exception {
+    public void testOccludingOnSplitSecondaryStack() throws Exception {
         // Launch first activity
         final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
 
@@ -140,21 +140,10 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
                 .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
                 .launch();
         waitAndAssertActivityStates(state(secondActivity, ON_STOP));
-
-        // Move occluding third activity to side, it will occlude first now
-        getLifecycleLog().clear();
-        moveActivityToStack(getComponentName(ThirdActivity.class), primarySplitStack);
-
-        waitAndAssertActivityStates(state(secondActivity, ON_RESUME),
-                state(firstActivity, ON_STOP));
-        LifecycleVerifier.assertEmptySequence(ThirdActivity.class, getLifecycleLog(), "moveToSide");
-        LifecycleVerifier.assertRestartAndResumeSequence(SecondActivity.class, getLifecycleLog());
-        LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
-                Arrays.asList(ON_PAUSE, ON_STOP), "moveToSide");
     }
 
     @Test
-    public void testTranslucentMovedBetweenStacks() throws Exception {
+    public void testTranslucentOnSplitSecondaryStack() throws Exception {
         // Launch first activity
         final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
 
@@ -183,17 +172,6 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
                 .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
                 .launch();
         waitAndAssertActivityStates(state(secondActivity, ON_PAUSE));
-
-        // Move translucent activity to side, it will be on top of the first now
-        getLifecycleLog().clear();
-        moveActivityToStack(getComponentName(TranslucentActivity.class), primarySplitStack);
-
-        waitAndAssertActivityStates(state(firstActivity, ON_PAUSE),
-                state(secondActivity, ON_RESUME));
-        LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
-                Arrays.asList(ON_PAUSE), "moveToSide");
-        // Translucent activity can be either relaunched or preserved depending on whether the split
-        // sizes match. Not verifying its lifecycle here.
     }
 
     @Test

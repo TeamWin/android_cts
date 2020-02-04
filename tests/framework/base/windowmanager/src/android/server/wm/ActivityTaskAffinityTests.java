@@ -33,7 +33,7 @@ import org.junit.Test;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:ActivitySecurityTests
+ *     atest CtsWindowManagerDeviceTestCases:ActivityTaskAffinityTests
  *
  * Tests if activities with the same taskAffinity can be in the same task.
  */

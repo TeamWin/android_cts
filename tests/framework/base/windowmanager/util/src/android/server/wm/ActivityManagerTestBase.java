@@ -658,10 +658,19 @@ public abstract class ActivityManagerTestBase {
         mWmState.computeState();
         final List<WindowManagerState.ActivityTask> stacks = mWmState.getRootTasks();
         for (WindowManagerState.ActivityTask stack : stacks) {
-            for (WindowManagerState.ActivityTask task : stack.mTasks) {
-                if (task.mTaskId == taskId) {
-                    return stack;
-                }
+            if (stack.getTask(taskId) != null) {
+                return stack;
+            }
+        }
+        return null;
+    }
+
+    protected WindowManagerState.ActivityTask getRootTask(int taskId) {
+        mWmState.computeState();
+        final List<WindowManagerState.ActivityTask> rootTasks = mWmState.getRootTasks();
+        for (WindowManagerState.ActivityTask rootTask : rootTasks) {
+            if (rootTask.getTaskId() == taskId) {
+                return rootTask;
             }
         }
         return null;
@@ -831,12 +840,25 @@ public abstract class ActivityManagerTestBase {
         return result[0];
     }
 
-    protected void moveActivityToStack(ComponentName activityName, int stackId) {
+    /** Move activity to stack or on top of the given stack when the stack is a leak task. */
+    protected void moveActivityToStackOrOnTop(ComponentName activityName, int stackId) {
         mWmState.computeState(activityName);
-        final int taskId = mWmState.getTaskByActivity(activityName).mTaskId;
-        SystemUtil.runWithShellPermissionIdentity(
-                () -> mAtm.moveTaskToStack(taskId, stackId, true));
-
+        WindowManagerState.ActivityTask rootTask = getRootTask(stackId);
+        if (rootTask.getActivities().size() != 0) {
+            // If the root task is a 1-level task, start the activity on top of given task.
+            getLaunchActivityBuilder()
+                    .setDisplayId(rootTask.mDisplayId)
+                    .setWindowingMode(rootTask.getWindowingMode())
+                    .setActivityType(rootTask.getActivityType())
+                    .setTargetActivity(activityName)
+                    .allowMultipleInstances(false)
+                    .setUseInstrumentation()
+                    .execute();
+        } else {
+            final int taskId = mWmState.getTaskByActivity(activityName).mTaskId;
+            SystemUtil.runWithShellPermissionIdentity(
+                    () -> mAtm.moveTaskToStack(taskId, stackId, true));
+        }
         mWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
                 .setStackId(stackId)
                 .build());
@@ -2201,7 +2223,7 @@ public abstract class ActivityManagerTestBase {
                 // all tests afterward would also fail (since the leakage is always there) and fire
                 // unnecessary false alarms.
                 try {
-                    mWmState.assertEmptyStackOrTask();
+                    mWmState.assertNoneEmptyTasks();
                 } catch (Throwable t) {
                     sStackTaskLeakFound = true;
                     addError(t);
