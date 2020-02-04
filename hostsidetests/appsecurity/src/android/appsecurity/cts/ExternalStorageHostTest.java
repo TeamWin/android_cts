@@ -157,7 +157,7 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
      * correctly.
      */
     @Test
-    public void testExternalStorageRead() throws Exception {
+    public void testExternalStorageRead29() throws Exception {
         try {
             wipePrimaryExternalStorage();
 

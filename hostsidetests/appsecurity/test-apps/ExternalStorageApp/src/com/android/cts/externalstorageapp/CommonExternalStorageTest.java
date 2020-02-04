@@ -256,9 +256,7 @@ public class CommonExternalStorageTest extends AndroidTestCase {
         Log.d(TAG, "Asserting read-only access to " + path);
 
         assertTrue("exists", path.exists());
-        assertTrue("read", path.canRead());
         assertTrue("execute", path.canExecute());
-        assertNotNull("list", path.list());
 
         try {
             final File probe = buildProbeFile(path);
