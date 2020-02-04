@@ -82,9 +82,13 @@ public class CredentialNotEnrolledTests extends PassFailButtons.Activity {
                     new BiometricPrompt.AuthenticationCallback() {
                         @Override
                         public void onAuthenticationError(int errorCode, CharSequence errString) {
-                            bpSetAllowedAuthenticatorsButton.setEnabled(false);
-                            mBiometricPromptSetAllowedAuthenticatorsPass = true;
-                            updatePassButton();
+                            if (errorCode == BiometricPrompt.BIOMETRIC_ERROR_NO_DEVICE_CREDENTIAL) {
+                                bpSetAllowedAuthenticatorsButton.setEnabled(false);
+                                mBiometricPromptSetAllowedAuthenticatorsPass = true;
+                                updatePassButton();
+                            } else {
+                                showToastAndLog("Unexpected errorCode: " + errorCode);
+                            }
                         }
                     });
         });
@@ -103,9 +107,13 @@ public class CredentialNotEnrolledTests extends PassFailButtons.Activity {
                     new BiometricPrompt.AuthenticationCallback() {
                         @Override
                         public void onAuthenticationError(int errorCode, CharSequence errString) {
-                            bpSetDeviceCredentialAllowedButton.setEnabled(false);
-                            mBiometricPromptSetDeviceCredentialAllowedPass = true;
-                            updatePassButton();
+                            if (errorCode == BiometricPrompt.BIOMETRIC_ERROR_NO_BIOMETRICS) {
+                                bpSetDeviceCredentialAllowedButton.setEnabled(false);
+                                mBiometricPromptSetDeviceCredentialAllowedPass = true;
+                                updatePassButton();
+                            } else {
+                                showToastAndLog("Unexpected errorCode: " + errorCode);
+                            }
                         }
                     });
         });
