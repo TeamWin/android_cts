@@ -51,6 +51,7 @@ import android.media.RouteDiscoveryPreference;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcel;
+import android.platform.test.annotations.AppModeFull;
 import android.text.TextUtils;
 
 import org.junit.After;
@@ -70,11 +71,12 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import androidx.test.InstrumentationRegistry;
-import androidx.test.filters.SmallTest;
+import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
 @RunWith(AndroidJUnit4.class)
-@SmallTest
+@AppModeFull(reason = "The system should be able to bind to SampleMediaRoute2ProviderService")
+@LargeTest
 public class MediaRouter2Test {
     private static final String TAG = "MediaRouter2Test";
     Context mContext;
