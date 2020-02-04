@@ -63,6 +63,7 @@ public class ManagedProfileWipeTest extends BaseManagedProfileTest {
         }, new DevicePolicyEventWrapper.Builder(EventId.WIPE_DATA_WITH_REASON_VALUE)
                 .setAdminPackageName(MANAGED_PROFILE_PKG)
                 .setInt(0)
+                .setStrings("notCalledFromParent")
                 .build());
         // Check and clear the notification is presented after work profile got removed, so profile
         // user no longer exists, verification should be run in primary user.
