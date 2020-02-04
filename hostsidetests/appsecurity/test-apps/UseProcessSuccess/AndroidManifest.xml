@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2015 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="com.android.cts.useprocess">
+
+    <application>
+        <processes>
+            <process />
+            <deny-permission android:name="android.permission.INTERNET" />
+            <process android:process=":other1" />
+            <process android:process="com.android.cts.otherprocess1">
+                <allow-permission android:name="android.permission.INTERNET" />
+            </process>
+            <allow-permission android:name="android.permission.INTERNET" />
+            <process android:process=":other2">
+                <deny-permission android:name="android.permission.INTERNET" />
+            </process>
+            <process android:process="com.android.cts.otherprocess2" />
+        </processes>
+
+        <activity android:name="com.android.cts.useprocess.DummyActivity" />
+        <activity android:name=".DummyActivity2" android:process=":other1" />
+        <activity android:name=".DummyActivity3" android:process="com.android.cts.otherprocess1" />
+        <service android:name=".DummyService" />
+        <service android:name=".DummyService2" android:process=":other2" />
+        <service android:name=".DummyService3" android:process="com.android.cts.otherprocess1" />
+        <receiver android:name=".DummyReceiver" />
+        <receiver android:name=".DummyReceiver2" android:process=":other2" />
+        <receiver android:name=".DummyReceiver3" android:process="com.android.cts.otherprocess2" />
+        <provider android:name=".DummyProvider"
+            android:authorities="com.android.cts.useprocess.auth1"/>
+        <provider android:name=".DummyProvider2" android:process=":other1"
+            android:authorities="com.android.cts.useprocess.auth2"/>
+        <provider android:name=".DummyProvider3" android:process="com.android.cts.otherprocess2"
+            android:authorities="com.android.cts.useprocess.auth3"/>
+    </application>
+
+</manifest>
