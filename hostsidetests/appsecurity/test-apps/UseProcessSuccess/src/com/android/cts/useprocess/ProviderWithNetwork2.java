@@ -16,15 +16,5 @@
 
 package com.android.cts.useprocess;
 
-import android.app.Activity;
-import android.os.Bundle;
-
-public class DummyActivity extends Activity {
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        setResult(RESULT_OK);
-        finish();
-    }
+public class ProviderWithNetwork2 extends ProviderWithNetwork1 {
 }
