@@ -17,7 +17,7 @@
 package android.server.wm;
 
 import static android.os.SystemClock.sleep;
-import static android.server.wm.ActivityManagerState.STATE_STOPPED;
+import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.app.Components.ENTRY_POINT_ALIAS_ACTIVITY;
 import static android.server.wm.app.Components.NO_DISPLAY_ACTIVITY;
 import static android.server.wm.app.Components.REPORT_FULLY_DRAWN_ACTIVITY;

@@ -120,8 +120,8 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
         moveTaskToPrimarySplitScreenAndVerify(firstActivity);
 
         final ComponentName firstActivityName = getComponentName(FirstActivity.class);
-        mAmWmState.computeState(firstActivityName);
-        int primarySplitStack = mAmWmState.getAmState().getStackIdByActivity(firstActivityName);
+        mWmState.computeState(firstActivityName);
+        int primarySplitStack = mWmState.getStackIdByActivity(firstActivityName);
 
         // Launch second activity to side
         getLifecycleLog().clear();
@@ -162,8 +162,8 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
         moveTaskToPrimarySplitScreenAndVerify(firstActivity);
 
         final ComponentName firstActivityName = getComponentName(FirstActivity.class);
-        mAmWmState.computeState(firstActivityName);
-        int primarySplitStack = mAmWmState.getAmState().getStackIdByActivity(firstActivityName);
+        mWmState.computeState(firstActivityName);
+        int primarySplitStack = mWmState.getStackIdByActivity(firstActivityName);
 
         // Launch second activity to side
         getLifecycleLog().clear();

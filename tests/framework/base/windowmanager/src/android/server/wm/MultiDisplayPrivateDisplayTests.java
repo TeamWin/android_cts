@@ -28,8 +28,7 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.ActivityManagerState.DisplayContent;
-import android.server.wm.WindowManagerState.Display;
+import android.server.wm.WindowManagerState.DisplayContent;
 import android.util.Log;
 
 import com.android.compatibility.common.util.SystemUtil;
@@ -68,11 +67,11 @@ public class MultiDisplayPrivateDisplayTests extends MultiDisplayTestBase {
     /** Saves physical private displays in mPrivateDisplayIds */
     private void findPrivateDisplays() {
         mPrivateDisplayIds.clear();
-        mAmWmState.computeState(true);
+        mWmState.computeState();
 
         for (DisplayContent displayContent: getDisplaysStates()) {
             int displayId = displayContent.mId;
-            Display display = mAmWmState.getWmState().getDisplay(displayId);
+            DisplayContent display = mWmState.getDisplay(displayId);
             if ((display.getFlags() & FLAG_PRIVATE) != 0) {
                 mPrivateDisplayIds.add(displayId);
             }
@@ -96,9 +95,9 @@ public class MultiDisplayPrivateDisplayTests extends MultiDisplayTestBase {
 
             assertSecurityExceptionFromActivityLauncher();
 
-            mAmWmState.computeState(TEST_ACTIVITY);
+            mWmState.computeState(TEST_ACTIVITY);
             assertFalse("Activity must not be launched on a private display",
-                mAmWmState.getAmState().containsActivity(TEST_ACTIVITY));
+                mWmState.containsActivity(TEST_ACTIVITY));
         }
     }
 

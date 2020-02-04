@@ -19,8 +19,8 @@ package android.server.wm.lifecycle;
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-import static android.server.wm.ActivityManagerState.STATE_PAUSED;
-import static android.server.wm.ActivityManagerState.STATE_STOPPED;
+import static android.server.wm.WindowManagerState.STATE_PAUSED;
+import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.UiDeviceUtils.pressBackButton;
 import static android.server.wm.lifecycle.ActivityLifecycleClientTestBase.LaunchForResultActivity.EXTRA_LAUNCH_ON_RESULT;
 import static android.server.wm.lifecycle.ActivityLifecycleClientTestBase.LaunchForResultActivity.EXTRA_LAUNCH_ON_RESUME_AFTER_RESULT;
@@ -152,8 +152,8 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         waitAndAssertActivityStates(state(translucentActivity, ON_STOP));
 
         final ComponentName firstActivityName = getComponentName(FirstActivity.class);
-        mAmWmState.computeState(firstActivityName);
-        int firstActivityStack = mAmWmState.getAmState().getStackIdByActivity(firstActivityName);
+        mWmState.computeState(firstActivityName);
+        int firstActivityStack = mWmState.getStackIdByActivity(firstActivityName);
 
         // Move translucent activity into the stack with the first activity
         getLifecycleLog().clear();
@@ -684,7 +684,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         // Start activity in another process to put original activity in background.
         final Activity testActivity = launchActivityAndWait(FirstActivity.class);
         final boolean isTranslucent = isTranslucent(testActivity);
-        mAmWmState.waitForActivityState(
+        mWmState.waitForActivityState(
                 targetActivity, isTranslucent ? STATE_PAUSED : STATE_STOPPED);
 
         // Only try to kill targetActivity if the top activity isn't translucent. If the top
@@ -699,8 +699,8 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         pressBackButton();
 
         // Verify activity is resumed
-        mAmWmState.waitForValidState(targetActivity);
-        mAmWmState.assertResumedActivity("Originally launched activity should be resumed",
+        mWmState.waitForValidState(targetActivity);
+        mWmState.assertResumedActivity("Originally launched activity should be resumed",
                 targetActivity);
     }
 

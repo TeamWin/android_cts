@@ -104,7 +104,7 @@ public class ToastTest extends ActivityManagerTestBase {
         boolean toastDisplayed = getBroadcastReceivedVariable(ACTION_TOAST_DISPLAYED).block(
                 TOAST_DISPLAY_TIMEOUT_MS);
         assertTrue("Toast not displayed on time", toastDisplayed);
-        WindowManagerState wmState = getAmWmState().getWmState();
+        WindowManagerState wmState = getWmState();
         wmState.computeState();
         WindowState toastWindow = wmState.findFirstWindowWithType(LayoutParams.TYPE_TOAST);
         assertNotNull("Couldn't retrieve toast window", toastWindow);

@@ -40,12 +40,12 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     @Test
     public void testSplashscreenContent() {
         launchActivityNoWait(SPLASHSCREEN_ACTIVITY);
-        mAmWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
-        mAmWmState.getWmState().getStableBounds();
+        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
+        mWmState.getStableBounds();
         final Bitmap image = takeScreenshot();
         // Use ratios to flexibly accomodate circular or not quite rectangular displays
         // Note: Color.BLACK is the pixel color outside of the display region
-        assertColors(image, mAmWmState.getWmState().getStableBounds(),
+        assertColors(image, mWmState.getStableBounds(),
             Color.RED, 0.50f, Color.BLACK, 0.02f);
     }
 

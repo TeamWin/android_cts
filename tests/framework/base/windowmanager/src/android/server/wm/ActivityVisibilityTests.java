@@ -29,9 +29,8 @@ import static android.content.Intent.CATEGORY_HOME;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_TASK_ON_HOME;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
-import static android.server.wm.ActivityManagerState.STATE_PAUSED;
-import static android.server.wm.ActivityManagerState.STATE_RESUMED;
-import static android.server.wm.ActivityManagerState.STATE_STOPPED;
+import static android.server.wm.WindowManagerState.STATE_RESUMED;
+import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.UiDeviceUtils.pressBackButton;
 import static android.server.wm.UiDeviceUtils.pressHomeButton;
 import static android.server.wm.VirtualDisplayHelper.waitForDefaultDisplayState;
@@ -69,7 +68,6 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.CommandSession.ActivitySession;
@@ -97,24 +95,24 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         }
 
         executeShellCommand(getAmStartCmdOverHome(LAUNCH_PIP_ON_PIP_ACTIVITY));
-        mAmWmState.waitForValidState(LAUNCH_PIP_ON_PIP_ACTIVITY);
+        mWmState.waitForValidState(LAUNCH_PIP_ON_PIP_ACTIVITY);
         // NOTE: moving to pinned stack will trigger the pip-on-pip activity to launch the
         // translucent activity.
-        final int stackId = mAmWmState.getAmState().getStackIdByActivity(
+        final int stackId = mWmState.getStackIdByActivity(
                 LAUNCH_PIP_ON_PIP_ACTIVITY);
 
         assertNotEquals(stackId, INVALID_STACK_ID);
         moveTopActivityToPinnedStack(stackId);
-        mAmWmState.waitForValidState(
+        mWmState.waitForValidState(
                 new WaitForValidActivityState.Builder(ALWAYS_FOCUSABLE_PIP_ACTIVITY)
                         .setWindowingMode(WINDOWING_MODE_PINNED)
                         .setActivityType(ACTIVITY_TYPE_STANDARD)
                         .build());
 
-        mAmWmState.assertFrontStack("Pinned stack must be the front stack.",
+        mWmState.assertFrontStack("Pinned stack must be the front stack.",
                 WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
-        mAmWmState.assertVisibility(LAUNCH_PIP_ON_PIP_ACTIVITY, true);
-        mAmWmState.assertVisibility(ALWAYS_FOCUSABLE_PIP_ACTIVITY, true);
+        mWmState.assertVisibility(LAUNCH_PIP_ON_PIP_ACTIVITY, true);
+        mWmState.assertVisibility(ALWAYS_FOCUSABLE_PIP_ACTIVITY, true);
     }
 
     /**
@@ -130,10 +128,10 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         launchHomeActivity();
         launchActivity(ALWAYS_FOCUSABLE_PIP_ACTIVITY);
 
-        mAmWmState.assertFrontStack("Fullscreen stack must be the front stack.",
+        mWmState.assertFrontStack("Fullscreen stack must be the front stack.",
                 WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
-        mAmWmState.assertVisibility(ALWAYS_FOCUSABLE_PIP_ACTIVITY, true);
-        mAmWmState.assertHomeActivityVisible(true);
+        mWmState.assertVisibility(ALWAYS_FOCUSABLE_PIP_ACTIVITY, true);
+        mWmState.assertHomeActivityVisible(true);
     }
 
     /**
@@ -150,20 +148,20 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         launchActivity(TEST_ACTIVITY);
         launchHomeActivity();
         launchActivity(ALWAYS_FOCUSABLE_PIP_ACTIVITY);
-        final int stackId = mAmWmState.getAmState().getStackIdByActivity(
+        final int stackId = mWmState.getStackIdByActivity(
                 ALWAYS_FOCUSABLE_PIP_ACTIVITY);
 
         assertNotEquals(stackId, INVALID_STACK_ID);
         moveTopActivityToPinnedStack(stackId);
-        mAmWmState.waitForValidState(
+        mWmState.waitForValidState(
                 new WaitForValidActivityState.Builder(ALWAYS_FOCUSABLE_PIP_ACTIVITY)
                         .setWindowingMode(WINDOWING_MODE_PINNED)
                         .setActivityType(ACTIVITY_TYPE_STANDARD)
                         .build());
 
-        mAmWmState.assertVisibility(ALWAYS_FOCUSABLE_PIP_ACTIVITY, true);
-        mAmWmState.assertVisibility(TEST_ACTIVITY, false);
-        mAmWmState.assertHomeActivityVisible(true);
+        mWmState.assertVisibility(ALWAYS_FOCUSABLE_PIP_ACTIVITY, true);
+        mWmState.assertVisibility(TEST_ACTIVITY, false);
+        mWmState.assertHomeActivityVisible(true);
     }
 
     @Test
@@ -175,13 +173,13 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
         forceStopHome();
 
-        assertEquals(mAmWmState.getAmState().getResumedActivitiesCount(), 0);
-        assertEquals(mAmWmState.getAmState().getStackCounts() , 0);
+        assertEquals(mWmState.getResumedActivitiesCount(), 0);
+        assertEquals(mWmState.getRootTasksCount() , 0);
 
         pressHomeButton();
 
-        mAmWmState.waitForHomeActivityVisible();
-        mAmWmState.assertHomeActivityVisible(true);
+        mWmState.waitForHomeActivityVisible();
+        mWmState.assertHomeActivityVisible(true);
     }
 
     private void forceStopHome() {
@@ -205,17 +203,17 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
                 getLaunchActivityBuilder().setTargetActivity(DOCKED_ACTIVITY),
                 getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
         launchActivity(TRANSLUCENT_ACTIVITY, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
-        mAmWmState.computeState(false /* compareTaskAndStackBounds */,
+        mWmState.computeState(
                 new WaitForValidActivityState(TEST_ACTIVITY),
                 new WaitForValidActivityState(DOCKED_ACTIVITY),
                 new WaitForValidActivityState(TRANSLUCENT_ACTIVITY));
-        mAmWmState.assertContainsStack("Must contain fullscreen stack.",
+        mWmState.assertContainsStack("Must contain fullscreen stack.",
                 WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
-        mAmWmState.assertContainsStack("Must contain docked stack.",
+        mWmState.assertContainsStack("Must contain docked stack.",
                 WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
-        mAmWmState.assertVisibility(DOCKED_ACTIVITY, true);
-        mAmWmState.assertVisibility(TEST_ACTIVITY, true);
-        mAmWmState.assertVisibility(TRANSLUCENT_ACTIVITY, true);
+        mWmState.assertVisibility(DOCKED_ACTIVITY, true);
+        mWmState.assertVisibility(TEST_ACTIVITY, true);
+        mWmState.assertVisibility(TRANSLUCENT_ACTIVITY, true);
     }
 
     @Test
@@ -238,7 +236,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
                                 useWindowFlags))
                         .setTargetActivity(TURN_SCREEN_ON_ACTIVITY));
 
-        mAmWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY, true);
+        mWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY, true);
         assertTrue("Display turns on by " + (useWindowFlags ? "flags" : "APIs"),
                 isDisplayOn(DEFAULT_DISPLAY));
 
@@ -258,18 +256,18 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
                 .setTargetActivity(BROADCAST_RECEIVER_ACTIVITY)
                 .setWaitForLaunched(true)
                 .execute();
-        mAmWmState.assertVisibility(BROADCAST_RECEIVER_ACTIVITY, true);
+        mWmState.assertVisibility(BROADCAST_RECEIVER_ACTIVITY, true);
         // Launch something to fullscreen stack to make it focused.
         launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
-        mAmWmState.assertVisibility(TEST_ACTIVITY, true);
+        mWmState.assertVisibility(TEST_ACTIVITY, true);
         // Finish activity in non-focused (docked) stack.
         mBroadcastActionTrigger.finishBroadcastReceiverActivity();
 
-        mAmWmState.computeState(LAUNCHING_ACTIVITY);
+        mWmState.computeState(LAUNCHING_ACTIVITY);
         // The testing activities support multiple resume (target SDK >= Q).
-        mAmWmState.waitForActivityState(LAUNCHING_ACTIVITY, STATE_RESUMED);
-        mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true);
-        mAmWmState.waitAndAssertActivityRemoved(BROADCAST_RECEIVER_ACTIVITY);
+        mWmState.waitForActivityState(LAUNCHING_ACTIVITY, STATE_RESUMED);
+        mWmState.assertVisibility(LAUNCHING_ACTIVITY, true);
+        mWmState.waitAndAssertActivityRemoved(BROADCAST_RECEIVER_ACTIVITY);
     }
 
     @Test
@@ -285,8 +283,8 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
                 .setIntentFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_TASK_ON_HOME).execute();
 
         mBroadcastActionTrigger.finishBroadcastReceiverActivity();
-        mAmWmState.waitForHomeActivityVisible();
-        mAmWmState.assertHomeActivityVisible(true);
+        mWmState.waitForHomeActivityVisible();
+        mWmState.assertHomeActivityVisible(true);
     }
 
     @Test
@@ -303,21 +301,21 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         // Make sure home activity is visible.
         launchHomeActivity();
         if (hasHomeScreen()) {
-            mAmWmState.assertHomeActivityVisible(true /* visible */);
+            mWmState.assertHomeActivityVisible(true /* visible */);
         }
 
         // Launch an activity that calls "moveTaskToBack" to finish itself.
         launchActivity(MOVE_TASK_TO_BACK_ACTIVITY, EXTRA_FINISH_POINT, finishPoint);
-        mAmWmState.assertVisibility(MOVE_TASK_TO_BACK_ACTIVITY, true);
+        mWmState.assertVisibility(MOVE_TASK_TO_BACK_ACTIVITY, true);
 
         // Launch a different activity on top.
         launchActivity(BROADCAST_RECEIVER_ACTIVITY);
-        mAmWmState.waitForActivityState(BROADCAST_RECEIVER_ACTIVITY, STATE_RESUMED);
-        mAmWmState.waitForActivityState(MOVE_TASK_TO_BACK_ACTIVITY,STATE_STOPPED);
+        mWmState.waitForActivityState(BROADCAST_RECEIVER_ACTIVITY, STATE_RESUMED);
+        mWmState.waitForActivityState(MOVE_TASK_TO_BACK_ACTIVITY,STATE_STOPPED);
         final boolean shouldBeVisible =
-                !mAmWmState.getAmState().isBehindOpaqueActivities(MOVE_TASK_TO_BACK_ACTIVITY);
-        mAmWmState.assertVisibility(MOVE_TASK_TO_BACK_ACTIVITY, shouldBeVisible);
-        mAmWmState.assertVisibility(BROADCAST_RECEIVER_ACTIVITY, true);
+                !mWmState.isBehindOpaqueActivities(MOVE_TASK_TO_BACK_ACTIVITY);
+        mWmState.assertVisibility(MOVE_TASK_TO_BACK_ACTIVITY, shouldBeVisible);
+        mWmState.assertVisibility(BROADCAST_RECEIVER_ACTIVITY, true);
 
         // Finish the top-most activity.
         mBroadcastActionTrigger.finishBroadcastReceiverActivity();
@@ -326,8 +324,8 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
 
         // Home must be visible.
         if (hasHomeScreen()) {
-            mAmWmState.waitForHomeActivityVisible();
-            mAmWmState.assertHomeActivityVisible(true /* visible */);
+            mWmState.waitForHomeActivityVisible();
+            mWmState.assertHomeActivityVisible(true /* visible */);
         }
     }
 
@@ -340,7 +338,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         // Start with home on top
         launchHomeActivity();
         if (hasHomeScreen()) {
-            mAmWmState.assertHomeActivityVisible(true /* visible */);
+            mWmState.assertHomeActivityVisible(true /* visible */);
         }
 
         // Launch the launching activity to the foreground
@@ -360,10 +358,10 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         // Press back
         pressBackButton();
 
-        mAmWmState.waitForValidState(ALT_LAUNCHING_ACTIVITY);
+        mWmState.waitForValidState(ALT_LAUNCHING_ACTIVITY);
 
         // Ensure the alternate launching activity is in focus
-        mAmWmState.assertFocusedActivity("Alt Launching Activity must be focused",
+        mWmState.assertFocusedActivity("Alt Launching Activity must be focused",
                 ALT_LAUNCHING_ACTIVITY);
     }
 
@@ -376,7 +374,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         // Start with home on top
         launchHomeActivity();
         if (hasHomeScreen()) {
-            mAmWmState.assertHomeActivityVisible(true /* visible */);
+            mWmState.assertHomeActivityVisible(true /* visible */);
         }
 
         // Launch the launching activity to the foreground
@@ -390,7 +388,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         // Return home
         launchHomeActivity();
         if (hasHomeScreen()) {
-            mAmWmState.assertHomeActivityVisible(true /* visible */);
+            mWmState.assertHomeActivityVisible(true /* visible */);
         }
         // Launch the launching activity from the alternate launching activity with reorder to
         // front.
@@ -398,19 +396,19 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         // Bring launching activity back to the foreground
         launchActivityNoWait(LAUNCHING_ACTIVITY);
         // Wait for the most front activity of the task.
-        mAmWmState.waitForValidState(ALT_LAUNCHING_ACTIVITY);
+        mWmState.waitForValidState(ALT_LAUNCHING_ACTIVITY);
 
         // Ensure the alternate launching activity is still in focus.
-        mAmWmState.assertFocusedActivity("Alt Launching Activity must be focused",
+        mWmState.assertFocusedActivity("Alt Launching Activity must be focused",
                 ALT_LAUNCHING_ACTIVITY);
 
         pressBackButton();
 
         // Wait for the bottom activity back to the foreground.
-        mAmWmState.waitForValidState(LAUNCHING_ACTIVITY);
+        mWmState.waitForValidState(LAUNCHING_ACTIVITY);
 
         // Ensure launching activity was brought forward.
-        mAmWmState.assertFocusedActivity("Launching Activity must be focused",
+        mWmState.assertFocusedActivity("Launching Activity must be focused",
                 LAUNCHING_ACTIVITY);
     }
 
@@ -434,8 +432,8 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         launchNoIdleActivity();
 
         pressBackButton();
-        mAmWmState.waitForHomeActivityVisible();
-        mAmWmState.assertHomeActivityVisible(true);
+        mWmState.waitForHomeActivityVisible();
+        mWmState.assertHomeActivityVisible(true);
     }
 
     /**
@@ -448,7 +446,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         launchNoIdleActivity();
         waitAndAssertActivityState(LAUNCHING_ACTIVITY, STATE_STOPPED,
                 "Activity should be stopped before idle timeout");
-        mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, false);
+        mWmState.assertVisibility(LAUNCHING_ACTIVITY, false);
     }
 
     private void launchNoIdleActivity() {
@@ -466,7 +464,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         lockScreenSession.disableLockScreen().sleepDevice();
         separateTestJournal();
         launchActivity(TURN_SCREEN_ON_ATTR_ACTIVITY);
-        mAmWmState.assertVisibility(TURN_SCREEN_ON_ATTR_ACTIVITY, true);
+        mWmState.assertVisibility(TURN_SCREEN_ON_ATTR_ACTIVITY, true);
         assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
         assertSingleLaunch(TURN_SCREEN_ON_ATTR_ACTIVITY);
     }
@@ -480,7 +478,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         separateTestJournal();
         launchActivityNoWait(TURN_SCREEN_ON_ATTR_ACTIVITY);
         // Wait for the activity stopped because lock screen prevent showing the activity.
-        mAmWmState.waitForActivityState(TURN_SCREEN_ON_ATTR_ACTIVITY, STATE_STOPPED);
+        mWmState.waitForActivityState(TURN_SCREEN_ON_ATTR_ACTIVITY, STATE_STOPPED);
         assertFalse("Display keeps off", isDisplayOn(DEFAULT_DISPLAY));
         assertSingleLaunchAndStop(TURN_SCREEN_ON_ATTR_ACTIVITY);
     }
@@ -489,10 +487,10 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     public void testTurnScreenOnShowOnLockAttr() {
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
         lockScreenSession.sleepDevice();
-        mAmWmState.waitForAllStoppedActivities();
+        mWmState.waitForAllStoppedActivities();
         separateTestJournal();
         launchActivity(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY);
-        mAmWmState.assertVisibility(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY, true);
+        mWmState.assertVisibility(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY, true);
         assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
         assertSingleLaunch(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY);
     }
@@ -501,17 +499,17 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     public void testTurnScreenOnAttrRemove() {
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
         lockScreenSession.sleepDevice();
-        mAmWmState.waitForAllStoppedActivities();
+        mWmState.waitForAllStoppedActivities();
         separateTestJournal();
         launchActivity(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY);
         assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
         assertSingleLaunch(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY);
 
         lockScreenSession.sleepDevice();
-        mAmWmState.waitForAllStoppedActivities();
+        mWmState.waitForAllStoppedActivities();
         separateTestJournal();
         launchActivity(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY);
-        mAmWmState.waitForActivityState(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY, STATE_STOPPED);
+        mWmState.waitForActivityState(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY, STATE_STOPPED);
         // Display should keep off, because setTurnScreenOn(false) has been called at
         // {@link TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY}'s onStop.
         assertFalse("Display keeps off", isDisplayOn(DEFAULT_DISPLAY));
@@ -524,7 +522,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         lockScreenSession.sleepDevice();
         separateTestJournal();
         launchActivity(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY);
-        mAmWmState.assertVisibility(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, true);
+        mWmState.assertVisibility(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, true);
         assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
         assertSingleLaunch(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY);
 
@@ -535,7 +533,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
                 "Activity should be stopped");
         separateTestJournal();
         launchActivity(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY);
-        mAmWmState.assertVisibility(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, true);
+        mWmState.assertVisibility(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, true);
         // Wait more for display state change since turning the display ON may take longer
         // and reported after the activity launch.
         waitForDefaultDisplayState(true /* wantOn */);
@@ -548,7 +546,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
         lockScreenSession.sleepDevice();
         launchActivity(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY);
-        mAmWmState.assertVisibility(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, true);
+        mWmState.assertVisibility(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, true);
 
         lockScreenSession.sleepDevice();
         waitAndAssertActivityState(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, STATE_STOPPED,
@@ -567,10 +565,10 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
             // Start home activity directly
             launchHomeActivity();
 
-            mAmWmState.assertHomeActivityVisible(true);
+            mWmState.assertHomeActivityVisible(true);
             waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED,
                     "Activity should become STOPPED");
-            mAmWmState.assertVisibility(TEST_ACTIVITY, false);
+            mWmState.assertVisibility(TEST_ACTIVITY, false);
         }
     }
 
@@ -586,11 +584,11 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
             pressHomeButton();
 
             // Wait and assert home and activity states
-            mAmWmState.waitForHomeActivityVisible();
-            mAmWmState.assertHomeActivityVisible(true);
+            mWmState.waitForHomeActivityVisible();
+            mWmState.assertHomeActivityVisible(true);
             waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED,
                     "Activity should become STOPPED");
-            mAmWmState.assertVisibility(TEST_ACTIVITY, false);
+            mWmState.assertVisibility(TEST_ACTIVITY, false);
         }
     }
 
@@ -602,12 +600,12 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
 
             // Press home button
             pressHomeButton();
-            mAmWmState.waitForHomeActivityVisible();
-            mAmWmState.assertHomeActivityVisible(true);
+            mWmState.waitForHomeActivityVisible();
+            mWmState.assertHomeActivityVisible(true);
         }
         waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED,
                 "Activity should become STOPPED");
-        mAmWmState.assertVisibility(TEST_ACTIVITY, false);
+        mWmState.assertVisibility(TEST_ACTIVITY, false);
     }
 
     @Test
@@ -680,11 +678,11 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     private void verifyActivityVisibilities(ComponentName activityBehind,
             boolean behindFullScreen) {
         if (behindFullScreen) {
-            mAmWmState.waitForActivityState(activityBehind, STATE_STOPPED);
-            mAmWmState.assertVisibility(activityBehind, false);
+            mWmState.waitForActivityState(activityBehind, STATE_STOPPED);
+            mWmState.assertVisibility(activityBehind, false);
         } else {
-            mAmWmState.waitForValidState(activityBehind);
-            mAmWmState.assertVisibility(activityBehind, true);
+            mWmState.waitForValidState(activityBehind);
+            mWmState.assertVisibility(activityBehind, true);
         }
     }
 }

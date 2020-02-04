@@ -67,7 +67,7 @@ abstract class ParentChildTestBase<T extends Activity> extends ActivityManagerTe
         doSingleTest(t);
         activityRule().finishActivity();
 
-        mAmWmState.waitForWithAmState(amState -> !amState.containsStack(
+        mWmState.waitForWithAmState(amState -> !amState.containsStack(
                 WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD),
                 "docked stack to be removed");
     }

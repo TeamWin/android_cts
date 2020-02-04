@@ -16,8 +16,8 @@
 
 package android.server.wm;
 
-import static android.server.wm.ActivityManagerState.STATE_RESUMED;
-import static android.server.wm.ActivityManagerState.STATE_STOPPED;
+import static android.server.wm.WindowManagerState.STATE_RESUMED;
+import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.app.Components.INPUT_METHOD_TEST_ACTIVITY;
 import static android.server.wm.app.Components.InputMethodTestActivity.EXTRA_PRIVATE_IME_OPTIONS;
 import static android.server.wm.app.Components.InputMethodTestActivity.EXTRA_TEST_CURSOR_ANCHOR_INFO;
@@ -135,11 +135,11 @@ public class ActivityViewTest extends ActivityManagerTestBase {
             int requestedHeight) {
         // Display size for the activity may not get updated right away. Retry in case.
         return Condition.waitFor("display size=" + requestedWidth + "x" + requestedHeight, () -> {
-            final WindowManagerState wmState = mAmWmState.getWmState();
+            final WindowManagerState wmState = mWmState;
             wmState.computeState();
 
-            final int displayId = mAmWmState.getAmState().getDisplayByActivity(activity);
-            final WindowManagerState.Display display = wmState.getDisplay(displayId);
+            final int displayId = mWmState.getDisplayByActivity(activity);
+            final WindowManagerState.DisplayContent display = wmState.getDisplay(displayId);
             int avDisplayWidth = 0;
             int avDisplayHeight = 0;
             if (display != null) {
@@ -161,7 +161,7 @@ public class ActivityViewTest extends ActivityManagerTestBase {
         separateTestJournal();
         mInstrumentation.runOnMainSync(() -> mActivityView.setVisibility(View.GONE));
         mInstrumentation.waitForIdleSync();
-        mAmWmState.waitForActivityState(TEST_ACTIVITY, STATE_STOPPED);
+        mWmState.waitForActivityState(TEST_ACTIVITY, STATE_STOPPED);
 
         assertLifecycleCounts(TEST_ACTIVITY, 0, 0, 0, 1, 1, 0, CountSpec.DONT_CARE);
     }
@@ -174,7 +174,7 @@ public class ActivityViewTest extends ActivityManagerTestBase {
         separateTestJournal();
         mInstrumentation.runOnMainSync(() -> mActivityView.setVisibility(View.INVISIBLE));
         mInstrumentation.waitForIdleSync();
-        mAmWmState.waitForActivityState(TEST_ACTIVITY, STATE_STOPPED);
+        mWmState.waitForActivityState(TEST_ACTIVITY, STATE_STOPPED);
 
         assertLifecycleCounts(TEST_ACTIVITY, 0, 0, 0, 1, 1, 0, CountSpec.DONT_CARE);
     }
@@ -187,14 +187,14 @@ public class ActivityViewTest extends ActivityManagerTestBase {
         separateTestJournal();
         mInstrumentation.runOnMainSync(() -> mActivityView.setVisibility(View.INVISIBLE));
         mInstrumentation.waitForIdleSync();
-        mAmWmState.waitForActivityState(TEST_ACTIVITY, STATE_STOPPED);
+        mWmState.waitForActivityState(TEST_ACTIVITY, STATE_STOPPED);
 
         assertLifecycleCounts(TEST_ACTIVITY, 0, 0, 0, 1, 1, 0, CountSpec.DONT_CARE);
 
         separateTestJournal();
         mInstrumentation.runOnMainSync(() -> mActivityView.setVisibility(View.VISIBLE));
         mInstrumentation.waitForIdleSync();
-        mAmWmState.waitForActivityState(TEST_ACTIVITY, STATE_RESUMED);
+        mWmState.waitForActivityState(TEST_ACTIVITY, STATE_RESUMED);
 
         assertLifecycleCounts(TEST_ACTIVITY, 0, 1, 1, 0, 0, 0, CountSpec.DONT_CARE);
     }
@@ -268,7 +268,7 @@ public class ActivityViewTest extends ActivityManagerTestBase {
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
         intent.putExtras(extras);
         SystemUtil.runWithShellPermissionIdentity(() -> mActivityView.startActivity(intent));
-        mAmWmState.waitForValidState(activity);
+        mWmState.waitForValidState(activity);
     }
 
     // Test activity

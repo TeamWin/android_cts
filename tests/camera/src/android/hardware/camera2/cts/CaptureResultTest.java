@@ -820,6 +820,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         waiverKeys.add(CaptureResult.STATISTICS_FACE_DETECT_MODE);
         waiverKeys.add(CaptureResult.FLASH_MODE);
         waiverKeys.add(CaptureResult.SCALER_CROP_REGION);
+        waiverKeys.add(CaptureResult.SCALER_ROTATE_AND_CROP);
 
         return waiverKeys;
     }

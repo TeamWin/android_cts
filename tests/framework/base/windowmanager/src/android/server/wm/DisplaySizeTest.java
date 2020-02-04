@@ -60,36 +60,36 @@ public class DisplaySizeTest extends ActivityManagerTestBase {
     public void testCompatibilityDialog() {
         // Launch some other app (not to perform density change on launcher).
         launchActivity(TEST_ACTIVITY);
-        mAmWmState.assertActivityDisplayed(TEST_ACTIVITY);
+        mWmState.assertActivityDisplayed(TEST_ACTIVITY);
 
         createManagedScreenDensitySession().setUnsupportedDensity();
 
         // Launch target app.
         launchActivity(SMALLEST_WIDTH_ACTIVITY);
-        mAmWmState.assertActivityDisplayed(SMALLEST_WIDTH_ACTIVITY);
-        mAmWmState.assertWindowDisplayed(UNSUPPORTED_DISPLAY_SIZE_DIALOG_NAME);
+        mWmState.assertActivityDisplayed(SMALLEST_WIDTH_ACTIVITY);
+        mWmState.assertWindowDisplayed(UNSUPPORTED_DISPLAY_SIZE_DIALOG_NAME);
     }
 
     @Test
     public void testCompatibilityDialogWhenFocused() {
         launchActivity(SMALLEST_WIDTH_ACTIVITY);
-        mAmWmState.assertActivityDisplayed(SMALLEST_WIDTH_ACTIVITY);
+        mWmState.assertActivityDisplayed(SMALLEST_WIDTH_ACTIVITY);
 
         createManagedScreenDensitySession().setUnsupportedDensity();
 
-        mAmWmState.assertWindowDisplayed(UNSUPPORTED_DISPLAY_SIZE_DIALOG_NAME);
+        mWmState.assertWindowDisplayed(UNSUPPORTED_DISPLAY_SIZE_DIALOG_NAME);
     }
 
     @Test
     public void testCompatibilityDialogAfterReturn() {
         // Launch target app.
         launchActivity(SMALLEST_WIDTH_ACTIVITY);
-        mAmWmState.assertActivityDisplayed(SMALLEST_WIDTH_ACTIVITY);
+        mWmState.assertActivityDisplayed(SMALLEST_WIDTH_ACTIVITY);
         // Launch another activity.
         final CommandSession.ActivitySession activity = createManagedActivityClientSession()
                 .startActivity(getLaunchActivityBuilder().setUseInstrumentation()
                         .setTargetActivity(TEST_ACTIVITY));
-        mAmWmState.assertActivityDisplayed(TEST_ACTIVITY);
+        mWmState.assertActivityDisplayed(TEST_ACTIVITY);
         separateTestJournal();
 
         createManagedScreenDensitySession().setUnsupportedDensity();
@@ -97,8 +97,8 @@ public class DisplaySizeTest extends ActivityManagerTestBase {
         assertActivityLifecycle(TEST_ACTIVITY, true /* relaunched */);
         activity.finish();
 
-        mAmWmState.assertActivityDisplayed(SMALLEST_WIDTH_ACTIVITY);
-        mAmWmState.assertWindowDisplayed(UNSUPPORTED_DISPLAY_SIZE_DIALOG_NAME);
+        mWmState.assertActivityDisplayed(SMALLEST_WIDTH_ACTIVITY);
+        mWmState.assertWindowDisplayed(UNSUPPORTED_DISPLAY_SIZE_DIALOG_NAME);
     }
 
     @Test

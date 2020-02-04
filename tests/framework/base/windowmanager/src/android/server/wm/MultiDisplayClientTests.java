@@ -40,7 +40,7 @@ import android.content.Intent;
 import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.ActivityManagerState.DisplayContent;
+import android.server.wm.WindowManagerState.DisplayContent;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
@@ -179,7 +179,7 @@ public class MultiDisplayClientTests extends MultiDisplayTestBase {
 
         // Verify if IME is showed on the target display.
         expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
-        mAmWmState.waitAndAssertImeWindowShownOnDisplay(targetDisplayId);
+        mWmState.waitAndAssertImeWindowShownOnDisplay(targetDisplayId);
 
         final int imeDisplayId = expectCommand(stream, imeSession.callGetDisplayId(), TIMEOUT)
                 .getReturnIntegerValue();
@@ -262,14 +262,14 @@ public class MultiDisplayClientTests extends MultiDisplayTestBase {
 
     private void waitAndAssertConfigurationChange(ComponentName activityName) {
         assertTrue("Must receive a single configuration change",
-                mAmWmState.waitForWithAmState(
+                mWmState.waitForWithAmState(
                         state -> getCallbackCount(activityName, ON_CONFIGURATION_CHANGED) == 1,
                         activityName + " receives configuration change"));
     }
 
     private void waitAndAssertResume(ComponentName activityName) {
         assertTrue("Must be resumed once",
-                mAmWmState.waitForWithAmState(
+                mWmState.waitForWithAmState(
                         state -> getCallbackCount(activityName, ON_RESUME) == 1,
                         activityName + " performs resume"));
     }

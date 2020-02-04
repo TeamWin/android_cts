@@ -50,9 +50,8 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.ActivityManagerState;
-import android.server.wm.ActivityManagerState.ActivityStack;
-import android.server.wm.ActivityManagerState.ActivityTask;
+import android.server.wm.WindowManagerState;
+import android.server.wm.WindowManagerState.ActivityTask;
 import android.server.wm.lifecycle.LifecycleLog.ActivityCallback;
 import android.util.Pair;
 
@@ -88,7 +87,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         getLifecycleLog().clear();
         activity.finish();
-        mAmWmState.waitForActivityRemoved(getComponentName(CallbackTrackingActivity.class));
+        mWmState.waitForActivityRemoved(getComponentName(CallbackTrackingActivity.class));
 
         LifecycleVerifier.assertResumeToDestroySequence(CallbackTrackingActivity.class,
                 getLifecycleLog());
@@ -472,7 +471,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         // Tap on first activity to switch the focus
         getLifecycleLog().clear();
-        final ActivityStack dockedStack = getStackForTaskId(firstActivity.getTaskId());
+        final ActivityTask dockedStack = getStackForTaskId(firstActivity.getTaskId());
         tapOnStackCenter(dockedStack);
 
         // Wait and assert focus switch
@@ -485,7 +484,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         // Tap on second activity to switch the focus again
         getLifecycleLog().clear();
-        final ActivityStack sideStack = getStackForTaskId(secondActivity.getTaskId());
+        final ActivityTask sideStack = getStackForTaskId(secondActivity.getTaskId());
         tapOnStackCenter(sideStack);
 
         // Wait and assert focus switch
@@ -531,7 +530,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         // Tap on first activity to switch the top resumed one
         getLifecycleLog().clear();
-        final ActivityStack dockedStack = getStackForTaskId(firstActivity.getTaskId());
+        final ActivityTask dockedStack = getStackForTaskId(firstActivity.getTaskId());
         tapOnStackCenter(dockedStack);
 
         // Wait and assert top resumed position switch
@@ -544,9 +543,9 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         // Tap on second activity to switch the top resumed activity again
         getLifecycleLog().clear();
-        final ActivityTask sideTask = mAmWmState.getAmState()
+        final ActivityTask sideTask = mWmState
                 .getTaskByActivity(secondActivityComponent);
-        final ActivityStack sideStack = getStackForTaskId(sideTask.getTaskId());
+        final ActivityTask sideStack = getStackForTaskId(sideTask.getTaskId());
         tapOnStackCenter(sideStack);
 
         // Wait and assert top resumed position switch
@@ -592,7 +591,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         // Tap on first activity to switch the top resumed one
         getLifecycleLog().clear();
-        final ActivityStack dockedStack = getStackForTaskId(slowActivity.getTaskId());
+        final ActivityTask dockedStack = getStackForTaskId(slowActivity.getTaskId());
         tapOnStackCenter(dockedStack);
 
         // Wait and assert top resumed position switch.
@@ -605,9 +604,9 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         // Tap on second activity to switch the top resumed activity again
         getLifecycleLog().clear();
-        final ActivityTask sideTask = mAmWmState.getAmState()
+        final ActivityTask sideTask = mWmState
                 .getTaskByActivity(secondActivityComponent);
-        final ActivityStack sideStack = getStackForTaskId(sideTask.getTaskId());
+        final ActivityTask sideStack = getStackForTaskId(sideTask.getTaskId());
         tapOnStackCenter(sideStack);
 
         // Wait and assert top resumed position switch. Because of timeout the new top position will
@@ -736,7 +735,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new simulated display
-            final ActivityManagerState.DisplayContent newDisplay
+            final WindowManagerState.DisplayContent newDisplay
                     = virtualDisplaySession.setSimulateDisplay(true).createDisplay();
 
             // Launch another activity on new secondary display.
@@ -785,7 +784,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
                 DEFAULT_DISPLAY, "Activity launched on default display must be focused");
 
         // Create new simulated display
-        final ActivityManagerState.DisplayContent newDisplay = createManagedVirtualDisplaySession()
+        final WindowManagerState.DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true)
                 .createDisplay();
 
@@ -835,7 +834,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         assumeTrue(supportsMultiDisplay());
 
         // Create new simulated display.
-        final ActivityManagerState.DisplayContent newDisplay = createManagedVirtualDisplaySession()
+        final WindowManagerState.DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true)
                 .createDisplay();
 
@@ -904,7 +903,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         assumeTrue(supportsMultiDisplay());
 
         // Create new simulated display.
-        final ActivityManagerState.DisplayContent newDisplay = createManagedVirtualDisplaySession()
+        final WindowManagerState.DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true)
                 .createDisplay();
 
@@ -979,7 +978,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
                 DEFAULT_DISPLAY, "Activity launched on default display must be focused");
 
         // Create new simulated display.
-        final ActivityManagerState.DisplayContent newDisplay = createManagedVirtualDisplaySession()
+        final WindowManagerState.DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true)
                 .createDisplay();
 
@@ -1024,7 +1023,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
                 DEFAULT_DISPLAY, "Activity launched on default display must be focused");
 
         // Create new simulated display.
-        final ActivityManagerState.DisplayContent newDisplay = createManagedVirtualDisplaySession()
+        final WindowManagerState.DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true)
                 .createDisplay();
 
@@ -1081,9 +1080,9 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         // PipMenuActivity is focusable, when the pinned stack gain top focus means the
         // PipMenuActivity is launched and resumed, then when pinned stack lost top focus means the
         // PipMenuActivity is finished.
-        mAmWmState.waitWindowingModeTopFocus(WINDOWING_MODE_PINNED, true /* topFocus */
+        mWmState.waitWindowingModeTopFocus(WINDOWING_MODE_PINNED, true /* topFocus */
                 , "wait PipMenuActivity get top focus");
-        mAmWmState.waitWindowingModeTopFocus(WINDOWING_MODE_PINNED, false /* topFocus */
+        mWmState.waitWindowingModeTopFocus(WINDOWING_MODE_PINNED, false /* topFocus */
                 , "wait PipMenuActivity lost top focus");
         waitAndAssertActivityStates(state(activity, ON_TOP_POSITION_GAINED));
 

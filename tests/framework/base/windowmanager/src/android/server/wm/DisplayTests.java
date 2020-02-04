@@ -29,7 +29,7 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.hardware.display.DisplayManager;
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.ActivityManagerState.DisplayContent;
+import android.server.wm.WindowManagerState.DisplayContent;
 import android.util.Size;
 import android.view.Display;
 
@@ -103,20 +103,20 @@ public class DisplayTests extends MultiDisplayTestBase {
 
         // Launch activity on new secondary display.
         launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
-        mAmWmState.computeState(TEST_ACTIVITY);
+        mWmState.computeState(TEST_ACTIVITY);
 
-        mAmWmState.assertFocusedActivity("Launched activity must be focused",
+        mWmState.assertFocusedActivity("Launched activity must be focused",
                 TEST_ACTIVITY);
 
         // Check that activity is on the right display.
-        final int frontStackId = mAmWmState.getAmState().getFrontStackId(DEFAULT_DISPLAY);
-        final ActivityManagerState.ActivityStack frontStack =
-                mAmWmState.getAmState().getStackById(frontStackId);
+        final int frontStackId = mWmState.getFrontRootTaskId(DEFAULT_DISPLAY);
+        final WindowManagerState.ActivityTask frontStack =
+                mWmState.getRootTask(frontStackId);
         assertEquals("Launched activity must be resumed",
                 getActivityName(TEST_ACTIVITY), frontStack.mResumedActivity);
         assertEquals("Front stack must be on the default display",
                 DEFAULT_DISPLAY, frontStack.mDisplayId);
-        mAmWmState.assertFocusedStack("Focus must be on the default display", frontStackId);
+        mWmState.assertFocusedStack("Focus must be on the default display", frontStackId);
     }
 
     @Test
@@ -164,7 +164,7 @@ public class DisplayTests extends MultiDisplayTestBase {
         lockScreenSession.sleepDevice()
                 .wakeUpDevice()
                 .unlockDevice();
-        mAmWmState.waitForHomeActivityVisible();
+        mWmState.waitForHomeActivityVisible();
 
         // Check if overrides are still applied.
         displayMetrics = displayMetricsSession.getDisplayMetrics();

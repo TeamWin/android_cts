@@ -116,9 +116,9 @@ public class WindowInsetsPolicyTest extends ActivityManagerTestBase {
         assumeTrue("Skipping test: no split multi-window support",
                 supportsSplitScreenMultiWindow());
 
-        mAmWmState.computeState(new ComponentName[] {});
+        mWmState.computeState(new ComponentName[] {});
         final boolean naturalOrientationPortrait =
-                mAmWmState.getWmState().getDisplay(DEFAULT_DISPLAY)
+                mWmState.getDisplay(DEFAULT_DISPLAY)
                         .mFullConfiguration.orientation == ORIENTATION_PORTRAIT;
 
         final RotationSession rotationSession = createManagedRotationSession();
@@ -126,14 +126,14 @@ public class WindowInsetsPolicyTest extends ActivityManagerTestBase {
 
         launchActivityInSplitScreenWithRecents(LAUNCHING_ACTIVITY);
         final TestActivity activity = launchAndWait(mTestActivity);
-        mAmWmState.computeState(mTestActivityComponentName);
+        mWmState.computeState(mTestActivityComponentName);
 
-        mAmWmState.assertContainsStack("Must contain fullscreen stack.",
+        mWmState.assertContainsStack("Must contain fullscreen stack.",
                 WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
-        mAmWmState.assertContainsStack("Must contain docked stack.",
+        mWmState.assertContainsStack("Must contain docked stack.",
                 WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
 
-        mAmWmState.computeState(LAUNCHING_ACTIVITY, mTestActivityComponentName);
+        mWmState.computeState(LAUNCHING_ACTIVITY, mTestActivityComponentName);
 
         // Ensure that top insets are not consumed for LAYOUT_FULLSCREEN
         WindowInsets insets = getOnMainSync(activity::getDispatchedInsets);

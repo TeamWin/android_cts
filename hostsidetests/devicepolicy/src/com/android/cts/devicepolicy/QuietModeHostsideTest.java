@@ -59,12 +59,21 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
           return;
         }
-        runDeviceTestsAsUser(
-                TEST_PACKAGE,
-                TEST_CLASS,
-                "testTryEnableQuietMode_defaultForegroundLauncher",
-                mPrimaryUserId,
-                createParams(mProfileId));
+        // Add a lockscreen to test the case that profile with unified challenge can still
+        // be turned on without asking the user to enter the lockscreen password.
+        changeUserCredential(/* newCredential= */ "1111", /* oldCredential= */ null,
+                mPrimaryUserId);
+        try {
+            runDeviceTestsAsUser(
+                    TEST_PACKAGE,
+                    TEST_CLASS,
+                    "testTryEnableQuietMode_defaultForegroundLauncher",
+                    mPrimaryUserId,
+                    createParams(mProfileId));
+        } finally {
+            changeUserCredential(/* newCredential= */ null, /* oldCredential= */ "1111",
+                    mPrimaryUserId);
+        }
     }
 
     @LargeTest
@@ -101,19 +110,16 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
+        // Set a separate work challenge so turning on the profile requires entering the
+        // separate challenge.
         changeUserCredential(/* newCredential= */ "1111", /* oldCredential= */ null,
-                mPrimaryUserId);
-        try {
-            runDeviceTestsAsUser(
-                    TEST_PACKAGE,
-                    TEST_CLASS,
-                    "testTryEnableQuiteMore_noCredentialRequest",
-                    mPrimaryUserId,
-                    createParams(mProfileId));
-        } finally {
-            changeUserCredential(/* newCredential= */ null, /* oldCredential= */ "1111",
-                    mPrimaryUserId);
-        }
+                mProfileId);
+        runDeviceTestsAsUser(
+                TEST_PACKAGE,
+                TEST_CLASS,
+                "testTryEnableQuietMode_noCredentialRequest",
+                mPrimaryUserId,
+                createParams(mProfileId));
     }
 
     private void createAndStartManagedProfile() throws Exception {

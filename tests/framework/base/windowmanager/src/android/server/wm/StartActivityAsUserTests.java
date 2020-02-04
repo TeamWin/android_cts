@@ -56,7 +56,7 @@ public class StartActivityAsUserTests {
     private final ActivityManager mAm = mContext.getSystemService(ActivityManager.class);
 
     private int mSecondUserId;
-    private ActivityAndWindowManagersState mAmWmState = new ActivityAndWindowManagersState();
+    private WindowManagerStateHelper mAmWmState = new WindowManagerStateHelper();
 
     @Before
     public void createSecondUser() {
@@ -116,7 +116,7 @@ public class StartActivityAsUserTests {
 
         runWithShellPermissionIdentity(() -> {
             mContext.startActivityAsUser(intent, secondUserHandle);
-            ActivityManagerState amState = mAmWmState.getAmState();
+            WindowManagerState amState = mAmWmState;
             amState.computeState();
             ComponentName componentName = ComponentName.createRelative(PACKAGE, CLASS);
             stackId[0] = amState.getStackIdByActivity(componentName);

@@ -1162,6 +1162,12 @@
     <string name="snsr_heartrate_test_no_heartrate_title">No heart rate monitor?</string>
     <string name="snsr_heartrate_test_no_heartrate_message">It doesn\'t seem like you have a heart rate monitor, so you don\'t need to run this test.</string>
 
+    <!-- Hinge Angle -->
+    <string name="snsr_hinge_angle_test">Hinge Angle Test</string>
+    <string name="snsr_hinge_angle_test_instructions">Place the device into its default position. Read the instructions for each scenario before you perform the test.</string>
+    <string name="snsr_hinge_angle_test_exercise_hinge">Transition the device from its default position as far in one direction as the hinge sensor measures.
+        Then, transition it in the other direction as far as it can measure. Lastly, return the device back to its default position. Once completed, press \"Next\" to finish the test.</string>
+
     <!-- Magnetic Field -->
     <string name="snsr_mag_m_test">Magnetic Field Measurement Tests</string>
     <string name="snsr_mag_verify_norm">Verifying the Norm...</string>

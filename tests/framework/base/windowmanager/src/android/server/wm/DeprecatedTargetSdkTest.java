@@ -47,8 +47,8 @@ public class DeprecatedTargetSdkTest extends ActivityManagerTestBase {
     public void testCompatibilityDialog() throws Exception {
         // Launch target app.
         launchActivity(MAIN_ACTIVITY);
-        mAmWmState.assertActivityDisplayed(MAIN_ACTIVITY);
-        mAmWmState.assertWindowDisplayed(DEPRECATED_TARGET_SDK_VERSION_DIALOG);
+        mWmState.assertActivityDisplayed(MAIN_ACTIVITY);
+        mWmState.assertWindowDisplayed(DEPRECATED_TARGET_SDK_VERSION_DIALOG);
 
         // Go back to dismiss the warning dialog.
         pressBackButton();

@@ -18,12 +18,8 @@ package android.server.wm;
 
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.MODE_ERRORED;
-import static android.server.wm.ActivityManagerState.STATE_INITIALIZING;
-import static android.server.wm.ActivityManagerState.STATE_RESUMED;
-import static android.server.wm.ComponentNameUtils.getActivityName;
+import static android.server.wm.WindowManagerState.STATE_INITIALIZING;
 import static android.server.wm.UiDeviceUtils.pressHomeButton;
-import static android.server.wm.UiDeviceUtils.pressUnlockButton;
-import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 import static android.server.wm.backgroundactivity.appa.Components.APP_A_BACKGROUND_ACTIVITY;
 import static android.server.wm.backgroundactivity.appa.Components.APP_A_FOREGROUND_ACTIVITY;
 import static android.server.wm.backgroundactivity.appa.Components.APP_A_SECOND_BACKGROUND_ACTIVITY;
@@ -52,13 +48,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import android.app.ActivityManager;
-import android.app.ActivityTaskManager;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.ResultReceiver;
-import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.SystemUserOnly;
 import android.server.wm.backgroundactivity.common.CommonComponents.Event;
@@ -108,9 +101,9 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
                 MODE_ERRORED);
 
         super.setUp();
-        assertNull(mAmWmState.getAmState().getTaskByActivity(APP_A_BACKGROUND_ACTIVITY));
-        assertNull(mAmWmState.getAmState().getTaskByActivity(APP_A_FOREGROUND_ACTIVITY));
-        assertNull(mAmWmState.getAmState().getTaskByActivity(APP_B_FOREGROUND_ACTIVITY));
+        assertNull(mWmState.getTaskByActivity(APP_A_BACKGROUND_ACTIVITY));
+        assertNull(mWmState.getTaskByActivity(APP_A_FOREGROUND_ACTIVITY));
+        assertNull(mWmState.getTaskByActivity(APP_B_FOREGROUND_ACTIVITY));
 
         runShellCommand("cmd deviceidle tempwhitelist -d 100000 "
                 + APP_A_FOREGROUND_ACTIVITY.getPackageName());
@@ -440,16 +433,16 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         // Resume the stopped state (it won't affect last-stop-app-switch-time) so we don't need to
         // wait extra time to prevent the next launch from being delayed.
         resumeAppSwitches();
-        mAmWmState.waitForHomeActivityVisible();
+        mWmState.waitForHomeActivityVisible();
     }
 
     private void assertTaskStack(ComponentName[] expectedComponents,
             ComponentName sourceComponent) {
         if (expectedComponents == null) {
-            assertNull(mAmWmState.getAmState().getTaskByActivity(sourceComponent));
+            assertNull(mWmState.getTaskByActivity(sourceComponent));
             return;
         }
-        List<ActivityManagerState.Activity> actual = mAmWmState.getAmState().getTaskByActivity(
+        List<WindowManagerState.Activity> actual = mWmState.getTaskByActivity(
                 sourceComponent).mActivities;
         assertEquals(expectedComponents.length, actual.size());
         int size = expectedComponents.length;

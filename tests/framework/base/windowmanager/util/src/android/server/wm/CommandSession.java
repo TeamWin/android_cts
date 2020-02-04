@@ -632,12 +632,17 @@ public final class CommandSession {
         private static CommandStorage sCommandStorage;
         private ActivitySessionHost mReceiver;
 
+        /** The subclasses can disable the test journal client if its information is not used. */
+        protected boolean mUseTestJournal = true;
         protected TestJournalClient mTestJournalClient;
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-            mTestJournalClient = TestJournalClient.create(this /* context */, getComponentName());
+            if (mUseTestJournal) {
+                mTestJournalClient = TestJournalClient.create(this /* context */,
+                        getComponentName());
+            }
 
             final String hostId = getIntent().getStringExtra(KEY_HOST_ID);
             final String clientId = getIntent().getStringExtra(KEY_CLIENT_ID);
@@ -1101,6 +1106,21 @@ public final class CommandSession {
                     && smallestWidthDp == that.smallestWidthDp
                     && densityDpi == that.densityDpi
                     && orientation == that.orientation;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = 0;
+            result = 31 * result + widthDp;
+            result = 31 * result + heightDp;
+            result = 31 * result + displayWidth;
+            result = 31 * result + displayHeight;
+            result = 31 * result + metricsWidth;
+            result = 31 * result + metricsHeight;
+            result = 31 * result + smallestWidthDp;
+            result = 31 * result + densityDpi;
+            result = 31 * result + orientation;
+            return result;
         }
 
         @Override

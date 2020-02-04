@@ -17,7 +17,7 @@
 package android.server.wm;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_DOCUMENT;
-import static android.server.wm.ActivityManagerState.STATE_STOPPED;
+import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
 import static android.server.wm.app.Components.NO_RELAUNCH_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
@@ -69,11 +69,11 @@ public class StartActivityTests extends ActivityManagerTestBase {
         // Launch second Activity from Activity Context to ensure previous Activity has launched.
         final Activity testActivity2 = mTestActivity2Rule.launchActivity(null);
 
-        mAmWmState.computeState(testActivity2.getComponentName());
+        mWmState.computeState(testActivity2.getComponentName());
 
         // Verify Activity was not started.
-        assertFalse(mAmWmState.getAmState().containsActivity(TEST_ACTIVITY));
-        mAmWmState.assertResumedActivity(
+        assertFalse(mWmState.containsActivity(TEST_ACTIVITY));
+        mWmState.assertResumedActivity(
                 "Activity launched from activity context should be present",
                 testActivity2.getComponentName());
     }
@@ -92,8 +92,8 @@ public class StartActivityTests extends ActivityManagerTestBase {
                 .setNewTask(true)
                 .execute();
 
-        mAmWmState.computeState(TEST_ACTIVITY);
-        mAmWmState.assertResumedActivity("Test Activity should be started with new task flag",
+        mWmState.computeState(TEST_ACTIVITY);
+        mWmState.assertResumedActivity("Test Activity should be started with new task flag",
                 TEST_ACTIVITY);
     }
 
@@ -117,7 +117,7 @@ public class StartActivityTests extends ActivityManagerTestBase {
 
         waitAndAssertActivityState(TRANSLUCENT_ACTIVITY, STATE_STOPPED,
                 "Activity should be stopped");
-        mAmWmState.assertResumedActivity("Test Activity should be remained on top and resumed",
+        mWmState.assertResumedActivity("Test Activity should be remained on top and resumed",
                 TEST_ACTIVITY);
     }
 
@@ -133,8 +133,8 @@ public class StartActivityTests extends ActivityManagerTestBase {
                 .setUseApplicationContext(true)
                 .execute();
 
-        mAmWmState.computeState(TEST_ACTIVITY);
-        mAmWmState.assertResumedActivity("Test Activity should be resumed without older sdk",
+        mWmState.computeState(TEST_ACTIVITY);
+        mWmState.assertResumedActivity("Test Activity should be resumed without older sdk",
                 TEST_ACTIVITY);
     }
 
@@ -165,8 +165,8 @@ public class StartActivityTests extends ActivityManagerTestBase {
 
         // The {@code intents} are started, wait for the last (top) activity to be ready and then
         // verify their task ids.
-        mAmWmState.computeState(intents[1].getComponent());
-        final ActivityManagerState amState = mAmWmState.getAmState();
+        mWmState.computeState(intents[1].getComponent());
+        final WindowManagerState amState = mWmState;
         final int callerTaskId = amState.getTaskByActivity(TEST_ACTIVITY).getTaskId();
         final int i0TaskId = amState.getTaskByActivity(intents[0].getComponent()).getTaskId();
         final int i1TaskId = amState.getTaskByActivity(intents[1].getComponent()).getTaskId();
