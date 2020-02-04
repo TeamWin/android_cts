@@ -20,6 +20,7 @@ import android.content.Context;
 import android.content.cts.R;
 import android.content.cts.util.XmlUtils;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
@@ -962,6 +963,9 @@ public class ResourcesTest extends AndroidTestCase {
     @AppModeFull
     public void testComplextColorDrawableAttrInflation() {
         Context context = InstrumentationRegistry.getTargetContext();
+        if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            return;
+        }
         LayoutInflater layoutInflater = (LayoutInflater) context.getSystemService(
                 Context.LAYOUT_INFLATER_SERVICE);
 
