@@ -419,7 +419,8 @@
 
         <service android:name="android.app.stubs.LocalAlertService" />
 
-        <activity android:name=".SimpleActivity" >
+        <activity android:name=".SimpleActivity"
+                  android:excludeFromRecents="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
