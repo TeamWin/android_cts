@@ -44,6 +44,9 @@ my_bionic_testlib_files := \
   libdlext_test_zip/libdlext_test_zip.so \
   libdlext_test_zip/libdlext_test_zip_zipaligned.zip \
   libgnu-hash-table-library.so \
+  libns_hidden_child_global.so \
+  libns_hidden_child_internal.so \
+  libns_hidden_child_public.so \
   librelocations-fat.so \
   librelocations-ANDROID_RELR.so \
   librelocations-ANDROID_REL.so \
@@ -135,6 +138,8 @@ my_bionic_testlib_files := \
   ns_a/libnstest_ns_a_public1_internal.so \
   ns_b/libnstest_ns_b_public2.so \
   ns_b/libnstest_ns_b_public3.so \
+  ns_hidden_child_app/libns_hidden_child_app.so \
+  ns_hidden_child_helper/ns_hidden_child_helper \
   prebuilt-elf-files/libtest_invalid-empty_shdr_table.so \
   prebuilt-elf-files/libtest_invalid-rw_load_segment.so \
   prebuilt-elf-files/libtest_invalid-textrels.so \
