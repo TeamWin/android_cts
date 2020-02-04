@@ -18,12 +18,14 @@ package android.permission.cts.telephony;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
+import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 
 import androidx.test.InstrumentationRegistry;
@@ -325,7 +327,57 @@ public class TelephonyManagerPermissionTest {
         }
     }
 
+    static final int PHONE_STATE_PERMISSION_MASK =
+                PhoneStateListener.LISTEN_CALL_FORWARDING_INDICATOR
+                        | PhoneStateListener.LISTEN_MESSAGE_WAITING_INDICATOR
+                        | PhoneStateListener.LISTEN_EMERGENCY_NUMBER_LIST
+                        | PhoneStateListener.LISTEN_REGISTRATION_FAILURE
+                        | PhoneStateListener.LISTEN_BARRING_INFO;
+
+    static final int PRECISE_PHONE_STATE_PERMISSION_MASK =
+                PhoneStateListener.LISTEN_PRECISE_DATA_CONNECTION_STATE
+                        | PhoneStateListener.LISTEN_CALL_DISCONNECT_CAUSES
+                        | PhoneStateListener.LISTEN_IMS_CALL_DISCONNECT_CAUSES;
+
+    static final int PHONE_PERMISSIONS_MASK =
+            PHONE_STATE_PERMISSION_MASK | PRECISE_PHONE_STATE_PERMISSION_MASK;
+
+    /**
+     * Verify the documented permissions for PhoneStateListener.
+     */
+    @Test
+    public void testListen() {
+        PhoneStateListener psl = new PhoneStateListener((Runnable r) -> { });
+
+        try {
+            for (int i = 1; i != 0; i = i << 1) {
+                if ((i & PHONE_PERMISSIONS_MASK) == 0) continue;
+                final int listenBit = i;
+                assertThrowsSecurityException(() -> mTelephonyManager.listen(psl, listenBit),
+                        "Expected a security exception for " + Integer.toHexString(i));
+            }
+        } finally {
+            mTelephonyManager.listen(psl, PhoneStateListener.LISTEN_NONE);
+        }
+    }
+
     private static Context getContext() {
         return InstrumentationRegistry.getContext();
+    }
+
+    // An actual version of assertThrows() was added in JUnit5
+    private static <T extends Throwable> void assertThrows(Class<T> clazz, Runnable r,
+            String message) {
+        try {
+            r.run();
+        } catch (Exception expected) {
+            assertTrue(clazz.isAssignableFrom(expected.getClass()));
+            return;
+        }
+        fail(message);
+    }
+
+    private static void assertThrowsSecurityException(Runnable r, String message) {
+        assertThrows(SecurityException.class, r, message);
     }
 }
