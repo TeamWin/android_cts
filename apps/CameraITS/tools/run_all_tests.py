@@ -56,7 +56,7 @@ VGA_WIDTH = 640
 #   scene*_a/b/... are similar scenes that share one or more tests
 ALL_SCENES = ['scene0', 'scene1_1', 'scene1_2', 'scene2_a', 'scene2_b',
               'scene2_c', 'scene2_d', 'scene2_e', 'scene3', 'scene4',
-              'scene5', 'sensor_fusion']
+              'scene5', 'sensor_fusion', 'scene_change']
 
 # Scenes that are logically grouped and can be called as group
 GROUPED_SCENES = {
@@ -66,7 +66,8 @@ GROUPED_SCENES = {
 
 # Scenes that can be automated through tablet display
 AUTO_SCENES = ['scene0', 'scene1_1', 'scene1_2', 'scene2_a', 'scene2_b',
-               'scene2_c', 'scene2_d', 'scene2_e', 'scene3', 'scene4']
+               'scene2_c', 'scene2_d', 'scene2_e', 'scene3', 'scene4',
+               'scene_change']
 
 SCENE_REQ = {
         'scene0': None,
@@ -86,7 +87,8 @@ SCENE_REQ = {
         'sensor_fusion': 'Rotating checkboard pattern. See '
                          'sensor_fusion/SensorFusion.pdf for detailed '
                          'instructions.\nNote that this test will be skipped '
-                         'on devices not supporting REALTIME camera timestamp.'
+                         'on devices not supporting REALTIME camera timestamp.',
+        'scene_change': 'The picture in tests/scene_change.pdf with faces'
 }
 
 SCENE_EXTRA_ARGS = {
@@ -119,7 +121,10 @@ NOT_YET_MANDATED = {
         'scene3': [],
         'scene4': [],
         'scene5': [],
-        'sensor_fusion': []
+        'sensor_fusion': [],
+        'scene_change': [
+                ['test_scene_change', 31]
+        ]
 }
 
 # Must match mHiddenPhysicalCameraSceneIds in ItsTestActivity.java
@@ -155,7 +160,8 @@ HIDDEN_PHYSICAL_CAMERA_TESTS = {
         'scene5': [],
         'sensor_fusion': [
                 'test_sensor_fusion'
-        ]
+        ],
+        'scene_change': []
 }
 
 # Tests run in more than 1 scene.
@@ -181,7 +187,8 @@ REPEATED_TESTS = {
         'scene3': [],
         'scene4': [],
         'scene5': [],
-        'sensor_fusion': []
+        'sensor_fusion': [],
+        'scene_change': []
 }
 
 
@@ -568,7 +575,8 @@ def main():
                 if cmd is not None:
                     valid_scene_code = subprocess.call(cmd, cwd=topdir)
                     assert valid_scene_code == 0
-            print 'Start running ITS on camera %s, %s' % (id_combo_string, scene)
+            print 'Start running ITS on camera %s, %s' % (
+                    id_combo_string, scene)
             # Extract chart from scene for scene3 once up front
             chart_loc_arg = ''
             chart_height = CHART_HEIGHT
@@ -582,6 +590,8 @@ def main():
                 chart_loc_arg = 'chart_loc=%.2f,%.2f,%.2f,%.2f,%.3f' % (
                         chart.xnorm, chart.ynorm, chart.wnorm, chart.hnorm,
                         chart.scale)
+            if scene == 'scene_change' and not auto_scene_switch:
+                print '\nWave hand over camera to create scene change'
             # Run each test, capturing stdout and stderr.
             for (testname, testpath) in tests:
                 # Only pick predefined tests for hidden physical camera
@@ -729,14 +739,16 @@ def main():
             print 'Shutting down chart screen: ', chart_host_id
             screen_id_arg = ('screen=%s' % chart_host_id)
             cmd = ['python', os.path.join(os.environ['CAMERA_ITS_TOP'], 'tools',
-                                          'turn_off_screen.py'), screen_id_arg]
+                                          'toggle_screen.py'), screen_id_arg,
+                                          'state=OFF']
             screen_off_code = subprocess.call(cmd)
             assert screen_off_code == 0
 
             print 'Shutting down DUT screen: ', device_id
             screen_id_arg = ('screen=%s' % device_id)
             cmd = ['python', os.path.join(os.environ['CAMERA_ITS_TOP'], 'tools',
-                                          'turn_off_screen.py'), screen_id_arg]
+                                          'toggle_screen.py'), screen_id_arg,
+                                          'state=OFF']
             screen_off_code = subprocess.call(cmd)
             assert screen_off_code == 0
 
