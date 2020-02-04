@@ -783,12 +783,29 @@ public class PhoneStateListenerTest {
         }
         t.checkException();
         assertThat(mOnPreciseDataConnectionStateChanged).isTrue();
-        assertThat(mPreciseDataConnectionState.getDataConnectionState())
+        assertThat(mPreciseDataConnectionState.getState())
                 .isIn(DATA_CONNECTION_STATE);
-        // basic test to verify there is no exception thrown.
+
+        // Ensure that no exceptions are thrown
+        mPreciseDataConnectionState.getNetworkType();
+        mPreciseDataConnectionState.getLinkProperties();
+        mPreciseDataConnectionState.getLastCauseCode();
+        mPreciseDataConnectionState.getLinkProperties();
+        mPreciseDataConnectionState.getApnSetting();
+
+        // Deprecated in R
+        assertEquals(mPreciseDataConnectionState.getDataConnectionState(),
+                mPreciseDataConnectionState.getState());
+        assertEquals(mPreciseDataConnectionState.getDataConnectionNetworkType(),
+                mPreciseDataConnectionState.getNetworkType());
+        assertEquals(mPreciseDataConnectionState.getDataConnectionFailCause(),
+                mPreciseDataConnectionState.getLastCauseCode());
+        assertEquals(mPreciseDataConnectionState.getDataConnectionLinkProperties(),
+                mPreciseDataConnectionState.getLinkProperties());
+
+        // Superseded in R by getApnSetting()
         mPreciseDataConnectionState.getDataConnectionApnTypeBitMask();
         mPreciseDataConnectionState.getDataConnectionApn();
-        mPreciseDataConnectionState.getDataConnectionFailCause();
     }
 
     @Test
