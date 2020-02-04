@@ -19,6 +19,7 @@ package com.android.cts.verifier.biometrics;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.hardware.biometrics.BiometricManager;
+import android.hardware.biometrics.BiometricManager.Authenticators;
 import android.hardware.biometrics.BiometricPrompt;
 import android.os.Bundle;
 import android.os.CancellationSignal;
@@ -158,4 +159,89 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
             }
         });
     }
+
+    /**
+     * When both credential and biometrics are enrolled, check that the user is able to
+     * authenticate with biometric.
+     */
+    void testSetDeviceCredentialAllowed_biometricAuth(Runnable successRunnable) {
+        final BiometricPrompt.Builder builder = new BiometricPrompt.Builder(this);
+        builder.setDeviceCredentialAllowed(true);
+        builder.setTitle("Please authenticate with BIOMETRIC only");
+        final BiometricPrompt prompt = builder.build();
+        prompt.authenticate(new CancellationSignal(), mExecutor,
+                new BiometricPrompt.AuthenticationCallback() {
+                    @Override
+                    public void onAuthenticationSucceeded(
+                            BiometricPrompt.AuthenticationResult result) {
+                        if (result.getAuthenticationType() ==
+                                BiometricPrompt.AUTHENTICATION_RESULT_TYPE_BIOMETRIC) {
+                            successRunnable.run();
+                        } else {
+                            showToastAndLog("Please ensure that you authenticate with biometric,"
+                                    + " and not device credential");
+                        }
+                    }
+                });
+    }
+
+    /**
+     * When both credential and biometrics are enrolled, check that the user is able to navigate
+     * to the credential option, and that authenticating works.
+     */
+    void testSetDeviceCredentialAllowed_credentialAuth(Runnable successRunnable) {
+        final BiometricPrompt.Builder builder = new BiometricPrompt.Builder(this);
+        builder.setDeviceCredentialAllowed(true);
+        builder.setTitle("Please authenticate with CREDENTIAL only");
+        builder.setDescription("Depending on your implementation, you may need to skip biometric"
+                + " authentication, e.g. press the \"Use PIN\" button");
+        final BiometricPrompt prompt = builder.build();
+        prompt.authenticate(new CancellationSignal(), mExecutor,
+                new BiometricPrompt.AuthenticationCallback() {
+                    @Override
+                    public void onAuthenticationSucceeded(
+                            BiometricPrompt.AuthenticationResult result) {
+                        if (result.getAuthenticationType()
+                                == BiometricPrompt.AUTHENTICATION_RESULT_TYPE_DEVICE_CREDENTIAL) {
+                            successRunnable.run();
+                        } else {
+                            showToastAndLog("Please ensure that you authenticate with device"
+                                    + " credential, and not biometric");
+                        }
+                    }
+                });
+    }
+
+    /**
+     * When both credential and biometrics are enrolled, check that the user is able to navigate
+     * to the credential option, and that authenticating works.
+     *
+     * Note: we don't need to test the biometric authentication path here since it's tested
+     * everywhere else already.
+     */
+    void testSetAllowedAuthenticators_credentialAndBiometricEnrolled_credentialAuth(
+            Runnable successRunnable) {
+        final BiometricPrompt.Builder builder = new BiometricPrompt.Builder(this);
+        builder.setAllowedAuthenticators(Authenticators.DEVICE_CREDENTIAL
+                | Authenticators.BIOMETRIC_WEAK);
+        builder.setTitle("Please authenticate with CREDENTIAL only");
+        builder.setDescription("Depending on your implementation, you may need to skip biometric"
+                + " authentication, e.g. press the \"Use PIN\" button");
+        final BiometricPrompt prompt = builder.build();
+        prompt.authenticate(new CancellationSignal(), mExecutor,
+                new BiometricPrompt.AuthenticationCallback() {
+                    @Override
+                    public void onAuthenticationSucceeded(
+                            BiometricPrompt.AuthenticationResult result) {
+                        if (result.getAuthenticationType()
+                                == BiometricPrompt.AUTHENTICATION_RESULT_TYPE_DEVICE_CREDENTIAL) {
+                            successRunnable.run();
+                        } else {
+                            showToastAndLog("Please ensure that you authenticate with device"
+                                    + " credential, and not biometric");
+                        }
+                    }
+                });
+    }
+
 }

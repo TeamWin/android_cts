@@ -261,6 +261,13 @@
     <string name="biometric_test_ui_verification_dialog_title">Please enter your recorded contents</string>
     <string name="biometric_test_ui_verification_dialog_check">Check</string>
 
+    <!-- setDeviceCredentialAllowed(true), biometric authentication -->
+    <string name="biometric_test_authenticate_with_credential1_button">Authenticate with biometric (not PIN/Pattern/Pass)</string>
+    <!-- setDeviceCredentialAllowed(true), credential authentication -->
+    <string name="biometric_test_authenticate_with_credential2_button">Authenticate with PIN/Pattern/Pass (skip biometric)</string>
+    <!-- setAllowedAuthenticators(CREDENTIAL|BIOMETRIC), credential authentication -->
+    <string name="biometric_test_authenticate_with_credential3_button">Authenticate with PIN/Pattern/Pass (skip biometric again)</string>
+
     <string name="biometric_test_strong_label">4) Strong Biometrics + Crypto</string>
     <string name="biometric_test_strong_instructions">This test checks that the Settings.ACTION_BIOMETRIC_ENROLL and its corresponding
         EXTRA_BIOMETRIC_MINIMUM_STRENGTH_REQUIRED APIs enroll only a STRONG biometric. Please ensure that the device

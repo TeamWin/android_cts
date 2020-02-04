@@ -51,8 +51,14 @@ public class BiometricWeakTests extends AbstractBaseTest {
 
     private Button mEnrollButton;
     private Button mAuthenticateButton;
+    private Button mAuthenticateCredential1Button; // setDeviceCredentialAllowed(true), biometric
+    private Button mAuthenticateCredential2Button; // setDeviceCredentialAllowed(true), credential
+    private Button mAuthenticateCredential3Button; // setAllowedAuthenticators(CREDENTIAL|BIOMETRIC)
 
     private boolean mAuthenticatePassed;
+    private boolean mAuthenticateCredential1Passed;
+    private boolean mAuthenticateCredential2Passed;
+    private boolean mAuthenticateCredential3Passed;
 
     @Override
     protected String getTag() {
@@ -68,8 +74,12 @@ public class BiometricWeakTests extends AbstractBaseTest {
 
         mEnrollButton = findViewById(R.id.biometric_test_weak_enroll_button);
         mAuthenticateButton = findViewById(R.id.biometric_test_weak_authenticate_button);
-
-        mAuthenticateButton.setEnabled(false);
+        mAuthenticateCredential1Button = findViewById(
+                R.id.authenticate_credential_setDeviceCredentialAllowed_biometric_button);
+        mAuthenticateCredential2Button = findViewById(
+                R.id.authenticate_credential_setDeviceCredentialAllowed_credential_button);
+        mAuthenticateCredential3Button = findViewById(
+                R.id.authenticate_credential_setAllowedAuthenticators_credential_button);
 
         mEnrollButton.setOnClickListener((view) -> {
             checkAndEnroll(mEnrollButton, Authenticators.BIOMETRIC_WEAK,
@@ -125,10 +135,35 @@ public class BiometricWeakTests extends AbstractBaseTest {
             };
             testBiometricUI(contents, Authenticators.BIOMETRIC_WEAK);
         });
+
+        mAuthenticateCredential1Button.setOnClickListener((view) -> {
+            testSetDeviceCredentialAllowed_biometricAuth(() -> {
+                mAuthenticateCredential1Passed = true;
+                mAuthenticateCredential1Button.setEnabled(false);
+                updatePassButton();
+            });
+        });
+
+        mAuthenticateCredential2Button.setOnClickListener((view) -> {
+            testSetDeviceCredentialAllowed_credentialAuth(() -> {
+                mAuthenticateCredential2Passed = true;
+                mAuthenticateCredential2Button.setEnabled(false);
+                updatePassButton();
+            });
+        });
+
+        mAuthenticateCredential3Button.setOnClickListener((view) -> {
+            testSetAllowedAuthenticators_credentialAndBiometricEnrolled_credentialAuth(() -> {
+                mAuthenticateCredential3Passed = true;
+                mAuthenticateCredential3Button.setEnabled(false);
+                updatePassButton();
+            });
+        });
     }
 
     private void updatePassButton() {
-        if (mAuthenticatePassed) {
+        if (mAuthenticatePassed && mAuthenticateCredential1Passed
+                && mAuthenticateCredential2Passed && mAuthenticateCredential3Passed) {
             showToastAndLog("All tests passed");
             getPassButton().setEnabled(true);
         }
@@ -139,9 +174,12 @@ public class BiometricWeakTests extends AbstractBaseTest {
         final int biometricStatus =
                 mBiometricManager.canAuthenticate(Authenticators.BIOMETRIC_WEAK);
         if (biometricStatus == BiometricManager.BIOMETRIC_SUCCESS) {
-            showToastAndLog("Successfully enrolled, please press the authenticate button");
+            showToastAndLog("Successfully enrolled, please continue the test");
             mEnrollButton.setEnabled(false);
             mAuthenticateButton.setEnabled(true);
+            mAuthenticateCredential1Button.setEnabled(true);
+            mAuthenticateCredential2Button.setEnabled(true);
+            mAuthenticateCredential3Button.setEnabled(true);
         } else {
             showToastAndLog("Unexpected result after enrollment: " + biometricStatus);
         }
