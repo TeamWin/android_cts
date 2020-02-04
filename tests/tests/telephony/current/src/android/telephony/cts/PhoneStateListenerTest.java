@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -32,6 +33,7 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.telephony.Annotation.RadioPowerState;
 import android.telephony.Annotation.SimActivationState;
+import android.telephony.BarringInfo;
 import android.telephony.CellInfo;
 import android.telephony.CellLocation;
 import android.telephony.PhoneStateListener;
@@ -86,9 +88,11 @@ public class PhoneStateListenerTest {
     private boolean mOnRadioPowerStateChangedCalled;
     private boolean mVoiceActivationStateChangedCalled;
     private boolean mSrvccStateChangedCalled;
+    private boolean mOnBarringInfoChangedCalled;
     private boolean mSecurityExceptionThrown;
     @RadioPowerState private int mRadioPowerState;
     @SimActivationState private int mVoiceActivationState;
+    private BarringInfo mBarringInfo;
     private PreciseDataConnectionState mPreciseDataConnectionState;
     private PreciseCallState mPreciseCallState;
     private SignalStrength mSignalStrength;
@@ -116,6 +120,7 @@ public class PhoneStateListenerTest {
             PreciseCallState.PRECISE_CALL_STATE_NOT_VALID,
             PreciseCallState.PRECISE_CALL_STATE_WAITING
     );
+
     private Executor mSimpleExecutor = new Executor() {
         @Override
         public void execute(Runnable r) {
@@ -1166,5 +1171,103 @@ public class PhoneStateListenerTest {
         }
         t.checkException();
         assertTrue(mOnActiveDataSubscriptionIdChanged);
+    }
+
+    @Test
+    public void testOnBarringInfoChanged() throws Throwable {
+        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
+            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
+            return;
+        }
+
+        TestThread t = new TestThread(new Runnable() {
+            public void run() {
+                Looper.prepare();
+
+                mListener = new PhoneStateListener() {
+                    @Override
+                    public void onBarringInfoChanged(BarringInfo barringInfo) {
+                        synchronized (mLock) {
+                            mOnBarringInfoChangedCalled = true;
+                            mLock.notify();
+                        }
+                    }
+                };
+                mTelephonyManager.listen(
+                        mListener, PhoneStateListener.LISTEN_BARRING_INFO);
+
+                Looper.loop();
+            }
+        });
+
+        assertFalse(mOnBarringInfoChangedCalled);
+        t.start();
+
+        synchronized (mLock) {
+            if (!mOnBarringInfoChangedCalled) {
+                mLock.wait(WAIT_TIME);
+            }
+        }
+        t.checkException();
+        assertTrue(mOnBarringInfoChangedCalled);
+
+        assertBarringInfoSane(mBarringInfo);
+    }
+
+    private static final int[] sBarringServiceInfoTypes = new int[] {
+            BarringInfo.BARRING_SERVICE_TYPE_CS_SERVICE,
+            BarringInfo.BARRING_SERVICE_TYPE_PS_SERVICE,
+            BarringInfo.BARRING_SERVICE_TYPE_CS_VOICE,
+            BarringInfo.BARRING_SERVICE_TYPE_MO_SIGNALLING,
+            BarringInfo.BARRING_SERVICE_TYPE_MO_DATA,
+            BarringInfo.BARRING_SERVICE_TYPE_CS_FALLBACK,
+            BarringInfo.BARRING_SERVICE_TYPE_MMTEL_VOICE,
+            BarringInfo.BARRING_SERVICE_TYPE_MMTEL_VIDEO,
+            BarringInfo.BARRING_SERVICE_TYPE_EMERGENCY,
+            BarringInfo.BARRING_SERVICE_TYPE_SMS
+    };
+
+    private static void assertBarringInfoSane(BarringInfo barringInfo) {
+        assertNotNull(barringInfo);
+
+        // Flags to track whether we have had unknown and known barring types reported
+        boolean hasBarringTypeUnknown = false;
+        boolean hasBarringTypeKnown = false;
+
+        for (int bsiType : sBarringServiceInfoTypes) {
+            BarringInfo.BarringServiceInfo bsi = barringInfo.getBarringServiceInfo(bsiType);
+            assertNotNull(bsi);
+            switch (bsi.getBarringType()) {
+                case BarringInfo.BarringServiceInfo.BARRING_TYPE_UNKNOWN:
+                    hasBarringTypeUnknown = true;
+                    assertFalse(bsi.isConditionallyBarred());
+                    assertEquals(0, bsi.getConditionalBarringFactor());
+                    assertEquals(0, bsi.getConditionalBarringTimeSeconds());
+                    break;
+
+                case BarringInfo.BarringServiceInfo.BARRING_TYPE_NONE:
+                case BarringInfo.BarringServiceInfo.BARRING_TYPE_UNCONDITIONAL:
+                    hasBarringTypeKnown = true;
+                    // Unless conditional barring is active, all conditional barring fields
+                    // should be "unset".
+                    assertFalse(bsi.isConditionallyBarred());
+                    assertEquals(0, bsi.getConditionalBarringFactor());
+                    assertEquals(0, bsi.getConditionalBarringTimeSeconds());
+                    break;
+
+                case BarringInfo.BarringServiceInfo.BARRING_TYPE_CONDITIONAL:
+                    hasBarringTypeKnown = true;
+                    // If conditional barring is active, then the barring time and factor must
+                    // be known (set), but the device may or may not be barred at the moment,
+                    // so isConditionallyBarred() can be either true or false (hence not checked).
+                    assertNotEquals(0, bsi.getConditionalBarringFactor());
+                    assertNotEquals(0, bsi.getConditionalBarringTimeSeconds());
+                    break;
+            }
+        }
+        // If any barring type is unknown, then barring is not supported so all must be
+        // unknown. If any type is known, then all that are not reported are assumed to
+        // be not barred.
+        assertNotEquals(hasBarringTypeUnknown, hasBarringTypeKnown);
     }
 }
