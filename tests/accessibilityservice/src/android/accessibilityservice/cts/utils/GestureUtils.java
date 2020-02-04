@@ -31,10 +31,11 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
-import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 
 public class GestureUtils {
+
+    public static final long STROKE_TIME_GAP_MS = 40;
 
     public static final Matcher<MotionEvent> IS_ACTION_DOWN =
             new MotionEventActionMatcher(MotionEvent.ACTION_DOWN);
@@ -184,11 +185,11 @@ public class GestureUtils {
             // If slop is 0 subsequent taps will also be on the point itself.
             StrokeDescription stroke = click(point);
             builder.addStroke(stroke);
-            time += stroke.getDuration() + 40;
+            time += stroke.getDuration() + STROKE_TIME_GAP_MS;
             for (int i = 1; i < taps; i++) {
                 stroke = click(getPointWithinSlop(point, slop));
                 builder.addStroke(startingAt(time, stroke));
-                time += stroke.getDuration() + 40;
+                time += stroke.getDuration() + STROKE_TIME_GAP_MS;
             }
         }
         return builder.build();
@@ -197,7 +198,8 @@ public class GestureUtils {
     public static GestureDescription doubleTapAndHold(PointF point) {
         GestureDescription.Builder builder = new GestureDescription.Builder();
         StrokeDescription tap1 = click(point);
-        StrokeDescription tap2 = startingAt(endTimeOf(tap1) + 40, longClick(point));
+        StrokeDescription tap2 =
+                startingAt(endTimeOf(tap1) + STROKE_TIME_GAP_MS, longClick(point));
         builder.addStroke(tap1);
         builder.addStroke(tap2);
         return builder.build();
@@ -311,24 +313,23 @@ public class GestureUtils {
         assertTrue(tapCount > 0);
         final int strokeCount = fingerCount * tapCount;
         final PointF[] pointers = new PointF[fingerCount];
-        final ArrayList<StrokeDescription> strokes = new ArrayList<>(strokeCount);
+        final StrokeDescription[] strokes = new StrokeDescription[strokeCount];
 
         // The first tap
         for (int i = 0; i < fingerCount; i++) {
             pointers[i] = add(basePoint, times(i, delta));
-            strokes.add(click(pointers[i]));
+            strokes[i] = click(pointers[i]);
         }
         // The rest of taps
-        for (int tapIndex = 0; tapIndex + 1 < tapCount; tapIndex++) {
+        for (int tapIndex = 1; tapIndex < tapCount; tapIndex++) {
             for (int i = 0; i < fingerCount; i++) {
-                final StrokeDescription s = strokes.get(tapIndex * fingerCount + i);
-                final long nextStartTime = endTimeOf(s) + 20;
-                final PointF nextSloppyPoint = getPointWithinSlop(pointers[i], slop);
-                pointers[i] = nextSloppyPoint;
-                strokes.add(startingAt(nextStartTime, click(nextSloppyPoint)));
+                final StrokeDescription lastStroke = strokes[(tapIndex - 1) * fingerCount + i];
+                final long nextStartTime = endTimeOf(lastStroke) + STROKE_TIME_GAP_MS;
+                final int nextIndex = tapIndex * fingerCount + i;
+                pointers[i] = getPointWithinSlop(pointers[i], slop);
+                strokes[nextIndex] = startingAt(nextStartTime, click(pointers[i]));
             }
         }
-        return getGestureBuilder(displayId,
-                strokes.toArray(new StrokeDescription[strokeCount])).build();
+        return getGestureBuilder(displayId, strokes).build();
     }
 }
