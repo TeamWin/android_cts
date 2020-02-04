@@ -573,6 +573,19 @@ public class CarrierApiTest extends AndroidTestCase {
         }
     }
 
+    public void testGetNetworkSelectionMode() throws Exception {
+        if (!hasCellular) return;
+
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.setNetworkSelectionModeAutomatic());
+            int networkMode = mTelephonyManager.getNetworkSelectionMode();
+            assertEquals(TelephonyManager.NETWORK_SELECTION_MODE_AUTO, networkMode);
+        } catch (SecurityException e) {
+            failMessage();
+        }
+    }
+
     public void testSubscriptionInfoChangeListener() throws Exception {
         if (!hasCellular) return;
         final AtomicReference<SecurityException> error = new AtomicReference<>();

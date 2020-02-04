@@ -1819,6 +1819,27 @@ public class TelephonyManagerTest {
     }
 
     /**
+     * Tests that the device properly reports the contents of NetworkSelectionMode
+     */
+    @Test
+    public void testGetNetworkSelectionMode() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.setNetworkSelectionModeAutomatic());
+        } catch (Exception e) {
+        }
+
+        int networkMode = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getNetworkSelectionMode());
+
+        assertEquals(TelephonyManager.NETWORK_SELECTION_MODE_AUTO, networkMode);
+    }
+
+    /**
      * Tests that the device properly sets the network selection mode to automatic.
      * Expects a security exception since the caller does not have carrier privileges.
      */
