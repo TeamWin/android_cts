@@ -17,8 +17,8 @@
 package android.server.wm.app;
 
 import android.content.ComponentName;
-import android.server.wm.component.ComponentsBase;
 import android.server.wm.TestJournalProvider;
+import android.server.wm.component.ComponentsBase;
 
 public class Components extends ComponentsBase {
     public static final ComponentName ALT_LAUNCHING_ACTIVITY = component("AltLaunchingActivity");
@@ -73,6 +73,7 @@ public class Components extends ComponentsBase {
     public static final ComponentName NO_HISTORY_ACTIVITY = component("NoHistoryActivity");
     public static final ComponentName NO_RELAUNCH_ACTIVITY = component("NoRelaunchActivity");
     public static final ComponentName NON_RESIZEABLE_ACTIVITY = component("NonResizeableActivity");
+    public static final ComponentName PRESENTATION_ACTIVITY = component("PresentationActivity");
     public static final ComponentName PIP_ACTIVITY = component("PipActivity");
     public static final ComponentName PIP_ACTIVITY2 = component("PipActivity2");
     public static final ComponentName PIP_ACTIVITY_WITH_SAME_AFFINITY =
@@ -419,6 +420,10 @@ public class Components extends ComponentsBase {
     public static class ToastReceiver {
         public static final String ACTION_TOAST_DISPLAYED = "toast_displayed";
         public static final String ACTION_TOAST_TAP_DETECTED = "toast_tap_detected";
+    }
+
+    public static class PresentationActivity {
+        public static final String KEY_DISPLAY_ID = "display_id";
     }
 
     private static ComponentName component(String className) {
