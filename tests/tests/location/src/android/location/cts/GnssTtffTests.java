@@ -136,7 +136,7 @@ public class GnssTtffTests extends GnssTestCase {
     boolean success = testGnssStatusCallback.awaitTtff();
     long ttffTimeMillis = SystemClock.elapsedRealtime() - startTimeMillis;
 
-    softAssert.assertTrue(
+    SoftAssert.failOrWarning(isMeasurementTestStrict(),
             "Test case:" + testName
             + ". Threshold exceeded without getting a location."
             + " Possibly, the test has been run deep indoors."

@@ -21,7 +21,8 @@ public class GnssStatusTest extends GnssTestCase  {
   public void testGnssStatusChanges() throws Exception {
     // Checks if GPS hardware feature is present, skips test (pass) if not,
     // and hard asserts that Location/GPS (Provider) is turned on if is Cts Verifier.
-    if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager, isCtsVerifierTest())) {
+    if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager,
+        TAG, MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED, isCtsVerifierTest())) {
       return;
     }
 
@@ -45,13 +46,11 @@ public class GnssStatusTest extends GnssTestCase  {
     success = success ? testGnssStatusCallback.awaitStop() : false;
     mTestLocationManager.unregisterGnssStatusCallback(testGnssStatusCallback);
 
-    SoftAssert softAssert = new SoftAssert(TAG);
-    softAssert.assertTrue(
+    SoftAssert.failOrWarning(isMeasurementTestStrict(),
         "Time elapsed without getting the right status changes."
             + " Possibly, the test has been run deep indoors."
             + " Consider retrying test outdoors.",
         success);
-    softAssert.assertAll();
   }
 
   /**
@@ -60,7 +59,8 @@ public class GnssStatusTest extends GnssTestCase  {
   public void testGnssStatusValues() throws InterruptedException {
     // Checks if GPS hardware feature is present, skips test (pass) if not,
     // and hard asserts that Location/GPS (Provider) is turned on if is Cts Verifier.
-    if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager, isCtsVerifierTest())) {
+    if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager,
+        TAG, MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED, isCtsVerifierTest())) {
       return;
     }
     SoftAssert softAssert = new SoftAssert(TAG);
