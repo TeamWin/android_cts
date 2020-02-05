@@ -269,6 +269,12 @@
     <string name="biometric_test_authenticate_with_credential3_button">Authenticate with PIN/Pattern/Pass (skip biometric again)</string>
     <!-- Invoking the public API with non-public constants -->
     <string name="biometric_test_invalid_inputs">Test invalid inputs</string>
+    <!-- Rejecting does not end the authentication lifecycle -->
+    <string name="biometric_test_reject_first">Reject, then authenticate</string>
+
+    <string name="biometric_test_reject_continues_instruction_title">Instructions</string>
+    <string name="biometric_test_reject_continues_instruction_contents">Please authenticate with a non-enrolled biometric before authenticating with the actual enrolled biometric.</string>
+    <string name="biometric_test_reject_continues_instruction_continue">Continue</string>
 
     <string name="biometric_test_strong_label">4) Strong Biometrics + Crypto</string>
     <string name="biometric_test_strong_instructions">This test checks that the Settings.ACTION_BIOMETRIC_ENROLL and its corresponding

@@ -72,6 +72,7 @@ public class BiometricStrongTests extends AbstractBaseTest {
     private Button mAuthenticateCredential2Button; // setDeviceCredentialAllowed(true), credential
     private Button mAuthenticateCredential3Button; // setAllowedAuthenticators(CREDENTIAL|BIOMETRIC)
     private Button mCheckInvalidInputsButton;
+    private Button mRejectThenAuthenticateButton;
     private Button mKeyInvalidatedButton;
 
     private boolean mAuthenticateWithoutStrongBoxPassed;
@@ -81,6 +82,7 @@ public class BiometricStrongTests extends AbstractBaseTest {
     private boolean mAuthenticateCredential2Passed;
     private boolean mAuthenticateCredential3Passed;
     private boolean mCheckInvalidInputsPassed;
+    private boolean mRejectThenAuthenticatePassed;
     private boolean mKeyInvalidatedStrongboxPassed;
     private boolean mKeyInvalidatedNoStrongboxPassed;
 
@@ -103,6 +105,7 @@ public class BiometricStrongTests extends AbstractBaseTest {
             mAuthenticateCredential2Button.setEnabled(true);
             mAuthenticateCredential3Button.setEnabled(true);
             mCheckInvalidInputsButton.setEnabled(true);
+            mRejectThenAuthenticateButton.setEnabled(true);
         } else {
             showToastAndLog("Unexpected result after enrollment: " + biometricStatus);
         }
@@ -126,6 +129,7 @@ public class BiometricStrongTests extends AbstractBaseTest {
         mAuthenticateCredential3Button = findViewById(
                 R.id.authenticate_credential_setAllowedAuthenticators_credential_button);
         mCheckInvalidInputsButton = findViewById(R.id.authenticate_invalid_inputs);
+        mRejectThenAuthenticateButton = findViewById(R.id.authenticate_reject_first);
         mKeyInvalidatedButton = findViewById(R.id.authenticate_key_invalidated_button);
 
         mHasStrongBox = getPackageManager()
@@ -192,6 +196,14 @@ public class BiometricStrongTests extends AbstractBaseTest {
             testInvalidInputs(() -> {
                 mCheckInvalidInputsPassed = true;
                 mCheckInvalidInputsButton.setEnabled(false);
+                updatePassButton();
+            });
+        });
+
+        mRejectThenAuthenticateButton.setOnClickListener((view) -> {
+            testBiometricRejectDoesNotEndAuthentication(() -> {
+                mRejectThenAuthenticatePassed = true;
+                mRejectThenAuthenticateButton.setEnabled(false);
                 updatePassButton();
             });
         });
@@ -307,7 +319,7 @@ public class BiometricStrongTests extends AbstractBaseTest {
         if (mAuthenticateWithoutStrongBoxPassed && mAuthenticateWithStrongBoxPassed
                 && mAuthenticateUIPassed && mAuthenticateCredential1Passed
                 && mAuthenticateCredential2Passed && mAuthenticateCredential3Passed
-                && mCheckInvalidInputsPassed) {
+                && mCheckInvalidInputsPassed && mRejectThenAuthenticatePassed) {
 
             if (!mKeyInvalidatedStrongboxPassed || !mKeyInvalidatedNoStrongboxPassed) {
                 mKeyInvalidatedButton.setEnabled(true);
