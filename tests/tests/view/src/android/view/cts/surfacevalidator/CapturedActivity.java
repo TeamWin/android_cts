@@ -212,9 +212,9 @@ public class CapturedActivity extends Activity {
             display.getRealSize(size);
             display.getMetrics(metrics);
 
-            View decorView = getWindow().getDecorView();
-            Rect boundsToCheck = new Rect(0, 0, decorView.getWidth(), decorView.getHeight());
-            int[] topLeft = decorView.getLocationOnScreen();
+            View testAreaView = findViewById(android.R.id.content);
+            Rect boundsToCheck = new Rect(0, 0, testAreaView.getWidth(), testAreaView.getHeight());
+            int[] topLeft = testAreaView.getLocationOnScreen();
             boundsToCheck.offset(topLeft[0], topLeft[1]);
 
             if (boundsToCheck.width() < 90 || boundsToCheck.height() < 90) {
