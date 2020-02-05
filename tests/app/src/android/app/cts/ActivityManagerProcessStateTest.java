@@ -151,6 +151,17 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         CtsAppTestUtils.turnScreenOn(mInstrumentation, mContext);
         removeTestAppFromWhitelists();
         mAppCount = 0;
+        // Make sure we are in Home screen before starting the test
+        mInstrumentation.getUiAutomation().performGlobalAction(
+                AccessibilityService.GLOBAL_ACTION_HOME);
+        // Stop all the packages to avoid residual impact
+        final ActivityManager am = mContext.getSystemService(ActivityManager.class);
+        for (int i = 0; i < PACKAGE_NAMES.length; i++) {
+            final String pkgName = PACKAGE_NAMES[i];
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                am.forceStopPackage(pkgName);
+            });
+        }
     }
 
     /**
@@ -1331,6 +1342,9 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             // Exit activity, check to see if we are now cached.
             mInstrumentation.getUiAutomation().performGlobalAction(
                     AccessibilityService.GLOBAL_ACTION_BACK);
+            // Hit back again in case the notification curtain is open
+            mInstrumentation.getUiAutomation().performGlobalAction(
+                    AccessibilityService.GLOBAL_ACTION_BACK);
 
             // Wait for process to become cached
             uidCachedListener.waitForValue(
@@ -1494,6 +1508,9 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             // Exit activity, check to see if we are now cached.
             waitForAppFocus(CANT_SAVE_STATE_1_PACKAGE_NAME, WAIT_TIME);
             device.waitForIdle();
+            mInstrumentation.getUiAutomation().performGlobalAction(
+                    AccessibilityService.GLOBAL_ACTION_BACK);
+            // Hit back again in case the notification curtain is open
             mInstrumentation.getUiAutomation().performGlobalAction(
                     AccessibilityService.GLOBAL_ACTION_BACK);
             uid1Watcher.expect(WatchUidRunner.CMD_CACHED, null);
