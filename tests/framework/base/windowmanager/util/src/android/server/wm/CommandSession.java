@@ -956,7 +956,7 @@ public final class CommandSession {
         /** Same as {@link #getConfigInfo()}, but for Application. */
         private ConfigInfo getAppConfigInfo() {
             final Application application = (Application) getApplicationContext();
-            return new ConfigInfo(application, application.getDisplay());
+            return new ConfigInfo(application, getDisplay());
         }
     }
 
