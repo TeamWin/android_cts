@@ -24,7 +24,6 @@ import static android.media.cts.MediaSessionTestHelperConstants.MEDIA_SESSION_TE
 
 import android.media.cts.BaseMultiUserTest;
 import android.media.cts.MediaSessionTestHelperConstants;
-
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
 import android.platform.test.annotations.RequiresDevice;
@@ -61,8 +60,6 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
 
     private final List<Integer> mNotificationListeners = new ArrayList<>();
 
-    private boolean mNotificationListenerDisabled;
-
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -70,7 +67,6 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
         // Ensure that the previously running media session test helper app doesn't exist.
         getDevice().uninstallPackage(MEDIA_SESSION_TEST_HELPER_PKG);
         mNotificationListeners.clear();
-        mNotificationListenerDisabled = "true".equals(getDevice().getProperty("ro.config.low_ram"));
     }
 
     @Override
@@ -101,11 +97,6 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
     }
 
     private void testGetActiveSessions_primaryUser(boolean instant) throws Exception {
-        if (mNotificationListenerDisabled) {
-            CLog.logAndDisplay(LogLevel.INFO,
-                    "NotificationListener is disabled. Test won't run.");
-            return;
-        }
         int primaryUserId = getDevice().getPrimaryUserId();
 
         setAllowGetActiveSessionForTest(true, primaryUserId);
@@ -144,11 +135,6 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
                     "Cannot create a new user. Skipping multi-user test cases.");
             return;
         }
-        if (mNotificationListenerDisabled) {
-            CLog.logAndDisplay(LogLevel.INFO,
-                    "NotificationListener is disabled. Test won't run.");
-            return;
-        }
 
         // Test if another user can get the session.
         int newUser = createAndStartUser();
@@ -181,11 +167,6 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
         if (!canCreateAdditionalUsers(1)) {
             CLog.logAndDisplay(LogLevel.INFO,
                     "Cannot create a new user. Skipping multi-user test cases.");
-            return;
-        }
-        if (mNotificationListenerDisabled) {
-            CLog.logAndDisplay(LogLevel.INFO,
-                    "NotificationListener is disabled. Test won't run.");
             return;
         }
 
@@ -223,11 +204,6 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
                     "Device doesn't support managed profiles. Test won't run.");
             return;
         }
-        if (mNotificationListenerDisabled) {
-            CLog.logAndDisplay(LogLevel.INFO,
-                    "NotificationListener is disabled. Test won't run.");
-            return;
-        }
 
         // Test if another managed profile can get the session.
         // Remove the created user first not to exceed system's user number limit.
@@ -241,12 +217,6 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
     @AppModeFull
     @RequiresDevice
     public void testGetActiveSessions_noSession2() throws Exception {
-        if (mNotificationListenerDisabled) {
-            CLog.logAndDisplay(LogLevel.INFO,
-                    "NotificationListener is disabled. Test won't run.");
-            return;
-        }
-
         int primaryUserId = getDevice().getPrimaryUserId();
 
         setAllowGetActiveSessionForTest(true, primaryUserId);
@@ -264,12 +234,6 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
     @AppModeFull
     @RequiresDevice
     public void testGetActiveSessions_withSession2() throws Exception {
-        if (mNotificationListenerDisabled) {
-            CLog.logAndDisplay(LogLevel.INFO,
-                    "NotificationListener is disabled. Test won't run.");
-            return;
-        }
-
         int primaryUserId = getDevice().getPrimaryUserId();
 
         setAllowGetActiveSessionForTest(true, primaryUserId);
