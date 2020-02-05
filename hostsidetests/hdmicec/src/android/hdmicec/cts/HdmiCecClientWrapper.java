@@ -166,13 +166,14 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     }
 
     /**
-     * Sends a <USER_CONTROL_PRESSED> and <USER_CONTROL_RELEASED> from TV to target device
+     * Sends a <USER_CONTROL_PRESSED> and <USER_CONTROL_RELEASED> from source to destination
      * through the output console of the cec-communication channel with the mentioned keycode.
      */
-    public void sendUserControlPressAndRelease(int keycode, boolean holdKey) throws Exception {
+    public void sendUserControlPressAndRelease(CecDevice source, CecDevice destination,
+            int keycode, boolean holdKey) throws Exception {
         checkCecClient();
         String key = String.format("%02x", keycode);
-        String command = "tx " + CecDevice.TV + CecDevice.PLAYBACK_1 + ":" +
+        String command = "tx " + source + destination + ":" +
                 CecMessage.USER_CONTROL_PRESSED + ":" + key;
 
         if (holdKey) {
@@ -190,7 +191,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         mOutputConsole.newLine();
         /* Sleep less than 200ms between press and release */
         TimeUnit.MILLISECONDS.sleep(100);
-        mOutputConsole.write("tx " + CecDevice.TV + CecDevice.PLAYBACK_1 + ":" +
+        mOutputConsole.write("tx " + source + destination + ":" +
                               CecMessage.USER_CONTROL_RELEASED);
         mOutputConsole.flush();
     }

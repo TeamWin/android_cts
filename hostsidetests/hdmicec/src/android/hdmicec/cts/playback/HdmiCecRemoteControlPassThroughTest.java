@@ -93,17 +93,23 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHostJUnit4Tes
         device.executeAdbCommand("logcat", "-c");
         // Start the APK and wait for it to complete.
         device.executeShellCommand(START_COMMAND);
-        hdmiCecClient.sendUserControlPressAndRelease(HdmiCecConstants.CEC_CONTROL_UP, false);
+        hdmiCecClient.sendUserControlPressAndRelease(CecDevice.TV, CecDevice.PLAYBACK_1,
+                HdmiCecConstants.CEC_CONTROL_UP, false);
         lookForLog("Short press KEYCODE_DPAD_UP");
-        hdmiCecClient.sendUserControlPressAndRelease(HdmiCecConstants.CEC_CONTROL_DOWN, false);
+        hdmiCecClient.sendUserControlPressAndRelease(CecDevice.TV, CecDevice.PLAYBACK_1,
+                HdmiCecConstants.CEC_CONTROL_DOWN, false);
         lookForLog("Short press KEYCODE_DPAD_DOWN");
-        hdmiCecClient.sendUserControlPressAndRelease(HdmiCecConstants.CEC_CONTROL_LEFT, false);
+        hdmiCecClient.sendUserControlPressAndRelease(CecDevice.TV, CecDevice.PLAYBACK_1,
+                HdmiCecConstants.CEC_CONTROL_LEFT, false);
         lookForLog("Short press KEYCODE_DPAD_LEFT");
-        hdmiCecClient.sendUserControlPressAndRelease(HdmiCecConstants.CEC_CONTROL_RIGHT, false);
+        hdmiCecClient.sendUserControlPressAndRelease(CecDevice.TV, CecDevice.PLAYBACK_1,
+                HdmiCecConstants.CEC_CONTROL_RIGHT, false);
         lookForLog("Short press KEYCODE_DPAD_RIGHT");
-        hdmiCecClient.sendUserControlPressAndRelease(HdmiCecConstants.CEC_CONTROL_SELECT, false);
+        hdmiCecClient.sendUserControlPressAndRelease(CecDevice.TV, CecDevice.PLAYBACK_1,
+                HdmiCecConstants.CEC_CONTROL_SELECT, false);
         lookForLog("Short press KEYCODE_DPAD_CENTER");
-        hdmiCecClient.sendUserControlPressAndRelease(HdmiCecConstants.CEC_CONTROL_BACK, false);
+        hdmiCecClient.sendUserControlPressAndRelease(CecDevice.TV, CecDevice.PLAYBACK_1,
+                HdmiCecConstants.CEC_CONTROL_BACK, false);
         lookForLog("Short press KEYCODE_BACK");
     }
 
@@ -121,17 +127,23 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHostJUnit4Tes
         device.executeAdbCommand("logcat", "-c");
         // Start the APK and wait for it to complete.
         device.executeShellCommand(START_COMMAND);
-        hdmiCecClient.sendUserControlPressAndRelease(HdmiCecConstants.CEC_CONTROL_UP, true);
+        hdmiCecClient.sendUserControlPressAndRelease(CecDevice.TV, CecDevice.PLAYBACK_1,
+                HdmiCecConstants.CEC_CONTROL_UP, true);
         lookForLog("Long press KEYCODE_DPAD_UP");
-        hdmiCecClient.sendUserControlPressAndRelease(HdmiCecConstants.CEC_CONTROL_DOWN, true);
+        hdmiCecClient.sendUserControlPressAndRelease(CecDevice.TV, CecDevice.PLAYBACK_1,
+                HdmiCecConstants.CEC_CONTROL_DOWN, true);
         lookForLog("Long press KEYCODE_DPAD_DOWN");
-        hdmiCecClient.sendUserControlPressAndRelease(HdmiCecConstants.CEC_CONTROL_LEFT, true);
+        hdmiCecClient.sendUserControlPressAndRelease(CecDevice.TV, CecDevice.PLAYBACK_1,
+                HdmiCecConstants.CEC_CONTROL_LEFT, true);
         lookForLog("Long press KEYCODE_DPAD_LEFT");
-        hdmiCecClient.sendUserControlPressAndRelease(HdmiCecConstants.CEC_CONTROL_RIGHT, true);
+        hdmiCecClient.sendUserControlPressAndRelease(CecDevice.TV, CecDevice.PLAYBACK_1,
+                HdmiCecConstants.CEC_CONTROL_RIGHT, true);
         lookForLog("Long press KEYCODE_DPAD_RIGHT");
-        hdmiCecClient.sendUserControlPressAndRelease(HdmiCecConstants.CEC_CONTROL_SELECT, true);
+        hdmiCecClient.sendUserControlPressAndRelease(CecDevice.TV, CecDevice.PLAYBACK_1,
+                HdmiCecConstants.CEC_CONTROL_SELECT, true);
         lookForLog("Long press KEYCODE_DPAD_CENTER");
-        hdmiCecClient.sendUserControlPressAndRelease(HdmiCecConstants.CEC_CONTROL_BACK, true);
+        hdmiCecClient.sendUserControlPressAndRelease(CecDevice.TV, CecDevice.PLAYBACK_1,
+                HdmiCecConstants.CEC_CONTROL_BACK, true);
         lookForLog("Long press KEYCODE_BACK");
     }
 }
