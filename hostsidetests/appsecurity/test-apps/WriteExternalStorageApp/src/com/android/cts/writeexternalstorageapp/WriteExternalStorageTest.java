@@ -154,8 +154,8 @@ public class WriteExternalStorageTest extends AndroidTestCase {
 
             assertTrue(path.getAbsolutePath().contains(packageName));
 
-            // Walk until we leave device, writing the whole way
-            while (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState(path))) {
+            // Walk until we reach package specific directory.
+            while (path.getAbsolutePath().contains(packageName)) {
                 assertDirReadWriteAccess(path);
                 path = path.getParentFile();
             }
@@ -183,16 +183,20 @@ public class WriteExternalStorageTest extends AndroidTestCase {
     public void testMountStatusWalkingUpTree() {
         final File top = Environment.getExternalStorageDirectory();
         File path = getContext().getExternalCacheDir();
+        final String packageName = getContext().getPackageName();
 
         int depth = 0;
         while (depth++ < 32) {
-            assertDirReadWriteAccess(path);
-            assertEquals(Environment.MEDIA_MOUNTED, Environment.getExternalStorageState(path));
-
+            // Check read&write access for only package specific directories. We might not have
+            // read/write access for directories like /storage/emulated/0/Android and
+            // /storage/emulated/0/Android/<data|media|obb>.
+            if (path.getAbsolutePath().contains(packageName)) {
+                assertDirReadWriteAccess(path);
+                assertEquals(Environment.MEDIA_MOUNTED, Environment.getExternalStorageState(path));
+            }
             if (path.getAbsolutePath().equals(top.getAbsolutePath())) {
                 break;
             }
-
             path = path.getParentFile();
         }
 
