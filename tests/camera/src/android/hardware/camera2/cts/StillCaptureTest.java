@@ -152,6 +152,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testDynamicDepthCapture() throws Exception {
+        int TEST_ITERATIONS = 10;
         for (int i = 0; i < mCameraIds.length; i++) {
             try {
                 Log.i(TAG, "Testing dynamic depth for Camera " + mCameraIds[i]);
@@ -166,13 +167,23 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
                     continue;
                 }
 
-                openDevice(mCameraIds[i]);
-
                 // Check the maximum supported size.
                 List<Size> orderedDepthJpegSizes = CameraTestUtils.getSortedSizesForFormat(
                         mCameraIds[i], mCameraManager, ImageFormat.DEPTH_JPEG, null/*bound*/);
                 Size maxDepthJpegSize = orderedDepthJpegSizes.get(0);
-                stillDynamicDepthTestByCamera(ImageFormat.DEPTH_JPEG, maxDepthJpegSize);
+                int format = ImageFormat.DEPTH_JPEG;
+
+                // Re-use the same ImageReader during all test iterations.
+                SimpleImageReaderListener imageListener = new SimpleImageReaderListener();
+                createImageReader(maxDepthJpegSize, format, MAX_READER_IMAGES, imageListener);
+
+                for (int j = 0; j < TEST_ITERATIONS; j++) {
+                    openDevice(mCameraIds[i]);
+
+                    stillDynamicDepthTestByCamera(format, maxDepthJpegSize, imageListener);
+
+                    closeDevice();
+                }
             } finally {
                 closeDevice();
                 closeImageReader();
@@ -1334,7 +1345,8 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
     /**
      * Issue a still capture and validate the dynamic depth output.
      */
-    private void stillDynamicDepthTestByCamera(int format, Size stillSize) throws Exception {
+    private void stillDynamicDepthTestByCamera(int format, Size stillSize,
+            SimpleImageReaderListener imageListener) throws Exception {
         assertTrue(format == ImageFormat.DEPTH_JPEG);
 
         Size maxPreviewSz = mOrderedPreviewSizes.get(0);
@@ -1343,16 +1355,30 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
                     + ", preview size " + maxPreviewSz);
         }
 
+        // Update preview size.
+        updatePreviewSurface(maxPreviewSz);
+
         // prepare capture and start preview.
         CaptureRequest.Builder previewBuilder =
                 mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
         CaptureRequest.Builder stillBuilder =
                 mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
         SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
-        SimpleImageReaderListener imageListener = new SimpleImageReaderListener();
-        prepareCaptureAndStartPreview(previewBuilder, stillBuilder, maxPreviewSz, stillSize,
-                ImageFormat.DEPTH_JPEG, resultListener, /*sessionListener*/null,
-                MAX_READER_IMAGES, imageListener);
+
+        // Configure output streams with preview and sill streams.
+        List<Surface> outputSurfaces = new ArrayList<Surface>();
+        outputSurfaces.add(mPreviewSurface);
+        outputSurfaces.add(mReaderSurface);
+        mSessionListener = new BlockingSessionCallback();
+        mSession = configureCameraSession(mCamera, outputSurfaces, mSessionListener, mHandler);
+
+        // Configure the requests.
+        previewBuilder.addTarget(mPreviewSurface);
+        stillBuilder.addTarget(mPreviewSurface);
+        stillBuilder.addTarget(mReaderSurface);
+
+        // Start preview.
+        mSession.setRepeatingRequest(previewBuilder.build(), resultListener, mHandler);
 
         // Capture a few dynamic depth images and check whether they are valid jpegs.
         for (int i = 0; i < MAX_READER_IMAGES; i++) {
