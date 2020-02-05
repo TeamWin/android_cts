@@ -328,7 +328,9 @@ public class WriteExternalStorageTest extends AndroidTestCase {
             final File after = new File(next, name);
 
             Log.v(TAG, "Moving " + before + " to " + after);
-            Os.rename(before.getAbsolutePath(), after.getAbsolutePath());
+            // Os.rename will fail with EXDEV here, use renameTo which does copy delete behind the
+            // scenes
+            before.renameTo(after);
 
             cur = next;
         }
