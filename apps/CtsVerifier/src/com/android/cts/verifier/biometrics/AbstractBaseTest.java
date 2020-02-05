@@ -21,6 +21,8 @@ import android.content.Intent;
 import android.hardware.biometrics.BiometricManager;
 import android.hardware.biometrics.BiometricManager.Authenticators;
 import android.hardware.biometrics.BiometricPrompt;
+import android.hardware.biometrics.BiometricPrompt.AuthenticationCallback;
+import android.hardware.biometrics.BiometricPrompt.AuthenticationResult;
 import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.os.Handler;
@@ -242,6 +244,71 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
                         }
                     }
                 });
+    }
+
+    private boolean isPublicAuthenticatorConstant(int authenticator) {
+        final int[] publicConstants =  {
+                Authenticators.BIOMETRIC_STRONG,
+                Authenticators.BIOMETRIC_WEAK,
+                Authenticators.DEVICE_CREDENTIAL
+        };
+        for (int constant : publicConstants) {
+            if (authenticator == constant) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void testInvalidInputs(Runnable successRunnable) {
+        for (int i = 0; i < 32; i++) {
+            final int authenticator = 1 << i;
+            // If it's a public constant, no need to test
+            if (isPublicAuthenticatorConstant(authenticator)) {
+                continue;
+            }
+
+            // Test canAuthenticate(int)
+            boolean exceptionCaught = false;
+            try {
+                mBiometricManager.canAuthenticate(authenticator);
+            } catch (Exception e) {
+                exceptionCaught = true;
+            }
+
+            if (!exceptionCaught) {
+                showToastAndLog("Non-public constants provided to canAuthenticate(int) must throw an"
+                        + " exception");
+                return;
+            }
+
+            // Test setAllowedAuthenticators(int)
+            exceptionCaught = false;
+            try {
+                final BiometricPrompt.Builder builder = new BiometricPrompt.Builder(this);
+                builder.setAllowedAuthenticators(authenticator);
+                builder.setTitle("This should never be shown");
+                builder.setNegativeButton("Cancel", mExecutor,
+                        (dialog, which) -> {
+                            // Do nothing
+                        });
+                final BiometricPrompt prompt = builder.build();
+                prompt.authenticate(new CancellationSignal(), mExecutor,
+                        new AuthenticationCallback() {
+
+                });
+            } catch (Exception e) {
+                exceptionCaught = true;
+            }
+
+            if (!exceptionCaught) {
+                showToastAndLog("Non-public constants provided to setAllowedAuthenticators(int) must"
+                        + " throw an exception");
+                return;
+            }
+        }
+
+        successRunnable.run();
     }
 
 }

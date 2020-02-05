@@ -267,6 +267,8 @@
     <string name="biometric_test_authenticate_with_credential2_button">Authenticate with PIN/Pattern/Pass (skip biometric)</string>
     <!-- setAllowedAuthenticators(CREDENTIAL|BIOMETRIC), credential authentication -->
     <string name="biometric_test_authenticate_with_credential3_button">Authenticate with PIN/Pattern/Pass (skip biometric again)</string>
+    <!-- Invoking the public API with non-public constants -->
+    <string name="biometric_test_invalid_inputs">Test invalid inputs</string>
 
     <string name="biometric_test_strong_label">4) Strong Biometrics + Crypto</string>
     <string name="biometric_test_strong_instructions">This test checks that the Settings.ACTION_BIOMETRIC_ENROLL and its corresponding
