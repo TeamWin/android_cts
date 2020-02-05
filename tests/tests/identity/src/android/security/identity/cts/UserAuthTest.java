@@ -31,11 +31,11 @@ import android.security.identity.ResultData;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.os.SystemClock;
 import android.util.Log;
-import android.test.AndroidTestCase;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -92,7 +92,7 @@ import android.security.keystore.KeyProperties;
 import android.security.keystore.UserNotAuthenticatedException;
 
 
-public class UserAuthTest extends AndroidTestCase {
+public class UserAuthTest {
     private static final String TAG = "UserAuthTest";
 
     private class DeviceLockSession extends ActivityManagerTestBase implements AutoCloseable {
@@ -100,14 +100,14 @@ public class UserAuthTest extends AndroidTestCase {
         private LockScreenSession mLockCredential;
 
         public DeviceLockSession() throws Exception {
-            setUp();
             mLockCredential = new LockScreenSession();
             mLockCredential.setLockCredential();
         }
 
         public void performDeviceLock() {
             mLockCredential.sleepDevice();
-            KeyguardManager keyguardManager = (KeyguardManager)getContext().
+            Context appContext = InstrumentationRegistry.getTargetContext();
+            KeyguardManager keyguardManager = (KeyguardManager)appContext.
                                               getSystemService(Context.KEYGUARD_SERVICE);
             for (int i = 0; i < 25 && !keyguardManager.isDeviceLocked(); i++) {
                 SystemClock.sleep(200);
@@ -123,7 +123,6 @@ public class UserAuthTest extends AndroidTestCase {
         @Override
         public void close() throws Exception {
             mLockCredential.close();
-            tearDown();
         }
     }
 
@@ -170,14 +169,18 @@ public class UserAuthTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testUserAuth() throws Exception {
         String alias = "authbound";
 
         try (DeviceLockSession dl = new DeviceLockSession()) {
-            KeyguardManager keyguardManager = (KeyguardManager)getContext()
+            Context appContext = InstrumentationRegistry.getTargetContext();
+            KeyguardManager keyguardManager = (KeyguardManager)appContext
                                               .getSystemService(Context.KEYGUARD_SERVICE);
 
             doTestUserAuth(dl, keyguardManager);
+        } catch (org.junit.AssumptionViolatedException e) {
+            /* do nothing */
         }
     }
 
@@ -196,6 +199,10 @@ public class UserAuthTest extends AndroidTestCase {
         // Provision the credential.
         Context appContext = InstrumentationRegistry.getTargetContext();
         IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
+        if (Util.isHalOptional()) {
+            assumeTrue("IC HAL not found on device", store != null);
+        }
+
         store.deleteCredentialByName("test");
         WritableIdentityCredential wc = store.createCredential("test",
                 "org.iso.18013-5.2019.mdl");
@@ -318,7 +325,7 @@ public class UserAuthTest extends AndroidTestCase {
         dl.performDeviceLock();
         assertTrue(keyguardManager.isDeviceLocked());
         dl.performDeviceUnlock();
-        assertFalse(keyguardManager.isDeviceLocked());
+        assertTrue(!keyguardManager.isDeviceLocked());
 
         credential = store.getCredentialByName("test",
                 CIPHERSUITE_ECDHE_HKDF_ECDSA_WITH_AES_256_GCM_SHA256);
