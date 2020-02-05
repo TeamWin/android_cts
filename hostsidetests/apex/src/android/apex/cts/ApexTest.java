@@ -33,7 +33,7 @@ public class ApexTest extends BaseHostJUnit4Test {
   }
 
   private boolean isGSI() throws Exception {
-    String systemProduct = getDevice().getProperty("ro.product.system.name");
+    String systemProduct = getDevice().getProperty("ro.product.system_ext.name");
     return systemProduct.equals("aosp_arm")
       || systemProduct.equals("aosp_arm64")
       || systemProduct.equals("aosp_x86")
