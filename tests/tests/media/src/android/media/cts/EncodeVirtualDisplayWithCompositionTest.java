@@ -79,7 +79,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RequiresDevice
 public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
     private static final String TAG = "EncodeVirtualDisplayWithCompositionTest";
-    private static final boolean DBG = true;
+    private static final boolean DBG = false;
     private static final String MIME_TYPE = MediaFormat.MIMETYPE_VIDEO_AVC;
 
     private static final long DEFAULT_WAIT_TIMEOUT_MS = 3000;
@@ -141,35 +141,53 @@ public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
 
     public void testRendering800x480Locally() throws Throwable {
         Log.i(TAG, "testRendering800x480Locally");
-        if (isConcurrentEncodingDecodingSupported(800, 480, BITRATE_800x480)) {
-            runTestRenderingInSeparateThread(800, 480, false, false);
+        if (isConcurrentEncodingDecodingSupported(MIME_TYPE, 800, 480, BITRATE_800x480)) {
+            runTestRenderingInSeparateThread(MIME_TYPE, 800, 480, false, false);
         } else {
             Log.i(TAG, "SKIPPING testRendering800x480Locally(): codec not supported");
         }
     }
 
-    public void testRendering800x480Rotated90() throws Throwable {
-        testRendering800x480Rotated(90);
-    }
+    private static final String AVC = MediaFormat.MIMETYPE_VIDEO_AVC;
+    public void testRendering800x480AvcRotated090() { testRendering800x480Rotated(AVC, 90); }
+    public void testRendering800x480AvcRotated180() { testRendering800x480Rotated(AVC, 180); }
+    public void testRendering800x480AvcRotated270() { testRendering800x480Rotated(AVC, 270); }
+    public void testRendering800x480AvcRotated360() { testRendering800x480Rotated(AVC, 360); }
 
-    public void testRendering800x480Rotated180() throws Throwable {
-        testRendering800x480Rotated(180);
-    }
+    private static final String HEVC = MediaFormat.MIMETYPE_VIDEO_HEVC;
+    public void testRendering800x480HevcRotated090() { testRendering800x480Rotated(HEVC, 90); }
+    public void testRendering800x480HevcRotated180() { testRendering800x480Rotated(HEVC, 180); }
+    public void testRendering800x480HevcRotated270() { testRendering800x480Rotated(HEVC, 270); }
+    public void testRendering800x480HevcRotated360() { testRendering800x480Rotated(HEVC, 360); }
 
-    public void testRendering800x480Rotated270() throws Throwable {
-        testRendering800x480Rotated(270);
-    }
+    private static final String VP8 = MediaFormat.MIMETYPE_VIDEO_VP8;
+    public void testRendering800x480Vp8Rotated090() { testRendering800x480Rotated(VP8, 90); }
+    public void testRendering800x480Vp8Rotated180() { testRendering800x480Rotated(VP8, 180); }
+    public void testRendering800x480Vp8Rotated270() { testRendering800x480Rotated(VP8, 270); }
+    public void testRendering800x480Vp8Rotated360() { testRendering800x480Rotated(VP8, 360); }
 
-    public void testRendering800x480Rotated360() throws Throwable {
-        testRendering800x480Rotated(360);
-    }
+    private static final String VP9 = MediaFormat.MIMETYPE_VIDEO_VP9;
+    public void testRendering800x480Vp9Rotated090() { testRendering800x480Rotated(VP9, 90); }
+    public void testRendering800x480Vp9Rotated180() { testRendering800x480Rotated(VP9, 180); }
+    public void testRendering800x480Vp9Rotated270() { testRendering800x480Rotated(VP9, 270); }
+    public void testRendering800x480Vp9Rotated360() { testRendering800x480Rotated(VP9, 360); }
 
-    private void testRendering800x480Rotated(int degrees) throws Throwable {
-        Log.i(TAG, "testRendering800x480Rotated " + degrees);
-        if (isConcurrentEncodingDecodingSupported(800, 480, BITRATE_800x480)) {
-            runTestRenderingInSeparateThread(800, 480, false, false, degrees);
-        } else {
-            Log.i(TAG, "SKIPPING testRendering800x480Rotated" + degrees + ":codec not supported");
+    private static final String AV1 = MediaFormat.MIMETYPE_VIDEO_AV1;
+    public void testRendering800x480Av1Rotated090() { testRendering800x480Rotated(AV1, 90); }
+    public void testRendering800x480Av1Rotated180() { testRendering800x480Rotated(AV1, 180); }
+    public void testRendering800x480Av1Rotated270() { testRendering800x480Rotated(AV1, 270); }
+    public void testRendering800x480Av1Rotated360() { testRendering800x480Rotated(AV1, 360); }
+
+    private void testRendering800x480Rotated(String mimeType, int degrees) {
+        try {
+            if (isConcurrentEncodingDecodingSupported(mimeType, 800, 480, BITRATE_800x480)) {
+                runTestRenderingInSeparateThread(mimeType, 800, 480, false, false, degrees);
+            } else {
+                Log.i(TAG, "SKIPPING testRendering800x480Rotated" + degrees + ":codec (" +
+                        mimeType + ") not supported");
+            }
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
         }
     }
 
@@ -180,14 +198,15 @@ public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
             Log.i(TAG, "SKIPPING testRenderingMaxResolutionLocally(): codec not supported");
         } else {
             Log.w(TAG, "Trying resolution " + maxRes);
-            runTestRenderingInSeparateThread(maxRes.getWidth(), maxRes.getHeight(), false, false);
+            runTestRenderingInSeparateThread(
+                    MIME_TYPE, maxRes.getWidth(), maxRes.getHeight(), false, false);
         }
     }
 
     public void testRendering800x480Remotely() throws Throwable {
         Log.i(TAG, "testRendering800x480Remotely");
-        if (isConcurrentEncodingDecodingSupported(800, 480, BITRATE_800x480)) {
-            runTestRenderingInSeparateThread(800, 480, true, false);
+        if (isConcurrentEncodingDecodingSupported(MIME_TYPE, 800, 480, BITRATE_800x480)) {
+            runTestRenderingInSeparateThread(MIME_TYPE, 800, 480, true, false);
         } else {
             Log.i(TAG, "SKIPPING testRendering800x480Remotely(): codec not supported");
         }
@@ -200,14 +219,15 @@ public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
             Log.i(TAG, "SKIPPING testRenderingMaxResolutionRemotely(): codec not supported");
         } else {
             Log.w(TAG, "Trying resolution " + maxRes);
-            runTestRenderingInSeparateThread(maxRes.getWidth(), maxRes.getHeight(), true, false);
+            runTestRenderingInSeparateThread(
+                    MIME_TYPE, maxRes.getWidth(), maxRes.getHeight(), true, false);
         }
     }
 
     public void testRendering800x480RemotelyWith3Windows() throws Throwable {
         Log.i(TAG, "testRendering800x480RemotelyWith3Windows");
-        if (isConcurrentEncodingDecodingSupported(800, 480, BITRATE_800x480)) {
-            runTestRenderingInSeparateThread(800, 480, true, true);
+        if (isConcurrentEncodingDecodingSupported(MIME_TYPE, 800, 480, BITRATE_800x480)) {
+            runTestRenderingInSeparateThread(MIME_TYPE, 800, 480, true, true);
         } else {
             Log.i(TAG, "SKIPPING testRendering800x480RemotelyWith3Windows(): codec not supported");
         }
@@ -215,8 +235,8 @@ public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
 
     public void testRendering800x480LocallyWith3Windows() throws Throwable {
         Log.i(TAG, "testRendering800x480LocallyWith3Windows");
-        if (isConcurrentEncodingDecodingSupported(800, 480, BITRATE_800x480)) {
-            runTestRenderingInSeparateThread(800, 480, false, true);
+        if (isConcurrentEncodingDecodingSupported(MIME_TYPE, 800, 480, BITRATE_800x480)) {
+            runTestRenderingInSeparateThread(MIME_TYPE, 800, 480, false, true);
         } else {
             Log.i(TAG, "SKIPPING testRendering800x480LocallyWith3Windows(): codec not supported");
         }
@@ -229,19 +249,20 @@ public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
      * @param h
      * @throws Exception
      */
-    private void runTestRenderingInSeparateThread(final int w, final int h,
+    private void runTestRenderingInSeparateThread(final String mimeType, final int w, final int h,
             final boolean runRemotely, final boolean multipleWindows) throws Throwable {
-        runTestRenderingInSeparateThread(w, h, runRemotely, multipleWindows, /* degrees */ 0);
+        runTestRenderingInSeparateThread(
+                mimeType, w, h, runRemotely, multipleWindows, /* degrees */ 0);
     }
 
-    private void runTestRenderingInSeparateThread(final int w, final int h,
+    private void runTestRenderingInSeparateThread(final String mimeType, final int w, final int h,
             final boolean runRemotely, final boolean multipleWindows, final int degrees)
             throws Throwable {
         mTestException = null;
         Thread renderingThread = new Thread(new Runnable() {
             public void run() {
                 try {
-                    doTestRenderingOutput(w, h, runRemotely, multipleWindows, degrees);
+                    doTestRenderingOutput(mimeType, w, h, runRemotely, multipleWindows, degrees);
                 } catch (Throwable t) {
                     t.printStackTrace();
                     mTestException = t;
@@ -256,15 +277,15 @@ public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
         }
     }
 
-    private void doTestRenderingOutput(int w, int h, boolean runRemotely, boolean multipleWindows,
-            int degrees) throws Throwable {
+    private void doTestRenderingOutput(String mimeType, int w, int h,
+            boolean runRemotely, boolean multipleWindows, int degrees) throws Throwable {
         if (DBG) {
-            Log.i(TAG, "doTestRenderingOutput for w:" + w + " h:" + h);
+            Log.i(TAG, "doTestRenderingOutput for type:" + mimeType + " w:" + w + " h:" + h);
         }
         try {
             mIsQuitting = false;
-            mDecoder = MediaCodec.createDecoderByType(MIME_TYPE);
-            MediaFormat decoderFormat = MediaFormat.createVideoFormat(MIME_TYPE, w, h);
+            mDecoder = MediaCodec.createDecoderByType(mimeType);
+            MediaFormat decoderFormat = MediaFormat.createVideoFormat(mimeType, w, h);
             if (degrees != 0) {
                 decoderFormat.setInteger(MediaFormat.KEY_ROTATION, degrees);
             }
@@ -276,7 +297,7 @@ public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
             mDecoderInputBuffers = mDecoder.getInputBuffers();
 
             mEncodingHelper = new EncodingHelper();
-            mEncodingSurface = mEncodingHelper.startEncoding(w, h,
+            mEncodingSurface = mEncodingHelper.startEncoding(mimeType, w, h,
                     new EncoderEventListener() {
                 @Override
                 public void onCodecConfig(ByteBuffer data, BufferInfo info) {
@@ -526,7 +547,7 @@ public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
             EncodingHelper encodingHelper = new EncodingHelper();
             try {
                 mEncodingSurface = encodingHelper.startEncoding(
-                        maxSize.getWidth(), maxSize.getHeight(), mEncoderEventListener);
+                        MIME_TYPE, maxSize.getWidth(), maxSize.getHeight(), mEncoderEventListener);
                 GlCompositor compositor = new GlCompositor();
                 if (DBG) {
                     Log.i(TAG, "start composition");
@@ -586,14 +607,16 @@ public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
         private MediaCodec mEncoder;
         private volatile boolean mStopEncoding = false;
         private EncoderEventListener mEventListener;
+        private String mMimeType;
         private int mW;
         private int mH;
         private Thread mEncodingThread;
         private Surface mEncodingSurface;
         private Semaphore mInitCompleted = new Semaphore(0);
 
-        Surface startEncoding(int w, int h, EncoderEventListener eventListener) {
+        Surface startEncoding(String mimeType, int w, int h, EncoderEventListener eventListener) {
             mStopEncoding = false;
+            mMimeType = mimeType;
             mW = w;
             mH = h;
             mEventListener = eventListener;
@@ -636,7 +659,7 @@ public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
 
         private void doEncoding() throws Exception {
             final int TIMEOUT_USEC_NORMAL = 1000000;
-            MediaFormat format = MediaFormat.createVideoFormat(MIME_TYPE, mW, mH);
+            MediaFormat format = MediaFormat.createVideoFormat(mMimeType, mW, mH);
             format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
                     MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
             int bitRate = BITRATE_DEFAULT;
@@ -1537,22 +1560,23 @@ public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
      * (The last one is required by CDD.)
      */
     private Size checkMaxConcurrentEncodingDecodingResolution() {
-        if (isConcurrentEncodingDecodingSupported(1920, 1080, BITRATE_1080p)) {
+        if (isConcurrentEncodingDecodingSupported(MIME_TYPE, 1920, 1080, BITRATE_1080p)) {
             return new Size(1920, 1080);
-        } else if (isConcurrentEncodingDecodingSupported(1280, 720, BITRATE_720p)) {
+        } else if (isConcurrentEncodingDecodingSupported(MIME_TYPE, 1280, 720, BITRATE_720p)) {
             return new Size(1280, 720);
-        } else if (isConcurrentEncodingDecodingSupported(800, 480, BITRATE_800x480)) {
+        } else if (isConcurrentEncodingDecodingSupported(MIME_TYPE, 800, 480, BITRATE_800x480)) {
             return new Size(800, 480);
-        } else if (isConcurrentEncodingDecodingSupported(720, 480, BITRATE_DEFAULT)) {
+        } else if (isConcurrentEncodingDecodingSupported(MIME_TYPE, 720, 480, BITRATE_DEFAULT)) {
             return new Size(720, 480);
         }
         Log.i(TAG, "SKIPPING test: concurrent encoding and decoding is not supported");
         return null;
     }
 
-    private boolean isConcurrentEncodingDecodingSupported(int w, int h, int bitRate) {
+    private boolean isConcurrentEncodingDecodingSupported(
+            String mimeType, int w, int h, int bitRate) {
         MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
-        MediaFormat testFormat = MediaFormat.createVideoFormat(MIME_TYPE, w, h);
+        MediaFormat testFormat = MediaFormat.createVideoFormat(mimeType, w, h);
         testFormat.setInteger(MediaFormat.KEY_BIT_RATE, bitRate);
         testFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
         if (mcl.findDecoderForFormat(testFormat) == null
@@ -1565,20 +1589,20 @@ public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
         MediaCodec encoder = null;
         Surface encodingSurface = null;
         try {
-            decoder = MediaCodec.createDecoderByType(MIME_TYPE);
-            MediaFormat decoderFormat = MediaFormat.createVideoFormat(MIME_TYPE, w, h);
+            decoder = MediaCodec.createDecoderByType(mimeType);
+            MediaFormat decoderFormat = MediaFormat.createVideoFormat(mimeType, w, h);
             decodingSurface = new OutputSurface(w, h);
             decodingSurface.makeCurrent();
             decoder.configure(decoderFormat, decodingSurface.getSurface(), null, 0);
             decoder.start();
 
-            MediaFormat format = MediaFormat.createVideoFormat(MIME_TYPE, w, h);
+            MediaFormat format = MediaFormat.createVideoFormat(mimeType, w, h);
             format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
                     MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
             format.setInteger(MediaFormat.KEY_BIT_RATE, bitRate);
             format.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
             format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
-            encoder = MediaCodec.createEncoderByType(MIME_TYPE);;
+            encoder = MediaCodec.createEncoderByType(mimeType);;
             encoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
             encodingSurface = encoder.createInputSurface();
             encoder.start();

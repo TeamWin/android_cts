@@ -19,6 +19,7 @@ package android.server.wm;
 import static android.server.wm.UiDeviceUtils.pressHomeButton;
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
+import static android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
@@ -70,6 +71,7 @@ public class WindowlessWmTests implements SurfaceHolder.Callback {
 
     private SurfaceControlViewHost mVr;
     private View mEmbeddedView;
+    private WindowManager.LayoutParams mEmbeddedLayoutParams;
 
     private boolean mClicked = false;
 
@@ -113,7 +115,9 @@ public class WindowlessWmTests implements SurfaceHolder.Callback {
 
         sv.setChildSurfacePackage(mVr.getSurfacePackage());
 
-        mVr.addView(v, width, height);
+        mEmbeddedLayoutParams = new WindowManager.LayoutParams(width, height,
+                WindowManager.LayoutParams.TYPE_APPLICATION, 0, PixelFormat.OPAQUE);
+        mVr.addView(v, mEmbeddedLayoutParams);
     }
 
     @Override
@@ -192,5 +196,34 @@ public class WindowlessWmTests implements SurfaceHolder.Callback {
         mClicked = false;
         CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         assertFalse(mClicked);
+    }
+
+    @Test
+    public void testDisableInputTouch() throws Throwable {
+        mEmbeddedView = new Button(mActivity);
+        mEmbeddedView.setOnClickListener((View v) -> {
+            mClicked = true;
+        });
+
+        addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT);
+        mInstrumentation.waitForIdleSync();
+
+        mActivityRule.runOnUiThread(() -> {
+                mEmbeddedLayoutParams.flags |= FLAG_NOT_TOUCHABLE;
+                mVr.relayout(mEmbeddedLayoutParams);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        assertFalse(mClicked);
+
+        mActivityRule.runOnUiThread(() -> {
+                mEmbeddedLayoutParams.flags &= ~FLAG_NOT_TOUCHABLE;
+                mVr.relayout(mEmbeddedLayoutParams);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        assertTrue(mClicked);
     }
 }

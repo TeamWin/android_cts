@@ -22,10 +22,7 @@ import static android.accessibilityservice.cts.utils.GestureUtils.diff;
 import static android.accessibilityservice.cts.utils.GestureUtils.endTimeOf;
 import static android.accessibilityservice.cts.utils.GestureUtils.getGestureBuilder;
 import static android.accessibilityservice.cts.utils.GestureUtils.longClick;
-import static android.accessibilityservice.cts.utils.GestureUtils.path;
 import static android.accessibilityservice.cts.utils.GestureUtils.startingAt;
-import static android.accessibilityservice.cts.utils.GestureUtils.swipe;
-import static android.accessibilityservice.cts.utils.GestureUtils.times;
 import static android.app.UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES;
 
 import static org.mockito.Mockito.any;
@@ -50,7 +47,6 @@ import android.graphics.PointF;
 import android.platform.test.annotations.AppModeFull;
 import android.util.DisplayMetrics;
 import android.view.Display;
-import android.view.ViewConfiguration;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 
@@ -72,11 +68,11 @@ import org.mockito.MockitoAnnotations;
 public class AccessibilityGestureDetectorTest {
 
     // Constants
-    private static final PointF HALF_FINGER_OFFSET = new PointF(120f, -50f);
     private static final float GESTURE_LENGTH_INCHES = 1.0f;
     private static final long STROKE_MS = 400;
     private static final long GESTURE_DISPATCH_TIMEOUT_MS = 3000;
     private static final long EVENT_DISPATCH_TIMEOUT_MS = 3000;
+    private static final PointF FINGER_OFFSET_PX = new PointF(100f, -50f);
 
     private static Instrumentation sInstrumentation;
     private static UiAutomation sUiAutomation;
@@ -389,21 +385,21 @@ public class AccessibilityGestureDetectorTest {
     }
 
     private void verifyGestureTouchEventOnDisplay(int displayId) {
-        assertEventAfterGesture(swipe(Display.DEFAULT_DISPLAY),
+        assertEventAfterGesture(swipe(displayId),
                 AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
                 AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
 
-        assertEventAfterGesture(tap(Display.DEFAULT_DISPLAY),
+        assertEventAfterGesture(tap(displayId),
                 AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
                 AccessibilityEvent.TYPE_TOUCH_EXPLORATION_GESTURE_START,
                 AccessibilityEvent.TYPE_TOUCH_EXPLORATION_GESTURE_END,
                 AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
 
-        assertEventAfterGesture(doubleTap(Display.DEFAULT_DISPLAY),
+        assertEventAfterGesture(doubleTap(displayId),
                 AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
                 AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
 
-        assertEventAfterGesture(doubleTapAndHold(Display.DEFAULT_DISPLAY),
+        assertEventAfterGesture(doubleTapAndHold(displayId),
                 AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
                 AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
     }
@@ -509,13 +505,12 @@ public class AccessibilityGestureDetectorTest {
     }
 
     private GestureDescription multiFingerMultiTap(int fingerCount, int tapCount, int displayId) {
-        // We dispatch the first finger, base, placed at left down side by half offset
-        // from the center of the display and the second one at right up side by delta
-        // from the base and so for third one.
-        final PointF base = diff(mTapLocation, HALF_FINGER_OFFSET);
-        final PointF delta = times(2, HALF_FINGER_OFFSET);
+        // We dispatch the first finger, base, placed at left down side by an offset
+        // from the center of the display and the rest ones at right up side by delta
+        // from the base.
+        final PointF base = diff(mTapLocation, FINGER_OFFSET_PX);
         return GestureUtils.multiFingerMultiTap(
-                base, delta, fingerCount, tapCount, /* slop */ 0, displayId);
+                base, FINGER_OFFSET_PX, fingerCount, tapCount, /* slop= */ 0, displayId);
     }
 
     private GestureDescription MultiFingerSwipe(

@@ -353,7 +353,7 @@
     <protected-broadcast android:name="android.net.wifi.WIFI_STATE_CHANGED" />
     <protected-broadcast android:name="android.net.wifi.WIFI_AP_STATE_CHANGED" />
     <protected-broadcast android:name="android.net.wifi.WIFI_CREDENTIAL_CHANGED" />
-    <protected-broadcast android:name="android.net.wifi.ACTION_WIFI_SCAN_AVAILABLE" />
+    <protected-broadcast android:name="android.net.wifi.action.WIFI_SCAN_AVAILABILITY_CHANGED" />
     <protected-broadcast android:name="android.net.wifi.aware.action.WIFI_AWARE_STATE_CHANGED" />
     <protected-broadcast android:name="android.net.wifi.rtt.action.WIFI_RTT_STATE_CHANGED" />
     <protected-broadcast android:name="android.net.wifi.SCAN_RESULTS" />
@@ -3353,8 +3353,8 @@
     <permission android:name="android.permission.NOTIFY_TV_INPUTS"
         android:protectionLevel="signature|privileged" />
 
-      <!-- @SystemApi Allows an application to interact with tuner resources through
-         Tuner Resource Manager.
+    <!-- This permission is required among systems services when accessing
+         tuner resource management related APIs or information.
          <p>Protection level: signature|privileged
          <p>Not for use by third-party applications.
          @hide -->
@@ -3930,7 +3930,7 @@
          <p>Declaring the permission implies intention to use the API and the user of the
          device can grant permission through the Settings application. -->
     <permission android:name="android.permission.PACKAGE_USAGE_STATS"
-        android:protectionLevel="signature|privileged|development|appop" />
+        android:protectionLevel="signature|privileged|development|appop|retailDemo" />
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
 
     <!-- @hide @SystemApi Allows an application to observe usage time of apps. The app can register

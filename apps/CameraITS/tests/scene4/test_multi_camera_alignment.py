@@ -303,12 +303,33 @@ def main():
         # do captures on 2 cameras
         caps = {}
         for i, fmt in enumerate(fmts):
+            physicalSizes = {}
+
             capture_cam_ids = physical_ids
             if fmt == 'raw':
                 capture_cam_ids = physical_raw_ids
+
+            for physical_id in capture_cam_ids:
+                configs = props_physical[physical_id]['android.scaler.streamConfigurationMap']\
+                                   ['availableStreamConfigurations']
+                if fmt == 'raw':
+                    fmt_codes = 0x20
+                    fmt_configs = [cfg for cfg in configs if cfg['format'] == fmt_codes]
+                else:
+                    fmt_codes = 0x23
+                    fmt_configs = [cfg for cfg in configs if cfg['format'] == fmt_codes]
+
+                out_configs = [cfg for cfg in fmt_configs if cfg['input'] is False]
+                out_sizes = [(cfg['width'], cfg['height']) for cfg in out_configs]
+                physicalSizes[physical_id] = max(out_sizes, key=lambda item: item[1])
+
             out_surfaces = [{'format': 'yuv', 'width': w, 'height': h},
-                            {'format': fmt, 'physicalCamera': capture_cam_ids[0]},
-                            {'format': fmt, 'physicalCamera': capture_cam_ids[1]}]
+                            {'format': fmt, 'physicalCamera': capture_cam_ids[0],
+                             'width': physicalSizes[capture_cam_ids[0]][0],
+                             'height': physicalSizes[capture_cam_ids[0]][1]},
+                            {'format': fmt, 'physicalCamera': capture_cam_ids[1],
+                             'width': physicalSizes[capture_cam_ids[1]][0],
+                             'height': physicalSizes[capture_cam_ids[1]][1]},]
 
             out_surfaces_supported = cam.is_stream_combination_supported(out_surfaces)
             its.caps.skip_unless(out_surfaces_supported)

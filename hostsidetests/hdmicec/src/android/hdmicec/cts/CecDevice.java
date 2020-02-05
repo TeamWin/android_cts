@@ -22,6 +22,7 @@ import java.util.Map;
 public enum CecDevice {
     TV(0x0),
     RECORDING_1(0x1),
+    TUNER_1(0x3),
     PLAYBACK_1(0x4),
     AUDIO_SYSTEM(0x5),
     PLAYBACK_2(0x8),
