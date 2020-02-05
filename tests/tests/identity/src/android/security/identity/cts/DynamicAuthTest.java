@@ -21,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 
@@ -61,6 +62,9 @@ public class DynamicAuthTest {
     public void dynamicAuthTest() throws Exception {
         Context appContext = InstrumentationRegistry.getTargetContext();
         IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
+        if (Util.isHalOptional()) {
+            assumeTrue("IC HAL not found on device", store != null);
+        }
 
         String credentialName = "test";
 
