@@ -50,6 +50,8 @@ public class TvPermissionTest extends AndroidTestCase {
             fail("Accessing " + tableName + " table should require WRITE_EPG_DATA permission.");
         } catch (SecurityException e) {
             // Expected exception
+        } catch (IllegalArgumentException e) {
+            // TvProvider is not visable for instant app
         }
     }
 
@@ -60,6 +62,8 @@ public class TvPermissionTest extends AndroidTestCase {
             fail("Accessing " + tableName + " table should require WRITE_EPG_DATA permission.");
         } catch (SecurityException e) {
             // Expected exception
+        } catch (IllegalArgumentException e) {
+            // TvProvider is not visable for instant app
         }
     }
 
@@ -69,6 +73,8 @@ public class TvPermissionTest extends AndroidTestCase {
             fail("Accessing " + tableName + " table should require WRITE_EPG_DATA permission.");
         } catch (SecurityException e) {
             // Expected exception
+        } catch (IllegalArgumentException e) {
+            // TvProvider is not visable for instant app
         }
     }
 
