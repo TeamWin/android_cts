@@ -27,7 +27,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 
-import com.android.cts.blob.DummyBlobData;
+import com.android.utils.blob.DummyBlobData;
 
 import org.junit.Before;
 import org.junit.Test;
