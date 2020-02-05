@@ -190,7 +190,9 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
         CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         assertTrue(mClicked);
 
-        mVr.release();
+        mActivityRule.runOnUiThread(() -> {
+            mVr.release();
+        });
         mInstrumentation.waitForIdleSync();
 
         mClicked = false;
