@@ -16,10 +16,6 @@
 
 package android.media.cts;
 
-import static android.media.MediaRoute2Info.CONNECTION_STATE_CONNECTING;
-import static android.media.MediaRoute2Info.DEVICE_TYPE_REMOTE_SPEAKER;
-import static android.media.MediaRoute2Info.PLAYBACK_VOLUME_VARIABLE;
-import static android.media.cts.SampleMediaRoute2ProviderService.FEATURES_ALL;
 import static android.media.cts.SampleMediaRoute2ProviderService.FEATURES_SPECIAL;
 import static android.media.cts.SampleMediaRoute2ProviderService.FEATURE_SAMPLE;
 import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID1;
@@ -28,7 +24,6 @@ import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID3_SESSI
 import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID4_TO_SELECT_AND_DESELECT;
 import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID5_TO_TRANSFER_TO;
 import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID_SPECIAL_FEATURE;
-import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID_VARIABLE_VOLUME;
 import static android.media.cts.SampleMediaRoute2ProviderService.SYSTEM_PROVIDER_ID;
 
 import static org.junit.Assert.assertEquals;
@@ -48,9 +43,7 @@ import android.media.MediaRouter2.RouteCallback;
 import android.media.MediaRouter2.RoutingController;
 import android.media.MediaRouter2.RoutingControllerCallback;
 import android.media.RouteDiscoveryPreference;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Parcel;
 import android.platform.test.annotations.AppModeFull;
 import android.text.TextUtils;
 
@@ -78,7 +71,7 @@ import androidx.test.runner.AndroidJUnit4;
 @AppModeFull(reason = "The system should be able to bind to SampleMediaRoute2ProviderService")
 @LargeTest
 public class MediaRouter2Test {
-    private static final String TAG = "MediaRouter2Test";
+    private static final String TAG = "MR2Test";
     Context mContext;
     private MediaRouter2 mRouter2;
     private Executor mExecutor;
@@ -706,7 +699,6 @@ public class MediaRouter2Test {
             throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
 
-        // A dummy callback is required to send route type info.
         RouteCallback routeCallback = new RouteCallback() {
             @Override
             public void onRoutesAdded(List<MediaRoute2Info> routes) {
