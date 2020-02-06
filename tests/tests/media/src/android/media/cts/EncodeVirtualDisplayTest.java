@@ -44,6 +44,7 @@ import androidx.test.filters.SmallTest;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Tests connecting a virtual display to the input of a MediaCodec encoder.
@@ -540,6 +541,7 @@ public class EncodeVirtualDisplayTest extends AndroidTestCase {
         private void showPresentation(final int color) {
             final TestPresentation[] presentation = new TestPresentation[1];
             try {
+                final CountDownLatch latch = new CountDownLatch(1);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -548,13 +550,17 @@ public class EncodeVirtualDisplayTest extends AndroidTestCase {
                         presentation[0] = new TestPresentation(getContext(), mDisplay, color);
                         if (VERBOSE) Log.d(TAG, "showing color=0x" + Integer.toHexString(color));
                         presentation[0].show();
+                        latch.countDown();
                     }
                 });
 
                 // Give the presentation an opportunity to render.  We don't have a way to
                 // monitor the output, so we just sleep for a bit.
-                try { Thread.sleep(UI_RENDER_PAUSE_MS); }
-                catch (InterruptedException ignore) {}
+                try {
+                    // wait for the UI thread execution to finish
+                    latch.await();
+                    Thread.sleep(UI_RENDER_PAUSE_MS);
+                } catch (InterruptedException ignore) {}
             } finally {
                 if (presentation[0] != null) {
                     runOnUiThread(new Runnable() {
