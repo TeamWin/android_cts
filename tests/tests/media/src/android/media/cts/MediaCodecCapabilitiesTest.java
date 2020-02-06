@@ -15,6 +15,8 @@
  */
 package android.media.cts;
 
+import android.app.ActivityManager;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
@@ -33,6 +35,7 @@ import static android.media.MediaFormat.MIMETYPE_VIDEO_VP8;
 import static android.media.MediaFormat.MIMETYPE_VIDEO_VP9;
 import android.media.MediaPlayer;
 import android.os.Build;
+import android.os.SystemProperties;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.util.Range;
@@ -691,13 +694,16 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         return format;
     }
 
-    private static int getActualMax(
+    private int getActualMax(
             boolean isEncoder, String name, String mime, CodecCapabilities caps, int max) {
         int flag = isEncoder ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0;
         MediaFormat format = createMinFormat(mime, caps);
         Log.d(TAG, "Test format " + format);
         Vector<MediaCodec> codecs = new Vector<MediaCodec>();
         MediaCodec codec = null;
+        ActivityManager am = (ActivityManager)
+                mContext.getSystemService(Context.ACTIVITY_SERVICE);
+        ActivityManager.MemoryInfo outInfo = new ActivityManager.MemoryInfo();
         for (int i = 0; i < max; ++i) {
             try {
                 Log.d(TAG, "Create codec " + name + " #" + i);
@@ -706,6 +712,12 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
                 codec.start();
                 codecs.add(codec);
                 codec = null;
+
+                am.getMemoryInfo(outInfo);
+                if (outInfo.lowMemory) {
+                    Log.d(TAG, "System is in low memory condition, stopping. max: " + i);
+                    break;
+                }
             } catch (IllegalArgumentException e) {
                 fail("Got unexpected IllegalArgumentException " + e.getMessage());
             } catch (IOException e) {
