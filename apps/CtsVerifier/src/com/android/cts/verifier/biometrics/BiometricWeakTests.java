@@ -55,12 +55,14 @@ public class BiometricWeakTests extends AbstractBaseTest {
     private Button mAuthenticateCredential2Button; // setDeviceCredentialAllowed(true), credential
     private Button mAuthenticateCredential3Button; // setAllowedAuthenticators(CREDENTIAL|BIOMETRIC)
     private Button mCheckInvalidInputsButton;
+    private Button mRejectThenAuthenticateButton;
 
     private boolean mAuthenticatePassed;
     private boolean mAuthenticateCredential1Passed;
     private boolean mAuthenticateCredential2Passed;
     private boolean mAuthenticateCredential3Passed;
     private boolean mCheckInvalidInputsPassed;
+    private boolean mRejectThenAuthenticatePassed;
 
     @Override
     protected String getTag() {
@@ -83,6 +85,7 @@ public class BiometricWeakTests extends AbstractBaseTest {
         mAuthenticateCredential3Button = findViewById(
                 R.id.authenticate_credential_setAllowedAuthenticators_credential_button);
         mCheckInvalidInputsButton = findViewById(R.id.authenticate_invalid_inputs);
+        mRejectThenAuthenticateButton = findViewById(R.id.authenticate_reject_first);
 
         mEnrollButton.setOnClickListener((view) -> {
             checkAndEnroll(mEnrollButton, Authenticators.BIOMETRIC_WEAK,
@@ -170,12 +173,31 @@ public class BiometricWeakTests extends AbstractBaseTest {
                 updatePassButton();
             });
         });
+
+        mRejectThenAuthenticateButton.setOnClickListener((view) -> {
+            testBiometricRejectDoesNotEndAuthentication(() -> {
+                mRejectThenAuthenticatePassed = true;
+                mRejectThenAuthenticateButton.setEnabled(false);
+                updatePassButton();
+            });
+        });
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        if (!mCurrentlyEnrolling) {
+            // Do not allow the test to continue if it loses foreground. Testers must start over.
+            // This is to avoid any potential change to the current enrollment / biometric state.
+            finish();
+        }
     }
 
     private void updatePassButton() {
         if (mAuthenticatePassed && mAuthenticateCredential1Passed
                 && mAuthenticateCredential2Passed && mAuthenticateCredential3Passed
-                && mCheckInvalidInputsPassed) {
+                && mCheckInvalidInputsPassed && mRejectThenAuthenticatePassed) {
             showToastAndLog("All tests passed");
             getPassButton().setEnabled(true);
         }
@@ -193,6 +215,7 @@ public class BiometricWeakTests extends AbstractBaseTest {
             mAuthenticateCredential2Button.setEnabled(true);
             mAuthenticateCredential3Button.setEnabled(true);
             mCheckInvalidInputsButton.setEnabled(true);
+            mRejectThenAuthenticateButton.setEnabled(true);
         } else {
             showToastAndLog("Unexpected result after enrollment: " + biometricStatus);
         }

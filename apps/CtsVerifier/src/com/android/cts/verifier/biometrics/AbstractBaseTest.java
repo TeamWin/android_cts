@@ -49,6 +49,8 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
     protected final Handler mHandler = new Handler(Looper.getMainLooper());
     protected final Executor mExecutor = mHandler::post;
 
+    protected boolean mCurrentlyEnrolling;
+
     BiometricManager mBiometricManager;
 
     @Override
@@ -60,6 +62,7 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_ENROLL) {
+            mCurrentlyEnrolling = false;
             onBiometricEnrollFinished();
         }
     }
@@ -105,6 +108,7 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
                 getPassButton().setEnabled(true);
             }
         } else if (result == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED) {
+            mCurrentlyEnrolling = true;
             final Intent enrollIntent = new Intent(Settings.ACTION_BIOMETRIC_ENROLL);
             enrollIntent.putExtra(Settings.EXTRA_BIOMETRIC_MINIMUM_STRENGTH_REQUIRED,
                     requestedStrength);
@@ -309,6 +313,47 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
         }
 
         successRunnable.run();
+    }
+
+    void testBiometricRejectDoesNotEndAuthentication(Runnable successRunnable) {
+        Utils.showInstructionDialog(this,
+                R.string.biometric_test_reject_continues_instruction_title,
+                R.string.biometric_test_reject_continues_instruction_contents,
+                R.string.biometric_test_reject_continues_instruction_continue,
+                (dialog, which) -> {
+                    if (which == DialogInterface.BUTTON_POSITIVE) {
+                        final BiometricPrompt.Builder builder = new BiometricPrompt.Builder(this);
+                        builder.setTitle("Reject, then authenticate");
+                        builder.setDescription("Please present a non-enrolled biometric to trigger"
+                                + " onAuthenticationFailed. Then present an enrolled biometric"
+                                + " to finish this test.");
+                        builder.setAllowedAuthenticators(Authenticators.BIOMETRIC_WEAK);
+                        builder.setNegativeButton("Cancel", mExecutor, (dialog1, which1) -> {
+                            // Do nothing
+                        });
+
+                        final BiometricPrompt prompt = builder.build();
+                        prompt.authenticate(new CancellationSignal(), mExecutor,
+                                new AuthenticationCallback() {
+                                    boolean rejectReceived;
+                                    @Override
+                                    public void onAuthenticationSucceeded(AuthenticationResult
+                                            result) {
+                                        if (rejectReceived) {
+                                            successRunnable.run();
+                                        } else {
+                                            showToastAndLog("Please present a non-enrolled"
+                                                    + " biometric first");
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onAuthenticationFailed() {
+                                        rejectReceived = true;
+                                    }
+                                });
+                    }
+                });
     }
 
 }
