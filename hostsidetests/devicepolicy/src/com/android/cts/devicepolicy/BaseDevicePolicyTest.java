@@ -777,7 +777,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         boolean check() throws Exception;
     }
 
-    protected void assertUserGetsRemoved(int userId) throws Exception {
+    protected void waitUntilUserRemoved(int userId) throws Exception {
         tryWaitForSuccess(() -> !listUsers().contains(userId),
                 "The user " + userId + " has not been removed",
                 TIMEOUT_USER_REMOVED_MILLIS

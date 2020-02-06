@@ -16,8 +16,8 @@
 
 package com.android.cts.devicepolicy;
 
-import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
-import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
+import static com.android.cts.devicepolicy.DeviceAndProfileOwnerTest.DEVICE_ADMIN_COMPONENT_FLATTENED;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
@@ -26,7 +26,6 @@ import static org.junit.Assert.assertTrue;
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
 
-import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil;
 
@@ -41,9 +40,8 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String DEVICE_ADMIN_APK = DeviceAndProfileOwnerTest.DEVICE_ADMIN_APK;
     private static final String ADMIN_RECEIVER_TEST_CLASS =
             DeviceAndProfileOwnerTest.ADMIN_RECEIVER_TEST_CLASS;
-
-    private static final String RELINQUISH_DEVICE_TEST_CLASS =
-            DEVICE_ADMIN_PKG + ".RelinquishDeviceTest";
+    private static final String ACTION_WIPE_DATA =
+            "com.android.cts.deviceandprofileowner.WIPE_DATA";
 
     private int mParentUserId = -1;
     protected int mUserId;
@@ -80,11 +78,9 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     public void tearDown() throws Exception {
         if (mHasFeature && mHasProfileToRemove) {
             removeOrgOwnedProfile();
-            removeUser(mUserId);
         }
-        if (mHasSecondaryProfileToRemove) {
+        if (mHasSecondaryProfileToRemove || !getUsersCreatedByTests().isEmpty()) {
             removeTestUsers();
-            getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
         }
         super.tearDown();
     }
@@ -109,11 +105,23 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".LockScreenInfoTest", "testSetAndGetLockInfo",
+                mUserId);
 
         removeOrgOwnedProfile();
         assertHasNoUser(mUserId);
-
         mHasProfileToRemove = false;
+
+        try {
+            installAppAsUser(DEVICE_ADMIN_APK, mParentUserId);
+            setDeviceOwner(DEVICE_ADMIN_COMPONENT_FLATTENED, mParentUserId, /*expectFailure*/false);
+            mHasSecondaryProfileToRemove = true;
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".LockScreenInfoTest", "testLockInfoIsNull",
+                    mParentUserId);
+        } finally {
+            removeAdmin(DEVICE_ADMIN_COMPONENT_FLATTENED, mParentUserId);
+            getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
+        }
     }
 
     @Test
@@ -339,8 +347,16 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".ApplicationHiddenParentTest", mUserId);
     }
 
-    private void removeOrgOwnedProfile() throws DeviceNotAvailableException {
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, RELINQUISH_DEVICE_TEST_CLASS, mUserId);
+    private void removeOrgOwnedProfile() throws Exception {
+        sendWipeProfileBroadcast(mUserId);
+        waitUntilUserRemoved(mUserId);
+    }
+
+    private void sendWipeProfileBroadcast(int userId) throws Exception {
+        final String cmd = "am broadcast --receiver-foreground --user " + userId
+                + " -a " + ACTION_WIPE_DATA
+                + " com.android.cts.deviceandprofileowner/.WipeDataReceiver";
+        getDevice().executeShellCommand(cmd);
     }
 
     private void assertHasNoUser(int userId) throws DeviceNotAvailableException {

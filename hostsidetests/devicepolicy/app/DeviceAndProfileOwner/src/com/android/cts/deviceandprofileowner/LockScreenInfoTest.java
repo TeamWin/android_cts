@@ -28,6 +28,10 @@ public class LockScreenInfoTest extends BaseDeviceAdminTest {
         super.tearDown();
     }
 
+    public void testLockInfoIsNull() {
+        assertNull(mDevicePolicyManager.getDeviceOwnerLockScreenInfo());
+    }
+
     public void testSetAndGetLockInfo() {
         setLockInfo("testSetAndGet");
     }
