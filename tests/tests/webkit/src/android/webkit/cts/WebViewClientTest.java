@@ -613,9 +613,6 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
         }
-        if (!getActivity().isMultiprocessMode()) {
-            return;
-        }
         final MockWebViewClient webViewClient = new MockWebViewClient();
         mOnUiThread.setWebViewClient(webViewClient);
         mOnUiThread.loadUrl("chrome://kill");

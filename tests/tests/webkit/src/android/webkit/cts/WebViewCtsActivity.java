@@ -48,13 +48,6 @@ public class WebViewCtsActivity extends Activity {
         }
     }
 
-    public boolean isMultiprocessMode() {
-        // Currently multiprocess is disabled on low RAM 32 bit devices.
-        return
-            Build.SUPPORTED_64_BIT_ABIS.length > 0 ||
-            !getSystemService(ActivityManager.class).isLowRamDevice();
-    }
-
     public WebView getWebView() {
         if (mInflationException != null) {
             throw new RuntimeException("Exception caught in onCreate", mInflationException);
