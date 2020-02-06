@@ -50,7 +50,7 @@ public class ContactsContractIntentsTest extends AndroidTestCase {
 
     public void testGetContentContactDir() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setData(ContactsContract.Contacts.CONTENT_URI);
+        intent.setType(ContactsContract.Contacts.CONTENT_ITEM_TYPE);
         assertCanBeHandled(intent);
     }
 }
