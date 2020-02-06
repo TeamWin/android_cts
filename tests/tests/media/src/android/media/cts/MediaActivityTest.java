@@ -16,8 +16,8 @@
 
 package android.media.cts;
 
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.fail;
+import static org.junit.Assert.assertTrue;
 
 import android.app.Instrumentation;
 import android.content.Context;
@@ -30,7 +30,7 @@ import android.os.SystemClock;
 import android.view.KeyEvent;
 
 import androidx.test.InstrumentationRegistry;
-import androidx.test.filters.MediumTest;
+import androidx.test.filters.LargeTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -44,16 +44,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 /**
  * Test media activity which has called {@link Activity#setMediaController}.
  */
 @NonMediaMainlineTest
-@MediumTest
+@LargeTest
 @RunWith(AndroidJUnit4.class)
 public class MediaActivityTest {
     private static final String TAG = "MediaActivityTest";
-    private static final int WAIT_TIME_MS = 500;
+    private static final int WAIT_TIME_MS = 1000;
+    private static final int TIME_SLICE = 50;
     private static final List<Integer> ALL_VOLUME_STREAMS = new ArrayList();
     static {
         ALL_VOLUME_STREAMS.add(AudioManager.STREAM_ACCESSIBILITY);
@@ -117,7 +119,7 @@ public class MediaActivityTest {
      * Tests whether volume key changes volume with the session's stream.
      */
     @Test
-    public void testVolumeKey_whileSessionAlive() throws InterruptedException {
+    public void testVolumeKey_whileSessionAlive() throws Exception {
         if (mUseFixedVolume) {
             return;
         }
@@ -131,51 +133,43 @@ public class MediaActivityTest {
             testKeyCode = KeyEvent.KEYCODE_VOLUME_DOWN;
         }
 
-        // The first event can be ignored and show volume panel instead. Use double tap.
-        sendKeyEvent(testKeyCode);
-        sendKeyEvent(testKeyCode);
-
-        Thread.sleep(WAIT_TIME_MS);
-        assertNotEquals((int) mStreamVolumeMap.get(testStream),
-                mAudioManager.getStreamVolume(testStream));
+        // The key event can be ignored and show volume panel instead. Use polling.
+        assertTrue("failed to adjust stream volume that foreground activity want",
+                pollingCheck(() -> {
+                    sendKeyEvent(testKeyCode);
+                    return mStreamVolumeMap.get(testStream)
+                            != mAudioManager.getStreamVolume(testStream);
+                }));
     }
 
     /**
-     * Tests whether volume key changes volume even after the session is released.
+     * Tests whether volume key changes a stream volume even after the session is released,
+     * without being ignored.
      */
     @Test
-    public void testVolumeKey_afterSessionReleased() throws InterruptedException {
+    public void testVolumeKey_afterSessionReleased() throws Exception {
         if (mUseFixedVolume) {
             return;
         }
 
         mSession.release();
 
-        // The first event can be ignored and show volume panel instead. Use double tap.
-        sendKeyEvent(KeyEvent.KEYCODE_VOLUME_DOWN);
-        sendKeyEvent(KeyEvent.KEYCODE_VOLUME_DOWN);
-
-        // We cannot know which stream is changed. Need to monitor all streams.
-        Thread.sleep(WAIT_TIME_MS);
-        for (int stream : mStreamVolumeMap.keySet()) {
-            int volume = mStreamVolumeMap.get(stream);
-            if (mAudioManager.getStreamVolume(stream) != volume) {
-                return;
-            }
+        // The key event can be ignored and show volume panel instead. Use polling.
+        boolean downKeySuccess = pollingCheck(() -> {
+            sendKeyEvent(KeyEvent.KEYCODE_VOLUME_DOWN);
+            return checkAnyStreamVolumeChanged();
+        });
+        if (downKeySuccess) {
+            // Volume down key has changed a stream volume. Test success.
+            return;
         }
 
-        // Volume can be already zero for the target stream, so try again with the volume up.
-        sendKeyEvent(KeyEvent.KEYCODE_VOLUME_UP);
-        sendKeyEvent(KeyEvent.KEYCODE_VOLUME_UP);
-
-        Thread.sleep(WAIT_TIME_MS);
-        for (int stream : mStreamVolumeMap.keySet()) {
-            int volume = mStreamVolumeMap.get(stream);
-            if (mAudioManager.getStreamVolume(stream) != volume) {
-                return;
-            }
-        }
-        fail("Volume keys were ignored");
+        // Volume may not have been changed because the target stream's volume level was minimum.
+        // Try again with the up key.
+        assertTrue(pollingCheck(() -> {
+            sendKeyEvent(KeyEvent.KEYCODE_VOLUME_UP);
+            return checkAnyStreamVolumeChanged();
+        }));
     }
 
     private void sendKeyEvent(int keyCode) {
@@ -185,5 +179,27 @@ public class MediaActivityTest {
         final KeyEvent up = new KeyEvent(downTime, upTime, KeyEvent.ACTION_UP, keyCode, 0);
         mInstrumentation.sendKeySync(down);
         mInstrumentation.sendKeySync(up);
+    }
+
+    private boolean checkAnyStreamVolumeChanged() {
+        for (int stream : mStreamVolumeMap.keySet()) {
+            int volume = mStreamVolumeMap.get(stream);
+            if (mAudioManager.getStreamVolume(stream) != volume) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean pollingCheck(Callable<Boolean> condition) throws Exception {
+        long pollingCount = WAIT_TIME_MS / TIME_SLICE;
+        while (!condition.call() && pollingCount-- > 0) {
+            try {
+                Thread.sleep(TIME_SLICE);
+            } catch (InterruptedException e) {
+                fail("unexpected InterruptedException");
+            }
+        }
+        return pollingCount >= 0;
     }
 }

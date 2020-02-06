@@ -1,7 +1,8 @@
 {
   "presubmit" : [
     {
-      "name": "CtsUserspaceRebootHostSideTestCases"
+      "name": "CtsUserspaceRebootHostSideTestCases",
+      "keywords": ["primary-device"]
     }
   ]
 }

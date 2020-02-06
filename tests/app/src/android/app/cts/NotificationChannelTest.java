@@ -65,6 +65,7 @@ public class NotificationChannelTest extends AndroidTestCase {
         assertEquals(IMPORTANCE_UNSPECIFIED, channel.getOriginalImportance());
         assertNull(channel.getConversationId());
         assertNull(channel.getParentChannelId());
+        assertFalse(channel.isImportantConversation());
     }
 
     public void testWriteToParcel() {
@@ -84,6 +85,7 @@ public class NotificationChannelTest extends AndroidTestCase {
         channel.setVibrationPattern(new long[] {299, 4562});
         channel.setBlockableSystem(true);
         channel.setConversationId("parent_channel", "conversation 1");
+        channel.setImportantConversation(true);
         Parcel parcel = Parcel.obtain();
         channel.writeToParcel(parcel, 0);
         parcel.setDataPosition(0);
@@ -218,5 +220,9 @@ public class NotificationChannelTest extends AndroidTestCase {
 
         assertEquals("parent", channel.getParentChannelId());
         assertEquals("conversation", channel.getConversationId());
+        assertFalse(channel.isImportantConversation());
+
+        channel.setImportantConversation(true);
+        assertTrue(channel.isImportantConversation());
     }
 }

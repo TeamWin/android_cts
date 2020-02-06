@@ -94,7 +94,7 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
                     CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE_LOCATION,
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
-                    WatchUidRunner.STATE_CACHED_RECENT,
+                    WatchUidRunner.STATE_CACHED_EMPTY,
                     new Integer(PROCESS_CAPABILITY_NONE));
 
             // package1 is in FGS state, start FGSL in pakcage1, it won't get location capability.
@@ -131,7 +131,7 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
 
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
-                    WatchUidRunner.STATE_CACHED_RECENT,
+                    WatchUidRunner.STATE_CACHED_EMPTY,
                     new Integer(PROCESS_CAPABILITY_NONE));
         } finally {
             uid1Watcher.finish();
@@ -207,7 +207,7 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
 
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
-                    WatchUidRunner.STATE_CACHED_RECENT,
+                    WatchUidRunner.STATE_CACHED_EMPTY,
                     new Integer(PROCESS_CAPABILITY_NONE));
         } finally {
             uid1Watcher.finish();
@@ -274,7 +274,6 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
                     new Integer(PROCESS_CAPABILITY_NONE));
             waiter.doWait(WAITFOR_MSEC);
             // stop FGSL in package2.
-            //Thread.sleep(2000);
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE_LOCATION,
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, 0, null);
@@ -322,7 +321,7 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
 
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
-                    WatchUidRunner.STATE_CACHED_RECENT,
+                    WatchUidRunner.STATE_CACHED_EMPTY,
                     new Integer(PROCESS_CAPABILITY_NONE));
         } finally {
             uid1Watcher.finish();

@@ -18,8 +18,6 @@ package android.media.cts;
 import static android.media.AudioAttributes.USAGE_GAME;
 import static android.media.cts.Utils.compareRemoteUserInfo;
 
-import static org.junit.Assert.fail;
-
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
@@ -28,6 +26,7 @@ import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.MediaDescription;
 import android.media.MediaMetadata;
+import android.media.MediaSession2;
 import android.media.Rating;
 import android.media.VolumeProvider;
 import android.media.session.MediaController;
@@ -68,6 +67,7 @@ public class MediaSessionTest extends AndroidTestCase {
     private static final int TEST_MAX_VOLUME = 11;
     private static final long TEST_QUEUE_ID = 12L;
     private static final long TEST_ACTION = 55L;
+    private static final int TEST_TOO_MANY_SESSION_COUNT = 1000;
 
     private AudioManager mAudioManager;
     private Handler mHandler = new Handler(Looper.getMainLooper());
@@ -578,13 +578,63 @@ public class MediaSessionTest extends AndroidTestCase {
         }
     }
 
+    /**
+     * An app should not be able to create too many sessions.
+     * See MediaSessionService#SESSION_CREATION_LIMIT_PER_UID
+     */
     public void testSessionCreationLimit() {
-        // An app should not be able to create too many sessions.
-        // See MediaSessionService#SESSION_CREATION_LIMIT_PER_UID
+        List<MediaSession> sessions = new ArrayList<>();
+        try {
+            for (int i = 0; i < TEST_TOO_MANY_SESSION_COUNT; i++) {
+                sessions.add(new MediaSession(mContext, "testSessionCreationLimit"));
+            }
+            fail("The number of session should be limited!");
+        } catch (RuntimeException e) {
+            // Expected
+        } finally {
+            for (MediaSession session : sessions) {
+                session.release();
+            }
+        }
+    }
+
+    /**
+     * Check that calling {@link MediaSession#release()} multiple times for the same session
+     * does not decrement current session count multiple times.
+     */
+    public void testSessionCreationLimitWithMediaSessionRelease() {
+        MediaSession sessionToReleaseMultipleTimes = new MediaSession(
+                mContext, "testSessionCreationLimitWithMediaSessionRelease");
+        List<MediaSession> sessions = new ArrayList<>();
+        try {
+            for (int i = 0; i < TEST_TOO_MANY_SESSION_COUNT; i++) {
+                sessions.add(new MediaSession(
+                        mContext, "testSessionCreationLimitWithMediaSessionRelease"));
+                // Call release() many times with the same session.
+                sessionToReleaseMultipleTimes.release();
+            }
+            fail("The number of session should be limited!");
+        } catch (RuntimeException e) {
+            // Expected
+        } finally {
+            for (MediaSession session : sessions) {
+                session.release();
+            }
+        }
+    }
+
+    /**
+     * Check that calling {@link MediaSession2#close()} does not decrement current session count.
+     */
+    public void testSessionCreationLimitWithMediaSession2Release() {
         List<MediaSession> sessions = new ArrayList<>();
         try {
             for (int i = 0; i < 1000; i++) {
-                sessions.add(new MediaSession(mContext, "testSessionCreationLimit"));
+                sessions.add(new MediaSession(
+                        mContext, "testSessionCreationLimitWithMediaSession2Release"));
+
+                MediaSession2 session2 = new MediaSession2.Builder(mContext).build();
+                session2.close();
             }
             fail("The number of session should be limited!");
         } catch (RuntimeException e) {

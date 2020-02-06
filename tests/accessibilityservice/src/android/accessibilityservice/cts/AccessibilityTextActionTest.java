@@ -29,6 +29,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibilityservice.cts.activities.AccessibilityTextTraversalActivity;
@@ -51,6 +52,7 @@ import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityNodeProvider;
 import android.view.accessibility.AccessibilityRequestPreparer;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -432,6 +434,47 @@ public class AccessibilityTextActionTest {
         // Declare preparation for the request complete, and verify that it runs to completion
         verify(mockRunnableForData, timeout(DEFAULT_TIMEOUT_MS)).run();
         a11yManager.removeAccessibilityRequestPreparer(requestPreparer);
+    }
+
+    @Test
+    public void testEditableTextView_shouldExposeAndRespondToImeEnterAction() throws Throwable {
+        final TextView textView = (TextView) mActivity.findViewById(R.id.editText);
+        makeTextViewVisibleAndSetText(textView, mActivity.getString(R.string.a_b));
+        textView.requestFocus();
+        assertTrue(textView.isFocused());
+
+        final TextView.OnEditorActionListener mockOnEditorActionListener =
+                mock(TextView.OnEditorActionListener.class);
+        textView.setOnEditorActionListener(mockOnEditorActionListener);
+        verifyZeroInteractions(mockOnEditorActionListener);
+
+        final AccessibilityNodeInfo text = sUiAutomation.getRootInActiveWindow()
+                .findAccessibilityNodeInfosByText(mActivity.getString(R.string.a_b)).get(0);
+        final List<AccessibilityNodeInfo.AccessibilityAction> actionList = text.getActionList();
+        assertTrue("Editable and focused text view should support ACTION_IME_ENTER",
+                actionList.contains(AccessibilityNodeInfo.AccessibilityAction.ACTION_IME_ENTER));
+
+        final int actionCount = actionList.size();
+        for (int i = 0; i < actionCount; i++) {
+            AccessibilityNodeInfo.AccessibilityAction action = actionList.get(i);
+            if (action.getId() == TextView.ACCESSIBILITY_ACTION_IME_ENTER) {
+                assertEquals(action.getLabel().toString(),
+                        sInstrumentation.getContext().getString(
+                                R.string.accessibility_action_ime_enter_label));
+                break;
+            }
+        }
+        text.performAction(TextView.ACCESSIBILITY_ACTION_IME_ENTER);
+        verify(mockOnEditorActionListener, times(1)).onEditorAction(
+                textView, EditorInfo.IME_ACTION_UNSPECIFIED, null);
+
+        // Testing custom ime action : IME_ACTION_DONE.
+        textView.setImeActionLabel("pinyin", EditorInfo.IME_ACTION_DONE);
+        text.refresh();
+
+        text.performAction(TextView.ACCESSIBILITY_ACTION_IME_ENTER);
+        verify(mockOnEditorActionListener, times(1)).onEditorAction(
+                textView, EditorInfo.IME_ACTION_DONE, null);
     }
 
     private Bundle getTextLocationArguments(AccessibilityNodeInfo info) {

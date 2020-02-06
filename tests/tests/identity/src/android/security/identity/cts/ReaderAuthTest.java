@@ -24,6 +24,7 @@ import static android.security.identity.ResultData.STATUS_READER_AUTHENTICATION_
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.security.keystore.KeyGenParameterSpec;
@@ -155,6 +156,10 @@ public class ReaderAuthTest {
         // Provision the credential.
         Context appContext = InstrumentationRegistry.getTargetContext();
         IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
+        if (Util.isHalOptional()) {
+            assumeTrue("IC HAL not found on device", store != null);
+        }
+
         String credentialName = "readerAuthTestCredential";
         store.deleteCredentialByName(credentialName);
         WritableIdentityCredential wc = store.createCredential(credentialName,
