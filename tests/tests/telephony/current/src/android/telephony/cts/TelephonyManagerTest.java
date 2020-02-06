@@ -516,6 +516,8 @@ public class TelephonyManagerTest {
         mTelephonyManager.getSubscriptionId(defaultAccount);
         mTelephonyManager.getCarrierConfig();
         ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.isDataConnectionEnabled());
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.isAnyRadioPoweredOn());
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                 (tm) -> tm.resetIms(tm.getSlotIndex()));
