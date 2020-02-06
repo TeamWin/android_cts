@@ -16,7 +16,6 @@
 
 package android.hardware.biometrics.cts;
 
-import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.hardware.biometrics.BiometricPrompt;
 import android.os.CancellationSignal;
@@ -41,12 +40,7 @@ public class BiometricPromptTest extends AndroidTestCase {
 
     private int mErrorReceived;
 
-    private final Executor mExecutor = new Executor() {
-        @Override
-        public void execute(Runnable runnable) {
-            mHandler.post(runnable);
-        }
-    };
+    private final Executor mExecutor = runnable -> mHandler.post(runnable);
 
     private final BiometricPrompt.AuthenticationCallback mAuthenticationCallback
             = new BiometricPrompt.AuthenticationCallback() {
@@ -78,18 +72,14 @@ public class BiometricPromptTest extends AndroidTestCase {
         }
 
         boolean exceptionTaken = false;
-        boolean callbackReceived = false;
         CancellationSignal cancellationSignal = new CancellationSignal();
         try {
             BiometricPrompt.Builder builder = new BiometricPrompt.Builder(getContext());
             builder.setTitle("Title");
             builder.setSubtitle("Subtitle");
             builder.setDescription("Description");
-            builder.setNegativeButton("Negative", mExecutor, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-
-                }
+            builder.setNegativeButton("Negative", mExecutor, (dialog, which) -> {
+                // Do nothing
             });
 
             BiometricPrompt prompt = builder.build();
