@@ -418,5 +418,34 @@ class __UnitTest(unittest.TestCase):
                     abs(get_angle(wide_img)), angle, 2.0)
 
 
+def component_shape(contour):
+    """Measure the shape of a connected component.
+
+    Args:
+        contour: return from cv2.findContours. A list of pixel coordinates of
+        the contour.
+
+    Returns:
+        The most left, right, top, bottom pixel location, height, width, and
+        the center pixel location of the contour.
+    """
+    shape = {'left': numpy.inf, 'right': 0, 'top': numpy.inf, 'bottom': 0,
+             'width': 0, 'height': 0, 'ctx': 0, 'cty': 0}
+    for pt in contour:
+        if pt[0][0] < shape['left']:
+            shape['left'] = pt[0][0]
+        if pt[0][0] > shape['right']:
+            shape['right'] = pt[0][0]
+        if pt[0][1] < shape['top']:
+            shape['top'] = pt[0][1]
+        if pt[0][1] > shape['bottom']:
+            shape['bottom'] = pt[0][1]
+    shape['width'] = shape['right'] - shape['left'] + 1
+    shape['height'] = shape['bottom'] - shape['top'] + 1
+    shape['ctx'] = (shape['left'] + shape['right']) / 2
+    shape['cty'] = (shape['top'] + shape['bottom']) / 2
+    return shape
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -584,6 +584,19 @@ def af_scene_change(props):
               'android.control.afSceneChange' in props['camera.characteristics.resultKeys']
 
 
+def zoom_ratio_range(props):
+    """Returns whether a device supports zoom capabilities.
+
+    Args:
+        props: Camera properties object.
+
+    Returns:
+        Boolean.
+    """
+    return props.has_key('android.control.zoomRatioRange') and \
+           props['android.control.zoomRatioRange'] is not None
+
+
 class __UnitTest(unittest.TestCase):
     """Run a suite of unit tests on this module.
     """
