@@ -1832,7 +1832,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
                     CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE,
                     mAppInfo[0].packageName, mAppInfo[0].packageName, 0, null);
             mWatchers[0].waitFor(WatchUidRunner.CMD_PROCSTATE,
-                    WatchUidRunner.STATE_CACHED_RECENT,
+                    WatchUidRunner.STATE_CACHED_EMPTY,
                     new Integer(PROCESS_CAPABILITY_NONE));
         } finally {
             // Clean up: unbind services to avoid from interferences with other tests
