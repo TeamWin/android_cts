@@ -35,6 +35,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+
 import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -83,7 +84,7 @@ public class CarrierConfigManagerTest {
     @After
     public void tearDown() throws Exception {
         try {
-            setOpMode("android.telephony.cts", OPSTR_READ_PHONE_STATE, MODE_ALLOWED);
+            setOpMode("--uid android.telephony.cts", OPSTR_READ_PHONE_STATE, MODE_ALLOWED);
         } catch (IOException e) {
             fail();
         }
@@ -166,7 +167,7 @@ public class CarrierConfigManagerTest {
         PersistableBundle config;
 
         try {
-            setOpMode("android.telephony.cts", OPSTR_READ_PHONE_STATE, MODE_IGNORED);
+            setOpMode("--uid android.telephony.cts", OPSTR_READ_PHONE_STATE, MODE_IGNORED);
         } catch (IOException e) {
             fail();
         }
@@ -175,7 +176,7 @@ public class CarrierConfigManagerTest {
         assertTrue(config.isEmptyParcel());
 
         try {
-            setOpMode("android.telephony.cts", OPSTR_READ_PHONE_STATE, MODE_ALLOWED);
+            setOpMode("--uid android.telephony.cts", OPSTR_READ_PHONE_STATE, MODE_ALLOWED);
         } catch (IOException e) {
             fail();
         }
