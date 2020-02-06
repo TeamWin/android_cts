@@ -420,9 +420,12 @@ public class RoleManagerTest {
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         waitFindObject(By.text(APP_28_LABEL)).click();
         waitFindObject(By.res("android:id/button1")).click();
-        TelecomManager telecomManager = sContext.getSystemService(TelecomManager.class);
-        TestUtils.waitUntil("App is not set as default dialer app", () -> Objects.equals(
-                telecomManager.getDefaultDialerPackage(), APP_28_PACKAGE_NAME));
+        // TODO(b/149037075): Use TelecomManager.getDefaultDialerPackage() once the bug is fixed.
+        //TelecomManager telecomManager = sContext.getSystemService(TelecomManager.class);
+        //TestUtils.waitUntil("App is not set as default dialer app", () -> Objects.equals(
+        //        telecomManager.getDefaultDialerPackage(), APP_28_PACKAGE_NAME));
+        TestUtils.waitUntil("App is not set as default dialer app", () ->
+                getRoleHolders(RoleManager.ROLE_DIALER).contains(APP_28_PACKAGE_NAME));
     }
 
     @Test
