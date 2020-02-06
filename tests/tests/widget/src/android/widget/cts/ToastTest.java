@@ -636,6 +636,20 @@ public class ToastTest {
         mToast.addCallback(null);
     }
 
+    @Test
+    public void testCustomToastBlocked_whenInTheBackground() throws Throwable {
+        // Make it background
+        mActivityRule.finishActivity();
+        makeCustomToast();
+        View view = mToast.getView();
+        // View has not been attached to screen yet
+        assertNull(view.getParent());
+
+        mActivityRule.runOnUiThread(mToast::show);
+
+        assertNotShowCustomToast(view);
+    }
+
     private void runOnMainAndDrawSync(@NonNull final View toastView,
             @Nullable final Runnable runner) {
         final CountDownLatch latch = new CountDownLatch(1);
