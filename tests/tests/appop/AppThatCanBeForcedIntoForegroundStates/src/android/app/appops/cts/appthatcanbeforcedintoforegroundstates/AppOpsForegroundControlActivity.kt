@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,33 +14,51 @@
  * limitations under the License.
  */
 
-package android.app.appops.cts
+package android.app.appops.cts.appthatcanbeforcedintoforegroundstates
 
 import android.app.Activity
 import android.os.Bundle
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-class UidStateForceActivity : Activity() {
+class AppOpsForegroundControlActivity : Activity() {
     companion object {
         private val lock = ReentrantLock()
         private val condition = lock.newCondition()
-        private var isActivityResumed = false
-        private var isActivityDestroyed = false;
 
-        var instance: UidStateForceActivity? = null
+        private var instance: AppOpsForegroundControlActivity? = null
+        private var isCreated = false
+        private var isForeground = false
 
-        fun waitForResumed() {
+        fun waitUntilCreated() {
             lock.withLock {
-                while (!isActivityResumed) {
+                while (!isCreated) {
                     condition.await()
                 }
             }
         }
 
-        fun waitForDestroyed() {
+        fun waitUntilBackground() {
             lock.withLock {
-                while (!isActivityDestroyed) {
+                while (!isCreated || isForeground) {
+                    condition.await()
+                }
+            }
+        }
+
+        fun waitUntilForeground() {
+            lock.withLock {
+                while (!isForeground) {
+                    condition.await()
+                }
+            }
+        }
+
+        fun finish() {
+            lock.withLock {
+                instance?.finish()
+
+                while (isCreated) {
                     condition.await()
                 }
             }
@@ -50,14 +68,18 @@ class UidStateForceActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        instance = this
+        lock.withLock {
+            instance = this
+            isCreated = true
+            condition.signalAll()
+        }
     }
 
     override fun onResume() {
         super.onResume()
 
         lock.withLock {
-            isActivityResumed = true
+            isForeground = true
             condition.signalAll()
         }
     }
@@ -66,7 +88,8 @@ class UidStateForceActivity : Activity() {
         super.onPause()
 
         lock.withLock {
-            isActivityResumed = false
+            isForeground = false
+            condition.signalAll()
         }
     }
 
@@ -74,7 +97,8 @@ class UidStateForceActivity : Activity() {
         super.onDestroy()
 
         lock.withLock {
-            isActivityDestroyed = true
+            instance = null
+            isCreated = false
             condition.signalAll()
         }
     }
