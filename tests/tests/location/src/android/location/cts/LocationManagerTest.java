@@ -86,7 +86,7 @@ public class LocationManagerTest extends BaseMockLocationTest {
     /**
      * Helper method to add a test provider with given name.
      */
-    private void addTestProvider(final String providerName) {
+    private void addTestProvider(final String providerName) throws Exception {
         mManager.addTestProvider(providerName, true, //requiresNetwork,
                 false, // requiresSatellite,
                 true,  // requiresCell,
@@ -97,6 +97,7 @@ public class LocationManagerTest extends BaseMockLocationTest {
                 Criteria.POWER_MEDIUM, // powerRequirement
                 Criteria.ACCURACY_FINE); // accuracy
         mManager.setTestProviderEnabled(providerName, true);
+	Thread.sleep(500);
     }
 
     @Override
@@ -146,7 +147,7 @@ public class LocationManagerTest extends BaseMockLocationTest {
         }
     }
 
-    public void testGetProviders() {
+    public void testGetProviders() throws Exception {
         List<String> providers = mManager.getAllProviders();
         assertTrue(providers.size() >= 2);
         assertTrue(hasTestProvider(providers));
@@ -165,6 +166,7 @@ public class LocationManagerTest extends BaseMockLocationTest {
         int oldSizeTrueProviders = providers.size();
 
         mManager.setTestProviderEnabled(TEST_MOCK_PROVIDER_NAME, false);
+	Thread.sleep(500);
         providers = mManager.getProviders(true);
         assertEquals(oldSizeTrueProviders - 1, providers.size());
         assertFalse(hasTestProvider(providers));
@@ -272,7 +274,7 @@ public class LocationManagerTest extends BaseMockLocationTest {
      * throws an {@link java.lang.IllegalArgumentException} if there is no such test provider,
      * so we have to add it before we clear it.
      */
-    private void forceRemoveTestProvider(String provider) {
+    private void forceRemoveTestProvider(String provider) throws Exception {
         addTestProvider(provider);
         mManager.removeTestProvider(provider);
     }
@@ -353,7 +355,7 @@ public class LocationManagerTest extends BaseMockLocationTest {
      * known way to determine if a given provider is a test provider.
      * @throws InterruptedException
      */
-    public void testReplaceRealProvidersWithMocks() throws InterruptedException {
+    public void testReplaceRealProvidersWithMocks() throws Exception {
         for (String providerName : mManager.getAllProviders()) {
             if (!providerName.equals(TEST_MOCK_PROVIDER_NAME) &&
                 !providerName.equals(LocationManager.PASSIVE_PROVIDER)) {
@@ -530,7 +532,7 @@ public class LocationManagerTest extends BaseMockLocationTest {
         }
     }
 
-    public void testLocationUpdatesWithCriteriaAndPendingIntent() throws InterruptedException {
+    public void testLocationUpdatesWithCriteriaAndPendingIntent() throws Exception {
         double latitude1 = 10;
         double longitude1 = 20;
         double latitude2 = 30;
@@ -586,7 +588,7 @@ public class LocationManagerTest extends BaseMockLocationTest {
         unmockFusedLocation();
     }
 
-    public void testSingleUpdateWithCriteriaAndPendingIntent() throws InterruptedException {
+    public void testSingleUpdateWithCriteriaAndPendingIntent() throws Exception {
         double latitude1 = 10;
         double longitude1 = 20;
         double latitude2 = 30;
@@ -650,7 +652,7 @@ public class LocationManagerTest extends BaseMockLocationTest {
     }
 
     public void testLocationUpdatesWithCriteriaAndLocationListenerAndLooper()
-            throws InterruptedException {
+            throws Exception {
         double latitude1 = 40;
         double longitude1 = 10;
         double latitude2 = 20;
@@ -706,7 +708,7 @@ public class LocationManagerTest extends BaseMockLocationTest {
     }
 
     public void testSingleUpdateWithCriteriaAndLocationListenerAndLooper()
-            throws InterruptedException {
+            throws Exception {
         double latitude1 = 40;
         double longitude1 = 10;
         double latitude2 = 20;
@@ -850,7 +852,7 @@ public class LocationManagerTest extends BaseMockLocationTest {
         mManager.removeNmeaListener((OnNmeaMessageListener) null);
     }
 
-    public void testIsProviderEnabled() {
+    public void testIsProviderEnabled() throws Exception {
         // this test assumes enabled TEST_MOCK_PROVIDER_NAME was created in setUp.
         assertNotNull(mManager.getProvider(TEST_MOCK_PROVIDER_NAME));
         assertTrue(mManager.isProviderEnabled(TEST_MOCK_PROVIDER_NAME));
@@ -867,7 +869,7 @@ public class LocationManagerTest extends BaseMockLocationTest {
 
         mManager.setTestProviderEnabled(TEST_MOCK_PROVIDER_NAME, true);
         try {
-            Thread.sleep(100);
+            Thread.sleep(500);
         } catch (Exception e) {
             Log.e(TAG, "fail in testIsProviderEnabled");
         }
@@ -1183,7 +1185,7 @@ public class LocationManagerTest extends BaseMockLocationTest {
         return criteria;
      }
 
-    private void mockFusedLocation() {
+    private void mockFusedLocation() throws Exception {
         addTestProvider(FUSED_PROVIDER_NAME);
     }
 
