@@ -27,18 +27,25 @@ import android.view.textclassifier.TextClassifier;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.filters.SmallTest;
 
+import org.junit.After;
 import org.junit.Test;
 
 @SmallTest
 public class TextClassificationSessionIdTest {
+    private final TextClassificationManager mTcm =
+            ApplicationProvider.getApplicationContext().getSystemService(
+                    TextClassificationManager.class);
+
+    @After
+    public void tearDown() {
+        // Clear the custom TC.
+        mTcm.setTextClassifier(null);
+    }
 
     @Test
     public void flattenToString() {
-        TextClassificationManager textClassificationManager =
-                ApplicationProvider.getApplicationContext().getSystemService(
-                        TextClassificationManager.class);
-        textClassificationManager.setTextClassifier(TextClassifier.NO_OP);
-        TextClassifier textClassifier = textClassificationManager.createTextClassificationSession(
+        mTcm.setTextClassifier(TextClassifier.NO_OP);
+        TextClassifier textClassifier = mTcm.createTextClassificationSession(
                 new TextClassificationContext.Builder(
                         "com.pkg",
                         TextClassifier.WIDGET_TYPE_TEXTVIEW)
