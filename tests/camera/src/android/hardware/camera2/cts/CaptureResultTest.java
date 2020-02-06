@@ -706,6 +706,10 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
             waiverKeys.add(CaptureResult.CONTROL_BOKEH_MODE);
         }
 
+        if (!staticInfo.isRotateAndCropSupported()) {
+            waiverKeys.add(CaptureResult.SCALER_ROTATE_AND_CROP);
+        }
+
         if (staticInfo.isHardwareLevelAtLeastFull()) {
             return waiverKeys;
         }
