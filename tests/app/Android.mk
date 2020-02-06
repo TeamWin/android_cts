@@ -34,6 +34,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     androidx.test.rules \
     androidx.test.ext.junit \
     platform-test-annotations \
+    cts-opengl-util \
     cts-wm-util \
     androidx.test.rules \
     platformprotosnano

@@ -16,6 +16,10 @@
 
 package android.app.cts;
 
+import static android.opengl.cts.Egl14Utils.getMaxTextureSize;
+
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -233,8 +237,16 @@ public class WallpaperManagerTest {
     @Test
     public void suggestDesiredDimensionsTest() {
         final Point min = getScreenSize();
-        final int w = min.x * 3;
-        final int h = min.y * 2;
+        int w = min.x * 3;
+        int h = min.y * 2;
+
+        // b/120847476: WallpaperManager limits at GL_MAX_TEXTURE_SIZE
+        final int max = getMaxTextureSize();
+        if (max > 0) {
+            w = Math.min(w, max);
+            h = Math.min(h, max);
+        }
+
         assertDesiredDimension(new Point(min.x / 2, min.y / 2), new Point(min.x / 2, min.y / 2));
 
         assertDesiredDimension(new Point(w, h), new Point(w, h));
