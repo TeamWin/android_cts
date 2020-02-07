@@ -45,6 +45,7 @@ import android.os.Environment;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
 import android.util.Log;
 
@@ -122,6 +123,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         }
     }
 
+    @Presubmit
     public void testFlacHeapOverflow() throws Exception {
         testIfMediaServerDied(R.raw.heap_oob_flac);
     }
@@ -189,6 +191,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         }
     }
 
+    @Presubmit
     public void testPlayNullSourcePath() throws Exception {
         try {
             mMediaPlayer.setDataSource((String) null);
@@ -611,6 +614,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         }
     }
 
+    @Presubmit
     public void testSetNextMediaPlayerWithReset() throws Exception {
 
         initMediaPlayer(mMediaPlayer);
@@ -627,6 +631,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         }
     }
 
+    @Presubmit
     public void testSetNextMediaPlayerWithRelease() throws Exception {
 
         initMediaPlayer(mMediaPlayer);
@@ -1298,6 +1303,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         mMediaPlayer.stop();
     }
 
+    @Presubmit
     public void testSeekModes() throws Exception {
         // This clip has 2 I frames at 66687us and 4299687us.
         if (!checkLoadResource(
@@ -1910,6 +1916,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         mMediaPlayer.stop();
     }
 
+    @Presubmit
     public void testGetTrackInfoForVideoWithSubtitleTracks() throws Throwable {
         if (!checkLoadResource(R.raw.testvideo_with_2_subtitle_tracks)) {
             return; // skip;
@@ -2200,6 +2207,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         testBody.call();
     }
 
+    @Presubmit
     public void testGetTrackInfoForVideoWithTimedText() throws Throwable {
         if (!checkLoadResource(R.raw.testvideo_with_2_timedtext_tracks)) {
             return; // skip;
@@ -2530,6 +2538,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         }
     }
 
+    @Presubmit
     public void testNullMediaDataSourceIsRejected() throws Exception {
         try {
             mMediaPlayer.setDataSource((MediaDataSource) null);
@@ -2539,6 +2548,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         }
     }
 
+    @Presubmit
     public void testMediaDataSourceIsClosedOnReset() throws Exception {
         TestMediaDataSource dataSource = new TestMediaDataSource(new byte[0]);
         mMediaPlayer.setDataSource(dataSource);
@@ -2546,6 +2556,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         assertTrue(dataSource.isClosed());
     }
 
+    @Presubmit
     public void testPlaybackFailsIfMediaDataSourceThrows() throws Exception {
         final int resid = R.raw.video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz;
         if (!MediaUtils.hasCodecsForResource(mContext, resid)) {
@@ -2563,6 +2574,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         assertTrue(mOnErrorCalled.waitForSignal());
     }
 
+    @Presubmit
     public void testPlaybackFailsIfMediaDataSourceReturnsAnError() throws Exception {
         final int resid = R.raw.video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz;
         if (!MediaUtils.hasCodecsForResource(mContext, resid)) {

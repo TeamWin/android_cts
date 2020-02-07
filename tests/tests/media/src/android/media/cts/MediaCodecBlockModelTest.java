@@ -25,6 +25,7 @@ import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.cts.R;
+import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
 import android.util.Log;
@@ -40,6 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * MediaCodec tests with CONFIGURE_FLAG_USE_BLOCK_MODEL.
  */
+@Presubmit
 @SmallTest
 @RequiresDevice
 public class MediaCodecBlockModelTest extends AndroidTestCase {
