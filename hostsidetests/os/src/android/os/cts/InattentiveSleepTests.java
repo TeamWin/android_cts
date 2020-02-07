@@ -58,6 +58,8 @@ public class InattentiveSleepTests extends BaseHostJUnit4Test {
     private static final String CMD_GET_STAY_ON = "settings get global stay_on_while_plugged_in";
     private static final String CMD_PUT_STAY_ON_TEMPLATE =
             "settings put global stay_on_while_plugged_in %d";
+    private static final String CMD_DISABLE_STAY_ON =
+            "settings put global stay_on_while_plugged_in 0";
     private static final String CMD_ENABLE_STAY_ON =
             "settings put global stay_on_while_plugged_in 7";
 
@@ -82,7 +84,9 @@ public class InattentiveSleepTests extends BaseHostJUnit4Test {
         assumeTrue("Test only applicable to TVs.", hasDeviceFeature(FEATURE_LEANBACK_ONLY));
 
         mWarningDurationConfig = getWarningDurationConfig();
-        mOriginalStayOnSetting = Long.valueOf(mDevice.executeShellCommand(CMD_GET_STAY_ON).trim());
+        mOriginalStayOnSetting = Long.parseLong(
+                mDevice.executeShellCommand(CMD_GET_STAY_ON).trim());
+        mDevice.executeShellCommand(CMD_DISABLE_STAY_ON);
         setInattentiveSleepTimeout(TIME_BEFORE_WARNING_MS + mWarningDurationConfig);
     }
 
