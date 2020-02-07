@@ -450,31 +450,30 @@ public class AccessibilityTextActionTest {
 
         final AccessibilityNodeInfo text = sUiAutomation.getRootInActiveWindow()
                 .findAccessibilityNodeInfosByText(mActivity.getString(R.string.a_b)).get(0);
-        final List<AccessibilityNodeInfo.AccessibilityAction> actionList = text.getActionList();
-        assertTrue("Editable and focused text view should support ACTION_IME_ENTER",
-                actionList.contains(AccessibilityNodeInfo.AccessibilityAction.ACTION_IME_ENTER));
-
-        final int actionCount = actionList.size();
-        for (int i = 0; i < actionCount; i++) {
-            AccessibilityNodeInfo.AccessibilityAction action = actionList.get(i);
-            if (action.getId() == TextView.ACCESSIBILITY_ACTION_IME_ENTER) {
-                assertEquals(action.getLabel().toString(),
-                        sInstrumentation.getContext().getString(
+        verifyImeActionLabel(text, sInstrumentation.getContext().getString(
                                 R.string.accessibility_action_ime_enter_label));
-                break;
-            }
-        }
-        text.performAction(TextView.ACCESSIBILITY_ACTION_IME_ENTER);
+        text.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_IME_ENTER.getId());
         verify(mockOnEditorActionListener, times(1)).onEditorAction(
                 textView, EditorInfo.IME_ACTION_UNSPECIFIED, null);
 
         // Testing custom ime action : IME_ACTION_DONE.
         textView.setImeActionLabel("pinyin", EditorInfo.IME_ACTION_DONE);
         text.refresh();
-
-        text.performAction(TextView.ACCESSIBILITY_ACTION_IME_ENTER);
+        verifyImeActionLabel(text, "pinyin");
+        text.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_IME_ENTER.getId());
         verify(mockOnEditorActionListener, times(1)).onEditorAction(
                 textView, EditorInfo.IME_ACTION_DONE, null);
+    }
+
+    private void verifyImeActionLabel(AccessibilityNodeInfo node, String label) {
+        final List<AccessibilityNodeInfo.AccessibilityAction> actionList = node.getActionList();
+        final int indexOfActionImeEnter =
+                actionList.indexOf(AccessibilityNodeInfo.AccessibilityAction.ACTION_IME_ENTER);
+        assertTrue(indexOfActionImeEnter >= 0);
+
+        final AccessibilityNodeInfo.AccessibilityAction action =
+                actionList.get(indexOfActionImeEnter);
+        assertEquals(action.getLabel().toString(), label);
     }
 
     private Bundle getTextLocationArguments(AccessibilityNodeInfo info) {
