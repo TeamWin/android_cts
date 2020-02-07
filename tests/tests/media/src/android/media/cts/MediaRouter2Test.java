@@ -16,6 +16,7 @@
 
 package android.media.cts;
 
+import static android.content.Context.AUDIO_SERVICE;
 import static android.media.cts.SampleMediaRoute2ProviderService.FEATURES_SPECIAL;
 import static android.media.cts.SampleMediaRoute2ProviderService.FEATURE_SAMPLE;
 import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID1;
@@ -36,6 +37,7 @@ import static org.testng.Assert.assertThrows;
 
 import android.annotation.NonNull;
 import android.content.Context;
+import android.media.AudioManager;
 import android.media.MediaRoute2Info;
 import android.media.MediaRouter2;
 import android.media.MediaRouter2.OnGetControllerHintsListener;
@@ -61,7 +63,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import androidx.test.InstrumentationRegistry;
@@ -76,6 +77,7 @@ public class MediaRouter2Test {
     Context mContext;
     private MediaRouter2 mRouter2;
     private Executor mExecutor;
+    private AudioManager mAudioManager;
 
     private static final int TIMEOUT_MS = 5000;
     private static final int WAIT_MS = 2000;
@@ -88,6 +90,7 @@ public class MediaRouter2Test {
         mContext = InstrumentationRegistry.getTargetContext();
         mRouter2 = MediaRouter2.getInstance(mContext);
         mExecutor = Executors.newSingleThreadExecutor();
+        mAudioManager = (AudioManager) mContext.getSystemService(AUDIO_SERVICE);
     }
 
     @After
@@ -692,6 +695,63 @@ public class MediaRouter2Test {
     }
 
     @Test
+    public void testVolumeHandlingWhenVolumeFixed() {
+        if (!mAudioManager.isVolumeFixed()) {
+            return;
+        }
+        MediaRoute2Info selectedSystemRoute =
+                mRouter2.getSystemController().getSelectedRoutes().get(0);
+        assertEquals(MediaRoute2Info.PLAYBACK_VOLUME_FIXED,
+                selectedSystemRoute.getVolumeHandling());
+    }
+
+    @Test
+    public void testCallbacksAreCalledWhenVolumeChanged() throws Exception {
+        if (mAudioManager.isVolumeFixed()) {
+            return;
+        }
+
+        final int maxVolume = mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        final int minVolume = mAudioManager.getStreamMinVolume(AudioManager.STREAM_MUSIC);
+        final int originalVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+
+        MediaRoute2Info selectedSystemRoute =
+                mRouter2.getSystemController().getSelectedRoutes().get(0);
+
+        assertEquals(maxVolume, selectedSystemRoute.getVolumeMax());
+        assertEquals(originalVolume, selectedSystemRoute.getVolume());
+        assertEquals(MediaRoute2Info.PLAYBACK_VOLUME_VARIABLE,
+                selectedSystemRoute.getVolumeHandling());
+
+        final int targetVolume = originalVolume == minVolume
+                ? originalVolume + 1 : originalVolume - 1;
+        final CountDownLatch latch = new CountDownLatch(1);
+        RouteCallback routeCallback = new RouteCallback() {
+            @Override
+            public void onRoutesChanged(List<MediaRoute2Info> routes) {
+                for (MediaRoute2Info route : routes) {
+                    if (route.getId().equals(selectedSystemRoute.getId())
+                            && route.getVolume() == targetVolume) {
+                        latch.countDown();
+                        break;
+                    }
+                }
+            }
+        };
+
+        mRouter2.registerRouteCallback(mExecutor, routeCallback,
+                new RouteDiscoveryPreference.Builder(new ArrayList<>(), true).build());
+
+        try {
+            mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, targetVolume, 0);
+            assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        } finally {
+            mRouter2.unregisterRouteCallback(routeCallback);
+            mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, originalVolume, 0);
+        }
+    }
+
+    @Test
     public void markCallbacksAsTested() {
         // Due to CTS coverage tool's bug, it doesn't count the callback methods as tested even if
         // we have tests for them. This method just directly calls those methods so that the tool
@@ -764,28 +824,5 @@ public class MediaRouter2Test {
             result.add(route.getOriginalId());
         }
         return result;
-    }
-
-    void awaitOnRouteChanged(Runnable task, String originalRouteId,
-            Predicate<MediaRoute2Info> predicate,
-            List<String> routeTypes) throws Exception {
-        CountDownLatch latch = new CountDownLatch(1);
-        RouteCallback routeCallback = new RouteCallback() {
-            @Override
-            public void onRoutesChanged(List<MediaRoute2Info> changed) {
-                MediaRoute2Info route = createRouteMap(changed).get(originalRouteId);
-                if (route != null && predicate.test(route)) {
-                    latch.countDown();
-                }
-            }
-        };
-        mRouter2.registerRouteCallback(mExecutor, routeCallback,
-                new RouteDiscoveryPreference.Builder(routeTypes, true).build());
-        try {
-            task.run();
-            assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
-        } finally {
-            mRouter2.unregisterRouteCallback(routeCallback);
-        }
     }
 }
