@@ -17,6 +17,7 @@
 package android.media.cts;
 
 import android.media.MediaFormat;
+import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
 import android.util.Log;
@@ -43,6 +44,7 @@ public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
         mImpl.doTestVirtualDisplayRecycles(getContext(), 3);
     }
 
+    @Presubmit
     public void testRendering800x480Locally() throws Throwable {
         Log.i(TAG, "testRendering800x480Locally");
         if (mImpl.isConcurrentEncodingDecodingSupported(
@@ -54,6 +56,7 @@ public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
         }
     }
 
+    @Presubmit
     public void testRenderingMaxResolutionLocally() throws Throwable {
         Log.i(TAG, "testRenderingMaxResolutionLocally");
         Size maxRes = mImpl.checkMaxConcurrentEncodingDecodingResolution();
@@ -66,6 +69,7 @@ public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
         }
     }
 
+    @Presubmit
     public void testRendering800x480Remotely() throws Throwable {
         Log.i(TAG, "testRendering800x480Remotely");
         if (mImpl.isConcurrentEncodingDecodingSupported(
@@ -76,6 +80,7 @@ public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
         }
     }
 
+    @Presubmit
     public void testRenderingMaxResolutionRemotely() throws Throwable {
         Log.i(TAG, "testRenderingMaxResolutionRemotely");
         Size maxRes = mImpl.checkMaxConcurrentEncodingDecodingResolution();
@@ -88,6 +93,7 @@ public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
         }
     }
 
+    @Presubmit
     public void testRendering800x480RemotelyWith3Windows() throws Throwable {
         Log.i(TAG, "testRendering800x480RemotelyWith3Windows");
         if (mImpl.isConcurrentEncodingDecodingSupported(
@@ -98,6 +104,7 @@ public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
         }
     }
 
+    @Presubmit
     public void testRendering800x480LocallyWith3Windows() throws Throwable {
         Log.i(TAG, "testRendering800x480LocallyWith3Windows");
         if (mImpl.isConcurrentEncodingDecodingSupported(

@@ -26,6 +26,7 @@ import android.media.MediaCodec;
 import android.media.MediaDescrambler;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
 import android.util.Log;
@@ -41,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Presubmit
 @SmallTest
 @RequiresDevice
 public class MediaCasTest extends AndroidTestCase {

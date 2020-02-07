@@ -34,6 +34,7 @@ import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.net.Uri;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.util.Log;
 import android.util.Pair;
 import android.util.Range;
@@ -1610,8 +1611,10 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
 
     public void testGoogH265FlexQCIF()   { specific(googH265(),   176, 144, true /* flex */); }
     public void testGoogH265SurfQCIF()   { specific(googH265(),   176, 144, false /* flex */); }
+    @Presubmit
     @SmallTest
     public void testGoogH264FlexQCIF()   { specific(googH264(),   176, 144, true /* flex */); }
+    @Presubmit
     @SmallTest
     public void testGoogH264SurfQCIF()   { specific(googH264(),   176, 144, false /* flex */); }
     public void testGoogH263FlexQCIF()   { specific(googH263(),   176, 144, true /* flex */); }
@@ -1628,9 +1631,11 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
     @NonMediaMainlineTest
     public void testOtherH265SurfQCIF()  { specific(otherH265(),  176, 144, false /* flex */); }
     @NonMediaMainlineTest
+    @Presubmit
     @SmallTest
     public void testOtherH264FlexQCIF()  { specific(otherH264(),  176, 144, true /* flex */); }
     @NonMediaMainlineTest
+    @Presubmit
     @SmallTest
     public void testOtherH264SurfQCIF()  { specific(otherH264(),  176, 144, false /* flex */); }
     @NonMediaMainlineTest

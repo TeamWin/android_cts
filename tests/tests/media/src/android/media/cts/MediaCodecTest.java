@@ -44,6 +44,7 @@ import android.os.ConditionVariable;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.PersistableBundle;
+import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
 import android.util.Log;
@@ -79,6 +80,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Blender Foundation / www.bigbuckbunny.org, and are licensed under the Creative Commons
  * Attribution 3.0 License at http://creativecommons.org/licenses/by/3.0/us/.
  */
+@Presubmit
 @SmallTest
 @RequiresDevice
 public class MediaCodecTest extends AndroidTestCase {
