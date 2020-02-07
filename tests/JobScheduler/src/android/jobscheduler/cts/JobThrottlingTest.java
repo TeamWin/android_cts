@@ -261,7 +261,6 @@ public class JobThrottlingTest {
                 Settings.Global.JOB_SCHEDULER_QUOTA_CONTROLLER_CONSTANTS,
                 "timing_session_coalescing_duration_ms=0");
 
-        setAirplaneMode(false);
         setScreenState(true);
 
         BatteryUtils.runDumpsysBatteryUnplug();
@@ -284,7 +283,7 @@ public class JobThrottlingTest {
                 Settings.Global.JOB_SCHEDULER_QUOTA_CONTROLLER_CONSTANTS,
                 "timing_session_coalescing_duration_ms=0,max_session_count_restricted=0");
 
-        setAirplaneMode(false);
+        setAirplaneMode(true);
         setScreenState(true);
 
         BatteryUtils.runDumpsysBatteryUnplug();
@@ -319,7 +318,7 @@ public class JobThrottlingTest {
                 Settings.Global.JOB_SCHEDULER_QUOTA_CONTROLLER_CONSTANTS,
                 "timing_session_coalescing_duration_ms=0,max_session_count_restricted=0");
 
-        setAirplaneMode(false);
+        setAirplaneMode(true);
         setScreenState(true);
 
         BatteryUtils.runDumpsysBatteryUnplug();
@@ -343,6 +342,7 @@ public class JobThrottlingTest {
         assertFalse("New job started in RESTRICTED bucket", mTestAppInterface.awaitJobStart(3_000));
 
         // Add network
+        setAirplaneMode(false);
         setWifiState(true, mCm, mWifiManager);
         assertTrue("New job didn't start in RESTRICTED bucket",
                 mTestAppInterface.awaitJobStart(3_000));
