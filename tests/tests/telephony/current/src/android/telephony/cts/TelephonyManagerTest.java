@@ -1114,13 +1114,21 @@ public class TelephonyManagerTest {
     @Test
     public void testSetSystemSelectionChannels() {
         LinkedBlockingQueue<Boolean> queue = new LinkedBlockingQueue<>(1);
-        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                (tm) -> tm.setSystemSelectionChannels(Collections.emptyList(),
-                        getContext().getMainExecutor(), queue::offer));
+        final UiAutomation uiAutomation =
+                InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
-            assertTrue(queue.poll(1000, TimeUnit.MILLISECONDS));
+            uiAutomation.adoptShellPermissionIdentity();
+            // This is a oneway binder call, meaning we may return before the permission check
+            // happens. Hold shell permissions until we get a response.
+            mTelephonyManager.setSystemSelectionChannels(Collections.emptyList(),
+                    getContext().getMainExecutor(), queue::offer);
+            Boolean result = queue.poll(1000, TimeUnit.MILLISECONDS);
+            assertNotNull(result);
+            assertTrue(result);
         } catch (InterruptedException e) {
             fail("interrupted");
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
         }
     }
 
