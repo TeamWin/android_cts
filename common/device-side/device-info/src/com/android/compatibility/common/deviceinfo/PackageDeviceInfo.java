@@ -19,6 +19,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
+import android.os.Build;
 import com.android.compatibility.common.util.DeviceInfoStore;
 
 import java.io.IOException;
@@ -55,7 +56,8 @@ public class PackageDeviceInfo extends DeviceInfo {
     protected void collectDeviceInfo(DeviceInfoStore store) throws Exception {
         final PackageManager pm = getContext().getPackageManager();
 
-        final List<PackageInfo> allPackages = pm.getInstalledPackages(PackageManager.GET_PERMISSIONS);
+        final List<PackageInfo> allPackages =
+                pm.getInstalledPackages(PackageManager.GET_PERMISSIONS);
 
         store.startArray(PACKAGE);
         for (PackageInfo pkg : allPackages) {
@@ -72,10 +74,7 @@ public class PackageDeviceInfo extends DeviceInfo {
 
                         store.startGroup();
                         store.addResult(PERMISSION_NAME, permission);
-                        store.addResult(PERMISSION_FLAGS, pi.flags);
-                        store.addResult(PERMISSION_GROUP, pi.group);
-                        store.addResult(PERMISSION_PROTECTION, pi.getProtection());
-                        store.addResult(PERMISSION_PROTECTION_FLAGS, pi.getProtectionFlags());
+                        writePermissionsDetails(pi, store);
                         store.endGroup();
                     } catch (PackageManager.NameNotFoundException e) {
                         // ignore unrecognized permission and continue
@@ -94,7 +93,7 @@ public class PackageDeviceInfo extends DeviceInfo {
 
                 store.addResult(HAS_SYSTEM_UID, appInfo.uid < SYS_UID_MAX);
 
-                final boolean canInstall = sharesUidWithPackageHolding(pm, appInfo.uid, INSTALL_PACKAGES_PERMISSION);
+                final boolean canInstall = sharesUidWithInstallerPackage(pm, appInfo.uid);
                 store.addResult(SHARES_INSTALL_PERMISSION, canInstall);
             }
 
@@ -102,7 +101,8 @@ public class PackageDeviceInfo extends DeviceInfo {
         }
         store.endArray(); // "package"
     }
-    private static boolean sharesUidWithPackageHolding(PackageManager pm, int uid, String permission) {
+
+    private static boolean sharesUidWithInstallerPackage(PackageManager pm, int uid) {
         final String[] sharesUidWith = pm.getPackagesForUid(uid);
 
         if (sharesUidWith == null) {
@@ -110,7 +110,8 @@ public class PackageDeviceInfo extends DeviceInfo {
         }
 
         // Approx 20 permissions per package for rough estimate of sizing
-        final List<String> sharedPermissions = new ArrayList<>(sharesUidWith.length * 20);
+        final int capacity = sharesUidWith.length * 20;
+        final List<String> sharedPermissions = new ArrayList<>(capacity);
         for (String pkg :sharesUidWith){
             try {
                 final PackageInfo info = pm.getPackageInfo(pkg, PackageManager.GET_PERMISSIONS);
@@ -129,6 +130,27 @@ public class PackageDeviceInfo extends DeviceInfo {
             }
         }
 
-        return sharedPermissions.contains(permission);
+        return sharedPermissions.contains(PackageDeviceInfo.INSTALL_PACKAGES_PERMISSION);
+    }
+
+    private static void writePermissionsDetails(PermissionInfo pi, DeviceInfoStore store)
+            throws IOException {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            store.addResult(PERMISSION_FLAGS, pi.flags);
+        } else {
+            store.addResult(PERMISSION_FLAGS, 0);
+        }
+
+        store.addResult(PERMISSION_GROUP, pi.group);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            store.addResult(PERMISSION_PROTECTION, pi.getProtection());
+            store.addResult(PERMISSION_PROTECTION_FLAGS, pi.getProtectionFlags());
+        } else {
+            store.addResult(PERMISSION_PROTECTION,
+                    pi.protectionLevel & PermissionInfo.PROTECTION_MASK_BASE);
+            store.addResult(PERMISSION_PROTECTION_FLAGS,
+                    pi.protectionLevel & ~PermissionInfo.PROTECTION_MASK_BASE);
+        }
     }
 }
