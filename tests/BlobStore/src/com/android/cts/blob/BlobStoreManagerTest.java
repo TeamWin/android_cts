@@ -25,6 +25,7 @@ import android.content.Context;
 import android.os.ParcelFileDescriptor;
 
 import com.android.cts.blob.R;
+import com.android.utils.blob.DummyBlobData;
 
 import org.junit.After;
 import org.junit.Before;
@@ -403,10 +404,10 @@ public class BlobStoreManagerTest {
 
             assertThrows(IllegalArgumentException.class, () ->
                     mBlobStoreManager.acquireLease(blobData.getBlobHandle(),
-                            R.string.test_desc, blobData.mExpiryTimeMs + 1000));
+                            R.string.test_desc, blobData.getExpiryTimeMillis() + 1000));
 
             mBlobStoreManager.acquireLease(blobData.getBlobHandle(), R.string.test_desc,
-                    blobData.mExpiryTimeMs - 1000);
+                    blobData.getExpiryTimeMillis() - 1000);
             mBlobStoreManager.acquireLease(blobData.getBlobHandle(), R.string.test_desc);
             // TODO: verify acquiring lease took effect.
             mBlobStoreManager.releaseLease(blobData.getBlobHandle());
@@ -421,7 +422,7 @@ public class BlobStoreManagerTest {
         blobData.prepare();
         try {
             assertThrows(NullPointerException.class, () -> mBlobStoreManager.acquireLease(
-                    null, R.string.test_desc, blobData.mExpiryTimeMs));
+                    null, R.string.test_desc, blobData.getExpiryTimeMillis()));
             assertThrows(IllegalArgumentException.class, () -> mBlobStoreManager.acquireLease(
                     blobData.getBlobHandle(), R.string.test_desc, -1));
             assertThrows(IllegalArgumentException.class, () -> mBlobStoreManager.acquireLease(

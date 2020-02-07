@@ -77,7 +77,7 @@ class AppOpEventCollectionTest {
 
         try {
             activityRule.activity.finish()
-            activityRule.activity.waitForDestroyed()
+            UidStateForceActivity.waitForDestroyed()
         } finally {
             appOpsManager.finishOp(OPSTR_WIFI_SCAN, myUid, myPackage, null)
             appOpsManager.finishOp(OPSTR_WIFI_SCAN, myUid, myPackage, null)

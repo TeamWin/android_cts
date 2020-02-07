@@ -19,13 +19,21 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.app.Instrumentation;
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.SystemClock;
+import android.view.textclassifier.TextClassification;
+import android.view.textclassifier.TextClassificationContext;
+import android.view.textclassifier.TextClassificationManager;
+import android.view.textclassifier.TextClassificationSessionId;
+import android.view.textclassifier.TextClassifier;
+import android.view.textclassifier.TextLanguage;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
@@ -35,6 +43,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
+
+import java.util.List;
 
 /**
  * Tests for TextClassifierService query related functions.
@@ -53,7 +63,11 @@ public class TextClassifierServiceSwapTest {
     private final TextClassifierTestWatcher mTestWatcher =
             CtsTextClassifierService.getTestWatcher();
     private final SafeCleanerRule mSafeCleanerRule = mTestWatcher.newSafeCleaner();
-
+    private final TextClassificationContext mTextClassificationContext =
+            new TextClassificationContext.Builder(
+                    ApplicationProvider.getApplicationContext().getPackageName(),
+                    TextClassifier.WIDGET_TYPE_EDIT_WEBVIEW)
+                    .build();
     @Rule
     public final RuleChain mAllRules = RuleChain
             .outerRule(mTestWatcher)
@@ -74,6 +88,30 @@ public class TextClassifierServiceSwapTest {
 
         // Verify the request was not passed to the service.
         assertThat(service.getRequestSessions()).isEmpty();
+    }
+
+    @Test
+    public void multipleActiveSessions() throws Exception {
+        final TextClassification.Request request =
+                new TextClassification.Request.Builder("Hello World", 0, 1).build();
+        final TextClassificationManager tcm =
+                ApplicationProvider.getApplicationContext().getSystemService(
+                        TextClassificationManager.class);
+        final TextClassifier firstSession =
+                tcm.createTextClassificationSession(mTextClassificationContext);
+        final TextClassifier secondSessionSession =
+                tcm.createTextClassificationSession(mTextClassificationContext);
+
+        firstSession.classifyText(request);
+        secondSessionSession.classifyText(request);
+        final CtsTextClassifierService service = mTestWatcher.getService();
+        service.awaitQuery(1_000);
+
+        final List<TextClassificationSessionId> sessionIds =
+                service.getRequestSessions().get("onClassifyText");
+        assertThat(sessionIds).hasSize(2);
+        assertThat(sessionIds.get(0).flattenToString())
+                .isNotEqualTo(sessionIds.get(1).flattenToString());
     }
 
     /**

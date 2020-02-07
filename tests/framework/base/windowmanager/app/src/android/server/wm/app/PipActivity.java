@@ -256,13 +256,13 @@ public class PipActivity extends AbstractLifecycleLogActivity {
     }
 
     @Override
-    public void onPictureInPictureRequested() {
+    public boolean onPictureInPictureRequested() {
         onCallback(CommandSession.ActivityCallback.ON_PICTURE_IN_PICTURE_REQUESTED);
         if (getIntent().hasExtra(EXTRA_ENTER_PIP_ON_PIP_REQUESTED)) {
             enterPictureInPictureMode(new PictureInPictureParams.Builder().build());
-            return;
+            return true;
         }
-        super.onPictureInPictureRequested();
+        return super.onPictureInPictureRequested();
     }
 
     @Override

@@ -17,14 +17,41 @@
 package android.app.appops.cts
 
 import android.app.Activity
+import android.os.Bundle
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 class UidStateForceActivity : Activity() {
-    private val lock = ReentrantLock()
-    private val condition = lock.newCondition()
-    private var isActivityResumed = false
-    private var isActivityDestroyed = false;
+    companion object {
+        private val lock = ReentrantLock()
+        private val condition = lock.newCondition()
+        private var isActivityResumed = false
+        private var isActivityDestroyed = false;
+
+        var instance: UidStateForceActivity? = null
+
+        fun waitForResumed() {
+            lock.withLock {
+                while (!isActivityResumed) {
+                    condition.await()
+                }
+            }
+        }
+
+        fun waitForDestroyed() {
+            lock.withLock {
+                while (!isActivityDestroyed) {
+                    condition.await()
+                }
+            }
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        instance = this
+    }
 
     override fun onResume() {
         super.onResume()
@@ -49,23 +76,6 @@ class UidStateForceActivity : Activity() {
         lock.withLock {
             isActivityDestroyed = true
             condition.signalAll()
-        }
-    }
-
-
-    fun waitForResumed() {
-        lock.withLock {
-            while (!isActivityResumed) {
-                condition.await()
-            }
-        }
-    }
-
-    fun waitForDestroyed() {
-        lock.withLock {
-            while (!isActivityDestroyed) {
-                condition.await()
-            }
         }
     }
 }

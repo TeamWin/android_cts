@@ -19,7 +19,7 @@ package android.app.appops.cts
 import android.app.AppOpsManager
 import android.app.AppOpsManager.HistoricalOp
 import android.app.AppOpsManager.HistoricalOps
-import android.app.AppOpsManager.OPSTR_START_FOREGROUND
+import android.app.AppOpsManager.OPSTR_REQUEST_DELETE_PACKAGES
 import android.app.AppOpsManager.OP_FLAGS_ALL
 import android.os.Process
 import android.os.SystemClock
@@ -208,22 +208,22 @@ class HistoricalAppopsTest {
                 SNAPSHOT_INTERVAL_MILLIS,
                 INTERVAL_COMPRESSION_MULTIPLIER)
 
-        appOpsManager.setUidMode(OPSTR_START_FOREGROUND, uid, AppOpsManager.MODE_ALLOWED)
+        appOpsManager.setUidMode(OPSTR_REQUEST_DELETE_PACKAGES, uid, AppOpsManager.MODE_ALLOWED)
 
-        activityRule.activity.waitForResumed()
+        UidStateForceActivity.waitForResumed()
 
-        appOpsManager.noteOp(OPSTR_START_FOREGROUND, uid, packageName, "firstFeature", null)
-        appOpsManager.noteOp(OPSTR_START_FOREGROUND, uid, packageName, "secondFeature", null)
+        appOpsManager.noteOp(OPSTR_REQUEST_DELETE_PACKAGES, uid, packageName, "firstFeature", null)
+        appOpsManager.noteOp(OPSTR_REQUEST_DELETE_PACKAGES, uid, packageName, "secondFeature", null)
 
         val memOps = getHistoricalOps(appOpsManager, uid = uid)!!
 
-        assertThat(memOps.getUidOpsAt(0).getPackageOpsAt(0).getOp(OPSTR_START_FOREGROUND)!!
+        assertThat(memOps.getUidOpsAt(0).getPackageOpsAt(0).getOp(OPSTR_REQUEST_DELETE_PACKAGES)!!
                 .getForegroundAccessCount(OP_FLAGS_ALL)).isEqualTo(2)
         assertThat(memOps.getUidOpsAt(0).getPackageOpsAt(0).getFeatureOps("firstFeature")!!
-                .getOp(OPSTR_START_FOREGROUND)!!.getForegroundAccessCount(OP_FLAGS_ALL))
+                .getOp(OPSTR_REQUEST_DELETE_PACKAGES)!!.getForegroundAccessCount(OP_FLAGS_ALL))
                 .isEqualTo(1)
         assertThat(memOps.getUidOpsAt(0).getPackageOpsAt(0).getFeatureOps("secondFeature")!!
-                .getOp(OPSTR_START_FOREGROUND)!!.getForegroundAccessCount(OP_FLAGS_ALL))
+                .getOp(OPSTR_REQUEST_DELETE_PACKAGES)!!.getForegroundAccessCount(OP_FLAGS_ALL))
                 .isEqualTo(1)
 
         // Wait until data is on disk and verify no entry got lost
@@ -270,7 +270,7 @@ class HistoricalAppopsTest {
         appOpsManager.setUidMode(AppOpsManager.OPSTR_START_FOREGROUND, 2000,
                 AppOpsManager.MODE_ALLOWED)
 
-        activityRule.activity.waitForResumed()
+        UidStateForceActivity.waitForResumed()
 
         try {
             val noteCount = 5

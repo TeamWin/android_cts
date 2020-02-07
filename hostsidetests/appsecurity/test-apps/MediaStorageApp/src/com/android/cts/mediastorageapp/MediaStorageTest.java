@@ -120,14 +120,7 @@ public class MediaStorageTest {
         // We might have top-level access
         final File probe = new File(Environment.getExternalStorageDirectory(),
                 "cts" + System.nanoTime());
-        if (sandboxed) {
-            try {
-                probe.createNewFile();
-                fail();
-            } catch (IOException expected) {
-            }
-            assertNull(Environment.getExternalStorageDirectory().list());
-        } else {
+        if (!sandboxed) {
             assertTrue(probe.createNewFile());
             assertNotNull(Environment.getExternalStorageDirectory().list());
         }

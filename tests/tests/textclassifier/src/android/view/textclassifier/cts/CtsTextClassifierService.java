@@ -17,11 +17,13 @@ package android.view.textclassifier.cts;
 
 import android.os.CancellationSignal;
 import android.service.textclassifier.TextClassifierService;
+import android.util.ArrayMap;
 import android.view.textclassifier.ConversationActions;
 import android.view.textclassifier.SelectionEvent;
 import android.view.textclassifier.TextClassification;
 import android.view.textclassifier.TextClassificationContext;
 import android.view.textclassifier.TextClassificationSessionId;
+import android.view.textclassifier.TextClassifier;
 import android.view.textclassifier.TextClassifierEvent;
 import android.view.textclassifier.TextLanguage;
 import android.view.textclassifier.TextLinks;
@@ -32,6 +34,7 @@ import androidx.annotation.NonNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -43,7 +46,8 @@ public final class CtsTextClassifierService extends TextClassifierService {
     private static final String TAG = "CtsTextClassifierService";
     public static final String MY_PACKAGE = "android.view.textclassifier.cts";
 
-    private final ArrayList<TextClassificationSessionId> mRequestSessions = new ArrayList<>();
+    private final Map<String, List<TextClassificationSessionId>> mRequestSessions =
+            new ArrayMap<>();
     private final CountDownLatch mRequestLatch = new CountDownLatch(1);
 
     /**
@@ -54,9 +58,12 @@ public final class CtsTextClassifierService extends TextClassifierService {
         return new TextClassifierTestWatcher();
     }
 
+    /**
+     * Returns all incoming session IDs, keyed by API name.
+     */
     @NonNull
-    List<TextClassificationSessionId> getRequestSessions() {
-        return Collections.unmodifiableList(mRequestSessions);
+    Map<String, List<TextClassificationSessionId>> getRequestSessions() {
+        return Collections.unmodifiableMap(mRequestSessions);
     }
 
     void awaitQuery(long timeoutMillis) {
@@ -71,64 +78,65 @@ public final class CtsTextClassifierService extends TextClassifierService {
     public void onSuggestSelection(TextClassificationSessionId sessionId,
             TextSelection.Request request, CancellationSignal cancellationSignal,
             Callback<TextSelection> callback) {
-        mRequestSessions.add(sessionId);
-        mRequestLatch.countDown();
+        handleRequest(sessionId, "onSuggestSelection");
+        callback.onSuccess(TextClassifier.NO_OP.suggestSelection(request));
     }
 
     @Override
     public void onClassifyText(TextClassificationSessionId sessionId,
             TextClassification.Request request, CancellationSignal cancellationSignal,
             Callback<TextClassification> callback) {
-        mRequestSessions.add(sessionId);
-        mRequestLatch.countDown();
+        handleRequest(sessionId, "onClassifyText");
+        callback.onSuccess(TextClassifier.NO_OP.classifyText(request));
     }
 
     @Override
     public void onGenerateLinks(TextClassificationSessionId sessionId, TextLinks.Request request,
             CancellationSignal cancellationSignal, Callback<TextLinks> callback) {
-        mRequestSessions.add(sessionId);
-        mRequestLatch.countDown();
+        handleRequest(sessionId, "onGenerateLinks");
+        callback.onSuccess(TextClassifier.NO_OP.generateLinks(request));
     }
 
     @Override
     public void onDetectLanguage(TextClassificationSessionId sessionId,
             TextLanguage.Request request, CancellationSignal cancellationSignal,
             Callback<TextLanguage> callback) {
-        mRequestSessions.add(sessionId);
-        mRequestLatch.countDown();
+        handleRequest(sessionId, "onDetectLanguage");
+        callback.onSuccess(TextClassifier.NO_OP.detectLanguage(request));
     }
 
     @Override
     public void onSuggestConversationActions(TextClassificationSessionId sessionId,
             ConversationActions.Request request, CancellationSignal cancellationSignal,
             Callback<ConversationActions> callback) {
-        mRequestSessions.add(sessionId);
-        mRequestLatch.countDown();
+        handleRequest(sessionId, "onSuggestConversationActions");
+        callback.onSuccess(TextClassifier.NO_OP.suggestConversationActions(request));
     }
 
     @Override
     public void onSelectionEvent(TextClassificationSessionId sessionId, SelectionEvent event) {
-        mRequestSessions.add(sessionId);
-        mRequestLatch.countDown();
+        handleRequest(sessionId, "onSelectionEvent");
     }
 
     @Override
     public void onTextClassifierEvent(TextClassificationSessionId sessionId,
             TextClassifierEvent event) {
-        mRequestSessions.add(sessionId);
-        mRequestLatch.countDown();
+        handleRequest(sessionId, "onTextClassifierEvent");
     }
 
     @Override
     public void onCreateTextClassificationSession(TextClassificationContext context,
             TextClassificationSessionId sessionId) {
-        mRequestSessions.add(sessionId);
-        mRequestLatch.countDown();
+        handleRequest(sessionId, "onCreateTextClassificationSession");
     }
 
     @Override
     public void onDestroyTextClassificationSession(TextClassificationSessionId sessionId) {
-        mRequestSessions.add(sessionId);
+        handleRequest(sessionId, "onDestroyTextClassificationSession");
+    }
+
+    private void handleRequest(TextClassificationSessionId sessionId, String methodName) {
+        mRequestSessions.computeIfAbsent(methodName, key -> new ArrayList<>()).add(sessionId);
         mRequestLatch.countDown();
     }
 
