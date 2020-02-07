@@ -45,22 +45,24 @@ class CodecAsyncHandler extends MediaCodec.Callback {
     private static final String LOG_TAG = CodecAsyncHandler.class.getSimpleName();
     private final Lock mLock = new ReentrantLock();
     private final Condition mCondition = mLock.newCondition();
-    private CallBackQueue mCbInputQueue;
-    private CallBackQueue mCbOutputQueue;
+    private final LinkedList<Pair<Integer, MediaCodec.BufferInfo>> mCbInputQueue;
+    private final LinkedList<Pair<Integer, MediaCodec.BufferInfo>> mCbOutputQueue;
     private MediaFormat mOutFormat;
     private boolean mSignalledOutFormatChanged;
     private volatile boolean mSignalledError;
 
     CodecAsyncHandler() {
-        mCbInputQueue = new CallBackQueue();
-        mCbOutputQueue = new CallBackQueue();
+        mCbInputQueue = new LinkedList<>();
+        mCbOutputQueue = new LinkedList<>();
         mSignalledError = false;
         mSignalledOutFormatChanged = false;
     }
 
     void clearQueues() {
+        mLock.lock();
         mCbInputQueue.clear();
         mCbOutputQueue.clear();
+        mLock.unlock();
     }
 
     void resetContext() {
@@ -73,14 +75,20 @@ class CodecAsyncHandler extends MediaCodec.Callback {
     @Override
     public void onInputBufferAvailable(@NonNull MediaCodec codec, int bufferIndex) {
         assertTrue(bufferIndex >= 0);
-        mCbInputQueue.push(new Pair<>(bufferIndex, (MediaCodec.BufferInfo) null));
+        mLock.lock();
+        mCbInputQueue.add(new Pair<>(bufferIndex, (MediaCodec.BufferInfo) null));
+        mCondition.signalAll();
+        mLock.unlock();
     }
 
     @Override
     public void onOutputBufferAvailable(@NonNull MediaCodec codec, int bufferIndex,
             @NonNull MediaCodec.BufferInfo info) {
         assertTrue(bufferIndex >= 0);
-        mCbOutputQueue.push(new Pair<>(bufferIndex, info));
+        mLock.lock();
+        mCbOutputQueue.add(new Pair<>(bufferIndex, info));
+        mCondition.signalAll();
+        mLock.unlock();
     }
 
     @Override
@@ -109,51 +117,52 @@ class CodecAsyncHandler extends MediaCodec.Callback {
 
     Pair<Integer, MediaCodec.BufferInfo> getInput() throws InterruptedException {
         Pair<Integer, MediaCodec.BufferInfo> element = null;
+        mLock.lock();
         while (!mSignalledError) {
             if (mCbInputQueue.isEmpty()) {
-                mLock.lock();
                 mCondition.await();
-                mLock.unlock();
             } else {
-                element = mCbInputQueue.pop();
+                element = mCbInputQueue.remove(0);
                 break;
             }
         }
+        mLock.unlock();
         return element;
     }
 
     Pair<Integer, MediaCodec.BufferInfo> getOutput() throws InterruptedException {
         Pair<Integer, MediaCodec.BufferInfo> element = null;
+        mLock.lock();
         while (!mSignalledError) {
             if (mCbOutputQueue.isEmpty()) {
-                mLock.lock();
                 mCondition.await();
-                mLock.unlock();
             } else {
-                element = mCbOutputQueue.pop();
+                element = mCbOutputQueue.remove(0);
                 break;
             }
         }
+        mLock.unlock();
         return element;
     }
 
     Pair<Integer, MediaCodec.BufferInfo> getWork() throws InterruptedException {
         Pair<Integer, MediaCodec.BufferInfo> element = null;
+        mLock.lock();
         while (!mSignalledError) {
             if (mCbInputQueue.isEmpty() && mCbOutputQueue.isEmpty()) {
-                mLock.lock();
                 mCondition.await();
-                mLock.unlock();
-            }
-            if (!mCbOutputQueue.isEmpty()) {
-                element = mCbOutputQueue.pop();
-                break;
-            }
-            if (!mCbInputQueue.isEmpty()) {
-                element = mCbInputQueue.pop();
-                break;
+            } else {
+                if (!mCbOutputQueue.isEmpty()) {
+                    element = mCbOutputQueue.remove(0);
+                    break;
+                }
+                if (!mCbInputQueue.isEmpty()) {
+                    element = mCbInputQueue.remove(0);
+                    break;
+                }
             }
         }
+        mLock.unlock();
         return element;
     }
 
@@ -167,38 +176,6 @@ class CodecAsyncHandler extends MediaCodec.Callback {
 
     MediaFormat getOutputFormat() {
         return mOutFormat;
-    }
-
-    private class CallBackQueue {
-        private final LinkedList<Pair<Integer, MediaCodec.BufferInfo>> mQueue = new LinkedList<>();
-
-        void push(Pair<Integer, MediaCodec.BufferInfo> element) {
-            mLock.lock();
-            mQueue.add(element);
-            mCondition.signalAll();
-            mLock.unlock();
-        }
-
-        Pair<Integer, MediaCodec.BufferInfo> pop() {
-            Pair<Integer, MediaCodec.BufferInfo> element = null;
-            mLock.lock();
-            if (mQueue.size() != 0) element = mQueue.remove(0);
-            mLock.unlock();
-            return element;
-        }
-
-        boolean isEmpty() {
-            mLock.lock();
-            boolean isEmpty = (mQueue.size() == 0);
-            mLock.unlock();
-            return isEmpty;
-        }
-
-        void clear() {
-            mLock.lock();
-            mQueue.clear();
-            mLock.unlock();
-        }
     }
 }
 
@@ -461,8 +438,10 @@ abstract class CodecTestBase {
                     int bufferID = element.first;
                     MediaCodec.BufferInfo info = element.second;
                     if (info != null) {
+                        // <id, info> corresponds to output callback. Handle it accordingly
                         dequeueOutput(bufferID, info);
                     } else {
+                        // <id, null> corresponds to input callback. Handle it accordingly
                         enqueueInput(bufferID);
                         frameCount++;
                     }
