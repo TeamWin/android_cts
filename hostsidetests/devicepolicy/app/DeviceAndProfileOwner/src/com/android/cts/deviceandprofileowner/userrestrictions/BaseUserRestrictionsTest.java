@@ -19,8 +19,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Process;
+import android.os.UserHandle;
 import android.os.UserManager;
 
+import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.cts.deviceandprofileowner.BaseDeviceAdminTest;
 
 import java.util.Arrays;
@@ -55,9 +58,8 @@ public abstract class BaseUserRestrictionsTest extends BaseDeviceAdminTest {
             UserManager.DISALLOW_MOUNT_PHYSICAL_MEDIA,
             UserManager.DISALLOW_UNMUTE_MICROPHONE,
             UserManager.DISALLOW_ADJUST_VOLUME,
-            // STOPSHIP (b/147111703): Uncomment the following lines once the bug has been fixed
-            // UserManager.DISALLOW_OUTGOING_CALLS,
-            // UserManager.DISALLOW_SMS,
+            UserManager.DISALLOW_OUTGOING_CALLS,
+            UserManager.DISALLOW_SMS,
             UserManager.DISALLOW_FUN,
             UserManager.DISALLOW_CREATE_WINDOWS,
             UserManager.DISALLOW_SYSTEM_ERROR_DIALOGS,
@@ -114,9 +116,23 @@ public abstract class BaseUserRestrictionsTest extends BaseDeviceAdminTest {
                         .getBoolean(restriction));
     }
 
+    /** Returns whether {@link UserManager} itself has applied the given restriction to the user. */
+    protected boolean hasBaseUserRestriction(String restriction, UserHandle userHandle) {
+        return ShellIdentityUtils.invokeMethodWithShellPermissions(mUserManager,
+                (um) -> um.hasBaseUserRestriction(restriction, userHandle));
+    }
+
+    /**
+     * Check that {@link UserManager#hasUserRestriction} gives the expected results for each
+     * restriction.
+     * @param expected the list of user restrictions that are expected to have been applied due
+     *                 to DO/PO
+     */
     protected void assertRestrictions(Set<String> expected) {
+        final UserHandle userHandle = Process.myUserHandle();
         for (String r : ALL_USER_RESTRICTIONS) {
-            assertLayeredRestriction(r, expected.contains(r));
+            assertLayeredRestriction(r,
+                    expected.contains(r) || hasBaseUserRestriction(r, userHandle));
         }
     }
 
