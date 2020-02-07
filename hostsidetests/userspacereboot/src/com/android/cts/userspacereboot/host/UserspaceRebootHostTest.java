@@ -155,6 +155,7 @@ public class UserspaceRebootHostTest extends BaseHostJUnit4Test  {
     }
 
     private void rebootUserspaceAndWaitForBootComplete() throws Exception {
+        getDevice().setProperty("test.userspace_reboot.requested", "1");
         getDevice().rebootUserspace();
         assertWithMessage("Device did not boot withing 2 minutes").that(
                 getDevice().waitForBootComplete(Duration.ofMinutes(2).toMillis())).isTrue();
@@ -162,8 +163,8 @@ public class UserspaceRebootHostTest extends BaseHostJUnit4Test  {
 
     private void assertUserspaceRebootSucceed() throws Exception {
         // If userspace reboot fails and fallback to hard reboot is triggered then
-        // sys.init.userspace_reboot.last_finished won't be set.
+        // test.userspace_reboot.requested won't be set.
         assertWithMessage("Userspace reboot failed and fallback to full reboot was triggered").that(
-                getDevice().getProperty("sys.init.userspace_reboot.last_finished")).isNotEmpty();
+                getDevice().getProperty("test.userspace_reboot.requested")).isEqualTo("1");
     }
 }
