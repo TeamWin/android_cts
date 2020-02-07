@@ -80,6 +80,11 @@
             android:name=".AccessibilityEmbeddedDisplayTest$EmbeddedDisplayActivity"
             android:screenOrientation="locked" />
 
+        <activity
+            android:label="@string/accessibility_embedded_hierarchy_test_activity"
+            android:name=".AccessibilityEmbeddedHierarchyTest$AccessibilityEmbeddedHierarchyActivity"
+            android:screenOrientation="locked"/>
+
         <service
                 android:name=".StubGestureAccessibilityService"
                 android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
