@@ -214,7 +214,9 @@ public class CodecEncoderTest extends CodecTestBase {
 
     private void encodeToMemory(String file, String encoder, int frameLimit, MediaFormat format)
             throws IOException, InterruptedException {
-        mSaveToMem = true;
+        /* TODO(b/149027258) */
+        if (true) mSaveToMem = false;
+        else mSaveToMem = true;
         mOutputBuff = new OutputManager();
         mCodec = MediaCodec.createByCodecName(encoder);
         setUpSource(file);
@@ -302,17 +304,18 @@ public class CodecEncoderTest extends CodecTestBase {
      * consistent (not flaky) in all runs.
      */
     @LargeTest
-    @Ignore("TODO(b/149027258)")
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleEncode() throws IOException, InterruptedException {
         setUpParams();
         ArrayList<String> listOfEncoders = selectCodecs(mMime, mFormats, null, true);
         assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
         boolean[] boolStates = {true, false};
-        mSaveToMem = true;
         setUpSource(mInputFile);
         for (String encoder : listOfEncoders) {
             mCodec = MediaCodec.createByCodecName(encoder);
+            /* TODO(b/149027258) */
+            if (true) mSaveToMem = false;
+            else mSaveToMem = true;
             for (MediaFormat format : mFormats) {
                 OutputManager ref = mSaveToMem ? new OutputManager() : null;
                 OutputManager test = mSaveToMem ? new OutputManager() : null;
@@ -437,7 +440,7 @@ public class CodecEncoderTest extends CodecTestBase {
      * scenarios, Timestamp ordering is verified. The output has to be consistent (not flaky)
      * in all runs
      */
-    @Ignore("TODO(b/148523403, b/149027258)")
+    @Ignore("TODO(b/148523403)")
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testReconfigure() throws IOException, InterruptedException {
@@ -470,7 +473,9 @@ public class CodecEncoderTest extends CodecTestBase {
                 /* test reconfigure codec in running state */
                 reConfigureCodec(format, isAsync, true, true);
                 mCodec.start();
-                mSaveToMem = true;
+                /* TODO(b/149027258) */
+                if (true) mSaveToMem = false;
+                else mSaveToMem = true;
                 test.reset();
                 doWork(Integer.MAX_VALUE);
                 queueEOS();
