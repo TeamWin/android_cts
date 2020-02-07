@@ -99,6 +99,19 @@ public class InlineSuggestionTest {
         latch.await();
     }
 
+    @Test
+    public void testInflateTwiceThrowsException() {
+        InlineSuggestion suggestion = createInlineSuggestion();
+        Context context = InstrumentationRegistry.getTargetContext();
+        Consumer<View> mockConsumer = mock(Consumer.class);
+
+        suggestion.inflate(context, new Size(100, 100), AsyncTask.THREAD_POOL_EXECUTOR,
+                mockConsumer);
+        assertThrows(IllegalStateException.class,
+                () -> suggestion.inflate(context, new Size(100, 100),
+                        AsyncTask.THREAD_POOL_EXECUTOR, mockConsumer));
+    }
+
     private InlineSuggestion createInlineSuggestion() {
         InlineSuggestionInfo info = InlineSuggestionInfo.newInlineSuggestionInfo(
                 mInlinePresentationSpec, InlineSuggestionInfo.SOURCE_AUTOFILL, new String[]{""});
