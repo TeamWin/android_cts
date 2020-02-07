@@ -1560,10 +1560,10 @@ public class ImsServiceTest {
                 .build()));
         // The RcsFeature is created when the ImsService is bound. If it wasn't created, then the
         // Framework did not call it.
-        sServiceConnector.getCarrierService().waitForLatchCountdown(
-                TestImsService.LATCH_CREATE_RCS);
-        sServiceConnector.getCarrierService().waitForLatchCountdown(
-                TestImsService.LATCH_RCS_READY);
+        assertTrue("Did not receive createRcsFeature", sServiceConnector.getCarrierService()
+                .waitForLatchCountdown(TestImsService.LATCH_CREATE_RCS));
+        assertTrue("Did not receive RcsFeature#onReady", sServiceConnector.getCarrierService()
+                .waitForLatchCountdown(TestImsService.LATCH_RCS_READY));
         // Make sure the RcsFeature was created in the test service.
         assertNotNull("Device ImsService created, but TestDeviceImsService#createRcsFeature was not"
                 + "called!", sServiceConnector.getCarrierService().getRcsFeature());
@@ -1576,10 +1576,10 @@ public class ImsServiceTest {
                 .build()));
         // The MmTelFeature is created when the ImsService is bound. If it wasn't created, then the
         // Framework did not call it.
-        sServiceConnector.getCarrierService().waitForLatchCountdown(
-                TestImsService.LATCH_CREATE_MMTEL);
-        assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
-                TestImsService.LATCH_MMTEL_READY));
+        assertTrue("Did not receive createMmTelFeature", sServiceConnector.getCarrierService()
+                .waitForLatchCountdown(TestImsService.LATCH_CREATE_MMTEL));
+        assertTrue("Did not receive MmTelFeature#onReady", sServiceConnector.getCarrierService()
+                .waitForLatchCountdown(TestImsService.LATCH_MMTEL_READY));
         assertNotNull("ImsService created, but ImsService#createMmTelFeature was not called!",
                 sServiceConnector.getCarrierService().getMmTelFeature());
     }
