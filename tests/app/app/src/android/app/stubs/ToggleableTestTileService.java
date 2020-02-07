@@ -19,8 +19,8 @@ package android.app.stubs;
 import android.content.ComponentName;
 import android.service.quicksettings.Tile;
 
-public class BooleanTestTileService extends TestTileService {
-    public static final String TAG = "BooleanTestTileService";
+public class ToggleableTestTileService extends TestTileService {
+    public static final String TAG = "ToggleableTestTileService";
     public static final String PKG = "android.app.stubs";
     public static final int ICON_ID = R.drawable.robot;
 
@@ -35,7 +35,7 @@ public class BooleanTestTileService extends TestTileService {
     }
 
     public static TestTileService getInstance() {
-        return BooleanTestTileService.sTestTileService;
+        return ToggleableTestTileService.sTestTileService;
     }
 
     @Override
@@ -44,13 +44,13 @@ public class BooleanTestTileService extends TestTileService {
     }
 
     public static String getId() {
-        return String.format("%s/%s", BooleanTestTileService.class.getPackage().getName(),
-                BooleanTestTileService.class.getName());
+        return String.format("%s/%s", ToggleableTestTileService.class.getPackage().getName(),
+                ToggleableTestTileService.class.getName());
     }
 
     public static ComponentName getComponentName() {
-        return new ComponentName(BooleanTestTileService.class.getPackage().getName(),
-                BooleanTestTileService.class.getName());
+        return new ComponentName(ToggleableTestTileService.class.getPackage().getName(),
+                ToggleableTestTileService.class.getName());
     }
 
     public void toggleState() {
