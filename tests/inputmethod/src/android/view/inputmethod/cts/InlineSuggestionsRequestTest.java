@@ -62,11 +62,14 @@ public class InlineSuggestionsRequestTest {
         ArrayList<InlinePresentationSpec> presentationSpecs = new ArrayList<>();
         InlineSuggestionsRequest request =
                 new InlineSuggestionsRequest.Builder(presentationSpecs)
+                        .addPresentationSpecs(
+                                new InlinePresentationSpec.Builder(new Size(100, 100),
+                                        new Size(400, 100)).build())
                         .setMaxSuggestionCount(suggestionCount).build();
 
         assertThat(request.getMaxSuggestionCount()).isEqualTo(suggestionCount);
         assertThat(request.getPresentationSpecs()).isNotNull();
-        assertThat(request.getPresentationSpecs().size()).isEqualTo(0);
+        assertThat(request.getPresentationSpecs().size()).isEqualTo(1);
     }
 
     @Test

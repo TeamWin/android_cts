@@ -347,10 +347,10 @@ public class MediaRoute2InfoTest {
                 .build();
 
         Parcel parcel = Parcel.obtain();
-        routeInfo.writeToParcel(parcel, 0);
+        parcel.writeParcelable(routeInfo, 0);
         parcel.setDataPosition(0);
 
-        MediaRoute2Info routeInfoFromParcel = MediaRoute2Info.CREATOR.createFromParcel(parcel);
+        MediaRoute2Info routeInfoFromParcel = parcel.readParcelable(null);
         assertEquals(routeInfo, routeInfoFromParcel);
         assertEquals(routeInfo.hashCode(), routeInfoFromParcel.hashCode());
 
@@ -359,5 +359,28 @@ public class MediaRoute2InfoTest {
         assertNotNull(extrasOut);
         assertTrue(extrasOut.containsKey(TEST_KEY));
         assertEquals(TEST_VALUE, extrasOut.getString(TEST_KEY));
+        parcel.recycle();
+
+        // In order to mark writeToParcel as tested, we let's just call it directly.
+        Parcel dummyParcel = Parcel.obtain();
+        routeInfo.writeToParcel(dummyParcel, 0);
+        dummyParcel.recycle();
+    }
+
+    @Test
+    public void testDescribeContents() {
+        MediaRoute2Info routeInfo = new MediaRoute2Info.Builder(TEST_ID, TEST_NAME)
+                .addFeature(TEST_ROUTE_TYPE_0)
+                .addFeature(TEST_ROUTE_TYPE_1)
+                .setDeviceType(TEST_DEVICE_TYPE)
+                .setIconUri(TEST_ICON_URI)
+                .setDescription(TEST_DESCRIPTION)
+                .setConnectionState(TEST_CONNECTION_STATE)
+                .setClientPackageName(TEST_CLIENT_PACKAGE_NAME)
+                .setVolumeHandling(TEST_VOLUME_HANDLING)
+                .setVolumeMax(TEST_VOLUME_MAX)
+                .setVolume(TEST_VOLUME)
+                .build();
+        assertEquals(0, routeInfo.describeContents());
     }
 }

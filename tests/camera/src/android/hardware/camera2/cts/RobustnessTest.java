@@ -256,114 +256,6 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         }
     }
 
-    private void setupConfigurationTargets(List<MandatoryStreamInformation> streamsInfo,
-            List<SurfaceTexture> privTargets, List<ImageReader> jpegTargets,
-            List<ImageReader> yuvTargets, List<ImageReader> y8Targets,
-            List<ImageReader> rawTargets, List<ImageReader> heicTargets,
-            List<OutputConfiguration> outputConfigs,
-            int numBuffers, boolean substituteY8, boolean substituteHeic,
-            String overridePhysicalCameraId) {
-
-        ImageDropperListener imageDropperListener = new ImageDropperListener();
-
-        for (MandatoryStreamInformation streamInfo : streamsInfo) {
-            if (streamInfo.isInput()) {
-                continue;
-            }
-            int format = streamInfo.getFormat();
-            if (substituteY8 && (format == ImageFormat.YUV_420_888)) {
-                format = ImageFormat.Y8;
-            } else if (substituteHeic && (format == ImageFormat.JPEG)) {
-                format = ImageFormat.HEIC;
-            }
-            Surface newSurface;
-            Size[] availableSizes = new Size[streamInfo.getAvailableSizes().size()];
-            availableSizes = streamInfo.getAvailableSizes().toArray(availableSizes);
-            Size targetSize = CameraTestUtils.getMaxSize(availableSizes);
-
-            switch (format) {
-                case ImageFormat.PRIVATE: {
-                    SurfaceTexture target = new SurfaceTexture(/*random int*/1);
-                    target.setDefaultBufferSize(targetSize.getWidth(), targetSize.getHeight());
-                    OutputConfiguration config = new OutputConfiguration(new Surface(target));
-                    if (overridePhysicalCameraId != null) {
-                        config.setPhysicalCameraId(overridePhysicalCameraId);
-                    }
-                    outputConfigs.add(config);
-                    privTargets.add(target);
-                    break;
-                }
-                case ImageFormat.JPEG: {
-                    ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
-                            targetSize.getHeight(), format, numBuffers);
-                    target.setOnImageAvailableListener(imageDropperListener, mHandler);
-                    OutputConfiguration config = new OutputConfiguration(target.getSurface());
-                    if (overridePhysicalCameraId != null) {
-                        config.setPhysicalCameraId(overridePhysicalCameraId);
-                    }
-                    outputConfigs.add(config);
-                    jpegTargets.add(target);
-                    break;
-                }
-                case ImageFormat.YUV_420_888: {
-                    ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
-                            targetSize.getHeight(), format, numBuffers);
-                    target.setOnImageAvailableListener(imageDropperListener, mHandler);
-                    OutputConfiguration config = new OutputConfiguration(target.getSurface());
-                    if (overridePhysicalCameraId != null) {
-                        config.setPhysicalCameraId(overridePhysicalCameraId);
-                    }
-                    outputConfigs.add(config);
-                    yuvTargets.add(target);
-                    break;
-                }
-                case ImageFormat.Y8: {
-                    ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
-                            targetSize.getHeight(), format, numBuffers);
-                    target.setOnImageAvailableListener(imageDropperListener, mHandler);
-                    OutputConfiguration config = new OutputConfiguration(target.getSurface());
-                    if (overridePhysicalCameraId != null) {
-                        config.setPhysicalCameraId(overridePhysicalCameraId);
-                    }
-                    outputConfigs.add(config);
-                    y8Targets.add(target);
-                    break;
-                }
-                case ImageFormat.RAW_SENSOR: {
-                    // targetSize could be null in the logical camera case where only
-                    // physical camera supports RAW stream.
-                    if (targetSize != null) {
-                        ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
-                                targetSize.getHeight(), format, numBuffers);
-                        target.setOnImageAvailableListener(imageDropperListener, mHandler);
-                        OutputConfiguration config =
-                                new OutputConfiguration(target.getSurface());
-                        if (overridePhysicalCameraId != null) {
-                            config.setPhysicalCameraId(overridePhysicalCameraId);
-                        }
-                        outputConfigs.add(config);
-                        rawTargets.add(target);
-                    }
-                    break;
-                }
-                case ImageFormat.HEIC: {
-                    ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
-                            targetSize.getHeight(), format, numBuffers);
-                    target.setOnImageAvailableListener(imageDropperListener, mHandler);
-                    OutputConfiguration config = new OutputConfiguration(target.getSurface());
-                    if (overridePhysicalCameraId != null) {
-                        config.setPhysicalCameraId(overridePhysicalCameraId);
-                    }
-                    outputConfigs.add(config);
-                    heicTargets.add(target);
-                    break;
-                }
-                default:
-                    fail("Unknown output format " + format);
-            }
-        }
-    }
-
     private void testMandatoryStreamCombination(String cameraId, StaticMetadata staticInfo,
             String physicalCameraId, MandatoryStreamCombination combination) throws Exception {
         // Check whether substituting YUV_888 format with Y8 format
@@ -431,9 +323,9 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         List<ImageReader> rawTargets = new ArrayList<ImageReader>();
         List<ImageReader> heicTargets = new ArrayList<ImageReader>();
 
-        setupConfigurationTargets(combination.getStreamsInformation(), privTargets, jpegTargets,
-                yuvTargets, y8Targets, rawTargets, heicTargets, outputConfigs, MIN_RESULT_COUNT,
-                substituteY8, substituteHeic, physicalCameraId);
+        CameraTestUtils.setupConfigurationTargets(combination.getStreamsInformation(), privTargets,
+                jpegTargets, yuvTargets, y8Targets, rawTargets, heicTargets, outputConfigs,
+                MIN_RESULT_COUNT, substituteY8, substituteHeic, physicalCameraId, mHandler);
 
         boolean haveSession = false;
         try {
@@ -628,10 +520,10 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         try {
             // The second stream information entry is the ZSL stream, which is configured
             // separately.
-            setupConfigurationTargets(streamInfo.subList(2, streamInfo.size()), privTargets,
-                    jpegTargets, yuvTargets, y8Targets, rawTargets, heicTargets, outputConfigs,
-                    NUM_REPROCESS_CAPTURES_PER_CONFIG, substituteY8,  substituteHeic,
-                    null/*overridePhysicalCameraId*/);
+            CameraTestUtils.setupConfigurationTargets(streamInfo.subList(2, streamInfo.size()),
+                    privTargets, jpegTargets, yuvTargets, y8Targets, rawTargets, heicTargets,
+                    outputConfigs, NUM_REPROCESS_CAPTURES_PER_CONFIG, substituteY8,
+                    substituteHeic, null/*overridePhysicalCameraId*/, mHandler);
 
             outputSurfaces.ensureCapacity(outputConfigs.size());
             for (OutputConfiguration config : outputConfigs) {

@@ -30,6 +30,7 @@ import android.opengl.GLES20;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
 import android.util.DisplayMetrics;
@@ -64,6 +65,7 @@ import java.util.concurrent.CountDownLatch;
  * The test puts up a series of colored screens, expecting to see all of them, and in order.
  * Any black screens that appear before or after are ignored.
  */
+@Presubmit
 @SmallTest
 @RequiresDevice
 public class EncodeVirtualDisplayTest extends AndroidTestCase {

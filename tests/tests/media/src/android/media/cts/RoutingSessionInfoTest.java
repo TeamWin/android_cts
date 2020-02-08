@@ -510,11 +510,10 @@ public class RoutingSessionInfoTest {
                 .build();
 
         Parcel parcel = Parcel.obtain();
-        sessionInfo.writeToParcel(parcel, 0);
+        parcel.writeParcelable(sessionInfo, 0);
         parcel.setDataPosition(0);
 
-        RoutingSessionInfo sessionInfoFromParcel =
-                RoutingSessionInfo.CREATOR.createFromParcel(parcel);
+        RoutingSessionInfo sessionInfoFromParcel = parcel.readParcelable(null);
         assertEquals(sessionInfo, sessionInfoFromParcel);
         assertEquals(sessionInfo.hashCode(), sessionInfoFromParcel.hashCode());
 
@@ -523,5 +522,23 @@ public class RoutingSessionInfoTest {
         assertNotNull(controlHintsOut);
         assertTrue(controlHintsOut.containsKey(TEST_KEY));
         assertEquals(TEST_VALUE, controlHintsOut.getString(TEST_KEY));
+        parcel.recycle();
+
+        // In order to mark writeToParcel as tested, we let's just call it directly.
+        Parcel dummyParcel = Parcel.obtain();
+        sessionInfo.writeToParcel(dummyParcel, 0);
+        dummyParcel.recycle();
+    }
+
+    @Test
+    public void testDescribeContents() {
+        RoutingSessionInfo sessionInfo = new RoutingSessionInfo.Builder(
+                TEST_ID, TEST_CLIENT_PACKAGE_NAME)
+                .addSelectedRoute(TEST_ROUTE_ID_0)
+                .addSelectableRoute(TEST_ROUTE_ID_2)
+                .addDeselectableRoute(TEST_ROUTE_ID_4)
+                .addTransferrableRoute(TEST_ROUTE_ID_6)
+                .build();
+        assertEquals(0, sessionInfo.describeContents());
     }
 }

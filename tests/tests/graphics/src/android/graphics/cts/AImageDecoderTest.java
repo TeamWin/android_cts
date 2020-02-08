@@ -997,6 +997,37 @@ public class AImageDecoderTest {
         nCloseAsset(asset);
     }
 
+    @Test
+    @Parameters({ "cmyk_yellow_224_224_32.jpg", "wide_gamut_yellow_224_224_64.jpeg" })
+    public void testNonStandardDataSpaces(String name) {
+        AssetManager assets = getAssetManager();
+        long asset = nOpenAsset(assets, name);
+        long aimagedecoder = nCreateFromAsset(asset);
+
+        // These images have profiles that do not map to ADataSpaces (or even SkColorSpaces).
+        // Verify that by default, AImageDecoder will treat them as ADATASPACE_UNKNOWN.
+        nTestInfo(aimagedecoder, 32, 32, "image/jpeg", false, DataSpace.ADATASPACE_UNKNOWN);
+        nCloseAsset(asset);
+    }
+
+    @Test
+    @Parameters({ "cmyk_yellow_224_224_32.jpg,#FFD8FC04",
+                  "wide_gamut_yellow_224_224_64.jpeg,#FFE0E040" })
+    public void testNonStandardDataSpacesDecode(String name, String color) {
+        AssetManager assets = getAssetManager();
+        long asset = nOpenAsset(assets, name);
+        long aimagedecoder = nCreateFromAsset(asset);
+
+        // These images are each a solid color. If we correctly do no color correction, they should
+        // match |color|.
+        int colorInt = Color.parseColor(color);
+        Bitmap bm = Bitmap.createBitmap(32, 32, Bitmap.Config.ARGB_8888);
+        bm.eraseColor(colorInt);
+
+        nTestDecode(aimagedecoder, ANDROID_BITMAP_FORMAT_NONE, false /* unpremul */, bm);
+        nCloseAsset(asset);
+    }
+
     // Return a pointer to the native AAsset named |file|. Must be closed with nCloseAsset.
     // Throws an Exception on failure.
     private static native long nOpenAsset(AssetManager assets, String file);

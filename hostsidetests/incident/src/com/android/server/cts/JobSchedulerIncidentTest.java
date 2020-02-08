@@ -105,8 +105,6 @@ public class JobSchedulerIncidentTest extends ProtoDumpTestCase {
         assertTrue(0 <= c.getBgModerateJobCount());
         assertTrue(0 <= c.getBgLowJobCount());
         assertTrue(0 <= c.getBgCriticalJobCount());
-        assertTrue(0 <= c.getMaxStandardRescheduleCount());
-        assertTrue(0 <= c.getMaxWorkRescheduleCount());
         assertTrue(0 <= c.getMinLinearBackoffTimeMs());
         assertTrue(0 <= c.getMinExpBackoffTimeMs());
     }

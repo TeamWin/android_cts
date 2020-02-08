@@ -37,6 +37,7 @@ import android.media.cts.R;
 import android.net.Uri;
 import android.os.Environment;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
 import android.util.Log;
@@ -54,6 +55,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.function.Function;
 
+@Presubmit
 @SmallTest
 @RequiresDevice
 @AppModeFull(reason = "No interaction with system server")

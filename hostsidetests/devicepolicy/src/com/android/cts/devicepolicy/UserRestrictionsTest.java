@@ -169,6 +169,10 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
         final int secondaryUserId = createUser();
         setPoAsUser(secondaryUserId);
 
+        // Ensure that UserManager differentiates its own restrictions from DO restrictions.
+        runTests("userrestrictions.DeviceOwnerUserRestrictionsTest",
+                "testHasBaseUserRestrictions", mDeviceOwnerUserId);
+
         // Let DO set all restrictions.
         runTests("userrestrictions.DeviceOwnerUserRestrictionsTest",
                 "testSetAllRestrictions", mDeviceOwnerUserId);
