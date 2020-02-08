@@ -170,7 +170,12 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         if (!mHasFeature) {
             return;
         }
-        executeDeviceTestMethod(".TimeManagementTest", "testSetTime");
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".TimeManagementTest", "testSetTime");
+        }, new DevicePolicyEventWrapper.Builder(EventId.SET_TIME_VALUE)
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .build());
+
         executeDeviceTestMethod(".TimeManagementTest", "testSetTime_failWhenAutoTimeEnabled");
     }
 
@@ -179,7 +184,12 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         if (!mHasFeature) {
             return;
         }
-        executeDeviceTestMethod(".TimeManagementTest", "testSetTimeZone");
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".TimeManagementTest", "testSetTimeZone");
+        }, new DevicePolicyEventWrapper.Builder(EventId.SET_TIME_ZONE_VALUE)
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .build());
+
         executeDeviceTestMethod(".TimeManagementTest", "testSetTimeZone_failIfAutoTimeZoneEnabled");
     }
 

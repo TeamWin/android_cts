@@ -256,31 +256,68 @@ public class AccessibilityGestureDetectorTest {
                 AccessibilityService.GESTURE_3_FINGER_TRIPLE_TAP,
                 displayId);
 
-                testGesture(
-                        MultiFingerSwipe(displayId, 2, 0, dy),
-                        AccessibilityService.GESTURE_2_FINGER_SWIPE_DOWN, displayId);
-                testGesture(
-                        MultiFingerSwipe(displayId, 2, -dx, 0),
-                        AccessibilityService.GESTURE_2_FINGER_SWIPE_LEFT, displayId);
-                testGesture(
-                        MultiFingerSwipe(displayId, 2, dx, 0),
-                        AccessibilityService.GESTURE_2_FINGER_SWIPE_RIGHT, displayId);
-                testGesture(
-                        MultiFingerSwipe(displayId, 2, 0, -dy),
-                        AccessibilityService.GESTURE_2_FINGER_SWIPE_UP, displayId);
+        testGesture(
+                fourFingerSingleTap(displayId),
+                AccessibilityService.GESTURE_4_FINGER_SINGLE_TAP,
+                displayId);
+        testGesture(
+                fourFingerDoubleTap(displayId),
+                AccessibilityService.GESTURE_4_FINGER_DOUBLE_TAP,
+                displayId);
+        testGesture(
+                fourFingerTripleTap(displayId),
+                AccessibilityService.GESTURE_4_FINGER_TRIPLE_TAP,
+                displayId);
 
-                testGesture(
-                        MultiFingerSwipe(displayId, 3, 0, dy),
-                        AccessibilityService.GESTURE_3_FINGER_SWIPE_DOWN, displayId);
-                testGesture(
-                        MultiFingerSwipe(displayId, 3, -dx, 0),
-                        AccessibilityService.GESTURE_3_FINGER_SWIPE_LEFT, displayId);
-                testGesture(
-                        MultiFingerSwipe(displayId, 3, dx, 0),
-                        AccessibilityService.GESTURE_3_FINGER_SWIPE_RIGHT, displayId);
-                testGesture(
-                        MultiFingerSwipe(displayId, 3, 0, -dy),
-                        AccessibilityService.GESTURE_3_FINGER_SWIPE_UP, displayId);
+        testGesture(
+                MultiFingerSwipe(displayId, 2, 0, dy),
+                AccessibilityService.GESTURE_2_FINGER_SWIPE_DOWN,
+                displayId);
+        testGesture(
+                MultiFingerSwipe(displayId, 2, -dx, 0),
+                AccessibilityService.GESTURE_2_FINGER_SWIPE_LEFT,
+                displayId);
+        testGesture(
+                MultiFingerSwipe(displayId, 2, dx, 0),
+                AccessibilityService.GESTURE_2_FINGER_SWIPE_RIGHT,
+                displayId);
+        testGesture(
+                MultiFingerSwipe(displayId, 2, 0, -dy),
+                AccessibilityService.GESTURE_2_FINGER_SWIPE_UP,
+                displayId);
+
+        testGesture(
+                MultiFingerSwipe(displayId, 3, 0, dy),
+                AccessibilityService.GESTURE_3_FINGER_SWIPE_DOWN,
+                displayId);
+        testGesture(
+                MultiFingerSwipe(displayId, 3, -dx, 0),
+                AccessibilityService.GESTURE_3_FINGER_SWIPE_LEFT,
+                displayId);
+        testGesture(
+                MultiFingerSwipe(displayId, 3, dx, 0),
+                AccessibilityService.GESTURE_3_FINGER_SWIPE_RIGHT,
+                displayId);
+        testGesture(
+                MultiFingerSwipe(displayId, 3, 0, -dy),
+                AccessibilityService.GESTURE_3_FINGER_SWIPE_UP,
+                displayId);
+        testGesture(
+                MultiFingerSwipe(displayId, 4, 0, dy),
+                AccessibilityService.GESTURE_4_FINGER_SWIPE_DOWN,
+                displayId);
+        testGesture(
+                MultiFingerSwipe(displayId, 4, -dx, 0),
+                AccessibilityService.GESTURE_4_FINGER_SWIPE_LEFT,
+                displayId);
+        testGesture(
+                MultiFingerSwipe(displayId, 4, dx, 0),
+                AccessibilityService.GESTURE_4_FINGER_SWIPE_RIGHT,
+                displayId);
+        testGesture(
+                MultiFingerSwipe(displayId, 4, 0, -dy),
+                AccessibilityService.GESTURE_4_FINGER_SWIPE_UP,
+                displayId);
     }
 
     /** Convenient short alias to make a Point. */
@@ -502,6 +539,18 @@ public class AccessibilityGestureDetectorTest {
 
     private GestureDescription threeFingerTripleTap(int displayId) {
         return multiFingerMultiTap(3, 3, displayId);
+    }
+
+    private GestureDescription fourFingerSingleTap(int displayId) {
+        return multiFingerMultiTap(4, 1, displayId);
+    }
+
+    private GestureDescription fourFingerDoubleTap(int displayId) {
+        return multiFingerMultiTap(4, 2, displayId);
+    }
+
+    private GestureDescription fourFingerTripleTap(int displayId) {
+        return multiFingerMultiTap(4, 3, displayId);
     }
 
     private GestureDescription multiFingerMultiTap(int fingerCount, int tapCount, int displayId) {

@@ -80,10 +80,6 @@
             android:name=".AccessibilityEmbeddedDisplayTest$EmbeddedDisplayActivity"
             android:screenOrientation="locked" />
 
-        <activity android:label="Activity for testing to take screenshot"
-                  android:name=".activities.AccessibilityScreenshotActivity"
-                  android:screenOrientation="locked"/>
-
         <service
                 android:name=".StubGestureAccessibilityService"
                 android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">

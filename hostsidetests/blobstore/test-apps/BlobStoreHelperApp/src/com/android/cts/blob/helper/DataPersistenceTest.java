@@ -24,7 +24,7 @@ import android.content.SharedPreferences;
 import android.os.ParcelFileDescriptor;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
-import com.android.cts.blob.DummyBlobData;
+import com.android.utils.blob.DummyBlobData;
 
 import org.junit.Before;
 import org.junit.Test;

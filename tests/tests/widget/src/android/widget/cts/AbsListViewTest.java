@@ -1209,6 +1209,26 @@ public class AbsListViewTest {
         verifyFastScroll();
     }
 
+    @Test
+    public void testRequestChildRectangleOnScreen_onScrollChangedCalled() throws Throwable {
+        final MyListView listView = new MyListView(mContext, mAttributeSet);
+
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, listView, () -> {
+            mActivityRule.getActivity().setContentView(listView);
+            listView.setAdapter(mCountriesAdapter);
+        });
+
+        View row = listView.getChildAt(0);
+        Rect r = new Rect();
+        r.set(0, listView.getHeight() - (row.getHeight() >> 1),
+                row.getWidth(), listView.getHeight() + (row.getHeight() >> 1));
+
+        listView.resetIsOnScrollChangedCalled();
+        assertFalse(listView.isOnScrollChangedCalled());
+        listView.requestChildRectangleOnScreen(row, r, true);
+        assertTrue(listView.isOnScrollChangedCalled());
+    }
+
     /**
      * MyListView for test.
      */
@@ -1329,6 +1349,22 @@ public class AbsListViewTest {
 
         public int getOnFilterCompleteCount() {
             return mOnFilterCompleteCount;
+        }
+
+        private boolean mIsOnScrollChangedCalled;
+
+        @Override
+        protected void onScrollChanged(int l, int t, int oldl, int oldt) {
+            mIsOnScrollChangedCalled = true;
+            super.onScrollChanged(l, t, oldl, oldt);
+        }
+
+        public boolean isOnScrollChangedCalled() {
+            return mIsOnScrollChangedCalled;
+        }
+
+        public void resetIsOnScrollChangedCalled() {
+            mIsOnScrollChangedCalled = false;
         }
     }
 }

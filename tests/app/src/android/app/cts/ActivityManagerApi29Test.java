@@ -175,7 +175,7 @@ public class ActivityManagerApi29Test {
         assertEquals(MODE_ALLOWED, noteOp(OPSTR_COARSE_LOCATION));
 
         stopSimpleActivity();
-        mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_RECENT,
+        mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY,
                 new Integer(PROCESS_CAPABILITY_NONE));
 
         // AppOps location access should be denied.
@@ -215,7 +215,7 @@ public class ActivityManagerApi29Test {
         assertEquals(MODE_IGNORED, noteOp(OPSTR_COARSE_LOCATION));
 
         stopSimpleService();
-        mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_RECENT,
+        mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY,
                 new Integer(PROCESS_CAPABILITY_NONE));
 
         // AppOps location access should be denied.
@@ -249,7 +249,7 @@ public class ActivityManagerApi29Test {
         mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE,
                 new Integer(PROCESS_CAPABILITY_NONE));
         stopSimpleService();
-        mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_RECENT,
+        mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY,
                 new Integer(PROCESS_CAPABILITY_NONE));
 
         for (int i = 0; i < NOTEOP_COUNT; i++) {
@@ -316,7 +316,7 @@ public class ActivityManagerApi29Test {
 
         // Stop the foreground service.
         stopSimpleService();
-        mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_RECENT,
+        mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY,
                 new Integer(PROCESS_CAPABILITY_NONE));
 
         assertEquals(MODE_IGNORED, noteOp(OPSTR_CAMERA));
