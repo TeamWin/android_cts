@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package com.android.cts.userspacereboot;
+package com.android.cts.userspacereboot.basic;
 
 import static com.google.common.truth.Truth.assertThat;
-
 
 import static org.testng.Assert.assertThrows;
 
@@ -31,7 +30,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class UserspaceRebootTest {
+public class BasicUserspaceRebootTest {
 
     private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
 
@@ -48,4 +47,5 @@ public class UserspaceRebootTest {
         assertThrows(UnsupportedOperationException.class,
                 () -> powerManager.reboot("userspace"));
     }
+
 }
