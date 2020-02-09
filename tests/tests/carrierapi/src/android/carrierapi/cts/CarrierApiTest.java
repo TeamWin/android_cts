@@ -541,14 +541,14 @@ public class CarrierApiTest extends AndroidTestCase {
     static final int READ_PHONE_STATE_LISTENERS =
             PhoneStateListener.LISTEN_CALL_FORWARDING_INDICATOR
                     | PhoneStateListener.LISTEN_MESSAGE_WAITING_INDICATOR
-                    | PhoneStateListener.LISTEN_EMERGENCY_NUMBER_LIST
-                    | PhoneStateListener.LISTEN_REGISTRATION_FAILURE
-                    | PhoneStateListener.LISTEN_BARRING_INFO;
+                    | PhoneStateListener.LISTEN_EMERGENCY_NUMBER_LIST;
 
     static final int READ_PRECISE_PHONE_STATE_LISTENERS =
             PhoneStateListener.LISTEN_PRECISE_DATA_CONNECTION_STATE
                     | PhoneStateListener.LISTEN_CALL_DISCONNECT_CAUSES
-                    | PhoneStateListener.LISTEN_IMS_CALL_DISCONNECT_CAUSES;
+                    | PhoneStateListener.LISTEN_IMS_CALL_DISCONNECT_CAUSES
+                    | PhoneStateListener.LISTEN_REGISTRATION_FAILURE
+                    | PhoneStateListener.LISTEN_BARRING_INFO;
 
     static final int CARRIER_PRIVILEGE_LISTENERS =
             READ_PHONE_STATE_LISTENERS | READ_PRECISE_PHONE_STATE_LISTENERS;
