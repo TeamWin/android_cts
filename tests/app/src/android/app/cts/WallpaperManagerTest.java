@@ -378,14 +378,16 @@ public class WallpaperManagerTest {
         final Bitmap p3Bitmap = Bitmap.createBitmap(100, 100, config, false, p3);
 
         try {
-            // SRGB is the default color space.
+            // sRGB is the default color space
             mWallpaperManager.setBitmap(srgbBitmap);
             assertThat(mWallpaperManager.getBitmap().getColorSpace()).isEqualTo(srgb);
 
             // If wide gamut is enabled, Display-P3 should be supported.
             mWallpaperManager.setBitmap(p3Bitmap);
-            assertThat(mWallpaperManager.getBitmap().getColorSpace())
-                    .isEqualTo(mEnableWcg ? p3 : srgb);
+
+            final boolean isDisplayP3 = mWallpaperManager.getBitmap().getColorSpace().equals(p3);
+            // Assert false only when device enabled WCG, but display does not support Display-P3
+            assertThat(mEnableWcg && !isDisplayP3).isFalse();
         } finally {
             srgbBitmap.recycle();
             p3Bitmap.recycle();
