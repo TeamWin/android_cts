@@ -22,9 +22,6 @@
 
   <application>
       <service android:name=".AppOpsUserService" android:exported="true" />
-      <activity android:name=".AutoClosingActivity"
-          android:exported="true"
-          android:permission="android.permission.ACCESS_FINE_LOCATION" />
   </application>
 
 </manifest>
