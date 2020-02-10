@@ -26,7 +26,7 @@ import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.os.Looper;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.FeatureUtil;
 
@@ -43,6 +43,9 @@ public abstract class CarApiTestBase {
     private final DefaultServiceConnectionListener mConnectionListener =
             new DefaultServiceConnectionListener();
 
+    protected static final Context sContext = InstrumentationRegistry.getInstrumentation()
+            .getContext();
+
     protected void assertMainThread() {
         assertTrue(Looper.getMainLooper().isCurrentThread());
     }
@@ -50,9 +53,7 @@ public abstract class CarApiTestBase {
     protected void setUp() throws Exception {
         assumeTrue(FeatureUtil.isAutomotive());
 
-        Context context =
-                InstrumentationRegistry.getInstrumentation().getTargetContext();
-        mCar = Car.createCar(context, mConnectionListener, null);
+        mCar = Car.createCar(sContext, mConnectionListener, null);
         mCar.connect();
         mConnectionListener.waitForConnection(DEFAULT_WAIT_TIMEOUT_MS);
     }
