@@ -32,6 +32,8 @@ import com.android.tradefed.log.LogUtil;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Tests for organization-owned Profile Owner.
  */
@@ -42,6 +44,10 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
             DeviceAndProfileOwnerTest.ADMIN_RECEIVER_TEST_CLASS;
     private static final String ACTION_WIPE_DATA =
             "com.android.cts.deviceandprofileowner.WIPE_DATA";
+
+    private static final String DUMMY_IME_APK = "DummyIme.apk";
+    private static final String DUMMY_IME_PKG = "com.android.cts.dummyime";
+    private static final String DUMMY_IME_COMPONENT = DUMMY_IME_PKG + "/.DummyIme";
 
     private int mParentUserId = -1;
     protected int mUserId;
@@ -362,14 +368,49 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     @Test
     public void testPersonalAppsSuspensionNormalApp() throws Exception {
         installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
+        // Initially the app should be launchable.
         assertCanStartPersonalApp(DEVICE_ADMIN_PKG, true);
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG,
-                ".PersonalAppsSuspensionTest", "testSuspendPersonalApps", mUserId);
+        setPersonalAppsSuspended(true);
+        // Now the app should be suspended and not launchable
         assertCanStartPersonalApp(DEVICE_ADMIN_PKG, false);
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG,
-                ".PersonalAppsSuspensionTest", "testUnsuspendPersonalApps", mUserId);
+        setPersonalAppsSuspended(false);
+        // Should be launchable again.
         assertCanStartPersonalApp(DEVICE_ADMIN_PKG, true);
     }
+
+    private void setPersonalAppsSuspended(boolean suspended) throws DeviceNotAvailableException {
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
+                suspended ? "testSuspendPersonalApps" : "testUnsuspendPersonalApps", mUserId);
+    }
+
+    @Test
+    public void testPersonalAppsSuspensionIme() throws Exception {
+        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
+        setupIme(mPrimaryUserId, DUMMY_IME_APK, DUMMY_IME_COMPONENT);
+        setPersonalAppsSuspended(true);
+        // Active IME should not be suspended.
+        assertCanStartPersonalApp(DUMMY_IME_PKG, true);
+        setPersonalAppsSuspended(false);
+    }
+
+    private void setupIme(int userId, String imeApk, String imePackage) throws Exception {
+        installAppAsUser(imeApk, userId);
+        // Wait until IMS service is registered by the system.
+        final long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        while (true) {
+            final String availableImes = getDevice().executeShellCommand(
+                    String.format("ime list --user %d -s -a", userId));
+            if (availableImes.contains(imePackage)) {
+                break;
+            }
+            assertTrue("Failed waiting for IME to become available", System.nanoTime() < deadline);
+            Thread.sleep(100);
+        }
+
+        executeShellCommand("ime enable " + imePackage);
+        executeShellCommand("ime set " + imePackage);
+    }
+
 
     private void assertCanStartPersonalApp(String packageName, boolean canStart)
             throws DeviceNotAvailableException {
