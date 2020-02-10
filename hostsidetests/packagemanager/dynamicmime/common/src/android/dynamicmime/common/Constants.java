@@ -27,6 +27,7 @@ public class Constants {
 
     public static final String GROUP_FIRST = "group_first";
     public static final String GROUP_SECOND = "group_second";
+    public static final String GROUP_THIRD = "group_third";
     public static final String GROUP_UNDEFINED = "undefined";
 
     public static final String ALIAS_BOTH_GROUPS = "group_both";
@@ -52,6 +53,7 @@ public class Constants {
     public static final String PACKAGE_ACTIVITIES = "android.dynamicmime.common.activity";
     public static final String PACKAGE_HELPER_APP = "android.dynamicmime.helper";
     public static final String PACKAGE_UPDATE_APP = "android.dynamicmime.update";
+    public static final String PACKAGE_PREFERRED_APP = "android.dynamicmime.preferred";
 
     public static final String ACTIVITY_FIRST = ".FirstActivity";
     public static final String ACTIVITY_SECOND = ".SecondActivity";
@@ -60,6 +62,7 @@ public class Constants {
 
     public static final String DATA_DIR = "/data/local/tmp/dynamic-mime-test/";
 
+    public static final String APK_PREFERRED_APP = DATA_DIR + "CtsDynamicMimePreferredApp.apk";
     public static final String APK_BOTH_GROUPS = DATA_DIR + "CtsDynamicMimeUpdateAppBothGroups.apk";
     public static final String APK_FIRST_GROUP = DATA_DIR + "CtsDynamicMimeUpdateAppFirstGroup.apk";
     public static final String APK_SECOND_GROUP = DATA_DIR +

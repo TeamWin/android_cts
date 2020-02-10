@@ -37,6 +37,7 @@
         <option name="push" value="CtsDynamicMimeUpdateAppFirstGroup.apk->/data/local/tmp/dynamic-mime-test/CtsDynamicMimeUpdateAppFirstGroup.apk"/>
         <option name="push" value="CtsDynamicMimeUpdateAppSecondGroup.apk->/data/local/tmp/dynamic-mime-test/CtsDynamicMimeUpdateAppSecondGroup.apk"/>
         <option name="push" value="CtsDynamicMimeUpdateAppBothGroups.apk->/data/local/tmp/dynamic-mime-test/CtsDynamicMimeUpdateAppBothGroups.apk"/>
+        <option name="push" value="CtsDynamicMimePreferredApp.apk->/data/local/tmp/dynamic-mime-test/CtsDynamicMimePreferredApp.apk"/>
     </target_preparer>
 
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >

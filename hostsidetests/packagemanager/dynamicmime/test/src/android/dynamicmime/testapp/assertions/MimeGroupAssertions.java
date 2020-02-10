@@ -84,6 +84,25 @@ public abstract class MimeGroupAssertions {
         };
     }
 
+    public static MimeGroupAssertions notUsed() {
+        return new MimeGroupAssertions() {
+            @Override
+            public void assertMatchedByMimeGroup(String group, String type) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public void assertNotMatchedByMimeGroup(String group, String type) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public void assertMimeGroupInternal(String group, Set<String> types) {
+                throw new UnsupportedOperationException();
+            }
+        };
+    }
+
     protected final MimeGroupAssertions mergeWith(MimeGroupAssertions other) {
         return new MimeGroupAssertions() {
             @Override

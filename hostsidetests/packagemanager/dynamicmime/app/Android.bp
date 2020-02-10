@@ -71,3 +71,18 @@ android_test_helper_app {
     sdk_version: "test_current",
     manifest: "manifests/AndroidManifest_update_bothGroups.xml",
 }
+
+android_test_helper_app {
+    name: "CtsDynamicMimePreferredApp",
+    defaults: ["cts_support_defaults"],
+    static_libs: ["CtsDynamicMimeCommon"],
+    srcs: ["src/**/*.java"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ],
+    sdk_version: "test_current",
+    manifest: "manifests/AndroidManifest_preferred.xml",
+}

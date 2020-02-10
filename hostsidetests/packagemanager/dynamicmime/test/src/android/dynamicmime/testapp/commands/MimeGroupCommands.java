@@ -18,8 +18,10 @@ package android.dynamicmime.testapp.commands;
 
 import static android.dynamicmime.common.Constants.GROUP_FIRST;
 import static android.dynamicmime.common.Constants.GROUP_SECOND;
+import static android.dynamicmime.common.Constants.GROUP_THIRD;
 import static android.dynamicmime.common.Constants.GROUP_UNDEFINED;
 import static android.dynamicmime.common.Constants.PACKAGE_HELPER_APP;
+import static android.dynamicmime.common.Constants.PACKAGE_PREFERRED_APP;
 import static android.dynamicmime.common.Constants.PACKAGE_UPDATE_APP;
 
 import android.content.Context;
@@ -61,6 +63,7 @@ public interface MimeGroupCommands {
     default void clearGroups() {
         clearMimeGroup(GROUP_FIRST);
         clearMimeGroup(GROUP_SECOND);
+        clearMimeGroup(GROUP_THIRD);
         clearMimeGroup(GROUP_UNDEFINED);
     }
 
@@ -74,6 +77,10 @@ public interface MimeGroupCommands {
 
     static MimeGroupCommands appWithUpdates(Context context) {
         return new AppCommands(context, PACKAGE_UPDATE_APP);
+    }
+
+    static MimeGroupCommands preferredApp(Context context) {
+        return new AppCommands(context, PACKAGE_PREFERRED_APP);
     }
 
     static MimeGroupCommands noOp() {

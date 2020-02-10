@@ -16,6 +16,7 @@
 
 package android.dynamicmime.testapp;
 
+import android.app.Instrumentation;
 import android.content.Context;
 import android.dynamicmime.testapp.assertions.MimeGroupAssertions;
 import android.dynamicmime.testapp.commands.MimeGroupCommands;
@@ -34,7 +35,15 @@ public abstract class BaseDynamicMimeTest extends MimeGroupOperations {
     }
 
     protected static Context context() {
-        return InstrumentationRegistry.getInstrumentation().getContext();
+        return instrumentation().getContext();
+    }
+
+    protected static Context targetContext() {
+        return instrumentation().getTargetContext();
+    }
+
+    protected static Instrumentation instrumentation() {
+        return InstrumentationRegistry.getInstrumentation();
     }
 
     @After
