@@ -30,6 +30,7 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.CommandSession.ActivitySession;
+import android.server.wm.CommandSession.DefaultLaunchProxy;
 import android.server.wm.CommandSession.LaunchInjector;
 
 import androidx.test.filters.FlakyTest;
@@ -147,18 +148,12 @@ public class AmProfileTests extends ActivityManagerTestBase {
     /** Starts the activity with profiler. */
     private ActivitySession startActivityProfiling(ComponentName activityName, boolean sampling,
             boolean streaming) {
-        return createManagedActivityClientSession().startActivity(new CommandSession.LaunchProxy() {
-            LaunchInjector mLaunchInjector;
+        return createManagedActivityClientSession().startActivity(new DefaultLaunchProxy() {
 
             @Override
             public boolean shouldWaitForLaunched() {
                 // The shell command included "-W".
                 return false;
-            }
-
-            @Override
-            public void setLaunchInjector(LaunchInjector injector) {
-                mLaunchInjector = injector;
             }
 
             @Override

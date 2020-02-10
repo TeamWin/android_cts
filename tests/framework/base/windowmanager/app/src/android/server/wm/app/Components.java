@@ -235,8 +235,10 @@ public class Components extends ComponentsBase {
         public static final String EXTRA_FIXED_ORIENTATION = "fixed_orientation";
         public static final String EXTRA_CONFIGURATION = "configuration";
         public static final String EXTRA_CONFIG_ASSETS_SEQ = "config_assets_seq";
+        public static final String EXTRA_INTENT = "intent";
         public static final String EXTRA_INTENTS = "intents";
         public static final String EXTRA_NO_IDLE = "no_idle";
+        public static final String COMMAND_NAVIGATE_UP_TO = "navigate_up_to";
         public static final String COMMAND_START_ACTIVITIES = "start_activities";
     }
 

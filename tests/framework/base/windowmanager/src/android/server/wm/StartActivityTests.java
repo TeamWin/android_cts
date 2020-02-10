@@ -22,11 +22,14 @@ import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
 import static android.server.wm.app.Components.NO_RELAUNCH_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.app.Components.TRANSLUCENT_ACTIVITY;
+import static android.server.wm.app.Components.TestActivity.COMMAND_NAVIGATE_UP_TO;
+import static android.server.wm.app.Components.TestActivity.EXTRA_INTENT;
 import static android.server.wm.app.Components.TestActivity.EXTRA_INTENTS;
 import static android.server.wm.app.Components.TestActivity.COMMAND_START_ACTIVITIES;
 import static android.server.wm.app27.Components.SDK_27_LAUNCHING_ACTIVITY;
 import static android.server.wm.second.Components.SECOND_ACTIVITY;
 
+import static android.view.Display.DEFAULT_DISPLAY;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertEquals;
@@ -38,6 +41,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.CommandSession.ActivitySession;
+import android.server.wm.intent.Activities;
 
 import androidx.test.rule.ActivityTestRule;
 
@@ -141,6 +145,51 @@ public class StartActivityTests extends ActivityManagerTestBase {
         mWmState.computeState(TEST_ACTIVITY);
         mWmState.assertResumedActivity("Test Activity should be resumed without older sdk",
                 TEST_ACTIVITY);
+    }
+
+    /**
+     * Starts 3 activities A, B, C in the same task. A and B belong to current package and are not
+     * exported. C belongs to a different package with different uid. After C called
+     * {@link Activity#navigateUpTo(Intent)} with the intent of A, the activities B, C should be
+     * finished and instead of creating a new instance of A, the original A should become the top
+     * activity because the caller C in different uid cannot launch a non-exported activity.
+     */
+    @Test
+    public void testStartActivityByNavigateUpToFromDiffUid() {
+        final Intent intent1 = new Intent(mContext, Activities.RegularActivity.class);
+        final TestActivitySession<Activities.RegularActivity> activitySession1 =
+                createManagedTestActivitySession();
+        activitySession1.launchTestActivityOnDisplaySync(intent1, DEFAULT_DISPLAY);
+        final TestActivitySession<Activities.SingleTopActivity> activitySession2 =
+                createManagedTestActivitySession();
+        activitySession2.launchTestActivityOnDisplaySync(Activities.SingleTopActivity.class,
+                DEFAULT_DISPLAY);
+
+        final CommandSession.ActivitySession activitySession3 =
+                createManagedActivityClientSession().startActivity(
+                        new CommandSession.DefaultLaunchProxy() {
+                            @Override
+                            public void execute() {
+                                final Intent intent = new Intent().setComponent(TEST_ACTIVITY);
+                                mLaunchInjector.setupIntent(intent);
+                                activitySession2.getActivity().startActivity(intent);
+                            }
+                        });
+
+        final Bundle data = new Bundle();
+        data.putParcelable(EXTRA_INTENT, intent1);
+        activitySession3.sendCommand(COMMAND_NAVIGATE_UP_TO, data);
+
+        waitAndAssertTopResumedActivity(intent1.getComponent(), DEFAULT_DISPLAY,
+                "navigateUpTo should return to the first activity");
+        // Make sure the resumed first activity is the original instance.
+        assertFalse("The target of navigateUpTo should not be destroyed",
+                activitySession1.getActivity().isDestroyed());
+
+        // The activities above the first one should be destroyed.
+        mWmState.waitAndAssertActivityRemoved(
+                activitySession3.getOriginalLaunchIntent().getComponent());
+        mWmState.waitAndAssertActivityRemoved(activitySession2.getActivity().getComponentName());
     }
 
     /**
