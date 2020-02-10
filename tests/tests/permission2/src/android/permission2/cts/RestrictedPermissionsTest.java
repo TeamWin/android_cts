@@ -449,7 +449,7 @@ public class RestrictedPermissionsTest {
 
     @Test
     @AppModeFull
-    public void testStorageTargetingSdk28DoesNotLooseAccessWhenOptingIn() throws Exception {
+    public void testStorageTargetingSdk28DoesNotLoseAccessWhenOptingIn() throws Exception {
         installApp(APK_USES_STORAGE_DEFAULT_28, null);
         assertHasFullStorageAccess();
         installApp(APK_USES_STORAGE_OPT_IN_28, null);
@@ -459,7 +459,7 @@ public class RestrictedPermissionsTest {
 
     @Test
     @AppModeFull
-    public void testStorageTargetingSdk28DoesNotLooseAccessViaUpdate() throws Exception {
+    public void testStorageTargetingSdk28DoesNotLoseAccessViaUpdate() throws Exception {
         installApp(APK_USES_STORAGE_DEFAULT_28, null);
         assertHasFullStorageAccess();
         installApp(APK_USES_STORAGE_DEFAULT_29, null);
@@ -469,7 +469,7 @@ public class RestrictedPermissionsTest {
 
     @Test
     @AppModeFull
-    public void testStorageTargetingSdk29DoesNotLooseAccessViaUpdate() throws Exception {
+    public void testStorageTargetingSdk29DoesNotLoseAccessViaUpdate() throws Exception {
         installApp(APK_USES_STORAGE_OPT_OUT_29, null);
         assertHasFullStorageAccess();
         installApp(APK_USES_STORAGE_DEFAULT_29, null);
@@ -479,12 +479,32 @@ public class RestrictedPermissionsTest {
 
     @Test
     @AppModeFull
-    public void testStorageTargetingSdk29DoesNotLooseAccessWhenOptingIn() throws Exception {
+    public void testStorageTargetingSdk29DoesNotLoseAccessWhenOptingIn() throws Exception {
         installApp(APK_USES_STORAGE_OPT_OUT_29, null);
         assertHasFullStorageAccess();
         installApp(APK_USES_STORAGE_OPT_IN_28, null);
 
         assertHasFullStorageAccess();
+    }
+
+    @Test
+    @AppModeFull
+    public void testStorageTargetingSdk29LosesAccessViaUpdateToTargetSdk30() throws Exception {
+        installApp(APK_USES_STORAGE_OPT_OUT_29, null);
+        assertHasFullStorageAccess();
+
+        installApp(APK_USES_STORAGE_OPT_OUT_30, null); // opt-out is a no-op on 30
+        assertHasIsolatedStorageAccess();
+    }
+
+    @Test
+    @AppModeFull
+    public void testStorageTargetingSdk28LosesAccessViaUpdateToTargetSdk30() throws Exception {
+        installApp(APK_USES_STORAGE_DEFAULT_28, null);
+        assertHasFullStorageAccess();
+
+        installApp(APK_USES_STORAGE_OPT_OUT_30, null); // opt-out is a no-op on 30
+        assertHasIsolatedStorageAccess();
     }
 
     @Test
