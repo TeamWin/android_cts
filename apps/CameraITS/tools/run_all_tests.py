@@ -56,7 +56,7 @@ VGA_WIDTH = 640
 #   scene*_a/b/... are similar scenes that share one or more tests
 ALL_SCENES = ['scene0', 'scene1_1', 'scene1_2', 'scene2_a', 'scene2_b',
               'scene2_c', 'scene2_d', 'scene2_e', 'scene3', 'scene4',
-              'scene5', 'sensor_fusion', 'scene_change']
+              'scene5', 'scene6', 'sensor_fusion', 'scene_change']
 
 # Scenes that are logically grouped and can be called as group
 GROUPED_SCENES = {
@@ -67,7 +67,7 @@ GROUPED_SCENES = {
 # Scenes that can be automated through tablet display
 AUTO_SCENES = ['scene0', 'scene1_1', 'scene1_2', 'scene2_a', 'scene2_b',
                'scene2_c', 'scene2_d', 'scene2_e', 'scene3', 'scene4',
-               'scene_change']
+               'scene6', 'scene_change']
 
 SCENE_REQ = {
         'scene0': None,
@@ -84,6 +84,8 @@ SCENE_REQ = {
                   'for more details',
         'scene5': 'Capture images with a diffuser attached to the camera. See '
                   'CameraITS.pdf section 2.3.4 for more details',
+        'scene6': 'A specific test page of a grid of 9x5 circles circle '
+                  'middle 50% of the scene.',
         'sensor_fusion': 'Rotating checkboard pattern. See '
                          'sensor_fusion/SensorFusion.pdf for detailed '
                          'instructions.\nNote that this test will be skipped '
@@ -121,6 +123,9 @@ NOT_YET_MANDATED = {
         'scene3': [],
         'scene4': [],
         'scene5': [],
+        'scene6': [
+                ['test_zoom', 30]
+        ],
         'sensor_fusion': [],
         'scene_change': [
                 ['test_scene_change', 31]
@@ -158,6 +163,7 @@ HIDDEN_PHYSICAL_CAMERA_TESTS = {
                 'test_aspect_ratio_and_crop'
         ],
         'scene5': [],
+        'scene6': [],
         'sensor_fusion': [
                 'test_sensor_fusion'
         ],
@@ -187,6 +193,7 @@ REPEATED_TESTS = {
         'scene3': [],
         'scene4': [],
         'scene5': [],
+        'scene6': [],
         'sensor_fusion': [],
         'scene_change': []
 }

@@ -19,6 +19,7 @@ import sys
 import cv2
 
 import its.caps
+import its.cv2image
 import its.device
 import its.image
 import its.objects
@@ -134,9 +135,9 @@ def find_circle(gray, name):
                     or len(ct) < 15):
             continue
         # Check the shapes of current component and its parent
-        child_shape = component_shape(ct)
+        child_shape = its.cv2image.component_shape(ct)
         parent = hrch[3]
-        prt_shape = component_shape(contours[parent])
+        prt_shape = its.cv2image.component_shape(contours[parent])
         prt_area = cv2.contourArea(contours[parent])
         dist_x = abs(child_shape['ctx']-prt_shape['ctx'])
         dist_y = abs(child_shape['cty']-prt_shape['cty'])
@@ -179,35 +180,6 @@ def find_circle(gray, name):
         print 'may be too complex.\n'
         assert num_circle == 1
     return [circle_ctx, circle_cty, (circle_w+circle_h)/4.0]
-
-
-def component_shape(contour):
-    """Measure the shape of a connected component.
-
-    Args:
-        contour: return from cv2.findContours. A list of pixel coordinates of
-        the contour.
-
-    Returns:
-        The most left, right, top, bottom pixel location, height, width, and
-        the center pixel location of the contour.
-    """
-    shape = {'left': np.inf, 'right': 0, 'top': np.inf, 'bottom': 0,
-             'width': 0, 'height': 0, 'ctx': 0, 'cty': 0}
-    for pt in contour:
-        if pt[0][0] < shape['left']:
-            shape['left'] = pt[0][0]
-        if pt[0][0] > shape['right']:
-            shape['right'] = pt[0][0]
-        if pt[0][1] < shape['top']:
-            shape['top'] = pt[0][1]
-        if pt[0][1] > shape['bottom']:
-            shape['bottom'] = pt[0][1]
-    shape['width'] = shape['right'] - shape['left'] + 1
-    shape['height'] = shape['bottom'] - shape['top'] + 1
-    shape['ctx'] = (shape['left']+shape['right'])/2
-    shape['cty'] = (shape['top']+shape['bottom'])/2
-    return shape
 
 
 def define_reference_camera(pose_reference, cam_reference):
@@ -319,7 +291,7 @@ def main():
                     fmt_codes = 0x23
                     fmt_configs = [cfg for cfg in configs if cfg['format'] == fmt_codes]
 
-                out_configs = [cfg for cfg in fmt_configs if cfg['input'] is False]
+                out_configs = [cfg for cfg in fmt_configs if not cfg['input']]
                 out_sizes = [(cfg['width'], cfg['height']) for cfg in out_configs]
                 physicalSizes[physical_id] = max(out_sizes, key=lambda item: item[1])
 
