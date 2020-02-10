@@ -50,7 +50,8 @@ public class OneTimePermissionTest {
             "android.permission.cts.OneTimePermissionTest.EXTRA_FOREGROUND_SERVICE_LIFESPAN";
 
     private static final long ONE_TIME_TIMEOUT_MILLIS = 5000;
-    private static final long ONE_TIME_REVOKE_DELAY_TIMEOUT = 10000;
+    private static final long ONE_TIME_TIMER_LOWER_GRACE_PERIOD = 500;
+    private static final long ONE_TIME_TIMER_UPPER_GRACE_PERIOD = 10000;
 
     private final Context mContext =
             InstrumentationRegistry.getInstrumentation().getTargetContext();
@@ -105,11 +106,13 @@ public class OneTimePermissionTest {
 
         long oneTimeStart = System.currentTimeMillis();
 
-        assertDenied(ONE_TIME_TIMEOUT_MILLIS + ONE_TIME_REVOKE_DELAY_TIMEOUT);
+        assertDenied(ONE_TIME_TIMEOUT_MILLIS + ONE_TIME_TIMER_UPPER_GRACE_PERIOD);
 
         long grantedLength = System.currentTimeMillis() - oneTimeStart;
-        if (grantedLength < ONE_TIME_TIMEOUT_MILLIS) {
-            throw new AssertionError("The one time permission lived shorter than expected");
+        if (grantedLength + ONE_TIME_TIMER_LOWER_GRACE_PERIOD < ONE_TIME_TIMEOUT_MILLIS) {
+            throw new AssertionError(
+                    "The one time permission lived shorter than expected. expected: "
+                            + ONE_TIME_TIMEOUT_MILLIS + "ms but was: " + grantedLength + "ms");
         }
     }
 
@@ -127,13 +130,13 @@ public class OneTimePermissionTest {
 
         assertGranted(5000);
 
-        assertDenied(lifespanMillis + ONE_TIME_REVOKE_DELAY_TIMEOUT);
+        assertDenied(lifespanMillis + ONE_TIME_TIMER_UPPER_GRACE_PERIOD);
 
         long grantedLength = System.currentTimeMillis() - oneTimeStart;
-        if (grantedLength < lifespanMillis) {
+        if (grantedLength + ONE_TIME_TIMER_LOWER_GRACE_PERIOD < lifespanMillis) {
             throw new AssertionError(
                     "The one time permission lived shorter than expected. expected: "
-                            + lifespanMillis + "ms but was: " + grantedLength);
+                            + lifespanMillis + "ms but was: " + grantedLength + "ms");
         }
 
     }
