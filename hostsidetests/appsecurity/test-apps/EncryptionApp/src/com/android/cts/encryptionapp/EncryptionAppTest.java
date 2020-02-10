@@ -33,6 +33,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
+import android.os.PowerManager;
 import android.os.StrictMode;
 import android.os.StrictMode.ViolationInfo;
 import android.os.SystemClock;
@@ -53,6 +54,7 @@ import java.io.File;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 public class EncryptionAppTest extends InstrumentationTestCase {
@@ -128,6 +130,14 @@ public class EncryptionAppTest extends InstrumentationTestCase {
         mDevice.executeShellCommand("settings delete global require_password_to_decrypt");
     }
 
+    public void testLockScreen() throws Exception {
+        summonKeyguard();
+    }
+
+    public void testUnlockScreen() throws Exception {
+        dismissKeyguard();
+    }
+
     public void doBootCountBefore() throws Exception {
         final int thisCount = getBootCount();
         mDe.getSharedPreferences(KEY_BOOT, 0).edit().putInt(KEY_BOOT, thisCount).commit();
@@ -191,6 +201,28 @@ public class EncryptionAppTest extends InstrumentationTestCase {
         enterTestPin();
         mDevice.waitForIdle();
         mDevice.pressHome();
+        mDevice.waitForIdle();
+    }
+
+    private void retryPressKeyCode(int keyCode, BooleanSupplier waitFor, String msg) {
+        int retry = 1;
+        do {
+            mDevice.pressKeyCode(keyCode);
+            if (waitFor.getAsBoolean()) {
+                return;
+            }
+            Log.d(TAG, msg + " retry=" + retry);
+            SystemClock.sleep(50);
+        } while (retry++ < 5);
+        if (!waitFor.getAsBoolean()) {
+            fail(msg + " FAILED");
+        }
+    }
+
+    private void summonKeyguard() throws Exception {
+        final PowerManager pm = mDe.getSystemService(PowerManager.class);
+        retryPressKeyCode(KeyEvent.KEYCODE_SLEEP, () -> pm != null && !pm.isInteractive(),
+                "***Waiting for device sleep...");
         mDevice.waitForIdle();
     }
 
