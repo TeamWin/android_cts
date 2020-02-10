@@ -135,4 +135,12 @@ public class CrossProfileAppsPermissionToInteractTest {
         assertThat(intent).isNull();
     }
 
+    /**
+     * Calls {@link CrossProfileApps#createRequestInteractAcrossProfilesIntent()}. This can then be
+     * used by host-side tests.
+     */
+    @Test
+    public void testCreateRequestInteractAcrossProfilesIntent_noAsserts() {
+        mCrossProfileApps.createRequestInteractAcrossProfilesIntent();
+    }
 }

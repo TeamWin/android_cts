@@ -211,6 +211,21 @@ public class CrossProfileAppsStartActivityTest {
         }
     }
 
+    /**
+     * Calls {@link CrossProfileApps#startActivity(Intent, UserHandle)}. This can then be used by
+     * host-side tests.
+     */
+    @Test
+    public void testStartActivityByIntent_noAsserts() throws Exception {
+        Intent nonMainActivityIntent = new Intent();
+        nonMainActivityIntent.setComponent(NonMainActivity.getComponentName(mContext));
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mCrossProfileApps,
+                crossProfileApps ->
+                        mCrossProfileApps.startActivity(nonMainActivityIntent, mTargetUser));
+    }
+
     @Test
     public void testCanStartMainActivityByComponent() {
         try {

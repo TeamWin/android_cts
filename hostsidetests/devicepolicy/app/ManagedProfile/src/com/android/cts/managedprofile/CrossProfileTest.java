@@ -85,6 +85,13 @@ public class CrossProfileTest extends BaseManagedProfileTest {
         mUserManager = mContext.getSystemService(UserManager.class);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        explicitlyResetInteractAcrossProfilesAppOps();
+        resetCrossProfilePackages();
+        super.tearDown();
+    }
+
     public void testSetCrossProfilePackages_notProfileOwner_throwsSecurityException() {
         try {
             mDevicePolicyManager.setCrossProfilePackages(
@@ -123,100 +130,96 @@ public class CrossProfileTest extends BaseManagedProfileTest {
                 .isEqualTo(packages2);
     }
 
+    /**
+     * Sets each of the packages in {@link #ALL_CROSS_PROFILE_PACKAGES} as cross-profile. This can
+     * then be used for writing host-side tests. Note that the state is cleared after running any
+     * test in this class, so this method should not be used to attempt to perform a sequence of
+     * device-side calls.
+     */
+    public void testSetCrossProfilePackages_noAsserts() throws Exception {
+        mDevicePolicyManager.setCrossProfilePackages(
+                ADMIN_RECEIVER_COMPONENT, ALL_CROSS_PROFILE_PACKAGES);
+    }
+
     public void testSetCrossProfilePackages_firstTime_doesNotResetAnyAppOps() throws Exception {
-        try {
-            explicitlySetInteractAcrossProfilesAppOps(MODE_ALLOWED);
-            mDevicePolicyManager.setCrossProfilePackages(
-                    ADMIN_RECEIVER_COMPONENT, ALL_CROSS_PROFILE_PACKAGES);
-            assertThatPackagesHaveAppOpMode(ALL_CROSS_PROFILE_PACKAGES, MODE_ALLOWED);
-        } finally {
-            explicitlyResetInteractAcrossProfilesAppOps();
-            resetCrossProfilePackages();
-        }
+        explicitlySetInteractAcrossProfilesAppOps(MODE_ALLOWED);
+        mDevicePolicyManager.setCrossProfilePackages(
+                ADMIN_RECEIVER_COMPONENT, ALL_CROSS_PROFILE_PACKAGES);
+        assertThatPackagesHaveAppOpMode(ALL_CROSS_PROFILE_PACKAGES, MODE_ALLOWED);
     }
 
     public void testSetCrossProfilePackages_unchanged_doesNotResetAnyAppOps() throws Exception {
-        try {
-            mDevicePolicyManager.setCrossProfilePackages(
-                    ADMIN_RECEIVER_COMPONENT, ALL_CROSS_PROFILE_PACKAGES);
-            explicitlySetInteractAcrossProfilesAppOps(MODE_ALLOWED);
+        mDevicePolicyManager.setCrossProfilePackages(
+                ADMIN_RECEIVER_COMPONENT, ALL_CROSS_PROFILE_PACKAGES);
+        explicitlySetInteractAcrossProfilesAppOps(MODE_ALLOWED);
 
-            mDevicePolicyManager.setCrossProfilePackages(
-                    ADMIN_RECEIVER_COMPONENT, ALL_CROSS_PROFILE_PACKAGES);
+        mDevicePolicyManager.setCrossProfilePackages(
+                ADMIN_RECEIVER_COMPONENT, ALL_CROSS_PROFILE_PACKAGES);
 
-            assertThatPackagesHaveAppOpMode(ALL_CROSS_PROFILE_PACKAGES, MODE_ALLOWED);
-        } finally {
-            explicitlyResetInteractAcrossProfilesAppOps();
-            resetCrossProfilePackages();
-        }
+        assertThatPackagesHaveAppOpMode(ALL_CROSS_PROFILE_PACKAGES, MODE_ALLOWED);
     }
 
     public void testSetCrossProfilePackages_noPackagesUnset_doesNotResetAnyAppOps()
             throws Exception {
-        try {
-            mDevicePolicyManager.setCrossProfilePackages(
-                    ADMIN_RECEIVER_COMPONENT, SUBLIST_CROSS_PROFILE_PACKAGES);
-            explicitlySetInteractAcrossProfilesAppOps(MODE_ALLOWED);
+        mDevicePolicyManager.setCrossProfilePackages(
+                ADMIN_RECEIVER_COMPONENT, SUBLIST_CROSS_PROFILE_PACKAGES);
+        explicitlySetInteractAcrossProfilesAppOps(MODE_ALLOWED);
 
-            mDevicePolicyManager.setCrossProfilePackages(
-                    ADMIN_RECEIVER_COMPONENT, ALL_CROSS_PROFILE_PACKAGES);
+        mDevicePolicyManager.setCrossProfilePackages(
+                ADMIN_RECEIVER_COMPONENT, ALL_CROSS_PROFILE_PACKAGES);
 
-            assertThatPackagesHaveAppOpMode(ALL_CROSS_PROFILE_PACKAGES, MODE_ALLOWED);
-        } finally {
-            explicitlyResetInteractAcrossProfilesAppOps();
-            resetCrossProfilePackages();
-        }
+        assertThatPackagesHaveAppOpMode(ALL_CROSS_PROFILE_PACKAGES, MODE_ALLOWED);
     }
 
     public void testSetCrossProfilePackages_somePackagesUnset_doesNotResetAppOpsIfStillSet()
             throws Exception {
-        try {
-            mDevicePolicyManager.setCrossProfilePackages(
-                    ADMIN_RECEIVER_COMPONENT, ALL_CROSS_PROFILE_PACKAGES);
-            explicitlySetInteractAcrossProfilesAppOps(MODE_ALLOWED);
+        mDevicePolicyManager.setCrossProfilePackages(
+                ADMIN_RECEIVER_COMPONENT, ALL_CROSS_PROFILE_PACKAGES);
+        explicitlySetInteractAcrossProfilesAppOps(MODE_ALLOWED);
 
-            mDevicePolicyManager.setCrossProfilePackages(
-                    ADMIN_RECEIVER_COMPONENT, SUBLIST_CROSS_PROFILE_PACKAGES);
+        mDevicePolicyManager.setCrossProfilePackages(
+                ADMIN_RECEIVER_COMPONENT, SUBLIST_CROSS_PROFILE_PACKAGES);
 
-            assertThatPackagesHaveAppOpMode(SUBLIST_CROSS_PROFILE_PACKAGES, MODE_ALLOWED);
-        } finally {
-            explicitlyResetInteractAcrossProfilesAppOps();
-            resetCrossProfilePackages();
-        }
+        assertThatPackagesHaveAppOpMode(SUBLIST_CROSS_PROFILE_PACKAGES, MODE_ALLOWED);
     }
 
     public void testSetCrossProfilePackages_resetsAppOpOfUnsetPackages() throws Exception {
-        try {
-            mDevicePolicyManager.setCrossProfilePackages(
-                    ADMIN_RECEIVER_COMPONENT, ALL_CROSS_PROFILE_PACKAGES);
-            explicitlySetInteractAcrossProfilesAppOps(MODE_ALLOWED);
+        mDevicePolicyManager.setCrossProfilePackages(
+                ADMIN_RECEIVER_COMPONENT, ALL_CROSS_PROFILE_PACKAGES);
+        explicitlySetInteractAcrossProfilesAppOps(MODE_ALLOWED);
 
-            mDevicePolicyManager.setCrossProfilePackages(
-                    ADMIN_RECEIVER_COMPONENT, SUBLIST_CROSS_PROFILE_PACKAGES);
+        mDevicePolicyManager.setCrossProfilePackages(
+                ADMIN_RECEIVER_COMPONENT, SUBLIST_CROSS_PROFILE_PACKAGES);
 
-            assertThatPackagesHaveAppOpMode(DIFF_CROSS_PROFILE_PACKAGES, MODE_DEFAULT);
-        } finally {
-            explicitlyResetInteractAcrossProfilesAppOps();
-            resetCrossProfilePackages();
-        }
+        assertThatPackagesHaveAppOpMode(DIFF_CROSS_PROFILE_PACKAGES, MODE_DEFAULT);
     }
 
     public void testSetCrossProfilePackages_resetsAppOpOfUnsetPackagesOnOtherProfile()
             throws Exception {
-        try {
-            mDevicePolicyManager.setCrossProfilePackages(
-                    ADMIN_RECEIVER_COMPONENT, ALL_CROSS_PROFILE_PACKAGES);
-            explicitlySetInteractAcrossProfilesAppOps(MODE_ALLOWED);
+        mDevicePolicyManager.setCrossProfilePackages(
+                ADMIN_RECEIVER_COMPONENT, ALL_CROSS_PROFILE_PACKAGES);
+        explicitlySetInteractAcrossProfilesAppOps(MODE_ALLOWED);
 
-            mDevicePolicyManager.setCrossProfilePackages(
-                    ADMIN_RECEIVER_COMPONENT, SUBLIST_CROSS_PROFILE_PACKAGES);
+        mDevicePolicyManager.setCrossProfilePackages(
+                ADMIN_RECEIVER_COMPONENT, SUBLIST_CROSS_PROFILE_PACKAGES);
 
-            assertThatPackagesHaveAppOpMode(
-                    DIFF_CROSS_PROFILE_PACKAGES, MODE_DEFAULT, UserHandle.of(0));
-        } finally {
-            explicitlyResetInteractAcrossProfilesAppOps();
-            resetCrossProfilePackages();
-        }
+        assertThatPackagesHaveAppOpMode(
+                DIFF_CROSS_PROFILE_PACKAGES, MODE_DEFAULT, UserHandle.of(0));
+    }
+
+    /**
+     * Sets each of the packages in {@link #ALL_CROSS_PROFILE_PACKAGES} as cross-profile, then sets
+     * them again to {@link #SUBLIST_CROSS_PROFILE_PACKAGES}, with all app-ops explicitly set as
+     * allowed before-hand. This should result in resetting packages {@link
+     * #DIFF_CROSS_PROFILE_PACKAGES}. This can then be used for writing host-side tests.
+     */
+    public void testSetCrossProfilePackages_resetsAppOps_noAsserts() throws Exception {
+        mDevicePolicyManager.setCrossProfilePackages(
+                ADMIN_RECEIVER_COMPONENT, ALL_CROSS_PROFILE_PACKAGES);
+        explicitlySetInteractAcrossProfilesAppOps(MODE_ALLOWED);
+
+        mDevicePolicyManager.setCrossProfilePackages(
+                ADMIN_RECEIVER_COMPONENT, SUBLIST_CROSS_PROFILE_PACKAGES);
     }
 
     /**
@@ -226,17 +229,12 @@ public class CrossProfileTest extends BaseManagedProfileTest {
      */
     public void testSetCrossProfilePackages_sendsBroadcastWhenResettingAppOps_noAsserts()
             throws Exception {
-        try {
-            mDevicePolicyManager.setCrossProfilePackages(
-                    ADMIN_RECEIVER_COMPONENT, ALL_CROSS_PROFILE_PACKAGES);
-            explicitlySetInteractAcrossProfilesAppOps(MODE_ALLOWED);
+        mDevicePolicyManager.setCrossProfilePackages(
+                ADMIN_RECEIVER_COMPONENT, ALL_CROSS_PROFILE_PACKAGES);
+        explicitlySetInteractAcrossProfilesAppOps(MODE_ALLOWED);
 
-            mDevicePolicyManager.setCrossProfilePackages(
-                    ADMIN_RECEIVER_COMPONENT, SUBLIST_CROSS_PROFILE_PACKAGES);
-        } finally {
-            explicitlyResetInteractAcrossProfilesAppOps();
-            resetCrossProfilePackages();
-        }
+        mDevicePolicyManager.setCrossProfilePackages(
+                ADMIN_RECEIVER_COMPONENT, SUBLIST_CROSS_PROFILE_PACKAGES);
     }
 
     private void explicitlySetInteractAcrossProfilesAppOps(int mode) throws Exception {
