@@ -66,6 +66,8 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
+import androidx.test.filters.FlakyTest;
+
 import com.android.compatibility.common.util.ImeAwareEditText;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestUtils;
@@ -290,6 +292,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
      * Tests launching a single instance home activity on virtual display with system decoration
      * support.
      */
+    @FlakyTest(bugId = 149070587)
     @Test
     public void testLaunchSingleHomeActivityOnDisplayWithDecorations() {
         createManagedHomeActivitySession(SINGLE_HOME_ACTIVITY);
@@ -313,6 +316,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
      * Tests launching a single instance home activity with SECONDARY_HOME on virtual display with
      * system decoration support.
      */
+    @FlakyTest(bugId = 149070587)
     @Test
     public void testLaunchSingleSecondaryHomeActivityOnDisplayWithDecorations() {
         createManagedHomeActivitySession(SINGLE_SECONDARY_HOME_ACTIVITY);
@@ -336,6 +340,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
      * Tests launching a multi-instance home activity on virtual display with system decoration
      * support.
      */
+    @FlakyTest(bugId = 149070587)
     @Test
     public void testLaunchHomeActivityOnDisplayWithDecorations() {
         createManagedHomeActivitySession(HOME_ACTIVITY);
