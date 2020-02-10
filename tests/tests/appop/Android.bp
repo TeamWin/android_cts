@@ -56,7 +56,6 @@ android_test {
         "libbacktrace",
         "libbase",
         "libbinder",
-        "libbinderthreadstate",
         "libbpf",
         "libbpf_android",
         "libc++",
