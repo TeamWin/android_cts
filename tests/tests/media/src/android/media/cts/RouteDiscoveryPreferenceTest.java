@@ -70,6 +70,7 @@ public class RouteDiscoveryPreferenceTest {
                 new RouteDiscoveryPreference.Builder(features, true /* isActiveScan */).build();
         assertEquals(features, preference.getPreferredFeatures());
         assertTrue(preference.isActiveScan());
+        assertEquals(0, preference.describeContents());
     }
 
     @Test

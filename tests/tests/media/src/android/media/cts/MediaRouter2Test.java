@@ -47,7 +47,11 @@ import android.media.MediaRouter2.RoutingControllerCallback;
 import android.media.RouteDiscoveryPreference;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.LargeTest;
 import android.text.TextUtils;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
@@ -65,10 +69,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import androidx.test.InstrumentationRegistry;
-import androidx.test.filters.LargeTest;
-import androidx.test.runner.AndroidJUnit4;
-
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "The system should be able to bind to SampleMediaRoute2ProviderService")
 @LargeTest
@@ -78,6 +78,7 @@ public class MediaRouter2Test {
     private MediaRouter2 mRouter2;
     private Executor mExecutor;
     private AudioManager mAudioManager;
+    private SampleMediaRoute2ProviderService mServiceInstance;
 
     private static final int TIMEOUT_MS = 5000;
     private static final int WAIT_MS = 2000;
@@ -93,10 +94,20 @@ public class MediaRouter2Test {
         mRouter2 = MediaRouter2.getInstance(mContext);
         mExecutor = Executors.newSingleThreadExecutor();
         mAudioManager = (AudioManager) mContext.getSystemService(AUDIO_SERVICE);
+
+        mServiceInstance = SampleMediaRoute2ProviderService.getInstance();
+        if (mServiceInstance != null) {
+            mServiceInstance.initializeRoutes();
+            mServiceInstance.publishRoutes();
+        }
     }
 
     @After
     public void tearDown() throws Exception {
+        if (mServiceInstance != null) {
+            mServiceInstance.clear();
+            mServiceInstance = null;
+        }
     }
 
     /**
@@ -827,11 +838,10 @@ public class MediaRouter2Test {
         // we have tests for them. This method just directly calls those methods so that the tool
         // can recognize the callback methods as tested.
 
-        // TODO: Uncomment this when the RouteCallback is properly tested.
-        // MediaRouter2.RouteCallback routeCallback = new MediaRouter2.RouteCallback();
-        // routeCallback.onRoutesAdded(null);
-        // routeCallback.onRoutesChanged(null);
-        // routeCallback.onRoutesRemoved(null);
+        MediaRouter2.RouteCallback routeCallback = new MediaRouter2.RouteCallback();
+        routeCallback.onRoutesAdded(null);
+        routeCallback.onRoutesChanged(null);
+        routeCallback.onRoutesRemoved(null);
 
         MediaRouter2.RoutingControllerCallback controllerCallback =
                 new MediaRouter2.RoutingControllerCallback();
@@ -878,7 +888,7 @@ public class MediaRouter2Test {
         }
     }
 
-    private static void releaseControllers(@NonNull List<RoutingController> controllers) {
+    static void releaseControllers(@NonNull List<RoutingController> controllers) {
         for (RoutingController controller : controllers) {
             controller.release();
         }
