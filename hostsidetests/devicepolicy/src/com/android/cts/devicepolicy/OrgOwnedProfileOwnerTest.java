@@ -359,6 +359,24 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         getDevice().executeShellCommand(cmd);
     }
 
+    @Test
+    public void testPersonalAppsSuspensionNormalApp() throws Exception {
+        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
+        assertCanStartPersonalApp(DEVICE_ADMIN_PKG, true);
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG,
+                ".PersonalAppsSuspensionTest", "testSuspendPersonalApps", mUserId);
+        assertCanStartPersonalApp(DEVICE_ADMIN_PKG, false);
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG,
+                ".PersonalAppsSuspensionTest", "testUnsuspendPersonalApps", mUserId);
+        assertCanStartPersonalApp(DEVICE_ADMIN_PKG, true);
+    }
+
+    private void assertCanStartPersonalApp(String packageName, boolean canStart)
+            throws DeviceNotAvailableException {
+        runDeviceTestsAsUser(packageName, "com.android.cts.suspensionchecker.ActivityLaunchTest",
+                canStart ? "testCanStartActivity" : "testCannotStartActivity", mParentUserId);
+    }
+
     private void assertHasNoUser(int userId) throws DeviceNotAvailableException {
         int numWaits = 0;
         final int MAX_NUM_WAITS = 15;
