@@ -411,6 +411,11 @@ public class BlobStoreManagerTest {
             mBlobStoreManager.acquireLease(blobData.getBlobHandle(), R.string.test_desc);
             // TODO: verify acquiring lease took effect.
             mBlobStoreManager.releaseLease(blobData.getBlobHandle());
+
+            mBlobStoreManager.acquireLease(blobData.getBlobHandle(), "Test description",
+                    blobData.getExpiryTimeMillis() - 20000);
+            mBlobStoreManager.acquireLease(blobData.getBlobHandle(), "Test description two");
+            mBlobStoreManager.releaseLease(blobData.getBlobHandle());
         } finally {
             blobData.delete();
         }
@@ -427,6 +432,10 @@ public class BlobStoreManagerTest {
                     blobData.getBlobHandle(), R.string.test_desc, -1));
             assertThrows(IllegalArgumentException.class, () -> mBlobStoreManager.acquireLease(
                     blobData.getBlobHandle(), -1));
+            assertThrows(IllegalArgumentException.class, () -> mBlobStoreManager.acquireLease(
+                    blobData.getBlobHandle(), null));
+            assertThrows(IllegalArgumentException.class, () -> mBlobStoreManager.acquireLease(
+                    blobData.getBlobHandle(), null, blobData.getExpiryTimeMillis()));
         } finally {
             blobData.delete();
         }
