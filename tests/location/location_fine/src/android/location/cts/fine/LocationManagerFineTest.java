@@ -190,6 +190,15 @@ public class LocationManagerFineTest {
     }
 
     @Test
+    public void testGetLastKnownLocation_RemoveProvider() {
+        Location loc1 = createLocation(TEST_PROVIDER, mRandom);
+
+        mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
+        mManager.removeTestProvider(TEST_PROVIDER);
+        assertThat(mManager.getLastKnownLocation(TEST_PROVIDER)).isNull();
+    }
+
+    @Test
     public void testGetCurrentLocation() throws Exception {
         Location loc = createLocation(TEST_PROVIDER, mRandom);
 
