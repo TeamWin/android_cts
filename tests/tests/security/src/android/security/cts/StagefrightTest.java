@@ -1973,6 +1973,36 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTestRawBlob(R.raw.bug_70897394_avc, "video/avc", 320, 240, false);
     }
 
+    @SecurityTest(minPatchLevel = "Unknown")
+    public void testBug_123700383() throws Exception {
+        assertExtractorDoesNotHang(R.raw.bug_123700383);
+    }
+
+    @SecurityTest(minPatchLevel = "Unknown")
+    public void testBug_127310810() throws Exception {
+        assertExtractorDoesNotHang(R.raw.bug_127310810);
+    }
+
+    @SecurityTest(minPatchLevel = "Unknown")
+    public void testBug_127312550() throws Exception {
+        assertExtractorDoesNotHang(R.raw.bug_127312550);
+    }
+
+    @SecurityTest(minPatchLevel = "Unknown")
+    public void testBug_127313223() throws Exception {
+        assertExtractorDoesNotHang(R.raw.bug_127313223);
+    }
+
+    @SecurityTest(minPatchLevel = "Unknown")
+    public void testBug_127313537() throws Exception {
+        assertExtractorDoesNotHang(R.raw.bug_127313537);
+    }
+
+    @SecurityTest(minPatchLevel = "Unknown")
+    public void testBug_127313764() throws Exception {
+        assertExtractorDoesNotHang(R.raw.bug_127313764);
+    }
+
     private int[] getFrameSizes(int rid) throws IOException {
         final Context context = getInstrumentation().getContext();
         final Resources resources =  context.getResources();
@@ -2393,5 +2423,36 @@ public class StagefrightTest extends InstrumentationTestCase {
                     mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
         thr.stopLooper();
         thr.join();
+    }
+
+    protected void assertExtractorDoesNotHang(int rid) throws Exception {
+        // The media extractor has a watchdog, currently set to 10 seconds.
+        final long timeoutMs = 12 * 1000;
+
+        Thread thread = new Thread(() -> {
+            MediaExtractor ex = new MediaExtractor();
+            AssetFileDescriptor fd =
+                    getInstrumentation().getContext().getResources().openRawResourceFd(rid);
+            try {
+                ex.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
+            } catch (IOException e) {
+                // It is OK for the call to fail, we're only making sure it doesn't hang.
+            } finally {
+                closeQuietly(fd);
+                ex.release();
+            }
+        });
+        thread.start();
+
+        thread.join(timeoutMs);
+        boolean hung = thread.isAlive();
+        if (hung) {
+            // We don't have much to do at this point. Attempt to un-hang the thread, the media
+            // extractor process is likely still spinning. At least we found a bug...
+            // TODO: reboot the media extractor process.
+            thread.interrupt();
+        }
+
+        assertFalse(hung);
     }
 }
