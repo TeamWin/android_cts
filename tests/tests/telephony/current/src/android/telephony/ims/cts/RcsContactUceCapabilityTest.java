@@ -25,6 +25,7 @@ import android.telephony.ims.RcsContactUceCapability;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -39,6 +40,7 @@ public class RcsContactUceCapabilityTest {
             + "-application.ims.iari.rcs.mnc000.mcc000.testService\"";
 
     @Test
+    @Ignore("RCS APIs not public yet")
     public void createParcelUnparcel() {
         if (!ImsUtils.shouldTestImsService()) {
             return;
