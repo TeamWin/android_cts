@@ -35,6 +35,7 @@ import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityManager;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -485,6 +486,21 @@ public class ToastTest {
         Toast toast = Toast.makeText(mContext, R.string.text, Toast.LENGTH_LONG);
         toast.setView(null);
         toast.setText(null);
+    }
+
+    @UiThreadTest
+    @Test
+    public void testGetWindowParams_whenTextToast_doesNotReturnNull() {
+        Toast toast = Toast.makeText(mContext, "Text", Toast.LENGTH_LONG);
+        assertNotNull(toast.getWindowParams());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testGetWindowParams_whenCustomToast_doesNotReturnNull() {
+        Toast toast = new Toast(mContext);
+        toast.setView(new TextView(mContext));
+        assertNotNull(toast.getWindowParams());
     }
 
     private void runOnMainAndDrawSync(@NonNull final View toastView,
