@@ -40,6 +40,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
+import android.location.GnssAntennaInfo;
 import android.location.GnssMeasurementsEvent;
 import android.location.GnssNavigationMessage;
 import android.location.GnssStatus;
@@ -1141,6 +1142,15 @@ public class LocationManagerFineTest {
 
         mManager.registerGnssMeasurementsCallback(Executors.newSingleThreadExecutor(), callback);
         mManager.unregisterGnssMeasurementsCallback(callback);
+    }
+
+    @Test
+    public void testRegisterGnssAntennaInfoCallback() {
+        GnssAntennaInfo.Callback callback = new GnssAntennaInfo.Callback() {
+        };
+
+        mManager.registerAntennaInfoCallback(Executors.newSingleThreadExecutor(), callback);
+        mManager.unregisterAntennaInfoCallback(callback);
     }
 
     @Test
