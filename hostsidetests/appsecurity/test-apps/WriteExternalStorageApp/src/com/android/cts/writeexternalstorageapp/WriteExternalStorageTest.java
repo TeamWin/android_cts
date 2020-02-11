@@ -163,21 +163,6 @@ public class WriteExternalStorageTest extends AndroidTestCase {
     }
 
     /**
-     * Verify that we have write access in other packages on primary external
-     * storage.
-     */
-    public void testPrimaryOtherPackageWriteAccess() throws Exception {
-        final File ourCache = getContext().getExternalCacheDir();
-        final File otherCache = new File(ourCache.getAbsolutePath()
-                .replace(getContext().getPackageName(), PACKAGE_NONE));
-        deleteContents(otherCache);
-        otherCache.delete();
-
-        assertTrue(otherCache.mkdirs());
-        assertDirReadWriteAccess(otherCache);
-    }
-
-    /**
      * Verify we have valid mount status until we leave the device.
      */
     public void testMountStatusWalkingUpTree() {
@@ -319,33 +304,6 @@ public class WriteExternalStorageTest extends AndroidTestCase {
                 assertDirNoWriteAccess(userPath);
             }
         }
-    }
-
-    /**
-     * Verify that moving around package-specific directories causes permissions
-     * to be updated.
-     */
-    public void testMovePackageSpecificPaths() throws Exception {
-        final File before = getContext().getExternalCacheDir();
-        final File beforeFile = new File(before, "test.probe");
-        assertTrue(beforeFile.createNewFile());
-        assertEquals(Os.getuid(), Os.stat(before.getAbsolutePath()).st_uid);
-        assertEquals(Os.getuid(), Os.stat(beforeFile.getAbsolutePath()).st_uid);
-
-        final File after = new File(before.getAbsolutePath()
-                .replace(getContext().getPackageName(), "com.example.does.not.exist"));
-        final File afterParent = after.getParentFile();
-        afterParent.mkdirs();
-        deleteContents(afterParent);
-
-        Os.rename(before.getAbsolutePath(), after.getAbsolutePath());
-
-        // Sit around long enough for VFS cache to expire
-        SystemClock.sleep(15 * DateUtils.SECOND_IN_MILLIS);
-
-        final File afterFile = new File(after, "test.probe");
-        assertNotEqual(Os.getuid(), Os.stat(after.getAbsolutePath()).st_uid);
-        assertNotEqual(Os.getuid(), Os.stat(afterFile.getAbsolutePath()).st_uid);
     }
 
     public void testExternalStorageRename() throws Exception {
