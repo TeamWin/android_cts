@@ -293,9 +293,6 @@ public class CommonExternalStorageTest extends AndroidTestCase {
     public static void assertDirNoAccess(File path) {
         Log.d(TAG, "Asserting no access to " + path);
 
-        assertFalse("read", path.canRead());
-        assertNull("list", path.list());
-
         try {
             final File probe = buildProbeFile(path);
             assertFalse(probe.createNewFile());
