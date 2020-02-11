@@ -22,8 +22,11 @@ import static android.contentcaptureservice.cts.Helper.componentNameFor;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.content.ComponentName;
+import android.os.ParcelFileDescriptor;
 import android.service.contentcapture.ActivityEvent;
 import android.service.contentcapture.ContentCaptureService;
+import android.service.contentcapture.DataShareCallback;
+import android.service.contentcapture.DataShareReadAdapter;
 import android.util.ArrayMap;
 import android.util.ArraySet;
 import android.util.Log;
@@ -32,18 +35,23 @@ import android.view.contentcapture.ContentCaptureContext;
 import android.view.contentcapture.ContentCaptureEvent;
 import android.view.contentcapture.ContentCaptureSessionId;
 import android.view.contentcapture.DataRemovalRequest;
+import android.view.contentcapture.DataShareRequest;
 import android.view.contentcapture.ViewNode;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.io.FileDescriptor;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 // TODO(b/123540602): if we don't move this service to a separate package, we need to handle the
 // onXXXX methods in a separate thread
@@ -57,6 +65,8 @@ public class CtsContentCaptureService extends ContentCaptureService {
             + CtsContentCaptureService.class.getSimpleName();
     public static final ComponentName CONTENT_CAPTURE_SERVICE_COMPONENT_NAME =
             componentNameFor(CtsContentCaptureService.class);
+
+    private static final Executor sExecutor = Executors.newCachedThreadPool();
 
     private static int sIdCounter;
 
@@ -124,6 +134,24 @@ public class CtsContentCaptureService extends ContentCaptureService {
      * exist.
      */
     private boolean mIgnoreOrphanSessionEvents;
+
+    /**
+     * Whether the service should accept a data share session.
+     */
+    private boolean mDataShareShouldAccept = false;
+
+    /**
+     * Bytes that were shared during the content capture
+     */
+    byte[] mDataShared = new byte[20_000];
+
+    /**
+     * The fields below represent state of the content capture data sharing session.
+     */
+    boolean mDataShareSessionStarted = false;
+    boolean mDataShareSessionFinished = false;
+    boolean mDataShareSessionSucceeded = false;
+    int mDataShareSessionErrorCode = 0;
 
     @NonNull
     public static ServiceWatcher setServiceWatcher() {
@@ -297,6 +325,43 @@ public class CtsContentCaptureService extends ContentCaptureService {
     }
 
     @Override
+    public void onDataShareRequest(DataShareRequest request, DataShareCallback callback) {
+        if (mDataShareShouldAccept) {
+            callback.onAccept(sExecutor, new DataShareReadAdapter() {
+                @Override
+                public void onStart(ParcelFileDescriptor fd) {
+                    mDataShareSessionStarted = true;
+
+                    int bytesReadTotal = 0;
+                    try (InputStream fis = new ParcelFileDescriptor.AutoCloseInputStream(fd)) {
+                        while (true) {
+                            int bytesRead = fis.read(mDataShared, bytesReadTotal,
+                                    mDataShared.length - bytesReadTotal);
+                            if (bytesRead == -1) {
+                                break;
+                            }
+                            bytesReadTotal += bytesRead;
+                        }
+                        mDataShareSessionFinished = true;
+                        mDataShareSessionSucceeded = true;
+                    } catch (IOException e) {
+                        // fall through. dataShareSessionSucceeded will stay false.
+                    }
+                }
+
+                @Override
+                public void onError(int errorCode) {
+                    mDataShareSessionFinished = true;
+                    mDataShareSessionErrorCode = errorCode;
+                }
+            });
+        } else {
+            callback.onReject();
+            mDataShareSessionStarted = mDataShareSessionFinished = true;
+        }
+    }
+
+    @Override
     public void onActivityEvent(ActivityEvent event) {
         Log.i(TAG, "onActivityEvent(): " + event);
         mActivityEvents.add(new MyActivityEvent(event));
@@ -359,6 +424,10 @@ public class CtsContentCaptureService extends ContentCaptureService {
         }
         mOnDisconnectListener = new DisconnectListener();
         return mOnDisconnectListener;
+    }
+
+    public void setDataSharingEnabled(boolean enabled) {
+        this.mDataShareShouldAccept = enabled;
     }
 
     @Override
