@@ -35,6 +35,7 @@ import android.media.MediaMuxer;
 import android.net.Uri;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.RequiresDevice;
 import android.util.Log;
 import android.util.Pair;
 import android.util.Range;
@@ -1631,10 +1632,12 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
     @NonMediaMainlineTest
     public void testOtherH265SurfQCIF()  { specific(otherH265(),  176, 144, false /* flex */); }
     @NonMediaMainlineTest
+    @RequiresDevice
     @Presubmit
     @SmallTest
     public void testOtherH264FlexQCIF()  { specific(otherH264(),  176, 144, true /* flex */); }
     @NonMediaMainlineTest
+    @RequiresDevice
     @Presubmit
     @SmallTest
     public void testOtherH264SurfQCIF()  { specific(otherH264(),  176, 144, false /* flex */); }
