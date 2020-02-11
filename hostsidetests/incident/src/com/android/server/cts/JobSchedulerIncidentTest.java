@@ -91,13 +91,6 @@ public class JobSchedulerIncidentTest extends ProtoDumpTestCase {
     private static void testConstantsProto(ConstantsProto c) throws Exception {
         assertNotNull(c);
 
-        assertTrue(0 <= c.getMinIdleCount());
-        assertTrue(0 <= c.getMinChargingCount());
-        assertTrue(0 <= c.getMinBatteryNotLowCount());
-        assertTrue(0 <= c.getMinStorageNotLowCount());
-        assertTrue(0 <= c.getMinConnectivityCount());
-        assertTrue(0 <= c.getMinContentCount());
-        assertTrue(0 <= c.getMinReadyJobsCount());
         assertTrue(0 <= c.getHeavyUseFactor());
         assertTrue(0 <= c.getModerateUseFactor());
         assertTrue(0 <= c.getFgJobCount());
