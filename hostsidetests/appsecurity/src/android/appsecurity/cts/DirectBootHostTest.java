@@ -223,6 +223,7 @@ public class DirectBootHostTest extends BaseHostJUnit4Test {
     private class InstallMultiple extends BaseInstallMultiple<InstallMultiple> {
         public InstallMultiple() {
             super(getDevice(), getBuild(), getAbi());
+            addArg("--force-queryable");
         }
     }
 }

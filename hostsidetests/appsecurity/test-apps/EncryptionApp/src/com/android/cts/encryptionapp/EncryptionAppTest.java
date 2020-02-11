@@ -30,7 +30,10 @@ import android.content.IntentFilter;
 import android.content.pm.ComponentInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Environment;
+import android.os.PowerManager;
 import android.os.StrictMode;
 import android.os.StrictMode.ViolationInfo;
 import android.os.SystemClock;
@@ -45,16 +48,17 @@ import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 
+import com.android.compatibility.common.util.TestUtils;
+
 import java.io.File;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 public class EncryptionAppTest extends InstrumentationTestCase {
     private static final String TAG = "EncryptionAppTest";
-
-    private static final long TIMEOUT = 10 * DateUtils.SECOND_IN_MILLIS;
 
     private static final String KEY_BOOT = "boot";
 
@@ -62,6 +66,10 @@ public class EncryptionAppTest extends InstrumentationTestCase {
     private static final String TEST_ACTION = "com.android.cts.encryptionapp.TEST";
 
     private static final String OTHER_PKG = "com.android.cts.splitapp";
+
+    private static final int BOOT_TIMEOUT_SECONDS = 150;
+
+    private static final Uri FILE_INFO_URI = Uri.parse("content://" + OTHER_PKG + "/files");
 
     private Context mCe;
     private Context mDe;
@@ -120,6 +128,14 @@ public class EncryptionAppTest extends InstrumentationTestCase {
         mDevice.executeShellCommand("locksettings clear --old 12345");
         mDevice.executeShellCommand("locksettings set-disabled true");
         mDevice.executeShellCommand("settings delete global require_password_to_decrypt");
+    }
+
+    public void testLockScreen() throws Exception {
+        summonKeyguard();
+    }
+
+    public void testUnlockScreen() throws Exception {
+        dismissKeyguard();
     }
 
     public void doBootCountBefore() throws Exception {
@@ -185,6 +201,28 @@ public class EncryptionAppTest extends InstrumentationTestCase {
         enterTestPin();
         mDevice.waitForIdle();
         mDevice.pressHome();
+        mDevice.waitForIdle();
+    }
+
+    private void retryPressKeyCode(int keyCode, BooleanSupplier waitFor, String msg) {
+        int retry = 1;
+        do {
+            mDevice.pressKeyCode(keyCode);
+            if (waitFor.getAsBoolean()) {
+                return;
+            }
+            Log.d(TAG, msg + " retry=" + retry);
+            SystemClock.sleep(50);
+        } while (retry++ < 5);
+        if (!waitFor.getAsBoolean()) {
+            fail(msg + " FAILED");
+        }
+    }
+
+    private void summonKeyguard() throws Exception {
+        final PowerManager pm = mDe.getSystemService(PowerManager.class);
+        retryPressKeyCode(KeyEvent.KEYCODE_SLEEP, () -> pm != null && !pm.isInteractive(),
+                "***Waiting for device sleep...");
         mDevice.waitForIdle();
     }
 
@@ -377,19 +415,19 @@ public class EncryptionAppTest extends InstrumentationTestCase {
         return Settings.Global.getInt(mDe.getContentResolver(), Settings.Global.BOOT_COUNT);
     }
 
+    private boolean queryFileExists(Uri fileUri) {
+        Cursor c = mDe.getContentResolver().query(fileUri, null, null, null, null);
+        c.moveToFirst();
+        int colIndex = c.getColumnIndex("exists");
+        return c.getInt(colIndex) == 1;
+    }
+
     private void awaitBroadcast(String action) throws Exception {
-        final Context otherContext = mDe.createPackageContext(OTHER_PKG, 0)
-                .createDeviceProtectedStorageContext();
-        final File probe = new File(otherContext.getFilesDir(),
-                getBootCount() + "." + action);
-        for (int i = 0; i < 150; i++) {
-            Log.d(TAG, "Waiting for " + probe + "...");
-            if (probe.exists()) {
-                return;
-            }
-            SystemClock.sleep(1000);
-        }
-        throw new AssertionError("Failed to find " + probe);
+        String fileName = getBootCount() + "." + action;
+        Uri fileUri = FILE_INFO_URI.buildUpon().appendPath(fileName).build();
+
+        TestUtils.waitUntil("Didn't receive broadcast " + action + " for boot " + getBootCount(),
+                BOOT_TIMEOUT_SECONDS, () -> queryFileExists(fileUri));
     }
 
     public interface ThrowingRunnable {

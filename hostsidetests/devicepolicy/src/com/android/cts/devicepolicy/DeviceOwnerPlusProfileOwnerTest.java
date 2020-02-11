@@ -208,7 +208,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
                 MANAGEMENT_TEST,
                 "testWipeData",
                 secondaryUserId);
-        assertUserGetsRemoved(secondaryUserId);
+        waitUntilUserRemoved(secondaryUserId);
     }
 
     @Test

@@ -366,7 +366,7 @@ public class CodecEncoderTest extends CodecTestBase {
      * Tests flush when codec is in sync and async mode. In these scenarios, Timestamp
      * ordering is verified. The output has to be consistent (not flaky) in all runs
      */
-    @Ignore("TODO(b/147576107, b/148651699)")
+    @Ignore("TODO(b/147576107, b/148652492, b/148651699)")
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testFlush() throws IOException, InterruptedException {

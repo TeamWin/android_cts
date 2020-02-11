@@ -39,7 +39,7 @@ public class ManagedProfileWipeTest extends BaseManagedProfileTest {
         sendWipeProfileBroadcast("com.android.cts.managedprofile.WIPE_DATA_WITH_REASON");
         // Note: the managed profile is removed by this test, which will make removeUserCommand in
         // tearDown() to complain, but that should be OK since its result is not asserted.
-        assertUserGetsRemoved(mProfileUserId);
+        waitUntilUserRemoved(mProfileUserId);
         // testWipeDataWithReason() removes the managed profile,
         // so it needs to separated from other tests.
         // Check and clear the notification is presented after work profile got removed, so profile
@@ -83,7 +83,7 @@ public class ManagedProfileWipeTest extends BaseManagedProfileTest {
         sendWipeProfileBroadcast("com.android.cts.managedprofile.WIPE_DATA_WITHOUT_REASON");
         // Note: the managed profile is removed by this test, which will make removeUserCommand in
         // tearDown() to complain, but that should be OK since its result is not asserted.
-        assertUserGetsRemoved(mProfileUserId);
+        waitUntilUserRemoved(mProfileUserId);
         // testWipeDataWithoutReason() removes the managed profile,
         // so it needs to separated from other tests.
         // Check the notification is not presented after work profile got removed, so profile user
@@ -107,7 +107,7 @@ public class ManagedProfileWipeTest extends BaseManagedProfileTest {
         sendWipeProfileBroadcast("com.android.cts.managedprofile.WIPE_DATA");
         // Note: the managed profile is removed by this test, which will make removeUserCommand in
         // tearDown() to complain, but that should be OK since its result is not asserted.
-        assertUserGetsRemoved(mProfileUserId);
+        waitUntilUserRemoved(mProfileUserId);
     }
 
     private void sendWipeProfileBroadcast(String action) throws Exception {

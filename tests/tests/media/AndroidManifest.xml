@@ -149,6 +149,7 @@
                 <action android:name="android.media.MediaRoute2ProviderService" />
             </intent-filter>
        </service>
+       <receiver android:name="android.media.cts.MediaButtonReceiver" />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

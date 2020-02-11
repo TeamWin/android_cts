@@ -40,7 +40,6 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.Context.BIND_AUTO_CREATE
 import android.content.Intent
-import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.IntentFilter
 import android.content.ServiceConnection
 import android.content.pm.PackageManager.FEATURE_BLUETOOTH
@@ -663,21 +662,6 @@ class AppOpsLoggingTest {
         assertThat(noted[0].first.op).isEqualTo(OPSTR_READ_PHONE_STATE)
         assertThat(noted[0].first.featureId).isEqualTo(TEST_FEATURE_ID)
         assertThat(noted[0].second.map { it.methodName }).contains("isInCall")
-    }
-
-    /**
-     * Realistic end-to-end test for starting a permission protected activity
-     */
-    @Test
-    fun startActivity() {
-        context.createFeatureContext(TEST_FEATURE_ID).startActivity(
-                Intent().setComponent(ComponentName(TEST_SERVICE_PKG,
-                        TEST_SERVICE_PKG + ".AutoClosingActivity"))
-                        .setFlags(FLAG_ACTIVITY_NEW_TASK))
-
-        assertThat(noted[0].first.op).isEqualTo(OPSTR_FINE_LOCATION)
-        assertThat(noted[0].first.featureId).isEqualTo(TEST_FEATURE_ID)
-        assertThat(noted[0].second.map { it.methodName }).contains("startActivity")
     }
 
     @After
