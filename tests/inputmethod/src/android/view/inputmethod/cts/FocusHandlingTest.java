@@ -48,6 +48,7 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -95,6 +96,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
         return TEST_MARKER_PREFIX + "/"  + SystemClock.elapsedRealtimeNanos();
     }
 
+    @FlakyTest(bugId = 149246840)
     @Test
     public void testOnStartInputCalledOnceIme() throws Exception {
         try (MockImeSession imeSession = MockImeSession.create(
