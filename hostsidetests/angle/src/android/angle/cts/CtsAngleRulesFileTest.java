@@ -63,17 +63,7 @@ public class CtsAngleRulesFileTest extends BaseHostJUnit4Test {
 
     private void setAndValidateAngleDevOptionWhitelist(String whiteList) throws Exception {
         // SETTINGS_GLOBAL_WHITELIST
-        for (int i = 0; i < NUM_ATTEMPTS; i++)
-        {
-            setGlobalSetting(getDevice(), SETTINGS_GLOBAL_WHITELIST, whiteList);
-            Thread.sleep(APPLY_SLEEP_MSEC);
-            String devOption = getGlobalSetting(getDevice(), SETTINGS_GLOBAL_WHITELIST);
-            if (devOption.equals(whiteList))
-            {
-                break;
-            }
-            Thread.sleep(REATTEMPT_SLEEP_MSEC);
-        }
+        setGlobalSetting(getDevice(), SETTINGS_GLOBAL_WHITELIST, whiteList);
 
         String devOption = getGlobalSetting(getDevice(), SETTINGS_GLOBAL_WHITELIST);
         Assert.assertEquals(
@@ -112,7 +102,7 @@ public class CtsAngleRulesFileTest extends BaseHostJUnit4Test {
 
         installPackage(ANGLE_DRIVER_TEST_APP);
 
-        waitThenRunDeviceTests(this, ANGLE_DRIVER_TEST_PKG,
+        runDeviceTests(ANGLE_DRIVER_TEST_PKG,
                 ANGLE_DRIVER_TEST_PKG + "." + ANGLE_DRIVER_TEST_CLASS,
                 ANGLE_DRIVER_TEST_NATIVE_METHOD);
     }
@@ -129,11 +119,11 @@ public class CtsAngleRulesFileTest extends BaseHostJUnit4Test {
         installPackage(ANGLE_DRIVER_TEST_APP);
         installPackage(ANGLE_DRIVER_TEST_SEC_APP);
 
-        waitThenRunDeviceTests(this, ANGLE_DRIVER_TEST_PKG,
+        runDeviceTests(ANGLE_DRIVER_TEST_PKG,
                 ANGLE_DRIVER_TEST_PKG + "." + ANGLE_DRIVER_TEST_CLASS,
                 ANGLE_DRIVER_TEST_ANGLE_METHOD);
 
-        waitThenRunDeviceTests(this, ANGLE_DRIVER_TEST_SEC_PKG,
+        runDeviceTests(ANGLE_DRIVER_TEST_SEC_PKG,
                 ANGLE_DRIVER_TEST_SEC_PKG + "." + ANGLE_DRIVER_TEST_CLASS,
                 ANGLE_DRIVER_TEST_NATIVE_METHOD);
     }
