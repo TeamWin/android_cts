@@ -25,6 +25,7 @@ import android.content.Context;
 import android.media.MediaRouter2;
 import android.media.RouteDiscoveryPreference;
 import android.media.cts.SampleMediaRoute2ProviderService.Proxy;
+import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -42,6 +43,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "The system should be able to bind to SampleMediaRoute2ProviderService")
 public class MediaRoute2ProviderServiceTest {
     private static final String TAG = "MR2ProviderServiceTest";
     Context mContext;
