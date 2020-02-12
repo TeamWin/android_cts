@@ -138,53 +138,19 @@ public class CtsRootlessGpuDebugHostTest extends BaseHostJUnit4Test {
     }
 
     /**
-     * Apply a setting and ensure it sticks before continuing
+     * Apply a setting and refresh the platform's cache
      */
     private void applySetting(String setting, String value) throws Exception {
         getDevice().executeShellCommand("settings put global " + setting + " " + value);
-
-        long hostStartTime = System.currentTimeMillis();
-        while (((System.currentTimeMillis() - hostStartTime) < SETTING_APPLY_TIMEOUT_MS)) {
-
-            // Give the setting a chance to apply
-            Thread.sleep(1000);
-
-            // Read it back, make sure it has applied
-            String returnedValue = getDevice().executeShellCommand("settings get global " + setting);
-            if ((returnedValue != null) && (returnedValue.trim().equals(value))) {
-                return;
-            }
-        }
-
-        // If this assert fires, try increasing the timeout
-        Assert.fail("Unable to set global setting (" + setting + ") to (" + value + ") before timout (" +
-                SETTING_APPLY_TIMEOUT_MS + "ms)");
+        getDevice().executeShellCommand("am refresh-settings-cache");
     }
 
     /**
-     * Delete a setting and ensure it goes away before continuing
+     * Delete a setting and refresh the platform's cache
      */
     private void deleteSetting(String setting) throws Exception {
-        getDevice().executeShellCommand("shell settings delete global " + setting);
-
-        long hostStartTime = System.currentTimeMillis();
-        while (((System.currentTimeMillis() - hostStartTime) < SETTING_APPLY_TIMEOUT_MS)) {
-
-            // Give the setting a chance to apply
-            Thread.sleep(1000);
-
-            // Read it back, make sure it is gone
-            String returnedValue = getDevice().executeShellCommand("settings get global " + setting);
-            if ((returnedValue == null) ||
-                (returnedValue.trim().isEmpty()) ||
-                (returnedValue.trim().equals("null"))) {
-                return;
-            }
-        }
-
-        // If this assert fires, try increasing the timeout
-        Assert.fail("Unable to delete global setting (" + setting + ") before timout (" +
-                SETTING_APPLY_TIMEOUT_MS + "ms)");
+        getDevice().executeShellCommand("settings delete global " + setting);
+        getDevice().executeShellCommand("am refresh-settings-cache");
     }
 
     /**
