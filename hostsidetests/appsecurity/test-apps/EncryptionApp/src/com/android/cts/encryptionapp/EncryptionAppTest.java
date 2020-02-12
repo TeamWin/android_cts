@@ -51,6 +51,7 @@ import android.view.KeyEvent;
 import com.android.compatibility.common.util.TestUtils;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -259,7 +260,8 @@ public class EncryptionAppTest extends InstrumentationTestCase {
         assertQuery(2, MATCH_DIRECT_BOOT_AWARE | MATCH_DIRECT_BOOT_UNAWARE);
 
         if (Environment.isExternalStorageEmulated()) {
-            assertEquals(Environment.MEDIA_UNMOUNTED, Environment.getExternalStorageState());
+            assertThat(Environment.getExternalStorageState())
+                    .isIn(Arrays.asList(Environment.MEDIA_UNMOUNTED, Environment.MEDIA_REMOVED));
 
             final File expected = null;
             assertEquals(expected, mCe.getExternalCacheDir());
