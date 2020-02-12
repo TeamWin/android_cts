@@ -53,7 +53,6 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
-import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runners.model.Statement;
@@ -199,9 +198,15 @@ public final class AutoFillServiceTestCase {
         protected static final RequiredFeatureRule sRequiredFeatureRule =
                 new RequiredFeatureRule(PackageManager.FEATURE_AUTOFILL);
 
-        private final TestWatcher mTestWatcher = new AutofillTestWatcher();
+        private final AutofillTestWatcher mTestWatcher = new AutofillTestWatcher();
 
-        private final RetryRule mRetryRule = new RetryRule(getNumberRetries());
+        private final RetryRule mRetryRule =
+                new RetryRule(getNumberRetries(), () -> {
+                    // Between testing and retries, clean all launched activities to avoid
+                    // exception:
+                    //     Could not launch intent Intent { ... } within 45 seconds.
+                    mTestWatcher.cleanAllActivities();
+                });
 
         private final AutofillLoggingTestRule mLoggingRule = new AutofillLoggingTestRule(TAG);
 
