@@ -15,16 +15,17 @@
  */
 package android.telephony.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
-
 import android.telephony.AccessNetworkConstants;
 import android.telephony.NetworkRegistrationInfo;
 import android.telephony.TelephonyManager;
 
-import java.util.Arrays;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
+
+import java.util.Arrays;
 
 public class NetworkRegistrationInfoTest {
 
@@ -85,6 +86,30 @@ public class NetworkRegistrationInfoTest {
         assertEquals(Arrays.asList(NetworkRegistrationInfo.SERVICE_TYPE_DATA,
                 NetworkRegistrationInfo.SERVICE_TYPE_VIDEO), nri.getAvailableServices());
     }
+
+    @Test
+    public void testGetEmergencyServices() {
+        NetworkRegistrationInfo nri = new NetworkRegistrationInfo.Builder()
+                .setAvailableServices(Arrays.asList(NetworkRegistrationInfo.SERVICE_TYPE_EMERGENCY,
+                        NetworkRegistrationInfo.SERVICE_TYPE_VOICE))
+                .build();
+        assertEquals(Arrays.asList(NetworkRegistrationInfo.SERVICE_TYPE_EMERGENCY,
+                NetworkRegistrationInfo.SERVICE_TYPE_VOICE), nri.getAvailableServices());
+    }
+
+     /**
+     * Basic test to ensure {@link NetworkRegistrationInfo#isSearching()} does not throw any
+     * exception.
+     */
+    @Test
+    public void testNetworkRegistrationInfoIsSearching() {
+        NetworkRegistrationInfo nri = new NetworkRegistrationInfo.Builder()
+                .setRegistrationState(
+                    NetworkRegistrationInfo.REGISTRATION_STATE_NOT_REGISTERED_SEARCHING)
+                .build();
+        assertTrue(nri.isSearching());
+    }
+
 
     @Test
     public void testGetDomain() {
