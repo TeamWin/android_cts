@@ -20,12 +20,15 @@ import static android.os.UserHandle.MIN_SECONDARY_USER_ID;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.Manifest;
 import android.app.UiAutomation;
 import android.app.usage.StorageStatsManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Process;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.os.storage.CrateInfo;
 import android.os.storage.StorageManager;
@@ -37,6 +40,7 @@ import androidx.test.runner.AndroidJUnit4;
 import com.google.common.truth.Correspondence;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -55,6 +59,8 @@ import java.util.UUID;
 @RunWith(AndroidJUnit4.class)
 public class StorageStatsManagerTest {
     private static final String CRATES_ROOT = "crates";
+    private final static boolean ENABLE_STORAGE_CRATES =
+            SystemProperties.getBoolean("fw.storage_crates", false);
 
     private Context mContext;
     private StorageManager mStorageManager;
@@ -120,6 +126,7 @@ public class StorageStatsManagerTest {
 
     @Test
     public void queryCratesForUid_noCratedFolder_shouldBeEmpty() throws Exception {
+        assumeTrue("only test on the device with storage crates feature", ENABLE_STORAGE_CRATES);
         Collection<CrateInfo> collection = mStorageStatsManager.queryCratesForUid(mUuid,
                 Process.myUid());
 
@@ -143,6 +150,7 @@ public class StorageStatsManagerTest {
     }
     @Test
     public void queryCratesForUser_noCratedFolder_shouldBeEmpty() throws Exception {
+        assumeTrue("only test on the device with storage crates feature", ENABLE_STORAGE_CRATES);
         Collection<CrateInfo> collection = queryCratesForUser(true, mUuid,
                 Process.myUserHandle());
 
@@ -151,6 +159,7 @@ public class StorageStatsManagerTest {
 
     @Test
     public void queryCratesForPackage_noCratedFolder_shouldBeEmpty() throws Exception {
+        assumeTrue("only test on the device with storage crates feature", ENABLE_STORAGE_CRATES);
         Collection<CrateInfo> collection = mStorageStatsManager.queryCratesForPackage(mUuid,
                 mContext.getOpPackageName(), Process.myUserHandle());
 
@@ -159,6 +168,7 @@ public class StorageStatsManagerTest {
 
     @Test
     public void queryCratesForUid_withOtherUid_shouldRiseSecurityIssueException() throws Exception {
+        assumeTrue("only test on the device with storage crates feature", ENABLE_STORAGE_CRATES);
         int fakeUid = UserHandle.getUid(MIN_SECONDARY_USER_ID,
                 UserHandle.getAppId(Process.myUid()));
         SecurityException securityException = null;
@@ -175,6 +185,7 @@ public class StorageStatsManagerTest {
     @Test
     public void queryCratesForUser_withOtherUid_shouldRiseSecurityIssueException()
             throws Exception {
+        assumeTrue("only test on the device with storage crates feature", ENABLE_STORAGE_CRATES);
         UserHandle fakeUserHandle = UserHandle.of(MIN_SECONDARY_USER_ID);
         SecurityException securityException = null;
 
@@ -190,6 +201,7 @@ public class StorageStatsManagerTest {
     @Test
     public void queryCratesForPackage_withOtherUid_shouldRiseSecurityIssueException()
             throws Exception {
+        assumeTrue("only test on the device with storage crates feature", ENABLE_STORAGE_CRATES);
         UserHandle fakeUserHandle = UserHandle.of(MIN_SECONDARY_USER_ID);
         SecurityException securityException = null;
 
@@ -206,6 +218,7 @@ public class StorageStatsManagerTest {
     @Test
     public void queryCratesForUid_addOneDirectory_shouldIncreasingOneCrate()
             throws Exception {
+        assumeTrue("only test on the device with storage crates feature", ENABLE_STORAGE_CRATES);
         Collection<CrateInfo> originalCollection = mStorageStatsManager.queryCratesForUid(
                 mUuid, Process.myUid());
 
@@ -219,6 +232,7 @@ public class StorageStatsManagerTest {
     @Test
     public void queryCratesForUser_addOneDirectory_shouldIncreasingOneCrate()
             throws Exception {
+        assumeTrue("only test on the device with storage crates feature", ENABLE_STORAGE_CRATES);
         Collection<CrateInfo> originalCollection = queryCratesForUser(true, mUuid,
                 Process.myUserHandle());
 
@@ -232,6 +246,7 @@ public class StorageStatsManagerTest {
     @Test
     public void queryCratesForPackage_addOneDirectory_shouldIncreasingOneCrate()
             throws Exception {
+        assumeTrue("only test on the device with storage crates feature", ENABLE_STORAGE_CRATES);
         Collection<CrateInfo> originalCollection = mStorageStatsManager.queryCratesForPackage(
                 mUuid, mContext.getOpPackageName(), Process.myUserHandle());
 
@@ -245,6 +260,7 @@ public class StorageStatsManagerTest {
     @Test
     public void queryCratesForUid_withoutSetCrateInfo_labelShouldTheSameWithFolderName()
             throws Exception {
+        assumeTrue("only test on the device with storage crates feature", ENABLE_STORAGE_CRATES);
         mContext.getCrateDir(mCrateId);
 
         Collection<CrateInfo> crateInfos = mStorageStatsManager.queryCratesForUid(
@@ -256,6 +272,7 @@ public class StorageStatsManagerTest {
     @Test
     public void queryCratesForUser_withoutSetCrateInfo_labelShouldTheSameWithFolderName()
             throws Exception {
+        assumeTrue("only test on the device with storage crates feature", ENABLE_STORAGE_CRATES);
         mContext.getCrateDir(mCrateId);
 
         Collection<CrateInfo> crateInfos =  queryCratesForUser(true, mUuid,
@@ -267,6 +284,7 @@ public class StorageStatsManagerTest {
     @Test
     public void queryCratesForPackage_withoutSetCrateInfo_labelShouldTheSameWithFolderName()
             throws Exception {
+        assumeTrue("only test on the device with storage crates feature", ENABLE_STORAGE_CRATES);
         mContext.getCrateDir(mCrateId);
 
         Collection<CrateInfo> crateInfos = mStorageStatsManager.queryCratesForPackage(
@@ -278,6 +296,7 @@ public class StorageStatsManagerTest {
     @Test
     public void queryCratesForUid_withoutSetCrateInfo_expirationShouldBeZero()
             throws Exception {
+        assumeTrue("only test on the device with storage crates feature", ENABLE_STORAGE_CRATES);
         mContext.getCrateDir(mCrateId);
 
         Collection<CrateInfo> crateInfos = mStorageStatsManager.queryCratesForUid(
@@ -289,6 +308,7 @@ public class StorageStatsManagerTest {
     @Test
     public void queryCratesForUser_withoutSetCrateInfo_expirationShouldBeZero()
             throws Exception {
+        assumeTrue("only test on the device with storage crates feature", ENABLE_STORAGE_CRATES);
         mContext.getCrateDir(mCrateId);
 
         Collection<CrateInfo> crateInfos =  queryCratesForUser(true, mUuid,
@@ -300,6 +320,7 @@ public class StorageStatsManagerTest {
     @Test
     public void queryCratesForPackage_withoutSetCrateInfo_expirationShouldBeZero()
             throws Exception {
+        assumeTrue("only test on the device with storage crates feature", ENABLE_STORAGE_CRATES);
         mContext.getCrateDir(mCrateId);
 
         Collection<CrateInfo> crateInfos = mStorageStatsManager.queryCratesForPackage(
@@ -311,6 +332,7 @@ public class StorageStatsManagerTest {
     @Test
     public void queryCratesForUid_removeCratedDir_shouldDecreaseTheNumberOfCrates()
             throws Exception {
+        assumeTrue("only test on the device with storage crates feature", ENABLE_STORAGE_CRATES);
         for (int i = 0; i < 3; i++) {
             mContext.getCrateDir(mCrateId + "_" + i);
         }
@@ -327,6 +349,7 @@ public class StorageStatsManagerTest {
     @Test
     public void queryCratesForPackage_removeCratedDir_shouldDecreaseTheNumberOfCrates()
             throws Exception {
+        assumeTrue("only test on the device with storage crates feature", ENABLE_STORAGE_CRATES);
         for (int i = 0; i < 3; i++) {
             mContext.getCrateDir(mCrateId + "_" + i);
         }
@@ -343,6 +366,7 @@ public class StorageStatsManagerTest {
     @Test
     public void queryCratesForUser_removeCratedDir_shouldDecreaseTheNumberOfCrates()
             throws Exception {
+        assumeTrue("only test on the device with storage crates feature", ENABLE_STORAGE_CRATES);
         for (int i = 0; i < 3; i++) {
             mContext.getCrateDir(mCrateId + "_" + i);
         }
@@ -371,6 +395,7 @@ public class StorageStatsManagerTest {
     @Test
     public void queryCratesForUid_createDeepPath_shouldCreateOneCrate()
             throws Exception {
+        assumeTrue("only test on the device with storage crates feature", ENABLE_STORAGE_CRATES);
         final Path threeLevelPath = mCrateDirPath.resolve("1").resolve("2").resolve("3");
         Files.createDirectories(threeLevelPath);
 
@@ -384,6 +409,7 @@ public class StorageStatsManagerTest {
     @Test
     public void queryCratesForUser_createDeepPath_shouldCreateOneCrate()
             throws Exception {
+        assumeTrue("only test on the device with storage crates feature", ENABLE_STORAGE_CRATES);
         final Path threeLevelPath = mCrateDirPath.resolve("1").resolve("2").resolve("3");
         Files.createDirectories(threeLevelPath);
 
@@ -397,6 +423,7 @@ public class StorageStatsManagerTest {
     @Test
     public void queryCratesForPackage_createDeepPath_shouldCreateOneCrate()
             throws Exception {
+        assumeTrue("only test on the device with storage crates feature", ENABLE_STORAGE_CRATES);
         final Path threeLevelPath = mCrateDirPath.resolve("1").resolve("2").resolve("3");
         Files.createDirectories(threeLevelPath);
 
