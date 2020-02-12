@@ -41,9 +41,6 @@ public abstract class BaseManagedProfileTest extends BaseDevicePolicyTest {
     private static final String MANAGED_PROFILE_APK = "CtsManagedProfileApp.apk";
     private static final String NOTIFICATION_PKG =
             "com.android.cts.managedprofiletests.notificationsender";
-    //The maximum time to wait for user to be unlocked.
-    private static final long USER_UNLOCK_TIMEOUT_NANO = 30_000_000_000L;
-    private static final String USER_STATE_UNLOCKED = "RUNNING_UNLOCKED";
     protected int mParentUserId;
     // ID of the profile we'll create. This will always be a profile of the parent.
     protected int mProfileUserId;
@@ -70,20 +67,8 @@ public abstract class BaseManagedProfileTest extends BaseDevicePolicyTest {
             installAppAsUser(MANAGED_PROFILE_APK, USER_ALL);
             setProfileOwnerOrFail(MANAGED_PROFILE_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
                     mProfileUserId);
-            waitForUserUnlock();
+            waitForUserUnlock(mProfileUserId);
         }
-    }
-
-    void waitForUserUnlock() throws Exception {
-        final String command = String.format("am get-started-user-state %d", mProfileUserId);
-        final long deadline = System.nanoTime() + USER_UNLOCK_TIMEOUT_NANO;
-        while (System.nanoTime() <= deadline) {
-            if (getDevice().executeShellCommand(command).startsWith(USER_STATE_UNLOCKED)) {
-                return;
-            }
-            Thread.sleep(100);
-        }
-        fail("Profile user is not unlocked.");
     }
 
     @Override
