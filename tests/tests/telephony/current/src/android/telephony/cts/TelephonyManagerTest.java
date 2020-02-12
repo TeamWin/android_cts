@@ -1456,6 +1456,40 @@ public class TelephonyManagerTest {
     }
 
     /**
+     * Basic test to ensure {@link NetworkRegistrationInfo#getRegisteredPlmn()} provides valid
+     * information.
+     */
+    @Test
+    public void testNetworkRegistrationInfoRegisteredPlmn() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        // get NetworkRegistration object
+        ServiceState ss = mTelephonyManager.getServiceState();
+        assertNotNull(ss);
+
+        boolean hasRegistered = false;
+        for (NetworkRegistrationInfo nwReg : ss.getNetworkRegistrationInfoList()) {
+            if (nwReg.isRegistered()
+                        && nwReg.getTransportType() == AccessNetworkConstants.TRANSPORT_TYPE_WWAN) {
+                hasRegistered = true;
+                String plmnId = nwReg.getRegisteredPlmn();
+                // CDMA doesn't have PLMN IDs. Rather than put CID|NID here, instead it will be
+                // empty. It's a case that's becoming less important over time, but for now a
+                // device that's only registered on CDMA needs to pass this test.
+                if (nwReg.getCellIdentity() instanceof android.telephony.CellIdentityCdma) {
+                    assertTrue(TextUtils.isEmpty(plmnId));
+                } else {
+                    assertFalse(TextUtils.isEmpty(plmnId));
+                    assertTrue("PlmnId() out of range [00000 - 999999], PLMN ID=" + plmnId,
+                            plmnId.matches("^[0-9]{5,6}$"));
+                }
+            }
+        }
+        assertTrue(hasRegistered);
+    }
+
+    /**
      * Basic test to ensure {@link NetworkRegistrationInfo#isRoaming()} does not throw any
      * exception.
      */
