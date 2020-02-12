@@ -175,7 +175,7 @@ public class RestrictedPermissionsTest {
     @AppModeFull
     public void testDefaultAllRestrictedPermissionsWhitelistedAtInstall22() throws Exception {
         // Install with no changes to whitelisted permissions
-        runShellCommand("pm install -g " + APK_USES_SMS_CALL_LOG_22);
+        runShellCommand("pm install -g --force-queryable " + APK_USES_SMS_CALL_LOG_22);
 
         // All restricted permission should be whitelisted.
         assertAllRestrictedPermissionWhitelisted();
@@ -353,8 +353,10 @@ public class RestrictedPermissionsTest {
     @AppModeFull
     public void shareUidBetweenRestrictedAndNotRestrictedApp() throws Exception {
         runShellCommand(
-                "pm install -g --restrict-permissions " + APK_USES_SMS_RESTRICTED_SHARED_UID);
-        runShellCommand("pm install -g " + APK_USES_SMS_NOT_RESTRICTED_SHARED_UID);
+                "pm install -g --force-queryable --restrict-permissions "
+                + APK_USES_SMS_RESTRICTED_SHARED_UID);
+        runShellCommand("pm install -g --force-queryable "
+                + APK_USES_SMS_NOT_RESTRICTED_SHARED_UID);
 
         eventually(
                 () -> assertThat(isGranted(PKG_USES_SMS_RESTRICTED_SHARED_UID, READ_SMS)).isTrue());
@@ -623,7 +625,8 @@ public class RestrictedPermissionsTest {
     private void installApp(@NonNull String app, @Nullable Set<String> whitelistedPermissions,
             @Nullable Set<String> grantedPermissions) throws Exception {
         // Install the app and whitelist/grant all permission if requested.
-        String installResult = runShellCommand("pm install -r --restrict-permissions " + app);
+        String installResult = runShellCommand("pm install -r --force-queryable "
+                + "--restrict-permissions " + app);
         assertThat(installResult.trim()).isEqualTo("Success");
 
         final Set<String> adjustedWhitelistedPermissions;
