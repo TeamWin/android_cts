@@ -28,12 +28,103 @@ import numpy as np
 
 ALIGN_TOL_MM = 4.0E-3  # mm
 ALIGN_TOL = 0.01  # multiplied by sensor diagonal to convert to pixels
-CHART_DISTANCE_CM = 22  # cm
 CIRCLE_RTOL = 0.1
 GYRO_REFERENCE = 1
 UNDEFINED_REFERENCE = 2
 NAME = os.path.basename(__file__).split('.')[0]
 TRANS_REF_MATRIX = np.array([0, 0, 0])
+
+
+def determine_valid_out_surfaces(cam, props, fmt, cap_camera_ids, sizes):
+    """Determine a valid output surfaces for captures.
+
+    Args:
+        cam:                obj; camera object
+        props:              dict; props for the physical cameras
+        fmt:                str; capture format ('yuv' or 'raw')
+        cap_camera_ids:     list; camera capture ids
+        sizes:              dict; valid physical sizes for the cap_camera_ids
+
+    Returns:
+        valid out_surfaces
+    """
+    valid_stream_combo = False
+
+    # try simultaneous capture
+    w, h = its.objects.get_available_output_sizes('yuv', props)[0]
+    out_surfaces = [{'format': 'yuv', 'width': w, 'height': h},
+                    {'format': fmt, 'physicalCamera': cap_camera_ids[0],
+                     'width': sizes[cap_camera_ids[0]][0],
+                     'height': sizes[cap_camera_ids[0]][1]},
+                    {'format': fmt, 'physicalCamera': cap_camera_ids[1],
+                     'width': sizes[cap_camera_ids[1]][0],
+                     'height': sizes[cap_camera_ids[1]][1]},]
+    valid_stream_combo = cam.is_stream_combination_supported(out_surfaces)
+
+    # try each camera individually
+    if not valid_stream_combo:
+        out_surfaces = []
+        for cap_id in cap_camera_ids:
+            out_surface = {'format': fmt, 'physicalCamera': cap_id,
+                           'width': sizes[cap_id][0],
+                           'height': sizes[cap_id][1]}
+            valid_stream_combo = cam.is_stream_combination_supported(out_surface)
+            if valid_stream_combo:
+                out_surfaces.append(out_surface)
+            else:
+                its.caps.skip_unless(valid_stream_combo)
+
+    return out_surfaces
+
+
+def take_images(cam, caps, props, fmt, cap_camera_ids, out_surfaces, debug):
+    """Do image captures.
+
+    Args:
+        cam:                obj; camera object
+        caps:               dict; capture results indexed by (fmt, id)
+        props:              dict; props for the physical cameras
+        fmt:                str; capture format ('yuv' or 'raw')
+        cap_camera_ids:     list; camera capture ids
+        out_surfaces:       list; valid output surfaces for caps
+        debug:              bool; determine if debug mode or not.
+
+    Returns:
+        caps                dict; capture information indexed by (fmt, cap_id)
+    """
+
+    print 'out_surfaces:', out_surfaces
+    if len(out_surfaces) == 3:  # do simultaneous capture
+        # Do 3A and get the values
+        s, e, _, _, fd = cam.do_3a(get_results=True, lock_ae=True,
+                                   lock_awb=True)
+        if fmt == 'raw':
+            e *= 2  # brighten RAW images
+
+        req = its.objects.manual_capture_request(s, e, fd)
+        _, caps[(fmt, cap_camera_ids[0])], caps[(fmt, cap_camera_ids[1])] = cam.do_capture(
+                req, out_surfaces)
+
+    else:  # step through cameras individually
+        for i, out_surface in enumerate(out_surfaces):
+            # Do 3A and get the values
+            s, e, _, _, fd = cam.do_3a(get_results=True,
+                                       lock_ae=True, lock_awb=True)
+            if fmt == 'raw':
+                e *= 2  # brighten RAW images
+
+            req = its.objects.manual_capture_request(s, e, fd)
+            caps[(fmt, cap_camera_ids[i])] = cam.do_capture(req, out_surface)
+
+    # save images if debug
+    if debug:
+        for i in [0, 1]:
+            img = its.image.convert_capture_to_rgb_image(
+                    caps[(fmt, cap_camera_ids[i])], props=props[cap_camera_ids[i]])
+            its.image.write_image(img, '%s_%s_%s.jpg' % (
+                    NAME, fmt, cap_camera_ids[i]))
+
+    return caps
 
 
 def convert_to_world_coordinates(x, y, r, t, k, z_w):
@@ -227,13 +318,14 @@ def main():
     different using
         android.lens.availableFocalLengths.
     """
-    chart_distance = CHART_DISTANCE_CM
+    chart_distance = its.cv2image.CHART_DISTANCE_RFOV
     for s in sys.argv[1:]:
         if s[:5] == 'dist=' and len(s) > 5:
             chart_distance = float(re.sub('cm', '', s[5:]))
             print 'Using chart distance: %.1fcm' % chart_distance
     chart_distance *= 1.0E-2
 
+    # capture images
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
         its.caps.skip_unless(its.caps.read_3a(props) and
@@ -270,12 +362,10 @@ def main():
         else:
             physical_ids = ids[0:2]
 
-        w, h = its.objects.get_available_output_sizes('yuv', props)[0]
-
-        # do captures on 2 cameras
+        # do captures for different formats
         caps = {}
         for i, fmt in enumerate(fmts):
-            physicalSizes = {}
+            physical_sizes = {}
 
             capture_cam_ids = physical_ids
             if fmt == 'raw':
@@ -293,31 +383,14 @@ def main():
 
                 out_configs = [cfg for cfg in fmt_configs if not cfg['input']]
                 out_sizes = [(cfg['width'], cfg['height']) for cfg in out_configs]
-                physicalSizes[physical_id] = max(out_sizes, key=lambda item: item[1])
+                physical_sizes[physical_id] = max(out_sizes, key=lambda item: item[1])
 
-            out_surfaces = [{'format': 'yuv', 'width': w, 'height': h},
-                            {'format': fmt, 'physicalCamera': capture_cam_ids[0],
-                             'width': physicalSizes[capture_cam_ids[0]][0],
-                             'height': physicalSizes[capture_cam_ids[0]][1]},
-                            {'format': fmt, 'physicalCamera': capture_cam_ids[1],
-                             'width': physicalSizes[capture_cam_ids[1]][0],
-                             'height': physicalSizes[capture_cam_ids[1]][1]},]
+            out_surfaces = determine_valid_out_surfaces(
+                    cam, props, fmt, capture_cam_ids, physical_sizes)
+            caps = take_images(
+                    cam, caps, props_physical, fmt, capture_cam_ids, out_surfaces, debug)
 
-            out_surfaces_supported = cam.is_stream_combination_supported(out_surfaces)
-            its.caps.skip_unless(out_surfaces_supported)
-
-            # Do 3A and get the values
-            s, e, _, _, fd = cam.do_3a(get_results=True,
-                                       lock_ae=True, lock_awb=True)
-            if fmt == 'raw':
-                e_corrected = e * 2  # brighten RAW images
-            else:
-                e_corrected = e
-            print 'out_surfaces:', out_surfaces
-            req = its.objects.manual_capture_request(s, e_corrected, fd)
-            _, caps[(fmt, capture_cam_ids[0])], caps[(fmt, capture_cam_ids[1])] = cam.do_capture(
-                    req, out_surfaces)
-
+    # process images for correctness
     for j, fmt in enumerate(fmts):
         size = {}
         k = {}
@@ -439,7 +512,8 @@ def main():
             chart_distance *= -1
         for i in [i_ref, i_2nd]:
             x_w[i], y_w[i] = convert_to_world_coordinates(
-                    circle[i][0], circle[i][1], r[i], t[i], k[i], chart_distance)
+                    circle[i][0], circle[i][1], r[i], t[i], k[i],
+                    chart_distance)
 
         # Back convert to image coordinates for sanity check
         x_p = {}

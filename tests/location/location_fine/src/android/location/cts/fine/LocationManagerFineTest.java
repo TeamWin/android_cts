@@ -40,6 +40,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
+import android.location.GnssAntennaInfo;
 import android.location.GnssMeasurementsEvent;
 import android.location.GnssNavigationMessage;
 import android.location.GnssStatus;
@@ -187,6 +188,15 @@ public class LocationManagerFineTest {
         } catch (IllegalArgumentException e) {
             // expected
         }
+    }
+
+    @Test
+    public void testGetLastKnownLocation_RemoveProvider() {
+        Location loc1 = createLocation(TEST_PROVIDER, mRandom);
+
+        mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
+        mManager.removeTestProvider(TEST_PROVIDER);
+        assertThat(mManager.getLastKnownLocation(TEST_PROVIDER)).isNull();
     }
 
     @Test
@@ -1132,6 +1142,15 @@ public class LocationManagerFineTest {
 
         mManager.registerGnssMeasurementsCallback(Executors.newSingleThreadExecutor(), callback);
         mManager.unregisterGnssMeasurementsCallback(callback);
+    }
+
+    @Test
+    public void testRegisterGnssAntennaInfoCallback() {
+        GnssAntennaInfo.Callback callback = new GnssAntennaInfo.Callback() {
+        };
+
+        mManager.registerAntennaInfoCallback(Executors.newSingleThreadExecutor(), callback);
+        mManager.unregisterAntennaInfoCallback(callback);
     }
 
     @Test

@@ -50,15 +50,16 @@ public class PacProxyTest extends BaseProxyTest {
       "}";
 
   /**
-   * PAC file that constructs the proxy to contain the host value passed in.
+   * PAC file that returns either proxy or DIRECT depending on the host.
    *
    * The return result is a bogus proxy that demonstrates that the input variables
    * are passed through correctly.
    */
   private static final String HOST_PAC = "function FindProxyForURL(url, host)" +
-      "{" +
-      "var res = host.split(\"-\")[1];" +
-      "  return \"PROXY localhost:\" + res;" +
+      "  if (host == \"testhost\") {" +
+      "    return \"PROXY localhost:8080\";" +
+      "  }" +
+      "  return \"DIRECT\";" +
       "}";
 
   /**
@@ -217,9 +218,8 @@ public class PacProxyTest extends BaseProxyTest {
   }
 
   /**
-   * This tests a PAC file that constructs the resulting proxy out of
-   * the current host, which tests that the data is being passed in/out
-   * of the javascript correctly.
+   * Tests a PAC file that returns different proxies depending on
+   * the host that is being accessed.
    */
   public void testHostPassthrough() throws Exception {
     mPacServer.setPacFile(HOST_PAC);
@@ -227,13 +227,13 @@ public class PacProxyTest extends BaseProxyTest {
 
     waitForSetProxySysProp();
 
-    int port = 452;
-    URI uri = new URI("http://" + port + "/test/my/url");
+    String host = "testhost";
+    URI uri = new URI("http://" + host + "/test/my/url");
     ProxySelector selector = ProxySelector.getDefault();
     List<Proxy> list = selector.select(uri);
 
     assertEquals("Proxy must have correct port", newArrayList(
-        new Proxy(Type.HTTP, InetSocketAddress.createUnresolved("localhost", port))),
+        new Proxy(Type.HTTP, InetSocketAddress.createUnresolved("localhost", 8080))),
         list);
   }
 

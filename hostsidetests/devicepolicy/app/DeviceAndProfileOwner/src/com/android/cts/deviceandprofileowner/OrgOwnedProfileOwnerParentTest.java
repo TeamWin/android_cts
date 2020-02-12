@@ -107,7 +107,6 @@ public class OrgOwnedProfileOwnerParentTest extends InstrumentationTestCase {
                     UserManager.DISALLOW_CONTENT_CAPTURE,
                     UserManager.DISALLOW_CONTENT_SUGGESTIONS,
                     UserManager.DISALLOW_DATA_ROAMING,
-                    UserManager.DISALLOW_DEBUGGING_FEATURES,
                     UserManager.DISALLOW_SAFE_BOOT,
                     UserManager.DISALLOW_SHARE_LOCATION,
                     UserManager.DISALLOW_SMS,
@@ -116,6 +115,8 @@ public class OrgOwnedProfileOwnerParentTest extends InstrumentationTestCase {
                     UserManager.DISALLOW_MOUNT_PHYSICAL_MEDIA,
                     UserManager.DISALLOW_OUTGOING_CALLS,
                     UserManager.DISALLOW_UNMUTE_MICROPHONE
+                    // This restriction disables ADB, so is not used in test.
+                    // UserManager.DISALLOW_DEBUGGING_FEATURES
             );
 
     public void testAddGetAndClearUserRestriction_onParent() {

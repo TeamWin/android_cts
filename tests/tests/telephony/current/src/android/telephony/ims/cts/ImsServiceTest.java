@@ -66,6 +66,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -780,6 +781,7 @@ public class ImsServiceTest {
 
     }
 
+    @Ignore("RCS APIs not public yet")
     @Test
     public void testRcsManagerRegistrationCallback() throws Exception {
         if (!ImsUtils.shouldTestImsService()) {
@@ -949,6 +951,7 @@ public class ImsServiceTest {
                 (m) -> m.unregisterImsRegistrationCallback(callback));
     }
 
+    @Ignore("RCS APIs not public yet")
     @Test
     public void testRcsManagerRegistrationState() throws Exception {
         if (!ImsUtils.shouldTestImsService()) {
@@ -1163,6 +1166,7 @@ public class ImsServiceTest {
         }
     }
 
+    @Ignore("RCS APIs not public yet")
     @Test
     public void testRcsCapabilityStatusCallback() throws Exception {
         if (!ImsUtils.shouldTestImsService()) {

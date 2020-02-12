@@ -134,7 +134,7 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
      * Verify that app with no external storage permissions works correctly.
      */
     @Test
-    public void testExternalStorageNone() throws Exception {
+    public void testExternalStorageNone29() throws Exception {
         try {
             wipePrimaryExternalStorage();
 
@@ -157,7 +157,7 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
      * correctly.
      */
     @Test
-    public void testExternalStorageRead() throws Exception {
+    public void testExternalStorageRead29() throws Exception {
         try {
             wipePrimaryExternalStorage();
 

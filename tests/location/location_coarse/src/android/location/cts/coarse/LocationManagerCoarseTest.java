@@ -117,12 +117,20 @@ public class LocationManagerCoarseTest {
     @Test
     public void testGetLastKnownLocation() {
         Location loc = createLocation(TEST_PROVIDER, mRandom);
-        Bundle extras = new Bundle();
-        extras.putParcelable(Location.EXTRA_NO_GPS_LOCATION, new Location(loc));
-        loc.setExtras(extras);
 
         mManager.setTestProviderLocation(TEST_PROVIDER, loc);
         assertThat(mManager.getLastKnownLocation(TEST_PROVIDER)).isNearby(loc, MAX_COARSE_FUDGE_DISTANCE_M);
+    }
+
+    @Test
+    public void testGetLastKnownLocation_FastInterval() {
+        Location loc1 = createLocation(TEST_PROVIDER, mRandom);
+        Location loc2 = createLocation(TEST_PROVIDER, mRandom);
+
+        mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
+        Location coarseLocation = mManager.getLastKnownLocation(TEST_PROVIDER);
+        mManager.setTestProviderLocation(TEST_PROVIDER, loc2);
+        assertThat(mManager.getLastKnownLocation(TEST_PROVIDER)).isEqualTo(coarseLocation);
     }
 
     @Test
