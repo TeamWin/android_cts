@@ -23,7 +23,24 @@ import android.os.Bundle;
 import android.util.Log;
 
 /**
- * A simple app that captures the key press events and logs them.
+ * A simple app that can be used to mute, unmute, set volume or get the volume status of a device.
+ * The actions supported are:
+ *
+ * 1. android.hdmicec.app.MUTE: Mutes the STREAM_MUSIC of the device,
+ *                              irrespective of the previous state.
+ *    Usage: START_COMMAND -a android.hdmicec.app.MUTE
+ * 2. android.hdmicec.app.UNMUTE: Unmutes the STREAM_MUSIC of the device,
+ *                                irrespective of the previous state.
+ *    Usage: START_COMMAND -a android.hdmicec.app.UNMUTE
+ * 3. android.hdmicec.app.REPORT_VOLUME: Reports if the STREAM_MUSIC of the device is muted and
+ *                                       if not muted, the current volume level in percent.
+ *    Usage: START_COMMAND -a android.hdmicec.app.REPORT_VOLUME
+ * 4. android.hdmicec.app.SET_VOLUME: Sets the volume of STREAM_MUSIC to a particular level.
+ *                                    Has to be used with --ei "volumePercent" x.
+ *    Usage: START_COMMAND -a android.hdmicec.app.SET_VOLUME --ei "volumePercent" x
+ *
+ * where START_COMMAND is
+ * adb shell am start -n "android.hdmicec.app/android.hdmicec.app.HdmiCecAudioManager"
  */
 public class HdmiCecAudioManager extends Activity {
 
@@ -33,27 +50,37 @@ public class HdmiCecAudioManager extends Activity {
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        if ("android.hdmicec.app.MUTE".equals(getIntent().getAction())) {
-            audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC,
-                    AudioManager.ADJUST_MUTE, 0);
-        } else if ("android.hdmicec.app.UNMUTE".equals(getIntent().getAction())) {
-            audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC,
-                    AudioManager.ADJUST_UNMUTE, 0);
-        } else if ("android.hdmicec.app.MUTE_STATUS".equals(getIntent().getAction())) {
-            if (audioManager.isStreamMute(AudioManager.STREAM_MUSIC)) {
-                Log.i(TAG, "Device muted.");
-            } else {
-                Log.i(TAG, "Device not muted.");
-            }
-        } else if ("android.hdmicec.app.SET_VOLUME".equals(getIntent().getAction())) {
-            int percentVolume = getIntent().getIntExtra("volumePercent", 50);
-            int minVolume = audioManager.getStreamMinVolume(AudioManager.STREAM_MUSIC);
-            int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-            int volume = minVolume + ((maxVolume - minVolume) * percentVolume / 100);
-            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, 0);
-            Log.i(TAG, "Set volume to " + volume + " (" + percentVolume + "%)");
-        } else {
-            Log.i(TAG, "Unknown intent");
+
+        switch(getIntent().getAction()) {
+            case "android.hdmicec.app.MUTE":
+                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC,
+                        AudioManager.ADJUST_MUTE, 0);
+                break;
+            case "android.hdmicec.app.UNMUTE":
+                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC,
+                        AudioManager.ADJUST_UNMUTE, 0);
+                break;
+            case "android.hdmicec.app.REPORT_VOLUME":
+                if (audioManager.isStreamMute(AudioManager.STREAM_MUSIC)) {
+                    Log.i(TAG, "Device muted.");
+                } else {
+                    int minVolume = audioManager.getStreamMinVolume(AudioManager.STREAM_MUSIC);
+                    int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+                    int volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+                    int percentVolume = 100 * volume / (maxVolume - minVolume);
+                    Log.i(TAG, "Volume at " + percentVolume + "%");
+                }
+                break;
+            case "android.hdmicec.app.SET_VOLUME":
+                int percentVolume = getIntent().getIntExtra("volumePercent", 50);
+                int minVolume = audioManager.getStreamMinVolume(AudioManager.STREAM_MUSIC);
+                int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+                int volume = minVolume + ((maxVolume - minVolume) * percentVolume / 100);
+                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, 0);
+                Log.i(TAG, "Set volume to " + volume + " (" + percentVolume + "%)");
+                break;
+            default:
+                Log.w(TAG, "Unknown intent!");
         }
         finishAndRemoveTask();
     }
