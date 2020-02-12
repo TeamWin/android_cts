@@ -31,30 +31,28 @@ java_defaults {
     ],
 }
 
-// TODO(b/140795853): once fixed, uncomment the below targets.
+//-----------------------------------------------------------
+android_test {
+    name: "HelloWorld5",
+    defaults: ["hello_world_defaults"],
+    srcs: ["src5/**/*.java"],
+    // tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ],
+}
 
 //-----------------------------------------------------------
-//android_test {
-//    name: "HelloWorld5",
-//    defaults: ["hello_world_defaults"],
-//    srcs: ["src5/**/*.java"],
-//    // tag this module as a cts test artifact
-//    test_suites: [
-//        "cts",
-//        "vts",
-//        "general-tests",
-//    ],
-//}
-
-//-----------------------------------------------------------
-//android_test {
-//    name: "HelloWorld7",
-//    defaults: ["hello_world_defaults"],
-//    srcs: ["src7/**/*.java"],
-//    // tag this module as a cts test artifact
-//    test_suites: [
-//        "cts",
-//        "vts",
-//        "general-tests",
-//    ],
-//}
+android_test {
+    name: "HelloWorld7",
+    defaults: ["hello_world_defaults"],
+    srcs: ["src7/**/*.java"],
+    // tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ],
+}
