@@ -484,7 +484,7 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
                         userId, /* expectFailure */ false));
     }
 
-    public boolean hasService(String service) {
+    private boolean hasService(String service) {
         String command = "service check " + service;
         try {
             String commandOutput = getDevice().executeShellCommand(command);
@@ -493,5 +493,43 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
             LogUtil.CLog.w("Exception running '" + command + "': " + e);
             return false;
         }
+    }
+
+    @Test
+    public void testSetPersonalAppsSuspendedLogged() throws Exception {
+        if (!mHasFeature|| !isStatsdEnabled(getDevice())) {
+            return;
+        }
+        assertMetricsLogged(getDevice(), () -> {
+                    runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DevicePolicyLoggingTest",
+                            "testSetPersonalAppsSuspendedLogged", mUserId);
+                }, new DevicePolicyEventWrapper.Builder(EventId.SET_PERSONAL_APPS_SUSPENDED_VALUE)
+                        .setAdminPackageName(DEVICE_ADMIN_PKG)
+                        .setBoolean(true)
+                        .build(),
+                new DevicePolicyEventWrapper.Builder(EventId.SET_PERSONAL_APPS_SUSPENDED_VALUE)
+                        .setAdminPackageName(DEVICE_ADMIN_PKG)
+                        .setBoolean(false)
+                        .build());
+    }
+
+    @Test
+    public void testSetManagedProfileMaximumTimeOffLogged() throws Exception {
+        if (!mHasFeature|| !isStatsdEnabled(getDevice())) {
+            return;
+        }
+        assertMetricsLogged(getDevice(), () -> {
+                    runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DevicePolicyLoggingTest",
+                            "testSetManagedProfileMaximumTimeOffLogged", mUserId);
+                }, new DevicePolicyEventWrapper.Builder(
+                        EventId.SET_MANAGED_PROFILE_MAXIMUM_TIME_OFF_VALUE)
+                        .setAdminPackageName(DEVICE_ADMIN_PKG)
+                        .setTimePeriod(1234567)
+                        .build(),
+                new DevicePolicyEventWrapper.Builder(
+                        EventId.SET_MANAGED_PROFILE_MAXIMUM_TIME_OFF_VALUE)
+                        .setAdminPackageName(DEVICE_ADMIN_PKG)
+                        .setTimePeriod(0)
+                        .build());
     }
 }

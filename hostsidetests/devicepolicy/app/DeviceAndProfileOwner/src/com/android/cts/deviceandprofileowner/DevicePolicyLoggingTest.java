@@ -184,4 +184,14 @@ public class DevicePolicyLoggingTest extends BaseDeviceAdminTest {
         mDevicePolicyManager.setMasterVolumeMuted(ADMIN_RECEIVER_COMPONENT, true);
         mDevicePolicyManager.setMasterVolumeMuted(ADMIN_RECEIVER_COMPONENT, initialValue);
     }
+
+    public void testSetPersonalAppsSuspendedLogged() {
+        mDevicePolicyManager.setPersonalAppsSuspended(ADMIN_RECEIVER_COMPONENT, true);
+        mDevicePolicyManager.setPersonalAppsSuspended(ADMIN_RECEIVER_COMPONENT, false);
+    }
+
+    public void testSetManagedProfileMaximumTimeOffLogged() {
+        mDevicePolicyManager.setManagedProfileMaximumTimeOff(ADMIN_RECEIVER_COMPONENT, 1234567);
+        mDevicePolicyManager.setManagedProfileMaximumTimeOff(ADMIN_RECEIVER_COMPONENT, 0);
+    }
 }
