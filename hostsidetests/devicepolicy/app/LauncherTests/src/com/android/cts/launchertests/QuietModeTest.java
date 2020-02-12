@@ -171,6 +171,26 @@ public class QuietModeTest {
         return trySetQuietModeEnabled(enabled, true, flags, expectsCredentialsNotNeeded);
     }
 
+    @Test
+    public void testTryEnableQuietMode() throws Exception {
+        setTestAppAsDefaultLauncher();
+        startLauncherActivityInTestApp();
+
+        Intent intent = trySetQuietModeEnabled(true);
+        assertNotNull("Failed to receive ACTION_MANAGED_PROFILE_UNAVAILABLE broadcast", intent);
+        assertTrue(mUserManager.isQuietModeEnabled(mTargetUser));
+    }
+
+    @Test
+    public void testTryDisableQuietMode() throws Exception {
+        setTestAppAsDefaultLauncher();
+        startLauncherActivityInTestApp();
+
+        Intent intent = trySetQuietModeEnabled(false);
+        assertNotNull("Failed to receive ACTION_MANAGED_PROFILE_AVAILABLE broadcast", intent);
+        assertFalse(mUserManager.isQuietModeEnabled(mTargetUser));
+    }
+
     private Intent trySetQuietModeEnabled(boolean enabled) throws Exception {
         return trySetQuietModeEnabled(enabled, false, 0, true);
     }
