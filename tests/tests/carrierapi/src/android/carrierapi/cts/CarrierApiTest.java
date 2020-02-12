@@ -563,6 +563,16 @@ public class CarrierApiTest extends AndroidTestCase {
         }
     }
 
+    public void testIsManualNetworkSelectionAllowed() throws Exception {
+        if (!hasCellular) return;
+
+        try {
+            assertTrue(mTelephonyManager.isManualNetworkSelectionAllowed());
+        } catch (SecurityException e) {
+            failMessage();
+        }
+    }
+
     public void testSubscriptionInfoChangeListener() throws Exception {
         if (!hasCellular) return;
         final AtomicReference<SecurityException> error = new AtomicReference<>();
