@@ -254,15 +254,25 @@ public class ExtractorTest {
                                     '/' + testSampleInfo.presentationTimeUs);
                         }
                         areTracksIdentical = false;
+                        break;
                     }
                     int refSz = refExtractor.readSampleData(refBuffer, 0);
-                    int testSz = testExtractor.readSampleData(testBuffer, 0);
-                    if (refSz != testSz || refSz != refSampleInfo.size) {
+                    if (refSz != refSampleInfo.size) {
                         if (ENABLE_LOGS) {
-                            Log.d(LOG_TAG, "Mime: " + refMime + " Size exp/got/got: " +
-                                    refSz + '/' + testSz + '/' + refSampleInfo.size);
+                            Log.d(LOG_TAG, "Mime: " + refMime + " Size exp/got: " +
+                                    refSampleInfo.size + '/' + refSz);
                         }
                         areTracksIdentical = false;
+                        break;
+                    }
+                    int testSz = testExtractor.readSampleData(testBuffer, 0);
+                    if (testSz != testSampleInfo.size) {
+                        if (ENABLE_LOGS) {
+                            Log.d(LOG_TAG, "Mime: " + refMime + " Size exp/got: " +
+                                    testSampleInfo.size + '/' + testSz);
+                        }
+                        areTracksIdentical = false;
+                        break;
                     }
                     int trackIndex = refExtractor.getSampleTrackIndex();
                     if (trackIndex != refTrackID) {
@@ -271,6 +281,7 @@ public class ExtractorTest {
                                     " TrackID exp/got: " + refTrackID + '/' + trackIndex);
                         }
                         areTracksIdentical = false;
+                        break;
                     }
                     trackIndex = testExtractor.getSampleTrackIndex();
                     if (trackIndex != testTrackID) {
@@ -279,6 +290,7 @@ public class ExtractorTest {
                                     " TrackID exp/got: " + testTrackID + '/' + trackIndex);
                         }
                         areTracksIdentical = false;
+                        break;
                     }
                     boolean haveRefSamples = refExtractor.advance();
                     boolean haveTestSamples = testExtractor.advance();
@@ -287,6 +299,7 @@ public class ExtractorTest {
                             Log.d(LOG_TAG, "Mime: " + refMime + " Mismatch in sampleCount");
                         }
                         areTracksIdentical = false;
+                        break;
                     }
 
                     if (!haveRefSamples && !isExtractorOKonEOS(refExtractor)) {
@@ -294,12 +307,14 @@ public class ExtractorTest {
                             Log.d(LOG_TAG, "Mime: " + refMime + " calls post advance() are not OK");
                         }
                         areTracksIdentical = false;
+                        break;
                     }
                     if (!haveTestSamples && !isExtractorOKonEOS(testExtractor)) {
                         if (ENABLE_LOGS) {
                             Log.d(LOG_TAG, "Mime: " + refMime + " calls post advance() are not OK");
                         }
                         areTracksIdentical = false;
+                        break;
                     }
                     if (ENABLE_LOGS) {
                         Log.v(LOG_TAG, "Mime: " + refMime + " Sample: " + frameCount +
@@ -307,8 +322,7 @@ public class ExtractorTest {
                                 " size: " + refSampleInfo.size +
                                 " ts: " + refSampleInfo.presentationTimeUs);
                     }
-                    if (!areTracksIdentical || !haveRefSamples || !haveTestSamples ||
-                            frameCount >= sampleLimit) {
+                    if (!haveRefSamples || frameCount >= sampleLimit) {
                         break;
                     }
                 }
@@ -342,6 +356,10 @@ public class ExtractorTest {
                 "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4";
 
         private MediaExtractor mRefExtractor;
+
+        static {
+            System.loadLibrary("ctsmediav2extractor_jni");
+        }
 
         @Before
         public void setUp() throws IOException {
@@ -538,6 +556,14 @@ public class ExtractorTest {
             testExtractor.unselectTrack(0);
             testExtractor.release();
         }
+
+        private native boolean nativeTestDataSource(String srcPath, String srcUrl);
+
+        @Test
+        public void testDataSourceNative() {
+            assertTrue(testName.getMethodName() + " failed ",
+                    nativeTestDataSource(mInpPrefix + mInpMedia, mInpMediaUrl));
+        }
     }
 
     /**
@@ -550,6 +576,10 @@ public class ExtractorTest {
         private final Random mRandNum = new Random(mSeed);
         private String[] mSrcFiles;
         private String mMime;
+
+        static {
+            System.loadLibrary("ctsmediav2extractor_jni");
+        }
 
         @Rule
         public TestName testName = new TestName();
@@ -617,6 +647,16 @@ public class ExtractorTest {
                             "bbb_cif_768kbps_30fps_h263_stereo_48kHz_192kbps_flac.mkv",}},
             });
         }
+
+        private native boolean nativeTestExtract(String srcPath, String refPath, String mime);
+
+        private native boolean nativeTestSeek(String srcPath, String mime);
+
+        private native boolean nativeTestSeekFlakiness(String srcPath, String mime);
+
+        private native boolean nativeTestSeekToZero(String srcPath, String mime);
+
+        private native boolean nativeTestFileFormat(String srcPath);
 
         public FunctionalityTest(String mime, String[] srcFiles) {
             mMime = mime;
@@ -763,12 +803,13 @@ public class ExtractorTest {
                     if (!isSampleInfoIdentical(arg.mExpected, received)) {
                         errCnt++;
                         if (ENABLE_LOGS) {
-                            Log.d(LOG_TAG, " flags exp/got: " +
-                                    received.flags + '/' + arg.mExpected.flags);
-                            Log.d(LOG_TAG, " size exp/got: " +
-                                    received.size + '/' + arg.mExpected.size);
-                            Log.d(LOG_TAG, " ts exp/got: " + received.presentationTimeUs +
-                                    '/' + arg.mExpected.presentationTimeUs);
+                            Log.d(LOG_TAG, " flags exp/got: " + arg.mExpected.flags + '/' +
+                                    received.flags);
+                            Log.d(LOG_TAG,
+                                    " size exp/got: " + arg.mExpected.size + '/' + received.size);
+                            Log.d(LOG_TAG,
+                                    " ts exp/got: " + arg.mExpected.presentationTimeUs + '/' +
+                                            received.presentationTimeUs);
                         }
                     }
                 }
@@ -798,7 +839,7 @@ public class ExtractorTest {
             MediaExtractor refExtractor = new MediaExtractor();
             refExtractor.setDataSource(mInpPrefix + mSrcFiles[0]);
             boolean isOk = true;
-            for (int i = 1; i < mSrcFiles.length; i++) {
+            for (int i = 1; i < mSrcFiles.length && isOk; i++) {
                 MediaExtractor testExtractor = new MediaExtractor();
                 testExtractor.setDataSource(mInpPrefix + mSrcFiles[i]);
                 if (!isMediaSimilar(refExtractor, testExtractor, mMime, Integer.MAX_VALUE)) {
@@ -840,6 +881,7 @@ public class ExtractorTest {
                     }
                     if (!codecListSupp.contains(mMime)) {
                         isOk = false;
+                        break;
                     }
                 }
             }
@@ -867,6 +909,7 @@ public class ExtractorTest {
                     }
                     if (!codecListSupp.contains(mMime)) {
                         isOk = false;
+                        break;
                     }
                 }
             }
@@ -900,12 +943,42 @@ public class ExtractorTest {
                     extractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
                     currInfo.set(0, (int) extractor.getSampleSize(),
                             extractor.getSampleTime(), extractor.getSampleFlags());
-                    extractor.unselectTrack(trackID);
                     if (!isSampleInfoIdentical(sampleInfoAtZero, currInfo)) {
                         if (!codecListSupp.contains(mMime)) {
+                            if (ENABLE_LOGS) {
+                                Log.d(LOG_TAG, "seen mismatch seekTo(0, SEEK_TO_CLOSEST_SYNC)");
+                                Log.d(LOG_TAG, " flags exp/got: " + sampleInfoAtZero.flags + '/' +
+                                        currInfo.flags);
+                                Log.d(LOG_TAG, " size exp/got: " + sampleInfoAtZero.size + '/' +
+                                        currInfo.size);
+                                Log.d(LOG_TAG,
+                                        " ts exp/got: " + sampleInfoAtZero.presentationTimeUs +
+                                                '/' + currInfo.presentationTimeUs);
+                            }
                             isOk = false;
+                            break;
                         }
                     }
+                    extractor.seekTo(-1L, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+                    currInfo.set(0, (int) extractor.getSampleSize(),
+                            extractor.getSampleTime(), extractor.getSampleFlags());
+                    if (!isSampleInfoIdentical(sampleInfoAtZero, currInfo)) {
+                        if (!codecListSupp.contains(mMime)) {
+                            if (ENABLE_LOGS) {
+                                Log.d(LOG_TAG, "seen mismatch seekTo(-1, SEEK_TO_CLOSEST_SYNC)");
+                                Log.d(LOG_TAG, " flags exp/got: " + sampleInfoAtZero.flags + '/' +
+                                        currInfo.flags);
+                                Log.d(LOG_TAG, " size exp/got: " + sampleInfoAtZero.size + '/' +
+                                        currInfo.size);
+                                Log.d(LOG_TAG,
+                                        " ts exp/got: " + sampleInfoAtZero.presentationTimeUs +
+                                                '/' + currInfo.presentationTimeUs);
+                            }
+                            isOk = false;
+                            break;
+                        }
+                    }
+                    extractor.unselectTrack(trackID);
                 }
                 extractor.release();
             }
@@ -926,6 +999,95 @@ public class ExtractorTest {
                 assertTrue(numTracks == extractor.getTrackCount() && format != null &&
                         mime != null);
                 extractor.release();
+            }
+        }
+
+        @LargeTest
+        @Test
+        public void testExtractNative() {
+            assumeTrue(shouldRunTest(mMime));
+            assertTrue(mSrcFiles.length > 1);
+            assumeTrue("TODO(b/146925481)", mMime == MediaFormat.MIMETYPE_VIDEO_VP8 ||
+                    mMime == MediaFormat.MIMETYPE_VIDEO_VP9 ||
+                    mMime == MediaFormat.MIMETYPE_VIDEO_AV1 ||
+                    mMime == MediaFormat.MIMETYPE_AUDIO_FLAC);
+            boolean isOk = true;
+            for (int i = 1; i < mSrcFiles.length; i++) {
+                if (!nativeTestExtract(mInpPrefix + mSrcFiles[0], mInpPrefix + mSrcFiles[i],
+                        mMime)) {
+                    Log.d(LOG_TAG, "Files: " + mSrcFiles[0] + ", " + mSrcFiles[i] +
+                            " are different from extractor perpsective");
+                    if (!codecListSupp.contains(mMime)) {
+                        isOk = false;
+                        break;
+                    }
+                }
+            }
+            assertTrue(testName.getMethodName() + " failed for mime: " + mMime, isOk);
+        }
+
+        @LargeTest
+        @Test
+        @Ignore("TODO(b/146420831)")
+        public void testSeekNative() {
+            assumeTrue(shouldRunTest(mMime));
+            boolean isOk = true;
+            for (String srcFile : mSrcFiles) {
+                if (!nativeTestSeek(mInpPrefix + srcFile, mMime)) {
+                    if (!codecListSupp.contains(mMime)) {
+                        isOk = false;
+                        break;
+                    }
+                }
+            }
+            assertTrue(testName.getMethodName() + " failed for mime: " + mMime, isOk);
+        }
+
+        @LargeTest
+        @Test
+        public void testSeekFlakinessNative() {
+            assumeTrue(shouldRunTest(mMime));
+            boolean isOk = true;
+            for (String srcFile : mSrcFiles) {
+                if (!nativeTestSeekFlakiness(mInpPrefix + srcFile, mMime)) {
+                    if (!codecListSupp.contains(mMime)) {
+                        isOk = false;
+                        break;
+                    }
+                }
+            }
+            assertTrue(testName.getMethodName() + " failed for mime: " + mMime, isOk);
+        }
+
+        @SmallTest
+        @Test
+        public void testSeekToZeroNative() {
+            assumeTrue(shouldRunTest(mMime));
+            assumeTrue("TODO(b/146925481)", mMime != MediaFormat.MIMETYPE_AUDIO_MPEG &&
+                    mMime != MediaFormat.MIMETYPE_AUDIO_AAC);
+            boolean isOk = true;
+            for (String srcFile : mSrcFiles) {
+                if (!nativeTestSeekToZero(mInpPrefix + srcFile, mMime)) {
+                    if (!codecListSupp.contains(mMime)) {
+                        isOk = false;
+                        break;
+                    }
+                }
+            }
+            assertTrue(testName.getMethodName() + " failed for mime: " + mMime, isOk);
+        }
+
+        @SmallTest
+        @Test
+        public void testFileFormatNative() {
+            assumeTrue(shouldRunTest(mMime));
+            boolean isOk = true;
+            for (String srcFile : mSrcFiles) {
+                if (!nativeTestFileFormat(mInpPrefix + srcFile)) {
+                    isOk = false;
+                    break;
+                }
+                assertTrue(testName.getMethodName() + " failed for mime: " + mMime, isOk);
             }
         }
     }
