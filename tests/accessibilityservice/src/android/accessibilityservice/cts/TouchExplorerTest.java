@@ -68,8 +68,10 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.graphics.PointF;
+import android.graphics.Region;
 import android.platform.test.annotations.AppModeFull;
 import android.util.DisplayMetrics;
+import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -353,8 +355,7 @@ public class TouchExplorerTest {
         dispatch(doubleTap(mTapLocation));
         mHoverListener.assertNonePropagated();
         mTouchListener.assertNonePropagated();
-        mService.assertPropagated(
-                TYPE_TOUCH_INTERACTION_START, TYPE_TOUCH_INTERACTION_END);
+        mService.assertPropagated(TYPE_TOUCH_INTERACTION_START, TYPE_TOUCH_INTERACTION_END);
         mService.clearEvents();
         mLongClickListener.assertNoneLongClicked();
     }
@@ -470,6 +471,84 @@ public class TouchExplorerTest {
                 ACTION_DOWN, ACTION_POINTER_DOWN, ACTION_MOVE, ACTION_POINTER_UP, ACTION_UP);
     }
 
+    /**
+     * Test the gesture detection passthrough by performing a fast swipe in the passthrough region.
+     * It should bypass the gesture detector entirely.
+     */
+    @Test
+    @AppModeFull
+    public void testGestureDetectionPassthrough_initiatesTouchExploration() {
+        if (!mHasTouchscreen || !mScreenBigEnough) return;
+        setRightSideOfScreenGestureDetectionPassthrough();
+        // Swipe in the passthrough region. This should generate hover events.
+        dispatch(swipe(mTapLocation, add(mTapLocation, mSwipeDistance, 0)));
+        mHoverListener.assertPropagated(ACTION_HOVER_ENTER, ACTION_HOVER_MOVE, ACTION_HOVER_EXIT);
+        mService.assertPropagated(
+                TYPE_TOUCH_INTERACTION_START,
+                TYPE_TOUCH_EXPLORATION_GESTURE_START,
+                TYPE_TOUCH_EXPLORATION_GESTURE_END,
+                TYPE_TOUCH_INTERACTION_END);
+        mService.clearEvents();
+        // Swipe starting inside the passthrough region but ending outside of it. This should still
+        // behave as a passthrough interaction.
+        dispatch(swipe(mTapLocation, add(mTapLocation, -mSwipeDistance, 0)));
+        mHoverListener.assertPropagated(ACTION_HOVER_ENTER, ACTION_HOVER_MOVE, ACTION_HOVER_EXIT);
+        mService.assertPropagated(
+                TYPE_TOUCH_INTERACTION_START,
+                TYPE_TOUCH_EXPLORATION_GESTURE_START,
+                TYPE_TOUCH_EXPLORATION_GESTURE_END,
+                TYPE_TOUCH_INTERACTION_END);
+        mService.clearEvents();
+        // Swipe outside the passthrough region. This should not generate hover events.
+        dispatch(swipe(add(mTapLocation, -1, 0), add(mTapLocation, -mSwipeDistance, 0)));
+        mHoverListener.assertNonePropagated();
+        mService.assertPropagated(
+                TYPE_TOUCH_INTERACTION_START,
+                TYPE_GESTURE_DETECTION_START,
+                TYPE_GESTURE_DETECTION_END,
+                TYPE_TOUCH_INTERACTION_END);
+        mService.clearEvents();
+        // There should be no touch events in this test.
+        mTouchListener.assertNonePropagated();
+        clearPassthroughRegions();
+    }
+
+    /**
+     * Test the touch exploration passthrough by performing a fast swipe in the passthrough region.
+     * It should generate touch events.
+     */
+    @Test
+    @AppModeFull
+    public void testTouchExplorationPassthrough_sendsTouchEvents() {
+        if (!mHasTouchscreen || !mScreenBigEnough) return;
+        setRightSideOfScreenTouchExplorationPassthrough();
+        // Swipe in the passthrough region. This should generate  touch events.
+        dispatch(swipe(mTapLocation, add(mTapLocation, mSwipeDistance, 0)));
+        mTouchListener.assertPropagated(ACTION_DOWN, ACTION_MOVE, ACTION_UP);
+        // We still want accessibility events to tell us when the gesture starts and ends.
+        mService.assertPropagated(
+                TYPE_TOUCH_INTERACTION_START, TYPE_TOUCH_INTERACTION_END, TYPE_VIEW_CLICKED);
+        mService.clearEvents();
+        // Swipe starting inside the passthrough region but ending outside of it. This should still
+        // behave as a passthrough interaction.
+        dispatch(swipe(mTapLocation, add(mTapLocation, -mSwipeDistance, 0)));
+        mTouchListener.assertPropagated(ACTION_DOWN, ACTION_MOVE, ACTION_UP);
+        mService.assertPropagated(
+                TYPE_TOUCH_INTERACTION_START, TYPE_TOUCH_INTERACTION_END, TYPE_VIEW_CLICKED);
+        mService.clearEvents();
+        // Swipe outside the passthrough region. This should not generate touch events.
+        dispatch(swipe(add(mTapLocation, -1, 0), add(mTapLocation, -mSwipeDistance, 0)));
+        mTouchListener.assertNonePropagated();
+        mService.assertPropagated(
+                TYPE_TOUCH_INTERACTION_START,
+                TYPE_GESTURE_DETECTION_START,
+                TYPE_GESTURE_DETECTION_END,
+                TYPE_TOUCH_INTERACTION_END);
+        // There should be no hover events in this test.
+        mHoverListener.assertNonePropagated();
+        clearPassthroughRegions();
+    }
+
     public void dispatch(StrokeDescription firstStroke, StrokeDescription... rest) {
         GestureDescription.Builder builder =
                 new GestureDescription.Builder().addStroke(firstStroke);
@@ -492,5 +571,45 @@ public class TouchExplorerTest {
                             .findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
                             .performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS);
                 });
+    }
+
+    private void setRightSideOfScreenGestureDetectionPassthrough() {
+        Region region = getRightSideOfScreenRegion();
+        mService.runOnServiceSync(
+                () -> {
+                    mService.setGestureDetectionPassthroughRegion(Display.DEFAULT_DISPLAY, region);
+                });
+    }
+
+    private void setRightSideOfScreenTouchExplorationPassthrough() {
+        Region region = getRightSideOfScreenRegion();
+        mService.runOnServiceSync(
+                () -> {
+                    mService.setTouchExplorationPassthroughRegion(Display.DEFAULT_DISPLAY, region);
+                });
+    }
+
+    private void clearPassthroughRegions() {
+        mService.runOnServiceSync(
+                () -> {
+                    mService.setGestureDetectionPassthroughRegion(
+                            Display.DEFAULT_DISPLAY, new Region());
+                    mService.setTouchExplorationPassthroughRegion(
+                            Display.DEFAULT_DISPLAY, new Region());
+                });
+    }
+
+    private Region getRightSideOfScreenRegion() {
+        WindowManager windowManager =
+                (WindowManager)
+                        mInstrumentation.getContext().getSystemService(Context.WINDOW_SERVICE);
+        final DisplayMetrics metrics = new DisplayMetrics();
+        windowManager.getDefaultDisplay().getRealMetrics(metrics);
+        int top = 0;
+        int left = metrics.widthPixels / 2;
+        int right = metrics.widthPixels;
+        int bottom = metrics.heightPixels;
+        Region region = new Region(left, top, right, bottom);
+        return region;
     }
 }
