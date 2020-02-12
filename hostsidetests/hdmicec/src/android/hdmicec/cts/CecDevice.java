@@ -21,12 +21,20 @@ import java.util.Map;
 
 public enum CecDevice {
     TV(0x0),
-    RECORDING_1(0x1),
+    RECORDER_1(0x1),
+    RECORDER_2(0x2),
     TUNER_1(0x3),
     PLAYBACK_1(0x4),
     AUDIO_SYSTEM(0x5),
+    TUNER_2(0x6),
+    TUNER_3(0x7),
     PLAYBACK_2(0x8),
+    RECORDER_3(0x9),
+    TUNER_4(0xa),
     PLAYBACK_3(0xb),
+    RESERVED_1(0xc),
+    RESERVED_2(0xd),
+    SPECIFIC_USE(0xe),
     BROADCAST(0xf);
 
     private final int playerId;
@@ -53,8 +61,15 @@ public enum CecDevice {
                 return Integer.toString(HdmiCecConstants.CEC_DEVICE_TYPE_TV);
             case AUDIO_SYSTEM:
                 return Integer.toString(HdmiCecConstants.CEC_DEVICE_TYPE_AUDIO_SYSTEM);
-            case RECORDING_1:
-                return Integer.toString(HdmiCecConstants.CEC_DEVICE_TYPE_RECORDING_DEVICE);
+            case RECORDER_1:
+            case RECORDER_2:
+            case RECORDER_3:
+                return Integer.toString(HdmiCecConstants.CEC_DEVICE_TYPE_RECORDER);
+            case TUNER_1:
+            case TUNER_2:
+            case TUNER_3:
+            case TUNER_4:
+                return Integer.toString(HdmiCecConstants.CEC_DEVICE_TYPE_TUNER);
             default:
                 return Integer.toString(HdmiCecConstants.CEC_DEVICE_TYPE_RESERVED);
         }
