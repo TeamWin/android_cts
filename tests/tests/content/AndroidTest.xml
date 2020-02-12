@@ -51,6 +51,8 @@
         <option name="push-file" key="HelloWorld7_xhdpi-v4.apk" value="/data/local/tmp/cts/content/HelloWorld7_xhdpi-v4.apk" />
         <option name="push-file" key="HelloWorld7_xxhdpi-v4.apk" value="/data/local/tmp/cts/content/HelloWorld7_xxhdpi-v4.apk" />
         <option name="push-file" key="HelloWorld7_xxxhdpi-v4.apk" value="/data/local/tmp/cts/content/HelloWorld7_xxxhdpi-v4.apk" />
+        <option name="push-file" key="v4-only-original.apk" value="/data/local/tmp/cts/content/v4-only-original.apk" />
+        <option name="push-file" key="v4-only-original.apk.idsig" value="/data/local/tmp/cts/content/v4-only-original.apk.idsig" />
     </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">

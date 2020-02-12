@@ -25,6 +25,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.os.ParcelFileDescriptor;
+import android.os.incremental.IncrementalManager;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.InstrumentationRegistry;
@@ -73,8 +74,8 @@ public class PackageManagerShellCommandTest {
 
     @Parameters
     public static Iterable<Object> initParameters() {
-        return Arrays.asList(DATA_LOADER_TYPE_NONE, DATA_LOADER_TYPE_STREAMING/*,
-                DATA_LOADER_TYPE_INCREMENTAL*/);
+        return Arrays.asList(DATA_LOADER_TYPE_NONE, DATA_LOADER_TYPE_STREAMING,
+                DATA_LOADER_TYPE_INCREMENTAL);
     }
 
     private boolean mStreaming = false;
@@ -137,17 +138,24 @@ public class PackageManagerShellCommandTest {
     }
 
     @Before
-    public void checkNotInstalled() throws Exception {
+    public void onBefore() throws Exception {
+        // Check if Incremental is allowed and revert to non-dataloader installation.
+        if (mDataLoaderType == DATA_LOADER_TYPE_INCREMENTAL && !IncrementalManager.isAllowed()) {
+            mDataLoaderType = DATA_LOADER_TYPE_NONE;
+        }
+
         mStreaming = mDataLoaderType != DATA_LOADER_TYPE_NONE;
         mIncremental = mDataLoaderType == DATA_LOADER_TYPE_INCREMENTAL;
         mInstall = mDataLoaderType == DATA_LOADER_TYPE_NONE ? " install " :
                 mDataLoaderType == DATA_LOADER_TYPE_STREAMING ? " install-streaming " :
                         " install-incremental ";
+
+        uninstallPackageSilently(TEST_APP_PACKAGE);
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
     }
 
     @After
-    public void uninstall() throws Exception {
+    public void onAfter() throws Exception {
         uninstallPackageSilently(TEST_APP_PACKAGE);
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
         assertEquals(null, getSplits(TEST_APP_PACKAGE));
