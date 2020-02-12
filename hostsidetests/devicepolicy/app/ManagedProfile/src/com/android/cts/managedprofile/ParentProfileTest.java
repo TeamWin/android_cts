@@ -92,6 +92,8 @@ public class ParentProfileTest extends BaseManagedProfileTest {
             .add("getUserRestrictions")
             .add("setApplicationHidden")
             .add("isApplicationHidden")
+            .add("setScreenCaptureDisabled")
+            .add("getScreenCaptureDisabled")
             .build();
 
     private static final String LOG_TAG = "ParentProfileTest";

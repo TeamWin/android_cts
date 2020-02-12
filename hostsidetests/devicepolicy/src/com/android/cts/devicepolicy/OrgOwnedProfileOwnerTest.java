@@ -462,6 +462,15 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
                 canStart ? "testCanStartActivity" : "testCannotStartActivity", mParentUserId);
     }
 
+    @Test
+    public void testScreenCaptureDisabled() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".ScreenCaptureDisabledTest",
+                "testSetScreenCaptureDisabledOnParent", mUserId);
+    }
+
     private void assertHasNoUser(int userId) throws DeviceNotAvailableException {
         int numWaits = 0;
         final int MAX_NUM_WAITS = 15;
