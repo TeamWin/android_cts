@@ -36,6 +36,18 @@ import java.util.Set;
  */
 public final class AutofillTestWatcher extends TestWatcher {
 
+    /**
+     * Cleans up all launched activities between the tests and retries.
+     */
+    public void cleanAllActivities() {
+        try {
+            finishActivities();
+            waitUntilAllDestroyed();
+        } finally {
+            resetStaticState();
+        }
+    }
+
     private static final String TAG = "AutofillTestWatcher";
 
     @GuardedBy("sUnfinishedBusiness")
@@ -55,12 +67,7 @@ public final class AutofillTestWatcher extends TestWatcher {
     @Override
     protected void finished(Description description) {
         final String testName = description.getDisplayName();
-        try {
-            finishActivities();
-            waitUntilAllDestroyed();
-        } finally {
-            resetStaticState();
-        }
+        cleanAllActivities();
         Log.i(TAG, "Finished " + testName);
         TestNameUtils.setCurrentTestName(null);
     }
