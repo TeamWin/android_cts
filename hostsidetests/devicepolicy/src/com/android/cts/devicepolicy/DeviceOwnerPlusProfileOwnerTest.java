@@ -65,6 +65,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
             new Builder(EventId.WIPE_DATA_WITH_REASON_VALUE)
                     .setAdminPackageName(COMP_DPC_PKG)
                     .setInt(0)
+                    .setStrings("notCalledFromParent")
                     .build();
     private static final String COMP_DPC_APK = "CtsCorpOwnedManagedProfile.apk";
     private static final String COMP_DPC_ADMIN =

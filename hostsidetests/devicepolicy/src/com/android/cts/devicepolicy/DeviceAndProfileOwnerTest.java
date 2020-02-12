@@ -180,6 +180,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String PARAM_APP_TO_ENABLE = "app_to_enable";
     public static final String RESOLVE_ACTIVITY_CMD = "cmd package resolve-activity --brief %s | tail -n 1";
 
+    private static final String NOT_CALLED_FROM_PARENT = "notCalledFromParent";
+
     // ID of the user all tests are run as. For device owner this will be the primary user, for
     // profile owner it is the user id of the created profile.
     protected int mUserId;
@@ -767,12 +769,12 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             }, new DevicePolicyEventWrapper.Builder(EventId.SET_APPLICATION_HIDDEN_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
                     .setBoolean(false)
-                    .setStrings(PERMISSIONS_APP_PKG, "hidden")
+                    .setStrings(PERMISSIONS_APP_PKG, "hidden", NOT_CALLED_FROM_PARENT)
                     .build(),
             new DevicePolicyEventWrapper.Builder(EventId.SET_APPLICATION_HIDDEN_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
                     .setBoolean(false)
-                    .setStrings(PERMISSIONS_APP_PKG, "not_hidden")
+                    .setStrings(PERMISSIONS_APP_PKG, "not_hidden", NOT_CALLED_FROM_PARENT)
                     .build());
         }
     }
@@ -1393,10 +1395,12 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }, new DevicePolicyEventWrapper.Builder(EventId.SET_CAMERA_DISABLED_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
                     .setBoolean(true)
+                    .setStrings(NOT_CALLED_FROM_PARENT)
                     .build(),
             new DevicePolicyEventWrapper.Builder(EventId.SET_CAMERA_DISABLED_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
                     .setBoolean(false)
+                    .setStrings(NOT_CALLED_FROM_PARENT)
                     .build());
     }
 
@@ -1717,7 +1721,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }, new DevicePolicyEventWrapper.Builder(EventId.SET_PASSWORD_QUALITY_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
                     .setInt(PASSWORD_QUALITY_COMPLEX)
-                    .setBoolean(false)
+                    .setStrings(NOT_CALLED_FROM_PARENT)
                     .build(),
             new DevicePolicyEventWrapper.Builder(EventId.SET_PASSWORD_MINIMUM_LENGTH_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
@@ -1773,22 +1777,22 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }, new DevicePolicyEventWrapper.Builder(EventId.SET_KEYGUARD_DISABLED_FEATURES_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
                     .setInt(KEYGUARD_DISABLE_FEATURES_NONE)
-                    .setBoolean(false)
+                    .setStrings(NOT_CALLED_FROM_PARENT)
                     .build(),
             new DevicePolicyEventWrapper.Builder(EventId.SET_KEYGUARD_DISABLED_FEATURES_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
                     .setInt(KEYGUARD_DISABLE_FINGERPRINT)
-                    .setBoolean(false)
+                    .setStrings(NOT_CALLED_FROM_PARENT)
                     .build(),
             new DevicePolicyEventWrapper.Builder(EventId.SET_KEYGUARD_DISABLED_FEATURES_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
                     .setInt(KEYGUARD_DISABLE_TRUST_AGENTS)
-                    .setBoolean(false)
+                    .setStrings(NOT_CALLED_FROM_PARENT)
                     .build(),
             new DevicePolicyEventWrapper.Builder(EventId.SET_KEYGUARD_DISABLED_FEATURES_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
                     .setInt(KEYGUARD_DISABLE_FEATURES_NONE)
-                    .setBoolean(false)
+                    .setStrings(NOT_CALLED_FROM_PARENT)
                     .build());
     }
 
@@ -1802,27 +1806,27 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                     ".DevicePolicyLoggingTest", "testSetUserRestrictionLogged");
         }, new DevicePolicyEventWrapper.Builder(EventId.ADD_USER_RESTRICTION_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setStrings(DISALLOW_CONFIG_LOCATION)
+                    .setStrings(DISALLOW_CONFIG_LOCATION, NOT_CALLED_FROM_PARENT)
                     .build(),
             new DevicePolicyEventWrapper.Builder(EventId.REMOVE_USER_RESTRICTION_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setStrings(DISALLOW_CONFIG_LOCATION)
+                    .setStrings(DISALLOW_CONFIG_LOCATION, NOT_CALLED_FROM_PARENT)
                     .build(),
             new DevicePolicyEventWrapper.Builder(EventId.ADD_USER_RESTRICTION_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setStrings(DISALLOW_ADJUST_VOLUME)
+                    .setStrings(DISALLOW_ADJUST_VOLUME, NOT_CALLED_FROM_PARENT)
                     .build(),
             new DevicePolicyEventWrapper.Builder(EventId.REMOVE_USER_RESTRICTION_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setStrings(DISALLOW_ADJUST_VOLUME)
+                    .setStrings(DISALLOW_ADJUST_VOLUME, NOT_CALLED_FROM_PARENT)
                     .build(),
             new DevicePolicyEventWrapper.Builder(EventId.ADD_USER_RESTRICTION_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setStrings(DISALLOW_AUTOFILL)
+                    .setStrings(DISALLOW_AUTOFILL, NOT_CALLED_FROM_PARENT)
                     .build(),
             new DevicePolicyEventWrapper.Builder(EventId.REMOVE_USER_RESTRICTION_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setStrings(DISALLOW_AUTOFILL)
+                    .setStrings(DISALLOW_AUTOFILL, NOT_CALLED_FROM_PARENT)
                     .build()
         );
     }
