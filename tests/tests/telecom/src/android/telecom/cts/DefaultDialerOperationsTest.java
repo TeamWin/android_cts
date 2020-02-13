@@ -97,7 +97,7 @@ public class DefaultDialerOperationsTest extends InstrumentationTestCase {
         assertEquals(TestUtils.PACKAGE, mTelecomManager.getDefaultDialerPackage());
         assertEquals(mTelecomManager.getDefaultDialerPackage(),
                 ShellIdentityUtils.invokeMethodWithShellPermissions(mTelecomManager,
-                        tm -> tm.getDefaultDialerPackage(Process.myUserHandle().getIdentifier())));
+                        tm -> tm.getDefaultDialerPackage(Process.myUserHandle())));
     }
 
     /** Default dialer should be the default package handling ACTION_DIAL. */
