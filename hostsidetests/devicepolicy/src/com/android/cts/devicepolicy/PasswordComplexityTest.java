@@ -56,6 +56,6 @@ public class PasswordComplexityTest extends BaseDevicePolicyTest {
                 () -> runDeviceTestsAsUser(PKG, CLS, mCurrentUserId),
                 new DevicePolicyEventWrapper
                         .Builder(EventId.GET_USER_PASSWORD_COMPLEXITY_LEVEL_VALUE)
-                        .setStrings(PKG).build());
+                        .setStrings("notCalledFromParent", PKG).build());
     }
 }

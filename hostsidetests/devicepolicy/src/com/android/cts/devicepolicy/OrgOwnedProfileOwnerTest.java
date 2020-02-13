@@ -17,6 +17,8 @@
 package com.android.cts.devicepolicy;
 
 import static com.android.cts.devicepolicy.DeviceAndProfileOwnerTest.DEVICE_ADMIN_COMPONENT_FLATTENED;
+import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
+import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -25,7 +27,9 @@ import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
+import android.stats.devicepolicy.EventId;
 
+import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil;
 
@@ -53,6 +57,8 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     protected int mUserId;
     private boolean mHasProfileToRemove = true;
     private boolean mHasSecondaryProfileToRemove = false;
+    private static final String DISALLOW_CONFIG_LOCATION = "no_config_location";
+    private static final String CALLED_FROM_PARENT = "calledFromParent";
 
     @Override
     public void setUp() throws Exception {
@@ -173,6 +179,24 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
+    public void testUserRestrictionSetOnParentLogged() throws Exception {
+        if (!mHasFeature|| !isStatsdEnabled(getDevice())) {
+            return;
+        }
+        assertMetricsLogged(getDevice(), () -> {
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DevicePolicyLoggingParentTest",
+                    "testUserRestrictionLogged", mUserId);
+                }, new DevicePolicyEventWrapper.Builder(EventId.ADD_USER_RESTRICTION_VALUE)
+                        .setAdminPackageName(DEVICE_ADMIN_PKG)
+                        .setStrings(DISALLOW_CONFIG_LOCATION, CALLED_FROM_PARENT)
+                        .build(),
+                new DevicePolicyEventWrapper.Builder(EventId.REMOVE_USER_RESTRICTION_VALUE)
+                        .setAdminPackageName(DEVICE_ADMIN_PKG)
+                        .setStrings(DISALLOW_CONFIG_LOCATION, CALLED_FROM_PARENT)
+                        .build());
+    }
+
+    @Test
     public void testUserRestrictionsSetOnParentAreNotPersisted() throws Exception {
         if (!mHasFeature) {
             return;
@@ -219,6 +243,26 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
                 "testHasUserRestrictionDisallowAddUser", mUserId);
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
                 "testClearUserRestrictionDisallowAddUser", mUserId);
+    }
+
+    @Test
+    public void testCameraDisabledOnParentLogged() throws Exception {
+        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+            return;
+        }
+        assertMetricsLogged(getDevice(), () -> {
+                    runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DevicePolicyLoggingParentTest",
+                            "testCameraDisabledLogged", mUserId);
+                }, new DevicePolicyEventWrapper.Builder(EventId.SET_CAMERA_DISABLED_VALUE)
+                        .setAdminPackageName(DEVICE_ADMIN_PKG)
+                        .setBoolean(true)
+                        .setStrings(CALLED_FROM_PARENT)
+                        .build(),
+                new DevicePolicyEventWrapper.Builder(EventId.SET_CAMERA_DISABLED_VALUE)
+                        .setAdminPackageName(DEVICE_ADMIN_PKG)
+                        .setBoolean(false)
+                        .setStrings(CALLED_FROM_PARENT)
+                        .build());
     }
 
     private void failToCreateUser() throws Exception {
@@ -416,6 +460,15 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
             throws DeviceNotAvailableException {
         runDeviceTestsAsUser(packageName, "com.android.cts.suspensionchecker.ActivityLaunchTest",
                 canStart ? "testCanStartActivity" : "testCannotStartActivity", mParentUserId);
+    }
+
+    @Test
+    public void testScreenCaptureDisabled() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".ScreenCaptureDisabledTest",
+                "testSetScreenCaptureDisabledOnParent", mUserId);
     }
 
     private void assertHasNoUser(int userId) throws DeviceNotAvailableException {

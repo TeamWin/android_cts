@@ -16,6 +16,8 @@
 
 package android.media.cts;
 
+import static android.media.MediaRoute2Info.PLAYBACK_VOLUME_VARIABLE;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -54,6 +56,9 @@ public class RoutingSessionInfoTest {
     public static final String TEST_KEY = "test_key";
     public static final String TEST_VALUE = "test_value";
 
+    public static final int TEST_VOLUME_HANDLING = PLAYBACK_VOLUME_VARIABLE;
+    public static final int TEST_VOLUME_MAX = 100;
+    public static final int TEST_VOLUME = 65;
     @Test
     public void testBuilderConstructorWithInvalidValues() {
         final String nullId = null;
@@ -175,6 +180,9 @@ public class RoutingSessionInfoTest {
                 .addDeselectableRoute(TEST_ROUTE_ID_5)
                 .addTransferrableRoute(TEST_ROUTE_ID_6)
                 .addTransferrableRoute(TEST_ROUTE_ID_7)
+                .setVolumeHandling(TEST_VOLUME_HANDLING)
+                .setVolumeMax(TEST_VOLUME_MAX)
+                .setVolume(TEST_VOLUME)
                 .setControlHints(controlHints)
                 .build();
 
@@ -196,6 +204,10 @@ public class RoutingSessionInfoTest {
         assertEquals(2, sessionInfo.getTransferrableRoutes().size());
         assertEquals(TEST_ROUTE_ID_6, sessionInfo.getTransferrableRoutes().get(0));
         assertEquals(TEST_ROUTE_ID_7, sessionInfo.getTransferrableRoutes().get(1));
+
+        assertEquals(TEST_VOLUME_HANDLING, sessionInfo.getVolumeHandling());
+        assertEquals(TEST_VOLUME_MAX, sessionInfo.getVolumeMax());
+        assertEquals(TEST_VOLUME, sessionInfo.getVolume());
 
         Bundle controlHintsOut = sessionInfo.getControlHints();
         assertNotNull(controlHintsOut);
@@ -384,6 +396,9 @@ public class RoutingSessionInfoTest {
                 .addDeselectableRoute(TEST_ROUTE_ID_5)
                 .addTransferrableRoute(TEST_ROUTE_ID_6)
                 .addTransferrableRoute(TEST_ROUTE_ID_7)
+                .setVolumeHandling(TEST_VOLUME_HANDLING)
+                .setVolumeMax(TEST_VOLUME_MAX)
+                .setVolume(TEST_VOLUME)
                 .setControlHints(controlHints)
                 .build();
 
@@ -397,6 +412,9 @@ public class RoutingSessionInfoTest {
                 .addDeselectableRoute(TEST_ROUTE_ID_5)
                 .addTransferrableRoute(TEST_ROUTE_ID_6)
                 .addTransferrableRoute(TEST_ROUTE_ID_7)
+                .setVolumeHandling(TEST_VOLUME_HANDLING)
+                .setVolumeMax(TEST_VOLUME_MAX)
+                .setVolume(TEST_VOLUME)
                 .setControlHints(controlHints)
                 .build();
 
@@ -419,6 +437,9 @@ public class RoutingSessionInfoTest {
                 .addDeselectableRoute(TEST_ROUTE_ID_5)
                 .addTransferrableRoute(TEST_ROUTE_ID_6)
                 .addTransferrableRoute(TEST_ROUTE_ID_7)
+                .setVolumeHandling(TEST_VOLUME_HANDLING)
+                .setVolumeMax(TEST_VOLUME_MAX)
+                .setVolume(TEST_VOLUME)
                 .setControlHints(controlHints)
                 .build();
 
@@ -443,6 +464,9 @@ public class RoutingSessionInfoTest {
                 .addDeselectableRoute(TEST_ROUTE_ID_5)
                 .addTransferrableRoute(TEST_ROUTE_ID_6)
                 .addTransferrableRoute(TEST_ROUTE_ID_7)
+                .setVolumeHandling(TEST_VOLUME_HANDLING)
+                .setVolumeMax(TEST_VOLUME_MAX)
+                .setVolume(TEST_VOLUME)
                 .setControlHints(controlHints)
                 .build();
 
@@ -488,6 +512,13 @@ public class RoutingSessionInfoTest {
                 .clearTransferrableRoutes()
                 .build());
 
+        assertNotEquals(sessionInfo, new RoutingSessionInfo.Builder(sessionInfo)
+                .setVolumeHandling(TEST_VOLUME_HANDLING + 1).build());
+        assertNotEquals(sessionInfo, new RoutingSessionInfo.Builder(sessionInfo)
+                .setVolumeMax(TEST_VOLUME_MAX + 1).build());
+        assertNotEquals(sessionInfo, new RoutingSessionInfo.Builder(sessionInfo)
+                .setVolume(TEST_VOLUME + 1).build());
+
         // Note: ControlHints will not affect the equals.
     }
 
@@ -506,6 +537,9 @@ public class RoutingSessionInfoTest {
                 .addDeselectableRoute(TEST_ROUTE_ID_5)
                 .addTransferrableRoute(TEST_ROUTE_ID_6)
                 .addTransferrableRoute(TEST_ROUTE_ID_7)
+                .setVolumeHandling(TEST_VOLUME_HANDLING)
+                .setVolumeMax(TEST_VOLUME_MAX)
+                .setVolume(TEST_VOLUME)
                 .setControlHints(controlHints)
                 .build();
 

@@ -301,7 +301,8 @@ public class AudioPlaybackCaptureTest {
             AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE,
             AudioAttributes.USAGE_ASSISTANCE_SONIFICATION,
             AudioAttributes.USAGE_ASSISTANT,
-            AudioAttributes.USAGE_NOTIFICATION
+            AudioAttributes.USAGE_NOTIFICATION,
+            AudioAttributes.USAGE_VOICE_COMMUNICATION
     };
 
     @Presubmit
@@ -388,7 +389,7 @@ public class AudioPlaybackCaptureTest {
         mAPCTestConfig.matchingUids = new int[]{ mUid };
         testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_GAME, EXPECT_DATA);
         testPlaybackCapture(OPT_OUT, AudioAttributes.USAGE_GAME, EXPECT_SILENCE);
-        testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_ALARM, EXPECT_SILENCE);
+        testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_VOICE_COMMUNICATION, EXPECT_SILENCE);
 
         mAPCTestConfig.matchingUids = new int[]{ 0 };
         testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_GAME, EXPECT_SILENCE);
@@ -399,7 +400,7 @@ public class AudioPlaybackCaptureTest {
         mAPCTestConfig.matchingUserIds = new int[]{ mUserId };
         testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_GAME, EXPECT_DATA);
         testPlaybackCapture(OPT_OUT, AudioAttributes.USAGE_GAME, EXPECT_SILENCE);
-        testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_ALARM, EXPECT_SILENCE);
+        testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_VOICE_COMMUNICATION, EXPECT_SILENCE);
 
         mAPCTestConfig.matchingUserIds = new int[]{ mUserId + 1 };
         testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_GAME, EXPECT_SILENCE);
@@ -410,7 +411,7 @@ public class AudioPlaybackCaptureTest {
         mAPCTestConfig.excludeUids = new int[]{ 0 };
         testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_GAME, EXPECT_DATA);
         testPlaybackCapture(OPT_OUT, AudioAttributes.USAGE_UNKNOWN, EXPECT_SILENCE);
-        testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_ALARM, EXPECT_SILENCE);
+        testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_VOICE_COMMUNICATION, EXPECT_SILENCE);
 
         mAPCTestConfig.excludeUids = new int[]{ mUid };
         testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_GAME, EXPECT_SILENCE);
@@ -421,7 +422,7 @@ public class AudioPlaybackCaptureTest {
         mAPCTestConfig.excludeUserIds = new int[]{ mUserId + 1 };
         testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_GAME, EXPECT_DATA);
         testPlaybackCapture(OPT_OUT, AudioAttributes.USAGE_UNKNOWN, EXPECT_SILENCE);
-        testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_ALARM, EXPECT_SILENCE);
+        testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_VOICE_COMMUNICATION, EXPECT_SILENCE);
 
         mAPCTestConfig.excludeUserIds = new int[]{ mUserId };
         testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_GAME, EXPECT_SILENCE);

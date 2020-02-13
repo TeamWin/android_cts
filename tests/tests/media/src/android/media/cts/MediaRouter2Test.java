@@ -17,6 +17,7 @@
 package android.media.cts;
 
 import static android.content.Context.AUDIO_SERVICE;
+import static android.media.MediaRoute2Info.PLAYBACK_VOLUME_VARIABLE;
 import static android.media.cts.SampleMediaRoute2ProviderService.FEATURES_SPECIAL;
 import static android.media.cts.SampleMediaRoute2ProviderService.FEATURE_SAMPLE;
 import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID1;
@@ -25,7 +26,6 @@ import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID3_SESSI
 import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID4_TO_SELECT_AND_DESELECT;
 import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID5_TO_TRANSFER_TO;
 import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID_SPECIAL_FEATURE;
-import static android.media.cts.SampleMediaRoute2ProviderService.SYSTEM_PROVIDER_ID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -84,6 +84,8 @@ public class MediaRouter2Test {
 
     private static final String TEST_KEY = "test_key";
     private static final String TEST_VALUE = "test_value";
+    private static final RouteDiscoveryPreference EMPTY_DISCOVERY_PREFERENCE =
+            new RouteDiscoveryPreference.Builder(Collections.emptyList(), false).build();
 
     @Before
     public void setUp() throws Exception {
@@ -190,7 +192,7 @@ public class MediaRouter2Test {
 
         // TODO: Remove this once the MediaRouter2 becomes always connected to the service.
         RouteCallback routeCallback = new RouteCallback();
-        mRouter2.registerRouteCallback(mExecutor, routeCallback, RouteDiscoveryPreference.EMPTY);
+        mRouter2.registerRouteCallback(mExecutor, routeCallback, EMPTY_DISCOVERY_PREFERENCE);
 
         try {
             mRouter2.registerControllerCallback(mExecutor, controllerCallback);
@@ -236,7 +238,7 @@ public class MediaRouter2Test {
 
         // TODO: Remove this once the MediaRouter2 becomes always connected to the service.
         RouteCallback routeCallback = new RouteCallback();
-        mRouter2.registerRouteCallback(mExecutor, routeCallback, RouteDiscoveryPreference.EMPTY);
+        mRouter2.registerRouteCallback(mExecutor, routeCallback, EMPTY_DISCOVERY_PREFERENCE);
 
         try {
             mRouter2.registerControllerCallback(mExecutor, controllerCallback);
@@ -283,7 +285,7 @@ public class MediaRouter2Test {
 
         // TODO: Remove this once the MediaRouter2 becomes always connected to the service.
         RouteCallback routeCallback = new RouteCallback();
-        mRouter2.registerRouteCallback(mExecutor, routeCallback, RouteDiscoveryPreference.EMPTY);
+        mRouter2.registerRouteCallback(mExecutor, routeCallback, EMPTY_DISCOVERY_PREFERENCE);
 
         try {
             mRouter2.registerControllerCallback(mExecutor, controllerCallback);
@@ -361,7 +363,7 @@ public class MediaRouter2Test {
 
         // TODO: Remove this once the MediaRouter2 becomes always connected to the service.
         RouteCallback routeCallback = new RouteCallback();
-        mRouter2.registerRouteCallback(mExecutor, routeCallback, RouteDiscoveryPreference.EMPTY);
+        mRouter2.registerRouteCallback(mExecutor, routeCallback, EMPTY_DISCOVERY_PREFERENCE);
 
         try {
             mRouter2.registerControllerCallback(mExecutor, controllerCallback);
@@ -378,6 +380,76 @@ public class MediaRouter2Test {
             releaseControllers(controllers);
             mRouter2.unregisterRouteCallback(routeCallback);
             mRouter2.unregisterControllerCallback(controllerCallback);
+        }
+    }
+
+    @Test
+    public void testSetSessionVolume() throws Exception {
+        List<String> sampleRouteFeature = new ArrayList<>();
+        sampleRouteFeature.add(FEATURE_SAMPLE);
+
+        Map<String, MediaRoute2Info> routes = waitAndGetRoutes(sampleRouteFeature);
+        MediaRoute2Info route = routes.get(ROUTE_ID1);
+        assertNotNull(route);
+
+        CountDownLatch successLatch = new CountDownLatch(1);
+        CountDownLatch volumeChangedLatch = new CountDownLatch(1);
+
+        List<RoutingController> controllers = new ArrayList<>();
+
+        // Create session with this route
+        RoutingControllerCallback controllerCallback = new RoutingControllerCallback() {
+            @Override
+            public void onControllerCreated(RoutingController controller) {
+                controllers.add(controller);
+                successLatch.countDown();
+            }
+        };
+
+        // TODO: Remove this once the MediaRouter2 becomes always connected to the service.
+        RouteCallback routeCallback = new RouteCallback();
+
+        try {
+            mRouter2.registerRouteCallback(mExecutor, routeCallback, EMPTY_DISCOVERY_PREFERENCE);
+            mRouter2.registerControllerCallback(mExecutor, controllerCallback);
+            mRouter2.requestCreateController(route);
+
+            assertTrue(successLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        } finally {
+            mRouter2.unregisterControllerCallback(controllerCallback);
+            mRouter2.unregisterRouteCallback(routeCallback);
+        }
+
+        assertEquals(1, controllers.size());
+        // test requestSetSessionVolume
+
+        RoutingController targetController = controllers.get(0);
+        assertEquals(PLAYBACK_VOLUME_VARIABLE, targetController.getVolumeHandling());
+        int currentVolume = targetController.getVolume();
+        int maxVolume = targetController.getVolumeMax();
+        int targetVolume = (currentVolume == maxVolume) ? currentVolume - 1 : (currentVolume + 1);
+
+        RoutingControllerCallback routingControllerCallback = new RoutingControllerCallback() {
+            @Override
+            public void onControllerUpdated(MediaRouter2.RoutingController controller) {
+                if (!TextUtils.equals(targetController.getId(), controller.getId())) {
+                    return;
+                }
+                if (controller.getVolume() == targetVolume) {
+                    volumeChangedLatch.countDown();
+                }
+            }
+        };
+
+        try {
+            mRouter2.registerControllerCallback(mExecutor, routingControllerCallback);
+            mRouter2.registerRouteCallback(mExecutor, routeCallback, EMPTY_DISCOVERY_PREFERENCE);
+            targetController.setVolume(targetVolume);
+            assertTrue(volumeChangedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        } finally {
+            releaseControllers(controllers);
+            mRouter2.unregisterRouteCallback(routeCallback);
+            mRouter2.unregisterControllerCallback(routingControllerCallback);
         }
     }
 
@@ -410,7 +482,7 @@ public class MediaRouter2Test {
 
         // TODO: Remove this once the MediaRouter2 becomes always connected to the service.
         RouteCallback routeCallback = new RouteCallback();
-        mRouter2.registerRouteCallback(mExecutor, routeCallback, RouteDiscoveryPreference.EMPTY);
+        mRouter2.registerRouteCallback(mExecutor, routeCallback, EMPTY_DISCOVERY_PREFERENCE);
 
         try {
             mRouter2.registerControllerCallback(mExecutor, controllerCallback);
@@ -458,8 +530,7 @@ public class MediaRouter2Test {
             @Override
             public void onControllerUpdated(RoutingController controller) {
                 if (onControllerCreatedLatch.getCount() != 0
-                        || !TextUtils.equals(
-                                controllers.get(0).getId(), controller.getId())) {
+                        || !TextUtils.equals(controllers.get(0).getId(), controller.getId())) {
                     return;
                 }
 
@@ -493,7 +564,7 @@ public class MediaRouter2Test {
 
         // TODO: Remove this once the MediaRouter2 becomes always connected to the service.
         RouteCallback routeCallback = new RouteCallback();
-        mRouter2.registerRouteCallback(mExecutor, routeCallback, RouteDiscoveryPreference.EMPTY);
+        mRouter2.registerRouteCallback(mExecutor, routeCallback, EMPTY_DISCOVERY_PREFERENCE);
 
         try {
             mRouter2.registerControllerCallback(mExecutor, controllerCallback);
@@ -550,8 +621,7 @@ public class MediaRouter2Test {
             @Override
             public void onControllerUpdated(RoutingController controller) {
                 if (onControllerCreatedLatch.getCount() != 0
-                        || !TextUtils.equals(
-                                controllers.get(0).getId(), controller.getId())) {
+                        || !TextUtils.equals(controllers.get(0).getId(), controller.getId())) {
                     return;
                 }
                 assertEquals(1, controller.getSelectedRoutes().size());
@@ -568,7 +638,7 @@ public class MediaRouter2Test {
 
         // TODO: Remove this once the MediaRouter2 becomes always connected to the service.
         RouteCallback routeCallback = new RouteCallback();
-        mRouter2.registerRouteCallback(mExecutor, routeCallback, RouteDiscoveryPreference.EMPTY);
+        mRouter2.registerRouteCallback(mExecutor, routeCallback, EMPTY_DISCOVERY_PREFERENCE);
 
         try {
             mRouter2.registerControllerCallback(mExecutor, controllerCallback);
@@ -641,7 +711,7 @@ public class MediaRouter2Test {
 
         // TODO: Remove this once the MediaRouter2 becomes always connected to the service.
         RouteCallback routeCallback = new RouteCallback();
-        mRouter2.registerRouteCallback(mExecutor, routeCallback, RouteDiscoveryPreference.EMPTY);
+        mRouter2.registerRouteCallback(mExecutor, routeCallback, EMPTY_DISCOVERY_PREFERENCE);
 
         try {
             mRouter2.registerControllerCallback(mExecutor, controllerCallback);
@@ -720,7 +790,7 @@ public class MediaRouter2Test {
 
         assertEquals(maxVolume, selectedSystemRoute.getVolumeMax());
         assertEquals(originalVolume, selectedSystemRoute.getVolume());
-        assertEquals(MediaRoute2Info.PLAYBACK_VOLUME_VARIABLE,
+        assertEquals(PLAYBACK_VOLUME_VARIABLE,
                 selectedSystemRoute.getVolumeHandling());
 
         final int targetVolume = originalVolume == minVolume
@@ -775,7 +845,7 @@ public class MediaRouter2Test {
     }
 
     // Helper for getting routes easily. Uses original ID as a key
-    static Map<String, MediaRoute2Info> createRouteMap(List<MediaRoute2Info> routes) {
+    private static Map<String, MediaRoute2Info> createRouteMap(List<MediaRoute2Info> routes) {
         Map<String, MediaRoute2Info> routeMap = new HashMap<>();
         for (MediaRoute2Info route : routes) {
             routeMap.put(route.getOriginalId(), route);
@@ -783,16 +853,15 @@ public class MediaRouter2Test {
         return routeMap;
     }
 
-    Map<String, MediaRoute2Info> waitAndGetRoutes(List<String> routeTypes)
+    private Map<String, MediaRoute2Info> waitAndGetRoutes(List<String> routeTypes)
             throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
 
         RouteCallback routeCallback = new RouteCallback() {
             @Override
             public void onRoutesAdded(List<MediaRoute2Info> routes) {
-                for (int i = 0; i < routes.size(); i++) {
-                    //TODO: use isSystem() or similar method when it's ready
-                    if (!TextUtils.equals(routes.get(i).getProviderId(), SYSTEM_PROVIDER_ID)) {
+                for (MediaRoute2Info route : routes) {
+                    if (!route.isSystemRoute()) {
                         latch.countDown();
                     }
                 }
@@ -809,7 +878,7 @@ public class MediaRouter2Test {
         }
     }
 
-    static void releaseControllers(@NonNull List<RoutingController> controllers) {
+    private static void releaseControllers(@NonNull List<RoutingController> controllers) {
         for (RoutingController controller : controllers) {
             controller.release();
         }
@@ -818,7 +887,7 @@ public class MediaRouter2Test {
     /**
      * Returns a list of original route IDs of the given route list.
      */
-    List<String> getOriginalRouteIds(@NonNull List<MediaRoute2Info> routes) {
+    private List<String> getOriginalRouteIds(@NonNull List<MediaRoute2Info> routes) {
         List<String> result = new ArrayList<>();
         for (MediaRoute2Info route : routes) {
             result.add(route.getOriginalId());

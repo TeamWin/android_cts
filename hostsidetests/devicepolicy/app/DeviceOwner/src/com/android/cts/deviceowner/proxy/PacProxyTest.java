@@ -56,6 +56,7 @@ public class PacProxyTest extends BaseProxyTest {
    * are passed through correctly.
    */
   private static final String HOST_PAC = "function FindProxyForURL(url, host)" +
+      "{" +
       "  if (host == \"testhost\") {" +
       "    return \"PROXY localhost:8080\";" +
       "  }" +
@@ -226,7 +227,6 @@ public class PacProxyTest extends BaseProxyTest {
     setPacURLAndWaitForDownload();
 
     waitForSetProxySysProp();
-
     String host = "testhost";
     URI uri = new URI("http://" + host + "/test/my/url");
     ProxySelector selector = ProxySelector.getDefault();

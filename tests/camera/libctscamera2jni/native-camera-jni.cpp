@@ -4068,25 +4068,28 @@ validateACameraMetadataFromCameraMetadataCriticalTagsNative(
 
     ret = ACameraMetadata_getConstEntry(ndkResult, ACAMERA_SENSOR_TIMESTAMP,
         &entry);
-    ACameraMetadata_free(ndkResult);
 
     if (ret != ACAMERA_OK) {
         ALOGE("validateCriticalTags failed: "
               "ACameraMetadata_getConstEntry returned %d.", ret);
+        ACameraMetadata_free(ndkResult);
         return false;
     }
     if (entry.type != ACAMERA_TYPE_INT64) {
         ALOGE("validateCriticalTags failed: entry.type is %u but should be %u.",
               entry.type, ACAMERA_TYPE_INT64);
+        ACameraMetadata_free(ndkResult);
         return false;
     }
     if (entry.count != 1) {
         ALOGE("validateCriticalTags failed: entry.count is %u but should be %u.",
               entry.count, 1);
+        ACameraMetadata_free(ndkResult);
         return false;
     }
     if (entry.data.i64 == nullptr) {
         ALOGE("validateCriticalTags failed: entry.data.i64 is nullptr.");
+        ACameraMetadata_free(ndkResult);
         return false;
     }
 
@@ -4094,8 +4097,81 @@ validateACameraMetadataFromCameraMetadataCriticalTagsNative(
     const int64_t ndkTimestampI64 = *(entry.data.i64);
     ALOGV("javaTimestampI64 = %" PRId64 ", ndkTimestampI64 = %" PRId64,
           javaTimestampI64, ndkTimestampI64);
+
+    ACameraMetadata_free(ndkResult);
+
     return (javaTimestampI64 == ndkTimestampI64);
 }
+
+static ACameraMetadata *sStashedMetadata = nullptr;
+
+// Test holding on to a ACameraMetadata past a single local JNI call
+extern "C" jboolean
+Java_android_hardware_camera2_cts_CaptureResultTest_\
+stashACameraMetadataFromCameraMetadataNative(
+        JNIEnv* env, jclass /*clazz*/, jobject captureResult) {
+    ALOGV("%s", __FUNCTION__);
+    ACameraMetadata* ndkResult =
+        ACameraMetadata_fromCameraMetadata(env, captureResult);
+    if (ndkResult == nullptr) return false;
+    sStashedMetadata = ndkResult;
+
+    return true;
+}
+
+extern "C" jboolean
+Java_android_hardware_camera2_cts_CaptureResultTest_\
+validateStashedACameraMetadataFromCameraMetadataNative(
+        JNIEnv* env, jclass /*clazz*/, jlong timestamp) {
+    ALOGV("%s", __FUNCTION__);
+    if (sStashedMetadata == nullptr) return false;
+
+    camera_status_t ret;
+    ACameraMetadata_const_entry entry;
+
+    ret = ACameraMetadata_getConstEntry(sStashedMetadata, ACAMERA_SENSOR_TIMESTAMP,
+        &entry);
+
+    if (ret != ACAMERA_OK) {
+        ALOGE("validateStashed failed: "
+              "ACameraMetadata_getConstEntry returned %d.", ret);
+        ACameraMetadata_free(sStashedMetadata);
+        sStashedMetadata = nullptr;
+        return false;
+    }
+    if (entry.type != ACAMERA_TYPE_INT64) {
+        ALOGE("validateStashed failed: entry.type is %u but should be %u.",
+              entry.type, ACAMERA_TYPE_INT64);
+        ACameraMetadata_free(sStashedMetadata);
+        sStashedMetadata = nullptr;
+        return false;
+    }
+    if (entry.count != 1) {
+        ALOGE("validateStashed failed: entry.count is %u but should be %u.",
+              entry.count, 1);
+        ACameraMetadata_free(sStashedMetadata);
+        sStashedMetadata = nullptr;
+        return false;
+    }
+    if (entry.data.i64 == nullptr) {
+        ALOGE("validateStashed failed: entry.data.i64 is nullptr.");
+        ACameraMetadata_free(sStashedMetadata);
+        sStashedMetadata = nullptr;
+        return false;
+    }
+
+    const int64_t javaTimestampI64 = static_cast<int64_t>(timestamp);
+    const int64_t ndkTimestampI64 = *(entry.data.i64);
+
+    ACameraMetadata_free(sStashedMetadata);
+    sStashedMetadata = nullptr;
+    ALOGV("javaTimestampI64 = %" PRId64 ", ndkTimestampI64 = %" PRId64,
+          javaTimestampI64, ndkTimestampI64);
+    return (javaTimestampI64 == ndkTimestampI64);
+
+}
+
+
 
 extern "C" jboolean
 Java_android_hardware_camera2_cts_CameraManagerTest_\

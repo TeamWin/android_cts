@@ -22,5 +22,8 @@
         <activity android:name=".SomeActivity"
                   android:exported="true"
         />
+        <activity android:name=".SomeActivityWithLocus"
+                  android:exported="true"
+        />
     </application>
 </manifest>

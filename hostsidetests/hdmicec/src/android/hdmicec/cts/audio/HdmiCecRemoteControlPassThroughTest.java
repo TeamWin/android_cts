@@ -140,4 +140,38 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHostJUnit4Tes
                 HdmiCecConstants.CEC_CONTROL_BACK, true);
         lookForLog("Long press KEYCODE_BACK");
     }
+
+    /**
+     * Test 11.2.13-3
+     * Tests that the device responds correctly to a <User Control Pressed> message for press and
+     * hold operations when no <User Control Released> is sent.
+     */
+    @Test
+    public void cect_11_2_13_3_UserControlPressAndHoldWithNoRelease() throws Exception {
+        ITestDevice device = getDevice();
+        // Clear activity
+        device.executeShellCommand(CLEAR_COMMAND);
+        // Clear logcat.
+        device.executeAdbCommand("logcat", "-c");
+        // Start the APK and wait for it to complete.
+        device.executeShellCommand(START_COMMAND);
+        hdmiCecClient.sendUserControlPress(CecDevice.TV, CecDevice.AUDIO_SYSTEM,
+                HdmiCecConstants.CEC_CONTROL_UP, true);
+        lookForLog("Long press KEYCODE_DPAD_UP");
+        hdmiCecClient.sendUserControlPress(CecDevice.TV, CecDevice.AUDIO_SYSTEM,
+                HdmiCecConstants.CEC_CONTROL_DOWN, true);
+        lookForLog("Long press KEYCODE_DPAD_DOWN");
+        hdmiCecClient.sendUserControlPress(CecDevice.TV, CecDevice.AUDIO_SYSTEM,
+                HdmiCecConstants.CEC_CONTROL_LEFT, true);
+        lookForLog("Long press KEYCODE_DPAD_LEFT");
+        hdmiCecClient.sendUserControlPress(CecDevice.TV, CecDevice.AUDIO_SYSTEM,
+                HdmiCecConstants.CEC_CONTROL_RIGHT, true);
+        lookForLog("Long press KEYCODE_DPAD_RIGHT");
+        hdmiCecClient.sendUserControlPress(CecDevice.TV, CecDevice.AUDIO_SYSTEM,
+                HdmiCecConstants.CEC_CONTROL_SELECT, true);
+        lookForLog("Long press KEYCODE_DPAD_CENTER");
+        hdmiCecClient.sendUserControlPress(CecDevice.TV, CecDevice.AUDIO_SYSTEM,
+                HdmiCecConstants.CEC_CONTROL_BACK, true);
+        lookForLog("Long press KEYCODE_BACK");
+    }
 }

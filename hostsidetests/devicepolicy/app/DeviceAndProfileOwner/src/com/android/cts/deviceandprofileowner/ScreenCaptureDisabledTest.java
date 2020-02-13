@@ -46,6 +46,25 @@ public class ScreenCaptureDisabledTest extends BaseDeviceAdminTest {
         assertTrue(mDevicePolicyManager.getScreenCaptureDisabled(null /* any admin */));
     }
 
+    public void testSetScreenCaptureDisabledOnParent() throws Exception {
+        DevicePolicyManager parentDevicePolicyManager =
+                mDevicePolicyManager.getParentProfileInstance(ADMIN_RECEIVER_COMPONENT);
+        boolean initial = parentDevicePolicyManager.getScreenCaptureDisabled(
+                ADMIN_RECEIVER_COMPONENT);
+
+        parentDevicePolicyManager.setScreenCaptureDisabled(ADMIN_RECEIVER_COMPONENT, true);
+        assertTrue(parentDevicePolicyManager.getScreenCaptureDisabled(ADMIN_RECEIVER_COMPONENT));
+        assertTrue(parentDevicePolicyManager.getScreenCaptureDisabled(null /* any admin */));
+        testScreenCaptureImpossible();
+
+        parentDevicePolicyManager.setScreenCaptureDisabled(ADMIN_RECEIVER_COMPONENT, false);
+        assertFalse(parentDevicePolicyManager.getScreenCaptureDisabled(ADMIN_RECEIVER_COMPONENT));
+        assertFalse(parentDevicePolicyManager.getScreenCaptureDisabled(null /* any admin */));
+        testScreenCapturePossible();
+
+        parentDevicePolicyManager.setScreenCaptureDisabled(ADMIN_RECEIVER_COMPONENT, initial);
+    }
+
     public void testScreenCaptureImpossible() throws Exception {
         for (int i = 0; i < MAX_ATTEMPTS_COUNT; i++) {
             Log.d(TAG, "testScreenCaptureImpossible: " + i + " trials");

@@ -78,6 +78,12 @@ abstract class SELinuxTargetSdkTestBase extends AndroidTestCase
         }
     }
 
+    protected static void noNetlinkRouteGetlink() throws IOException {
+        assertEquals("RTM_GETLINK is not allowed on a netlink route sockets. Verify that the " +
+			"following patch has been applied to your kernel: " +
+			"https://android-review.googlesource.com/q/I7b44ce60ad98f858c412722d41b9842f8577151f",
+                13, checkNetlinkRouteGetlink());
+    }
 
     protected static void noNetlinkRouteBind() throws IOException {
         assertEquals("Bind() is not allowed on a netlink route sockets",
@@ -161,6 +167,7 @@ abstract class SELinuxTargetSdkTestBase extends AndroidTestCase
         return true;
     }
 
+    private static final native int checkNetlinkRouteGetlink();
     private static final native int checkNetlinkRouteBind();
     private static final native String getFileContext(String path);
 }

@@ -17,7 +17,6 @@
 package com.android.cts.verifier;
 
 import com.android.cts.verifier.TestListAdapter.TestListItem;
-
 import android.app.ListActivity;
 import android.content.Intent;
 import android.content.res.Configuration;
