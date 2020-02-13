@@ -17,8 +17,11 @@
 package android.server.wm;
 
 import static android.os.SystemClock.sleep;
+import static android.server.wm.ActivityLauncher.KEY_LAUNCH_ACTIVITY;
+import static android.server.wm.ActivityLauncher.KEY_TARGET_COMPONENT;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.app.Components.ENTRY_POINT_ALIAS_ACTIVITY;
+import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
 import static android.server.wm.app.Components.NO_DISPLAY_ACTIVITY;
 import static android.server.wm.app.Components.REPORT_FULLY_DRAWN_ACTIVITY;
 import static android.server.wm.app.Components.SINGLE_TASK_ACTIVITY;
@@ -87,6 +90,9 @@ import java.util.function.IntConsumer;
 @Presubmit
 public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
     private static final String TAG_ATM = "ActivityTaskManager";
+    private static final String LAUNCH_STATE_COLD = "COLD";
+    private static final String LAUNCH_STATE_WARM = "WARM";
+    private static final String LAUNCH_STATE_HOT = "HOT";
     private static final int EVENT_WM_ACTIVITY_LAUNCH_TIME = 30009;
     private final MetricsReader mMetricsReader = new MetricsReader();
     private long mPreUptimeMs;
@@ -246,16 +252,9 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
 
         assertEquals("Expected a cold launch.", metricsLog.getType(), TYPE_TRANSITION_WARM_LAUNCH);
 
-        assertThat("did not find component in am start output.", amStartOutput,
-                containsString(TEST_ACTIVITY.flattenToShortString()));
-
-        assertThat("did not find windows drawn delay time in am start output.", amStartOutput,
-                containsString(Integer.toString(windowsDrawnDelayMs)));
-
-        assertThat("did not find launch state in am start output.", amStartOutput,
-                containsString("WARM"));
+        assertLaunchComponentStateAndTime(amStartOutput, TEST_ACTIVITY, LAUNCH_STATE_WARM,
+                windowsDrawnDelayMs);
     }
-
 
     /**
      * Hot launch an activity with wait option and verify that {@link android.app.WaitResult#totalTime}
@@ -283,14 +282,8 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
 
         assertEquals("Expected a cold launch.", metricsLog.getType(), TYPE_TRANSITION_HOT_LAUNCH);
 
-        assertThat("did not find component in am start output.", amStartOutput,
-                containsString(TEST_ACTIVITY.flattenToShortString()));
-
-        assertThat("did not find windows drawn delay time in am start output.", amStartOutput,
-                containsString(Integer.toString(windowsDrawnDelayMs)));
-
-        assertThat("did not find launch state in am start output.", amStartOutput,
-                containsString("HOT"));
+        assertLaunchComponentStateAndTime(amStartOutput, TEST_ACTIVITY, LAUNCH_STATE_HOT,
+                windowsDrawnDelayMs);
     }
 
     /**
@@ -312,14 +305,8 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
 
         assertEquals("Expected a cold launch.", metricsLog.getType(), TYPE_TRANSITION_COLD_LAUNCH);
 
-        assertThat("did not find component in am start output.", amStartOutput,
-                containsString(TEST_ACTIVITY.flattenToShortString()));
-
-        assertThat("did not find windows drawn delay time in am start output.", amStartOutput,
-                containsString(Integer.toString(windowsDrawnDelayMs)));
-
-        assertThat("did not find launch state in am start output.", amStartOutput,
-                containsString("COLD"));
+        assertLaunchComponentStateAndTime(amStartOutput, TEST_ACTIVITY, LAUNCH_STATE_COLD,
+                windowsDrawnDelayMs);
     }
 
     /**
@@ -412,6 +399,18 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
                         postUptimeMs);
     }
 
+    /**
+     * Launch an activity which will start another activity immediately. The reported component
+     * name should be the last one with valid launch state.
+     */
+    @Test
+    public void testConsecutiveLaunch() {
+        final String amStartOutput = executeShellCommand("am start --ez " + KEY_LAUNCH_ACTIVITY
+                + " true --es " + KEY_TARGET_COMPONENT + " " + TEST_ACTIVITY.flattenToShortString()
+                + " -W " + LAUNCHING_ACTIVITY.flattenToShortString());
+        assertLaunchComponentState(amStartOutput, TEST_ACTIVITY, LAUNCH_STATE_COLD);
+    }
+
     @Test
     public void testLaunchTimeEventLogNonProcessSwitch() {
         launchAndWaitForActivity(SINGLE_TASK_ACTIVITY);
@@ -444,6 +443,21 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
             }
         }
         return null;
+    }
+
+    private static void assertLaunchComponentState(String amStartOutput, ComponentName component,
+            String state) {
+        assertThat("did not find component in am start output.", amStartOutput,
+                containsString(component.flattenToShortString()));
+        assertThat("did not find launch state in am start output.", amStartOutput,
+                containsString(state));
+    }
+
+    private static void assertLaunchComponentStateAndTime(String amStartOutput,
+            ComponentName component, String state, int windowsDrawnDelayMs) {
+        assertLaunchComponentState(amStartOutput, component, state);
+        assertThat("did not find windows drawn delay time in am start output.", amStartOutput,
+                containsString(Integer.toString(windowsDrawnDelayMs)));
     }
 
     private void assertLogsContain(String[] logs, String expectedLog) {
