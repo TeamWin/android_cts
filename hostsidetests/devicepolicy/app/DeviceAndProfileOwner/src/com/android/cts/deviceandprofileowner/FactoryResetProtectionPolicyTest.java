@@ -32,7 +32,7 @@ public class FactoryResetProtectionPolicyTest extends BaseDeviceAdminTest {
 
         FactoryResetProtectionPolicy policy = new FactoryResetProtectionPolicy.Builder()
                 .setFactoryResetProtectionAccounts(accounts)
-                .setFactoryResetProtectionDisabled(true)
+                .setFactoryResetProtectionEnabled(false)
                 .build();
 
         mDevicePolicyManager.setFactoryResetProtectionPolicy(ADMIN_RECEIVER_COMPONENT, policy);
@@ -48,7 +48,7 @@ public class FactoryResetProtectionPolicyTest extends BaseDeviceAdminTest {
         // Set a non-default policy
         FactoryResetProtectionPolicy policy = new FactoryResetProtectionPolicy.Builder()
                 .setFactoryResetProtectionAccounts(new ArrayList<>())
-                .setFactoryResetProtectionDisabled(true)
+                .setFactoryResetProtectionEnabled(false)
                 .build();
         mDevicePolicyManager.setFactoryResetProtectionPolicy(ADMIN_RECEIVER_COMPONENT, policy);
 
@@ -68,8 +68,8 @@ public class FactoryResetProtectionPolicyTest extends BaseDeviceAdminTest {
 
     private void assertPoliciesAreEqual(FactoryResetProtectionPolicy expectedPolicy,
             FactoryResetProtectionPolicy actualPolicy) {
-        assertThat(actualPolicy.isFactoryResetProtectionDisabled()).isEqualTo(
-                expectedPolicy.isFactoryResetProtectionDisabled());
+        assertThat(actualPolicy.isFactoryResetProtectionEnabled()).isEqualTo(
+                expectedPolicy.isFactoryResetProtectionEnabled());
         assertAccountsAreEqual(expectedPolicy.getFactoryResetProtectionAccounts(),
                 actualPolicy.getFactoryResetProtectionAccounts());
     }
