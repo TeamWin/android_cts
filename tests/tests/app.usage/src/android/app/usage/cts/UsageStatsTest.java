@@ -108,6 +108,8 @@ public class UsageStatsTest {
 
     private static final String TEST_APP_PKG = "android.app.usage.cts.test1";
     private static final String TEST_APP_CLASS = "android.app.usage.cts.test1.SomeActivity";
+    private static final String TEST_APP_CLASS_LOCUS
+            = "android.app.usage.cts.test1.SomeActivityWithLocus";
 
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     private static final long MINUTE = TimeUnit.MINUTES.toMillis(1);
@@ -1259,6 +1261,69 @@ public class UsageStatsTest {
         assertEquals("Unexpected number of activity stops", 1, stops);
     }
 
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @Test
+    public void testAccessLocusEventsWithPermisions() throws Exception {
+        long startTime = System.currentTimeMillis();
+        startAndDestroyActivityWithLocus();
+        long endTime = System.currentTimeMillis();
+
+        UsageEvents events = queryEventsAsShell(startTime, endTime);
+
+        int locuses = 0;
+
+        while (events.hasNextEvent()) {
+            UsageEvents.Event event = new UsageEvents.Event();
+            assertTrue(events.getNextEvent(event));
+
+            if (TEST_APP_PKG.equals(event.getPackageName())
+                && event.mEventType == Event.LOCUS_ID_SET) {
+                    locuses++;
+            }
+        }
+        assertEquals("Unexpected number of locus events", 2, locuses);
+    }
+
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @Test
+    public void testAccessLocusEventsWithoutPermisions() throws Exception {
+        long startTime = System.currentTimeMillis();
+        startAndDestroyActivityWithLocus();
+        long endTime = System.currentTimeMillis();
+
+        UsageEvents events = mUsageStatsManager.queryEvents(startTime, endTime);
+
+        int locuses = 0;
+
+        while (events.hasNextEvent()) {
+            UsageEvents.Event event = new UsageEvents.Event();
+            assertTrue(events.getNextEvent(event));
+
+            if (TEST_APP_PKG.equals(event.getPackageName())
+                && event.mEventType == Event.LOCUS_ID_SET) {
+                    locuses++;
+            }
+        }
+        assertEquals("Unexpected number of locus events", 0, locuses);
+    }
+
+    private void startAndDestroyActivityWithLocus() {
+        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        final ActivityManager mAm = context.getSystemService(ActivityManager.class);
+
+        Intent intent = new Intent();
+        intent.setClassName(TEST_APP_PKG, TEST_APP_CLASS_LOCUS);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(intent);
+        mUiDevice.wait(Until.hasObject(By.clazz(TEST_APP_PKG, TEST_APP_CLASS_LOCUS)), TIMEOUT);
+        SystemClock.sleep(500);
+
+        // Destroy the activity
+        SystemUtil.runWithShellPermissionIdentity(() -> mAm.forceStopPackage(TEST_APP_PKG));
+        mUiDevice.wait(Until.gone(By.clazz(TEST_APP_PKG, TEST_APP_CLASS_LOCUS)), TIMEOUT);
+        SystemClock.sleep(500);
+    }
+
     private void pressWakeUp() {
         mUiDevice.pressKeyCode(KeyEvent.KEYCODE_WAKEUP);
     }
@@ -1291,5 +1356,10 @@ public class UsageStatsTest {
             assertFalse(entity + " found in list of active activities and tokens\n"
                     + activeUsages, found);
         }
+    }
+
+    private UsageEvents queryEventsAsShell(long start, long end) {
+        return SystemUtil.runWithShellPermissionIdentity(() ->
+                mUsageStatsManager.queryEvents(start, end));
     }
 }
