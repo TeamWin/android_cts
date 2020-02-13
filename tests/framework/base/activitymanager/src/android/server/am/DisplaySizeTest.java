@@ -111,10 +111,10 @@ public class DisplaySizeTest extends ActivityManagerTestBase {
         private static final String DENSITY_PROP_EMULATOR = "qemu.sf.lcd_density";
 
         void setUnsupportedDensity() {
-            // Set device to 6x zoom. It doesn't matter that we're zooming in
+            // Set device to 0.85 zoom. It doesn't matter that we're zooming out
             // since the feature verifies that we're in a non-default density.
             final int stableDensity = getStableDensity();
-            final int targetDensity = (int) (stableDensity * 6);
+            final int targetDensity = (int) (stableDensity * 0.85);
             setDensity(targetDensity);
         }
 
