@@ -109,19 +109,15 @@ public class BatteryConstraintTest extends BaseJobSchedulerTest {
             Thread.sleep(50);
             curSeq = Integer.parseInt(SystemUtil.runShellCommand(getInstrumentation(),
                     "cmd jobscheduler get-battery-seq").trim());
-            // The job scheduler actually looks at the charging/discharging state,
-            // which is currently determined by battery stats in response to the low-level
-            // plugged/unplugged events.  So we can get this updated after the last seq
-            // is received, so we need to make sure that has correctly changed.
             curCharging = Boolean.parseBoolean(SystemUtil.runShellCommand(getInstrumentation(),
                     "cmd jobscheduler get-battery-charging").trim());
-            if (curSeq == seq && curCharging == plugged) {
+            if (curSeq >= seq && curCharging == plugged) {
                 return;
             }
         } while ((SystemClock.elapsedRealtime() - startTime) < 5000);
 
         fail("Timed out waiting for job scheduler: expected seq=" + seq + ", cur=" + curSeq
-                + ", plugged=" + plugged + " curCharging=" + curCharging);
+                + ", expected plugged=" + plugged + " curCharging=" + curCharging);
     }
 
     void verifyChargingState(boolean charging) throws Exception {
