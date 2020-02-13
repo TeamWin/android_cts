@@ -36,6 +36,7 @@ import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.cts.R;
+import android.graphics.cts.Utils;
 import android.graphics.drawable.AnimatedImageDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -47,8 +48,9 @@ import androidx.test.filters.FlakyTest;
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.BitmapUtils;
+import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.WidgetTestUtils;
 
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -66,8 +68,7 @@ import junitparams.Parameters;
 
 @RunWith(JUnitParamsRunner.class)
 public class AnimatedImageDrawableTest {
-    private Resources mRes;
-    private ContentResolver mContentResolver;
+    private ImageView mImageView;
 
     private static final int RES_ID = R.drawable.animated;
     private static final int WIDTH = 278;
@@ -75,27 +76,24 @@ public class AnimatedImageDrawableTest {
     private static final int NUM_FRAMES = 4;
     private static final int FRAME_DURATION = 250; // in milliseconds
     private static final int DURATION = NUM_FRAMES * FRAME_DURATION;
-    private static final int LAYOUT = R.layout.animated_image_layout;
-    private static final int IMAGE_ID = R.id.animated_image;
+
     @Rule
-    public ActivityTestRule<DrawableStubActivity> mActivityRule =
-            new ActivityTestRule<DrawableStubActivity>(DrawableStubActivity.class);
+    public ActivityTestRule<AnimatedImageActivity> mActivityRule =
+            new ActivityTestRule<AnimatedImageActivity>(AnimatedImageActivity.class);
     private Activity mActivity;
 
-    private Uri getAsResourceUri(int resId) {
-        return new Uri.Builder()
-            .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
-            .authority(mRes.getResourcePackageName(resId))
-            .appendPath(mRes.getResourceTypeName(resId))
-            .appendPath(mRes.getResourceEntryName(resId))
-            .build();
+    private Resources getResources() {
+        return InstrumentationRegistry.getTargetContext().getResources();
     }
 
-    @Before
-    public void setup() {
-        mRes = InstrumentationRegistry.getTargetContext().getResources();
-        mContentResolver = InstrumentationRegistry.getTargetContext().getContentResolver();
+    private ContentResolver getContentResolver() {
+        return InstrumentationRegistry.getTargetContext().getContentResolver();
+    }
+
+    private void setupActivity() {
         mActivity = mActivityRule.getActivity();
+        PollingCheck.waitFor(mActivity::hasWindowFocus);
+        mImageView = mActivity.findViewById(R.id.animated_image);
     }
 
     @Test
@@ -105,8 +103,9 @@ public class AnimatedImageDrawableTest {
 
     @Test
     public void testMutate() {
-        AnimatedImageDrawable aid1 = (AnimatedImageDrawable) mRes.getDrawable(R.drawable.animated);
-        AnimatedImageDrawable aid2 = (AnimatedImageDrawable) mRes.getDrawable(R.drawable.animated);
+        Resources res = getResources();
+        AnimatedImageDrawable aid1 = (AnimatedImageDrawable) res.getDrawable(R.drawable.animated);
+        AnimatedImageDrawable aid2 = (AnimatedImageDrawable) res.getDrawable(R.drawable.animated);
 
         final int originalAlpha = aid1.getAlpha();
         assertEquals(255, originalAlpha);
@@ -117,15 +116,15 @@ public class AnimatedImageDrawableTest {
             aid1.setAlpha(100);
             assertEquals(originalAlpha, aid2.getAlpha());
         } finally {
-            mRes.getDrawable(R.drawable.animated).setAlpha(originalAlpha);
+            res.getDrawable(R.drawable.animated).setAlpha(originalAlpha);
         }
     }
 
     private AnimatedImageDrawable createFromImageDecoder(int resId) {
         Uri uri = null;
         try {
-            uri = getAsResourceUri(resId);
-            ImageDecoder.Source source = ImageDecoder.createSource(mContentResolver, uri);
+            uri = Utils.getAsResourceUri(resId);
+            ImageDecoder.Source source = ImageDecoder.createSource(getContentResolver(), uri);
             Drawable drawable = ImageDecoder.decodeDrawable(source);
             assertTrue(drawable instanceof AnimatedImageDrawable);
             return (AnimatedImageDrawable) drawable;
@@ -176,6 +175,7 @@ public class AnimatedImageDrawableTest {
 
     @Test
     public void testRegisterCallback() throws Throwable {
+        setupActivity();
         AnimatedImageDrawable drawable = createFromImageDecoder(R.drawable.animated);
 
         mActivityRule.runOnUiThread(() -> {
@@ -191,6 +191,7 @@ public class AnimatedImageDrawableTest {
 
     @Test
     public void testClearCallbacks() throws Throwable {
+        setupActivity();
         AnimatedImageDrawable drawable = createFromImageDecoder(R.drawable.animated);
 
         Callback[] callbacks = new Callback[] {
@@ -218,26 +219,14 @@ public class AnimatedImageDrawableTest {
         }
     }
 
-    /**
-     *  Helper for attaching drawable to the view system.
-     *
-     *  Necessary for the drawable to animate.
-     *
-     *  Must be called from UI thread.
-     */
-    private void setContentView(AnimatedImageDrawable drawable) {
-        mActivity.setContentView(LAYOUT);
-        ImageView imageView = (ImageView) mActivity.findViewById(IMAGE_ID);
-        imageView.setImageDrawable(drawable);
-    }
-
     @Test
     public void testUnregisterCallback() throws Throwable {
+        setupActivity();
         AnimatedImageDrawable drawable = createFromImageDecoder(R.drawable.animated);
 
         Callback cb = new Callback(drawable);
-        mActivityRule.runOnUiThread(() -> {
-            setContentView(drawable);
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mImageView, () -> {
+            mImageView.setImageDrawable(drawable);
 
             drawable.registerAnimationCallback(cb);
             assertTrue(drawable.unregisterAnimationCallback(cb));
@@ -255,14 +244,15 @@ public class AnimatedImageDrawableTest {
     @Test
     @FlakyTest (bugId = 120280954)
     public void testLifeCycle() throws Throwable {
+        setupActivity();
         AnimatedImageDrawable drawable = createFromImageDecoder(RES_ID);
 
         // Only run the animation one time.
         drawable.setRepeatCount(0);
 
         Callback cb = new Callback(drawable);
-        mActivityRule.runOnUiThread(() -> {
-            setContentView(drawable);
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mImageView, () -> {
+            mImageView.setImageDrawable(drawable);
 
             drawable.registerAnimationCallback(cb);
         });
@@ -271,13 +261,15 @@ public class AnimatedImageDrawableTest {
         cb.assertStarted(false);
         cb.assertEnded(false);
 
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mImageView, () -> {
             drawable.start();
             assertTrue(drawable.isRunning());
         });
         cb.waitForStart();
         cb.assertStarted(true);
 
+        // FIXME: Now that it seems the reason for the flakiness has been solved (b/129400990),
+        // reduce this extra duration workaround.
         // Extra time, to wait for the message to post.
         cb.waitForEnd(DURATION * 20);
         cb.assertEnded(true);
@@ -286,6 +278,7 @@ public class AnimatedImageDrawableTest {
 
     @Test
     public void testLifeCycleSoftware() throws Throwable {
+        setupActivity();
         AnimatedImageDrawable drawable = createFromImageDecoder(RES_ID);
 
         Bitmap bm = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(),
@@ -332,16 +325,19 @@ public class AnimatedImageDrawableTest {
     @Test
     @FlakyTest (bugId = 72737527)
     public void testAddCallbackAfterStart() throws Throwable {
+        setupActivity();
         AnimatedImageDrawable drawable = createFromImageDecoder(RES_ID);
         Callback cb = new Callback(drawable);
-        mActivityRule.runOnUiThread(() -> {
-            setContentView(drawable);
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mImageView, () -> {
+            mImageView.setImageDrawable(drawable);
 
             drawable.setRepeatCount(0);
             drawable.start();
             drawable.registerAnimationCallback(cb);
         });
 
+        // FIXME: Now that it seems the reason for the flakiness has been solved (b/129400990),
+        // reduce this extra duration workaround.
         // Add extra duration to wait for the message posted by the end of the
         // animation. This should help fix flakiness.
         cb.waitForEnd(DURATION * 10);
@@ -350,10 +346,11 @@ public class AnimatedImageDrawableTest {
 
     @Test
     public void testStop() throws Throwable {
+        setupActivity();
         AnimatedImageDrawable drawable = createFromImageDecoder(RES_ID);
         Callback cb = new Callback(drawable);
-        mActivityRule.runOnUiThread(() -> {
-            setContentView(drawable);
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mImageView, () -> {
+            mImageView.setImageDrawable(drawable);
 
             drawable.registerAnimationCallback(cb);
 
@@ -377,42 +374,45 @@ public class AnimatedImageDrawableTest {
 
     @Test
     @FlakyTest (bugId = 72737527)
-    public void testRepeatCounts() throws Throwable {
-        for (int repeatCount : new int[] { 3, 5, 7, 16 }) {
-            AnimatedImageDrawable drawable = createFromImageDecoder(RES_ID);
-            assertEquals(AnimatedImageDrawable.REPEAT_INFINITE, drawable.getRepeatCount());
+    @Parameters({ "3", "5", "7", "16" })
+    public void testRepeatCounts(int repeatCount) throws Throwable {
+        setupActivity();
+        AnimatedImageDrawable drawable = createFromImageDecoder(RES_ID);
+        assertEquals(AnimatedImageDrawable.REPEAT_INFINITE, drawable.getRepeatCount());
 
-            Callback cb = new Callback(drawable);
-            mActivityRule.runOnUiThread(() -> {
-                setContentView(drawable);
+        Callback cb = new Callback(drawable);
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mImageView, () -> {
+            mImageView.setImageDrawable(drawable);
 
-                drawable.registerAnimationCallback(cb);
-                drawable.setRepeatCount(repeatCount);
-                assertEquals(repeatCount, drawable.getRepeatCount());
-                drawable.start();
-            });
+            drawable.registerAnimationCallback(cb);
+            drawable.setRepeatCount(repeatCount);
+            assertEquals(repeatCount, drawable.getRepeatCount());
+            drawable.start();
+        });
 
-            cb.waitForStart();
-            cb.assertStarted(true);
+        cb.waitForStart();
+        cb.assertStarted(true);
 
-            // The animation runs repeatCount + 1 total times.
-            cb.waitForEnd(DURATION * repeatCount);
-            cb.assertEnded(false);
+        // The animation runs repeatCount + 1 total times.
+        cb.waitForEnd(DURATION * repeatCount);
+        cb.assertEnded(false);
 
-            cb.waitForEnd(DURATION * 20);
-            cb.assertEnded(true);
+        // FIXME: Now that it seems the reason for the flakiness has been solved (b/129400990),
+        // reduce this extra duration workaround.
+        cb.waitForEnd(DURATION * 20);
+        cb.assertEnded(true);
 
-            drawable.setRepeatCount(AnimatedImageDrawable.REPEAT_INFINITE);
-            assertEquals(AnimatedImageDrawable.REPEAT_INFINITE, drawable.getRepeatCount());
-        }
+        drawable.setRepeatCount(AnimatedImageDrawable.REPEAT_INFINITE);
+        assertEquals(AnimatedImageDrawable.REPEAT_INFINITE, drawable.getRepeatCount());
     }
 
     @Test
     public void testRepeatCountInfinite() throws Throwable {
+        setupActivity();
         AnimatedImageDrawable drawable = createFromImageDecoder(RES_ID);
         Callback cb = new Callback(drawable);
-        mActivityRule.runOnUiThread(() -> {
-            setContentView(drawable);
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mImageView, () -> {
+            mImageView.setImageDrawable(drawable);
 
             drawable.registerAnimationCallback(cb);
             drawable.setRepeatCount(AnimatedImageDrawable.REPEAT_INFINITE);
@@ -522,8 +522,8 @@ public class AnimatedImageDrawableTest {
         AnimatedImageDrawable testDrawable = null;
         Uri uri = null;
         try {
-            uri = getAsResourceUri(RES_ID);
-            ImageDecoder.Source source = ImageDecoder.createSource(mContentResolver, uri);
+            uri = Utils.getAsResourceUri(RES_ID);
+            ImageDecoder.Source source = ImageDecoder.createSource(getContentResolver(), uri);
             Drawable dr = ImageDecoder.decodeDrawable(source, (decoder, info, src) -> {
                 decoder.setPostProcessor((canvas) -> {
                     canvas.drawRect(rectCreator.apply(canvas.getWidth(),
@@ -550,32 +550,36 @@ public class AnimatedImageDrawableTest {
 
     @Test
     public void testCreateFromXml() throws XmlPullParserException, IOException {
-        XmlPullParser parser = mRes.getXml(R.drawable.animatedimagedrawable_tag);
-        Drawable drawable = Drawable.createFromXml(mRes, parser);
+        Resources res = getResources();
+        XmlPullParser parser = res.getXml(R.drawable.animatedimagedrawable_tag);
+        Drawable drawable = Drawable.createFromXml(res, parser);
         assertNotNull(drawable);
         assertTrue(drawable instanceof AnimatedImageDrawable);
     }
 
     @Test
     public void testCreateFromXmlClass() throws XmlPullParserException, IOException {
-        XmlPullParser parser = mRes.getXml(R.drawable.animatedimagedrawable);
-        Drawable drawable = Drawable.createFromXml(mRes, parser);
+        Resources res = getResources();
+        XmlPullParser parser = res.getXml(R.drawable.animatedimagedrawable);
+        Drawable drawable = Drawable.createFromXml(res, parser);
         assertNotNull(drawable);
         assertTrue(drawable instanceof AnimatedImageDrawable);
     }
 
     @Test
     public void testCreateFromXmlClassAttribute() throws XmlPullParserException, IOException {
-        XmlPullParser parser = mRes.getXml(R.drawable.animatedimagedrawable_class);
-        Drawable drawable = Drawable.createFromXml(mRes, parser);
+        Resources res = getResources();
+        XmlPullParser parser = res.getXml(R.drawable.animatedimagedrawable_class);
+        Drawable drawable = Drawable.createFromXml(res, parser);
         assertNotNull(drawable);
         assertTrue(drawable instanceof AnimatedImageDrawable);
     }
 
     @Test(expected=XmlPullParserException.class)
     public void testMissingSrcInflate() throws XmlPullParserException, IOException  {
-        XmlPullParser parser = mRes.getXml(R.drawable.animatedimagedrawable_nosrc);
-        Drawable drawable = Drawable.createFromXml(mRes, parser);
+        Resources res = getResources();
+        XmlPullParser parser = res.getXml(R.drawable.animatedimagedrawable_nosrc);
+        Drawable drawable = Drawable.createFromXml(res, parser);
     }
 
     @Test
@@ -600,8 +604,9 @@ public class AnimatedImageDrawableTest {
     }
 
     private AnimatedImageDrawable parseXml(int resId) throws XmlPullParserException, IOException {
-        XmlPullParser parser = mRes.getXml(resId);
-        Drawable drawable = Drawable.createFromXml(mRes, parser);
+        Resources res = getResources();
+        XmlPullParser parser = res.getXml(resId);
+        Drawable drawable = Drawable.createFromXml(res, parser);
         assertNotNull(drawable);
         assertTrue(drawable instanceof AnimatedImageDrawable);
         return (AnimatedImageDrawable) drawable;
@@ -666,8 +671,9 @@ public class AnimatedImageDrawableTest {
 
     @Test
     public void testRepeatCountFromXml() throws XmlPullParserException, IOException {
-        XmlPullParser parser = mRes.getXml(R.drawable.animatedimagedrawable_loop_count);
-        Drawable drawable = Drawable.createFromXml(mRes, parser);
+        Resources res = getResources();
+        XmlPullParser parser = res.getXml(R.drawable.animatedimagedrawable_loop_count);
+        Drawable drawable = Drawable.createFromXml(res, parser);
         assertNotNull(drawable);
         assertTrue(drawable instanceof AnimatedImageDrawable);
 
@@ -678,15 +684,16 @@ public class AnimatedImageDrawableTest {
     @Test
     public void testInfiniteRepeatCountFromXml() throws XmlPullParserException, IOException {
         // This image has an encoded repeat count of 1. Verify that.
-        Drawable drawable = mRes.getDrawable(R.drawable.animated_one_loop);
+        Resources res = getResources();
+        Drawable drawable = res.getDrawable(R.drawable.animated_one_loop);
         assertNotNull(drawable);
         assertTrue(drawable instanceof AnimatedImageDrawable);
         AnimatedImageDrawable aid = (AnimatedImageDrawable) drawable;
         assertEquals(1, aid.getRepeatCount());
 
         // This layout uses the same image and overrides the repeat count to infinity.
-        XmlPullParser parser = mRes.getXml(R.drawable.animatedimagedrawable_loop_count_infinite);
-        drawable = Drawable.createFromXml(mRes, parser);
+        XmlPullParser parser = res.getXml(R.drawable.animatedimagedrawable_loop_count_infinite);
+        drawable = Drawable.createFromXml(res, parser);
         assertNotNull(drawable);
         assertTrue(drawable instanceof AnimatedImageDrawable);
 
@@ -697,8 +704,9 @@ public class AnimatedImageDrawableTest {
     // Verify that decoding on the AnimatedImageThread works.
     private void decodeInBackground(AnimatedImageDrawable drawable) throws Throwable {
         final Callback cb = new Callback(drawable);
-        mActivityRule.runOnUiThread(() -> {
-            setContentView(drawable);
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mImageView, () -> {
+            mImageView.setImageDrawable(drawable);
+
             drawable.registerAnimationCallback(cb);
             drawable.start();
         });
@@ -713,9 +721,11 @@ public class AnimatedImageDrawableTest {
 
     @Test
     public void testInputStream() throws Throwable {
-        try (InputStream in = mRes.openRawResource(R.drawable.animated)) {
+        setupActivity();
+        Resources res = getResources();
+        try (InputStream in = res.openRawResource(R.drawable.animated)) {
             ImageDecoder.Source src =
-                    ImageDecoder.createSource(mRes, in, Bitmap.DENSITY_NONE);
+                    ImageDecoder.createSource(res, in, Bitmap.DENSITY_NONE);
             AnimatedImageDrawable drawable =
                     (AnimatedImageDrawable) ImageDecoder.decodeDrawable(src);
             decodeInBackground(drawable);
@@ -725,7 +735,7 @@ public class AnimatedImageDrawableTest {
 
     private byte[] getAsByteArray() {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        try (InputStream in = mRes.openRawResource(RES_ID)) {
+        try (InputStream in = getResources().openRawResource(RES_ID)) {
             byte[] buf = new byte[4096];
             int bytesRead;
             while ((bytesRead = in.read(buf)) != -1) {
@@ -758,6 +768,7 @@ public class AnimatedImageDrawableTest {
 
     @Test
     public void testByteBuffer() throws Throwable {
+        setupActivity();
         // Natively, this tests ByteArrayStream.
         byte[] array = getAsByteArray();
         ByteBuffer byteBuffer = ByteBuffer.wrap(array);
@@ -767,6 +778,7 @@ public class AnimatedImageDrawableTest {
 
     @Test
     public void testReadOnlyByteBuffer() throws Throwable {
+        setupActivity();
         // Natively, this tests ByteBufferStream.
         byte[] array = getAsByteArray();
         ByteBuffer byteBuffer = ByteBuffer.wrap(array).asReadOnlyBuffer();
@@ -776,6 +788,7 @@ public class AnimatedImageDrawableTest {
 
     @Test
     public void testDirectByteBuffer() throws Throwable {
+        setupActivity();
         ByteBuffer byteBuffer = getAsDirectByteBuffer();
         final AnimatedImageDrawable drawable = createFromByteBuffer(byteBuffer);
         decodeInBackground(drawable);
