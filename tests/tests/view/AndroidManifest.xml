@@ -352,7 +352,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="android.view.cts.KeyEventInterceptTestActivity">
+        <activity android:name="android.view.cts.InputEventInterceptTestActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>

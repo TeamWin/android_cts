@@ -18,16 +18,30 @@ package android.view.cts;
 
 import android.app.Activity;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
-public class KeyEventInterceptTestActivity extends Activity {
-    final Queue<KeyEvent> mKeyEvents = new LinkedList<>();
+public class InputEventInterceptTestActivity extends Activity {
+    final BlockingQueue<KeyEvent> mKeyEvents = new LinkedBlockingQueue<>();
+    final BlockingQueue<MotionEvent> mMotionEvents = new LinkedBlockingQueue<>();
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         mKeyEvents.add(event);
+        return true;
+    }
+
+    @Override
+    public boolean dispatchGenericMotionEvent(MotionEvent event) {
+        mMotionEvents.add(event);
+        return true;
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        mMotionEvents.add(event);
         return true;
     }
 }
