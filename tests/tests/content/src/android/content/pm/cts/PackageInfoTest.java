@@ -18,6 +18,7 @@ package android.content.pm.cts;
 
 
 import android.content.pm.ApplicationInfo;
+import android.content.pm.ComponentInfo;
 import android.content.pm.ConfigurationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageItemInfo;
@@ -61,6 +62,19 @@ public class PackageInfoTest extends AndroidTestCase {
         mPackageInfoCmp = PackageInfo.CREATOR.createFromParcel(p);
         checkPkgInfoSame(mPackageInfo, mPackageInfoCmp);
         p.recycle();
+    }
+
+    public void testApplicationInfoSame() {
+        ApplicationInfo ai = mPackageInfo.applicationInfo;
+
+        // Make sure all the components in it has the same ApplicationInfo.
+        for (ComponentInfo[] ar : new ComponentInfo[][]{
+                mPackageInfo.activities, mPackageInfo.services, mPackageInfo.providers,
+                mPackageInfo.receivers}) {
+            for (ComponentInfo ci : ar) {
+                assertSame("component=" + ci.getComponentName(), ai, ci.applicationInfo);
+            }
+        }
     }
 
     private void checkPkgInfoSame(PackageInfo expected, PackageInfo actual) {
