@@ -151,6 +151,8 @@ public class MultiDisplayClientTests extends MultiDisplayTestBase {
 
     private void testDisplayIdUpdateWhenImeMove(Class<? extends ImeTestActivity> activityClass)
             throws Exception {
+        assumeTrue(MSG_NO_MOCK_IME, supportsInstallableIme());
+
         final VirtualDisplaySession virtualDisplaySession = createManagedVirtualDisplaySession();
         final MockImeSession mockImeSession = MockImeHelper.createManagedMockImeSession(this);
 
