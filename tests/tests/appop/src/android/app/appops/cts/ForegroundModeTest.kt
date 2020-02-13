@@ -33,6 +33,7 @@ import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.ServiceConnection
 import android.os.IBinder
+import android.platform.test.annotations.AppModeFull
 import android.provider.Settings
 import android.provider.Settings.Global.APP_OPS_CONSTANTS
 import android.support.test.uiautomator.UiDevice
@@ -50,6 +51,7 @@ import java.util.concurrent.TimeUnit.MILLISECONDS
 private const val TEST_SERVICE_PKG = "android.app.appops.cts.appthatcanbeforcedintoforegroundstates"
 private const val TIMEOUT_MILLIS = 45000L
 
+@AppModeFull(reason = "This test connects to other test app")
 class ForegroundModeTest {
     private var previousAppOpsConstants: String? = null
 
