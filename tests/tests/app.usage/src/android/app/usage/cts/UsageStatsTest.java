@@ -58,6 +58,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AppStandbyUtils;
+import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
@@ -74,6 +75,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 
 /**
  * Test the UsageStats API. It is difficult to test the entire surface area
@@ -642,6 +644,24 @@ public class UsageStatsTest {
                 mUsageStatsManager.getAppStandbyBucket(mTargetPackage));
     }
 
+    @Test
+    public void testIsAppInactive_Charging() throws Exception {
+        mUiDevice.executeShellCommand("am set-standby-bucket " + TEST_APP_PKG + " rare");
+
+        try {
+            BatteryUtils.runDumpsysBatteryUnplug();
+            // Plug/unplug change takes a while to propagate inside the system.
+            waitUntil(() -> mUsageStatsManager.isAppInactive(TEST_APP_PKG), true);
+
+            BatteryUtils.runDumpsysBatterySetPluggedIn(true);
+            BatteryUtils.runDumpsysBatterySetLevel(100);
+            // Plug/unplug change takes a while to propagate inside the system.
+            waitUntil(() -> mUsageStatsManager.isAppInactive(TEST_APP_PKG), false);
+        } finally {
+            BatteryUtils.runDumpsysBatteryReset();
+        }
+    }
+
     static final int[] INTERACTIVE_EVENTS = new int[] {
             Event.SCREEN_INTERACTIVE,
             Event.SCREEN_NON_INTERACTIVE
@@ -708,6 +728,18 @@ public class UsageStatsTest {
 
         fail("Timed out waiting for " + count + " events, only reached " + events.size());
         return events;
+    }
+
+    private void waitUntil(BooleanSupplier condition, boolean expected) throws Exception {
+        final long sleepTimeMs = 500;
+        final int count = 10;
+        for (int i = 0; i < count; ++i) {
+            if (condition.getAsBoolean() == expected) {
+                return;
+            }
+            Thread.sleep(sleepTimeMs);
+        }
+        fail("Condition wasn't satisfied after " + (sleepTimeMs * count) + "ms");
     }
 
     static class AggrEventData {
