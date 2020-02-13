@@ -16,16 +16,33 @@
 
 package android.media.cts;
 
+import static android.media.cts.MediaRouter2Test.releaseControllers;
 import static android.media.cts.SampleMediaRoute2ProviderService.FEATURE_SAMPLE;
 import static android.media.cts.SampleMediaRoute2ProviderService.FEATURE_SPECIAL;
+import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID1;
+import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID2;
+import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID4_TO_SELECT_AND_DESELECT;
+import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID5_TO_TRANSFER_TO;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
+import android.media.MediaRoute2Info;
+import android.media.MediaRoute2ProviderService;
 import android.media.MediaRouter2;
+import android.media.MediaRouter2.RouteCallback;
+import android.media.MediaRouter2.RoutingController;
+import android.media.MediaRouter2.RoutingControllerCallback;
 import android.media.RouteDiscoveryPreference;
+import android.media.RoutingSessionInfo;
 import android.media.cts.SampleMediaRoute2ProviderService.Proxy;
+import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.LargeTest;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -35,8 +52,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -44,33 +64,458 @@ import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "The system should be able to bind to SampleMediaRoute2ProviderService")
+@LargeTest
 public class MediaRoute2ProviderServiceTest {
     private static final String TAG = "MR2ProviderServiceTest";
     Context mContext;
     private MediaRouter2 mRouter2;
     private Executor mExecutor;
+    private SampleMediaRoute2ProviderService mServiceInstance;
 
     private static final int TIMEOUT_MS = 5000;
+
+    private static final String SESSION_ID_1 = "SESSION_ID_1";
+    private static final String SESSION_ID_2 = "SESSION_ID_2";
+
+    // TODO: Merge these TEST_KEY / TEST_VALUE in all files
+    public static final String TEST_KEY = "test_key";
+    public static final String TEST_VALUE = "test_value";
 
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getTargetContext();
         mRouter2 = MediaRouter2.getInstance(mContext);
         mExecutor = Executors.newSingleThreadExecutor();
+        mServiceInstance = SampleMediaRoute2ProviderService.getInstance();
     }
 
     @After
     public void tearDown() throws Exception {
-        setProxy(null);
+        if (mServiceInstance != null) {
+            mServiceInstance.clear();
+            mServiceInstance = null;
+        }
     }
+
+    @Test
+    public void testGetSessionInfoAndGetAllSessionInfo() {
+        SampleMediaRoute2ProviderService service = mServiceInstance;
+        assertNotNull(service);
+        assertEquals(0, service.getAllSessionInfo().size());
+
+        // Add a session
+        RoutingSessionInfo sessionInfo1 = new RoutingSessionInfo.Builder(
+                SESSION_ID_1, "" /* clientPackageName */)
+                .addSelectedRoute(ROUTE_ID1)
+                .build();
+        service.notifySessionCreated(sessionInfo1, MediaRoute2ProviderService.REQUEST_ID_UNKNOWN);
+        assertEquals(1, service.getAllSessionInfo().size());
+        assertEquals(sessionInfo1, service.getAllSessionInfo().get(0));
+        assertEquals(sessionInfo1, service.getSessionInfo(SESSION_ID_1));
+
+        // Add another session
+        RoutingSessionInfo sessionInfo2 = new RoutingSessionInfo.Builder(
+                SESSION_ID_2, "" /* clientPackageName */)
+                .addSelectedRoute(ROUTE_ID2)
+                .build();
+        service.notifySessionCreated(
+                sessionInfo2, MediaRoute2ProviderService.REQUEST_ID_UNKNOWN);
+        assertEquals(2, service.getAllSessionInfo().size());
+        assertEquals(sessionInfo2, service.getSessionInfo(SESSION_ID_2));
+
+        // Remove the first session
+        service.notifySessionReleased(SESSION_ID_1);
+        assertNull(service.getSessionInfo(SESSION_ID_1));
+        assertEquals(1, service.getAllSessionInfo().size());
+        assertEquals(sessionInfo2, service.getAllSessionInfo().get(0));
+        assertEquals(sessionInfo2, service.getSessionInfo(SESSION_ID_2));
+
+        // Remove the remaining session
+        service.notifySessionReleased(SESSION_ID_2);
+        assertEquals(0, service.getAllSessionInfo().size());
+        assertNull(service.getSessionInfo(SESSION_ID_2));
+    }
+
+    @Test
+    public void testNotifyRoutesInvokesMediaRouter2RouteCallback() throws Exception {
+        SampleMediaRoute2ProviderService service = mServiceInstance;
+        assertNotNull(service);
+
+        final String routeId0 = "routeId0";
+        final String routeName0 = "routeName0";
+        final String routeId1 = "routeId1";
+        final String routeName1 = "routeName1";
+        final List<String> features = Collections.singletonList("customFeature");
+
+        final List<MediaRoute2Info> routes = new ArrayList<>();
+        routes.add(new MediaRoute2Info.Builder(routeId0, routeName0)
+                .addFeatures(features)
+                .build());
+        routes.add(new MediaRoute2Info.Builder(routeId1, routeName1)
+                .addFeatures(features)
+                .build());
+
+        final int newConnectionState = MediaRoute2Info.CONNECTION_STATE_CONNECTED;
+        CountDownLatch onRoutesAddedLatch = new CountDownLatch(1);
+        CountDownLatch onRoutesChangedLatch = new CountDownLatch(1);
+        CountDownLatch onRoutesRemovedLatch = new CountDownLatch(1);
+        RouteCallback routeCallback = new RouteCallback() {
+            @Override
+            public void onRoutesAdded(List<MediaRoute2Info> routes) {
+                if (!features.equals(routes.get(0).getFeatures())) {
+                    return;
+                }
+                assertEquals(2, routes.size());
+
+                MediaRoute2Info route0;
+                MediaRoute2Info route1;
+                if (routeId0.equals(routes.get(0).getOriginalId())) {
+                    route0 = routes.get(0);
+                    route1 = routes.get(1);
+                } else {
+                    route0 = routes.get(1);
+                    route1 = routes.get(0);
+                }
+
+                assertNotNull(route0);
+                assertEquals(routeId0, route0.getOriginalId());
+                assertEquals(routeName0, route0.getName());
+                assertEquals(features, route0.getFeatures());
+
+                assertNotNull(route1);
+                assertEquals(routeId1, route1.getOriginalId());
+                assertEquals(routeName1, route1.getName());
+                assertEquals(features, route1.getFeatures());
+
+                onRoutesAddedLatch.countDown();
+            }
+
+            @Override
+            public void onRoutesChanged(List<MediaRoute2Info> routes) {
+                if (!features.equals(routes.get(0).getFeatures())) {
+                    return;
+                }
+                assertEquals(1, routes.size());
+                assertEquals(routeId1, routes.get(0).getOriginalId());
+                assertEquals(newConnectionState, routes.get(0).getConnectionState());
+                onRoutesChangedLatch.countDown();
+            }
+
+            @Override
+            public void onRoutesRemoved(List<MediaRoute2Info> routes) {
+                if (!features.equals(routes.get(0).getFeatures())) {
+                    return;
+                }
+                assertEquals(2, routes.size());
+
+                MediaRoute2Info route0;
+                MediaRoute2Info route1;
+                if (routeId0.equals(routes.get(0).getOriginalId())) {
+                    route0 = routes.get(0);
+                    route1 = routes.get(1);
+                } else {
+                    route0 = routes.get(1);
+                    route1 = routes.get(0);
+                }
+
+                assertNotNull(route0);
+                assertEquals(routeId0, route0.getOriginalId());
+                assertEquals(routeName0, route0.getName());
+                assertEquals(features, route0.getFeatures());
+
+                assertNotNull(route1);
+                assertEquals(routeId1, route1.getOriginalId());
+                assertEquals(routeName1, route1.getName());
+                assertEquals(features, route1.getFeatures());
+
+                onRoutesRemovedLatch.countDown();
+            }
+        };
+
+        mRouter2.registerRouteCallback(mExecutor, routeCallback,
+                new RouteDiscoveryPreference.Builder(features, true).build());
+        try {
+            service.notifyRoutes(routes);
+            assertTrue(onRoutesAddedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+
+            // Change the connection state of route2 in order to invoke onRoutesChanged()
+            MediaRoute2Info newRoute2 = new MediaRoute2Info.Builder(routes.get(1))
+                    .setConnectionState(newConnectionState)
+                    .build();
+            routes.set(1, newRoute2);
+            service.notifyRoutes(routes);
+            assertTrue(onRoutesChangedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+
+            // Now remove all the routes
+            routes.clear();
+            service.notifyRoutes(routes);
+            assertTrue(onRoutesRemovedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        } finally {
+            mRouter2.unregisterRouteCallback(routeCallback);
+        }
+    }
+
+    @Test
+    public void testSessionRelatedCallbacks() throws Exception {
+        SampleMediaRoute2ProviderService service = mServiceInstance;
+        assertNotNull(service);
+        service.initializeRoutes();
+        service.publishRoutes();
+
+        List<String> featuresSample = Collections.singletonList(FEATURE_SAMPLE);
+        Map<String, MediaRoute2Info> routes = waitAndGetRoutes(featuresSample);
+        MediaRoute2Info routeToCreateSession = routes.get(ROUTE_ID1);
+        assertNotNull(routeToCreateSession);
+
+        Bundle sessionHints = new Bundle();
+        sessionHints.putString(TEST_KEY, TEST_VALUE);
+        mRouter2.setOnGetControllerHintsListener(route -> sessionHints);
+
+        CountDownLatch onCreateSessionLatch = new CountDownLatch(1);
+        CountDownLatch onReleaseSessionLatch = new CountDownLatch(1);
+        CountDownLatch onSelectRouteLatch = new CountDownLatch(1);
+        CountDownLatch onDeselectRouteLatch = new CountDownLatch(1);
+        CountDownLatch onTransferToRouteLatch = new CountDownLatch(1);
+
+        // Now test all session-related callbacks.
+        setProxy(new Proxy() {
+            @Override
+            public void onCreateSession(String packageName, String routeId, long requestId,
+                    Bundle sessionHints) {
+                assertEquals(mContext.getPackageName(), packageName);
+                assertEquals(ROUTE_ID1, routeId);
+                assertNotNull(sessionHints);
+                assertTrue(sessionHints.containsKey(TEST_KEY));
+                assertEquals(TEST_VALUE, sessionHints.getString(TEST_KEY));
+
+                RoutingSessionInfo info = new RoutingSessionInfo.Builder(
+                        SESSION_ID_1, mContext.getPackageName())
+                        .addSelectedRoute(ROUTE_ID1)
+                        .addSelectableRoute(ROUTE_ID4_TO_SELECT_AND_DESELECT)
+                        .addTransferrableRoute(ROUTE_ID5_TO_TRANSFER_TO)
+                        .build();
+                service.notifySessionCreated(info, requestId);
+                onCreateSessionLatch.countDown();
+            }
+
+            @Override
+            public void onSelectRoute(String sessionId, String routeId) {
+                assertEquals(SESSION_ID_1, sessionId);
+                assertEquals(ROUTE_ID4_TO_SELECT_AND_DESELECT, routeId);
+
+                RoutingSessionInfo oldInfo = service.getSessionInfo(SESSION_ID_1);
+                RoutingSessionInfo newInfo = new RoutingSessionInfo.Builder(oldInfo)
+                        .addSelectedRoute(ROUTE_ID4_TO_SELECT_AND_DESELECT)
+                        .removeSelectableRoute(ROUTE_ID4_TO_SELECT_AND_DESELECT)
+                        .addDeselectableRoute(ROUTE_ID4_TO_SELECT_AND_DESELECT)
+                        .build();
+                service.notifySessionUpdated(newInfo);
+                onSelectRouteLatch.countDown();
+            }
+
+            @Override
+            public void onDeselectRoute(String sessionId, String routeId) {
+                assertEquals(SESSION_ID_1, sessionId);
+                assertEquals(ROUTE_ID4_TO_SELECT_AND_DESELECT, routeId);
+
+                RoutingSessionInfo oldInfo = service.getSessionInfo(SESSION_ID_1);
+                RoutingSessionInfo newInfo = new RoutingSessionInfo.Builder(oldInfo)
+                        .removeSelectedRoute(ROUTE_ID4_TO_SELECT_AND_DESELECT)
+                        .addSelectableRoute(ROUTE_ID4_TO_SELECT_AND_DESELECT)
+                        .removeDeselectableRoute(ROUTE_ID4_TO_SELECT_AND_DESELECT)
+                        .build();
+                service.notifySessionUpdated(newInfo);
+                onDeselectRouteLatch.countDown();
+            }
+
+            @Override
+            public void onTransferToRoute(String sessionId, String routeId) {
+                assertEquals(SESSION_ID_1, sessionId);
+                assertEquals(ROUTE_ID5_TO_TRANSFER_TO, routeId);
+
+                RoutingSessionInfo oldInfo = service.getSessionInfo(SESSION_ID_1);
+                RoutingSessionInfo newInfo = new RoutingSessionInfo.Builder(oldInfo)
+                        .clearDeselectableRoutes()
+                        .clearSelectedRoutes()
+                        .clearDeselectableRoutes()
+                        .addSelectedRoute(ROUTE_ID5_TO_TRANSFER_TO)
+                        .build();
+                service.notifySessionUpdated(newInfo);
+                onTransferToRouteLatch.countDown();
+            }
+
+            @Override
+            public void onReleaseSession(String sessionId) {
+                assertEquals(SESSION_ID_1, sessionId);
+                service.notifySessionReleased(sessionId);
+                onReleaseSessionLatch.countDown();
+            }
+        });
+
+
+        CountDownLatch onControllerCreatedLatch = new CountDownLatch(1);
+        CountDownLatch onControllerUpdatedForSelectLatch = new CountDownLatch(1);
+        CountDownLatch onControllerUpdatedForDeselectLatch = new CountDownLatch(1);
+        CountDownLatch onControllerUpdatedForTransferLatch = new CountDownLatch(1);
+        List<RoutingController> controllers = new ArrayList<>();
+
+        RoutingControllerCallback controllerCallback = new RoutingControllerCallback() {
+            @Override
+            public void onControllerCreated(RoutingController controller) {
+                // TODO: Make RoutingController#getOriginalId() as @TestApi and use it.
+                if (ROUTE_ID1.equals(controller.getSelectedRoutes().get(0).getOriginalId())) {
+                    controllers.add(controller);
+                    onControllerCreatedLatch.countDown();
+                }
+            }
+
+            @Override
+            public void onControllerUpdated(RoutingController controller) {
+                List<MediaRoute2Info> selectedRoutes = controller.getSelectedRoutes();
+                if (onControllerUpdatedForSelectLatch.getCount() > 0) {
+                    if (selectedRoutes.size() == 2
+                            && ROUTE_ID4_TO_SELECT_AND_DESELECT.equals(
+                                    selectedRoutes.get(1).getOriginalId())) {
+                        onControllerUpdatedForSelectLatch.countDown();
+                    }
+                } else if (onControllerUpdatedForDeselectLatch.getCount() > 0) {
+                    if (selectedRoutes.size() == 1
+                            && ROUTE_ID1.equals(selectedRoutes.get(0).getOriginalId())) {
+                        onControllerUpdatedForDeselectLatch.countDown();
+                    }
+                } else if (onControllerUpdatedForTransferLatch.getCount() > 0) {
+                    if (selectedRoutes.size() == 1
+                            && ROUTE_ID5_TO_TRANSFER_TO.equals(
+                                    selectedRoutes.get(0).getOriginalId())) {
+                        onControllerUpdatedForTransferLatch.countDown();
+                    }
+                }
+            }
+        };
+
+        // TODO: Remove this once the MediaRouter2 becomes always connected to the service.
+        RouteCallback dummyCallback = new RouteCallback();
+        try {
+            mRouter2.registerRouteCallback(mExecutor, dummyCallback,
+                    new RouteDiscoveryPreference.Builder(new ArrayList<>(), true).build());
+            mRouter2.registerControllerCallback(mExecutor, controllerCallback);
+
+            mRouter2.requestCreateController(routeToCreateSession);
+            assertTrue(onCreateSessionLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            assertTrue(onControllerCreatedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            assertFalse(controllers.isEmpty());
+
+            RoutingController controller = controllers.get(0);
+
+            controller.selectRoute(routes.get(ROUTE_ID4_TO_SELECT_AND_DESELECT));
+            assertTrue(onSelectRouteLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            assertTrue(onControllerUpdatedForSelectLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+
+            controller.deselectRoute(routes.get(ROUTE_ID4_TO_SELECT_AND_DESELECT));
+            assertTrue(onDeselectRouteLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            assertTrue(onControllerUpdatedForDeselectLatch.await(
+                    TIMEOUT_MS, TimeUnit.MILLISECONDS));
+
+            controller.transferToRoute(routes.get(ROUTE_ID5_TO_TRANSFER_TO));
+            assertTrue(onTransferToRouteLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            assertTrue(onControllerUpdatedForTransferLatch.await(
+                    TIMEOUT_MS, TimeUnit.MILLISECONDS));
+
+            controller.release();
+            assertTrue(onReleaseSessionLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        } finally {
+            mRouter2.unregisterRouteCallback(dummyCallback);
+            mRouter2.unregisterControllerCallback(controllerCallback);
+            mRouter2.setOnGetControllerHintsListener(null);
+            releaseControllers(mRouter2.getControllers());
+        }
+    }
+
+    @Test
+    public void testNotifySessionReleased() throws Exception {
+        SampleMediaRoute2ProviderService service = mServiceInstance;
+        assertNotNull(service);
+        service.initializeRoutes();
+        service.publishRoutes();
+
+        List<String> featuresSample = Collections.singletonList(FEATURE_SAMPLE);
+        Map<String, MediaRoute2Info> routes = waitAndGetRoutes(featuresSample);
+        MediaRoute2Info routeToCreateSession = routes.get(ROUTE_ID1);
+        assertNotNull(routeToCreateSession);
+
+        CountDownLatch onCreateSessionLatch = new CountDownLatch(1);
+        setProxy(new Proxy() {
+            @Override
+            public void onCreateSession(String packageName, String routeId, long requestId,
+                    Bundle sessionHints) {
+                assertEquals(mContext.getPackageName(), packageName);
+                assertEquals(ROUTE_ID1, routeId);
+                assertNull(sessionHints);
+
+                RoutingSessionInfo info = new RoutingSessionInfo.Builder(
+                        SESSION_ID_1, mContext.getPackageName())
+                        .addSelectedRoute(ROUTE_ID1)
+                        .addSelectableRoute(ROUTE_ID4_TO_SELECT_AND_DESELECT)
+                        .addTransferrableRoute(ROUTE_ID5_TO_TRANSFER_TO)
+                        .build();
+                service.notifySessionCreated(info, requestId);
+                onCreateSessionLatch.countDown();
+            }
+        });
+
+
+        CountDownLatch onControllerCreatedLatch = new CountDownLatch(1);
+        CountDownLatch onControllerReleasedLatch = new CountDownLatch(1);
+        List<RoutingController> controllers = new ArrayList<>();
+
+        RoutingControllerCallback controllerCallback = new RoutingControllerCallback() {
+            @Override
+            public void onControllerCreated(RoutingController controller) {
+                // TODO: Make RoutingController#getOriginalId() as @TestApi and use it.
+                if (ROUTE_ID1.equals(controller.getSelectedRoutes().get(0).getOriginalId())) {
+                    controllers.add(controller);
+                    onControllerCreatedLatch.countDown();
+                }
+            }
+
+            @Override
+            public void onControllerReleased(RoutingController controller) {
+                if (ROUTE_ID1.equals(controller.getSelectedRoutes().get(0).getOriginalId())) {
+                    assertTrue(controller.isReleased());
+                    onControllerReleasedLatch.countDown();
+                }
+            }
+        };
+
+        // TODO: Remove this once the MediaRouter2 becomes always connected to the service.
+        RouteCallback dummyCallback = new RouteCallback();
+        try {
+            mRouter2.registerRouteCallback(mExecutor, dummyCallback,
+                    new RouteDiscoveryPreference.Builder(new ArrayList<>(), true).build());
+            mRouter2.registerControllerCallback(mExecutor, controllerCallback);
+
+            mRouter2.requestCreateController(routeToCreateSession);
+            assertTrue(onCreateSessionLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            assertTrue(onControllerCreatedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            assertFalse(controllers.isEmpty());
+
+            service.notifySessionReleased(SESSION_ID_1);
+            assertTrue(onControllerReleasedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        } finally {
+            mRouter2.unregisterRouteCallback(dummyCallback);
+            mRouter2.unregisterControllerCallback(controllerCallback);
+            releaseControllers(mRouter2.getControllers());
+        }
+    }
+
 
     @Test
     public void testOnDiscoveryPreferenceChanged() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
         CountDownLatch latch2 = new CountDownLatch(1);
 
-        MediaRouter2.RouteCallback routeCallback = new MediaRouter2.RouteCallback();
-        MediaRouter2.RouteCallback routeCallback2 = new MediaRouter2.RouteCallback();
+        RouteCallback routeCallback = new RouteCallback();
+        RouteCallback routeCallback2 = new RouteCallback();
 
         List<String> featuresSample = Collections.singletonList(FEATURE_SAMPLE);
         List<String> featuresSpecial = Collections.singletonList(FEATURE_SPECIAL);
@@ -109,4 +554,39 @@ public class MediaRoute2ProviderServiceTest {
             instance.setProxy(proxy);
         }
     }
+
+    Map<String, MediaRoute2Info> waitAndGetRoutes(List<String> features)
+            throws Exception {
+        CountDownLatch latch = new CountDownLatch(1);
+
+        RouteCallback routeCallback = new RouteCallback() {
+            @Override
+            public void onRoutesAdded(List<MediaRoute2Info> routes) {
+                for (MediaRoute2Info route : routes) {
+                    if (!route.isSystemRoute()) {
+                        latch.countDown();
+                    }
+                }
+            }
+        };
+
+        mRouter2.registerRouteCallback(mExecutor, routeCallback,
+                new RouteDiscoveryPreference.Builder(features, true).build());
+        try {
+            latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            return createRouteMap(mRouter2.getRoutes());
+        } finally {
+            mRouter2.unregisterRouteCallback(routeCallback);
+        }
+    }
+
+    // Helper for getting routes easily. Uses original ID as a key
+    static Map<String, MediaRoute2Info> createRouteMap(List<MediaRoute2Info> routes) {
+        Map<String, MediaRoute2Info> routeMap = new HashMap<>();
+        for (MediaRoute2Info route : routes) {
+            routeMap.put(route.getOriginalId(), route);
+        }
+        return routeMap;
+    }
+
 }
