@@ -28,6 +28,7 @@ import android.graphics.Bitmap;
 import android.graphics.ColorSpace;
 import android.graphics.Point;
 import android.hardware.HardwareBuffer;
+import android.os.SystemClock;
 import android.view.Display;
 import android.view.WindowManager;
 
@@ -77,7 +78,7 @@ public class AccessibilityTakeScreenshotTest {
 
     @Test
     public void testTakeScreenshot_GetScreenshotResult() {
-        mStartTestingTime = System.currentTimeMillis();
+        mStartTestingTime = SystemClock.uptimeMillis();
         Consumer<AccessibilityService.ScreenshotResult> screenshotConsumer =
                 new TakeScreenshotConsumer();
         mService.takeScreenshot(Display.DEFAULT_DISPLAY, mContext.getMainExecutor(),
