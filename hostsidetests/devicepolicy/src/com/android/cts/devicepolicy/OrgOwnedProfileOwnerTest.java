@@ -397,6 +397,15 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".ApplicationHiddenParentTest", mUserId);
     }
 
+    @Test
+    public void testSetKeyguardDisabledFeatures() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".KeyguardDisabledFeaturesTest",
+                "testSetKeyguardDisabledFeatures_onParent", mUserId);
+    }
+
     private void removeOrgOwnedProfile() throws Exception {
         sendWipeProfileBroadcast(mUserId);
         waitUntilUserRemoved(mUserId);
