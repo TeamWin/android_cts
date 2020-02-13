@@ -69,7 +69,7 @@ public class RouteDiscoveryPreferenceTest {
         RouteDiscoveryPreference preference =
                 new RouteDiscoveryPreference.Builder(features, true /* isActiveScan */).build();
         assertEquals(features, preference.getPreferredFeatures());
-        assertTrue(preference.isActiveScan());
+        assertTrue(preference.shouldPerformActiveScan());
         assertEquals(0, preference.describeContents());
     }
 
@@ -91,7 +91,7 @@ public class RouteDiscoveryPreferenceTest {
                 .build();
 
         assertEquals(newFeatures, newPreference.getPreferredFeatures());
-        assertTrue(newPreference.isActiveScan());
+        assertTrue(newPreference.shouldPerformActiveScan());
     }
 
     @Test
@@ -105,11 +105,11 @@ public class RouteDiscoveryPreferenceTest {
 
         // Using copy constructor, we only change the activeScan to 'false'.
         RouteDiscoveryPreference newPreference = new RouteDiscoveryPreference.Builder(preference)
-                .setActiveScan(false)
+                .setShouldPerformActiveScan(false)
                 .build();
 
         assertEquals(features, newPreference.getPreferredFeatures());
-        assertFalse(newPreference.isActiveScan());
+        assertFalse(newPreference.shouldPerformActiveScan());
     }
 
     @Test
@@ -181,7 +181,7 @@ public class RouteDiscoveryPreferenceTest {
 
         RouteDiscoveryPreference preferenceWithDifferentActiveScan =
                 new RouteDiscoveryPreference.Builder(preference)
-                        .setActiveScan(false)
+                        .setShouldPerformActiveScan(false)
                         .build();
         assertNotEquals(preference, preferenceWithDifferentActiveScan);
     }
