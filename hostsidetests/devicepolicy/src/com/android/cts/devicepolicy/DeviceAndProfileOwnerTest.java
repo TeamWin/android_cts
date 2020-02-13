@@ -1120,6 +1120,9 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             // Reboot while in kiosk mode and then unlock the device
             rebootAndWaitUntilReady();
 
+            // wait for the device ready to be tested
+            waitForBroadcastIdle();
+
             // Check that kiosk mode is working and can't be interrupted
             executeDeviceTestMethod(".LockTaskHostDrivenTest",
                     "testLockTaskIsActiveAndCantBeInterrupted");
