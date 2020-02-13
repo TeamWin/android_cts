@@ -18,6 +18,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.util.cts">
 
+    <queries>
+        <package android:name="com.android.cts.install.lib.testapp.A" />
+        <package android:name="com.android.cts.install.lib.testapp.B" />
+        <package android:name="com.android.cts.install.lib.testapp.C" />
+    </queries>
+
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <uses-permission android:name="android.permission.READ_LOGS" />
     <application>
