@@ -29,6 +29,7 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.CddTest;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -68,7 +69,8 @@ public class VulkanDeqpLevelTest {
         }
     }
 
-    @CddTest(requirement = "7.1.4.2/C-1-8,C-1-9")
+    @CddTest(requirement = "7.1.4.2/C-1-8")
+    @Ignore("b/149464764: Test disabled until certain targets get the new feature flag.")
     @Test
     public void testVulkanDeqpLevel() {
         if (mVulkanHardwareVersion.version >= VULKAN_1_0) {

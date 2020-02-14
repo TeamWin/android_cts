@@ -58,6 +58,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AppStandbyUtils;
+import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
@@ -74,6 +75,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 
 /**
  * Test the UsageStats API. It is difficult to test the entire surface area
@@ -535,11 +537,31 @@ public class UsageStatsTest {
         assertTrue(stats.isEmpty());
     }
 
+    private void generateAndSendNotification(Context context) throws Exception {
+        final NotificationManager mNotificationManager =
+                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        final NotificationChannel mChannel = new NotificationChannel(CHANNEL_ID, "Channel",
+                NotificationManager.IMPORTANCE_DEFAULT);
+        // Configure the notification channel.
+        mChannel.setDescription("Test channel");
+        mNotificationManager.createNotificationChannel(mChannel);
+        final Notification.Builder mBuilder =
+                new Notification.Builder(context, CHANNEL_ID)
+                        .setSmallIcon(R.drawable.ic_notification)
+                        .setContentTitle("My notification")
+                        .setContentText("Hello World!");
+        final PendingIntent pi = PendingIntent.getActivity(context, 1,
+                new Intent(Settings.ACTION_SETTINGS), 0);
+        mBuilder.setContentIntent(pi);
+        mNotificationManager.notify(1, mBuilder.build());
+        Thread.sleep(500);
+    }
+
     @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testNotificationSeen() throws Exception {
         final long startTime = System.currentTimeMillis();
-        Context context = InstrumentationRegistry.getContext();
+        final Context context = InstrumentationRegistry.getContext();
 
         // Skip the test for wearable devices and televisions; neither has a notification shade.
         assumeFalse("Test cannot run on a watch- notification shade is not shown",
@@ -547,26 +569,10 @@ public class UsageStatsTest {
         assumeFalse("Test cannot run on a television- notifications are not shown",
                 context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY));
 
-        NotificationManager mNotificationManager =
-            (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        int importance = NotificationManager.IMPORTANCE_DEFAULT;
-        NotificationChannel mChannel = new NotificationChannel(CHANNEL_ID, "Channel",
-            importance);
-        // Configure the notification channel.
-        mChannel.setDescription("Test channel");
-        mNotificationManager.createNotificationChannel(mChannel);
-        Notification.Builder mBuilder =
-                new Notification.Builder(context, CHANNEL_ID)
-                    .setSmallIcon(R.drawable.ic_notification)
-                    .setContentTitle("My notification")
-                    .setContentText("Hello World!");
-        PendingIntent pi = PendingIntent.getActivity(context, 1,
-                new Intent(Settings.ACTION_SETTINGS), 0);
-        mBuilder.setContentIntent(pi);
-        mNotificationManager.notify(1, mBuilder.build());
-        Thread.sleep(500);
+        generateAndSendNotification(context);
+
         long endTime = System.currentTimeMillis();
-        UsageEvents events = mUsageStatsManager.queryEvents(startTime, endTime);
+        UsageEvents events = queryEventsAsShell(startTime, endTime);
         boolean found = false;
         Event event = new Event();
         while (events.hasNextEvent()) {
@@ -582,7 +588,7 @@ public class UsageStatsTest {
         for (int i = 0; i < 5; i++) {
             Thread.sleep(500);
             endTime = System.currentTimeMillis();
-            events = mUsageStatsManager.queryEvents(startTime, endTime);
+            events = queryEventsAsShell(startTime, endTime);
             found = false;
             while (events.hasNextEvent()) {
                 events.getNextEvent(event);
@@ -594,6 +600,47 @@ public class UsageStatsTest {
         }
         assertTrue(found);
         mUiDevice.pressBack();
+    }
+
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @Test
+    public void testNotificationInterruptionEventsObfuscation() throws Exception {
+        final long startTime = System.currentTimeMillis();
+        final Context context = InstrumentationRegistry.getContext();
+
+        // Skip the test for wearable devices and televisions; neither has a notification shade.
+        assumeFalse("Test cannot run on a watch- notification shade is not shown",
+                context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH));
+        assumeFalse("Test cannot run on a television- notifications are not shown",
+                context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY));
+
+        generateAndSendNotification(context);
+        final long endTime = System.currentTimeMillis();
+
+        final UsageEvents obfuscatedEvents = mUsageStatsManager.queryEvents(startTime, endTime);
+        final UsageEvents unobfuscatedEvents = queryEventsAsShell(startTime, endTime);
+        verifyNotificationInterruptionEvent(obfuscatedEvents, true);
+        verifyNotificationInterruptionEvent(unobfuscatedEvents, false);
+    }
+
+    private void verifyNotificationInterruptionEvent(UsageEvents events, boolean obfuscated) {
+        boolean found = false;
+        Event event = new Event();
+        while (events.hasNextEvent()) {
+            events.getNextEvent(event);
+            if (event.getEventType() == Event.NOTIFICATION_INTERRUPTION) {
+                found = true;
+                break;
+            }
+        }
+        assertTrue(found);
+        if (obfuscated) {
+            assertEquals("Notification channel id was not obfuscated.",
+                    UsageEvents.OBFUSCATED_NOTIFICATION_CHANNEL_ID, event.mNotificationChannelId);
+        } else {
+            assertEquals("Failed to verify notification channel id.",
+                    CHANNEL_ID, event.mNotificationChannelId);
+        }
     }
 
     @AppModeFull(reason = "No usage events access in instant apps")
@@ -640,6 +687,24 @@ public class UsageStatsTest {
         assertEquals("Activity launch didn't bring RESTRICTED app into ACTIVE bucket",
                 UsageStatsManager.STANDBY_BUCKET_ACTIVE,
                 mUsageStatsManager.getAppStandbyBucket(mTargetPackage));
+    }
+
+    @Test
+    public void testIsAppInactive_Charging() throws Exception {
+        mUiDevice.executeShellCommand("am set-standby-bucket " + TEST_APP_PKG + " rare");
+
+        try {
+            BatteryUtils.runDumpsysBatteryUnplug();
+            // Plug/unplug change takes a while to propagate inside the system.
+            waitUntil(() -> mUsageStatsManager.isAppInactive(TEST_APP_PKG), true);
+
+            BatteryUtils.runDumpsysBatterySetPluggedIn(true);
+            BatteryUtils.runDumpsysBatterySetLevel(100);
+            // Plug/unplug change takes a while to propagate inside the system.
+            waitUntil(() -> mUsageStatsManager.isAppInactive(TEST_APP_PKG), false);
+        } finally {
+            BatteryUtils.runDumpsysBatteryReset();
+        }
     }
 
     static final int[] INTERACTIVE_EVENTS = new int[] {
@@ -708,6 +773,18 @@ public class UsageStatsTest {
 
         fail("Timed out waiting for " + count + " events, only reached " + events.size());
         return events;
+    }
+
+    private void waitUntil(BooleanSupplier condition, boolean expected) throws Exception {
+        final long sleepTimeMs = 500;
+        final int count = 10;
+        for (int i = 0; i < count; ++i) {
+            if (condition.getAsBoolean() == expected) {
+                return;
+            }
+            Thread.sleep(sleepTimeMs);
+        }
+        fail("Condition wasn't satisfied after " + (sleepTimeMs * count) + "ms");
     }
 
     static class AggrEventData {
@@ -1263,48 +1340,15 @@ public class UsageStatsTest {
 
     @AppModeFull(reason = "No usage events access in instant apps")
     @Test
-    public void testAccessLocusEventsWithPermisions() throws Exception {
-        long startTime = System.currentTimeMillis();
+    public void testLocusIdEventsVisibility() throws Exception {
+        final long startTime = System.currentTimeMillis();
         startAndDestroyActivityWithLocus();
-        long endTime = System.currentTimeMillis();
+        final long endTime = System.currentTimeMillis();
 
-        UsageEvents events = queryEventsAsShell(startTime, endTime);
-
-        int locuses = 0;
-
-        while (events.hasNextEvent()) {
-            UsageEvents.Event event = new UsageEvents.Event();
-            assertTrue(events.getNextEvent(event));
-
-            if (TEST_APP_PKG.equals(event.getPackageName())
-                && event.mEventType == Event.LOCUS_ID_SET) {
-                    locuses++;
-            }
-        }
-        assertEquals("Unexpected number of locus events", 2, locuses);
-    }
-
-    @AppModeFull(reason = "No usage events access in instant apps")
-    @Test
-    public void testAccessLocusEventsWithoutPermisions() throws Exception {
-        long startTime = System.currentTimeMillis();
-        startAndDestroyActivityWithLocus();
-        long endTime = System.currentTimeMillis();
-
-        UsageEvents events = mUsageStatsManager.queryEvents(startTime, endTime);
-
-        int locuses = 0;
-
-        while (events.hasNextEvent()) {
-            UsageEvents.Event event = new UsageEvents.Event();
-            assertTrue(events.getNextEvent(event));
-
-            if (TEST_APP_PKG.equals(event.getPackageName())
-                && event.mEventType == Event.LOCUS_ID_SET) {
-                    locuses++;
-            }
-        }
-        assertEquals("Unexpected number of locus events", 0, locuses);
+        final UsageEvents restrictedEvents = mUsageStatsManager.queryEvents(startTime, endTime);
+        final UsageEvents allEvents = queryEventsAsShell(startTime, endTime);
+        verifyLocusIdEventVisibility(restrictedEvents, false);
+        verifyLocusIdEventVisibility(allEvents, true);
     }
 
     private void startAndDestroyActivityWithLocus() {
@@ -1322,6 +1366,25 @@ public class UsageStatsTest {
         SystemUtil.runWithShellPermissionIdentity(() -> mAm.forceStopPackage(TEST_APP_PKG));
         mUiDevice.wait(Until.gone(By.clazz(TEST_APP_PKG, TEST_APP_CLASS_LOCUS)), TIMEOUT);
         SystemClock.sleep(500);
+    }
+
+    private void verifyLocusIdEventVisibility(UsageEvents events, boolean hasPermission) {
+        int locuses = 0;
+        while (events.hasNextEvent()) {
+            final Event event = new UsageEvents.Event();
+            assertTrue(events.getNextEvent(event));
+
+            if (TEST_APP_PKG.equals(event.getPackageName())
+                    && event.mEventType == Event.LOCUS_ID_SET) {
+                locuses++;
+            }
+        }
+
+        if (hasPermission) {
+            assertEquals("LOCUS_ID_SET events were not visible.", 2, locuses);
+        } else {
+            assertEquals("LOCUS_ID_SET events were visible.", 0, locuses);
+        }
     }
 
     private void pressWakeUp() {

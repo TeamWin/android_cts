@@ -36,6 +36,8 @@ public class CompatChangesSystemApiTest extends CompatChangeGatingTestCase {
     protected static final String TEST_APK = "CtsHostsideCompatChangeTestsApp.apk";
     protected static final String TEST_PKG = "com.android.cts.appcompat";
 
+    private static final long CTS_SYSTEM_API_CHANGEID = 149391281;
+
     @Override
     protected void setUp() throws Exception {
         installPackage(TEST_APK, true);
@@ -43,39 +45,39 @@ public class CompatChangesSystemApiTest extends CompatChangeGatingTestCase {
 
     public void testIsChangeEnabled() throws Exception {
         runDeviceCompatTest(TEST_PKG, ".CompatChangesTest", "isChangeEnabled_changeEnabled",
-                /*enabledChanges*/ImmutableSet.of(1L),
+                /*enabledChanges*/ImmutableSet.of(CTS_SYSTEM_API_CHANGEID),
                 /*disabledChanges*/ ImmutableSet.of());
     }
 
     public void testIsChangeEnabledPackageName() throws Exception {
         runDeviceCompatTest(TEST_PKG, ".CompatChangesTest",
                 "isChangeEnabledPackageName_changeEnabled",
-                /*enabledChanges*/ImmutableSet.of(1L),
+                /*enabledChanges*/ImmutableSet.of(CTS_SYSTEM_API_CHANGEID),
                 /*disabledChanges*/ ImmutableSet.of());
     }
 
     public void testIsChangeEnabledUid() throws Exception {
         runDeviceCompatTest(TEST_PKG, ".CompatChangesTest", "isChangeEnabledUid_changeEnabled",
-                /*enabledChanges*/ImmutableSet.of(1L),
+                /*enabledChanges*/ImmutableSet.of(CTS_SYSTEM_API_CHANGEID),
                 /*disabledChanges*/ ImmutableSet.of());
     }
 
     public void testIsChangeDisabled() throws Exception {
         runDeviceCompatTest(TEST_PKG, ".CompatChangesTest", "isChangeEnabled_changeDisabled",
                 /*enabledChanges*/ImmutableSet.of(),
-                /*disabledChanges*/ ImmutableSet.of(1L));
+                /*disabledChanges*/ ImmutableSet.of(CTS_SYSTEM_API_CHANGEID));
     }
 
     public void testIsChangeDisabledPackageName() throws Exception {
         runDeviceCompatTest(TEST_PKG, ".CompatChangesTest",
                 "isChangeEnabledPackageName_changeDisabled",
                 /*enabledChanges*/ImmutableSet.of(),
-                /*disabledChanges*/ ImmutableSet.of(1L));
+                /*disabledChanges*/ ImmutableSet.of(CTS_SYSTEM_API_CHANGEID));
     }
 
     public void testIsChangeDisabledUid() throws Exception {
         runDeviceCompatTest(TEST_PKG, ".CompatChangesTest", "isChangeEnabledUid_changeDisabled",
                 /*enabledChanges*/ImmutableSet.of(),
-                /*disabledChanges*/ ImmutableSet.of(1L));
+                /*disabledChanges*/ ImmutableSet.of(CTS_SYSTEM_API_CHANGEID));
     }
 }

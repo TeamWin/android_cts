@@ -17,15 +17,20 @@
 package android.media.mediaparser.cts;
 
 import android.media.MediaCodec;
+import android.media.MediaFormat;
 import android.media.MediaParser;
 import android.util.Pair;
 
 import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.Format;
+import com.google.android.exoplayer2.drm.DrmInitData;
 import com.google.android.exoplayer2.extractor.ExtractorInput;
 import com.google.android.exoplayer2.extractor.SeekMap;
 import com.google.android.exoplayer2.extractor.SeekPoint;
 import com.google.android.exoplayer2.extractor.TrackOutput;
 import com.google.android.exoplayer2.testutil.FakeExtractorOutput;
+import com.google.android.exoplayer2.util.MimeTypes;
+import com.google.android.exoplayer2.video.ColorInfo;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -61,16 +66,6 @@ public class MockMediaParserOutputConsumer implements MediaParser.OutputConsumer
                 });
     }
 
-    private static SeekMap.SeekPoints toExoPlayerSeekPoints(
-            Pair<MediaParser.SeekPoint, MediaParser.SeekPoint> seekPoints) {
-        return new SeekMap.SeekPoints(
-                toExoPlayerSeekPoint(seekPoints.first), toExoPlayerSeekPoint(seekPoints.second));
-    }
-
-    private static SeekPoint toExoPlayerSeekPoint(MediaParser.SeekPoint seekPoint) {
-        return new SeekPoint(seekPoint.timeUs, seekPoint.position);
-    }
-
     @Override
     public void onTracksFound(int numberOfTracks) {
         // Do nothing.
@@ -78,9 +73,10 @@ public class MockMediaParserOutputConsumer implements MediaParser.OutputConsumer
 
     @Override
     public void onTrackData(int trackIndex, MediaParser.TrackData trackData) {
-        while (mTrackOutputs.size() < trackIndex) {
+        while (mTrackOutputs.size() <= trackIndex) {
             mTrackOutputs.add(mFakeExtractorOutput.track(trackIndex, C.TRACK_TYPE_UNKNOWN));
         }
+        mTrackOutputs.get(trackIndex).format(toExoPlayerFormat(trackData));
     }
 
     @Override
@@ -102,6 +98,208 @@ public class MockMediaParserOutputConsumer implements MediaParser.OutputConsumer
             int size,
             int offset,
             MediaCodec.CryptoInfo cryptoData) {}
+
+    // Internal methods.
+
+    private static SeekMap.SeekPoints toExoPlayerSeekPoints(
+            Pair<MediaParser.SeekPoint, MediaParser.SeekPoint> seekPoints) {
+        return new SeekMap.SeekPoints(
+                toExoPlayerSeekPoint(seekPoints.first), toExoPlayerSeekPoint(seekPoints.second));
+    }
+
+    private static SeekPoint toExoPlayerSeekPoint(MediaParser.SeekPoint seekPoint) {
+        return new SeekPoint(seekPoint.timeUs, seekPoint.position);
+    }
+
+    private static Format toExoPlayerFormat(MediaParser.TrackData trackData) {
+        MediaFormat mediaFormat = trackData.mediaFormat;
+        String sampleMimeType =
+                mediaFormat.getString(MediaFormat.KEY_MIME, /* defaultValue= */ null);
+        String id =
+                mediaFormat.containsKey(MediaFormat.KEY_TRACK_ID)
+                        ? String.valueOf(mediaFormat.getInteger(MediaFormat.KEY_TRACK_ID))
+                        : null;
+        String codecs =
+                mediaFormat.getString(MediaFormat.KEY_CODECS_STRING, /* defaultValue= */ null);
+        int bitrate =
+                mediaFormat.getInteger(
+                        MediaFormat.KEY_BIT_RATE, /* defaultValue= */ Format.NO_VALUE);
+        int maxInputSize =
+                mediaFormat.getInteger(
+                        MediaFormat.KEY_MAX_INPUT_SIZE, /* defaultValue= */ Format.NO_VALUE);
+        int width =
+                mediaFormat.getInteger(MediaFormat.KEY_WIDTH, /* defaultValue= */ Format.NO_VALUE);
+        int height =
+                mediaFormat.getInteger(MediaFormat.KEY_HEIGHT, /* defaultValue= */ Format.NO_VALUE);
+        float frameRate =
+                mediaFormat.getFloat(
+                        MediaFormat.KEY_FRAME_RATE, /* defaultValue= */ Format.NO_VALUE);
+        int rotationDegrees =
+                mediaFormat.getInteger(
+                        MediaFormat.KEY_ROTATION, /* defaultValue= */ Format.NO_VALUE);
+        ArrayList<byte[]> initData = null;
+        if (mediaFormat.containsKey("csd-0")) {
+            initData = new ArrayList<>();
+            int index = 0;
+            while (mediaFormat.containsKey("csd-" + index)) {
+                initData.add(mediaFormat.getByteBuffer("csd-" + index++).array());
+            }
+        }
+        float pixelAspectWidth =
+                (float)
+                        mediaFormat.getInteger(
+                                MediaFormat.KEY_PIXEL_ASPECT_RATIO_WIDTH, /* defaultValue= */ 0);
+        float pixelAspectHeight =
+                (float)
+                        mediaFormat.getInteger(
+                                MediaFormat.KEY_PIXEL_ASPECT_RATIO_HEIGHT, /* defaultValue= */ 0);
+        float pixelAspectRatio =
+                pixelAspectHeight == 0 || pixelAspectWidth == 0
+                        ? Format.NO_VALUE
+                        : pixelAspectWidth / pixelAspectHeight;
+        ColorInfo colorInfo = getExoPlayerColorInfo(mediaFormat);
+        DrmInitData drmInitData = getExoPlayerDrmInitData(trackData.drmInitData);
+
+        int selectionFlags =
+                mediaFormat.getInteger(MediaFormat.KEY_IS_AUTOSELECT, /* defaultValue= */ 0) != 0
+                        ? C.SELECTION_FLAG_AUTOSELECT
+                        : 0;
+        selectionFlags |=
+                mediaFormat.getInteger(MediaFormat.KEY_IS_FORCED_SUBTITLE, /* defaultValue= */ 0)
+                                != 0
+                        ? C.SELECTION_FLAG_FORCED
+                        : 0;
+        selectionFlags |=
+                mediaFormat.getInteger(MediaFormat.KEY_IS_DEFAULT, /* defaultValue= */ 0) != 0
+                        ? C.SELECTION_FLAG_DEFAULT
+                        : 0;
+
+        String language = mediaFormat.getString(MediaFormat.KEY_LANGUAGE, /* defaultValue= */ null);
+
+        // TODO: Replace this with Format.Builder once available.
+        if (MimeTypes.isVideo(sampleMimeType)) {
+            return Format.createVideoSampleFormat(
+                    id,
+                    sampleMimeType,
+                    codecs,
+                    bitrate,
+                    maxInputSize,
+                    width,
+                    height,
+                    frameRate,
+                    initData,
+                    rotationDegrees,
+                    pixelAspectRatio,
+                    /* projectionData= */ null,
+                    /* stereoMode= */ Format.NO_VALUE,
+                    colorInfo,
+                    drmInitData);
+        } else if (MimeTypes.isAudio(sampleMimeType)) {
+            int channels = mediaFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
+            int sampleRate = mediaFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE);
+            return Format.createAudioContainerFormat(
+                    id,
+                    /* label= */ null,
+                    /* containerMimeType= */ null,
+                    sampleMimeType,
+                    codecs,
+                    /* metadata= */ null,
+                    bitrate,
+                    channels,
+                    sampleRate,
+                    initData,
+                    selectionFlags,
+                    /* roleFlags= */ 0,
+                    language);
+        } else { // Application or Text.
+            return Format.createTextSampleFormat(
+                    id,
+                    sampleMimeType,
+                    codecs,
+                    bitrate,
+                    selectionFlags,
+                    language,
+                    /* accessibilityChannel= */ 0, // TODO: Add once ag/9864463 is submitted.
+                    /* drmInitData= */ drmInitData,
+                    /* subsampleOffsetUs= */ Format.OFFSET_SAMPLE_RELATIVE,
+                    initData);
+        }
+    }
+
+    private static DrmInitData getExoPlayerDrmInitData(android.media.DrmInitData drmInitData) {
+        // TODO: Implement once ag/10253368 is resolved.
+        return null;
+    }
+
+    private static ColorInfo getExoPlayerColorInfo(MediaFormat mediaFormat) {
+        int colorSpace = Format.NO_VALUE;
+        if (mediaFormat.containsKey(MediaFormat.KEY_COLOR_FORMAT)) {
+            switch (mediaFormat.getInteger(MediaFormat.KEY_COLOR_FORMAT)) {
+                case MediaFormat.COLOR_STANDARD_BT601_NTSC:
+                case MediaFormat.COLOR_STANDARD_BT601_PAL:
+                    colorSpace = C.COLOR_SPACE_BT601;
+                    break;
+                case MediaFormat.COLOR_STANDARD_BT709:
+                    colorSpace = C.COLOR_SPACE_BT709;
+                    break;
+                case MediaFormat.COLOR_STANDARD_BT2020:
+                    colorSpace = C.COLOR_SPACE_BT2020;
+                    break;
+                default:
+                    colorSpace = Format.NO_VALUE;
+            }
+        }
+
+        int colorRange = Format.NO_VALUE;
+        if (mediaFormat.containsKey(MediaFormat.KEY_COLOR_RANGE)) {
+            switch (mediaFormat.getInteger(MediaFormat.KEY_COLOR_RANGE)) {
+                case MediaFormat.COLOR_RANGE_FULL:
+                    colorRange = C.COLOR_RANGE_FULL;
+                    break;
+                case MediaFormat.COLOR_RANGE_LIMITED:
+                    colorRange = C.COLOR_RANGE_LIMITED;
+                    break;
+                default:
+                    colorRange = Format.NO_VALUE;
+            }
+        }
+
+        int colorTransfer = Format.NO_VALUE;
+        if (mediaFormat.containsKey(MediaFormat.KEY_COLOR_TRANSFER)) {
+            switch (mediaFormat.getInteger(MediaFormat.KEY_COLOR_TRANSFER)) {
+                case MediaFormat.COLOR_TRANSFER_HLG:
+                    colorTransfer = C.COLOR_TRANSFER_HLG;
+                    break;
+                case MediaFormat.COLOR_TRANSFER_SDR_VIDEO:
+                    colorTransfer = C.COLOR_TRANSFER_SDR;
+                    break;
+                case MediaFormat.COLOR_TRANSFER_ST2084:
+                    colorTransfer = C.COLOR_TRANSFER_ST2084;
+                    break;
+                case MediaFormat.COLOR_TRANSFER_LINEAR:
+                    // Fall through, there's no mapping.
+                default:
+                    colorTransfer = Format.NO_VALUE;
+            }
+        }
+        boolean hasHdrInfo = mediaFormat.containsKey(MediaFormat.KEY_HDR_STATIC_INFO);
+        if (colorSpace == Format.NO_VALUE
+                && colorRange == Format.NO_VALUE
+                && colorTransfer == Format.NO_VALUE
+                && !hasHdrInfo) {
+            return null;
+        } else {
+            return new ColorInfo(
+                    colorSpace,
+                    colorRange,
+                    colorTransfer,
+                    hasHdrInfo
+                            ? mediaFormat.getByteBuffer(MediaFormat.KEY_HDR_STATIC_INFO).array()
+                            : null);
+        }
+    }
+
+    // Internal classes.
 
     private class ExtractorInputAdapter implements ExtractorInput {
 

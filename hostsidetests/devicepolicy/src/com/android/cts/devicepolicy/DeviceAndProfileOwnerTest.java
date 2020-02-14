@@ -166,6 +166,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private static final int KEYGUARD_DISABLE_FEATURES_NONE = 0;
     private static final int KEYGUARD_DISABLE_FINGERPRINT = 1 << 5;
     private static final int KEYGUARD_DISABLE_TRUST_AGENTS = 1 << 4;
+    private static final int KEYGUARD_DISABLE_SECURE_CAMERA = 1 << 1;
     private static final String DISALLOW_CONFIG_LOCATION = "no_config_location";
     private static final String DISALLOW_ADJUST_VOLUME = "no_adjust_volume";
     private static final String DISALLOW_AUTOFILL = "no_autofill";
@@ -1791,9 +1792,23 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                     .build(),
             new DevicePolicyEventWrapper.Builder(EventId.SET_KEYGUARD_DISABLED_FEATURES_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
+                    .setInt(KEYGUARD_DISABLE_SECURE_CAMERA)
+                    .setStrings(NOT_CALLED_FROM_PARENT)
+                    .build(),
+            new DevicePolicyEventWrapper.Builder(EventId.SET_KEYGUARD_DISABLED_FEATURES_VALUE)
+                    .setAdminPackageName(DEVICE_ADMIN_PKG)
                     .setInt(KEYGUARD_DISABLE_FEATURES_NONE)
                     .setStrings(NOT_CALLED_FROM_PARENT)
                     .build());
+    }
+
+    @Test
+    public void testSetKeyguardDisabledFeatures() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceTestMethod(".KeyguardDisabledFeaturesTest",
+                "testSetKeyguardDisabledFeatures");
     }
 
     @Test
