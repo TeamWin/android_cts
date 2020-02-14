@@ -273,7 +273,8 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
             return;
         }
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".KeyguardDisabledFeaturesTest",
-                "testSetKeyguardDisabledFeatures_onParentSilentIgnore", mUserId);
+                "testSetKeyguardDisabledFeatures_onParentSilentIgnoreWhenCallerIsNotOrgOwnedPO",
+                mUserId);
     }
 
     @FlakyTest
