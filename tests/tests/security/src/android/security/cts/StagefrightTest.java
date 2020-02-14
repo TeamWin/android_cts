@@ -122,7 +122,7 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     public void testStagefright_bug_35763994() throws Exception {
-        doStagefrightTest(R.raw.bug_35763994, false);
+        doStagefrightTest(R.raw.bug_35763994, new CrashUtils.Config().checkMinAddress(false));
     }
 
     @SecurityTest
@@ -132,7 +132,7 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest
     public void testStagefright_cve_2016_2507() throws Exception {
-        doStagefrightTest(R.raw.cve_2016_2507, false);
+        doStagefrightTest(R.raw.cve_2016_2507, new CrashUtils.Config().checkMinAddress(false));
     }
 
     @SecurityTest
@@ -222,13 +222,14 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest
     public void testStagefright_cve_2016_2429_b_27211885() throws Exception {
-        doStagefrightTest(R.raw.cve_2016_2429_b_27211885, false);
+        doStagefrightTest(R.raw.cve_2016_2429_b_27211885,
+                new CrashUtils.Config().checkMinAddress(false));
     }
 
     @SecurityTest
     public void testStagefright_bug_34031018() throws Exception {
-        doStagefrightTest(R.raw.bug_34031018_32bit, false);
-        doStagefrightTest(R.raw.bug_34031018_64bit, false);
+        doStagefrightTest(R.raw.bug_34031018_32bit, new CrashUtils.Config().checkMinAddress(false));
+        doStagefrightTest(R.raw.bug_34031018_64bit, new CrashUtils.Config().checkMinAddress(false));
     }
 
     /***********************************************************
@@ -248,7 +249,8 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest
     public void testStagefright_cve_2017_0852_b_62815506() throws Exception {
-        doStagefrightTest(R.raw.cve_2017_0852_b_62815506, false);
+        doStagefrightTest(R.raw.cve_2017_0852_b_62815506,
+                new CrashUtils.Config().checkMinAddress(false));
     }
 
     /***********************************************************
@@ -288,12 +290,12 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest
     public void testStagefright_bug_33818508() throws Exception {
-        doStagefrightTest(R.raw.bug_33818508, false);
+        doStagefrightTest(R.raw.bug_33818508, new CrashUtils.Config().checkMinAddress(false));
     }
 
     @SecurityTest
     public void testStagefright_bug_32873375() throws Exception {
-        doStagefrightTest(R.raw.bug_32873375, false);
+        doStagefrightTest(R.raw.bug_32873375, new CrashUtils.Config().checkMinAddress(false));
     }
 
     @SecurityTest
@@ -318,7 +320,7 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest
     public void testStagefright_bug_32322258() throws Exception {
-        doStagefrightTest(R.raw.bug_32322258, false);
+        doStagefrightTest(R.raw.bug_32322258, new CrashUtils.Config().checkMinAddress(false));
     }
 
     @SecurityTest
@@ -333,7 +335,8 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest
     public void testStagefright_cve_2015_3862_b_22954006() throws Exception {
-        doStagefrightTest(R.raw.cve_2015_3862_b_22954006, false);
+        doStagefrightTest(R.raw.cve_2015_3862_b_22954006,
+                new CrashUtils.Config().checkMinAddress(false));
     }
 
     @SecurityTest
@@ -387,12 +390,13 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest
     public void testStagefright_cve_2016_3755() throws Exception {
-        doStagefrightTest(R.raw.cve_2016_3755, false);
+        doStagefrightTest(R.raw.cve_2016_3755, new CrashUtils.Config().checkMinAddress(false));
     }
 
     @SecurityTest
     public void testStagefright_cve_2016_3878_b_29493002() throws Exception {
-        doStagefrightTest(R.raw.cve_2016_3878_b_29493002, false);
+        doStagefrightTest(R.raw.cve_2016_3878_b_29493002,
+                new CrashUtils.Config().checkMinAddress(false));
     }
 
     @SecurityTest
@@ -402,11 +406,11 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest
     public void testStagefright_bug_27855419_CVE_2016_2463() throws Exception {
-        doStagefrightTest(R.raw.bug_27855419, false);
+        doStagefrightTest(R.raw.bug_27855419, new CrashUtils.Config().checkMinAddress(false));
     }
 
     public void testStagefright_bug_19779574() throws Exception {
-        doStagefrightTest(R.raw.bug_19779574, false);
+        doStagefrightTest(R.raw.bug_19779574, new CrashUtils.Config().checkMinAddress(false));
     }
 
     /***********************************************************
@@ -416,7 +420,7 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest
     public void testStagefright_bug_35467107() throws Exception {
-        doStagefrightTest(R.raw.bug_35467107, false);
+        doStagefrightTest(R.raw.bug_35467107, new CrashUtils.Config().checkMinAddress(false));
     }
 
     /***********************************************************
@@ -435,36 +439,37 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     private void doStagefrightTest(final int rid) throws Exception {
-        doStagefrightTest(rid, true); // check addresss by default
+        doStagefrightTest(rid, null);
     }
 
-    private void doStagefrightTest(final int rid, boolean checkMinCrashAddress) throws Exception {
-        doStagefrightTestMediaPlayer(rid, checkMinCrashAddress);
-        doStagefrightTestMediaCodec(rid, checkMinCrashAddress);
-        doStagefrightTestMediaMetadataRetriever(rid, checkMinCrashAddress);
+    private void doStagefrightTest(final int rid, CrashUtils.Config config) throws Exception {
+        doStagefrightTestMediaPlayer(rid, config);
+        doStagefrightTestMediaCodec(rid, config);
+        doStagefrightTestMediaMetadataRetriever(rid, config);
 
         Context context = getInstrumentation().getContext();
         Resources resources =  context.getResources();
         CtsTestServer server = new CtsTestServer(context);
         String rname = resources.getResourceEntryName(rid);
         String url = server.getAssetUrl("raw/" + rname);
-        doStagefrightTestMediaPlayer(url, checkMinCrashAddress);
-        doStagefrightTestMediaCodec(url, checkMinCrashAddress);
-        doStagefrightTestMediaMetadataRetriever(url, checkMinCrashAddress);
+
+        doStagefrightTestMediaPlayer(url, config);
+        doStagefrightTestMediaCodec(url, config);
+        doStagefrightTestMediaMetadataRetriever(url, config);
         server.shutdown();
     }
 
     private void doStagefrightTest(final int rid, int timeout) throws Exception {
-        doStagefrightTest(rid, true, timeout); // check crash address by default
+        doStagefrightTest(rid, null, timeout);
     }
 
     private void doStagefrightTest(
-            final int rid, boolean checkMinCrashAddress, int timeout) throws Exception {
+            final int rid, CrashUtils.Config config, int timeout) throws Exception {
         runWithTimeout(new Runnable() {
             @Override
             public void run() {
                 try {
-                  doStagefrightTest(rid, checkMinCrashAddress);
+                  doStagefrightTest(rid, config);
                 } catch (Exception e) {
                   fail(e.toString());
                 }
@@ -473,12 +478,12 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     private void doStagefrightTestANR(final int rid) throws Exception {
-        doStagefrightTestANR(rid, true); // check crash address by default
+        doStagefrightTestANR(rid, null);
     }
 
     private void doStagefrightTestANR(
-            final int rid, boolean checkMinCrashAddress) throws Exception {
-        doStagefrightTestMediaPlayerANR(rid, null);
+            final int rid, CrashUtils.Config config) throws Exception {
+        doStagefrightTestMediaPlayerANR(rid, null, config);
     }
 
     private Surface getDummySurface() {
@@ -532,7 +537,7 @@ public class StagefrightTest extends InstrumentationTestCase {
         MediaPlayer.OnPreparedListener,
         MediaPlayer.OnCompletionListener {
 
-        boolean checkMinAddress = true;
+        CrashUtils.Config config;
 
         private final Pattern[] validProcessPatterns = {
             Pattern.compile("adsprpcd"),
@@ -554,10 +559,16 @@ public class StagefrightTest extends InstrumentationTestCase {
         };
 
         MediaPlayerCrashListener() {
+            this(null);
         }
 
-        MediaPlayerCrashListener(boolean checkMinAddress) {
-            this.checkMinAddress = checkMinAddress;
+        MediaPlayerCrashListener(CrashUtils.Config config) {
+            if (config == null) {
+                config = new CrashUtils.Config();
+            }
+            // if a different process is needed for a test, it should be added to the main list.
+            config.setProcessPatterns(validProcessPatterns);
+            this.config = config;
         }
 
         @Override
@@ -605,8 +616,7 @@ public class StagefrightTest extends InstrumentationTestCase {
                 if (crashes == null) {
                     Log.e(TAG, "Crash results not found for test " + getName());
                     return what;
-                } else if (CrashUtils.securityCrashDetected(
-                        crashes, checkMinAddress, validProcessPatterns)) {
+                } else if (CrashUtils.securityCrashDetected(crashes, config)) {
                     return what;
                 } else {
                     Log.i(TAG, "Crash ignored due to no security crash found for test " +
@@ -654,21 +664,21 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     private void doStagefrightTestMediaPlayer(final int rid) throws Exception {
-        doStagefrightTestMediaPlayer(rid, true); // check crash address by default
+        doStagefrightTestMediaPlayer(rid, null, null);
     }
 
     private void doStagefrightTestMediaPlayer(
-            final int rid, boolean checkMinCrashAddress) throws Exception {
-        doStagefrightTestMediaPlayer(rid, null, checkMinCrashAddress);
+            final int rid, CrashUtils.Config config) throws Exception {
+        doStagefrightTestMediaPlayer(rid, null, config);
     }
 
     private void doStagefrightTestMediaPlayer(final String url) throws Exception {
-        doStagefrightTestMediaPlayer(url, true); // check crash address by default
+        doStagefrightTestMediaPlayer(url, null);
     }
 
     private void doStagefrightTestMediaPlayer(
-            final String url, boolean checkMinCrashAddress) throws Exception {
-        doStagefrightTestMediaPlayer(-1, url, checkMinCrashAddress);
+            final String url, CrashUtils.Config config) throws Exception {
+        doStagefrightTestMediaPlayer(-1, url, config);
     }
 
     private void closeQuietly(AutoCloseable closeable) {
@@ -683,17 +693,17 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     private void doStagefrightTestMediaPlayer(final int rid, final String uri) throws Exception {
-        doStagefrightTestMediaPlayer(rid, uri, true); // check crash address by default
+        doStagefrightTestMediaPlayer(rid, uri, null);
     }
 
     private void doStagefrightTestMediaPlayer(final int rid, final String uri,
-            boolean checkMinCrashAddress) throws Exception {
+            CrashUtils.Config config) throws Exception {
 
         String name = uri != null ? uri :
             getInstrumentation().getContext().getResources().getResourceEntryName(rid);
         Log.i(TAG, "start mediaplayer test for: " + name);
 
-        final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener(checkMinCrashAddress);
+        final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener(config);
 
         LooperThread t = new LooperThread(new Runnable() {
             @Override
@@ -738,31 +748,31 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     private void doStagefrightTestMediaCodec(final int rid) throws Exception {
-        doStagefrightTestMediaCodec(rid, true); // check crash address by default
+        doStagefrightTestMediaCodec(rid, null, null);
     }
 
     private void doStagefrightTestMediaCodec(
-            final int rid, boolean checkMinCrashAddress) throws Exception {
-        doStagefrightTestMediaCodec(rid, null, checkMinCrashAddress);
+            final int rid, CrashUtils.Config config) throws Exception {
+        doStagefrightTestMediaCodec(rid, null, config);
     }
 
     private void doStagefrightTestMediaCodec(final String url) throws Exception {
-        doStagefrightTestMediaCodec(url, true); // check crash address by default
+        doStagefrightTestMediaCodec(url, null);
     }
 
     private void doStagefrightTestMediaCodec(
-            final String url, boolean checkMinCrashAddress) throws Exception {
-        doStagefrightTestMediaCodec(-1, url, checkMinCrashAddress);
+            final String url, CrashUtils.Config config) throws Exception {
+        doStagefrightTestMediaCodec(-1, url, config);
     }
 
     private void doStagefrightTestMediaCodec(final int rid, final String url) throws Exception {
-        doStagefrightTestMediaCodec(rid, url, true); // check crash address by default
+        doStagefrightTestMediaCodec(rid, url, null);
     }
 
     private void doStagefrightTestMediaCodec(
-            final int rid, final String url, boolean checkMinCrashAddress) throws Exception {
+            final int rid, final String url, CrashUtils.Config config) throws Exception {
 
-        final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener(checkMinCrashAddress);
+        final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener(config);
 
         LooperThread thr = new LooperThread(new Runnable() {
             @Override
@@ -918,31 +928,31 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     private void doStagefrightTestMediaMetadataRetriever(final int rid) throws Exception {
-        doStagefrightTestMediaMetadataRetriever(rid, true); // check crash address by default
+        doStagefrightTestMediaMetadataRetriever(rid, null, null);
     }
     private void doStagefrightTestMediaMetadataRetriever(
-            final int rid, boolean checkMinCrashAddress) throws Exception {
-        doStagefrightTestMediaMetadataRetriever(rid, null, checkMinCrashAddress);
+            final int rid, CrashUtils.Config config) throws Exception {
+        doStagefrightTestMediaMetadataRetriever(rid, null, config);
     }
 
     private void doStagefrightTestMediaMetadataRetriever(final String url) throws Exception {
-        doStagefrightTestMediaMetadataRetriever(url, true); // check crash address by default
+        doStagefrightTestMediaMetadataRetriever(url, null);
     }
 
     private void doStagefrightTestMediaMetadataRetriever(
-            final String url, boolean checkMinCrashAddress) throws Exception {
-        doStagefrightTestMediaMetadataRetriever(-1, url, checkMinCrashAddress);
+            final String url, CrashUtils.Config config) throws Exception {
+        doStagefrightTestMediaMetadataRetriever(-1, url, config);
     }
 
     private void doStagefrightTestMediaMetadataRetriever(
             final int rid, final String url) throws Exception {
-        doStagefrightTestMediaMetadataRetriever(rid, url, true); // check crash address by default
+        doStagefrightTestMediaMetadataRetriever(rid, url, null);
     }
 
     private void doStagefrightTestMediaMetadataRetriever(
-            final int rid, final String url, boolean checkMinCrashAddress) throws Exception {
+            final int rid, final String url, CrashUtils.Config config) throws Exception {
 
-        final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener(checkMinCrashAddress);
+        final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener(config);
 
         LooperThread thr = new LooperThread(new Runnable() {
             @Override
@@ -1010,12 +1020,13 @@ public class StagefrightTest extends InstrumentationTestCase {
         thr.join();
     }
 
-    private void doStagefrightTestMediaPlayerANR(final int rid, final String uri) throws Exception {
+    private void doStagefrightTestMediaPlayerANR(final int rid, final String uri,
+            CrashUtils.Config config) throws Exception {
         String name = uri != null ? uri :
             getInstrumentation().getContext().getResources().getResourceEntryName(rid);
         Log.i(TAG, "start mediaplayerANR test for: " + name);
 
-        final MediaPlayerCrashListener mpl = new MediaPlayerCrashListener();
+        final MediaPlayerCrashListener mpl = new MediaPlayerCrashListener(config);
 
         LooperThread t = new LooperThread(new Runnable() {
             @Override
@@ -1061,11 +1072,13 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     public void testBug36816007() throws Exception {
-        doStagefrightTestRawBlob(R.raw.bug_36816007, "video/avc", 320, 240, false);
+        doStagefrightTestRawBlob(R.raw.bug_36816007, "video/avc", 320, 240,
+                new CrashUtils.Config().checkMinAddress(false));
     }
 
     public void testBug36895511() throws Exception {
-        doStagefrightTestRawBlob(R.raw.bug_36895511, "video/hevc", 320, 240, false);
+        doStagefrightTestRawBlob(R.raw.bug_36895511, "video/hevc", 320, 240,
+                new CrashUtils.Config().checkMinAddress(false));
     }
 
     @SecurityTest
@@ -1075,7 +1088,8 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     @SecurityTest
     public void testBug_70897394() throws Exception {
-        doStagefrightTestRawBlob(R.raw.bug_70897394_avc, "video/avc", 320, 240);
+        doStagefrightTestRawBlob(R.raw.bug_70897394_avc, "video/avc", 320, 240,
+                new CrashUtils.Config().checkMinAddress(false));
     }
 
     private void runWithTimeout(Runnable runner, int timeout) {
@@ -1102,14 +1116,13 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     private void doStagefrightTestRawBlob(
             int rid, String mime, int initWidth, int initHeight) throws Exception {
-        // check crash address by default
-        doStagefrightTestRawBlob(rid, mime, initWidth, initHeight, true);
+        doStagefrightTestRawBlob(rid, mime, initWidth, initHeight, new CrashUtils.Config());
     }
 
     private void doStagefrightTestRawBlob(int rid, String mime, int initWidth, int initHeight,
-            boolean checkMinCrashAddress) throws Exception {
+            CrashUtils.Config config) throws Exception {
 
-        final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener(checkMinCrashAddress);
+        final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener(config);
         final Context context = getInstrumentation().getContext();
         final Resources resources =  context.getResources();
 
