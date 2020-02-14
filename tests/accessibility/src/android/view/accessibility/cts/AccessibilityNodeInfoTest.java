@@ -524,7 +524,6 @@ public class AccessibilityNodeInfoTest {
         //         labeledby: AccessibilityEndToEndTest#testLabelForReportedToAccessibility
         //         windowid: Not directly observable
         //         sourceid: Not directly observable
-        //         TODO(b/147393134): Need to test if we could get leashed child/parent properly.
         //         leashedChild: Not directly accessible
         //         leashedParent: Not directly accessible
         //         leashedParentNodeId: Not directly accessible
@@ -640,7 +639,6 @@ public class AccessibilityNodeInfoTest {
         //  labeledby (can't be performed on sealed instance, even if null)
         //  sourceId (not directly observable)
         //  windowId (not directly observable)
-        //  TODO(b/147393134): Need to test if we could get leashed child/parent properly.
         //  leashedChild (not directly observable)
         //  leashedParent (not directly observable)
         //  leashedParentNodeId (not directly observable)
