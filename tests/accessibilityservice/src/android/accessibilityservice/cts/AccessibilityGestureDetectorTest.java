@@ -238,6 +238,10 @@ public class AccessibilityGestureDetectorTest {
                 twoFingerDoubleTap(displayId),
                 AccessibilityService.GESTURE_2_FINGER_DOUBLE_TAP,
                 displayId);
+                testGesture(
+                twoFingerDoubleTapAndHold(displayId),
+                AccessibilityService.GESTURE_2_FINGER_DOUBLE_TAP_AND_HOLD,
+                displayId);
         testGesture(
                 twoFingerTripleTap(displayId),
                 AccessibilityService.GESTURE_2_FINGER_TRIPLE_TAP,
@@ -251,6 +255,10 @@ public class AccessibilityGestureDetectorTest {
                 threeFingerDoubleTap(displayId),
                 AccessibilityService.GESTURE_3_FINGER_DOUBLE_TAP,
                 displayId);
+                testGesture(
+                threeFingerDoubleTapAndHold(displayId),
+                AccessibilityService.GESTURE_3_FINGER_DOUBLE_TAP_AND_HOLD,
+                displayId);
         testGesture(
                 threeFingerTripleTap(displayId),
                 AccessibilityService.GESTURE_3_FINGER_TRIPLE_TAP,
@@ -263,6 +271,10 @@ public class AccessibilityGestureDetectorTest {
         testGesture(
                 fourFingerDoubleTap(displayId),
                 AccessibilityService.GESTURE_4_FINGER_DOUBLE_TAP,
+                displayId);
+                testGesture(
+                fourFingerDoubleTapAndHold(displayId),
+                AccessibilityService.GESTURE_4_FINGER_DOUBLE_TAP_AND_HOLD,
                 displayId);
         testGesture(
                 fourFingerTripleTap(displayId),
@@ -525,6 +537,10 @@ public class AccessibilityGestureDetectorTest {
         return multiFingerMultiTap(2, 2, displayId);
     }
 
+    private GestureDescription twoFingerDoubleTapAndHold(int displayId) {
+        return multiFingerMultiTapAndHold(2, 2, displayId);
+    }
+ 
     private GestureDescription twoFingerTripleTap(int displayId) {
         return multiFingerMultiTap(2, 3, displayId);
     }
@@ -535,6 +551,10 @@ public class AccessibilityGestureDetectorTest {
 
     private GestureDescription threeFingerDoubleTap(int displayId) {
         return multiFingerMultiTap(3, 2, displayId);
+    }
+
+    private GestureDescription threeFingerDoubleTapAndHold(int displayId) {
+        return multiFingerMultiTapAndHold(3, 2, displayId);
     }
 
     private GestureDescription threeFingerTripleTap(int displayId) {
@@ -549,6 +569,10 @@ public class AccessibilityGestureDetectorTest {
         return multiFingerMultiTap(4, 2, displayId);
     }
 
+    private GestureDescription fourFingerDoubleTapAndHold(int displayId) {
+        return multiFingerMultiTapAndHold(4, 2, displayId);
+    }
+
     private GestureDescription fourFingerTripleTap(int displayId) {
         return multiFingerMultiTap(4, 3, displayId);
     }
@@ -559,6 +583,16 @@ public class AccessibilityGestureDetectorTest {
         // from the base.
         final PointF base = diff(mTapLocation, FINGER_OFFSET_PX);
         return GestureUtils.multiFingerMultiTap(
+                base, FINGER_OFFSET_PX, fingerCount, tapCount, /* slop= */ 0, displayId);
+    }
+
+    private GestureDescription multiFingerMultiTapAndHold(
+            int fingerCount, int tapCount, int displayId) {
+        // We dispatch the first finger, base, placed at left down side by an offset
+        // from the center of the display and the rest ones at right up side by delta
+        // from the base.
+        final PointF base = diff(mTapLocation, FINGER_OFFSET_PX);
+        return GestureUtils.multiFingerMultiTapAndHold(
                 base, FINGER_OFFSET_PX, fingerCount, tapCount, /* slop= */ 0, displayId);
     }
 
