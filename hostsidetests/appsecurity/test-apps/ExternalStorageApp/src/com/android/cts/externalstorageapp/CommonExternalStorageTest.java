@@ -177,22 +177,6 @@ public class CommonExternalStorageTest extends AndroidTestCase {
         return targetFiles;
     }
 
-    /**
-     * Return a set of several package-specific external storage paths pointing
-     * at "gift" files designed to be exchanged with the target package.
-     */
-    public static List<File> getAllPackageSpecificGiftPaths(Context context,
-            String targetPackageName) {
-        final List<File> files = getPrimaryPackageSpecificPaths(context);
-        final List<File> targetFiles = new ArrayList<>();
-        for (File file : files) {
-            final File targetFile = new File(
-                    file.getAbsolutePath().replace(context.getPackageName(), targetPackageName));
-            targetFiles.add(new File(targetFile, targetPackageName + ".gift"));
-        }
-        return targetFiles;
-    }
-
     public static List<File> getPrimaryPackageSpecificPaths(Context context) {
         final List<File> paths = new ArrayList<File>();
         Collections.addAll(paths, context.getExternalCacheDir());
