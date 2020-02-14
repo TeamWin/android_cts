@@ -33,6 +33,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.BackupUtils;
 
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -146,7 +147,7 @@ public class OtherSoundsSettingsTest {
     @Test
     public void testOtherSoundsSettings_touchVibration() throws Exception {
         Vibrator mVibrator = (Vibrator) getInstrumentation().getTargetContext().getSystemService(Context.VIBRATOR_SERVICE);
-        if (!mVibrator.hasVibrator()) return;
+        Assume.assumeTrue("Having applicable vibrator assumption", mVibrator.hasVibrator());
 
         int originalValue =
                 Settings.System.getInt(
