@@ -73,7 +73,7 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
         if (isStatsdEnabled(getDevice())) {
             assertMetricsLogged(getDevice(), () -> {
                 runDeviceTestsAsUser(
-                        MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".ManagedProfileTest",
+                        MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".CrossProfileIntentFilterTest",
                         "testAddCrossProfileIntentFilter_all", mProfileUserId);
             }, new DevicePolicyEventWrapper.Builder(ADD_CROSS_PROFILE_INTENT_FILTER_VALUE)
                     .setAdminPackageName(MANAGED_PROFILE_PKG)
