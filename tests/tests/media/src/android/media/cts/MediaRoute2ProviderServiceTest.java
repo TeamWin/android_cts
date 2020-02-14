@@ -525,7 +525,7 @@ public class MediaRoute2ProviderServiceTest {
             public void onDiscoveryPreferenceChanged(RouteDiscoveryPreference preference) {
                 List<String> features = preference.getPreferredFeatures();
                 if (features.contains(FEATURE_SAMPLE) && features.contains(FEATURE_SPECIAL)
-                        && preference.isActiveScan()) {
+                        && preference.shouldPerformActiveScan()) {
                     latch.countDown();
                 }
                 if (latch.getCount() == 0 && !features.contains(FEATURE_SAMPLE)
