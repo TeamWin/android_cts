@@ -86,43 +86,52 @@ public class CrashUtilsTest extends TestCase {
 
     @Test
     public void testValidCrash() throws Exception {
-        assertTrue(CrashUtils.securityCrashDetected(mCrashes, true,
-                Pattern.compile("synthetic_process_0")));
+        assertTrue(CrashUtils.securityCrashDetected(mCrashes, new CrashUtils.Config()
+                .checkMinAddress(true)
+                .setProcessPatterns(Pattern.compile("synthetic_process_0"))));
     }
 
     @Test
     public void testMissingName() throws Exception {
-        assertFalse(CrashUtils.securityCrashDetected(mCrashes, true,
-                Pattern.compile("")));
+        assertFalse(CrashUtils.securityCrashDetected(mCrashes, new CrashUtils.Config()
+                .checkMinAddress(true)
+                .setProcessPatterns(Pattern.compile(""))));
     }
 
     @Test
     public void testSIGABRT() throws Exception {
-        assertFalse(CrashUtils.securityCrashDetected(mCrashes, true,
-                Pattern.compile("installd")));
+        assertFalse(CrashUtils.securityCrashDetected(mCrashes, new CrashUtils.Config()
+                .checkMinAddress(true)
+                .setProcessPatterns(Pattern.compile("installd"))));
     }
 
     @Test
     public void testFaultAddressBelowMin() throws Exception {
-        assertFalse(CrashUtils.securityCrashDetected(mCrashes, true,
-                Pattern.compile("synthetic_process_1")));
+        assertFalse(CrashUtils.securityCrashDetected(mCrashes, new CrashUtils.Config()
+                .checkMinAddress(true)
+                .setProcessPatterns(Pattern.compile("synthetic_process_1"))));
     }
 
     @Test
     public void testIgnoreMinAddressCheck() throws Exception {
-        assertTrue(CrashUtils.securityCrashDetected(mCrashes, false,
-                Pattern.compile("synthetic_process_1")));
+        assertTrue(CrashUtils.securityCrashDetected(mCrashes, new CrashUtils.Config()
+                .checkMinAddress(false)
+                .setProcessPatterns(Pattern.compile("synthetic_process_1"))));
     }
 
     @Test
     public void testBadAbortMessage() throws Exception {
-        assertFalse(CrashUtils.securityCrashDetected(mCrashes, true,
-                Pattern.compile("generic")));
+        assertFalse(CrashUtils.securityCrashDetected(mCrashes, new CrashUtils.Config()
+                .checkMinAddress(true)
+                .setProcessPatterns(Pattern.compile("generic"))));
     }
 
     @Test
     public void testGoodAndBadCrashes() throws Exception {
-        assertTrue(CrashUtils.securityCrashDetected(mCrashes, true,
-                Pattern.compile("synthetic_process_0"), Pattern.compile("generic")));
+        assertTrue(CrashUtils.securityCrashDetected(mCrashes, new CrashUtils.Config()
+                .checkMinAddress(true)
+                .setProcessPatterns(
+                        Pattern.compile("synthetic_process_0"),
+                        Pattern.compile("generic"))));
     }
 }
