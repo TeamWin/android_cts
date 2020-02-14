@@ -236,7 +236,7 @@ public class SampleMediaRoute2ProviderService extends MediaRoute2ProviderService
         RoutingSessionInfo sessionInfo = new RoutingSessionInfo.Builder(sessionId, packageName)
                 .addSelectedRoute(routeId)
                 .addSelectableRoute(ROUTE_ID4_TO_SELECT_AND_DESELECT)
-                .addTransferrableRoute(ROUTE_ID5_TO_TRANSFER_TO)
+                .addTransferableRoute(ROUTE_ID5_TO_TRANSFER_TO)
                 .setVolumeHandling(PLAYBACK_VOLUME_VARIABLE)
                 .setVolumeMax(SESSION_VOLUME_MAX)
                 .setVolume(SESSION_VOLUME_INITIAL)
@@ -381,7 +381,7 @@ public class SampleMediaRoute2ProviderService extends MediaRoute2ProviderService
                 .clearSelectedRoutes()
                 .addSelectedRoute(routeId)
                 .removeDeselectableRoute(routeId)
-                .removeTransferrableRoute(routeId)
+                .removeTransferableRoute(routeId)
                 .build();
         notifySessionUpdated(newSessionInfo);
         publishRoutes();

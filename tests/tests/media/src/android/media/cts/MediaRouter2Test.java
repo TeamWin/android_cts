@@ -640,7 +640,7 @@ public class MediaRouter2Test {
                         ROUTE_ID1));
                 assertTrue(getOriginalRouteIds(controller.getSelectedRoutes())
                         .contains(ROUTE_ID5_TO_TRANSFER_TO));
-                assertFalse(getOriginalRouteIds(controller.getTransferrableRoutes())
+                assertFalse(getOriginalRouteIds(controller.getTransferableRoutes())
                         .contains(ROUTE_ID5_TO_TRANSFER_TO));
 
                 onControllerUpdatedLatch.countDown();
@@ -658,7 +658,7 @@ public class MediaRouter2Test {
 
             assertEquals(1, controllers.size());
             RoutingController controller = controllers.get(0);
-            assertTrue(getOriginalRouteIds(controller.getTransferrableRoutes())
+            assertTrue(getOriginalRouteIds(controller.getTransferableRoutes())
                     .contains(ROUTE_ID5_TO_TRANSFER_TO));
 
             // Transfer to ROUTE_ID5_TO_TRANSFER_TO
@@ -731,7 +731,7 @@ public class MediaRouter2Test {
 
             assertEquals(1, controllers.size());
             RoutingController controller = controllers.get(0);
-            assertTrue(getOriginalRouteIds(controller.getTransferrableRoutes())
+            assertTrue(getOriginalRouteIds(controller.getTransferableRoutes())
                     .contains(ROUTE_ID5_TO_TRANSFER_TO));
 
             // Release controller. Future calls should be ignored.
