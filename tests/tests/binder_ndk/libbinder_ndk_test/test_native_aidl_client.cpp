@@ -831,7 +831,7 @@ std::shared_ptr<ITest> getProxyLocalService() {
   //
   // Warning: for testing purposes only. This parcels things within the same process for testing
   // purposes. In normal usage, this should just return SharedRefBase::make<MyTest> directly.
-  return (new BpTest(binder))->ref<ITest>();
+  return SharedRefBase::make<BpTest>(binder);
 }
 
 std::shared_ptr<ITest> getNdkBinderTestJavaService(const std::string& method) {
