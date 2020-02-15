@@ -292,6 +292,24 @@ public class AudioFrequencyUnprocessedActivity extends AudioFrequencyActivity im
         mResultsMic =  new Results("mic_response", mBands);
         mResultsTone = new Results("tone_response", mBandsTone);
         mResultsBack = new Results("background_response", mBandsBack);
+
+        connectRefMicUI();
+    }
+
+    //
+    // Overrides
+    //
+    void enableTestUI(boolean enable) {
+        mButtonTestTone.setEnabled(enable);
+        mButtonPlayTone.setEnabled(enable);
+
+        mButtonTestNoise.setEnabled(enable);
+        mButtonPlayNoise.setEnabled(enable);
+
+        mButtonTestUsbBackground.setEnabled(enable);
+
+        mButtonTestUsbNoise.setEnabled(enable);
+        mButtonPlayUsbNoise.setEnabled(enable);
     }
 
     private void playerToggleButton(int buttonId, int sourceId) {
