@@ -21,6 +21,8 @@ import static com.android.compatibility.common.util.ShellIdentityUtils.invokeMet
 import static com.android.compatibility.common.util.ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn;
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import static org.junit.Assert.fail;
 
 import static org.testng.Assert.assertThrows;
@@ -45,6 +47,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -72,6 +75,9 @@ public final class CarUserManagerTest extends CarApiTestBase {
 
     private static int sInitialUserId = UserHandle.myUserId();
     private static int sNewUserId = UserHandle.USER_NULL;
+
+    private final Executor mNoOpExecutor = (r) -> {};
+    private final UserLifecycleListener mNoOpListener = (e) -> {};
 
     @Override
     @Before
@@ -102,7 +108,8 @@ public final class CarUserManagerTest extends CarApiTestBase {
     public void testAddListener_noPermission() throws Exception {
         toggleInteractAcrossUsersPermission(false);
         try {
-            assertThrows(SecurityException.class, ()-> sCarUserManager.addListener((e) -> {}));
+            assertThrows(SecurityException.class,
+                    () -> sCarUserManager.addListener(mNoOpExecutor, mNoOpListener));
         } finally {
             toggleInteractAcrossUsersPermission(true);
         }
@@ -112,7 +119,8 @@ public final class CarUserManagerTest extends CarApiTestBase {
     public void testRemoveListener_noPermission() throws Exception {
         toggleInteractAcrossUsersPermission(false);
         try {
-            assertThrows(SecurityException.class, ()-> sCarUserManager.removeListener((e) -> {}));
+            assertThrows(SecurityException.class,
+                    ()-> sCarUserManager.removeListener(mNoOpListener));
         } finally {
             toggleInteractAcrossUsersPermission(true);
         }
@@ -171,13 +179,22 @@ public final class CarUserManagerTest extends CarApiTestBase {
             }
         };
         Log.d(TAG, "registering listener: " + listener);
-        sCarUserManager.addListener(listener);
+
+
+        AtomicBoolean executedRef = new AtomicBoolean();
+        sCarUserManager.addListener((r) -> {
+            executedRef.set(true);
+            r.run();
+        }, listener);
 
         // Switch while listener is registered
         switchUser(newUserId);
         if (!latch.await(SWITCH_TIMEOUT_USING_CHECK_MS, TimeUnit.MILLISECONDS)) {
             fail("listener not called in " + SWITCH_TIMEOUT_USING_CHECK_MS + "ms");
         }
+
+        // Make sure it was executed in the proper threaqd
+        assertWithMessage("not executed on executor").that(executedRef.get()).isTrue();
 
          // Then switch back when it isn't
         // TODO(b/144120654): the current mechanism is not thread safe because if an event is

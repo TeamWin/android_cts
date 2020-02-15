@@ -31,6 +31,7 @@ import com.android.tradefed.util.AbiUtils;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -198,11 +199,12 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     }
 
     /**
-     * Verify that app with WRITE_EXTERNAL can leave gifts in external storage
-     * directories belonging to other apps, and those apps can read.
+     * Verify that app without REQUEST_INSTALL_PACKAGES can't access obb
+     * directories belonging to other apps.
      */
+    @Ignore("Re-enable as part of b/148918640")
     @Test
-    public void testExternalStorageGifts() throws Exception {
+    public void testCantAccessOtherObbDirs() throws Exception {
         try {
             wipePrimaryExternalStorage();
 
@@ -211,18 +213,17 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
             getDevice().uninstallPackage(WRITE_PKG);
             final String[] options = {AbiUtils.createAbiFlag(getAbi().getName())};
 
-            // We purposefully delay the installation of the reading apps to
-            // verify that the daemon correctly invalidates any caches.
             assertNull(getDevice().installPackage(getTestAppFile(WRITE_APK), false, options));
-            for (int user : mUsers) {
-                runDeviceTests(WRITE_PKG, WRITE_PKG + ".WriteGiftTest", "testGifts", user);
-            }
-
             assertNull(getDevice().installPackage(getTestAppFile(NONE_APK), false, options));
             assertNull(getDevice().installPackage(getTestAppFile(READ_APK), false, options));
+
             for (int user : mUsers) {
-                runDeviceTests(READ_PKG, READ_PKG + ".ReadGiftTest", "testGifts", user);
-                runDeviceTests(NONE_PKG, NONE_PKG + ".GiftTest", "testGifts", user);
+                runDeviceTests(WRITE_PKG, WRITE_PKG + ".WriteGiftTest",
+                        "testCantAccessOtherObbDirs", user);
+                runDeviceTests(READ_PKG, READ_PKG + ".ReadGiftTest", "testCantAccessOtherObbDirs",
+                        user);
+                runDeviceTests(NONE_PKG, NONE_PKG + ".GiftTest", "testCantAccessOtherObbDirs",
+                        user);
             }
         } finally {
             getDevice().uninstallPackage(NONE_PKG);
@@ -231,8 +232,12 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         }
     }
 
+    /**
+     * Verify that app with REQUEST_INSTALL_PACKAGES can leave gifts in obb
+     * directories belonging to other apps, and those apps can read.
+     */
     @Test
-    public void testExternalStorageObbGifts() throws Exception {
+    public void testCanAccessOtherObbDirs() throws Exception {
         try {
             wipePrimaryExternalStorage();
 
@@ -359,8 +364,7 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     }
 
     /**
-     * Test that apps with read permissions see the appropriate permissions
-     * when apps with r/w permission levels move around their files.
+     * Test that apps with read permissions see the appropriate permissions.
      */
     @Test
     public void testMultiViewMoveConsistency() throws Exception {
@@ -369,10 +373,8 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
 
             getDevice().uninstallPackage(NONE_PKG);
             getDevice().uninstallPackage(READ_PKG);
-            getDevice().uninstallPackage(WRITE_PKG);
             final String[] options = {AbiUtils.createAbiFlag(getAbi().getName())};
 
-            assertNull(getDevice().installPackage(getTestAppFile(WRITE_APK), false, options));
             assertNull(getDevice().installPackage(getTestAppFile(READ_APK), false, options));
 
             for (int user : mUsers) {
@@ -382,25 +384,14 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
                 runDeviceTests(READ_PKG, READ_PKG + ".ReadMultiViewTest", "testRWAccess", user);
             }
 
-            for (int user : mUsers) {
-                runDeviceTests(WRITE_PKG, WRITE_PKG + ".WriteMultiViewTest", "testMoveAway", user);
-            }
-            for (int user : mUsers) {
-                runDeviceTests(READ_PKG, READ_PKG + ".ReadMultiViewTest", "testROAccess", user);
-            }
-
             // for fuse file system
             Thread.sleep(10000);
-            for (int user : mUsers) {
-                runDeviceTests(WRITE_PKG, WRITE_PKG + ".WriteMultiViewTest", "testMoveBack", user);
-            }
             for (int user : mUsers) {
                 runDeviceTests(READ_PKG, READ_PKG + ".ReadMultiViewTest", "testRWAccess", user);
             }
         } finally {
             getDevice().uninstallPackage(NONE_PKG);
             getDevice().uninstallPackage(READ_PKG);
-            getDevice().uninstallPackage(WRITE_PKG);
         }
     }
 

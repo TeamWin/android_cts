@@ -42,6 +42,7 @@ import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PermissionInfo;
+import android.os.Build;
 import android.os.Process;
 import android.os.UserHandle;
 
@@ -92,7 +93,12 @@ public class PermissionUtils {
      * @param apkFile The apk to install
      */
     public static void install(@NonNull String apkFile) {
-        runShellCommand("pm install -r --force-sdk " + apkFile);
+        final int sdkVersion = Build.VERSION.SDK_INT
+                + (Build.VERSION.RELEASE_OR_CODENAME.equals("REL") ? 0 : 1);
+        boolean forceQueryable = sdkVersion > Build.VERSION_CODES.Q;
+        runShellCommand("pm install -r --force-sdk "
+                + (forceQueryable ? "--force-queryable " : "")
+                + apkFile);
     }
 
     /**

@@ -332,4 +332,54 @@ public class GestureUtils {
         }
         return getGestureBuilder(displayId, strokes).build();
     }
+
+    /**
+     * Simulates a user placing multiple fingers on the specified screen
+     * and then multi-tapping and holding with these fingers.
+     *
+     * The location of fingers based on <code>basePoint<code/> are shifted by <code>delta<code/>.
+     * Like (baseX, baseY), (baseX + deltaX, baseY + deltaY), and so on.
+     *
+     * @param basePoint Where to place the first finger.
+     * @param delta Offset to basePoint where to place the 2nd or 3rd finger.
+     * @param fingerCount The number of fingers.
+     * @param tapCount The number of taps to fingers.
+     * @param slop Slop range the finger tapped.
+     * @param displayId Which display to dispatch the gesture.
+     */
+    public static GestureDescription multiFingerMultiTapAndHold(
+            PointF basePoint,
+            PointF delta,
+            int fingerCount,
+            int tapCount,
+            int slop,
+            int displayId) {
+        assertTrue(fingerCount >= 2);
+        assertTrue(tapCount > 0);
+        final int strokeCount = fingerCount * tapCount;
+        final PointF[] pointers = new PointF[fingerCount];
+        final StrokeDescription[] strokes = new StrokeDescription[strokeCount];
+
+        // The first tap
+        for (int i = 0; i < fingerCount; i++) {
+            pointers[i] = add(basePoint, times(i, delta));
+            strokes[i] = click(pointers[i]);
+        }
+        // The rest of taps
+        for (int tapIndex = 1; tapIndex < tapCount; tapIndex++) {
+            for (int i = 0; i < fingerCount; i++) {
+                final StrokeDescription lastStroke = strokes[(tapIndex - 1) * fingerCount + i];
+                final long nextStartTime = endTimeOf(lastStroke) + STROKE_TIME_GAP_MS;
+                final int nextIndex = tapIndex * fingerCount + i;
+                pointers[i] = getPointWithinSlop(pointers[i], slop);
+                if (tapIndex + 1 == tapCount) {
+                    // Last tap so do long click.
+                    strokes[nextIndex] = startingAt(nextStartTime, longClick(pointers[i]));
+                } else {
+                    strokes[nextIndex] = startingAt(nextStartTime, click(pointers[i]));
+                }
+            }
+        }
+        return getGestureBuilder(displayId, strokes).build();
+    }
 }

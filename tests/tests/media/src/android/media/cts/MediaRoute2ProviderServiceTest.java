@@ -292,7 +292,7 @@ public class MediaRoute2ProviderServiceTest {
                         SESSION_ID_1, mContext.getPackageName())
                         .addSelectedRoute(ROUTE_ID1)
                         .addSelectableRoute(ROUTE_ID4_TO_SELECT_AND_DESELECT)
-                        .addTransferrableRoute(ROUTE_ID5_TO_TRANSFER_TO)
+                        .addTransferableRoute(ROUTE_ID5_TO_TRANSFER_TO)
                         .build();
                 service.notifySessionCreated(info, requestId);
                 onCreateSessionLatch.countDown();
@@ -456,7 +456,7 @@ public class MediaRoute2ProviderServiceTest {
                         SESSION_ID_1, mContext.getPackageName())
                         .addSelectedRoute(ROUTE_ID1)
                         .addSelectableRoute(ROUTE_ID4_TO_SELECT_AND_DESELECT)
-                        .addTransferrableRoute(ROUTE_ID5_TO_TRANSFER_TO)
+                        .addTransferableRoute(ROUTE_ID5_TO_TRANSFER_TO)
                         .build();
                 service.notifySessionCreated(info, requestId);
                 onCreateSessionLatch.countDown();
@@ -525,7 +525,7 @@ public class MediaRoute2ProviderServiceTest {
             public void onDiscoveryPreferenceChanged(RouteDiscoveryPreference preference) {
                 List<String> features = preference.getPreferredFeatures();
                 if (features.contains(FEATURE_SAMPLE) && features.contains(FEATURE_SPECIAL)
-                        && preference.isActiveScan()) {
+                        && preference.shouldPerformActiveScan()) {
                     latch.countDown();
                 }
                 if (latch.getCount() == 0 && !features.contains(FEATURE_SAMPLE)
