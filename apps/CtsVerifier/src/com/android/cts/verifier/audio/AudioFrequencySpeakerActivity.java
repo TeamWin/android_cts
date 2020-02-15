@@ -205,6 +205,15 @@ public class AudioFrequencySpeakerActivity extends AudioFrequencyActivity implem
                 5.0, -50.0,      /* start top,bottom value */
                 5.0, -50.0      /* stop top,bottom value */);
 
+        connectRefMicUI();
+    }
+
+    //
+    // Overrides
+    //
+    void enableTestUI(boolean enable) {
+        mLoopbackPlugReady.setEnabled(enable);
+        mTestButton.setEnabled(enable);
     }
 
     /**
@@ -212,8 +221,8 @@ public class AudioFrequencySpeakerActivity extends AudioFrequencyActivity implem
      */
     private void enableLayout(boolean enable) {
         for (int i = 0; i < mLinearLayout.getChildCount(); i++) {
-            View view = mLinearLayout.getChildAt(i);
-            view.setEnabled(enable);
+            mLoopbackPlugReady.setEnabled(enable);
+            mTestButton.setEnabled(enable);
         }
     }
 
