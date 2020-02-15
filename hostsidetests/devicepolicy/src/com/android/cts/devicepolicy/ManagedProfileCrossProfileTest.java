@@ -16,6 +16,13 @@
 
 package com.android.cts.devicepolicy;
 
+import static android.stats.devicepolicy.EventId.ADD_CROSS_PROFILE_INTENT_FILTER_VALUE;
+import static android.stats.devicepolicy.EventId.ADD_CROSS_PROFILE_WIDGET_PROVIDER_VALUE;
+import static android.stats.devicepolicy.EventId.REMOVE_CROSS_PROFILE_WIDGET_PROVIDER_VALUE;
+import static android.stats.devicepolicy.EventId.SET_CROSS_PROFILE_CALENDAR_PACKAGES_VALUE;
+import static android.stats.devicepolicy.EventId.SET_CROSS_PROFILE_PACKAGES_VALUE;
+import static android.stats.devicepolicy.EventId.SET_INTERACT_ACROSS_PROFILES_APP_OP_VALUE;
+
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
 
@@ -24,7 +31,6 @@ import static org.junit.Assert.assertFalse;
 
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
-import android.stats.devicepolicy.EventId;
 
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -47,6 +53,9 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
     private static final String ACTION_CAN_INTERACT_ACROSS_PROFILES_CHANGED =
             "android.content.pm.action.CAN_INTERACT_ACROSS_PROFILES_CHANGED";
 
+    /** From {@code android.app.AppOpsManager#MODE_DEFAULT}. */
+    private static final int MODE_DEFAULT = 3;
+
     @LargeTest
     @Test
     public void testCrossProfileIntentFilters() throws Exception {
@@ -66,7 +75,7 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
                 runDeviceTestsAsUser(
                         MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".ManagedProfileTest",
                         "testAddCrossProfileIntentFilter_all", mProfileUserId);
-            }, new DevicePolicyEventWrapper.Builder(EventId.ADD_CROSS_PROFILE_INTENT_FILTER_VALUE)
+            }, new DevicePolicyEventWrapper.Builder(ADD_CROSS_PROFILE_INTENT_FILTER_VALUE)
                     .setAdminPackageName(MANAGED_PROFILE_PKG)
                     .setInt(1)
                     .setStrings("com.android.cts.managedprofile.ACTION_TEST_ALL_ACTIVITY")
@@ -288,11 +297,11 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
                 changeCrossProfileWidgetForUser(WIDGET_PROVIDER_PKG,
                         "remove-cross-profile-widget", mProfileUserId);
             }, new DevicePolicyEventWrapper
-                        .Builder(EventId.ADD_CROSS_PROFILE_WIDGET_PROVIDER_VALUE)
+                        .Builder(ADD_CROSS_PROFILE_WIDGET_PROVIDER_VALUE)
                         .setAdminPackageName(MANAGED_PROFILE_PKG)
                         .build(),
                 new DevicePolicyEventWrapper
-                        .Builder(EventId.REMOVE_CROSS_PROFILE_WIDGET_PROVIDER_VALUE)
+                        .Builder(REMOVE_CROSS_PROFILE_WIDGET_PROVIDER_VALUE)
                         .setAdminPackageName(MANAGED_PROFILE_PKG)
                         .build());
         } finally {
@@ -310,7 +319,7 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
         assertMetricsLogged(getDevice(), () -> {
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
                     "testCrossProfileCalendarPackage", mProfileUserId);
-        }, new DevicePolicyEventWrapper.Builder(EventId.SET_CROSS_PROFILE_CALENDAR_PACKAGES_VALUE)
+        }, new DevicePolicyEventWrapper.Builder(SET_CROSS_PROFILE_CALENDAR_PACKAGES_VALUE)
                     .setAdminPackageName(MANAGED_PROFILE_PKG)
                     .setStrings(MANAGED_PROFILE_PKG)
                     .build());
@@ -391,6 +400,23 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
                 ".CrossProfileTest",
                 "testGetCrossProfilePackages_whenSet_returnsEqual",
                 mProfileUserId);
+    }
+
+    @Test
+    public void testSetCrossProfilePackages_isLogged() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        installAllDummyApps();
+        assertMetricsLogged(
+                getDevice(),
+                () -> runWorkProfileDeviceTest(
+                        ".CrossProfileTest", "testSetCrossProfilePackages_noAsserts"),
+                new DevicePolicyEventWrapper.Builder(SET_CROSS_PROFILE_PACKAGES_VALUE)
+                        .setAdminPackageName(MANAGED_PROFILE_PKG)
+                        .setStrings(
+                                DUMMY_APP_1_PKG, DUMMY_APP_2_PKG, DUMMY_APP_3_PKG, DUMMY_APP_4_PKG)
+                        .build());
     }
 
     @FlakyTest
@@ -519,6 +545,28 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
         final String expectedSubstring =
                 packageName + "#" + ACTION_CAN_INTERACT_ACROSS_PROFILES_CHANGED + "#" + userId;
         return readLogcat().contains(expectedSubstring);
+    }
+
+    @Test
+    public void testSetCrossProfilePackages_resetsAppOps_isLogged() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        installAllDummyApps();
+        assertMetricsLogged(
+                getDevice(),
+                () -> runWorkProfileDeviceTest(
+                        ".CrossProfileTest", "testSetCrossProfilePackages_resetsAppOps_noAsserts"),
+                new DevicePolicyEventWrapper.Builder(SET_INTERACT_ACROSS_PROFILES_APP_OP_VALUE)
+                        .setStrings(DUMMY_APP_3_PKG)
+                        .setInt(MODE_DEFAULT)
+                        .setBoolean(true) // cross-profile manifest attribute
+                        .build(),
+                new DevicePolicyEventWrapper.Builder(SET_INTERACT_ACROSS_PROFILES_APP_OP_VALUE)
+                        .setStrings(DUMMY_APP_4_PKG)
+                        .setInt(MODE_DEFAULT)
+                        .setBoolean(true) // cross-profile manifest attribute
+                        .build());
     }
 
     private void runCrossProfileCalendarTestsWhenWhitelistedAndEnabled() throws Exception {

@@ -1,11 +1,14 @@
 package com.android.cts.devicepolicy;
 
+import static android.stats.devicepolicy.EventId.CROSS_PROFILE_APPS_GET_TARGET_USER_PROFILES_VALUE;
+import static android.stats.devicepolicy.EventId.CROSS_PROFILE_APPS_START_ACTIVITY_AS_USER_VALUE;
+import static android.stats.devicepolicy.EventId.START_ACTIVITY_BY_INTENT_VALUE;
+
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
 
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
-import android.stats.devicepolicy.EventId;
 
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -135,6 +138,26 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
 
     @LargeTest
     @Test
+    public void testStartActivityIntent_isLogged() throws Exception {
+        if (!mHasManagedUserFeature) {
+            return;
+        }
+        assertMetricsLogged(
+                getDevice(),
+                () -> verifyCrossProfileAppsApi(
+                        mProfileId,
+                        mPrimaryUserId,
+                        START_ACTIVITY_TEST_CLASS,
+                        "testStartActivityByIntent_noAsserts"),
+                new DevicePolicyEventWrapper
+                        .Builder(START_ACTIVITY_BY_INTENT_VALUE)
+                        .setStrings(TEST_PACKAGE)
+                        .setBoolean(true) // from work profile
+                        .build());
+    }
+
+    @LargeTest
+    @Test
     public void testPrimaryUserToSecondaryUser() throws Exception {
         if (!mCanTestMultiUser) {
             return;
@@ -177,7 +200,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
                             "testStartMainActivity_noAsserts");
                 },
                 new DevicePolicyEventWrapper
-                        .Builder(EventId.CROSS_PROFILE_APPS_START_ACTIVITY_AS_USER_VALUE)
+                        .Builder(CROSS_PROFILE_APPS_START_ACTIVITY_AS_USER_VALUE)
                         .setStrings(new String[] {"com.android.cts.crossprofileappstest"})
                         .build());
     }
@@ -198,7 +221,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
                             "testGetTargetUserProfiles_noAsserts");
                 },
                 new DevicePolicyEventWrapper
-                        .Builder(EventId.CROSS_PROFILE_APPS_GET_TARGET_USER_PROFILES_VALUE)
+                        .Builder(CROSS_PROFILE_APPS_GET_TARGET_USER_PROFILES_VALUE)
                         .setStrings(new String[] {"com.android.cts.crossprofileappstest"})
                         .build());
     }
