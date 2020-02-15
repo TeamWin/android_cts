@@ -34,6 +34,7 @@ import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_
 import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
 import static android.content.pm.PackageManager.FEATURE_EMBEDDED;
 import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
+import static android.content.pm.PackageManager.FEATURE_INPUT_METHODS;
 import static android.content.pm.PackageManager.FEATURE_LEANBACK;
 import static android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE;
 import static android.content.pm.PackageManager.FEATURE_SCREEN_LANDSCAPE;
@@ -197,6 +198,9 @@ public abstract class ActivityManagerTestBase {
 
     protected static final String AM_START_HOME_ACTIVITY_COMMAND =
             "am start -a android.intent.action.MAIN -c android.intent.category.HOME";
+
+    protected static final String MSG_NO_MOCK_IME =
+            "MockIme cannot be used for devices that do not support installable IMEs";
 
     private static final String LOCK_CREDENTIAL = "1234";
 
@@ -1539,6 +1543,10 @@ public abstract class ActivityManagerTestBase {
     protected boolean supportsMultiDisplay() {
         return mContext.getPackageManager().hasSystemFeature(
                 FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS);
+    }
+
+    protected boolean supportsInstallableIme() {
+        return mContext.getPackageManager().hasSystemFeature(FEATURE_INPUT_METHODS);
     }
 
     static class CountSpec<T> {
