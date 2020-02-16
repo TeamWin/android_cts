@@ -29,10 +29,9 @@ import android.quickaccesswallet.QuickAccessWalletActivity;
 import android.service.quickaccesswallet.WalletCard;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.rule.ActivityTestRule;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -42,14 +41,11 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class WalletCardTest {
 
-    @Rule
-    public ActivityTestRule<QuickAccessWalletActivity> mActivityRule =
-            new ActivityTestRule<>(QuickAccessWalletActivity.class);
     private Context mContext;
 
     @Before
     public void setup() {
-        mContext = mActivityRule.getActivity().getApplicationContext();
+        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
     }
 
     /**
@@ -57,7 +53,7 @@ public class WalletCardTest {
      * preferences and asserts they can no longer be retrieved.
      */
     @Test
-    public void parcel_toParcel() {
+    public void testParcel_toParcel() {
         Bitmap bitmap = Bitmap.createBitmap(70, 44, Bitmap.Config.ARGB_8888);
         Intent intent = new Intent(mContext, QuickAccessWalletActivity.class);
         WalletCard card = new WalletCard.Builder(
@@ -82,7 +78,7 @@ public class WalletCardTest {
     }
 
     @Test
-    public void parcel_noIconOrLabel_toParcel() {
+    public void testParcel_noIconOrLabel_toParcel() {
         Bitmap bitmap = Bitmap.createBitmap(70, 44, Bitmap.Config.ARGB_8888);
         Intent intent = new Intent(mContext, QuickAccessWalletActivity.class);
         WalletCard card = new WalletCard.Builder(

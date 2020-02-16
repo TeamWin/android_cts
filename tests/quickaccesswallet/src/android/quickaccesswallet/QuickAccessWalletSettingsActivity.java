@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,10 @@
 package android.quickaccesswallet;
 
 import android.app.Activity;
+import android.os.Bundle;
 
 /**
- * A simple activity that would show the wallet
+ * A simple activity for wallet settings
  */
-public class QuickAccessWalletActivity extends Activity {
+public class QuickAccessWalletSettingsActivity extends Activity {
 }
