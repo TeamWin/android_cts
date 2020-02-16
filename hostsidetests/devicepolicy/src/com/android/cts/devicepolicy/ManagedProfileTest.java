@@ -22,6 +22,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
 import android.stats.devicepolicy.EventId;
 
@@ -551,7 +552,10 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
         }
     }
 
+    // TODO(b/149580605): Fix this flaky test.
     @Test
+    @FlakyTest
+    @Ignore
     public void testSanityCheck() throws Exception {
         if (!mHasFeature) {
             return;

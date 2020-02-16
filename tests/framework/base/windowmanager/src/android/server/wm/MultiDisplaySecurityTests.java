@@ -836,6 +836,8 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
 
     @Test
     public void testNoInputConnectionForUntrustedVirtualDisplay() throws Exception {
+        assumeTrue(MSG_NO_MOCK_IME, supportsInstallableIme());
+
         final long NOT_EXPECT_TIMEOUT = TimeUnit.SECONDS.toMillis(2);
 
         final MockImeSession mockImeSession = createManagedMockImeSession(this);

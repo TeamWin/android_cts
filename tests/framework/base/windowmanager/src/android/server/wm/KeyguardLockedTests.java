@@ -307,6 +307,8 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
     @Test
     public void testShowWhenLockedAttrImeActivityAndShowSoftInput() throws Exception {
+        assumeTrue(MSG_NO_MOCK_IME, supportsInstallableIme());
+
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
         final MockImeSession mockImeSession = createManagedMockImeSession(this);
 
@@ -326,6 +328,8 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
     @Test
     public void testShowWhenLockedImeActivityAndShowSoftInput() throws Exception {
+        assumeTrue(MSG_NO_MOCK_IME, supportsInstallableIme());
+
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
         final MockImeSession mockImeSession = createManagedMockImeSession(this);
         final TestActivitySession<ShowWhenLockedImeActivity> imeTestActivitySession =
