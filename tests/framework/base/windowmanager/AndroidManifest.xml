@@ -152,7 +152,9 @@
 
         <activity android:name="android.server.wm.StartActivityTests$TestActivity2" />
 
-        <activity android:name="android.server.wm.MultiDisplaySystemDecorationTests$ImeTestActivity" />
+        <activity android:name="android.server.wm.MultiDisplaySystemDecorationTests$ImeTestActivity"
+                  android:resizeableActivity="true"
+                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen" />
         <activity android:name="android.server.wm.MultiDisplaySystemDecorationTests$ImeTestActivity2" />
         <activity android:name="android.server.wm.MultiDisplaySystemDecorationTests$ImeTestActivityWithBrokenContextWrapper" />
 
