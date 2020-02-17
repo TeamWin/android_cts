@@ -100,8 +100,13 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         int seconds = 0;
 
         commands.add("cec-client");
+        /* "-p 2" starts the client as if it is connected to HDMI port 2, taking the physical
+         * address 2.0.0.0 */
         commands.add("-p");
         commands.add("2");
+        /* "-t x" starts the client as a TV device */
+        commands.add("-t");
+        commands.add("x");
         commands.addAll(Arrays.asList(clientParams));
 
         mCecClient = RunUtil.getDefault().runCmdInBackground(commands);
