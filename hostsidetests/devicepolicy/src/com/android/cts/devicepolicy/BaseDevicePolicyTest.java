@@ -237,7 +237,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
             if (getDevice().executeShellCommand(command).startsWith(USER_STATE_UNLOCKED)) {
                 return;
             }
-            Thread.sleep(100);
+            Thread.sleep(1000);
         }
         fail("User is not unlocked.");
     }
@@ -999,5 +999,16 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
         getDevice().pushFile(file, TEST_UPDATE_LOCATION + "/" + fileName);
         file.delete();
+    }
+
+    boolean hasService(String service) {
+        String command = "service check " + service;
+        try {
+            String commandOutput = getDevice().executeShellCommand(command);
+            return !commandOutput.contains("not found");
+        } catch (Exception e) {
+            CLog.w("Exception running '" + command + "': " + e);
+            return false;
+        }
     }
 }
