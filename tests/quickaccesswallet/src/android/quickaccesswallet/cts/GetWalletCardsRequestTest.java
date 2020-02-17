@@ -32,7 +32,7 @@ import org.junit.runner.RunWith;
 public class GetWalletCardsRequestTest {
 
     @Test
-    public void parcel_toParcel() {
+    public void testParcel_toParcel() {
         GetWalletCardsRequest request = new GetWalletCardsRequest(100, 70, 32, 5);
 
         Parcel p = Parcel.obtain();

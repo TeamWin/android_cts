@@ -72,6 +72,9 @@ public class RestrictedStoragePermissionTest {
     private static final String APK_USES_STORAGE_OPT_OUT_30 =
             "/data/local/tmp/cts/permissions2/CtsStoragePermissionsUserOptOutSdk30.apk";
 
+    private static final String APK_USES_STORAGE_PRESERVED_OPT_OUT_30 =
+            "/data/local/tmp/cts/permissions2/CtsStoragePermissionsPreservedUserOptOutSdk30.apk";
+
     private static final String PKG = "android.permission2.cts.restrictedpermissionuser";
 
     private static final long ENABLE_SCOPED_STORAGE_CHANGE_ID = 144914977L;
@@ -483,6 +486,59 @@ public class RestrictedStoragePermissionTest {
 
         // It does not matter that write is white listed as the storage access level is only
         // controlled by the read perm
+        assertHasIsolatedStorageAccess();
+    }
+
+    @Test
+    @AppModeFull
+    public void testStorageTargetingSdk30CanPreserveLegacyOnUpdateFromLegacy() throws Exception {
+        installApp(APK_USES_STORAGE_OPT_OUT_29, null);
+
+        // Updating with the flag preserves legacy
+        installApp(APK_USES_STORAGE_PRESERVED_OPT_OUT_30, null);
+        assertHasFullStorageAccess();
+
+        // And with the flag still preserves legacy
+        installApp(APK_USES_STORAGE_PRESERVED_OPT_OUT_30, null);
+        assertHasFullStorageAccess();
+
+        // But without the flag loses legacy
+        installApp(APK_USES_STORAGE_OPT_OUT_30, null);
+        assertHasIsolatedStorageAccess();
+
+        // And again with the flag doesn't bring back legacy
+        installApp(APK_USES_STORAGE_PRESERVED_OPT_OUT_30, null);
+        assertHasIsolatedStorageAccess();
+    }
+
+    @Test
+    @AppModeFull
+    public void testStorageTargetingSdk30CannotPreserveLegacyAfterLegacyUninstall()
+            throws Exception {
+        installApp(APK_USES_STORAGE_OPT_OUT_29, null);
+        assertHasFullStorageAccess();
+
+        runShellCommand("pm uninstall " + PKG);
+
+        installApp(APK_USES_STORAGE_PRESERVED_OPT_OUT_30, null);
+        assertHasIsolatedStorageAccess();
+    }
+
+    @Test
+    @AppModeFull
+    public void testStorageTargetingSdk30CannotPreserveLegacyOnUpdateFromNonLegacy()
+            throws Exception {
+        installApp(APK_USES_STORAGE_DEFAULT_29, null);
+        installApp(APK_USES_STORAGE_PRESERVED_OPT_OUT_30, null);
+
+        assertHasIsolatedStorageAccess();
+    }
+
+    @Test
+    @AppModeFull
+    public void testStorageTargetingSdk30CannotPreserveLegacyOnInstall() throws Exception {
+        installApp(APK_USES_STORAGE_PRESERVED_OPT_OUT_30, null);
+
         assertHasIsolatedStorageAccess();
     }
 
