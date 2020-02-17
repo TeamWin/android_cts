@@ -438,12 +438,34 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testPersonalAppsSuspensionIme() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
         installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
         setupIme(mPrimaryUserId, DUMMY_IME_APK, DUMMY_IME_COMPONENT);
         setPersonalAppsSuspended(true);
         // Active IME should not be suspended.
         assertCanStartPersonalApp(DUMMY_IME_PKG, true);
         setPersonalAppsSuspended(false);
+    }
+
+    @Test
+    public void testCanRestrictAccountManagementOnParentProfile() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".AccountManagementParentTest",
+                "testCanSetAccountManagementRestriction", mUserId);
+        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
+        try {
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".AccountManagementParentTest",
+                    "testAccountRestricted", mPrimaryUserId);
+        } finally {
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".AccountManagementParentTest",
+                    "testCanRemoveAccountManagementRestriction", mUserId);
+        }
     }
 
     private void setupIme(int userId, String imeApk, String imePackage) throws Exception {
