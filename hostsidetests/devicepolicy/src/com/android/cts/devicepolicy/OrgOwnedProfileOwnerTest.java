@@ -126,7 +126,8 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
         try {
             installAppAsUser(DEVICE_ADMIN_APK, mParentUserId);
-            setDeviceOwner(DEVICE_ADMIN_COMPONENT_FLATTENED, mParentUserId, /*expectFailure*/false);
+            assertTrue(setDeviceOwner(DEVICE_ADMIN_COMPONENT_FLATTENED,
+                    mParentUserId, /*expectFailure*/false));
             mHasSecondaryProfileToRemove = true;
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".LockScreenInfoTest", "testLockInfoIsNull",
                     mParentUserId);
