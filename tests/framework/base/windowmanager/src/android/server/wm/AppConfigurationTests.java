@@ -234,7 +234,7 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
 
         // Launch to fullscreen stack and record size.
         separateTestJournal();
-        launchActivity(activityName, WINDOWING_MODE_FULLSCREEN);
+        launchActivity(activityName, WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
         final SizeInfo initialFullscreenSizes = getActivityDisplaySize(activityName);
         final Rect displayRect = getDisplayRect(activityName);
 
@@ -256,7 +256,8 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
                 width /* taskWidth */, height /* taskHeight */);
 
         // Move activity back to fullscreen stack.
-        setActivityTaskWindowingMode(activityName, WINDOWING_MODE_FULLSCREEN);
+        setActivityTaskWindowingMode(activityName,
+                WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
         final SizeInfo finalFullscreenSizes = getActivityDisplaySize(activityName);
 
         // After activity configuration was changed twice it must report same size as original one.
@@ -740,7 +741,7 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
         // Move to fullscreen stack.
         separateTestJournal();
         setActivityTaskWindowingMode(
-                activityName, WINDOWING_MODE_FULLSCREEN);
+                activityName, WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
         final SizeInfo fullscreenSizes = getActivityDisplaySize(activityName);
         assertSizesAreSane(fullscreenSizes, initialDockedSizes);
 
@@ -955,6 +956,43 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
         SizeInfo freeformActivitySizes = getActivitySizeInfo(freeformActivitySession);
         SizeInfo applicationSizes = getAppSizeInfo(freeformActivitySession);
         assertSizesAreSame(freeformActivitySizes, applicationSizes);
+    }
+
+    @Test
+    public void testAppConfigurationUpdatesWhenSplitScreenActivityFinishes() throws Exception {
+        assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
+
+        // Launch activity in fullscreen initially
+        final ActivitySession fullscreenActivitySession = createManagedActivityClientSession()
+                .startActivity(getLaunchActivityBuilder()
+                        .setUseInstrumentation()
+                        .setTargetActivity(TEST_ACTIVITY)
+                        .setWindowingMode(WINDOWING_MODE_FULLSCREEN));
+        SizeInfo fullscreenActivitySizes = getActivitySizeInfo(fullscreenActivitySession);
+        SizeInfo initialApplicationSizes = getAppSizeInfo(fullscreenActivitySession);
+        assertSizesAreSame(fullscreenActivitySizes, initialApplicationSizes);
+
+        // Launch activity in split-screen and assert sizes
+        separateTestJournal();
+        final ActivitySession secondActivitySession = createManagedActivityClientSession()
+                .startActivity(getLaunchActivityBuilder()
+                        .setUseInstrumentation()
+                        .setTargetActivity(RESIZEABLE_ACTIVITY)
+                        .setNewTask(true)
+                        .setMultipleTask(true)
+                        .setWindowingMode(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY));
+        waitForOrFail("Activity and application configuration must match",
+                () -> activityAndAppSizesMatch(secondActivitySession));
+        SizeInfo dockedActivitySizes = getActivitySizeInfo(secondActivitySession);
+        SizeInfo newApplicationSizes = getAppSizeInfo(secondActivitySession);
+        assertSizesAreSame(dockedActivitySizes, newApplicationSizes);
+        assertSizesAreSane(fullscreenActivitySizes, dockedActivitySizes);
+
+        // Finish top activity and assert the size change
+        secondActivitySession.finish();
+        waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY, "finishActivityOnTop");
+        waitForOrFail("Application configuration must be restored to the original size",
+                () -> initialApplicationSizes.equals(getAppSizeInfo(fullscreenActivitySession)));
     }
 
     private boolean activityAndAppSizesMatch(ActivitySession activitySession) {
