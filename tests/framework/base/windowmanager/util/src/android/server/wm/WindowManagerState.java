@@ -957,12 +957,6 @@ public class WindowManagerState {
             }
             for (int i = 0; i < proto.tasks.length; i++) {
                 ActivityTask task = new ActivityTask(proto.tasks[i]);
-                if (task.mCreatedByOrganizer) {
-                    // TODO(b/149338177): figure out how CTS tests deal with organizer. For now,
-                    //                    don't treat them as regular stacks
-                    // Skip tasks created by an organizer
-                    continue;
-                }
                 mRootTasks.add(task);
                 // Also update activity manager state
                 amState.mRootTasks.add(task);
@@ -1073,7 +1067,6 @@ public class WindowManagerState {
         boolean mAnimatingBounds;
         private int mSurfaceWidth;
         private int mSurfaceHeight;
-        boolean mCreatedByOrganizer;
 
         ActivityTask(TaskProto proto) {
             super(proto.windowContainer);
@@ -1092,7 +1085,6 @@ public class WindowManagerState {
             mAnimatingBounds = proto.animatingBounds;
             mSurfaceWidth = proto.surfaceWidth;
             mSurfaceHeight = proto.surfaceHeight;
-            mCreatedByOrganizer = proto.createdByOrganizer;
 
             if (proto.resumedActivity != null) {
                 mResumedActivity = proto.resumedActivity.title;
