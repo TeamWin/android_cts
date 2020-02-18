@@ -21,14 +21,23 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.Process;
 import android.os.UserManager;
+import android.util.Log;
 import android.widget.TextView;
 
+/**
+ * An activity that is not the main activity of the application.
+ *
+ * <p>Logs its task ID with the following format: "NonMainActivity#taskId#[taskId]#", where [taskId]
+ * is the actual task ID, such as NonMainActivity#taskId#4#.
+ */
 public class NonMainActivity extends Activity {
+    private static final String LOG_TAG = "NonMainActivity";
 
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         setContentView(R.layout.non_main);
+        Log.w(LOG_TAG, "NonMainActivity#taskId#" + getTaskId() + "#");
     }
 
     @Override
