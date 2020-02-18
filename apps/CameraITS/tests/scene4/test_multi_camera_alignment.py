@@ -30,6 +30,7 @@ ALIGN_TOL = 0.01  # multiplied by sensor diagonal to convert to pixels
 CHART_DISTANCE_CM = 22  # cm
 CIRCLE_RTOL = 0.1
 GYRO_REFERENCE = 1
+LENS_FACING_BACK = 1  # 0: FRONT, 1: BACK, 2: EXTERNAL
 NAME = os.path.basename(__file__).split('.')[0]
 TRANS_REF_MATRIX = np.array([0, 0, 0])
 
@@ -267,6 +268,12 @@ def main():
                              its.caps.per_frame_control(props) and
                              its.caps.logical_multi_camera(props))
 
+        # Convert chart_distance for lens facing back
+        if props['android.lens.facing'] == LENS_FACING_BACK:
+            # API spec defines +z is pointing out from screen
+            print 'lens facing BACK'
+            chart_distance *= -1
+
         # Find physical camera IDs and those that support RGB raw
         ids = its.caps.logical_multi_camera_physical_ids(props)
         props_physical = {}
@@ -457,10 +464,6 @@ def main():
         # Convert circle centers to real world coordinates
         x_w = {}
         y_w = {}
-        if props['android.lens.facing']:
-            # API spec defines +z is pointing out from screen
-            print 'lens facing BACK'
-            chart_distance *= -1
         for i in [i_ref, i_2nd]:
             x_w[i], y_w[i] = convert_to_world_coordinates(
                     circle[i][0], circle[i][1], r[i], t[i], k[i], chart_distance)
