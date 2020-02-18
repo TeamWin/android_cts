@@ -2775,6 +2775,44 @@ You should be prompted to select credentials; choose the ones you just installed
         \n
         Verify that you are prompted with the above choices and both options work as intended. Then mark this test accordingly.
     </string>
+    <string name="provisioning_byod_cross_profile_permission_control">Cross profile permission control</string>
+    <string name="provisioning_byod_cross_profile_permission_control_info">
+        This test exercises cross profile permission controls. Follow instructions above.
+    </string>
+    <string name="provisioning_byod_cross_profile_permission_control_instruction">
+        For this test you need to install CrossProfileTestApp.apk by running
+        adb install -r -t /path/to/CrossProfileTestApp.apk. Make sure the app is installed
+        on both the personal and work profiles.\n
+        Press the \"Prepare test\" button to enable configuring cross profile for the test app.\n
+        Then press through the following verification steps.\n
+        Mark the test as passed if all the following test cases are verified.
+    </string>
+    <string name="provisioning_byod_cross_profile_permission_control_prepare_button">Prepare test</string>
+    <string name="provisioning_byod_cross_profile_permission_disabled_by_default">Cross profile permission disabled by default</string>
+    <string name="provisioning_byod_cross_profile_permission_disabled_by_default_instruction">
+        Press the Go button to go to Settings &gt; Apps &amp; notifications &gt; Special app access >\n
+        Connected personal and work apps.\n
+        Choose the \"Cross profile test app\" from the list and check that the switch is disabled.\n
+        Go back to CTS Verifier and mark the test as \"Pass\" or \"Fail\".
+    </string>
+    <string name="provisioning_byod_cross_profile_permission_enabled">Cross profile permission enabled</string>
+    <string name="provisioning_byod_cross_profile_permission_enabled_instruction">
+        Press the Go button to open the \"Cross Profile Test App\".\n
+        Press the \"Open Settings\" button to go to Settings &gt; Apps &amp; notifications &gt; Special app access >
+        Connected personal and work apps > Cross profile test app, then enable the switch.\n
+        Verify that when you go back it takes you to the \"Cross Profile Test App\".\n
+        Now verify that it shows \"INTERACTING ACROSS PROFILES ALLOWED\" message.\n
+        Go back to CTS Verifier and mark the test as \"Pass\" or \"Fail\".
+    </string>
+    <string name="provisioning_byod_cross_profile_permission_disabled">Cross profile permission disabled</string>
+    <string name="provisioning_byod_cross_profile_permission_disabled_instruction">
+        Press the Go button to open the \"Cross Profile Test App\".\n
+        Press the \"Open Settings\" button to go to Settings &gt; Apps &amp; notifications &gt; Special app access >
+        Connected personal and work apps > Cross profile test app, then disable the switch.\n
+        Verify that when you go back it takes you to the \"Cross Profile Test App\".\n
+        Now verify that it shows \"INTERACTING ACROSS PROFILES NOT ALLOWED\" message.\n
+        Go back to CTS Verifier and mark the test as \"Pass\" or \"Fail\".
+    </string>
     <string name="provisioning_byod_app_linking_instruction">
         Please press the Go button to start an action.\n
         \n
