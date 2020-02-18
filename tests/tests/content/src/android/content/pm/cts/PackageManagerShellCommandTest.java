@@ -74,8 +74,7 @@ public class PackageManagerShellCommandTest {
 
     @Parameters
     public static Iterable<Object> initParameters() {
-        return Arrays.asList(DATA_LOADER_TYPE_NONE, DATA_LOADER_TYPE_STREAMING,
-                DATA_LOADER_TYPE_INCREMENTAL);
+        return Arrays.asList(DATA_LOADER_TYPE_NONE);
     }
 
     private boolean mStreaming = false;
