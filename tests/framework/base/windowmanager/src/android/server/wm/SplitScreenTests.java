@@ -490,16 +490,6 @@ public class SplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testFinishDockActivityWhileMinimized() throws Exception {
-        launchActivityInDockStackAndMinimize(TEST_ACTIVITY);
-
-        mBroadcastActionTrigger.doAction(TEST_ACTIVITY_ACTION_FINISH_SELF);
-        waitForDockNotMinimized();
-        mWmState.waitAndAssertActivityRemoved(TEST_ACTIVITY);
-        assertDockNotMinimized();
-    }
-
-    @Test
     public void testDockedStackToMinimizeWhenUnlocked() {
         if (!mIsHomeRecentsComponent) {
             launchActivityInDockStackAndMinimize(TEST_ACTIVITY);
@@ -660,30 +650,6 @@ public class SplitScreenTests extends ActivityManagerTestBase {
         final int recentsStackIndex = mWmState.getStackIndexByActivityType(ACTIVITY_TYPE_RECENTS);
         assertThat("Recents stack should be on top of home stack",
                 recentsStackIndex, lessThan(homeStackIndex));
-    }
-
-    @Test
-    public void testStackListOrderOnSplitScreenDismissed() throws Exception {
-        launchActivitiesInSplitScreen(
-                getLaunchActivityBuilder().setTargetActivity(DOCKED_ACTIVITY),
-                getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
-
-        setActivityTaskWindowingMode(DOCKED_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
-        mWmState.computeState(new WaitForValidActivityState.Builder(DOCKED_ACTIVITY)
-                .setWindowingMode(WINDOWING_MODE_FULLSCREEN)
-                .build());
-
-        final int homeStackIndex = mWmState.getStackIndexByActivityType(ACTIVITY_TYPE_HOME);
-        final int prevSplitScreenPrimaryIndex =
-                mWmState.getStackIndexByActivity(DOCKED_ACTIVITY);
-        final int prevSplitScreenSecondaryIndex =
-                mWmState.getStackIndexByActivity(TEST_ACTIVITY);
-
-        final int expectedHomeStackIndex =
-                (prevSplitScreenPrimaryIndex > prevSplitScreenSecondaryIndex
-                        ? prevSplitScreenPrimaryIndex : prevSplitScreenSecondaryIndex) - 1;
-        assertEquals("Home stack needs to be directly behind the top stack",
-                expectedHomeStackIndex, homeStackIndex);
     }
 
     private void launchActivityInDockStackAndMinimize(ComponentName activityName) {
