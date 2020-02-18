@@ -107,11 +107,17 @@ public class ProvisioningTest {
 
     static Collection<X509Certificate> createCredential(IdentityCredentialStore store,
             String credentialName) throws IdentityCredentialException {
+        return createCredentialWithChallenge(store, credentialName, "SomeChallenge".getBytes());
+    }
+
+    static Collection<X509Certificate> createCredentialWithChallenge(IdentityCredentialStore store,
+            String credentialName,
+            byte[] challenge) throws IdentityCredentialException {
         WritableIdentityCredential wc = null;
         wc = store.createCredential(credentialName, "org.iso.18013-5.2019.mdl");
 
         Collection<X509Certificate> certificateChain =
-                wc.getCredentialKeyCertificateChain("SomeChallenge".getBytes());
+                wc.getCredentialKeyCertificateChain(challenge);
         // TODO: inspect cert-chain
 
         // Profile 0 (no authentication)
