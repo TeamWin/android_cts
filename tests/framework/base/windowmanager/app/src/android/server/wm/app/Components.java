@@ -204,6 +204,9 @@ public class Components extends ComponentsBase {
     public static final ComponentName POPUP_MPP_ACTIVITY =
             component("PopupMinimalPostProcessingActivity");
 
+    public static final ComponentName TEST_DREAM_SERVICE =
+            component("TestDream");
+
     /**
      * Action and extra key constants for {@link #INPUT_METHOD_TEST_ACTIVITY}.
      */
