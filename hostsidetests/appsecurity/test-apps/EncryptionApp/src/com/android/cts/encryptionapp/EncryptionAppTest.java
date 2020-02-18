@@ -44,7 +44,6 @@ import android.os.strictmode.Violation;
 import android.provider.Settings;
 import android.support.test.uiautomator.UiDevice;
 import android.test.InstrumentationTestCase;
-import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 
@@ -419,8 +418,19 @@ public class EncryptionAppTest extends InstrumentationTestCase {
 
     private boolean queryFileExists(Uri fileUri) {
         Cursor c = mDe.getContentResolver().query(fileUri, null, null, null, null);
+        if (c == null) {
+            Log.w(TAG, "Couldn't query for file " + fileUri + "; returning false");
+            return false;
+        }
+
         c.moveToFirst();
+
         int colIndex = c.getColumnIndex("exists");
+        if (colIndex < 0) {
+            Log.e(TAG, "Column 'exists' does not exist; returning false");
+            return false;
+        }
+
         return c.getInt(colIndex) == 1;
     }
 

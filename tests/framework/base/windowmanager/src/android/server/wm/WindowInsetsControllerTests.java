@@ -29,13 +29,15 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsets.Type;
-import android.view.WindowInsetsAnimationCallback;
+import android.view.WindowInsetsAnimation;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Ignore;
 import org.junit.Test;
+
+import java.util.List;
 
 /**
  * Test whether WindowInsetsController controls window insets as expected.
@@ -199,22 +201,22 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
                 () -> getInstrumentation().sendPointerSync(event));
     }
 
-    private static class AnimationCallback implements WindowInsetsAnimationCallback {
+    private static class AnimationCallback extends WindowInsetsAnimation.Callback {
 
         private boolean mFinished = false;
 
-        @Override
-        public int getDispatchMode() {
-            return DISPATCH_MODE_CONTINUE_ON_SUBTREE;
+        AnimationCallback() {
+            super(DISPATCH_MODE_CONTINUE_ON_SUBTREE);
         }
 
         @Override
-        public WindowInsets onProgress(WindowInsets insets) {
+        public WindowInsets onProgress(WindowInsets insets,
+                List<WindowInsetsAnimation> runningAnimations) {
             return insets;
         }
 
         @Override
-        public void onFinish(InsetsAnimation animation) {
+        public void onEnd(WindowInsetsAnimation animation) {
             synchronized (this) {
                 mFinished = true;
                 notify();
