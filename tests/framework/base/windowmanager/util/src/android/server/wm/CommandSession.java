@@ -374,6 +374,20 @@ public final class CommandSession {
         boolean shouldWaitForLaunched();
     }
 
+    abstract static class DefaultLaunchProxy implements LaunchProxy {
+        LaunchInjector mLaunchInjector;
+
+        @Override
+        public boolean shouldWaitForLaunched() {
+            return true;
+        }
+
+        @Override
+        public void setLaunchInjector(LaunchInjector injector) {
+            mLaunchInjector = injector;
+        }
+    }
+
     /** Created by test case to control testing activity that implements the session protocol. */
     public static class ActivitySessionClient extends BroadcastReceiver implements AutoCloseable {
         private final Context mContext;
