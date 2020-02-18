@@ -18,8 +18,6 @@ package com.android.cts.deviceandprofileowner;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.testng.Assert.assertThrows;
-
 import android.app.admin.DevicePolicyManager;
 
 public class KeyguardDisabledFeaturesTest extends BaseDeviceAdminTest {
@@ -32,9 +30,19 @@ public class KeyguardDisabledFeaturesTest extends BaseDeviceAdminTest {
         assertThat(mDevicePolicyManager.getKeyguardDisabledFeatures(
                 ADMIN_RECEIVER_COMPONENT)).isEqualTo(
                 DevicePolicyManager.KEYGUARD_DISABLE_SECURE_CAMERA);
+
+        removeKeyguardDisableFeatures(mDevicePolicyManager);
+        mDevicePolicyManager.setKeyguardDisabledFeatures(ADMIN_RECEIVER_COMPONENT,
+                DevicePolicyManager.KEYGUARD_DISABLE_SECURE_NOTIFICATIONS);
+
+        // Check if the admin has disabled notifications specifically for the keyguard
+        assertThat(mDevicePolicyManager.getKeyguardDisabledFeatures(
+                ADMIN_RECEIVER_COMPONENT)).isEqualTo(
+                DevicePolicyManager.KEYGUARD_DISABLE_SECURE_NOTIFICATIONS);
+        removeKeyguardDisableFeatures(mDevicePolicyManager);
     }
 
-    public void testSetKeyguardDisabledFeatures_onParentSilentIgnore() {
+    public void testSetKeyguardDisabledFeatures_onParentSilentIgnoreWhenCallerIsNotOrgOwnedPO() {
         DevicePolicyManager parentDevicePolicyManager =
                 mDevicePolicyManager.getParentProfileInstance(ADMIN_RECEIVER_COMPONENT);
 
@@ -56,5 +64,20 @@ public class KeyguardDisabledFeaturesTest extends BaseDeviceAdminTest {
         assertThat(parentDevicePolicyManager.getKeyguardDisabledFeatures(
                 ADMIN_RECEIVER_COMPONENT)).isEqualTo(
                 DevicePolicyManager.KEYGUARD_DISABLE_SECURE_CAMERA);
+
+        removeKeyguardDisableFeatures(parentDevicePolicyManager);
+        parentDevicePolicyManager.setKeyguardDisabledFeatures(ADMIN_RECEIVER_COMPONENT,
+                DevicePolicyManager.KEYGUARD_DISABLE_SECURE_NOTIFICATIONS);
+
+        // Check if the admin has disabled notifications specifically for the keyguard
+        assertThat(parentDevicePolicyManager.getKeyguardDisabledFeatures(
+                ADMIN_RECEIVER_COMPONENT)).isEqualTo(
+                DevicePolicyManager.KEYGUARD_DISABLE_SECURE_NOTIFICATIONS);
+        removeKeyguardDisableFeatures(parentDevicePolicyManager);
+    }
+
+    private void removeKeyguardDisableFeatures(DevicePolicyManager devicePolicyManager) {
+        devicePolicyManager.setKeyguardDisabledFeatures(ADMIN_RECEIVER_COMPONENT,
+                DevicePolicyManager.KEYGUARD_DISABLE_FEATURES_NONE);
     }
 }
