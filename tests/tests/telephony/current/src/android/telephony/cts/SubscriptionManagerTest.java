@@ -68,6 +68,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+
 public class SubscriptionManagerTest {
     private SubscriptionManager mSm;
 
@@ -513,12 +514,12 @@ public class SubscriptionManagerTest {
         if (!isSupported()) return;
         boolean enabled = executeWithShellPermissionAndDefault(false, mSm,
                 (sm) -> sm.isSubscriptionEnabled(mSubId));
-        if (isDSDS()) {
-            // Change it to a different value
-            changeAndVerifySubscriptionEnabledValue(mSubId, !enabled);
-            // Reset it back to original
-            changeAndVerifySubscriptionEnabledValue(mSubId, enabled);
-        }
+        // Enable or disable subscription may require users UX confirmation or may not be supported.
+        // Call APIs to make sure there's no crash.
+        executeWithShellPermissionAndDefault(false, mSm,
+                (sm) -> sm.setSubscriptionEnabled(mSubId, !enabled));
+        executeWithShellPermissionAndDefault(false, mSm,
+                (sm) -> sm.setSubscriptionEnabled(mSubId, enabled));
     }
 
     @Test
@@ -593,18 +594,6 @@ public class SubscriptionManagerTest {
                 assertEquals(resetGetValue, preferredSubId);
             }
         }
-    }
-
-    private void changeAndVerifySubscriptionEnabledValue(int subId, boolean targetValue) {
-        boolean changeSuccessfully = executeWithShellPermissionAndDefault(false, mSm,
-                (sm) -> sm.setSubscriptionEnabled(subId, targetValue));
-        if (!changeSuccessfully) {
-            fail("Cannot change subscription " + subId
-                    + " from " + !targetValue + " to " + targetValue);
-        }
-        boolean res = executeWithShellPermissionAndDefault(targetValue, mSm,
-                (sm) -> sm.isSubscriptionEnabled(subId));
-        assertEquals(targetValue, res);
     }
 
     private <T, U> T executeWithShellPermissionAndDefault(T defaultValue, U targetObject,
