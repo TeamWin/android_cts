@@ -1855,6 +1855,19 @@ public class TelephonyManagerTest {
     }
 
     /**
+     * Tests that the device properly check whether selection mode was manual.
+     */
+    @Test
+    public void testIsManualNetworkSelectionAllowed() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
+            return;
+        }
+        assertTrue(ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.isManualNetworkSelectionAllowed()));
+    }
+
+    /**
      * Construct a CallAttributes object and test getters.
      */
     @Test
