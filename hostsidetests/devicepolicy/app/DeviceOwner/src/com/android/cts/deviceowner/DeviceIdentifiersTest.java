@@ -16,6 +16,7 @@
 package com.android.cts.deviceowner;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.telephony.TelephonyManager;
 
@@ -38,26 +39,37 @@ public class DeviceIdentifiersTest extends BaseDeviceOwnerTest {
         // identifiers. However since the TelephonyManager methods can return null this method
         // verifies that the device owner with the READ_PHONE_STATE permission receives the same
         // value that the shell identity receives with the READ_PRIVILEGED_PHONE_STATE permission.
-        TelephonyManager telephonyManager = (TelephonyManager) mContext.getSystemService(
-                Context.TELEPHONY_SERVICE);
+        PackageManager packageManager = mContext.getPackageManager();
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            TelephonyManager telephonyManager = (TelephonyManager) mContext.getSystemService(
+                    Context.TELEPHONY_SERVICE);
+            try {
+                assertEquals(String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE, "getDeviceId"),
+                        ShellIdentityUtils.invokeMethodWithShellPermissions(telephonyManager,
+                                (tm) -> tm.getDeviceId()), telephonyManager.getDeviceId());
+                assertEquals(String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE, "getImei"),
+                        ShellIdentityUtils.invokeMethodWithShellPermissions(telephonyManager,
+                                (tm) -> tm.getImei()), telephonyManager.getImei());
+                assertEquals(String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE, "getMeid"),
+                        ShellIdentityUtils.invokeMethodWithShellPermissions(telephonyManager,
+                                (tm) -> tm.getMeid()), telephonyManager.getMeid());
+                assertEquals(
+                        String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE, "getSubscriberId"),
+                        ShellIdentityUtils.invokeMethodWithShellPermissions(telephonyManager,
+                                (tm) -> tm.getSubscriberId()), telephonyManager.getSubscriberId());
+                assertEquals(
+                        String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE,
+                                "getSimSerialNumber"),
+                        ShellIdentityUtils.invokeMethodWithShellPermissions(telephonyManager,
+                                (tm) -> tm.getSimSerialNumber()),
+                        telephonyManager.getSimSerialNumber());
+            } catch (SecurityException e) {
+                fail("The device owner with the READ_PHONE_STATE permission must be able to access "
+                        + "the device IDs: " + e);
+            }
+        }
+
         try {
-            assertEquals(String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE, "getDeviceId"),
-                    ShellIdentityUtils.invokeMethodWithShellPermissions(telephonyManager,
-                            (tm) -> tm.getDeviceId()), telephonyManager.getDeviceId());
-            assertEquals(String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE, "getImei"),
-                    ShellIdentityUtils.invokeMethodWithShellPermissions(telephonyManager,
-                            (tm) -> tm.getImei()), telephonyManager.getImei());
-            assertEquals(String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE, "getMeid"),
-                    ShellIdentityUtils.invokeMethodWithShellPermissions(telephonyManager,
-                            (tm) -> tm.getMeid()), telephonyManager.getMeid());
-            assertEquals(String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE, "getSubscriberId"),
-                    ShellIdentityUtils.invokeMethodWithShellPermissions(telephonyManager,
-                            (tm) -> tm.getSubscriberId()), telephonyManager.getSubscriberId());
-            assertEquals(
-                    String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE, "getSimSerialNumber"),
-                    ShellIdentityUtils.invokeMethodWithShellPermissions(telephonyManager,
-                            (tm) -> tm.getSimSerialNumber()),
-                    telephonyManager.getSimSerialNumber());
             assertEquals(String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE, "Build#getSerial"),
                     ShellIdentityUtils.invokeStaticMethodWithShellPermissions(Build::getSerial),
                     Build.getSerial());
@@ -68,38 +80,40 @@ public class DeviceIdentifiersTest extends BaseDeviceOwnerTest {
     }
 
     public void testDeviceOwnerCannotGetDeviceIdentifiersWithoutPermission() throws Exception {
-        // The device owner without the READ_PHONE_STATE permission should still receive a
-        // SecurityException when querying for device identifiers.
-        TelephonyManager telephonyManager = (TelephonyManager) mContext.getSystemService(
-                Context.TELEPHONY_SERVICE);
-        try {
-            telephonyManager.getDeviceId();
-            fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getDeviceId"));
-        } catch (SecurityException expected) {
-        }
+        PackageManager packageManager = mContext.getPackageManager();
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            // The device owner without the READ_PHONE_STATE permission should still receive a
+            // SecurityException when querying for device identifiers.
+            TelephonyManager telephonyManager = (TelephonyManager) mContext.getSystemService(
+                    Context.TELEPHONY_SERVICE);
+            try {
+                telephonyManager.getDeviceId();
+                fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getDeviceId"));
+            } catch (SecurityException expected) {
+            }
+            try {
+                telephonyManager.getImei();
+                fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getImei"));
+            } catch (SecurityException expected) {
+            }
 
-        try {
-            telephonyManager.getImei();
-            fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getImei"));
-        } catch (SecurityException expected) {
-        }
+            try {
+                telephonyManager.getMeid();
+                fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getMeid"));
+            } catch (SecurityException expected) {
+            }
 
-        try {
-            telephonyManager.getMeid();
-            fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getMeid"));
-        } catch (SecurityException expected) {
-        }
+            try {
+                telephonyManager.getSubscriberId();
+                fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getSubscriberId"));
+            } catch (SecurityException expected) {
+            }
 
-        try {
-            telephonyManager.getSubscriberId();
-            fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getSubscriberId"));
-        } catch (SecurityException expected) {
-        }
-
-        try {
-            telephonyManager.getSimSerialNumber();
-            fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getSimSerialNumber"));
-        } catch (SecurityException expected) {
+            try {
+                telephonyManager.getSimSerialNumber();
+                fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getSimSerialNumber"));
+            } catch (SecurityException expected) {
+            }
         }
 
         try {
