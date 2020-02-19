@@ -20,7 +20,7 @@
     <option name="config-descriptor:metadata" key="parameter" value="not_instant_app" />
     <option name="config-descriptor:metadata" key="parameter" value="not_multi_abi" />
     <option name="config-descriptor:metadata" key="parameter" value="not_secondary_user" />
-    <test class="com.android.tradefed.testtype.HostTest" >
+    <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="class" value="com.android.cts.userspacereboot.host.UserspaceRebootHostTest" />
     </test>
 </configuration>
