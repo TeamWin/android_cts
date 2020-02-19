@@ -339,6 +339,32 @@ public class TelephonyManagerPermissionTest {
     }
 
     /**
+     * Tests that getNetworkSelectionMode requires permission
+     * Expects a security exception since the caller does not have carrier privileges.
+     */
+    @Test
+    public void testGetNetworkSelectionModeWithoutPermission() {
+        if (!mHasTelephony) {
+            return;
+        }
+        assertThrowsSecurityException(() -> mTelephonyManager.getNetworkSelectionMode(),
+                "Expected SecurityException. App does not have carrier privileges.");
+    }
+
+    /**
+     * Tests that setNetworkSelectionModeAutomatic requires permission
+     * Expects a security exception since the caller does not have carrier privileges.
+     */
+    @Test
+    public void testSetNetworkSelectionModeAutomaticWithoutPermission() {
+        if (!mHasTelephony) {
+            return;
+        }
+        assertThrowsSecurityException(() -> mTelephonyManager.setNetworkSelectionModeAutomatic(),
+                "Expected SecurityException. App does not have carrier privileges.");
+    }
+
+    /**
      * Verify that setForbiddenPlmns requires Permission.
      * <p>
      * Requires Permission:
