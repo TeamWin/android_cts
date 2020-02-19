@@ -23,7 +23,7 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
-    <application android:label="SplitApp" android:multiArch="true">
+    <application android:label="SplitApp" android:multiArch="true" android:forceQueryable="true">
         <activity android:name=".MyActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
