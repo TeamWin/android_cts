@@ -71,32 +71,30 @@ public class GnssAntennaInfoRegistrationTest {
 
     @Test
     public void testGnssAntennaInfoCallbackRegistration() {
-        TestGnssAntennaInfoCallback callback = new TestGnssAntennaInfoCallback();
-
         // TODO(skz): check that version code is greater than R
 
-        mManager.registerAntennaInfoCallback(Executors.newSingleThreadExecutor(), callback);
+        if(!mManager.getGnssCapabilities().hasGnssAntennaInfo()) {
+            // GnssAntennaInfo is not supported
+            return;
+        }
+
+        TestGnssAntennaInfoListener listener = new TestGnssAntennaInfoListener();
+
+        mManager.registerAntennaInfoListener(Executors.newSingleThreadExecutor(), listener);
         try {
             mAntennaInfoReciept.await(ANTENNA_INFO_TIMEOUT_SEC, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             Log.e(TAG, "Test was interrupted.");
         }
 
-        if(!callback.verifyStatus()) {
-            // GnssAntennaInfo is not supported (or is taking too long)
-            mManager.unregisterAntennaInfoCallback(callback);
-            return;
-        }
+        listener.verifyRegistration();
 
-        callback.verifyRegistration();
-
-        mManager.unregisterAntennaInfoCallback(callback);
+        mManager.unregisterAntennaInfoListener(listener);
     }
 
-    private class TestGnssAntennaInfoCallback extends GnssAntennaInfo.Callback {
+    private class TestGnssAntennaInfoListener implements GnssAntennaInfo.Listener {
         private boolean receivedAntennaInfo = false;
         private int numResults = 0;
-        private int status = -10000;
 
         @Override
         public void onGnssAntennaInfoReceived(@NonNull List<GnssAntennaInfo> gnssAntennaInfos) {
@@ -107,15 +105,6 @@ public class GnssAntennaInfoRegistrationTest {
             for (GnssAntennaInfo gnssAntennaInfo: gnssAntennaInfos) {
                 Log.d(TAG, gnssAntennaInfo.toString() + "\n");
             }
-        }
-
-        @Override
-        public void onStatusChanged(@GnssAntennaInfoStatus int status) {
-            this.status = status;
-        }
-
-        public boolean verifyStatus() {
-            return (status == GnssAntennaInfo.Callback.STATUS_READY);
         }
 
         public void verifyRegistration() {

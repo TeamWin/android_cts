@@ -18,11 +18,11 @@ package android.location.cts.fine;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import android.location.GnssAntennaInfo;
-import android.location.GnssAntennaInfo.PhaseCenterOffsetCoordinates;
-import android.location.GnssAntennaInfo.PhaseCenterVariationCorrections;
-import android.location.GnssAntennaInfo.SignalGainCorrections;
+import android.location.GnssAntennaInfo.PhaseCenterOffset;
+import android.location.GnssAntennaInfo.SphericalCorrections;
 import android.os.Parcel;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -73,33 +73,56 @@ public class GnssAntennaInfoTest {
     };
 
     @Test
-    public void testDescribeContents() {
-        GnssAntennaInfo gnssAntennaInfo = createTestGnssAntennaInfo();
+    public void testFullAntennaInfoDescribeContents() {
+        GnssAntennaInfo gnssAntennaInfo = createFullTestGnssAntennaInfo();
         assertEquals(0, gnssAntennaInfo.describeContents());
     }
 
     @Test
-    public void testWriteToParcel() {
-        GnssAntennaInfo gnssAntennaInfo = createTestGnssAntennaInfo();
+    public void testPartialAntennaInfoDescribeContents() {
+        GnssAntennaInfo gnssAntennaInfo = createPartialTestGnssAntennaInfo();
+        assertEquals(0, gnssAntennaInfo.describeContents());
+    }
+
+    @Test
+    public void testFullAntennaInfoWriteToParcel() {
+        GnssAntennaInfo gnssAntennaInfo = createFullTestGnssAntennaInfo();
         Parcel parcel = Parcel.obtain();
         gnssAntennaInfo.writeToParcel(parcel, 0);
         parcel.setDataPosition(0);
         GnssAntennaInfo newGnssAntennaInfo = GnssAntennaInfo.CREATOR.createFromParcel(parcel);
-        verifyGnssAntennaInfoValuesAndGetters(newGnssAntennaInfo);
+        verifyFullGnssAntennaInfoValuesAndGetters(newGnssAntennaInfo);
         parcel.recycle();
     }
 
     @Test
-    public void testCreateGnssAntennaInfoAndGetValues() {
-        GnssAntennaInfo gnssAntennaInfo = createTestGnssAntennaInfo();
-        verifyGnssAntennaInfoValuesAndGetters(gnssAntennaInfo);
+    public void testPartialAntennaInfoWriteToParcel() {
+        GnssAntennaInfo gnssAntennaInfo = createPartialTestGnssAntennaInfo();
+        Parcel parcel = Parcel.obtain();
+        gnssAntennaInfo.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+        GnssAntennaInfo newGnssAntennaInfo = GnssAntennaInfo.CREATOR.createFromParcel(parcel);
+        verifyPartialGnssAntennaInfoValuesAndGetters(newGnssAntennaInfo);
+        parcel.recycle();
     }
 
-    private static GnssAntennaInfo createTestGnssAntennaInfo() {
+    @Test
+    public void testCreateFullGnssAntennaInfoAndGetValues() {
+        GnssAntennaInfo gnssAntennaInfo = createFullTestGnssAntennaInfo();
+        verifyFullGnssAntennaInfoValuesAndGetters(gnssAntennaInfo);
+    }
+
+    @Test
+    public void testCreatePartialGnssAntennaInfoAndGetValues() {
+        GnssAntennaInfo gnssAntennaInfo = createPartialTestGnssAntennaInfo();
+        verifyPartialGnssAntennaInfoValuesAndGetters(gnssAntennaInfo);
+    }
+
+    private static GnssAntennaInfo createFullTestGnssAntennaInfo() {
         double carrierFrequencyMHz = 13758.0;
 
-        GnssAntennaInfo.PhaseCenterOffsetCoordinates phaseCenterOffsetCoordinates = new
-                GnssAntennaInfo.PhaseCenterOffsetCoordinates(
+        GnssAntennaInfo.PhaseCenterOffset phaseCenterOffset = new
+                GnssAntennaInfo.PhaseCenterOffset(
                         4.3d,
                     1.4d,
                     2.10d,
@@ -110,75 +133,109 @@ public class GnssAntennaInfoTest {
         double[][] phaseCenterVariationCorrectionsMillimeters = PHASE_CENTER_VARIATION_CORRECTIONS;
         double[][] phaseCenterVariationCorrectionsUncertaintyMillimeters =
                 PHASE_CENTER_VARIATION_CORRECTION_UNCERTAINTIES;
-        GnssAntennaInfo.PhaseCenterVariationCorrections
+        SphericalCorrections
                 phaseCenterVariationCorrections =
-                new GnssAntennaInfo.PhaseCenterVariationCorrections(
+                new SphericalCorrections(
                         phaseCenterVariationCorrectionsMillimeters,
                         phaseCenterVariationCorrectionsUncertaintyMillimeters);
 
         double[][] signalGainCorrectionsDbi = SIGNAL_GAIN_CORRECTIONS;
         double[][] signalGainCorrectionsUncertaintyDbi = SIGNAL_GAIN_CORRECTION_UNCERTAINTIES;
-        GnssAntennaInfo.SignalGainCorrections signalGainCorrections = new
-                GnssAntennaInfo.SignalGainCorrections(
+        SphericalCorrections signalGainCorrections = new
+                SphericalCorrections(
                 signalGainCorrectionsDbi,
                 signalGainCorrectionsUncertaintyDbi);
 
-        return new GnssAntennaInfo(carrierFrequencyMHz, phaseCenterOffsetCoordinates,
-                phaseCenterVariationCorrections, signalGainCorrections);
+        return new GnssAntennaInfo.Builder()
+                .setCarrierFrequencyMHz(carrierFrequencyMHz)
+                .setPhaseCenterOffset(phaseCenterOffset)
+                .setPhaseCenterVariationCorrections(phaseCenterVariationCorrections)
+                .setSignalGainCorrections(signalGainCorrections)
+                .build();
     }
 
-    private static void verifyGnssAntennaInfoValuesAndGetters(GnssAntennaInfo gnssAntennaInfo) {
+    private static GnssAntennaInfo createPartialTestGnssAntennaInfo() {
+        double carrierFrequencyMHz = 13758.0;
+
+        GnssAntennaInfo.PhaseCenterOffset phaseCenterOffset = new
+                GnssAntennaInfo.PhaseCenterOffset(
+                4.3d,
+                1.4d,
+                2.10d,
+                2.1d,
+                3.12d,
+                0.5d);
+
+        return new GnssAntennaInfo.Builder()
+                .setCarrierFrequencyMHz(carrierFrequencyMHz)
+                .setPhaseCenterOffset(phaseCenterOffset)
+                .build();
+    }
+
+    private static void verifyPartialGnssAntennaInfoValuesAndGetters(GnssAntennaInfo gnssAntennaInfo) {
         assertEquals(13758.0d, gnssAntennaInfo.getCarrierFrequencyMHz(), PRECISION);
 
         // Phase Center Offset Tests --------------------------------------------------------
-        PhaseCenterOffsetCoordinates phaseCenterOffsetCoordinates =
-                gnssAntennaInfo.getPhaseCenterOffsetCoordinates();
-        assertEquals(4.3d, phaseCenterOffsetCoordinates.getXCoordMillimeters(),
+        PhaseCenterOffset phaseCenterOffset =
+                gnssAntennaInfo.getPhaseCenterOffset();
+        assertEquals(4.3d, phaseCenterOffset.getXOffsetMm(),
                 PRECISION);
-        assertEquals(1.4d, phaseCenterOffsetCoordinates.getXCoordUncertaintyMillimeters(),
+        assertEquals(1.4d, phaseCenterOffset.getXOffsetUncertaintyMm(),
                 PRECISION);
-        assertEquals(2.10d, phaseCenterOffsetCoordinates.getYCoordMillimeters(),
+        assertEquals(2.10d, phaseCenterOffset.getYOffsetMm(),
                 PRECISION);
-        assertEquals(2.1d, phaseCenterOffsetCoordinates.getYCoordUncertaintyMillimeters(),
+        assertEquals(2.1d, phaseCenterOffset.getYOffsetUncertaintyMm(),
                 PRECISION);
-        assertEquals(3.12d, phaseCenterOffsetCoordinates.getZCoordMillimeters(),
+        assertEquals(3.12d, phaseCenterOffset.getZOffsetMm(),
                 PRECISION);
-        assertEquals(0.5d, phaseCenterOffsetCoordinates.getZCoordUncertaintyMillimeters(),
+        assertEquals(0.5d, phaseCenterOffset.getZOffsetUncertaintyMm(),
                 PRECISION);
 
         // Phase Center Variation Corrections Tests -----------------------------------------
-        PhaseCenterVariationCorrections phaseCenterVariationCorrections =
+        assertNull(gnssAntennaInfo.getPhaseCenterVariationCorrections());
+
+        // Signal Gain Corrections Tests -----------------------------------------------------
+        assertNull(gnssAntennaInfo.getSignalGainCorrections());
+    }
+
+    private static void verifyFullGnssAntennaInfoValuesAndGetters(GnssAntennaInfo gnssAntennaInfo) {
+        assertEquals(13758.0d, gnssAntennaInfo.getCarrierFrequencyMHz(), PRECISION);
+
+        // Phase Center Offset Tests --------------------------------------------------------
+        PhaseCenterOffset phaseCenterOffset =
+                gnssAntennaInfo.getPhaseCenterOffset();
+        assertEquals(4.3d, phaseCenterOffset.getXOffsetMm(),
+                PRECISION);
+        assertEquals(1.4d, phaseCenterOffset.getXOffsetUncertaintyMm(),
+                PRECISION);
+        assertEquals(2.10d, phaseCenterOffset.getYOffsetMm(),
+                PRECISION);
+        assertEquals(2.1d, phaseCenterOffset.getYOffsetUncertaintyMm(),
+                PRECISION);
+        assertEquals(3.12d, phaseCenterOffset.getZOffsetMm(),
+                PRECISION);
+        assertEquals(0.5d, phaseCenterOffset.getZOffsetUncertaintyMm(),
+                PRECISION);
+
+        // Phase Center Variation Corrections Tests -----------------------------------------
+        SphericalCorrections phaseCenterVariationCorrections =
                 gnssAntennaInfo.getPhaseCenterVariationCorrections();
 
-        assertEquals(6, phaseCenterVariationCorrections.getNumRows());
-        assertEquals(6, phaseCenterVariationCorrections.getNumColumns());
         assertEquals(60.0d, phaseCenterVariationCorrections.getDeltaTheta(), PRECISION);
         assertEquals(36.0d, phaseCenterVariationCorrections.getDeltaPhi(), PRECISION);
         assertArrayEquals(PHASE_CENTER_VARIATION_CORRECTIONS, phaseCenterVariationCorrections
-                .getRawCorrectionsArray());
+                .getCorrectionsArray());
         assertArrayEquals(PHASE_CENTER_VARIATION_CORRECTION_UNCERTAINTIES,
-                phaseCenterVariationCorrections.getRawCorrectionUncertaintiesArray());
-        assertEquals(13.46d, phaseCenterVariationCorrections
-                .getPhaseCenterVariationCorrectionMillimetersAt(2, 2), PRECISION);
-        assertEquals(2.23d, phaseCenterVariationCorrections
-                        .getPhaseCenterVariationCorrectionUncertaintyMillimetersAt(2,
-                                2), PRECISION);
+                phaseCenterVariationCorrections.getCorrectionUncertaintiesArray());
 
         // Signal Gain Corrections Tests -----------------------------------------------------
-        SignalGainCorrections signalGainCorrections = gnssAntennaInfo.getSignalGainCorrections();
+        SphericalCorrections signalGainCorrections = gnssAntennaInfo.getSignalGainCorrections();
 
-        assertEquals(6, signalGainCorrections.getNumRows());
-        assertEquals(6, signalGainCorrections.getNumColumns());
         assertEquals(60.0d, signalGainCorrections.getDeltaTheta(), PRECISION);
         assertEquals(36.0d, signalGainCorrections.getDeltaPhi(), PRECISION);
         assertArrayEquals(SIGNAL_GAIN_CORRECTIONS, signalGainCorrections
-                .getRawCorrectionsArray());
+                .getCorrectionsArray());
         assertArrayEquals(SIGNAL_GAIN_CORRECTION_UNCERTAINTIES,
-                signalGainCorrections.getRawCorrectionUncertaintiesArray());
-        assertEquals(7.92d, signalGainCorrections
-                .getSignalGainCorrectionDbiAt(2, 2), PRECISION);
-        assertEquals(2.10d, signalGainCorrections
-                .getSignalGainCorrectionUncertaintyDbiAt(2,
-                        2), PRECISION);
+                signalGainCorrections.getCorrectionUncertaintiesArray());
     }
 }
