@@ -32,11 +32,20 @@ public class SetFrameRateTest {
             new ActivityTestRule<>(FrameRateCtsActivity.class);
 
     @Test
-    public void testSetFrameRate() throws InterruptedException {
+    public void testExactFrameRateMatch() throws InterruptedException {
         FrameRateCtsActivity activity = mActivityRule.getActivity();
-        activity.testSurfaceSetFrameRate();
-        activity.testANativeWindowSetFrameRate();
-        activity.testSurfaceControlSetFrameRate();
-        activity.testNativeSurfaceControlSetFrameRate();
+        activity.testExactFrameRateMatch();
+    }
+
+    @Test
+    public void testFixedSource() throws InterruptedException {
+        FrameRateCtsActivity activity = mActivityRule.getActivity();
+        activity.testFixedSource();
+    }
+
+    @Test
+    public void testInvalidParams() throws InterruptedException {
+        FrameRateCtsActivity activity = mActivityRule.getActivity();
+        activity.testInvalidParams();
     }
 }
