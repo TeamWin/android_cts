@@ -30,6 +30,7 @@ ALIGN_TOL_MM = 4.0E-3  # mm
 ALIGN_TOL = 0.01  # multiplied by sensor diagonal to convert to pixels
 CIRCLE_RTOL = 0.1
 GYRO_REFERENCE = 1
+LENS_FACING_BACK = 1  # 0: FRONT, 1: BACK, 2: EXTERNAL
 UNDEFINED_REFERENCE = 2
 NAME = os.path.basename(__file__).split('.')[0]
 TRANS_REF_MATRIX = np.array([0, 0, 0])
@@ -333,7 +334,7 @@ def main():
                              its.caps.logical_multi_camera(props))
 
         # Convert chart_distance for lens facing back
-        if props['android.lens.facing']:
+        if props['android.lens.facing'] == LENS_FACING_BACK:
             # API spec defines +z is pointing out from screen
             print 'lens facing BACK'
             chart_distance *= -1
