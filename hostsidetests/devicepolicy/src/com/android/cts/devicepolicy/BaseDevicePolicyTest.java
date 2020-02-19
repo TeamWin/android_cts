@@ -74,6 +74,9 @@ import javax.annotation.Nullable;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
+    //The maximum time to wait for user to be unlocked.
+    private static final long USER_UNLOCK_TIMEOUT_NANO = 30_000_000_000L;
+    private static final String USER_STATE_UNLOCKED = "RUNNING_UNLOCKED";
     @Option(
             name = "skip-device-admin-feature-check",
             description = "Flag that allows to skip the check for android.software.device_admin "
@@ -225,6 +228,18 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         stayAwake();
         // Go to home.
         executeShellCommand("input keyevent KEYCODE_HOME");
+    }
+
+    void waitForUserUnlock(int userId) throws Exception {
+        final String command = String.format("am get-started-user-state %d", userId);
+        final long deadline = System.nanoTime() + USER_UNLOCK_TIMEOUT_NANO;
+        while (System.nanoTime() <= deadline) {
+            if (getDevice().executeShellCommand(command).startsWith(USER_STATE_UNLOCKED)) {
+                return;
+            }
+            Thread.sleep(100);
+        }
+        fail("User is not unlocked.");
     }
 
     @After

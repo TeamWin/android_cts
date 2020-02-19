@@ -180,7 +180,7 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
         try {
             rebootAndWaitUntilReady();
             verifyUserCredential(password, mPrimaryUserId);
-            waitForUserUnlock();
+            waitForUserUnlock(mProfileUserId);
             installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".SanityTest", mProfileUserId);
         } finally {
