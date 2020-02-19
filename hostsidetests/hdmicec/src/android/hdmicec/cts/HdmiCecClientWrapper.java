@@ -186,7 +186,6 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      */
     public void sendUserControlPress(CecDevice source, CecDevice destination,
             int keycode, boolean holdKey) throws Exception {
-        checkCecClient();
         String key = String.format("%02x", keycode);
         String command = "tx " + source + destination + ":" +
                 CecMessage.USER_CONTROL_PRESSED + ":" + key;
@@ -206,6 +205,19 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         mOutputConsole.write(command);
         mOutputConsole.newLine();
         mOutputConsole.flush();
+    }
+
+    /**
+     * Sends a series of <UCP> [firstKeycode] from source to destination through the output console
+     * of the cec-communication channel immediately followed by <UCP> [secondKeycode]. No <UCR>
+     *  message is sent.
+     */
+    public void sendUserControlInterruptedPressAndHold(CecDevice source, CecDevice destination,
+            int firstKeycode, int secondKeycode, boolean holdKey) throws Exception {
+        sendUserControlPress(source, destination, firstKeycode, holdKey);
+        /* Sleep less than 200ms between press and release */
+        TimeUnit.MILLISECONDS.sleep(100);
+        sendUserControlPress(source, destination, secondKeycode, false);
     }
 
     /** Sends a message to the output console of the cec-client */

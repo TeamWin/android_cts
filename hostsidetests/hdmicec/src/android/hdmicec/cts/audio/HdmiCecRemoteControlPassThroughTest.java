@@ -174,4 +174,45 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHostJUnit4Tes
                 HdmiCecConstants.CEC_CONTROL_BACK, true);
         lookForLog("Long press KEYCODE_BACK");
     }
+
+    /**
+     * Test 11.2.13-4
+     * Tests that the device responds correctly to a <User Control Pressed> [firstKeycode] press
+     * and hold operation when interrupted by a <User Control Pressed> [secondKeycode] before a
+     * <User Control Released> [firstKeycode] is sent.
+     */
+    @Test
+    public void cect_11_2_13_4_UserControlInterruptedPressAndHoldWithNoRelease() throws Exception {
+        ITestDevice device = getDevice();
+        // Clear activity
+        device.executeShellCommand(CLEAR_COMMAND);
+        // Clear logcat.
+        device.executeAdbCommand("logcat", "-c");
+        // Start the APK and wait for it to complete.
+        device.executeShellCommand(START_COMMAND);
+        hdmiCecClient.sendUserControlInterruptedPressAndHold(CecDevice.TV,
+                CecDevice.AUDIO_SYSTEM, HdmiCecConstants.CEC_CONTROL_UP,
+                HdmiCecConstants.CEC_CONTROL_BACK, true);
+        lookForLog("Long press KEYCODE_DPAD_UP");
+        hdmiCecClient.sendUserControlInterruptedPressAndHold(CecDevice.TV,
+                CecDevice.AUDIO_SYSTEM, HdmiCecConstants.CEC_CONTROL_DOWN,
+                HdmiCecConstants.CEC_CONTROL_UP, true);
+        lookForLog("Long press KEYCODE_DPAD_DOWN");
+        hdmiCecClient.sendUserControlInterruptedPressAndHold(CecDevice.TV,
+                CecDevice.AUDIO_SYSTEM, HdmiCecConstants.CEC_CONTROL_LEFT,
+                HdmiCecConstants.CEC_CONTROL_DOWN, true);
+        lookForLog("Long press KEYCODE_DPAD_LEFT");
+        hdmiCecClient.sendUserControlInterruptedPressAndHold(CecDevice.TV,
+                CecDevice.AUDIO_SYSTEM, HdmiCecConstants.CEC_CONTROL_RIGHT,
+                HdmiCecConstants.CEC_CONTROL_LEFT, true);
+        lookForLog("Long press KEYCODE_DPAD_RIGHT");
+        hdmiCecClient.sendUserControlInterruptedPressAndHold(CecDevice.TV,
+                CecDevice.AUDIO_SYSTEM, HdmiCecConstants.CEC_CONTROL_SELECT,
+                HdmiCecConstants.CEC_CONTROL_RIGHT, true);
+        lookForLog("Long press KEYCODE_DPAD_CENTER");
+        hdmiCecClient.sendUserControlInterruptedPressAndHold(CecDevice.TV,
+                CecDevice.AUDIO_SYSTEM, HdmiCecConstants.CEC_CONTROL_BACK,
+                HdmiCecConstants.CEC_CONTROL_SELECT, true);
+        lookForLog("Long press KEYCODE_BACK");
+    }
 }
