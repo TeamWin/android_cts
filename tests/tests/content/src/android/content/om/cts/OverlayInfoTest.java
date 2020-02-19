@@ -108,6 +108,6 @@ public class OverlayInfoTest {
         assertEquals(info.state, copyInfo.state);
         assertEquals(info.userId, copyInfo.userId);
         assertEquals(info.priority, copyInfo.priority);
-        assertEquals(info.isStatic, copyInfo.isStatic);
+        assertEquals(info.isMutable, copyInfo.isMutable);
     }
 }
