@@ -173,12 +173,16 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             mExtractor.advance();
             mSignaledEos = mExtractor.getSampleTrackIndex() == -1
                     || timestampUs >= mLastBufferTimestampUs;
-            codec.getQueueRequest(index).setLinearBlock(
-                    input.block,
-                    input.offset,
-                    written,
-                    timestampUs,
-                    mSignaledEos ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0).queue();
+            codec.getQueueRequest(index)
+                    .setLinearBlock(
+                            input.block,
+                            input.offset,
+                            written,
+                            null /* cryptoInfo */)
+                    .setPresentationTimeUs(timestampUs)
+                    .setFlags(
+                            mSignaledEos ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0)
+                    .queue();
             input.offset += written;
         }
 
