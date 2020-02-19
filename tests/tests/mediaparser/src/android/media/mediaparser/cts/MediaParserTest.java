@@ -364,7 +364,7 @@ public class MediaParserTest {
 
         mediaParser.advance(mockInput);
         if (expectedExtractorName != null) {
-            assertThat(expectedExtractorName).isEqualTo(mediaParser.getExtractorName());
+            assertThat(expectedExtractorName).isEqualTo(mediaParser.getParserName());
             // We are only checking that the extractor is the right one.
             return;
         }
