@@ -40,7 +40,7 @@ public class Utils {
         return getResources().openRawResource(resId);
     }
 
-    static Uri getAsResourceUri(int resId) {
+    public static Uri getAsResourceUri(int resId) {
         Resources res = getResources();
         return new Uri.Builder()
                 .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)

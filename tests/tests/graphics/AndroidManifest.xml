@@ -53,6 +53,10 @@
         <activity android:name="android.graphics.drawable.cts.DrawableStubActivity"
                   android:theme="@style/WhiteBackgroundNoWindowAnimation"
           android:screenOrientation="locked"/>
+        <activity android:name="android.graphics.drawable.cts.AnimatedImageActivity"
+                  android:theme="@style/WhiteBackgroundNoWindowAnimation"
+            android:screenOrientation="locked">
+        </activity>
         <provider
             android:name=".EmptyProvider"
             android:exported="true"
