@@ -155,7 +155,17 @@ public class OmapiTest {
     private boolean supportsHardware() {
         final PackageManager pm = InstrumentationRegistry.getContext().getPackageManager();
         boolean lowRamDevice = PropertyUtil.propertyEquals("ro.config.low_ram", "true");
-        return !lowRamDevice || (lowRamDevice && pm.hasSystemFeature("android.hardware.type.watch"));
+        return !lowRamDevice || pm.hasSystemFeature("android.hardware.type.watch")
+                || hasSecureElementPackage(pm);
+    }
+
+    private boolean hasSecureElementPackage(PackageManager pm) {
+        try {
+            pm.getPackageInfo("com.android.se", 0 /* flags*/);
+            return true;
+        } catch (PackageManager.NameNotFoundException e) {
+            return false;
+        }
     }
 
     private void assertGreaterOrEqual(long greater, long lesser) {
