@@ -34,9 +34,10 @@ import android.content.Context;
 import android.media.MediaRoute2Info;
 import android.media.MediaRoute2ProviderService;
 import android.media.MediaRouter2;
+import android.media.MediaRouter2.ControllerCallback;
 import android.media.MediaRouter2.RouteCallback;
 import android.media.MediaRouter2.RoutingController;
-import android.media.MediaRouter2.RoutingControllerCallback;
+import android.media.MediaRouter2.TransferCallback;
 import android.media.RouteDiscoveryPreference;
 import android.media.RoutingSessionInfo;
 import android.media.cts.SampleMediaRoute2ProviderService.Proxy;
@@ -359,23 +360,28 @@ public class MediaRoute2ProviderServiceTest {
         CountDownLatch onControllerUpdatedForTransferLatch = new CountDownLatch(1);
         List<RoutingController> controllers = new ArrayList<>();
 
-        RoutingControllerCallback controllerCallback = new RoutingControllerCallback() {
+        TransferCallback transferCallback = new TransferCallback() {
             @Override
-            public void onControllerCreated(RoutingController controller) {
+            public void onTransferred(RoutingController oldController,
+                    RoutingController newController) {
                 // TODO: Make RoutingController#getOriginalId() as @TestApi and use it.
-                if (ROUTE_ID1.equals(controller.getSelectedRoutes().get(0).getOriginalId())) {
-                    controllers.add(controller);
+                if (newController != null
+                        && ROUTE_ID1.equals(newController
+                        .getSelectedRoutes().get(0).getOriginalId())) {
+                    controllers.add(newController);
                     onControllerCreatedLatch.countDown();
                 }
             }
+        };
 
+        ControllerCallback controllerCallback = new ControllerCallback() {
             @Override
             public void onControllerUpdated(RoutingController controller) {
                 List<MediaRoute2Info> selectedRoutes = controller.getSelectedRoutes();
                 if (onControllerUpdatedForSelectLatch.getCount() > 0) {
                     if (selectedRoutes.size() == 2
                             && ROUTE_ID4_TO_SELECT_AND_DESELECT.equals(
-                                    selectedRoutes.get(1).getOriginalId())) {
+                            selectedRoutes.get(1).getOriginalId())) {
                         onControllerUpdatedForSelectLatch.countDown();
                     }
                 } else if (onControllerUpdatedForDeselectLatch.getCount() > 0) {
@@ -386,7 +392,7 @@ public class MediaRoute2ProviderServiceTest {
                 } else if (onControllerUpdatedForTransferLatch.getCount() > 0) {
                     if (selectedRoutes.size() == 1
                             && ROUTE_ID5_TO_TRANSFER_TO.equals(
-                                    selectedRoutes.get(0).getOriginalId())) {
+                            selectedRoutes.get(0).getOriginalId())) {
                         onControllerUpdatedForTransferLatch.countDown();
                     }
                 }
@@ -398,9 +404,10 @@ public class MediaRoute2ProviderServiceTest {
         try {
             mRouter2.registerRouteCallback(mExecutor, dummyCallback,
                     new RouteDiscoveryPreference.Builder(new ArrayList<>(), true).build());
+            mRouter2.registerTransferCallback(mExecutor, transferCallback);
             mRouter2.registerControllerCallback(mExecutor, controllerCallback);
 
-            mRouter2.requestCreateController(routeToCreateSession);
+            mRouter2.transferTo(routeToCreateSession);
             assertTrue(onCreateSessionLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
             assertTrue(onControllerCreatedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
             assertFalse(controllers.isEmpty());
@@ -416,7 +423,7 @@ public class MediaRoute2ProviderServiceTest {
             assertTrue(onControllerUpdatedForDeselectLatch.await(
                     TIMEOUT_MS, TimeUnit.MILLISECONDS));
 
-            controller.transferToRoute(routes.get(ROUTE_ID5_TO_TRANSFER_TO));
+            mRouter2.transferTo(routes.get(ROUTE_ID5_TO_TRANSFER_TO));
             assertTrue(onTransferToRouteLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
             assertTrue(onControllerUpdatedForTransferLatch.await(
                     TIMEOUT_MS, TimeUnit.MILLISECONDS));
@@ -425,6 +432,7 @@ public class MediaRoute2ProviderServiceTest {
             assertTrue(onReleaseSessionLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
         } finally {
             mRouter2.unregisterRouteCallback(dummyCallback);
+            mRouter2.unregisterTransferCallback(transferCallback);
             mRouter2.unregisterControllerCallback(controllerCallback);
             mRouter2.setOnGetControllerHintsListener(null);
             releaseControllers(mRouter2.getControllers());
@@ -468,21 +476,23 @@ public class MediaRoute2ProviderServiceTest {
         CountDownLatch onControllerReleasedLatch = new CountDownLatch(1);
         List<RoutingController> controllers = new ArrayList<>();
 
-        RoutingControllerCallback controllerCallback = new RoutingControllerCallback() {
+        TransferCallback transferCallback = new TransferCallback() {
             @Override
-            public void onControllerCreated(RoutingController controller) {
+            public void onTransferred(RoutingController oldController,
+                    RoutingController newController) {
                 // TODO: Make RoutingController#getOriginalId() as @TestApi and use it.
-                if (ROUTE_ID1.equals(controller.getSelectedRoutes().get(0).getOriginalId())) {
-                    controllers.add(controller);
-                    onControllerCreatedLatch.countDown();
-                }
-            }
-
-            @Override
-            public void onControllerReleased(RoutingController controller) {
-                if (ROUTE_ID1.equals(controller.getSelectedRoutes().get(0).getOriginalId())) {
-                    assertTrue(controller.isReleased());
-                    onControllerReleasedLatch.countDown();
+                if (newController != null) {
+                    if (ROUTE_ID1.equals(newController
+                            .getSelectedRoutes().get(0).getOriginalId())) {
+                        controllers.add(newController);
+                        onControllerCreatedLatch.countDown();
+                    }
+                } else {
+                    if (ROUTE_ID1.equals(oldController
+                            .getSelectedRoutes().get(0).getOriginalId())) {
+                        assertTrue(oldController.isReleased());
+                        onControllerReleasedLatch.countDown();
+                    }
                 }
             }
         };
@@ -492,9 +502,9 @@ public class MediaRoute2ProviderServiceTest {
         try {
             mRouter2.registerRouteCallback(mExecutor, dummyCallback,
                     new RouteDiscoveryPreference.Builder(new ArrayList<>(), true).build());
-            mRouter2.registerControllerCallback(mExecutor, controllerCallback);
+            mRouter2.registerTransferCallback(mExecutor, transferCallback);
 
-            mRouter2.requestCreateController(routeToCreateSession);
+            mRouter2.transferTo(routeToCreateSession);
             assertTrue(onCreateSessionLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
             assertTrue(onControllerCreatedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
             assertFalse(controllers.isEmpty());
@@ -503,7 +513,7 @@ public class MediaRoute2ProviderServiceTest {
             assertTrue(onControllerReleasedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
         } finally {
             mRouter2.unregisterRouteCallback(dummyCallback);
-            mRouter2.unregisterControllerCallback(controllerCallback);
+            mRouter2.unregisterTransferCallback(transferCallback);
             releaseControllers(mRouter2.getControllers());
         }
     }

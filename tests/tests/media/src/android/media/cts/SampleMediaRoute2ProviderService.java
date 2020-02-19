@@ -304,6 +304,7 @@ public class SampleMediaRoute2ProviderService extends MediaRoute2ProviderService
                 .setClientPackageName(sessionInfo.getClientPackageName())
                 .build());
         mRouteIdToSessionId.put(routeId, sessionId);
+        publishRoutes();
 
         RoutingSessionInfo newSessionInfo = new RoutingSessionInfo.Builder(sessionInfo)
                 .addSelectedRoute(routeId)
@@ -333,6 +334,7 @@ public class SampleMediaRoute2ProviderService extends MediaRoute2ProviderService
         mRoutes.put(routeId, new MediaRoute2Info.Builder(route)
                 .setClientPackageName(null)
                 .build());
+        publishRoutes();
 
         if (sessionInfo.getSelectedRoutes().size() == 1) {
             notifySessionReleased(sessionId);

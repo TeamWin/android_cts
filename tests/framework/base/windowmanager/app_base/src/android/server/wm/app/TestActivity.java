@@ -16,9 +16,11 @@
 
 package android.server.wm.app;
 
+import static android.server.wm.app.Components.TestActivity.COMMAND_NAVIGATE_UP_TO;
 import static android.server.wm.app.Components.TestActivity.EXTRA_CONFIG_ASSETS_SEQ;
 import static android.server.wm.app.Components.TestActivity.EXTRA_FIXED_ORIENTATION;
 import static android.server.wm.app.Components.TestActivity.EXTRA_INTENTS;
+import static android.server.wm.app.Components.TestActivity.EXTRA_INTENT;
 import static android.server.wm.app.Components.TestActivity.EXTRA_NO_IDLE;
 import static android.server.wm.app.Components.TestActivity.TEST_ACTIVITY_ACTION_FINISH_SELF;
 import static android.server.wm.app.Components.TestActivity.COMMAND_START_ACTIVITIES;
@@ -108,6 +110,9 @@ public class TestActivity extends AbstractLifecycleLogActivity {
             case COMMAND_START_ACTIVITIES:
                 final Parcelable[] intents = data.getParcelableArray(EXTRA_INTENTS);
                 startActivities(Arrays.copyOf(intents, intents.length, Intent[].class));
+                break;
+            case COMMAND_NAVIGATE_UP_TO:
+                navigateUpTo(data.getParcelable(EXTRA_INTENT));
                 break;
             default:
                 super.handleCommand(command, data);

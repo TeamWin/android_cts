@@ -24,6 +24,7 @@ import static junit.framework.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -36,7 +37,6 @@ import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
-import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -104,7 +104,7 @@ public class CrossProfileAppsStartActivityTest {
         intent.setComponent(MainActivity.getComponentName(mContext));
         ShellIdentityUtils.dropShellPermissionIdentity();
 
-        mCrossProfileApps.startActivity(intent, mTargetUser);
+        mCrossProfileApps.startActivity(intent, mTargetUser, /* callingActivity= */ null);
     }
 
     @Test
@@ -113,8 +113,11 @@ public class CrossProfileAppsStartActivityTest {
         intent.setComponent(MainActivity.getComponentName(mContext));
         ShellIdentityUtils.dropShellPermissionIdentity();
 
-        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mCrossProfileApps,
-                crossProfileApps -> crossProfileApps.startActivity(intent, mTargetUser), INTERACT_ACROSS_PROFILES);
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mCrossProfileApps,
+                crossProfileApps -> crossProfileApps.startActivity(
+                        intent, mTargetUser, /* callingActivity= */ null),
+                INTERACT_ACROSS_PROFILES);
 
         // Look for the text view to verify that MainActivity is started.
         UiObject2 textView = mDevice.wait(Until.findObject(By.res(ID_USER_TEXTVIEW)),
@@ -130,8 +133,11 @@ public class CrossProfileAppsStartActivityTest {
         intent.setComponent(MainActivity.getComponentName(mContext));
         ShellIdentityUtils.dropShellPermissionIdentity();
 
-        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mCrossProfileApps,
-                crossProfileApps -> crossProfileApps.startActivity(intent, mTargetUser), INTERACT_ACROSS_USERS);
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mCrossProfileApps,
+                crossProfileApps -> crossProfileApps.startActivity(
+                        intent, mTargetUser, /* callingActivity= */ null),
+                INTERACT_ACROSS_USERS);
 
         // Look for the text view to verify that MainActivity is started.
         UiObject2 textView = mDevice.wait(Until.findObject(By.res(ID_USER_TEXTVIEW)),
@@ -147,8 +153,11 @@ public class CrossProfileAppsStartActivityTest {
         intent.setComponent(MainActivity.getComponentName(mContext));
         ShellIdentityUtils.dropShellPermissionIdentity();
 
-        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mCrossProfileApps,
-                crossProfileApps -> crossProfileApps.startActivity(intent, mTargetUser), INTERACT_ACROSS_USERS_FULL);
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mCrossProfileApps,
+                crossProfileApps -> crossProfileApps.startActivity(
+                        intent, mTargetUser, /* callingActivity= */ null),
+                INTERACT_ACROSS_USERS_FULL);
 
         // Look for the text view to verify that MainActivity is started.
         UiObject2 textView = mDevice.wait(Until.findObject(By.res(ID_USER_TEXTVIEW)),
@@ -164,9 +173,10 @@ public class CrossProfileAppsStartActivityTest {
         Intent nonMainActivityImplicitIntent = new Intent();
         nonMainActivityImplicitIntent.setAction(Intent.ACTION_VIEW);
 
-        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mCrossProfileApps,
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mCrossProfileApps,
                 crossProfileApps -> crossProfileApps.startActivity(
-                        nonMainActivityImplicitIntent, mTargetUser));
+                        nonMainActivityImplicitIntent, mTargetUser, /* callingActivity= */ null));
     }
 
     @Test
@@ -175,9 +185,10 @@ public class CrossProfileAppsStartActivityTest {
         mainActivityIntent.setComponent(MainActivity.getComponentName(mContext));
 
         try {
-            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mCrossProfileApps,
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mCrossProfileApps,
                     crossProfileApps -> mCrossProfileApps.startActivity(
-                            mainActivityIntent, mTargetUser));
+                            mainActivityIntent, mTargetUser, /* callingActivity= */ null));
 
             // Look for the text view to verify that MainActivity is started.
             UiObject2 textView = mDevice.wait(Until.findObject(By.res(ID_USER_TEXTVIEW)),
@@ -196,9 +207,10 @@ public class CrossProfileAppsStartActivityTest {
         nonMainActivityIntent.setComponent(NonMainActivity.getComponentName(mContext));
 
         try {
-            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mCrossProfileApps,
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mCrossProfileApps,
                     crossProfileApps -> mCrossProfileApps.startActivity(
-                            nonMainActivityIntent, mTargetUser));
+                            nonMainActivityIntent, mTargetUser, /* callingActivity= */ null));
 
             // Look for the text view to verify that NonMainActivity is started.
             UiObject2 textView = mDevice.wait(Until.findObject(By.res(ID_USER_TEXTVIEW2)),
@@ -212,7 +224,33 @@ public class CrossProfileAppsStartActivityTest {
     }
 
     /**
-     * Calls {@link CrossProfileApps#startActivity(Intent, UserHandle)}. This can then be used by
+     * Starts an activity in the same task in the target user. Asserts that the activity is
+     * correctly started in the correct user, but the host-side test should verify that the tasks
+     * are the same using the log messages printed by each activity.
+     */
+    @Test
+    public void testStartActivityIntent_sameTaskByDefault() throws Exception {
+        try {
+            final Intent crossProfileSameTaskCheckerIntent = new Intent();
+            crossProfileSameTaskCheckerIntent.setComponent(
+                    CrossProfileSameTaskLauncherActivity.getComponentName(mContext));
+            crossProfileSameTaskCheckerIntent.putExtra(
+                    CrossProfileSameTaskLauncherActivity.TARGET_USER_EXTRA, mTargetUser);
+            mContext.startActivity(crossProfileSameTaskCheckerIntent);
+
+            // Look for the text view to verify that NonMainActivity is started.
+            UiObject2 textView = mDevice.wait(Until.findObject(By.res(ID_USER_TEXTVIEW2)),
+                    TIMEOUT_WAIT_UI);
+            assertNotNull("Failed to start non-main activity in target user", textView);
+            assertEquals("Non-Main Activity is started in wrong user",
+                    String.valueOf(mUserSerialNumber), textView.getText());
+        } catch (Exception e) {
+            fail("unable to start cross-profile activity in the same task: " + e);
+        }
+    }
+
+    /**
+     * Calls {@link CrossProfileApps#startActivity(Intent, UserHandle, Activity)}. This can then be used by
      * host-side tests.
      */
     @Test
@@ -222,8 +260,8 @@ public class CrossProfileAppsStartActivityTest {
 
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
                 mCrossProfileApps,
-                crossProfileApps ->
-                        mCrossProfileApps.startActivity(nonMainActivityIntent, mTargetUser));
+                crossProfileApps -> mCrossProfileApps.startActivity(
+                        nonMainActivityIntent, mTargetUser, /* callingActivity= */ null));
     }
 
     @Test
@@ -267,8 +305,10 @@ public class CrossProfileAppsStartActivityTest {
         Intent nonExportedActivityIntent = new Intent();
         nonExportedActivityIntent.setComponent(NonExportedActivity.getComponentName(mContext));
 
-        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mCrossProfileApps,
-                crossProfileApps -> mCrossProfileApps.startActivity(nonExportedActivityIntent, mTargetUser));
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mCrossProfileApps,
+                crossProfileApps -> mCrossProfileApps.startActivity(
+                        nonExportedActivityIntent, mTargetUser, /* callingActivity= */ null));
 
         // Look for the text view to verify that NonExportedActivity is started.
         UiObject2 textView = mDevice.wait(Until.findObject(By.res(ID_USER_TEXTVIEW2)),
@@ -290,9 +330,8 @@ public class CrossProfileAppsStartActivityTest {
         otherPackageIntent.setComponent(new ComponentName(
                 "com.android.cts.launcherapps.simpleapp",
                 "com.android.cts.launcherapps.simpleapp.SimpleActivity"));
-        mCrossProfileApps.startActivity(otherPackageIntent,
-                mTargetUser
-        );
+        mCrossProfileApps.startActivity(
+                otherPackageIntent, mTargetUser, /* callingActivity= */ null);
     }
 
     @Test(expected = SecurityException.class)
