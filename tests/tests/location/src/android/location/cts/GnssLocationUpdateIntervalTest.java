@@ -37,6 +37,7 @@ public class GnssLocationUpdateIntervalTest extends GnssTestCase {
     private static final String TAG = "GnssLocationUpdateIntervalTest";
 
     private static final int LOCATION_TO_COLLECT_COUNT = 8;
+    private static final int PASSIVE_LOCATION_TO_COLLECT_COUNT = 100;
     private static final int TIMEOUT_IN_SEC = 120;
 
     // Minimum time interval between fixes in milliseconds.
@@ -90,10 +91,9 @@ public class GnssLocationUpdateIntervalTest extends GnssTestCase {
         TestLocationListener activeLocationListener = new TestLocationListener(
                 LOCATION_TO_COLLECT_COUNT);
         TestLocationListener passiveLocationListener = new TestLocationListener(
-                LOCATION_TO_COLLECT_COUNT);
+                PASSIVE_LOCATION_TO_COLLECT_COUNT);
         mTestLocationManager.requestLocationUpdates(activeLocationListener, fixIntervalMillis);
-        mTestLocationManager.requestPassiveLocationUpdates(passiveLocationListener,
-                fixIntervalMillis);
+        mTestLocationManager.requestPassiveLocationUpdates(passiveLocationListener, 0);
         try {
             boolean success = activeLocationListener.await(
                     (fixIntervalMillis * LOCATION_TO_COLLECT_COUNT) + TIMEOUT_IN_SEC);
