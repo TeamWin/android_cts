@@ -43,7 +43,6 @@ import android.util.Size;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -64,7 +63,6 @@ import android.view.inputmethod.InputMethod;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.CallSuper;
@@ -75,6 +73,7 @@ import androidx.annotation.WorkerThread;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -637,7 +636,7 @@ public final class MockIme extends InputMethodService {
     @GuardedBy("this")
     private boolean mSuggestionViewVisible = false;
 
-    public InlineSuggestionsRequest onCreateInlineSuggestionsRequest() {
+    public InlineSuggestionsRequest onCreateInlineSuggestionsRequest(Bundle uiExtras) {
         Log.d(TAG, "onCreateInlineSuggestionsRequest() called");
         final ArrayList<InlinePresentationSpec> presentationSpecs = new ArrayList<>();
         presentationSpecs.add(new InlinePresentationSpec.Builder(new Size(100, 100),
@@ -694,21 +693,30 @@ public final class MockIme extends InputMethodService {
         Log.d(TAG, "updateSuggestionViews() called on " + suggestionViews.length + " views");
         mSuggestionViews = Arrays.asList(suggestionViews);
         mSuggestionViewSizes = Arrays.asList(sizes);
-        updateInlineSuggestionVisibility(true, true);
+        final boolean visible = !mSuggestionViews.isEmpty();
+        updateInlineSuggestionVisibility(visible, true);
         onSuggestionViewUpdated();
     }
 
     private void onInlineSuggestionsResponseInternal(InlineSuggestionsResponse response) {
-        Log.d(TAG, "onInlineSuggestionsResponseInternal() called. Suggestion="
-                + response.getInlineSuggestions().size());
-
+        if (response == null || response.getInlineSuggestions() == null) {
+            Log.w(TAG, "onInlineSuggestionsResponseInternal() null response/suggestions");
+            return;
+        }
         final List<InlineSuggestion> inlineSuggestions = response.getInlineSuggestions();
         final int totalSuggestionsCount = inlineSuggestions.size();
+        Log.d(TAG, "onInlineSuggestionsResponseInternal() called. Suggestion="
+                + totalSuggestionsCount);
+
+        if (totalSuggestionsCount == 0) {
+            updateSuggestionViews(new View[]{} , new Size[]{});
+        }
+
         final AtomicInteger suggestionsCount = new AtomicInteger(totalSuggestionsCount);
         final View[] suggestionViews = new View[totalSuggestionsCount];
         final Size[] sizes = new Size[totalSuggestionsCount];
 
-        for (int i=0; i < totalSuggestionsCount; i++) {
+        for (int i = 0; i < totalSuggestionsCount; i++) {
             final int index = i;
             InlineSuggestion inlineSuggestion = inlineSuggestions.get(index);
             Size size = inlineSuggestion.getInfo().getPresentationSpec().getMaxSize();
