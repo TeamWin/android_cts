@@ -94,6 +94,8 @@ public final class UiBot {
     private static final String RESOURCE_ID_SAVE_BUTTON_NO = "autofill_save_no";
     private static final String RESOURCE_ID_SAVE_BUTTON_YES = "autofill_save_yes";
     private static final String RESOURCE_ID_OVERFLOW = "overflow";
+    //TODO: Change magic constant
+    private static final String RESOURCE_ID_SUGGESTION_STRIP = "message";
 
     private static final String RESOURCE_STRING_SAVE_TITLE = "autofill_save_title";
     private static final String RESOURCE_STRING_SAVE_TITLE_WITH_TYPE =
@@ -132,6 +134,8 @@ public final class UiBot {
     private static final BySelector SAVE_UI_SELECTOR = By.res("android", RESOURCE_ID_SAVE_SNACKBAR);
     private static final BySelector DATASET_HEADER_SELECTOR =
             By.res("android", RESOURCE_ID_DATASET_HEADER);
+    private static final BySelector SUGGESTION_STRIP_SELECTOR =
+            By.res("android", RESOURCE_ID_SUGGESTION_STRIP);
 
     // TODO: figure out a more reliable solution that does not depend on SystemUI resources.
     private static final String SPLIT_WINDOW_DIVIDER_ID =
@@ -329,6 +333,19 @@ public final class UiBot {
         assertWithMessage("wrong elements on dataset picker").that(getChildrenAsText(picker))
                 .containsExactlyElementsIn(expectedChild).inOrder();
         return picker;
+    }
+
+    public UiObject2 assertSuggestionStrip(int childrenCount) throws Exception {
+        final UiObject2 strip = findSuggestionStrip(UI_TIMEOUT);
+        assertThat(strip.getChildCount()).isEqualTo(childrenCount);
+        return strip;
+    }
+
+    public void selectSuggestion(int index) throws Exception {
+        final UiObject2 strip = findSuggestionStrip(UI_TIMEOUT);
+        assertThat(index).isAtLeast(0);
+        assertThat(index).isLessThan(strip.getChildCount());
+        strip.getChildren().get(index).click();
     }
 
     /**
@@ -1035,6 +1052,10 @@ public final class UiBot {
         }
 
         return picker;
+    }
+
+    private UiObject2 findSuggestionStrip(Timeout timeout) throws Exception {
+        return waitForObject(SUGGESTION_STRIP_SELECTOR, timeout);
     }
 
     /**
