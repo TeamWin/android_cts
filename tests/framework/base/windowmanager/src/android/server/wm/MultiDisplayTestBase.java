@@ -241,6 +241,38 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         }
     }
 
+    public static class DisplayMetricsSession implements AutoCloseable {
+        private final ReportedDisplayMetrics mInitialDisplayMetrics;
+        private final int mDisplayId;
+
+        DisplayMetricsSession(int displayId) {
+            mDisplayId = displayId;
+            mInitialDisplayMetrics = ReportedDisplayMetrics.getDisplayMetrics(mDisplayId);
+        }
+
+        ReportedDisplayMetrics getInitialDisplayMetrics() {
+            return mInitialDisplayMetrics;
+        }
+
+        ReportedDisplayMetrics getDisplayMetrics() {
+            return ReportedDisplayMetrics.getDisplayMetrics(mDisplayId);
+        }
+
+        void overrideDisplayMetrics(final Size size, final int density) {
+            mInitialDisplayMetrics.setDisplayMetrics(size, density);
+        }
+
+        @Override
+        public void close() {
+            mInitialDisplayMetrics.restoreDisplayMetrics();
+        }
+    }
+
+    /** @see ObjectTracker#manage(AutoCloseable) */
+    protected DisplayMetricsSession createManagedDisplayMetricsSession(int displayId) {
+        return mObjectTracker.manage(new DisplayMetricsSession(displayId));
+    }
+
     void waitForDisplayGone(Predicate<DisplayContent> displayPredicate) {
         waitForOrFail("displays to be removed", () -> {
             mWmState.computeState();

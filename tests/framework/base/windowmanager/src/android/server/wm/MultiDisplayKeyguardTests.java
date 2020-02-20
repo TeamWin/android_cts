@@ -18,6 +18,7 @@ package android.server.wm;
 
 import static android.server.wm.UiDeviceUtils.pressBackButton;
 import static android.server.wm.app.Components.DISMISS_KEYGUARD_ACTIVITY;
+import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG;
 
 import static org.junit.Assert.assertFalse;
@@ -26,6 +27,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.WindowManagerState.DisplayContent;
+import android.util.Size;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -70,7 +72,6 @@ public class MultiDisplayKeyguardTests extends MultiDisplayTestBase {
 
     /**
      * Tests keyguard dialog shows on secondary display.
-     * @throws Exception
      */
     @Test
     public void testShowKeyguardDialogOnSecondaryDisplay() {
@@ -93,8 +94,77 @@ public class MultiDisplayKeyguardTests extends MultiDisplayTestBase {
     }
 
     /**
+     * Tests keyguard dialog should exist after secondary display changed.
+     */
+    @Test
+    public void testShowKeyguardDialogSecondaryDisplayChange() {
+        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        final VirtualDisplaySession virtualDisplaySession = createManagedVirtualDisplaySession();
+
+        final DisplayContent publicDisplay = virtualDisplaySession
+                .setPublicDisplay(true)
+                .createDisplay();
+
+        lockScreenSession.gotoKeyguard();
+        assertTrue("KeyguardDialog must show on external public display",
+                mWmState.waitForWithAmState(
+                        state -> isKeyguardOnDisplay(state, publicDisplay.mId),
+                        "keyguard window to show"));
+
+        // By default, a Presentation object should be dismissed if the DisplayMetrics changed.
+        // But this rule should not apply to KeyguardPresentation.
+        virtualDisplaySession.resizeDisplay();
+        mWmState.computeState();
+        assertTrue("KeyguardDialog must show on external public display even display changed",
+                mWmState.waitForWithAmState(
+                        state -> isKeyguardOnDisplay(state, publicDisplay.mId),
+                        "keyguard window to show"));
+    }
+
+    /**
+     * Tests keyguard dialog should exist after default display changed.
+     */
+    @Test
+    public void testShowKeyguardDialogDefaultDisplayChange() {
+        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        final VirtualDisplaySession virtualDisplaySession = createManagedVirtualDisplaySession();
+        final DisplayMetricsSession displayMetricsSession =
+                createManagedDisplayMetricsSession(DEFAULT_DISPLAY);
+
+        // Use simulate display instead of virtual display, because VirtualDisplayActivity will
+        // relaunch after configuration change.
+        final DisplayContent publicDisplay = virtualDisplaySession
+                .setSimulateDisplay(true)
+                .createDisplay();
+
+        lockScreenSession.gotoKeyguard();
+        assertTrue("KeyguardDialog must show on external public display",
+                mWmState.waitForWithAmState(
+                        state -> isKeyguardOnDisplay(state, publicDisplay.mId),
+                        "keyguard window to show"));
+
+        // Unlock then lock again, to ensure the display metrics has updated.
+        lockScreenSession.wakeUpDevice().unlockDevice();
+        // Overriding the display metrics on the default display should not affect Keyguard to show
+        // on secondary display.
+        final ReportedDisplayMetrics originalDisplayMetrics =
+                displayMetricsSession.getInitialDisplayMetrics();
+        final Size overrideSize = new Size(
+                (int) (originalDisplayMetrics.physicalSize.getWidth() * 1.5),
+                (int) (originalDisplayMetrics.physicalSize.getHeight() * 1.5));
+        final Integer overrideDensity = (int) (originalDisplayMetrics.physicalDensity * 1.1);
+        displayMetricsSession.overrideDisplayMetrics(overrideSize, overrideDensity);
+
+        lockScreenSession.gotoKeyguard();
+        assertTrue("KeyguardDialog must show on external public display",
+                mWmState.waitForWithAmState(
+                        state -> isKeyguardOnDisplay(state, publicDisplay.mId),
+                        "keyguard window to show"));
+
+    }
+
+    /**
      * Tests keyguard dialog cannot be shown on private display.
-     * @throws Exception
      */
     @Test
     public void testNoKeyguardDialogOnPrivateDisplay() {
