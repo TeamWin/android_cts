@@ -25,11 +25,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.RemoteCallback;
-import android.util.ArrayMap;
-import android.util.Log;
 import android.util.SparseArray;
-
-import java.util.Random;
 
 public class TestActivity extends Activity {
 
@@ -43,13 +39,13 @@ public class TestActivity extends Activity {
 
     private void handleIntent(Intent intent) {
         RemoteCallback remoteCallback = intent.getParcelableExtra("remoteCallback");
-        Bundle result = new Bundle();
         final String action = intent.getAction();
-        final String packageName = intent.getStringExtra(
-                Intent.EXTRA_PACKAGE_NAME);
+        final Intent queryIntent = intent.getParcelableExtra(Intent.EXTRA_INTENT);
         if ("android.appenumeration.cts.action.GET_PACKAGE_INFO".equals(action)) {
+            final String packageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
             sendPackageInfo(remoteCallback, packageName);
         } else if ("android.appenumeration.cts.action.START_FOR_RESULT".equals(action)) {
+            final String packageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
             int requestCode = RESULT_FIRST_USER + callbacks.size();
             callbacks.put(requestCode, remoteCallback);
             startActivityForResult(
@@ -67,9 +63,51 @@ public class TestActivity extends Activity {
                 setResult(RESULT_FIRST_USER, new Intent().putExtra("error", e));
             }
             finish();
+        } else if ("android.appenumeration.cts.action.QUERY_INTENT_ACTIVITIES".equals(action)) {
+            sendQueryIntentActivities(remoteCallback, queryIntent);
+        } else if ("android.appenumeration.cts.action.QUERY_INTENT_SERVICES".equals(action)) {
+            sendQueryIntentServices(remoteCallback, queryIntent);
+        } else if ("android.appenumeration.cts.action.QUERY_INTENT_PROVIDERS".equals(action)) {
+            sendQueryIntentProviders(remoteCallback, queryIntent);
         } else {
             sendError(remoteCallback, new Exception("unknown action " + action));
         }
+    }
+
+    private void sendQueryIntentActivities(RemoteCallback remoteCallback, Intent queryIntent) {
+        final String[] resolveInfos = getPackageManager().queryIntentActivities(
+                queryIntent, 0 /* flags */).stream()
+                .map(ri -> ri.activityInfo.applicationInfo.packageName)
+                .distinct()
+                .toArray(String[]::new);
+        Bundle result = new Bundle();
+        result.putStringArray(EXTRA_RETURN_RESULT, resolveInfos);
+        remoteCallback.sendResult(result);
+        finish();
+    }
+
+    private void sendQueryIntentServices(RemoteCallback remoteCallback, Intent queryIntent) {
+        final String[] resolveInfos = getPackageManager().queryIntentServices(
+                queryIntent, 0 /* flags */).stream()
+                .map(ri -> ri.serviceInfo.applicationInfo.packageName)
+                .distinct()
+                .toArray(String[]::new);
+        Bundle result = new Bundle();
+        result.putStringArray(EXTRA_RETURN_RESULT, resolveInfos);
+        remoteCallback.sendResult(result);
+        finish();
+    }
+
+    private void sendQueryIntentProviders(RemoteCallback remoteCallback, Intent queryIntent) {
+        final String[] resolveInfos = getPackageManager().queryIntentContentProviders(
+                queryIntent, 0 /* flags */).stream()
+                .map(ri -> ri.providerInfo.applicationInfo.packageName)
+                .distinct()
+                .toArray(String[]::new);
+        Bundle result = new Bundle();
+        result.putStringArray(EXTRA_RETURN_RESULT, resolveInfos);
+        remoteCallback.sendResult(result);
+        finish();
     }
 
     private void sendError(RemoteCallback remoteCallback, Exception failure) {
