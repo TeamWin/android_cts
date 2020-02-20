@@ -16,29 +16,33 @@
 package com.android.cts.managedprofile;
 
 import static com.android.cts.managedprofile.BaseManagedProfileTest.ADMIN_RECEIVER_COMPONENT;
+import static com.google.common.truth.Truth.assertThat;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.test.ActivityInstrumentationTestCase2;
 
 import androidx.test.InstrumentationRegistry;
 
+import java.util.List;
+
 /**
  * Test for {@link DevicePolicyManager#addCrossProfileIntentFilter} API.
  *
- * Note that it expects that there is an activity responding to {@code PrimaryUserActivity.ACTION}
- * in the primary profile, one to {@code ManagedProfileActivity.ACTION} in the secondary profile,
- * and one to {@code AllUsersActivity.ACTION} in both profiles.
+ * <p>Note that it expects that there is an activity responding to {@code PrimaryUserActivity
+ * .ACTION} in the primary profile, one to {@code ManagedProfileActivity.ACTION} in the secondary
+ * profile, and one to {@code AllUsersActivity.ACTION} in both profiles.
  */
-public class ManagedProfileTest extends ActivityInstrumentationTestCase2<TestActivity> {
+public class CrossProfileIntentFilterTest extends ActivityInstrumentationTestCase2<TestActivity> {
 
     private PackageManager mPackageManager;
     private DevicePolicyManager mDevicePolicyManager;
 
-    public ManagedProfileTest() {
+    public CrossProfileIntentFilterTest() {
         super(TestActivity.class);
     }
 
@@ -65,8 +69,11 @@ public class ManagedProfileTest extends ActivityInstrumentationTestCase2<TestAct
         testIntentFilter.addAction(PrimaryUserActivity.ACTION);
         mDevicePolicyManager.addCrossProfileIntentFilter(ADMIN_RECEIVER_COMPONENT,
                 testIntentFilter, DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED);
-        assertEquals(1, mPackageManager.queryIntentActivities(
-                new Intent(PrimaryUserActivity.ACTION), /* flags = */ 0).size());
+        final List<ResolveInfo> activities =
+                mPackageManager.queryIntentActivities(
+                        new Intent(PrimaryUserActivity.ACTION), /* flags = */ 0);
+        assertThat(activities).hasSize(1);
+        assertThat(activitiesIncludeCrossProfileIntentForwarderActivity(activities)).isTrue();
 
         mDevicePolicyManager.clearCrossProfileIntentFilters(ADMIN_RECEIVER_COMPONENT);
 
@@ -85,8 +92,11 @@ public class ManagedProfileTest extends ActivityInstrumentationTestCase2<TestAct
         mDevicePolicyManager.addCrossProfileIntentFilter(ADMIN_RECEIVER_COMPONENT,
                 testIntentFilter, DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED);
 
-        assertEquals(1, mPackageManager.queryIntentActivities(
-                new Intent(PrimaryUserActivity.ACTION), /* flags = */ 0).size());
+        final List<ResolveInfo> activities =
+                mPackageManager.queryIntentActivities(
+                        new Intent(PrimaryUserActivity.ACTION), /* flags = */ 0);
+        assertThat(activities).hasSize(1);
+        assertThat(activitiesIncludeCrossProfileIntentForwarderActivity(activities)).isTrue();
         getActivity().startActivity(PrimaryUserActivity.ACTION);
         assertTrue(getActivity().checkActivityStarted());
     }
@@ -100,13 +110,16 @@ public class ManagedProfileTest extends ActivityInstrumentationTestCase2<TestAct
         mDevicePolicyManager.addCrossProfileIntentFilter(ADMIN_RECEIVER_COMPONENT,
                 testIntentFilter, DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED);
 
-        assertEquals(2, mPackageManager.queryIntentActivities(
-                new Intent(AllUsersActivity.ACTION), /* flags = */ 0).size());
+        final List<ResolveInfo> activities =
+                mPackageManager.queryIntentActivities(
+                        new Intent(AllUsersActivity.ACTION), /* flags = */ 0);
+        assertThat(activities).hasSize(2);
+        assertThat(activitiesIncludeCrossProfileIntentForwarderActivity(activities)).isTrue();
         // If we used startActivity(), the user would have a disambiguation dialog presented which
         // requires human intervention, so we won't be testing like that
     }
 
-    public void testAddCrossProfileIntentFilter_managed() {
+    public void testAddCrossProfileIntentFilter_work() {
         assertEquals(1, mPackageManager.queryIntentActivities(
                 new Intent(ManagedProfileActivity.ACTION), /* flags = */ 0).size());
 
@@ -116,9 +129,22 @@ public class ManagedProfileTest extends ActivityInstrumentationTestCase2<TestAct
                 testIntentFilter, DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED);
 
         // We should still be resolving in the profile
-        assertEquals(1, mPackageManager.queryIntentActivities(
-                new Intent(ManagedProfileActivity.ACTION), /* flags = */ 0).size());
+        final List<ResolveInfo> activities =
+                mPackageManager.queryIntentActivities(
+                        new Intent(ManagedProfileActivity.ACTION), /* flags = */ 0);
+        assertThat(activities).hasSize(1);
+        assertThat(activitiesIncludeCrossProfileIntentForwarderActivity(activities)).isFalse();
         getActivity().startActivity(ManagedProfileActivity.ACTION);
         assertTrue(getActivity().checkActivityStarted());
+    }
+
+    private boolean activitiesIncludeCrossProfileIntentForwarderActivity(
+            List<ResolveInfo> activities) {
+        for (ResolveInfo activity : activities) {
+            if (activity.isCrossProfileIntentForwarderActivity()) {
+                return true;
+            }
+        }
+        return false;
     }
 }
