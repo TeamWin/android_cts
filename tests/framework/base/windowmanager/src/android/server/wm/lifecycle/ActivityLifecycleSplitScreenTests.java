@@ -352,7 +352,7 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
         waitForActivityTransitions(ConfigChangeHandlingActivity.class,
                 Arrays.asList(ON_TOP_POSITION_LOST, ON_MULTI_WINDOW_MODE_CHANGED));
         LifecycleVerifier.assertOrder(getLifecycleLog(), ConfigChangeHandlingActivity.class,
-                Arrays.asList(ON_TOP_POSITION_LOST, ON_MULTI_WINDOW_MODE_CHANGED),
+                Arrays.asList(ON_MULTI_WINDOW_MODE_CHANGED, ON_TOP_POSITION_LOST),
                 "moveToSplitScreen");
 
         // Exit split-screen

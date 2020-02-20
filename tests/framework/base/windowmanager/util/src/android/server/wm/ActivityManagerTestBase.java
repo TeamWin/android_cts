@@ -750,15 +750,11 @@ public abstract class ActivityManagerTestBase {
      * {@code false}.
      */
     protected void launchActivityInSplitScreenWithRecents(ComponentName activityName) {
-        launchActivityInSplitScreenWithRecents(activityName, SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT);
-    }
-
-    protected void launchActivityInSplitScreenWithRecents(ComponentName activityName,
-            int createMode) {
         SystemUtil.runWithShellPermissionIdentity(() -> {
             launchActivity(activityName);
             final int taskId = mWmState.getTaskByActivity(activityName).mTaskId;
-            mAtm.setTaskWindowingModeSplitScreenPrimary(taskId, createMode,
+            mAtm.setTaskWindowingModeSplitScreenPrimary(taskId,
+                    SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT,
                     true /* onTop */, false /* animate */,
                     null /* initialBounds */, true /* showRecents */);
 
