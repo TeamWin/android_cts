@@ -714,9 +714,6 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
         separateTestJournal();
         launchActivityInSplitScreenWithRecents(activityName);
         final SizeInfo initialDockedSizes = getActivityDisplaySize(activityName);
-        // Make sure docked stack is focused. This way when we dismiss it later fullscreen stack
-        // will come up.
-        launchActivity(activityName, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
         mWmState.computeState(
                 new WaitForValidActivityState.Builder(activityName).build());
 
@@ -724,6 +721,10 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
         separateTestJournal();
         setActivityTaskWindowingMode(
                 activityName, WINDOWING_MODE_FULLSCREEN);
+        // Home task could be on top since it was the top-most task while in split-screen mode
+        // (dock task was minimized), start the activity again to ensure the activity is at
+        // foreground.
+        launchActivity(activityName, WINDOWING_MODE_FULLSCREEN);
         final SizeInfo fullscreenSizes = getActivityDisplaySize(activityName);
         assertSizesAreSane(fullscreenSizes, initialDockedSizes);
 

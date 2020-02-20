@@ -994,9 +994,6 @@ public class WindowManagerState {
     }
 
     public static class DisplayContent extends ActivityContainer {
-        static Predicate<ActivityTask> isRootAndNotTaskOrganized
-                = t -> !t.mCreatedByOrganizer && t.isRootTask();
-
         public int mId;
         ArrayList<ActivityTask> mRootTasks = new ArrayList<>();
         int mFocusedRootTaskId;
@@ -1024,11 +1021,7 @@ public class WindowManagerState {
             if (proto.resumedActivity != null) {
                 mResumedActivity = proto.resumedActivity.title;
             }
-            // TODO(b/149338177): figure out how CTS tests deal with organizer. For now,
-            //                    don't treat them as regular stacks
-            // Skip tasks created by an organizer
-            collectDescendantsOfTypeIf(ActivityTask.class, isRootAndNotTaskOrganized, this,
-                                       mRootTasks);
+            addRootTasks();
 
             mDpi = proto.dpi;
             DisplayInfoProto infoProto = proto.displayInfo;
@@ -1061,6 +1054,29 @@ public class WindowManagerState {
                 mPinnedStackMovementBounds = extract(pinnedStackProto.movementBounds);
             }
 
+        }
+
+        private void addRootTasks() {
+            // TODO(b/149338177): figure out how CTS tests deal with organizer. For now,
+            //                    don't treat them as regular stacks
+            collectDescendantsOfTypeIf(ActivityTask.class, t -> t.isRootTask(), this,
+                    mRootTasks);
+            ArrayList<ActivityTask> rootOrganizedTasks = new ArrayList<>();
+            for (int i = mRootTasks.size() -1; i >= 0; --i) {
+                final ActivityTask task = mRootTasks.get(i);
+                // Skip tasks created by an organizer
+                if (task.mCreatedByOrganizer) {
+                    mRootTasks.remove(task);
+                    rootOrganizedTasks.add(task);
+                }
+            }
+            // Add root tasks controlled by an organizer
+            for (int i = rootOrganizedTasks.size() -1; i >= 0; --i) {
+                final ActivityTask task = rootOrganizedTasks.get(i);
+                for (int j = task.mChildren.size() - 1; j >= 0; j--) {
+                    mRootTasks.add((ActivityTask) task.mChildren.get(j));
+                }
+            }
         }
 
         boolean containsActivity(ComponentName activityName) {
@@ -1158,6 +1174,10 @@ public class WindowManagerState {
             collectChildrenOfType(Activity.class, this, mActivities);
         }
 
+        boolean isEmpty() {
+            return mTasks.isEmpty() && mActivities.isEmpty();
+        }
+
         public int getResizeMode() {
             return mResizeMode;
         }
@@ -1236,6 +1256,11 @@ public class WindowManagerState {
 
         boolean containsActivity(ComponentName activityName) {
             return getActivity(activityName) != null;
+        }
+
+        @Override
+        int getActivityType() {
+            return mTaskType;
         }
     }
 
