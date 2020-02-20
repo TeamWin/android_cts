@@ -221,11 +221,22 @@ TEST(FileBasedEncryptionPolicyTest, allowedPolicy) {
             contents_mode = arg.policy.v1.contents_encryption_mode;
             filenames_mode = arg.policy.v1.filenames_encryption_mode;
 
+            // Starting with Android 11, FBE must use a strong, non-reversible
+            // key derivation function [CDD 9.9.3/C-1-13], and FBE keys must
+            // never be never reused for different cryptographic purposes
+            // [CDD 9.9.3/C-1-14].  Effectively, these requirements mean that
+            // the fscrypt policy version must not be v1.  If this part of the
+            // test fails, make sure the device's fstab has something like
+            // "fileencryption=aes-256-xts:aes-256-cts:v2".
             if (first_api_level < R_API_LEVEL) {
+                GTEST_LOG_(INFO) << "Exempt from non-reversible FBE key derivation due to old "
+                                    "starting API level";
                 // On these old devices we also allow the use of some custom
                 // encryption mode numbers which were never supported by the
                 // Android common kernel and shouldn't be used on new devices.
                 allow_legacy_modes = true;
+            } else {
+                ADD_FAILURE() << "Device isn't using non-reversible FBE key derivation";
             }
             break;
         case FSCRYPT_POLICY_V2:
