@@ -20,6 +20,7 @@ import com.android.tradefed.config.ConfigurationException;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionSetter;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.HostTest;
 import com.android.tradefed.testtype.IAbi;
@@ -27,20 +28,21 @@ import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
 import com.android.tradefed.testtype.ISetOptionReceiver;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import org.junit.runner.Description;
+import com.android.tradefed.testtype.ITestInformationReceiver;
+
 import org.junit.runner.Runner;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.Parameterized;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Custom JUnit4 parameterized test runner that also accommodate {@link IDeviceTest}.
  */
 public class DeviceJUnit4Parameterized extends Parameterized
-        implements IDeviceTest, IBuildReceiver, IAbiReceiver, ISetOptionReceiver {
+        implements IDeviceTest, IBuildReceiver, IAbiReceiver, ISetOptionReceiver, ITestInformationReceiver {
 
     @Option(
         name = HostTest.SET_OPTION_NAME,
@@ -49,6 +51,7 @@ public class DeviceJUnit4Parameterized extends Parameterized
     private Set<String> mKeyValueOptions = new HashSet<>();
 
     private ITestDevice mDevice;
+    private TestInformation mTestInformation;
     private List<Runner> mRunners;
 
     public DeviceJUnit4Parameterized(Class<?> klass) throws Throwable {
@@ -89,10 +92,24 @@ public class DeviceJUnit4Parameterized extends Parameterized
         return mDevice;
     }
 
-
     @Override
     protected List<Runner> getChildren() {
         return mRunners;
+    }
+
+    @Override
+    public void setTestInformation(TestInformation testInformation) {
+        mTestInformation = testInformation;
+        for (Runner runner : mRunners) {
+            if (runner instanceof ITestInformationReceiver) {
+                ((ITestInformationReceiver) runner).setTestInformation(mTestInformation);
+            }
+        }
+    }
+
+    @Override
+    public TestInformation getTestInformation() {
+        return mTestInformation;
     }
 
     @Override
