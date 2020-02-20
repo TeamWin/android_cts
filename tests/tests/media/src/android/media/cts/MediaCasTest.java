@@ -252,7 +252,7 @@ public class MediaCasTest extends AndroidTestCase {
         MediaDescrambler descrambler = null;
 
         try {
-            mediaCas = new MediaCas(sClearKeySystemId, "TIS_Session_1",
+            mediaCas = new MediaCas(getContext(), sClearKeySystemId, "TIS_Session_1",
                 android.media.tv.TvInputService.PRIORITY_HINT_USE_CASE_TYPE_LIVE);
             descrambler = new MediaDescrambler(sClearKeySystemId);
 
@@ -266,9 +266,7 @@ public class MediaCasTest extends AndroidTestCase {
                 fail("Can't open session for program");
             }
 
-            if (!PropertyUtil.isVendorApiLevelNewerThan(API_LEVEL_BEFORE_CAS_SESSION + 1)) {
-                Log.d(TAG, "Session Id = " + Arrays.toString(session.getSessionId()));
-            }
+            Log.d(TAG, "Session Id = " + Arrays.toString(session.getSessionId()));
 
             session.setPrivateData(pvtData);
 

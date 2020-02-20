@@ -16,6 +16,7 @@ package android.accessibilityservice.cts;
 
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
+import static android.view.accessibility.AccessibilityNodeInfo.EXTRA_DATA_RENDERING_INFO_KEY;
 import static android.view.accessibility.AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_ARG_LENGTH;
 import static android.view.accessibility.AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_ARG_START_INDEX;
 import static android.view.accessibility.AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY;
@@ -47,7 +48,11 @@ import android.text.style.ClickableSpan;
 import android.text.style.ImageSpan;
 import android.text.style.ReplacementSpan;
 import android.text.style.URLSpan;
+import android.util.DisplayMetrics;
+import android.util.Size;
+import android.util.TypedValue;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityNodeProvider;
@@ -463,6 +468,65 @@ public class AccessibilityTextActionTest {
         text.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_IME_ENTER.getId());
         verify(mockOnEditorActionListener, times(1)).onEditorAction(
                 textView, EditorInfo.IME_ACTION_DONE, null);
+    }
+
+    @Test
+    public void testExtraRendering_textViewShouldProvideExtraDataTextSizeWhenRequested() {
+        final Bundle arg = new Bundle();
+        final DisplayMetrics displayMetrics = mActivity.getResources().getDisplayMetrics();
+        final TextView textView = mActivity.findViewById(R.id.text);
+        final String stringToSet = mActivity.getString(R.string.foo_bar_baz);
+        final int expectedWidthInPx = textView.getLayoutParams().width;
+        final int expectedHeightInPx = textView.getLayoutParams().height;
+        final float expectedTextSize = textView.getTextSize();
+        final float newTextSize = 20f;
+        final float expectedNewTextSize = (int) (0.5f + TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_SP, newTextSize, displayMetrics));
+        makeTextViewVisibleAndSetText(textView, stringToSet);
+
+        final AccessibilityNodeInfo info = sUiAutomation.getRootInActiveWindow()
+                .findAccessibilityNodeInfosByText(stringToSet).get(0);
+        assertTrue("Text view should offer extra data to accessibility ",
+                info.getAvailableExtraData().contains(EXTRA_DATA_RENDERING_INFO_KEY));
+
+        AccessibilityNodeInfo.ExtraRenderingInfo extraRenderingInfo;
+        assertNull(info.getExtraRenderingInfo());
+        assertTrue("Refresh failed", info.refreshWithExtraData(
+                EXTRA_DATA_RENDERING_INFO_KEY , arg));
+        assertNotNull(info.getExtraRenderingInfo());
+        extraRenderingInfo = info.getExtraRenderingInfo();
+        assertNotNull(extraRenderingInfo.getLayoutParams());
+        assertEquals(expectedWidthInPx, extraRenderingInfo.getLayoutParams().getWidth());
+        assertEquals(expectedHeightInPx, extraRenderingInfo.getLayoutParams().getHeight());
+        assertEquals(expectedTextSize, extraRenderingInfo.getTextSizeInPx(), 0f);
+        assertEquals(TypedValue.COMPLEX_UNIT_DIP, extraRenderingInfo.getTextSizeUnit());
+
+        // After changing text size
+        sInstrumentation.runOnMainSync(() ->
+                textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, newTextSize));
+        assertTrue("Refresh failed", info.refreshWithExtraData(
+                EXTRA_DATA_RENDERING_INFO_KEY, arg));
+        extraRenderingInfo = info.getExtraRenderingInfo();
+        assertEquals(expectedNewTextSize, extraRenderingInfo.getTextSizeInPx(), 0f);
+        assertEquals(TypedValue.COMPLEX_UNIT_SP, extraRenderingInfo.getTextSizeUnit());
+    }
+
+    @Test
+    public void testExtraRendering_viewGroupShouldNotProvideLayoutParamsWhenNotRequested() {
+        final AccessibilityNodeInfo info = sUiAutomation.getRootInActiveWindow()
+                .findAccessibilityNodeInfosByViewId(
+                        "android.accessibilityservice.cts:id/viewGroup").get(0);
+
+        assertTrue("ViewGroup should offer extra data to accessibility",
+                info.getAvailableExtraData().contains(EXTRA_DATA_RENDERING_INFO_KEY));
+        assertNull(info.getExtraRenderingInfo());
+        assertTrue("Refresh failed", info.refreshWithExtraData(
+                EXTRA_DATA_RENDERING_INFO_KEY, new Bundle()));
+        assertNotNull(info.getExtraRenderingInfo());
+        assertNotNull(info.getExtraRenderingInfo().getLayoutParams());
+        final Size size = info.getExtraRenderingInfo().getLayoutParams();
+        assertEquals(ViewGroup.LayoutParams.MATCH_PARENT, size.getWidth());
+        assertEquals(ViewGroup.LayoutParams.WRAP_CONTENT, size.getHeight());
     }
 
     private void verifyImeActionLabel(AccessibilityNodeInfo node, String label) {

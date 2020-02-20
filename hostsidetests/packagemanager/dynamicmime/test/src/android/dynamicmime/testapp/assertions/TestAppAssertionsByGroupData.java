@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-package android.view.cts;
+package android.dynamicmime.testapp.assertions;
 
-import android.app.Activity;
-import android.view.KeyEvent;
+import android.content.Context;
 
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.Set;
 
-public class KeyEventInterceptTestActivity extends Activity {
-    final Queue<KeyEvent> mKeyEvents = new LinkedList<>();
+class TestAppAssertionsByGroupData extends AssertionsByGroupData {
+    private final Context mContext;
+
+    TestAppAssertionsByGroupData(Context context) {
+        mContext = context;
+    }
 
     @Override
-    public boolean dispatchKeyEvent(KeyEvent event) {
-        mKeyEvents.add(event);
-        return true;
+    protected Set<String> getMimeGroup(String mimeGroup) {
+        return mContext.getPackageManager().getMimeGroup(mimeGroup);
     }
 }

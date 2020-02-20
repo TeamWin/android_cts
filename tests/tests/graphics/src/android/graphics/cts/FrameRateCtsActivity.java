@@ -16,11 +16,14 @@
 
 package android.graphics.cts;
 
+import static android.system.OsConstants.EINVAL;
+
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -48,6 +51,7 @@ public class FrameRateCtsActivity extends Activity {
     private static final long WAIT_FOR_SURFACE_TIMEOUT_SECONDS = 3;
     private static final long FRAME_RATE_SWITCH_GRACE_PERIOD_SECONDS = 1;
     private static final long STABLE_FRAME_RATE_WAIT_SECONDS = 1;
+    private static final long POST_BUFFER_INTERVAL_MILLIS = 500;
 
     private DisplayManager mDisplayManager;
     private SurfaceView mSurfaceView;
@@ -104,6 +108,179 @@ public class FrameRateCtsActivity extends Activity {
         public void onDisplayRemoved(int displayId) {}
     };
 
+    public enum Api {
+        SURFACE("Surface"),
+        ANATIVE_WINDOW("ANativeWindow"),
+        SURFACE_CONTROL("SurfaceControl"),
+        NATIVE_SURFACE_CONTROL("ASurfaceControl");
+
+        private final String mName;
+        Api(String name) {
+            mName = name;
+        }
+
+        public String toString() {
+            return mName;
+        }
+    }
+
+    private static class TestSurface {
+        private Api mApi;
+        private String mName;
+        private SurfaceControl mSurfaceControl;
+        private Surface mSurface;
+        private long mNativeSurfaceControl;
+        private int mColor;
+        private boolean mLastBufferPostTimeValid;
+        private long mLastBufferPostTime;
+
+        TestSurface(Api api, SurfaceControl parentSurfaceControl, Surface parentSurface,
+                String name, Rect destFrame, boolean visible, int color) {
+            mApi = api;
+            mName = name;
+            mColor = color;
+
+            if (mApi == Api.SURFACE || mApi == Api.ANATIVE_WINDOW || mApi == Api.SURFACE_CONTROL) {
+                assertTrue("No parent surface", parentSurfaceControl != null);
+                mSurfaceControl = new SurfaceControl.Builder()
+                                          .setParent(parentSurfaceControl)
+                                          .setName(mName)
+                                          .setBufferSize(destFrame.right - destFrame.left,
+                                                  destFrame.bottom - destFrame.top)
+                                          .build();
+                SurfaceControl.Transaction transaction = new SurfaceControl.Transaction();
+                try {
+                    transaction.setGeometry(mSurfaceControl, null, destFrame, Surface.ROTATION_0)
+                            .apply();
+                } finally {
+                    transaction.close();
+                }
+                mSurface = new Surface(mSurfaceControl);
+            } else if (mApi == Api.NATIVE_SURFACE_CONTROL) {
+                assertTrue("No parent surface", parentSurface != null);
+                mNativeSurfaceControl = nativeSurfaceControlCreate(parentSurface, mName,
+                        destFrame.left, destFrame.top, destFrame.right, destFrame.bottom);
+                assertTrue("Failed to create a native SurfaceControl", mNativeSurfaceControl != 0);
+            }
+
+            setVisibility(visible);
+            postBuffer();
+        }
+
+        public int setFrameRate(float frameRate, int compatibility) {
+            Log.i(TAG,
+                    String.format("Setting frame rate for %s: fps=%.0f compatibility=%s", mName,
+                            frameRate, frameRateCompatibilityToString(compatibility)));
+
+            int rc = 0;
+            if (mApi == Api.SURFACE) {
+                mSurface.setFrameRate(frameRate, compatibility);
+            } else if (mApi == Api.ANATIVE_WINDOW) {
+                rc = nativeWindowSetFrameRate(mSurface, frameRate, compatibility);
+            } else if (mApi == Api.SURFACE_CONTROL) {
+                SurfaceControl.Transaction transaction = new SurfaceControl.Transaction();
+                try {
+                    transaction.setFrameRate(mSurfaceControl, frameRate, compatibility).apply();
+                } finally {
+                    transaction.close();
+                }
+            } else if (mApi == Api.NATIVE_SURFACE_CONTROL) {
+                nativeSurfaceControlSetFrameRate(mNativeSurfaceControl, frameRate, compatibility);
+            }
+            return rc;
+        }
+
+        public void setInvalidFrameRate(float frameRate, int compatibility) {
+            if (mApi == Api.SURFACE) {
+                boolean caughtIllegalArgException = false;
+                try {
+                    setFrameRate(frameRate, compatibility);
+                } catch (IllegalArgumentException exc) {
+                    caughtIllegalArgException = true;
+                }
+                assertTrue("Expected an IllegalArgumentException from invalid call to"
+                                + " Surface.setFrameRate()",
+                        caughtIllegalArgException);
+            } else {
+                int rc = setFrameRate(frameRate, compatibility);
+                if (mApi == Api.ANATIVE_WINDOW) {
+                    assertTrue("Expected -EINVAL return value from invalid call to"
+                                    + " ANativeWindow_setFrameRate()",
+                            rc == -EINVAL);
+                }
+            }
+        }
+
+        public void setVisibility(boolean visible) {
+            Log.i(TAG,
+                    String.format("Setting visibility for %s: %s", mName,
+                            visible ? "visible" : "hidden"));
+            if (mApi == Api.SURFACE || mApi == Api.ANATIVE_WINDOW || mApi == Api.SURFACE_CONTROL) {
+                SurfaceControl.Transaction transaction = new SurfaceControl.Transaction();
+                try {
+                    transaction.setVisibility(mSurfaceControl, visible).apply();
+                } finally {
+                    transaction.close();
+                }
+            } else if (mApi == Api.NATIVE_SURFACE_CONTROL) {
+                nativeSurfaceControlSetVisibility(mNativeSurfaceControl, visible);
+            }
+        }
+
+        public void postBuffer() {
+            mLastBufferPostTimeValid = true;
+            mLastBufferPostTime = System.nanoTime();
+            if (mApi == Api.SURFACE || mApi == Api.ANATIVE_WINDOW || mApi == Api.SURFACE_CONTROL) {
+                Canvas canvas = mSurface.lockHardwareCanvas();
+                canvas.drawColor(mColor);
+                mSurface.unlockCanvasAndPost(canvas);
+            } else if (mApi == Api.NATIVE_SURFACE_CONTROL) {
+                assertTrue("Posting a buffer failed",
+                        nativeSurfaceControlPostBuffer(mNativeSurfaceControl, mColor));
+            }
+        }
+
+        public long getLastBufferPostTime() {
+            assertTrue("No buffer posted yet", mLastBufferPostTimeValid);
+            return mLastBufferPostTime;
+        }
+
+        public void release() {
+            if (mSurface != null) {
+                mSurface.release();
+                mSurface = null;
+            }
+            if (mSurfaceControl != null) {
+                mSurfaceControl.release();
+                mSurfaceControl = null;
+            }
+            if (mNativeSurfaceControl != 0) {
+                nativeSurfaceControlDestroy(mNativeSurfaceControl);
+                mNativeSurfaceControl = 0;
+            }
+        }
+
+        @Override
+        protected void finalize() throws Throwable {
+            try {
+                release();
+            } finally {
+                super.finalize();
+            }
+        }
+    }
+
+    private static String frameRateCompatibilityToString(int compatibility) {
+        switch (compatibility) {
+            case Surface.FRAME_RATE_COMPATIBILITY_DEFAULT:
+                return "default";
+            case Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE:
+                return "fixed_source";
+            default:
+                return "invalid(" + compatibility + ")";
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -150,6 +327,29 @@ public class FrameRateCtsActivity extends Activity {
         return uniqueFrameRates;
     }
 
+    private boolean isFrameRateMultiple(float higherFrameRate, float lowerFrameRate) {
+        float multiple = higherFrameRate / lowerFrameRate;
+        int roundedMultiple = Math.round(multiple);
+        return roundedMultiple > 0
+                && Math.abs(roundedMultiple * lowerFrameRate - higherFrameRate) <= 0.1f;
+    }
+
+    // Returns two device-supported frame rates that aren't multiples of each other, or null if no
+    // such incompatible frame rates are available. This is useful for testing behavior where we
+    // have layers with conflicting frame rates.
+    private float[] getIncompatibleFrameRates() {
+        ArrayList<Float> frameRates = getFrameRatesToTest();
+        for (int i = 0; i < frameRates.size(); i++) {
+            for (int j = i + 1; j < frameRates.size(); j++) {
+                if (!isFrameRateMultiple(Math.max(frameRates.get(i), frameRates.get(j)),
+                            Math.min(frameRates.get(i), frameRates.get(j)))) {
+                    return new float[] {frameRates.get(i), frameRates.get(j)};
+                }
+            }
+        }
+        return null;
+    }
+
     private void waitForSurface() throws InterruptedException {
         if (mSurface == null) {
             Log.i(TAG, "Waiting for surface");
@@ -164,60 +364,52 @@ public class FrameRateCtsActivity extends Activity {
         }
     }
 
-    private boolean isDeviceFrameRateCompatibleWithAppRequest(
-            float deviceFrameRate, float appRequestedFrameRate) {
-        float multiple = deviceFrameRate / appRequestedFrameRate;
-        int roundedMultiple = Math.round(multiple);
-        return roundedMultiple > 0
-                && Math.abs(roundedMultiple * appRequestedFrameRate - deviceFrameRate) <= 0.1f;
-    }
-
-    private void postBuffer() {
-        Canvas canvas = mSurfaceView.getHolder().lockHardwareCanvas();
-        canvas.drawColor(Color.BLUE);
-        mSurfaceView.getHolder().unlockCanvasAndPost(canvas);
-    }
-
-    private void setFrameRateSurface(float frameRate) {
-        Log.i(TAG, String.format("Setting frame rate to %.0f", frameRate));
-        mSurface.setFrameRate(frameRate);
-        postBuffer();
-    }
-
-    private void setFrameRateANativeWindow(float frameRate) {
-        Log.i(TAG, String.format("Setting frame rate to %.0f", frameRate));
-        nativeWindowSetFrameRate(mSurface, frameRate);
-        postBuffer();
-    }
-
-    private void setFrameRateSurfaceControl(float frameRate) {
-        Log.i(TAG, String.format("Setting frame rate to %.0f", frameRate));
-        SurfaceControl.Transaction transaction = new SurfaceControl.Transaction();
-        transaction.setFrameRate(mSurfaceView.getSurfaceControl(), frameRate).apply();
-        transaction.close();
-        postBuffer();
-    }
-
-    private void setFrameRateNativeSurfaceControl(long surfaceControl, float frameRate) {
-        Log.i(TAG, String.format("Setting frame rate to %.0f", frameRate));
-        nativeSurfaceControlSetFrameRate(surfaceControl, frameRate);
-    }
-
-    private void verifyCompatibleAndStableFrameRate(float appRequestedFrameRate)
+    // Returns true if we reached waitUntilNanos, false if some other event occurred.
+    private boolean waitForEvents(long waitUntilNanos, ArrayList<TestSurface> surfaces)
             throws InterruptedException {
+        mFrameRateChangedEvents.clear();
+        long nowNanos = System.nanoTime();
+        while (nowNanos < waitUntilNanos) {
+            long surfacePostTime = Long.MAX_VALUE;
+            for (TestSurface surface : surfaces) {
+                surfacePostTime = Math.min(surfacePostTime,
+                        surface.getLastBufferPostTime()
+                                + (POST_BUFFER_INTERVAL_MILLIS * 1_000_000L));
+            }
+            long timeoutNs = Math.min(waitUntilNanos, surfacePostTime) - nowNanos;
+            long timeoutMs = timeoutNs / 1_000_000L;
+            int remainderNs = (int) (timeoutNs % 1_000_000L);
+            // Don't call wait(0, 0) - it blocks indefinitely.
+            if (timeoutMs > 0 || remainderNs > 0) {
+                mLock.wait(timeoutMs, remainderNs);
+            }
+            nowNanos = System.nanoTime();
+            assertTrue("Lost the surface", mSurface != null);
+            if (!mFrameRateChangedEvents.isEmpty()) {
+                return false;
+            }
+            if (nowNanos >= surfacePostTime) {
+                for (TestSurface surface : surfaces) {
+                    surface.postBuffer();
+                }
+            }
+        }
+        return true;
+    }
+
+    private void verifyCompatibleAndStableFrameRate(float appRequestedFrameRate,
+            ArrayList<TestSurface> surfaces) throws InterruptedException {
         Log.i(TAG, "Verifying compatible and stable frame rate");
         long nowNanos = System.nanoTime();
         long gracePeriodEndTimeNanos =
                 nowNanos + FRAME_RATE_SWITCH_GRACE_PERIOD_SECONDS * 1_000_000_000L;
         while (true) {
             // Wait until we switch to a compatible frame rate.
-            while (!isDeviceFrameRateCompatibleWithAppRequest(
-                           mDeviceFrameRate, appRequestedFrameRate)
-                    && gracePeriodEndTimeNanos > nowNanos) {
-                mLock.wait((gracePeriodEndTimeNanos - nowNanos) / 1_000_000);
-                nowNanos = System.nanoTime();
-                assertTrue("Lost the surface", mSurface != null);
+            while (!isFrameRateMultiple(mDeviceFrameRate, appRequestedFrameRate)
+                    && !waitForEvents(gracePeriodEndTimeNanos, surfaces)) {
+                // Empty
             }
+            nowNanos = System.nanoTime();
 
             // TODO(b/148033900): Remove the if and error log below, and replace it with this
             // assertTrue() call, once we have a way to ignore display manager policy.
@@ -241,95 +433,142 @@ public class FrameRateCtsActivity extends Activity {
             // that frame rate.
             long endTimeNanos = nowNanos + STABLE_FRAME_RATE_WAIT_SECONDS * 1_000_000_000L;
             while (endTimeNanos > nowNanos) {
-                mFrameRateChangedEvents.clear();
-                mLock.wait((endTimeNanos - nowNanos) / 1_000_000);
-                nowNanos = System.nanoTime();
-                assertTrue("Lost the surface", mSurface != null);
-                if (!mFrameRateChangedEvents.isEmpty()) {
-                    break;
-                }
-                if (nowNanos >= endTimeNanos) {
+                if (waitForEvents(endTimeNanos, surfaces)) {
                     Log.i(TAG, String.format("Stable frame rate %.0f verified", mDeviceFrameRate));
                     return;
                 }
+                nowNanos = System.nanoTime();
+                if (!mFrameRateChangedEvents.isEmpty()) {
+                    break;
+                }
             }
         }
     }
 
-    public void testSurfaceSetFrameRate() throws InterruptedException {
+    private void testExactFrameRateMatch(Api api) throws InterruptedException {
+        Log.i(TAG, String.format("Testing %s exact frame rate match", api));
         ArrayList<Float> frameRatesToTest = getFrameRatesToTest();
-        Log.i(TAG, "Testing Surface.setFrameRate()");
-        synchronized (mLock) {
-            waitForSurface();
-            for (float frameRate : frameRatesToTest) {
-                setFrameRateSurface(frameRate);
-                verifyCompatibleAndStableFrameRate(frameRate);
-            }
-            setFrameRateSurface(-100.f);
-            Thread.sleep(1000);
-            setFrameRateSurface(0.f);
-        }
-        Log.i(TAG, "Done testing Surface.setFrameRate()");
-    }
-
-    public void testANativeWindowSetFrameRate() throws InterruptedException {
-        ArrayList<Float> frameRatesToTest = getFrameRatesToTest();
-        Log.i(TAG, "Testing ANativeWindow_setFrameRate()");
-        synchronized (mLock) {
-            waitForSurface();
-            for (float frameRate : frameRatesToTest) {
-                setFrameRateANativeWindow(frameRate);
-                verifyCompatibleAndStableFrameRate(frameRate);
-            }
-            setFrameRateANativeWindow(-100.f);
-            Thread.sleep(1000);
-            setFrameRateANativeWindow(0.f);
-        }
-        Log.i(TAG, "Done testing ANativeWindow_setFrameRate()");
-    }
-
-    public void testSurfaceControlSetFrameRate() throws InterruptedException {
-        ArrayList<Float> frameRatesToTest = getFrameRatesToTest();
-        Log.i(TAG, "Testing SurfaceControl.Transaction.setFrameRate()");
-        synchronized (mLock) {
-            waitForSurface();
-            for (float frameRate : frameRatesToTest) {
-                setFrameRateSurfaceControl(frameRate);
-                verifyCompatibleAndStableFrameRate(frameRate);
-            }
-            setFrameRateSurfaceControl(-100.f);
-            Thread.sleep(1000);
-            setFrameRateSurfaceControl(0.f);
-        }
-        Log.i(TAG, "Done testing SurfaceControl.Transaction.setFrameRate()");
-    }
-
-    public void testNativeSurfaceControlSetFrameRate() throws InterruptedException {
-        ArrayList<Float> frameRatesToTest = getFrameRatesToTest();
-        Log.i(TAG, "Testing ASurfaceTransaction_setFrameRate()");
-        long nativeSurfaceControl = 0;
+        TestSurface surface = null;
         try {
             synchronized (mLock) {
                 waitForSurface();
-                nativeSurfaceControl = nativeSurfaceControlCreate(mSurface);
-                assertTrue("Failed to create a native SurfaceControl", nativeSurfaceControl != 0);
+                surface = new TestSurface(api, mSurfaceView.getSurfaceControl(), mSurface,
+                        "testSurface", mSurfaceView.getHolder().getSurfaceFrame(),
+                        /*visible=*/true, Color.RED);
+                ArrayList<TestSurface> surfaces = new ArrayList<>();
+                surfaces.add(surface);
                 for (float frameRate : frameRatesToTest) {
-                    setFrameRateNativeSurfaceControl(nativeSurfaceControl, frameRate);
-                    verifyCompatibleAndStableFrameRate(frameRate);
+                    surface.setFrameRate(frameRate, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT);
+                    verifyCompatibleAndStableFrameRate(frameRate, surfaces);
                 }
-                setFrameRateNativeSurfaceControl(nativeSurfaceControl, -100.f);
-                Thread.sleep(1000);
-                setFrameRateNativeSurfaceControl(nativeSurfaceControl, 0.f);
+                surface.setFrameRate(0.f, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT);
             }
         } finally {
-            nativeSurfaceControlDestroy(nativeSurfaceControl);
+            if (surface != null) {
+                surface.release();
+            }
         }
-        Log.i(TAG, "Done testing ASurfaceTransaction_setFrameRate()");
     }
 
-    private static native int nativeWindowSetFrameRate(Surface surface, float frameRate);
-    private static native long nativeSurfaceControlCreate(Surface parentSurface);
+    public void testExactFrameRateMatch() throws InterruptedException {
+        for (Api api : Api.values()) {
+            testExactFrameRateMatch(api);
+        }
+    }
+
+    private void testFixedSource(Api api) throws InterruptedException {
+        Log.i(TAG, String.format("Testing %s fixed_source behavior", api));
+        float[] incompatibleFrameRates = getIncompatibleFrameRates();
+        if (incompatibleFrameRates == null) {
+            Log.i(TAG, "No incompatible frame rates to use for testing fixed_source behavior");
+            return;
+        }
+
+        float frameRateA = incompatibleFrameRates[0];
+        float frameRateB = incompatibleFrameRates[1];
+        Log.i(TAG,
+                String.format("Testing with incompatible frame rates: surfaceA=%.0f surfaceB=%.0f",
+                        frameRateA, frameRateB));
+        synchronized (mLock) {
+            waitForSurface();
+            TestSurface surfaceA = null;
+            TestSurface surfaceB = null;
+            try {
+                int width = mSurfaceView.getHolder().getSurfaceFrame().width();
+                int height = mSurfaceView.getHolder().getSurfaceFrame().height() / 2;
+                Rect destFrameA =
+                        new Rect(/*left=*/0, /*top=*/0, /*right=*/width, /*bottom=*/height);
+                surfaceA = new TestSurface(api, mSurfaceView.getSurfaceControl(), mSurface,
+                        "surfaceA", destFrameA, /*visible=*/true, Color.RED);
+                Rect destFrameB = new Rect(
+                        /*left=*/0, /*top=*/height, /*right=*/width, /*bottom=*/height * 2);
+                surfaceB = new TestSurface(api, mSurfaceView.getSurfaceControl(), mSurface,
+                        "surfaceB", destFrameB, /*visible=*/false, Color.GREEN);
+
+                surfaceA.setFrameRate(frameRateA, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT);
+                surfaceB.setFrameRate(frameRateB, Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE);
+
+                ArrayList<TestSurface> surfaces = new ArrayList<>();
+                surfaces.add(surfaceA);
+                surfaces.add(surfaceB);
+
+                verifyCompatibleAndStableFrameRate(frameRateA, surfaces);
+                surfaceB.setVisibility(true);
+                verifyCompatibleAndStableFrameRate(frameRateB, surfaces);
+            } finally {
+                if (surfaceA != null) {
+                    surfaceA.release();
+                }
+                if (surfaceB != null) {
+                    surfaceB.release();
+                }
+            }
+        }
+    }
+
+    public void testFixedSource() throws InterruptedException {
+        for (Api api : Api.values()) {
+            testFixedSource(api);
+        }
+    }
+
+    private void testInvalidParams(Api api) throws InterruptedException {
+        Log.i(TAG, String.format("Testing %s invalid params behavior", api));
+        TestSurface surface = null;
+        try {
+            synchronized (mLock) {
+                waitForSurface();
+                surface = new TestSurface(api, mSurfaceView.getSurfaceControl(), mSurface,
+                        "testSurface", mSurfaceView.getHolder().getSurfaceFrame(),
+                        /*visible=*/true, Color.RED);
+                surface.setInvalidFrameRate(-100.f, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT);
+                surface.setInvalidFrameRate(
+                        Float.POSITIVE_INFINITY, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT);
+                surface.setInvalidFrameRate(Float.NaN, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT);
+                surface.setInvalidFrameRate(0.f, -10);
+                surface.setInvalidFrameRate(0.f, 50);
+            }
+        } finally {
+            if (surface != null) {
+                surface.release();
+            }
+        }
+    }
+
+    public void testInvalidParams() throws InterruptedException {
+        for (Api api : Api.values()) {
+            testInvalidParams(api);
+        }
+    }
+
+    private static native int nativeWindowSetFrameRate(
+            Surface surface, float frameRate, int compatibility);
+    private static native long nativeSurfaceControlCreate(
+            Surface parentSurface, String name, int left, int top, int right, int bottom);
     private static native void nativeSurfaceControlDestroy(long surfaceControl);
     private static native void nativeSurfaceControlSetFrameRate(
-            long surfaceControl, float frameRate);
+            long surfaceControl, float frameRate, int compatibility);
+    private static native void nativeSurfaceControlSetVisibility(
+            long surfaceControl, boolean visible);
+    private static native boolean nativeSurfaceControlPostBuffer(long surfaceControl, int color);
 }

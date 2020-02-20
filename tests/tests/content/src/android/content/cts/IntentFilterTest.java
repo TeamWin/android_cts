@@ -20,18 +20,6 @@ import static android.os.PatternMatcher.PATTERN_LITERAL;
 import static android.os.PatternMatcher.PATTERN_PREFIX;
 import static android.os.PatternMatcher.PATTERN_SIMPLE_GLOB;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-import org.xmlpull.v1.XmlSerializer;
-
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Intent;
@@ -52,14 +40,28 @@ import android.util.Xml;
 
 import com.android.internal.util.FastXmlSerializer;
 
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlSerializer;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+
 
 public class IntentFilterTest extends AndroidTestCase {
 
     private IntentFilter mIntentFilter;
     private static final String ACTION = "testAction";
     private static final String CATEGORY = "testCategory";
-    private static final String DATA_TYPE = "vnd.android.cursor.dir/person";
+    private static final String DATA_DYNAMIC_TYPE = "type/dynamic";
+    private static final String DATA_STATIC_TYPE = "vnd.android.cursor.dir/person";
     private static final String DATA_SCHEME = "testDataSchemes.";
+    private static final String MIME_GROUP = "mime_group";
     private static final String SSP = "testSsp";
     private static final String HOST = "testHost";
     private static final int PORT = 80;
@@ -80,11 +82,11 @@ public class IntentFilterTest extends AndroidTestCase {
         filter = new IntentFilter(ACTION);
         verifyContent(filter, ACTION, null);
 
-        final IntentFilter actionTypeFilter = new IntentFilter(ACTION, DATA_TYPE);
-        verifyContent(actionTypeFilter, ACTION, DATA_TYPE);
+        final IntentFilter actionTypeFilter = new IntentFilter(ACTION, DATA_STATIC_TYPE);
+        verifyContent(actionTypeFilter, ACTION, DATA_STATIC_TYPE);
 
         filter = new IntentFilter(actionTypeFilter);
-        verifyContent(filter, ACTION, DATA_TYPE);
+        verifyContent(filter, ACTION, DATA_STATIC_TYPE);
 
         final String dataType = "testdataType";
         try {
@@ -110,8 +112,10 @@ public class IntentFilterTest extends AndroidTestCase {
         if (dataType != null) {
             assertEquals(1, filter.countDataTypes());
             assertEquals(dataType, filter.getDataType(0));
+            assertEquals(1, filter.countStaticDataTypes());
         } else {
             assertEquals(0, filter.countDataTypes());
+            assertEquals(0, filter.countStaticDataTypes());
         }
     }
 
@@ -215,6 +219,125 @@ public class IntentFilterTest extends AndroidTestCase {
                         null), });
     }
 
+    public void testDynamicMimeTypes() {
+        IntentFilter filter = new Match()
+                .addDynamicMimeTypes(new String[] { "which1/what1" });
+        checkMatches(filter, new MatchCondition[] {
+                new MatchCondition(IntentFilter.NO_MATCH_TYPE, null, null, null, null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "which1/what1",
+                        null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "which1/*", null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "*/*", null),
+                new MatchCondition(IntentFilter.NO_MATCH_TYPE, null, null, "which2/what2", null),
+                new MatchCondition(IntentFilter.NO_MATCH_TYPE, null, null, "which2/*", null),
+                new MatchCondition(IntentFilter.NO_MATCH_TYPE, null, null, "which1/what2", null),
+        });
+
+        filter = new Match()
+                .addDynamicMimeTypes(new String[] { "which1/what1", "which2/what2" });
+        checkMatches(filter, new MatchCondition[] {
+                new MatchCondition(IntentFilter.NO_MATCH_TYPE, null, null, null, null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "which1/what1",
+                        null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "which1/*", null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "*/*", null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "which2/what2",
+                        null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "which2/*", null),
+                new MatchCondition(IntentFilter.NO_MATCH_TYPE, null, null, "which1/what2", null),
+                new MatchCondition(IntentFilter.NO_MATCH_TYPE, null, null, "which3/what3", null),
+        });
+
+        filter = new Match()
+                .addDynamicMimeTypes(new String[] { "which1/*" });
+        checkMatches(filter, new MatchCondition[] {
+                new MatchCondition(IntentFilter.NO_MATCH_TYPE, null, null, null, null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "which1/what1",
+                        null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "which1/*", null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "*/*", null),
+                new MatchCondition(IntentFilter.NO_MATCH_TYPE, null, null, "which2/what2", null),
+                new MatchCondition(IntentFilter.NO_MATCH_TYPE, null, null, "which2/*", null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "which1/what2",
+                        null),
+                new MatchCondition(IntentFilter.NO_MATCH_TYPE, null, null, "which3/what3", null),
+        });
+
+        filter = new Match()
+                .addDynamicMimeTypes(new String[] { "*/*" });
+        checkMatches(filter, new MatchCondition[] {
+                new MatchCondition(IntentFilter.NO_MATCH_TYPE, null, null, null, null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "which1/what1",
+                        null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "which1/*", null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "*/*", null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "which2/what2",
+                        null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "which2/*", null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "which1/what2",
+                        null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "which3/what3",
+                        null), });
+    }
+
+    public void testClearDynamicMimeTypesWithStaticType() {
+        IntentFilter filter = new Match()
+                .addMimeTypes(new String[] {"which1/what1"})
+                .addDynamicMimeTypes(new String[] { "which2/what2" });
+
+        checkMatches(filter, new MatchCondition[] {
+                new MatchCondition(IntentFilter.NO_MATCH_TYPE, null, null, null, null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "which1/what1",
+                        null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "which1/*", null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "*/*", null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "which2/what2",
+                        null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "which2/*", null),
+                new MatchCondition(IntentFilter.NO_MATCH_TYPE, null, null, "which1/what2", null),
+                new MatchCondition(IntentFilter.NO_MATCH_TYPE, null, null, "which3/what3", null),
+        });
+
+        filter.clearDynamicDataTypes();
+
+        checkMatches(filter, new MatchCondition[] {
+                new MatchCondition(IntentFilter.NO_MATCH_TYPE, null, null, null, null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "which1/what1",
+                        null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "which1/*", null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "*/*", null),
+                new MatchCondition(IntentFilter.NO_MATCH_TYPE, null, null, "which2/what2", null),
+                new MatchCondition(IntentFilter.NO_MATCH_TYPE, null, null, "which2/*", null),
+                new MatchCondition(IntentFilter.NO_MATCH_TYPE, null, null, "which1/what2", null),
+        });
+    }
+
+    public void testClearDynamicMimeTypesWithAction() {
+        IntentFilter filter = new Match()
+                .addActions(new String[] {"action1"})
+                .addDynamicMimeTypes(new String[] { "which1/what1" });
+
+        checkMatches(filter, new MatchCondition[] {
+                new MatchCondition(IntentFilter.NO_MATCH_TYPE, null, null, null, null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "which1/what1",
+                        null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "which1/*", null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE, null, null, "*/*", null),
+                new MatchCondition(IntentFilter.NO_MATCH_TYPE, null, null, "which2/what2", null),
+                new MatchCondition(IntentFilter.NO_MATCH_TYPE, null, null, "which2/*", null),
+                new MatchCondition(IntentFilter.NO_MATCH_TYPE, null, null, "which1/what2", null),
+        });
+
+        filter.clearDynamicDataTypes();
+
+        checkMatches(filter, new MatchCondition[] {
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_EMPTY, null, null, null, null),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_EMPTY, "action1", null, null, null),
+                new MatchCondition(IntentFilter.NO_MATCH_TYPE, "action1", null, "which2/what2",
+                        null),
+        });
+    }
+
     public void testAccessPriority() {
         final int expected = 1;
         mIntentFilter.setPriority(expected);
@@ -255,9 +378,9 @@ public class IntentFilterTest extends AndroidTestCase {
     }
 
     public void testCreate() {
-        IntentFilter filter = IntentFilter.create(ACTION, DATA_TYPE);
+        IntentFilter filter = IntentFilter.create(ACTION, DATA_STATIC_TYPE);
         assertNotNull(filter);
-        verifyContent(filter, ACTION, DATA_TYPE);
+        verifyContent(filter, ACTION, DATA_STATIC_TYPE);
     }
 
 
@@ -492,18 +615,83 @@ public class IntentFilterTest extends AndroidTestCase {
 
     public void testDataTypes() throws MalformedMimeTypeException {
         for (int i = 0; i < 10; i++) {
-            mIntentFilter.addDataType(DATA_TYPE + i);
+            mIntentFilter.addDataType(DATA_STATIC_TYPE + i);
         }
         assertEquals(10, mIntentFilter.countDataTypes());
+        assertEquals(10, mIntentFilter.countStaticDataTypes());
         final Iterator<String> iter = mIntentFilter.typesIterator();
+        String actual;
+        int i = 0;
+        while (iter.hasNext()) {
+            actual = iter.next();
+            assertEquals(DATA_STATIC_TYPE + i, actual);
+            assertEquals(DATA_STATIC_TYPE + i, mIntentFilter.getDataType(i));
+            assertTrue(mIntentFilter.hasDataType(DATA_STATIC_TYPE + i));
+            assertFalse(mIntentFilter.hasDataType(DATA_STATIC_TYPE + i + 10));
+            i++;
+        }
+    }
+
+    public void testDynamicDataTypes() throws MalformedMimeTypeException {
+        for (int i = 0; i < 10; i++) {
+            mIntentFilter.addDynamicDataType(DATA_DYNAMIC_TYPE + i);
+        }
+        assertEquals(10, mIntentFilter.countDataTypes());
+        assertEquals(0, mIntentFilter.countStaticDataTypes());
+
+        final Iterator<String> iter = mIntentFilter.typesIterator();
+        String actual;
+        int i = 0;
+        while (iter.hasNext()) {
+            actual = iter.next();
+            assertEquals(DATA_DYNAMIC_TYPE + i, actual);
+            assertEquals(DATA_DYNAMIC_TYPE + i, mIntentFilter.getDataType(i));
+            assertTrue(mIntentFilter.hasDataType(DATA_DYNAMIC_TYPE + i));
+            assertFalse(mIntentFilter.hasDataType(DATA_DYNAMIC_TYPE + i + 10));
+            i++;
+        }
+    }
+
+    public void testClearDynamicDataTypes() throws MalformedMimeTypeException {
+        for (int i = 0; i < 10; i++) {
+            mIntentFilter.addDataType(DATA_STATIC_TYPE + i);
+            mIntentFilter.addDynamicDataType(DATA_DYNAMIC_TYPE + i);
+        }
+        assertEquals(20, mIntentFilter.countDataTypes());
+        assertEquals(10, mIntentFilter.countStaticDataTypes());
+
+        mIntentFilter.clearDynamicDataTypes();
+
+        assertEquals(10, mIntentFilter.countDataTypes());
+        assertEquals(10, mIntentFilter.countStaticDataTypes());
+
+        final Iterator<String> iter = mIntentFilter.typesIterator();
+        String actual;
+        int i = 0;
+        while (iter.hasNext()) {
+            actual = iter.next();
+            assertEquals(DATA_STATIC_TYPE + i, actual);
+            assertEquals(DATA_STATIC_TYPE + i, mIntentFilter.getDataType(i));
+            assertTrue(mIntentFilter.hasDataType(DATA_STATIC_TYPE + i));
+            assertFalse(mIntentFilter.hasDataType(DATA_DYNAMIC_TYPE + i));
+            i++;
+        }
+    }
+
+    public void testMimeGroups() {
+        for (int i = 0; i < 10; i++) {
+            mIntentFilter.addMimeGroup(MIME_GROUP + i);
+        }
+        assertEquals(10, mIntentFilter.countMimeGroups());
+        final Iterator<String> iter = mIntentFilter.mimeGroupsIterator();
         String actual = null;
         int i = 0;
         while (iter.hasNext()) {
             actual = iter.next();
-            assertEquals(DATA_TYPE + i, actual);
-            assertEquals(DATA_TYPE + i, mIntentFilter.getDataType(i));
-            assertTrue(mIntentFilter.hasDataType(DATA_TYPE + i));
-            assertFalse(mIntentFilter.hasDataType(DATA_TYPE + i + 10));
+            assertEquals(MIME_GROUP + i, actual);
+            assertEquals(MIME_GROUP + i, mIntentFilter.getMimeGroup(i));
+            assertTrue(mIntentFilter.hasMimeGroup(MIME_GROUP + i));
+            assertFalse(mIntentFilter.hasMimeGroup(MIME_GROUP + i + 10));
             i++;
         }
     }
@@ -514,22 +702,23 @@ public class IntentFilterTest extends AndroidTestCase {
         assertEquals(expected, mIntentFilter.matchData(null, DATA_SCHEME, null));
 
         assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.matchData(null, DATA_SCHEME, URI));
-        assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.matchData(DATA_TYPE, DATA_SCHEME,
-                URI));
+        assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.matchData(DATA_STATIC_TYPE,
+                DATA_SCHEME, URI));
 
         mIntentFilter.addDataScheme(DATA_SCHEME);
-        assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.matchData(DATA_TYPE,
+        assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.matchData(DATA_STATIC_TYPE,
                 "mDataSchemestest", URI));
-        assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.matchData(DATA_TYPE, "", URI));
+        assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.matchData(DATA_STATIC_TYPE, "",
+                URI));
 
         expected = IntentFilter.MATCH_CATEGORY_SCHEME + IntentFilter.MATCH_ADJUSTMENT_NORMAL;
         assertEquals(expected, mIntentFilter.matchData(null, DATA_SCHEME, URI));
-        assertEquals(IntentFilter.NO_MATCH_TYPE, mIntentFilter.matchData(DATA_TYPE, DATA_SCHEME,
-                URI));
+        assertEquals(IntentFilter.NO_MATCH_TYPE, mIntentFilter.matchData(DATA_STATIC_TYPE,
+                DATA_SCHEME, URI));
 
-        mIntentFilter.addDataType(DATA_TYPE);
+        mIntentFilter.addDataType(DATA_STATIC_TYPE);
         assertEquals(IntentFilter.MATCH_CATEGORY_TYPE + IntentFilter.MATCH_ADJUSTMENT_NORMAL,
-                mIntentFilter.matchData(DATA_TYPE, DATA_SCHEME, URI));
+                mIntentFilter.matchData(DATA_STATIC_TYPE, DATA_SCHEME, URI));
 
         mIntentFilter.addDataAuthority(HOST, String.valueOf(PORT));
         assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.matchData(null, DATA_SCHEME, URI));
@@ -584,7 +773,9 @@ public class IntentFilterTest extends AndroidTestCase {
         mIntentFilter.addDataAuthority(HOST, String.valueOf(PORT));
         mIntentFilter.addDataPath(DATA_PATH, 1);
         mIntentFilter.addDataScheme(DATA_SCHEME);
-        mIntentFilter.addDataType(DATA_TYPE);
+        mIntentFilter.addDataType(DATA_STATIC_TYPE);
+        mIntentFilter.addDynamicDataType(DATA_DYNAMIC_TYPE);
+        mIntentFilter.addMimeGroup(MIME_GROUP);
         mIntentFilter.writeToXml(xml);
         xml.flush();
         final XmlPullParser parser = Xml.newPullParser();
@@ -594,7 +785,9 @@ public class IntentFilterTest extends AndroidTestCase {
         intentFilter.readFromXml(parser);
         assertEquals(ACTION, intentFilter.getAction(0));
         assertEquals(CATEGORY, intentFilter.getCategory(0));
-        assertEquals(DATA_TYPE, intentFilter.getDataType(0));
+        assertTrue(intentFilter.hasExactStaticDataType(DATA_STATIC_TYPE));
+        assertTrue(intentFilter.hasExactDynamicDataType(DATA_DYNAMIC_TYPE));
+        assertEquals(MIME_GROUP, intentFilter.getMimeGroup(0));
         assertEquals(DATA_SCHEME, intentFilter.getDataScheme(0));
         assertEquals(DATA_PATH, intentFilter.getDataPath(0).getPath());
         assertEquals(HOST, intentFilter.getDataAuthority(0).getHost());
@@ -655,7 +848,11 @@ public class IntentFilterTest extends AndroidTestCase {
 
         assertEquals("testAction", mIntentFilter.getAction(0));
         assertEquals("testCategory", mIntentFilter.getCategory(0));
-        assertEquals("vnd.android.cursor.dir/person", mIntentFilter.getDataType(0));
+
+        assertTrue(mIntentFilter.hasExactDynamicDataType("vnd.android.cursor.dir/person"));
+        assertTrue(mIntentFilter.hasExactStaticDataType("text/plain"));
+
+        assertEquals("testMimeGroup", mIntentFilter.getMimeGroup(0));
         assertEquals("testScheme", mIntentFilter.getDataScheme(0));
         assertEquals("testHost", mIntentFilter.getDataAuthority(0).getHost());
         assertEquals(80, mIntentFilter.getDataAuthority(0).getPort());
@@ -781,10 +978,10 @@ public class IntentFilterTest extends AndroidTestCase {
         assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.match(resolver, intent, true, null));
         mIntentFilter.addDataAuthority(HOST, String.valueOf(PORT));
         assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.match(resolver, intent, true, null));
-        intent.setType(DATA_TYPE);
+        intent.setType(DATA_STATIC_TYPE);
         assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.match(resolver, intent, true, null));
 
-        mIntentFilter.addDataType(DATA_TYPE);
+        mIntentFilter.addDataType(DATA_STATIC_TYPE);
 
         assertEquals(IntentFilter.MATCH_CATEGORY_TYPE + IntentFilter.MATCH_ADJUSTMENT_NORMAL,
                 mIntentFilter.match(resolver, intent, true, null));
@@ -797,7 +994,7 @@ public class IntentFilterTest extends AndroidTestCase {
         assertEquals(IntentFilter.MATCH_CATEGORY_TYPE + IntentFilter.MATCH_ADJUSTMENT_NORMAL,
                 mIntentFilter.match(resolver, intent, true, null));
 
-        intent.setDataAndType(uri, DATA_TYPE);
+        intent.setDataAndType(uri, DATA_STATIC_TYPE);
         assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.match(resolver, intent, true, null));
 
     }
@@ -815,18 +1012,18 @@ public class IntentFilterTest extends AndroidTestCase {
 
         assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.matchData(null, DATA_SCHEME, URI));
 
-        assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.match(ACTION, DATA_TYPE,
+        assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.match(ACTION, DATA_STATIC_TYPE,
                 DATA_SCHEME, URI, null, null));
 
         mIntentFilter.addDataScheme(DATA_SCHEME);
-        assertEquals(IntentFilter.NO_MATCH_TYPE, mIntentFilter.match(ACTION, DATA_TYPE,
+        assertEquals(IntentFilter.NO_MATCH_TYPE, mIntentFilter.match(ACTION, DATA_STATIC_TYPE,
                 DATA_SCHEME, URI, null, null));
-        assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.match(ACTION, DATA_TYPE, "", URI,
-                null, null));
-        mIntentFilter.addDataType(DATA_TYPE);
+        assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.match(ACTION, DATA_STATIC_TYPE, "",
+                URI, null, null));
+        mIntentFilter.addDataType(DATA_STATIC_TYPE);
 
         assertEquals(IntentFilter.MATCH_CATEGORY_TYPE + IntentFilter.MATCH_ADJUSTMENT_NORMAL,
-                mIntentFilter.match(ACTION, DATA_TYPE, DATA_SCHEME, URI, null, null));
+                mIntentFilter.match(ACTION, DATA_STATIC_TYPE, DATA_SCHEME, URI, null, null));
 
         assertEquals(IntentFilter.NO_MATCH_TYPE, mIntentFilter.match(ACTION, null, DATA_SCHEME,
                 URI, null, null));
@@ -835,29 +1032,29 @@ public class IntentFilterTest extends AndroidTestCase {
                 URI, cat, null));
 
         cat.add(CATEGORY);
-        assertEquals(IntentFilter.NO_MATCH_CATEGORY, mIntentFilter.match(ACTION, DATA_TYPE,
+        assertEquals(IntentFilter.NO_MATCH_CATEGORY, mIntentFilter.match(ACTION, DATA_STATIC_TYPE,
                 DATA_SCHEME, URI, cat, null));
         cat = new HashSet<String>();
         mIntentFilter.addDataAuthority(HOST, String.valueOf(PORT));
         assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.match(ACTION, null, DATA_SCHEME,
                 URI, null, null));
-        assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.match(ACTION, DATA_TYPE,
+        assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.match(ACTION, DATA_STATIC_TYPE,
                 DATA_SCHEME, URI, null, null));
 
         final Uri uri = Uri.parse(DATA_SCHEME + "://" + HOST + ":" + PORT);
         mIntentFilter.addDataPath(DATA_PATH, PatternMatcher.PATTERN_LITERAL);
-        assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.match(ACTION, DATA_TYPE,
+        assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.match(ACTION, DATA_STATIC_TYPE,
                 DATA_SCHEME, uri, null, null));
-        assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.match(ACTION, DATA_TYPE,
+        assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.match(ACTION, DATA_STATIC_TYPE,
                 DATA_SCHEME, URI, null, null));
 
-        assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.match(ACTION, DATA_TYPE,
+        assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.match(ACTION, DATA_STATIC_TYPE,
                 DATA_SCHEME, URI, cat, null));
         cat.add(CATEGORY);
-        assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.match(ACTION, DATA_TYPE,
+        assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.match(ACTION, DATA_STATIC_TYPE,
                 DATA_SCHEME, URI, cat, null));
         mIntentFilter.addCategory(CATEGORY);
-        assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.match(ACTION, DATA_TYPE,
+        assertEquals(IntentFilter.NO_MATCH_DATA, mIntentFilter.match(ACTION, DATA_STATIC_TYPE,
                 DATA_SCHEME, URI, cat, null));
     }
 
@@ -867,7 +1064,9 @@ public class IntentFilterTest extends AndroidTestCase {
         mIntentFilter.addDataAuthority(HOST, String.valueOf(PORT));
         mIntentFilter.addDataPath(DATA_PATH, 1);
         mIntentFilter.addDataScheme(DATA_SCHEME);
-        mIntentFilter.addDataType(DATA_TYPE);
+        mIntentFilter.addDataType(DATA_STATIC_TYPE);
+        mIntentFilter.addDynamicDataType(DATA_DYNAMIC_TYPE);
+        mIntentFilter.addMimeGroup(MIME_GROUP);
         Parcel parcel = Parcel.obtain();
         mIntentFilter.writeToParcel(parcel, 1);
         parcel.setDataPosition(0);
@@ -880,6 +1079,11 @@ public class IntentFilterTest extends AndroidTestCase {
                 target.getDataAuthority(0).getPort());
         assertEquals(mIntentFilter.getDataPath(0).getPath(), target.getDataPath(0).getPath());
         assertEquals(mIntentFilter.getDataScheme(0), target.getDataScheme(0));
+        assertEquals(mIntentFilter.getDataType(0), target.getDataType(0));
+        assertEquals(mIntentFilter.getDataType(1), target.getDataType(1));
+        assertEquals(mIntentFilter.countStaticDataTypes(), target.countStaticDataTypes());
+        assertEquals(mIntentFilter.countDataTypes(), target.countDataTypes());
+        assertEquals(mIntentFilter.getMimeGroup(0), target.getMimeGroup(0));
     }
 
     public void testAddDataType() throws MalformedMimeTypeException {
@@ -890,17 +1094,18 @@ public class IntentFilterTest extends AndroidTestCase {
             // expected
         }
 
-        mIntentFilter.addDataType(DATA_TYPE);
-        assertEquals(DATA_TYPE, mIntentFilter.getDataType(0));
+        mIntentFilter.addDataType(DATA_STATIC_TYPE);
+        assertEquals(DATA_STATIC_TYPE, mIntentFilter.getDataType(0));
     }
 
     private static class Match extends IntentFilter {
+        Match() {
+        }
+
         Match(String[] actions, String[] categories, String[] mimeTypes, String[] schemes,
                 String[] authorities, String[] ports) {
             if (actions != null) {
-                for (int i = 0; i < actions.length; i++) {
-                    addAction(actions[i]);
-                }
+                addActions(actions);
             }
             if (categories != null) {
                 for (int i = 0; i < categories.length; i++) {
@@ -947,6 +1152,35 @@ public class IntentFilterTest extends AndroidTestCase {
                     addDataSchemeSpecificPart(ssps[i], sspTypes[i]);
                 }
             }
+        }
+
+        Match addDynamicMimeTypes(String[] dynamicMimeTypes) {
+            for (int i = 0; i < dynamicMimeTypes.length; i++) {
+                try {
+                    addDynamicDataType(dynamicMimeTypes[i]);
+                } catch (IntentFilter.MalformedMimeTypeException e) {
+                    throw new RuntimeException("Bad mime type", e);
+                }
+            }
+            return this;
+        }
+
+        Match addMimeTypes(String[] mimeTypes) {
+            for (int i = 0; i < mimeTypes.length; i++) {
+                try {
+                    addDataType(mimeTypes[i]);
+                } catch (IntentFilter.MalformedMimeTypeException e) {
+                    throw new RuntimeException("Bad mime type", e);
+                }
+            }
+            return this;
+        }
+
+        Match addActions(String[] actions) {
+            for (int i = 0; i < actions.length; i++) {
+                addAction(actions[i]);
+            }
+            return this;
         }
     }
 
@@ -1179,7 +1413,7 @@ public class IntentFilterTest extends AndroidTestCase {
     public void testDump() throws MalformedMimeTypeException {
         TestPrinter printer = new TestPrinter();
         String prefix = "TestIntentFilter";
-        IntentFilter filter = new IntentFilter(ACTION, DATA_TYPE);
+        IntentFilter filter = new IntentFilter(ACTION, DATA_STATIC_TYPE);
         filter.dump(printer, prefix);
         assertTrue(printer.isPrintlnCalled);
     }

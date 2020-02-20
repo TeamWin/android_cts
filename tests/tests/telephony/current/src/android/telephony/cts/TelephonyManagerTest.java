@@ -168,6 +168,7 @@ public class TelephonyManagerTest {
     private static final int MIN_FPLMN_NUM = 3;
 
     private static final String TEST_FORWARD_NUMBER = "54321";
+    private static final String TESTING_PLMN = "12345";
 
     static {
         EMERGENCY_NUMBER_SOURCE_SET = new HashSet<Integer>();
@@ -512,6 +513,11 @@ public class TelephonyManagerTest {
                 (tm) -> tm.getImei());
         ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.getImei(mTelephonyManager.getSlotIndex()));
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.isManualNetworkSelectionAllowed());
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getManualNetworkSelectionPlmn());
+
         mTelephonyManager.getPhoneCount();
         mTelephonyManager.getDataEnabled();
         mTelephonyManager.getNetworkSpecifier();
@@ -1764,6 +1770,52 @@ public class TelephonyManagerTest {
     }
 
     /**
+     * Tests that the device properly reports the contents of ManualNetworkSelectionPlmn
+     * The setting is not persisted selection
+     */
+    @Test
+    public void testGetManualNetworkSelectionPlmnNonPersisted() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                    (tm) -> tm.setNetworkSelectionModeManual(
+                     TESTING_PLMN/* operatorNumeric */, false /* persistSelection */));
+            String plmn = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                     (tm) -> tm.getManualNetworkSelectionPlmn());
+            assertEquals(TESTING_PLMN, plmn);
+        } finally {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.setNetworkSelectionModeAutomatic());
+        }
+    }
+
+    /**
+     * Tests that the device properly reports the contents of ManualNetworkSelectionPlmn
+     * The setting is persisted selection
+     */
+    @Test
+    public void testGetManualNetworkSelectionPlmnPersisted() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                    (tm) -> tm.setNetworkSelectionModeManual(
+                     TESTING_PLMN/* operatorNumeric */, true /* persistSelection */));
+            String plmn = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                     (tm) -> tm.getManualNetworkSelectionPlmn());
+            assertEquals(TESTING_PLMN, plmn);
+        } finally {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.setNetworkSelectionModeAutomatic());
+        }
+    }
+
+    /**
      * Verify that TelephonyManager.getCardIdForDefaultEuicc returns a positive value or either
      * UNINITIALIZED_CARD_ID or UNSUPPORTED_CARD_ID.
      */
@@ -1816,6 +1868,27 @@ public class TelephonyManagerTest {
 
     private static Context getContext() {
         return InstrumentationRegistry.getContext();
+    }
+
+    /**
+     * Tests that the device properly reports the contents of NetworkSelectionMode
+     */
+    @Test
+    public void testGetNetworkSelectionMode() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.setNetworkSelectionModeAutomatic());
+        } catch (Exception e) {
+        }
+
+        int networkMode = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getNetworkSelectionMode());
+
+        assertEquals(TelephonyManager.NETWORK_SELECTION_MODE_AUTO, networkMode);
     }
 
     /**

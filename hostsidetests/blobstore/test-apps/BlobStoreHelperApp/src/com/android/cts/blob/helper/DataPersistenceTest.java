@@ -149,7 +149,7 @@ public class DataPersistenceTest {
     }
 
     private SharedPreferences getSharedPreferences() {
-        return mContext.getSharedPreferences(mContext.getPackageName(),
-                Context.MODE_PRIVATE);
+        return mContext.createDeviceProtectedStorageContext().getSharedPreferences(
+                mContext.getPackageName(), Context.MODE_PRIVATE);
     }
 }

@@ -50,4 +50,15 @@ public class PersonalAppsSuspensionTest {
         assertThat(mDpm.getPersonalAppsSuspendedReasons(ADMIN))
                 .isEqualTo(DevicePolicyManager.PERSONAL_APPS_NOT_SUSPENDED);
     }
+
+    @Test
+    public void testSetManagedProfileMaximumTimeOff1Sec() {
+        mDpm.setManagedProfileMaximumTimeOff(ADMIN, 1000);
+    }
+
+    @Test
+    public void testPersonalAppsSuspendedByTimeout() {
+        assertThat(mDpm.getPersonalAppsSuspendedReasons(ADMIN))
+                .isEqualTo(DevicePolicyManager.PERSONAL_APPS_SUSPENDED_PROFILE_TIMEOUT);
+    }
 }

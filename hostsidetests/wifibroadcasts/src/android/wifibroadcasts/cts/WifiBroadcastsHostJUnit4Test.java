@@ -162,5 +162,7 @@ public class WifiBroadcastsHostJUnit4Test implements IDeviceTest {
         } finally {
             in.close();
         }
+        //Re-enable Wi-Fi as part of CTS Pre-conditions
+        device.executeShellCommand("svc wifi enable; sleep 1");
     }
 }
