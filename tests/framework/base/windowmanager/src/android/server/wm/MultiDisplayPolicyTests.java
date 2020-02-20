@@ -389,7 +389,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
                 pair(newDisplay.mId, TEST_ACTIVITY));
 
         // Move activity from secondary display to primary.
-        moveActivityToStack(TEST_ACTIVITY, defaultDisplayStackId);
+        moveActivityToStackOrOnTop(TEST_ACTIVITY, defaultDisplayStackId);
         waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
                 "Moved activity must be on top");
     }
@@ -734,8 +734,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
     private void assertTopTaskSameSurfaceSizeWithDisplay(int displayId) {
         final DisplayContent display = mWmState.getDisplay(displayId);
         final int stackId = mWmState.getFrontRootTaskId(displayId);
-        final ActivityTask task =
-                mWmState.getRootTask(stackId).mTasks.get(0);
+        final ActivityTask task = mWmState.getRootTask(stackId).getTopTask();
 
         assertEquals("Task must have same surface width with its display",
                 display.getSurfaceSize(), task.getSurfaceWidth());

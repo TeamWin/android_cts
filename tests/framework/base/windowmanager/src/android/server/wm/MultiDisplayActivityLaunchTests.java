@@ -275,7 +275,7 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
         nonResizeableSession.takeCallbackHistory();
 
         // Try to move the non-resizeable activity to the top of stack on secondary display.
-        moveActivityToStack(NON_RESIZEABLE_ACTIVITY, externalFrontStackId);
+        moveActivityToStackOrOnTop(NON_RESIZEABLE_ACTIVITY, externalFrontStackId);
         // Wait for a while to check that it will move.
         assertTrue("Non-resizeable activity should be moved",
                 mWmState.waitForWithAmState(
@@ -653,10 +653,10 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
         assertEquals("Activity launched on secondary display must be resumed",
                 getActivityName(LAUNCHING_ACTIVITY), secondFrontStack.mResumedActivity);
         mWmState.assertFocusedStack("Top stack must be on primary display", frontStackId);
-        assertEquals("Top stack must only contain 1 task",
-                1, secondFrontStack.getTasks().size());
-        assertEquals("Top task must only contain 1 activity",
-                1, secondFrontStack.getTasks().get(0).mActivities.size());
+        assertEquals("Second display must only contain 1 root task", 1,
+                mWmState.getDisplay(newDisplay.mId).getRootTasks().size());
+        assertEquals("Top task must only contain 1 activity", 1,
+                secondFrontStack.getActivities().size());
     }
 
     /**
@@ -719,10 +719,10 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
                 getActivityName(ALT_LAUNCHING_ACTIVITY),
                 secondFrontStack.mResumedActivity);
         mWmState.assertFocusedStack("Top stack must be on secondary display", secondFrontStackId);
-        assertEquals("Top stack must only contain 1 task",
-                1, secondFrontStack.getTasks().size());
+        assertEquals("Second display must only contain 1 task",
+                1, mWmState.getDisplay(newDisplay.mId).getRootTasks().size());
         assertEquals("Top stack task must contain 2 activities",
-                2, secondFrontStack.getTasks().get(0).mActivities.size());
+                2, secondFrontStack.getActivities().size());
     }
 
     /**
@@ -848,6 +848,7 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
         getPendingIntentActivity(TEST_ACTIVITY).send(mContext, resultCode, null /* intent */,
                 null /* onFinished */, null /* handler */, null /* requiredPermission */,
                 options.toBundle());
+        waitAndAssertActivityState(TOP_ACTIVITY, STATE_STOPPED, "Activity should be stopped");
         waitAndAssertTopResumedActivity(TEST_ACTIVITY, displayContent.mId,
                 "Activity launched on secondary display and on top");
     }

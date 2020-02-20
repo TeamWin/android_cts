@@ -574,7 +574,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         launchActivity(PIP_ACTIVITY2, EXTRA_ENTER_PIP, "true");
 
         final ActivityTask pinnedStack = getPinnedStack();
-        assertEquals(1, pinnedStack.getTasks().size());
+        assertEquals(0, pinnedStack.getTasks().size());
         assertTrue(mWmState.containsActivityInWindowingMode(
                 PIP_ACTIVITY2, WINDOWING_MODE_PINNED));
         assertTrue(mWmState.containsActivityInWindowingMode(
@@ -1017,8 +1017,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackExists();
-        ActivityTask stack = mWmState.getStandardStackByWindowingMode(
-                WINDOWING_MODE_PINNED);
+        ActivityTask stack = mWmState.getStandardStackByWindowingMode(WINDOWING_MODE_PINNED);
         int stackId = stack.mRootTaskId;
         int taskId = stack.getTopTask().mTaskId;
 

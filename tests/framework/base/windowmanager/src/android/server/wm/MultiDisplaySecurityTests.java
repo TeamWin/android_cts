@@ -555,7 +555,8 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
         waitAndAssertTopResumedActivity(SECOND_ACTIVITY, newDisplay.mId,
                 "Top activity must be the newly launched one");
         frontStack = mWmState.getRootTask(frontStackId);
-        assertEquals("Secondary display must contain 1 task", 1, frontStack.getTasks().size());
+        assertEquals("Secondary display must contain 1 task", 1,
+                mWmState.getDisplay(newDisplay.mId).getRootTasks().size());
     }
 
     /**

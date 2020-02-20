@@ -590,17 +590,12 @@ public class WindowManagerStateHelper extends WindowManagerState {
                 getKeyguardControllerState().aodShowing);
     }
 
-    public void assertEmptyStackOrTask() {
+    public void assertNoneEmptyTasks() {
         computeState();
-        final List<ActivityTask> stacks = getRootTasks();
-        for (ActivityTask stack : stacks) {
-            assertWithMessage("Empty stack was found, id = " + stack.mRootTaskId)
-                    .that(stack.getTopTask()).isNotNull();
-            final List<ActivityTask> tasks = stack.getTasks();
-            for (ActivityTask task : tasks) {
-                assertWithMessage("Empty task was found, id = " + task.mTaskId)
-                        .that(task.getActivities().size()).isGreaterThan(0);
-            }
+        final List<ActivityTask> tasks = getRootTasks();
+        for (ActivityTask task : tasks) {
+            task.forAllTasks((t) -> assertWithMessage("Empty task was found, id = " + t.mTaskId)
+                    .that(t.mTasks.size() + t.mActivities.size()).isGreaterThan(0));
         }
     }
 
