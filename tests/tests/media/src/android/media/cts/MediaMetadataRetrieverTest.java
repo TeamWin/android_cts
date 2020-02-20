@@ -45,11 +45,14 @@ import android.util.Log;
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.MediaUtils;
+import java.io.Closeable;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -62,6 +65,7 @@ import java.util.function.Function;
 public class MediaMetadataRetrieverTest extends AndroidTestCase {
     private static final String TAG = "MediaMetadataRetrieverTest";
     private static final boolean SAVE_BITMAP_OUTPUT = false;
+    private static final String TEST_MEDIA_FILE = "retriever_test.3gp";
 
     protected Resources mResources;
     protected MediaMetadataRetriever mRetriever;
@@ -93,6 +97,10 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
     protected void tearDown() throws Exception {
         super.tearDown();
         mRetriever.release();
+        File file = new File(Environment.getExternalStorageDirectory(), TEST_MEDIA_FILE);
+        if (file.exists()) {
+            file.delete();
+        }
     }
 
     protected void setDataSourceFd(int resid) {
@@ -368,27 +376,23 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
     }
 
     public void testSetDataSourcePath() {
-        File outputFile = new File(Environment.getExternalStorageDirectory(), "retriever_test.3gp");
+        copyMeidaFile();
+        File file = new File(Environment.getExternalStorageDirectory(), TEST_MEDIA_FILE);
         try {
-            recordMedia(outputFile);
-            mRetriever.setDataSource(outputFile.getAbsolutePath());
+            mRetriever.setDataSource(file.getAbsolutePath());
         } catch (Exception ex) {
             fail("Failed setting data source with path, caught exception:" + ex);
-        } finally {
-            outputFile.delete();
         }
     }
 
     public void testSetDataSourceUri() {
-        File outputFile = new File(Environment.getExternalStorageDirectory(), "retriever_test.3gp");
+        copyMeidaFile();
+        File file = new File(Environment.getExternalStorageDirectory(), TEST_MEDIA_FILE);
         try {
-            recordMedia(outputFile);
-            Uri uri = Uri.parse(outputFile.getAbsolutePath());
+            Uri uri = Uri.parse(file.getAbsolutePath());
             mRetriever.setDataSource(getContext(), uri);
         } catch (Exception ex) {
             fail("Failed setting data source with Uri, caught exception:" + ex);
-        } finally {
-            outputFile.delete();
         }
     }
 
@@ -1005,20 +1009,42 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
         }
     }
 
-    private void recordMedia(File outputFile) throws Exception {
-        MediaRecorder mr = new MediaRecorder();
+    private void copyMeidaFile() {
+        InputStream inputStream = null;
+        FileOutputStream outputStream = null;
+        String outputPath = new File(
+            Environment.getExternalStorageDirectory(), TEST_MEDIA_FILE).getAbsolutePath();
         try {
-            mr.setAudioSource(MediaRecorder.AudioSource.MIC);
-            mr.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-            mr.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
-            mr.setOutputFile(outputFile.getAbsolutePath());
+            inputStream = getContext().getResources().openRawResource(R.raw.testvideo);
+            outputStream = new FileOutputStream(outputPath);
+            copy(inputStream, outputStream);
+        } catch (Exception e) {
 
-            mr.prepare();
-            mr.start();
-            Thread.sleep(SLEEP_TIME);
-            mr.stop();
-        } finally {
-            mr.release();
+        }finally {
+            closeQuietly(inputStream);
+            closeQuietly(outputStream);
+        }
+    }
+
+    private int copy(InputStream in, OutputStream out) throws IOException {
+        int total = 0;
+        byte[] buffer = new byte[8192];
+        int c;
+        while ((c = in.read(buffer)) != -1) {
+            total += c;
+            out.write(buffer, 0, c);
+        }
+        return total;
+    }
+
+    private void closeQuietly(Closeable closeable) {
+        if (closeable != null) {
+            try {
+                closeable.close();
+            } catch (RuntimeException rethrown) {
+                throw rethrown;
+            } catch (Exception ignored) {
+            }
         }
     }
 
