@@ -32,6 +32,7 @@
 
 // The relevant Android API levels
 #define Q_API_LEVEL 29
+#define R_API_LEVEL 30
 
 static int getFirstApiLevel(void) {
     int level = property_get_int32("ro.product.first_api_level", 0);
@@ -111,33 +112,50 @@ static bool cpuHasAESInstructions(void) {
 // CDD 9.9.3/C-1-5: must use AES-256-XTS or Adiantum contents encryption.
 // CDD 9.9.3/C-1-6: must use AES-256-CTS or Adiantum filenames encryption.
 // CDD 9.9.3/C-1-12: mustn't use Adiantum if the CPU has AES instructions.
-static void validateEncryptionModes(int contents_mode, int filenames_mode) {
+static void validateEncryptionModes(int contents_mode, int filenames_mode,
+                                    bool allow_legacy_modes) {
+    bool allowed = false;
     switch (contents_mode) {
         case FSCRYPT_MODE_AES_256_XTS:
         case FSCRYPT_MODE_ADIANTUM:
-        // Many existing devices shipped with custom kernel patches implementing
-        // AES-256-XTS inline encryption behind "FSCRYPT_MODE_PRIVATE", so we
-        // need to let it pass.  It's up to the vendor to ensure it's really
-        // AES-256-XTS.
-        case FSCRYPT_MODE_PRIVATE:
+            allowed = true;
             break;
-        default:
-            ADD_FAILURE() << "Contents encryption mode not allowed: " << contents_mode;
+        case FSCRYPT_MODE_PRIVATE:
+            // Some devices shipped with custom kernel patches implementing
+            // AES-256-XTS inline encryption behind "FSCRYPT_MODE_PRIVATE", so
+            // we need to let it pass on old devices.  It's up to the vendor to
+            // ensure it's really AES-256-XTS.
+            allowed = allow_legacy_modes;
+            if (allowed) {
+                GTEST_LOG_(INFO) << "Allowing FSCRYPT_MODE_PRIVATE because this is an old device";
+            }
             break;
     }
+    if (!allowed) {
+        ADD_FAILURE() << "Contents encryption mode not allowed: " << contents_mode;
+    }
 
+    allowed = false;
     switch (filenames_mode) {
         case FSCRYPT_MODE_AES_256_CTS:
         case FSCRYPT_MODE_ADIANTUM:
-        // At least one existing device shipped with the experimental
-        // AES-256-HEH filenames encryption, which was never added to the CDD.
-        // It's cryptographically superior to AES-256-CTS for the use case,
-        // though, so it's compliant in spirit; let it pass for now...
+            allowed = true;
+            break;
         case FSCRYPT_MODE_AES_256_HEH:
+            // At least one device shipped with the experimental AES-256-HEH
+            // filenames encryption, which was never added to the CDD and was
+            // only supported by one kernel version (android-4.4).  It's
+            // cryptographically superior to AES-256-CTS for the use case,
+            // though, so it's compliant in spirit; let it pass on old devices.
+            allowed = allow_legacy_modes;
+            if (allowed) {
+                GTEST_LOG_(INFO)
+                        << "Allowing FSCRYPT_MODE_AES_256_HEH because this is an old device";
+            }
             break;
-        default:
-            ADD_FAILURE() << "Filenames encryption mode not allowed: " << filenames_mode;
-            break;
+    }
+    if (!allowed) {
+        ADD_FAILURE() << "Filenames encryption mode not allowed: " << filenames_mode;
     }
 
     if (contents_mode == FSCRYPT_MODE_ADIANTUM || filenames_mode == FSCRYPT_MODE_ADIANTUM) {
@@ -163,6 +181,7 @@ TEST(FileBasedEncryptionPolicyTest, allowedPolicy) {
     int res;
     int contents_mode;
     int filenames_mode;
+    bool allow_legacy_modes = false;
 
     android::base::unique_fd fd(open(DIR_TO_CHECK, O_RDONLY | O_CLOEXEC));
     if (fd < 0) {
@@ -201,6 +220,13 @@ TEST(FileBasedEncryptionPolicyTest, allowedPolicy) {
             GTEST_LOG_(INFO) << "Detected v1 encryption policy";
             contents_mode = arg.policy.v1.contents_encryption_mode;
             filenames_mode = arg.policy.v1.filenames_encryption_mode;
+
+            if (first_api_level < R_API_LEVEL) {
+                // On these old devices we also allow the use of some custom
+                // encryption mode numbers which were never supported by the
+                // Android common kernel and shouldn't be used on new devices.
+                allow_legacy_modes = true;
+            }
             break;
         case FSCRYPT_POLICY_V2:
             GTEST_LOG_(INFO) << "Detected v2 encryption policy";
@@ -214,5 +240,5 @@ TEST(FileBasedEncryptionPolicyTest, allowedPolicy) {
     GTEST_LOG_(INFO) << "Contents encryption mode: " << contents_mode;
     GTEST_LOG_(INFO) << "Filenames encryption mode: " << filenames_mode;
 
-    validateEncryptionModes(contents_mode, filenames_mode);
+    validateEncryptionModes(contents_mode, filenames_mode, allow_legacy_modes);
 }
