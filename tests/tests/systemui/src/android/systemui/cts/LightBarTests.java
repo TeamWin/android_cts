@@ -40,6 +40,8 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
+import com.android.compatibility.common.util.CddTest;
+
 /**
  * Test for light status bar.
  *
@@ -57,7 +59,6 @@ public class LightBarTests extends LightBarTestBase {
      * margin to accommodate for that when comparing colors.
      */
     private static final int COLOR_COMPONENT_ERROR_MARGIN = 20;
-
     private final String NOTIFICATION_TAG = "TEST_TAG";
     private final String NOTIFICATION_CHANNEL_ID = "test_channel";
     private final String NOTIFICATION_GROUP_KEY = "test_group";
@@ -69,6 +70,7 @@ public class LightBarTests extends LightBarTestBase {
     @Rule
     public TestName mTestName = new TestName();
 
+    @CddTest(requirement="3.8.6/C-2-2")
     @Test
     @AppModeFull // Instant apps cannot create notifications
     public void testLightStatusBarIcons() throws Throwable {
