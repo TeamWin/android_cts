@@ -31,11 +31,16 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
+import android.service.autofill.InlinePresentation;
 import android.util.Log;
+import android.util.Size;
 import android.view.autofill.AutofillManager;
+import android.view.inline.InlinePresentationSpec;
 import android.widget.RemoteViews;
 
 import androidx.annotation.NonNull;
+import androidx.autofill.InlinePresentationBuilder;
+import androidx.test.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule;
@@ -44,6 +49,7 @@ import com.android.compatibility.common.util.RetryRule;
 import com.android.compatibility.common.util.SafeCleanerRule;
 import com.android.compatibility.common.util.SettingsStateKeeperRule;
 import com.android.compatibility.common.util.TestNameUtils;
+import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSessionRule;
 
 import org.junit.AfterClass;
@@ -193,7 +199,10 @@ public final class AutoFillServiceTestCase {
         };
 
         @ClassRule
-        public static final MockImeSessionRule sMockImeSessionRule = new MockImeSessionRule();
+        public static final MockImeSessionRule sMockImeSessionRule = new MockImeSessionRule(
+                InstrumentationRegistry.getTargetContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder().setInlineSuggestionsEnabled(true));
 
         protected static final RequiredFeatureRule sRequiredFeatureRule =
                 new RequiredFeatureRule(PackageManager.FEATURE_AUTOFILL);
@@ -414,6 +423,12 @@ public final class AutoFillServiceTestCase {
                     .getPackageName(), R.layout.list_item_cancel);
             presentation.setTextViewText(R.id.text1, message);
             return presentation;
+        }
+
+        protected InlinePresentation createInlinePresentation(String message) {
+            return new InlinePresentation(new InlinePresentationBuilder(message).build(),
+                    new InlinePresentationSpec.Builder(new Size(100, 100), new Size(400, 100))
+                            .build(), /* pinned= */ false);
         }
 
         @NonNull

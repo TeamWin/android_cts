@@ -48,6 +48,13 @@ public abstract class AbstractLoginActivityTestCase
     }
 
     /**
+     * Performs a click on username.
+     */
+    protected void requestClickOnUsername() throws TimeoutException {
+        mUiBot.waitForWindowChange(() -> mActivity.onUsername(View::performClick));
+    }
+
+    /**
      * Requests focus on username and expect no Window event happens.
      */
     protected void requestFocusOnUsernameNoWindowChange() {

@@ -16,6 +16,8 @@
 
 package com.android.cts.mockime;
 
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import static android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS;
 
 import android.content.BroadcastReceiver;
@@ -25,6 +27,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.inputmethodservice.InputMethodService;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -36,31 +39,44 @@ import android.os.ResultReceiver;
 import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.Size;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowManager;
+import android.view.inline.InlinePresentationSpec;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.CorrectionInfo;
 import android.view.inputmethod.CursorAnchorInfo;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.ExtractedTextRequest;
+import android.view.inputmethod.InlineSuggestion;
+import android.view.inputmethod.InlineSuggestionsRequest;
+import android.view.inputmethod.InlineSuggestionsResponse;
 import android.view.inputmethod.InputBinding;
 import android.view.inputmethod.InputContentInfo;
 import android.view.inputmethod.InputMethod;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.CallSuper;
+import androidx.annotation.GuardedBy;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -407,23 +423,38 @@ public final class MockIme extends InputMethodService {
 
             final int defaultBackgroundColor =
                     getResources().getColor(android.R.color.holo_orange_dark, null);
-            setBackgroundColor(mSettings.getBackgroundColor(defaultBackgroundColor));
 
             final int mainSpacerHeight = mSettings.getInputViewHeightWithoutSystemWindowInset(
                     LayoutParams.WRAP_CONTENT);
             {
-                final RelativeLayout layout = new RelativeLayout(getContext());
+                final LinearLayout layout = new LinearLayout(getContext());
+                layout.setOrientation(LinearLayout.VERTICAL);
+
+                if (mSettings.getInlineSuggestionsEnabled()) {
+                    final ScrollView scrollView = new ScrollView(getContext());
+                    final LayoutParams scrollViewParams = new LayoutParams(MATCH_PARENT, 100);
+                    scrollView.setLayoutParams(scrollViewParams);
+
+                    sSuggestionView = new LinearLayout(getContext());
+                    sSuggestionView.setBackgroundColor(0xFFEEEEEE);
+                    //TODO: Change magic id
+                    sSuggestionView.setId(0x0102000b);
+                    scrollView.addView(sSuggestionView,
+                            new LayoutParams(MATCH_PARENT, MATCH_PARENT));
+
+                    layout.addView(scrollView);
+                }
+
                 final TextView textView = new TextView(getContext());
-                final RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
-                        RelativeLayout.LayoutParams.MATCH_PARENT,
-                        RelativeLayout.LayoutParams.WRAP_CONTENT);
-                params.addRule(RelativeLayout.CENTER_IN_PARENT, RelativeLayout.TRUE);
+                final LayoutParams params = new LayoutParams(MATCH_PARENT, WRAP_CONTENT);
                 textView.setLayoutParams(params);
                 textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
                 textView.setGravity(Gravity.CENTER);
                 textView.setText(getImeId());
+                textView.setBackgroundColor(mSettings.getBackgroundColor(defaultBackgroundColor));
                 layout.addView(textView);
-                addView(layout, LayoutParams.MATCH_PARENT, mainSpacerHeight);
+
+                addView(layout, MATCH_PARENT, mainSpacerHeight);
             }
 
             final int systemUiVisibility = mSettings.getInputViewSystemUiVisibility(0);
@@ -596,6 +627,105 @@ public final class MockIme extends InputMethodService {
                 !hasInputBinding
                         || getCurrentInputConnection() == getCurrentInputBinding().getConnection();
         return new ImeState(hasInputBinding, hasDummyInputConnectionConnection);
+    }
+
+    private static LinearLayout sSuggestionView;
+    @GuardedBy("this")
+    private List<View> mSuggestionViews = new ArrayList<>();
+    @GuardedBy("this")
+    private List<Size> mSuggestionViewSizes = new ArrayList<>();
+    @GuardedBy("this")
+    private boolean mSuggestionViewVisible = false;
+
+    public InlineSuggestionsRequest onCreateInlineSuggestionsRequest() {
+        Log.d(TAG, "onCreateInlineSuggestionsRequest() called");
+        final ArrayList<InlinePresentationSpec> presentationSpecs = new ArrayList<>();
+        presentationSpecs.add(new InlinePresentationSpec.Builder(new Size(100, 100),
+                new Size(400, 100)).build());
+        presentationSpecs.add(new InlinePresentationSpec.Builder(new Size(100, 100),
+                new Size(400, 100)).build());
+
+        return new InlineSuggestionsRequest.Builder(presentationSpecs)
+                .setMaxSuggestionCount(6)
+                .build();
+    }
+
+    @Override
+    public boolean onInlineSuggestionsResponse(InlineSuggestionsResponse response) {
+        Log.d(TAG, "onInlineSuggestionsResponse() called");
+        AsyncTask.THREAD_POOL_EXECUTOR.execute(() -> {
+            onInlineSuggestionsResponseInternal(response);
+        });
+        return true;
+    }
+
+    private synchronized void updateInlineSuggestionVisibility(boolean visible, boolean force) {
+        Log.d(TAG, "updateInlineSuggestionVisibility() called, visible=" + visible + ", force="
+                + force);
+        mMainHandler.post(() -> {
+            Log.d(TAG, "updateInlineSuggestionVisibility() running");
+            if (visible == mSuggestionViewVisible && !force) {
+                return;
+            } else if (visible) {
+                sSuggestionView.removeAllViews();
+                final int size = mSuggestionViews.size();
+                for (int i = 0; i < size; i++) {
+                    if(mSuggestionViews.get(i) == null) {
+                        continue;
+                    }
+                    ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
+                            mSuggestionViewSizes.get(i).getWidth(),
+                            mSuggestionViewSizes.get(i).getHeight());
+                    sSuggestionView.addView(mSuggestionViews.get(i), layoutParams);
+                }
+                mSuggestionViewVisible = true;
+            } else {
+                sSuggestionView.removeAllViews();
+                mSuggestionViewVisible = false;
+            }
+        });
+    }
+
+    private void onSuggestionViewUpdated() {
+        getTracer().onSuggestionViewUpdated();
+    }
+
+    private synchronized void updateSuggestionViews(View[] suggestionViews, Size[] sizes) {
+        Log.d(TAG, "updateSuggestionViews() called on " + suggestionViews.length + " views");
+        mSuggestionViews = Arrays.asList(suggestionViews);
+        mSuggestionViewSizes = Arrays.asList(sizes);
+        updateInlineSuggestionVisibility(true, true);
+        onSuggestionViewUpdated();
+    }
+
+    private void onInlineSuggestionsResponseInternal(InlineSuggestionsResponse response) {
+        Log.d(TAG, "onInlineSuggestionsResponseInternal() called. Suggestion="
+                + response.getInlineSuggestions().size());
+
+        final List<InlineSuggestion> inlineSuggestions = response.getInlineSuggestions();
+        final int totalSuggestionsCount = inlineSuggestions.size();
+        final AtomicInteger suggestionsCount = new AtomicInteger(totalSuggestionsCount);
+        final View[] suggestionViews = new View[totalSuggestionsCount];
+        final Size[] sizes = new Size[totalSuggestionsCount];
+
+        for (int i=0; i < totalSuggestionsCount; i++) {
+            final int index = i;
+            InlineSuggestion inlineSuggestion = inlineSuggestions.get(index);
+            Size size = inlineSuggestion.getInfo().getPresentationSpec().getMaxSize();
+            Log.d(TAG, "Calling inflate on suggestion " + i);
+            inlineSuggestion.inflate(this, size,
+                    AsyncTask.THREAD_POOL_EXECUTOR,
+                    suggestionView -> {
+                        Log.d(TAG, "new inline suggestion view ready");
+                        if(suggestionView != null) {
+                            suggestionViews[index] = suggestionView;
+                            sizes[index] = size;
+                        }
+                        if (suggestionsCount.decrementAndGet() == 0) {
+                            updateSuggestionViews(suggestionViews, sizes);
+                        }
+                    });
+        }
     }
 
     /**
@@ -821,6 +951,10 @@ public final class MockIme extends InputMethodService {
             final Bundle arguments = new Bundle();
             imeLayoutInfo.writeToBundle(arguments);
             recordEventInternal("onInputViewLayoutChanged", runnable, arguments);
+        }
+
+        public void onSuggestionViewUpdated() {
+            recordEventInternal("onSuggestionViewUpdated", () -> {}, new Bundle());
         }
     }
 }

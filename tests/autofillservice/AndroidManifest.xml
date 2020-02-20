@@ -164,6 +164,18 @@
             </meta-data>
         </service>
         <service
+            android:name=".inline.InstrumentedAutoFillServiceInlineEnabled"
+            android:label="InstrumentedAutoFillServiceInlineEnabled"
+            android:permission="android.permission.BIND_AUTOFILL_SERVICE" >
+            <intent-filter>
+                <action android:name="android.service.autofill.AutofillService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.autofill"
+                android:resource="@xml/autofill_service_inline_enabled">
+            </meta-data>
+        </service>
+        <service
             android:name=".NoOpAutofillService"
             android:label="NoOpAutofillService"
             android:permission="android.permission.BIND_AUTOFILL_SERVICE" >
