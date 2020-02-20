@@ -827,34 +827,35 @@ abstract class TestUtils extends Assert {
     }
 
     static int getMaxSupportedPlaintextInputSizeBytes(String transformation, int keySizeBits) {
+        String encryptionPadding = getCipherEncryptionPadding(transformation);
+        int modulusSizeBytes = (keySizeBits + 7) / 8;
+        if (KeyProperties.ENCRYPTION_PADDING_NONE.equalsIgnoreCase(encryptionPadding)) {
+            return modulusSizeBytes - 1;
+        } else if (KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1.equalsIgnoreCase(
+                encryptionPadding)) {
+            return modulusSizeBytes - 11;
+        } else if (KeyProperties.ENCRYPTION_PADDING_RSA_OAEP.equalsIgnoreCase(
+                encryptionPadding)) {
+            String digest = getCipherDigest(transformation);
+            int digestOutputSizeBytes = (getDigestOutputSizeBits(digest) + 7) / 8;
+            return modulusSizeBytes - 2 * digestOutputSizeBytes - 2;
+        } else {
+            throw new IllegalArgumentException(
+                    "Unsupported encryption padding scheme: " + encryptionPadding);
+        }
+
+    }
+
+    static int getMaxSupportedPlaintextInputSizeBytes(String transformation, Key key) {
         String keyAlgorithm = getCipherKeyAlgorithm(transformation);
         if (KeyProperties.KEY_ALGORITHM_AES.equalsIgnoreCase(keyAlgorithm)
                 || KeyProperties.KEY_ALGORITHM_3DES.equalsIgnoreCase(keyAlgorithm)) {
             return Integer.MAX_VALUE;
         } else if (KeyProperties.KEY_ALGORITHM_RSA.equalsIgnoreCase(keyAlgorithm)) {
-            String encryptionPadding = getCipherEncryptionPadding(transformation);
-            int modulusSizeBytes = (keySizeBits + 7) / 8;
-            if (KeyProperties.ENCRYPTION_PADDING_NONE.equalsIgnoreCase(encryptionPadding)) {
-                return modulusSizeBytes - 1;
-            } else if (KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1.equalsIgnoreCase(
-                    encryptionPadding)) {
-                return modulusSizeBytes - 11;
-            } else if (KeyProperties.ENCRYPTION_PADDING_RSA_OAEP.equalsIgnoreCase(
-                    encryptionPadding)) {
-                String digest = getCipherDigest(transformation);
-                int digestOutputSizeBytes = (getDigestOutputSizeBits(digest) + 7) / 8;
-                return modulusSizeBytes - 2 * digestOutputSizeBytes - 2;
-            } else {
-                throw new IllegalArgumentException(
-                        "Unsupported encryption padding scheme: " + encryptionPadding);
-            }
+            return getMaxSupportedPlaintextInputSizeBytes(transformation, getKeySizeBits(key));
         } else {
             throw new IllegalArgumentException("Unsupported key algorithm: " + keyAlgorithm);
         }
-    }
-
-    static int getMaxSupportedPlaintextInputSizeBytes(String transformation, Key key) {
-        return getMaxSupportedPlaintextInputSizeBytes(transformation, getKeySizeBits(key));
     }
 
     static int getDigestOutputSizeBits(String digest) {
