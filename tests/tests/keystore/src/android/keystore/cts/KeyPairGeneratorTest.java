@@ -66,6 +66,7 @@ import java.text.DecimalFormatSymbols;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.X509ExtendedKeyManager;
@@ -1812,7 +1813,19 @@ public class KeyPairGeneratorTest extends AndroidTestCase {
         }
 
         @Override
+        public String chooseEngineClientAlias(String[] keyType, Principal[] issuers,
+            SSLEngine engine) {
+            return "fake";
+        }
+
+        @Override
         public String chooseServerAlias(String keyType, Principal[] issuers, Socket socket) {
+            return "fake";
+        }
+
+        @Override
+        public String chooseEngineServerAlias(String keyType, Principal[] issuers,
+            SSLEngine engine) {
             return "fake";
         }
 
