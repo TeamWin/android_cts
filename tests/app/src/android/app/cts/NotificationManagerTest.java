@@ -731,10 +731,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testConsolidatedNotificationPolicy() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
-
         final int originalFilter = mNotificationManager.getCurrentInterruptionFilter();
         Policy origPolicy = mNotificationManager.getNotificationPolicy();
         try {
@@ -794,10 +790,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testConsolidatedNotificationPolicyMultiRules() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
-
         final int originalFilter = mNotificationManager.getCurrentInterruptionFilter();
         Policy origPolicy = mNotificationManager.getNotificationPolicy();
         try {
@@ -863,10 +855,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testPostPCanToggleAlarmsMediaSystemTest() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
-
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
 
@@ -897,10 +885,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testPostRCanToggleConversationsTest() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
-
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
 
@@ -1267,10 +1251,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testSuspendPackage() throws Exception {
-        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
-            return;
-        }
-
         toggleListenerAccess(TestNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), true);
         Thread.sleep(500); // wait for listener to be allowed
@@ -1313,10 +1293,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testSuspendedPackageSendsNotification() throws Exception {
-        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
-            return;
-        }
-
         toggleListenerAccess(TestNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), true);
         Thread.sleep(500); // wait for listener to be allowed
@@ -1405,10 +1381,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testShowBadging_ranking() throws Exception {
-        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
-            return;
-        }
-
         final int originalBadging = Settings.Secure.getInt(
                 mContext.getContentResolver(), Settings.Secure.NOTIFICATION_BADGING);
 
@@ -1461,10 +1433,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testGetSuppressedVisualEffectsOff_ranking() throws Exception {
-        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
-            return;
-        }
-
         toggleListenerAccess(TestNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), true);
         Thread.sleep(500); // wait for listener to be allowed
@@ -1491,10 +1459,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testGetSuppressedVisualEffects_ranking() throws Exception {
-        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
-            return;
-        }
-
         final int originalFilter = mNotificationManager.getCurrentInterruptionFilter();
         NotificationManager.Policy origPolicy = mNotificationManager.getNotificationPolicy();
         try {
@@ -1547,10 +1511,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testKeyChannelGroupOverrideImportanceExplanation_ranking() throws Exception {
-        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
-            return;
-        }
-
         toggleListenerAccess(TestNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), true);
         Thread.sleep(500); // wait for listener to be allowed
@@ -1952,10 +1912,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testTotalSilenceOnlyMuteStreams() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
-
         final int originalFilter = mNotificationManager.getCurrentInterruptionFilter();
         Policy origPolicy = mNotificationManager.getNotificationPolicy();
         try {
@@ -1997,10 +1953,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testAlarmsOnlyMuteStreams() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
-
         final int originalFilter = mNotificationManager.getCurrentInterruptionFilter();
         Policy origPolicy = mNotificationManager.getNotificationPolicy();
         try {
@@ -2042,10 +1994,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testAddAutomaticZenRule_configActivity() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
-
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
 
@@ -2058,10 +2006,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testUpdateAutomaticZenRule_configActivity() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
-
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
 
@@ -2076,10 +2020,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testRemoveAutomaticZenRule_configActivity() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
-
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
 
@@ -2095,10 +2035,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testSetAutomaticZenRuleState() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
-
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
 
@@ -2118,10 +2054,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testSetAutomaticZenRuleState_turnOff() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
-
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
 
@@ -2150,10 +2082,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testSetAutomaticZenRuleState_deletedRule() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
-
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
 
@@ -2178,10 +2106,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testSetAutomaticZenRuleState_multipleRules() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
-
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
 
@@ -2215,9 +2139,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testSetNotificationPolicy_P_setOldFields() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
         Policy origPolicy = mNotificationManager.getNotificationPolicy();
@@ -2240,9 +2161,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testSetNotificationPolicy_P_setNewFields() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
         Policy origPolicy = mNotificationManager.getNotificationPolicy();
@@ -2265,9 +2183,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testSetNotificationPolicy_P_setOldNewFields() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
         Policy origPolicy = mNotificationManager.getNotificationPolicy();
@@ -2401,10 +2316,6 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testNotificationDelegate_cannotCancelNotificationsPostedByDelegator()
             throws Exception {
-        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
-            return;
-        }
-
         toggleListenerAccess(TestNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), true);
         Thread.sleep(500); // wait for listener to be allowed
@@ -2555,10 +2466,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testShouldHideSilentStatusIcons() throws Exception {
-        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
-            return;
-        }
-
         try {
             mNotificationManager.shouldHideSilentStatusBarIcons();
             fail("Non-privileged apps should not get this information");
@@ -2573,10 +2480,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testMatchesCallFilter() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
-
         // allow all callers
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
@@ -2634,10 +2537,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testNotificationListener_setNotificationsShown() throws Exception {
-        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
-            return;
-        }
-
         toggleListenerAccess(TestNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), true);
         Thread.sleep(500); // wait for listener to be allowed
@@ -2667,10 +2566,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testNotificationListener_getNotificationChannels() throws Exception {
-        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
-            return;
-        }
-
         toggleListenerAccess(TestNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), true);
         Thread.sleep(500); // wait for listener to be allowed
@@ -2687,10 +2582,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testNotificationListener_getNotificationChannelGroups() throws Exception {
-        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
-            return;
-        }
-
         toggleListenerAccess(TestNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), true);
         Thread.sleep(500); // wait for listener to be allowed
@@ -2706,10 +2597,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testNotificationListener_updateNotificationChannel() throws Exception {
-        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
-            return;
-        }
-
         toggleListenerAccess(TestNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), true);
         Thread.sleep(500); // wait for listener to be allowed
@@ -2730,10 +2617,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testNotificationListener_getActiveNotifications() throws Exception {
-        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
-            return;
-        }
-
         toggleListenerAccess(TestNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), true);
         Thread.sleep(500); // wait for listener to be allowed
@@ -2762,10 +2645,6 @@ public class NotificationManagerTest extends AndroidTestCase {
 
 
     public void testNotificationListener_getCurrentRanking() throws Exception {
-        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
-            return;
-        }
-
         toggleListenerAccess(TestNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), true);
         Thread.sleep(500); // wait for listener to be allowed
@@ -2780,10 +2659,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testNotificationListener_cancelNotifications() throws Exception {
-        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
-            return;
-        }
-
         toggleListenerAccess(TestNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), true);
         Thread.sleep(500); // wait for listener to be allowed

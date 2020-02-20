@@ -17,7 +17,6 @@
 package android.app.notification.legacy29.cts;
 
 import static android.app.NotificationManager.Policy.CONVERSATION_SENDERS_ANYONE;
-import static android.app.NotificationManager.Policy.CONVERSATION_SENDERS_IMPORTANT;
 import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_CONVERSATIONS;
 
 import static junit.framework.Assert.assertEquals;
@@ -25,7 +24,6 @@ import static junit.framework.Assert.assertTrue;
 import static junit.framework.TestCase.assertNotNull;
 import static junit.framework.TestCase.assertNull;
 
-import android.app.ActivityManager;
 import android.app.Instrumentation;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -61,7 +59,6 @@ public class NotificationManager29Test {
     final String NOTIFICATION_CHANNEL_ID = "LegacyNoManTest29";
     private NotificationManager mNotificationManager;
     private Context mContext;
-    private ActivityManager mActivityManager;
 
     @Before
     public void setUp() throws Exception {
@@ -71,7 +68,6 @@ public class NotificationManager29Test {
                 Context.NOTIFICATION_SERVICE);
         mNotificationManager.createNotificationChannel(new NotificationChannel(
                 NOTIFICATION_CHANNEL_ID, "name", NotificationManager.IMPORTANCE_DEFAULT));
-        mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
     }
 
     private void toggleNotificationPolicyAccess(String packageName,
@@ -158,9 +154,6 @@ public class NotificationManager29Test {
 
     @Test
     public void testApi29CannotToggleConversationsTest() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
 
@@ -185,9 +178,6 @@ public class NotificationManager29Test {
 
     @Test
     public void testApi29CannotToggleConversationsOffTest() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
 

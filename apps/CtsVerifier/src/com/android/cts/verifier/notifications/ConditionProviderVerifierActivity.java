@@ -21,9 +21,7 @@ import static android.app.NotificationManager.AUTOMATIC_RULE_STATUS_ENABLED;
 import static android.app.NotificationManager.AUTOMATIC_RULE_STATUS_REMOVED;
 import static android.app.NotificationManager.AUTOMATIC_RULE_STATUS_UNKNOWN;
 import static android.app.NotificationManager.INTERRUPTION_FILTER_PRIORITY;
-import static android.provider.Settings.EXTRA_APP_PACKAGE;
 
-import android.app.ActivityManager;
 import android.app.AutomaticZenRule;
 import android.app.NotificationManager;
 import android.content.ComponentName;
@@ -71,32 +69,26 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
     @Override
     protected List<InteractiveTestCase> createTestItems() {
         List<InteractiveTestCase> tests = new ArrayList<>(9);
-        ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-        if (am.isLowRamDevice()) {
-            tests.add(new CannotBeEnabledTest());
-            tests.add(new ServiceStoppedTest());
-        } else {
-            tests.add(new IsEnabledTest());
-            tests.add(new ServiceStartedTest());
-            tests.add(new CreateAutomaticZenRuleTest());
-            tests.add(new CreateAutomaticZenRuleWithZenPolicyTest());
-            tests.add(new UpdateAutomaticZenRuleTest());
-            tests.add(new UpdateAutomaticZenRuleWithZenPolicyTest());
-            tests.add(new GetAutomaticZenRuleTest());
-            tests.add(new GetAutomaticZenRulesTest());
-            tests.add(new VerifyRulesIntent());
-            tests.add(new VerifyRulesAvailableToUsers());
-            tests.add(new ReceiveRuleDisableNoticeTest());
-            tests.add(new ReceiveRuleEnabledNoticeTest());
-            tests.add(new ReceiveRuleDeletedNoticeTest());
-            tests.add(new SubscribeAutomaticZenRuleTest());
-            tests.add(new DeleteAutomaticZenRuleTest());
-            tests.add(new UnsubscribeAutomaticZenRuleTest());
-            tests.add(new RequestUnbindTest());
-            tests.add(new RequestBindTest());
-            tests.add(new IsDisabledTest());
-            tests.add(new ServiceStoppedTest());
-        }
+        tests.add(new IsEnabledTest());
+        tests.add(new ServiceStartedTest());
+        tests.add(new CreateAutomaticZenRuleTest());
+        tests.add(new CreateAutomaticZenRuleWithZenPolicyTest());
+        tests.add(new UpdateAutomaticZenRuleTest());
+        tests.add(new UpdateAutomaticZenRuleWithZenPolicyTest());
+        tests.add(new GetAutomaticZenRuleTest());
+        tests.add(new GetAutomaticZenRulesTest());
+        tests.add(new VerifyRulesIntent());
+        tests.add(new VerifyRulesAvailableToUsers());
+        tests.add(new ReceiveRuleDisableNoticeTest());
+        tests.add(new ReceiveRuleEnabledNoticeTest());
+        tests.add(new ReceiveRuleDeletedNoticeTest());
+        tests.add(new SubscribeAutomaticZenRuleTest());
+        tests.add(new DeleteAutomaticZenRuleTest());
+        tests.add(new UnsubscribeAutomaticZenRuleTest());
+        tests.add(new RequestUnbindTest());
+        tests.add(new RequestBindTest());
+        tests.add(new IsDisabledTest());
+        tests.add(new ServiceStoppedTest());
         return tests;
     }
 
@@ -122,45 +114,6 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
                     status = PASS;
                 } else {
                     status = WAIT_FOR_USER;
-                }
-                next();
-            }
-        }
-
-        protected void tearDown() {
-            // wait for the service to start
-            delay();
-        }
-
-        @Override
-        protected Intent getIntent() {
-            return new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
-        }
-    }
-
-    protected class CannotBeEnabledTest extends InteractiveTestCase {
-        @Override
-        protected View inflate(ViewGroup parent) {
-            return createNlsSettingsItem(parent, R.string.cp_cannot_enable_service);
-        }
-
-        @Override
-        boolean autoStart() {
-            return true;
-        }
-
-        @Override
-        protected void test() {
-            mNm.cancelAll();
-            Intent settings = new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
-            if (settings.resolveActivity(mPackageManager) == null) {
-                logFail("no settings activity");
-                status = FAIL;
-            } else {
-                if (mNm.isNotificationPolicyAccessGranted()) {
-                    status = FAIL;
-                } else {
-                    status = PASS;
                 }
                 next();
             }

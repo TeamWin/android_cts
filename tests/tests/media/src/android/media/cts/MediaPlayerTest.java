@@ -15,7 +15,6 @@
  */
 package android.media.cts;
 
-import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
@@ -827,8 +826,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         int oldRingerMode = Integer.MIN_VALUE;
         int oldVolume = Integer.MIN_VALUE;
         try {
-            if (am.getRingerMode() != AudioManager.RINGER_MODE_NORMAL
-                    && !ActivityManager.isLowRamDeviceStatic()) {
+            if (am.getRingerMode() != AudioManager.RINGER_MODE_NORMAL) {
                 Utils.toggleNotificationPolicyAccess(
                         mContext.getPackageName(), getInstrumentation(), true /* on */);
             }
@@ -932,10 +930,8 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
             if (oldVolume != Integer.MIN_VALUE) {
                 am.setStreamVolume(AudioManager.STREAM_MUSIC, oldVolume, 0);
             }
-            if (!ActivityManager.isLowRamDeviceStatic()) {
-                Utils.toggleNotificationPolicyAccess(
-                        mContext.getPackageName(), getInstrumentation(), false  /* on == false */);
-            }
+            Utils.toggleNotificationPolicyAccess(
+                    mContext.getPackageName(), getInstrumentation(), false  /* on == false */);
         }
     }
 

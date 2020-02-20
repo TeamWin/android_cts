@@ -24,7 +24,6 @@ import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.fail;
 
-import android.app.ActivityManager;
 import android.app.Instrumentation;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -43,6 +42,9 @@ import android.service.notification.NotificationAssistantService;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
 import junit.framework.Assert;
 
 import org.junit.After;
@@ -57,9 +59,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
-
 @RunWith(AndroidJUnit4.class)
 public class NotificationAssistantServiceTest {
 
@@ -71,7 +70,6 @@ public class NotificationAssistantServiceTest {
     private TestNotificationAssistant mNotificationAssistantService;
     private TestNotificationListener mNotificationListenerService;
     private NotificationManager mNotificationManager;
-    private ActivityManager mActivityManager;
     private StatusBarManager mStatusBarManager;
     private Context mContext;
     private UiAutomation mUi;
@@ -84,7 +82,6 @@ public class NotificationAssistantServiceTest {
                 Context.NOTIFICATION_SERVICE);
         mNotificationManager.createNotificationChannel(new NotificationChannel(
                 NOTIFICATION_CHANNEL_ID, "name", NotificationManager.IMPORTANCE_DEFAULT));
-        mActivityManager = mContext.getSystemService(ActivityManager.class);
         mStatusBarManager = (StatusBarManager) mContext.getSystemService(
                 Context.STATUS_BAR_SERVICE);
     }
@@ -92,18 +89,14 @@ public class NotificationAssistantServiceTest {
     @After
     public void tearDown() throws IOException {
         if (mNotificationListenerService != null) mNotificationListenerService.resetData();
-        if (!mActivityManager.isLowRamDevice()) {
-            toggleListenerAccess(false);
-            toggleAssistantAccess(false);
-        }
+
+        toggleListenerAccess(false);
+        toggleAssistantAccess(false);
         mUi.dropShellPermissionIdentity();
     }
 
     @Test
     public void testOnNotificationEnqueued() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
         toggleListenerAccess(true);
         Thread.sleep(SLEEP_TIME);
 
@@ -138,9 +131,6 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testAdjustNotification_userSentimentKey() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
         setUpListeners();
 
         mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE");
@@ -172,9 +162,6 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testAdjustNotification_importanceKey() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
         setUpListeners();
 
         mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE");
@@ -205,9 +192,6 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testAdjustNotification_rankingScoreKey() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
         setUpListeners();
 
         try {
@@ -263,9 +247,6 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testAdjustNotification_smartActionKey() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
         setUpListeners();
 
         mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE");
@@ -313,9 +294,6 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testAdjustNotification_smartReplyKey() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
         setUpListeners();
         CharSequence smartReply = "Smart Reply!";
 
@@ -359,9 +337,6 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testAdjustNotification_importanceKey_notAllowed() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
         setUpListeners();
 
         mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE");
@@ -394,9 +369,6 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testAdjustNotification_rankingScoreKey_notAllowed() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
         setUpListeners();
 
         mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE");
@@ -442,9 +414,6 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testGetAllowedAssistantCapabilities_permission() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
         toggleAssistantAccess(false);
 
         try {
@@ -457,9 +426,6 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testGetAllowedAssistantCapabilities() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
         toggleAssistantAccess(true);
         Thread.sleep(SLEEP_TIME); // wait for assistant to be allowed
         mNotificationAssistantService = TestNotificationAssistant.getInstance();
@@ -489,9 +455,6 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testOnActionInvoked_methodExists() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
         setUpListeners();
         final Intent intent = new Intent(Intent.ACTION_MAIN, Telephony.Threads.CONTENT_URI);
 
@@ -509,9 +472,6 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testOnNotificationDirectReplied_methodExists() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
         setUpListeners();
         // This method has to exist and the call cannot fail
         mNotificationAssistantService.onNotificationDirectReplied("");
@@ -519,9 +479,6 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testOnNotificationExpansionChanged_methodExists() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
         setUpListeners();
         // This method has to exist and the call cannot fail
         mNotificationAssistantService.onNotificationExpansionChanged("", true, true);
@@ -529,9 +486,6 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testOnNotificationVisibilityChanged() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
         setUpListeners();
 
         mUi.adoptShellPermissionIdentity("android.permission.EXPAND_STATUS_BAR");
@@ -560,9 +514,6 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testOnNotificationsSeen() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
         setUpListeners();
 
         mUi.adoptShellPermissionIdentity("android.permission.EXPAND_STATUS_BAR");
@@ -585,9 +536,6 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testOnPanelRevealedAndHidden() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
         setUpListeners();
 
         mUi.adoptShellPermissionIdentity("android.permission.EXPAND_STATUS_BAR");
@@ -609,9 +557,6 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testOnSuggestedReplySent_methodExists() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
         setUpListeners();
         // This method has to exist and the call cannot fail
         mNotificationAssistantService.onSuggestedReplySent("", "",
