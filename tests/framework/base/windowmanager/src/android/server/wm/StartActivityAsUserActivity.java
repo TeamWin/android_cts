@@ -23,6 +23,7 @@ import static android.server.wm.StartActivityAsUserTests.KEY_USER_ID;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.RemoteCallback;
+import android.os.UserHandle;
 import android.util.Log;
 
 public class StartActivityAsUserActivity extends Activity {
@@ -35,10 +36,10 @@ public class StartActivityAsUserActivity extends Activity {
         RemoteCallback cb = (RemoteCallback) extra.get(EXTRA_CALLBACK);
         if (cb != null) {
             Bundle result = new Bundle();
-            result.putInt(KEY_USER_ID, getUserId());
+            result.putInt(KEY_USER_ID, UserHandle.myUserId());
             cb.sendResult(result);
         }
-        Log.i(LOG_TAG, "Second activity started with user " + getUserId());
+        Log.i(LOG_TAG, "Second activity started with user " + UserHandle.myUserId());
         finish();
     }
 }
