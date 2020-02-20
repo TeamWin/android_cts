@@ -250,17 +250,11 @@ public class SensorTest extends SensorTestCase {
                 sensors.get(0).isWakeUpSensor());
     }
 
-    private void hasAtLeastOneWakeupSensorOrEmpty(List<Sensor> sensors, String sensorName) {
-        if (sensors == null || sensors.isEmpty()) return;
-        boolean foundWakeup = false;
-        for (Sensor sensor : sensors) {
-            if (sensor.isWakeUpSensor()) {
-                foundWakeup = true;
-                break;
-            }
-        }
+    private void hasDefaultWakeupSensorOrEmpty(int sensorType, String sensorName) {
+        Sensor sensor = mSensorManager.getDefaultSensor(sensorType);
+        if (sensor == null) return;
 
-        assertTrue("No wake-up " + sensorName + " sensors implemented", foundWakeup);
+        assertTrue("Default " + sensorName + " sensor is not a wake-up sensor", sensor.isWakeUpSensor());
     }
 
     // Some sensors like proximity, significant motion etc. are defined as wake-up sensors by
@@ -276,8 +270,8 @@ public class SensorTest extends SensorTestCase {
         hasOnlyOneWakeUpSensorOrEmpty(mSensorManager.getSensorList(TYPE_GLANCE_GESTURE));
         hasOnlyOneWakeUpSensorOrEmpty(mSensorManager.getSensorList(TYPE_PICK_UP_GESTURE));
 
-        hasAtLeastOneWakeupSensorOrEmpty(mSensorManager.getSensorList(Sensor.TYPE_PROXIMITY), "proximity");
-        hasAtLeastOneWakeupSensorOrEmpty(mSensorManager.getSensorList(Sensor.TYPE_HINGE_ANGLE), "hinge");
+        hasDefaultWakeupSensorOrEmpty(Sensor.TYPE_PROXIMITY, "proximity");
+        hasDefaultWakeupSensorOrEmpty(Sensor.TYPE_HINGE_ANGLE, "hinge");
     }
 
     public void testGetDefaultSensorWithWakeUpFlag() {
