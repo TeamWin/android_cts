@@ -75,8 +75,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         super.setUp();
 
         mWifiManager = (WifiManager) getContext().getSystemService(Context.WIFI_SERVICE);
-        mCm =
-                (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        mCm = (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
 
         PackageManager packageManager = mContext.getPackageManager();
         mHasWifi = packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI);
@@ -84,7 +83,9 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         mBuilder =
                 new JobInfo.Builder(CONNECTIVITY_JOB_ID, kJobServiceComponent);
 
-        mInitialWiFiState = mWifiManager.isWifiEnabled();
+        if (mHasWifi) {
+            mInitialWiFiState = mWifiManager.isWifiEnabled();
+        }
         mInitialRestrictBackground = SystemUtil
                 .runShellCommand(getInstrumentation(), RESTRICT_BACKGROUND_GET_CMD)
                 .contains("enabled");
@@ -101,7 +102,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         setDataSaverEnabled(mInitialRestrictBackground);
 
         // Ensure that we leave WiFi in its previous state.
-        if (mWifiManager.isWifiEnabled() != mInitialWiFiState) {
+        if (mHasWifi && mWifiManager.isWifiEnabled() != mInitialWiFiState) {
             setWifiState(mInitialWiFiState, mCm, mWifiManager);
         }
 
