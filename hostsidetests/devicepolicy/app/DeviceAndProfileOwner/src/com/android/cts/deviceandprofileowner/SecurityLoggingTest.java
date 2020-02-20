@@ -68,11 +68,14 @@ import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.KeyProtection;
 import android.text.TextUtils;
+import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+
+import junit.framework.AssertionFailedError;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -88,6 +91,7 @@ import java.util.stream.Collectors;
 import javax.crypto.spec.SecretKeySpec;
 
 public class SecurityLoggingTest extends BaseDeviceAdminTest {
+    private static final String TAG = "SecurityLoggingTest";
     private static final String ARG_BATCH_NUMBER = "batchNumber";
     private static final String PREF_KEY_PREFIX = "batch-last-id-";
     private static final String PREF_NAME = "batchIds";
@@ -346,10 +350,21 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
             events = mDevicePolicyManager.retrieveSecurityLogs(ADMIN_RECEIVER_COMPONENT);
             if (events == null) Thread.sleep(1000);
         }
-
-        verifySecurityLogs(events);
+        try {
+            verifySecurityLogs(events);
+        } catch (AssertionFailedError e) {
+            dumpSecurityLogs(events);
+            throw e;
+        }
 
         return events;
+    }
+
+    private void dumpSecurityLogs(List<SecurityEvent> events) {
+        Log.d(TAG, "Security events dump:");
+        for (SecurityEvent event : events) {
+            Log.d(TAG, event.toString());
+        }
     }
 
     /**
