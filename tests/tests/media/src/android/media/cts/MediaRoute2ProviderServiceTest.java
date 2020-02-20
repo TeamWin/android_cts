@@ -370,10 +370,7 @@ public class MediaRoute2ProviderServiceTest {
             @Override
             public void onTransferred(RoutingController oldController,
                     RoutingController newController) {
-                // TODO: Make RoutingController#getOriginalId() as @TestApi and use it.
-                if (newController != null
-                        && ROUTE_ID1.equals(newController
-                        .getSelectedRoutes().get(0).getOriginalId())) {
+                if (newController != null && SESSION_ID_1.equals(newController.getOriginalId())) {
                     controllers.add(newController);
                     onControllerCreatedLatch.countDown();
                 }
@@ -484,16 +481,14 @@ public class MediaRoute2ProviderServiceTest {
             @Override
             public void onTransferred(RoutingController oldController,
                     RoutingController newController) {
-                // TODO: Make RoutingController#getOriginalId() as @TestApi and use it.
                 if (newController != null) {
-                    if (ROUTE_ID1.equals(newController
-                            .getSelectedRoutes().get(0).getOriginalId())) {
+                    if (SESSION_ID_1.equals(newController.getOriginalId())) {
                         controllers.add(newController);
                         onControllerCreatedLatch.countDown();
                     }
                 } else {
-                    if (ROUTE_ID1.equals(oldController
-                            .getSelectedRoutes().get(0).getOriginalId())) {
+                    // newController == null means that the oldController is released
+                    if (SESSION_ID_1.equals(oldController.getOriginalId())) {
                         assertTrue(oldController.isReleased());
                         onControllerReleasedLatch.countDown();
                     }
