@@ -465,14 +465,14 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         }
 
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".AccountManagementParentTest",
-                "testCanSetAccountManagementRestriction", mUserId);
+                "testSetAccountManagementDisabledOnParent", mUserId);
         installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
         try {
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".AccountManagementParentTest",
-                    "testAccountRestricted", mPrimaryUserId);
+                    "testAccountManagementDisabled", mPrimaryUserId);
         } finally {
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".AccountManagementParentTest",
-                    "testCanRemoveAccountManagementRestriction", mUserId);
+                    "testEnableAccountManagement", mUserId);
         }
     }
 
