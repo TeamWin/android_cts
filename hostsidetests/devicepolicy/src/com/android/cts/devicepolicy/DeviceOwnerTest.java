@@ -789,14 +789,6 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testRequestSetLocationProviderAllowed() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-        executeDeviceOwnerTest("RequestSetLocationProviderAllowedTest");
-    }
-
-    @Test
     public void testDeviceOwnerProvisioning() throws Exception {
         if (!mHasFeature) {
             return;
