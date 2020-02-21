@@ -827,8 +827,6 @@ public final class CannedFillResponse {
                 return this;
             }
 
-
-
             /**
              * Sets the view to present the response in the UI.
              */
@@ -853,6 +851,9 @@ public final class CannedFillResponse {
                 return this;
             }
 
+            /**
+             * Builds the canned dataset.
+             */
             public CannedDataset build() {
                 return new CannedDataset(this);
             }

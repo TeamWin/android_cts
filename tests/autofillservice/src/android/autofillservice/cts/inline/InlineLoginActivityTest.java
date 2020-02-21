@@ -22,6 +22,7 @@ import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.findAutofillIdByResourceId;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.getContext;
+import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
 import static android.autofillservice.cts.Timeouts.MOCK_IME_TIMEOUT_MS;
 import static android.autofillservice.cts.inline.InstrumentedAutoFillServiceInlineEnabled.SERVICE_NAME;
 
@@ -40,7 +41,6 @@ import android.autofillservice.cts.Helper;
 import android.autofillservice.cts.InstrumentedAutoFillService;
 import android.os.Process;
 import android.service.autofill.FillContext;
-import android.support.test.uiautomator.UiObject2;
 
 import com.android.compatibility.common.util.RetryableException;
 import com.android.cts.mockime.ImeEventStream;
@@ -60,29 +60,14 @@ public class InlineLoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
-    public void testAutofill_oneDataset() throws Exception {
+    public void testAutofill_noDataset() throws Exception {
         // Set service.
         enableService();
 
         final MockImeSession mockImeSession = sMockImeSessionRule.getMockImeSession();
         assumeTrue("MockIME not available", mockImeSession != null);
 
-        // Set expectations.
-        String expectedHeader = null, expectedFooter = null;
-
-        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
-                .addDataset(new CannedFillResponse.CannedDataset.Builder()
-                        .setField(ID_USERNAME, "dude")
-                        .setField(ID_PASSWORD, "sweet")
-                        .setPresentation(createPresentation("The Dude"))
-                        .setInlinePresentation(createInlinePresentation("The Dude"))
-                        .build());
-
-        sReplier.addResponse(builder.build());
-        mActivity.expectAutoFill("dude", "sweet");
-
-        // Dynamically set password to make sure it's sanitized.
-        mActivity.onPassword((v) -> v.setText("I AM GROOT"));
+        sReplier.addResponse(CannedFillResponse.NO_RESPONSE);
 
         final ImeEventStream stream = mockImeSession.openEventStream();
         mockImeSession.callRequestShowSelf(0);
@@ -95,65 +80,50 @@ public class InlineLoginActivityTest extends AbstractLoginActivityTestCase {
         expectEvent(stream, editorMatcher("onStartInput", mActivity.getUsername().getId()),
                 MOCK_IME_TIMEOUT_MS);
 
-        //TODO: extServices bug cause test to fail first time, retry if suggestion strip missing.
-        try {
-            expectEvent(stream, event -> "onSuggestionViewUpdated".equals(event.getEventName()),
-                    MOCK_IME_TIMEOUT_MS);
-        } catch (TimeoutException e) {
-            sReplier.getNextFillRequest();
-            throw new RetryableException("Retry inline test");
-        }
+        sReplier.getNextFillRequest();
 
-        final UiObject2 suggestionStrip = mUiBot.assertSuggestionStrip(1);
-        mUiBot.selectSuggestion(0);
+        mUiBot.assertNoSuggestionStripEver();
+        mUiBot.assertNoDatasetsEver();
 
-        // Check the results.
-        mActivity.assertAutoFilled();
-
-        // Sanity checks.
-
-        // Make sure input was sanitized.
-        final InstrumentedAutoFillService.FillRequest request = sReplier.getNextFillRequest();
-        assertWithMessage("CancelationSignal is null").that(request.cancellationSignal).isNotNull();
-        assertTextIsSanitized(request.structure, ID_PASSWORD);
-        final FillContext fillContext = request.contexts.get(request.contexts.size() - 1);
-        assertThat(fillContext.getFocusedId())
-                .isEqualTo(findAutofillIdByResourceId(fillContext, ID_USERNAME));
-
-        // Make sure initial focus was properly set.
-        assertWithMessage("Username node is not focused").that(
-                findNodeByResourceId(request.structure, ID_USERNAME).isFocused()).isTrue();
-        assertWithMessage("Password node is focused").that(
-                findNodeByResourceId(request.structure, ID_PASSWORD).isFocused()).isFalse();
+        waitUntilDisconnected();
     }
 
     @Test
-    public void testAutofill_twoDatasets() throws Exception {
+    public void testAutofill_oneDataset() throws Exception {
+        testBasicLoginAutofill(/* numDatasets= */ 1, /* selectedDatasetIndex= */ 0);
+    }
+
+    @Test
+    public void testAutofill_twoDatasets_selectFirstDataset() throws Exception {
+        testBasicLoginAutofill(/* numDatasets= */ 2, /* selectedDatasetIndex= */ 0);
+
+    }
+
+    @Test
+    public void testAutofill_twoDatasets_selectSecondDataset() throws Exception {
+        testBasicLoginAutofill(/* numDatasets= */ 2, /* selectedDatasetIndex= */ 1);
+    }
+
+    private void testBasicLoginAutofill(int numDatasets, int selectedDatasetIndex)
+            throws Exception {
         // Set service.
         enableService();
 
         final MockImeSession mockImeSession = sMockImeSessionRule.getMockImeSession();
         assumeTrue("MockIME not available", mockImeSession != null);
 
-        // Set expectations.
-        String expectedHeader = null, expectedFooter = null;
-
-        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
-                .addDataset(new CannedFillResponse.CannedDataset.Builder()
-                        .setField(ID_USERNAME, "dude")
-                        .setField(ID_PASSWORD, "sweet")
-                        .setPresentation(createPresentation("The Dude"))
-                        .setInlinePresentation(createInlinePresentation("The Dude"))
-                        .build())
-                .addDataset(new CannedFillResponse.CannedDataset.Builder()
-                        .setField(ID_USERNAME, "test")
-                        .setField(ID_PASSWORD, "tweet")
-                        .setPresentation(createPresentation("Second Dude"))
-                        .setInlinePresentation(createInlinePresentation("Second Dude"))
-                        .build());
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder();
+        for (int i = 0; i < numDatasets; i++) {
+            builder.addDataset(new CannedFillResponse.CannedDataset.Builder()
+                    .setField(ID_USERNAME, "dude" + i)
+                    .setField(ID_PASSWORD, "sweet" + i)
+                    .setPresentation(createPresentation("The Dude" + i))
+                    .setInlinePresentation(createInlinePresentation("The Dude" + i))
+                    .build());
+        }
 
         sReplier.addResponse(builder.build());
-        mActivity.expectAutoFill("test", "tweet");
+        mActivity.expectAutoFill("dude" + selectedDatasetIndex, "sweet" + selectedDatasetIndex);
 
         // Dynamically set password to make sure it's sanitized.
         mActivity.onPassword((v) -> v.setText("I AM GROOT"));
@@ -178,13 +148,13 @@ public class InlineLoginActivityTest extends AbstractLoginActivityTestCase {
             throw new RetryableException("Retry inline test");
         }
 
-        mUiBot.assertSuggestionStrip(2);
-        mUiBot.selectSuggestion(1);
+        mUiBot.assertSuggestionStrip(numDatasets);
+        mUiBot.assertNoDatasetsEver();
+
+        mUiBot.selectSuggestion(selectedDatasetIndex);
 
         // Check the results.
         mActivity.assertAutoFilled();
-
-        // Sanity checks.
 
         // Make sure input was sanitized.
         final InstrumentedAutoFillService.FillRequest request = sReplier.getNextFillRequest();
