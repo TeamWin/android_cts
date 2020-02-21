@@ -31,12 +31,9 @@ import android.stats.devicepolicy.EventId;
 
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.log.LogUtil;
 
 import org.junit.Ignore;
 import org.junit.Test;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for organization-owned Profile Owner.
@@ -495,22 +492,16 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
-    private void setupIme(int userId, String imeApk, String imePackage) throws Exception {
+    private void setupIme(int userId, String imeApk, String imeComponent) throws Exception {
         installAppAsUser(imeApk, userId);
-        // Wait until IMS service is registered by the system.
-        final long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
-        while (true) {
-            final String availableImes = getDevice().executeShellCommand(
-                    String.format("ime list --user %d -s -a", userId));
-            if (availableImes.contains(imePackage)) {
-                break;
-            }
-            assertTrue("Failed waiting for IME to become available", System.nanoTime() < deadline);
-            Thread.sleep(100);
-        }
 
-        executeShellCommand("ime enable " + imePackage);
-        executeShellCommand("ime set " + imePackage);
+        // Wait until IMS service is registered by the system.
+        waitForOutput("Failed waiting for IME to become available",
+                String.format("ime list --user %d -s -a", userId),
+                s -> s.contains(imeComponent), 10 /* seconds */);
+
+        executeShellCommand("ime enable " + imeComponent);
+        executeShellCommand("ime set " + imeComponent);
     }
 
 
