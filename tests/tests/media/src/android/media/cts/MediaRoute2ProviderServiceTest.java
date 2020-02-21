@@ -17,12 +17,12 @@
 package android.media.cts;
 
 import static android.media.cts.MediaRouter2Test.releaseControllers;
-import static android.media.cts.SampleMediaRoute2ProviderService.FEATURE_SAMPLE;
-import static android.media.cts.SampleMediaRoute2ProviderService.FEATURE_SPECIAL;
-import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID1;
-import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID2;
-import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID4_TO_SELECT_AND_DESELECT;
-import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID5_TO_TRANSFER_TO;
+import static android.media.cts.StubMediaRoute2ProviderService.FEATURE_SAMPLE;
+import static android.media.cts.StubMediaRoute2ProviderService.FEATURE_SPECIAL;
+import static android.media.cts.StubMediaRoute2ProviderService.ROUTE_ID1;
+import static android.media.cts.StubMediaRoute2ProviderService.ROUTE_ID2;
+import static android.media.cts.StubMediaRoute2ProviderService.ROUTE_ID4_TO_SELECT_AND_DESELECT;
+import static android.media.cts.StubMediaRoute2ProviderService.ROUTE_ID5_TO_TRANSFER_TO;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -40,7 +40,7 @@ import android.media.MediaRouter2.RoutingController;
 import android.media.MediaRouter2.TransferCallback;
 import android.media.RouteDiscoveryPreference;
 import android.media.RoutingSessionInfo;
-import android.media.cts.SampleMediaRoute2ProviderService.Proxy;
+import android.media.cts.StubMediaRoute2ProviderService.Proxy;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.LargeTest;
@@ -66,14 +66,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
-@AppModeFull(reason = "The system should be able to bind to SampleMediaRoute2ProviderService")
+@AppModeFull(reason = "The system should be able to bind to StubMediaRoute2ProviderService")
 @LargeTest
 public class MediaRoute2ProviderServiceTest {
     private static final String TAG = "MR2ProviderServiceTest";
     Context mContext;
     private MediaRouter2 mRouter2;
     private Executor mExecutor;
-    private SampleMediaRoute2ProviderService mService;
+    private StubMediaRoute2ProviderService mService;
 
     private static final int TIMEOUT_MS = 5000;
 
@@ -93,8 +93,8 @@ public class MediaRoute2ProviderServiceTest {
         new PollingCheck(TIMEOUT_MS) {
             @Override
             protected boolean check() {
-                SampleMediaRoute2ProviderService service =
-                        SampleMediaRoute2ProviderService.getInstance();
+                StubMediaRoute2ProviderService service =
+                        StubMediaRoute2ProviderService.getInstance();
                 if (service != null) {
                     mService = service;
                     return true;
@@ -557,8 +557,8 @@ public class MediaRoute2ProviderServiceTest {
         }
     }
 
-    void setProxy(SampleMediaRoute2ProviderService.Proxy proxy) {
-        SampleMediaRoute2ProviderService service = mService;
+    void setProxy(StubMediaRoute2ProviderService.Proxy proxy) {
+        StubMediaRoute2ProviderService service = mService;
         if (service != null) {
             service.setProxy(proxy);
         }
