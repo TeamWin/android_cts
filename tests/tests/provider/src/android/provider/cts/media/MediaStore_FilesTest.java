@@ -116,9 +116,9 @@ public class MediaStore_FilesTest {
         assertEquals(1, mResolver.update(fileUri, values, null, null));
         assertStringColumn(fileUri, MediaColumns.DATA, updatedPath);
 
-        // check that inserting a duplicate entry fails
+        // check that inserting a duplicate entry updates previous entry.
         Uri foo = mResolver.insert(allFilesUri, values);
-        assertNull(foo);
+        assertEquals(foo, fileUri);
 
         // Delete the file and observe that the file count decreased.
         assertEquals(1, mResolver.delete(fileUri, null, null));
