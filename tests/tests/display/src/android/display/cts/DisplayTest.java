@@ -470,6 +470,16 @@ public class DisplayTest {
             params.setTitle("CtsTestPresentation");
             getWindow().setAttributes(params);
         }
+
+        @Override
+        public void cancel() {
+            // Ignore attempts to force cancel the presentation. This is going to happen when we
+            // change the mode of the display since doing so will change the display metrics, which
+            // Presentations don't yet support. Ignoring it means the Presentation will stay up and
+            // the mode will stay changed until dismiss is called, preventing a race condition
+            // between the test checking the mode of the display and the mode changing back to the
+            // default because the requesting Presentation is no longer showing.
+        }
     }
 
     private Activity launchScreenOnActivity() {
