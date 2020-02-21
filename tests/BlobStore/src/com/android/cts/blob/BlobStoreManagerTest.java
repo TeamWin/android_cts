@@ -15,16 +15,29 @@
  */
 package com.android.cts.blob;
 
+import static android.os.storage.StorageManager.UUID_DEFAULT;
+
+import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
 import android.app.blob.BlobHandle;
 import android.app.blob.BlobStoreManager;
+import android.app.usage.StorageStats;
+import android.app.usage.StorageStatsManager;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
+import android.os.Process;
+import android.util.Log;
 
 import com.android.cts.blob.R;
+import com.android.cts.blob.ICommandReceiver;
 import com.android.utils.blob.DummyBlobData;
 
 import org.junit.After;
@@ -34,7 +47,9 @@ import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -42,7 +57,14 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 @RunWith(AndroidJUnit4.class)
 public class BlobStoreManagerTest {
+    private static final String TAG = "BlobStoreTest";
+
     private static final long TIMEOUT_COMMIT_CALLBACK_SEC = 5;
+
+    private static final long TIMEOUT_BIND_SERVICE_SEC = 2;
+
+    private static final String HELPER_PKG = "com.android.cts.blob.helper";
+    private static final String HELPER_SERVICE = HELPER_PKG + ".BlobStoreTestService";
 
     private Context mContext;
     private BlobStoreManager mBlobStoreManager;
@@ -56,18 +78,17 @@ public class BlobStoreManagerTest {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mBlobStoreManager = (BlobStoreManager) mContext.getSystemService(
                 Context.BLOB_STORE_SERVICE);
-        mCreatedSessionIds.clear();
+        clearAllBlobsData();
     }
 
     @After
     public void tearDown() {
-        for (long sessionId : mCreatedSessionIds) {
-            try {
-                mBlobStoreManager.deleteSession(sessionId);
-            } catch (Exception e) {
-                // Ignore
-            }
-        }
+        clearAllBlobsData();
+    }
+
+    private void clearAllBlobsData() {
+        executeCmd("cmd blob_store clear-all-sessions");
+        executeCmd("cmd blob_store clear-all-blobs");
     }
 
     @Test
@@ -443,9 +464,199 @@ public class BlobStoreManagerTest {
         assertThrows(NullPointerException.class, () -> mBlobStoreManager.releaseLease(null));
     }
 
+    @Test
+    public void testStorageAttributedToSelf() throws Exception {
+        final DummyBlobData blobData = new DummyBlobData(mContext);
+        blobData.prepare();
+        final long partialFileSize = 3373L;
+
+        final StorageStatsManager storageStatsManager = mContext.getSystemService(
+                StorageStatsManager.class);
+        StorageStats beforeStatsForPkg = storageStatsManager
+                .queryStatsForPackage(UUID_DEFAULT, mContext.getPackageName(), mContext.getUser());
+        StorageStats beforeStatsForUid = storageStatsManager
+                .queryStatsForUid(UUID_DEFAULT, Process.myUid());
+
+        // Create a session and write some data.
+        final long sessionId = createSession(blobData.getBlobHandle());
+        assertThat(sessionId).isGreaterThan(0L);
+        try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
+            blobData.writeToSession(session, 0, partialFileSize);
+        }
+
+        StorageStats afterStatsForPkg = storageStatsManager
+                .queryStatsForPackage(UUID_DEFAULT, mContext.getPackageName(), mContext.getUser());
+        StorageStats afterStatsForUid = storageStatsManager
+                .queryStatsForUid(UUID_DEFAULT, Process.myUid());
+
+        // 'partialFileSize' bytes were written, verify the size increase.
+        assertThat(afterStatsForPkg.getDataBytes() - beforeStatsForPkg.getDataBytes())
+                .isEqualTo(partialFileSize);
+        assertThat(afterStatsForUid.getDataBytes() - beforeStatsForUid.getDataBytes())
+                .isEqualTo(partialFileSize);
+
+        // Complete writing data.
+        final long totalFileSize = blobData.getFileSize();
+        try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
+            blobData.writeToSession(session, partialFileSize, totalFileSize - partialFileSize);
+        }
+
+        afterStatsForPkg = storageStatsManager
+                .queryStatsForPackage(UUID_DEFAULT, mContext.getPackageName(), mContext.getUser());
+        afterStatsForUid = storageStatsManager
+                .queryStatsForUid(UUID_DEFAULT, Process.myUid());
+
+        // 'totalFileSize' bytes were written so far, verify the size increase.
+        assertThat(afterStatsForPkg.getDataBytes() - beforeStatsForPkg.getDataBytes())
+                .isEqualTo(totalFileSize);
+        assertThat(afterStatsForUid.getDataBytes() - beforeStatsForUid.getDataBytes())
+                .isEqualTo(totalFileSize);
+
+        // Commit the session.
+        try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
+            blobData.writeToSession(session, partialFileSize, session.getSize() - partialFileSize);
+            final CompletableFuture<Integer> callback = new CompletableFuture<>();
+            session.commit(mContext.getMainExecutor(), callback::complete);
+            assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
+                    .isEqualTo(0);
+        }
+
+        mBlobStoreManager.acquireLease(blobData.getBlobHandle(), R.string.test_desc);
+
+        afterStatsForPkg = storageStatsManager
+                .queryStatsForPackage(UUID_DEFAULT, mContext.getPackageName(), mContext.getUser());
+        afterStatsForUid = storageStatsManager
+                .queryStatsForUid(UUID_DEFAULT, Process.myUid());
+
+        // Session was committed but no one else is using it, verify the size increase stays
+        // the same as earlier.
+        assertThat(afterStatsForPkg.getDataBytes() - beforeStatsForPkg.getDataBytes())
+                .isEqualTo(totalFileSize);
+        assertThat(afterStatsForUid.getDataBytes() - beforeStatsForUid.getDataBytes())
+                .isEqualTo(totalFileSize);
+
+        mBlobStoreManager.releaseLease(blobData.getBlobHandle());
+
+        afterStatsForPkg = storageStatsManager
+                .queryStatsForPackage(UUID_DEFAULT, mContext.getPackageName(), mContext.getUser());
+        afterStatsForUid = storageStatsManager
+                .queryStatsForUid(UUID_DEFAULT, Process.myUid());
+
+        // No leases on the blob, so it should not be attributed.
+        assertThat(afterStatsForPkg.getDataBytes() - beforeStatsForPkg.getDataBytes())
+                .isEqualTo(0L);
+        assertThat(afterStatsForUid.getDataBytes() - beforeStatsForUid.getDataBytes())
+                .isEqualTo(0L);
+    }
+
+    @Test
+    public void testStorageAttribution_acquireLease() throws Exception {
+        final DummyBlobData blobData = new DummyBlobData(mContext);
+        blobData.prepare();
+
+        final StorageStatsManager storageStatsManager = mContext.getSystemService(
+                StorageStatsManager.class);
+        StorageStats beforeStatsForPkg = storageStatsManager
+                .queryStatsForPackage(UUID_DEFAULT, mContext.getPackageName(), mContext.getUser());
+        StorageStats beforeStatsForUid = storageStatsManager
+                .queryStatsForUid(UUID_DEFAULT, Process.myUid());
+
+        final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
+        try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
+            blobData.writeToSession(session);
+            session.allowPublicAccess();
+
+            final CompletableFuture<Integer> callback = new CompletableFuture<>();
+            session.commit(mContext.getMainExecutor(), callback::complete);
+            assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
+                    .isEqualTo(0);
+        }
+
+        StorageStats afterStatsForPkg = storageStatsManager
+                .queryStatsForPackage(UUID_DEFAULT, mContext.getPackageName(), mContext.getUser());
+        StorageStats afterStatsForUid = storageStatsManager
+                .queryStatsForUid(UUID_DEFAULT, Process.myUid());
+
+        // No leases on the blob, so it should not be attributed.
+        assertThat(afterStatsForPkg.getDataBytes() - beforeStatsForPkg.getDataBytes())
+                .isEqualTo(0L);
+        assertThat(afterStatsForUid.getDataBytes() - beforeStatsForUid.getDataBytes())
+                .isEqualTo(0L);
+
+        final ICommandReceiver commandReceiver = bindToHelperService();
+
+        StorageStats beforeStatsForHelperPkg = commandReceiver.queryStatsForPackage();
+        StorageStats beforeStatsForHelperUid = commandReceiver.queryStatsForUid();
+
+        commandReceiver.acquireLease(blobData.getBlobHandle());
+
+        StorageStats afterStatsForHelperPkg = commandReceiver.queryStatsForPackage();
+        StorageStats afterStatsForHelperUid = commandReceiver.queryStatsForUid();
+
+        assertThat(afterStatsForHelperPkg.getDataBytes() - beforeStatsForHelperPkg.getDataBytes())
+                .isEqualTo(blobData.getFileSize());
+        assertThat(afterStatsForHelperUid.getDataBytes() - beforeStatsForHelperUid.getDataBytes())
+                .isEqualTo(blobData.getFileSize());
+
+        afterStatsForPkg = storageStatsManager
+                .queryStatsForPackage(UUID_DEFAULT, mContext.getPackageName(), mContext.getUser());
+        afterStatsForUid = storageStatsManager
+                .queryStatsForUid(UUID_DEFAULT, Process.myUid());
+
+        // There shouldn't be no change in stats for this package
+        assertThat(afterStatsForPkg.getDataBytes() - beforeStatsForPkg.getDataBytes())
+                .isEqualTo(0L);
+        assertThat(afterStatsForUid.getDataBytes() - beforeStatsForUid.getDataBytes())
+                .isEqualTo(0L);
+
+        commandReceiver.releaseLease(blobData.getBlobHandle());
+
+        afterStatsForHelperPkg = commandReceiver.queryStatsForPackage();
+        afterStatsForHelperUid = commandReceiver.queryStatsForUid();
+
+        // Lease is released, so it should not be attributed anymore.
+        assertThat(afterStatsForHelperPkg.getDataBytes() - beforeStatsForHelperPkg.getDataBytes())
+                .isEqualTo(0L);
+        assertThat(afterStatsForHelperUid.getDataBytes() - beforeStatsForHelperUid.getDataBytes())
+                .isEqualTo(0L);
+    }
+
+    private ICommandReceiver bindToHelperService() throws Exception {
+        final TestServiceConnection serviceConnection = new TestServiceConnection();
+        final Intent intent = new Intent()
+                .setComponent(new ComponentName(HELPER_PKG, HELPER_SERVICE));
+        mContext.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+        return ICommandReceiver.Stub.asInterface(serviceConnection.getService());
+    }
+
+    private class TestServiceConnection implements ServiceConnection {
+        private BlockingQueue<IBinder> mBlockingQueue = new LinkedBlockingQueue<>();
+
+        public void onServiceConnected(ComponentName componentName, IBinder service) {
+            Log.i(TAG, "Service got connected: " + componentName);
+            mBlockingQueue.offer(service);
+        }
+
+        public void onServiceDisconnected(ComponentName componentName) {
+            Log.e(TAG, "Service got disconnected: " + componentName);
+        }
+
+        public IBinder getService() throws Exception {
+            final IBinder service = mBlockingQueue.poll(TIMEOUT_BIND_SERVICE_SEC,
+                    TimeUnit.SECONDS);
+            return service;
+        }
+    }
+
     private long createSession(BlobHandle blobHandle) throws Exception {
         final long sessionId = mBlobStoreManager.createSession(blobHandle);
         mCreatedSessionIds.add(sessionId);
         return sessionId;
+    }
+
+    private String executeCmd(String cmd) {
+        final String result = runShellCommand(cmd).trim();
+        Log.d(TAG, "Output of <" + cmd + ">: <" + result + ">");
+        return result;
     }
 }

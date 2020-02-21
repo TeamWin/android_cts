@@ -15,12 +15,12 @@
  * limitations under the License.
  -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.android.cts.blob.helper">
+          package="com.android.cts.device.blob">
     <application>
         <uses-library android:name="android.test.runner" />
     </application>
 
     <instrumentation
             android:name="androidx.test.runner.AndroidJUnitRunner"
-            android:targetPackage="com.android.cts.blob.helper"  />
+            android:targetPackage="com.android.cts.device.blob"  />
 </manifest>
