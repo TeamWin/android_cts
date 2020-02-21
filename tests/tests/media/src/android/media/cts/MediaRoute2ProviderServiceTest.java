@@ -121,7 +121,7 @@ public class MediaRoute2ProviderServiceTest {
                 SESSION_ID_1, "" /* clientPackageName */)
                 .addSelectedRoute(ROUTE_ID1)
                 .build();
-        mService.notifySessionCreated(sessionInfo1, MediaRoute2ProviderService.REQUEST_ID_UNKNOWN);
+        mService.notifySessionCreated(sessionInfo1, MediaRoute2ProviderService.REQUEST_ID_NONE);
         assertEquals(1, mService.getAllSessionInfo().size());
         assertEquals(sessionInfo1, mService.getAllSessionInfo().get(0));
         assertEquals(sessionInfo1, mService.getSessionInfo(SESSION_ID_1));
@@ -132,7 +132,7 @@ public class MediaRoute2ProviderServiceTest {
                 .addSelectedRoute(ROUTE_ID2)
                 .build();
         mService.notifySessionCreated(
-                sessionInfo2, MediaRoute2ProviderService.REQUEST_ID_UNKNOWN);
+                sessionInfo2, MediaRoute2ProviderService.REQUEST_ID_NONE);
         assertEquals(2, mService.getAllSessionInfo().size());
         assertEquals(sessionInfo2, mService.getSessionInfo(SESSION_ID_2));
 
@@ -288,7 +288,7 @@ public class MediaRoute2ProviderServiceTest {
         // Now test all session-related callbacks.
         setProxy(new Proxy() {
             @Override
-            public void onCreateSession(String packageName, String routeId, long requestId,
+            public void onCreateSession(long requestId, String packageName, String routeId,
                     Bundle sessionHints) {
                 assertEquals(mContext.getPackageName(), packageName);
                 assertEquals(ROUTE_ID1, routeId);
@@ -307,7 +307,7 @@ public class MediaRoute2ProviderServiceTest {
             }
 
             @Override
-            public void onSelectRoute(String sessionId, String routeId) {
+            public void onSelectRoute(long requestId, String sessionId, String routeId) {
                 assertEquals(SESSION_ID_1, sessionId);
                 assertEquals(ROUTE_ID4_TO_SELECT_AND_DESELECT, routeId);
 
@@ -322,7 +322,7 @@ public class MediaRoute2ProviderServiceTest {
             }
 
             @Override
-            public void onDeselectRoute(String sessionId, String routeId) {
+            public void onDeselectRoute(long requestId, String sessionId, String routeId) {
                 assertEquals(SESSION_ID_1, sessionId);
                 assertEquals(ROUTE_ID4_TO_SELECT_AND_DESELECT, routeId);
 
@@ -337,7 +337,7 @@ public class MediaRoute2ProviderServiceTest {
             }
 
             @Override
-            public void onTransferToRoute(String sessionId, String routeId) {
+            public void onTransferToRoute(long requestId, String sessionId, String routeId) {
                 assertEquals(SESSION_ID_1, sessionId);
                 assertEquals(ROUTE_ID5_TO_TRANSFER_TO, routeId);
 
@@ -353,7 +353,7 @@ public class MediaRoute2ProviderServiceTest {
             }
 
             @Override
-            public void onReleaseSession(String sessionId) {
+            public void onReleaseSession(long requestId, String sessionId) {
                 assertEquals(SESSION_ID_1, sessionId);
                 mService.notifySessionReleased(sessionId);
                 onReleaseSessionLatch.countDown();
@@ -455,7 +455,7 @@ public class MediaRoute2ProviderServiceTest {
         CountDownLatch onCreateSessionLatch = new CountDownLatch(1);
         setProxy(new Proxy() {
             @Override
-            public void onCreateSession(String packageName, String routeId, long requestId,
+            public void onCreateSession(long requestId, String packageName, String routeId,
                     Bundle sessionHints) {
                 assertEquals(mContext.getPackageName(), packageName);
                 assertEquals(ROUTE_ID1, routeId);
