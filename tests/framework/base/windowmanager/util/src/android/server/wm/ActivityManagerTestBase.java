@@ -60,7 +60,6 @@ import static android.server.wm.ActivityLauncher.KEY_TARGET_COMPONENT;
 import static android.server.wm.ActivityLauncher.KEY_USE_APPLICATION_CONTEXT;
 import static android.server.wm.ActivityLauncher.KEY_WINDOWING_MODE;
 import static android.server.wm.ActivityLauncher.launchActivityFromExtras;
-import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.CommandSession.KEY_FORWARD;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.ComponentNameUtils.getLogTag;
@@ -74,6 +73,7 @@ import static android.server.wm.UiDeviceUtils.pressSleepButton;
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 import static android.server.wm.UiDeviceUtils.waitForDeviceIdle;
+import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.app.Components.BROADCAST_RECEIVER_ACTIVITY;
 import static android.server.wm.app.Components.BroadcastReceiverActivity.ACTION_TRIGGER_BROADCAST;
 import static android.server.wm.app.Components.BroadcastReceiverActivity.EXTRA_BROADCAST_ORIENTATION;
@@ -141,6 +141,7 @@ import android.view.Display;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.ViewConfiguration;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -533,10 +534,32 @@ public abstract class ActivityManagerTestBase {
         return ComponentName.unflattenFromString(mContext.getResources().getString(resId));
     }
 
+    /**
+     * Move around center of the specific display to ensures the display to be focused without
+     * triggering potential clicked event to impact the test environment.
+     * (e.g: Keyguard credential activated unexpectedly.)
+     *
+     * @param displayId the display ID to gain focused by inject swipe action
+     */
+    protected void moveAroundCenterSync(int displayId) {
+        final Rect bounds = mWmState.getDisplay(displayId).getDisplayRect();
+        final long downTime = SystemClock.uptimeMillis();
+        final int touchSlop = ViewConfiguration.get(mContext).getScaledTouchSlop();
+        final int downX = bounds.left + bounds.width() / 2;
+        final int downY = bounds.top + bounds.height() / 2;
+        injectMotion(downTime, downTime, MotionEvent.ACTION_DOWN, downX, downY, displayId, true);
+
+        final int moveX = downX + Float.floatToIntBits(touchSlop / 2.0f);
+        final int moveY = downY + Float.floatToIntBits(touchSlop / 2.0f);
+        injectMotion(downTime, downTime, MotionEvent.ACTION_MOVE, moveX, moveY, displayId, true);
+
+        final long upTime = SystemClock.uptimeMillis();
+        injectMotion(downTime, upTime, MotionEvent.ACTION_UP, moveX, moveY, displayId, true);
+    }
+
     protected void tapOnDisplaySync(int x, int y, int displayId) {
         tapOnDisplay(x, y, displayId, true /* sync*/);
     }
-
 
     private void tapOnDisplay(int x, int y, int displayId, boolean sync) {
         final long downTime = SystemClock.uptimeMillis();
@@ -658,10 +681,19 @@ public abstract class ActivityManagerTestBase {
         mWmState.computeState();
         final List<WindowManagerState.ActivityTask> stacks = mWmState.getRootTasks();
         for (WindowManagerState.ActivityTask stack : stacks) {
-            for (WindowManagerState.ActivityTask task : stack.mTasks) {
-                if (task.mTaskId == taskId) {
-                    return stack;
-                }
+            if (stack.getTask(taskId) != null) {
+                return stack;
+            }
+        }
+        return null;
+    }
+
+    protected WindowManagerState.ActivityTask getRootTask(int taskId) {
+        mWmState.computeState();
+        final List<WindowManagerState.ActivityTask> rootTasks = mWmState.getRootTasks();
+        for (WindowManagerState.ActivityTask rootTask : rootTasks) {
+            if (rootTask.getTaskId() == taskId) {
+                return rootTask;
             }
         }
         return null;
@@ -831,12 +863,25 @@ public abstract class ActivityManagerTestBase {
         return result[0];
     }
 
-    protected void moveActivityToStack(ComponentName activityName, int stackId) {
+    /** Move activity to stack or on top of the given stack when the stack is a leak task. */
+    protected void moveActivityToStackOrOnTop(ComponentName activityName, int stackId) {
         mWmState.computeState(activityName);
-        final int taskId = mWmState.getTaskByActivity(activityName).mTaskId;
-        SystemUtil.runWithShellPermissionIdentity(
-                () -> mAtm.moveTaskToStack(taskId, stackId, true));
-
+        WindowManagerState.ActivityTask rootTask = getRootTask(stackId);
+        if (rootTask.getActivities().size() != 0) {
+            // If the root task is a 1-level task, start the activity on top of given task.
+            getLaunchActivityBuilder()
+                    .setDisplayId(rootTask.mDisplayId)
+                    .setWindowingMode(rootTask.getWindowingMode())
+                    .setActivityType(rootTask.getActivityType())
+                    .setTargetActivity(activityName)
+                    .allowMultipleInstances(false)
+                    .setUseInstrumentation()
+                    .execute();
+        } else {
+            final int taskId = mWmState.getTaskByActivity(activityName).mTaskId;
+            SystemUtil.runWithShellPermissionIdentity(
+                    () -> mAtm.moveTaskToStack(taskId, stackId, true));
+        }
         mWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
                 .setStackId(stackId)
                 .build());
@@ -1188,7 +1233,7 @@ public abstract class ActivityManagerTestBase {
         public LockScreenSession enterAndConfirmLockCredential() {
             // Ensure focus will switch to default display. Meanwhile we cannot tap on center area,
             // which may tap on input credential area.
-            tapOnDisplaySync(10, 10, DEFAULT_DISPLAY);
+            moveAroundCenterSync(DEFAULT_DISPLAY);
 
             waitForDeviceIdle(3000);
             SystemUtil.runWithShellPermissionIdentity(() ->
@@ -1230,7 +1275,7 @@ public abstract class ActivityManagerTestBase {
 
         LockScreenSession unlockDevice() {
             // Make sure the unlock button event is send to the default display.
-            tapOnDisplaySync(10, 10, DEFAULT_DISPLAY);
+            moveAroundCenterSync(DEFAULT_DISPLAY);
 
             pressUnlockButton();
             return this;
@@ -2201,7 +2246,7 @@ public abstract class ActivityManagerTestBase {
                 // all tests afterward would also fail (since the leakage is always there) and fire
                 // unnecessary false alarms.
                 try {
-                    mWmState.assertEmptyStackOrTask();
+                    mWmState.assertNoneEmptyTasks();
                 } catch (Throwable t) {
                     sStackTaskLeakFound = true;
                     addError(t);

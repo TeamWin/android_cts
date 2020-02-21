@@ -54,6 +54,8 @@ import android.text.TextUtils;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.PollingCheck;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -78,7 +80,7 @@ public class MediaRouter2Test {
     private MediaRouter2 mRouter2;
     private Executor mExecutor;
     private AudioManager mAudioManager;
-    private SampleMediaRoute2ProviderService mServiceInstance;
+    private SampleMediaRoute2ProviderService mService;
 
     private static final int TIMEOUT_MS = 5000;
     private static final int WAIT_MS = 2000;
@@ -95,18 +97,27 @@ public class MediaRouter2Test {
         mExecutor = Executors.newSingleThreadExecutor();
         mAudioManager = (AudioManager) mContext.getSystemService(AUDIO_SERVICE);
 
-        mServiceInstance = SampleMediaRoute2ProviderService.getInstance();
-        if (mServiceInstance != null) {
-            mServiceInstance.initializeRoutes();
-            mServiceInstance.publishRoutes();
-        }
+        new PollingCheck(TIMEOUT_MS) {
+            @Override
+            protected boolean check() {
+                SampleMediaRoute2ProviderService service =
+                        SampleMediaRoute2ProviderService.getInstance();
+                if (service != null) {
+                    mService = service;
+                    return true;
+                }
+                return false;
+            }
+        }.run();
+        mService.initializeRoutes();
+        mService.publishRoutes();
     }
 
     @After
     public void tearDown() throws Exception {
-        if (mServiceInstance != null) {
-            mServiceInstance.clear();
-            mServiceInstance = null;
+        if (mService != null) {
+            mService.clear();
+            mService = null;
         }
     }
 

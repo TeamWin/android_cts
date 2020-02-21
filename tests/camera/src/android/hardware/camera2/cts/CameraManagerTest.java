@@ -16,16 +16,13 @@
 
 package android.hardware.camera2.cts;
 
-import static org.mockito.Mockito.*;
-import static org.mockito.AdditionalMatchers.not;
-import static org.mockito.AdditionalMatchers.and;
 import static junit.framework.Assert.*;
 
-import android.app.ActivityManager;
+import static org.mockito.Mockito.*;
+
 import android.app.Instrumentation;
 import android.app.NotificationManager;
 import android.app.UiAutomation;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
@@ -40,17 +37,17 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.ParcelFileDescriptor;
-import android.test.AndroidTestCase;
 import android.util.Log;
 import android.util.Pair;
+
 import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.PropertyUtil;
 import com.android.ex.camera2.blocking.BlockingStateCallback;
 
-import org.junit.runners.Parameterized;
-import org.junit.runner.RunWith;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 
@@ -61,9 +58,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.Set;
 
 /**
  * <p>Basic test for CameraManager class.</p>
@@ -809,14 +806,6 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
             Log.i(TAG, "No cameras present, skipping test");
             return;
         }
-
-        ActivityManager am = mContext.getSystemService(ActivityManager.class);
-
-        // Go devices do not support all interrupt filtering functionality
-        if (am.isLowRamDevice()) {
-            return;
-        }
-
         // Allow the test package to adjust notification policy
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);

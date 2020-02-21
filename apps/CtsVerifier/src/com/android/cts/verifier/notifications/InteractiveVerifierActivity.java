@@ -36,6 +36,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
@@ -513,47 +514,6 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         }
 
         @Override
-        protected void tearDown() {
-            // wait for the service to start
-            delay();
-        }
-
-        @Override
-        protected Intent getIntent() {
-            return new Intent(ACTION_NOTIFICATION_LISTENER_SETTINGS);
-        }
-    }
-
-    protected class CannotBeEnabledTest extends InteractiveTestCase {
-        @Override
-        protected View inflate(ViewGroup parent) {
-            return createNlsSettingsItem(parent, R.string.nls_cannot_enable_service);
-        }
-
-        @Override
-        boolean autoStart() {
-            return true;
-        }
-
-        @Override
-        protected void test() {
-            mNm.cancelAll();
-            Intent settings = new Intent(ACTION_NOTIFICATION_LISTENER_SETTINGS);
-            if (settings.resolveActivity(mPackageManager) == null) {
-                logFail("no settings activity");
-                status = FAIL;
-            } else {
-                String listeners = Secure.getString(getContentResolver(),
-                        ENABLED_NOTIFICATION_LISTENERS);
-                if (listeners != null && listeners.contains(LISTENER_PATH)) {
-                    status = FAIL;
-                } else {
-                    status = PASS;
-                }
-                next();
-            }
-        }
-
         protected void tearDown() {
             // wait for the service to start
             delay();

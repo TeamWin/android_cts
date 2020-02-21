@@ -140,7 +140,7 @@ public class DisplayTests extends MultiDisplayTestBase {
         launchHomeActivity();
 
         final DisplayMetricsSession displayMetricsSession =
-                mObjectTracker.manage(new DisplayMetricsSession(DEFAULT_DISPLAY));
+                createManagedDisplayMetricsSession(DEFAULT_DISPLAY);
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
 
         // Read initial sizes.
@@ -187,34 +187,6 @@ public class DisplayTests extends MultiDisplayTestBase {
             Configuration config = context.createDisplayContext(display)
                     .getResources().getConfiguration();
             return config;
-        }
-    }
-
-    private static class DisplayMetricsSession implements AutoCloseable {
-
-        private final ReportedDisplayMetrics mInitialDisplayMetrics;
-        private final int mDisplayId;
-
-        DisplayMetricsSession(int displayId) {
-            mDisplayId = displayId;
-            mInitialDisplayMetrics = ReportedDisplayMetrics.getDisplayMetrics(mDisplayId);
-        }
-
-        ReportedDisplayMetrics getInitialDisplayMetrics() {
-            return mInitialDisplayMetrics;
-        }
-
-        ReportedDisplayMetrics getDisplayMetrics() {
-            return ReportedDisplayMetrics.getDisplayMetrics(mDisplayId);
-        }
-
-        void overrideDisplayMetrics(final Size size, final int density) {
-            mInitialDisplayMetrics.setDisplayMetrics(size, density);
-        }
-
-        @Override
-        public void close() {
-            mInitialDisplayMetrics.restoreDisplayMetrics();
         }
     }
 }

@@ -174,6 +174,8 @@ public class WebViewDeviceSideStartupTest
                 .build());
         StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
                 .detectAll()
+                // TODO(b/149790106): Fix and remove.
+                .permitIncorrectContextUse()
                 .penaltyLog()
                 .penaltyDeath()
                 .build());

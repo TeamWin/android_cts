@@ -48,6 +48,8 @@ import android.platform.test.annotations.LargeTest;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.PollingCheck;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -71,7 +73,7 @@ public class MediaRoute2ProviderServiceTest {
     Context mContext;
     private MediaRouter2 mRouter2;
     private Executor mExecutor;
-    private SampleMediaRoute2ProviderService mServiceInstance;
+    private SampleMediaRoute2ProviderService mService;
 
     private static final int TIMEOUT_MS = 5000;
 
@@ -87,61 +89,68 @@ public class MediaRoute2ProviderServiceTest {
         mContext = InstrumentationRegistry.getTargetContext();
         mRouter2 = MediaRouter2.getInstance(mContext);
         mExecutor = Executors.newSingleThreadExecutor();
-        mServiceInstance = SampleMediaRoute2ProviderService.getInstance();
+
+        new PollingCheck(TIMEOUT_MS) {
+            @Override
+            protected boolean check() {
+                SampleMediaRoute2ProviderService service =
+                        SampleMediaRoute2ProviderService.getInstance();
+                if (service != null) {
+                    mService = service;
+                    return true;
+                }
+                return false;
+            }
+        }.run();
     }
 
     @After
     public void tearDown() throws Exception {
-        if (mServiceInstance != null) {
-            mServiceInstance.clear();
-            mServiceInstance = null;
+        if (mService != null) {
+            mService.clear();
+            mService = null;
         }
     }
 
     @Test
     public void testGetSessionInfoAndGetAllSessionInfo() {
-        SampleMediaRoute2ProviderService service = mServiceInstance;
-        assertNotNull(service);
-        assertEquals(0, service.getAllSessionInfo().size());
+        assertEquals(0, mService.getAllSessionInfo().size());
 
         // Add a session
         RoutingSessionInfo sessionInfo1 = new RoutingSessionInfo.Builder(
                 SESSION_ID_1, "" /* clientPackageName */)
                 .addSelectedRoute(ROUTE_ID1)
                 .build();
-        service.notifySessionCreated(sessionInfo1, MediaRoute2ProviderService.REQUEST_ID_UNKNOWN);
-        assertEquals(1, service.getAllSessionInfo().size());
-        assertEquals(sessionInfo1, service.getAllSessionInfo().get(0));
-        assertEquals(sessionInfo1, service.getSessionInfo(SESSION_ID_1));
+        mService.notifySessionCreated(sessionInfo1, MediaRoute2ProviderService.REQUEST_ID_UNKNOWN);
+        assertEquals(1, mService.getAllSessionInfo().size());
+        assertEquals(sessionInfo1, mService.getAllSessionInfo().get(0));
+        assertEquals(sessionInfo1, mService.getSessionInfo(SESSION_ID_1));
 
         // Add another session
         RoutingSessionInfo sessionInfo2 = new RoutingSessionInfo.Builder(
                 SESSION_ID_2, "" /* clientPackageName */)
                 .addSelectedRoute(ROUTE_ID2)
                 .build();
-        service.notifySessionCreated(
+        mService.notifySessionCreated(
                 sessionInfo2, MediaRoute2ProviderService.REQUEST_ID_UNKNOWN);
-        assertEquals(2, service.getAllSessionInfo().size());
-        assertEquals(sessionInfo2, service.getSessionInfo(SESSION_ID_2));
+        assertEquals(2, mService.getAllSessionInfo().size());
+        assertEquals(sessionInfo2, mService.getSessionInfo(SESSION_ID_2));
 
         // Remove the first session
-        service.notifySessionReleased(SESSION_ID_1);
-        assertNull(service.getSessionInfo(SESSION_ID_1));
-        assertEquals(1, service.getAllSessionInfo().size());
-        assertEquals(sessionInfo2, service.getAllSessionInfo().get(0));
-        assertEquals(sessionInfo2, service.getSessionInfo(SESSION_ID_2));
+        mService.notifySessionReleased(SESSION_ID_1);
+        assertNull(mService.getSessionInfo(SESSION_ID_1));
+        assertEquals(1, mService.getAllSessionInfo().size());
+        assertEquals(sessionInfo2, mService.getAllSessionInfo().get(0));
+        assertEquals(sessionInfo2, mService.getSessionInfo(SESSION_ID_2));
 
         // Remove the remaining session
-        service.notifySessionReleased(SESSION_ID_2);
-        assertEquals(0, service.getAllSessionInfo().size());
-        assertNull(service.getSessionInfo(SESSION_ID_2));
+        mService.notifySessionReleased(SESSION_ID_2);
+        assertEquals(0, mService.getAllSessionInfo().size());
+        assertNull(mService.getSessionInfo(SESSION_ID_2));
     }
 
     @Test
     public void testNotifyRoutesInvokesMediaRouter2RouteCallback() throws Exception {
-        SampleMediaRoute2ProviderService service = mServiceInstance;
-        assertNotNull(service);
-
         final String routeId0 = "routeId0";
         final String routeName0 = "routeName0";
         final String routeId1 = "routeId1";
@@ -236,7 +245,7 @@ public class MediaRoute2ProviderServiceTest {
         mRouter2.registerRouteCallback(mExecutor, routeCallback,
                 new RouteDiscoveryPreference.Builder(features, true).build());
         try {
-            service.notifyRoutes(routes);
+            mService.notifyRoutes(routes);
             assertTrue(onRoutesAddedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
 
             // Change the connection state of route2 in order to invoke onRoutesChanged()
@@ -244,12 +253,12 @@ public class MediaRoute2ProviderServiceTest {
                     .setConnectionState(newConnectionState)
                     .build();
             routes.set(1, newRoute2);
-            service.notifyRoutes(routes);
+            mService.notifyRoutes(routes);
             assertTrue(onRoutesChangedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
 
             // Now remove all the routes
             routes.clear();
-            service.notifyRoutes(routes);
+            mService.notifyRoutes(routes);
             assertTrue(onRoutesRemovedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
         } finally {
             mRouter2.unregisterRouteCallback(routeCallback);
@@ -258,10 +267,8 @@ public class MediaRoute2ProviderServiceTest {
 
     @Test
     public void testSessionRelatedCallbacks() throws Exception {
-        SampleMediaRoute2ProviderService service = mServiceInstance;
-        assertNotNull(service);
-        service.initializeRoutes();
-        service.publishRoutes();
+        mService.initializeRoutes();
+        mService.publishRoutes();
 
         List<String> featuresSample = Collections.singletonList(FEATURE_SAMPLE);
         Map<String, MediaRoute2Info> routes = waitAndGetRoutes(featuresSample);
@@ -295,7 +302,7 @@ public class MediaRoute2ProviderServiceTest {
                         .addSelectableRoute(ROUTE_ID4_TO_SELECT_AND_DESELECT)
                         .addTransferableRoute(ROUTE_ID5_TO_TRANSFER_TO)
                         .build();
-                service.notifySessionCreated(info, requestId);
+                mService.notifySessionCreated(info, requestId);
                 onCreateSessionLatch.countDown();
             }
 
@@ -304,13 +311,13 @@ public class MediaRoute2ProviderServiceTest {
                 assertEquals(SESSION_ID_1, sessionId);
                 assertEquals(ROUTE_ID4_TO_SELECT_AND_DESELECT, routeId);
 
-                RoutingSessionInfo oldInfo = service.getSessionInfo(SESSION_ID_1);
+                RoutingSessionInfo oldInfo = mService.getSessionInfo(SESSION_ID_1);
                 RoutingSessionInfo newInfo = new RoutingSessionInfo.Builder(oldInfo)
                         .addSelectedRoute(ROUTE_ID4_TO_SELECT_AND_DESELECT)
                         .removeSelectableRoute(ROUTE_ID4_TO_SELECT_AND_DESELECT)
                         .addDeselectableRoute(ROUTE_ID4_TO_SELECT_AND_DESELECT)
                         .build();
-                service.notifySessionUpdated(newInfo);
+                mService.notifySessionUpdated(newInfo);
                 onSelectRouteLatch.countDown();
             }
 
@@ -319,13 +326,13 @@ public class MediaRoute2ProviderServiceTest {
                 assertEquals(SESSION_ID_1, sessionId);
                 assertEquals(ROUTE_ID4_TO_SELECT_AND_DESELECT, routeId);
 
-                RoutingSessionInfo oldInfo = service.getSessionInfo(SESSION_ID_1);
+                RoutingSessionInfo oldInfo = mService.getSessionInfo(SESSION_ID_1);
                 RoutingSessionInfo newInfo = new RoutingSessionInfo.Builder(oldInfo)
                         .removeSelectedRoute(ROUTE_ID4_TO_SELECT_AND_DESELECT)
                         .addSelectableRoute(ROUTE_ID4_TO_SELECT_AND_DESELECT)
                         .removeDeselectableRoute(ROUTE_ID4_TO_SELECT_AND_DESELECT)
                         .build();
-                service.notifySessionUpdated(newInfo);
+                mService.notifySessionUpdated(newInfo);
                 onDeselectRouteLatch.countDown();
             }
 
@@ -334,25 +341,24 @@ public class MediaRoute2ProviderServiceTest {
                 assertEquals(SESSION_ID_1, sessionId);
                 assertEquals(ROUTE_ID5_TO_TRANSFER_TO, routeId);
 
-                RoutingSessionInfo oldInfo = service.getSessionInfo(SESSION_ID_1);
+                RoutingSessionInfo oldInfo = mService.getSessionInfo(SESSION_ID_1);
                 RoutingSessionInfo newInfo = new RoutingSessionInfo.Builder(oldInfo)
                         .clearDeselectableRoutes()
                         .clearSelectedRoutes()
                         .clearDeselectableRoutes()
                         .addSelectedRoute(ROUTE_ID5_TO_TRANSFER_TO)
                         .build();
-                service.notifySessionUpdated(newInfo);
+                mService.notifySessionUpdated(newInfo);
                 onTransferToRouteLatch.countDown();
             }
 
             @Override
             public void onReleaseSession(String sessionId) {
                 assertEquals(SESSION_ID_1, sessionId);
-                service.notifySessionReleased(sessionId);
+                mService.notifySessionReleased(sessionId);
                 onReleaseSessionLatch.countDown();
             }
         });
-
 
         CountDownLatch onControllerCreatedLatch = new CountDownLatch(1);
         CountDownLatch onControllerUpdatedForSelectLatch = new CountDownLatch(1);
@@ -364,10 +370,7 @@ public class MediaRoute2ProviderServiceTest {
             @Override
             public void onTransferred(RoutingController oldController,
                     RoutingController newController) {
-                // TODO: Make RoutingController#getOriginalId() as @TestApi and use it.
-                if (newController != null
-                        && ROUTE_ID1.equals(newController
-                        .getSelectedRoutes().get(0).getOriginalId())) {
+                if (newController != null && SESSION_ID_1.equals(newController.getOriginalId())) {
                     controllers.add(newController);
                     onControllerCreatedLatch.countDown();
                 }
@@ -399,7 +402,7 @@ public class MediaRoute2ProviderServiceTest {
             }
         };
 
-        // TODO: Remove this once the MediaRouter2 becomes always connected to the service.
+        // TODO: Remove this once the MediaRouter2 becomes always connected to the mService.
         RouteCallback dummyCallback = new RouteCallback();
         try {
             mRouter2.registerRouteCallback(mExecutor, dummyCallback,
@@ -441,10 +444,8 @@ public class MediaRoute2ProviderServiceTest {
 
     @Test
     public void testNotifySessionReleased() throws Exception {
-        SampleMediaRoute2ProviderService service = mServiceInstance;
-        assertNotNull(service);
-        service.initializeRoutes();
-        service.publishRoutes();
+        mService.initializeRoutes();
+        mService.publishRoutes();
 
         List<String> featuresSample = Collections.singletonList(FEATURE_SAMPLE);
         Map<String, MediaRoute2Info> routes = waitAndGetRoutes(featuresSample);
@@ -466,7 +467,7 @@ public class MediaRoute2ProviderServiceTest {
                         .addSelectableRoute(ROUTE_ID4_TO_SELECT_AND_DESELECT)
                         .addTransferableRoute(ROUTE_ID5_TO_TRANSFER_TO)
                         .build();
-                service.notifySessionCreated(info, requestId);
+                mService.notifySessionCreated(info, requestId);
                 onCreateSessionLatch.countDown();
             }
         });
@@ -480,16 +481,14 @@ public class MediaRoute2ProviderServiceTest {
             @Override
             public void onTransferred(RoutingController oldController,
                     RoutingController newController) {
-                // TODO: Make RoutingController#getOriginalId() as @TestApi and use it.
                 if (newController != null) {
-                    if (ROUTE_ID1.equals(newController
-                            .getSelectedRoutes().get(0).getOriginalId())) {
+                    if (SESSION_ID_1.equals(newController.getOriginalId())) {
                         controllers.add(newController);
                         onControllerCreatedLatch.countDown();
                     }
                 } else {
-                    if (ROUTE_ID1.equals(oldController
-                            .getSelectedRoutes().get(0).getOriginalId())) {
+                    // newController == null means that the oldController is released
+                    if (SESSION_ID_1.equals(oldController.getOriginalId())) {
                         assertTrue(oldController.isReleased());
                         onControllerReleasedLatch.countDown();
                     }
@@ -497,7 +496,7 @@ public class MediaRoute2ProviderServiceTest {
             }
         };
 
-        // TODO: Remove this once the MediaRouter2 becomes always connected to the service.
+        // TODO: Remove this once the MediaRouter2 becomes always connected to the mService.
         RouteCallback dummyCallback = new RouteCallback();
         try {
             mRouter2.registerRouteCallback(mExecutor, dummyCallback,
@@ -509,7 +508,7 @@ public class MediaRoute2ProviderServiceTest {
             assertTrue(onControllerCreatedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
             assertFalse(controllers.isEmpty());
 
-            service.notifySessionReleased(SESSION_ID_1);
+            mService.notifySessionReleased(SESSION_ID_1);
             assertTrue(onControllerReleasedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
         } finally {
             mRouter2.unregisterRouteCallback(dummyCallback);
@@ -559,9 +558,9 @@ public class MediaRoute2ProviderServiceTest {
     }
 
     void setProxy(SampleMediaRoute2ProviderService.Proxy proxy) {
-        SampleMediaRoute2ProviderService instance = SampleMediaRoute2ProviderService.getInstance();
-        if (instance != null) {
-            instance.setProxy(proxy);
+        SampleMediaRoute2ProviderService service = mService;
+        if (service != null) {
+            service.setProxy(proxy);
         }
     }
 

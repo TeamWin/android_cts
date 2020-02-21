@@ -16,17 +16,23 @@
 
 package android.os.cts;
 
+import static android.content.Context.WINDOW_SERVICE;
+import static android.view.Display.DEFAULT_DISPLAY;
+import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.hardware.display.DisplayManager;
 import android.net.TrafficStats;
 import android.net.Uri;
 import android.os.IBinder;
@@ -51,6 +57,8 @@ import android.platform.test.annotations.AppModeInstant;
 import android.system.Os;
 import android.system.OsConstants;
 import android.util.Log;
+import android.view.Display;
+import android.view.WindowManager;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -608,6 +616,66 @@ public class StrictModeTest {
         } catch (IOException ex) {
             // Expected
         }
+    }
+
+    @Test
+    public void testIncorrectContextUse_GetSystemService() throws Exception {
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder()
+                        .detectIncorrectContextUse()
+                        .penaltyLog()
+                        .build());
+
+        inspectViolation(
+                () -> getContext().getApplicationContext().getSystemService(WindowManager.class),
+                info -> assertThat(info.getStackTrace()).contains(
+                        "Tried to access visual service " + WINDOW_SERVICE));
+
+        final Display display = getContext().getSystemService(DisplayManager.class)
+                .getDisplay(DEFAULT_DISPLAY);
+        final Context visualContext = getContext().createDisplayContext(display)
+                .createWindowContext(TYPE_APPLICATION_OVERLAY, null /* options */);
+        assertNoViolation(() -> visualContext.getSystemService(WINDOW_SERVICE));
+
+        Intent intent = new Intent(InstrumentationRegistry.getInstrumentation().getTargetContext(),
+                SimpleTestActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Activity activity = InstrumentationRegistry.getInstrumentation()
+                .startActivitySync(intent);
+        assertNoViolation(() -> activity.getSystemService(WINDOW_SERVICE));
+    }
+
+    @Test
+    public void testIncorrectContextUse_GetDisplay() throws Exception {
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder()
+                        .detectIncorrectContextUse()
+                        .penaltyLog()
+                        .build());
+
+        final Display display = getContext().getSystemService(DisplayManager.class)
+                .getDisplay(DEFAULT_DISPLAY);
+
+        final Context displayContext = getContext().createDisplayContext(display);
+        assertNoViolation(displayContext::getDisplay);
+
+        final Context windowContext =
+                displayContext.createWindowContext(TYPE_APPLICATION_OVERLAY, null /* options */);
+        assertNoViolation(windowContext::getDisplay);
+
+        Intent intent = new Intent(InstrumentationRegistry.getInstrumentation().getTargetContext(),
+                SimpleTestActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Activity activity = InstrumentationRegistry.getInstrumentation()
+                .startActivitySync(intent);
+        assertNoViolation(() -> activity.getDisplay());
+
+        try {
+            getContext().getApplicationContext().getDisplay();
+        } catch (UnsupportedOperationException e) {
+            return;
+        }
+        fail("Expected to get incorrect use exception from calling getDisplay() on Application");
     }
 
     private static void runWithRemoteServiceBound(Context context, Consumer<ISecondary> consumer)

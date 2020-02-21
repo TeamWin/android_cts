@@ -1146,11 +1146,10 @@ public class LocationManagerFineTest {
 
     @Test
     public void testRegisterGnssAntennaInfoCallback() {
-        GnssAntennaInfo.Callback callback = new GnssAntennaInfo.Callback() {
-        };
+        GnssAntennaInfo.Listener listener = (gnssAntennaInfos) -> {};
 
-        mManager.registerAntennaInfoCallback(Executors.newSingleThreadExecutor(), callback);
-        mManager.unregisterAntennaInfoCallback(callback);
+        mManager.registerAntennaInfoListener(Executors.newSingleThreadExecutor(), listener);
+        mManager.unregisterAntennaInfoListener(listener);
     }
 
     @Test

@@ -16,6 +16,8 @@
 
 package android.display.cts;
 
+import static android.view.Display.DEFAULT_DISPLAY;
+
 import static org.junit.Assert.*;
 
 import android.app.Activity;
@@ -88,6 +90,7 @@ public class DisplayTest {
     private UiModeManager mUiModeManager;
     private Context mContext;
     private ColorSpace[] mSupportedWideGamuts;
+    private Display mDefaultDisplay;
 
     // To test display mode switches.
     private TestPresentation mPresentation;
@@ -106,7 +109,8 @@ public class DisplayTest {
         mDisplayManager = (DisplayManager)mContext.getSystemService(Context.DISPLAY_SERVICE);
         mWindowManager = (WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE);
         mUiModeManager = (UiModeManager)mContext.getSystemService(Context.UI_MODE_SERVICE);
-        mSupportedWideGamuts = mContext.getDisplay().getSupportedWideColorGamut();
+        mDefaultDisplay = mDisplayManager.getDisplay(DEFAULT_DISPLAY);
+        mSupportedWideGamuts = mDefaultDisplay.getSupportedWideColorGamut();
     }
 
     @After
@@ -171,7 +175,7 @@ public class DisplayTest {
         boolean hasDefaultDisplay = false;
         boolean hasSecondaryDisplay = false;
         for (Display display : displays) {
-            if (display.getDisplayId() == Display.DEFAULT_DISPLAY) {
+            if (display.getDisplayId() == DEFAULT_DISPLAY) {
                 hasDefaultDisplay = true;
             }
             if (isSecondaryDisplay(display)) {
@@ -188,7 +192,7 @@ public class DisplayTest {
     @Presubmit
     @Test
     public void testDefaultDisplay() {
-        assertEquals(Display.DEFAULT_DISPLAY, mWindowManager.getDefaultDisplay().getDisplayId());
+        assertEquals(DEFAULT_DISPLAY, mWindowManager.getDefaultDisplay().getDisplayId());
     }
 
     /**
@@ -196,7 +200,7 @@ public class DisplayTest {
      */
     @Test
     public void testDefaultDisplayHdrCapability() {
-        Display display = mDisplayManager.getDisplay(Display.DEFAULT_DISPLAY);
+        Display display = mDisplayManager.getDisplay(DEFAULT_DISPLAY);
         HdrCapabilities cap = display.getHdrCapabilities();
         int[] hdrTypes = cap.getSupportedHdrTypes();
         for (int type : hdrTypes) {
@@ -219,7 +223,7 @@ public class DisplayTest {
     public void testSecondaryDisplay() {
         Display display = getSecondaryDisplay(mDisplayManager.getDisplays());
         assertNotNull(display);
-        assertTrue(Display.DEFAULT_DISPLAY != display.getDisplayId());
+        assertTrue(DEFAULT_DISPLAY != display.getDisplayId());
     }
 
     /**
@@ -384,10 +388,9 @@ public class DisplayTest {
      */
     @Test
     public void testGetPreferredWideGamutColorSpace() {
-        final Display defaultDisplay = mWindowManager.getDefaultDisplay();
-        final ColorSpace colorSpace = defaultDisplay.getPreferredWideGamutColorSpace();
+        final ColorSpace colorSpace = mDefaultDisplay.getPreferredWideGamutColorSpace();
 
-        if (defaultDisplay.isWideColorGamut()) {
+        if (mDefaultDisplay.isWideColorGamut()) {
             assertFalse(colorSpace.isSrgb());
             assertTrue(colorSpace.isWideGamut());
         } else {
@@ -430,7 +433,7 @@ public class DisplayTest {
         final ColorSpace displayP3 = ColorSpace.get(ColorSpace.Named.DISPLAY_P3);
         final ColorSpace dciP3 = ColorSpace.get(ColorSpace.Named.DCI_P3);
         final List<ColorSpace> list = Arrays.asList(mSupportedWideGamuts);
-        final boolean supportsWideGamut = mContext.getDisplay().isWideColorGamut()
+        final boolean supportsWideGamut = mDefaultDisplay.isWideColorGamut()
                 && mSupportedWideGamuts.length > 0;
         final boolean supportsP3 = list.contains(displayP3) || list.contains(dciP3);
         assertEquals(supportsWideGamut, supportsP3);

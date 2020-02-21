@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Android Open Source Project
+ * Copyright 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,19 +26,20 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-public class SonyDualshock4Test extends InputTestCase {
+public class SonyDualshock4UsbTest extends InputTestCase {
 
-    public SonyDualshock4Test() {
-        super(R.raw.sony_dualshock4_register);
+    // Simulates the behavior of PlayStation DualShock4 gamepad (model CUH-ZCT1U)
+    public SonyDualshock4UsbTest() {
+        super(R.raw.sony_dualshock4_usb_register);
     }
 
     @Test
     public void testAllKeys() {
-        testInputEvents(R.raw.sony_dualshock4_keyeventtests);
+        testInputEvents(R.raw.sony_dualshock4_usb_keyeventtests);
     }
 
     @Test
     public void testAllMotions() {
-        testInputEvents(R.raw.sony_dualshock4_motioneventtests);
+        testInputEvents(R.raw.sony_dualshock4_usb_motioneventtests);
     }
 }
