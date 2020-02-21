@@ -527,8 +527,6 @@ public class TelephonyManagerTest {
         }
 
         TelephonyManager.getDefaultRespondViaMessageApplication(getContext(), false);
-        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                (tm) -> tm.getPhoneCapability());
     }
 
     @Test
