@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.database.ContentObserver;
+import android.net.wifi.WifiManager;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.platform.test.annotations.AppModeFull;
@@ -33,6 +34,7 @@ import android.support.test.uiautomator.Until;
 import android.test.AndroidTestCase;
 
 import com.android.compatibility.common.util.CddTest;
+import com.android.compatibility.common.util.PollingCheck;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -76,12 +78,35 @@ public class ScanningSettingsTest extends AndroidTestCase {
     }
 
     @CddTest(requirement = "7.4.2/C-2-1")
-    public void testWifiScanningSettings() throws PackageManager.NameNotFoundException {
+    public void testWifiScanningSettings() throws Exception {
         if (isTv()) {
             return;
         }
         launchScanningSettings();
-        toggleSettingAndVerify(WIFI_SCANNING_TITLE_RES, Settings.Global.WIFI_SCAN_ALWAYS_AVAILABLE);
+
+        final Resources res = mPackageManager.getResourcesForApplication(SETTINGS_PACKAGE);
+        final int resId = res.getIdentifier(WIFI_SCANNING_TITLE_RES, "string", SETTINGS_PACKAGE);
+        final UiObject2 pref = mDevice.findObject(By.text(res.getString(resId)));
+
+        final WifiManager wifiManager = mContext.getSystemService(WifiManager.class);
+
+        final boolean checked = wifiManager.isScanAlwaysAvailable();
+
+        // Click the preference to toggle the setting.
+        pref.click();
+        PollingCheck.check(
+                "Scan Always Available wasn't toggled from " + checked + " to " + !checked,
+                TIMEOUT,
+                () -> !checked == wifiManager.isScanAlwaysAvailable()
+        );
+
+        // Click the preference again to toggle the setting back.
+        pref.click();
+        PollingCheck.check(
+                "Scan Always Available wasn't toggled from " + !checked + " to " + checked,
+                TIMEOUT,
+                () -> checked == wifiManager.isScanAlwaysAvailable()
+        );
     }
 
     @CddTest(requirement = "7.4.3/C-4-1")
