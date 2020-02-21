@@ -53,6 +53,65 @@ public class AudioFrequencyActivity extends PassFailButtons.Activity {
 
     public int mMaxLevel = 0;
 
+    private OnBtnClickListener mBtnClickListener = new OnBtnClickListener();
+    //
+    // Common UI Handling
+    protected void connectRefMicUI() {
+        findViewById(R.id.refmic_tests_yes_btn).setOnClickListener(mBtnClickListener);
+        findViewById(R.id.refmic_tests_no_btn).setOnClickListener(mBtnClickListener);
+        findViewById(R.id.refmic_test_info_btn).setOnClickListener(mBtnClickListener);
+
+        enableTestUI(false);
+    }
+
+    private void showRefMicInfoDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.ref_mic_dlg_caption)
+                .setMessage(R.string.ref_mic_dlg_text)
+                .setPositiveButton(R.string.audio_general_ok, null)
+                .show();
+    }
+
+    private class OnBtnClickListener implements OnClickListener {
+        @Override
+        public void onClick(View v) {
+            switch (v.getId()) {
+                case R.id.refmic_tests_yes_btn:
+                    recordRefMicStatus(true);
+                    enableTestUI(true);
+                    // disable test button so that they will now run the test(s)
+                    getPassButton().setEnabled(false);
+                    break;
+
+                case R.id.refmic_tests_no_btn:
+                    recordRefMicStatus(false);
+                    enableTestUI(false);
+                    // Allow the user to "pass" the test.
+                    getPassButton().setEnabled(true);
+                    break;
+
+                case R.id.refmic_test_info_btn:
+                    showRefMicInfoDialog();
+                    break;
+            }
+        }
+    }
+
+    private void recordRefMicStatus(boolean has) {
+        getReportLog().addValue(
+                "User reported ref mic availability: ",
+                has ? 1.0 : 0,
+                ResultType.NEUTRAL,
+                ResultUnit.NONE);
+    }
+
+    //
+    // Overrides
+    //
+    void enableTestUI(boolean enable) {
+
+    }
+
     public void setMaxLevel() {
         AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         mMaxLevel = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);

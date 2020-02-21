@@ -238,7 +238,22 @@ public class AudioFrequencyMicActivity extends AudioFrequencyActivity implements
                 5.0, -50.0,      /* start top,bottom value */
                 5.0, -50.0      /* stop top,bottom value */);
 
+        connectRefMicUI();
     }
+
+    //
+    // Overrides
+    //
+    void enableTestUI(boolean enable) {
+        mButtonTestNoise.setEnabled(enable);
+        mButtonPlayNoise.setEnabled(enable);
+
+        mButtonTestUsbBackground.setEnabled(enable);
+
+        mButtonTestUsbNoise.setEnabled(enable);
+        mButtonPlayUsbNoise.setEnabled(enable);
+    }
+
     private void playerToggleButton(int buttonId) {
         if (playerIsPlaying()) {
             playerStopAll();
