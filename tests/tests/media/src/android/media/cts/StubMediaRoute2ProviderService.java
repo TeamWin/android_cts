@@ -40,7 +40,7 @@ import java.util.Map;
 
 import javax.annotation.concurrent.GuardedBy;
 
-public class SampleMediaRoute2ProviderService extends MediaRoute2ProviderService {
+public class StubMediaRoute2ProviderService extends MediaRoute2ProviderService {
     private static final String TAG = "SampleMR2ProviderSvc";
     private static final Object sLock = new Object();
 
@@ -88,7 +88,7 @@ public class SampleMediaRoute2ProviderService extends MediaRoute2ProviderService
     private int mNextSessionId = 1000;
 
     @GuardedBy("sLock")
-    private static SampleMediaRoute2ProviderService sInstance;
+    private static StubMediaRoute2ProviderService sInstance;
     private Proxy mProxy;
 
     public void initializeRoutes() {
@@ -139,7 +139,7 @@ public class SampleMediaRoute2ProviderService extends MediaRoute2ProviderService
         mRoutes.put(variableVolumeRoute.getId(), variableVolumeRoute);
     }
 
-    public static SampleMediaRoute2ProviderService getInstance() {
+    public static StubMediaRoute2ProviderService getInstance() {
         synchronized (sLock) {
             return sInstance;
         }

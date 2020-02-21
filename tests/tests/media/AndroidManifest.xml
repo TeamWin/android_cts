@@ -143,7 +143,7 @@
             android:foregroundServiceType="mediaProjection"
             android:enabled="true">
         </service>
-        <service android:name=".SampleMediaRoute2ProviderService"
+        <service android:name=".StubMediaRoute2ProviderService"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.media.MediaRoute2ProviderService" />

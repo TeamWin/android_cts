@@ -18,14 +18,14 @@ package android.media.cts;
 
 import static android.content.Context.AUDIO_SERVICE;
 import static android.media.MediaRoute2Info.PLAYBACK_VOLUME_VARIABLE;
-import static android.media.cts.SampleMediaRoute2ProviderService.FEATURES_SPECIAL;
-import static android.media.cts.SampleMediaRoute2ProviderService.FEATURE_SAMPLE;
-import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID1;
-import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID2;
-import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID3_SESSION_CREATION_FAILED;
-import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID4_TO_SELECT_AND_DESELECT;
-import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID5_TO_TRANSFER_TO;
-import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID_SPECIAL_FEATURE;
+import static android.media.cts.StubMediaRoute2ProviderService.FEATURES_SPECIAL;
+import static android.media.cts.StubMediaRoute2ProviderService.FEATURE_SAMPLE;
+import static android.media.cts.StubMediaRoute2ProviderService.ROUTE_ID1;
+import static android.media.cts.StubMediaRoute2ProviderService.ROUTE_ID2;
+import static android.media.cts.StubMediaRoute2ProviderService.ROUTE_ID3_SESSION_CREATION_FAILED;
+import static android.media.cts.StubMediaRoute2ProviderService.ROUTE_ID4_TO_SELECT_AND_DESELECT;
+import static android.media.cts.StubMediaRoute2ProviderService.ROUTE_ID5_TO_TRANSFER_TO;
+import static android.media.cts.StubMediaRoute2ProviderService.ROUTE_ID_SPECIAL_FEATURE;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -72,7 +72,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
-@AppModeFull(reason = "The system should be able to bind to SampleMediaRoute2ProviderService")
+@AppModeFull(reason = "The system should be able to bind to StubMediaRoute2ProviderService")
 @LargeTest
 public class MediaRouter2Test {
     private static final String TAG = "MR2Test";
@@ -80,7 +80,7 @@ public class MediaRouter2Test {
     private MediaRouter2 mRouter2;
     private Executor mExecutor;
     private AudioManager mAudioManager;
-    private SampleMediaRoute2ProviderService mService;
+    private StubMediaRoute2ProviderService mService;
 
     private static final int TIMEOUT_MS = 5000;
     private static final int WAIT_MS = 2000;
@@ -100,8 +100,8 @@ public class MediaRouter2Test {
         new PollingCheck(TIMEOUT_MS) {
             @Override
             protected boolean check() {
-                SampleMediaRoute2ProviderService service =
-                        SampleMediaRoute2ProviderService.getInstance();
+                StubMediaRoute2ProviderService service =
+                        StubMediaRoute2ProviderService.getInstance();
                 if (service != null) {
                     mService = service;
                     return true;
@@ -362,7 +362,7 @@ public class MediaRouter2Test {
                     assertTrue(createRouteMap(newController.getSelectedRoutes()).containsKey(
                             ROUTE_ID1));
 
-                    // The SampleMediaRoute2ProviderService is supposed to set control hints
+                    // The StubMediaRoute2ProviderService is supposed to set control hints
                     // with the given controllerHints.
                     Bundle controlHints = newController.getControlHints();
                     assertNotNull(controlHints);
@@ -387,7 +387,7 @@ public class MediaRouter2Test {
         try {
             mRouter2.registerTransferCallback(mExecutor, transferCallback);
 
-            // The SampleMediaRoute2ProviderService supposed to set control hints
+            // The StubMediaRoute2ProviderService supposed to set control hints
             // with the given creationSessionHints.
             mRouter2.setOnGetControllerHintsListener(listener);
             mRouter2.transferTo(route);
