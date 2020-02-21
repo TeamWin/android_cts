@@ -49,15 +49,13 @@ public class Camera2ParameterizedTestCase extends CameraParameterizedTestCase {
         System.setProperty("dexmaker.dexcache", mContext.getCacheDir().toString());
         mCameraManager = (CameraManager) mContext.getSystemService(Context.CAMERA_SERVICE);
         assertNotNull("Unable to get CameraManager", mCameraManager);
-        mCameraIdsUnderTest =
-                CameraTestUtils.getCameraIdListForTesting(mCameraManager, mAdoptShellPerm);
+        mCameraIdsUnderTest = deriveCameraIdsUnderTest();
         assertNotNull("Unable to get camera ids", mCameraIdsUnderTest);
     }
 
     @Override
     public void tearDown() throws Exception {
-        String[] cameraIdsPostTest =
-                CameraTestUtils.getCameraIdListForTesting(mCameraManager, mAdoptShellPerm);
+        String[] cameraIdsPostTest = deriveCameraIdsUnderTest();
         assertNotNull("Camera ids shouldn't be null", cameraIdsPostTest);
         Log.i(TAG, "Camera ids in setup:" + Arrays.toString(mCameraIdsUnderTest));
         Log.i(TAG, "Camera ids in tearDown:" + Arrays.toString(cameraIdsPostTest));
@@ -66,5 +64,20 @@ public class Camera2ParameterizedTestCase extends CameraParameterizedTestCase {
                 cameraIdsPostTest.length,
                 mCameraIdsUnderTest.length == cameraIdsPostTest.length);
         super.tearDown();
+    }
+
+    private String[] deriveCameraIdsUnderTest() throws Exception {
+        String[] idsUnderTest =
+                CameraTestUtils.getCameraIdListForTesting(mCameraManager, mAdoptShellPerm);
+        assertNotNull("Camera ids shouldn't be null", idsUnderTest);
+        if (mOverrideCameraId != null) {
+            if (Arrays.asList(idsUnderTest).contains(mOverrideCameraId)) {
+                idsUnderTest = new String[]{mOverrideCameraId};
+            } else {
+                idsUnderTest = new String[]{};
+            }
+        }
+
+        return idsUnderTest;
     }
 }

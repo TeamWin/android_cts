@@ -20,6 +20,7 @@ import android.app.Instrumentation;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
+import android.hardware.cts.helpers.CameraUtils;
 import android.os.SystemClock;
 import android.util.Log;
 
@@ -49,29 +50,31 @@ public class LegacyCameraPerformanceTest {
 
     private Instrumentation mInstrumentation;
     private CameraPerformanceTestHelper mHelper;
+    private int[] mCameraIds;
 
     @Before
     public void setUp() throws Exception {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mHelper = new CameraPerformanceTestHelper();
+        mCameraIds = CameraUtils.deriveCameraIdsUnderTest();
     }
 
     @After
     public void tearDown() throws Exception {
         if (mHelper.getCamera() != null) {
             mHelper.getCamera().release();
-
         }
     }
 
     @Test
     public void testLegacyApiPerformance() throws Exception {
         final int NUM_TEST_LOOPS = 10;
+        if (mCameraIds.length == 0) return;
 
-        int nCameras = Camera.getNumberOfCameras();
-        double[] avgCameraTakePictureTimes = new double[nCameras];
+        double[] avgCameraTakePictureTimes = new double[mCameraIds.length];
 
-        for (int id = 0; id < nCameras; id++) {
+        int count = 0;
+        for (int id : mCameraIds) {
             DeviceReportLog reportLog = new DeviceReportLog(REPORT_LOG_NAME,
                     "test_camera_takePicture");
             reportLog.addValue("camera_id", id, ResultType.NEUTRAL, ResultUnit.NONE);
@@ -172,7 +175,7 @@ public class LegacyCameraPerformanceTest {
                         + ". Max(ms): " + Stat.getMax(cameraTakePictureTimes));
             }
 
-            avgCameraTakePictureTimes[id] = Stat.getAverage(cameraTakePictureTimes);
+            avgCameraTakePictureTimes[count++] = Stat.getAverage(cameraTakePictureTimes);
             reportLog.addValues("camera_open_time", cameraOpenTimes, ResultType.LOWER_BETTER,
                     ResultUnit.MS);
             reportLog.addValues("camera_start_preview_time", startPreviewTimes,
@@ -191,7 +194,7 @@ public class LegacyCameraPerformanceTest {
             reportLog.submit(mInstrumentation);
         }
 
-        if (nCameras != 0) {
+        if (mCameraIds.length != 0) {
             DeviceReportLog reportLog = new DeviceReportLog(REPORT_LOG_NAME,
                     "test_camera_takepicture_average");
             reportLog.setSummary("camera_takepicture_average_time_for_all_cameras",

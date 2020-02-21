@@ -124,6 +124,7 @@ public class CameraTest extends Assert {
     private final ConditionVariable mPreviewDone = new ConditionVariable();
     private final ConditionVariable mFocusDone = new ConditionVariable();
     private final ConditionVariable mSnapshotDone = new ConditionVariable();
+    private int[] mCameraIds;
 
     Camera mCamera;
     boolean mIsExternalCamera;
@@ -134,6 +135,7 @@ public class CameraTest extends Assert {
 
     @Before
     public void setUp() throws Exception {
+        mCameraIds = CameraUtils.deriveCameraIdsUnderTest();
     }
 
     @After
@@ -408,8 +410,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testTakePicture() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             initializeMessageLooper(id);
             mCamera.startPreview();
@@ -454,8 +455,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testPreviewCallback() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             testPreviewCallbackByCamera(id);
         }
@@ -509,8 +509,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testStabilizationOneShotPreviewCallback() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             testStabilizationOneShotPreviewCallbackByCamera(id);
         }
@@ -535,8 +534,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testSetOneShotPreviewCallback() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             testSetOneShotPreviewCallbackByCamera(id);
         }
@@ -559,8 +557,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testSetPreviewDisplay() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             testSetPreviewDisplayByCamera(id);
         }
@@ -603,8 +600,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testDisplayOrientation() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             testDisplayOrientationByCamera(id);
         }
@@ -642,8 +638,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testParameters() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             testParametersByCamera(id);
         }
@@ -866,8 +861,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testJpegThumbnailSize() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             initializeMessageLooper(id);
             testJpegThumbnailSizeByCamera(false, 0, 0);
@@ -940,8 +934,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testJpegExif() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             initializeMessageLooper(id);
             testJpegExifByCamera(false);
@@ -1233,8 +1226,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testLockUnlock() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             testLockUnlockByCamera(id);
         }
@@ -1426,8 +1418,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testPreviewCallbackWithBuffer() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             testPreviewCallbackWithBufferByCamera(id);
         }
@@ -1524,8 +1515,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testImmediateZoom() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             testImmediateZoomByCamera(id);
         }
@@ -1596,8 +1586,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testSmoothZoom() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             testSmoothZoomByCamera(id);
         }
@@ -1722,8 +1711,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testFocusDistances() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             testFocusDistancesByCamera(id);
         }
@@ -1831,8 +1819,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testCancelAutofocus() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             testCancelAutofocusByCamera(id);
         }
@@ -1913,6 +1900,11 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testMultipleCameras() throws Exception {
+        if (CameraUtils.mOverrideCameraId != null) {
+            // A single camera is being tested. Skip.
+            return;
+        }
+
         int nCameras = Camera.getNumberOfCameras();
         Log.v(TAG, "total " + nCameras + " cameras");
         assertTrue(nCameras >= 0);
@@ -1976,8 +1968,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test(timeout=60*60*1000) // timeout = 60 mins for long running tests
     public void testPreviewPictureSizesCombination() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             testPreviewPictureSizesCombinationByCamera(id);
         }
@@ -2093,8 +2084,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testPreviewFpsRange() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             testPreviewFpsRangeByCamera(id);
         }
@@ -2322,8 +2312,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testSceneMode() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             testSceneModeByCamera(id);
         }
@@ -2423,8 +2412,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testInvalidParameters() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             testInvalidParametersByCamera(id);
         }
@@ -2478,8 +2466,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testGetParameterDuringFocus() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             testGetParameterDuringFocusByCamera(id);
         }
@@ -2514,8 +2501,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testPreviewFormats() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             testPreviewFormatsByCamera(id);
         }
@@ -2539,6 +2525,11 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testMultiCameraRelease() throws Exception {
+        if (CameraUtils.mOverrideCameraId != null) {
+            // A single camera is being tested. Skip.
+            return;
+        }
+
         // Verify that multiple cameras exist, and that they can be opened at the same time
         if (VERBOSE) Log.v(TAG, "testMultiCameraRelease: Checking pre-conditions.");
         int nCameras = Camera.getNumberOfCameras();
@@ -2628,8 +2619,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testFocusAreas() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
 
             initializeMessageLooper(id);
@@ -2648,8 +2638,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testMeteringAreas() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             initializeMessageLooper(id);
             Parameters parameters = mCamera.getParameters();
@@ -2785,8 +2774,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testJpegCallbackStartPreview() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             testJpegCallbackStartPreviewByCamera(id);
         }
@@ -2815,8 +2803,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testRecordingHint() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             testRecordingHintByCamera(id);
         }
@@ -2911,8 +2898,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testAutoExposureLock() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             initializeMessageLooper(id);
             Parameters parameters = mCamera.getParameters();
@@ -2928,8 +2914,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testAutoWhiteBalanceLock() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             initializeMessageLooper(id);
             Parameters parameters = mCamera.getParameters();
@@ -2945,8 +2930,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void test3ALockInteraction() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             initializeMessageLooper(id);
             Parameters parameters = mCamera.getParameters();
@@ -3170,8 +3154,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testFaceDetection() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             testFaceDetectionByCamera(id);
         }
@@ -3297,8 +3280,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test(timeout=60*60*1000) // timeout = 60 mins for long running tests
     public void testVideoSnapshot() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             testVideoSnapshotByCamera(id, /*recordingHint*/false);
             testVideoSnapshotByCamera(id, /*recordingHint*/true);
@@ -3378,8 +3360,7 @@ public class CameraTest extends Assert {
 
     @Test
     public void testPreviewCallbackWithPicture() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             testPreviewCallbackWithPictureByCamera(id);
         }
@@ -3438,8 +3419,7 @@ public class CameraTest extends Assert {
 
     @Test
     public void testEnableShutterSound() throws Exception {
-        int nCameras = Camera.getNumberOfCameras();
-        for (int id = 0; id < nCameras; id++) {
+        for (int id : mCameraIds) {
             Log.v(TAG, "Camera id=" + id);
             testEnableShutterSoundByCamera(id);
         }

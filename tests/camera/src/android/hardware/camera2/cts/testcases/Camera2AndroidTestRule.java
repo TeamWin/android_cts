@@ -38,11 +38,14 @@ import android.hardware.camera2.cts.helpers.StaticMetadata.CheckLevel;
 import android.media.Image;
 import android.media.Image.Plane;
 import android.media.ImageReader;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
 import android.view.Surface;
 import android.view.WindowManager;
+
+import androidx.test.InstrumentationRegistry;
 
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
 import com.android.ex.camera2.blocking.BlockingStateCallback;
@@ -86,6 +89,10 @@ public class Camera2AndroidTestRule extends ExternalResource {
 
     private WindowManager mWindowManager;
     private Context mContext;
+
+    private static final String CAMERA_ID_INSTR_ARG_KEY = "camera-id";
+    private static final Bundle mBundle = InstrumentationRegistry.getArguments();
+    private static final String mOverrideCameraId = mBundle.getString(CAMERA_ID_INSTR_ARG_KEY);
 
     public Camera2AndroidTestRule(Context context) {
         mContext = context;
@@ -175,6 +182,20 @@ public class Camera2AndroidTestRule extends ExternalResource {
         return mCollector;
     }
 
+    private String[] deriveCameraIdsUnderTest() throws Exception {
+        String[] idsUnderTest = mCameraManager.getCameraIdListNoLazy();
+        assertNotNull("Camera ids shouldn't be null", idsUnderTest);
+        if (mOverrideCameraId != null) {
+            if (Arrays.asList(idsUnderTest).contains(mOverrideCameraId)) {
+                idsUnderTest = new String[]{mOverrideCameraId};
+            } else {
+                idsUnderTest = new String[]{};
+            }
+        }
+
+        return idsUnderTest;
+    }
+
     /**
      * Set up the camera2 test case required environments, including CameraManager,
      * HandlerThread, Camera IDs, and CameraStateCallback etc.
@@ -193,8 +214,7 @@ public class Camera2AndroidTestRule extends ExternalResource {
          */
         System.setProperty("dexmaker.dexcache", getContext().getCacheDir().toString());
 
-        mCameraIdsUnderTest = mCameraManager.getCameraIdListNoLazy();
-        assertNotNull("Camera ids shouldn't be null", mCameraIdsUnderTest);
+        mCameraIdsUnderTest = deriveCameraIdsUnderTest();
         mHandlerThread = new HandlerThread(TAG);
         mHandlerThread.start();
         mHandler = new Handler(mHandlerThread.getLooper());
@@ -239,8 +259,7 @@ public class Camera2AndroidTestRule extends ExternalResource {
         Log.v(TAG, "Tear down...");
         if (mCameraManager != null) {
             try {
-                String[] cameraIdsPostTest = mCameraManager.getCameraIdListNoLazy();
-                assertNotNull("Camera ids shouldn't be null", cameraIdsPostTest);
+                String[] cameraIdsPostTest = deriveCameraIdsUnderTest();
                 Log.i(TAG, "Camera ids in setup:" + Arrays.toString(mCameraIdsUnderTest));
                 Log.i(TAG, "Camera ids in tearDown:" + Arrays.toString(cameraIdsPostTest));
                 assertTrue(
