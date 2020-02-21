@@ -333,6 +333,18 @@ public class MediaStore_FilesTest {
         ProviderTestUtils.stageFile(R.raw.scenery, file);
         Log.d(TAG, "Staged image file at " + file.getAbsolutePath());
 
+        // Since file is created by shell, package name in MediaStore database row for this file
+        // will not be test app's package name. To treat the insert as upsert, package name in
+        // database must be test app's package name. Force test app to be the owner of database row.
+        final Uri scannedUri = MediaStore.scanFile(mResolver, file);
+        assertNotNull(scannedUri);
+        ProviderTestUtils.executeShellCommand("content update"
+                        + " --user " + InstrumentationRegistry.getTargetContext().getUserId()
+                        + " --uri " + scannedUri
+                        + " --bind owner_package_name:s:"
+                        + InstrumentationRegistry.getContext().getPackageName(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation());
+
         final ContentValues insertValues = new ContentValues();
         insertValues.put(MediaColumns.DATA, file.getAbsolutePath());
         insertValues.put(MediaStore.Images.ImageColumns.DESCRIPTION, "Not a cat photo");
