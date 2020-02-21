@@ -2532,4 +2532,104 @@ public class MediaCodecTest extends AndroidTestCase {
             }
         }
     }
+
+    /**
+     * Test if flushing early in the playback does not prevent client from getting the
+     * latest configuration. Empirically, this happens most often when the
+     * codec is flushed after the first buffer is queued, so this test walks
+     * through the scenario.
+     */
+    public void testFlushAfterFirstBuffer() throws Exception {
+        for (int i = 0; i < 100; ++i) {
+            doFlushAfterFirstBuffer();
+        }
+    }
+
+    private void doFlushAfterFirstBuffer() throws Exception {
+        MediaExtractor extractor = null;
+        MediaCodec codec = null;
+
+        try {
+            MediaFormat newFormat = null;
+            extractor = getMediaExtractorForMimeType(
+                    R.raw.noise_2ch_48khz_aot29_dr_sbr_sig2_mp4, "audio/");
+            int trackIndex = extractor.getSampleTrackIndex();
+            MediaFormat format = extractor.getTrackFormat(trackIndex);
+            codec = createCodecByType(
+                    format.getString(MediaFormat.KEY_MIME), false /* isEncoder */);
+            codec.configure(format, null, null, 0);
+            codec.start();
+            int firstInputIndex = codec.dequeueInputBuffer(0);
+            while (firstInputIndex == MediaCodec.INFO_TRY_AGAIN_LATER) {
+                firstInputIndex = codec.dequeueInputBuffer(5000);
+            }
+            assertTrue(firstInputIndex >= 0);
+            extractor.readSampleData(codec.getInputBuffer(firstInputIndex), 0);
+            codec.queueInputBuffer(
+                    firstInputIndex, 0, Math.toIntExact(extractor.getSampleSize()),
+                    extractor.getSampleTime(), extractor.getSampleFlags());
+            // Don't advance, so the first buffer will be read again after flush
+            codec.flush();
+            ByteBuffer csd = format.getByteBuffer("csd-0");
+            MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
+            // We don't need to decode many frames
+            int numFrames = 10;
+            boolean eos = false;
+            while (!eos) {
+                if (numFrames > 0) {
+                    int inputIndex = codec.dequeueInputBuffer(0);
+                    if (inputIndex == MediaCodec.INFO_TRY_AGAIN_LATER) {
+                        inputIndex = codec.dequeueInputBuffer(5000);
+                    }
+                    if (inputIndex >= 0) {
+                        ByteBuffer inputBuffer = codec.getInputBuffer(inputIndex);
+                        if (csd != null) {
+                            inputBuffer.clear();
+                            inputBuffer.put(csd);
+                            codec.queueInputBuffer(
+                                    inputIndex, 0, inputBuffer.position(), 0,
+                                    MediaCodec.BUFFER_FLAG_CODEC_CONFIG);
+                            csd = null;
+                        } else {
+                            int size = extractor.readSampleData(inputBuffer, 0);
+                            if (size <= 0) {
+                                break;
+                            }
+                            int flags = extractor.getSampleFlags();
+                            --numFrames;
+                            if (numFrames <= 0) {
+                                flags |= MediaCodec.BUFFER_FLAG_END_OF_STREAM;
+                            }
+                            codec.queueInputBuffer(
+                                    inputIndex, 0, size, extractor.getSampleTime(), flags);
+                            extractor.advance();
+                        }
+                    }
+                }
+
+                int outputIndex = codec.dequeueOutputBuffer(bufferInfo, 0);
+                if (outputIndex == MediaCodec.INFO_TRY_AGAIN_LATER) {
+                    outputIndex = codec.dequeueOutputBuffer(bufferInfo, 5000);
+                }
+                if (outputIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                    newFormat = codec.getOutputFormat();
+                } else if (outputIndex >= 0) {
+                    if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                        eos = true;
+                    }
+                    codec.releaseOutputBuffer(outputIndex, false);
+                }
+            }
+            assertNotNull(newFormat);
+            assertEquals(48000, newFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE));
+        } finally {
+            if (extractor != null) {
+                extractor.release();
+            }
+            if (codec != null) {
+                codec.stop();
+                codec.release();
+            }
+        }
+    }
 }
