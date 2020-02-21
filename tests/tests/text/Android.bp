@@ -16,6 +16,7 @@ android_test {
     name: "CtsTextTestCases",
     defaults: ["cts_defaults"],
     sdk_version: "test_current",
+    stl: "c++_shared",
 
     srcs: [
         "src/**/*.java",
@@ -38,7 +39,7 @@ android_test {
 
     jni_libs: [
         "libctstext_jni",
-        "libc++",
+        "libnativehelper_compat_libc++",
     ],
     // Include both the 32 and 64 bit versions of libctstext_jni, where
     // applicable.
