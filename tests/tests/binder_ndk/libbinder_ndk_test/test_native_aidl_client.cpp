@@ -550,12 +550,12 @@ TEST_P(NdkBinderTest_Aidl, Arrays) {
                        {true},
                        {false, true, false},
                    });
-  testRepeat<int8_t>(iface, &ITest::RepeatByteArray,
-                     {
-                         {},
-                         {1},
-                         {1, 2, 3},
-                     });
+  testRepeat<uint8_t>(iface, &ITest::RepeatByteArray,
+                      {
+                          {},
+                          {1},
+                          {1, 2, 3},
+                      });
   testRepeat<char16_t>(iface, &ITest::RepeatCharArray,
                        {
                            {},
@@ -683,13 +683,13 @@ TEST_P(NdkBinderTest_Aidl, NullableArrays) {
                        {{true}},
                        {{false, true, false}},
                    });
-  testRepeat<int8_t>(iface, &ITest::RepeatNullableByteArray,
-                     {
-                         std::nullopt,
-                         {{}},
-                         {{1}},
-                         {{1, 2, 3}},
-                     });
+  testRepeat<uint8_t>(iface, &ITest::RepeatNullableByteArray,
+                      {
+                          std::nullopt,
+                          {{}},
+                          {{1}},
+                          {{1, 2, 3}},
+                      });
   testRepeat<char16_t>(iface, &ITest::RepeatNullableCharArray,
                        {
                            std::nullopt,
