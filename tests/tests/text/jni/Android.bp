@@ -14,9 +14,10 @@
 
 cc_library {
     name: "libctstext_jni",
+    sdk_version: "current",
     srcs: [
         "CtsTextJniOnLoad.cpp",
         "android_text_format_cts_NativeTimeFunctions.cpp",
     ],
-    static_libs: ["libnativehelper"],
+    shared_libs: ["libnativehelper_compat_libc++"],
 }
