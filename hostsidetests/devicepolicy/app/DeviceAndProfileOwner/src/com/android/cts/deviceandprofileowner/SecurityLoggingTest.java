@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.cts.deviceowner;
+package com.android.cts.deviceandprofileowner;
 
 import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_FINGERPRINT;
 import static android.app.admin.DevicePolicyManager.PASSWORD_QUALITY_COMPLEX;
@@ -62,10 +62,12 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Parcel;
 import android.os.Process;
+import android.os.UserHandle;
 import android.os.UserManager;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.KeyProtection;
+import android.text.TextUtils;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -85,7 +87,7 @@ import java.util.stream.Collectors;
 
 import javax.crypto.spec.SecretKeySpec;
 
-public class SecurityLoggingTest extends BaseDeviceOwnerTest {
+public class SecurityLoggingTest extends BaseDeviceAdminTest {
     private static final String ARG_BATCH_NUMBER = "batchNumber";
     private static final String PREF_KEY_PREFIX = "batch-last-id-";
     private static final String PREF_NAME = "batchIds";
@@ -123,8 +125,8 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
                     .put(TAG_KEY_GENERATED, of(I, S, I))
                     .put(TAG_KEY_IMPORT, of(I, S, I))
                     .put(TAG_KEY_DESTRUCTION, of(I, S, I))
-                    .put(TAG_CERT_AUTHORITY_INSTALLED, of(I, S))
-                    .put(TAG_CERT_AUTHORITY_REMOVED, of(I, S))
+                    .put(TAG_CERT_AUTHORITY_INSTALLED, of(I, S, I))
+                    .put(TAG_CERT_AUTHORITY_REMOVED, of(I, S, I))
                     .put(TAG_USER_RESTRICTION_ADDED, of(S, I, S))
                     .put(TAG_USER_RESTRICTION_REMOVED, of(S, I, S))
                     .put(TAG_CRYPTO_SELF_TEST_COMPLETED, of(I))
@@ -170,6 +172,7 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
     private static final int SUCCESS_INDEX = 0;
     private static final int ALIAS_INDEX = 1;
     private static final int UID_INDEX = 2;
+    private static final int USERID_INDEX = 2;
     private static final int SUBJECT_INDEX = 1;
     private static final int ADMIN_PKG_INDEX = 0;
     private static final int ADMIN_USER_INDEX = 1;
@@ -208,7 +211,7 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
      */
     public void testRetrievingSecurityLogsThrowsSecurityException() {
         try {
-            mDevicePolicyManager.retrieveSecurityLogs(getWho());
+            mDevicePolicyManager.retrieveSecurityLogs(ADMIN_RECEIVER_COMPONENT);
             fail("did not throw expected SecurityException");
         } catch (SecurityException expected) {
         }
@@ -220,7 +223,7 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
      */
     public void testRetrievingPreviousSecurityLogsThrowsSecurityException() {
         try {
-            mDevicePolicyManager.retrievePreRebootSecurityLogs(getWho());
+            mDevicePolicyManager.retrievePreRebootSecurityLogs(ADMIN_RECEIVER_COMPONENT);
             fail("did not throw expected SecurityException");
         } catch (SecurityException expected) {
         }
@@ -236,6 +239,10 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
         verifyKeystoreEventsPresent(events);
         verifyKeyChainEventsPresent(events);
         verifyAdminEventsPresent(events);
+        verifyAdbShellCommand(events); // Event generated from host side logic
+        if (mDevicePolicyManager.isOrganizationOwnedDeviceWithManagedProfile()) {
+            verifyEventsRedacted(events);
+        }
     }
 
     private void verifyAutomaticEventsPresent(List<SecurityEvent> events) {
@@ -263,6 +270,39 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
         verifyLockingPolicyEventsPresent(events);
         verifyUserRestrictionEventsPresent(events);
         verifyCameraPolicyEvents(events);
+    }
+    private void verifyAdbShellCommand(List<SecurityEvent> events) {
+        // Won't be able to locate the command on org-owned devices, as it will be redacted.
+        if (!mDevicePolicyManager.isOrganizationOwnedDeviceWithManagedProfile()) {
+            findEvent("adb command", events,
+                    e -> e.getTag() == TAG_ADB_SHELL_CMD &&
+                            e.getData().equals("whoami"));
+
+        }
+    }
+
+    private void verifyEventsRedacted(List<SecurityEvent> events) {
+        final int userId = Process.myUserHandle().getIdentifier();
+        for (SecurityEvent event : events) {
+            switch (event.getTag()) {
+                case TAG_ADB_SHELL_CMD:
+                    assertTrue(TextUtils.isEmpty((String) event.getData()));
+                    break;
+                case TAG_APP_PROCESS_START:
+                case TAG_KEY_GENERATED:
+                case TAG_KEY_IMPORT:
+                case TAG_KEY_DESTRUCTION:
+                    assertEquals(userId, UserHandle.getUserId(getInt(event, UID_INDEX)));
+                    break;
+                case TAG_CERT_AUTHORITY_INSTALLED:
+                case TAG_CERT_AUTHORITY_REMOVED:
+                    assertEquals(userId, getInt(event, USERID_INDEX));
+                    break;
+                case TAG_KEY_INTEGRITY_VIOLATION:
+                    assertEquals(userId, UserHandle.getUserId(getInt(event, 1)));
+                    break;
+            }
+        }
     }
 
     /**
@@ -303,7 +343,7 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
         // Retry once after seeping for 1 second, in case "dpm force-security-logs" hasn't taken
         // effect just yet.
         for (int i = 0; i < 2 && events == null; i++) {
-            events = mDevicePolicyManager.retrieveSecurityLogs(getWho());
+            events = mDevicePolicyManager.retrieveSecurityLogs(ADMIN_RECEIVER_COMPONENT);
             if (events == null) Thread.sleep(1000);
         }
 
@@ -470,9 +510,9 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
      * security logging is enabled after its execution.
      */
     public void testEnablingSecurityLogging() {
-        assertFalse(mDevicePolicyManager.isSecurityLoggingEnabled(getWho()));
-        mDevicePolicyManager.setSecurityLoggingEnabled(getWho(), true);
-        assertTrue(mDevicePolicyManager.isSecurityLoggingEnabled(getWho()));
+        assertFalse(mDevicePolicyManager.isSecurityLoggingEnabled(ADMIN_RECEIVER_COMPONENT));
+        mDevicePolicyManager.setSecurityLoggingEnabled(ADMIN_RECEIVER_COMPONENT, true);
+        assertTrue(mDevicePolicyManager.isSecurityLoggingEnabled(ADMIN_RECEIVER_COMPONENT));
     }
 
     /**
@@ -480,11 +520,11 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
      * disabled after its execution.
      */
     public void testDisablingSecurityLogging() {
-        mDevicePolicyManager.setSecurityLoggingEnabled(getWho(), false);
-        assertFalse(mDevicePolicyManager.isSecurityLoggingEnabled(getWho()));
+        mDevicePolicyManager.setSecurityLoggingEnabled(ADMIN_RECEIVER_COMPONENT, false);
+        assertFalse(mDevicePolicyManager.isSecurityLoggingEnabled(ADMIN_RECEIVER_COMPONENT));
 
         // Verify that logs are actually not available.
-        assertNull(mDevicePolicyManager.retrieveSecurityLogs(getWho()));
+        assertNull(mDevicePolicyManager.retrieveSecurityLogs(ADMIN_RECEIVER_COMPONENT));
     }
 
     /**
@@ -492,11 +532,12 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
      * null.
      */
     public void testSecurityLoggingRetrievalRateLimited() {
-        final List<SecurityEvent> logs = mDevicePolicyManager.retrieveSecurityLogs(getWho());
+        final List<SecurityEvent> logs = mDevicePolicyManager.retrieveSecurityLogs(
+                ADMIN_RECEIVER_COMPONENT);
         // if logs is null it means that that attempt was rate limited => test PASS
         if (logs != null) {
-            assertNull(mDevicePolicyManager.retrieveSecurityLogs(getWho()));
-            assertNull(mDevicePolicyManager.retrieveSecurityLogs(getWho()));
+            assertNull(mDevicePolicyManager.retrieveSecurityLogs(ADMIN_RECEIVER_COMPONENT));
+            assertNull(mDevicePolicyManager.retrieveSecurityLogs(ADMIN_RECEIVER_COMPONENT));
         }
     }
 
@@ -546,7 +587,8 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
     }
 
     private void installCaCert() {
-        mDevicePolicyManager.installCaCert(getWho(), TEST_CA.getBytes());
+        assertTrue(
+                mDevicePolicyManager.installCaCert(ADMIN_RECEIVER_COMPONENT, TEST_CA.getBytes()));
     }
 
     private void verifyCertInstalledEventPresent(List<SecurityEvent> events) {
@@ -557,7 +599,7 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
     }
 
     private void uninstallCaCert() {
-        mDevicePolicyManager.uninstallCaCert(getWho(), TEST_CA.getBytes());
+        mDevicePolicyManager.uninstallCaCert(ADMIN_RECEIVER_COMPONENT, TEST_CA.getBytes());
     }
 
     private void verifyCertUninstalledEventPresent(List<SecurityEvent> events) {
@@ -568,21 +610,21 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
     }
 
     private void generatePasswordComplexityEvents() {
-        mDevicePolicyManager.setPasswordQuality(getWho(), PASSWORD_QUALITY_COMPLEX);
-        mDevicePolicyManager.setPasswordMinimumLength(getWho(), TEST_PWD_LENGTH);
-        mDevicePolicyManager.setPasswordMinimumLetters(getWho(), TEST_PWD_CHARS);
-        mDevicePolicyManager.setPasswordMinimumNonLetter(getWho(), TEST_PWD_CHARS);
-        mDevicePolicyManager.setPasswordMinimumUpperCase(getWho(), TEST_PWD_CHARS);
-        mDevicePolicyManager.setPasswordMinimumLowerCase(getWho(), TEST_PWD_CHARS);
-        mDevicePolicyManager.setPasswordMinimumNumeric(getWho(), TEST_PWD_CHARS);
-        mDevicePolicyManager.setPasswordMinimumSymbols(getWho(), TEST_PWD_CHARS);
+        mDevicePolicyManager.setPasswordQuality(ADMIN_RECEIVER_COMPONENT, PASSWORD_QUALITY_COMPLEX);
+        mDevicePolicyManager.setPasswordMinimumLength(ADMIN_RECEIVER_COMPONENT, TEST_PWD_LENGTH);
+        mDevicePolicyManager.setPasswordMinimumLetters(ADMIN_RECEIVER_COMPONENT, TEST_PWD_CHARS);
+        mDevicePolicyManager.setPasswordMinimumNonLetter(ADMIN_RECEIVER_COMPONENT, TEST_PWD_CHARS);
+        mDevicePolicyManager.setPasswordMinimumUpperCase(ADMIN_RECEIVER_COMPONENT, TEST_PWD_CHARS);
+        mDevicePolicyManager.setPasswordMinimumLowerCase(ADMIN_RECEIVER_COMPONENT, TEST_PWD_CHARS);
+        mDevicePolicyManager.setPasswordMinimumNumeric(ADMIN_RECEIVER_COMPONENT, TEST_PWD_CHARS);
+        mDevicePolicyManager.setPasswordMinimumSymbols(ADMIN_RECEIVER_COMPONENT, TEST_PWD_CHARS);
     }
 
     private void verifyPasswordComplexityEventsPresent(List<SecurityEvent> events) {
         final int userId = Process.myUserHandle().getIdentifier();
         // This reflects default values for password complexity event payload fields.
         final Object[] expectedPayload = new Object[] {
-                getWho().getPackageName(), // admin package
+                ADMIN_RECEIVER_COMPONENT.getPackageName(), // admin package
                 userId,                    // admin user
                 userId,                    // target user
                 0,                         // default password length
@@ -617,37 +659,40 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
 
     private void generateLockingPolicyEvents() {
         if (mHasSecureLockScreen) {
-            mDevicePolicyManager.setPasswordExpirationTimeout(getWho(),
+            mDevicePolicyManager.setPasswordExpirationTimeout(ADMIN_RECEIVER_COMPONENT,
                     TEST_PWD_EXPIRATION_TIMEOUT);
-            mDevicePolicyManager.setPasswordHistoryLength(getWho(), TEST_PWD_HISTORY_LENGTH);
-            mDevicePolicyManager.setMaximumFailedPasswordsForWipe(getWho(), TEST_PWD_MAX_ATTEMPTS);
+            mDevicePolicyManager.setPasswordHistoryLength(ADMIN_RECEIVER_COMPONENT,
+                    TEST_PWD_HISTORY_LENGTH);
+            mDevicePolicyManager.setMaximumFailedPasswordsForWipe(ADMIN_RECEIVER_COMPONENT,
+                    TEST_PWD_MAX_ATTEMPTS);
         }
-        mDevicePolicyManager.setKeyguardDisabledFeatures(getWho(), KEYGUARD_DISABLE_FINGERPRINT);
-        mDevicePolicyManager.setMaximumTimeToLock(getWho(), TEST_MAX_TIME_TO_LOCK);
+        mDevicePolicyManager.setKeyguardDisabledFeatures(ADMIN_RECEIVER_COMPONENT,
+                KEYGUARD_DISABLE_FINGERPRINT);
+        mDevicePolicyManager.setMaximumTimeToLock(ADMIN_RECEIVER_COMPONENT, TEST_MAX_TIME_TO_LOCK);
         mDevicePolicyManager.lockNow();
     }
 
     private void verifyLockingPolicyEventsPresent(List<SecurityEvent> events) {
         final int userId = Process.myUserHandle().getIdentifier();
-
+        final String packageName = ADMIN_RECEIVER_COMPONENT.getPackageName();
         if (mHasSecureLockScreen) {
             findEvent("set password expiration", events,
                     e -> e.getTag() == TAG_PASSWORD_EXPIRATION_SET &&
-                            getString(e, ADMIN_PKG_INDEX).equals(getWho().getPackageName()) &&
+                            getString(e, ADMIN_PKG_INDEX).equals(packageName) &&
                             getInt(e, ADMIN_USER_INDEX) == userId &&
                             getInt(e, TARGET_USER_INDEX) == userId &&
                             getLong(e, PWD_EXPIRATION_INDEX) == TEST_PWD_EXPIRATION_TIMEOUT);
 
             findEvent("set password history length", events,
                     e -> e.getTag() == TAG_PASSWORD_HISTORY_LENGTH_SET &&
-                            getString(e, ADMIN_PKG_INDEX).equals(getWho().getPackageName()) &&
+                            getString(e, ADMIN_PKG_INDEX).equals(packageName) &&
                             getInt(e, ADMIN_USER_INDEX) == userId &&
                             getInt(e, TARGET_USER_INDEX) == userId &&
                             getInt(e, PWD_HIST_LEN_INDEX) == TEST_PWD_HISTORY_LENGTH);
 
             findEvent("set password attempts", events,
                     e -> e.getTag() == TAG_MAX_PASSWORD_ATTEMPTS_SET &&
-                            getString(e, ADMIN_PKG_INDEX).equals(getWho().getPackageName()) &&
+                            getString(e, ADMIN_PKG_INDEX).equals(packageName) &&
                             getInt(e, ADMIN_USER_INDEX) == userId &&
                             getInt(e, TARGET_USER_INDEX) == userId &&
                             getInt(e, MAX_PWD_ATTEMPTS_INDEX) == TEST_PWD_MAX_ATTEMPTS);
@@ -655,21 +700,21 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
 
         findEvent("set keyguard disabled features", events,
                 e -> e.getTag() == TAG_KEYGUARD_DISABLED_FEATURES_SET &&
-                        getString(e, ADMIN_PKG_INDEX).equals(getWho().getPackageName()) &&
+                        getString(e, ADMIN_PKG_INDEX).equals(packageName) &&
                         getInt(e, ADMIN_USER_INDEX) == userId &&
                         getInt(e, TARGET_USER_INDEX) == userId &&
                         getInt(e, KEYGUARD_FEATURES_INDEX) == KEYGUARD_DISABLE_FINGERPRINT);
 
         findEvent("set screen lock timeout", events,
                 e -> e.getTag() == TAG_MAX_SCREEN_LOCK_TIMEOUT_SET &&
-                        getString(e, ADMIN_PKG_INDEX).equals(getWho().getPackageName()) &&
+                        getString(e, ADMIN_PKG_INDEX).equals(packageName) &&
                         getInt(e, ADMIN_USER_INDEX) == userId &&
                         getInt(e, TARGET_USER_INDEX) == userId &&
                         getLong(e, MAX_SCREEN_TIMEOUT_INDEX) == TEST_MAX_TIME_TO_LOCK);
 
         findEvent("set screen lock timeout", events,
                 e -> e.getTag() == TAG_REMOTE_LOCK &&
-                        getString(e, ADMIN_PKG_INDEX).equals(getWho().getPackageName()) &&
+                        getString(e, ADMIN_PKG_INDEX).equals(packageName) &&
                         getInt(e, ADMIN_USER_INDEX) == userId);
     }
 
@@ -681,8 +726,10 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
     }
 
     private void generateUserRestrictionEvents() {
-        mDevicePolicyManager.addUserRestriction(getWho(), UserManager.DISALLOW_FUN);
-        mDevicePolicyManager.clearUserRestriction(getWho(), UserManager.DISALLOW_FUN);
+        mDevicePolicyManager.addUserRestriction(ADMIN_RECEIVER_COMPONENT,
+                UserManager.DISALLOW_PRINTING);
+        mDevicePolicyManager.clearUserRestriction(ADMIN_RECEIVER_COMPONENT,
+                UserManager.DISALLOW_PRINTING);
     }
 
     private void verifyUserRestrictionEventsPresent(List<SecurityEvent> events) {
@@ -694,14 +741,15 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
         final int userId = Process.myUserHandle().getIdentifier();
         findEvent(description, events,
                 e -> e.getTag() == tag &&
-                        getString(e, ADMIN_PKG_INDEX).equals(getWho().getPackageName()) &&
+                        getString(e, ADMIN_PKG_INDEX).equals(
+                                ADMIN_RECEIVER_COMPONENT.getPackageName()) &&
                         getInt(e, ADMIN_USER_INDEX) == userId &&
-                        UserManager.DISALLOW_FUN.equals(getString(e, USER_RESTRICTION_INDEX)));
+                        UserManager.DISALLOW_PRINTING.equals(getString(e, USER_RESTRICTION_INDEX)));
     }
 
     private void generateCameraPolicyEvents() {
-        mDevicePolicyManager.setCameraDisabled(getWho(), true);
-        mDevicePolicyManager.setCameraDisabled(getWho(), false);
+        mDevicePolicyManager.setCameraDisabled(ADMIN_RECEIVER_COMPONENT, true);
+        mDevicePolicyManager.setCameraDisabled(ADMIN_RECEIVER_COMPONENT, false);
     }
 
     private void verifyCameraPolicyEvents(List<SecurityEvent> events) {
@@ -709,14 +757,16 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
 
         findEvent("set camera disabled", events,
                 e -> e.getTag() == TAG_CAMERA_POLICY_SET &&
-                        getString(e, ADMIN_PKG_INDEX).equals(getWho().getPackageName()) &&
+                        getString(e, ADMIN_PKG_INDEX).equals(
+                                ADMIN_RECEIVER_COMPONENT.getPackageName()) &&
                         getInt(e, ADMIN_USER_INDEX) == userId &&
                         getInt(e, TARGET_USER_INDEX) == userId &&
                         getInt(e, CAMERA_DISABLED_INDEX) == 1);
 
         findEvent("set camera enabled", events,
                 e -> e.getTag() == TAG_CAMERA_POLICY_SET &&
-                        getString(e, ADMIN_PKG_INDEX).equals(getWho().getPackageName()) &&
+                        getString(e, ADMIN_PKG_INDEX).equals(
+                                ADMIN_RECEIVER_COMPONENT.getPackageName()) &&
                         getInt(e, ADMIN_USER_INDEX) == userId &&
                         getInt(e, TARGET_USER_INDEX) == userId &&
                         getInt(e, CAMERA_DISABLED_INDEX) == 0);
