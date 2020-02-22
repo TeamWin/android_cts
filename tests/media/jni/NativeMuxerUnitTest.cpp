@@ -17,6 +17,10 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "NativeMuxerUnitTest"
 #include <log/log.h>
+
+#include <NdkMediaExtractor.h>
+#include <NdkMediaFormat.h>
+#include <NdkMediaMuxer.h>
 #include <fcntl.h>
 #include <jni.h>
 #include <sys/stat.h>
@@ -29,9 +33,6 @@
 #include <vector>
 
 #include "NativeMediaConstants.h"
-#include "media/NdkMediaExtractor.h"
-#include "media/NdkMediaFormat.h"
-#include "media/NdkMediaMuxer.h"
 
 static media_status_t insertPerFrameSubtitles(AMediaMuxer* muxer, long pts, size_t trackID) {
     const char* greeting = "hello world";
