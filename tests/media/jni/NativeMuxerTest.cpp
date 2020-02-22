@@ -18,6 +18,9 @@
 #define LOG_TAG "NativeMuxerTest"
 #include <log/log.h>
 
+#include <NdkMediaExtractor.h>
+#include <NdkMediaFormat.h>
+#include <NdkMediaMuxer.h>
 #include <fcntl.h>
 #include <jni.h>
 #include <sys/stat.h>
@@ -30,9 +33,6 @@
 #include <vector>
 
 #include "NativeMediaConstants.h"
-#include "media/NdkMediaExtractor.h"
-#include "media/NdkMediaFormat.h"
-#include "media/NdkMediaMuxer.h"
 
 /**
  * MuxerNativeTestHelper breaks a media file to elements that a muxer can use to rebuild its clone.
