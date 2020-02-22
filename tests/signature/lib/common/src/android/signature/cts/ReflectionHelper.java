@@ -34,6 +34,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Uses reflection to obtain runtime representations of elements in the API.
@@ -421,10 +423,24 @@ public class ReflectionHelper {
         }
     }
 
+    private final static Pattern REPEATING_ANNOTATION_PATTERN =
+            Pattern.compile("@.*\\(value=\\[(.*)\\]\\)");
+
     public static boolean hasMatchingAnnotation(AnnotatedElement elem, String annotationSpec) {
         for (Annotation a : elem.getAnnotations()) {
             if (a.toString().equals(annotationSpec)) {
                 return true;
+            }
+            // It could be a repeating annotation. In that case, a.toString() returns
+            // "@MyAnnotation$Container(value=[@MyAnnotation(A), @MyAnnotation(B)])"
+            // Then, iterate over @MyAnnotation(A) and @MyAnnotation(B).
+            Matcher m = REPEATING_ANNOTATION_PATTERN.matcher(a.toString());
+            if (m.matches()) {
+                for (String token : m.group(1).split(", ")) {
+                    if (token.equals(annotationSpec)) {
+                        return true;
+                    }
+                }
             }
         }
         return false;
