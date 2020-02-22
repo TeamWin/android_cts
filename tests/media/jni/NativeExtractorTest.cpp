@@ -18,13 +18,12 @@
 #define LOG_TAG "NativeExtractorTest"
 #include <log/log.h>
 
+#include <NdkMediaExtractor.h>
 #include <jni.h>
 #include <sys/stat.h>
 
 #include <cstdlib>
 #include <random>
-
-#include "media/NdkMediaExtractor.h"
 
 static bool isExtractorOKonEOS(AMediaExtractor* extractor) {
     return AMediaExtractor_getSampleTrackIndex(extractor) < 0 &&
@@ -726,10 +725,13 @@ int registerAndroidMediaV2CtsExtractorTestFunc(JNIEnv* env) {
     return env->RegisterNatives(c, methodTable, sizeof(methodTable) / sizeof(JNINativeMethod));
 }
 
+extern int registerAndroidMediaV2CtsExtractorUnitTestApi(JNIEnv* env);
+
 extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void*) {
     JNIEnv* env;
     if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) return JNI_ERR;
     if (registerAndroidMediaV2CtsExtractorTestSetDS(env) != JNI_OK) return JNI_ERR;
     if (registerAndroidMediaV2CtsExtractorTestFunc(env) != JNI_OK) return JNI_ERR;
+    if (registerAndroidMediaV2CtsExtractorUnitTestApi(env) != JNI_OK) return JNI_ERR;
     return JNI_VERSION_1_6;
 }
