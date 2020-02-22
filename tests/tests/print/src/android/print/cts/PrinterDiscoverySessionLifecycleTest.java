@@ -117,7 +117,7 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         selectPrinter(localPrinterId);
         waitForWriteAdapterCallback(2);
 
-        clickPrintButton();
+        mPrintHelper.submitPrintJob();
 
         eventually(() -> {
             answerPrintServicesWarning(true);
@@ -191,10 +191,12 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         // Wait for preview to load and finish print
         waitForWriteAdapterCallback(1);
 
-        eventually(() -> {
-            clickPrintButton();
-            waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
-        }, OPERATION_TIMEOUT_MILLIS * 2);
+        eventually(
+                () -> {
+                    mPrintHelper.submitPrintJob();
+                    waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+                },
+                OPERATION_TIMEOUT_MILLIS * 2);
     }
 
     @Test
@@ -243,10 +245,12 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         // Wait for preview to load and finish print
         waitForWriteAdapterCallback(1);
 
-        eventually(() -> {
-            clickPrintButton();
-            waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
-        }, OPERATION_TIMEOUT_MILLIS * 2);
+        eventually(
+                () -> {
+                    mPrintHelper.submitPrintJob();
+                    waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+                },
+                OPERATION_TIMEOUT_MILLIS * 2);
     }
 
     @Test
@@ -312,7 +316,7 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         assertNotNull("Coundn't find printer:" + SECOND_PRINTER_LOCAL_ID, secondPrinterId);
 
         // Click the print button.
-        clickPrintButton();
+        mPrintHelper.submitPrintJob();
 
         eventually(() -> {
             // Answer the dialog for the print service cloud warning
@@ -406,13 +410,13 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         assertNotNull("Coundn't find printer:" + FIRST_PRINTER_LOCAL_ID, firstPrinterId);
 
         // Click the print button.
-        clickPrintButton();
+        mPrintHelper.submitPrintJob();
 
         // Cancel the dialog for the print service cloud warning
         answerPrintServicesWarning(false);
 
         // Click the print button again.
-        clickPrintButton();
+        mPrintHelper.submitPrintJob();
 
         // Answer the dialog for the print service cloud warning
         answerPrintServicesWarning(true);
@@ -499,7 +503,7 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
                 FIRST_PRINTER_LOCAL_ID);
 
         // Click the print button.
-        clickPrintButton();
+        mPrintHelper.submitPrintJob();
 
         eventually(() -> {
             // Answer the dialog for the print service cloud warning

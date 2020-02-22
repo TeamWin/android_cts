@@ -289,7 +289,7 @@ public class PrintServicesTest extends BasePrintTest {
         selectPrinter(PRINTER_NAME);
 
         // Click the print button.
-        clickPrintButton();
+        mPrintHelper.submitPrintJob();
 
         eventually(() -> {
             // Answer the dialog for the print service cloud warning
@@ -507,7 +507,7 @@ public class PrintServicesTest extends BasePrintTest {
             // Job is not yet confirmed, hence it is not yet "active"
             runOnMainThread(() -> assertEquals(0, firstService.callGetActivePrintJobs().size()));
 
-            clickPrintButton();
+            mPrintHelper.submitPrintJob();
 
             eventually(() -> {
                 answerPrintServicesWarning(true);
@@ -521,7 +521,7 @@ public class PrintServicesTest extends BasePrintTest {
             resetCounters();
             runOnMainThread(() -> pm.print("job2", adapter, null));
             waitForWriteAdapterCallback(1);
-            clickPrintButton();
+            mPrintHelper.submitPrintJob();
             waitForServiceOnPrintJobQueuedCallbackCalled(1);
 
             eventually(() -> runOnMainThread(
@@ -535,7 +535,7 @@ public class PrintServicesTest extends BasePrintTest {
 
             waitForWriteAdapterCallback(1);
             selectPrinter("Printer2");
-            clickPrintButton();
+            mPrintHelper.submitPrintJob();
 
             StubbablePrintService secondService = serviceCallbacks2.getService();
             runOnMainThread(() -> assertEquals(0, secondService.callGetActivePrintJobs().size()));
