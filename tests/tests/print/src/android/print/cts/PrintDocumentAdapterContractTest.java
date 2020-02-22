@@ -127,7 +127,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForLayoutAdapterCallbackCount(2);
 
         // Click the print button.
-        clickPrintButton();
+        mPrintHelper.submitPrintJob();
 
         eventually(() -> {
             // Answer the dialog for the print service cloud warning
@@ -377,7 +377,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForWriteAdapterCallback(2);
 
         // Click the print button.
-        clickPrintButton();
+        mPrintHelper.submitPrintJob();
 
         eventually(() -> {
             // Answer the dialog for the print service cloud warning
@@ -462,7 +462,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForLayoutAdapterCallbackCount(6);
 
         // Click the print button.
-        clickPrintButton();
+        mPrintHelper.submitPrintJob();
 
         eventually(() -> {
             // Answer the dialog for the print service cloud warning
@@ -647,7 +647,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         writeCorruptedFile[0] = true;
 
         // Click the print button
-        clickPrintButton();
+        mPrintHelper.submitPrintJob();
 
         eventually(() -> {
             // Answer the dialog for the print service cloud warning
@@ -728,7 +728,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForLayoutAdapterCallbackCount(4);
 
         // Click the print button.
-        clickPrintButton();
+        mPrintHelper.submitPrintJob();
 
         eventually(() -> {
             // Answer the dialog for the print service cloud warning
@@ -867,7 +867,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForLayoutAdapterCallbackCount(2);
 
         // Click the print button.
-        clickPrintButton();
+        mPrintHelper.submitPrintJob();
 
         eventually(() -> {
             // Answer the dialog for the print service cloud warning
@@ -982,7 +982,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         selectPrinter("Third printer");
 
         // Click the print button.
-        clickPrintButton();
+        mPrintHelper.submitPrintJob();
 
         eventually(() -> {
             // Answer the dialog for the print service cloud warning
@@ -1082,7 +1082,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForLayoutAdapterCallbackCount(2);
 
         // Click the print button.
-        clickPrintButton();
+        mPrintHelper.submitPrintJob();
 
         eventually(() -> {
             // Answer the dialog for the print service cloud warning
@@ -1479,7 +1479,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         clickRetryButton();
 
         // Click the print button.
-        clickPrintButton();
+        mPrintHelper.submitPrintJob();
 
         eventually(() -> {
             // Answer the dialog for the print service cloud warning
@@ -1548,7 +1548,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         clickRetryButton();
 
         // Click the print button.
-        clickPrintButton();
+        mPrintHelper.submitPrintJob();
 
         eventually(() -> {
             // Answer the dialog for the print service cloud warning
@@ -1969,7 +1969,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         print(adapter);
         waitForWriteAdapterCallback(1);
         selectPrinter("First printer");
-        clickPrintButton();
+        mPrintHelper.submitPrintJob();
 
         eventually(() -> {
             // Answer the dialog for the print service cloud warning
