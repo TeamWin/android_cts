@@ -31,8 +31,8 @@ java_test_host {
 }
 
 android_test_helper_app {
-  name: "CtsBlobStoreHelperApp",
-  srcs:  ["test-apps/BlobStoreHelperApp/src/**/*.java"],
+  name: "CtsBlobStoreHostTestHelper",
+  srcs:  ["test-apps/BlobStoreHostTestHelper/src/**/*.java"],
   static_libs: [
       "compatibility-device-util-axt",
       "androidx.test.ext.junit",
@@ -41,7 +41,7 @@ android_test_helper_app {
       "truth-prebuilt",
       "testng",
   ],
-  manifest : "test-apps/BlobStoreHelperApp/AndroidManifest.xml",
+  manifest : "test-apps/BlobStoreHostTestHelper/AndroidManifest.xml",
   platform_apis: true,
   // Tag this module as a cts test artifact
   test_suites: [

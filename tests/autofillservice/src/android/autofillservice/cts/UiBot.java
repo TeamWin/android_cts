@@ -70,6 +70,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.RetryableException;
 import com.android.compatibility.common.util.Timeout;
+import com.android.cts.mockime.MockIme;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -262,6 +263,14 @@ public final class UiBot {
     }
 
     /**
+     * Asserts the suggestion strip was never shown.
+     */
+    public void assertNoSuggestionStripEver() throws Exception {
+        assertNeverShown("suggestion strip", SUGGESTION_STRIP_SELECTOR,
+                DATASET_PICKER_NOT_SHOWN_NAPTIME_MS);
+    }
+
+    /**
      * Asserts the dataset chooser is shown and contains exactly the given datasets.
      *
      * @return the dataset picker object.
@@ -335,12 +344,25 @@ public final class UiBot {
         return picker;
     }
 
+    /**
+     * Asserts the suggestion strip on the {@link MockIme} is shown and contains the given number
+     * of child suggestions.
+     *
+     * @param childrenCount the expected number of children.
+     *
+     * @return the suggestion strip object
+     */
     public UiObject2 assertSuggestionStrip(int childrenCount) throws Exception {
         final UiObject2 strip = findSuggestionStrip(UI_TIMEOUT);
         assertThat(strip.getChildCount()).isEqualTo(childrenCount);
         return strip;
     }
 
+    /**
+     * Selects the suggestion in the {@link MockIme}'s suggestion strip at the given index.
+     *
+     * @param index the index of the suggestion to select.
+     */
     public void selectSuggestion(int index) throws Exception {
         final UiObject2 strip = findSuggestionStrip(UI_TIMEOUT);
         assertThat(index).isAtLeast(0);

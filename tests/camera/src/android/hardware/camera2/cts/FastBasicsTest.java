@@ -25,6 +25,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
+import android.hardware.cts.helpers.CameraUtils;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CaptureRequest;
@@ -193,7 +194,8 @@ public class FastBasicsTest extends Camera2SurfaceViewTestCase {
     @Presubmit
     @Test
     public void testCamera1() throws Exception {
-        for (int i = 0; i < Camera.getNumberOfCameras(); i++) {
+        int[] cameraIds = CameraUtils.deriveCameraIdsUnderTest();
+        for (int i : cameraIds) {
             Camera camera = null;
             try {
                 Log.i(TAG, "Testing android.hardware.Camera API for camera device " + i);

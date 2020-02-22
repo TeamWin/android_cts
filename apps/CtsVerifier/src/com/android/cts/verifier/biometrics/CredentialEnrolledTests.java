@@ -59,10 +59,18 @@ public class CredentialEnrolledTests extends PassFailButtons.Activity {
             final BiometricManager bm = getSystemService(BiometricManager.class);
 
             final int biometricResult = bm.canAuthenticate(Authenticators.BIOMETRIC_WEAK);
-            if (biometricResult != BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED) {
-                showToastAndLog("Unexpected result: " + biometricResult +
-                        ". Please make sure the device does not have a biometric enrolled");
-                return;
+            switch (biometricResult) {
+                case BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE:
+                case BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED:
+                    // OK
+                    break;
+                case BiometricManager.BIOMETRIC_SUCCESS:
+                    showToastAndLog("Unexpected result: " + biometricResult +
+                            ". Please make sure the device does not have a biometric enrolled");
+                    return;
+                default:
+                    showToastAndLog("Unexpected result: " + biometricResult);
+                    return;
             }
 
             final int credentialResult = bm.canAuthenticate(Authenticators.DEVICE_CREDENTIAL);

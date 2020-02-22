@@ -56,6 +56,7 @@ import android.server.wm.WindowManagerState.DisplayContent;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.ActivitySessionClient;
 import android.server.wm.settings.SettingsSession;
+import android.util.DisplayMetrics;
 import android.util.Pair;
 import android.util.Size;
 import android.view.WindowManager;
@@ -168,10 +169,12 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         @Nullable
         final Integer overrideDensity;
 
+        final int mDisplayId;
+
         /** Get physical and override display metrics from WM for specified display. */
         public static ReportedDisplayMetrics getDisplayMetrics(int displayId) {
             return new ReportedDisplayMetrics(executeShellCommand(WM_SIZE + " -d " + displayId)
-                            + executeShellCommand(WM_DENSITY + " -d " + displayId));
+                            + executeShellCommand(WM_DENSITY + " -d " + displayId), displayId);
         }
 
         void setDisplayMetrics(final Size size, final int density) {
@@ -193,11 +196,12 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         }
 
         private void setSize(final Size size) {
-            executeShellCommand(WM_SIZE + " " + size.getWidth() + "x" + size.getHeight());
+            executeShellCommand(
+                    WM_SIZE + " " + size.getWidth() + "x" + size.getHeight() + " -d " + mDisplayId);
         }
 
         private void setDensity(final int density) {
-            executeShellCommand(WM_DENSITY + " " + density);
+            executeShellCommand(WM_DENSITY + " " + density + " -d " + mDisplayId);
         }
 
         /** Get display size that WM operates with. */
@@ -210,7 +214,8 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             return overrideDensity != null ? overrideDensity : physicalDensity;
         }
 
-        private ReportedDisplayMetrics(final String lines) {
+        private ReportedDisplayMetrics(final String lines, int displayId) {
+            mDisplayId = displayId;
             Matcher matcher = PHYSICAL_SIZE.matcher(lines);
             assertTrue("Physical display size must be reported", matcher.find());
             log(matcher.group());
@@ -256,6 +261,16 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
 
         ReportedDisplayMetrics getDisplayMetrics() {
             return ReportedDisplayMetrics.getDisplayMetrics(mDisplayId);
+        }
+
+        void changeDisplayMetrics(double sizeRatio, double densityRatio) {
+            final Size originalSize = mInitialDisplayMetrics.physicalSize;
+            final int density = mInitialDisplayMetrics.physicalDensity;
+
+            final Size overrideSize = new Size((int)(originalSize.getWidth() * sizeRatio),
+                    (int)(originalSize.getHeight() * sizeRatio));
+            final int overrideDensity = (int)(density * densityRatio);
+            overrideDisplayMetrics(overrideSize, overrideDensity);
         }
 
         void overrideDisplayMetrics(final Size size, final int density) {

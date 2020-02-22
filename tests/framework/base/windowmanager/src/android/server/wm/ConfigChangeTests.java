@@ -16,9 +16,9 @@
 
 package android.server.wm;
 
-import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.StateLogger.log;
 import static android.server.wm.StateLogger.logE;
+import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.app.Components.FONT_SCALE_ACTIVITY;
 import static android.server.wm.app.Components.FONT_SCALE_NO_RELAUNCH_ACTIVITY;
 import static android.server.wm.app.Components.FontScaleActivity.EXTRA_FONT_ACTIVITY_DPI;

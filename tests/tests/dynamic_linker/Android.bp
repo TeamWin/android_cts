@@ -14,6 +14,7 @@
 
 cc_test_library {
     name: "libdynamiclinker_native_lib_a",
+    sdk_version: "current",
     srcs: ["native_lib_a.cpp"],
     cflags: [
         "-Wall",
@@ -27,6 +28,7 @@ cc_test_library {
 
 cc_test_library {
     name: "libdynamiclinker_native_lib_b",
+    sdk_version: "current",
     srcs: ["native_lib_b.cpp"],
     cflags: [
         "-Wall",

@@ -2095,6 +2095,11 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, testName, mUserId);
     }
 
+    protected void executeDeviceTestMethod(String className, String testName,
+            Map<String, String> params) throws Exception {
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, testName, mUserId, params);
+    }
+
     private void installAppPermissionAppAsUser()
             throws FileNotFoundException, DeviceNotAvailableException {
         installAppAsUser(PERMISSIONS_APP_APK, false, mUserId);
@@ -2311,20 +2316,5 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private void restoreRestrictBackgroundPolicyTo(boolean restricted) throws Exception {
         getDevice().executeShellCommand(
                 restricted ? RESTRICT_BACKGROUND_ON_CMD : RESTRICT_BACKGROUND_OFF_CMD);
-    }
-
-    // TODO: copied from RequiredServiceRule, which is on compatibility-device-util
-    // (and we use compatibility-host-util)
-    public boolean hasService(String service) {
-        // TODO: ideally should call SystemServiceManager directly, but we would need to open
-        // some @Testing APIs for that.
-        String command = "service check " + service;
-        try {
-            String commandOutput = getDevice().executeShellCommand(command);
-            return !commandOutput.contains("not found");
-        } catch (Exception e) {
-            CLog.w("Exception running '" + command + "': " + e);
-            return false;
-        }
     }
 }

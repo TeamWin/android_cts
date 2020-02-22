@@ -18,6 +18,7 @@ package android.hardware.cts.helpers;
 
 import android.app.UiAutomation;
 import android.content.Context;
+import android.os.Bundle;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -41,6 +42,10 @@ public class CameraParameterizedTestCase {
     protected Context mContext;
     @Parameter(0)
     public boolean mAdoptShellPerm;
+
+    private static final String CAMERA_ID_INSTR_ARG_KEY = "camera-id";
+    private static final Bundle mBundle = InstrumentationRegistry.getArguments();
+    protected static final String mOverrideCameraId = mBundle.getString(CAMERA_ID_INSTR_ARG_KEY);
 
     @Parameters
     public static Iterable<? extends Object> data() {

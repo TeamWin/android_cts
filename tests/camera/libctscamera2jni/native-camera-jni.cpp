@@ -939,11 +939,19 @@ class PreviewTestCase {
     }
 
     camera_status_t initWithErrorLog() {
+        return initWithErrorLog(nullptr /*env*/, nullptr /*jOverrideCameraId*/);
+    }
+
+    camera_status_t initWithErrorLog(JNIEnv* env, jstring jOverrideCameraId) {
         camera_status_t ret = ACameraManager_getCameraIdList(
                 mCameraManager, &mCameraIdList);
         if (ret != ACAMERA_OK) {
             LOG_ERROR(errorString, "Get camera id list failed: ret %d", ret);
             return ret;
+        }
+
+        if (env != nullptr && jOverrideCameraId != nullptr) {
+            mOverrideCameraId = env->GetStringUTFChars(jOverrideCameraId, 0);
         }
         ret = ACameraManager_registerAvailabilityCallback(mCameraManager, &mServiceCb);
         if (ret != ACAMERA_OK) {
@@ -951,6 +959,8 @@ class PreviewTestCase {
             return ret;
         }
         mMgrInited = true;
+        mJOverrideCameraId = jOverrideCameraId;
+        mJNIEnv = env;
         return ACAMERA_OK;
     }
 
@@ -971,6 +981,12 @@ class PreviewTestCase {
             mCameraIdList = nullptr;
         }
         mMgrInited = false;
+        if (mOverrideCameraId != nullptr && mJNIEnv != nullptr) {
+            mJNIEnv->ReleaseStringUTFChars(mJOverrideCameraId, mOverrideCameraId);
+            mOverrideCameraId = nullptr;
+            mJOverrideCameraId = nullptr;
+            mJNIEnv = nullptr;
+        }
         return ACAMERA_OK;
     }
 
@@ -978,12 +994,22 @@ class PreviewTestCase {
         if (!mMgrInited || !mCameraIdList) {
             return -1;
         }
+        if (mOverrideCameraId != nullptr) {
+            return 1;
+        }
         return mCameraIdList->numCameras;
     }
 
     const char* getCameraId(int idx) {
         if (!mMgrInited || !mCameraIdList || idx < 0 || idx >= mCameraIdList->numCameras) {
             return nullptr;
+        }
+        if (mOverrideCameraId != nullptr) {
+            if (idx >= 1) {
+                return nullptr;
+            } else {
+                return mOverrideCameraId;
+            }
         }
         return mCameraIdList->cameraIds[idx];
     }
@@ -993,10 +1019,18 @@ class PreviewTestCase {
         if (!mMgrInited || !mCameraIdList || idx < 0 || idx >= mCameraIdList->numCameras) {
             return nullptr;
         }
+        const char* cameraId = mCameraIdList->cameraIds[idx];
+        if (mOverrideCameraId != nullptr) {
+            if (idx >= 1) {
+                return nullptr;
+            } else {
+                cameraId = mOverrideCameraId;
+            }
+        }
 
         ACameraMetadata* chars;
         camera_status_t ret = ACameraManager_getCameraCharacteristics(
-                mCameraManager, mCameraIdList->cameraIds[idx], &chars);
+                mCameraManager, cameraId, &chars);
         if (ret != ACAMERA_OK) {
             LOG_ERROR(errorString, "Get camera characteristics failed: ret %d", ret);
             return nullptr;
@@ -1618,6 +1652,9 @@ class PreviewTestCase {
     ACameraOutputTarget* mReqPreviewOutput = nullptr;
     ACameraOutputTarget* mReqImgReaderOutput = nullptr;
     const char* mCameraId;
+    JNIEnv* mJNIEnv = nullptr;
+    jstring mJOverrideCameraId;
+    const char* mOverrideCameraId = nullptr;
 
     bool mMgrInited = false; // cameraId, serviceListener
     bool mImgReaderInited = false;
@@ -2014,13 +2051,13 @@ cleanup:
 extern "C" jboolean
 Java_android_hardware_camera2_cts_NativeCameraDeviceTest_\
 testCameraDeviceOpenAndCloseNative(
-        JNIEnv* env, jclass /*clazz*/) {
+        JNIEnv* env, jclass /*clazz*/, jstring jOverrideCameraId) {
     ALOGV("%s", __FUNCTION__);
     int numCameras = 0;
     bool pass = false;
     PreviewTestCase testCase;
 
-    camera_status_t ret = testCase.initWithErrorLog();
+    camera_status_t ret = testCase.initWithErrorLog(env, jOverrideCameraId);
     if (ret != ACAMERA_OK) {
         // Don't log error here. testcase did it
         goto cleanup;
@@ -2084,7 +2121,7 @@ cleanup:
 extern "C" jboolean
 Java_android_hardware_camera2_cts_NativeCameraDeviceTest_\
 testCameraDeviceCreateCaptureRequestNative(
-        JNIEnv* env, jclass /*clazz*/) {
+        JNIEnv* env, jclass /*clazz*/, jstring jOverrideCameraId) {
     ALOGV("%s", __FUNCTION__);
     bool pass = false;
     ACameraManager* mgr = ACameraManager_create();
@@ -2095,9 +2132,18 @@ testCameraDeviceCreateCaptureRequestNative(
     camera_status_t ret = ACameraManager_getCameraIdList(mgr, &cameraIdList);
 
     int numCameras = cameraIdList->numCameras;
+    const char* overrideCameraId = nullptr;
+    if (jOverrideCameraId != nullptr) {
+        overrideCameraId = env->GetStringUTFChars(jOverrideCameraId, nullptr);
+    }
+
     for (int i = 0; i < numCameras; i++) {
         CameraDeviceListener deviceListener;
         const char* cameraId = cameraIdList->cameraIds[i];
+        if (overrideCameraId != nullptr && strcmp(overrideCameraId, cameraId)) {
+            // Skip other cameras if overriding camera id to be tested.
+            continue;
+        }
         ACameraDevice_StateCallbacks deviceCb {
             &deviceListener,
             CameraDeviceListener::onDisconnected,
@@ -2322,13 +2368,14 @@ cleanup:
 extern "C" jboolean
 Java_android_hardware_camera2_cts_NativeCameraDeviceTest_\
 testCameraDeviceSessionOpenAndCloseNative(
-        JNIEnv* env, jclass /*clazz*/, jobject jPreviewSurface) {
+        JNIEnv* env, jclass /*clazz*/, jobject jPreviewSurface,
+        jstring jOverrideCameraId) {
     ALOGV("%s", __FUNCTION__);
     int numCameras = 0;
     bool pass = false;
     PreviewTestCase testCase;
 
-    camera_status_t ret = testCase.initWithErrorLog();
+    camera_status_t ret = testCase.initWithErrorLog(env, jOverrideCameraId);
     if (ret != ACAMERA_OK) {
         // Don't log error here. testcase did it
         goto cleanup;
@@ -2460,7 +2507,8 @@ cleanup:
 extern "C" jboolean
 Java_android_hardware_camera2_cts_NativeCameraDeviceTest_\
 testCameraDeviceSharedOutputUpdate(
-        JNIEnv* env, jclass /*clazz*/, jobject jPreviewSurface, jobject jSharedSurface) {
+        JNIEnv* env, jclass /*clazz*/, jobject jPreviewSurface, jobject jSharedSurface,
+        jstring jOverrideCameraId) {
     ALOGV("%s", __FUNCTION__);
     int numCameras = 0;
     bool pass = false;
@@ -2477,7 +2525,7 @@ testCameraDeviceSharedOutputUpdate(
     uint32_t timeoutSec = 1;
     uint32_t runPreviewSec = 2;
 
-    camera_status_t ret = testCase.initWithErrorLog();
+    camera_status_t ret = testCase.initWithErrorLog(env, jOverrideCameraId);
     if (ret != ACAMERA_OK) {
         // Don't log error here. testcase did it
         goto cleanup;
@@ -2729,13 +2777,14 @@ cleanup:
 extern "C" jboolean
 Java_android_hardware_camera2_cts_NativeCameraDeviceTest_\
 testCameraDeviceSimplePreviewNative(
-        JNIEnv* env, jclass /*clazz*/, jobject jPreviewSurface) {
+        JNIEnv* env, jclass /*clazz*/, jobject jPreviewSurface,
+        jstring jOverrideCameraId) {
     ALOGV("%s", __FUNCTION__);
     int numCameras = 0;
     bool pass = false;
     PreviewTestCase testCase;
 
-    camera_status_t ret = testCase.initWithErrorLog();
+    camera_status_t ret = testCase.initWithErrorLog(env, jOverrideCameraId);
     if (ret != ACAMERA_OK) {
         // Don't log error here. testcase did it
         goto cleanup;
@@ -2837,7 +2886,8 @@ cleanup:
 extern "C" jboolean
 Java_android_hardware_camera2_cts_NativeCameraDeviceTest_\
 testCameraDevicePreviewWithSessionParametersNative(
-        JNIEnv* env, jclass /*clazz*/, jobject jPreviewSurface) {
+        JNIEnv* env, jclass /*clazz*/, jobject jPreviewSurface,
+        jstring jOverrideCameraId) {
     ALOGV("%s", __FUNCTION__);
     int numCameras = 0;
     bool pass = false;
@@ -2845,7 +2895,7 @@ testCameraDevicePreviewWithSessionParametersNative(
     ACameraMetadata* chars = nullptr;
     PreviewTestCase testCase;
 
-    camera_status_t ret = testCase.initWithErrorLog();
+    camera_status_t ret = testCase.initWithErrorLog(env, jOverrideCameraId);
     if (ret != ACAMERA_OK) {
         // Don't log error here. testcase did it
         goto cleanup;
@@ -2965,7 +3015,8 @@ cleanup:
 }
 
 bool nativeCameraDeviceLogicalPhysicalStreaming(
-        JNIEnv* env, jobject jPreviewSurface, bool usePhysicalSettings) {
+        JNIEnv* env, jobject jPreviewSurface, bool usePhysicalSettings,
+        jstring jOverrideCameraId) {
     const int NUM_TEST_IMAGES = 10;
     const int TEST_WIDTH  = 640;
     const int TEST_HEIGHT = 480;
@@ -2981,7 +3032,7 @@ bool nativeCameraDeviceLogicalPhysicalStreaming(
     uint32_t timeoutSec = 1;
     uint32_t runPreviewSec = 2;
 
-    camera_status_t ret = testCase.initWithErrorLog();
+    camera_status_t ret = testCase.initWithErrorLog(env, jOverrideCameraId);
     if (ret != ACAMERA_OK) {
         // Don't log error here. testcase did it
         goto cleanup;
@@ -3244,22 +3295,26 @@ cleanup:
 extern "C" jboolean
 Java_android_hardware_camera2_cts_NativeCameraDeviceTest_\
 testCameraDeviceLogicalPhysicalStreamingNative(
-        JNIEnv* env, jclass /*clazz*/, jobject jPreviewSurface) {
+        JNIEnv* env, jclass /*clazz*/, jobject jPreviewSurface,
+        jstring jOverrideCameraId) {
     return nativeCameraDeviceLogicalPhysicalStreaming(env,
-            jPreviewSurface, false /*usePhysicalSettings*/);
+            jPreviewSurface, false /*usePhysicalSettings*/,
+            jOverrideCameraId);
 }
 
 extern "C" jboolean
 Java_android_hardware_camera2_cts_NativeCameraDeviceTest_\
 testCameraDeviceLogicalPhysicalSettingsNative(
-        JNIEnv* env, jclass /*clazz*/, jobject jPreviewSurface) {
+        JNIEnv* env, jclass /*clazz*/, jobject jPreviewSurface,
+        jstring jOverrideCameraId) {
     return nativeCameraDeviceLogicalPhysicalStreaming(env,
-            jPreviewSurface, true /*usePhysicalSettings*/);
+            jPreviewSurface, true /*usePhysicalSettings*/,
+            jOverrideCameraId);
 }
 
-
 bool nativeImageReaderTestBase(
-        JNIEnv* env, jstring jOutPath, jint format, AImageReader_ImageCallback cb) {
+        JNIEnv* env, jstring jOutPath, jint format, AImageReader_ImageCallback cb,
+        jstring jOverrideCameraId) {
     const int NUM_TEST_IMAGES = 10;
     const int TEST_WIDTH  = 640;
     const int TEST_HEIGHT = 480;
@@ -3275,7 +3330,7 @@ bool nativeImageReaderTestBase(
         ALOGI("%s: out path is %s", __FUNCTION__, outPath);
     }
 
-    camera_status_t ret = testCase.initWithErrorLog();
+    camera_status_t ret = testCase.initWithErrorLog(env, jOverrideCameraId);
     if (ret != ACAMERA_OK) {
         // Don't log error here. testcase did it
         goto cleanup;
@@ -3523,7 +3578,7 @@ cleanup:
 // surface will eventually run out of free buffers and start reporting capture errors.
 extern "C" jboolean
 Java_android_hardware_camera2_cts_NativeCameraDeviceTest_\
-testCameraDeviceCaptureFailureNative(JNIEnv* env) {
+testCameraDeviceCaptureFailureNative(JNIEnv* env, jclass /*clazz*/, jstring jOverrideCameraId) {
     const size_t NUM_TEST_IMAGES = 10;
     const size_t NUM_FAILED_FRAMES = 3; // Wait for at least 3 consecutive failed capture requests
     const int64_t NUM_TOTAL_FRAMES = 60; // Avoid waiting for more than 60 frames
@@ -3536,7 +3591,7 @@ testCameraDeviceCaptureFailureNative(JNIEnv* env) {
     uint32_t timeoutSec = 10; // It is important to keep this timeout bigger than the framework
                               // timeout
 
-    camera_status_t ret = testCase.initWithErrorLog();
+    camera_status_t ret = testCase.initWithErrorLog(env, jOverrideCameraId);
     if (ret != ACAMERA_OK) {
         // Don't log error here. testcase did it
         goto exit;
@@ -3697,46 +3752,51 @@ exit:
 extern "C" jboolean
 Java_android_hardware_camera2_cts_NativeImageReaderTest_\
 testJpegNative(
-        JNIEnv* env, jclass /*clazz*/, jstring jOutPath) {
+        JNIEnv* env, jclass /*clazz*/, jstring jOutPath,
+        jstring jOverrideCameraId) {
     ALOGV("%s", __FUNCTION__);
     return nativeImageReaderTestBase(env, jOutPath, AIMAGE_FORMAT_JPEG,
-            ImageReaderListener::validateImageCb);
+            ImageReaderListener::validateImageCb, jOverrideCameraId);
 }
 
 extern "C" jboolean
 Java_android_hardware_camera2_cts_NativeImageReaderTest_\
 testY8Native(
-        JNIEnv* env, jclass /*clazz*/, jstring jOutPath) {
+        JNIEnv* env, jclass /*clazz*/, jstring jOutPath,
+        jstring jOverrideCameraId) {
     ALOGV("%s", __FUNCTION__);
     return nativeImageReaderTestBase(env, jOutPath, AIMAGE_FORMAT_Y8,
-            ImageReaderListener::validateImageCb);
+            ImageReaderListener::validateImageCb, jOverrideCameraId);
 }
 
 extern "C" jboolean
 Java_android_hardware_camera2_cts_NativeImageReaderTest_\
 testHeicNative(
-        JNIEnv* env, jclass /*clazz*/, jstring jOutPath) {
+        JNIEnv* env, jclass /*clazz*/, jstring jOutPath,
+        jstring jOverrideCameraId) {
     ALOGV("%s", __FUNCTION__);
     return nativeImageReaderTestBase(env, jOutPath, AIMAGE_FORMAT_HEIC,
-            ImageReaderListener::validateImageCb);
+            ImageReaderListener::validateImageCb, jOverrideCameraId);
 }
 
 extern "C" jboolean
 Java_android_hardware_camera2_cts_NativeImageReaderTest_\
 testDepthJpegNative(
-        JNIEnv* env, jclass /*clazz*/, jstring jOutPath) {
+        JNIEnv* env, jclass /*clazz*/, jstring jOutPath,
+        jstring jOverrideCameraId) {
     ALOGV("%s", __FUNCTION__);
     return nativeImageReaderTestBase(env, jOutPath, AIMAGE_FORMAT_DEPTH_JPEG,
-            ImageReaderListener::validateImageCb);
+            ImageReaderListener::validateImageCb, jOverrideCameraId);
 }
 
 extern "C" jboolean
 Java_android_hardware_camera2_cts_NativeImageReaderTest_\
 testImageReaderCloseAcquiredImagesNative(
-        JNIEnv* env, jclass /*clazz*/) {
+        JNIEnv* env, jclass /*clazz*/,
+        jstring jOverrideCameraId) {
     ALOGV("%s", __FUNCTION__);
     return nativeImageReaderTestBase(env, nullptr, AIMAGE_FORMAT_JPEG,
-            ImageReaderListener::acquireImageCb);
+            ImageReaderListener::acquireImageCb, jOverrideCameraId);
 }
 
 template <>
@@ -3858,7 +3918,8 @@ releaseAvailabilityCallbacksNative(
 extern "C" jboolean
 Java_android_hardware_camera2_cts_NativeStillCaptureTest_\
 testStillCaptureNative(
-        JNIEnv* env, jclass /*clazz*/, jstring jOutPath, jobject jPreviewSurface) {
+        JNIEnv* env, jclass /*clazz*/, jstring jOutPath, jobject jPreviewSurface,
+        jstring jOverrideCameraId) {
     ALOGV("%s", __FUNCTION__);
     const int NUM_TEST_IMAGES = 10;
     const int TEST_WIDTH  = 640;
@@ -3872,7 +3933,7 @@ testStillCaptureNative(
     const char* outPath = env->GetStringUTFChars(jOutPath, nullptr);
     ALOGI("%s: out path is %s", __FUNCTION__, outPath);
 
-    camera_status_t ret = testCase.initWithErrorLog();
+    camera_status_t ret = testCase.initWithErrorLog(env, jOverrideCameraId);
     if (ret != ACAMERA_OK) {
         // Don't log error here. testcase did it
         goto cleanup;

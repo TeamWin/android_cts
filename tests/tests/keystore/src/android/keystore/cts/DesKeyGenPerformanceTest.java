@@ -18,13 +18,14 @@ package android.keystore.cts;
 
 import android.security.keystore.KeyProperties;
 
-import org.junit.Test;
-
 public class DesKeyGenPerformanceTest extends PerformanceTestBase {
 
     final int[] SUPPORTED_DES_KEY_SIZES = {168};
 
     public void testDesKeyGen() throws Exception {
+        if (!TestUtils.supports3DES()) {
+            return;
+        }
         for (int keySize : SUPPORTED_DES_KEY_SIZES) {
             measure(
                     new KeystoreSecretKeyGenMeasurable(

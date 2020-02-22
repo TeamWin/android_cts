@@ -572,6 +572,10 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
      */
     @Test
     public void testCameraManagerListenerCallbacks() throws Exception {
+        if (mOverrideCameraId != null) {
+            // Testing is done for individual camera. Skip.
+            return;
+        }
         testCameraManagerListenerCallbacks(/*useExecutor*/ false);
         testCameraManagerListenerCallbacks(/*useExecutor*/ true);
     }

@@ -17,12 +17,12 @@
 package android.media.cts;
 
 import static android.media.cts.MediaRouter2Test.releaseControllers;
-import static android.media.cts.SampleMediaRoute2ProviderService.FEATURE_SAMPLE;
-import static android.media.cts.SampleMediaRoute2ProviderService.FEATURE_SPECIAL;
-import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID1;
-import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID2;
-import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID4_TO_SELECT_AND_DESELECT;
-import static android.media.cts.SampleMediaRoute2ProviderService.ROUTE_ID5_TO_TRANSFER_TO;
+import static android.media.cts.StubMediaRoute2ProviderService.FEATURE_SAMPLE;
+import static android.media.cts.StubMediaRoute2ProviderService.FEATURE_SPECIAL;
+import static android.media.cts.StubMediaRoute2ProviderService.ROUTE_ID1;
+import static android.media.cts.StubMediaRoute2ProviderService.ROUTE_ID2;
+import static android.media.cts.StubMediaRoute2ProviderService.ROUTE_ID4_TO_SELECT_AND_DESELECT;
+import static android.media.cts.StubMediaRoute2ProviderService.ROUTE_ID5_TO_TRANSFER_TO;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -40,7 +40,7 @@ import android.media.MediaRouter2.RoutingController;
 import android.media.MediaRouter2.TransferCallback;
 import android.media.RouteDiscoveryPreference;
 import android.media.RoutingSessionInfo;
-import android.media.cts.SampleMediaRoute2ProviderService.Proxy;
+import android.media.cts.StubMediaRoute2ProviderService.Proxy;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.LargeTest;
@@ -66,14 +66,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
-@AppModeFull(reason = "The system should be able to bind to SampleMediaRoute2ProviderService")
+@AppModeFull(reason = "The system should be able to bind to StubMediaRoute2ProviderService")
 @LargeTest
 public class MediaRoute2ProviderServiceTest {
     private static final String TAG = "MR2ProviderServiceTest";
     Context mContext;
     private MediaRouter2 mRouter2;
     private Executor mExecutor;
-    private SampleMediaRoute2ProviderService mService;
+    private StubMediaRoute2ProviderService mService;
 
     private static final int TIMEOUT_MS = 5000;
 
@@ -93,8 +93,8 @@ public class MediaRoute2ProviderServiceTest {
         new PollingCheck(TIMEOUT_MS) {
             @Override
             protected boolean check() {
-                SampleMediaRoute2ProviderService service =
-                        SampleMediaRoute2ProviderService.getInstance();
+                StubMediaRoute2ProviderService service =
+                        StubMediaRoute2ProviderService.getInstance();
                 if (service != null) {
                     mService = service;
                     return true;
@@ -121,7 +121,7 @@ public class MediaRoute2ProviderServiceTest {
                 SESSION_ID_1, "" /* clientPackageName */)
                 .addSelectedRoute(ROUTE_ID1)
                 .build();
-        mService.notifySessionCreated(sessionInfo1, MediaRoute2ProviderService.REQUEST_ID_UNKNOWN);
+        mService.notifySessionCreated(sessionInfo1, MediaRoute2ProviderService.REQUEST_ID_NONE);
         assertEquals(1, mService.getAllSessionInfo().size());
         assertEquals(sessionInfo1, mService.getAllSessionInfo().get(0));
         assertEquals(sessionInfo1, mService.getSessionInfo(SESSION_ID_1));
@@ -132,7 +132,7 @@ public class MediaRoute2ProviderServiceTest {
                 .addSelectedRoute(ROUTE_ID2)
                 .build();
         mService.notifySessionCreated(
-                sessionInfo2, MediaRoute2ProviderService.REQUEST_ID_UNKNOWN);
+                sessionInfo2, MediaRoute2ProviderService.REQUEST_ID_NONE);
         assertEquals(2, mService.getAllSessionInfo().size());
         assertEquals(sessionInfo2, mService.getSessionInfo(SESSION_ID_2));
 
@@ -288,7 +288,7 @@ public class MediaRoute2ProviderServiceTest {
         // Now test all session-related callbacks.
         setProxy(new Proxy() {
             @Override
-            public void onCreateSession(String packageName, String routeId, long requestId,
+            public void onCreateSession(long requestId, String packageName, String routeId,
                     Bundle sessionHints) {
                 assertEquals(mContext.getPackageName(), packageName);
                 assertEquals(ROUTE_ID1, routeId);
@@ -307,7 +307,7 @@ public class MediaRoute2ProviderServiceTest {
             }
 
             @Override
-            public void onSelectRoute(String sessionId, String routeId) {
+            public void onSelectRoute(long requestId, String sessionId, String routeId) {
                 assertEquals(SESSION_ID_1, sessionId);
                 assertEquals(ROUTE_ID4_TO_SELECT_AND_DESELECT, routeId);
 
@@ -322,7 +322,7 @@ public class MediaRoute2ProviderServiceTest {
             }
 
             @Override
-            public void onDeselectRoute(String sessionId, String routeId) {
+            public void onDeselectRoute(long requestId, String sessionId, String routeId) {
                 assertEquals(SESSION_ID_1, sessionId);
                 assertEquals(ROUTE_ID4_TO_SELECT_AND_DESELECT, routeId);
 
@@ -337,7 +337,7 @@ public class MediaRoute2ProviderServiceTest {
             }
 
             @Override
-            public void onTransferToRoute(String sessionId, String routeId) {
+            public void onTransferToRoute(long requestId, String sessionId, String routeId) {
                 assertEquals(SESSION_ID_1, sessionId);
                 assertEquals(ROUTE_ID5_TO_TRANSFER_TO, routeId);
 
@@ -353,7 +353,7 @@ public class MediaRoute2ProviderServiceTest {
             }
 
             @Override
-            public void onReleaseSession(String sessionId) {
+            public void onReleaseSession(long requestId, String sessionId) {
                 assertEquals(SESSION_ID_1, sessionId);
                 mService.notifySessionReleased(sessionId);
                 onReleaseSessionLatch.countDown();
@@ -455,7 +455,7 @@ public class MediaRoute2ProviderServiceTest {
         CountDownLatch onCreateSessionLatch = new CountDownLatch(1);
         setProxy(new Proxy() {
             @Override
-            public void onCreateSession(String packageName, String routeId, long requestId,
+            public void onCreateSession(long requestId, String packageName, String routeId,
                     Bundle sessionHints) {
                 assertEquals(mContext.getPackageName(), packageName);
                 assertEquals(ROUTE_ID1, routeId);
@@ -557,8 +557,8 @@ public class MediaRoute2ProviderServiceTest {
         }
     }
 
-    void setProxy(SampleMediaRoute2ProviderService.Proxy proxy) {
-        SampleMediaRoute2ProviderService service = mService;
+    void setProxy(StubMediaRoute2ProviderService.Proxy proxy) {
+        StubMediaRoute2ProviderService service = mService;
         if (service != null) {
             service.setProxy(proxy);
         }

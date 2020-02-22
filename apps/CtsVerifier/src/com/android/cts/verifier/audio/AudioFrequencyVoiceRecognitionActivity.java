@@ -329,6 +329,23 @@ public class AudioFrequencyVoiceRecognitionActivity extends AudioFrequencyActivi
         mResultsMic = new Results("mic_response", BANDS_MIC);
         mResultsTone = new Results("tone_response", BANDS_TONE);
         mResultsBack = new Results("background_response", BANDS_BACKGROUND);
+        connectRefMicUI();
+    }
+
+    //
+    // Overrides
+    //
+    void enableTestUI(boolean enable) {
+        mButtonTestTone.setEnabled(enable);
+        mButtonPlayTone.setEnabled(enable);
+
+        mButtonTestNoise.setEnabled(enable);
+        mButtonPlayNoise.setEnabled(enable);
+
+        mButtonTestUsbBackground.setEnabled(enable);
+
+        mButtonTestUsbNoise.setEnabled(enable);
+        mButtonPlayUsbNoise.setEnabled(enable);
     }
 
     private void playerToggleButton(int buttonId, int sourceId) {

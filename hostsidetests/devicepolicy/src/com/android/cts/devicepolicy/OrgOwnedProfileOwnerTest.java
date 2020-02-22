@@ -31,12 +31,9 @@ import android.stats.devicepolicy.EventId;
 
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.log.LogUtil;
 
 import org.junit.Ignore;
 import org.junit.Test;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for organization-owned Profile Owner.
@@ -273,6 +270,44 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
                         .build());
     }
 
+    @FlakyTest(bugId = 137093665)
+    @Test
+    public void testSecurityLogging() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        // Backup stay awake setting because testGenerateLogs() will turn it off.
+        final String stayAwake = getDevice().getSetting("global", "stay_on_while_plugged_in");
+        try {
+            // Turn logging on.
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".SecurityLoggingTest",
+                    "testEnablingSecurityLogging", mUserId);
+            // Reboot to ensure ro.device_owner is set to true in logd and logging is on.
+            rebootAndWaitUntilReady();
+            waitForUserUnlock(mUserId);
+
+            // Generate various types of events on device side and check that they are logged.
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG,".SecurityLoggingTest",
+                    "testGenerateLogs", mUserId);
+            getDevice().executeShellCommand("whoami"); // Generate adb command securty event
+            getDevice().executeShellCommand("dpm force-security-logs");
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".SecurityLoggingTest",
+                    "testVerifyGeneratedLogs", mUserId);
+
+            // Immediately attempting to fetch events again should fail.
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".SecurityLoggingTest",
+                    "testSecurityLoggingRetrievalRateLimited", mUserId);
+        } finally {
+            // Turn logging off.
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".SecurityLoggingTest",
+                    "testDisablingSecurityLogging", mUserId);
+            // Restore stay awake setting.
+            if (stayAwake != null) {
+                getDevice().setSetting("global", "stay_on_while_plugged_in", stayAwake);
+            }
+        }
+    }
+
     private void failToCreateUser() throws Exception {
         String command ="pm create-user " + "TestUser_" + System.currentTimeMillis();
         String commandOutput = getDevice().executeShellCommand(command);
@@ -280,25 +315,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         String[] tokens = commandOutput.split("\\s+");
         assertTrue(tokens.length > 0);
         assertEquals("Error:", tokens[0]);
-    }
-
-    protected int createUser() throws Exception {
-        String command ="pm create-user " + "TestUser_" + System.currentTimeMillis();
-        String commandOutput = getDevice().executeShellCommand(command);
-
-        String[] tokens = commandOutput.split("\\s+");
-        assertTrue(tokens.length > 0);
-        assertEquals("Success:", tokens[0]);
-        int userId = Integer.parseInt(tokens[tokens.length-1]);
-        startUser(userId);
-        return userId;
-    }
-
-    protected void removeUser(int userId) throws Exception  {
-        if (listUsers().contains(userId) && userId != USER_SYSTEM) {
-            String command = "am stop-user -w -f " + userId;
-            getDevice().executeShellCommand(command);
-        }
     }
 
     @Test
@@ -397,7 +413,7 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testApplicationHidden() throws Exception {
+    public void testApplicationHiddenParent() throws Exception {
         if (!mHasFeature) {
             return;
         }
@@ -476,22 +492,16 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
-    private void setupIme(int userId, String imeApk, String imePackage) throws Exception {
+    private void setupIme(int userId, String imeApk, String imeComponent) throws Exception {
         installAppAsUser(imeApk, userId);
-        // Wait until IMS service is registered by the system.
-        final long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
-        while (true) {
-            final String availableImes = getDevice().executeShellCommand(
-                    String.format("ime list --user %d -s -a", userId));
-            if (availableImes.contains(imePackage)) {
-                break;
-            }
-            assertTrue("Failed waiting for IME to become available", System.nanoTime() < deadline);
-            Thread.sleep(100);
-        }
 
-        executeShellCommand("ime enable " + imePackage);
-        executeShellCommand("ime set " + imePackage);
+        // Wait until IMS service is registered by the system.
+        waitForOutput("Failed waiting for IME to become available",
+                String.format("ime list --user %d -s -a", userId),
+                s -> s.contains(imeComponent), 10 /* seconds */);
+
+        executeShellCommand("ime enable " + imeComponent);
+        executeShellCommand("ime set " + imeComponent);
     }
 
 
@@ -530,17 +540,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         assertTrue("Failed to set profile owner",
                 setProfileOwner(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
                         userId, /* expectFailure */ false));
-    }
-
-    private boolean hasService(String service) {
-        String command = "service check " + service;
-        try {
-            String commandOutput = getDevice().executeShellCommand(command);
-            return !commandOutput.contains("not found");
-        } catch (Exception e) {
-            LogUtil.CLog.w("Exception running '" + command + "': " + e);
-            return false;
-        }
     }
 
     @Test
