@@ -96,6 +96,7 @@ public class ParentProfileTest extends BaseManagedProfileTest {
             .add("getScreenCaptureDisabled")
             .add("getAccountTypesWithManagementDisabled")
             .add("setAccountManagementDisabled")
+            .add("setDefaultSmsApplication")
             .build();
 
     private static final String LOG_TAG = "ParentProfileTest";
@@ -172,6 +173,13 @@ public class ParentProfileTest extends BaseManagedProfileTest {
 
         assertThrows(SecurityException.class,
                 () -> mParentDevicePolicyManager.getAutoTime(ADMIN_RECEIVER_COMPONENT));
+    }
+
+    public void testCannotCallSetDefaultSmsApplicationOnParentProfile() {
+        String messagesPackageName = "com.google.android.apps.messaging";
+        assertThrows(SecurityException.class,
+                () -> mParentDevicePolicyManager.setDefaultSmsApplication(ADMIN_RECEIVER_COMPONENT,
+                        messagesPackageName));
     }
 
 }
