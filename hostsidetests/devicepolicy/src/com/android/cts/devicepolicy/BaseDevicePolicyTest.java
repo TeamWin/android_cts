@@ -114,6 +114,9 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     protected static final int FLAG_EPHEMERAL = 0x00000100;
     protected static final int FLAG_MANAGED_PROFILE = 0x00000020;
 
+    /** Default password to use in tests. */
+    protected static final String TEST_PASSWORD = "1234";
+
     /**
      * The {@link android.os.BatteryManager} flags value representing all charging types; {@link
      * android.os.BatteryManager#BATTERY_PLUGGED_AC}, {@link
@@ -182,6 +185,9 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         mBuildHelper = new CompatibilityBuildHelper(getBuild());
 
         mHasSecureLockScreen = hasDeviceFeature("android.software.secure_lock_screen");
+        if (mHasSecureLockScreen) {
+            ensurePrimaryUserHasNoPassword();
+        }
 
         // disable the package verifier to avoid the dialog when installing an app
         mPackageVerifier = getDevice().executeShellCommand(
@@ -220,6 +226,12 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         stayAwake();
         // Go to home.
         executeShellCommand("input keyevent KEYCODE_HOME");
+    }
+
+    private void ensurePrimaryUserHasNoPassword() throws DeviceNotAvailableException {
+        if (!verifyUserCredentialIsCorrect(null, mPrimaryUserId)) {
+            changeUserCredential(null, TEST_PASSWORD, mPrimaryUserId);
+        }
     }
 
     /** If package manager is not available, e.g. after system crash, wait for it a little bit. */
@@ -883,6 +895,8 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
     /**
      * Set lockscreen password / work challenge for the given user, null or "" means clear
+     * IMPORTANT: prefer to use {@link #TEST_PASSWORD} for primary user, otherwise if the test
+     * terminates before cleaning password up, the device will be unusable for further testing.
      */
     protected void changeUserCredential(String newCredential, String oldCredential, int userId)
             throws DeviceNotAvailableException {
