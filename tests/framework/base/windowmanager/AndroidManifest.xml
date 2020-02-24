@@ -376,6 +376,8 @@
         <activity android:name="android.server.wm.StartActivityAsUserActivity"
                   android:directBootAware="true"/>
 
+        <activity android:name="android.server.wm.WindowInsetsAnimationTests$TestActivity"
+                  android:theme="@android:style/Theme.Material.NoActionBar" />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
