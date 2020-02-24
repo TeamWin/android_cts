@@ -43,7 +43,7 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
         if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
             return;
         }
-        changeUserCredential("1234", null, mProfileUserId);
+        changeUserCredential(TEST_PASSWORD, null, mProfileUserId);
         lockProfile();
     }
 
@@ -101,7 +101,7 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
         if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
             return;
         }
-        final String devicePassword = "1234";
+        final String devicePassword = TEST_PASSWORD;
 
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ResetPasswordWithTokenTest",
                 "testSetResetPasswordToken", mProfileUserId);
@@ -135,7 +135,8 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
         verifyUnifiedPassword(true);
 
         // Set separate challenge and verify that the API reports it correctly.
-        changeUserCredential("1234" /* newCredential */, null /* oldCredential */, mProfileUserId);
+        changeUserCredential(
+                TEST_PASSWORD /* newCredential */, null /* oldCredential */, mProfileUserId);
         verifyUnifiedPassword(false);
     }
 
@@ -147,21 +148,20 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
         if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
             return;
         }
-        String password = "0000";
         try {
             // Add a device password after the work profile has been created.
-            changeUserCredential(password, /* oldCredential= */ null, mPrimaryUserId);
+            changeUserCredential(TEST_PASSWORD, /* oldCredential= */ null, mPrimaryUserId);
             // Lock the profile with key eviction.
             lockProfile();
             // Turn on work profile, by unlocking the profile with the device password.
-            verifyUserCredential(password, mPrimaryUserId);
+            verifyUserCredential(TEST_PASSWORD, mPrimaryUserId);
 
             // Verify profile user is running unlocked by running a sanity test on the work profile.
             installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".SanityTest", mProfileUserId);
         } finally {
             // Clean up
-            changeUserCredential(/* newCredential= */ null, password, mPrimaryUserId);
+            changeUserCredential(/* newCredential= */ null, TEST_PASSWORD, mPrimaryUserId);
         }
     }
 
@@ -175,16 +175,15 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
         }
         // Waiting before rebooting prevents flakiness.
         waitForBroadcastIdle();
-        String password = "0000";
-        changeUserCredential(password, /* oldCredential= */ null, mPrimaryUserId);
+        changeUserCredential(TEST_PASSWORD, /* oldCredential= */ null, mPrimaryUserId);
         try {
             rebootAndWaitUntilReady();
-            verifyUserCredential(password, mPrimaryUserId);
+            verifyUserCredential(TEST_PASSWORD, mPrimaryUserId);
             waitForUserUnlock(mProfileUserId);
             installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".SanityTest", mProfileUserId);
         } finally {
-            changeUserCredential(/* newCredential= */ null, password, mPrimaryUserId);
+            changeUserCredential(/* newCredential= */ null, TEST_PASSWORD, mPrimaryUserId);
             // Work-around for http://b/113866275 - password prompt being erroneously shown at the
             // end.
             pressPowerButton();
@@ -200,8 +199,8 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
         }
         // Waiting before rebooting prevents flakiness.
         waitForBroadcastIdle();
-        String profilePassword = "profile";
-        String primaryPassword = "primary";
+        final String profilePassword = "profile";
+        final String primaryPassword = TEST_PASSWORD;
         int managedProfileUserId = getFirstManagedProfileUserId();
         changeUserCredential(
                 profilePassword, /* oldCredential= */ null, managedProfileUserId);
@@ -229,7 +228,7 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
         }
         assertMetricsLogged(getDevice(), () -> {
             changeUserCredential(
-                    "1234" /* newCredential */, null /* oldCredential */, mProfileUserId);
+                    TEST_PASSWORD /* newCredential */, null /* oldCredential */, mProfileUserId);
         }, new DevicePolicyEventWrapper.Builder(EventId.SEPARATE_PROFILE_CHALLENGE_CHANGED_VALUE)
                 .setBoolean(true)
                 .build());

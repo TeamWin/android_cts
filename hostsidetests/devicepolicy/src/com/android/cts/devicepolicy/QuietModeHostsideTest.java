@@ -79,7 +79,7 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
         }
         // Add a lockscreen to test the case that profile with unified challenge can still
         // be turned on without asking the user to enter the lockscreen password.
-        changeUserCredential(/* newCredential= */ "1111", /* oldCredential= */ null,
+        changeUserCredential(/* newCredential= */ TEST_PASSWORD, /* oldCredential= */ null,
                 mPrimaryUserId);
         try {
             runDeviceTestsAsUser(
@@ -89,7 +89,7 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
                     mPrimaryUserId,
                     createParams(mProfileId));
         } finally {
-            changeUserCredential(/* newCredential= */ null, /* oldCredential= */ "1111",
+            changeUserCredential(/* newCredential= */ null, /* oldCredential= */ TEST_PASSWORD,
                     mPrimaryUserId);
         }
     }
@@ -208,7 +208,7 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
         }
         // Set a separate work challenge so turning on the profile requires entering the
         // separate challenge.
-        changeUserCredential(/* newCredential= */ "1111", /* oldCredential= */ null,
+        changeUserCredential(/* newCredential= */ TEST_PASSWORD, /* oldCredential= */ null,
                 mProfileId);
         runDeviceTestsAsUser(
                 TEST_PACKAGE,

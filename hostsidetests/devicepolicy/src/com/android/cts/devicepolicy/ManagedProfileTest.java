@@ -546,12 +546,12 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
                 mProfileUserId);
         // Non-unified case
         try {
-            changeUserCredential("1234", null, mProfileUserId);
+            changeUserCredential(TEST_PASSWORD, null, mProfileUserId);
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".TrustAgentInfoTest",
                     "testSetTrustAgentConfiguration_bothHaveTrustAgentConfigAndNonUnified",
                     mProfileUserId);
         } finally {
-            changeUserCredential(null, "1234", mProfileUserId);
+            changeUserCredential(null, TEST_PASSWORD, mProfileUserId);
         }
     }
 
