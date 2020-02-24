@@ -20,14 +20,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.ParcelFileDescriptor;
-import android.os.incremental.IncrementalManager;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -120,23 +122,11 @@ public class PackageManagerShellCommandIncrementalTest {
 
     @Test
     public void testInstallWithIdSig() throws Exception {
-        if (!IncrementalManager.isAllowed()) {
-            return;
-        }
+        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        Assume.assumeTrue(context.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_INCREMENTAL_DELIVERY));
         installPackage(TEST_APK);
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
-    }
-
-    @Test
-    public void testProperty() {
-        if (!IncrementalManager.isAllowed()) {
-            return;
-        }
-
-        android.os.SystemProperties.set("incremental.allowed", "0");
-        assertFalse(IncrementalManager.isAllowed());
-        android.os.SystemProperties.set("incremental.allowed", null);
-        assertTrue(IncrementalManager.isAllowed());
     }
 
     private boolean isAppInstalled(String packageName) throws IOException {
