@@ -64,6 +64,9 @@ public class PermissionPolicyTest {
     private static final Date HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PATCH_DATE = parseDate("2017-11-01");
     private static final String HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PERMISSION
             = "android.permission.HIDE_NON_SYSTEM_OVERLAY_WINDOWS";
+    private static final String ACCESS_SHORTCUTS = "android.permission.ACCESS_SHORTCUTS";
+    private static final String UNLIMITED_SHORTCUTS_API_CALLS =
+            "android.permission.UNLIMITED_SHORTCUTS_API_CALLS";
 
     private static final String LOG_TAG = "PermissionProtectionTest";
 
@@ -155,6 +158,11 @@ public class PermissionPolicyTest {
                     expectedPermission.protectionLevel & ~PROTECTION_MASK_BASE;
             final int declaredProtectionFlags = declaredPermission.getProtectionFlags();
             if (expectedProtectionFlags != declaredProtectionFlags) {
+                if (ACCESS_SHORTCUTS.equals(expectedPermissionName)
+                        || UNLIMITED_SHORTCUTS_API_CALLS.equals(expectedPermissionName)) {
+                    // Move the permissions check to GTS
+                    continue;
+                }
                 offendingList.add(
                         String.format(
                                 "Permission %s invalid enforced protection %x, expected %x",
