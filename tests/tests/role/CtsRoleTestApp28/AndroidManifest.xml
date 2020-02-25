@@ -45,6 +45,14 @@
                 <data android:scheme="tel" />
             </intent-filter>
         </activity>
+        <service
+            android:name=".DialerInCallService"
+            android:permission="android.permission.BIND_INCALL_SERVICE">
+            <meta-data android:name="android.telecom.IN_CALL_SERVICE_UI" android:value="true" />
+            <intent-filter>
+                <action android:name="android.telecom.InCallService" />
+            </intent-filter>
+        </service>
 
         <!-- Sms -->
         <activity android:name=".SmsSendToActivity">
@@ -59,7 +67,6 @@
             android:permission="android.permission.SEND_RESPOND_VIA_MESSAGE">
             <intent-filter>
                 <action android:name="android.intent.action.RESPOND_VIA_MESSAGE" />
-                <category android:name="android.intent.category.DEFAULT" />
                 <data android:scheme="smsto" />
             </intent-filter>
         </service>
