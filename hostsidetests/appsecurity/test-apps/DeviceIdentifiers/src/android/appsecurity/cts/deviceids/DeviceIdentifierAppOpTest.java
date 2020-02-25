@@ -20,7 +20,10 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.fail;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Build;
+import android.telephony.SubscriptionInfo;
+import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.test.AndroidTestCase;
 
@@ -43,9 +46,9 @@ public class DeviceIdentifierAppOpTest  {
 
     @Test
     public void testAccessToDeviceIdentifiersWithAppOp() throws Exception {
+        Context context = InstrumentationRegistry.getContext();
         TelephonyManager telephonyManager =
-                (TelephonyManager) InstrumentationRegistry.getContext().getSystemService(
-                        Context.TELEPHONY_SERVICE);
+                (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
         try {
             assertEquals(String.format(DEVICE_ID_WITH_APPOP_ERROR_MESSAGE, "getDeviceId"),
                     ShellIdentityUtils.invokeMethodWithShellPermissions(telephonyManager,
@@ -67,6 +70,21 @@ public class DeviceIdentifierAppOpTest  {
             assertEquals(String.format(DEVICE_ID_WITH_APPOP_ERROR_MESSAGE, "Build#getSerial"),
                     ShellIdentityUtils.invokeStaticMethodWithShellPermissions(Build::getSerial),
                     Build.getSerial());
+            if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+                SubscriptionManager subscriptionManager =
+                        (SubscriptionManager) context.getSystemService(
+                                Context.TELEPHONY_SUBSCRIPTION_SERVICE);
+                int subId = subscriptionManager.getDefaultSubscriptionId();
+                if (subId != SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
+                    SubscriptionInfo expectedSubInfo =
+                            ShellIdentityUtils.invokeMethodWithShellPermissions(subscriptionManager,
+                                    (sm) -> sm.getActiveSubscriptionInfo(subId));
+                    SubscriptionInfo actualSubInfo = subscriptionManager.getActiveSubscriptionInfo(
+                            subId);
+                    assertEquals(String.format(DEVICE_ID_WITH_APPOP_ERROR_MESSAGE, "getIccId"),
+                            expectedSubInfo.getIccId(), actualSubInfo.getIccId());
+                }
+            }
         } catch (SecurityException e) {
             fail("An app with the READ_DEVICE_IDENTIFIERS app op set to allowed must be able to "
                     + "access the device identifiers; caught SecurityException instead: "
