@@ -25,7 +25,7 @@ public class Poc19_02 extends SecurityTestCase {
      * b/70857947
      */
     @SecurityTest(minPatchLevel = "2019-02")
-    public void testPocCVE_2018_6367() throws Exception {
+    public void testPocCVE_2018_6267() throws Exception {
         AdbUtils.runPocAssertNoCrashes("CVE-2018-6267", getDevice(), "mediaserver");
     }
 
