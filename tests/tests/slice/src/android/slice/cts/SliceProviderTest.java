@@ -16,6 +16,9 @@
 
 package android.slice.cts;
 
+import android.content.pm.PackageManager;
+import androidx.test.InstrumentationRegistry;
+import android.content.Context;
 import android.app.slice.Slice;
 import android.app.slice.SliceSpec;
 import android.content.ContentResolver;
@@ -31,6 +34,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import static org.junit.Assume.assumeFalse;
 
 @RunWith(AndroidJUnit4.class)
 public class SliceProviderTest {
@@ -43,6 +47,8 @@ public class SliceProviderTest {
             "content://" + VALID_AUTHORITY + ACTION_BLUETOOTH;
     private static final String SHADY_ACTION_URI_STRING =
             "content://" + SUSPICIOUS_AUTHORITY + ACTION_BLUETOOTH;
+    private final Context mContext = InstrumentationRegistry.getContext();
+    private boolean isSliceDisabled = mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_SLICES_DISABLED);
 
     @Rule
     public ActivityTestRule<Launcher> mLauncherActivityTestRule = new ActivityTestRule<>(Launcher.class);
@@ -60,6 +66,7 @@ public class SliceProviderTest {
 
     @Test
     public void testCallSliceUri_ValidAuthority() {
+        assumeFalse(isSliceDisabled);
         doQuery(validActionUri);
     }
 
