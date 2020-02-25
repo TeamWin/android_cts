@@ -16,6 +16,9 @@
 
 package android.server.wm;
 
+import static android.view.WindowInsets.Type.displayCutout;
+import static android.view.WindowInsets.Type.navigationBars;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
@@ -27,7 +30,6 @@ import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.util.Size;
 import android.view.Display;
-import android.view.DisplayCutout;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowMetrics;
@@ -103,26 +105,14 @@ public class WindowMetricsTests extends WindowManagerTestBase {
 
     private static Size getLegacySize(WindowMetrics windowMetrics) {
         WindowInsets windowInsets = windowMetrics.getWindowInsets();
-        final Insets insetsWithCutout = getProperInsetsWithCutout(windowInsets.getStableInsets(),
-                windowInsets.getDisplayCutout());
-        final int insetsInWidth = insetsWithCutout.left + insetsWithCutout.right;
-        final int insetsInHeight = insetsWithCutout.top + insetsWithCutout.bottom;
+        final Insets insetsWithCutout =
+                windowInsets.getInsetsIgnoringVisibility(navigationBars() | displayCutout());
+
+        final int insetsWidth = insetsWithCutout.left + insetsWithCutout.right;
+        final int insetsHeight = insetsWithCutout.top + insetsWithCutout.bottom;
 
         Size size = windowMetrics.getSize();
-        return new Size(size.getWidth() - insetsInWidth, size.getHeight() - insetsInHeight);
-    }
-
-    private static Insets getProperInsetsWithCutout(Insets stableInsets, DisplayCutout cutout) {
-        final Insets excludingStatusBar = Insets.of(stableInsets.left, 0,
-                stableInsets.right, stableInsets.bottom);
-        if (cutout == null) {
-            return excludingStatusBar;
-        } else {
-            final Insets unionInsetsWithCutout = Insets.max(excludingStatusBar,
-                    Insets.of(cutout.getSafeInsetLeft(), cutout.getSafeInsetTop(),
-                            cutout.getSafeInsetRight(), cutout.getSafeInsetBottom()));
-            return unionInsetsWithCutout;
-        }
+        return new Size(size.getWidth() - insetsWidth, size.getHeight() - insetsHeight);
     }
 
     public static class MetricsActivity extends Activity implements View.OnLayoutChangeListener {
