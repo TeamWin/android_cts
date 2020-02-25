@@ -137,6 +137,23 @@ public class CarrierConfigManagerTest {
             assertEquals("KEY_CARRIER_VVM_PACKAGE_NAME_STRING doesn't match static default.",
                 config.getString(CarrierConfigManager.KEY_CARRIER_VVM_PACKAGE_NAME_STRING), "");
             assertFalse(CarrierConfigManager.isConfigForIdentifiedCarrier(config));
+
+            // Check default value matching
+            assertEquals("KEY_DATA_LIMIT_NOTIFICATION_BOOL doesn't match static default.",
+                    config.getBoolean(CarrierConfigManager.KEY_DATA_LIMIT_NOTIFICATION_BOOL),
+                            true);
+            assertEquals("KEY_DATA_RAPID_NOTIFICATION_BOOL doesn't match static default.",
+                    config.getBoolean(CarrierConfigManager.KEY_DATA_RAPID_NOTIFICATION_BOOL),
+                            true);
+            assertEquals("KEY_DATA_WARNING_NOTIFICATION_BOOL doesn't match static default.",
+                    config.getBoolean(CarrierConfigManager.KEY_DATA_WARNING_NOTIFICATION_BOOL),
+                            true);
+            assertEquals("Gps.KEY_PERSIST_LPP_MODE_BOOL doesn't match static default.",
+                    config.getBoolean(CarrierConfigManager.Gps.KEY_PERSIST_LPP_MODE_BOOL),
+                            true);
+            assertEquals("KEY_MONTHLY_DATA_CYCLE_DAY_INT doesn't match static default.",
+                    config.getInt(CarrierConfigManager.KEY_MONTHLY_DATA_CYCLE_DAY_INT),
+                            CarrierConfigManager.DATA_CYCLE_USE_PLATFORM_DEFAULT);
         }
 
         // These key should return default values if not customized.
@@ -150,6 +167,12 @@ public class CarrierConfigManagerTest {
                 CarrierConfigManager.KEY_LTE_RSRQ_THRESHOLDS_INT_ARRAY));
         assertNotNull(config.getIntArray(
                 CarrierConfigManager.KEY_LTE_RSSNR_THRESHOLDS_INT_ARRAY));
+
+        // Check the GPS key prefix
+        assertTrue("Gps.KEY_PREFIX doesn't match the prefix of the name of "
+                + "Gps.KEY_PERSIST_LPP_MODE_BOOL",
+                        CarrierConfigManager.Gps.KEY_PERSIST_LPP_MODE_BOOL.startsWith(
+                                CarrierConfigManager.Gps.KEY_PREFIX));
     }
 
     @Test
