@@ -49,6 +49,8 @@ static void sanitizeMessage(const InputMessage& msg, InputMessage* outMsg) {
         case InputMessage::Type::KEY: {
             // uint32_t seq
             outMsg->body.key.seq = msg.body.key.seq;
+            // int32_t eventId
+            outMsg->body.key.eventId = msg.body.key.eventId;
             // nsecs_t eventTime
             outMsg->body.key.eventTime = msg.body.key.eventTime;
             // int32_t deviceId
@@ -78,6 +80,8 @@ static void sanitizeMessage(const InputMessage& msg, InputMessage* outMsg) {
         case InputMessage::Type::MOTION: {
             // uint32_t seq
             outMsg->body.motion.seq = msg.body.motion.seq;
+            // int32_t eventId
+            outMsg->body.motion.eventId = msg.body.key.eventId;
             // nsecs_t eventTime
             outMsg->body.motion.eventTime = msg.body.motion.eventTime;
             // int32_t deviceId
@@ -146,6 +150,7 @@ static void sanitizeMessage(const InputMessage& msg, InputMessage* outMsg) {
         }
         case InputMessage::Type::FOCUS: {
             outMsg->body.focus.seq = msg.body.focus.seq;
+            outMsg->body.focus.eventId = msg.body.focus.eventId;
             outMsg->body.focus.hasFocus = msg.body.focus.hasFocus;
             outMsg->body.focus.inTouchMode = msg.body.focus.inTouchMode;
             break;
