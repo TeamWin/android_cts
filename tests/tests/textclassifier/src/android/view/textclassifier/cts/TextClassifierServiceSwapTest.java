@@ -110,8 +110,7 @@ public class TextClassifierServiceSwapTest {
         final List<TextClassificationSessionId> sessionIds =
                 service.getRequestSessions().get("onClassifyText");
         assertThat(sessionIds).hasSize(2);
-        assertThat(sessionIds.get(0).flattenToString())
-                .isNotEqualTo(sessionIds.get(1).flattenToString());
+        assertThat(sessionIds.get(0).getValue()).isNotEqualTo(sessionIds.get(1).getValue());
     }
 
     /**
