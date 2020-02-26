@@ -181,6 +181,8 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
         filter.addAction(KeyChainTestActivity.ACTION_KEYCHAIN);
         filter.addAction(CommandReceiverActivity.ACTION_EXECUTE_COMMAND);
         filter.addAction(WorkProfileWidgetActivity.ACTION_TEST_WORK_PROFILE_WIDGET);
+        filter.addAction(
+                CrossProfilePermissionControlActivity.ACTION_CROSS_PROFILE_PERMISSION_CONTROL);
         dpm.addCrossProfileIntentFilter(getWho(context), filter,
                 DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT);
 
@@ -192,6 +194,7 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
         filter.addAction(ByodFlowTestActivity.ACTION_TEST_RESULT);
         filter.addAction(CrossProfileTestActivity.ACTION_CROSS_PROFILE_TO_PERSONAL);
         filter.addAction(LocationListenerActivity.ACTION_SET_LOCATION_AND_CHECK_UPDATES);
+
         dpm.addCrossProfileIntentFilter(getWho(context), filter,
                 DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED);
 
