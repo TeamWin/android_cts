@@ -44,6 +44,8 @@ import android.service.quickaccesswallet.WalletServiceEvent;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.SettingsUtils;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -66,22 +68,19 @@ public class QuickAccessWalletClientTest {
     private static final GetWalletCardsRequest GET_WALLET_CARDS_REQUEST =
             new GetWalletCardsRequest(700, 440, 64, 5);
 
-    private static final int SETTING_DISABLED = 0;
-    private static final int SETTING_ENABLED = 1;
+    private static final String SETTING_DISABLED = "0";
+    private static final String SETTING_ENABLED = "1";
     private Context mContext;
     private String mDefaultPaymentApp;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         // Save current default payment app
         mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        ContentResolver cr = mContext.getContentResolver();
-        mDefaultPaymentApp = Settings.Secure.getString(cr,
-                Settings.Secure.NFC_PAYMENT_DEFAULT_COMPONENT);
-
+        mDefaultPaymentApp = SettingsUtils.get(Settings.Secure.NFC_PAYMENT_DEFAULT_COMPONENT);
         ComponentName component =
                 ComponentName.createRelative(mContext, TestHostApduService.class.getName());
-        Settings.Secure.putString(cr, Settings.Secure.NFC_PAYMENT_DEFAULT_COMPONENT,
+        SettingsUtils.syncSet(mContext, Settings.Secure.NFC_PAYMENT_DEFAULT_COMPONENT,
                 component.flattenToString());
         TestQuickAccessWalletService.resetStaticFields();
     }
@@ -90,7 +89,7 @@ public class QuickAccessWalletClientTest {
     public void tearDown() {
         // Restore saved default payment app
         ContentResolver cr = mContext.getContentResolver();
-        Settings.Secure.putString(cr, Settings.Secure.NFC_PAYMENT_DEFAULT_COMPONENT,
+        SettingsUtils.syncSet(mContext, Settings.Secure.NFC_PAYMENT_DEFAULT_COMPONENT,
                 mDefaultPaymentApp);
 
         // Return all services to default state
@@ -112,43 +111,44 @@ public class QuickAccessWalletClientTest {
 
     @Test
     public void testIsWalletFeatureAvailableWhenDeviceLocked_checksSecureSettings() {
-        ContentResolver cr = mContext.getContentResolver();
         QuickAccessWalletClient client = QuickAccessWalletClient.create(mContext);
 
-        int showNotif = Settings.Secure.getInt(
-                cr, Settings.Secure.LOCK_SCREEN_SHOW_NOTIFICATIONS, SETTING_DISABLED);
-        int allowPriv = Settings.Secure.getInt(
-                cr, Settings.Secure.LOCK_SCREEN_ALLOW_PRIVATE_NOTIFICATIONS, SETTING_DISABLED);
+
+        String showNotificationsSetting = SettingsUtils.getSecureSetting(
+                Settings.Secure.LOCK_SCREEN_SHOW_NOTIFICATIONS);
+        String allowPrivateNotificationsSetting = SettingsUtils.get(
+                Settings.Secure.LOCK_SCREEN_ALLOW_PRIVATE_NOTIFICATIONS);
 
         try {
-            Settings.Secure.putInt(
-                    cr, Settings.Secure.LOCK_SCREEN_SHOW_NOTIFICATIONS, SETTING_ENABLED);
-            Settings.Secure.putInt(
-                    cr, Settings.Secure.LOCK_SCREEN_ALLOW_PRIVATE_NOTIFICATIONS, SETTING_ENABLED);
+            SettingsUtils.syncSet(mContext, Settings.Secure.LOCK_SCREEN_SHOW_NOTIFICATIONS,
+                    SETTING_ENABLED);
+            SettingsUtils.syncSet(mContext, Settings.Secure.LOCK_SCREEN_ALLOW_PRIVATE_NOTIFICATIONS,
+                    SETTING_ENABLED);
             assertThat(client.isWalletFeatureAvailableWhenDeviceLocked()).isTrue();
 
-            Settings.Secure.putInt(
-                    cr, Settings.Secure.LOCK_SCREEN_SHOW_NOTIFICATIONS, SETTING_ENABLED);
-            Settings.Secure.putInt(
-                    cr, Settings.Secure.LOCK_SCREEN_ALLOW_PRIVATE_NOTIFICATIONS, SETTING_DISABLED);
+            SettingsUtils.syncSet(mContext, Settings.Secure.LOCK_SCREEN_SHOW_NOTIFICATIONS,
+                    SETTING_ENABLED);
+            SettingsUtils.syncSet(mContext, Settings.Secure.LOCK_SCREEN_ALLOW_PRIVATE_NOTIFICATIONS,
+                    SETTING_DISABLED);
             assertThat(client.isWalletFeatureAvailableWhenDeviceLocked()).isFalse();
 
-            Settings.Secure.putInt(
-                    cr, Settings.Secure.LOCK_SCREEN_SHOW_NOTIFICATIONS, SETTING_DISABLED);
-            Settings.Secure.putInt(
-                    cr, Settings.Secure.LOCK_SCREEN_ALLOW_PRIVATE_NOTIFICATIONS, SETTING_ENABLED);
+            SettingsUtils.syncSet(mContext, Settings.Secure.LOCK_SCREEN_SHOW_NOTIFICATIONS,
+                    SETTING_DISABLED);
+            SettingsUtils.syncSet(mContext, Settings.Secure.LOCK_SCREEN_ALLOW_PRIVATE_NOTIFICATIONS,
+                    SETTING_ENABLED);
             assertThat(client.isWalletFeatureAvailableWhenDeviceLocked()).isFalse();
 
-            Settings.Secure.putInt(
-                    cr, Settings.Secure.LOCK_SCREEN_SHOW_NOTIFICATIONS, SETTING_DISABLED);
-            Settings.Secure.putInt(
-                    cr, Settings.Secure.LOCK_SCREEN_ALLOW_PRIVATE_NOTIFICATIONS, SETTING_DISABLED);
+            SettingsUtils.syncSet(mContext, Settings.Secure.LOCK_SCREEN_SHOW_NOTIFICATIONS,
+                    SETTING_DISABLED);
+            SettingsUtils.syncSet(mContext, Settings.Secure.LOCK_SCREEN_ALLOW_PRIVATE_NOTIFICATIONS,
+                    SETTING_DISABLED);
             assertThat(client.isWalletFeatureAvailableWhenDeviceLocked()).isFalse();
         } finally {
             // return settings to original values
-            Settings.Secure.putInt(cr, Settings.Secure.LOCK_SCREEN_SHOW_NOTIFICATIONS, showNotif);
-            Settings.Secure.putInt(
-                    cr, Settings.Secure.LOCK_SCREEN_ALLOW_PRIVATE_NOTIFICATIONS, allowPriv);
+            SettingsUtils.syncSet(mContext, Settings.Secure.LOCK_SCREEN_SHOW_NOTIFICATIONS,
+                    showNotificationsSetting);
+            SettingsUtils.syncSet(mContext, Settings.Secure.LOCK_SCREEN_ALLOW_PRIVATE_NOTIFICATIONS,
+                    allowPrivateNotificationsSetting);
         }
     }
 
