@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,21 @@
 package android.security.cts;
 
 import android.platform.test.annotations.SecurityTest;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
-@SecurityTest
+import static org.junit.Assert.*;
+
+@RunWith(DeviceJUnit4ClassRunner.class)
 public class Poc18_09 extends SecurityTestCase {
 
-  /**
-   * CVE-2018-11261
-   */
-  @SecurityTest(minPatchLevel = "2018-09")
-  public void testPocCVE_2018_11261() throws Exception {
-    AdbUtils.runPocAssertNoCrashes("CVE-2018-11261", getDevice(), "mediaserver");
-  }
+    /**
+     * CVE-2018-11261
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2018-09")
+    public void testPocCVE_2018_11261() throws Exception {
+        AdbUtils.runPocAssertNoCrashes("CVE-2018-11261", getDevice(), "mediaserver");
+    }
 }

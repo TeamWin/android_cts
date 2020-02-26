@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,14 +16,17 @@
 
 package android.security.cts;
 
-import com.android.compatibility.common.util.Crash;
-import com.android.compatibility.common.util.CrashUtils;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
-import android.platform.test.annotations.SecurityTest;
-import java.util.regex.Pattern;
 
-@SecurityTest
+import android.platform.test.annotations.SecurityTest;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+
+import static org.junit.Assert.*;
+
+@RunWith(DeviceJUnit4ClassRunner.class)
 public class TestMediaCodec extends SecurityTestCase {
 
     final static String HEVCDEC_BINARY = "testhevc";
@@ -44,6 +47,7 @@ public class TestMediaCodec extends SecurityTestCase {
     /**
      * b/73965867
      **/
+    @Test
     @SecurityTest(minPatchLevel = "2018-06")
     public void testPocBug_73965867() throws Exception {
         String inputFiles[] = {"bug_73965867.hevc"};
@@ -53,6 +57,7 @@ public class TestMediaCodec extends SecurityTestCase {
     /**
      * b/64380202
      **/
+    @Test
     @SecurityTest(minPatchLevel = "2018-01")
     public void testPocBug_64380202() throws Exception {
         String inputFiles[] = {"bug_64380202.hevc"};
@@ -64,6 +69,7 @@ public class TestMediaCodec extends SecurityTestCase {
     /**
      * b/64380403
      **/
+    @Test
     @SecurityTest(minPatchLevel = "2018-01")
     public void testPocBug_64380403() throws Exception {
         String inputFiles[] = {"bug_64380403.hevc"};
@@ -80,6 +86,7 @@ public class TestMediaCodec extends SecurityTestCase {
     /**
      * b/68299873
      **/
+    @Test
     @SecurityTest(minPatchLevel = "2018-01")
     public void testPocCVE_2017_13190() throws Exception {
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-13190", null, null, AdbUtils.TMP_PATH,
@@ -90,6 +97,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * b/33966031
      * Vulnerability Behaviour: SIGSEGV in self
      **/
+    @Test
     @SecurityTest(minPatchLevel = "2017-07")
     public void testPocCVE_2017_0540() throws Exception {
         String inputFiles[] = {"cve_2017_0540.hevc"};
@@ -100,6 +108,7 @@ public class TestMediaCodec extends SecurityTestCase {
     /**
      * b/34897036
      **/
+    @Test
     @SecurityTest(minPatchLevel = "2017-05")
     public void testPocCVE_2017_0589() throws Exception {
         String inputFiles[] = {"cve_2017_0589.hevc"};
@@ -110,6 +119,7 @@ public class TestMediaCodec extends SecurityTestCase {
     /**
      * b/65718319
      **/
+    @Test
     @SecurityTest(minPatchLevel = "2018-01")
     public void testPocCVE_2017_13193() throws Exception {
         String inputFiles[] = {"cve_2017_13193.hevc"};
@@ -118,6 +128,7 @@ public class TestMediaCodec extends SecurityTestCase {
                 getDevice());
     }
 
+    @Test
     @SecurityTest(minPatchLevel = "2017-07")
     public void testPocCVE_2017_0695() throws Exception {
         String inputFiles[] = {"cve_2017_0695.hevc"};
@@ -131,6 +142,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * before any existing test methods
      ******************************************************************************/
 
+    @Test
     @SecurityTest(minPatchLevel = "2017-03")
     public void testPocBug_33139050() throws Exception {
         String inputFiles[] = {"bug_33139050.h264"};
@@ -143,6 +155,7 @@ public class TestMediaCodec extends SecurityTestCase {
     /**
      * b/33621215
      **/
+    @Test
     @SecurityTest(minPatchLevel = "2017-03")
     public void testPocBug_33621215() throws Exception {
         String inputFiles[] = {"bug_33621215.h264"};
@@ -159,6 +172,7 @@ public class TestMediaCodec extends SecurityTestCase {
     /**
      * b/63521984
      **/
+    @Test
     @SecurityTest(minPatchLevel = "2018-08")
     public void testPocCVE_2018_9444() throws Exception {
         String inputFiles[] = {"cve_2018_9444.h264"};
@@ -174,6 +188,7 @@ public class TestMediaCodec extends SecurityTestCase {
     /**
      * b/34203195
      **/
+    @Test
     @SecurityTest(minPatchLevel = "2017-07")
     public void testPocBug_34203195() throws Exception {
         String inputFiles[] = {"bug_34203195.m2v"};
@@ -184,6 +199,7 @@ public class TestMediaCodec extends SecurityTestCase {
     /**
      * b/37561455
      **/
+    @Test
     @SecurityTest(minPatchLevel = "2017-08")
     public void testPocBug_37561455() throws Exception {
         String inputFiles[] = {"bug_37561455.m2v"};
@@ -194,6 +210,7 @@ public class TestMediaCodec extends SecurityTestCase {
     /**
      * b/63316255
      **/
+    @Test
     @SecurityTest(minPatchLevel = "2017-12")
     public void testPocBug_63316255() throws Exception {
         String inputFiles[] = {"bug_63316255.m2v"};
