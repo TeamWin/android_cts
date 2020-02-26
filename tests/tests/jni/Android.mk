@@ -43,7 +43,7 @@ LOCAL_JNI_SHARED_LIBRARIES := \
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_SDK_VERSION := current
+LOCAL_SDK_VERSION := test_current
 LOCAL_NDK_STL_VARIANT := c++_shared
 
 LOCAL_USE_EMBEDDED_NATIVE_LIBS := false
