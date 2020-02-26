@@ -17,13 +17,19 @@
 package android.security.cts;
 
 import android.platform.test.annotations.SecurityTest;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
-@SecurityTest
+import static org.junit.Assert.*;
+
+@RunWith(DeviceJUnit4ClassRunner.class)
 public class Poc19_02 extends SecurityTestCase {
 
     /**
      * b/70857947
      */
+    @Test
     @SecurityTest(minPatchLevel = "2019-02")
     public void testPocCVE_2018_6267() throws Exception {
         AdbUtils.runPocAssertNoCrashes("CVE-2018-6267", getDevice(), "mediaserver");
@@ -32,6 +38,7 @@ public class Poc19_02 extends SecurityTestCase {
     /**
      * b/80198474
      */
+    @Test
     @SecurityTest(minPatchLevel = "2019-02")
     public void testPocCVE_2018_6271() throws Exception {
         AdbUtils.runPocAssertNoCrashes("CVE-2018-6271", getDevice(), "mediaserver");

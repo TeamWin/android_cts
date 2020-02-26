@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,18 @@ package android.security.cts;
 
 import android.platform.test.annotations.SecurityTest;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.*;
 
-@SecurityTest
+@RunWith(DeviceJUnit4ClassRunner.class)
 public class Poc19_11 extends SecurityTestCase {
 
     /**
      * b/138441919
      */
+    @Test
     @SecurityTest(minPatchLevel = "2019-11")
     public void testPocBug_138441919() throws Exception {
         int code = AdbUtils.runProxyAutoConfig("bug_138441919", getDevice());
@@ -36,6 +39,7 @@ public class Poc19_11 extends SecurityTestCase {
     /**
      * b/139806216
      */
+    @Test
     @SecurityTest(minPatchLevel = "2019-11")
     public void testPocBug_139806216() throws Exception {
         int code = AdbUtils.runProxyAutoConfig("bug_139806216", getDevice());
