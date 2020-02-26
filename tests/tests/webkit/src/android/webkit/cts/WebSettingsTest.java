@@ -245,9 +245,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
             return;
         }
 
-        // TODO(b/148840827): Uncomment default value assertion when a new version of WebView
-        // where the change happened is dropped in master.
-        // assertFalse("File access should be off by default", mSettings.getAllowFileAccess());
+        assertFalse("File access should be off by default", mSettings.getAllowFileAccess());
 
         mSettings.setAllowFileAccess(true);
         assertTrue("Explicitly setting file access to true should work",
