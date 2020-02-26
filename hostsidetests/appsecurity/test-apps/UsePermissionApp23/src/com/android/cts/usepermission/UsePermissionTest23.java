@@ -285,9 +285,9 @@ public class UsePermissionTest23 extends BasePermissionsTest {
     public void testGrantPreviouslyRevokedWithPrejudiceShowsPrompt_part1() throws Exception {
         // Make sure we don't have the permission
         assertEquals(PackageManager.PERMISSION_DENIED, getInstrumentation().getContext()
-                .checkSelfPermission(Manifest.permission.READ_CALENDAR));
+                .checkSelfPermission(Manifest.permission.CAMERA));
 
-        String[] permissions = new String[] {Manifest.permission.READ_CALENDAR};
+        String[] permissions = new String[] {Manifest.permission.CAMERA};
 
         // Request the permission and deny it
         BasePermissionActivity.Result firstResult = requestPermissions(permissions, () -> {
@@ -300,7 +300,7 @@ public class UsePermissionTest23 extends BasePermissionsTest {
 
         // Request the permission and choose don't ask again
         BasePermissionActivity.Result secondResult = requestPermissions(new String[]{
-                Manifest.permission.READ_CALENDAR}, () -> {
+                Manifest.permission.CAMERA}, () -> {
             denyWithPrejudice();
             getUiDevice().waitForIdle();
         });
@@ -309,8 +309,8 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         assertPermissionRequestResult(secondResult, permissions, new boolean[] {false});
 
         // Clear the denial with prejudice
-        grantPermission(Manifest.permission.READ_CALENDAR);
-        revokePermission(Manifest.permission.READ_CALENDAR);
+        grantPermission(Manifest.permission.CAMERA);
+        revokePermission(Manifest.permission.CAMERA);
 
         // We just committed a suicide by revoking the permission. See part2 below...
     }
@@ -319,17 +319,17 @@ public class UsePermissionTest23 extends BasePermissionsTest {
     public void testGrantPreviouslyRevokedWithPrejudiceShowsPrompt_part2() throws Exception {
         // Make sure we don't have the permission
         assertEquals(PackageManager.PERMISSION_DENIED, getInstrumentation().getContext()
-                .checkSelfPermission(Manifest.permission.READ_CALENDAR));
+                .checkSelfPermission(Manifest.permission.CAMERA));
 
         // Request the permission and allow it
         BasePermissionActivity.Result thirdResult = requestPermissions(new String[]{
-                Manifest.permission.READ_CALENDAR}, () -> {
-            clickAllowButton();
+                Manifest.permission.CAMERA}, () -> {
+            clickAllowForegroundButton();
             getUiDevice().waitForIdle();
         });
 
         // Make sure the permission is granted
-        assertPermissionRequestResult(thirdResult, new String[] {Manifest.permission.READ_CALENDAR},
+        assertPermissionRequestResult(thirdResult, new String[] {Manifest.permission.CAMERA},
                 new boolean[] {true});
     }
 
