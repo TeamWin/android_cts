@@ -154,14 +154,17 @@ public class OsHostTests extends DeviceTestCase implements IBuildReceiver, IAbiR
             // Clean slate in case of earlier aborted run
             mDevice.uninstallPackage(HOST_VERIFICATION_PKG);
 
-            String[] options = { AbiUtils.createAbiFlag(mAbi.getName()) };
+            final String[] options = { AbiUtils.createAbiFlag(mAbi.getName()) };
+            final int currentUser = mDevice.getCurrentUser();
 
             mDevice.clearLogcat();
 
-            String installResult = getDevice().installPackage(getTestAppFile(HOST_VERIFICATION_APK),
-                    false /* = reinstall? */, options);
+            final String errorString;
+            errorString = mDevice.installPackageForUser(getTestAppFile(HOST_VERIFICATION_APK),
+                    false /* = reinstall? */, currentUser, options);
 
-            assertNull("Couldn't install web intent filter sample apk", installResult);
+            assertNull("Couldn't install web intent filter sample apk in user " +
+                    currentUser + " : " + errorString, errorString);
 
             String logs = mDevice.executeAdbCommand("logcat", "-v", "brief", "-d");
             boolean foundVerifierOutput = false;
