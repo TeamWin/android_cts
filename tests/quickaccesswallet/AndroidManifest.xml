@@ -20,8 +20,6 @@
           android:targetSandboxVersion="2">
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <!-- Required to update Secure Settings to set default payment app -->
-    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
     <!-- Required for HostApduService -->
     <uses-permission android:name="android.permission.NFC"/>
     <!-- Required to test QuickAccessWalletClient feature availability -->
