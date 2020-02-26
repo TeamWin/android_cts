@@ -2871,6 +2871,14 @@
                 android:label="@string/provisioning_byod_keyguard_disabled_features">
         </activity>
 
+        <activity android:name=".managedprovisioning.CrossProfilePermissionControlActivity"
+                  android:label="@string/provisioning_byod_cross_profile_permission_control">
+            <intent-filter>
+                <action android:name="com.android.cts.verifier.managedprovisioning.action.CROSS_PROFILE_PERMISSION_CONTROL" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <activity android:name=".managedprovisioning.DisallowAppsControlActivity"
                 android:label="@string/provisioning_byod_disallow_apps_control">
         </activity>
