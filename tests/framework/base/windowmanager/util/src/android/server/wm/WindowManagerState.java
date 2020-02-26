@@ -135,7 +135,6 @@ public class WindowManagerState {
     private String mTopResumedActivityRecord = null;
     final List<String> mResumedActivitiesInStacks = new ArrayList<>();
     final List<String> mResumedActivitiesInDisplays = new ArrayList<>();
-    private boolean mIsDockedStackMinimized;
     private Rect mDefaultPinnedStackBounds = new Rect();
     private Rect mPinnedStackMovementBounds = new Rect();
     private String mInputMethodWindowAppToken = null;
@@ -364,7 +363,6 @@ public class WindowManagerState {
         mKeyguardControllerState = null;
         mIsHomeRecentsComponent = null;
         mPendingActivities.clear();
-        mIsDockedStackMinimized = false;
         mDefaultPinnedStackBounds.setEmpty();
         mPinnedStackMovementBounds.setEmpty();
         mInputMethodWindowAppToken = null;
@@ -876,10 +874,6 @@ public class WindowManagerState {
         return mWindowStates.size() - mWindowStates.indexOf(w);
     }
 
-    public boolean isDockedStackMinimized() {
-        return mIsDockedStackMinimized;
-    }
-
     ActivityTask getStandardRootTaskByWindowingMode(int windowingMode) {
         for (ActivityTask task : mRootTasks) {
             if (task.getActivityType() != ACTIVITY_TYPE_STANDARD) {
@@ -985,9 +979,6 @@ public class WindowManagerState {
             mAppTransitionState = appStateToString(appState);
             mLastTransition = appTransitionToString(lastTransition);
 
-            if (proto.dockedStackDividerController != null) {
-                amState.mIsDockedStackMinimized = proto.dockedStackDividerController.minimizedDock;
-            }
             PinnedStackControllerProto pinnedStackProto = proto.pinnedStackController;
             if (pinnedStackProto != null) {
                 amState.mDefaultPinnedStackBounds = extract(pinnedStackProto.defaultBounds);
