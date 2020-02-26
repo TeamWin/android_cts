@@ -113,7 +113,8 @@ pre-installed-apps := \
     CtsEmptyDeviceOwner \
     CtsPermissionApp \
     CtsForceStopHelper \
-    NotificationBot
+    NotificationBot \
+    CrossProfileTestApp
 
 # Apps to be installed as Instant App using adb install --instant
 pre-installed-instant-app := CtsVerifierInstantApp
