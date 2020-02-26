@@ -42,13 +42,10 @@ import android.autofillservice.cts.InstrumentedAutoFillService;
 import android.os.Process;
 import android.service.autofill.FillContext;
 
-import com.android.compatibility.common.util.RetryableException;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.MockImeSession;
 
 import org.junit.Test;
-
-import java.util.concurrent.TimeoutException;
 
 public class InlineLoginActivityTest extends AbstractLoginActivityTestCase {
 
@@ -125,28 +122,29 @@ public class InlineLoginActivityTest extends AbstractLoginActivityTestCase {
         sReplier.addResponse(builder.build());
         mActivity.expectAutoFill("dude" + selectedDatasetIndex, "sweet" + selectedDatasetIndex);
 
-        // Dynamically set password to make sure it's sanitized.
-        mActivity.onPassword((v) -> v.setText("I AM GROOT"));
-
         final ImeEventStream stream = mockImeSession.openEventStream();
-        mockImeSession.callRequestShowSelf(0);
 
         // Wait until the MockIme gets bound to the TestActivity.
         expectBindInput(stream, Process.myPid(), MOCK_IME_TIMEOUT_MS);
+
+        // Wait until IME is displaying.
+        mockImeSession.callRequestShowSelf(0);
+        expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
+                MOCK_IME_TIMEOUT_MS);
+        expectEvent(stream, event -> "onStartInputView".equals(event.getEventName()),
+                MOCK_IME_TIMEOUT_MS);
+
+        // Dynamically set password to make sure it's sanitized.
+        mActivity.onPassword((v) -> v.setText("I AM GROOT"));
 
         // Trigger auto-fill.
         requestFocusOnUsername();
         expectEvent(stream, editorMatcher("onStartInput", mActivity.getUsername().getId()),
                 MOCK_IME_TIMEOUT_MS);
 
-        //TODO: extServices bug cause test to fail first time, retry if suggestion strip missing.
-        try {
-            expectEvent(stream, event -> "onSuggestionViewUpdated".equals(event.getEventName()),
-                    MOCK_IME_TIMEOUT_MS);
-        } catch (TimeoutException e) {
-            sReplier.getNextFillRequest();
-            throw new RetryableException("Retry inline test");
-        }
+        // Wait until suggestion strip is updated
+        expectEvent(stream, event -> "onSuggestionViewUpdated".equals(event.getEventName()),
+                MOCK_IME_TIMEOUT_MS);
 
         mUiBot.assertSuggestionStrip(numDatasets);
         mUiBot.assertNoDatasetsEver();
