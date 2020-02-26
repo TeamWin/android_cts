@@ -16,18 +16,16 @@
 
 package com.android.cts.usepermission;
 
-import static com.android.compatibility.common.util.UiAutomatorUtils.waitFindObject;
 import static com.android.compatibility.common.util.UiAutomatorUtils.getUiDevice;
+import static com.android.compatibility.common.util.UiAutomatorUtils.waitFindObject;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.TestCase.assertTrue;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 import android.Manifest;
 import android.app.Activity;
@@ -36,20 +34,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
-import android.icu.text.CaseMap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
-import android.support.test.uiautomator.Direction;
-import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.support.test.uiautomator.UiScrollable;
 import android.support.test.uiautomator.UiSelector;
-import android.support.test.uiautomator.Until;
 import android.text.Spanned;
 import android.text.style.ClickableSpan;
 import android.util.ArrayMap;
@@ -67,7 +61,6 @@ import com.android.compatibility.common.util.ThrowingRunnable;
 import com.android.compatibility.common.util.UiDumpUtils;
 
 import junit.framework.Assert;
-import junit.framework.TestCase;
 
 import org.junit.Before;
 import org.junit.runner.RunWith;
@@ -76,7 +69,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 
@@ -449,19 +441,27 @@ public abstract class BasePermissionsTest {
                     waitForIdle();
                 }
 
-                final boolean wasGranted = isTv() ? false : !(waitFindObject(byText(R.string.Deny)).isChecked() || (!legacyApp && waitFindObject(byText(R.string.Ask)).isChecked()));
+                final boolean wasGranted = isTv()
+                        ? false
+                        : !(waitFindObject(byText(R.string.Deny)).isChecked()
+                                || (legacyApp
+                                    && hasAskButton(permission)
+                                    && waitFindObject(byText(R.string.Ask)).isChecked()));
                 boolean alreadyChecked = false;
                 if (isTv()) {
                     waitFindObject(By.text(permissionLabel)).click();
                 } else if (state == STATE_ALLOWED) {
-                    UiObject2 object = waitFindObject(byText(R.string.Allow));
+                    UiObject2 object = waitFindObject(byText(
+                            showsForegroundOnlyButton(permission)
+                                    ? R.string.AllowForeground
+                                    : R.string.Allow));
                     alreadyChecked = object.isChecked();
                     if (!alreadyChecked) {
                         object.click();
                     }
                 } else if (state == STATE_DENIED){
                     UiObject2 object;
-                    if (legacyApp) {
+                    if (legacyApp || !hasAskButton(permission)) {
                         object = waitFindObject(byText(R.string.Deny));
                     } else {
                         object = waitFindObject(byText(R.string.Ask));
@@ -527,6 +527,19 @@ public abstract class BasePermissionsTest {
         assertNotNull("Unknown permisison " + permission, labelResName);
         final int resourceId = mPlatformResources.getIdentifier(labelResName, null, null);
         return mPlatformResources.getString(resourceId);
+    }
+
+    private boolean hasAskButton(String permission) {
+        return Manifest.permission.CAMERA.equals(permission)
+                || Manifest.permission.RECORD_AUDIO.equals(permission)
+                || Manifest.permission.ACCESS_FINE_LOCATION.equals(permission)
+                || Manifest.permission.ACCESS_COARSE_LOCATION.equals(permission)
+                || Manifest.permission.ACCESS_BACKGROUND_LOCATION.equals(permission);
+    }
+
+    private boolean showsForegroundOnlyButton(String permission) {
+        return Manifest.permission.CAMERA.equals(permission)
+                || Manifest.permission.RECORD_AUDIO.equals(permission);
     }
 
     private void startActivity(final Intent intent) throws Exception {
