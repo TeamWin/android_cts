@@ -101,6 +101,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import static java.lang.Integer.toHexString;
 
@@ -529,9 +530,18 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected ComponentName getDefaultSecondaryHomeComponent() {
+        assumeTrue(supportsMultiDisplay());
         int resId = Resources.getSystem().getIdentifier(
-                "config_secondaryHomeComponent", "string", "android");
-        return ComponentName.unflattenFromString(mContext.getResources().getString(resId));
+                "config_secondaryHomePackage", "string", "android");
+        final Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.addCategory(Intent.CATEGORY_SECONDARY_HOME);
+        intent.setPackage(mContext.getResources().getString(resId));
+        final ResolveInfo resolveInfo =
+                mContext.getPackageManager().resolveActivity(intent, MATCH_DEFAULT_ONLY);
+        assertNotNull("Should have default secondary home activity", resolveInfo);
+
+        return new ComponentName(resolveInfo.activityInfo.packageName,
+                resolveInfo.activityInfo.name);
     }
 
     /**
