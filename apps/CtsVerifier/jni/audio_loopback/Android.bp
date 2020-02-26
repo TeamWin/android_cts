@@ -16,6 +16,8 @@ cc_test_library {
         "-DSTDC_HEADERS",
         "-Werror",
         "-Wall",
+        // For slCreateEngine
+        "-Wno-deprecated",
     ],
     sdk_version: "23",
 }
