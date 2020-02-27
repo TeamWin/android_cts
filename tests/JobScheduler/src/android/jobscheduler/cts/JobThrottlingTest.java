@@ -37,6 +37,7 @@ import android.net.wifi.WifiManager;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.os.Temperature;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
@@ -48,6 +49,7 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.AppStandbyUtils;
 import com.android.compatibility.common.util.BatteryUtils;
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.ThermalUtils;
 
 import org.junit.After;
@@ -146,6 +148,9 @@ public class JobThrottlingTest {
         mInitialAirplaneModeState = isAirplaneModeOn();
         mInitialJobSchedulerConstants = Settings.Global.getString(mContext.getContentResolver(),
                 Settings.Global.JOB_SCHEDULER_CONSTANTS);
+        // Make sure test jobs can run regardless of bucket.
+        Settings.Global.putString(mContext.getContentResolver(),
+                Settings.Global.JOB_SCHEDULER_CONSTANTS, "min_ready_non_active_jobs_count=0");
     }
 
     @Test
@@ -443,6 +448,9 @@ public class JobThrottlingTest {
         if (isAirplaneModeOn() != mInitialAirplaneModeState) {
             setAirplaneMode(mInitialAirplaneModeState);
         }
+        mUiDevice.executeShellCommand(
+                "cmd jobscheduler reset-execution-quota -u " + UserHandle.myUserId()
+                        + " " + TEST_APP_PACKAGE);
     }
 
     private void setTestPackageRestricted(boolean restricted) throws Exception {
