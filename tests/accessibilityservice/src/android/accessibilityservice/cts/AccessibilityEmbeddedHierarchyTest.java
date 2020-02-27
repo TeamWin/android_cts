@@ -18,6 +18,7 @@ package android.accessibilityservice.cts;
 
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -69,6 +70,8 @@ public class AccessibilityEmbeddedHierarchyTest {
     private final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
 
+    private AccessibilityEmbeddedHierarchyActivity mActivity;
+
     @Rule
     public final RuleChain mRuleChain = RuleChain
             .outerRule(mActivityRule)
@@ -90,8 +93,9 @@ public class AccessibilityEmbeddedHierarchyTest {
 
     @Before
     public void setUp() throws Throwable {
-        launchActivityAndWaitForItToBeOnscreen(sInstrumentation, sUiAutomation, mActivityRule)
-                .waitForEmbeddedHierarchy();
+        mActivity = launchActivityAndWaitForItToBeOnscreen(sInstrumentation, sUiAutomation,
+                mActivityRule);
+        mActivity.waitForEmbeddedHierarchy();
     }
 
     @Test
@@ -114,6 +118,7 @@ public class AccessibilityEmbeddedHierarchyTest {
         final AccessibilityNodeInfo target =
                 findEmbeddedAccessibilityNodeInfo(sUiAutomation.getRootInActiveWindow());
         final AccessibilityNodeInfo parent = target.getParent();
+
         final Rect hostViewBoundsInScreen = new Rect();
         final Rect embeddedViewBoundsInScreen = new Rect();
         parent.getBoundsInScreen(hostViewBoundsInScreen);
@@ -123,6 +128,36 @@ public class AccessibilityEmbeddedHierarchyTest {
                         + " doesn't contain embeddedViewBoundsInScreen"
                         + embeddedViewBoundsInScreen.toShortString(),
                 hostViewBoundsInScreen.contains(embeddedViewBoundsInScreen));
+    }
+
+    @Test
+    public void testEmbeddedViewHasCorrectBoundAfterHostViewMove() {
+        final AccessibilityNodeInfo target =
+                findEmbeddedAccessibilityNodeInfo(sUiAutomation.getRootInActiveWindow());
+
+        final Rect hostViewBoundsInScreen = new Rect();
+        final Rect newEmbeddedViewBoundsInScreen = new Rect();
+        final Rect oldEmbeddedViewBoundsInScreen = new Rect();
+        target.getBoundsInScreen(oldEmbeddedViewBoundsInScreen);
+
+        // Move Host SurfaceView from (0, 0) to (100, 100).
+        mActivity.requestNewLayoutForTest();
+
+        final AccessibilityNodeInfo newTarget =
+                findEmbeddedAccessibilityNodeInfo(sUiAutomation.getRootInActiveWindow());
+        final AccessibilityNodeInfo parent = newTarget.getParent();
+
+        newTarget.getBoundsInScreen(newEmbeddedViewBoundsInScreen);
+        parent.getBoundsInScreen(hostViewBoundsInScreen);
+
+        assertTrue("hostViewBoundsInScreen" + hostViewBoundsInScreen.toShortString()
+                        + " doesn't contain newEmbeddedViewBoundsInScreen"
+                        + newEmbeddedViewBoundsInScreen.toShortString(),
+                hostViewBoundsInScreen.contains(newEmbeddedViewBoundsInScreen));
+        assertFalse("newEmbeddedViewBoundsInScreen" + newEmbeddedViewBoundsInScreen.toShortString()
+                        + " shouldn't be the same with oldEmbeddedViewBoundsInScreen"
+                        + oldEmbeddedViewBoundsInScreen.toShortString(),
+                newEmbeddedViewBoundsInScreen.equals(oldEmbeddedViewBoundsInScreen));
     }
 
     private AccessibilityNodeInfo findEmbeddedAccessibilityNodeInfo(AccessibilityNodeInfo root) {
@@ -150,8 +185,11 @@ public class AccessibilityEmbeddedHierarchyTest {
             AccessibilityTestActivity implements SurfaceHolder.Callback {
         private final CountDownLatch mCountDownLatch = new CountDownLatch(1);
 
-        private static final int DEFAULT_WIDTH = 200;
-        private static final int DEFAULT_HEIGHT = 200;
+        private static final int DEFAULT_WIDTH = 150;
+        private static final int DEFAULT_HEIGHT = 150;
+
+        private static final int POSITION_X = 50;
+        private static final int POSITION_Y = 50;
 
         private SurfaceView mSurfaceView;
         private SurfaceControlViewHost mViewHost;
@@ -194,6 +232,14 @@ public class AccessibilityEmbeddedHierarchyTest {
             } catch (InterruptedException e) {
                 throw new AssertionError(e);
             }
+        }
+
+        public void requestNewLayoutForTest() {
+            sInstrumentation.runOnMainSync(() -> {
+                mSurfaceView.setX(POSITION_X);
+                mSurfaceView.setY(POSITION_Y);
+                mSurfaceView.requestLayout();
+            });
         }
     }
 }
