@@ -19,7 +19,6 @@ package android.view.accessibility.cts;
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -27,7 +26,6 @@ import static org.junit.Assert.assertSame;
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.accessibilityservice.AccessibilityServiceInfo;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
@@ -35,7 +33,6 @@ import android.view.accessibility.AccessibilityManager;
 import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -55,7 +52,6 @@ import java.util.List;
 public class AccessibilityServiceInfoTest {
     private AccessibilityManager mAccessibilityManager;
     private PackageManager mPackageManager;
-    private Context mContext;
 
     private final InstrumentedAccessibilityServiceTestRule<SpeakingAccessibilityService>
             mSpeakingAccessibilityServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
@@ -85,7 +81,6 @@ public class AccessibilityServiceInfoTest {
 
     @Before
     public void setUp() throws Exception {
-        mContext = getInstrumentation().getContext();
         mAccessibilityManager = getInstrumentation().getContext().getSystemService(
                 AccessibilityManager.class);
         mPackageManager = getInstrumentation().getContext().getPackageManager();
@@ -123,12 +118,8 @@ public class AccessibilityServiceInfoTest {
                 | AccessibilityServiceInfo.CAPABILITY_CAN_REQUEST_TOUCH_EXPLORATION
                 | AccessibilityServiceInfo.CAPABILITY_CAN_RETRIEVE_WINDOW_CONTENT);
         assertEquals("foo.bar.Activity", speakingService.getSettingsActivityName());
-        assertNotNull(speakingService.loadAnimatedImage(mContext));
         assertEquals(/* expected= */ "Some description",
                 speakingService.loadDescription(mPackageManager));
-        assertEquals(/* expected= */
-                "<invalidtag href=\"fake_link\"> <img src=\"R.drawable.file_name\">",
-                speakingService.loadHtmlDescription(mPackageManager));
         assertEquals(/* expected= */ "Some summary",
                 speakingService.loadSummary(mPackageManager));
         assertNotNull(speakingService.getResolveInfo());
@@ -136,73 +127,5 @@ public class AccessibilityServiceInfoTest {
                 speakingService.getInteractiveUiTimeoutMillis());
         assertEquals(/* expected= */ 1000,
                 speakingService.getNonInteractiveUiTimeoutMillis());
-    }
-
-    /**
-     * Tests the html description of accessibility services whether to meet the custom
-     * specification.
-     */
-    @Test
-    public void testAccessibilityServicesHtmlDescription() {
-        mSpeakingAndVibratingAccessibilityServiceRule.enableService();
-        mA11yButtonServiceRule.enableService();
-        final List<AccessibilityServiceInfo> enabledServices =
-                mAccessibilityManager.getEnabledAccessibilityServiceList(
-                        AccessibilityServiceInfo.FEEDBACK_ALL_MASK);
-        final AccessibilityServiceInfo vibratingService =
-                mVibratingAccessibilityServiceRule.getService().getServiceInfo();
-        final AccessibilityServiceInfo speakingService =
-                mSpeakingAccessibilityServiceRule.getService().getServiceInfo();
-        final AccessibilityServiceInfo speakingAndVibratingService =
-                mSpeakingAndVibratingAccessibilityServiceRule.getService().getServiceInfo();
-        final AccessibilityServiceInfo a11yService =
-                mA11yButtonServiceRule.getService().getServiceInfo();
-
-        assertSame(/* message= */ "There should be four services.", /* expected= */ 4,
-                enabledServices.size());
-        assertEquals(/* expected= */
-                "<invalidtag href=\"fake_link\">Test link</invalidtag> "
-                        + "<IMG src = \"R.drawable.file_name\">",
-                vibratingService.loadHtmlDescription(mPackageManager));
-        assertEquals(/* expected= */
-                "<invalidtag href=\"fake_link\"> <img src=\"R.drawable.file_name\">",
-                speakingService.loadHtmlDescription(mPackageManager));
-        assertEquals(/* expected= */
-                "<invalidtag href=fake_link> <invalidtag src=R.drawable.file_name>",
-                speakingAndVibratingService.loadHtmlDescription(mPackageManager));
-        assertEquals(/* expected= */
-                "<invalidtag src=\"r.drawable.file_name\"> "
-                        + "<invalidtag alt=\"foo\" src=\"R.drawable.file_name\"> "
-                        + "<invalidtag src=\"file://path\"> "
-                        + "<invalidtag src=\"http://path\">",
-                a11yService.loadHtmlDescription(mPackageManager));
-    }
-
-    /**
-     * Tests the animated image resource of accessibility services whether to meet the custom
-     * specification.
-     */
-    @Test
-    public void testAccessibilityServicesAnimatedImageResource() {
-        mSpeakingAndVibratingAccessibilityServiceRule.enableService();
-        mA11yButtonServiceRule.enableService();
-        final List<AccessibilityServiceInfo> enabledServices =
-                mAccessibilityManager.getEnabledAccessibilityServiceList(
-                        AccessibilityServiceInfo.FEEDBACK_ALL_MASK);
-        final AccessibilityServiceInfo vibratingService =
-                mVibratingAccessibilityServiceRule.getService().getServiceInfo();
-        final AccessibilityServiceInfo speakingService =
-                mSpeakingAccessibilityServiceRule.getService().getServiceInfo();
-        final AccessibilityServiceInfo speakingAndVibratingService =
-                mSpeakingAndVibratingAccessibilityServiceRule.getService().getServiceInfo();
-        final AccessibilityServiceInfo a11yService =
-                mA11yButtonServiceRule.getService().getServiceInfo();
-
-        assertSame(/* message= */ "There should be four services.", /* expected= */ 4,
-                enabledServices.size());
-        assertNotNull(vibratingService.loadAnimatedImage(mContext));
-        assertNotNull(speakingService.loadAnimatedImage(mContext));
-        assertNull(speakingAndVibratingService.loadAnimatedImage(mContext));
-        assertNull(a11yService.loadAnimatedImage(mContext));
     }
 }
