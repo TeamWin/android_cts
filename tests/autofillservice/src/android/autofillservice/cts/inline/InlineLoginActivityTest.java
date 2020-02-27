@@ -170,4 +170,90 @@ public class InlineLoginActivityTest extends AbstractLoginActivityTestCase {
         assertWithMessage("Password node is focused").that(
                 findNodeByResourceId(request.structure, ID_PASSWORD).isFocused()).isFalse();
     }
+
+    @Test
+    public void testAutofill_disjointDatasets() throws Exception {
+        // Set service.
+        enableService();
+
+        final MockImeSession mockImeSession = sMockImeSessionRule.getMockImeSession();
+        assumeTrue("MockIME not available", mockImeSession != null);
+
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setPresentation(createPresentation("The Username"))
+                        .setInlinePresentation(createInlinePresentation("The Username"))
+                        .build())
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation("The Password"))
+                        .setInlinePresentation(createInlinePresentation("The Password"))
+                        .build())
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_PASSWORD, "lollipop")
+                        .setPresentation(createPresentation("The Password2"))
+                        .setInlinePresentation(createInlinePresentation("The Password2"))
+                        .build());
+
+        sReplier.addResponse(builder.build());
+        mActivity.expectAutoFill("dude");
+
+        final ImeEventStream stream = mockImeSession.openEventStream();
+
+        // Wait until the MockIme gets bound to the TestActivity.
+        expectBindInput(stream, Process.myPid(), MOCK_IME_TIMEOUT_MS);
+
+        // Wait until IME is displaying.
+        mockImeSession.callRequestShowSelf(0);
+        expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
+                MOCK_IME_TIMEOUT_MS);
+        expectEvent(stream, event -> "onStartInputView".equals(event.getEventName()),
+                MOCK_IME_TIMEOUT_MS);
+
+        // Trigger auto-fill.
+        requestFocusOnUsername();
+        expectEvent(stream, editorMatcher("onStartInput", mActivity.getUsername().getId()),
+                MOCK_IME_TIMEOUT_MS);
+
+        // Wait until suggestion strip is updated
+        expectEvent(stream, event -> "onSuggestionViewUpdated".equals(event.getEventName()),
+                MOCK_IME_TIMEOUT_MS);
+
+        mUiBot.assertNoDatasetsEver();
+
+        mUiBot.assertSuggestionStrip(1);
+
+        // Switch focus to password
+        requestFocusOnPassword();
+        expectEvent(stream, event -> "onSuggestionViewUpdated".equals(event.getEventName()),
+                MOCK_IME_TIMEOUT_MS);
+
+        mUiBot.assertSuggestionStrip(2);
+
+        // Switch focus back to username
+        requestFocusOnUsername();
+        expectEvent(stream, event -> "onSuggestionViewUpdated".equals(event.getEventName()),
+                MOCK_IME_TIMEOUT_MS);
+
+        mUiBot.assertSuggestionStrip(1);
+        mUiBot.selectSuggestion(0);
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+
+        // Make sure input was sanitized.
+        final InstrumentedAutoFillService.FillRequest request = sReplier.getNextFillRequest();
+        assertWithMessage("CancelationSignal is null").that(request.cancellationSignal).isNotNull();
+        assertTextIsSanitized(request.structure, ID_PASSWORD);
+        final FillContext fillContext = request.contexts.get(request.contexts.size() - 1);
+        assertThat(fillContext.getFocusedId())
+                .isEqualTo(findAutofillIdByResourceId(fillContext, ID_USERNAME));
+
+        // Make sure initial focus was properly set.
+        assertWithMessage("Username node is not focused").that(
+                findNodeByResourceId(request.structure, ID_USERNAME).isFocused()).isTrue();
+        assertWithMessage("Password node is focused").that(
+                findNodeByResourceId(request.structure, ID_PASSWORD).isFocused()).isFalse();
+    }
 }
