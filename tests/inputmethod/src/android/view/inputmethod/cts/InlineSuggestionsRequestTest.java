@@ -32,6 +32,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
+import android.os.LocaleList;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -60,16 +61,21 @@ public class InlineSuggestionsRequestTest {
     public void testInlineSuggestionsRequestValues() {
         final int suggestionCount = 3;
         ArrayList<InlinePresentationSpec> presentationSpecs = new ArrayList<>();
+        LocaleList localeList = LocaleList.forLanguageTags("fa-IR");
         InlineSuggestionsRequest request =
                 new InlineSuggestionsRequest.Builder(presentationSpecs)
                         .addPresentationSpecs(
                                 new InlinePresentationSpec.Builder(new Size(100, 100),
                                         new Size(400, 100)).build())
+                        .setSupportedLocales(LocaleList.forLanguageTags("fa-IR"))
+                        .setExtras(/* value */ null)
                         .setMaxSuggestionCount(suggestionCount).build();
 
         assertThat(request.getMaxSuggestionCount()).isEqualTo(suggestionCount);
         assertThat(request.getPresentationSpecs()).isNotNull();
         assertThat(request.getPresentationSpecs().size()).isEqualTo(1);
+        assertThat(request.getExtras()).isNull();
+        assertThat(request.getSupportedLocales()).isEqualTo(localeList);
     }
 
     @Test
