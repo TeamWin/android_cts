@@ -1815,7 +1815,7 @@ public class KeyPairGeneratorTest extends AndroidTestCase {
         @Override
         public String chooseEngineClientAlias(String[] keyType, Principal[] issuers,
             SSLEngine engine) {
-            return "fake";
+            throw new IllegalStateException();
         }
 
         @Override
@@ -1826,7 +1826,7 @@ public class KeyPairGeneratorTest extends AndroidTestCase {
         @Override
         public String chooseEngineServerAlias(String keyType, Principal[] issuers,
             SSLEngine engine) {
-            return "fake";
+            throw new IllegalStateException();
         }
 
         @Override
