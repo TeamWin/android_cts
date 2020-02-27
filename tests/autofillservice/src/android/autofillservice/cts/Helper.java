@@ -1309,6 +1309,20 @@ public final class Helper {
         return false;
     }
 
+    public static Bundle newClientState(String key, String value) {
+        final Bundle clientState = new Bundle();
+        clientState.putString(key, value);
+        return clientState;
+    }
+
+    public static void assertAuthenticationClientState(String where, Bundle data,
+            String expectedKey, String expectedValue) {
+        assertWithMessage("no client state on %s", where).that(data).isNotNull();
+        final String extraValue = data.getString(expectedKey);
+        assertWithMessage("invalid value for %s on %s", expectedKey, where)
+                .that(extraValue).isEqualTo(expectedValue);
+    }
+
     /**
      * Asserts that 2 bitmaps have are the same. If they aren't throws an exception and dump them
      * locally so their can be visually inspected.
