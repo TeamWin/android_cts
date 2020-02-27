@@ -5301,6 +5301,33 @@ Follow the instructions on the screen to measure the frequency response for the 
         UI when prompted.
     </string>
     <string name="telecom_incoming_self_mgd_place_call_button">Start Self-Managed Call</string>
+    <string name="telecom_default_dialer_test_title">Default Dialer Test</string>
+    <string name="telecom_default_dialer_test_info">
+        This test verifies that a third party dialer can show an incoming call screen when the
+        device is locked.
+    </string>
+    <string name="telecom_default_dialer_step_1">
+        Click the button below to set CtsVerifier as the default dialer.
+    </string>
+    <string name="telecom_default_dialer_set_third_party_dialer_button">
+        Set third party dialer
+    </string>
+    <string name="telecom_default_dialer_step_2">
+        Click the button to make sure that this phone is secured with a lock screen.
+    </string>
+    <string name="telecom_confirm_lock_screen">Confirm lock screen</string>
+    <string name="telecom_default_dialer_step_3">
+        Click the button below to lock the phone and then call this device. Answer the incoming call
+        in the UI when prompted without unlock the phone.
+    </string>
+    <string name="telecom_default_dialer_lock_button">Lock phone and dail</string>
+    <string name="telecom_default_dialer_step_4">
+        Click the button below to confirm that the ongoing incoming call was answered when the
+        device is locked.
+    </string>
+    <string name="telecom_default_dialer_end_button">End call and confirm</string>
+    <string name="telecom_default_dialer_confirm_button">Confirm</string>
+    <string name="telecom_in_call_ui_label">CtsVerifierInCallUi</string>
     <!-- Strings for SetNewPasswordComplexityTest -->
     <string name="set_complexity_test_title">Set New Password Complexity Test</string>
     <string name="set_complexity_test_message">
