@@ -80,10 +80,11 @@ public class ConcurrentCameraTest extends Camera2ConcurrentAndroidTestCase {
         public List<ImageReader> rawTargets = new ArrayList<ImageReader>();
         public List<ImageReader> heicTargets = new ArrayList<ImageReader>();
         public TestSample(String cameraId, StaticMetadata staticInfo,
-                MandatoryStreamCombination combination) {
+                MandatoryStreamCombination combination, boolean subY8) {
             this.cameraId = cameraId;
             this.staticInfo = staticInfo;
             this.combination = combination;
+            this.substituteY8 = subY8;
         }
     }
 
@@ -123,8 +124,9 @@ public class ConcurrentCameraTest extends Camera2ConcurrentAndroidTestCase {
                             info != null);
                     MandatoryStreamCombination chosenCombination =
                             deviceSample.getValue().combination;
+                    boolean substituteY8 = deviceSample.getValue().substituteY8;
                     TestSample testSample = new TestSample(deviceSample.getKey(), info.mStaticInfo,
-                            chosenCombination);
+                            chosenCombination, substituteY8);
                     testSamples.add(testSample);
                     openDevice(deviceSample.getKey());
                 }
@@ -242,13 +244,12 @@ public class ConcurrentCameraTest extends Camera2ConcurrentAndroidTestCase {
             CameraTestInfo info = mCameraTestInfos.get(testSample.cameraId);
             assertTrue("CameraTestInfo not found for camera id " + testSample.cameraId,
                     info != null);
-            boolean substituteY8 = (testSample.substituteY8);
             CameraTestUtils.setupConfigurationTargets(
                 testSample.combination.getStreamsInformation(), testSample.privTargets,
                 testSample.jpegTargets, testSample.yuvTargets, testSample.y8Targets,
                 testSample.rawTargets, testSample.heicTargets, testSample.outputConfigs,
-                MIN_RESULT_COUNT, substituteY8, /*substituteHEIC*/false, /*physicalCameraId*/null,
-                mHandler);
+                MIN_RESULT_COUNT, testSample.substituteY8, /*substituteHEIC*/false,
+                /*physicalCameraId*/null, mHandler);
 
             try {
                 checkSessionConfigurationSupported(info.mCamera, mHandler, testSample.outputConfigs,
