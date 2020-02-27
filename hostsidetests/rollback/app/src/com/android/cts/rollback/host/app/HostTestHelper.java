@@ -612,6 +612,22 @@ public class HostTestHelper {
     }
 
     @Test
+    public void testFingerprintChange_Phase1() throws Exception {
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(-1);
+        assertThat(InstallUtils.getInstalledVersion(TestApp.B)).isEqualTo(-1);
+
+        // Both available and enabling rollbacks should be invalidated after fingerprint changes.
+        Install.multi(TestApp.A1, TestApp.B1).commit();
+        Install.single(TestApp.A2).setEnableRollback().commit();
+        Install.single(TestApp.B2).setEnableRollback().setStaged().commit();
+    }
+
+    @Test
+    public void testFingerprintChange_Phase2() throws Exception {
+        assertThat(RollbackUtils.getRollbackManager().getAvailableRollbacks()).isEmpty();
+    }
+
+    @Test
     public void isCheckpointSupported() {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         StorageManager sm = (StorageManager) context.getSystemService(Context.STORAGE_SERVICE);

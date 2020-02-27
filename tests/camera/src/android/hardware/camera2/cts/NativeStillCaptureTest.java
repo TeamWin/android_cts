@@ -48,9 +48,9 @@ public class NativeStillCaptureTest extends Camera2SurfaceViewTestCase {
         // Init preview surface to a guaranteed working size
         updatePreviewSurface(new Size(640, 480));
         assertTrue("testStillCapture fail, see log for details",
-                testStillCaptureNative(mDebugFileNameBase, mPreviewSurface));
+                testStillCaptureNative(mDebugFileNameBase, mPreviewSurface, mOverrideCameraId));
     }
 
     private static native boolean testStillCaptureNative(
-            String filePath, Surface previewSurface);
+            String filePath, Surface previewSurface, String overrideCameraId);
 }

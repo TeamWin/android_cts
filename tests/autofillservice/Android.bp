@@ -17,6 +17,7 @@ android_test {
     defaults: ["cts_defaults"],
     static_libs: [
         "androidx.annotation_annotation",
+        "androidx.autofill_autofill",
         "androidx.test.ext.junit",
         "compatibility-device-util-axt",
         "ctsdeviceutillegacy-axt",

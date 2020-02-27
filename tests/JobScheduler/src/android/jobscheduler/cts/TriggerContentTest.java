@@ -133,12 +133,10 @@ public class TriggerContentTest extends BaseJobSchedulerTest {
     private JobInfo makePhotosJobInfo() {
         JobInfo.Builder builder = new JobInfo.Builder(TRIGGER_CONTENT_JOB_ID,
                 kTriggerContentServiceComponent);
-        // Look for specific changes to images in the provider.
+        // Look for general reports of changes in the overall provider.
         builder.addTriggerContentUri(new JobInfo.TriggerContentUri(
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                MEDIA_URI,
                 JobInfo.TriggerContentUri.FLAG_NOTIFY_FOR_DESCENDANTS));
-        // Also look for general reports of changes in the overall provider.
-        builder.addTriggerContentUri(new JobInfo.TriggerContentUri(MEDIA_URI, 0));
         // For testing purposes, react quickly.
         builder.setTriggerContentUpdateDelay(500);
         builder.setTriggerContentMaxDelay(500);

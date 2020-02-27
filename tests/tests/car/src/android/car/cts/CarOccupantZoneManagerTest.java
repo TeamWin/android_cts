@@ -29,16 +29,25 @@ import android.platform.test.annotations.RequiresDevice;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.Display;
 
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.util.List;
 
 @SmallTest
 @RequiresDevice
+@RunWith(AndroidJUnit4.class)
 public class CarOccupantZoneManagerTest extends CarApiTestBase {
 
     private OccupantZoneInfo mDriverZoneInfo;
 
     private CarOccupantZoneManager mCarOccupantZoneManager;
 
+    @Override
+    @Before
     public void setUp() throws Exception {
         super.setUp();
         mCarOccupantZoneManager =
@@ -55,14 +64,16 @@ public class CarOccupantZoneManagerTest extends CarApiTestBase {
         mDriverZoneInfo = drivers.get(0);
     }
 
+    @Test
     public void testDriverUserIdMustBeCurrentUser() {
         int myUid = Process.myUid();
-        assertWithMessage("Driver user id must correspond to current user id (Process.myUid: %d)",
+        assertWithMessage("Driver user id must correspond to current user id (Process.myUid: %s)",
                 myUid).that(
                 UserHandle.getUserId(myUid)).isEqualTo(
                 mCarOccupantZoneManager.getUserForOccupant(mDriverZoneInfo));
     }
 
+    @Test
     public void testExpectAtLeastDriverZoneExists() {
         assertWithMessage(
                 "Driver zone is expected to exist. Make sure a driver zone is properly defined in"
@@ -71,12 +82,14 @@ public class CarOccupantZoneManagerTest extends CarApiTestBase {
                 .contains(mDriverZoneInfo);
     }
 
+    @Test
     public void testDriverHasMainDisplay() {
         assertWithMessage("Driver is expected to be associated with main display")
                 .that(mCarOccupantZoneManager.getAllDisplaysForOccupant(mDriverZoneInfo))
                 .contains(getDriverDisplay());
     }
 
+    @Test
     public void testDriverDisplayIdIsDefaultDisplay() {
         assertThat(getDriverDisplay().getDisplayId()).isEqualTo(Display.DEFAULT_DISPLAY);
     }
@@ -93,4 +106,3 @@ public class CarOccupantZoneManagerTest extends CarApiTestBase {
         return driverDisplay;
     }
 }
-

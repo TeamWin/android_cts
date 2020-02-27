@@ -34,12 +34,7 @@ import rotation_rig as rot
 MIN_SUPPORTED_SDK_VERSION = 28  # P
 
 CHART_DELAY = 1  # seconds
-CHART_DISTANCE = 30.0  # cm
-CHART_HEIGHT = 13.5  # cm
 CHART_LEVEL = 96
-CHART_SCALE_START = 0.65
-CHART_SCALE_STOP = 1.35
-CHART_SCALE_STEP = 0.025
 NOT_YET_MANDATED_ALL = 100
 NUM_TRYS = 2
 PROC_TIMEOUT_CODE = -101  # terminated process return -process_id
@@ -56,7 +51,7 @@ VGA_WIDTH = 640
 #   scene*_a/b/... are similar scenes that share one or more tests
 ALL_SCENES = ['scene0', 'scene1_1', 'scene1_2', 'scene2_a', 'scene2_b',
               'scene2_c', 'scene2_d', 'scene2_e', 'scene3', 'scene4',
-              'scene5', 'sensor_fusion', 'scene_change']
+              'scene5', 'scene6', 'sensor_fusion', 'scene_change']
 
 # Scenes that are logically grouped and can be called as group
 GROUPED_SCENES = {
@@ -67,7 +62,7 @@ GROUPED_SCENES = {
 # Scenes that can be automated through tablet display
 AUTO_SCENES = ['scene0', 'scene1_1', 'scene1_2', 'scene2_a', 'scene2_b',
                'scene2_c', 'scene2_d', 'scene2_e', 'scene3', 'scene4',
-               'scene_change']
+               'scene6', 'scene_change']
 
 SCENE_REQ = {
         'scene0': None,
@@ -84,6 +79,8 @@ SCENE_REQ = {
                   'for more details',
         'scene5': 'Capture images with a diffuser attached to the camera. See '
                   'CameraITS.pdf section 2.3.4 for more details',
+        'scene6': 'A specific test page of a grid of 9x5 circles circle '
+                  'middle 50% of the scene.',
         'sensor_fusion': 'Rotating checkboard pattern. See '
                          'sensor_fusion/SensorFusion.pdf for detailed '
                          'instructions.\nNote that this test will be skipped '
@@ -116,11 +113,15 @@ NOT_YET_MANDATED = {
                 ['test_num_faces', 30]
         ],
         'scene2_e': [
-                ['test_num_faces', 30]
+                ['test_num_faces', 30],
+                ['test_continuous_picture', 30]
         ],
         'scene3': [],
         'scene4': [],
         'scene5': [],
+        'scene6': [
+                ['test_zoom', 30]
+        ],
         'sensor_fusion': [],
         'scene_change': [
                 ['test_scene_change', 31]
@@ -158,6 +159,7 @@ HIDDEN_PHYSICAL_CAMERA_TESTS = {
                 'test_aspect_ratio_and_crop'
         ],
         'scene5': [],
+        'scene6': [],
         'sensor_fusion': [
                 'test_sensor_fusion'
         ],
@@ -187,6 +189,7 @@ REPEATED_TESTS = {
         'scene3': [],
         'scene4': [],
         'scene5': [],
+        'scene6': [],
         'sensor_fusion': [],
         'scene_change': []
 }
@@ -349,7 +352,7 @@ def main():
     rot_rig_id = None
     tmp_dir = None
     skip_scene_validation = False
-    chart_distance = CHART_DISTANCE
+    chart_distance = its.cv2image.CHART_DISTANCE_RFOV
     chart_level = CHART_LEVEL
     one_camera_argv = sys.argv[1:]
 
@@ -579,13 +582,15 @@ def main():
                     id_combo_string, scene)
             # Extract chart from scene for scene3 once up front
             chart_loc_arg = ''
-            chart_height = CHART_HEIGHT
+            chart_height = its.cv2image.CHART_HEIGHT
             if scene == 'scene3':
                 chart_height *= its.cv2image.calc_chart_scaling(
                         chart_distance, camera_fov)
                 chart = its.cv2image.Chart(SCENE3_FILE, chart_height,
-                                           chart_distance, CHART_SCALE_START,
-                                           CHART_SCALE_STOP, CHART_SCALE_STEP,
+                                           chart_distance,
+                                           its.cv2image.CHART_SCALE_START,
+                                           its.cv2image.CHART_SCALE_STOP,
+                                           its.cv2image.CHART_SCALE_STEP,
                                            id_combo.id)
                 chart_loc_arg = 'chart_loc=%.2f,%.2f,%.2f,%.2f,%.3f' % (
                         chart.xnorm, chart.ynorm, chart.wnorm, chart.hnorm,

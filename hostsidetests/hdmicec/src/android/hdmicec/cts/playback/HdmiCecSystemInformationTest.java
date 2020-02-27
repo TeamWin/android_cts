@@ -172,7 +172,7 @@ public final class HdmiCecSystemInformationTest extends BaseHostJUnit4Test {
         final String originalLanguage = extractLanguage(locale);
         final String language = originalLanguage.equals("spa") ? "eng" : "spa";
         try {
-            hdmiCecClient.sendCecMessage(CecDevice.RECORDING_1, CecDevice.BROADCAST,
+            hdmiCecClient.sendCecMessage(CecDevice.RECORDER_1, CecDevice.BROADCAST,
                     CecMessage.SET_MENU_LANGUAGE, hdmiCecClient.convertStringToHexParams(language));
             assertEquals(originalLanguage, extractLanguage(getSystemLocale()));
         } finally {

@@ -47,7 +47,7 @@ class FeatureTest {
     private val appUid by lazy { context.packageManager.getPackageUid(APP_PKG, 0) }
 
     private fun installApk(apk: String) {
-        val result = runCommand("pm install -r $APK_PATH$apk")
+        val result = runCommand("pm install -r --force-queryable $APK_PATH$apk")
         assertThat(result.trim()).isEqualTo("Success")
     }
 

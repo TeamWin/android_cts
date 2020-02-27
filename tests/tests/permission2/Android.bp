@@ -49,6 +49,7 @@ android_test {
         ":CtsStoragePermissionsUserOptInSdk22",
         ":CtsStoragePermissionsUserOptInSdk28",
         ":CtsStoragePermissionsUserOptOutSdk29",
+        ":CtsStoragePermissionsPreservedUserOptOutSdk30",
         ":CtsLegacyStorageNotIsolatedWithSharedUid",
         ":CtsLegacyStorageIsolatedWithSharedUid",
         ":CtsLegacyStorageRestrictedWithSharedUid",

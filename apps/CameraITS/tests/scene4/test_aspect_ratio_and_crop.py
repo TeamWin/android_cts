@@ -16,6 +16,7 @@ import math
 import os.path
 import cv2
 import its.caps
+import its.cv2image
 import its.device
 import its.image
 import its.objects
@@ -541,9 +542,9 @@ def measure_aspect_ratio(img, raw_avlb, img_name, debug):
                     or len(ct) < 15):
             continue
         # Check the shapes of current component and its parent
-        child_shape = component_shape(ct)
+        child_shape = its.cv2image.component_shape(ct)
         parent = hrch[3]
-        prt_shape = component_shape(contours[parent])
+        prt_shape = its.cv2image.component_shape(contours[parent])
         prt_area = cv2.contourArea(contours[parent])
         dist_x = abs(child_shape["ctx"]-prt_shape["ctx"])
         dist_y = abs(child_shape["cty"]-prt_shape["cty"])
@@ -642,35 +643,6 @@ def measure_aspect_ratio(img, raw_avlb, img_name, debug):
     print "Circle center position wrt to image center:",
     print "%.3fx%.3f" % (cc_ct["vert"], cc_ct["hori"])
     return aspect_ratio, cc_ct, (circle_w, circle_h)
-
-
-def component_shape(contour):
-    """Measure the shape for a connected component in the aspect ratio test.
-
-    Args:
-        contour: return from cv2.findContours. A list of pixel coordinates of
-        the contour.
-
-    Returns:
-        The most left, right, top, bottom pixel location, height, width, and
-        the center pixel location of the contour.
-    """
-    shape = {"left": np.inf, "right": 0, "top": np.inf, "bottom": 0,
-             "width": 0, "height": 0, "ctx": 0, "cty": 0}
-    for pt in contour:
-        if pt[0][0] < shape["left"]:
-            shape["left"] = pt[0][0]
-        if pt[0][0] > shape["right"]:
-            shape["right"] = pt[0][0]
-        if pt[0][1] < shape["top"]:
-            shape["top"] = pt[0][1]
-        if pt[0][1] > shape["bottom"]:
-            shape["bottom"] = pt[0][1]
-    shape["width"] = shape["right"] - shape["left"] + 1
-    shape["height"] = shape["bottom"] - shape["top"] + 1
-    shape["ctx"] = (shape["left"]+shape["right"])/2
-    shape["cty"] = (shape["top"]+shape["bottom"])/2
-    return shape
 
 
 if __name__ == "__main__":

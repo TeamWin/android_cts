@@ -24,7 +24,7 @@
         <option name="jar" value="CtsBlobStoreHostTestCases.jar" />
     </test>
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
-        <option name="test-file-name" value="CtsBlobStoreHelperApp.apk" />
+        <option name="test-file-name" value="CtsBlobStoreHostTestHelper.apk" />
         <option name="cleanup-apks" value="true" />
     </target_preparer>
 </configuration>

@@ -69,7 +69,9 @@ public class TestListActivity extends AbstractTestListActivity implements View.O
                     if (checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
                         requestPermissions(packageInfo.requestedPermissions,
                                 CTS_VERIFIER_PERMISSION_REQUEST);
-                        return;
+                        /* don't return here. Some tests (i.e. USB Restrict Access test)
+                         * which need to run even if permissions are incomplete.
+                         */
                     }
                 }
             }

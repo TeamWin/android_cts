@@ -199,7 +199,7 @@ public class ConferenceTest extends BaseTelecomTestWithMockServices {
         // Consumed internally in Telecom; no verifiable manner to see the end point of this data
         // through public APIs.
         mConferenceObject.setConnectionTime(0);
-        mConferenceObject.setConnectionStartElapsedRealTime(0);
+        mConferenceObject.setConnectionStartElapsedRealtimeMillis(0);
 
         Bundle extras = new Bundle();
         extras.putString(TelecomManager.EXTRA_CALL_DISCONNECT_MESSAGE, "Test");

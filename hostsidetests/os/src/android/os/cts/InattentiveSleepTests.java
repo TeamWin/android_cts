@@ -27,7 +27,6 @@ import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ProtoUtils;
 import com.android.server.power.PowerManagerServiceDumpProto;
 import com.android.server.power.PowerServiceSettingsAndConfigurationDumpProto;
-import com.android.server.wm.IdentifierProto;
 import com.android.server.wm.WindowManagerServiceDumpProto;
 import com.android.server.wm.WindowStateProto;
 import com.android.tradefed.device.ITestDevice;
@@ -58,6 +57,8 @@ public class InattentiveSleepTests extends BaseHostJUnit4Test {
     private static final String CMD_GET_STAY_ON = "settings get global stay_on_while_plugged_in";
     private static final String CMD_PUT_STAY_ON_TEMPLATE =
             "settings put global stay_on_while_plugged_in %d";
+    private static final String CMD_DISABLE_STAY_ON =
+            "settings put global stay_on_while_plugged_in 0";
     private static final String CMD_ENABLE_STAY_ON =
             "settings put global stay_on_while_plugged_in 7";
 
@@ -82,7 +83,9 @@ public class InattentiveSleepTests extends BaseHostJUnit4Test {
         assumeTrue("Test only applicable to TVs.", hasDeviceFeature(FEATURE_LEANBACK_ONLY));
 
         mWarningDurationConfig = getWarningDurationConfig();
-        mOriginalStayOnSetting = Long.valueOf(mDevice.executeShellCommand(CMD_GET_STAY_ON).trim());
+        mOriginalStayOnSetting = Long.parseLong(
+                mDevice.executeShellCommand(CMD_GET_STAY_ON).trim());
+        mDevice.executeShellCommand(CMD_DISABLE_STAY_ON);
         setInattentiveSleepTimeout(TIME_BEFORE_WARNING_MS + mWarningDurationConfig);
     }
 
@@ -189,17 +192,19 @@ public class InattentiveSleepTests extends BaseHostJUnit4Test {
 
     @Test
     public void testInattentiveSleep_warningTiming() throws Exception {
-        long eps = 300;
+        setInattentiveSleepTimeout(5000 + mWarningDurationConfig);
+
+        long eps = 1000;
         wakeUpToHome();
 
         long start = System.currentTimeMillis();
-        Thread.sleep(eps);
-        waitUntilWarningIsShowing();
+        waitUntilWarningIsNotShowing(1000);
+        waitUntilWarningIsShowing(5000);
         long warningShown = System.currentTimeMillis();
 
         long actualTimeToWarningShown = warningShown - start;
         assertTrue("Warning was shown at unexpected time, after " + actualTimeToWarningShown + "ms",
-                Math.abs(actualTimeToWarningShown - TIME_BEFORE_WARNING_MS) <= eps);
+                Math.abs(actualTimeToWarningShown - 5000) <= eps);
 
         long sleepTime = warningShown + mWarningDurationConfig - eps;
         while (System.currentTimeMillis() < sleepTime) {
@@ -249,6 +254,14 @@ public class InattentiveSleepTests extends BaseHostJUnit4Test {
     }
 
     private void waitUntilWarningIsShowing() throws Exception {
-        PollingCheck.waitFor(TIME_BEFORE_WARNING_MS + 1000, this::isWarningShown);
+        waitUntilWarningIsShowing(TIME_BEFORE_WARNING_MS + 1000);
+    }
+
+    private void waitUntilWarningIsShowing(long timeout) throws Exception {
+        PollingCheck.waitFor(timeout, this::isWarningShown);
+    }
+
+    private void waitUntilWarningIsNotShowing(long timeout) throws Exception {
+        PollingCheck.waitFor(timeout, () -> !isWarningShown());
     }
 }

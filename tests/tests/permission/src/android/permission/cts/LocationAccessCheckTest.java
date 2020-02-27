@@ -56,6 +56,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Looper;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.SecurityTest;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
 import android.service.notification.NotificationListenerService;
@@ -512,6 +513,7 @@ public class LocationAccessCheckTest {
     }
 
     @Test
+    @SecurityTest(minPatchLevel="2019-12-01")
     public void notificationIsShownOnlyOnce() throws Throwable {
         accessLocation();
         getNotification(true);
@@ -520,6 +522,7 @@ public class LocationAccessCheckTest {
     }
 
     @Test
+    @SecurityTest(minPatchLevel="2019-12-01")
     public void notificationIsShownAgainAfterClear() throws Throwable {
         accessLocation();
         getNotification(true);
@@ -556,6 +559,7 @@ public class LocationAccessCheckTest {
     }
 
     @Test
+    @SecurityTest(minPatchLevel="2019-12-01")
     public void removeNotificationOnUninstall() throws Throwable {
         accessLocation();
         getNotification(false);
@@ -595,6 +599,7 @@ public class LocationAccessCheckTest {
     }
 
     @Test
+    @SecurityTest(minPatchLevel="2019-12-01")
     public void noNotificationIfFeatureDisabled() throws Throwable {
         disableLocationAccessCheck();
         accessLocation();
@@ -602,6 +607,7 @@ public class LocationAccessCheckTest {
     }
 
     @Test
+    @SecurityTest(minPatchLevel="2019-12-01")
     public void notificationOnlyForAccessesSinceFeatureWasEnabled() throws Throwable {
         // Disable the feature and access location in disabled state
         disableLocationAccessCheck();
@@ -618,6 +624,7 @@ public class LocationAccessCheckTest {
     }
 
     @Test
+    @SecurityTest(minPatchLevel="2019-12-01")
     public void noNotificationIfBlamerNotSystemOrLocationProvider() throws Throwable {
         // Blame the app for access from an untrusted for notification purposes package.
         runWithShellPermissionIdentity(() -> {
@@ -629,6 +636,7 @@ public class LocationAccessCheckTest {
     }
 
     @Test
+    @SecurityTest(minPatchLevel="2019-12-01")
     public void testOpeningLocationSettingsDoesNotTriggerAccess() throws Throwable {
         Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

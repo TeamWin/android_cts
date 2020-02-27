@@ -18,6 +18,9 @@ package com.android.cts.rollback.host;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.hamcrest.CoreMatchers.endsWith;
+import static org.hamcrest.CoreMatchers.not;
+import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
 import com.android.ddmlib.Log;
@@ -248,4 +251,21 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
         run2("testApkRollbackByAnotherInstaller_Phase2");
     }
 
+    /**
+     * Tests that rollbacks are invalidated upon fingerprint changes.
+     */
+    @Test
+    public void testFingerprintChange() throws Exception {
+        assumeThat(getDevice().getBuildFlavor(), not(endsWith("-user")));
+
+        try {
+            getDevice().executeShellCommand("setprop persist.pm.mock-upgrade true");
+
+            run("testFingerprintChange_Phase1");
+            getDevice().reboot();
+            run("testFingerprintChange_Phase2");
+        } finally {
+            getDevice().executeShellCommand("setprop persist.pm.mock-upgrade false");
+        }
+    }
 }

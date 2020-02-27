@@ -123,53 +123,9 @@ public class RcsUceAdapterTest {
         ImsManager imsManager = getContext().getSystemService(ImsManager.class);
         RcsUceAdapter uceAdapter = imsManager.getImsRcsManager(sTestSub).getUceAdapter();
         assertNotNull("UCE adapter should not be null!", uceAdapter);
-
         // requestCapabilities
         ArrayList<Uri> numbers = new ArrayList<>(1);
         numbers.add(TEST_NUMBER_URI);
-        try {
-            ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(uceAdapter,
-                    (m) -> m.requestCapabilities(Runnable::run, numbers,
-                            new RcsUceAdapter.CapabilitiesCallback() {
-                            }), ImsException.class,
-                    "android.permission.READ_PRIVILEGED_PHONE_STATE");
-        } catch (SecurityException e) {
-            fail("requestCapabilities should succeed with READ_PRIVILEGED_PHONE_STATE.");
-        } catch (ImsException e) {
-            // unsupported is a valid fail cause.
-            if (e.getCode() != ImsException.CODE_ERROR_UNSUPPORTED_OPERATION) {
-                fail("request capabilities failed with code " + e.getCode());
-            }
-        }
-
-        try {
-            uceAdapter.requestCapabilities(Runnable::run, numbers,
-                    new RcsUceAdapter.CapabilitiesCallback() {});
-            fail("requestCapabilities should require READ_PRIVILEGED_PHONE_STATE.");
-        } catch (SecurityException e) {
-            //expected
-        }
-
-        // getUcePublishState
-        try {
-            Integer result = ShellIdentityUtils.invokeThrowableMethodWithShellPermissions(
-                    uceAdapter, RcsUceAdapter::getUcePublishState, ImsException.class,
-                    "android.permission.READ_PRIVILEGED_PHONE_STATE");
-            assertNotNull("result from getUcePublishState should not be null", result);
-        } catch (SecurityException e) {
-            fail("getUcePublishState should succeed with READ_PRIVILEGED_PHONE_STATE.");
-        } catch (ImsException e) {
-            // unsupported is a valid fail cause.
-            if (e.getCode() != ImsException.CODE_ERROR_UNSUPPORTED_OPERATION) {
-                fail("getUcePublishState failed with code " + e.getCode());
-            }
-        }
-        try {
-            uceAdapter.getUcePublishState();
-            fail("requestCapabilities should require READ_PRIVILEGED_PHONE_STATE.");
-        } catch (SecurityException e) {
-            //expected
-        }
 
         //isUceSettingEnabled
         Boolean isUceSettingEnabledResult = null;

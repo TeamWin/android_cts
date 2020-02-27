@@ -64,6 +64,12 @@ android_test {
         "src/**/*.java",
         "BinderPermissionTestService/**/I*.aidl",
     ],
+    data: [
+        // v4 signed version of android.appsecurity.cts.tinyapp
+        // TODO(b/149354175): use built APKs instead - after soong gets v4 support
+        "data/v4-only-original.apk",
+        "data/v4-only-original.apk.idsig",
+    ],
     platform_apis: true,
     // Tag this module as a cts test artifact
     test_suites: [

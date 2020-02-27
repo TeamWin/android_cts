@@ -20,17 +20,17 @@ import static com.google.common.truth.Truth.assertThat;
 
 public class AdminConfiguredNetworksTest extends BaseDeviceAdminTest {
 
-    public void testSetLockdownAdminConfiguredNetworks() {
-        mDevicePolicyManager.setLockdownAdminConfiguredNetworks(ADMIN_RECEIVER_COMPONENT,
+    public void testSetConfiguredNetworksLockdownState() {
+        mDevicePolicyManager.setConfiguredNetworksLockdownState(ADMIN_RECEIVER_COMPONENT,
                 true);
 
-        assertThat(mDevicePolicyManager.isLockdownAdminConfiguredNetworks(
+        assertThat(mDevicePolicyManager.hasLockdownAdminConfiguredNetworks(
                 ADMIN_RECEIVER_COMPONENT)).isTrue();
 
-        mDevicePolicyManager.setLockdownAdminConfiguredNetworks(ADMIN_RECEIVER_COMPONENT,
+        mDevicePolicyManager.setConfiguredNetworksLockdownState(ADMIN_RECEIVER_COMPONENT,
                 false);
 
-        assertThat(mDevicePolicyManager.isLockdownAdminConfiguredNetworks(
+        assertThat(mDevicePolicyManager.hasLockdownAdminConfiguredNetworks(
                 ADMIN_RECEIVER_COMPONENT)).isFalse();
     }
 

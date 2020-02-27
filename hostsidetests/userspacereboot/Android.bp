@@ -24,23 +24,11 @@ java_test_host {
         "hamcrest-library",
     ],
     data: [
-        ":UserspaceRebootTest",
+        ":BasicUserspaceRebootTestApp",
+        ":BootCompletedUserspaceRebootTestApp",
     ],
     test_suites: [
         "cts",
         "general-tests",
     ],
-}
-
-android_test_helper_app {
-    name: "UserspaceRebootTest",
-    srcs:  ["app/src/**/*.java"],
-    manifest : "app/AndroidManifest.xml",
-    static_libs: [
-        "androidx.test.runner",
-        "androidx.test.core",
-        "testng",
-        "truth-prebuilt",
-    ],
-    sdk_version: "test_current",
 }

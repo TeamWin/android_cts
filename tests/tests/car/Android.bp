@@ -21,6 +21,9 @@ android_test {
         "truth-prebuilt",
         "ctstestrunner-axt",
         "android.test.base.stubs",
+        // TODO: remove once Android migrates to JUnit 4.12,
+        // which provides assertThrows
+        "testng",
     ],
     libs: [
         "android.car-test-stubs",

@@ -24,8 +24,10 @@ android_test {
         "android.test.runner.stubs",
         "android.test.base.stubs",
     ],
+    jni_uses_platform_apis: true,
     jni_libs: [
         "libctsmediav2muxer_jni",
+        "libctsmediav2extractor_jni",
     ],
     srcs: ["src/**/*.java"],
     // Tag this module as a cts test artifact

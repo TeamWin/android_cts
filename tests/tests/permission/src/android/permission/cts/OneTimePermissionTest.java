@@ -17,6 +17,7 @@
 package android.permission.cts;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 import static com.android.compatibility.common.util.SystemUtil.eventually;
@@ -42,6 +43,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+
 public class OneTimePermissionTest {
     private static final String APP_PKG_NAME = "android.permission.cts.appthatrequestpermission";
     private static final String APK =
@@ -50,12 +54,15 @@ public class OneTimePermissionTest {
             "android.permission.cts.OneTimePermissionTest.EXTRA_FOREGROUND_SERVICE_LIFESPAN";
 
     private static final long ONE_TIME_TIMEOUT_MILLIS = 5000;
-    private static final long ONE_TIME_REVOKE_DELAY_TIMEOUT = 10000;
+    private static final long ONE_TIME_TIMER_LOWER_GRACE_PERIOD = 500;
+    private static final long ONE_TIME_TIMER_UPPER_GRACE_PERIOD = 10000;
 
     private final Context mContext =
             InstrumentationRegistry.getInstrumentation().getTargetContext();
     private final UiDevice mUiDevice =
             UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+    private final ActivityManager mActivityManager =
+            mContext.getSystemService(ActivityManager.class);
 
     private String mOldOneTimePermissionTimeoutValue;
 
@@ -97,44 +104,37 @@ public class OneTimePermissionTest {
     public void testOneTimePermission() throws Throwable {
         startApp();
 
+        CompletableFuture<Long> exitTime = registerAppExitListener();
+
         clickOneTimeButton();
 
-        pressHome();
+        exitApp();
 
         assertGranted(5000);
 
-        long oneTimeStart = System.currentTimeMillis();
+        assertDenied(ONE_TIME_TIMEOUT_MILLIS + ONE_TIME_TIMER_UPPER_GRACE_PERIOD);
 
-        assertDenied(ONE_TIME_TIMEOUT_MILLIS + ONE_TIME_REVOKE_DELAY_TIMEOUT);
-
-        long grantedLength = System.currentTimeMillis() - oneTimeStart;
-        if (grantedLength < ONE_TIME_TIMEOUT_MILLIS) {
-            throw new AssertionError("The one time permission lived shorter than expected");
-        }
+        assertExpectedLifespan(exitTime, ONE_TIME_TIMEOUT_MILLIS);
     }
 
     @Test
     public void testForegroundServiceMaintainsPermission() throws Throwable {
         startApp();
 
+        CompletableFuture<Long> exitTime = registerAppExitListener();
+
         clickOneTimeButton();
-        long oneTimeStart = System.currentTimeMillis();
 
-        long lifespanMillis = 2 * ONE_TIME_TIMEOUT_MILLIS;
-        startAppForegroundService(lifespanMillis);
+        long expectedLifespanMillis = 2 * ONE_TIME_TIMEOUT_MILLIS;
+        startAppForegroundService(expectedLifespanMillis);
 
-        pressHome();
+        exitApp();
 
         assertGranted(5000);
 
-        assertDenied(lifespanMillis + ONE_TIME_REVOKE_DELAY_TIMEOUT);
+        assertDenied(expectedLifespanMillis + ONE_TIME_TIMER_UPPER_GRACE_PERIOD);
 
-        long grantedLength = System.currentTimeMillis() - oneTimeStart;
-        if (grantedLength < lifespanMillis) {
-            throw new AssertionError(
-                    "The one time permission lived shorter than expected. expected: "
-                            + lifespanMillis + "ms but was: " + grantedLength);
-        }
+        assertExpectedLifespan(exitTime, expectedLifespanMillis);
 
     }
 
@@ -144,7 +144,7 @@ public class OneTimePermissionTest {
 
         clickOneTimeButton();
 
-        pressHome();
+        exitApp();
 
         assertGranted(5000);
 
@@ -157,25 +157,44 @@ public class OneTimePermissionTest {
         assertDenied(500);
     }
 
-    private void assertGrantedState(String s, int permissionGranted, long timeoutMillis)
-            throws Throwable {
+    private void assertGrantedState(String s, int permissionGranted, long timeoutMillis) {
         eventually(() -> Assert.assertEquals(s,
                 permissionGranted, mContext.getPackageManager()
                         .checkPermission(ACCESS_FINE_LOCATION, APP_PKG_NAME)), timeoutMillis);
     }
 
-    private void assertGranted(long timeoutMillis) throws Throwable {
+    private void assertGranted(long timeoutMillis) {
         assertGrantedState("Permission was never granted", PackageManager.PERMISSION_GRANTED,
                 timeoutMillis);
     }
 
-    private void assertDenied(long timeoutMillis) throws Throwable {
+    private void assertDenied(long timeoutMillis) {
         assertGrantedState("Permission was never revoked", PackageManager.PERMISSION_DENIED,
                 timeoutMillis);
     }
 
-    private void pressHome() {
-        SystemUtil.runShellCommand("input keyevent KEYCODE_HOME");
+    private void assertExpectedLifespan(CompletableFuture<Long> exitTime, long expectedLifespan)
+            throws InterruptedException, java.util.concurrent.ExecutionException,
+            java.util.concurrent.TimeoutException {
+        long grantedLength = System.currentTimeMillis() - exitTime.get(0, TimeUnit.MILLISECONDS);
+        if (grantedLength + ONE_TIME_TIMER_LOWER_GRACE_PERIOD < expectedLifespan) {
+            throw new AssertionError(
+                    "The one time permission lived shorter than expected. expected: "
+                            + expectedLifespan + "ms but was: " + grantedLength + "ms");
+        }
+    }
+
+    private void exitApp() {
+        eventually(() -> {
+            mUiDevice.pressHome();
+            mUiDevice.pressBack();
+            runWithShellPermissionIdentity(() -> {
+                if (mActivityManager.getPackageImportance(APP_PKG_NAME)
+                        <= IMPORTANCE_FOREGROUND) {
+                    throw new AssertionError("Unable to exit application");
+                }
+            });
+        });
     }
 
     private void clickOneTimeButton() throws Throwable {
@@ -201,5 +220,39 @@ public class OneTimePermissionTest {
                 APP_PKG_NAME, APP_PKG_NAME + ".KeepAliveForegroundService"));
         intent.putExtra(EXTRA_FOREGROUND_SERVICE_LIFESPAN, lifespanMillis);
         mContext.startService(intent);
+    }
+
+    private CompletableFuture<Long> registerAppExitListener() {
+        CompletableFuture<Long> exitTimeCallback = new CompletableFuture<>();
+        try {
+            int uid = mContext.getPackageManager().getPackageUid(APP_PKG_NAME, 0);
+            runWithShellPermissionIdentity(() ->
+                    mActivityManager.addOnUidImportanceListener(new SingleAppExitListener(
+                            uid, IMPORTANCE_FOREGROUND, exitTimeCallback), IMPORTANCE_FOREGROUND));
+        } catch (PackageManager.NameNotFoundException e) {
+            throw new AssertionError("Package not found.", e);
+        }
+        return exitTimeCallback;
+    }
+
+    private class SingleAppExitListener implements ActivityManager.OnUidImportanceListener {
+
+        private final int mUid;
+        private final int mImportance;
+        private final CompletableFuture<Long> mCallback;
+
+        SingleAppExitListener(int uid, int importance, CompletableFuture<Long> callback) {
+            mUid = uid;
+            mImportance = importance;
+            mCallback = callback;
+        }
+
+        @Override
+        public void onUidImportance(int uid, int importance) {
+            if (uid == mUid && importance > mImportance) {
+                mCallback.complete(System.currentTimeMillis());
+                mActivityManager.removeOnUidImportanceListener(this);
+            }
+        }
     }
 }

@@ -15,7 +15,6 @@
 android_test {
     name: "CtsWidgetTestCases29",
     defaults: ["cts_defaults"],
-    sdk_version: "test_current",
     target_sdk_version: "29",
 
     static_libs: [

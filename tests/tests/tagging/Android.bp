@@ -1,0 +1,21 @@
+cc_test_library {
+    name: "libtaggingtest",
+    srcs: ["libtaggingtest/android_tagging_cts_TaggingTest.cpp"],
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+    sdk_version: "current",
+    gtest: false,
+}
+
+cc_test_library {
+    name: "libtaggingdisabledtest",
+    srcs: ["libtaggingtest/android_tagging_disabled_cts_TaggingTest.cpp"],
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+    sdk_version: "current",
+    gtest: false,
+}

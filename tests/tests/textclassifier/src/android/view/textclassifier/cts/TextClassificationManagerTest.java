@@ -63,10 +63,11 @@ public class TextClassificationManagerTest {
     private static final String CURRENT = "current";
     private static final String SESSION = "session";
     private static final String DEFAULT = "default";
+    private static final String NO_OP = "no_op";
 
     @Parameterized.Parameters(name = "{0}")
     public static Iterable<Object> textClassifierTypes() {
-        return Arrays.asList(CURRENT, SESSION, DEFAULT);
+        return Arrays.asList(CURRENT, SESSION, DEFAULT, NO_OP);
     }
 
     @Parameterized.Parameter
@@ -125,6 +126,8 @@ public class TextClassificationManagerTest {
                             InstrumentationRegistry.getTargetContext().getPackageName(),
                             TextClassifier.WIDGET_TYPE_TEXTVIEW)
                             .build());
+        } else if (mTextClassifierType.equals(NO_OP)) {
+            mClassifier = TextClassifier.NO_OP;
         } else {
             mClassifier = TextClassifierService.getDefaultTextClassifierImplementation(
                     InstrumentationRegistry.getTargetContext());
@@ -175,29 +178,6 @@ public class TextClassificationManagerTest {
     @Test
     public void testClassifyTextWith4Param() {
         assertValidResult(mClassifier.classifyText(TEXT, START, END, LOCALES));
-    }
-
-    @Test
-    public void testNoOpClassifier() {
-        mManager.setTextClassifier(TextClassifier.NO_OP);
-        mClassifier = mManager.getTextClassifier();
-
-        final TextSelection selection = mClassifier.suggestSelection(TEXT_SELECTION_REQUEST);
-        assertValidResult(selection);
-        assertEquals(START, selection.getSelectionStartIndex());
-        assertEquals(END, selection.getSelectionEndIndex());
-        assertEquals(0, selection.getEntityCount());
-
-        final TextClassification classification =
-                mClassifier.classifyText(TEXT_CLASSIFICATION_REQUEST);
-        assertValidResult(classification);
-        assertNull(classification.getText());
-        assertEquals(0, classification.getEntityCount());
-        assertEquals(0, classification.getActions().size());
-        assertNull(classification.getIcon());
-        assertNull(classification.getLabel());
-        assertNull(classification.getIntent());
-        assertNull(classification.getOnClickListener());
     }
 
     @Test

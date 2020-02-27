@@ -22,7 +22,6 @@ import android.net.wifi.WifiModeEnum;
 import android.os.WakeLockLevelEnum;
 import android.server.ErrorSource;
 
-import com.android.internal.os.StatsdConfigProto.FieldMatcher;
 import com.android.internal.os.StatsdConfigProto.StatsdConfig;
 import com.android.os.AtomsProto;
 import com.android.os.AtomsProto.ANROccurred;
@@ -40,18 +39,24 @@ import com.android.os.AtomsProto.DangerousPermissionState;
 import com.android.os.AtomsProto.DangerousPermissionStateSampled;
 import com.android.os.AtomsProto.DeviceCalculatedPowerBlameUid;
 import com.android.os.AtomsProto.FlashlightStateChanged;
+import com.android.os.AtomsProto.ForegroundServiceAppOpSessionEnded;
 import com.android.os.AtomsProto.ForegroundServiceStateChanged;
 import com.android.os.AtomsProto.GpsScanStateChanged;
 import com.android.os.AtomsProto.HiddenApiUsed;
-import com.android.os.AtomsProto.LooperStats;
+import com.android.os.AtomsProto.IonHeapSize;
 import com.android.os.AtomsProto.LmkKillOccurred;
+import com.android.os.AtomsProto.LooperStats;
 import com.android.os.AtomsProto.MediaCodecStateChanged;
 import com.android.os.AtomsProto.OverlayStateChanged;
+import com.android.os.AtomsProto.PackageNotificationPreferences;
+import com.android.os.AtomsProto.PackageNotificationChannelPreferences;
+import com.android.os.AtomsProto.PackageNotificationChannelGroupPreferences;
 import com.android.os.AtomsProto.PictureInPictureStateChanged;
 import com.android.os.AtomsProto.ProcessMemoryHighWaterMark;
 import com.android.os.AtomsProto.ProcessMemorySnapshot;
 import com.android.os.AtomsProto.ProcessMemoryState;
 import com.android.os.AtomsProto.ScheduledJobStateChanged;
+import com.android.os.AtomsProto.SnapshotMergeReported;
 import com.android.os.AtomsProto.SyncStateChanged;
 import com.android.os.AtomsProto.TestAtomReported;
 import com.android.os.AtomsProto.VibratorStateChanged;
@@ -65,9 +70,9 @@ import com.android.tradefed.log.LogUtil;
 
 import com.google.common.collect.Range;
 
+import java.lang.ProcessBuilder;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -117,6 +122,32 @@ public class UidAtomTests extends DeviceAtomTestCase {
         assertThat(atom.getUid()).isEqualTo(getUid());
         assertThat(atom.getProcessName()).isEqualTo(DEVICE_SIDE_TEST_PACKAGE);
         assertThat(atom.getOomAdjScore()).isAtLeast(500);
+    }
+
+    public void testSnapshotMergeReported() throws Exception {
+        if (statsdDisabled()) {
+            return;
+        }
+
+        // Test is only valid for Virtual A/B devices
+        if (!"true".equals(getProperty("ro.virtual_ab.enabled"))) {
+            return;
+        }
+
+        final int atomTag = Atom.SNAPSHOT_MERGE_REPORTED_FIELD_NUMBER;
+        createAndUploadConfig(atomTag, false);
+        Thread.sleep(WAIT_TIME_SHORT);
+
+        Process process = new ProcessBuilder("snapshotctl", "--dry-run", "--report").start();
+
+        Thread.sleep(WAIT_TIME_SHORT);
+
+        List<EventMetricData> data = getEventMetricDataList();
+
+        SnapshotMergeReported atom = data.get(0).getAtom().getSnapshotMergeReported();
+        assertThat(atom.getFinalState()).isEqualTo(SnapshotMergeReported.UpdateState.MERGE_COMPLETED);
+        assertThat(atom.getDurationMillis()).isEqualTo(1234);
+        assertThat(atom.getIntermediateReboots()).isEqualTo(56);
     }
 
     public void testAppCrashOccurred() throws Exception {
@@ -512,6 +543,51 @@ public class UidAtomTests extends DeviceAtomTestCase {
                 atom -> atom.getForegroundServiceStateChanged().getState().getNumber());
     }
 
+
+    public void testForegroundServiceAccessAppOp() throws Exception {
+        if (statsdDisabled()) {
+            return;
+        }
+        final int atomTag = Atom.FOREGROUND_SERVICE_APP_OP_SESSION_ENDED_FIELD_NUMBER;
+        final String name = "testForegroundServiceAccessAppOp";
+
+        createAndUploadConfig(atomTag, false);
+        Thread.sleep(WAIT_TIME_SHORT);
+
+        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", name);
+
+        // Sorted list of events in order in which they occurred.
+        List<EventMetricData> data = getEventMetricDataList();
+
+        assertWithMessage("Wrong atom size").that(data.size()).isEqualTo(3);
+        for (int i = 0; i < data.size(); i++) {
+            ForegroundServiceAppOpSessionEnded atom
+                    = data.get(i).getAtom().getForegroundServiceAppOpSessionEnded();
+            final int opName = atom.getAppOpName().getNumber();
+            final int acceptances = atom.getCountOpsAccepted();
+            final int rejections = atom.getCountOpsRejected();
+            final int count = acceptances + rejections;
+            int expectedCount = 0;
+            switch (opName) {
+                case ForegroundServiceAppOpSessionEnded.AppOpName.OP_CAMERA_VALUE:
+                    expectedCount = 2;
+                    break;
+                case ForegroundServiceAppOpSessionEnded.AppOpName.OP_FINE_LOCATION_VALUE:
+                    expectedCount = 1;
+                    break;
+                case ForegroundServiceAppOpSessionEnded.AppOpName.OP_RECORD_AUDIO_VALUE:
+                    expectedCount = 2;
+                    break;
+                case ForegroundServiceAppOpSessionEnded.AppOpName.OP_COARSE_LOCATION_VALUE:
+                    // fall-through
+                default:
+                    fail("Unexpected opName " + opName);
+            }
+            assertWithMessage("Wrong count for " + opName).that(count).isEqualTo(expectedCount);
+
+        }
+    }
+
     public void testGpsScan() throws Exception {
         if (statsdDisabled()) {
             return;
@@ -539,6 +615,69 @@ public class UidAtomTests extends DeviceAtomTestCase {
             GpsScanStateChanged a1 = data.get(1).getAtom().getGpsScanStateChanged();
             assertThat(a0.getState().getNumber()).isEqualTo(stateOn);
             assertThat(a1.getState().getNumber()).isEqualTo(stateOff);
+        } finally {
+            if ("null".equals(origWhitelist) || "".equals(origWhitelist)) {
+                getDevice().executeShellCommand(
+                        "settings delete global location_background_throttle_package_whitelist");
+            } else {
+                getDevice().executeShellCommand(String.format(
+                        "settings put global location_background_throttle_package_whitelist %s",
+                        origWhitelist));
+            }
+        }
+    }
+
+    public void testGnssStats() throws Exception {
+        if (statsdDisabled()) {
+            return;
+        }
+
+        // Get GnssMetrics as a simple gauge metric.
+        StatsdConfig.Builder config = getPulledConfig();
+        addGaugeAtomWithDimensions(config, Atom.GNSS_STATS_FIELD_NUMBER, null);
+        uploadConfig(config);
+        Thread.sleep(WAIT_TIME_SHORT);
+
+        if (!hasFeature(FEATURE_LOCATION_GPS, true)) return;
+        // Whitelist this app against background location request throttling
+        String origWhitelist = getDevice().executeShellCommand(
+                "settings get global location_background_throttle_package_whitelist").trim();
+        getDevice().executeShellCommand(String.format(
+                "settings put global location_background_throttle_package_whitelist %s",
+                DEVICE_SIDE_TEST_PACKAGE));
+
+        try {
+            runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", "testGpsStatus");
+
+            Thread.sleep(WAIT_TIME_LONG);
+            // Trigger a pull and wait for new pull before killing the process.
+            setAppBreadcrumbPredicate();
+            Thread.sleep(WAIT_TIME_LONG);
+
+            // Assert about GnssMetrics for the test app.
+            List<Atom> atoms = getGaugeMetricDataList();
+
+            boolean found = false;
+            for (Atom atom : atoms) {
+                AtomsProto.GnssStats state = atom.getGnssStats();
+                found = true;
+                assertThat(state.getLocationReports()).isGreaterThan((long) 0);
+                assertThat(state.getLocationFailureReports()).isAtLeast((long) 0);
+                assertThat(state.getTimeToFirstFixReports()).isGreaterThan((long) 0);
+                assertThat(state.getTimeToFirstFixMilliS()).isGreaterThan((long) 0);
+                assertThat(state.getPositionAccuracyReports()).isGreaterThan((long) 0);
+                assertThat(state.getPositionAccuracyMeters()).isGreaterThan((long) 0);
+                assertThat(state.getTopFourAverageCn0Reports()).isGreaterThan((long) 0);
+                assertThat(state.getTopFourAverageCn0DbMhz()).isGreaterThan((long) 0);
+                assertThat(state.getL5TopFourAverageCn0Reports()).isAtLeast((long) 0);
+                assertThat(state.getL5TopFourAverageCn0DbMhz()).isAtLeast((long) 0);
+                assertThat(state.getSvStatusReports()).isGreaterThan((long) 0);
+                assertThat(state.getSvStatusReportsUsedInFix()).isGreaterThan((long) 0);
+                assertThat(state.getL5SvStatusReports()).isAtLeast((long) 0);
+                assertThat(state.getL5SvStatusReportsUsedInFix()).isAtLeast((long) 0);
+            }
+            assertWithMessage(String.format("Did not find a matching atom"))
+                    .that(found).isTrue();
         } finally {
             if ("null".equals(origWhitelist) || "".equals(origWhitelist)) {
                 getDevice().executeShellCommand(
@@ -1189,6 +1328,36 @@ public class UidAtomTests extends DeviceAtomTestCase {
             .that(foundSystemServer).isTrue();
     }
 
+    public void testIonHeapSize() throws Exception {
+        if (statsdDisabled() || !fileExists("/sys/kernel/ion/total_heaps_kb")) {
+            return;
+        }
+
+        // Get IonHeapSize as a simple gauge metric.
+        StatsdConfig.Builder config = getPulledConfig();
+        addGaugeAtomWithDimensions(config, Atom.ION_HEAP_SIZE_FIELD_NUMBER, null);
+        uploadConfig(config);
+        Thread.sleep(WAIT_TIME_SHORT);
+
+        // Start test app and trigger a pull while it is running.
+        try (AutoCloseable a = withActivity("StatsdCtsForegroundActivity", "action",
+                "action.show_notification")) {
+            setAppBreadcrumbPredicate();
+            Thread.sleep(WAIT_TIME_LONG);
+        }
+
+        List<Atom> atoms = getGaugeMetricDataList();
+        assertThat(atoms).hasSize(1);
+        IonHeapSize ionHeapSize = atoms.get(0).getIonHeapSize();
+        assertThat(ionHeapSize.getTotalSizeKb()).isGreaterThan(0);
+    }
+
+    private boolean fileExists(String path) throws Exception {
+        String commandFormat = "test -f %s && echo \"yes\" || echo \"no\"";
+        String result = getDevice().executeShellCommand(String.format(commandFormat, path));
+        return result.trim().equals("yes");
+    }
+
     /**
      * The the app id from a uid.
      *
@@ -1500,4 +1669,130 @@ public class UidAtomTests extends DeviceAtomTestCase {
         assertThat(atom.getBytesField().getExperimentIdList()).isEmpty();
     }
 
+    public void testNotificationPackagePreferenceExtraction() throws Exception {
+        if (statsdDisabled()) {
+            return;
+        }
+
+        StatsdConfig.Builder config = getPulledConfig();
+        addGaugeAtomWithDimensions(config,
+                    Atom.PACKAGE_NOTIFICATION_PREFERENCES_FIELD_NUMBER,
+                    null);
+        uploadConfig(config);
+        Thread.sleep(WAIT_TIME_SHORT);
+        runActivity("StatsdCtsForegroundActivity", "action", "action.show_notification");
+        Thread.sleep(WAIT_TIME_SHORT);
+        setAppBreadcrumbPredicate();
+        Thread.sleep(WAIT_TIME_SHORT);
+
+        List<PackageNotificationPreferences> allPreferences = new ArrayList<>();
+        for (Atom atom : getGaugeMetricDataList()){
+            if(atom.hasPackageNotificationPreferences()) {
+                allPreferences.add(atom.getPackageNotificationPreferences());
+            }
+        }
+        assertThat(allPreferences.size()).isGreaterThan(0);
+
+        boolean foundTestPackagePreferences = false;
+        int uid = getUid();
+        for (PackageNotificationPreferences pref : allPreferences) {
+            assertThat(pref.getUid()).isGreaterThan(0);
+            assertTrue(pref.hasImportance());
+            assertTrue(pref.hasVisibility());
+            assertTrue(pref.hasUserLockedFields());
+            if(pref.getUid() == uid){
+                assertThat(pref.getImportance()).isEqualTo(-1000);  //UNSPECIFIED_IMPORTANCE
+                assertThat(pref.getVisibility()).isEqualTo(-1000);  //UNSPECIFIED_VISIBILITY
+                foundTestPackagePreferences = true;
+            }
+        }
+        assertTrue(foundTestPackagePreferences);
+    }
+
+    public void testNotificationChannelPreferencesExtraction() throws Exception {
+        if (statsdDisabled()) {
+            return;
+        }
+
+        StatsdConfig.Builder config = getPulledConfig();
+        addGaugeAtomWithDimensions(config,
+                    Atom.PACKAGE_NOTIFICATION_CHANNEL_PREFERENCES_FIELD_NUMBER,
+                    null);
+        uploadConfig(config);
+        Thread.sleep(WAIT_TIME_SHORT);
+        runActivity("StatsdCtsForegroundActivity", "action", "action.show_notification");
+        Thread.sleep(WAIT_TIME_SHORT);
+        setAppBreadcrumbPredicate();
+        Thread.sleep(WAIT_TIME_SHORT);
+
+        List<PackageNotificationChannelPreferences> allChannelPreferences = new ArrayList<>();
+        for(Atom atom : getGaugeMetricDataList()) {
+            if (atom.hasPackageNotificationChannelPreferences()) {
+               allChannelPreferences.add(atom.getPackageNotificationChannelPreferences());
+            }
+        }
+        assertThat(allChannelPreferences.size()).isGreaterThan(0);
+
+        boolean foundTestPackagePreferences = false;
+        int uid = getUid();
+        for (PackageNotificationChannelPreferences pref : allChannelPreferences) {
+            assertThat(pref.getUid()).isGreaterThan(0);
+            assertTrue(pref.hasChannelId());
+            assertTrue(pref.hasChannelName());
+            assertTrue(pref.hasDescription());
+            assertTrue(pref.hasImportance());
+            assertTrue(pref.hasUserLockedFields());
+            assertTrue(pref.hasIsDeleted());
+            if(uid == pref.getUid() && pref.getChannelId().equals("StatsdCtsChannel")) {
+                assertThat(pref.getChannelName()).isEqualTo("Statsd Cts");
+                assertThat(pref.getDescription()).isEqualTo("Statsd Cts Channel");
+                assertThat(pref.getImportance()).isEqualTo(3);  // IMPORTANCE_DEFAULT
+                foundTestPackagePreferences = true;
+            }
+        }
+        assertTrue(foundTestPackagePreferences);
+    }
+
+    public void testNotificationChannelGroupPreferencesExtraction() throws Exception {
+        if (statsdDisabled()) {
+            return;
+        }
+
+        StatsdConfig.Builder config = getPulledConfig();
+        addGaugeAtomWithDimensions(config,
+                    Atom.PACKAGE_NOTIFICATION_CHANNEL_GROUP_PREFERENCES_FIELD_NUMBER,
+                    null);
+        uploadConfig(config);
+        Thread.sleep(WAIT_TIME_SHORT);
+        runActivity("StatsdCtsForegroundActivity", "action", "action.create_channel_group");
+        Thread.sleep(WAIT_TIME_SHORT);
+        setAppBreadcrumbPredicate();
+        Thread.sleep(WAIT_TIME_SHORT);
+
+        List<PackageNotificationChannelGroupPreferences> allGroupPreferences = new ArrayList<>();
+        for(Atom atom : getGaugeMetricDataList()) {
+            if (atom.hasPackageNotificationChannelGroupPreferences()) {
+                allGroupPreferences.add(atom.getPackageNotificationChannelGroupPreferences());
+            }
+        }
+        assertThat(allGroupPreferences.size()).isGreaterThan(0);
+
+        boolean foundTestPackagePreferences = false;
+        int uid = getUid();
+        for(PackageNotificationChannelGroupPreferences pref : allGroupPreferences) {
+            assertThat(pref.getUid()).isGreaterThan(0);
+            assertTrue(pref.hasGroupId());
+            assertTrue(pref.hasGroupName());
+            assertTrue(pref.hasDescription());
+            assertTrue(pref.hasIsBlocked());
+            assertTrue(pref.hasUserLockedFields());
+            if(uid == pref.getUid() && pref.getGroupId().equals("StatsdCtsGroup")) {
+                assertThat(pref.getGroupName()).isEqualTo("Statsd Cts Group");
+                assertThat(pref.getDescription()).isEqualTo("StatsdCtsGroup Description");
+                assertThat(pref.getIsBlocked()).isFalse();
+                foundTestPackagePreferences = true;
+            }
+        }
+        assertTrue(foundTestPackagePreferences);
+    }
 }

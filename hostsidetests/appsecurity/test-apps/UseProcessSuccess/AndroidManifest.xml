@@ -17,36 +17,48 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
         package="com.android.cts.useprocess">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application>
         <processes>
             <process />
             <deny-permission android:name="android.permission.INTERNET" />
-            <process android:process=":other1" />
-            <process android:process="com.android.cts.otherprocess1">
+            <process android:process=":withoutnet1" />
+            <process android:process="com.android.cts.useprocess.withnet1">
                 <allow-permission android:name="android.permission.INTERNET" />
             </process>
             <allow-permission android:name="android.permission.INTERNET" />
-            <process android:process=":other2">
+            <process android:process=":withoutnet2">
                 <deny-permission android:name="android.permission.INTERNET" />
             </process>
-            <process android:process="com.android.cts.otherprocess2" />
+            <process android:process="com.android.cts.useprocess.withnet2" />
         </processes>
 
-        <activity android:name="com.android.cts.useprocess.DummyActivity" />
-        <activity android:name=".DummyActivity2" android:process=":other1" />
-        <activity android:name=".DummyActivity3" android:process="com.android.cts.otherprocess1" />
-        <service android:name=".DummyService" />
-        <service android:name=".DummyService2" android:process=":other2" />
-        <service android:name=".DummyService3" android:process="com.android.cts.otherprocess1" />
-        <receiver android:name=".DummyReceiver" />
-        <receiver android:name=".DummyReceiver2" android:process=":other2" />
-        <receiver android:name=".DummyReceiver3" android:process="com.android.cts.otherprocess2" />
-        <provider android:name=".DummyProvider"
+        <activity android:name=".ActivityWithNetwork1" android:exported="true" />
+        <activity android:name=".ActivityWithoutNetwork1" android:exported="true"
+            android:process=":withoutnet1" />
+        <activity android:name=".ActivityWithNetwork2" android:exported="true"
+            android:process="com.android.cts.useprocess.withnet1" />
+        <service android:name=".ServiceWithNetwork1" />
+        <service android:name=".ServiceWithNetwork2"
+            android:process="com.android.cts.useprocess.withnet1" />
+        <service android:name=".ServiceWithNetwork3"
+            android:process="com.android.cts.useprocess.withnet2" />
+        <service android:name=".ServiceWithoutNetwork1" android:process=":withoutnet1" />
+        <service android:name=".ServiceWithoutNetwork2" android:process=":withoutnet2" />
+        <receiver android:name=".DummyReceiver1" />
+        <receiver android:name=".DummyReceiver2" android:process=":withoutnet2" />
+        <receiver android:name=".DummyReceiver3"
+            android:process="com.android.cts.useprocess.withnet2" />
+        <provider android:name=".ProviderWithNetwork1"
             android:authorities="com.android.cts.useprocess.auth1"/>
-        <provider android:name=".DummyProvider2" android:process=":other1"
+        <provider android:name=".ProviderWithoutNetwork1" android:process=":withoutnet1"
             android:authorities="com.android.cts.useprocess.auth2"/>
-        <provider android:name=".DummyProvider3" android:process="com.android.cts.otherprocess2"
+        <provider android:name=".ProviderWithNetwork2"
+            android:process="com.android.cts.useprocess.withnet2"
             android:authorities="com.android.cts.useprocess.auth3"/>
     </application>
 
+    <instrumentation android:targetPackage="com.android.cts.useprocess"
+        android:name="androidx.test.runner.AndroidJUnitRunner"/>
 </manifest>

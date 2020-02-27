@@ -34,7 +34,7 @@ import org.junit.runner.RunWith;
 public class WalletServiceEventTest {
 
     @Test
-    public void parcel_toParcel() {
+    public void testParcel_toParcel() {
         WalletServiceEvent event = new WalletServiceEvent(TYPE_NFC_PAYMENT_STARTED);
 
         Parcel p = Parcel.obtain();

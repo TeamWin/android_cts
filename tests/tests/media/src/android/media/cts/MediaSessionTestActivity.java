@@ -24,6 +24,7 @@ import android.content.Context;
 import android.media.session.MediaController;
 import android.media.session.MediaSession;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.WindowManager;
 
 /**
@@ -32,28 +33,40 @@ import android.view.WindowManager;
  */
 public class MediaSessionTestActivity extends Activity {
     public static final String KEY_SESSION_TOKEN = "KEY_SESSION_TOKEN";
+    private static final String TAG = "MediaSessionTestActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Wake up device.
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setTurnScreenOn(true);
+
+        // Unlock device which is previously locked by power button press.
+        // This is required even when the screen lock is set to 'None'.
         setShowWhenLocked(true);
 
         KeyguardManager keyguardManager =
                 (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
-        if (keyguardManager.isKeyguardLocked()) {
+        // KeyguardManager can be null for the instant mode.
+        if (keyguardManager == null) {
+            Log.i(TAG, "Unable to get KeyguardManager. Probably in the instant mode.");
+        } else if (keyguardManager.isKeyguardLocked()) {
+            // Note: CTS requires 'no lock pattern or password is set on the device'.
+            // However, try to dismiss keyguard for convenience.
             keyguardManager.requestDismissKeyguard(this,
                     new KeyguardManager.KeyguardDismissCallback() {
                         @Override
                         public void onDismissError() {
-                            fail("Failed to dismiss keyguard.");
+                            fail("Running CTS needs device unlock. Manually unlock device because"
+                                    + " failed to dismiss keyguard.");
                         }
 
                         @Override
                         public void onDismissCancelled() {
-                            fail("Dismissing keyguard is canceled");
+                            fail("Running CTS needs device unlock. Manually unlock device because"
+                                    + " failed to dismiss keyguard.");
                         }
                     });
         }

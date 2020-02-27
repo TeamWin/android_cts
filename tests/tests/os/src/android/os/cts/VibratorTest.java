@@ -18,9 +18,12 @@ package android.os.cts;
 
 import static org.junit.Assert.fail;
 
+import android.app.UiAutomation;
 import android.media.AudioAttributes;
+import android.os.SystemClock;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
+import android.os.Vibrator.OnVibratorStateChangedListener;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
@@ -29,6 +32,13 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
@@ -38,11 +48,17 @@ public class VibratorTest {
                 .setUsage(AudioAttributes.USAGE_MEDIA)
                 .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                 .build();
+    private static final long CALLBACK_TIMEOUT_MILLIS = 5000;
 
     private Vibrator mVibrator;
+    @Mock
+    private OnVibratorStateChangedListener mListener1;
+    @Mock
+    private OnVibratorStateChangedListener mListener2;
 
     @Before
     public void setUp() {
+        MockitoAnnotations.initMocks(this);
         mVibrator = InstrumentationRegistry.getContext().getSystemService(Vibrator.class);
     }
 
@@ -126,6 +142,58 @@ public class VibratorTest {
         // Just make sure it doesn't crash when this is called; we don't really have a way to test
         // if the amplitude control works or not.
         mVibrator.hasAmplitudeControl();
+    }
+
+    @Test
+    public void testVibratorIsVibrating() {
+        final UiAutomation ui = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        ui.adoptShellPermissionIdentity("android.permission.ACCESS_VIBRATOR_STATE");
+        assertEquals(mVibrator.isVibrating(), false);
+        mVibrator.vibrate(1000);
+        assertEquals(mVibrator.isVibrating(), true);
+        mVibrator.cancel();
+        assertEquals(mVibrator.isVibrating(), false);
+    }
+
+    @Test
+    public void testVibratorVibratesNoLongerThanDuration() {
+        final UiAutomation ui = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        ui.adoptShellPermissionIdentity("android.permission.ACCESS_VIBRATOR_STATE");
+        assertEquals(mVibrator.isVibrating(), false);
+        mVibrator.vibrate(100);
+        SystemClock.sleep(150);
+        assertEquals(mVibrator.isVibrating(), false);
+    }
+
+    @Test
+    public void testVibratorStateCallback() throws Exception {
+        final UiAutomation ui = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        ui.adoptShellPermissionIdentity("android.permission.ACCESS_VIBRATOR_STATE");
+        // Add listener1
+        mVibrator.addVibratorStateListener(mListener1);
+        // Add listener2 on main thread.
+        mVibrator.addVibratorStateListener(mListener2);
+        verify(mListener1, timeout(CALLBACK_TIMEOUT_MILLIS)
+                .times(1)).onVibratorStateChanged(false);
+        verify(mListener2, timeout(CALLBACK_TIMEOUT_MILLIS)
+                .times(1)).onVibratorStateChanged(false);
+
+        mVibrator.vibrate(1000);
+        assertEquals(mVibrator.isVibrating(), true);
+
+        verify(mListener1, timeout(CALLBACK_TIMEOUT_MILLIS)
+                .times(1)).onVibratorStateChanged(true);
+        verify(mListener2, timeout(CALLBACK_TIMEOUT_MILLIS)
+                .times(1)).onVibratorStateChanged(true);
+
+        reset(mListener1);
+        reset(mListener2);
+        // Remove listener1
+        mVibrator.removeVibratorStateListener(mListener1);
+        mVibrator.removeVibratorStateListener(mListener2);
+
+        mVibrator.cancel();
+        assertEquals(mVibrator.isVibrating(), false);
     }
 
     private static void sleep(long millis) {

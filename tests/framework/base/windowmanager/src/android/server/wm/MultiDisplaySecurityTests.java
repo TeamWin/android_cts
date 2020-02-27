@@ -555,7 +555,8 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
         waitAndAssertTopResumedActivity(SECOND_ACTIVITY, newDisplay.mId,
                 "Top activity must be the newly launched one");
         frontStack = mWmState.getRootTask(frontStackId);
-        assertEquals("Secondary display must contain 1 task", 1, frontStack.getTasks().size());
+        assertEquals("Secondary display must contain 1 task", 1,
+                mWmState.getDisplay(newDisplay.mId).getRootTasks().size());
     }
 
     /**
@@ -836,6 +837,8 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
 
     @Test
     public void testNoInputConnectionForUntrustedVirtualDisplay() throws Exception {
+        assumeTrue(MSG_NO_MOCK_IME, supportsInstallableIme());
+
         final long NOT_EXPECT_TIMEOUT = TimeUnit.SECONDS.toMillis(2);
 
         final MockImeSession mockImeSession = createManagedMockImeSession(this);

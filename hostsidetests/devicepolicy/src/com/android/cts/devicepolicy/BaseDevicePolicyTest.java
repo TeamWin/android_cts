@@ -24,22 +24,12 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
-import com.android.ddmlib.testrunner.TestResult.TestStatus;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
-import com.android.tradefed.result.CollectingTestListener;
-import com.android.tradefed.result.FileInputStreamSource;
-import com.android.tradefed.result.LogDataType;
-import com.android.tradefed.result.TestDescription;
-import com.android.tradefed.result.TestResult;
-import com.android.tradefed.result.TestRunResult;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
-import com.android.tradefed.util.FileUtil;
-import com.android.tradefed.util.TarUtil;
 
 import com.google.common.io.ByteStreams;
 
@@ -62,6 +52,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -74,6 +65,9 @@ import javax.annotation.Nullable;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
+    //The maximum time to wait for user to be unlocked.
+    private static final long USER_UNLOCK_TIMEOUT_SEC = 30;
+    private static final String USER_STATE_UNLOCKED = "RUNNING_UNLOCKED";
     @Option(
             name = "skip-device-admin-feature-check",
             description = "Flag that allows to skip the check for android.software.device_admin "
@@ -119,6 +113,9 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     protected static final int FLAG_GUEST = 0x00000004;
     protected static final int FLAG_EPHEMERAL = 0x00000100;
     protected static final int FLAG_MANAGED_PROFILE = 0x00000020;
+
+    /** Default password to use in tests. */
+    protected static final String TEST_PASSWORD = "1234";
 
     /**
      * The {@link android.os.BatteryManager} flags value representing all charging types; {@link
@@ -176,6 +173,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     @Before
     public void setUp() throws Exception {
         assertNotNull(getBuild());  // ensure build has been set before test is run.
+        ensurePackageManagerReady();
         mHasFeature = getDevice().getApiLevel() >= 21; /* Build.VERSION_CODES.L */
         if (!mSkipDeviceAdminFeatureCheck) {
             mHasFeature = mHasFeature && hasDeviceFeature("android.software.device_admin");
@@ -187,6 +185,9 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         mBuildHelper = new CompatibilityBuildHelper(getBuild());
 
         mHasSecureLockScreen = hasDeviceFeature("android.software.secure_lock_screen");
+        if (mHasSecureLockScreen) {
+            ensurePrimaryUserHasNoPassword();
+        }
 
         // disable the package verifier to avoid the dialog when installing an app
         mPackageVerifier = getDevice().executeShellCommand(
@@ -225,6 +226,35 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         stayAwake();
         // Go to home.
         executeShellCommand("input keyevent KEYCODE_HOME");
+    }
+
+    private void ensurePrimaryUserHasNoPassword() throws DeviceNotAvailableException {
+        if (!verifyUserCredentialIsCorrect(null, mPrimaryUserId)) {
+            changeUserCredential(null, TEST_PASSWORD, mPrimaryUserId);
+        }
+    }
+
+    /** If package manager is not available, e.g. after system crash, wait for it a little bit. */
+    private void ensurePackageManagerReady() throws Exception {
+        waitForOutput("Package manager didn't become available", "service check package",
+                s -> s.trim().equals("Service package: found"), 120 /* seconds */);
+    }
+
+    protected void waitForUserUnlock(int userId) throws Exception {
+        waitForOutput("User is not unlocked.",
+                String.format("am get-started-user-state %d", userId),
+                s -> s.startsWith(USER_STATE_UNLOCKED), USER_UNLOCK_TIMEOUT_SEC);
+    }
+
+    protected void waitForOutput(String message, String command, Predicate<String> predicate,
+            long timeoutSec) throws Exception {
+        final long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(timeoutSec);
+        while (!predicate.test(getDevice().executeShellCommand(command))) {
+            if (System.nanoTime() > deadline) {
+                fail(message);
+            }
+            Thread.sleep(1000);
+        }
     }
 
     @After
@@ -777,7 +807,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         boolean check() throws Exception;
     }
 
-    protected void assertUserGetsRemoved(int userId) throws Exception {
+    protected void waitUntilUserRemoved(int userId) throws Exception {
         tryWaitForSuccess(() -> !listUsers().contains(userId),
                 "The user " + userId + " has not been removed",
                 TIMEOUT_USER_REMOVED_MILLIS
@@ -865,6 +895,8 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
     /**
      * Set lockscreen password / work challenge for the given user, null or "" means clear
+     * IMPORTANT: prefer to use {@link #TEST_PASSWORD} for primary user, otherwise if the test
+     * terminates before cleaning password up, the device will be unusable for further testing.
      */
     protected void changeUserCredential(String newCredential, String oldCredential, int userId)
             throws DeviceNotAvailableException {
@@ -984,5 +1016,16 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
         getDevice().pushFile(file, TEST_UPDATE_LOCATION + "/" + fileName);
         file.delete();
+    }
+
+    boolean hasService(String service) {
+        String command = "service check " + service;
+        try {
+            String commandOutput = getDevice().executeShellCommand(command);
+            return !commandOutput.contains("not found");
+        } catch (Exception e) {
+            CLog.w("Exception running '" + command + "': " + e);
+            return false;
+        }
     }
 }

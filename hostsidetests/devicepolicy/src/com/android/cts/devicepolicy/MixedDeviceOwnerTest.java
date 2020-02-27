@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +49,9 @@ import java.util.Map;
 public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     private static final String DELEGATION_NETWORK_LOGGING = "delegation-network-logging";
+
+    private static final String ARG_SECURITY_LOGGING_BATCH_NUMBER = "batchNumber";
+    private static final int SECURITY_EVENTS_BATCH_SIZE = 100;
 
     @Override
     public void setUp() throws Exception {
@@ -302,6 +306,97 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
                     .build());
     }
 
+    @FlakyTest(bugId = 137093665)
+    @Test
+    public void testSecurityLoggingWithSingleUser() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        // Backup stay awake setting because testGenerateLogs() will turn it off.
+        final String stayAwake = getDevice().getSetting("global", "stay_on_while_plugged_in");
+        try {
+            // Turn logging on.
+            executeDeviceTestMethod(".SecurityLoggingTest", "testEnablingSecurityLogging");
+            // Reboot to ensure ro.device_owner is set to true in logd and logging is on.
+            rebootAndWaitUntilReady();
+            waitForUserUnlock(mUserId);
+
+            // Generate various types of events on device side and check that they are logged.
+            executeDeviceTestMethod(".SecurityLoggingTest", "testGenerateLogs");
+            getDevice().executeShellCommand("whoami"); // Generate adb command securty event
+            getDevice().executeShellCommand("dpm force-security-logs");
+            executeDeviceTestMethod(".SecurityLoggingTest", "testVerifyGeneratedLogs");
+
+            // Reboot the device, so the security event ids are reset.
+            rebootAndWaitUntilReady();
+
+            // Verify event ids are consistent across a consecutive batch.
+            for (int batchNumber = 0; batchNumber < 3; batchNumber++) {
+                generateDummySecurityLogs();
+                getDevice().executeShellCommand("dpm force-security-logs");
+                executeDeviceTestMethod(".SecurityLoggingTest", "testVerifyLogIds",
+                        Collections.singletonMap(ARG_SECURITY_LOGGING_BATCH_NUMBER,
+                                Integer.toString(batchNumber)));
+            }
+
+            // Immediately attempting to fetch events again should fail.
+            executeDeviceTestMethod(".SecurityLoggingTest",
+                    "testSecurityLoggingRetrievalRateLimited");
+        } finally {
+            // Turn logging off.
+            executeDeviceTestMethod(".SecurityLoggingTest", "testDisablingSecurityLogging");
+            // Restore stay awake setting.
+            if (stayAwake != null) {
+                getDevice().setSetting("global", "stay_on_while_plugged_in", stayAwake);
+            }
+        }
+    }
+
+    @Test
+    public void testSecurityLoggingEnabledLogged() throws Exception {
+        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+            return;
+        }
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".SecurityLoggingTest", "testEnablingSecurityLogging");
+            executeDeviceTestMethod(".SecurityLoggingTest", "testDisablingSecurityLogging");
+        }, new DevicePolicyEventWrapper.Builder(EventId.SET_SECURITY_LOGGING_ENABLED_VALUE)
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .setBoolean(true)
+                .build(),
+            new DevicePolicyEventWrapper.Builder(EventId.SET_SECURITY_LOGGING_ENABLED_VALUE)
+                    .setAdminPackageName(DEVICE_ADMIN_PKG)
+                    .setBoolean(false)
+                    .build());
+    }
+
+    @Test
+    public void testSecurityLoggingWithTwoUsers() throws Exception {
+        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
+            return;
+        }
+
+        final int userId = createUser();
+        try {
+            // The feature can be enabled, but in a "paused" state. Attempting to retrieve logs
+            // should throw security exception.
+            executeDeviceTestMethod(".SecurityLoggingTest", "testEnablingSecurityLogging");
+            executeDeviceTestMethod(".SecurityLoggingTest",
+                    "testRetrievingSecurityLogsThrowsSecurityException");
+            executeDeviceTestMethod(".SecurityLoggingTest",
+                    "testRetrievingPreviousSecurityLogsThrowsSecurityException");
+        } finally {
+            removeUser(userId);
+            executeDeviceTestMethod(".SecurityLoggingTest", "testDisablingSecurityLogging");
+        }
+    }
+
+    private void generateDummySecurityLogs() throws Exception {
+        // Trigger security events of type TAG_ADB_SHELL_CMD.
+        for (int i = 0; i < SECURITY_EVENTS_BATCH_SIZE; i++) {
+            getDevice().executeShellCommand("echo just_testing_" + i);
+        }
+    }
     private int createSecondaryUserAsProfileOwner() throws Exception {
         final int userId = createUser();
         installAppAsUser(INTENT_RECEIVER_APK, userId);

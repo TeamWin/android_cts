@@ -66,6 +66,8 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
+import androidx.test.filters.FlakyTest;
+
 import com.android.compatibility.common.util.ImeAwareEditText;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestUtils;
@@ -382,6 +384,8 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     // IME related tests
     @Test
     public void testImeWindowCanSwitchToDifferentDisplays() throws Exception {
+        assumeTrue(MSG_NO_MOCK_IME, supportsInstallableIme());
+
         final MockImeSession mockImeSession = createManagedMockImeSession(this);
         final TestActivitySession<ImeTestActivity> imeTestActivitySession =
                 createManagedTestActivitySession();
@@ -429,6 +433,8 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
     @Test
     public void testImeApiForBug118341760() throws Exception {
+        assumeTrue(MSG_NO_MOCK_IME, supportsInstallableIme());
+
         final long TIMEOUT_START_INPUT = TimeUnit.SECONDS.toMillis(5);
 
         final MockImeSession mockImeSession = createManagedMockImeSession(this);
@@ -467,6 +473,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         // If config_perDisplayFocusEnabled, the focus will not move even if touching on
         // the Activity in the different display.
         assumeFalse(perDisplayFocusEnabled());
+        assumeTrue(MSG_NO_MOCK_IME, supportsInstallableIme());
 
         final MockImeSession mockImeSession = createManagedMockImeSession(this);
         final TestActivitySession<ImeTestActivity> imeTestActivitySession =
@@ -524,6 +531,8 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
      */
     @Test
     public void testCrossDisplayBasicImeOperations() throws Exception {
+        assumeTrue(MSG_NO_MOCK_IME, supportsInstallableIme());
+
         final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
 
         final MockImeSession mockImeSession = createManagedMockImeSession(this);
@@ -576,6 +585,8 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
     @Test
     public void testImeWindowCanShownWhenActivityMovedToDisplay() throws Exception {
+        assumeTrue(MSG_NO_MOCK_IME, supportsInstallableIme());
+
         // Launch a regular activity on default display at the test beginning to prevent the test
         // may mis-touch the launcher icon that breaks the test expectation.
         final TestActivitySession<Activities.RegularActivity> testActivitySession =

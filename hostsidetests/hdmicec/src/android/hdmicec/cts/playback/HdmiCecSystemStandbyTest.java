@@ -87,7 +87,7 @@ public final class HdmiCecSystemStandbyTest extends BaseHostJUnit4Test {
             checkDeviceAsleepAfterStandbySent(CecDevice.TV, CecDevice.BROADCAST);
             /* Wake up the TV */
             hdmiCecClient.sendConsoleMessage("on " + CecDevice.TV);
-            checkDeviceAsleepAfterStandbySent(CecDevice.RECORDING_1, CecDevice.BROADCAST);
+            checkDeviceAsleepAfterStandbySent(CecDevice.RECORDER_1, CecDevice.BROADCAST);
             /* Wake up the TV */
             hdmiCecClient.sendConsoleMessage("on " + CecDevice.TV);
             checkDeviceAsleepAfterStandbySent(CecDevice.AUDIO_SYSTEM, CecDevice.BROADCAST);
@@ -109,7 +109,7 @@ public final class HdmiCecSystemStandbyTest extends BaseHostJUnit4Test {
         getDevice().executeShellCommand("reboot");
         getDevice().waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
         checkDeviceAsleepAfterStandbySent(CecDevice.TV, CecDevice.PLAYBACK_1);
-        checkDeviceAsleepAfterStandbySent(CecDevice.RECORDING_1, CecDevice.PLAYBACK_1);
+        checkDeviceAsleepAfterStandbySent(CecDevice.RECORDER_1, CecDevice.PLAYBACK_1);
         checkDeviceAsleepAfterStandbySent(CecDevice.AUDIO_SYSTEM, CecDevice.PLAYBACK_1);
         checkDeviceAsleepAfterStandbySent(CecDevice.PLAYBACK_2, CecDevice.PLAYBACK_1);
         checkDeviceAsleepAfterStandbySent(CecDevice.BROADCAST, CecDevice.PLAYBACK_1);

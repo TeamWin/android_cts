@@ -770,7 +770,6 @@ public class MuxerTest {
      * Add an offset to the presentation time of samples of a track. Mux with the added offset,
      * validate by re-extracting the muxer output file and compare with original.
      */
-    @Ignore("TODO(test fails for mp4, need to check if test is faulty)")
     @LargeTest
     @RunWith(Parameterized.class)
     public static class TestOffsetPts {
@@ -829,6 +828,10 @@ public class MuxerTest {
         public void testOffsetPresentationTime() throws IOException {
             final int OFFSET_TS = 111000;
             Assume.assumeTrue(shouldRunTest(mOutFormat));
+            Assume.assumeTrue("TODO(b/148978457)",
+                    mOutFormat != MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+            Assume.assumeTrue("TODO(b/148978457)",
+                    mOutFormat != MediaMuxer.OutputFormat.MUXER_OUTPUT_3GPP);
             Assume.assumeTrue("TODO(b/146423022)",
                     mOutFormat != MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM);
             Assume.assumeTrue("TODO(b/146421018)",
@@ -858,6 +861,10 @@ public class MuxerTest {
         @Test
         public void testOffsetPresentationTimeNative() {
             Assume.assumeTrue(shouldRunTest(mOutFormat));
+            Assume.assumeTrue("TODO(b/148978457)",
+                    mOutFormat != MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+            Assume.assumeTrue("TODO(b/148978457)",
+                    mOutFormat != MediaMuxer.OutputFormat.MUXER_OUTPUT_3GPP);
             Assume.assumeTrue("TODO(b/146423022)",
                     mOutFormat != MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM);
             Assume.assumeTrue("TODO(b/146421018)",

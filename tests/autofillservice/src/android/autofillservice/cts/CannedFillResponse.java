@@ -27,6 +27,7 @@ import android.service.autofill.Dataset;
 import android.service.autofill.FillCallback;
 import android.service.autofill.FillContext;
 import android.service.autofill.FillResponse;
+import android.service.autofill.InlinePresentation;
 import android.service.autofill.SaveInfo;
 import android.service.autofill.UserData;
 import android.util.Log;
@@ -75,6 +76,7 @@ public final class CannedFillResponse {
     private final CharSequence mSaveDescription;
     private final Bundle mExtras;
     private final RemoteViews mPresentation;
+    private final InlinePresentation mInlinePresentation;
     private final RemoteViews mHeader;
     private final RemoteViews mFooter;
     private final IntentSender mAuthentication;
@@ -106,6 +108,7 @@ public final class CannedFillResponse {
         mSaveType = builder.mSaveType;
         mExtras = builder.mExtras;
         mPresentation = builder.mPresentation;
+        mInlinePresentation = builder.mInlinePresentation;
         mHeader = builder.mHeader;
         mFooter = builder.mFooter;
         mAuthentication = builder.mAuthentication;
@@ -227,7 +230,7 @@ public final class CannedFillResponse {
         }
         if (mAuthenticationIds != null) {
             builder.setAuthentication(getAutofillIds(nodeResolver, mAuthenticationIds),
-                    mAuthentication, mPresentation);
+                    mAuthentication, mPresentation, mInlinePresentation);
         }
         if (mDisableDuration > 0) {
             builder.disableAutofill(mDisableDuration);
@@ -278,6 +281,7 @@ public final class CannedFillResponse {
                 + ", failureMessage=" + mFailureMessage
                 + ", saveDescription=" + mSaveDescription
                 + ", hasPresentation=" + (mPresentation != null)
+                + ", hasInlinePresentation=" + (mInlinePresentation != null)
                 + ", hasHeader=" + (mHeader != null)
                 + ", hasFooter=" + (mFooter != null)
                 + ", hasAuthentication=" + (mAuthentication != null)
@@ -313,6 +317,7 @@ public final class CannedFillResponse {
         public int mSaveType = -1;
         private Bundle mExtras;
         private RemoteViews mPresentation;
+        private InlinePresentation mInlinePresentation;
         private RemoteViews mFooter;
         private RemoteViews mHeader;
         private IntentSender mAuthentication;
@@ -396,6 +401,14 @@ public final class CannedFillResponse {
          */
         public Builder setPresentation(RemoteViews presentation) {
             mPresentation = presentation;
+            return this;
+        }
+
+        /**
+         * Sets the view to present the response in the UI.
+         */
+        public Builder setInlinePresentation(InlinePresentation inlinePresentation) {
+            mInlinePresentation = inlinePresentation;
             return this;
         }
 
@@ -558,16 +571,20 @@ public final class CannedFillResponse {
     public static class CannedDataset {
         private final Map<String, AutofillValue> mFieldValues;
         private final Map<String, RemoteViews> mFieldPresentations;
+        private final Map<String, InlinePresentation> mFieldInlinePresentations;
         private final Map<String, Pair<Boolean, Pattern>> mFieldFilters;
         private final RemoteViews mPresentation;
+        private final InlinePresentation mInlinePresentation;
         private final IntentSender mAuthentication;
         private final String mId;
 
         private CannedDataset(Builder builder) {
             mFieldValues = builder.mFieldValues;
             mFieldPresentations = builder.mFieldPresentations;
+            mFieldInlinePresentations = builder.mFieldInlinePresentations;
             mFieldFilters = builder.mFieldFilters;
             mPresentation = builder.mPresentation;
+            mInlinePresentation = builder.mInlinePresentation;
             mAuthentication = builder.mAuthentication;
             mId = builder.mId;
         }
@@ -576,9 +593,13 @@ public final class CannedFillResponse {
          * Creates a new dataset, replacing the field ids by the real ids from the assist structure.
          */
         Dataset asDataset(Function<String, ViewNode> nodeResolver) {
-            final Dataset.Builder builder = (mPresentation == null)
-                    ? new Dataset.Builder()
-                    : new Dataset.Builder(mPresentation);
+            final Dataset.Builder builder = mPresentation != null
+                    ? mInlinePresentation == null
+                    ? new Dataset.Builder(mPresentation)
+                    : new Dataset.Builder(mPresentation, mInlinePresentation)
+                    : mInlinePresentation == null
+                            ? new Dataset.Builder()
+                            : new Dataset.Builder(mInlinePresentation);
 
             if (mFieldValues != null) {
                 for (Map.Entry<String, AutofillValue> entry : mFieldValues.entrySet()) {
@@ -590,18 +611,34 @@ public final class CannedFillResponse {
                     final AutofillId autofillId = node.getAutofillId();
                     final AutofillValue value = entry.getValue();
                     final RemoteViews presentation = mFieldPresentations.get(id);
+                    final InlinePresentation inlinePresentation = mFieldInlinePresentations.get(id);
                     final Pair<Boolean, Pattern> filter = mFieldFilters.get(id);
                     if (presentation != null) {
                         if (filter == null) {
-                            builder.setValue(autofillId, value, presentation);
+                            if (inlinePresentation != null) {
+                                builder.setValue(autofillId, value, presentation,
+                                        inlinePresentation);
+                            } else {
+                                builder.setValue(autofillId, value, presentation);
+                            }
                         } else {
-                            builder.setValue(autofillId, value, filter.second, presentation);
+                            if (inlinePresentation != null) {
+                                builder.setValue(autofillId, value, filter.second, presentation,
+                                        inlinePresentation);
+                            } else {
+                                builder.setValue(autofillId, value, filter.second, presentation);
+                            }
                         }
                     } else {
-                        if (filter == null) {
-                            builder.setValue(autofillId, value);
+                        if (inlinePresentation != null) {
+                            builder.setInlinePresentation(autofillId, value,
+                                    filter != null ? filter.second : null, inlinePresentation);
                         } else {
-                            builder.setValue(autofillId, value, filter.second);
+                            if (filter == null) {
+                                builder.setValue(autofillId, value);
+                            } else {
+                                builder.setValue(autofillId, value, filter.second);
+                            }
                         }
                     }
                 }
@@ -613,7 +650,9 @@ public final class CannedFillResponse {
         @Override
         public String toString() {
             return "CannedDataset " + mId + " : [hasPresentation=" + (mPresentation != null)
+                    + ", hasInlinePresentation=" + (mInlinePresentation != null)
                     + ", fieldPresentations=" + (mFieldPresentations)
+                    + ", fieldInlinePresentations=" + (mFieldInlinePresentations)
                     + ", hasAuthentication=" + (mAuthentication != null)
                     + ", fieldValues=" + mFieldValues
                     + ", fieldFilters=" + mFieldFilters + "]";
@@ -622,9 +661,12 @@ public final class CannedFillResponse {
         public static class Builder {
             private final Map<String, AutofillValue> mFieldValues = new HashMap<>();
             private final Map<String, RemoteViews> mFieldPresentations = new HashMap<>();
+            private final Map<String, InlinePresentation> mFieldInlinePresentations =
+                    new HashMap<>();
             private final Map<String, Pair<Boolean, Pattern>> mFieldFilters = new HashMap<>();
 
             private RemoteViews mPresentation;
+            private InlinePresentation mInlinePresentation;
             private IntentSender mAuthentication;
             private String mId;
 
@@ -749,10 +791,47 @@ public final class CannedFillResponse {
             }
 
             /**
+             * Sets the canned value of a field based on its {@code id}.
+             *
+             * <p>The meaning of the id is defined by the object using the canned dataset.
+             * For example, {@link InstrumentedAutoFillService.Replier} resolves the id based on
+             * {@link IdMode}.
+             */
+            public Builder setField(String id, String text, RemoteViews presentation,
+                    InlinePresentation inlinePresentation) {
+                setField(id, text);
+                mFieldPresentations.put(id, presentation);
+                mFieldInlinePresentations.put(id, inlinePresentation);
+                return this;
+            }
+
+            /**
+             * Sets the canned value of a field based on its {@code id}.
+             *
+             * <p>The meaning of the id is defined by the object using the canned dataset.
+             * For example, {@link InstrumentedAutoFillService.Replier} resolves the id based on
+             * {@link IdMode}.
+             */
+            public Builder setField(String id, String text, RemoteViews presentation,
+                    InlinePresentation inlinePresentation, Pattern filter) {
+                setField(id, text, presentation, inlinePresentation);
+                mFieldFilters.put(id, new Pair<>(true, filter));
+                return this;
+            }
+
+            /**
              * Sets the view to present the response in the UI.
              */
             public Builder setPresentation(RemoteViews presentation) {
                 mPresentation = presentation;
+                return this;
+            }
+
+            /**
+             * Sets the view to present the response in the UI.
+             */
+            public Builder setInlinePresentation(InlinePresentation inlinePresentation) {
+                mInlinePresentation = inlinePresentation;
                 return this;
             }
 
@@ -772,6 +851,9 @@ public final class CannedFillResponse {
                 return this;
             }
 
+            /**
+             * Builds the canned dataset.
+             */
             public CannedDataset build() {
                 return new CannedDataset(this);
             }

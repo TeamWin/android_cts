@@ -55,20 +55,4 @@ public class ReadMultiViewTest extends AndroidTestCase {
         assertEquals(Os.getuid(), Os.stat(ourTestDir.getAbsolutePath()).st_uid);
         assertEquals(Os.getuid(), Os.stat(testFile.getAbsolutePath()).st_uid);
     }
-
-    /**
-     * Verify that we have RO access to test.probe in PACKAGE_WRITE's cache.
-     */
-    public void testROAccess() throws Exception {
-        final File ourCache = getContext().getExternalCacheDir();
-        final File otherCache = new File(ourCache.getAbsolutePath()
-                .replace(getContext().getPackageName(), PACKAGE_WRITE));
-        final File otherTestDir = new File(otherCache, "testDir");
-        final File testFile = new File(otherTestDir, "test.probe");
-
-        assertFileReadOnlyAccess(testFile);
-        assertNotEqual(Os.getuid(), Os.stat(testFile.getAbsolutePath()).st_uid);
-        assertNotEqual(Os.getuid(), Os.stat(otherCache.getAbsolutePath()).st_uid);
-        assertNotEqual(Os.getuid(), Os.stat(otherTestDir.getAbsolutePath()).st_uid);
-    }
 }

@@ -2428,6 +2428,10 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             // Skip test, http://b/141496896
             return;
         }
+        if (mOverrideCameraId != null) {
+            // A single camera is being tested. Skip test.
+            return;
+        }
         int legacyDeviceCount = Camera.getNumberOfCameras();
         assertTrue("More legacy devices: " + legacyDeviceCount + " compared to Camera2 devices: " +
                 mCharacteristics.size(), legacyDeviceCount <= mCharacteristics.size());

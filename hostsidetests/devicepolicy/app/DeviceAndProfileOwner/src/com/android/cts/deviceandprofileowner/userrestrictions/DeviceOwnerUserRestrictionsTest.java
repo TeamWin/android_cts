@@ -15,6 +15,8 @@
  */
 package com.android.cts.deviceandprofileowner.userrestrictions;
 
+import android.os.Process;
+import android.os.UserHandle;
 import android.os.UserManager;
 
 public class DeviceOwnerUserRestrictionsTest extends BaseUserRestrictionsTest {
@@ -81,5 +83,29 @@ public class DeviceOwnerUserRestrictionsTest extends BaseUserRestrictionsTest {
 
     @Override
     protected String[] getDefaultEnabledRestrictions() { return DEFAULT_ENABLED; }
+
+    /**
+     * Picks a restriction that isn't applied by {@link UserManager} itself, applies it, and makes
+     * sure that {@link UserManager} understands that it is applied but not as a base restriction.
+     */
+    public void testHasBaseUserRestrictions() {
+        final UserHandle userHandle = Process.myUserHandle();
+        for (String r : ALL_USER_RESTRICTIONS) {
+            if(!hasBaseUserRestriction(r, userHandle)) {
+                mDevicePolicyManager.addUserRestriction(ADMIN_RECEIVER_COMPONENT, r);
+                assertTrue("Restriction " + r + " expected",
+                        mUserManager.hasUserRestriction(r, userHandle));
+                assertFalse("Restriction " + r + " not expected as a baseRestriction",
+                        hasBaseUserRestriction(r, userHandle));
+
+                mDevicePolicyManager.clearUserRestriction(ADMIN_RECEIVER_COMPONENT, r);
+                assertFalse("Restriction " + r + " not expected",
+                        mUserManager.hasUserRestriction(r, userHandle));
+                assertFalse("Restriction " + r + " not expected as a baseRestriction",
+                        hasBaseUserRestriction(r, userHandle));
+                return;
+            }
+        }
+    }
 }
 

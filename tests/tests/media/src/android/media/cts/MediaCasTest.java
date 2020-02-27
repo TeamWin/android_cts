@@ -26,6 +26,7 @@ import android.media.MediaCodec;
 import android.media.MediaDescrambler;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
 import android.util.Log;
@@ -41,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Presubmit
 @SmallTest
 @RequiresDevice
 public class MediaCasTest extends AndroidTestCase {
@@ -250,7 +252,8 @@ public class MediaCasTest extends AndroidTestCase {
         MediaDescrambler descrambler = null;
 
         try {
-            mediaCas = new MediaCas(sClearKeySystemId);
+            mediaCas = new MediaCas(getContext(), sClearKeySystemId, "TIS_Session_1",
+                android.media.tv.TvInputService.PRIORITY_HINT_USE_CASE_TYPE_LIVE);
             descrambler = new MediaDescrambler(sClearKeySystemId);
 
             mediaCas.provision(sProvisionStr);
@@ -262,6 +265,8 @@ public class MediaCasTest extends AndroidTestCase {
             if (session == null) {
                 fail("Can't open session for program");
             }
+
+            Log.d(TAG, "Session Id = " + Arrays.toString(session.getSessionId()));
 
             session.setPrivateData(pvtData);
 
@@ -290,6 +295,7 @@ public class MediaCasTest extends AndroidTestCase {
             Handler handler = new Handler(thread.getLooper());
             testEventEcho(mediaCas, 1, 2, null /* data */, handler);
             testSessionEventEcho(mediaCas, session, 1, 2, null /* data */, handler);
+            testOpenSessionEcho(mediaCas, 0, 2, handler);
             thread.interrupt();
 
             String eventDataString = "event data string";
@@ -519,6 +525,14 @@ public class MediaCasTest extends AndroidTestCase {
             mData = data;
         }
 
+        TestEventListener(MediaCas mediaCas, int intent, int scramblingMode) {
+            mMediaCas = mediaCas;
+            mEvent = intent;
+            mArg = scramblingMode;
+            mData = null;
+            mSession = null;
+        }
+
         boolean waitForResult() {
             try {
                 if (!mLatch.await(1, TimeUnit.SECONDS)) {
@@ -555,7 +569,16 @@ public class MediaCasTest extends AndroidTestCase {
             }
             mLatch.countDown();
         }
-     }
+
+        @Override
+        public void onPluginStatusUpdate(MediaCas mediaCas, int statusUpdated, int arg) {
+            Log.d(TAG, "Received MediaCas Status Update event");
+            if (mediaCas == mMediaCas && statusUpdated == mEvent && arg == mArg ) {
+                mIsIdential = true;
+            }
+            mLatch.countDown();
+        }
+    }
 
     // helper to send an event and wait for echo
     private void testEventEcho(MediaCas mediaCas, int event,
@@ -581,6 +604,25 @@ public class MediaCasTest extends AndroidTestCase {
             throw e;
         }
         assertTrue("Didn't receive session event callback for " + event, listener.waitForResult());
+    }
+
+    // helper to open Session with scrambling mode and wait for echo for status change event
+    private void testOpenSessionEcho(MediaCas mediaCas, int intent, int scramblingMode,
+        Handler handler) throws Exception {
+        TestEventListener listener = new TestEventListener(mediaCas, intent, scramblingMode);
+        mediaCas.setEventListener(listener, handler);
+        try {
+            mediaCas.openSession(intent, scramblingMode);
+        } catch (UnsupportedCasException e) {
+            if (!PropertyUtil.isVendorApiLevelNewerThan(API_LEVEL_BEFORE_CAS_SESSION + 1)) {
+                Log.d(TAG,
+                    "Opens Session with scramblingMode isn't supported, Skipped this test case");
+                return;
+            }
+            throw e;
+        }
+        assertTrue("Didn't receive Echo from openSession with scrambling mode: " + scramblingMode,
+            listener.waitForResult());
     }
 
     // helper to descramble from the sample input (sInputBufferStr) and get output buffer

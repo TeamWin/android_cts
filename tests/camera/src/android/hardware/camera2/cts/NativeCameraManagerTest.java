@@ -60,6 +60,12 @@ public class NativeCameraManagerTest extends CameraParameterizedTestCase {
     }
 
     @Test
+    public void testCameraManagerExtendedAvailabilityCallback() {
+        assertTrue("testCameraManagerExtendedAvailabilityCallback fail, see log for details",
+                testCameraManagerExtendedAvailabilityCallbackNative());
+    }
+
+    @Test
     public void testCameraManagerCameraCharacteristics() {
         assertTrue("testCameraManagerCameraCharacteristics fail, see log for details",
                 testCameraManagerCharacteristicsNative());
@@ -68,5 +74,6 @@ public class NativeCameraManagerTest extends CameraParameterizedTestCase {
     private static native boolean testCameraManagerGetAndCloseNative();
     private static native boolean testCameraManagerGetCameraIdsNative();
     private static native boolean testCameraManagerAvailabilityCallbackNative();
+    private static native boolean testCameraManagerExtendedAvailabilityCallbackNative();
     private static native boolean testCameraManagerCharacteristicsNative();
 }

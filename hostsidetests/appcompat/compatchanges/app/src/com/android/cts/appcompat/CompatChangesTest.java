@@ -43,6 +43,7 @@ import org.junit.runners.JUnit4;
  */
 @RunWith(AndroidJUnit4.class)
 public final class CompatChangesTest {
+  private static final long CTS_SYSTEM_API_CHANGEID = 149391281;
   @Before
   public void setUp() {
     InstrumentationRegistry.getInstrumentation().getUiAutomation()
@@ -58,40 +59,40 @@ public final class CompatChangesTest {
   /* Test run by CompatChangesSystemApiTest.testIsChangeEnabled */
   @Test
   public void isChangeEnabled_changeEnabled() {
-    assertThat(CompatChanges.isChangeEnabled(1L)).isTrue();
+    assertThat(CompatChanges.isChangeEnabled(CTS_SYSTEM_API_CHANGEID)).isTrue();
   }
 
   /* Test run by CompatChangesSystemApiTest.testIsChangeEnabledPackageName */
   @Test
   public void isChangeEnabledPackageName_changeEnabled() {
     Context context = InstrumentationRegistry.getTargetContext();
-    assertThat(CompatChanges.isChangeEnabled(1L, context.getPackageName(),
+    assertThat(CompatChanges.isChangeEnabled(CTS_SYSTEM_API_CHANGEID, context.getPackageName(),
             context.getUser())).isTrue();
   }
 
   /* Test run by CompatChangesSystemApiTest.testIsChangeEnabledUid */
   @Test
   public void isChangeEnabledUid_changeEnabled() {
-    assertThat(CompatChanges.isChangeEnabled(1L, Process.myUid())).isTrue();
+    assertThat(CompatChanges.isChangeEnabled(CTS_SYSTEM_API_CHANGEID, Process.myUid())).isTrue();
   }
 
   /* Test run by CompatChangesSystemApiTest.testIsChangeDisabled */
   @Test
   public void isChangeEnabled_changeDisabled() {
-    assertThat(CompatChanges.isChangeEnabled(1L)).isFalse();
+    assertThat(CompatChanges.isChangeEnabled(CTS_SYSTEM_API_CHANGEID)).isFalse();
   }
 
   /* Test run by CompatChangesSystemApiTest.testIsChangeDisabledPackageName */
   @Test
   public void isChangeEnabledPackageName_changeDisabled() {
     Context context = InstrumentationRegistry.getTargetContext();
-    assertThat(CompatChanges.isChangeEnabled(1L, context.getPackageName(),
+    assertThat(CompatChanges.isChangeEnabled(CTS_SYSTEM_API_CHANGEID, context.getPackageName(),
             context.getUser())).isFalse();
   }
 
   /* Test run by CompatChangesSystemApiTest.testIsChangeDisabledUid */
   @Test
   public void isChangeEnabledUid_changeDisabled() {
-    assertThat(CompatChanges.isChangeEnabled(1L, Process.myUid())).isFalse();
+    assertThat(CompatChanges.isChangeEnabled(CTS_SYSTEM_API_CHANGEID, Process.myUid())).isFalse();
   }
 }

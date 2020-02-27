@@ -20,6 +20,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
+
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.After;
@@ -39,6 +40,9 @@ public class UseProcessTest extends BaseAppSecurityTest {
     private static final String APK_FAIL_SERVICE = "CtsUseProcessFailService.apk";
     private static final String APK_FAIL_RECEIVER = "CtsUseProcessFailReceiver.apk";
     private static final String APK_FAIL_PROVIDER = "CtsUseProcessFailProvider.apk";
+
+    private static final String SUCCESS_UNIT_TEST_CLASS
+            = "com.android.cts.useprocess.AccessNetworkTest";
 
     @Before
     public void setUp() throws Exception {
@@ -64,6 +68,8 @@ public class UseProcessTest extends BaseAppSecurityTest {
     private void testInstallUsePackageSuccess(boolean instant) throws Exception {
         new InstallMultiple(instant).addApk(APK_SUCCESS).run();
         assertTrue(getDevice().getInstalledPackageNames().contains(PKG));
+
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), PKG, SUCCESS_UNIT_TEST_CLASS, null);
     }
 
     @Test
@@ -150,5 +156,4 @@ public class UseProcessTest extends BaseAppSecurityTest {
                         "Can't install because provider com.android.cts.useprocess.DummyProvider");
         assertTrue(!getDevice().getInstalledPackageNames().contains(PKG));
     }
-
 }

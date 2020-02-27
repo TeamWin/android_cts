@@ -31,10 +31,9 @@ import android.service.quickaccesswallet.GetWalletCardsResponse;
 import android.service.quickaccesswallet.WalletCard;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.rule.ActivityTestRule;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -49,19 +48,15 @@ public class GetWalletCardsResponseTest {
     private static final int CARD_WIDTH = 70;
     private static final int CARD_HEIGHT = 44;
 
-    @Rule
-    public ActivityTestRule<QuickAccessWalletActivity> mActivityRule =
-            new ActivityTestRule<>(QuickAccessWalletActivity.class);
-
     private Context mContext;
 
     @Before
     public void setup() {
-        mContext = mActivityRule.getActivity().getApplicationContext();
+        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
     }
 
     @Test
-    public void parcel_toParcel() {
+    public void testParcel_toParcel() {
         Intent intent = new Intent(mContext, QuickAccessWalletActivity.class);
         WalletCard card1 = new WalletCard.Builder(
                 "card1",

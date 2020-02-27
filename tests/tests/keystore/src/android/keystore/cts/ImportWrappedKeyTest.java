@@ -406,10 +406,9 @@ public class ImportWrappedKeyTest extends AndroidTestCase {
     private KeyPair genKeyPair(String alias, boolean isStrongBoxBacked) throws Exception {
         KeyPairGenerator kpg =
                 KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore");
-
         kpg.initialize(
                 new KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_WRAP_KEY)
-                        .setDigests(KeyProperties.DIGEST_SHA512, KeyProperties.DIGEST_SHA256)
+                        .setDigests(KeyProperties.DIGEST_SHA256)
                         .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_OAEP)
                         .setBlockModes(KeyProperties.BLOCK_MODE_ECB)
                         .setIsStrongBoxBacked(isStrongBoxBacked)

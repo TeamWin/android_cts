@@ -269,7 +269,8 @@ public class MediaStorePendingTest {
                         Environment.DIRECTORY_NOTIFICATIONS, Environment.DIRECTORY_PODCASTS,
                         Environment.DIRECTORY_ALARMS));
         final Set<String> allowedVideo = new HashSet<>(
-                Arrays.asList(Environment.DIRECTORY_MOVIES, Environment.DIRECTORY_DCIM));
+                Arrays.asList(Environment.DIRECTORY_MOVIES, Environment.DIRECTORY_DCIM,
+                Environment.DIRECTORY_PICTURES));
         final Set<String> allowedImages = new HashSet<>(
                 Arrays.asList(Environment.DIRECTORY_PICTURES, Environment.DIRECTORY_DCIM));
         final Set<String> allowedDownloads = new HashSet<>(

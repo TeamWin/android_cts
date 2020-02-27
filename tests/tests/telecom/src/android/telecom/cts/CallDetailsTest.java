@@ -283,8 +283,8 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
         mConnection.setConnectionProperties(Connection.PROPERTY_IS_RTT);
         assertCallProperties(mCall, Call.Details.PROPERTY_RTT);
 
-        mConnection.setConnectionProperties(Connection.PROPERTY_ASSISTED_DIALING_USED);
-        assertCallProperties(mCall, Call.Details.PROPERTY_ASSISTED_DIALING_USED);
+        mConnection.setConnectionProperties(Connection.PROPERTY_ASSISTED_DIALING);
+        assertCallProperties(mCall, Call.Details.PROPERTY_ASSISTED_DIALING);
 
         mConnection.setConnectionProperties(Connection.PROPERTY_NETWORK_IDENTIFIED_EMERGENCY_CALL);
         assertCallProperties(mCall, Call.Details.PROPERTY_NETWORK_IDENTIFIED_EMERGENCY_CALL);

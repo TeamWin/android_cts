@@ -36,6 +36,7 @@
     <target_preparer class="com.android.tradefed.targetprep.PushFilePreparer" >
         <option name="push-file" key="CtsAppToBlame1.apk" value="/data/local/tmp/cts/appops/CtsAppToBlame1.apk" />
         <option name="push-file" key="CtsAppToBlame2.apk" value="/data/local/tmp/cts/appops/CtsAppToBlame2.apk" />
+        <option name="push-file" key="CtsAppToCollect.apk" value="/data/local/tmp/cts/appops/CtsAppToCollect.apk" />
         <option name="push-file" key="AppWithDuplicateFeature.apk" value="/data/local/tmp/cts/appops/AppWithDuplicateFeature.apk" />
         <option name="push-file" key="AppWithFeatureInheritingFromExisting.apk" value="/data/local/tmp/cts/appops/AppWithFeatureInheritingFromExisting.apk" />
         <option name="push-file" key="AppWithFeatureInheritingFromSameAsOther.apk" value="/data/local/tmp/cts/appops/AppWithFeatureInheritingFromSameAsOther.apk" />

@@ -407,6 +407,8 @@ public class MediaStore_Video_MediaTest {
                     c.getString(c.getColumnIndex(VideoColumns.INSTANCE_ID)));
             assertEquals("4F9DD7A46B26513A7C35272F0D623A06",
                     c.getString(c.getColumnIndex(VideoColumns.ORIGINAL_DOCUMENT_ID)));
+            assertTrue(new String(c.getBlob(c.getColumnIndex(VideoColumns.XMP)))
+                    .contains("exif:ShutterSpeedValue"));
 
             // Confirm that timestamp was parsed
             assertEquals(1539711603000L, c.getLong(c.getColumnIndex(VideoColumns.DATE_TAKEN)));

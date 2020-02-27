@@ -18,6 +18,7 @@ android_test {
     static_libs: [
         "ctstestrunner-axt",
         "androidx.test.ext.junit",
+        "exoplayer2-extractor-test-utils",
         // TODO: Remove the assets folder once b/146655310 is fixed.
         // Current assets version in the asset folder from ExoPlayer SHA
         // 2fc426214f5cfdde2e15a9f08c397a961fa0e249.

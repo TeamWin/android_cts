@@ -5,4 +5,5 @@
     <string name="Ask">Ask every time</string>
     <string name="Allow">Allow</string>
     <string name="AllowAll">Allow all the time</string>
+    <string name="AllowForeground">Allow only while using the app</string>
 </resources>

@@ -302,6 +302,7 @@ public class CodecEncoderTest extends CodecTestBase {
      * consistent (not flaky) in all runs.
      */
     @LargeTest
+    @Ignore("TODO(b/149027258)")
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleEncode() throws IOException, InterruptedException {
         setUpParams();
@@ -365,7 +366,7 @@ public class CodecEncoderTest extends CodecTestBase {
      * Tests flush when codec is in sync and async mode. In these scenarios, Timestamp
      * ordering is verified. The output has to be consistent (not flaky) in all runs
      */
-    @Ignore("TODO(b/147576107, b/148651699)")
+    @Ignore("TODO(b/147576107, b/148652492, b/148651699)")
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testFlush() throws IOException, InterruptedException {
@@ -436,7 +437,7 @@ public class CodecEncoderTest extends CodecTestBase {
      * scenarios, Timestamp ordering is verified. The output has to be consistent (not flaky)
      * in all runs
      */
-    @Ignore("TODO(b/148523403)")
+    @Ignore("TODO(b/148523403, b/149027258)")
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testReconfigure() throws IOException, InterruptedException {

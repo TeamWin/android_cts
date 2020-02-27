@@ -16,11 +16,16 @@
 
 package android.content.pm.cts;
 
+import static android.content.pm.PackageInstaller.DATA_LOADER_TYPE_INCREMENTAL;
+import static android.content.pm.PackageInstaller.DATA_LOADER_TYPE_NONE;
+import static android.content.pm.PackageInstaller.DATA_LOADER_TYPE_STREAMING;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.os.ParcelFileDescriptor;
+import android.os.incremental.IncrementalManager;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.InstrumentationRegistry;
@@ -65,13 +70,15 @@ public class PackageManagerShellCommandTest {
     private static final String TEST_HW7_SPLIT4 = "HelloWorld7_xxxhdpi-v4.apk";
 
     @Parameter
-    public boolean mStreaming;
+    public int mDataLoaderType;
 
     @Parameters
     public static Iterable<Object> initParameters() {
-        return Arrays.asList(false, true);
+        return Arrays.asList(DATA_LOADER_TYPE_NONE, DATA_LOADER_TYPE_STREAMING);
     }
 
+    private boolean mStreaming = false;
+    private boolean mIncremental = false;
     private String mInstall = "";
 
     private static String executeShellCommand(String command) throws IOException {
@@ -130,13 +137,24 @@ public class PackageManagerShellCommandTest {
     }
 
     @Before
-    public void checkNotInstalled() throws Exception {
-        mInstall = mStreaming ? " install-streaming " : " install ";
+    public void onBefore() throws Exception {
+        // Check if Incremental is allowed and revert to non-dataloader installation.
+        if (mDataLoaderType == DATA_LOADER_TYPE_INCREMENTAL && !IncrementalManager.isAllowed()) {
+            mDataLoaderType = DATA_LOADER_TYPE_NONE;
+        }
+
+        mStreaming = mDataLoaderType != DATA_LOADER_TYPE_NONE;
+        mIncremental = mDataLoaderType == DATA_LOADER_TYPE_INCREMENTAL;
+        mInstall = mDataLoaderType == DATA_LOADER_TYPE_NONE ? " install " :
+                mDataLoaderType == DATA_LOADER_TYPE_STREAMING ? " install-streaming " :
+                        " install-incremental ";
+
+        uninstallPackageSilently(TEST_APP_PACKAGE);
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
     }
 
     @After
-    public void uninstall() throws Exception {
+    public void onAfter() throws Exception {
         uninstallPackageSilently(TEST_APP_PACKAGE);
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
         assertEquals(null, getSplits(TEST_APP_PACKAGE));
@@ -172,8 +190,13 @@ public class PackageManagerShellCommandTest {
         File file = new File(createApkPath(TEST_HW5));
         String commandResult = executeShellCommand("pm " + mInstall + " -t -g -S " + file.length(),
                 new File[]{});
-        assertTrue(commandResult,
-                commandResult.startsWith("Failure [INSTALL_PARSE_FAILED_NOT_APK"));
+        if (mIncremental) {
+            assertEquals("Failure [INSTALL_FAILED_MEDIA_UNAVAILABLE: Failed to prepare image.]\n",
+                    commandResult);
+        } else {
+            assertTrue(commandResult,
+                    commandResult.startsWith("Failure [INSTALL_PARSE_FAILED_NOT_APK"));
+        }
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
     }
 
@@ -428,8 +451,8 @@ public class PackageManagerShellCommandTest {
 
     private void installPackage(String baseName) throws IOException {
         File file = new File(createApkPath(baseName));
-        assertEquals("Success\n",
-                executeShellCommand("pm " + mInstall + " -t -g " + file.getPath()));
+        assertEquals("Success\n", executeShellCommand(
+                "pm " + mInstall + " -t -g " + file.getPath()));
     }
 
     private void installPackageStdIn(String baseName) throws IOException {
@@ -454,7 +477,7 @@ public class PackageManagerShellCommandTest {
         File[] files = Arrays.stream(splits).map(split -> new File(split)).toArray(File[]::new);
         String param = Arrays.stream(files).map(
                 file -> file.getName() + ":" + file.length()).collect(Collectors.joining(" "));
-        assertEquals("Success\n", executeShellCommand("pm install-streaming " + param, files));
+        assertEquals("Success\n", executeShellCommand("pm" + mInstall + param, files));
     }
 
     private void installSplitsStdIn(String[] baseNames, String args) throws IOException {

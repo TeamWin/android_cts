@@ -16,6 +16,7 @@ package android.slice.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -30,6 +31,7 @@ import android.app.slice.SliceItem;
 import android.app.slice.SliceManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 
@@ -54,9 +56,12 @@ public class SliceManagerTest {
     private static final Uri BASE_URI = Uri.parse("content://android.slice.cts.local/main");
     private final Context mContext = InstrumentationRegistry.getContext();
     private final SliceManager mSliceManager = mContext.getSystemService(SliceManager.class);
+    private boolean isSliceDisabled = mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_SLICES_DISABLED);
+
 
     @Before
     public void setup() {
+        assumeFalse(isSliceDisabled);
         LocalSliceProvider.sProxy = mock(SliceProvider.class);
         try {
             mSliceManager.unpinSlice(BASE_URI);
@@ -66,6 +71,9 @@ public class SliceManagerTest {
 
     @After
     public void teardown() throws Exception {
+        if (isSliceDisabled) {
+            return;
+        }
         try {
             mSliceManager.unpinSlice(BASE_URI);
         } catch (Exception e) {
@@ -74,6 +82,7 @@ public class SliceManagerTest {
 
     @Test
     public void testPinSlice() throws Exception {
+        assumeFalse(isSliceDisabled);
         mSliceManager.pinSlice(BASE_URI, Collections.emptySet());
 
         verify(LocalSliceProvider.sProxy, timeout(2000)).onSlicePinned(eq(BASE_URI));
@@ -81,6 +90,7 @@ public class SliceManagerTest {
 
     @Test
     public void testUnpinSlice() throws Exception {
+        assumeFalse(isSliceDisabled);
         mSliceManager.pinSlice(BASE_URI, Collections.emptySet());
 
         verify(LocalSliceProvider.sProxy, timeout(2000)).onSlicePinned(eq(BASE_URI));
@@ -92,6 +102,7 @@ public class SliceManagerTest {
 
     @Test
     public void testPinList() {
+        assumeFalse(isSliceDisabled);
         Uri uri = BASE_URI;
         Uri longerUri = uri.buildUpon().appendPath("something").build();
         try {
@@ -111,6 +122,7 @@ public class SliceManagerTest {
 
     @Test
     public void testMapIntentToUri() {
+        assumeFalse(isSliceDisabled);
         Intent intent = new Intent("android.slice.cts.action.TEST_ACTION");
         intent.setPackage("android.slice.cts");
         intent.putExtra("path", "intent");
@@ -127,6 +139,7 @@ public class SliceManagerTest {
 
     @Test
     public void testOnCreatePermissionSlice() {
+        assumeFalse(isSliceDisabled);
         LocalSliceProvider.sAnswer = invocation -> {
             throw new SecurityException("No slices allowed");
         };

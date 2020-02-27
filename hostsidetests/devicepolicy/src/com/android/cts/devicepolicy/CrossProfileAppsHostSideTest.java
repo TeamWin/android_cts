@@ -1,20 +1,31 @@
 package com.android.cts.devicepolicy;
 
+import static android.stats.devicepolicy.EventId.CROSS_PROFILE_APPS_GET_TARGET_USER_PROFILES_VALUE;
+import static android.stats.devicepolicy.EventId.CROSS_PROFILE_APPS_START_ACTIVITY_AS_USER_VALUE;
+import static android.stats.devicepolicy.EventId.START_ACTIVITY_BY_INTENT_VALUE;
+
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
 
+import static com.google.common.truth.Truth.assertThat;
+
+import static org.junit.Assert.fail;
+
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
-import android.stats.devicepolicy.EventId;
 
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.result.InputStreamSource;
+import com.android.tradefed.util.StreamUtil;
 
 import org.junit.Test;
 
 import java.io.FileNotFoundException;
 import java.util.Collections;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
@@ -135,6 +146,53 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
 
     @LargeTest
     @Test
+    public void testStartActivityIntent_isLogged() throws Exception {
+        if (!mHasManagedUserFeature) {
+            return;
+        }
+        assertMetricsLogged(
+                getDevice(),
+                () -> verifyCrossProfileAppsApi(
+                        mProfileId,
+                        mPrimaryUserId,
+                        START_ACTIVITY_TEST_CLASS,
+                        "testStartActivityByIntent_noAsserts"),
+                new DevicePolicyEventWrapper
+                        .Builder(START_ACTIVITY_BY_INTENT_VALUE)
+                        .setStrings(TEST_PACKAGE)
+                        .setBoolean(true) // from work profile
+                        .build());
+    }
+
+    @LargeTest
+    @Test
+    public void testStartActivityIntent_sameTaskByDefault() throws Exception {
+        if (!mHasManagedUserFeature) {
+            return;
+        }
+        getDevice().clearLogcat();
+        verifyCrossProfileAppsApi(
+                mProfileId,
+                mPrimaryUserId,
+                START_ACTIVITY_TEST_CLASS,
+                "testStartActivityIntent_sameTaskByDefault");
+        assertThat(findTaskId("CrossProfileSameTaskLauncherActivity"))
+                .isEqualTo(findTaskId("NonMainActivity"));
+    }
+
+    private int findTaskId(String className) throws Exception {
+        final Matcher matcher =
+                Pattern.compile(className + "#taskId#" + "(.*?)" + "#").matcher(readLogcat());
+        boolean isFound = matcher.find();
+        if (!isFound) {
+            fail("Task not found for " + className);
+            return -1;
+        }
+        return Integer.parseInt(matcher.group(1));
+    }
+
+    @LargeTest
+    @Test
     public void testPrimaryUserToSecondaryUser() throws Exception {
         if (!mCanTestMultiUser) {
             return;
@@ -177,7 +235,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
                             "testStartMainActivity_noAsserts");
                 },
                 new DevicePolicyEventWrapper
-                        .Builder(EventId.CROSS_PROFILE_APPS_START_ACTIVITY_AS_USER_VALUE)
+                        .Builder(CROSS_PROFILE_APPS_START_ACTIVITY_AS_USER_VALUE)
                         .setStrings(new String[] {"com.android.cts.crossprofileappstest"})
                         .build());
     }
@@ -198,7 +256,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
                             "testGetTargetUserProfiles_noAsserts");
                 },
                 new DevicePolicyEventWrapper
-                        .Builder(EventId.CROSS_PROFILE_APPS_GET_TARGET_USER_PROFILES_VALUE)
+                        .Builder(CROSS_PROFILE_APPS_GET_TARGET_USER_PROFILES_VALUE)
                         .setStrings(new String[] {"com.android.cts.crossprofileappstest"})
                         .build());
     }
@@ -233,5 +291,15 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
     private Map<String, String> createTargetUserParam(int targetUserId) throws Exception {
         return Collections.singletonMap(PARAM_TARGET_USER,
                 Integer.toString(getUserSerialNumber(targetUserId)));
+    }
+
+    private String readLogcat() throws Exception {
+        getDevice().stopLogcat();
+        final String logcat;
+        try (InputStreamSource logcatStream = getDevice().getLogcat()) {
+            logcat = StreamUtil.getStringFromSource(logcatStream);
+        }
+        getDevice().startLogcat();
+        return logcat;
     }
 }

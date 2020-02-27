@@ -22,7 +22,10 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.app.ActivityManager;
+import android.app.ActivityManager.RunningServiceInfo;
 import android.app.AlarmManager;
+import android.app.AppOpsManager;
 import android.app.PendingIntent;
 import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
@@ -42,6 +45,7 @@ import android.content.pm.ApplicationInfo;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
+import android.location.GnssStatus;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -60,6 +64,8 @@ import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.ShellIdentityUtils;
+
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -69,6 +75,8 @@ import java.util.concurrent.TimeUnit;
 
 public class AtomTests {
     private static final String TAG = AtomTests.class.getSimpleName();
+
+    private static final String MY_PACKAGE_NAME = "com.android.server.cts.device.statsd";
 
     @Test
     public void testAudioState() {
@@ -229,6 +237,58 @@ public class AtomTests {
     }
 
     @Test
+    public void testForegroundServiceAccessAppOp() throws Exception {
+        Context context = InstrumentationRegistry.getContext();
+        Intent fgsIntent = new Intent(context, StatsdCtsForegroundService.class);
+        AppOpsManager appOpsManager = context.getSystemService(AppOpsManager.class);
+
+        // No foreground service session
+        noteAppOp(appOpsManager, AppOpsManager.OPSTR_COARSE_LOCATION, true);
+
+        // Foreground service session 1
+        context.startService(fgsIntent);
+        while (!checkIfServiceRunning(context, StatsdCtsForegroundService.class.getName())) {
+            sleep(50);
+        }
+        noteAppOp(appOpsManager, AppOpsManager.OPSTR_CAMERA, true);
+        noteAppOp(appOpsManager, AppOpsManager.OPSTR_FINE_LOCATION, true);
+        noteAppOp(appOpsManager, AppOpsManager.OPSTR_CAMERA, true);
+        noteAppOp(appOpsManager, AppOpsManager.OPSTR_RECORD_AUDIO, false);
+        noteAppOp(appOpsManager, AppOpsManager.OPSTR_RECORD_AUDIO, true);
+        context.stopService(fgsIntent);
+
+        // No foreground service session
+        noteAppOp(appOpsManager, AppOpsManager.OPSTR_COARSE_LOCATION, true);
+
+        // TODO(b/149098800): Start fgs a second time and log OPSTR_CAMERA again
+    }
+
+    /** @param doNote true if should use noteOp; false if should use startOp. */
+    private void noteAppOp(AppOpsManager appOpsManager, String opStr, boolean doNote) {
+        if (doNote) {
+            ShellIdentityUtils.invokeMethodWithShellPermissions(appOpsManager,
+                    (aom) -> aom.noteOp(opStr, android.os.Process.myUid(), MY_PACKAGE_NAME, null,
+                            "statsdTest"));
+        } else {
+            ShellIdentityUtils.invokeMethodWithShellPermissions(appOpsManager,
+                    (aom) -> aom.startOp(opStr, android.os.Process.myUid(),
+                            MY_PACKAGE_NAME, null, "statsdTest"));
+        }
+        sleep(500);
+    }
+
+    /** Check if service is running. */
+    public boolean checkIfServiceRunning(Context context, String serviceName) {
+        ActivityManager manager = context.getSystemService(ActivityManager.class);
+        for (RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceName.equals(service.service.getClassName()) && service.foreground) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Test
     public void testGpsScan() {
         Context context = InstrumentationRegistry.getContext();
         final LocationManager locManager = context.getSystemService(LocationManager.class);
@@ -267,6 +327,81 @@ public class AtomTests {
         }.execute();
 
         waitForReceiver(context, 59_000, latch, null);
+    }
+
+    @Test
+    public void testGpsStatus() {
+        Context context = InstrumentationRegistry.getContext();
+        final LocationManager locManager = context.getSystemService(LocationManager.class);
+
+        if (!locManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            Log.e(TAG, "GPS provider is not enabled");
+            return;
+        }
+
+        // Time out set to 85 seconds (5 seconds for sleep and a possible 85 seconds if TTFF takes
+        // max time which would be around 90 seconds.
+        // This is based on similar location cts test timeout values.
+        final int TIMEOUT_IN_MSEC = 85_000;
+        final int SLEEP_TIME_IN_MSEC = 5_000;
+        // TTFF could take up to 90 seconds, thus we need to wait till TTFF does occur if it does
+        // not occur in the first SLEEP_TIME_IN_MSEC
+        final CountDownLatch mLatchTtff = new CountDownLatch(1);
+
+        GnssStatus.Callback gnssStatusCallback = new GnssStatus.Callback() {
+            @Override
+            public void onStarted() {
+                Log.v(TAG, "Gnss Status Listener Started");
+            }
+
+            @Override
+            public void onStopped() {
+                Log.v(TAG, "Gnss Status Listener Stopped");
+            }
+
+            @Override
+            public void onFirstFix(int ttffMillis) {
+                Log.v(TAG, "Gnss Status Listener Received TTFF");
+                mLatchTtff.countDown();
+            }
+
+            @Override
+            public void onSatelliteStatusChanged(GnssStatus status) {
+                Log.v(TAG, "Gnss Status Listener Received Status Update");
+            }
+        };
+
+        boolean gnssStatusCallbackAdded = locManager.registerGnssStatusCallback(
+                gnssStatusCallback, new Handler(Looper.getMainLooper()));
+        if (!gnssStatusCallbackAdded) {
+            // Registration of GnssMeasurements listener has failed, this indicates a platform bug.
+            Log.e(TAG, "Failed to start gnss status callback");
+        }
+
+        final LocationListener locListener = new LocationListener() {
+            public void onLocationChanged(Location location) {
+                Log.v(TAG, "onLocationChanged: location has been obtained");
+            }
+            public void onProviderDisabled(String provider) {
+                Log.v(TAG, "onProviderDisabled " + provider);
+            }
+            public void onProviderEnabled(String provider) {
+                Log.v(TAG, "onProviderEnabled " + provider);
+            }
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+                Log.v(TAG, "onStatusChanged " + provider + " " + status);
+            }
+        };
+
+        locManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+                0,
+                0 /* minDistance */,
+                locListener,
+                Looper.getMainLooper());
+        sleep(SLEEP_TIME_IN_MSEC);
+        waitForReceiver(context, TIMEOUT_IN_MSEC, mLatchTtff, null);
+        locManager.removeUpdates(locListener);
+        locManager.unregisterGnssStatusCallback(gnssStatusCallback);
     }
 
     @Test
@@ -320,7 +455,7 @@ public class AtomTests {
 
     @Test
     public void testScheduledJob() throws Exception {
-        final ComponentName name = new ComponentName("com.android.server.cts.device.statsd",
+        final ComponentName name = new ComponentName(MY_PACKAGE_NAME,
                 StatsdJobService.class.getName());
 
         Context context = InstrumentationRegistry.getContext();

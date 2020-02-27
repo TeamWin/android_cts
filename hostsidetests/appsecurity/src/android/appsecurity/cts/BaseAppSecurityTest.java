@@ -94,6 +94,7 @@ abstract class BaseAppSecurityTest extends BaseHostJUnit4Test {
         public InstallMultiple(boolean instant) {
             super(getDevice(), getBuild(), getAbi());
             addArg(instant ? "--instant" : "");
+            addArg("--force-queryable");
         }
     }
 }

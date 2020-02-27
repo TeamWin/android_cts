@@ -19,7 +19,7 @@ package android.quickaccesswallet;
 import android.app.Activity;
 
 /**
- * A simple activity.
+ * A simple activity that would show the wallet
  */
 public class QuickAccessWalletActivity extends Activity {
 }

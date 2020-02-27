@@ -25,11 +25,35 @@ android_test {
     ],
     srcs: [
         "src/**/*.java",
+        ":CtsBlobStoreTestsAidl",
     ],
     test_suites: [
         "cts",
         "vts",
         "general-tests",
     ],
-    platform_apis: true,
+    sdk_version: "test_current"
+}
+
+android_test_helper_app {
+    name: "CtsBlobStoreTestHelper",
+    defaults: ["cts_defaults"],
+    srcs: [
+        "helper-app/src/**/*.java",
+        ":CtsBlobStoreTestsAidl"
+    ],
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ],
+    manifest: "helper-app/AndroidManifest.xml",
+    sdk_version: "test_current"
+}
+
+filegroup {
+    name: "CtsBlobStoreTestsAidl",
+    srcs: [
+        "aidl/**/*.aidl",
+    ]
 }

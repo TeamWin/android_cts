@@ -53,6 +53,7 @@ import android.widget.TextView;
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -303,6 +304,7 @@ public class NavigationBarColorTest extends EndToEndImeTestBase {
                         DimmingTestMode.NO_DIMMING_DIALOG));
     }
 
+    @FlakyTest(bugId = 148768026)
     @Test
     public void testLightNavigationBar() throws Exception {
         final NavigationBarInfo info = NavigationBarInfo.getInstance();

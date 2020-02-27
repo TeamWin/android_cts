@@ -270,6 +270,8 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
             ImageReader previewReader = null;
             ImageReader jpegReader = null;
 
+            CaptureResult resultForNdk = null;
+
             SimpleImageReaderListener jpegListener = new SimpleImageReaderListener();
             SimpleImageReaderListener prevListener = new SimpleImageReaderListener();
             try {
@@ -368,11 +370,41 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
                         resultDiff, clockDiff);
                 mCollector.expectGreater("Timestamps must be increasing.", result3.second,
                         result4.second);
+
+                resultForNdk = result.first;
             } finally {
                 closeDevice(id);
                 closeImageReader(previewReader);
                 closeImageReader(jpegReader);
             }
+
+            mCollector.expectTrue(
+                "validateACameraMetadataFromCameraMetadataCriticalTagsNative failed",
+                validateACameraMetadataFromCameraMetadataCriticalTagsNative(resultForNdk,
+                        resultForNdk.get(CaptureResult.SENSOR_TIMESTAMP)));
+
+            long timestamp = resultForNdk.get(CaptureResult.SENSOR_TIMESTAMP);
+            mCollector.expectTrue(
+                "stashACameraMetadataFromCameraMetadataNative failed",
+                stashACameraMetadataFromCameraMetadataNative(resultForNdk));
+
+            // Try to drop the Java side object here
+            resultForNdk = null;
+            int[] block = null;
+            final int count = 9;
+            for (int i = 0; i < count + 1; i++) {
+                block = new int[1000000];
+                block[1000 + i] = i;
+
+                Runtime.getRuntime().gc();
+                Runtime.getRuntime().runFinalization();
+
+                mCollector.expectTrue("This should never fail", block[1000 + i] == i);
+            }
+            mCollector.expectTrue(
+                "validateStashedACameraMetadataFromCameraMetadataNative failed",
+                validateStashedACameraMetadataFromCameraMetadataNative(timestamp));
+            mCollector.expectTrue("This should never fail", block[1000 + count] == count);
         }
     }
 
@@ -544,11 +576,6 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
                 }
             }
         }
-
-        errorCollector.expectTrue(
-            "validateACameraMetadataFromCameraMetadataCriticalTagsNative failed",
-            validateACameraMetadataFromCameraMetadataCriticalTagsNative(result,
-                result.get(CaptureResult.SENSOR_TIMESTAMP)));
     }
 
     /*
@@ -923,6 +950,11 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
     // ACameraMetadata_fromCameraMetadata().
     private static native boolean validateACameraMetadataFromCameraMetadataCriticalTagsNative(
         CaptureResult result, long sensorTimestamp);
+
+    // First stash a native ACameraMetadata created from a capture result, then compare the stored value
+    // to the passed-in timestamp.
+    private static native boolean stashACameraMetadataFromCameraMetadataNative(CaptureResult result);
+    private static native boolean validateStashedACameraMetadataFromCameraMetadataNative(long timestamp);
 
     /**
      * TODO: Use CameraCharacteristics.getAvailableCaptureResultKeys() once we can filter out

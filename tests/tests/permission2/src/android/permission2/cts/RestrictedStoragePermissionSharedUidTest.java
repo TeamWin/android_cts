@@ -127,9 +127,9 @@ public class RestrictedStoragePermissionSharedUidTest {
 
         void install() {
             if (isRestricted) {
-                runShellCommand("pm install -g --restrict-permissions " + mApk);
+                runShellCommand("pm install -g --force-queryable --restrict-permissions " + mApk);
             } else {
-                runShellCommand("pm install -g " + mApk);
+                runShellCommand("pm install -g --force-queryable " + mApk);
             }
         }
 

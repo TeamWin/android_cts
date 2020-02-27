@@ -22,6 +22,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
 import android.stats.devicepolicy.EventId;
 
@@ -32,6 +33,9 @@ import com.android.tradefed.log.LogUtil.CLog;
 
 import org.junit.Ignore;
 import org.junit.Test;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Set of tests for Managed Profile use cases.
@@ -235,6 +239,9 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
 
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ParentProfileTest",
                 "testCannotCallAutoTimeMethodsOnParentProfile", mProfileUserId);
+
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ParentProfileTest",
+                "testCannotCallSetDefaultSmsApplicationOnParentProfile", mProfileUserId);
     }
 
     // TODO: This test is not specific to managed profiles, but applies to multi-user in general.
@@ -539,16 +546,19 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
                 mProfileUserId);
         // Non-unified case
         try {
-            changeUserCredential("1234", null, mProfileUserId);
+            changeUserCredential(TEST_PASSWORD, null, mProfileUserId);
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".TrustAgentInfoTest",
                     "testSetTrustAgentConfiguration_bothHaveTrustAgentConfigAndNonUnified",
                     mProfileUserId);
         } finally {
-            changeUserCredential(null, "1234", mProfileUserId);
+            changeUserCredential(null, TEST_PASSWORD, mProfileUserId);
         }
     }
 
+    // TODO(b/149580605): Fix this flaky test.
     @Test
+    @FlakyTest
+    @Ignore
     public void testSanityCheck() throws Exception {
         if (!mHasFeature) {
             return;
@@ -613,6 +623,49 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
 
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".UserManagerTest",
                 "testIsManagedProfileReturnsFalse", mPrimaryUserId);
+    }
+
+    @Test
+    public void testCanGetWorkShortcutIconDrawableFromPersonalProfile()
+            throws DeviceNotAvailableException {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".LauncherAppsTest",
+                "addDynamicShortcuts", mProfileUserId);
+        try {
+            Map<String, String> params = new HashMap<>();
+            params.put("otherProfileUserId", String.valueOf(mProfileUserId));
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".LauncherAppsTest",
+                    "shortcutIconDrawable_currentToOtherProfile_withUsersFullPermission_isNotNull",
+                    mPrimaryUserId, params);
+        } finally {
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".LauncherAppsTest",
+                    "removeAllDynamicShortcuts", mProfileUserId);
+        }
+    }
+
+    @Test
+    public void testCanGetPersonalShortcutIconDrawableFromWorkProfile()
+            throws DeviceNotAvailableException {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".LauncherAppsTest",
+                "addDynamicShortcuts", mPrimaryUserId);
+        try {
+            Map<String, String> params = new HashMap<>();
+            params.put("otherProfileUserId", String.valueOf(mPrimaryUserId));
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".LauncherAppsTest",
+                    "shortcutIconDrawable_currentToOtherProfile_withUsersFullPermission_isNotNull",
+                    mProfileUserId, params);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".LauncherAppsTest",
+                    "shortcutIconDrawable_currentToOtherProfile_withoutUsersFullPermission_isNull",
+                    mProfileUserId, params);
+        } finally {
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".LauncherAppsTest",
+                    "removeAllDynamicShortcuts", mPrimaryUserId);
+        }
     }
 
     private void changeUserRestrictionOrFail(String key, boolean value, int userId)

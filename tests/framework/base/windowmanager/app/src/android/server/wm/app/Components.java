@@ -17,8 +17,8 @@
 package android.server.wm.app;
 
 import android.content.ComponentName;
-import android.server.wm.component.ComponentsBase;
 import android.server.wm.TestJournalProvider;
+import android.server.wm.component.ComponentsBase;
 
 public class Components extends ComponentsBase {
     public static final ComponentName ALT_LAUNCHING_ACTIVITY = component("AltLaunchingActivity");
@@ -73,6 +73,7 @@ public class Components extends ComponentsBase {
     public static final ComponentName NO_HISTORY_ACTIVITY = component("NoHistoryActivity");
     public static final ComponentName NO_RELAUNCH_ACTIVITY = component("NoRelaunchActivity");
     public static final ComponentName NON_RESIZEABLE_ACTIVITY = component("NonResizeableActivity");
+    public static final ComponentName PRESENTATION_ACTIVITY = component("PresentationActivity");
     public static final ComponentName PIP_ACTIVITY = component("PipActivity");
     public static final ComponentName PIP_ACTIVITY2 = component("PipActivity2");
     public static final ComponentName PIP_ACTIVITY_WITH_SAME_AFFINITY =
@@ -203,6 +204,9 @@ public class Components extends ComponentsBase {
     public static final ComponentName POPUP_MPP_ACTIVITY =
             component("PopupMinimalPostProcessingActivity");
 
+    public static final ComponentName TEST_DREAM_SERVICE =
+            component("TestDream");
+
     /**
      * Action and extra key constants for {@link #INPUT_METHOD_TEST_ACTIVITY}.
      */
@@ -235,8 +239,10 @@ public class Components extends ComponentsBase {
         public static final String EXTRA_FIXED_ORIENTATION = "fixed_orientation";
         public static final String EXTRA_CONFIGURATION = "configuration";
         public static final String EXTRA_CONFIG_ASSETS_SEQ = "config_assets_seq";
+        public static final String EXTRA_INTENT = "intent";
         public static final String EXTRA_INTENTS = "intents";
         public static final String EXTRA_NO_IDLE = "no_idle";
+        public static final String COMMAND_NAVIGATE_UP_TO = "navigate_up_to";
         public static final String COMMAND_START_ACTIVITIES = "start_activities";
     }
 
@@ -466,6 +472,10 @@ public class Components extends ComponentsBase {
     public static class ClickableToastActivity {
         public static final String ACTION_TOAST_DISPLAYED = "toast_displayed";
         public static final String ACTION_TOAST_TAP_DETECTED = "toast_tap_detected";
+    }
+
+    public static class PresentationActivity {
+        public static final String KEY_DISPLAY_ID = "display_id";
     }
 
     private static ComponentName component(String className) {

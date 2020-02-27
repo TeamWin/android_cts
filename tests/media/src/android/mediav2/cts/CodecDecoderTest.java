@@ -525,6 +525,7 @@ public class CodecDecoderTest extends CodecTestBase {
                 if (mIsCodecInAsyncMode) mCodec.start();
                 queueCodecConfig(); /* flushed codec too soon after start, resubmit csd */
 
+                mExtractor.seekTo(0, mode);
                 doWork(23);
 
                 /* test flush in running state */

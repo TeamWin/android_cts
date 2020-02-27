@@ -19,10 +19,13 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
+import android.os.Build;
+import android.os.Process;
 import com.android.compatibility.common.util.DeviceInfoStore;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * PackageDeviceInfo collector.
@@ -30,7 +33,6 @@ import java.util.*;
 public class PackageDeviceInfo extends DeviceInfo {
 
     private static final String PACKAGE = "package";
-
     private static final String NAME = "name";
     private static final String VERSION_NAME = "version_name";
     private static final String SYSTEM_PRIV = "system_priv";
@@ -45,22 +47,22 @@ public class PackageDeviceInfo extends DeviceInfo {
     private static final String PERMISSION_PROTECTION = "protection_level";
     private static final String PERMISSION_PROTECTION_FLAGS = "protection_level_flags";
 
-    private static final int SYS_UID_MAX = 10000;
     private static final String HAS_SYSTEM_UID = "has_system_uid";
 
     private static final String SHARES_INSTALL_PERMISSION = "shares_install_packages_permission";
     private static final String INSTALL_PACKAGES_PERMISSION = "android.permission.INSTALL_PACKAGES";
 
+
     @Override
     protected void collectDeviceInfo(DeviceInfoStore store) throws Exception {
         final PackageManager pm = getContext().getPackageManager();
 
-        final List<PackageInfo> allPackages = pm.getInstalledPackages(PackageManager.GET_PERMISSIONS);
+        final List<PackageInfo> allPackages =
+                pm.getInstalledPackages(PackageManager.GET_PERMISSIONS);
 
         store.startArray(PACKAGE);
         for (PackageInfo pkg : allPackages) {
             store.startGroup();
-
             store.addResult(NAME, pkg.packageName);
             store.addResult(VERSION_NAME, pkg.versionName);
 
@@ -72,10 +74,7 @@ public class PackageDeviceInfo extends DeviceInfo {
 
                         store.startGroup();
                         store.addResult(PERMISSION_NAME, permission);
-                        store.addResult(PERMISSION_FLAGS, pi.flags);
-                        store.addResult(PERMISSION_GROUP, pi.group);
-                        store.addResult(PERMISSION_PROTECTION, pi.getProtection());
-                        store.addResult(PERMISSION_PROTECTION_FLAGS, pi.getProtectionFlags());
+                        writePermissionsDetails(pi, store);
                         store.endGroup();
                     } catch (PackageManager.NameNotFoundException e) {
                         // ignore unrecognized permission and continue
@@ -92,17 +91,17 @@ public class PackageDeviceInfo extends DeviceInfo {
                 store.addResult(MIN_SDK, appInfo.minSdkVersion);
                 store.addResult(TARGET_SDK, appInfo.targetSdkVersion);
 
-                store.addResult(HAS_SYSTEM_UID, appInfo.uid < SYS_UID_MAX);
+                store.addResult(HAS_SYSTEM_UID, appInfo.uid < Process.FIRST_APPLICATION_UID);
 
-                final boolean canInstall = sharesUidWithPackageHolding(pm, appInfo.uid, INSTALL_PACKAGES_PERMISSION);
+                final boolean canInstall = sharesUidWithInstallerPackage(pm, appInfo.uid);
                 store.addResult(SHARES_INSTALL_PERMISSION, canInstall);
             }
-
             store.endGroup();
         }
         store.endArray(); // "package"
     }
-    private static boolean sharesUidWithPackageHolding(PackageManager pm, int uid, String permission) {
+
+    private static boolean sharesUidWithInstallerPackage(PackageManager pm, int uid) {
         final String[] sharesUidWith = pm.getPackagesForUid(uid);
 
         if (sharesUidWith == null) {
@@ -110,7 +109,8 @@ public class PackageDeviceInfo extends DeviceInfo {
         }
 
         // Approx 20 permissions per package for rough estimate of sizing
-        final List<String> sharedPermissions = new ArrayList<>(sharesUidWith.length * 20);
+        final int capacity = sharesUidWith.length * 20;
+        final List<String> sharedPermissions = new ArrayList<>(capacity);
         for (String pkg :sharesUidWith){
             try {
                 final PackageInfo info = pm.getPackageInfo(pkg, PackageManager.GET_PERMISSIONS);
@@ -129,6 +129,28 @@ public class PackageDeviceInfo extends DeviceInfo {
             }
         }
 
-        return sharedPermissions.contains(permission);
+        return sharedPermissions.contains(PackageDeviceInfo.INSTALL_PACKAGES_PERMISSION);
+    }
+
+    private static void writePermissionsDetails(PermissionInfo pi, DeviceInfoStore store)
+            throws IOException {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            store.addResult(PERMISSION_FLAGS, pi.flags);
+        } else {
+            store.addResult(PERMISSION_FLAGS, 0);
+        }
+
+        store.addResult(PERMISSION_GROUP, pi.group);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            store.addResult(PERMISSION_PROTECTION, pi.getProtection());
+            store.addResult(PERMISSION_PROTECTION_FLAGS, pi.getProtectionFlags());
+        } else {
+            store.addResult(PERMISSION_PROTECTION,
+                    pi.protectionLevel & PermissionInfo.PROTECTION_MASK_BASE);
+            store.addResult(PERMISSION_PROTECTION_FLAGS,
+                    pi.protectionLevel & ~PermissionInfo.PROTECTION_MASK_BASE);
+        }
     }
 }
+

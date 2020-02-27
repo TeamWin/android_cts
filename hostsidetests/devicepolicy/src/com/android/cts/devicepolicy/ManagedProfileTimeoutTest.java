@@ -26,7 +26,6 @@ import org.junit.Test;
 import java.util.concurrent.TimeUnit;
 
 public class ManagedProfileTimeoutTest extends BaseManagedProfileTest {
-    private static final String PROFILE_CREDENTIAL = "1234";
     // This should be sufficiently larger than ProfileTimeoutTestHelper.TIMEOUT_MS
     private static final int PROFILE_TIMEOUT_DELAY_MS = 60_000;
 
@@ -92,10 +91,10 @@ public class ManagedProfileTimeoutTest extends BaseManagedProfileTest {
 
     private void setUpWorkProfileTimeout() throws DeviceNotAvailableException {
         // Set separate challenge.
-        changeUserCredential(PROFILE_CREDENTIAL, null, mProfileUserId);
+        changeUserCredential(TEST_PASSWORD, null, mProfileUserId);
 
         // Make sure the profile is not prematurely locked.
-        verifyUserCredential(PROFILE_CREDENTIAL, mProfileUserId);
+        verifyUserCredential(TEST_PASSWORD, mProfileUserId);
         verifyOnlyProfileLocked(false);
         // Set profile timeout to 5 seconds.
         runProfileTimeoutTest("testSetWorkProfileTimeout", mProfileUserId);

@@ -23,7 +23,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -241,26 +240,22 @@ public class SmsMessageTest {
             return;
         }
 
+        SmsMessage.SubmitPdu smsPdu;
         String scAddress = null, destinationAddress = null;
         String message = null;
         boolean statusReportRequested = false;
 
-        try {
-            // null message, null destination
-            SmsMessage.getSubmitPdu(scAddress, destinationAddress, message, statusReportRequested);
-            fail("Should throw NullPointerException");
-        } catch (NullPointerException expected) {
-            // expected
-        }
+        // Null message, null destination
+        smsPdu = SmsMessage.getSubmitPdu(scAddress, destinationAddress, message,
+                statusReportRequested);
+        assertNull(smsPdu);
 
         message = "This is a test message";
-        try {
-            // non-null message
-            SmsMessage.getSubmitPdu(scAddress, destinationAddress, message, statusReportRequested);
-            fail("Should throw NullPointerException");
-        } catch (NullPointerException expected) {
-            // expected
-        }
+
+        // Non-null message, null destination
+        smsPdu = SmsMessage.getSubmitPdu(scAddress, destinationAddress, message,
+                statusReportRequested);
+        assertNull(smsPdu);
 
         if (mTelephonyManager.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
             // TODO: temp workaround, OCTET encoding for EMS not properly supported
@@ -271,8 +266,8 @@ public class SmsMessageTest {
         destinationAddress = "18004664411";
         message = "This is a test message";
         statusReportRequested = false;
-        SmsMessage.SubmitPdu smsPdu =
-            SmsMessage.getSubmitPdu(scAddress, destinationAddress, message, statusReportRequested);
+        smsPdu = SmsMessage.getSubmitPdu(
+                scAddress, destinationAddress, message, statusReportRequested);
         assertNotNull(smsPdu);
 
         smsPdu = SmsMessage.getSubmitPdu(scAddress, destinationAddress, (short)80,

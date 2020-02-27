@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -32,6 +33,8 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.telephony.Annotation.RadioPowerState;
 import android.telephony.Annotation.SimActivationState;
+import android.telephony.BarringInfo;
+import android.telephony.CellIdentity;
 import android.telephony.CellInfo;
 import android.telephony.CellLocation;
 import android.telephony.PhoneStateListener;
@@ -50,15 +53,15 @@ import androidx.test.InstrumentationRegistry;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.TestThread;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
 
 public class PhoneStateListenerTest {
 
@@ -86,9 +89,12 @@ public class PhoneStateListenerTest {
     private boolean mOnRadioPowerStateChangedCalled;
     private boolean mVoiceActivationStateChangedCalled;
     private boolean mSrvccStateChangedCalled;
+    private boolean mOnBarringInfoChangedCalled;
     private boolean mSecurityExceptionThrown;
+    private boolean mOnRegistrationFailedCalled;
     @RadioPowerState private int mRadioPowerState;
     @SimActivationState private int mVoiceActivationState;
+    private BarringInfo mBarringInfo;
     private PreciseDataConnectionState mPreciseDataConnectionState;
     private PreciseCallState mPreciseCallState;
     private SignalStrength mSignalStrength;
@@ -116,6 +122,7 @@ public class PhoneStateListenerTest {
             PreciseCallState.PRECISE_CALL_STATE_NOT_VALID,
             PreciseCallState.PRECISE_CALL_STATE_WAITING
     );
+
     private Executor mSimpleExecutor = new Executor() {
         @Override
         public void execute(Runnable r) {
@@ -569,59 +576,6 @@ public class PhoneStateListenerTest {
         assertThat(mOnCallDisconnectCauseChangedCalled).isTrue();
     }
 
-    /**
-     * Validate SecurityException will be thrown if listen with
-     * LISTEN_CALL_DISCONNECT_CAUSES without READ_PRECISE_PHONE_STATE permission.
-     */
-    @Test
-    public void testOnCallDisconnectCauseChangedWithoutPermission() throws Throwable {
-        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
-            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
-            return;
-        }
-
-        TestThread t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-
-                mListener = new PhoneStateListener() {
-                    @Override
-                    public void onCallDisconnectCauseChanged(int disconnectCause,
-                                                             int preciseDisconnectCause) {
-                        synchronized (mLock) {
-                            mOnCallDisconnectCauseChangedCalled = true;
-                            mLock.notify();
-                        }
-                    }
-                };
-
-                try {
-                    mTelephonyManager.listen(mListener,
-                            PhoneStateListener.LISTEN_CALL_DISCONNECT_CAUSES);
-                } catch (SecurityException se) {
-                    mSecurityExceptionThrown = true;
-                    mLock.notify();
-                }
-                Looper.loop();
-            }
-        });
-
-        assertThat(mOnCallDisconnectCauseChangedCalled).isFalse();
-        t.start();
-
-        synchronized (mLock) {
-            if (!mSecurityExceptionThrown) {
-                mLock.wait(WAIT_TIME);
-            }
-        }
-        assertThat(mSecurityExceptionThrown).isTrue();
-        assertThat(mOnCallDisconnectCauseChangedCalled).isFalse();
-    }
-
-    /*
-     * The tests below rely on the framework to immediately call the installed listener upon
-     * registration. There is no simple way to emulate state changes for testing the listeners.
-     */
     @Test
     public void testOnImsCallDisconnectCauseChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
@@ -659,54 +613,6 @@ public class PhoneStateListenerTest {
         }
         t.checkException();
         assertThat(mOnImsCallDisconnectCauseChangedCalled).isTrue();
-    }
-
-    /**
-     * Validate that SecuirtyException should be thrown if listen with
-     * LISTEN_IMS_CALL_DISCONNECT_CAUSES without permission READ_PRECISE_PHONE_STATE.
-     */
-    @Test
-    public void testOnImsCallDisconnectCauseChangedWithoutPermission() throws Throwable {
-        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
-            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
-            return;
-        }
-
-        TestThread t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-
-                mListener = new PhoneStateListener() {
-                    @Override
-                    public void onImsCallDisconnectCauseChanged(ImsReasonInfo imsReason) {
-                        synchronized (mLock) {
-                            mOnImsCallDisconnectCauseChangedCalled = true;
-                            mLock.notify();
-                        }
-                    }
-                };
-
-                try {
-                    mTelephonyManager.listen(mListener,
-                            PhoneStateListener.LISTEN_IMS_CALL_DISCONNECT_CAUSES);
-                } catch (SecurityException se) {
-                    mSecurityExceptionThrown = true;
-                    mLock.notify();
-                }
-                Looper.loop();
-            }
-        });
-
-        assertThat(mOnImsCallDisconnectCauseChangedCalled).isFalse();
-        t.start();
-
-        synchronized (mLock) {
-            if (!mSecurityExceptionThrown) {
-                mLock.wait(WAIT_TIME);
-            }
-        }
-        assertThat(mSecurityExceptionThrown).isTrue();
-        assertThat(mOnImsCallDisconnectCauseChangedCalled).isFalse();
     }
 
     @Test
@@ -879,61 +785,29 @@ public class PhoneStateListenerTest {
         }
         t.checkException();
         assertThat(mOnPreciseDataConnectionStateChanged).isTrue();
-        assertThat(mPreciseDataConnectionState.getDataConnectionState())
+        assertThat(mPreciseDataConnectionState.getState())
                 .isIn(DATA_CONNECTION_STATE);
-        // basic test to verify there is no exception thrown.
+
+        // Ensure that no exceptions are thrown
+        mPreciseDataConnectionState.getNetworkType();
+        mPreciseDataConnectionState.getLinkProperties();
+        mPreciseDataConnectionState.getLastCauseCode();
+        mPreciseDataConnectionState.getLinkProperties();
+        mPreciseDataConnectionState.getApnSetting();
+
+        // Deprecated in R
+        assertEquals(mPreciseDataConnectionState.getDataConnectionState(),
+                mPreciseDataConnectionState.getState());
+        assertEquals(mPreciseDataConnectionState.getDataConnectionNetworkType(),
+                mPreciseDataConnectionState.getNetworkType());
+        assertEquals(mPreciseDataConnectionState.getDataConnectionFailCause(),
+                mPreciseDataConnectionState.getLastCauseCode());
+        assertEquals(mPreciseDataConnectionState.getDataConnectionLinkProperties(),
+                mPreciseDataConnectionState.getLinkProperties());
+
+        // Superseded in R by getApnSetting()
         mPreciseDataConnectionState.getDataConnectionApnTypeBitMask();
         mPreciseDataConnectionState.getDataConnectionApn();
-        mPreciseDataConnectionState.getDataConnectionFailCause();
-    }
-
-    /**
-     * Validate that SecurityException should be thrown when listen
-     * with LISTEN_PRECISE_DATA_CONNECTION_STATE without READ_PRECISE_PHONE_STATE permission.
-     */
-    @Test
-    public void testOnPreciseDataConnectionStateChangedWithoutPermission() throws Throwable {
-        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
-            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
-            return;
-        }
-
-        TestThread t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-
-                mListener = new PhoneStateListener() {
-                    @Override
-                    public void onPreciseDataConnectionStateChanged(
-                            PreciseDataConnectionState state) {
-                        synchronized (mLock) {
-                            mOnPreciseDataConnectionStateChanged = true;
-                            mLock.notify();
-                        }
-                    }
-                };
-
-                try {
-                    mTelephonyManager.listen(mListener,
-                            PhoneStateListener.LISTEN_PRECISE_DATA_CONNECTION_STATE);
-                } catch (SecurityException se) {
-                    mSecurityExceptionThrown = true;
-                    mLock.notify();
-                }
-                Looper.loop();
-            }
-        });
-
-        assertThat(mOnCallDisconnectCauseChangedCalled).isFalse();
-        t.start();
-
-        synchronized (mLock) {
-            if (!mSecurityExceptionThrown) {
-                mLock.wait(WAIT_TIME);
-            }
-        }
-        assertThat(mSecurityExceptionThrown).isTrue();
-        assertThat(mOnPreciseDataConnectionStateChanged).isFalse();
     }
 
     @Test
@@ -1316,5 +1190,151 @@ public class PhoneStateListenerTest {
         }
         t.checkException();
         assertTrue(mOnActiveDataSubscriptionIdChanged);
+    }
+
+    @Test
+    public void testOnBarringInfoChanged() throws Throwable {
+        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
+            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
+            return;
+        }
+
+        TestThread t = new TestThread(new Runnable() {
+            public void run() {
+                Looper.prepare();
+
+                mListener = new PhoneStateListener() {
+                    @Override
+                    public void onBarringInfoChanged(BarringInfo barringInfo) {
+                        synchronized (mLock) {
+                            mOnBarringInfoChangedCalled = true;
+                            mLock.notify();
+                        }
+                    }
+                };
+                mTelephonyManager.listen(
+                        mListener, PhoneStateListener.LISTEN_BARRING_INFO);
+
+                Looper.loop();
+            }
+        });
+
+        assertFalse(mOnBarringInfoChangedCalled);
+        t.start();
+
+        synchronized (mLock) {
+            if (!mOnBarringInfoChangedCalled) {
+                mLock.wait(WAIT_TIME);
+            }
+        }
+        t.checkException();
+        assertTrue(mOnBarringInfoChangedCalled);
+
+        assertBarringInfoSane(mBarringInfo);
+    }
+
+    private static final int[] sBarringServiceInfoTypes = new int[] {
+            BarringInfo.BARRING_SERVICE_TYPE_CS_SERVICE,
+            BarringInfo.BARRING_SERVICE_TYPE_PS_SERVICE,
+            BarringInfo.BARRING_SERVICE_TYPE_CS_VOICE,
+            BarringInfo.BARRING_SERVICE_TYPE_MO_SIGNALLING,
+            BarringInfo.BARRING_SERVICE_TYPE_MO_DATA,
+            BarringInfo.BARRING_SERVICE_TYPE_CS_FALLBACK,
+            BarringInfo.BARRING_SERVICE_TYPE_MMTEL_VOICE,
+            BarringInfo.BARRING_SERVICE_TYPE_MMTEL_VIDEO,
+            BarringInfo.BARRING_SERVICE_TYPE_EMERGENCY,
+            BarringInfo.BARRING_SERVICE_TYPE_SMS
+    };
+
+    private static void assertBarringInfoSane(BarringInfo barringInfo) {
+        assertNotNull(barringInfo);
+
+        // Flags to track whether we have had unknown and known barring types reported
+        boolean hasBarringTypeUnknown = false;
+        boolean hasBarringTypeKnown = false;
+
+        for (int bsiType : sBarringServiceInfoTypes) {
+            BarringInfo.BarringServiceInfo bsi = barringInfo.getBarringServiceInfo(bsiType);
+            assertNotNull(bsi);
+            switch (bsi.getBarringType()) {
+                case BarringInfo.BarringServiceInfo.BARRING_TYPE_UNKNOWN:
+                    hasBarringTypeUnknown = true;
+                    assertFalse(bsi.isConditionallyBarred());
+                    assertEquals(0, bsi.getConditionalBarringFactor());
+                    assertEquals(0, bsi.getConditionalBarringTimeSeconds());
+                    break;
+
+                case BarringInfo.BarringServiceInfo.BARRING_TYPE_NONE:
+                case BarringInfo.BarringServiceInfo.BARRING_TYPE_UNCONDITIONAL:
+                    hasBarringTypeKnown = true;
+                    // Unless conditional barring is active, all conditional barring fields
+                    // should be "unset".
+                    assertFalse(bsi.isConditionallyBarred());
+                    assertEquals(0, bsi.getConditionalBarringFactor());
+                    assertEquals(0, bsi.getConditionalBarringTimeSeconds());
+                    break;
+
+                case BarringInfo.BarringServiceInfo.BARRING_TYPE_CONDITIONAL:
+                    hasBarringTypeKnown = true;
+                    // If conditional barring is active, then the barring time and factor must
+                    // be known (set), but the device may or may not be barred at the moment,
+                    // so isConditionallyBarred() can be either true or false (hence not checked).
+                    assertNotEquals(0, bsi.getConditionalBarringFactor());
+                    assertNotEquals(0, bsi.getConditionalBarringTimeSeconds());
+                    break;
+            }
+        }
+        // If any barring type is unknown, then barring is not supported so all must be
+        // unknown. If any type is known, then all that are not reported are assumed to
+        // be not barred.
+        assertNotEquals(hasBarringTypeUnknown, hasBarringTypeKnown);
+    }
+
+    @Test
+    public void testOnRegistrationFailed() throws Throwable {
+        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
+            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
+            return;
+        }
+
+        TestThread t = new TestThread(new Runnable() {
+            public void run() {
+                Looper.prepare();
+
+                mListener = new PhoneStateListener() {
+                    @Override
+                    public void onRegistrationFailed(CellIdentity cid, String chosenPlmn,
+                            int domain, int causeCode, int additionalCauseCode) {
+                        synchronized (mLock) {
+                            mOnRegistrationFailedCalled = true;
+                            mLock.notify();
+                        }
+                    }
+                };
+                mTelephonyManager.listen(
+                        mListener, PhoneStateListener.LISTEN_REGISTRATION_FAILURE);
+
+                Looper.loop();
+            }
+        });
+
+        assertFalse(mOnBarringInfoChangedCalled);
+        t.start();
+
+        synchronized (mLock) {
+            if (!mOnBarringInfoChangedCalled) {
+                mLock.wait(WAIT_TIME);
+            }
+        }
+        t.checkException();
+
+        // Assert that in the WAIT_TIME interval, the listener wasn't invoked. While this is
+        // **technically** a flaky test, in practice this flake should happen approximately never
+        // as it would mean that a registered phone is failing to reselect during CTS at this
+        // exact moment.
+        //
+        // What the test is verifying is that there is no "auto" callback for registration
+        // failure because unlike other PSL registrants, this one is not called upon registration.
+        assertFalse(mOnRegistrationFailedCalled);
     }
 }

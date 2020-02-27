@@ -143,12 +143,13 @@
             android:foregroundServiceType="mediaProjection"
             android:enabled="true">
         </service>
-        <service android:name=".SampleMediaRoute2ProviderService"
+        <service android:name=".StubMediaRoute2ProviderService"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.media.MediaRoute2ProviderService" />
             </intent-filter>
        </service>
+       <receiver android:name="android.media.cts.MediaButtonReceiver" />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

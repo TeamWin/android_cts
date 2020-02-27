@@ -22,8 +22,6 @@ import org.junit.runner.RunWith;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class DataPersistenceTest extends BaseBlobStoreHostTest {
-    private static final String TARGET_APK = "CtsBlobStoreHelperApp.apk";
-    private static final String TARGET_PKG = "com.android.cts.blob.helper";
     private static final String TEST_CLASS = TARGET_PKG + ".DataPersistenceTest";
 
     @Test

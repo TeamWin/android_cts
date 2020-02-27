@@ -145,55 +145,58 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testSetSecurityLoggingEnabled_failIfNotDeviceOwner() {
+    public void testSetSecurityLoggingEnabled_failIfNotOrganizationOwnedProfileOwner() {
         if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping testSetSecurityLoggingEnabled_failIfNotDeviceOwner");
+            Log.w(TAG, "Skipping testSetSecurityLoggingEnabled_"
+                    + "failIfNotOrganizationOwnedProfileOwner");
             return;
         }
         try {
             mDevicePolicyManager.setSecurityLoggingEnabled(mComponent, true);
             fail("did not throw expected SecurityException");
         } catch (SecurityException e) {
-            assertDeviceOwnerMessage(e.getMessage());
+            assertOrganizationOwnedProfileOwnerMessage(e.getMessage());
         }
     }
 
-    public void testIsSecurityLoggingEnabled_failIfNotDeviceOwner() {
+    public void testIsSecurityLoggingEnabled_failIfNotOrganizationOwnedProfileOwner() {
         if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping testIsSecurityLoggingEnabled_failIfNotDeviceOwner");
+            Log.w(TAG, "Skipping testIsSecurityLoggingEnabled_"
+                    + "failIfNotOrganizationOwnedProfileOwner");
             return;
         }
         try {
             mDevicePolicyManager.isSecurityLoggingEnabled(mComponent);
             fail("did not throw expected SecurityException");
         } catch (SecurityException e) {
-            assertDeviceOwnerMessage(e.getMessage());
+            assertOrganizationOwnedProfileOwnerMessage(e.getMessage());
         }
     }
 
-    public void testRetrieveSecurityLogs_failIfNotDeviceOwner() {
+    public void testRetrieveSecurityLogs_failIfNotOrganizationOwnedProfileOwner() {
         if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping testRetrieveSecurityLogs_failIfNotDeviceOwner");
+            Log.w(TAG, "Skipping testRetrieveSecurityLogs_failIfNotOrganizationOwnedProfileOwner");
             return;
         }
         try {
             mDevicePolicyManager.retrieveSecurityLogs(mComponent);
             fail("did not throw expected SecurityException");
         } catch (SecurityException e) {
-            assertDeviceOwnerMessage(e.getMessage());
+            assertOrganizationOwnedProfileOwnerMessage(e.getMessage());
         }
     }
 
-    public void testRetrievePreRebootSecurityLogs_failIfNotDeviceOwner() {
+    public void testRetrievePreRebootSecurityLogs_failIfNotOrganizationOwnedProfileOwner() {
         if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping testRetrievePreRebootSecurityLogs_failIfNotDeviceOwner");
+            Log.w(TAG, "Skipping testRetrievePreRebootSecurityLogs_"
+                    + "failIfNotOrganizationOwnedProfileOwner");
             return;
         }
         try {
             mDevicePolicyManager.retrievePreRebootSecurityLogs(mComponent);
             fail("did not throw expected SecurityException");
         } catch (SecurityException e) {
-            assertDeviceOwnerMessage(e.getMessage());
+            assertOrganizationOwnedProfileOwnerMessage(e.getMessage());
         }
     }
 
@@ -281,20 +284,6 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         }
         try {
             mDevicePolicyManager.setLocationEnabled(mComponent, true);
-            fail("did not throw expected SecurityException");
-        } catch (SecurityException e) {
-            assertDeviceOwnerMessage(e.getMessage());
-        }
-    }
-
-    public void testRequestSetLocationProviderEnabled_failIfNotDeviceOwner() {
-        if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping testRequestSetLocationProviderEnabled_failIfNotDeviceOwner");
-            return;
-        }
-        try {
-            mDevicePolicyManager.requestSetLocationProviderAllowed(mComponent, "test_provider",
-                    true);
             fail("did not throw expected SecurityException");
         } catch (SecurityException e) {
             assertDeviceOwnerMessage(e.getMessage());

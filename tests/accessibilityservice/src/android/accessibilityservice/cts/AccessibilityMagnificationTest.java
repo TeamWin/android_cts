@@ -313,7 +313,7 @@ public class AccessibilityMagnificationTest {
             final Rect boundsInScreen = new Rect();
             final DisplayMetrics displayMetrics = new DisplayMetrics();
             buttonNode.getBoundsInScreen(boundsInScreen);
-            mInstrumentation.getContext().getDisplay().getMetrics(displayMetrics);
+            activity.getDisplay().getMetrics(displayMetrics);
             final Rect displayRect = new Rect(0, 0,
                     displayMetrics.widthPixels, displayMetrics.heightPixels);
             // The boundsInScreen of button is adjusted to outside of screen by framework,

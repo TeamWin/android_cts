@@ -131,6 +131,7 @@ public class CarrierApiTest extends AndroidTestCase {
     private static final String ALPHA_TAG_B = "tagB";
     private static final String NUMBER_A = "1234567890";
     private static final String NUMBER_B = "0987654321";
+    private static final String TESTING_PLMN = "12345";
 
     private static final int DSDS_PHONE_COUNT = 2;
 
@@ -485,6 +486,7 @@ public class CarrierApiTest extends AndroidTestCase {
             mTelephonyManager.getVoiceMailAlphaTag();
             mTelephonyManager.getForbiddenPlmns();
             mTelephonyManager.getServiceState();
+            mTelephonyManager.getManualNetworkSelectionPlmn();
             mTelephonyManager.setForbiddenPlmns(new ArrayList<String>());
         } catch (SecurityException e) {
             failMessage();
@@ -538,26 +540,63 @@ public class CarrierApiTest extends AndroidTestCase {
         }
     }
 
+    static final int READ_PHONE_STATE_LISTENERS =
+            PhoneStateListener.LISTEN_CALL_FORWARDING_INDICATOR
+                    | PhoneStateListener.LISTEN_MESSAGE_WAITING_INDICATOR
+                    | PhoneStateListener.LISTEN_EMERGENCY_NUMBER_LIST;
+
+    static final int READ_PRECISE_PHONE_STATE_LISTENERS =
+            PhoneStateListener.LISTEN_PRECISE_DATA_CONNECTION_STATE
+                    | PhoneStateListener.LISTEN_CALL_DISCONNECT_CAUSES
+                    | PhoneStateListener.LISTEN_IMS_CALL_DISCONNECT_CAUSES
+                    | PhoneStateListener.LISTEN_REGISTRATION_FAILURE
+                    | PhoneStateListener.LISTEN_BARRING_INFO;
+
+    static final int CARRIER_PRIVILEGE_LISTENERS =
+            READ_PHONE_STATE_LISTENERS | READ_PRECISE_PHONE_STATE_LISTENERS;
+
+    public void testGetManualNetworkSelectionPlmnPersisted() throws Exception {
+        if (!hasCellular) return;
+
+        try {
+            mTelephonyManager.setNetworkSelectionModeManual(
+                     TESTING_PLMN/* operatorNumeric */, true /* persistSelection */);
+            String plmn = mTelephonyManager.getManualNetworkSelectionPlmn();
+            assertEquals(TESTING_PLMN, plmn);
+        } finally {
+            mTelephonyManager.setNetworkSelectionModeAutomatic();
+        }
+    }
+
     public void testPhoneStateListener() throws Exception {
         if (!hasCellular) return;
-        final AtomicReference<SecurityException> error = new AtomicReference<>();
-        final CountDownLatch latch = new CountDownLatch(1);
-        new Handler(mListenerThread.getLooper()).post(() -> {
-            PhoneStateListener listener = new PhoneStateListener() {};
-            try {
-                mTelephonyManager.listen(
-                        listener, PhoneStateListener.LISTEN_MESSAGE_WAITING_INDICATOR);
-                mTelephonyManager.listen(
-                        listener, PhoneStateListener.LISTEN_CALL_FORWARDING_INDICATOR);
-            } catch (SecurityException e) {
-                error.set(e);
-            } finally {
-                mTelephonyManager.listen(listener, PhoneStateListener.LISTEN_NONE);
-                latch.countDown();
-            }
-        });
-        assertTrue("Test timed out", latch.await(30L, TimeUnit.SECONDS));
-        if (error.get() != null) {
+        PhoneStateListener psl = new PhoneStateListener((Runnable r) -> { });
+        try {
+            mTelephonyManager.listen(psl, CARRIER_PRIVILEGE_LISTENERS);
+        } finally {
+            mTelephonyManager.listen(psl, PhoneStateListener.LISTEN_NONE);
+        }
+    }
+
+    public void testIsManualNetworkSelectionAllowed() throws Exception {
+        if (!hasCellular) return;
+
+        try {
+            assertTrue(mTelephonyManager.isManualNetworkSelectionAllowed());
+        } catch (SecurityException e) {
+            failMessage();
+        }
+    }
+
+    public void testGetNetworkSelectionMode() throws Exception {
+        if (!hasCellular) return;
+
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.setNetworkSelectionModeAutomatic());
+            int networkMode = mTelephonyManager.getNetworkSelectionMode();
+            assertEquals(TelephonyManager.NETWORK_SELECTION_MODE_AUTO, networkMode);
+        } catch (SecurityException e) {
             failMessage();
         }
     }

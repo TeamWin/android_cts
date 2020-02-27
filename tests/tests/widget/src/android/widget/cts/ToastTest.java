@@ -650,6 +650,21 @@ public class ToastTest {
         assertNotShowCustomToast(view);
     }
 
+    @UiThreadTest
+    @Test
+    public void testGetWindowParams_whenTextToast_returnsNull() {
+        Toast toast = Toast.makeText(mContext, "Text", Toast.LENGTH_LONG);
+        assertNull(toast.getWindowParams());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testGetWindowParams_whenCustomToast_doesNotReturnNull() {
+        Toast toast = new Toast(mContext);
+        toast.setView(new TextView(mContext));
+        assertNotNull(toast.getWindowParams());
+    }
+
     private void runOnMainAndDrawSync(@NonNull final View toastView,
             @Nullable final Runnable runner) {
         final CountDownLatch latch = new CountDownLatch(1);

@@ -234,14 +234,16 @@ public class KeyAttestationTest extends AndroidTestCase {
         KeyGenParameterSpec.Builder builder =
             new KeyGenParameterSpec.Builder(keystoreAlias, PURPOSE_SIGN)
                     .setAlgorithmParameterSpec(new ECGenParameterSpec("secp256r1"))
-                    .setDigests(DIGEST_NONE, DIGEST_SHA256, DIGEST_SHA512)
                     .setAttestationChallenge(new byte[128])
                     .setKeyValidityStart(now)
                     .setKeyValidityForOriginationEnd(originationEnd)
                     .setKeyValidityForConsumptionEnd(consumptionEnd);
 
         if (TestUtils.hasStrongBox(getContext())) {
+            builder.setDigests(DIGEST_NONE, DIGEST_SHA256);
             builder.setIsStrongBoxBacked(true);
+        } else {
+            builder.setDigests(DIGEST_NONE, DIGEST_SHA256, DIGEST_SHA512);
         }
 
         generateKeyPair(KEY_ALGORITHM_EC, builder.build());
@@ -251,7 +253,7 @@ public class KeyAttestationTest extends AndroidTestCase {
 
         try {
             Certificate certificates[] = keyStore.getCertificateChain(keystoreAlias);
-            verifyCertificateChain(certificates);
+            verifyCertificateChain(certificates, TestUtils.hasStrongBox(getContext()));
 
             X509Certificate attestationCert = (X509Certificate) certificates[0];
             checkDeviceLocked(new Attestation(attestationCert));
@@ -392,7 +394,10 @@ public class KeyAttestationTest extends AndroidTestCase {
                     .setKeyValidityForConsumptionEnd(consumptionEnd);
 
         if (TestUtils.hasStrongBox(getContext())) {
+            builder.setDigests(DIGEST_NONE, DIGEST_SHA256);
             builder.setIsStrongBoxBacked(true);
+        } else {
+            builder.setDigests(DIGEST_NONE, DIGEST_SHA256, DIGEST_SHA512);
         }
 
         generateKeyPair(KEY_ALGORITHM_RSA, builder.build());
@@ -402,7 +407,7 @@ public class KeyAttestationTest extends AndroidTestCase {
 
         try {
             Certificate certificates[] = keyStore.getCertificateChain(keystoreAlias);
-            verifyCertificateChain(certificates);
+            verifyCertificateChain(certificates, TestUtils.hasStrongBox(getContext()));
 
             X509Certificate attestationCert = (X509Certificate) certificates[0];
             checkDeviceLocked(new Attestation(attestationCert));
@@ -504,7 +509,7 @@ public class KeyAttestationTest extends AndroidTestCase {
 
         try {
             Certificate certificates[] = keyStore.getCertificateChain(keystoreAlias);
-            verifyCertificateChain(certificates);
+            verifyCertificateChain(certificates, false /* expectStrongBox */);
 
             X509Certificate attestationCert = (X509Certificate) certificates[0];
             Attestation attestation = new Attestation(attestationCert);
@@ -558,7 +563,7 @@ public class KeyAttestationTest extends AndroidTestCase {
 
         try {
             Certificate certificates[] = keyStore.getCertificateChain(keystoreAlias);
-            verifyCertificateChain(certificates);
+            verifyCertificateChain(certificates, false /* expectStrongBox */);
 
             X509Certificate attestationCert = (X509Certificate) certificates[0];
             Attestation attestation = new Attestation(attestationCert);
@@ -1076,7 +1081,7 @@ public class KeyAttestationTest extends AndroidTestCase {
         keyPairGenerator.generateKeyPair();
     }
 
-    private void verifyCertificateChain(Certificate[] certChain)
+    private void verifyCertificateChain(Certificate[] certChain, boolean expectStrongBox)
             throws GeneralSecurityException {
         assertNotNull(certChain);
         for (int i = 1; i < certChain.length; ++i) {
@@ -1107,14 +1112,15 @@ public class KeyAttestationTest extends AndroidTestCase {
                     assertEquals(signedCertSubject, new X500Name("CN=Android Keystore Key"));
                 } else {
                     // Only strongbox implementations should have strongbox in the subject line
-                    assertFalse(x509CurrCert.getSubjectDN()
-                                            .getName()
-                                            .toLowerCase()
-                                            .contains("strongbox"));
+                    assertEquals(expectStrongBox, x509CurrCert.getSubjectDN()
+                                                              .getName()
+                                                              .toLowerCase()
+                                                              .contains("strongbox"));
                 }
             } catch (InvalidKeyException | CertificateException | NoSuchAlgorithmException
                     | NoSuchProviderException | SignatureException e) {
-                throw new GeneralSecurityException("Failed to verify certificate "
+                throw new GeneralSecurityException("Using StrongBox: " + expectStrongBox + "\n"
+                        + "Failed to verify certificate "
                         + certChain[i - 1] + " with public key " + certChain[i].getPublicKey(), e);
             }
         }

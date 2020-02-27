@@ -25,6 +25,7 @@ android_test {
         "guava",
         "junit",
     ],
+    jni_uses_platform_apis: true,
     jni_libs: [
         "libcts_jni",
         "libctsos_jni",

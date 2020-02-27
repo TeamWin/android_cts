@@ -43,36 +43,36 @@ public class NativeImageReaderTest extends Camera2AndroidTestCase {
     @Test
     public void testJpeg() {
         assertTrue("testJpeg fail, see log for details",
-                testJpegNative(mDebugFileNameBase));
+                testJpegNative(mDebugFileNameBase, mOverrideCameraId));
     }
 
     @Test
     public void testY8() {
         assertTrue("testY8 fail, see log for details",
-                testY8Native(mDebugFileNameBase));
+                testY8Native(mDebugFileNameBase, mOverrideCameraId));
     }
 
     @Test
     public void testHeic() {
         assertTrue("testHeic fail, see log for details",
-                testHeicNative(mDebugFileNameBase));
+                testHeicNative(mDebugFileNameBase, mOverrideCameraId));
     }
 
     @Test
     public void testDepthJpeg() {
         assertTrue("testDepthJpeg fail, see log for details",
-                testDepthJpegNative(mDebugFileNameBase));
+                testDepthJpegNative(mDebugFileNameBase, mOverrideCameraId));
     }
 
     @Test
     public void testImageReaderCloseAcquiredImages() {
         assertTrue("testImageReaderClose fail, see log for details",
-                testImageReaderCloseAcquiredImagesNative());
+                testImageReaderCloseAcquiredImagesNative(mOverrideCameraId));
     }
 
-    private static native boolean testJpegNative(String filePath);
-    private static native boolean testY8Native(String filePath);
-    private static native boolean testHeicNative(String filePath);
-    private static native boolean testDepthJpegNative(String filePath);
-    private static native boolean testImageReaderCloseAcquiredImagesNative();
+    private static native boolean testJpegNative(String filePath, String overrideCameraId);
+    private static native boolean testY8Native(String filePath, String overrideCameraId);
+    private static native boolean testHeicNative(String filePath, String overrideCameraId);
+    private static native boolean testDepthJpegNative(String filePath, String overrideCameraId);
+    private static native boolean testImageReaderCloseAcquiredImagesNative(String overrideCameraId);
 }

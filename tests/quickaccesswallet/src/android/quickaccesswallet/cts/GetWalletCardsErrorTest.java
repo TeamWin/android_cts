@@ -22,14 +22,12 @@ import static com.google.common.truth.Truth.assertThat;
 import android.content.Context;
 import android.graphics.drawable.Icon;
 import android.os.Parcel;
-import android.quickaccesswallet.QuickAccessWalletActivity;
 import android.service.quickaccesswallet.GetWalletCardsError;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.rule.ActivityTestRule;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -39,19 +37,15 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class GetWalletCardsErrorTest {
 
-    @Rule
-    public ActivityTestRule<QuickAccessWalletActivity> mActivityRule =
-            new ActivityTestRule<>(QuickAccessWalletActivity.class);
-
     private Context mContext;
 
     @Before
     public void setup() {
-        mContext = mActivityRule.getActivity().getApplicationContext();
+        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
     }
 
     @Test
-    public void parcel_toParcel() {
+    public void testParcel_toParcel() {
         Icon icon = Icon.createWithResource(mContext, android.R.drawable.ic_dialog_info);
         GetWalletCardsError error = new GetWalletCardsError(icon, "error");
 
@@ -64,7 +58,7 @@ public class GetWalletCardsErrorTest {
     }
 
     @Test
-    public void parcel_withNullIcon_toParcel() {
+    public void testParcel_withNullIcon_toParcel() {
         GetWalletCardsError error = new GetWalletCardsError(null, "error");
 
         Parcel p = Parcel.obtain();
@@ -76,7 +70,7 @@ public class GetWalletCardsErrorTest {
     }
 
     @Test
-    public void parcel_withNullIconAndMessage_toParcel() {
+    public void testParcel_withNullIconAndMessage_toParcel() {
         GetWalletCardsError error = new GetWalletCardsError(null, null);
 
         Parcel p = Parcel.obtain();

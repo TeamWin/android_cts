@@ -21,6 +21,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraConstrainedHighSpeedCaptureSession;
@@ -37,6 +38,8 @@ import android.hardware.camera2.params.InputConfiguration;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.cts.helpers.CameraUtils;
 import android.hardware.camera2.params.MeteringRectangle;
+import android.hardware.camera2.params.MandatoryStreamCombination;
+import android.hardware.camera2.params.MandatoryStreamCombination.MandatoryStreamInformation;
 import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.camera2.params.SessionConfiguration;
 import android.hardware.camera2.params.StreamConfigurationMap;
@@ -77,7 +80,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -196,6 +201,114 @@ public class CameraTestUtils extends Assert {
         ImageWriter writer = ImageWriter.newInstance(inputSurface, maxImages);
         writer.setOnImageReleasedListener(listener, handler);
         return writer;
+    }
+
+    public static void setupConfigurationTargets(List<MandatoryStreamInformation> streamsInfo,
+            List<SurfaceTexture> privTargets, List<ImageReader> jpegTargets,
+            List<ImageReader> yuvTargets, List<ImageReader> y8Targets,
+            List<ImageReader> rawTargets, List<ImageReader> heicTargets,
+            List<OutputConfiguration> outputConfigs,
+            int numBuffers, boolean substituteY8, boolean substituteHeic,
+            String overridePhysicalCameraId, Handler handler) {
+
+        ImageDropperListener imageDropperListener = new ImageDropperListener();
+
+        for (MandatoryStreamInformation streamInfo : streamsInfo) {
+            if (streamInfo.isInput()) {
+                continue;
+            }
+            int format = streamInfo.getFormat();
+            if (substituteY8 && (format == ImageFormat.YUV_420_888)) {
+                format = ImageFormat.Y8;
+            } else if (substituteHeic && (format == ImageFormat.JPEG)) {
+                format = ImageFormat.HEIC;
+            }
+            Surface newSurface;
+            Size[] availableSizes = new Size[streamInfo.getAvailableSizes().size()];
+            availableSizes = streamInfo.getAvailableSizes().toArray(availableSizes);
+            Size targetSize = CameraTestUtils.getMaxSize(availableSizes);
+
+            switch (format) {
+                case ImageFormat.PRIVATE: {
+                    SurfaceTexture target = new SurfaceTexture(/*random int*/1);
+                    target.setDefaultBufferSize(targetSize.getWidth(), targetSize.getHeight());
+                    OutputConfiguration config = new OutputConfiguration(new Surface(target));
+                    if (overridePhysicalCameraId != null) {
+                        config.setPhysicalCameraId(overridePhysicalCameraId);
+                    }
+                    outputConfigs.add(config);
+                    privTargets.add(target);
+                    break;
+                }
+                case ImageFormat.JPEG: {
+                    ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
+                            targetSize.getHeight(), format, numBuffers);
+                    target.setOnImageAvailableListener(imageDropperListener, handler);
+                    OutputConfiguration config = new OutputConfiguration(target.getSurface());
+                    if (overridePhysicalCameraId != null) {
+                        config.setPhysicalCameraId(overridePhysicalCameraId);
+                    }
+                    outputConfigs.add(config);
+                    jpegTargets.add(target);
+                    break;
+                }
+                case ImageFormat.YUV_420_888: {
+                    ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
+                            targetSize.getHeight(), format, numBuffers);
+                    target.setOnImageAvailableListener(imageDropperListener, handler);
+                    OutputConfiguration config = new OutputConfiguration(target.getSurface());
+                    if (overridePhysicalCameraId != null) {
+                        config.setPhysicalCameraId(overridePhysicalCameraId);
+                    }
+                    outputConfigs.add(config);
+                    yuvTargets.add(target);
+                    break;
+                }
+                case ImageFormat.Y8: {
+                    ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
+                            targetSize.getHeight(), format, numBuffers);
+                    target.setOnImageAvailableListener(imageDropperListener, handler);
+                    OutputConfiguration config = new OutputConfiguration(target.getSurface());
+                    if (overridePhysicalCameraId != null) {
+                        config.setPhysicalCameraId(overridePhysicalCameraId);
+                    }
+                    outputConfigs.add(config);
+                    y8Targets.add(target);
+                    break;
+                }
+                case ImageFormat.RAW_SENSOR: {
+                    // targetSize could be null in the logical camera case where only
+                    // physical camera supports RAW stream.
+                    if (targetSize != null) {
+                        ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
+                                targetSize.getHeight(), format, numBuffers);
+                        target.setOnImageAvailableListener(imageDropperListener, handler);
+                        OutputConfiguration config =
+                                new OutputConfiguration(target.getSurface());
+                        if (overridePhysicalCameraId != null) {
+                            config.setPhysicalCameraId(overridePhysicalCameraId);
+                        }
+                        outputConfigs.add(config);
+                        rawTargets.add(target);
+                    }
+                    break;
+                }
+                case ImageFormat.HEIC: {
+                    ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
+                            targetSize.getHeight(), format, numBuffers);
+                    target.setOnImageAvailableListener(imageDropperListener, handler);
+                    OutputConfiguration config = new OutputConfiguration(target.getSurface());
+                    if (overridePhysicalCameraId != null) {
+                        config.setPhysicalCameraId(overridePhysicalCameraId);
+                    }
+                    outputConfigs.add(config);
+                    heicTargets.add(target);
+                    break;
+                }
+                default:
+                    fail("Unknown output format " + format);
+            }
+        }
     }
 
     /**
@@ -734,6 +847,27 @@ public class CameraTestUtils extends Assert {
             }
         }
         return idsForTesting.toArray(new String[idsForTesting.size()]);
+    }
+
+    public static Set<Set<String>> getConcurrentStreamingCameraIds(CameraManager manager,
+            boolean getSystemCameras)
+            throws CameraAccessException {
+        Set<String> cameraIds = new HashSet<String>(Arrays.asList(getCameraIdListForTesting(manager, getSystemCameras)));
+        Set<Set<String>> combinations =  manager.getConcurrentStreamingCameraIds();
+        Set<Set<String>> correctComb = new HashSet<Set<String>>();
+        for (Set<String> comb : combinations) {
+            Set<String> filteredIds = new HashSet<String>();
+            for (String id : comb) {
+                if (cameraIds.contains(id)) {
+                    filteredIds.add(id);
+                }
+            }
+            if (filteredIds.isEmpty()) {
+                continue;
+            }
+            correctComb.add(filteredIds);
+        }
+        return correctComb;
     }
 
     /**

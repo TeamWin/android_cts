@@ -154,27 +154,12 @@ public class WriteExternalStorageTest extends AndroidTestCase {
 
             assertTrue(path.getAbsolutePath().contains(packageName));
 
-            // Walk until we leave device, writing the whole way
-            while (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState(path))) {
+            // Walk until we reach package specific directory.
+            while (path.getAbsolutePath().contains(packageName)) {
                 assertDirReadWriteAccess(path);
                 path = path.getParentFile();
             }
         }
-    }
-
-    /**
-     * Verify that we have write access in other packages on primary external
-     * storage.
-     */
-    public void testPrimaryOtherPackageWriteAccess() throws Exception {
-        final File ourCache = getContext().getExternalCacheDir();
-        final File otherCache = new File(ourCache.getAbsolutePath()
-                .replace(getContext().getPackageName(), PACKAGE_NONE));
-        deleteContents(otherCache);
-        otherCache.delete();
-
-        assertTrue(otherCache.mkdirs());
-        assertDirReadWriteAccess(otherCache);
     }
 
     /**
@@ -183,16 +168,20 @@ public class WriteExternalStorageTest extends AndroidTestCase {
     public void testMountStatusWalkingUpTree() {
         final File top = Environment.getExternalStorageDirectory();
         File path = getContext().getExternalCacheDir();
+        final String packageName = getContext().getPackageName();
 
         int depth = 0;
         while (depth++ < 32) {
-            assertDirReadWriteAccess(path);
-            assertEquals(Environment.MEDIA_MOUNTED, Environment.getExternalStorageState(path));
-
+            // Check read&write access for only package specific directories. We might not have
+            // read/write access for directories like /storage/emulated/0/Android and
+            // /storage/emulated/0/Android/<data|media|obb>.
+            if (path.getAbsolutePath().contains(packageName)) {
+                assertDirReadWriteAccess(path);
+                assertEquals(Environment.MEDIA_MOUNTED, Environment.getExternalStorageState(path));
+            }
             if (path.getAbsolutePath().equals(top.getAbsolutePath())) {
                 break;
             }
-
             path = path.getParentFile();
         }
 
@@ -321,33 +310,6 @@ public class WriteExternalStorageTest extends AndroidTestCase {
         }
     }
 
-    /**
-     * Verify that moving around package-specific directories causes permissions
-     * to be updated.
-     */
-    public void testMovePackageSpecificPaths() throws Exception {
-        final File before = getContext().getExternalCacheDir();
-        final File beforeFile = new File(before, "test.probe");
-        assertTrue(beforeFile.createNewFile());
-        assertEquals(Os.getuid(), Os.stat(before.getAbsolutePath()).st_uid);
-        assertEquals(Os.getuid(), Os.stat(beforeFile.getAbsolutePath()).st_uid);
-
-        final File after = new File(before.getAbsolutePath()
-                .replace(getContext().getPackageName(), "com.example.does.not.exist"));
-        final File afterParent = after.getParentFile();
-        afterParent.mkdirs();
-        deleteContents(afterParent);
-
-        Os.rename(before.getAbsolutePath(), after.getAbsolutePath());
-
-        // Sit around long enough for VFS cache to expire
-        SystemClock.sleep(15 * DateUtils.SECOND_IN_MILLIS);
-
-        final File afterFile = new File(after, "test.probe");
-        assertNotEqual(Os.getuid(), Os.stat(after.getAbsolutePath()).st_uid);
-        assertNotEqual(Os.getuid(), Os.stat(afterFile.getAbsolutePath()).st_uid);
-    }
-
     public void testExternalStorageRename() throws Exception {
         final String name = "cts_" + System.nanoTime();
 
@@ -370,7 +332,9 @@ public class WriteExternalStorageTest extends AndroidTestCase {
             final File after = new File(next, name);
 
             Log.v(TAG, "Moving " + before + " to " + after);
-            Os.rename(before.getAbsolutePath(), after.getAbsolutePath());
+            // Os.rename will fail with EXDEV here, use renameTo which does copy delete behind the
+            // scenes
+            before.renameTo(after);
 
             cur = next;
         }

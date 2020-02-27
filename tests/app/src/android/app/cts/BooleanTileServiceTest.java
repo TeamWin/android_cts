@@ -21,7 +21,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import android.app.stubs.BooleanTestTileService;
+import android.app.stubs.ToggleableTestTileService;
 import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
 
@@ -68,7 +68,7 @@ public class BooleanTileServiceTest extends BaseTileServiceTest {
         // Tile starts inactive
         assertTrue(line.contains("value=false"));
 
-        ((BooleanTestTileService) mTileService).toggleState();
+        ((ToggleableTestTileService) mTileService).toggleState();
 
         // Close and open QS to make sure that state is refreshed
         expandSettings(false);
@@ -91,12 +91,12 @@ public class BooleanTileServiceTest extends BaseTileServiceTest {
 
     @Override
     protected String getComponentName() {
-        return BooleanTestTileService.getComponentName().flattenToString();
+        return ToggleableTestTileService.getComponentName().flattenToString();
     }
 
     @Override
     protected TileService getTileServiceInstance() {
-        return BooleanTestTileService.getInstance();
+        return ToggleableTestTileService.getInstance();
     }
 
     /**
@@ -108,10 +108,10 @@ public class BooleanTileServiceTest extends BaseTileServiceTest {
     @Override
     protected void waitForListening(boolean state) throws InterruptedException {
         int ct = 0;
-        while (BooleanTestTileService.isListening() != state && (ct++ < CHECK_RETRIES)) {
+        while (ToggleableTestTileService.isListening() != state && (ct++ < CHECK_RETRIES)) {
             Thread.sleep(CHECK_DELAY);
         }
-        assertEquals(state, BooleanTestTileService.isListening());
+        assertEquals(state, ToggleableTestTileService.isListening());
     }
 
     /**
@@ -123,9 +123,9 @@ public class BooleanTileServiceTest extends BaseTileServiceTest {
     @Override
     protected void waitForConnected(boolean state) throws InterruptedException {
         int ct = 0;
-        while (BooleanTestTileService.isConnected() != state && (ct++ < CHECK_RETRIES)) {
+        while (ToggleableTestTileService.isConnected() != state && (ct++ < CHECK_RETRIES)) {
             Thread.sleep(CHECK_DELAY);
         }
-        assertEquals(state, BooleanTestTileService.isConnected());
+        assertEquals(state, ToggleableTestTileService.isConnected());
     }
 }

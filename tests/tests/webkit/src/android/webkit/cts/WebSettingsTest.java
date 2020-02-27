@@ -245,23 +245,30 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
             return;
         }
 
-        assertTrue(mSettings.getAllowFileAccess());
+        // TODO(b/148840827): Uncomment default value assertion when a new version of WebView
+        // where the change happened is dropped in master.
+        // assertFalse("File access should be off by default", mSettings.getAllowFileAccess());
 
+        mSettings.setAllowFileAccess(true);
+        assertTrue("Explicitly setting file access to true should work",
+                mSettings.getAllowFileAccess());
         String fileUrl = TestHtmlConstants.getFileUrl(TestHtmlConstants.HELLO_WORLD_URL);
         mOnUiThread.loadUrlAndWaitForCompletion(fileUrl);
-        assertEquals(TestHtmlConstants.HELLO_WORLD_TITLE, mOnUiThread.getTitle());
+        assertEquals("Loading files on the file system should work with file access enabled",
+                TestHtmlConstants.HELLO_WORLD_TITLE, mOnUiThread.getTitle());
 
         fileUrl = TestHtmlConstants.getFileUrl(TestHtmlConstants.BR_TAG_URL);
         mSettings.setAllowFileAccess(false);
-        assertFalse(mSettings.getAllowFileAccess());
+        assertFalse("Explicitly setting file access to false should work",
+                mSettings.getAllowFileAccess());
         mOnUiThread.loadUrlAndWaitForCompletion(fileUrl);
-        // android_asset URLs should still be loaded when even with file access
-        // disabled.
-        assertEquals(TestHtmlConstants.BR_TAG_TITLE, mOnUiThread.getTitle());
+        assertEquals(
+                "android_asset URLs should still be loaded when even with file access disabled",
+                TestHtmlConstants.BR_TAG_TITLE, mOnUiThread.getTitle());
 
-        // Files on the file system should not be loaded.
         mOnUiThread.loadUrlAndWaitForCompletion(TestHtmlConstants.LOCAL_FILESYSTEM_URL);
-        assertEquals(TestHtmlConstants.WEBPAGE_NOT_AVAILABLE_TITLE, mOnUiThread.getTitle());
+        assertEquals("Files on the file system should not be loaded with file access disabled",
+                TestHtmlConstants.WEBPAGE_NOT_AVAILABLE_TITLE, mOnUiThread.getTitle());
     }
 
     public void testAccessCacheMode_defaultValue() throws Throwable {
@@ -1060,6 +1067,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         writeFile("target.html", target);
 
         mSettings.setJavaScriptEnabled(true);
+        mSettings.setAllowFileAccess(true);
         // disable universal access from files
         mSettings.setAllowUniversalAccessFromFileURLs(false);
         mSettings.setAllowFileAccessFromFileURLs(enableXHR);

@@ -16,8 +16,10 @@
 
 package com.android.cts.devicepolicy;
 
+import static com.android.cts.devicepolicy.DeviceAndProfileOwnerTest.DEVICE_ADMIN_COMPONENT_FLATTENED;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
@@ -25,10 +27,10 @@ import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
+import android.stats.devicepolicy.EventId;
 
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.log.LogUtil;
 
 import org.junit.Ignore;
 import org.junit.Test;
@@ -41,14 +43,27 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String DEVICE_ADMIN_APK = DeviceAndProfileOwnerTest.DEVICE_ADMIN_APK;
     private static final String ADMIN_RECEIVER_TEST_CLASS =
             DeviceAndProfileOwnerTest.ADMIN_RECEIVER_TEST_CLASS;
+    private static final String ACTION_WIPE_DATA =
+            "com.android.cts.deviceandprofileowner.WIPE_DATA";
 
-    private static final String RELINQUISH_DEVICE_TEST_CLASS =
-            DEVICE_ADMIN_PKG + ".RelinquishDeviceTest";
+    private static final String DUMMY_IME_APK = "DummyIme.apk";
+    private static final String DUMMY_IME_PKG = "com.android.cts.dummyime";
+    private static final String DUMMY_IME_COMPONENT = DUMMY_IME_PKG + "/.DummyIme";
+    private static final String DUMMY_LAUNCHER_APK = "DummyLauncher.apk";
+    private static final String DUMMY_LAUNCHER_COMPONENT =
+            "com.android.cts.dummylauncher/android.app.Activity";
+    private static final String QUIET_MODE_TOGGLE_ACTIVITY =
+            "com.android.cts.dummylauncher/.QuietModeToggleActivity";
+    private static final String EXTRA_QUIET_MODE_STATE =
+            "com.android.cts.dummyactivity.QUIET_MODE_STATE";
+    public static final String SUSPENSION_CHECKER_CLASS =
+            "com.android.cts.suspensionchecker.ActivityLaunchTest";
 
-    private int mParentUserId = -1;
     protected int mUserId;
     private boolean mHasProfileToRemove = true;
     private boolean mHasSecondaryProfileToRemove = false;
+    private static final String DISALLOW_CONFIG_LOCATION = "no_config_location";
+    private static final String CALLED_FROM_PARENT = "calledFromParent";
 
     @Override
     public void setUp() throws Exception {
@@ -59,14 +74,13 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
         if (mHasFeature) {
             removeTestUsers();
-            mParentUserId = mPrimaryUserId;
             createManagedProfile();
         }
     }
 
     private void createManagedProfile() throws Exception {
-        mUserId = createManagedProfile(mParentUserId);
-        switchUser(mParentUserId);
+        mUserId = createManagedProfile(mPrimaryUserId);
+        switchUser(mPrimaryUserId);
         startUserAndWait(mUserId);
 
         installAppAsUser(DEVICE_ADMIN_APK, mUserId);
@@ -80,11 +94,9 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     public void tearDown() throws Exception {
         if (mHasFeature && mHasProfileToRemove) {
             removeOrgOwnedProfile();
-            removeUser(mUserId);
         }
-        if (mHasSecondaryProfileToRemove) {
+        if (mHasSecondaryProfileToRemove || !getUsersCreatedByTests().isEmpty()) {
             removeTestUsers();
-            getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
         }
         super.tearDown();
     }
@@ -109,11 +121,24 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".LockScreenInfoTest", "testSetAndGetLockInfo",
+                mUserId);
 
         removeOrgOwnedProfile();
         assertHasNoUser(mUserId);
-
         mHasProfileToRemove = false;
+
+        try {
+            installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
+            assertTrue(setDeviceOwner(DEVICE_ADMIN_COMPONENT_FLATTENED,
+                    mPrimaryUserId, /*expectFailure*/false));
+            mHasSecondaryProfileToRemove = true;
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".LockScreenInfoTest", "testLockInfoIsNull",
+                    mPrimaryUserId);
+        } finally {
+            removeAdmin(DEVICE_ADMIN_COMPONENT_FLATTENED, mPrimaryUserId);
+            getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
+        }
     }
 
     @Test
@@ -156,6 +181,24 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".OrgOwnedProfileOwnerParentTest", mUserId);
+    }
+
+    @Test
+    public void testUserRestrictionSetOnParentLogged() throws Exception {
+        if (!mHasFeature|| !isStatsdEnabled(getDevice())) {
+            return;
+        }
+        assertMetricsLogged(getDevice(), () -> {
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DevicePolicyLoggingParentTest",
+                    "testUserRestrictionLogged", mUserId);
+                }, new DevicePolicyEventWrapper.Builder(EventId.ADD_USER_RESTRICTION_VALUE)
+                        .setAdminPackageName(DEVICE_ADMIN_PKG)
+                        .setStrings(DISALLOW_CONFIG_LOCATION, CALLED_FROM_PARENT)
+                        .build(),
+                new DevicePolicyEventWrapper.Builder(EventId.REMOVE_USER_RESTRICTION_VALUE)
+                        .setAdminPackageName(DEVICE_ADMIN_PKG)
+                        .setStrings(DISALLOW_CONFIG_LOCATION, CALLED_FROM_PARENT)
+                        .build());
     }
 
     @Test
@@ -207,6 +250,64 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
                 "testClearUserRestrictionDisallowAddUser", mUserId);
     }
 
+    @Test
+    public void testCameraDisabledOnParentLogged() throws Exception {
+        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+            return;
+        }
+        assertMetricsLogged(getDevice(), () -> {
+                    runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DevicePolicyLoggingParentTest",
+                            "testCameraDisabledLogged", mUserId);
+                }, new DevicePolicyEventWrapper.Builder(EventId.SET_CAMERA_DISABLED_VALUE)
+                        .setAdminPackageName(DEVICE_ADMIN_PKG)
+                        .setBoolean(true)
+                        .setStrings(CALLED_FROM_PARENT)
+                        .build(),
+                new DevicePolicyEventWrapper.Builder(EventId.SET_CAMERA_DISABLED_VALUE)
+                        .setAdminPackageName(DEVICE_ADMIN_PKG)
+                        .setBoolean(false)
+                        .setStrings(CALLED_FROM_PARENT)
+                        .build());
+    }
+
+    @FlakyTest(bugId = 137093665)
+    @Test
+    public void testSecurityLogging() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        // Backup stay awake setting because testGenerateLogs() will turn it off.
+        final String stayAwake = getDevice().getSetting("global", "stay_on_while_plugged_in");
+        try {
+            // Turn logging on.
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".SecurityLoggingTest",
+                    "testEnablingSecurityLogging", mUserId);
+            // Reboot to ensure ro.device_owner is set to true in logd and logging is on.
+            rebootAndWaitUntilReady();
+            waitForUserUnlock(mUserId);
+
+            // Generate various types of events on device side and check that they are logged.
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG,".SecurityLoggingTest",
+                    "testGenerateLogs", mUserId);
+            getDevice().executeShellCommand("whoami"); // Generate adb command securty event
+            getDevice().executeShellCommand("dpm force-security-logs");
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".SecurityLoggingTest",
+                    "testVerifyGeneratedLogs", mUserId);
+
+            // Immediately attempting to fetch events again should fail.
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".SecurityLoggingTest",
+                    "testSecurityLoggingRetrievalRateLimited", mUserId);
+        } finally {
+            // Turn logging off.
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".SecurityLoggingTest",
+                    "testDisablingSecurityLogging", mUserId);
+            // Restore stay awake setting.
+            if (stayAwake != null) {
+                getDevice().setSetting("global", "stay_on_while_plugged_in", stayAwake);
+            }
+        }
+    }
+
     private void failToCreateUser() throws Exception {
         String command ="pm create-user " + "TestUser_" + System.currentTimeMillis();
         String commandOutput = getDevice().executeShellCommand(command);
@@ -214,25 +315,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         String[] tokens = commandOutput.split("\\s+");
         assertTrue(tokens.length > 0);
         assertEquals("Error:", tokens[0]);
-    }
-
-    protected int createUser() throws Exception {
-        String command ="pm create-user " + "TestUser_" + System.currentTimeMillis();
-        String commandOutput = getDevice().executeShellCommand(command);
-
-        String[] tokens = commandOutput.split("\\s+");
-        assertTrue(tokens.length > 0);
-        assertEquals("Success:", tokens[0]);
-        int userId = Integer.parseInt(tokens[tokens.length-1]);
-        startUser(userId);
-        return userId;
-    }
-
-    protected void removeUser(int userId) throws Exception  {
-        if (listUsers().contains(userId) && userId != USER_SYSTEM) {
-            String command = "am stop-user -w -f " + userId;
-            getDevice().executeShellCommand(command);
-        }
     }
 
     @Test
@@ -331,7 +413,7 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testApplicationHidden() throws Exception {
+    public void testApplicationHiddenParent() throws Exception {
         if (!mHasFeature) {
             return;
         }
@@ -339,8 +421,103 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".ApplicationHiddenParentTest", mUserId);
     }
 
-    private void removeOrgOwnedProfile() throws DeviceNotAvailableException {
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, RELINQUISH_DEVICE_TEST_CLASS, mUserId);
+    @Test
+    public void testSetKeyguardDisabledFeatures() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".KeyguardDisabledFeaturesTest",
+                "testSetKeyguardDisabledFeatures_onParent", mUserId);
+    }
+
+    private void removeOrgOwnedProfile() throws Exception {
+        sendWipeProfileBroadcast(mUserId);
+        waitUntilUserRemoved(mUserId);
+    }
+
+    private void sendWipeProfileBroadcast(int userId) throws Exception {
+        final String cmd = "am broadcast --receiver-foreground --user " + userId
+                + " -a " + ACTION_WIPE_DATA
+                + " com.android.cts.deviceandprofileowner/.WipeDataReceiver";
+        getDevice().executeShellCommand(cmd);
+    }
+
+    @Test
+    public void testPersonalAppsSuspensionNormalApp() throws Exception {
+        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
+        // Initially the app should be launchable.
+        assertCanStartPersonalApp(DEVICE_ADMIN_PKG, true);
+        setPersonalAppsSuspended(true);
+        // Now the app should be suspended and not launchable
+        assertCanStartPersonalApp(DEVICE_ADMIN_PKG, false);
+        setPersonalAppsSuspended(false);
+        // Should be launchable again.
+        assertCanStartPersonalApp(DEVICE_ADMIN_PKG, true);
+    }
+
+    private void setPersonalAppsSuspended(boolean suspended) throws DeviceNotAvailableException {
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
+                suspended ? "testSuspendPersonalApps" : "testUnsuspendPersonalApps", mUserId);
+    }
+
+    @Test
+    public void testPersonalAppsSuspensionIme() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
+        setupIme(mPrimaryUserId, DUMMY_IME_APK, DUMMY_IME_COMPONENT);
+        setPersonalAppsSuspended(true);
+        // Active IME should not be suspended.
+        assertCanStartPersonalApp(DUMMY_IME_PKG, true);
+        setPersonalAppsSuspended(false);
+    }
+
+    @Test
+    public void testCanRestrictAccountManagementOnParentProfile() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".AccountManagementParentTest",
+                "testSetAccountManagementDisabledOnParent", mUserId);
+        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
+        try {
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".AccountManagementParentTest",
+                    "testAccountManagementDisabled", mPrimaryUserId);
+        } finally {
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".AccountManagementParentTest",
+                    "testEnableAccountManagement", mUserId);
+        }
+    }
+
+    private void setupIme(int userId, String imeApk, String imeComponent) throws Exception {
+        installAppAsUser(imeApk, userId);
+
+        // Wait until IMS service is registered by the system.
+        waitForOutput("Failed waiting for IME to become available",
+                String.format("ime list --user %d -s -a", userId),
+                s -> s.contains(imeComponent), 10 /* seconds */);
+
+        executeShellCommand("ime enable " + imeComponent);
+        executeShellCommand("ime set " + imeComponent);
+    }
+
+
+    private void assertCanStartPersonalApp(String packageName, boolean canStart)
+            throws DeviceNotAvailableException {
+        runDeviceTestsAsUser(packageName, "com.android.cts.suspensionchecker.ActivityLaunchTest",
+                canStart ? "testCanStartActivity" : "testCannotStartActivity", mPrimaryUserId);
+    }
+
+    @Test
+    public void testScreenCaptureDisabled() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".ScreenCaptureDisabledTest",
+                "testSetScreenCaptureDisabledOnParent", mUserId);
     }
 
     private void assertHasNoUser(int userId) throws DeviceNotAvailableException {
@@ -365,14 +542,84 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
                         userId, /* expectFailure */ false));
     }
 
-    public boolean hasService(String service) {
-        String command = "service check " + service;
-        try {
-            String commandOutput = getDevice().executeShellCommand(command);
-            return !commandOutput.contains("not found");
-        } catch (Exception e) {
-            LogUtil.CLog.w("Exception running '" + command + "': " + e);
-            return false;
+    @Test
+    public void testSetPersonalAppsSuspendedLogged() throws Exception {
+        if (!mHasFeature|| !isStatsdEnabled(getDevice())) {
+            return;
         }
+        assertMetricsLogged(getDevice(), () -> {
+                    runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DevicePolicyLoggingTest",
+                            "testSetPersonalAppsSuspendedLogged", mUserId);
+                }, new DevicePolicyEventWrapper.Builder(EventId.SET_PERSONAL_APPS_SUSPENDED_VALUE)
+                        .setAdminPackageName(DEVICE_ADMIN_PKG)
+                        .setBoolean(true)
+                        .build(),
+                new DevicePolicyEventWrapper.Builder(EventId.SET_PERSONAL_APPS_SUSPENDED_VALUE)
+                        .setAdminPackageName(DEVICE_ADMIN_PKG)
+                        .setBoolean(false)
+                        .build());
+    }
+
+    @Test
+    public void testSetManagedProfileMaximumTimeOffLogged() throws Exception {
+        if (!mHasFeature|| !isStatsdEnabled(getDevice())) {
+            return;
+        }
+        assertMetricsLogged(getDevice(), () -> {
+                    runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DevicePolicyLoggingTest",
+                            "testSetManagedProfileMaximumTimeOffLogged", mUserId);
+                }, new DevicePolicyEventWrapper.Builder(
+                        EventId.SET_MANAGED_PROFILE_MAXIMUM_TIME_OFF_VALUE)
+                        .setAdminPackageName(DEVICE_ADMIN_PKG)
+                        .setTimePeriod(1234567)
+                        .build(),
+                new DevicePolicyEventWrapper.Builder(
+                        EventId.SET_MANAGED_PROFILE_MAXIMUM_TIME_OFF_VALUE)
+                        .setAdminPackageName(DEVICE_ADMIN_PKG)
+                        .setTimePeriod(0)
+                        .build());
+    }
+
+    @Test
+    public void testWorkProfileMaximumTimeOff() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
+                "testSetManagedProfileMaximumTimeOff1Sec", mUserId);
+
+        final String defaultLauncher = getDefaultLauncher();
+        try {
+            installAppAsUser(DUMMY_LAUNCHER_APK, true, true, mPrimaryUserId);
+            setAndStartLauncher(DUMMY_LAUNCHER_COMPONENT);
+            toggleQuietMode(true);
+            // Verify that at some point personal app becomes impossible to launch.
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, SUSPENSION_CHECKER_CLASS,
+                    "testWaitForActivityNotLaunchable", mPrimaryUserId);
+            toggleQuietMode(false);
+            // Ensure the profile is properly started before wipe broadcast is sent in teardown.
+            waitForUserUnlock(mUserId);
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
+                    "testPersonalAppsSuspendedByTimeout", mUserId);
+        } finally {
+            setAndStartLauncher(defaultLauncher);
+        }
+    }
+
+    private void toggleQuietMode(boolean quietModeEnable) throws Exception {
+        final String str = String.format("am start-activity -n %s --ez %s %s",
+                QUIET_MODE_TOGGLE_ACTIVITY, EXTRA_QUIET_MODE_STATE, quietModeEnable);
+        executeShellCommand(str);
+    }
+
+    private void setAndStartLauncher(String component) throws Exception {
+        String output = getDevice().executeShellCommand(String.format(
+                "cmd package set-home-activity --user %d %s", mPrimaryUserId, component));
+        assertTrue("failed to set home activity", output.contains("Success"));
+        output = getDevice().executeShellCommand(
+                String.format("cmd shortcut clear-default-launcher --user %d", mPrimaryUserId));
+        assertTrue("failed to clear default launcher", output.contains("Success"));
+        executeShellCommand("am start -W -n " + component);
     }
 }

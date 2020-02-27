@@ -38,6 +38,7 @@ public class WindowCtsActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().requestFeature(Window.FEATURE_LEFT_ICON);
+        getWindow().setDecorFitsSystemWindows(true);
         setContentView(R.layout.windowstub_layout);
         getContentView().setOnApplyWindowInsetsListener((v, insets) -> {
             mLastInsets = insets;

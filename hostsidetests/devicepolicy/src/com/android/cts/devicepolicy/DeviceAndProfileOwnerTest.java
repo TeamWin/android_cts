@@ -166,6 +166,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private static final int KEYGUARD_DISABLE_FEATURES_NONE = 0;
     private static final int KEYGUARD_DISABLE_FINGERPRINT = 1 << 5;
     private static final int KEYGUARD_DISABLE_TRUST_AGENTS = 1 << 4;
+    private static final int KEYGUARD_DISABLE_SECURE_CAMERA = 1 << 1;
     private static final String DISALLOW_CONFIG_LOCATION = "no_config_location";
     private static final String DISALLOW_ADJUST_VOLUME = "no_adjust_volume";
     private static final String DISALLOW_AUTOFILL = "no_autofill";
@@ -179,6 +180,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private static final int PERMISSION_GRANT_STATE_DENIED = 2;
     private static final String PARAM_APP_TO_ENABLE = "app_to_enable";
     public static final String RESOLVE_ACTIVITY_CMD = "cmd package resolve-activity --brief %s | tail -n 1";
+
+    private static final String NOT_CALLED_FROM_PARENT = "notCalledFromParent";
 
     // ID of the user all tests are run as. For device owner this will be the primary user, for
     // profile owner it is the user id of the created profile.
@@ -446,15 +449,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         installAppPermissionAppAsUser();
         executeDeviceTestMethod(
                 ".PermissionsTest", "testPermissionGrantState_developmentPermission");
-    }
-
-    @Test
-    public void testLocationPermissions() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-        installAppPermissionAppAsUser();
-        executeDeviceTestMethod(".PermissionsTest", "testLocationPermissionsCannotBeGranted");
     }
 
     /**
@@ -776,12 +770,12 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             }, new DevicePolicyEventWrapper.Builder(EventId.SET_APPLICATION_HIDDEN_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
                     .setBoolean(false)
-                    .setStrings(PERMISSIONS_APP_PKG, "hidden")
+                    .setStrings(PERMISSIONS_APP_PKG, "hidden", NOT_CALLED_FROM_PARENT)
                     .build(),
             new DevicePolicyEventWrapper.Builder(EventId.SET_APPLICATION_HIDDEN_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
                     .setBoolean(false)
-                    .setStrings(PERMISSIONS_APP_PKG, "not_hidden")
+                    .setStrings(PERMISSIONS_APP_PKG, "not_hidden", NOT_CALLED_FROM_PARENT)
                     .build());
         }
     }
@@ -1402,10 +1396,12 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }, new DevicePolicyEventWrapper.Builder(EventId.SET_CAMERA_DISABLED_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
                     .setBoolean(true)
+                    .setStrings(NOT_CALLED_FROM_PARENT)
                     .build(),
             new DevicePolicyEventWrapper.Builder(EventId.SET_CAMERA_DISABLED_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
                     .setBoolean(false)
+                    .setStrings(NOT_CALLED_FROM_PARENT)
                     .build());
     }
 
@@ -1461,10 +1457,9 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature || !mHasSecureLockScreen) {
             return;
         }
-        final String testPassword = "1234";
-        final String wrongPassword = "12345";
+        final String wrongPassword = TEST_PASSWORD + "5";
 
-        changeUserCredential(testPassword, null /*oldCredential*/, mUserId);
+        changeUserCredential(TEST_PASSWORD, null /*oldCredential*/, mUserId);
         try {
             // Test that before trying an incorrect password there are 0 failed attempts.
             executeDeviceTestMethod(".GetCurrentFailedPasswordAttemptsTest",
@@ -1485,7 +1480,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             // executeDeviceTestMethod(".GetCurrentFailedPasswordAttemptsTest",
             //         "testNoFailedPasswordAttempts");
         } finally {
-            changeUserCredential(null /*newCredential*/, testPassword, mUserId);
+            changeUserCredential(null /*newCredential*/, TEST_PASSWORD, mUserId);
         }
     }
 
@@ -1509,11 +1504,11 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                     "testGetPasswordExpirationUpdatedAfterPasswordReset_beforeReset");
             // Wait for 20 seconds so we can make sure that the expiration date is refreshed later.
             Thread.sleep(20000);
-            changeUserCredential("1234", null, mUserId);
+            changeUserCredential(TEST_PASSWORD, null, mUserId);
             executeDeviceTestMethod(".GetPasswordExpirationTest",
                     "testGetPasswordExpirationUpdatedAfterPasswordReset_afterReset");
         } finally {
-            changeUserCredential(null, "1234", mUserId);
+            changeUserCredential(null, TEST_PASSWORD, mUserId);
         }
     }
 
@@ -1726,7 +1721,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }, new DevicePolicyEventWrapper.Builder(EventId.SET_PASSWORD_QUALITY_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
                     .setInt(PASSWORD_QUALITY_COMPLEX)
-                    .setBoolean(false)
+                    .setStrings(NOT_CALLED_FROM_PARENT)
                     .build(),
             new DevicePolicyEventWrapper.Builder(EventId.SET_PASSWORD_MINIMUM_LENGTH_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
@@ -1782,23 +1777,37 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }, new DevicePolicyEventWrapper.Builder(EventId.SET_KEYGUARD_DISABLED_FEATURES_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
                     .setInt(KEYGUARD_DISABLE_FEATURES_NONE)
-                    .setBoolean(false)
+                    .setStrings(NOT_CALLED_FROM_PARENT)
                     .build(),
             new DevicePolicyEventWrapper.Builder(EventId.SET_KEYGUARD_DISABLED_FEATURES_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
                     .setInt(KEYGUARD_DISABLE_FINGERPRINT)
-                    .setBoolean(false)
+                    .setStrings(NOT_CALLED_FROM_PARENT)
                     .build(),
             new DevicePolicyEventWrapper.Builder(EventId.SET_KEYGUARD_DISABLED_FEATURES_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
                     .setInt(KEYGUARD_DISABLE_TRUST_AGENTS)
-                    .setBoolean(false)
+                    .setStrings(NOT_CALLED_FROM_PARENT)
+                    .build(),
+            new DevicePolicyEventWrapper.Builder(EventId.SET_KEYGUARD_DISABLED_FEATURES_VALUE)
+                    .setAdminPackageName(DEVICE_ADMIN_PKG)
+                    .setInt(KEYGUARD_DISABLE_SECURE_CAMERA)
+                    .setStrings(NOT_CALLED_FROM_PARENT)
                     .build(),
             new DevicePolicyEventWrapper.Builder(EventId.SET_KEYGUARD_DISABLED_FEATURES_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
                     .setInt(KEYGUARD_DISABLE_FEATURES_NONE)
-                    .setBoolean(false)
+                    .setStrings(NOT_CALLED_FROM_PARENT)
                     .build());
+    }
+
+    @Test
+    public void testSetKeyguardDisabledFeatures() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceTestMethod(".KeyguardDisabledFeaturesTest",
+                "testSetKeyguardDisabledFeatures");
     }
 
     @Test
@@ -1811,27 +1820,27 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                     ".DevicePolicyLoggingTest", "testSetUserRestrictionLogged");
         }, new DevicePolicyEventWrapper.Builder(EventId.ADD_USER_RESTRICTION_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setStrings(DISALLOW_CONFIG_LOCATION)
+                    .setStrings(DISALLOW_CONFIG_LOCATION, NOT_CALLED_FROM_PARENT)
                     .build(),
             new DevicePolicyEventWrapper.Builder(EventId.REMOVE_USER_RESTRICTION_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setStrings(DISALLOW_CONFIG_LOCATION)
+                    .setStrings(DISALLOW_CONFIG_LOCATION, NOT_CALLED_FROM_PARENT)
                     .build(),
             new DevicePolicyEventWrapper.Builder(EventId.ADD_USER_RESTRICTION_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setStrings(DISALLOW_ADJUST_VOLUME)
+                    .setStrings(DISALLOW_ADJUST_VOLUME, NOT_CALLED_FROM_PARENT)
                     .build(),
             new DevicePolicyEventWrapper.Builder(EventId.REMOVE_USER_RESTRICTION_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setStrings(DISALLOW_ADJUST_VOLUME)
+                    .setStrings(DISALLOW_ADJUST_VOLUME, NOT_CALLED_FROM_PARENT)
                     .build(),
             new DevicePolicyEventWrapper.Builder(EventId.ADD_USER_RESTRICTION_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setStrings(DISALLOW_AUTOFILL)
+                    .setStrings(DISALLOW_AUTOFILL, NOT_CALLED_FROM_PARENT)
                     .build(),
             new DevicePolicyEventWrapper.Builder(EventId.REMOVE_USER_RESTRICTION_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setStrings(DISALLOW_AUTOFILL)
+                    .setStrings(DISALLOW_AUTOFILL, NOT_CALLED_FROM_PARENT)
                     .build()
         );
     }
@@ -2085,6 +2094,11 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, testName, mUserId);
     }
 
+    protected void executeDeviceTestMethod(String className, String testName,
+            Map<String, String> params) throws Exception {
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, testName, mUserId, params);
+    }
+
     private void installAppPermissionAppAsUser()
             throws FileNotFoundException, DeviceNotAvailableException {
         installAppAsUser(PERMISSIONS_APP_APK, false, mUserId);
@@ -2301,20 +2315,5 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private void restoreRestrictBackgroundPolicyTo(boolean restricted) throws Exception {
         getDevice().executeShellCommand(
                 restricted ? RESTRICT_BACKGROUND_ON_CMD : RESTRICT_BACKGROUND_OFF_CMD);
-    }
-
-    // TODO: copied from RequiredServiceRule, which is on compatibility-device-util
-    // (and we use compatibility-host-util)
-    public boolean hasService(String service) {
-        // TODO: ideally should call SystemServiceManager directly, but we would need to open
-        // some @Testing APIs for that.
-        String command = "service check " + service;
-        try {
-            String commandOutput = getDevice().executeShellCommand(command);
-            return !commandOutput.contains("not found");
-        } catch (Exception e) {
-            CLog.w("Exception running '" + command + "': " + e);
-            return false;
-        }
     }
 }

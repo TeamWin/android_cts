@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.util.Scanner;
 import java.io.File;
 import java.io.IOException;
+import java.net.NetworkInterface;
+import java.util.Collections;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
@@ -25,27 +27,6 @@ abstract class SELinuxTargetSdkTestBase extends AndroidTestCase
         } finally {
             if (in != null) {
                 in.close();
-            }
-        }
-    }
-
-    protected static void noExecuteOnly() throws IOException {
-        String[] maps = {"^[0-9a-z]+-[0-9a-z]+\\s+--xp.*\\/apex\\/com\\.android\\.runtime\\/.*",
-            "^[0-9a-z]+-[0-9a-z]+\\s+--xp.*\\/system\\/.*"};
-        for (String map : maps) {
-            final Pattern mapsPattern = Pattern.compile(map);
-            BufferedReader reader = new BufferedReader(new FileReader("/proc/self/maps"));
-            String line;
-            try {
-                while ((line = reader.readLine()) != null) {
-                    Matcher m = mapsPattern.matcher(line);
-                    assertFalse("System provided libraries should be not be marked execute-only " +
-                           "for apps with targetSdkVersion<Q, but an execute-only segment was " +
-                           "found:\n" + line, m.matches());
-                }
-
-            } finally {
-                reader.close();
             }
         }
     }
@@ -78,10 +59,36 @@ abstract class SELinuxTargetSdkTestBase extends AndroidTestCase
         }
     }
 
+    protected static void checkNetlinkRouteGetlink(boolean expectAllowed) throws IOException {
+        if (!expectAllowed) {
+            assertEquals(
+                    "RTM_GETLINK is not allowed on a netlink route sockets. Verify that the"
+                        + " following patch has been applied to your kernel: "
+                        + "https://android-review.googlesource.com/q/I7b44ce60ad98f858c412722d41b9842f8577151f",
+                    13,
+                    checkNetlinkRouteGetlink());
+        } else {
+            assertEquals(
+                    "RTM_GETLINK should be allowed netlink route sockets for apps with "
+                            + "targetSdkVersion <= Q",
+                    -1,
+                    checkNetlinkRouteGetlink());
+        }
+    }
 
-    protected static void noNetlinkRouteBind() throws IOException {
-        assertEquals("Bind() is not allowed on a netlink route sockets",
-                13, checkNetlinkRouteBind());
+    protected static void checkNetlinkRouteBind(boolean expectAllowed) throws IOException {
+        if (!expectAllowed) {
+            assertEquals(
+                    "Bind() is not allowed on a netlink route sockets",
+                    13,
+                    checkNetlinkRouteBind());
+        } else {
+            assertEquals(
+                    "Bind() should succeed for netlink route sockets for apps with "
+                            + "targetSdkVersion <= Q",
+                    -1,
+                    checkNetlinkRouteBind());
+        }
     }
 
     /**
@@ -161,6 +168,30 @@ abstract class SELinuxTargetSdkTestBase extends AndroidTestCase
         return true;
     }
 
+    /**
+     * Verify that apps having targetSdkVersion <= 29 are able to see MAC
+     * addresses of ethernet devices.
+     * The counterpart of this test (testing for targetSdkVersion > 29) is
+     * {@link libcore.java.net.NetworkInterfaceTest#testGetHardwareAddress_returnsNull()}.
+     */
+    protected static void checkNetworkInterface_returnsHardwareAddresses() throws Exception {
+        assertNotNull(NetworkInterface.getNetworkInterfaces());
+        for (NetworkInterface nif : Collections.list(NetworkInterface.getNetworkInterfaces())) {
+            if (isEthernet(nif.getName())) {
+                assertEquals(6, nif.getHardwareAddress().length);
+            }
+        }
+    }
+
+    /**
+     * Checks whether a network interface is an ethernet interface.
+     */
+    private static Pattern ethernetNamePattern = Pattern.compile("^(eth|wlan)[0-9]+$");
+    private static boolean isEthernet(String ifName) throws Exception {
+        return ethernetNamePattern.matcher(ifName).matches();
+    }
+
+    private static final native int checkNetlinkRouteGetlink();
     private static final native int checkNetlinkRouteBind();
     private static final native String getFileContext(String path);
 }

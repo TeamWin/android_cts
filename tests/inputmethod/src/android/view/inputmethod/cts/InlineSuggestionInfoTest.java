@@ -63,6 +63,7 @@ public class InlineSuggestionInfoTest {
         assertThat(info.getAutofillHints()).isNotNull();
         assertThat(info.getAutofillHints().length).isEqualTo(1);
         assertThat(info.getAutofillHints()[0]).isEqualTo("password");
+        assertThat(info.getType()).isEqualTo(InlineSuggestionInfo.TYPE_SUGGESTION);
     }
 
     @Test

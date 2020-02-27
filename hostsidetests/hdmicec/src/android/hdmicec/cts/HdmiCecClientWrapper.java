@@ -100,8 +100,13 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         int seconds = 0;
 
         commands.add("cec-client");
+        /* "-p 2" starts the client as if it is connected to HDMI port 2, taking the physical
+         * address 2.0.0.0 */
         commands.add("-p");
         commands.add("2");
+        /* "-t x" starts the client as a TV device */
+        commands.add("-t");
+        commands.add("x");
         commands.addAll(Arrays.asList(clientParams));
 
         mCecClient = RunUtil.getDefault().runCmdInBackground(commands);
@@ -162,6 +167,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
             CecMessage message, String params) throws Exception {
         checkCecClient();
         mOutputConsole.write("tx " + source + destination + ":" + message + params);
+        mOutputConsole.newLine();
         mOutputConsole.flush();
     }
 
@@ -171,7 +177,21 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      */
     public void sendUserControlPressAndRelease(CecDevice source, CecDevice destination,
             int keycode, boolean holdKey) throws Exception {
-        checkCecClient();
+        sendUserControlPress(source, destination, keycode, holdKey);
+        /* Sleep less than 200ms between press and release */
+        TimeUnit.MILLISECONDS.sleep(100);
+        mOutputConsole.write("tx " + source + destination + ":" +
+                              CecMessage.USER_CONTROL_RELEASED);
+        mOutputConsole.flush();
+    }
+
+    /**
+     * Sends a <UCP> message from source to destination through the output console of the
+     * cec-communication channel with the mentioned keycode. If holdKey is true, the method will
+     * send multiple <UCP> messages to simulate a long press. No <UCR> will be sent.
+     */
+    public void sendUserControlPress(CecDevice source, CecDevice destination,
+            int keycode, boolean holdKey) throws Exception {
         String key = String.format("%02x", keycode);
         String command = "tx " + source + destination + ":" +
                 CecMessage.USER_CONTROL_PRESSED + ":" + key;
@@ -182,6 +202,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
             int repeat = 16;
             for (int i = 0; i < repeat; i++) {
                 mOutputConsole.write(command);
+                mOutputConsole.newLine();
                 mOutputConsole.flush();
                 TimeUnit.MILLISECONDS.sleep(300);
             }
@@ -189,11 +210,20 @@ public final class HdmiCecClientWrapper extends ExternalResource {
 
         mOutputConsole.write(command);
         mOutputConsole.newLine();
+        mOutputConsole.flush();
+    }
+
+    /**
+     * Sends a series of <UCP> [firstKeycode] from source to destination through the output console
+     * of the cec-communication channel immediately followed by <UCP> [secondKeycode]. No <UCR>
+     *  message is sent.
+     */
+    public void sendUserControlInterruptedPressAndHold(CecDevice source, CecDevice destination,
+            int firstKeycode, int secondKeycode, boolean holdKey) throws Exception {
+        sendUserControlPress(source, destination, firstKeycode, holdKey);
         /* Sleep less than 200ms between press and release */
         TimeUnit.MILLISECONDS.sleep(100);
-        mOutputConsole.write("tx " + source + destination + ":" +
-                              CecMessage.USER_CONTROL_RELEASED);
-        mOutputConsole.flush();
+        sendUserControlPress(source, destination, secondKeycode, false);
     }
 
     /** Sends a message to the output console of the cec-client */
@@ -359,6 +389,20 @@ public final class HdmiCecClientWrapper extends ExternalResource {
             params.insert(0, ":" + String.format("%02x", rawParam % 256));
             rawParam >>= 8;
         } while (rawParam > 0);
+
+        return params.toString();
+    }
+
+    /** Formats the rawParam into CEC message parameters. The parameters will be at least
+     * minimumNibbles long. */
+    public String formatParams(long rawParam, int minimumNibbles) {
+        StringBuilder params = new StringBuilder("");
+
+        do {
+            params.insert(0, ":" + String.format("%02x", rawParam % 256));
+            rawParam >>= 8;
+            minimumNibbles -= 2;
+        } while (rawParam > 0 || minimumNibbles > 0);
 
         return params.toString();
     }

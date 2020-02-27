@@ -15,7 +15,7 @@
 android_test_helper_app {
     name: "CtsReadExternalStorageApp",
     defaults: ["cts_support_defaults"],
-    sdk_version: "current",
+    sdk_version: "29",
     static_libs: [
         "androidx.test.rules",
         "CtsExternalStorageTestLib",

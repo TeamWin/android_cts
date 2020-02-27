@@ -266,6 +266,17 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
                 "testSucceedsWithProfileOwnerIdsGrant", mUserId);
     }
 
+    @Test
+    @Override
+    public void testSetKeyguardDisabledFeatures() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".KeyguardDisabledFeaturesTest",
+                "testSetKeyguardDisabledFeatures_onParentSilentIgnoreWhenCallerIsNotOrgOwnedPO",
+                mUserId);
+    }
+
     @FlakyTest
     @Override
     @Test
