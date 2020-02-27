@@ -1208,12 +1208,14 @@ public class PhoneStateListenerTest {
                     public void onBarringInfoChanged(BarringInfo barringInfo) {
                         synchronized (mLock) {
                             mOnBarringInfoChangedCalled = true;
+                            mBarringInfo = barringInfo;
                             mLock.notify();
                         }
                     }
                 };
-                mTelephonyManager.listen(
-                        mListener, PhoneStateListener.LISTEN_BARRING_INFO);
+
+                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                        (tm) -> tm.listen(mListener, PhoneStateListener.LISTEN_BARRING_INFO));
 
                 Looper.loop();
             }
@@ -1311,8 +1313,10 @@ public class PhoneStateListenerTest {
                         }
                     }
                 };
-                mTelephonyManager.listen(
-                        mListener, PhoneStateListener.LISTEN_REGISTRATION_FAILURE);
+
+                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                        (tm) -> tm.listen(mListener,
+                                PhoneStateListener.LISTEN_REGISTRATION_FAILURE));
 
                 Looper.loop();
             }
