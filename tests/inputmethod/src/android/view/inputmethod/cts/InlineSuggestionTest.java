@@ -114,7 +114,8 @@ public class InlineSuggestionTest {
 
     private InlineSuggestion createInlineSuggestion() {
         InlineSuggestionInfo info = InlineSuggestionInfo.newInlineSuggestionInfo(
-                mInlinePresentationSpec, InlineSuggestionInfo.SOURCE_AUTOFILL, new String[]{""});
+                mInlinePresentationSpec, InlineSuggestionInfo.SOURCE_AUTOFILL, new String[]{""},
+                InlineSuggestionInfo.TYPE_SUGGESTION, /* isPinned */ false);
         return InlineSuggestion.newInlineSuggestion(info);
     }
 }
