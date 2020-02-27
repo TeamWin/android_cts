@@ -4028,6 +4028,32 @@
                 android:value="config_voice_capable"/>
         </activity>
 
+        <activity android:name=".telecom.TelecomDefaultDialerTestActivity"
+                  android:label="@string/telecom_default_dialer_test_title">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/test_category_telecom"/>
+            <meta-data
+                android:name="test_required_features"
+                android:value="android.hardware.telephony"/>
+            <meta-data
+                android:name="test_required_configs"
+                android:value="config_voice_capable"/>
+        </activity>
+
+        <activity android:name=".telecom.CtsVerifierInCallUi"
+                  android:label="@string/telecom_in_call_ui_label">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+        </activity>
+
         <activity android:name=".managedprovisioning.LockscreenMessageTestActivity"
             android:label="@string/device_owner_customize_lockscreen_message" />
 
