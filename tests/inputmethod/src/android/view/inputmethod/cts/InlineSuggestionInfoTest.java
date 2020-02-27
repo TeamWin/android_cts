@@ -19,6 +19,7 @@ package android.view.inputmethod.cts;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
+import static org.testng.Assert.assertTrue;
 
 import android.os.Parcel;
 import android.util.Size;
@@ -42,21 +43,32 @@ public class InlineSuggestionInfoTest {
     public void testNullInlinePresentationSpecThrowsException() {
         assertThrows(NullPointerException.class,
                 () -> InlineSuggestionInfo.newInlineSuggestionInfo(/* presentationSpec */ null,
-                        InlineSuggestionInfo.SOURCE_AUTOFILL, new String[]{""}));
+                        InlineSuggestionInfo.SOURCE_AUTOFILL, new String[]{""},
+                        InlineSuggestionInfo.TYPE_SUGGESTION, /* isPinned */ false));
     }
 
     @Test
     public void testNullSourceThrowsException() {
         assertThrows(IllegalArgumentException.class,
                 () -> InlineSuggestionInfo.newInlineSuggestionInfo(
-                        mInlinePresentationSpec, /* source */null, new String[]{""}));
+                        mInlinePresentationSpec, /* source */null, new String[]{""},
+                        InlineSuggestionInfo.TYPE_SUGGESTION, /* isPinned */ false));
+    }
+
+    @Test
+    public void testNullTypeThrowsException() {
+        assertThrows(IllegalArgumentException.class,
+                () -> InlineSuggestionInfo.newInlineSuggestionInfo(
+                        mInlinePresentationSpec, InlineSuggestionInfo.SOURCE_AUTOFILL,
+                        new String[]{""}, /* type */ null, /* isPinned */ false));
     }
 
     @Test
     public void testInlineSuggestionInfoValues() {
         InlineSuggestionInfo info =
                 InlineSuggestionInfo.newInlineSuggestionInfo(mInlinePresentationSpec,
-                        InlineSuggestionInfo.SOURCE_AUTOFILL, new String[]{"password"});
+                        InlineSuggestionInfo.SOURCE_AUTOFILL, new String[]{"password"},
+                        InlineSuggestionInfo.TYPE_SUGGESTION, /* isPinned */ true);
 
         assertThat(info.getSource()).isEqualTo(InlineSuggestionInfo.SOURCE_AUTOFILL);
         assertThat(info.getPresentationSpec()).isNotNull();
@@ -64,12 +76,14 @@ public class InlineSuggestionInfoTest {
         assertThat(info.getAutofillHints().length).isEqualTo(1);
         assertThat(info.getAutofillHints()[0]).isEqualTo("password");
         assertThat(info.getType()).isEqualTo(InlineSuggestionInfo.TYPE_SUGGESTION);
+        assertTrue(info.isPinned());
     }
 
     @Test
     public void testInlineSuggestionInfoParcelizeDeparcelize() {
         InlineSuggestionInfo info = InlineSuggestionInfo.newInlineSuggestionInfo(
-                mInlinePresentationSpec, InlineSuggestionInfo.SOURCE_AUTOFILL, new String[]{""});
+                mInlinePresentationSpec, InlineSuggestionInfo.SOURCE_AUTOFILL, new String[]{""},
+                InlineSuggestionInfo.TYPE_SUGGESTION, /* isPinned */ false);
         Parcel p = Parcel.obtain();
         info.writeToParcel(p, 0);
         p.setDataPosition(0);
