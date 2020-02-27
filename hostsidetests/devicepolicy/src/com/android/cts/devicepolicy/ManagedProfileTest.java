@@ -239,6 +239,9 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
 
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ParentProfileTest",
                 "testCannotCallAutoTimeMethodsOnParentProfile", mProfileUserId);
+
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ParentProfileTest",
+                "testCannotCallSetDefaultSmsApplicationOnParentProfile", mProfileUserId);
     }
 
     // TODO: This test is not specific to managed profiles, but applies to multi-user in general.
