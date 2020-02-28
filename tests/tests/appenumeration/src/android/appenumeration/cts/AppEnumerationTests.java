@@ -21,7 +21,6 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -32,6 +31,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.RemoteCallback;
 
+import androidx.annotation.Nullable;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -48,6 +48,7 @@ import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -183,6 +184,36 @@ public class AppEnumerationTests {
     }
 
     @Test
+    public void queriesNothing_cannotSeeFilters() throws Exception {
+        assertNotQueryable(QUERIES_NOTHING, TARGET_FILTERS,
+                "android.appenumeration.action.ACTIVITY", this::queryIntentActivities);
+        assertNotQueryable(QUERIES_NOTHING, TARGET_FILTERS,
+                "android.appenumeration.action.SERVICE", this::queryIntentServices);
+        assertNotQueryable(QUERIES_NOTHING, TARGET_FILTERS,
+                "android.appenumeration.action.PROVIDER", this::queryIntentProviders);
+    }
+
+    @Test
+    public void queriesActivityAction_canSeeFilters() throws Exception {
+        assertQueryable(QUERIES_ACTIVITY_ACTION, TARGET_FILTERS,
+                "android.appenumeration.action.ACTIVITY", this::queryIntentActivities);
+        assertQueryable(QUERIES_SERVICE_ACTION, TARGET_FILTERS,
+                "android.appenumeration.action.SERVICE", this::queryIntentServices);
+        assertQueryable(QUERIES_PROVIDER_AUTH, TARGET_FILTERS,
+                "android.appenumeration.action.PROVIDER", this::queryIntentProviders);
+    }
+
+    @Test
+    public void queriesNothingHasPermission_canSeeFilters() throws Exception {
+        assertQueryable(QUERIES_NOTHING_PERM, TARGET_FILTERS,
+                "android.appenumeration.action.ACTIVITY", this::queryIntentActivities);
+        assertQueryable(QUERIES_NOTHING_PERM, TARGET_FILTERS,
+                "android.appenumeration.action.SERVICE", this::queryIntentServices);
+        assertQueryable(QUERIES_NOTHING_PERM, TARGET_FILTERS,
+                "android.appenumeration.action.PROVIDER", this::queryIntentProviders);
+    }
+
+    @Test
     public void queriesSomething_cannotSeeNoApi() throws Exception {
         assertNotVisible(QUERIES_ACTIVITY_ACTION, TARGET_NO_API);
         assertNotVisible(QUERIES_SERVICE_ACTION, TARGET_NO_API);
@@ -281,30 +312,92 @@ public class AppEnumerationTests {
         }
     }
 
+    interface ThrowingBiFunction<T,U,R> {
+        R apply(T arg1, U arg2) throws Exception;
+    }
+
+    private void assertNotQueryable(String sourcePackageName, String targetPackageName,
+            String intentAction, ThrowingBiFunction<String, Intent, String[]> commandMethod)
+            throws Exception {
+        if (!sGlobalFeatureEnabled) return;
+        Intent intent = new Intent(intentAction);
+        String[] queryablePackageNames = commandMethod.apply(sourcePackageName, intent);
+        for (String packageName : queryablePackageNames) {
+            if (packageName.contentEquals(targetPackageName)) {
+                fail(sourcePackageName + " should not be able to query " + targetPackageName +
+                        " via " + intentAction);
+            }
+        }
+    }
+    private void assertQueryable(String sourcePackageName, String targetPackageName,
+            String intentAction, ThrowingBiFunction<String, Intent, String[]> commandMethod)
+            throws Exception {
+        if (!sGlobalFeatureEnabled) return;
+        Intent intent = new Intent(intentAction);
+        String[] queryablePackageNames = commandMethod.apply(sourcePackageName, intent);
+        for (String packageName : queryablePackageNames) {
+            if (packageName.contentEquals(targetPackageName)) {
+                return;
+            }
+        }
+        fail(sourcePackageName + " should be able to query " + targetPackageName + " via "
+                + intentAction);
+    }
+
     private PackageInfo getPackageInfo(String sourcePackageName, String targetPackageName)
             throws Exception {
         Bundle response = sendCommand(sourcePackageName, targetPackageName,
-                PKG_BASE + "cts.action.GET_PACKAGE_INFO");
+                null /*queryIntent*/, PKG_BASE + "cts.action.GET_PACKAGE_INFO");
         return response.getParcelable(Intent.EXTRA_RETURN_RESULT);
     }
 
     private PackageInfo startForResult(String sourcePackageName, String targetPackageName)
             throws Exception {
         Bundle response = sendCommand(sourcePackageName, targetPackageName,
-                PKG_BASE + "cts.action.START_FOR_RESULT");
+                null /*queryIntent*/, PKG_BASE + "cts.action.START_FOR_RESULT");
         return response.getParcelable(Intent.EXTRA_RETURN_RESULT);
     }
 
-    private Bundle sendCommand(String sourcePackageName, String targetPackageName, String action)
+    private String[] queryIntentActivities(String sourcePackageName, Intent queryIntent)
             throws Exception {
-        Intent intent = new Intent(action)
+        Bundle response = sendCommand(sourcePackageName, null, queryIntent, PKG_BASE +
+                        "cts.action.QUERY_INTENT_ACTIVITIES");
+        return response.getStringArray(Intent.EXTRA_RETURN_RESULT);
+    }
+
+    private String[] queryIntentServices(String sourcePackageName, Intent queryIntent)
+            throws Exception {
+        Bundle response = sendCommand(sourcePackageName, null, queryIntent, PKG_BASE +
+                "cts.action.QUERY_INTENT_SERVICES");
+        return response.getStringArray(Intent.EXTRA_RETURN_RESULT);
+    }
+
+    private String[] queryIntentProviders(String sourcePackageName, Intent queryIntent)
+            throws Exception {
+        Bundle response = sendCommand(sourcePackageName, null, queryIntent, PKG_BASE +
+                "cts.action.QUERY_INTENT_PROVIDERS");
+        return response.getStringArray(Intent.EXTRA_RETURN_RESULT);
+    }
+
+    private Bundle sendCommand(String sourcePackageName, @Nullable String targetPackageName,
+            @Nullable Intent queryIntent, String action)
+            throws Exception {
+        final Intent intent = new Intent(action)
                 .setComponent(new ComponentName(
                         sourcePackageName, PKG_BASE + "cts.query.TestActivity"))
                 // data uri unique to each activity start to ensure actual launch and not just
                 // redisplay
-                .setData(Uri.parse("test://" + name.getMethodName() + targetPackageName))
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
-                .putExtra(Intent.EXTRA_PACKAGE_NAME, targetPackageName);
+                .setData(Uri.parse("test://" + name.getMethodName()
+                      + (targetPackageName != null
+                      ? targetPackageName : UUID.randomUUID().toString())))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
+        if (targetPackageName != null) {
+            intent.putExtra(Intent.EXTRA_PACKAGE_NAME, targetPackageName);
+        }
+        if (queryIntent != null) {
+            intent.putExtra(Intent.EXTRA_INTENT, queryIntent);
+        }
+
         final ConditionVariable latch = new ConditionVariable();
         final AtomicReference<Bundle> resultReference = new AtomicReference<>();
         final RemoteCallback callback = new RemoteCallback(
@@ -317,7 +410,7 @@ public class AppEnumerationTests {
         InstrumentationRegistry.getInstrumentation().getContext().startActivity(intent);
         if (!latch.block(TimeUnit.SECONDS.toMillis(10))) {
             throw new TimeoutException(
-                    "Latch timed out while awiating a response from " + targetPackageName);
+                    "Latch timed out while awiating a response from " + sourcePackageName);
         }
         final Bundle bundle = resultReference.get();
         if (bundle != null && bundle.containsKey("error")) {
