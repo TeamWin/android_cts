@@ -61,13 +61,13 @@ public class MediaParserTest {
 
     @Test
     public void testFlacHeaderOggSniff() throws IOException, InterruptedException {
-        testSniffAsset("ogg/flac_header", /* expectedExtractorName= */ "exo.OggExtractor");
+        testSniffAsset("ogg/flac_header", /* expectedExtractorName= */ "exo.OggParser");
     }
 
     @Test
     public void testOpusHeaderOggSniff() throws IOException, InterruptedException {
         try {
-            testSniffAsset("ogg/opus_header", /* expectedExtractorName= */ "exo.OggExtractor");
+            testSniffAsset("ogg/opus_header", /* expectedExtractorName= */ "exo.OggParser");
             Assert.fail();
         } catch (MediaParser.UnrecognizedInputFormatException e) {
             // Expected.
@@ -77,8 +77,7 @@ public class MediaParserTest {
     @Test
     public void testInvalidHeaderOggSniff() throws IOException, InterruptedException {
         try {
-            testSniffAsset(
-                    "ogg/invalid_ogg_header", /* expectedExtractorName= */ "exo.OggExtractor");
+            testSniffAsset("ogg/invalid_ogg_header", /* expectedExtractorName= */ "exo.OggParser");
             Assert.fail();
         } catch (MediaParser.UnrecognizedInputFormatException e) {
             // Expected.
@@ -88,7 +87,7 @@ public class MediaParserTest {
     @Test
     public void testInvalidHeaderSniff() throws IOException, InterruptedException {
         try {
-            testSniffAsset("ogg/invalid_header", /* expectedExtractorName= */ "exo.OggExtractor");
+            testSniffAsset("ogg/invalid_header", /* expectedExtractorName= */ "exo.OggParser");
             Assert.fail();
         } catch (MediaParser.UnrecognizedInputFormatException e) {
             // Expected.
@@ -341,17 +340,17 @@ public class MediaParserTest {
         testExtractAsset("mp4/sample_fragmented.mp4");
     }
 
-    private static void testSniffAsset(String assetPath, String expectedExtractorName)
+    private static void testSniffAsset(String assetPath, String expectedParserName)
             throws IOException, InterruptedException {
-        extractAsset(assetPath, expectedExtractorName);
+        extractAsset(assetPath, expectedParserName);
     }
 
     private static void testExtractAsset(String assetPath)
             throws IOException, InterruptedException {
-        extractAsset(assetPath, /* expectedExtractorName= */ null);
+        extractAsset(assetPath, /* expectedParserName= */ null);
     }
 
-    private static void extractAsset(String assetPath, String expectedExtractorName)
+    private static void extractAsset(String assetPath, String expectedParserName)
             throws IOException, InterruptedException {
         byte[] assetBytes =
                 TestUtil.getByteArray(
@@ -363,8 +362,8 @@ public class MediaParserTest {
                 MediaParser.create(new MockMediaParserOutputConsumer(new FakeExtractorOutput()));
 
         mediaParser.advance(mockInput);
-        if (expectedExtractorName != null) {
-            assertThat(expectedExtractorName).isEqualTo(mediaParser.getParserName());
+        if (expectedParserName != null) {
+            assertThat(expectedParserName).isEqualTo(mediaParser.getParserName());
             // We are only checking that the extractor is the right one.
             return;
         }
