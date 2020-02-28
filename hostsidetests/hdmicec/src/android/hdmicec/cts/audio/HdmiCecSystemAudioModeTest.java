@@ -130,6 +130,13 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
                 CecMessage.SYSTEM_AUDIO_MODE_REQUEST);
     }
 
+    public void sendSystemAudioModeInitiation() throws Exception {
+        hdmiCecClient.sendCecMessage(CecDevice.TV, AUDIO_DEVICE,
+                CecMessage.SYSTEM_AUDIO_MODE_REQUEST,
+                hdmiCecClient.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS,
+                HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH));
+    }
+
     @After
     public void resetVolume() throws Exception {
         setDeviceVolume(20);
