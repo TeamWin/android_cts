@@ -65,6 +65,7 @@ import org.junit.After
 import org.junit.Assert.fail
 import org.junit.Assume.assumeTrue
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
@@ -482,7 +483,9 @@ class AppOpsLoggingTest {
 
     /**
      * Realistic end-to-end test for getting called back for a proximity alert
+     * (b/150438846 - ignored this test due to flakiness)
      */
+    @Ignore
     @Test
     fun triggerProximityAlert() {
         val PROXIMITY_ALERT_ACTION = "proxAlert"
