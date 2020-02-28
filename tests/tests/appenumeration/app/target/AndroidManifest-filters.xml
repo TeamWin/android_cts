@@ -31,7 +31,11 @@
         </service>
         <provider android:name="android.appenumeration.testapp.DummyProvider"
                   android:authorities="android.appenumeration.testapp"
-                  android:exported="true" />
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="android.appenumeration.action.PROVIDER" />
+            </intent-filter>
+        </provider>
         <receiver android:name="android.appenumeration.testapp.DummyReceiver">
             <intent-filter>
                 <action android:name="android.appenumeration.action.BROADCAST" />
@@ -52,7 +56,8 @@
         </service>
         <provider android:name="android.appenumeration.testapp.DummyProvider"
                   android:authorities="android.appenumeration.testapp.unexported"
-                  android:exported="false" />
+                  android:exported="false" >
+        </provider>
         <receiver android:name="android.appenumeration.testapp.DummyReceiver"
                   android:exported="false">
             <intent-filter>
