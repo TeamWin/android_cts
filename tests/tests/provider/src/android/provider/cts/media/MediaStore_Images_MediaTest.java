@@ -37,6 +37,8 @@ import android.graphics.BitmapFactory;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.storage.StorageManager;
@@ -63,6 +65,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -72,6 +75,9 @@ import java.util.HashSet;
 @RunWith(Parameterized.class)
 public class MediaStore_Images_MediaTest {
     private static final String MIME_TYPE_JPEG = "image/jpeg";
+
+    private static final File EXTERNAL_STORAGE_DIR = Environment.getExternalStorageDirectory();
+    private static final File DCIM_DIR = new File(EXTERNAL_STORAGE_DIR, Environment.DIRECTORY_DCIM);
 
     private Context mContext;
     private ContentResolver mContentResolver;
@@ -288,6 +294,47 @@ public class MediaStore_Images_MediaTest {
             assertEquals(1, mContentResolver.delete(uri, null, null));
             file.delete();
         }
+    }
+
+    @Test
+    public void testUpsert() throws Exception {
+        File file = null;
+        try {
+            // Create file
+            file = copyResourceToFile(R.raw.scenery, DCIM_DIR, "cts" + System.nanoTime() + ".jpg");
+            final String externalPath = file.getAbsolutePath();
+
+            // Verify a record exists in MediaProvider.
+            final Uri scannedUri = MediaStore.scanFile(mContentResolver, file);
+            assertNotNull(scannedUri);
+
+            // Now insert via ContentResolver and verify it works.
+            ContentValues values = new ContentValues();
+            values.put(Media.DATA, externalPath);
+
+            // This insert is really an upsert. It should work.
+            final Uri uri = mContentResolver.insert(mExternalImages, values);
+            assertNotNull(uri);
+            // insert was an upsert, _id in uri and scannedUri should be same.
+            assertEquals(uri.getLastPathSegment(), scannedUri.getLastPathSegment());
+        } finally {
+            if (file != null) {
+                file.delete();
+            }
+        }
+    }
+
+    private File copyResourceToFile(int sourceResId, File destinationDir,
+            String destinationFileName) throws Exception {
+        final File file = new File(destinationDir, destinationFileName);
+        file.createNewFile();
+
+        try (InputStream source = InstrumentationRegistry.getTargetContext().getResources()
+                .openRawResource(sourceResId);
+             OutputStream target = new FileOutputStream(file)) {
+            FileUtils.copy(source, target);
+        }
+        return file;
     }
 
     private void assertInsertionSuccess(String stringUrl) throws IOException {

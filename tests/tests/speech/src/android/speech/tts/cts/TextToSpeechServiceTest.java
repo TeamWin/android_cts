@@ -15,6 +15,7 @@
  */
 package android.speech.tts.cts;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.ConditionVariable;
 import android.os.Environment;
@@ -34,6 +35,8 @@ import java.util.List;
 public class TextToSpeechServiceTest extends AndroidTestCase {
     private static final String UTTERANCE = "text to speech cts test";
     private static final String SAMPLE_FILE_NAME = "mytts.wav";
+    private static final String EARCON_UTTERANCE = "testEarcon";
+    private static final String SPEECH_UTTERANCE = "testSpeech";
 
     private TextToSpeechWrapper mTts;
 
@@ -204,6 +207,64 @@ public class TextToSpeechServiceTest extends AndroidTestCase {
         } finally {
             sampleFile.delete();
         }
+    }
+
+    public void testAddPlayEarcon() throws Exception {
+      File sampleFile = new File(getContext().getExternalFilesDir(null), SAMPLE_FILE_NAME);
+      try {
+        generateSampleAudio(sampleFile);
+
+        Uri sampleUri = Uri.fromFile(sampleFile);
+        assertEquals(getTts().addEarcon(EARCON_UTTERANCE, sampleFile), TextToSpeech.SUCCESS);
+
+        int result = getTts().playEarcon(EARCON_UTTERANCE,
+            TextToSpeech.QUEUE_FLUSH, createParamsBundle(EARCON_UTTERANCE), EARCON_UTTERANCE);
+
+        verifyAddPlay(result, mTts, EARCON_UTTERANCE);
+      } finally {
+        sampleFile.delete();
+      }
+    }
+
+    public void testAddPlaySpeech() throws Exception {
+      File sampleFile = new File(getContext().getExternalFilesDir(null), SAMPLE_FILE_NAME);
+      try {
+        generateSampleAudio(sampleFile);
+
+        Uri sampleUri = Uri.fromFile(sampleFile);
+        assertEquals(getTts().addSpeech(SPEECH_UTTERANCE, sampleFile), TextToSpeech.SUCCESS);
+
+        int result = getTts().speak(SPEECH_UTTERANCE,
+            TextToSpeech.QUEUE_FLUSH, createParamsBundle(SPEECH_UTTERANCE), SPEECH_UTTERANCE);
+
+        verifyAddPlay(result, mTts, SPEECH_UTTERANCE);
+      } finally {
+        sampleFile.delete();
+      }
+    }
+
+    private void generateSampleAudio(File sampleFile) throws Exception {
+      assertFalse(sampleFile.exists());
+
+      ParcelFileDescriptor fileDescriptor = ParcelFileDescriptor.open(sampleFile,
+          ParcelFileDescriptor.MODE_WRITE_ONLY
+          | ParcelFileDescriptor.MODE_CREATE
+          | ParcelFileDescriptor.MODE_TRUNCATE);
+
+      Bundle params = createParamsBundle("mocktofile");
+
+      int result =
+          getTts().synthesizeToFile(
+              UTTERANCE, params, fileDescriptor,
+              params.getString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID));
+
+      verifySynthesisFile(result, mTts, sampleFile);
+    }
+
+    private void verifyAddPlay(int result, TextToSpeechWrapper mTts, String utterance)
+        throws Exception {
+      assertEquals(TextToSpeech.SUCCESS, result);
+      assertTrue(mTts.waitForComplete(utterance));
     }
 
     private HashMap<String, String> createParams(String utteranceId) {

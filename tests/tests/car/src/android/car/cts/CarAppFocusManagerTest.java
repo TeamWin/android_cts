@@ -90,8 +90,8 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
 
     @Test
     public void testRegisterUnregister() throws Exception {
-        FocusChangedListerner listener = new FocusChangedListerner();
-        FocusChangedListerner listener2 = new FocusChangedListerner();
+        FocusChangedListener listener = new FocusChangedListener();
+        FocusChangedListener listener2 = new FocusChangedListener();
         mManager.addFocusListener(listener, 1);
         mManager.addFocusListener(listener2, 1);
         mManager.removeFocusListener(listener);
@@ -114,8 +114,8 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
         final int[] emptyFocus = new int[0];
 
         Assert.assertArrayEquals(emptyFocus, mManager.getActiveAppTypes());
-        FocusChangedListerner change = new FocusChangedListerner();
-        FocusChangedListerner change2 = new FocusChangedListerner();
+        FocusChangedListener change = new FocusChangedListener();
+        FocusChangedListener change2 = new FocusChangedListener();
         FocusOwnershipCallback owner = new FocusOwnershipCallback();
         FocusOwnershipCallback owner2 = new FocusOwnershipCallback();
         mManager.addFocusListener(change, CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION);
@@ -216,8 +216,8 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
 
         Assert.assertArrayEquals(new int[0], mManager.getActiveAppTypes());
 
-        FocusChangedListerner listener = new FocusChangedListerner();
-        FocusChangedListerner listener2 = new FocusChangedListerner();
+        FocusChangedListener listener = new FocusChangedListener();
+        FocusChangedListener listener2 = new FocusChangedListener();
         FocusOwnershipCallback owner = new FocusOwnershipCallback();
         mManager.addFocusListener(listener, CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION);
         manager2.addFocusListener(listener2, CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION);
@@ -243,8 +243,8 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
 
     @Test
     public void testMultipleChangeListenersPerManager() throws Exception {
-        FocusChangedListerner listener = new FocusChangedListerner();
-        FocusChangedListerner listener2 = new FocusChangedListerner();
+        FocusChangedListener listener = new FocusChangedListener();
+        FocusChangedListener listener2 = new FocusChangedListener();
         FocusOwnershipCallback owner = new FocusOwnershipCallback();
         mManager.addFocusListener(listener, CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION);
         mManager.addFocusListener(listener2, CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION);
@@ -261,14 +261,14 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
 
         listener.reset();
         listener2.reset();
-        mManager.abandonAppFocus(owner, CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION);
+        mManager.abandonAppFocus(owner);
         assertTrue(listener.waitForFocusChangedAndAssert(DEFAULT_WAIT_TIMEOUT_MS,
                 CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION, false));
         assertTrue(listener2.waitForFocusChangedAndAssert(DEFAULT_WAIT_TIMEOUT_MS,
                 CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION, false));
     }
 
-    private class FocusChangedListerner implements CarAppFocusManager.OnAppFocusChangedListener {
+    private class FocusChangedListener implements CarAppFocusManager.OnAppFocusChangedListener {
         private int mLastChangeAppType;
         private boolean mLastChangeAppActive;
         private final Semaphore mChangeWait = new Semaphore(0);

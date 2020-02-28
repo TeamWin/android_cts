@@ -302,7 +302,7 @@ class LifecycleVerifier {
                 ? Arrays.asList(
                 ON_TOP_POSITION_LOST, ON_PAUSE, ON_STOP, ON_DESTROY, PRE_ON_CREATE,
                 ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME, ON_TOP_POSITION_GAINED,
-                ON_TOP_POSITION_LOST, ON_PAUSE, ON_MULTI_WINDOW_MODE_CHANGED)
+                ON_MULTI_WINDOW_MODE_CHANGED, ON_TOP_POSITION_LOST, ON_PAUSE)
                 : Arrays.asList(
                         ON_PAUSE, ON_STOP, ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START,
                 ON_RESUME, ON_PAUSE);
