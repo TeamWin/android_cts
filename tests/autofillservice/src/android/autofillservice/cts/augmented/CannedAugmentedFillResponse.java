@@ -19,6 +19,7 @@ import static android.autofillservice.cts.augmented.AugmentedHelper.getContentDe
 
 import android.autofillservice.cts.R;
 import android.content.Context;
+import android.service.autofill.InlinePresentation;
 import android.service.autofill.augmented.FillCallback;
 import android.service.autofill.augmented.FillController;
 import android.service.autofill.augmented.FillRequest;
@@ -54,12 +55,14 @@ public final class CannedAugmentedFillResponse {
     private final Map<AutofillId, Dataset> mDatasets;
     private long mDelay;
     private final Dataset mOnlyDataset;
+    private final @Nullable List<Dataset> mInlineSuggestions;
 
     private CannedAugmentedFillResponse(@NonNull Builder builder) {
         mResponseType = builder.mResponseType;
         mDatasets = builder.mDatasets;
         mDelay = builder.mDelay;
         mOnlyDataset = builder.mOnlyDataset;
+        mInlineSuggestions = builder.mInlineSuggestions;
     }
 
     /**
@@ -115,6 +118,10 @@ public final class CannedAugmentedFillResponse {
             return null;
         }
 
+        if (mInlineSuggestions != null) {
+            return createResponseWithInlineSuggestion();
+        }
+
         final LayoutInflater inflater = LayoutInflater.from(context);
         final TextView rootView = (TextView) inflater.inflate(R.layout.augmented_autofill_ui, null);
 
@@ -155,10 +162,28 @@ public final class CannedAugmentedFillResponse {
                 + ", datasets=" + mDatasets
                 + "]";
     }
+
     public enum AugmentedResponseType {
         NORMAL,
         NULL,
         TIMEOUT,
+    }
+
+    private FillResponse createResponseWithInlineSuggestion() {
+        List<android.service.autofill.Dataset> list = new ArrayList<>();
+        for (Dataset dataset : mInlineSuggestions) {
+            if (!dataset.getValues().isEmpty()) {
+                android.service.autofill.Dataset.Builder datasetBuilder =
+                        new android.service.autofill.Dataset.Builder();
+                for (Pair<AutofillId, AutofillValue> pair : dataset.getValues()) {
+                    final AutofillId id = pair.first;
+                    datasetBuilder.setInlinePresentation(id, pair.second, null,
+                            dataset.mFieldPresentationById.get(id));
+                }
+                list.add(datasetBuilder.build());
+            }
+        }
+        return new FillResponse.Builder().setInlineSuggestions(list).build();
     }
 
     public static final class Builder {
@@ -166,6 +191,7 @@ public final class CannedAugmentedFillResponse {
         private final AugmentedResponseType mResponseType;
         private long mDelay;
         private Dataset mOnlyDataset;
+        private @Nullable List<Dataset> mInlineSuggestions;
 
         public Builder(@NonNull AugmentedResponseType type) {
             mResponseType = type;
@@ -187,6 +213,19 @@ public final class CannedAugmentedFillResponse {
             for (AutofillId id : ids) {
                 mDatasets.put(id, dataset);
             }
+            return this;
+        }
+
+        /**
+         * The {@link android.service.autofill.Dataset}s representing the inline suggestions data.
+         * Defaults to null if no inline suggestions are available from the service.
+         */
+        @NonNull
+        public Builder addInlineSuggestion(@NonNull Dataset dataset) {
+            if (mInlineSuggestions == null) {
+                mInlineSuggestions = new ArrayList<>();
+            }
+            mInlineSuggestions.add(dataset);
             return this;
         }
 
@@ -226,6 +265,7 @@ public final class CannedAugmentedFillResponse {
      */
     public static class Dataset {
         private final Map<AutofillId, AutofillValue> mFieldValuesById;
+        private final Map<AutofillId, InlinePresentation> mFieldPresentationById;
         private final String mPresentation;
         private final AutofillValue mOnlyFieldValue;
 
@@ -233,6 +273,7 @@ public final class CannedAugmentedFillResponse {
             mFieldValuesById = builder.mFieldValuesById;
             mPresentation = builder.mPresentation;
             mOnlyFieldValue = builder.mOnlyFieldValue;
+            mFieldPresentationById = builder.mFieldPresentationById;
         }
 
         @NonNull
@@ -257,6 +298,8 @@ public final class CannedAugmentedFillResponse {
 
         public static class Builder {
             private final Map<AutofillId, AutofillValue> mFieldValuesById = new ArrayMap<>();
+            private final Map<AutofillId, InlinePresentation> mFieldPresentationById =
+                    new ArrayMap<>();
 
             private final String mPresentation;
             private AutofillValue mOnlyFieldValue;
@@ -273,6 +316,19 @@ public final class CannedAugmentedFillResponse {
                     throw new IllegalStateException("already called setOnlyField()");
                 }
                 mFieldValuesById.put(id, AutofillValue.forText(text));
+                return this;
+            }
+
+            /**
+             * Sets the value that will be autofilled on the field with {@code id}.
+             */
+            public Builder setField(@NonNull AutofillId id, @NonNull String text,
+                    @NonNull InlinePresentation presentation) {
+                if (mOnlyFieldValue != null) {
+                    throw new IllegalStateException("already called setOnlyField()");
+                }
+                mFieldValuesById.put(id, AutofillValue.forText(text));
+                mFieldPresentationById.put(id, presentation);
                 return this;
             }
 
