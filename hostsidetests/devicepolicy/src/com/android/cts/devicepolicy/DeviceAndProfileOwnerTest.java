@@ -1457,10 +1457,9 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature || !mHasSecureLockScreen) {
             return;
         }
-        final String testPassword = "1234";
-        final String wrongPassword = "12345";
+        final String wrongPassword = TEST_PASSWORD + "5";
 
-        changeUserCredential(testPassword, null /*oldCredential*/, mUserId);
+        changeUserCredential(TEST_PASSWORD, null /*oldCredential*/, mUserId);
         try {
             // Test that before trying an incorrect password there are 0 failed attempts.
             executeDeviceTestMethod(".GetCurrentFailedPasswordAttemptsTest",
@@ -1481,7 +1480,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             // executeDeviceTestMethod(".GetCurrentFailedPasswordAttemptsTest",
             //         "testNoFailedPasswordAttempts");
         } finally {
-            changeUserCredential(null /*newCredential*/, testPassword, mUserId);
+            changeUserCredential(null /*newCredential*/, TEST_PASSWORD, mUserId);
         }
     }
 
@@ -1505,11 +1504,11 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                     "testGetPasswordExpirationUpdatedAfterPasswordReset_beforeReset");
             // Wait for 20 seconds so we can make sure that the expiration date is refreshed later.
             Thread.sleep(20000);
-            changeUserCredential("1234", null, mUserId);
+            changeUserCredential(TEST_PASSWORD, null, mUserId);
             executeDeviceTestMethod(".GetPasswordExpirationTest",
                     "testGetPasswordExpirationUpdatedAfterPasswordReset_afterReset");
         } finally {
-            changeUserCredential(null, "1234", mUserId);
+            changeUserCredential(null, TEST_PASSWORD, mUserId);
         }
     }
 
