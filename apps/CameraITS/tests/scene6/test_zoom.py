@@ -147,9 +147,9 @@ def main():
         debug = its.caps.debug_mode()
 
         z_min, z_max = float(z_range[0]), float(z_range[1])
+        its.caps.skip_unless(z_max >= z_min*ZOOM_MIN_THRESH)
         z_list = np.arange(z_min, z_max, float(z_max-z_min)/(NUM_STEPS-1))
         z_list = np.append(z_list, z_max)
-        its.caps.skip_unless(z_max >= z_min*ZOOM_MIN_THRESH)
 
         # do captures over zoom range
         req = its.objects.auto_capture_request()
