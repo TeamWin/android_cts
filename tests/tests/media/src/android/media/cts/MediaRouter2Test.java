@@ -147,7 +147,7 @@ public class MediaRouter2Test {
     @Test
     public void testRegisterTransferCallbackWithInvalidArguments() {
         Executor executor = mExecutor;
-        TransferCallback callback = new TransferCallback();
+        TransferCallback callback = new TransferCallback() {};
 
         // Tests null executor
         assertThrows(NullPointerException.class,
@@ -198,7 +198,7 @@ public class MediaRouter2Test {
         };
 
         // TODO: Remove this once the MediaRouter2 becomes always connected to the service.
-        RouteCallback routeCallback = new RouteCallback();
+        RouteCallback routeCallback = new RouteCallback() {};
         mRouter2.registerRouteCallback(mExecutor, routeCallback, EMPTY_DISCOVERY_PREFERENCE);
 
         try {
@@ -247,7 +247,7 @@ public class MediaRouter2Test {
         };
 
         // TODO: Remove this once the MediaRouter2 becomes always connected to the service.
-        RouteCallback routeCallback = new RouteCallback();
+        RouteCallback routeCallback = new RouteCallback() {};
         mRouter2.registerRouteCallback(mExecutor, routeCallback, EMPTY_DISCOVERY_PREFERENCE);
 
         try {
@@ -302,7 +302,7 @@ public class MediaRouter2Test {
         assertNotNull(route2);
 
         // TODO: Remove this once the MediaRouter2 becomes always connected to the service.
-        RouteCallback routeCallback = new RouteCallback();
+        RouteCallback routeCallback = new RouteCallback() {};
         mRouter2.registerRouteCallback(mExecutor, routeCallback, EMPTY_DISCOVERY_PREFERENCE);
 
         try {
@@ -381,7 +381,7 @@ public class MediaRouter2Test {
         };
 
         // TODO: Remove this once the MediaRouter2 becomes always connected to the service.
-        RouteCallback routeCallback = new RouteCallback();
+        RouteCallback routeCallback = new RouteCallback() {};
         mRouter2.registerRouteCallback(mExecutor, routeCallback, EMPTY_DISCOVERY_PREFERENCE);
 
         try {
@@ -429,7 +429,7 @@ public class MediaRouter2Test {
         };
 
         // TODO: Remove this once the MediaRouter2 becomes always connected to the service.
-        RouteCallback routeCallback = new RouteCallback();
+        RouteCallback routeCallback = new RouteCallback() {};
 
         try {
             mRouter2.registerRouteCallback(mExecutor, routeCallback, EMPTY_DISCOVERY_PREFERENCE);
@@ -506,7 +506,7 @@ public class MediaRouter2Test {
         };
 
         // TODO: Remove this once the MediaRouter2 becomes always connected to the service.
-        RouteCallback routeCallback = new RouteCallback();
+        RouteCallback routeCallback = new RouteCallback() {};
         mRouter2.registerRouteCallback(mExecutor, routeCallback, EMPTY_DISCOVERY_PREFERENCE);
 
         try {
@@ -594,7 +594,7 @@ public class MediaRouter2Test {
 
 
         // TODO: Remove this once the MediaRouter2 becomes always connected to the service.
-        RouteCallback routeCallback = new RouteCallback();
+        RouteCallback routeCallback = new RouteCallback() {};
         mRouter2.registerRouteCallback(mExecutor, routeCallback, EMPTY_DISCOVERY_PREFERENCE);
 
         try {
@@ -671,7 +671,7 @@ public class MediaRouter2Test {
         };
 
         // TODO: Remove this once the MediaRouter2 becomes always connected to the service.
-        RouteCallback routeCallback = new RouteCallback();
+        RouteCallback routeCallback = new RouteCallback() {};
         mRouter2.registerRouteCallback(mExecutor, routeCallback, EMPTY_DISCOVERY_PREFERENCE);
 
         try {
@@ -740,7 +740,7 @@ public class MediaRouter2Test {
         };
 
         // TODO: Remove this once the MediaRouter2 becomes always connected to the service.
-        RouteCallback routeCallback = new RouteCallback();
+        RouteCallback routeCallback = new RouteCallback() {};
         mRouter2.registerRouteCallback(mExecutor, routeCallback, EMPTY_DISCOVERY_PREFERENCE);
 
         try {
@@ -814,7 +814,7 @@ public class MediaRouter2Test {
         };
 
        // TODO: Remove this once the MediaRouter2 becomes always connected to the service.
-        RouteCallback routeCallback = new RouteCallback();
+        RouteCallback routeCallback = new RouteCallback() {};
         mRouter2.registerRouteCallback(mExecutor, routeCallback, EMPTY_DISCOVERY_PREFERENCE);
 
         try {
@@ -931,13 +931,12 @@ public class MediaRouter2Test {
         // we have tests for them. This method just directly calls those methods so that the tool
         // can recognize the callback methods as tested.
 
-        MediaRouter2.RouteCallback routeCallback = new MediaRouter2.RouteCallback();
+        RouteCallback routeCallback = new RouteCallback() {};
         routeCallback.onRoutesAdded(null);
         routeCallback.onRoutesChanged(null);
         routeCallback.onRoutesRemoved(null);
 
-        MediaRouter2.TransferCallback transferCallback =
-                new MediaRouter2.TransferCallback();
+        TransferCallback transferCallback = new TransferCallback() {};
         transferCallback.onTransferred(null, null);
         transferCallback.onTransferFailed(null);
 
