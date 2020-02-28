@@ -24,6 +24,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
+import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
@@ -174,6 +175,29 @@ public class AppEnumerationTests {
         assertVisible(QUERIES_SERVICE_ACTION, TARGET_FORCEQUERYABLE);
         assertVisible(QUERIES_PROVIDER_AUTH, TARGET_FORCEQUERYABLE);
         assertVisible(QUERIES_PACKAGE, TARGET_FORCEQUERYABLE);
+    }
+
+    @Test
+    public void startExplicitly_cannotStartNonVisible() throws Exception {
+        assertNotVisible(QUERIES_NOTHING, TARGET_FILTERS);
+        try {
+            startExplicitIntent(QUERIES_NOTHING, TARGET_FILTERS);
+            fail("Package cannot start a package it cannot see");
+        } catch (ActivityNotFoundException e) {
+            // hooray!
+        }
+    }
+
+    @Test
+    public void startExplicitly_canStartVisible() throws Exception {
+        assertVisible(QUERIES_ACTIVITY_ACTION, TARGET_FILTERS);
+        startExplicitIntent(QUERIES_ACTIVITY_ACTION, TARGET_FILTERS);
+    }
+
+    @Test
+    public void startImplicitly_canStartNonVisible() throws Exception {
+        assertNotVisible(QUERIES_NOTHING, TARGET_FILTERS);
+        startImplicitIntent(QUERIES_NOTHING);
     }
 
     @Test
@@ -403,6 +427,19 @@ public class AppEnumerationTests {
         Bundle response = sendCommand(sourcePackageNames, null, new Intent().putExtra("flags", flags),
                 "android.appenumeration.cts.action.GET_INSTALLED_PACKAGES");
         return response.getStringArray(Intent.EXTRA_RETURN_RESULT);
+    }
+
+    private void startExplicitIntent(String sourcePackage, String targetPackage) throws Exception {
+        sendCommand(sourcePackage, targetPackage,
+                new Intent().setComponent(new ComponentName(targetPackage,
+                        "android.appenumeration.testapp.DummyActivity")),
+                "android.appenumeration.cts.action.START_DIRECTLY");
+    }
+
+    private void startImplicitIntent(String sourcePackage) throws Exception {
+        sendCommand(sourcePackage, TARGET_FILTERS,
+                new Intent("android.appenumeration.action.ACTIVITY"),
+                "android.appenumeration.cts.action.START_DIRECTLY");
     }
 
     private Bundle sendCommand(String sourcePackageName, @Nullable String targetPackageName,
