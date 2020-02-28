@@ -403,7 +403,7 @@ public class MediaRoute2ProviderServiceTest {
         };
 
         // TODO: Remove this once the MediaRouter2 becomes always connected to the mService.
-        RouteCallback dummyCallback = new RouteCallback();
+        RouteCallback dummyCallback = new RouteCallback() {};
         try {
             mRouter2.registerRouteCallback(mExecutor, dummyCallback,
                     new RouteDiscoveryPreference.Builder(new ArrayList<>(), true).build());
@@ -497,7 +497,7 @@ public class MediaRoute2ProviderServiceTest {
         };
 
         // TODO: Remove this once the MediaRouter2 becomes always connected to the mService.
-        RouteCallback dummyCallback = new RouteCallback();
+        RouteCallback dummyCallback = new RouteCallback() {};
         try {
             mRouter2.registerRouteCallback(mExecutor, dummyCallback,
                     new RouteDiscoveryPreference.Builder(new ArrayList<>(), true).build());
@@ -523,8 +523,8 @@ public class MediaRoute2ProviderServiceTest {
         CountDownLatch latch = new CountDownLatch(1);
         CountDownLatch latch2 = new CountDownLatch(1);
 
-        RouteCallback routeCallback = new RouteCallback();
-        RouteCallback routeCallback2 = new RouteCallback();
+        RouteCallback routeCallback = new RouteCallback() {};
+        RouteCallback routeCallback2 = new RouteCallback() {};
 
         List<String> featuresSample = Collections.singletonList(FEATURE_SAMPLE);
         List<String> featuresSpecial = Collections.singletonList(FEATURE_SPECIAL);
