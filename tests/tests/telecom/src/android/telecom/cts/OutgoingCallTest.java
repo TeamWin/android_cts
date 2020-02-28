@@ -21,6 +21,7 @@ import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.telecom.CallAudioState;
+import android.telecom.Connection;
 import android.telecom.TelecomManager;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
@@ -157,5 +158,41 @@ public class OutgoingCallTest extends BaseTelecomTestWithMockServices {
                 TimeUnit.SECONDS);
         Thread.sleep(STATE_CHANGE_DELAY);
         assertEquals(TelephonyManager.CALL_STATE_OFFHOOK, mTelephonyManager.getCallState());
+    }
+
+    /**
+     * Ensure that {@link TelecomManager#EXTRA_PHONE_ACCOUNT_HANDLE} is taken account when placing
+     * an outgoing call.
+     * @throws Exception
+     */
+    public void testExtraPhoneAccountHandleAvailable() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        final Bundle extras1 = new Bundle();
+        final Bundle extras2 = new Bundle();
+        extras1.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE,
+                TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
+        extras2.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE,
+                TestUtils.TEST_PHONE_ACCOUNT_HANDLE_2);
+
+        mTelecomManager.registerPhoneAccount(TestUtils.TEST_PHONE_ACCOUNT);
+        TestUtils.enablePhoneAccount(
+                getInstrumentation(), TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
+        placeAndVerifyCall(extras1);
+        Connection conn = verifyConnectionForOutgoingCall();
+        assertEquals(TestUtils.TEST_PHONE_ACCOUNT_HANDLE, conn.getPhoneAccountHandle());
+
+        cleanupCalls();
+        setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
+
+        mTelecomManager.registerPhoneAccount(TestUtils.TEST_PHONE_ACCOUNT_2);
+        TestUtils.enablePhoneAccount(
+                getInstrumentation(), TestUtils.TEST_PHONE_ACCOUNT_HANDLE_2);
+        placeAndVerifyCall(extras2);
+        conn = verifyConnectionForOutgoingCall();
+        assertEquals(TestUtils.TEST_PHONE_ACCOUNT_HANDLE_2, conn.getPhoneAccountHandle());
+        conn.onDisconnect();
     }
 }
