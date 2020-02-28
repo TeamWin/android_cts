@@ -74,7 +74,7 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
 
         getDevice().installPackageForUser(
                 mApkFile, /* reinstall= */true, /* grantPermissions= */true,
-                mParentUserId, /* extraArgs= */"-t");
+                mParentUserId, /* extraArgs= */"-t", /* extraArgs= */"--force-queryable");
     }
 
     @After
@@ -89,7 +89,7 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
     public void setBuild(IBuildInfo buildInfo) {
         mCtsBuild = buildInfo;
     }
-    
+
     @Test
     public void testBindServiceAsUser_differentUser_bindsServiceToCorrectUser()
             throws Exception {
@@ -98,13 +98,13 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
         mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
         getDevice().installPackageForUser(
                 mApkFile, /* reinstall= */true, /* grantPermissions= */true,
-                userInSameProfileGroup, /* extraArgs= */"-t");
+                userInSameProfileGroup, /* extraArgs= */"-t", /* extraArgs= */"--force-queryable");
 
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         File testServiceApkFile = buildHelper.getTestFile(TEST_SERVICE_WITH_PERMISSION_APK);
         getDevice().installPackageForUser(
                 testServiceApkFile, /* reinstall= */true, /* grantPermissions= */true,
-                userInSameProfileGroup, /* extraArgs= */"-t");
+                userInSameProfileGroup, /* extraArgs= */"-t", /* extraArgs= */"--force-queryable");
 
         runDeviceTests(
                 getDevice(),
@@ -125,13 +125,13 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
         mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
         getDevice().installPackageForUser(
                 mApkFile, /* reinstall= */true, /* grantPermissions= */true,
-                userInSameProfileGroup, /* extraArgs= */"-t");
+                userInSameProfileGroup, /* extraArgs= */"-t", /* extraArgs= */"--force-queryable");
 
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         File testServiceApkFile = buildHelper.getTestFile(TEST_SERVICE_WITH_PERMISSION_APK);
         getDevice().installPackageForUser(
                 testServiceApkFile, /* reinstall= */true, /* grantPermissions= */true,
-                userInSameProfileGroup, /* extraArgs= */"-t");
+                userInSameProfileGroup, /* extraArgs= */"-t", /* extraArgs= */"--force-queryable");
 
         runDeviceTests(
                 getDevice(),
@@ -152,13 +152,13 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
         mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
         getDevice().installPackageForUser(
                 mApkFile, /* reinstall= */true, /* grantPermissions= */true,
-                userInSameProfileGroup, /* extraArgs= */"-t");
+                userInSameProfileGroup, /* extraArgs= */"-t", /* extraArgs= */"--force-queryable");
 
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         File testServiceApkFile = buildHelper.getTestFile(TEST_SERVICE_WITH_PERMISSION_APK);
         getDevice().installPackageForUser(
                 testServiceApkFile, /* reinstall= */true, /* grantPermissions= */true,
-                userInSameProfileGroup, /* extraArgs= */"-t");
+                userInSameProfileGroup, /* extraArgs= */"-t", /* extraArgs= */"--force-queryable");
 
         runDeviceTests(
                 getDevice(),
@@ -179,13 +179,13 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
         mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
         getDevice().installPackageForUser(
                 mApkFile, /* reinstall= */true, /* grantPermissions= */true,
-                userInSameProfileGroup, /* extraArgs= */"-t");
+                userInSameProfileGroup, /* extraArgs= */"-t", /* extraArgs= */"--force-queryable");
 
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         File testServiceApkFile = buildHelper.getTestFile(TEST_SERVICE_WITH_PERMISSION_APK);
         getDevice().installPackageForUser(
                 testServiceApkFile, /* reinstall= */true, /* grantPermissions= */true,
-                userInSameProfileGroup, /* extraArgs= */"-t");
+                userInSameProfileGroup, /* extraArgs= */"-t", /* extraArgs= */"--force-queryable");
 
         runDeviceTests(
                 getDevice(),
@@ -206,13 +206,13 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
         mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
         getDevice().installPackageForUser(
                 mApkFile, /* reinstall= */true, /* grantPermissions= */true,
-                userInSameProfileGroup, /* extraArgs= */"-t");
+                userInSameProfileGroup, /* extraArgs= */"-t", /* extraArgs= */"--force-queryable");
 
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         File testServiceApkFile = buildHelper.getTestFile(TEST_SERVICE_WITH_PERMISSION_APK);
         getDevice().installPackageForUser(
                 testServiceApkFile, /* reinstall= */true, /* grantPermissions= */true,
-                userInSameProfileGroup, /* extraArgs= */"-t");
+                userInSameProfileGroup, /* extraArgs= */"-t", /* extraArgs= */"--force-queryable");
 
         runDeviceTests(
                 getDevice(),
@@ -233,13 +233,13 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
         mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
         getDevice().installPackageForUser(
                 mApkFile, /* reinstall= */true, /* grantPermissions= */true,
-                userInSameProfileGroup, /* extraArgs= */"-t");
+                userInSameProfileGroup, /* extraArgs= */"-t", /* extraArgs= */"--force-queryable");
 
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         File testServiceApkFile = buildHelper.getTestFile(TEST_SERVICE_WITH_PERMISSION_APK);
         getDevice().installPackageForUser(
                 testServiceApkFile, /* reinstall= */true, /* grantPermissions= */true,
-                userInSameProfileGroup, /* extraArgs= */"-t");
+                userInSameProfileGroup, /* extraArgs= */"-t", /* extraArgs= */"--force-queryable");
 
         runDeviceTests(
                 getDevice(),
@@ -260,13 +260,13 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
         mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
         getDevice().installPackageForUser(
                 mApkFile, /* reinstall= */true, /* grantPermissions= */true,
-                userInSameProfileGroup, /* extraArgs= */"-t");
+                userInSameProfileGroup, /* extraArgs= */"-t", /* extraArgs= */"--force-queryable");
 
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         File testServiceApkFile = buildHelper.getTestFile(TEST_SERVICE_WITH_PERMISSION_APK);
         getDevice().installPackageForUser(
                 testServiceApkFile, /* reinstall= */true, /* grantPermissions= */true,
-                userInSameProfileGroup, /* extraArgs= */"-t");
+                userInSameProfileGroup, /* extraArgs= */"-t", /* extraArgs= */"--force-queryable");
 
         runDeviceTests(
                 getDevice(),
@@ -287,13 +287,15 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
         mTestArgs.put("testUser", Integer.toString(userInDifferentProfileGroup));
         getDevice().installPackageForUser(
                 mApkFile, /* reinstall= */true, /* grantPermissions= */true,
-                userInDifferentProfileGroup, /* extraArgs= */"-t");
+                userInDifferentProfileGroup, /* extraArgs= */"-t",
+                /* extraArgs= */"--force-queryable");
 
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         File testServiceApkFile = buildHelper.getTestFile(TEST_SERVICE_WITH_PERMISSION_APK);
         getDevice().installPackageForUser(
                 testServiceApkFile, /* reinstall= */true, /* grantPermissions= */true,
-                userInDifferentProfileGroup, /* extraArgs= */"-t");
+                userInDifferentProfileGroup, /* extraArgs= */"-t",
+                /* extraArgs= */"--force-queryable");
 
         runDeviceTests(
                 getDevice(),
@@ -314,13 +316,15 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
         mTestArgs.put("testUser", Integer.toString(userInDifferentProfileGroup));
         getDevice().installPackageForUser(
                 mApkFile, /* reinstall= */true, /* grantPermissions= */true,
-                userInDifferentProfileGroup, /* extraArgs= */"-t");
+                userInDifferentProfileGroup, /* extraArgs= */"-t",
+                /* extraArgs= */"--force-queryable");
 
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         File testServiceApkFile = buildHelper.getTestFile(TEST_SERVICE_WITH_PERMISSION_APK);
         getDevice().installPackageForUser(
                 testServiceApkFile, /* reinstall= */true, /* grantPermissions= */true,
-                userInDifferentProfileGroup, /* extraArgs= */"-t");
+                userInDifferentProfileGroup, /* extraArgs= */"-t",
+                /* extraArgs= */"--force-queryable");
 
         runDeviceTests(
                 getDevice(),
@@ -341,13 +345,15 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
         mTestArgs.put("testUser", Integer.toString(userInDifferentProfileGroup));
         getDevice().installPackageForUser(
                 mApkFile, /* reinstall= */true, /* grantPermissions= */true,
-                userInDifferentProfileGroup, /* extraArgs= */"-t");
+                userInDifferentProfileGroup, /* extraArgs= */"-t",
+                /* extraArgs= */"--force-queryable");
 
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         File testServiceApkFile = buildHelper.getTestFile(TEST_SERVICE_WITH_PERMISSION_APK);
         getDevice().installPackageForUser(
                 testServiceApkFile, /* reinstall= */true, /* grantPermissions= */true,
-                userInDifferentProfileGroup, /* extraArgs= */"-t");
+                userInDifferentProfileGroup, /* extraArgs= */"-t",
+                /* extraArgs= */"--force-queryable");
 
         runDeviceTests(
                 getDevice(),
@@ -368,13 +374,13 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
         mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
         getDevice().installPackageForUser(
                 mApkFile, /* reinstall= */true, /* grantPermissions= */true,
-                userInSameProfileGroup, /* extraArgs= */"-t");
+                userInSameProfileGroup, /* extraArgs= */"-t", /* extraArgs= */"--force-queryable");
 
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         File testServiceApkFile = buildHelper.getTestFile(TEST_SERVICE_WITH_PERMISSION_APK);
         getDevice().installPackageForUser(
                 testServiceApkFile, /* reinstall= */true, /* grantPermissions= */true,
-                userInSameProfileGroup, /* extraArgs= */"-t");
+                userInSameProfileGroup, /* extraArgs= */"-t", /* extraArgs= */"--force-queryable");
 
         runDeviceTests(
                 getDevice(),
@@ -395,13 +401,13 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
         mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
         getDevice().installPackageForUser(
                 mApkFile, /* reinstall= */true, /* grantPermissions= */true,
-                userInSameProfileGroup, /* extraArgs= */"-t");
+                userInSameProfileGroup, /* extraArgs= */"-t", /* extraArgs= */"--force-queryable");
 
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         File testServiceApkFile = buildHelper.getTestFile(TEST_SERVICE_WITH_PERMISSION_APK);
         getDevice().installPackageForUser(
                 testServiceApkFile, /* reinstall= */true, /* grantPermissions= */true,
-                userInSameProfileGroup, /* extraArgs= */"-t");
+                userInSameProfileGroup, /* extraArgs= */"-t", /* extraArgs= */"--force-queryable");
 
         runDeviceTests(
                 getDevice(),
@@ -422,13 +428,13 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
         mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
         getDevice().installPackageForUser(
                 mApkFile, /* reinstall= */true, /* grantPermissions= */true,
-                userInSameProfileGroup, /* extraArgs= */"-t");
+                userInSameProfileGroup, /* extraArgs= */"-t", /* extraArgs= */"--force-queryable");
 
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         File testServiceApkFile = buildHelper.getTestFile(TEST_SERVICE_WITH_PERMISSION_APK);
         getDevice().installPackageForUser(
                 testServiceApkFile, /* reinstall= */true, /* grantPermissions= */true,
-                userInSameProfileGroup, /* extraArgs= */"-t");
+                userInSameProfileGroup, /* extraArgs= */"-t", /* extraArgs= */"--force-queryable");
 
         runDeviceTests(
                 getDevice(),

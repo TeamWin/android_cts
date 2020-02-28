@@ -27,6 +27,7 @@ import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_M
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
+import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.greaterThan;
@@ -79,7 +80,10 @@ import java.util.stream.Collectors;
 @Presubmit
 @android.server.wm.annotation.Group3
 public class DisplayCutoutTests {
-    static final Rect ZERO_RECT = new Rect();
+    static final String LEFT = "left";
+    static final String TOP = "top";
+    static final String RIGHT = "right";
+    static final String BOTTOM = "bottom";
 
     @Rule
     public final ErrorCollector mErrorCollector = new ErrorCollector();
@@ -164,8 +168,12 @@ public class DisplayCutoutTests {
     public void testDisplayCutout_shortEdges_portrait() {
         runTest(LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES, (a, insets, displayCutout, which) -> {
             if (which == ROOT) {
-                assertThat("Display.getCutout() must equal view root cutout",
-                        a.getDisplay().getCutout(), equalTo(displayCutout));
+                assertThat("cutout is either null or the short edge insets must be equal to "
+                                + "those of the Display.getCutout() and the long edge "
+                                + "side insets must be 0",
+                        safeInsets(displayCutout),
+                        anyOf(is(nullValue()), onlyHasShortEdgeInsetsAndEqualsTo(
+                                safeInsets(a.getDisplay().getCutout()))));
             }
         });
     }
@@ -200,29 +208,26 @@ public class DisplayCutoutTests {
         final DisplayCutout displayCutout = insets.getDisplayCutout();
         final DisplayCutout dispatchedDisplayCutout = dispatchedInsets.getDisplayCutout();
         if (displayCutout != null) {
-            commonAsserts(activity, insets, displayCutout);
+            commonAsserts(activity, displayCutout);
             if (cutoutMode != LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS) {
                 shortEdgeAsserts(activity, insets, displayCutout);
             }
-            assertCutoutsAreConsistentWithInsets(displayCutout);
+            assertCutoutsAreConsistentWithInsets(activity, displayCutout);
         }
         test.run(activity, insets, displayCutout, ROOT);
 
         if (dispatchedDisplayCutout != null) {
-            commonAsserts(activity, dispatchedInsets, dispatchedDisplayCutout);
+            commonAsserts(activity, dispatchedDisplayCutout);
             if (cutoutMode != LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS) {
                 shortEdgeAsserts(activity, insets, displayCutout);
             }
-            assertCutoutsAreConsistentWithInsets(dispatchedDisplayCutout);
+            assertCutoutsAreConsistentWithInsets(activity, dispatchedDisplayCutout);
         }
         test.run(activity, dispatchedInsets, dispatchedDisplayCutout, DISPATCHED);
     }
 
-    private void commonAsserts(TestActivity activity, WindowInsets insets, DisplayCutout cutout) {
+    private void commonAsserts(TestActivity activity, DisplayCutout cutout) {
         assertSafeInsetsValid(cutout);
-        assertThat("systemWindowInsets (also known as content insets) must be at least as large as "
-                        + "cutout safe insets",
-                safeInsets(cutout), insetsLessThanOrEqualTo(systemWindowInsets(insets)));
         assertCutoutsAreWithinSafeInsets(activity, cutout);
         assertBoundsAreNonEmpty(cutout);
         assertAtMostOneCutoutPerEdge(activity, cutout);
@@ -231,26 +236,29 @@ public class DisplayCutoutTests {
     private void shortEdgeAsserts(
             TestActivity activity, WindowInsets insets, DisplayCutout cutout) {
         assertOnlyShortEdgeHasInsets(activity, cutout);
-        assertOnlyShortEdgeHasBounds(activity, insets, cutout);
+        assertOnlyShortEdgeHasBounds(activity, cutout);
+        assertThat("systemWindowInsets (also known as content insets) must be at least as "
+                        + "large as cutout safe insets",
+                safeInsets(cutout), insetsLessThanOrEqualTo(systemWindowInsets(insets)));
     }
 
-    private void assertCutoutIsConsistentWithInset(String position, int insetSize, Rect bound) {
-        if (insetSize > 0) {
-            assertThat("cutout must have a bound on the " + position, bound,
-                    not(equalTo(ZERO_RECT)));
+    private void assertCutoutIsConsistentWithInset(String position, DisplayCutout cutout,
+            int safeInsetSize, Rect appBound) {
+        if (safeInsetSize > 0) {
+            assertThat("cutout must have a bound on the " + position,
+                    hasBound(position, cutout, appBound), is(true));
         } else {
-            assertThat("cutout  must have no bound on the " + position, bound,
-                    equalTo(ZERO_RECT));
+            assertThat("cutout  must have no bound on the " + position,
+                    hasBound(position, cutout, appBound), is(false));
         }
     }
 
-    public void assertCutoutsAreConsistentWithInsets(DisplayCutout cutout) {
-        final Rect safeInsets = safeInsets(cutout);
-        assertCutoutIsConsistentWithInset("top", safeInsets.top, cutout.getBoundingRectTop());
-        assertCutoutIsConsistentWithInset("bottom", safeInsets.bottom,
-                cutout.getBoundingRectBottom());
-        assertCutoutIsConsistentWithInset("left", safeInsets.left, cutout.getBoundingRectLeft());
-        assertCutoutIsConsistentWithInset("right", safeInsets.right, cutout.getBoundingRectRight());
+    public void assertCutoutsAreConsistentWithInsets(TestActivity activity, DisplayCutout cutout) {
+        final Rect appBounds = getAppBounds(activity);
+        assertCutoutIsConsistentWithInset(TOP, cutout, cutout.getSafeInsetTop(), appBounds);
+        assertCutoutIsConsistentWithInset(BOTTOM, cutout, cutout.getSafeInsetBottom(), appBounds);
+        assertCutoutIsConsistentWithInset(LEFT, cutout, cutout.getSafeInsetLeft(), appBounds);
+        assertCutoutIsConsistentWithInset(RIGHT, cutout, cutout.getSafeInsetRight(), appBounds);
     }
 
     private void assertSafeInsetsValid(DisplayCutout displayCutout) {
@@ -312,32 +320,55 @@ public class DisplayCutoutTests {
         }
     }
 
-    private void assertOnlyShortEdgeHasBounds(TestActivity activity, WindowInsets insets,
-                                              DisplayCutout cutout) {
+    private void assertOnlyShortEdgeHasBounds(TestActivity activity, DisplayCutout cutout) {
         final Point displaySize = new Point();
         runOnMainSync(() -> activity.getDecorView().getDisplay().getRealSize(displaySize));
+        final Rect appBounds = getAppBounds(activity);
         if (displaySize.y > displaySize.x) {
             // Portrait display
             assertThat("left edge has a cutout despite being long edge",
-                    cutout.getBoundingRectLeft(), is(ZERO_RECT));
+                    hasBound(LEFT, cutout, appBounds), is(false));
+
             assertThat("right edge has a cutout despite being long edge",
-                    cutout.getBoundingRectRight(), is(ZERO_RECT));
+                    hasBound(RIGHT, cutout, appBounds), is(false));
         }
         if (displaySize.y < displaySize.x) {
             // Landscape display
             assertThat("top edge has a cutout despite being long edge",
-                    cutout.getBoundingRectTop(), is(ZERO_RECT));
+                    hasBound(TOP, cutout, appBounds), is(false));
+
             assertThat("bottom edge has a cutout despite being long edge",
-                    cutout.getBoundingRectBottom(), is(ZERO_RECT));
+                    hasBound(BOTTOM, cutout, appBounds), is(false));
         }
+    }
+
+    private boolean hasBound(String position, DisplayCutout cutout, Rect appBound) {
+        final Rect cutoutRect;
+        final int waterfallSize;
+        if (LEFT.equals(position)) {
+            cutoutRect = cutout.getBoundingRectLeft();
+            waterfallSize = cutout.getWaterfallInsets().left;
+        } else if (TOP.equals(position)) {
+            cutoutRect = cutout.getBoundingRectTop();
+            waterfallSize = cutout.getWaterfallInsets().top;
+        } else if (RIGHT.equals(position)) {
+            cutoutRect = cutout.getBoundingRectRight();
+            waterfallSize = cutout.getWaterfallInsets().right;
+        } else {
+            cutoutRect = cutout.getBoundingRectBottom();
+            waterfallSize = cutout.getWaterfallInsets().bottom;
+        }
+        return Rect.intersects(cutoutRect, appBound) || waterfallSize > 0;
     }
 
     private List<Rect> boundsWith(DisplayCutout cutout, Predicate<Rect> predicate) {
         return cutout.getBoundingRects().stream().filter(predicate).collect(Collectors.toList());
     }
 
-
     private static Rect safeInsets(DisplayCutout displayCutout) {
+        if (displayCutout == null) {
+            return null;
+        }
         return new Rect(displayCutout.getSafeInsetLeft(), displayCutout.getSafeInsetTop(),
                 displayCutout.getSafeInsetRight(), displayCutout.getSafeInsetBottom());
     }
@@ -359,12 +390,33 @@ public class DisplayCutoutTests {
         return safeRect;
     }
 
+    private Rect getAppBounds(TestActivity a) {
+        final Rect appBounds = new Rect();
+        runOnMainSync(() -> {
+            appBounds.right = a.getDecorView().getWidth();
+            appBounds.bottom = a.getDecorView().getHeight();
+        });
+        return appBounds;
+    }
+
     private static Matcher<Rect> insetsLessThanOrEqualTo(Rect max) {
         return new CustomTypeSafeMatcher<Rect>("must be smaller on each side than " + max) {
             @Override
             protected boolean matchesSafely(Rect actual) {
                 return actual.left <= max.left && actual.top <= max.top
                         && actual.right <= max.right && actual.bottom <= max.bottom;
+            }
+        };
+    }
+
+    private static Matcher<Rect> onlyHasShortEdgeInsetsAndEqualsTo(Rect expect) {
+        return new CustomTypeSafeMatcher<Rect>(
+                "must be 0 on long edge insets and equal on short edge insets to "
+                        + expect) {
+            @Override
+            protected boolean matchesSafely(Rect actual) {
+                return actual != null && actual.left == 0 && actual.top == expect.top
+                        && actual.right == 0 && actual.bottom == expect.bottom;
             }
         };
     }
