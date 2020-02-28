@@ -275,6 +275,24 @@ public class DecoderTest extends MediaPlayerTestBase {
                                        int[] channelMasks) throws Exception {
 
         for (String mimetype : mimetypes) {
+            // ensure we find a codec for all listed mime/channel/rate combinations
+            MediaCodecList mcl = new MediaCodecList(MediaCodecList.ALL_CODECS);
+            for (int sampleRate : sampleRates) {
+                for (int channelMask : channelMasks) {
+                    int channelCount = AudioFormat.channelCountFromOutChannelMask(channelMask);
+                    MediaFormat desiredFormat = MediaFormat.createAudioFormat(
+                                mimetype,
+                                sampleRate,
+                                channelCount);
+                    String codecname = mcl.findDecoderForFormat(desiredFormat);
+
+                    assertTrue("findDecoderForFormat() failed for mime=" + mimetype
+                               + " sampleRate=" + sampleRate + " channelCount=" + channelCount,
+                               codecname != null);
+                }
+            }
+
+            // check all mime-matching codecs successfully configure the desired rate/channels
             ArrayList<MediaCodecInfo> codecInfoList = getDecoderMediaCodecInfoList(mimetype);
             if (codecInfoList == null) {
                 continue;
