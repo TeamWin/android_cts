@@ -290,6 +290,8 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());
         List<String> extraArgs = new LinkedList<>();
         extraArgs.add("-t");
+        // Make the test app queryable by other apps via PackageManager APIs.
+        extraArgs.add("--force-queryable");
         if (dontKillApp) extraArgs.add("--dont-kill");
         String result = getDevice().installPackageForUser(
                 buildHelper.getTestFile(appFileName), true, grantPermissions, userId,
