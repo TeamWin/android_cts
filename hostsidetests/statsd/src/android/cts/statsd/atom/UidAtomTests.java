@@ -111,7 +111,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
         Thread.sleep(WAIT_TIME_SHORT);
 
         executeBackgroundService(ACTION_LMK);
-        Thread.sleep(5_000);
+        Thread.sleep(15_000);
 
         // Sorted list of events in order in which they occurred.
         List<EventMetricData> data = getEventMetricDataList();
@@ -1445,8 +1445,8 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
             if (getAppId(permissionState.getUid()) == testAppId) {
 
-                if (permissionState.getPermissionName().equals(
-                        "android.permission.ACCESS_FINE_LOCATION")) {
+                if (permissionState.getPermissionName().contains(
+                        "ACCESS_FINE_LOCATION")) {
                     assertThat(permissionState.getIsGranted()).isTrue();
                     assertThat(permissionState.getPermissionFlags() & ~(
                             FLAG_PERMISSION_USER_SENSITIVE_WHEN_DENIED
