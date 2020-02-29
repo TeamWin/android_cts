@@ -156,7 +156,7 @@ public class UserspaceRebootHostTest extends BaseHostJUnit4Test  {
 
     private void rebootUserspaceAndWaitForBootComplete() throws Exception {
         assertThat(getDevice().setProperty("test.userspace_reboot.requested", "1")).isTrue();
-        getDevice().rebootUserspace();
+        getDevice().rebootUserspaceUntilOnline();
         assertWithMessage("Device did not boot withing 2 minutes").that(
                 getDevice().waitForBootComplete(Duration.ofMinutes(2).toMillis())).isTrue();
     }
