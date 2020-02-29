@@ -663,73 +663,48 @@ public class SubscriptionManagerTest {
         if (!isSupported()) return;
         int preferredSubId = executeWithShellPermissionAndDefault(-1, mSm,
                 (sm) -> sm.getPreferredDataSubscriptionId());
+        if (preferredSubId != SubscriptionManager.DEFAULT_SUBSCRIPTION_ID) {
+            // Make sure to switch back to primary/default data sub first.
+            setPreferredDataSubId(SubscriptionManager.DEFAULT_SUBSCRIPTION_ID);
+        }
 
-        final LinkedBlockingQueue<Integer> resultQueue = new LinkedBlockingQueue<>(1);
-        Executor executor = new Executor() {
-            @Override
-            public void execute(Runnable command) {
-                command.run();
-            }
-        };
-
-        Consumer<Integer> consumer = new Consumer<Integer>() {
-            @Override
-            public void accept(Integer res) {
-                if (res == null) {
-                    resultQueue.offer(-1);
-                } else {
-                    resultQueue.offer(res);
-                }
-            }
-        };
-
-        List<SubscriptionInfo> subscriptionInfos = mSm.getActiveSubscriptionInfoList();
-        boolean changes = false;
+        List<SubscriptionInfo> subscriptionInfos = mSm.getActiveAndHiddenSubscriptionInfoList();
 
         for (SubscriptionInfo subInfo : subscriptionInfos) {
-            int subId = subInfo.getSubscriptionId();
-            if (subId != preferredSubId) {
-                int newPreferredSubId = subId;
-                // Change to a new value.
-                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
-                        (sm) -> sm.setPreferredDataSubscriptionId(newPreferredSubId, false,
-                                executor, consumer));
-                int res = -1;
-                try {
-                    res = resultQueue.poll(2, TimeUnit.SECONDS);
-                } catch (InterruptedException e) {
-                    fail("Cannot get the modem result in time");
-                }
-                assertEquals(SET_OPPORTUNISTIC_SUB_SUCCESS, res);
-                int newGetValue = executeWithShellPermissionAndDefault(-1, mSm,
-                        (sm) -> sm.getPreferredDataSubscriptionId());
-                assertEquals(newPreferredSubId, newGetValue);
-                changes = true;
-                break;
-            }
+            // Only test on opportunistic subscriptions.
+            if (!subInfo.isOpportunistic()) continue;
+            setPreferredDataSubId(subInfo.getSubscriptionId());
         }
 
-        // Reset back, or set the duplicate.
-        if (SubscriptionManager.isValidSubscriptionId(preferredSubId)) {
-            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
-                    (sm) -> sm.setPreferredDataSubscriptionId(preferredSubId, false,
-                            executor, consumer));
-            int res = -1;
-            try {
-                res = resultQueue.poll(2, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                fail("Cannot get the modem result in time");
-            }
-            // Duplicate setting ends up with nothing.
-            if (!changes) {
-                assertEquals(-1, res);
+        // Switch data back to previous preferredSubId.
+        setPreferredDataSubId(preferredSubId);
+    }
+
+    private void setPreferredDataSubId(int subId) {
+        final LinkedBlockingQueue<Integer> resultQueue = new LinkedBlockingQueue<>(1);
+        Executor executor = (command)-> command.run();
+        Consumer<Integer> consumer = (res)-> {
+            if (res == null) {
+                resultQueue.offer(-1);
             } else {
-                assertEquals(SET_OPPORTUNISTIC_SUB_SUCCESS, res);
-                int resetGetValue = executeWithShellPermissionAndDefault(-1, mSm,
-                        (sm) -> sm.getPreferredDataSubscriptionId());
-                assertEquals(resetGetValue, preferredSubId);
+                resultQueue.offer(res);
             }
+        };
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
+                (sm) -> sm.setPreferredDataSubscriptionId(subId, false,
+                        executor, consumer));
+        int res = -1;
+        try {
+            res = resultQueue.poll(2, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            fail("Cannot get the modem result in time");
         }
+
+        assertEquals(SET_OPPORTUNISTIC_SUB_SUCCESS, res);
+        int getValue = executeWithShellPermissionAndDefault(-1, mSm,
+                (sm) -> sm.getPreferredDataSubscriptionId());
+        assertEquals(subId, getValue);
     }
 
     private void changeAndVerifySubscriptionEnabledValue(int subId, boolean targetValue) {
