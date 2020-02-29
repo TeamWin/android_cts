@@ -388,7 +388,7 @@ public class PrinterCapabilitiesTest extends BasePrintTest {
             selectPrinter(PRINTER_NAME);
         }
 
-        clickPrintButton();
+        mPrintHelper.submitPrintJob();
 
         if (!sDefaultPrinterBeenSet) {
             answerPrintServicesWarning(true);

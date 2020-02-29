@@ -24,4 +24,5 @@ android_test {
     srcs: ["src/**/*.java"],
     static_libs: ["print-test-util-lib"],
     sdk_version: "test_current",
+    required: ["com.android.cts.helpers.aosp"],
 }
