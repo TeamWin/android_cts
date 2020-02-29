@@ -17,6 +17,10 @@ package com.android.cts.blob.helper;
 
 import static android.os.storage.StorageManager.UUID_DEFAULT;
 
+import static com.android.utils.blob.Utils.writeToSession;
+
+import static com.google.common.truth.Truth.assertThat;
+
 import android.app.Service;
 import android.app.blob.BlobHandle;
 import android.app.blob.BlobStoreManager;
@@ -25,11 +29,17 @@ import android.app.usage.StorageStatsManager;
 import android.content.Intent;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.IBinder;
+import android.os.ParcelFileDescriptor;
 import android.os.Process;
 
 import com.android.cts.blob.ICommandReceiver;
+import com.android.utils.blob.Utils;
 
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class BlobStoreTestService extends Service {
     @Override
@@ -38,26 +48,72 @@ public class BlobStoreTestService extends Service {
     }
 
     private class CommandReceiver extends ICommandReceiver.Stub {
+        @Override
+        public int commit(BlobHandle blobHandle, ParcelFileDescriptor input,
+                long timeoutSec, long size) {
+            final BlobStoreManager blobStoreManager = getSystemService(
+                    BlobStoreManager.class);
+            try {
+                final long sessionId = blobStoreManager.createSession(blobHandle);
+                try (BlobStoreManager.Session session = blobStoreManager.openSession(sessionId)) {
+                    writeToSession(session, input, size);
+
+                    final CompletableFuture<Integer> callback = new CompletableFuture<>();
+                    session.commit(getMainExecutor(), callback::complete);
+                    return callback.get(timeoutSec, TimeUnit.SECONDS);
+                }
+            } catch (IOException | InterruptedException | TimeoutException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public ParcelFileDescriptor openBlob(BlobHandle blobHandle) {
+            final BlobStoreManager blobStoreManager = getSystemService(
+                    BlobStoreManager.class);
+            try {
+                return blobStoreManager.openBlob(blobHandle);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public void openSession(long sessionId) {
+            final BlobStoreManager blobStoreManager = getSystemService(
+                    BlobStoreManager.class);
+            try {
+                try (BlobStoreManager.Session session = blobStoreManager.openSession(sessionId)) {
+                    assertThat(session).isNotNull();
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
         public void acquireLease(BlobHandle blobHandle) {
             final BlobStoreManager blobStoreManager = getSystemService(
                     BlobStoreManager.class);
             try {
                 blobStoreManager.acquireLease(blobHandle, "Test description");
             } catch (IOException e) {
-                throw new IllegalStateException(e);
+                throw new RuntimeException(e);
             }
         }
 
+        @Override
         public void releaseLease(BlobHandle blobHandle) {
             final BlobStoreManager blobStoreManager = getSystemService(
                     BlobStoreManager.class);
             try {
                 blobStoreManager.releaseLease(blobHandle);
             } catch (IOException e) {
-                throw new IllegalStateException(e);
+                throw new RuntimeException(e);
             }
         }
 
+        @Override
         public StorageStats queryStatsForPackage() {
             final StorageStatsManager storageStatsManager = getSystemService(
                     StorageStatsManager.class);
@@ -65,10 +121,11 @@ public class BlobStoreTestService extends Service {
                 return storageStatsManager
                         .queryStatsForPackage(UUID_DEFAULT, getPackageName(), getUser());
             } catch (IOException | NameNotFoundException e) {
-                throw new IllegalStateException(e);
+                throw new RuntimeException(e);
             }
         }
 
+        @Override
         public StorageStats queryStatsForUid() {
             final StorageStatsManager storageStatsManager = getSystemService(
                     StorageStatsManager.class);
@@ -76,7 +133,7 @@ public class BlobStoreTestService extends Service {
                 return storageStatsManager
                         .queryStatsForUid(UUID_DEFAULT, Process.myUid());
             } catch (IOException e) {
-                throw new IllegalStateException(e);
+                throw new RuntimeException(e);
             }
         }
     }

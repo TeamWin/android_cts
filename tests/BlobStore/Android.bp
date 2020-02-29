@@ -19,6 +19,7 @@ android_test {
         "androidx.test.ext.junit",
         "androidx.test.rules",
         "compatibility-device-util-axt",
+        "guava",
         "truth-prebuilt",
         "testng",
         "BlobStoreTestUtils",
@@ -38,6 +39,30 @@ android_test {
 android_test_helper_app {
     name: "CtsBlobStoreTestHelper",
     defaults: ["cts_defaults"],
+    static_libs: [
+        "truth-prebuilt",
+        "BlobStoreTestUtils",
+    ],
+    srcs: [
+        "helper-app/src/**/*.java",
+        ":CtsBlobStoreTestsAidl"
+    ],
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests"
+    ],
+    manifest: "helper-app/AndroidManifest.xml",
+    sdk_version: "test_current"
+}
+
+android_test_helper_app {
+    name: "CtsBlobStoreTestHelperDiffSig",
+    defaults: ["cts_defaults"],
+    static_libs: [
+        "truth-prebuilt",
+        "BlobStoreTestUtils",
+    ],
     srcs: [
         "helper-app/src/**/*.java",
         ":CtsBlobStoreTestsAidl"
@@ -48,6 +73,34 @@ android_test_helper_app {
         "general-tests",
     ],
     manifest: "helper-app/AndroidManifest.xml",
+    aaptflags: [
+        "--rename-manifest-package com.android.cts.blob.helper2",
+    ],
+    certificate: ":cts-blob-helper-cert",
+    sdk_version: "test_current"
+}
+
+android_test_helper_app {
+    name: "CtsBlobStoreTestHelperDiffSig2",
+    defaults: ["cts_defaults"],
+    static_libs: [
+        "truth-prebuilt",
+        "BlobStoreTestUtils",
+    ],
+    srcs: [
+        "helper-app/src/**/*.java",
+        ":CtsBlobStoreTestsAidl"
+    ],
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ],
+    manifest: "helper-app/AndroidManifest.xml",
+    aaptflags: [
+        "--rename-manifest-package com.android.cts.blob.helper3",
+    ],
+    certificate: ":cts-blob-helper-cert2",
     sdk_version: "test_current"
 }
 
