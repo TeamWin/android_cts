@@ -27,6 +27,7 @@ import android.platform.test.annotations.LargeTest;
 import android.stats.devicepolicy.EventId;
 
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
+import com.android.tradefed.device.DeviceNotAvailableException;
 
 import org.junit.Ignore;
 import org.junit.Test;
@@ -389,6 +390,21 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
             removeUser(userId);
             executeDeviceTestMethod(".SecurityLoggingTest", "testDisablingSecurityLogging");
         }
+    }
+
+    @Test
+    public void testLocationPermissionGrantNotifies() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        installAppPermissionAppAsUser();
+        configureNotificationListener();
+        executeDeviceTestMethod(".PermissionsTest", "testUserNotifiedOfLocationPermissionGrant");
+    }
+
+    private void configureNotificationListener() throws DeviceNotAvailableException {
+        getDevice().executeShellCommand("cmd notification allow_listener "
+                + "com.android.cts.deviceandprofileowner/.NotificationListener");
     }
 
     private void generateDummySecurityLogs() throws Exception {
