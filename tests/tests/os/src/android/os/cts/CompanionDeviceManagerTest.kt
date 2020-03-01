@@ -22,8 +22,13 @@ import android.platform.test.annotations.AppModeFull
 import android.test.InstrumentationTestCase
 import com.android.compatibility.common.util.SystemUtil.runShellCommand
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
+import com.android.compatibility.common.util.ThrowingSupplier
 
+const val COMPANION_APPROVE_WIFI_CONNECTIONS =
+        "android.permission.COMPANION_APPROVE_WIFI_CONNECTIONS"
 const val DUMMY_MAC_ADDRESS = "00:00:00:00:00:10"
+const val MANAGE_COMPANION_DEVICES = "android.permission.MANAGE_COMPANION_DEVICES"
+const val SHELL_PACKAGE_NAME = "com.android.shell"
 val InstrumentationTestCase.context get() = instrumentation.context
 
 /**
@@ -33,37 +38,50 @@ class CompanionDeviceManagerTest : InstrumentationTestCase() {
 
     val cdm by lazy { context.getSystemService(CompanionDeviceManager::class.java) }
 
+    private fun isShellAssociated(macAddress: String, packageName: String): Boolean {
+        val userId = context.userId
+        return runShellCommand("cmd companiondevice list $userId")
+                .lines()
+                .any {
+                    packageName in it && macAddress in it
+                }
+    }
+
+    private fun isCdmAssociated(
+        macAddress: String,
+        packageName: String,
+        vararg permissions: String
+    ): Boolean {
+        return runWithShellPermissionIdentity(ThrowingSupplier {
+            cdm.isDeviceAssociatedForWifiConnection(packageName,
+                    MacAddress.fromString(macAddress), context.user)
+        }, *permissions)
+    }
+
     @AppModeFull(reason = "Companion API for non-instant apps only")
     fun testIsDeviceAssociated() {
         val userId = context.userId
-        val user = android.os.Process.myUserHandle()
         val packageName = context.packageName
-        val isAssociated = {
-            runWithShellPermissionIdentity<Boolean> {
-                cdm.isDeviceAssociatedForWifiConnection(packageName,
-                        MacAddress.fromString(DUMMY_MAC_ADDRESS), user)
-            }
-        }
-        val shellIsAssociated = {
-            runShellCommand("cmd companiondevice list $userId")
-                    .lines()
-                    .any {
-                        packageName in it &&
-                                DUMMY_MAC_ADDRESS in it
-                    }
-        }
 
-        assertFalse(isAssociated())
-        assertFalse(shellIsAssociated())
+        assertFalse(isCdmAssociated(DUMMY_MAC_ADDRESS, packageName, MANAGE_COMPANION_DEVICES))
+        assertFalse(isShellAssociated(DUMMY_MAC_ADDRESS, packageName))
 
         try {
             runShellCommand(
                     "cmd companiondevice associate $userId $packageName $DUMMY_MAC_ADDRESS")
-            assertTrue(isAssociated())
-            assertTrue(shellIsAssociated())
+            assertTrue(isCdmAssociated(DUMMY_MAC_ADDRESS, packageName, MANAGE_COMPANION_DEVICES))
+            assertTrue(isShellAssociated(DUMMY_MAC_ADDRESS, packageName))
         } finally {
             runShellCommand(
                     "cmd companiondevice disassociate $userId $packageName $DUMMY_MAC_ADDRESS")
         }
+    }
+
+    @AppModeFull(reason = "Companion API for non-instant apps only")
+    fun testIsDeviceAssociatedWithCompanionApproveWifiConnectionsPermission() {
+        assertTrue(isCdmAssociated(
+            DUMMY_MAC_ADDRESS, SHELL_PACKAGE_NAME, MANAGE_COMPANION_DEVICES,
+            COMPANION_APPROVE_WIFI_CONNECTIONS))
+        assertFalse(isShellAssociated(DUMMY_MAC_ADDRESS, SHELL_PACKAGE_NAME))
     }
 }
