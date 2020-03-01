@@ -77,10 +77,6 @@ public class RestrictedStoragePermissionTest {
 
     private static final String PKG = "android.permission2.cts.restrictedpermissionuser";
 
-    private static final long ENABLE_SCOPED_STORAGE_CHANGE_ID = 144914977L;
-
-    private static final long REQUIRE_SCOPED_STORAGE_CHANGE_ID = 131432978L;
-
     @Test
     @AppModeFull
     public void testTargetingSdk22DefaultWhitelistedHasFullAccess() throws Exception {
@@ -186,40 +182,6 @@ public class RestrictedStoragePermissionTest {
         installApp(APK_USES_STORAGE_OPT_OUT_30, null);
 
         // Check expected storage mode
-        assertHasIsolatedStorageAccess();
-    }
-
-    @Test
-    @AppModeFull
-    public void testTargetingSdk30_withRequireScopedStorageCompatChangeDisabled_canOptOut()
-            throws Exception {
-        installApp(APK_USES_STORAGE_OPT_OUT_30, null);
-        disableCompat(REQUIRE_SCOPED_STORAGE_CHANGE_ID, PKG);
-
-        assertHasFullStorageAccess();
-    }
-
-    @Test
-    @AppModeFull
-    public void testTargetingSdk30_withAllScopedStorageCompatChangesDisabled_hasFullAccess()
-            throws Exception {
-        installApp(APK_USES_STORAGE_OPT_OUT_30, null);
-        // As REQUIRE_SCOPED_STORAGE supersedes ENABLE_SCOPED_STORAGE, we need to disable both.
-        disableCompat(REQUIRE_SCOPED_STORAGE_CHANGE_ID, PKG);
-        disableCompat(ENABLE_SCOPED_STORAGE_CHANGE_ID, PKG);
-
-        assertHasFullStorageAccess();
-    }
-
-    @Test
-    @AppModeFull
-    public void testTargetingSdk30_withEnableScopedStorageOnlyDisabled_isNoOp() throws Exception {
-        installApp(APK_USES_STORAGE_OPT_OUT_30, null);
-        // Leave REQUIRE_SCOPED_STORAGE explicitly enabled (as is the default for apps
-        // targeting SDK 30).
-        disableCompat(ENABLE_SCOPED_STORAGE_CHANGE_ID, PKG);
-
-        // Disabling only ENABLE_SCOPED_STORAGE must have been be a no-op.
         assertHasIsolatedStorageAccess();
     }
 
@@ -493,6 +455,7 @@ public class RestrictedStoragePermissionTest {
     @AppModeFull
     public void testStorageTargetingSdk30CanPreserveLegacyOnUpdateFromLegacy() throws Exception {
         installApp(APK_USES_STORAGE_OPT_OUT_29, null);
+        assertHasFullStorageAccess();
 
         // Updating with the flag preserves legacy
         installApp(APK_USES_STORAGE_PRESERVED_OPT_OUT_30, null);
@@ -780,19 +743,5 @@ public class RestrictedStoragePermissionTest {
     @After
     public void uninstallApp() {
         runShellCommand("pm uninstall " + PKG);
-    }
-
-    private void disableCompat(long changeId, String packageName) throws Exception {
-        runShellCommand("am compat disable " + changeId + " " + packageName);
-    }
-
-    private void resetCompat(long changeId, String packageName) {
-        runShellCommand("am compat reset " + changeId + " " + packageName);
-    }
-
-    @After
-    public void resetCompat() {
-        resetCompat(REQUIRE_SCOPED_STORAGE_CHANGE_ID, PKG);
-        resetCompat(ENABLE_SCOPED_STORAGE_CHANGE_ID, PKG);
     }
 }
