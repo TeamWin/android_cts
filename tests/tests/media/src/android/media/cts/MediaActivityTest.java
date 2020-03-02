@@ -16,8 +16,11 @@
 
 package android.media.cts;
 
+import static junit.framework.Assert.assertEquals;
+
 import static org.junit.Assert.fail;
 import static org.junit.Assert.assertTrue;
+import static org.testng.Assert.assertFalse;
 
 import android.app.Instrumentation;
 import android.content.Context;
@@ -26,6 +29,8 @@ import android.content.res.Resources;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.session.MediaSession;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.view.KeyEvent;
 
@@ -45,6 +50,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test media activity which has called {@link Activity#setMediaController}.
@@ -93,8 +100,12 @@ public class MediaActivityTest {
         }
 
         mSession = new MediaSession(mContext, TAG);
+
+        // Set volume stream other than STREAM_MUSIC.
+        // STREAM_MUSIC is the new default stream for changing volume, so it doesn't precisely test
+        // whether the session is prioritized for volume control or not.
         mSession.setPlaybackToLocal(new AudioAttributes.Builder()
-                .setLegacyStreamType(AudioManager.STREAM_MUSIC).build());
+                .setLegacyStreamType(AudioManager.STREAM_RING).build());
 
         Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -170,6 +181,48 @@ public class MediaActivityTest {
             sendKeyEvent(KeyEvent.KEYCODE_VOLUME_UP);
             return checkAnyStreamVolumeChanged();
         }));
+    }
+
+    @Test
+    public void testMediaKey_whileSessionAlive() throws Exception {
+        int testKeyEvent = KeyEvent.KEYCODE_MEDIA_PLAY;
+
+        // Note: No extra setup for the session is needed after Activity#setMediaController().
+        // i.e. No playback nor activeness is required.
+        CountDownLatch latch = new CountDownLatch(2);
+        mSession.setCallback(new MediaSession.Callback() {
+            @Override
+            public boolean onMediaButtonEvent(Intent mediaButtonIntent) {
+                KeyEvent event = mediaButtonIntent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
+                assertEquals(testKeyEvent, event.getKeyCode());
+                latch.countDown();
+                return true;
+            }
+        }, new Handler(Looper.getMainLooper()));
+
+        sendKeyEvent(testKeyEvent);
+
+        assertTrue(latch.await(WAIT_TIME_MS * 10, TimeUnit.MILLISECONDS));
+    }
+
+    @Test
+    public void testMediaKey_whileSessionReleased() throws Exception {
+        int testKeyEvent = KeyEvent.KEYCODE_MEDIA_PLAY;
+
+        CountDownLatch latch = new CountDownLatch(1);
+        mSession.setCallback(new MediaSession.Callback() {
+            @Override
+            public boolean onMediaButtonEvent(Intent mediaButtonIntent) {
+                fail("Released session shouldn't be able to receive key event in any case");
+                latch.countDown();
+                return true;
+            }
+        }, new Handler(Looper.getMainLooper()));
+        mSession.release();
+
+        sendKeyEvent(testKeyEvent);
+
+        assertFalse(latch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
     }
 
     private void sendKeyEvent(int keyCode) {
