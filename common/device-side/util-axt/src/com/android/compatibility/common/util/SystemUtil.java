@@ -181,6 +181,18 @@ public class SystemUtil {
     }
 
     /**
+     * Runs a {@link ThrowingSupplier} adopting a subset of Shell's permissions,
+     * and returning the result.
+     */
+    public static <T> T runWithShellPermissionIdentity(@NonNull ThrowingSupplier<T> supplier,
+            String... permissions) {
+        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        AtomicReference<T> result = new AtomicReference<>();
+        runWithShellPermissionIdentity(automan, () -> result.set(supplier.get()), permissions);
+        return result.get();
+    }
+
+    /**
      * Runs a {@link ThrowingRunnable} adopting Shell's permissions.
      */
     public static void runWithShellPermissionIdentity(@NonNull ThrowingRunnable runnable) {
