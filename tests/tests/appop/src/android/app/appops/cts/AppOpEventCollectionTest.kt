@@ -75,20 +75,24 @@ class AppOpEventCollectionTest {
         val beforeUidChange = System.currentTimeMillis()
         sleep(1)
 
+        assertThat(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!
+                .getLastAccessTime(MAX_PRIORITY_UID_STATE, UID_STATE_TOP, OP_FLAGS_ALL))
+                .isIn(before..beforeUidChange)
+
         try {
             activityRule.activity.finish()
             UidStateForceActivity.waitForDestroyed()
+
+            eventually {
+                // The system remembers the time before and after the uid change as separate events
+                assertThat(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!
+                        .getLastAccessTime(UID_STATE_TOP + 1, MIN_PRIORITY_UID_STATE,
+                        OP_FLAGS_ALL)).isAtLeast(beforeUidChange)
+            }
         } finally {
             appOpsManager.finishOp(OPSTR_WIFI_SCAN, myUid, myPackage, null)
             appOpsManager.finishOp(OPSTR_WIFI_SCAN, myUid, myPackage, null)
         }
-
-        // The system remembers the time before and after the uid change as separate events
-        val opEntry = getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!
-        assertThat(opEntry.getLastAccessTime(MAX_PRIORITY_UID_STATE, UID_STATE_TOP, OP_FLAGS_ALL))
-                .isIn(before..beforeUidChange)
-        assertThat(opEntry.getLastAccessTime(UID_STATE_TOP + 1, MIN_PRIORITY_UID_STATE,
-                OP_FLAGS_ALL)).isAtLeast(beforeUidChange)
     }
 
     @Test
