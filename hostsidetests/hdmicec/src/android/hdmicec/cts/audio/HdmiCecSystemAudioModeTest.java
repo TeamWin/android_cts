@@ -226,6 +226,18 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
     }
 
     /**
+     * Test 11.2.15-2
+     * Tests that the device issues <Set System Audio Mode>
+     * message when the feature is initiated in the device .
+     */
+    @Test
+    public void cect_11_2_15_2_SystemAudioModeWithFeatureInitiation() throws Exception {
+        initiateSystemAudioModeFromDut();
+        String message = hdmiCecClient.checkExpectedOutput(CecMessage.SET_SYSTEM_AUDIO_MODE);
+        assertThat(hdmiCecClient.getParamsFromMessage(message)).isEqualTo(ON);
+    }
+
+    /**
      * Test 11.2.15-3
      * Tests that the device doesn't broadcast any <Set System Audio Mode>
      * messages when TV responds with a <Feature Abort> to a directly addressed
