@@ -78,30 +78,8 @@ public class HostTestHelper {
         InstallUtils.dropShellPermissionIdentity();
     }
 
-    /**
-     * Called by host side @Before/@After methods to clean up leftover sessions from last test
-     * so staged-installs won't fail.
-     */
     @Test
     public void cleanUp() throws Exception {
-        PackageInstaller packageInstaller = InstallUtils.getPackageInstaller();
-        packageInstaller.getStagedSessions().forEach(sessionInfo -> {
-            if (sessionInfo.getParentSessionId() != PackageInstaller.SessionInfo.INVALID_ID
-                    || sessionInfo.isStagedSessionApplied()
-                    || sessionInfo.isStagedSessionFailed()) {
-                return;
-            }
-            try {
-                Log.i(TAG, "abandoning session " + sessionInfo.getSessionId());
-                packageInstaller.abandonSession(sessionInfo.getSessionId());
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to abandon session " + sessionInfo.getSessionId(), e);
-            }
-        });
-
-        Uninstall.packages(TestApp.A);
-        Uninstall.packages(TestApp.B);
-
         // Remove all pending rollbacks
         RollbackManager rm = RollbackUtils.getRollbackManager();
         rm.getAvailableRollbacks().stream().flatMap(info -> info.getPackages().stream())
