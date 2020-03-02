@@ -16,6 +16,7 @@
 
 package android.content.pm.cts;
 
+import static org.junit.Assert.assertArrayEquals;
 
 import android.content.pm.ApplicationInfo;
 import android.content.pm.ComponentInfo;
@@ -110,7 +111,7 @@ public class PackageInfoTest extends AndroidTestCase {
         assertEquals(expected.flags, actual.flags);
         assertEquals(expected.sourceDir, actual.sourceDir);
         assertEquals(expected.publicSourceDir, actual.publicSourceDir);
-        assertEquals(expected.sharedLibraryFiles, actual.sharedLibraryFiles);
+        assertArrayEquals(expected.sharedLibraryFiles, actual.sharedLibraryFiles);
         assertEquals(expected.dataDir, actual.dataDir);
         assertEquals(expected.uid, actual.uid);
         assertEquals(expected.enabled, actual.enabled);
