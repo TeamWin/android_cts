@@ -39,8 +39,11 @@ import org.junit.Test;
  * Tests for organization-owned Profile Owner.
  */
 public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
-    public static final String DEVICE_ADMIN_PKG = DeviceAndProfileOwnerTest.DEVICE_ADMIN_PKG;
+    private static final String DEVICE_ADMIN_PKG = DeviceAndProfileOwnerTest.DEVICE_ADMIN_PKG;
     private static final String DEVICE_ADMIN_APK = DeviceAndProfileOwnerTest.DEVICE_ADMIN_APK;
+    private static final String CERT_INSTALLER_PKG = DeviceAndProfileOwnerTest.CERT_INSTALLER_PKG;
+    private static final String CERT_INSTALLER_APK = DeviceAndProfileOwnerTest.CERT_INSTALLER_APK;
+
     private static final String ADMIN_RECEIVER_TEST_CLASS =
             DeviceAndProfileOwnerTest.ADMIN_RECEIVER_TEST_CLASS;
     private static final String ACTION_WIPE_DATA =
@@ -605,6 +608,31 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         } finally {
             setAndStartLauncher(defaultLauncher);
         }
+    }
+
+    @Test
+    public void testDelegatedCertInstallerDeviceIdAttestation() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        installAppAsUser(CERT_INSTALLER_APK, mUserId);
+
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DelegatedCertInstallerHelper",
+                "testManualSetCertInstallerDelegate", mUserId);
+
+        runDeviceTestsAsUser(CERT_INSTALLER_PKG, ".DelegatedDeviceIdAttestationTest",
+                "testGenerateKeyPairWithDeviceIdAttestationExpectingSuccess", mUserId);
+    }
+
+    @Test
+    public void testDeviceIdAttestationForProfileOwner() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        // Test that Device ID attestation works for org-owned profile owner.
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DeviceIdAttestationTest",
+                "testSucceedsWithProfileOwnerIdsGrant", mUserId);
+
     }
 
     private void toggleQuietMode(boolean quietModeEnable) throws Exception {
