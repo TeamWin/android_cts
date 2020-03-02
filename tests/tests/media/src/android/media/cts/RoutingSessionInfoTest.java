@@ -42,7 +42,8 @@ import androidx.test.runner.AndroidJUnit4;
 public class RoutingSessionInfoTest {
     public static final String TEST_ID = "test_id";
     public static final String TEST_CLIENT_PACKAGE_NAME = "com.test.client.package.name";
-    public static final String TEST_ROUTE_FEATURE = "test_route_feature";
+    public static final String TEST_NAME = "test_name";
+    public static final String TEST_OTHER_NAME = "test_other_name";
 
     public static final String TEST_ROUTE_ID_0 = "test_route_type_0";
     public static final String TEST_ROUTE_ID_1 = "test_route_type_1";
@@ -172,6 +173,7 @@ public class RoutingSessionInfoTest {
 
         RoutingSessionInfo sessionInfo = new RoutingSessionInfo.Builder(
                 TEST_ID, TEST_CLIENT_PACKAGE_NAME)
+                .setName(TEST_NAME)
                 .addSelectedRoute(TEST_ROUTE_ID_0)
                 .addSelectedRoute(TEST_ROUTE_ID_1)
                 .addSelectableRoute(TEST_ROUTE_ID_2)
@@ -188,6 +190,7 @@ public class RoutingSessionInfoTest {
 
         assertEquals(TEST_ID, sessionInfo.getId());
         assertEquals(TEST_CLIENT_PACKAGE_NAME, sessionInfo.getClientPackageName());
+        assertEquals(TEST_NAME, sessionInfo.getName());
 
         assertEquals(2, sessionInfo.getSelectedRoutes().size());
         assertEquals(TEST_ROUTE_ID_0, sessionInfo.getSelectedRoutes().get(0));
@@ -388,6 +391,7 @@ public class RoutingSessionInfoTest {
 
         RoutingSessionInfo sessionInfo1 = new RoutingSessionInfo.Builder(
                 TEST_ID, TEST_CLIENT_PACKAGE_NAME)
+                .setName(TEST_NAME)
                 .addSelectedRoute(TEST_ROUTE_ID_0)
                 .addSelectedRoute(TEST_ROUTE_ID_1)
                 .addSelectableRoute(TEST_ROUTE_ID_2)
@@ -404,6 +408,7 @@ public class RoutingSessionInfoTest {
 
         RoutingSessionInfo sessionInfo2 = new RoutingSessionInfo.Builder(
                 TEST_ID, TEST_CLIENT_PACKAGE_NAME)
+                .setName(TEST_NAME)
                 .addSelectedRoute(TEST_ROUTE_ID_0)
                 .addSelectedRoute(TEST_ROUTE_ID_1)
                 .addSelectableRoute(TEST_ROUTE_ID_2)
@@ -429,6 +434,7 @@ public class RoutingSessionInfoTest {
 
         RoutingSessionInfo sessionInfo1 = new RoutingSessionInfo.Builder(
                 TEST_ID, TEST_CLIENT_PACKAGE_NAME)
+                .setName(TEST_NAME)
                 .addSelectedRoute(TEST_ROUTE_ID_0)
                 .addSelectedRoute(TEST_ROUTE_ID_1)
                 .addSelectableRoute(TEST_ROUTE_ID_2)
@@ -456,6 +462,7 @@ public class RoutingSessionInfoTest {
 
         RoutingSessionInfo sessionInfo = new RoutingSessionInfo.Builder(
                 TEST_ID, TEST_CLIENT_PACKAGE_NAME)
+                .setName(TEST_NAME)
                 .addSelectedRoute(TEST_ROUTE_ID_0)
                 .addSelectedRoute(TEST_ROUTE_ID_1)
                 .addSelectableRoute(TEST_ROUTE_ID_2)
@@ -469,6 +476,9 @@ public class RoutingSessionInfoTest {
                 .setVolume(TEST_VOLUME)
                 .setControlHints(controlHints)
                 .build();
+
+        assertNotEquals(sessionInfo, new RoutingSessionInfo.Builder(sessionInfo)
+                .setName(TEST_OTHER_NAME).build());
 
         // Now, we will use copy constructor
         assertNotEquals(sessionInfo, new RoutingSessionInfo.Builder(sessionInfo)
@@ -529,6 +539,7 @@ public class RoutingSessionInfoTest {
 
         RoutingSessionInfo sessionInfo = new RoutingSessionInfo.Builder(
                 TEST_ID, TEST_CLIENT_PACKAGE_NAME)
+                .setName(TEST_NAME)
                 .addSelectedRoute(TEST_ROUTE_ID_0)
                 .addSelectedRoute(TEST_ROUTE_ID_1)
                 .addSelectableRoute(TEST_ROUTE_ID_2)
@@ -568,6 +579,7 @@ public class RoutingSessionInfoTest {
     public void testDescribeContents() {
         RoutingSessionInfo sessionInfo = new RoutingSessionInfo.Builder(
                 TEST_ID, TEST_CLIENT_PACKAGE_NAME)
+                .setName(TEST_NAME)
                 .addSelectedRoute(TEST_ROUTE_ID_0)
                 .addSelectableRoute(TEST_ROUTE_ID_2)
                 .addDeselectableRoute(TEST_ROUTE_ID_4)
