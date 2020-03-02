@@ -21,6 +21,7 @@ import android.app.UiAutomation;
 import androidx.test.InstrumentationRegistry;
 
 import java.util.function.BiFunction;
+import java.util.function.Supplier;
 
 /**
  * Provides utility methods to invoke system and privileged APIs as the shell user.
@@ -340,5 +341,23 @@ public class ShellIdentityUtils {
                 InstrumentationRegistry.getInstrumentation().getUiAutomation();
 
         uiAutomation.dropShellPermissionIdentity();
+    }
+
+    /**
+     * Run an arbitrary piece of code while holding shell permissions.
+     *
+     * @param supplier an expression that performs the desired operation with shell permissions
+     * @param <T> the return type of the expression
+     * @return the return value of the expression
+     */
+    public static <T> T invokeWithShellPermissions(Supplier<T> supplier) {
+        final UiAutomation uiAutomation =
+                InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            return supplier.get();
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
     }
 }
