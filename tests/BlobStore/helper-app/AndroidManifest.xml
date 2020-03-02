@@ -19,7 +19,8 @@
           package="com.android.cts.blob.helper" >
 
     <application>
-        <service android:name=".BlobStoreTestService" android:exported="true"/>
+        <service android:name=".BlobStoreTestService"
+                 android:exported="true"/>
     </application>
 
 </manifest>
