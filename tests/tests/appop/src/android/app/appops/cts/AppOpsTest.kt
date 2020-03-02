@@ -28,9 +28,9 @@ import android.app.AppOpsManager.MODE_ALLOWED
 import android.app.AppOpsManager.MODE_DEFAULT
 import android.app.AppOpsManager.MODE_ERRORED
 import android.app.AppOpsManager.MODE_IGNORED
-import android.app.AppOpsManager.OPSTR_CAMERA
 import android.app.AppOpsManager.OPSTR_READ_CALENDAR
 import android.app.AppOpsManager.OPSTR_RECORD_AUDIO
+import android.app.AppOpsManager.OPSTR_WIFI_SCAN
 import android.app.AppOpsManager.OPSTR_WRITE_CALENDAR
 
 import org.mockito.Mockito.mock
@@ -288,19 +288,19 @@ class AppOpsTest {
                         }
                     }
 
-            mAppOps.startWatchingActive(arrayOf(OPSTR_CAMERA), Executor { it.run() },
+            mAppOps.startWatchingActive(arrayOf(OPSTR_WIFI_SCAN), Executor { it.run() },
                     activeWatcher)
             try {
-                mAppOps.startOp(OPSTR_CAMERA, mMyUid, mOpPackageName, null, null)
+                mAppOps.startOp(OPSTR_WIFI_SCAN, mMyUid, mOpPackageName, null, null)
                 assertTrue(receivedActiveState.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)!!)
 
-                mAppOps.finishOp(OPSTR_CAMERA, mMyUid, mOpPackageName, null)
+                mAppOps.finishOp(OPSTR_WIFI_SCAN, mMyUid, mOpPackageName, null)
                 assertFalse(receivedActiveState.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)!!)
 
-                mAppOps.startOp(OPSTR_CAMERA, mMyUid, mOpPackageName, null, null)
+                mAppOps.startOp(OPSTR_WIFI_SCAN, mMyUid, mOpPackageName, null, null)
                 assertTrue(receivedActiveState.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)!!)
 
-                mAppOps.finishOp(OPSTR_CAMERA, mMyUid, mOpPackageName, null)
+                mAppOps.finishOp(OPSTR_WIFI_SCAN, mMyUid, mOpPackageName, null)
                 assertFalse(receivedActiveState.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)!!)
             } finally {
                 mAppOps.stopWatchingActive(activeWatcher)
