@@ -17,8 +17,14 @@ package com.android.cts.blob;
 
 import android.app.blob.BlobHandle;
 import android.app.usage.StorageStats;
+import android.os.ParcelFileDescriptor;
 
 interface ICommandReceiver {
+    int commit(in BlobHandle blobHandle, in ParcelFileDescriptor input,
+            long size, long timeoutSec);
+    ParcelFileDescriptor openBlob(in BlobHandle blobHandle);
+    void openSession(long sessionId);
+
     void acquireLease(in BlobHandle blobHandle);
     void releaseLease(in BlobHandle blobHandle);
 
