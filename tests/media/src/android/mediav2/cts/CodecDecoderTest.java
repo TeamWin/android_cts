@@ -166,6 +166,7 @@ public class CodecDecoderTest extends CodecTestBase {
             mCodec.queueInputBuffer(bufferIndex, 0, size, pts, codecFlags);
             if (size > 0 && (codecFlags & (MediaCodec.BUFFER_FLAG_CODEC_CONFIG |
                     MediaCodec.BUFFER_FLAG_PARTIAL_FRAME)) == 0) {
+                mOutputBuff.saveInPTS(pts);
                 mInputCount++;
             }
         }
@@ -189,6 +190,7 @@ public class CodecDecoderTest extends CodecTestBase {
                 flags);
         if (info.size > 0 && ((flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) &&
                 ((flags & MediaCodec.BUFFER_FLAG_PARTIAL_FRAME) == 0)) {
+            mOutputBuff.saveInPTS(info.presentationTimeUs);
             mInputCount++;
         }
     }
@@ -216,11 +218,7 @@ public class CodecDecoderTest extends CodecTestBase {
                     info.size + " timestamp: " + info.presentationTimeUs);
         }
         if (info.size > 0 && (info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) {
-            if (info.presentationTimeUs <= mPrevOutputPts) {
-                fail("Timestamp ordering check failed: last timestamp: " + mPrevOutputPts +
-                        " current timestamp:" + info.presentationTimeUs);
-            }
-            mPrevOutputPts = info.presentationTimeUs;
+            mOutputBuff.saveOutPTS(info.presentationTimeUs);
             mOutputCount++;
         }
         mCodec.releaseOutputBuffer(bufferIndex, false);
@@ -462,10 +460,10 @@ public class CodecDecoderTest extends CodecTestBase {
         }
         boolean[] boolStates = {true, false};
         mSaveToMem = true;
+        OutputManager ref = new OutputManager();
+        OutputManager test = new OutputManager();
         for (String decoder : listOfDecoders) {
             mCodec = MediaCodec.createByCodecName(decoder);
-            OutputManager ref = mSaveToMem ? new OutputManager() : null;
-            OutputManager test = mSaveToMem ? new OutputManager() : null;
             int loopCounter = 0;
             for (boolean eosType : boolStates) {
                 for (boolean isAsync : boolStates) {
@@ -473,10 +471,8 @@ public class CodecDecoderTest extends CodecTestBase {
                     String log = String.format("codec: %s, file: %s, mode: %s, eos type: %s:: ",
                             decoder, mTestFile, (isAsync ? "async" : "sync"),
                             (eosType ? "eos with last frame" : "eos separate"));
-                    if (mSaveToMem) {
-                        mOutputBuff = loopCounter == 0 ? ref : test;
-                        mOutputBuff.reset();
-                    }
+                    mOutputBuff = loopCounter == 0 ? ref : test;
+                    mOutputBuff.reset();
                     mExtractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
                     configureCodec(format, isAsync, eosType, false);
                     MediaFormat defFormat = mCodec.getOutputFormat();
@@ -500,8 +496,17 @@ public class CodecDecoderTest extends CodecTestBase {
                         assertTrue(log + "input count != output count, act/exp: " + mOutputCount +
                                 " / " + mInputCount, mInputCount == mOutputCount);
                     }
-                    if (mSaveToMem && loopCounter != 0) {
+                    if (loopCounter != 0) {
                         assertTrue(log + "decoder output is flaky", ref.equals(test));
+                    } else {
+                        if (mIsAudio) {
+                            assertTrue(log + " pts is not strictly increasing",
+                                    ref.isPtsStrictlyIncreasing(mPrevOutputPts));
+                        } else {
+                            assertTrue(
+                                    log + " input pts list and output pts list are not identical",
+                                    ref.isOutPtsListIdenticalToInpPtsList(false));
+                        }
                     }
                     if (validateFormat) {
                         assertTrue(log + "not received format change",
@@ -549,10 +554,17 @@ public class CodecDecoderTest extends CodecTestBase {
         final long pts = 500000;
         final int mode = MediaExtractor.SEEK_TO_CLOSEST_SYNC;
         boolean[] boolStates = {true, false};
+        OutputManager test = new OutputManager();
         for (String decoder : listOfDecoders) {
             decodeToMemory(mTestFile, decoder, pts, mode, Integer.MAX_VALUE);
             OutputManager ref = mOutputBuff;
-            OutputManager test = new OutputManager();
+            if (mIsAudio) {
+                assertTrue("reference output pts is not strictly increasing",
+                        ref.isPtsStrictlyIncreasing(mPrevOutputPts));
+            } else {
+                assertTrue("input pts list and output pts list are not identical",
+                        ref.isOutPtsListIdenticalToInpPtsList(false));
+            }
             mOutputBuff = test;
             setUpSource(mTestFile);
             mCodec = MediaCodec.createByCodecName(decoder);
@@ -582,7 +594,10 @@ public class CodecDecoderTest extends CodecTestBase {
                 queueCodecConfig(); /* flushed codec too soon after start, resubmit csd */
 
                 mExtractor.seekTo(0, mode);
+                test.reset();
                 doWork(23);
+                assertTrue(log + " pts is not strictly increasing",
+                        test.isPtsStrictlyIncreasing(mPrevOutputPts));
 
                 /* test flush in running state */
                 flushCodec();
@@ -656,12 +671,23 @@ public class CodecDecoderTest extends CodecTestBase {
         final long pts = 500000;
         final int mode = MediaExtractor.SEEK_TO_CLOSEST_SYNC;
         boolean[] boolStates = {true, false};
+        OutputManager test = new OutputManager();
         for (String decoder : listOfDecoders) {
             decodeToMemory(mTestFile, decoder, pts, mode, Integer.MAX_VALUE);
             OutputManager ref = mOutputBuff;
             decodeToMemory(mReconfigFile, decoder, pts, mode, Integer.MAX_VALUE);
             OutputManager configRef = mOutputBuff;
-            OutputManager test = new OutputManager();
+            if (mIsAudio) {
+                assertTrue("reference output pts is not strictly increasing",
+                        ref.isPtsStrictlyIncreasing(mPrevOutputPts));
+                assertTrue("config reference output pts is not strictly increasing",
+                        configRef.isPtsStrictlyIncreasing(mPrevOutputPts));
+            } else {
+                assertTrue("input pts list and reference pts list are not identical",
+                        ref.isOutPtsListIdenticalToInpPtsList(false));
+                assertTrue("input pts list and reconfig ref output pts list are not identical",
+                        ref.isOutPtsListIdenticalToInpPtsList(false));
+            }
             mOutputBuff = test;
             mCodec = MediaCodec.createByCodecName(decoder);
             for (boolean isAsync : boolStates) {
@@ -815,17 +841,36 @@ public class CodecDecoderTest extends CodecTestBase {
             fail("no suitable codecs found for mime: " + mMime);
         }
         boolean[] boolStates = {true, false};
+        OutputManager ref = new OutputManager();
+        OutputManager test = new OutputManager();
+        mSaveToMem = true;
         for (String decoder : listOfDecoders) {
             mCodec = MediaCodec.createByCodecName(decoder);
+            int loopCounter = 0;
             for (boolean isAsync : boolStates) {
                 String log = String.format("decoder: %s, input file: %s, mode: %s:: ", decoder,
                         mTestFile, (isAsync ? "async" : "sync"));
                 configureCodec(format, isAsync, false, false);
+                mOutputBuff = loopCounter == 0 ? ref : test;
+                mOutputBuff.reset();
                 mCodec.start();
                 queueEOS();
                 waitForAllOutputs();
                 mCodec.stop();
                 assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
+                if (loopCounter != 0) {
+                    assertTrue(log + "decoder output is flaky", ref.equals(test));
+                } else {
+                    if (mIsAudio) {
+                        assertTrue(log + " pts is not strictly increasing",
+                                ref.isPtsStrictlyIncreasing(mPrevOutputPts));
+                    } else {
+                        assertTrue(
+                                log + " input pts list and output pts list are not identical",
+                                ref.isOutPtsListIdenticalToInpPtsList(false));
+                    }
+                }
+                loopCounter++;
             }
             mCodec.release();
         }
@@ -857,10 +902,10 @@ public class CodecDecoderTest extends CodecTestBase {
         }
         boolean[] boolStates = {true, false};
         mSaveToMem = true;
+        OutputManager ref = new OutputManager();
+        OutputManager test = new OutputManager();
         for (String decoder : listOfDecoders) {
             mCodec = MediaCodec.createByCodecName(decoder);
-            OutputManager ref = mSaveToMem ? new OutputManager() : null;
-            OutputManager test = mSaveToMem ? new OutputManager() : null;
             int loopCounter = 0;
             for (MediaFormat fmt : formats) {
                 for (boolean eosMode : boolStates) {
@@ -869,10 +914,8 @@ public class CodecDecoderTest extends CodecTestBase {
                         String log = String.format("codec: %s, file: %s, mode: %s, eos type: %s:: ",
                                 decoder, mTestFile, (isAsync ? "async" : "sync"),
                                 (eosMode ? "eos with last frame" : "eos separate"));
-                        if (mSaveToMem) {
-                            mOutputBuff = loopCounter == 0 ? ref : test;
-                            mOutputBuff.reset();
-                        }
+                        mOutputBuff = loopCounter == 0 ? ref : test;
+                        mOutputBuff.reset();
                         mExtractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
                         configureCodec(fmt, isAsync, eosMode, false);
                         MediaFormat defFormat = mCodec.getOutputFormat();
@@ -898,8 +941,17 @@ public class CodecDecoderTest extends CodecTestBase {
                                     log + "input count != output count, act/exp: " + mOutputCount +
                                             " / " + mInputCount, mInputCount == mOutputCount);
                         }
-                        if (mSaveToMem && loopCounter != 0) {
+                        if (loopCounter != 0) {
                             assertTrue(log + "decoder output is flaky", ref.equals(test));
+                        } else {
+                            if (mIsAudio) {
+                                assertTrue(log + " pts is not strictly increasing",
+                                        ref.isPtsStrictlyIncreasing(mPrevOutputPts));
+                            } else {
+                                assertTrue(
+                                        log + " input pts list and output pts list are not identical",
+                                        ref.isOutPtsListIdenticalToInpPtsList(false));
+                            }
                         }
                         if (validateFormat) {
                             assertTrue(log + "not received format change",
@@ -931,11 +983,18 @@ public class CodecDecoderTest extends CodecTestBase {
         boolean[] boolStates = {true, false};
         int frameLimit = 10;
         ByteBuffer buffer = ByteBuffer.allocate(4 * 1024 * 1024);
+        OutputManager test = new OutputManager();
         for (String decoder : listOfDecoders) {
             decodeToMemory(mTestFile, decoder, 0, MediaExtractor.SEEK_TO_CLOSEST_SYNC, frameLimit);
             mCodec = MediaCodec.createByCodecName(decoder);
             OutputManager ref = mOutputBuff;
-            OutputManager test = new OutputManager();
+            if (mIsAudio) {
+                assertTrue("reference output pts is not strictly increasing",
+                        ref.isPtsStrictlyIncreasing(mPrevOutputPts));
+            } else {
+                assertTrue("input pts list and output pts list are not identical",
+                        ref.isOutPtsListIdenticalToInpPtsList(false));
+            }
             mSaveToMem = true;
             mOutputBuff = test;
             for (boolean isAsync : boolStates) {
