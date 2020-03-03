@@ -25,16 +25,18 @@ import static androidx.test.InstrumentationRegistry.getInstrumentation;
 import static org.junit.Assume.assumeTrue;
 
 import android.os.SystemClock;
+import android.platform.test.annotations.Presubmit;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsets.Type;
 import android.view.WindowInsetsAnimation;
 
+import androidx.test.filters.FlakyTest;
+
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -45,12 +47,13 @@ import java.util.List;
  * Build/Install/Run:
  *     atest CtsWindowManagerDeviceTestCases:WindowInsetsControllerTests
  */
+@FlakyTest(detail = "Promote once confirmed non-flaky")
+@Presubmit
 public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     private final static long TIMEOUT = 1000; // milliseconds
     private final static AnimationCallback ANIMATION_CALLBACK = new AnimationCallback();
 
-    @Ignore("Disabled until insets flag is flipped")
     @Test
     public void testHide() {
         final TestActivity activity = startActivity(TestActivity.class);
@@ -69,7 +72,6 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         }
     }
 
-    @Ignore("Disabled until insets flag is flipped")
     @Test
     public void testShow() {
         final TestActivity activity = startActivity(TestActivity.class);
@@ -92,7 +94,6 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         }
     }
 
-    @Ignore("Disabled until insets flag is flipped")
     @Test
     public void testSetSystemBarsBehavior_showBarsByTouch() throws InterruptedException {
         final TestActivity activity = startActivity(TestActivity.class);
@@ -111,7 +112,6 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         PollingCheck.waitFor(TIMEOUT, () -> rootView.getRootWindowInsets().isVisible(types));
     }
 
-    @Ignore("Disabled until insets flag is flipped")
     @Test
     public void testSetSystemBarsBehavior_showBarsBySwipe() throws InterruptedException {
         final TestActivity activity = startActivity(TestActivity.class);
@@ -135,7 +135,6 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         PollingCheck.waitFor(TIMEOUT, () -> rootView.getRootWindowInsets().isVisible(types));
     }
 
-    @Ignore("Disabled until insets flag is flipped")
     @Test
     public void testSetSystemBarsBehavior_showTransientBarsBySwipe() throws InterruptedException {
         final TestActivity activity = startActivity(TestActivity.class);
