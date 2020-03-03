@@ -24,14 +24,18 @@ import android.net.LinkProperties;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
+import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.os.UserHandle;
 import android.util.Log;
 
+import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -80,11 +84,11 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         PackageManager packageManager = mContext.getPackageManager();
         mHasWifi = packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI);
         mHasTelephony = packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
-        mBuilder =
-                new JobInfo.Builder(CONNECTIVITY_JOB_ID, kJobServiceComponent);
+        mBuilder = new JobInfo.Builder(CONNECTIVITY_JOB_ID, kJobServiceComponent);
 
         if (mHasWifi) {
             mInitialWiFiState = mWifiManager.isWifiEnabled();
+            ensureSavedWifiNetwork(mWifiManager);
         }
         mInitialRestrictBackground = SystemUtil
                 .runShellCommand(getInstrumentation(), RESTRICT_BACKGROUND_GET_CMD)
@@ -129,7 +133,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
                 mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)
                         .build());
 
-        sendExpediteStableChargingBroadcast();
+        runJob();
 
         assertTrue("Job with unmetered constraint did not fire on WiFi.",
                 kTestEnvironment.awaitExecution());
@@ -150,7 +154,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
                 mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                         .build());
 
-        sendExpediteStableChargingBroadcast();
+        runJob();
 
         assertTrue("Job with connectivity constraint did not fire on WiFi.",
                 kTestEnvironment.awaitExecution());
@@ -173,7 +177,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
                 mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                         .build());
 
-        sendExpediteStableChargingBroadcast();
+        runJob();
 
         assertTrue("Job with connectivity constraint did not fire on WiFi.",
                 kTestEnvironment.awaitExecution());
@@ -194,7 +198,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
                 mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                         .build());
 
-        sendExpediteStableChargingBroadcast();
+        runJob();
 
         assertTrue("Job with connectivity constraint did not fire on mobile.",
                 kTestEnvironment.awaitExecution());
@@ -221,7 +225,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
                 mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                         .build());
 
-        sendExpediteStableChargingBroadcast();
+        runJob();
 
         assertTrue("Job with connectivity constraint did not fire on mobile.",
                 kTestEnvironment.awaitExecution());
@@ -248,7 +252,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
                 mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_METERED)
                         .build());
 
-        sendExpediteStableChargingBroadcast();
+        runJob();
         assertTrue("Job with metered connectivity constraint did not fire on mobile.",
                 kTestEnvironment.awaitExecution());
     }
@@ -269,7 +273,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
 
         mTestAppInterface.scheduleJob(false, true);
 
-        sendExpediteStableChargingBroadcast();
+        runJob();
         assertTrue("Job with metered connectivity constraint did not fire on mobile.",
                 mTestAppInterface.awaitJobStart(30_000));
 
@@ -303,7 +307,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
                 mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_CELLULAR)
                         .build());
 
-        sendExpediteStableChargingBroadcast();
+        runJob();
         assertTrue("Job with metered connectivity constraint did not fire on mobile.",
                 kTestEnvironment.awaitExecution());
 
@@ -334,7 +338,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         mJobScheduler.schedule(
                 mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)
                         .build());
-        sendExpediteStableChargingBroadcast();
+        runJob();
 
         assertTrue("Job requiring unmetered connectivity still executed on mobile.",
                 kTestEnvironment.awaitTimeout());
@@ -356,7 +360,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         mJobScheduler.schedule(
                 mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_CELLULAR)
                         .build());
-        sendExpediteStableChargingBroadcast();
+        runJob();
 
         assertTrue("Job requiring metered connectivity still executed on WiFi.",
                 kTestEnvironment.awaitTimeout());
@@ -383,7 +387,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         mJobScheduler.schedule(
                 mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_METERED)
                         .build());
-        sendExpediteStableChargingBroadcast();
+        runJob();
 
         assertTrue("Job requiring metered connectivity still executed on WiFi.",
                 kTestEnvironment.awaitTimeout());
@@ -407,7 +411,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         kTestEnvironment.setExpectedExecutions(0);
         mJobScheduler.schedule(
                 mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_CELLULAR).build());
-        sendExpediteStableChargingBroadcast();
+        runJob();
 
         assertTrue("Job requiring cellular connectivity still executed on WiFi.",
                 kTestEnvironment.awaitTimeout());
@@ -416,6 +420,15 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
     // --------------------------------------------------------------------------------------------
     // Utility methods
     // --------------------------------------------------------------------------------------------
+
+    /** Asks (not forces) JobScheduler to run the job if functional constraints are met. */
+    private void runJob() throws Exception {
+        // Since connectivity is a functional constraint, calling the "run" command without force
+        // will only get the job to run if the constraint is satisfied.
+        SystemUtil.runShellCommand(getInstrumentation(), "cmd jobscheduler run"
+                + " -u " + UserHandle.myUserId()
+                + " " + kJobServiceComponent.getPackageName() + " " + CONNECTIVITY_JOB_ID);
+    }
 
     /**
      * Determine whether the device running these CTS tests should be subject to tests involving
@@ -453,6 +466,14 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
     private void disconnectFromWifi()
             throws InterruptedException {
         setWifiState(false, mCm, mWifiManager);
+    }
+
+    /** Ensures that the device has a wifi network saved. */
+    static void ensureSavedWifiNetwork(WifiManager wifiManager) {
+        final List<WifiConfiguration> savedNetworks =
+                ShellIdentityUtils.invokeMethodWithShellPermissions(
+                        wifiManager, WifiManager::getConfiguredNetworks);
+        assertFalse("Need at least one saved wifi network", savedNetworks.isEmpty());
     }
 
     /**
