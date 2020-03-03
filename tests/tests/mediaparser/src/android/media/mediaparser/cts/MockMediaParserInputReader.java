@@ -31,8 +31,7 @@ public class MockMediaParserInputReader implements MediaParser.SeekableInputRead
     }
 
     @Override
-    public int read(byte[] buffer, int offset, int readLength)
-            throws IOException, InterruptedException {
+    public int read(byte[] buffer, int offset, int readLength) throws IOException {
         return mFakeExtractorInput.read(buffer, offset, readLength);
     }
 
