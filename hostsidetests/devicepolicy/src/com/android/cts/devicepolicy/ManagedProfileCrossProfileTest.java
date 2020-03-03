@@ -68,7 +68,7 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
         disableActivityForUser("PrimaryUserActivity", mProfileUserId);
 
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG,
-                MANAGED_PROFILE_PKG + ".ManagedProfileTest", mProfileUserId);
+                MANAGED_PROFILE_PKG + ".CrossProfileIntentFilterTest", mProfileUserId);
 
         if (isStatsdEnabled(getDevice())) {
             assertMetricsLogged(getDevice(), () -> {
