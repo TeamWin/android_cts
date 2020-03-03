@@ -126,6 +126,10 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
     @Before
     @After
     public void cleanUp() throws Exception {
+        getDevice().executeShellCommand("for i in $(pm list staged-sessions --only-sessionid "
+                + "--only-parent); do pm install-abandon $i; done");
+        getDevice().executeShellCommand("pm uninstall com.android.cts.install.lib.testapp.A");
+        getDevice().executeShellCommand("pm uninstall com.android.cts.install.lib.testapp.B");
         run("cleanUp");
         uninstallShimApexIfNecessary();
     }
