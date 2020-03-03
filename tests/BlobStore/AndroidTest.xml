@@ -23,6 +23,8 @@
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsBlobStoreTestCases.apk" />
         <option name="test-file-name" value="CtsBlobStoreTestHelper.apk" />
+        <option name="test-file-name" value="CtsBlobStoreTestHelperDiffSig.apk" />
+        <option name="test-file-name" value="CtsBlobStoreTestHelperDiffSig2.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="com.android.cts.blob" />
