@@ -140,7 +140,7 @@ public class BasicAdapterTest extends AndroidTestCase {
         assertTrue(BluetoothAdapter.checkBluetoothAddress(adapter.getAddress()));
     }
 
-    public void test_getName() {
+    public void test_setName_getName() {
         if (!mHasBluetooth) {
             // Skip the test if bluetooth is not present.
             return;
@@ -150,6 +150,10 @@ public class BasicAdapterTest extends AndroidTestCase {
 
         String name = adapter.getName();
         assertNotNull(name);
+
+        String genericName = "Generic Device 1";
+        assertTrue(adapter.setName(genericName));
+        assertEquals(genericName, adapter.getName());
     }
 
     public void test_getBondedDevices() {
