@@ -61,7 +61,8 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
     private static final int OFF = 0x0;
 
     @Rule
-    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(AUDIO_DEVICE, this);
+    public HdmiCecClientWrapper hdmiCecClient =
+            new HdmiCecClientWrapper(AUDIO_DEVICE, this, "-t", "t");
 
     private void lookForLogFromHdmiCecAudioManager(String expectedOut) throws Exception {
         ITestDevice device = getDevice();
