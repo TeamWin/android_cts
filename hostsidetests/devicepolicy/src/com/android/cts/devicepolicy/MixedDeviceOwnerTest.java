@@ -245,7 +245,8 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testFactoryResetProtectionPolicy() throws Exception {
-        if (!mHasFeature) {
+        boolean hasPersistentDataBlock = hasService("persistent_data_block");
+        if (!mHasFeature || !hasPersistentDataBlock) {
             return;
         }
 
