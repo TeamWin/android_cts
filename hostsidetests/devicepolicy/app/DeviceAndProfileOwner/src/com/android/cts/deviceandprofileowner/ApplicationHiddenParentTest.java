@@ -28,7 +28,7 @@ public class ApplicationHiddenParentTest extends BaseDeviceAdminTest {
     private DevicePolicyManager mParentDevicePolicyManager;
     private PackageManager mPackageManager;
 
-    private static final String SYSTEM_PACKAGE_TO_HIDE = "com.google.android.youtube";
+    private static final String SYSTEM_PACKAGE_TO_HIDE = "com.android.keychain";
     private static final String NON_SYSTEM_PACKAGE_TO_HIDE = "com.android.cts.permissionapp";
 
     @Override
@@ -41,6 +41,13 @@ public class ApplicationHiddenParentTest extends BaseDeviceAdminTest {
 
         assertThat(mDevicePolicyManager.isProfileOwnerApp(ADMIN_RECEIVER_COMPONENT.getPackageName())).isTrue();
         assertThat(mDevicePolicyManager.isOrganizationOwnedDeviceWithManagedProfile()).isTrue();
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        mParentDevicePolicyManager.setApplicationHidden(ADMIN_RECEIVER_COMPONENT,
+                SYSTEM_PACKAGE_TO_HIDE, false);
+        super.tearDown();
     }
 
     public void testSetApplicationHidden_systemPackage()
