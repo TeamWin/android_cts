@@ -122,18 +122,6 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
         super.tearDown();
     }
 
-    /**
-     * The scheduler will usually only flush its queue of unexpired jobs when the device is
-     * considered to be on stable power - that is, plugged in for a period of 2 minutes.
-     * Rather than wait for this to happen, we cheat and send this broadcast instead.
-     */
-    protected void sendExpediteStableChargingBroadcast() throws IOException {
-        // Faking the device to be 90% charging and then to be 91%, so that it triggers
-        // BatteryManager.ACTION_CHARGING in the upward change-level transition logic.
-        SystemUtil.runShellCommand(getInstrumentation(), "cmd battery set level 90");
-        SystemUtil.runShellCommand(getInstrumentation(), "cmd battery set level 91");
-    }
-
     public void assertHasUriPermission(Uri uri, int grantFlags) {
         if ((grantFlags&Intent.FLAG_GRANT_READ_URI_PERMISSION) != 0) {
             assertEquals(PackageManager.PERMISSION_GRANTED,
