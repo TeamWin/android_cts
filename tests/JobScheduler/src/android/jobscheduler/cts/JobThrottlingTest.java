@@ -16,6 +16,7 @@
 
 package android.jobscheduler.cts;
 
+import static android.jobscheduler.cts.ConnectivityConstraintTest.ensureSavedWifiNetwork;
 import static android.jobscheduler.cts.ConnectivityConstraintTest.setWifiState;
 import static android.jobscheduler.cts.TestAppInterface.TEST_APP_PACKAGE;
 import static android.os.PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED;
@@ -242,6 +243,7 @@ public class JobThrottlingTest {
             Log.d(TAG, "Skipping test that requires the device be WiFi enabled.");
             return;
         }
+        ensureSavedWifiNetwork(mWifiManager);
         setWifiState(true, mCm, mWifiManager);
         assumeTrue("device idle not enabled", mDeviceIdleEnabled);
         mTestAppInterface.scheduleJob(false, true);
@@ -317,6 +319,7 @@ public class JobThrottlingTest {
     public void testJobsInRestrictedBucket_WithRequiredNetwork() throws Exception {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);
         assumeTrue(mHasWifi);
+        ensureSavedWifiNetwork(mWifiManager);
 
         // Disable coalescing and the parole session
         Settings.Global.putString(mContext.getContentResolver(),
