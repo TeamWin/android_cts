@@ -85,7 +85,6 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
     static final String EXTRA_FINISH_IN_ON_CREATE = "finish_in_on_create";
     static final String EXTRA_FINISH_IN_ON_START = "finish_in_on_start";
     static final String EXTRA_FINISH_IN_ON_RESUME = "finish_in_on_resume";
-    static final String EXTRA_FINISH_AFTER_RESUME = "finish_after_resume";
     static final String EXTRA_FINISH_IN_ON_PAUSE = "finish_in_on_pause";
     static final String EXTRA_FINISH_IN_ON_STOP = "finish_in_on_stop";
     static final String EXTRA_START_ACTIVITY_IN_ON_CREATE = "start_activity_in_on_create";
@@ -378,8 +377,6 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
             final Intent intent = getIntent();
             if (intent.getBooleanExtra(EXTRA_FINISH_IN_ON_RESUME, false)) {
                 finish();
-            } else if (intent.getBooleanExtra(EXTRA_FINISH_AFTER_RESUME, false)) {
-                getWindow().getDecorView().post(this::finish);
             }
         }
 
