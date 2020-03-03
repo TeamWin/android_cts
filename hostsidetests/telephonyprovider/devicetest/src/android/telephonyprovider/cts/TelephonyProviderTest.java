@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-package android.telephonyprovider.cts;
-
-import static android.telephonyprovider.cts.DefaultSmsAppHelper.assumeTelephony;
-
-import static androidx.test.InstrumentationRegistry.getInstrumentation;
+package android.telephonyprovider.host.cts;
 
 import android.content.ContentResolver;
 import android.database.Cursor;
 import android.provider.Telephony.Carriers;
 
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(AndroidJUnit4.class)
 public class TelephonyProviderTest {
     private ContentResolver mContentResolver;
     private static final String[] APN_PROJECTION = {
@@ -41,8 +42,7 @@ public class TelephonyProviderTest {
 
     @Before
     public void setUp() throws Exception {
-        assumeTelephony();
-        mContentResolver = getInstrumentation().getContext().getContentResolver();
+        mContentResolver = InstrumentationRegistry.getInstrumentation().getContext().getContentResolver();
     }
 
     // In JB MR1 access to the TelephonyProvider's Carriers table was clamped down and would
@@ -54,7 +54,7 @@ public class TelephonyProviderTest {
     // locking down the API and no longer allowing the exception. Accordingly, the behavior of this
     // test is now reversed and we expect a SecurityException to be thrown.
     @Test
-    public void testAccessToApns() {
+    public void testAccessToApnsWithChangeEnabled() {
         try {
             String selection = Carriers.CURRENT + " IS NOT NULL";
             String[] selectionArgs = null;
@@ -63,6 +63,18 @@ public class TelephonyProviderTest {
             Assert.fail("No SecurityException thrown");
         } catch (SecurityException e) {
             // expected
+        }
+    }
+
+    @Test
+    public void testAccessToApnsWithChangeDisabled() {
+        try {
+            String selection = Carriers.CURRENT + " IS NOT NULL";
+            String[] selectionArgs = null;
+            Cursor cursor = mContentResolver.query(Carriers.CONTENT_URI,
+                    APN_PROJECTION, selection, selectionArgs, null);
+        } catch (SecurityException e) {
+            Assert.fail("SecurityException thrown");
         }
     }
 }
