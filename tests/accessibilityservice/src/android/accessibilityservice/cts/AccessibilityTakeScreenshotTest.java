@@ -17,8 +17,10 @@
 package android.accessibilityservice.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
@@ -83,6 +85,24 @@ public class AccessibilityTakeScreenshotTest {
                 new TakeScreenshotConsumer();
         mService.takeScreenshot(Display.DEFAULT_DISPLAY, mContext.getMainExecutor(),
                 screenshotConsumer);
+    }
+
+    @Test
+    public void testTakeScreenshot_RequestIntervalTime() throws Exception {
+        final Consumer callback = mock(Consumer.class);
+        assertTrue(mService.takeScreenshot(Display.DEFAULT_DISPLAY, mContext.getMainExecutor(),
+                callback));
+        Thread.sleep(
+                AccessibilityService.ACCESSIBILITY_TAKE_SCREENSHOT_REQUEST_INTERVAL_TIMES_MS / 2);
+        // Requests the API again during interval time from calling the first time.
+        assertFalse(mService.takeScreenshot(Display.DEFAULT_DISPLAY, mContext.getMainExecutor(),
+                callback));
+        Thread.sleep(
+                AccessibilityService.ACCESSIBILITY_TAKE_SCREENSHOT_REQUEST_INTERVAL_TIMES_MS / 2 +
+                        1);
+        // Requests the API again after interval time from calling the first time.
+        assertTrue(mService.takeScreenshot(Display.DEFAULT_DISPLAY, mContext.getMainExecutor(),
+                callback));
     }
 
     private void verifyScreenshotResult(AccessibilityService.ScreenshotResult screenshot) {
