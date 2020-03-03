@@ -49,7 +49,7 @@ public class BlobStoreTestService extends Service {
 
     private class CommandReceiver extends ICommandReceiver.Stub {
         @Override
-        public int commit(BlobHandle blobHandle, ParcelFileDescriptor input,
+        public int commit(BlobHandle blobHandle, ParcelFileDescriptor input, int accessTypeFlags,
                 long timeoutSec, long size) {
             final BlobStoreManager blobStoreManager = getSystemService(
                     BlobStoreManager.class);
@@ -57,6 +57,9 @@ public class BlobStoreTestService extends Service {
                 final long sessionId = blobStoreManager.createSession(blobHandle);
                 try (BlobStoreManager.Session session = blobStoreManager.openSession(sessionId)) {
                     writeToSession(session, input, size);
+                    if ((accessTypeFlags & ICommandReceiver.FLAG_ACCESS_TYPE_PUBLIC) != 0) {
+                        session.allowPublicAccess();
+                    }
 
                     final CompletableFuture<Integer> callback = new CompletableFuture<>();
                     session.commit(getMainExecutor(), callback::complete);
