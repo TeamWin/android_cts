@@ -20,7 +20,7 @@ import android.app.usage.StorageStats;
 import android.os.ParcelFileDescriptor;
 
 interface ICommandReceiver {
-    int commit(in BlobHandle blobHandle, in ParcelFileDescriptor input,
+    int commit(in BlobHandle blobHandle, in ParcelFileDescriptor input, int accessTypeFlags,
             long size, long timeoutSec);
     ParcelFileDescriptor openBlob(in BlobHandle blobHandle);
     void openSession(long sessionId);
@@ -30,4 +30,7 @@ interface ICommandReceiver {
 
     StorageStats queryStatsForPackage();
     StorageStats queryStatsForUid();
+
+    const int FLAG_ACCESS_TYPE_PRIVATE = 0;
+    const int FLAG_ACCESS_TYPE_PUBLIC = 1;
 }
