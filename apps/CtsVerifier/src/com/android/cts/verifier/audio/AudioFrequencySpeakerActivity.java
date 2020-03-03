@@ -27,11 +27,8 @@ import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.IntentFilter;
 
-import android.media.AudioDeviceCallback;
-import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioManager;
-import android.media.AudioTrack;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 
@@ -47,8 +44,6 @@ import android.view.View.OnClickListener;
 
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.SeekBar;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 
 /**
@@ -71,7 +66,6 @@ public class AudioFrequencySpeakerActivity extends AudioFrequencyActivity implem
     Button mLoopbackPlugReady;          //user signal to have connected USB Microphone
     Button mTestButton;                 //user to start test
     String mUsbDevicesInfo;             //usb device info for report
-    LinearLayout mLinearLayout;
     TextView mResultText;
     TextView mUsbStatusText;
     ProgressBar mProgressBar;
@@ -135,14 +129,13 @@ public class AudioFrequencySpeakerActivity extends AudioFrequencyActivity implem
 
         mLoopbackPlugReady = (Button)findViewById(R.id.audio_frequency_speaker_mic_ready_btn);
         mLoopbackPlugReady.setOnClickListener(mBtnClickListener);
-        mLinearLayout = (LinearLayout)findViewById(R.id.audio_frequency_speaker_layout);
         mUsbStatusText = (TextView)findViewById(R.id.audio_frequency_speaker_usb_status);
         mTestButton = (Button)findViewById(R.id.audio_frequency_speaker_test_btn);
         mTestButton.setOnClickListener(mBtnClickListener);
         mResultText = (TextView)findViewById(R.id.audio_frequency_speaker_results_text);
         mProgressBar = (ProgressBar)findViewById(R.id.audio_frequency_speaker_progress_bar);
         showWait(false);
-        enableLayout(false);         //disabled all content
+        enableLayout(R.id.audio_frequency_speaker_layout,false);         //disabled all content
 
         mSPlayer = new SoundPlayerObject();
         mSPlayer.setSoundWithResId(getApplicationContext(), R.raw.stereo_mono_white_noise_48);
@@ -214,16 +207,6 @@ public class AudioFrequencySpeakerActivity extends AudioFrequencyActivity implem
     void enableTestUI(boolean enable) {
         mLoopbackPlugReady.setEnabled(enable);
         mTestButton.setEnabled(enable);
-    }
-
-    /**
-     * enable test ui elements
-     */
-    private void enableLayout(boolean enable) {
-        for (int i = 0; i < mLinearLayout.getChildCount(); i++) {
-            mLoopbackPlugReady.setEnabled(enable);
-            mTestButton.setEnabled(enable);
-        }
     }
 
     /**
@@ -727,11 +710,11 @@ public class AudioFrequencySpeakerActivity extends AudioFrequencyActivity implem
         if (isConnected) {
             mUsbStatusText.setText(
                     getResources().getText(R.string.audio_frequency_speaker_mic_ready_text));
-            enableLayout(true);
+            enableLayout(R.id.audio_frequency_speaker_layout, true);
         } else {
             mUsbStatusText.setText(
                     getResources().getText(R.string.audio_frequency_speaker_mic_not_ready_text));
-            enableLayout(false);
+            enableLayout(R.id.audio_frequency_speaker_layout, false);
         }
     }
 

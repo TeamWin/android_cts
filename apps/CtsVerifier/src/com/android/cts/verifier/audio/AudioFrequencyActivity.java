@@ -25,25 +25,12 @@ import com.android.compatibility.common.util.ResultUnit;
 
 import android.app.AlertDialog;
 import android.content.Context;
-import android.media.AudioDeviceCallback;
-import android.media.AudioDeviceInfo;
-import android.media.AudioFormat;
 import android.media.AudioManager;
-import android.media.AudioTrack;
-import android.media.AudioRecord;
-import android.media.MediaRecorder;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.Button;
-import android.widget.TextView;
-import android.widget.SeekBar;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 
 /**
  * Audio Frequency Test base activity
@@ -110,6 +97,13 @@ public class AudioFrequencyActivity extends PassFailButtons.Activity {
     //
     void enableTestUI(boolean enable) {
 
+    }
+
+    void enableLayout(int layoutId, boolean enable) {
+        ViewGroup group = (ViewGroup)findViewById(layoutId);
+        for (int i = 0; i < group.getChildCount(); i++) {
+            group.getChildAt(i).setEnabled(enable);
+        }
     }
 
     public void setMaxLevel() {

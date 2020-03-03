@@ -29,8 +29,6 @@ import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.IntentFilter;
 
-import android.media.AudioDeviceCallback;
-import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
@@ -49,8 +47,6 @@ import android.view.View.OnClickListener;
 
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.SeekBar;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 
 /**
@@ -87,19 +83,13 @@ public class AudioFrequencyMicActivity extends AudioFrequencyActivity implements
     final OnBtnClickListener mBtnClickListener = new OnBtnClickListener();
     Context mContext;
 
-    LinearLayout mLayoutTestNoise;
-    Button mButtonTestNoise;
     ProgressBar mProgressNoise;
     TextView mResultTestNoise;
     Button mButtonPlayNoise;
 
-    LinearLayout mLayoutTestUsbBackground;
-    Button mButtonTestUsbBackground;
     ProgressBar mProgressUsbBackground;
     TextView mResultTestUsbBackground;
 
-    LinearLayout mLayoutTestUsbNoise;
-    Button mButtonTestUsbNoise;
     ProgressBar mProgressUsbNoise;
     TextView mResultTestUsbNoise;
     Button mButtonPlayUsbNoise;
@@ -144,30 +134,23 @@ public class AudioFrequencyMicActivity extends AudioFrequencyActivity implements
         mContext = this;
 
         //Test Noise
-        mLayoutTestNoise = (LinearLayout) findViewById(R.id.frequency_mic_layout_test_noise);
-        mButtonTestNoise = (Button) findViewById(R.id.frequency_mic_test_noise_btn);
-        mButtonTestNoise.setOnClickListener(mBtnClickListener);
+        findViewById(R.id.frequency_mic_test_noise_btn).setOnClickListener(mBtnClickListener);
         mProgressNoise = (ProgressBar) findViewById(R.id.frequency_mic_test_noise_progress_bar);
         mResultTestNoise = (TextView) findViewById(R.id.frequency_mic_test_noise_result);
         mButtonPlayNoise = (Button) findViewById(R.id.frequency_mic_play_noise_btn);
         mButtonPlayNoise.setOnClickListener(mBtnClickListener);
         showWait(mProgressNoise, false);
 
-      //USB Background
-        mLayoutTestUsbBackground = (LinearLayout)
-                findViewById(R.id.frequency_mic_layout_test_usb_background);
-        mButtonTestUsbBackground = (Button)
-                findViewById(R.id.frequency_mic_test_usb_background_btn);
-        mButtonTestUsbBackground.setOnClickListener(mBtnClickListener);
+        //USB Background
+        findViewById(R.id.frequency_mic_test_usb_background_btn).
+                setOnClickListener(mBtnClickListener);
         mProgressUsbBackground = (ProgressBar)
                 findViewById(R.id.frequency_mic_test_usb_background_progress_bar);
         mResultTestUsbBackground = (TextView)
                 findViewById(R.id.frequency_mic_test_usb_background_result);
         showWait(mProgressUsbBackground, false);
 
-        mLayoutTestUsbNoise = (LinearLayout) findViewById(R.id.frequency_mic_layout_test_usb_noise);
-        mButtonTestUsbNoise = (Button) findViewById(R.id.frequency_mic_test_usb_noise_btn);
-        mButtonTestUsbNoise.setOnClickListener(mBtnClickListener);
+        findViewById(R.id.frequency_mic_test_usb_noise_btn).setOnClickListener(mBtnClickListener);
         mProgressUsbNoise = (ProgressBar)
                 findViewById(R.id.frequency_mic_test_usb_noise_progress_bar);
         mResultTestUsbNoise = (TextView) findViewById(R.id.frequency_mic_test_usb_noise_result);
@@ -245,13 +228,13 @@ public class AudioFrequencyMicActivity extends AudioFrequencyActivity implements
     // Overrides
     //
     void enableTestUI(boolean enable) {
-        mButtonTestNoise.setEnabled(enable);
-        mButtonPlayNoise.setEnabled(enable);
+        enableLayout(R.id.frequency_mic_layout_test_noise_dut_buttons, enable);
+        enableLayout(R.id.frequency_mic_layout_test_noise_src_buttons, enable);
 
-        mButtonTestUsbBackground.setEnabled(enable);
+        enableLayout(R.id.frequency_mic_layout_test_usb_background_dut_buttons, enable);
 
-        mButtonTestUsbNoise.setEnabled(enable);
-        mButtonPlayUsbNoise.setEnabled(enable);
+        enableLayout(R.id.frequency_mic_layout_test_usb_noise_dut_buttons, enable);
+        enableLayout(R.id.frequency_mic_layout_test_usb_noise_src_buttons, enable);
     }
 
     private void playerToggleButton(int buttonId) {
@@ -311,16 +294,6 @@ public class AudioFrequencyMicActivity extends AudioFrequencyActivity implements
         if (mSPlayer.isAlive() && mSPlayer.isPlaying()) {
             mSPlayer.play(false);
             setButtonPlayStatus(-1);
-        }
-    }
-
-    /**
-     * enable test ui elements
-     */
-    private void enableLayout(LinearLayout layout, boolean enable) {
-        for (int i = 0; i < layout.getChildCount(); i++) {
-            View view = layout.getChildAt(i);
-            view.setEnabled(enable);
         }
     }
 
