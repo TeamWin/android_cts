@@ -29,6 +29,7 @@ import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Test;
@@ -40,6 +41,7 @@ public class WindowContextTests extends MultiDisplayTestBase {
     private DisplayManager mDisplayManager = mContext.getSystemService(DisplayManager.class);
 
     @Test
+    @FlakyTest(bugId = 150251036)
     public void testWindowContextConfigChanges() {
         final WindowManagerState.DisplayContent display =  createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true).createDisplay();
