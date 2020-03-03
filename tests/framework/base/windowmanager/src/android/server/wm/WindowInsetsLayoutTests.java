@@ -26,12 +26,15 @@ import static org.junit.Assert.assertEquals;
 
 import android.graphics.Insets;
 import android.graphics.Point;
+import android.platform.test.annotations.Presubmit;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsets.Side;
 import android.view.WindowInsets.Type;
 import android.view.WindowManager;
+
+import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.PollingCheck;
 
@@ -45,11 +48,12 @@ import org.junit.Test;
  * Build/Install/Run:
  *     atest CtsWindowManagerDeviceTestCases:WindowInsetsLayoutTests
  */
+@FlakyTest(detail = "Promote once confirmed non-flaky")
+@Presubmit
 public class WindowInsetsLayoutTests extends WindowManagerTestBase {
 
     private final static long TIMEOUT = 1000; // milliseconds
 
-    @Ignore("Disabled until insets flag is flipped")
     @Test
     public void testSetFitInsetsTypes() {
         final TestActivity activity = startActivity(TestActivity.class);
@@ -92,7 +96,6 @@ public class WindowInsetsLayoutTests extends WindowManagerTestBase {
         });
     }
 
-    @Ignore("Disabled until insets flag is flipped")
     @Test
     public void testSetFitInsetsSides() {
         final TestActivity activity = startActivity(TestActivity.class);
@@ -137,7 +140,6 @@ public class WindowInsetsLayoutTests extends WindowManagerTestBase {
         });
     }
 
-    @Ignore("Disabled until insets flag is flipped")
     @Test
     public void testSetFitInsetsIgnoringVisibility() {
         final TestActivity activity = startActivity(TestActivity.class);
