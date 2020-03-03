@@ -16,6 +16,7 @@
 
 package android.mediav2.cts;
 
+import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
 import android.media.Image;
 import android.media.MediaCodec;
@@ -27,13 +28,16 @@ import android.util.Log;
 import android.util.Pair;
 
 import androidx.annotation.NonNull;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -348,11 +352,15 @@ class OutputManager {
 
 abstract class CodecTestBase {
     private static final String LOG_TAG = CodecTestBase.class.getSimpleName();
+    private static final String CODEC_SEL_KEY = "codec-sel";
+    static final String CODEC_SEL_VALUE = "default";
+    static final Map<String, String> codecSelKeyMimeMap = new HashMap<>();
     static final boolean ENABLE_LOGS = false;
     static final int PER_TEST_TIMEOUT_LARGE_TEST_MS = 300000;
     static final int PER_TEST_TIMEOUT_SMALL_TEST_MS = 60000;
     static final long Q_DEQ_TIMEOUT_US = 500;
     static final String mInpPrefix = WorkDir.getMediaDirString();
+    static String codecSelKeys;
 
     CodecAsyncHandler mAsyncHandle;
     boolean mIsCodecInAsyncMode;
@@ -370,6 +378,38 @@ abstract class CodecTestBase {
     OutputManager mOutputBuff;
 
     MediaCodec mCodec;
+
+    static {
+        codecSelKeyMimeMap.put("vp8", MediaFormat.MIMETYPE_VIDEO_VP8);
+        codecSelKeyMimeMap.put("vp9", MediaFormat.MIMETYPE_VIDEO_VP9);
+        codecSelKeyMimeMap.put("av1", MediaFormat.MIMETYPE_VIDEO_AV1);
+        codecSelKeyMimeMap.put("avc", MediaFormat.MIMETYPE_VIDEO_AVC);
+        codecSelKeyMimeMap.put("hevc", MediaFormat.MIMETYPE_VIDEO_HEVC);
+        codecSelKeyMimeMap.put("mpeg4", MediaFormat.MIMETYPE_VIDEO_MPEG4);
+        codecSelKeyMimeMap.put("h263", MediaFormat.MIMETYPE_VIDEO_H263);
+        codecSelKeyMimeMap.put("mpeg2", MediaFormat.MIMETYPE_VIDEO_MPEG2);
+        codecSelKeyMimeMap.put("vraw", MediaFormat.MIMETYPE_VIDEO_RAW);
+        codecSelKeyMimeMap.put("amrnb", MediaFormat.MIMETYPE_AUDIO_AMR_NB);
+        codecSelKeyMimeMap.put("amrwb", MediaFormat.MIMETYPE_AUDIO_AMR_WB);
+        codecSelKeyMimeMap.put("mp3", MediaFormat.MIMETYPE_AUDIO_MPEG);
+        codecSelKeyMimeMap.put("aac", MediaFormat.MIMETYPE_AUDIO_AAC);
+        codecSelKeyMimeMap.put("vorbis", MediaFormat.MIMETYPE_AUDIO_VORBIS);
+        codecSelKeyMimeMap.put("opus", MediaFormat.MIMETYPE_AUDIO_OPUS);
+        codecSelKeyMimeMap.put("g711alaw", MediaFormat.MIMETYPE_AUDIO_G711_ALAW);
+        codecSelKeyMimeMap.put("g711mlaw", MediaFormat.MIMETYPE_AUDIO_G711_MLAW);
+        codecSelKeyMimeMap.put("araw", MediaFormat.MIMETYPE_AUDIO_RAW);
+        codecSelKeyMimeMap.put("flac", MediaFormat.MIMETYPE_AUDIO_FLAC);
+        codecSelKeyMimeMap.put("gsm", MediaFormat.MIMETYPE_AUDIO_MSGSM);
+
+        android.os.Bundle args = InstrumentationRegistry.getArguments();
+        codecSelKeys = args.getString(CODEC_SEL_KEY);
+        if (codecSelKeys == null) codecSelKeys = CODEC_SEL_VALUE;
+    }
+
+    static boolean isTv() {
+        return InstrumentationRegistry.getInstrumentation().getContext().getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+    }
 
     abstract void enqueueInput(int bufferIndex) throws IOException;
 
