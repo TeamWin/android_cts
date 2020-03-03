@@ -114,14 +114,14 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
                 return;
             }
 
-            onPermissionsGranted();
-
             startTestButton.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     startTest();
                 }
             });
+
+            onPermissionsGranted();
         }
     }
 
