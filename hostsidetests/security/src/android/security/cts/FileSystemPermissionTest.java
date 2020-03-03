@@ -1,4 +1,4 @@
-package android.cts.security;
+package android.security.cts;
 
 import static android.security.cts.SELinuxHostTest.copyResourceToTempFile;
 import static android.security.cts.SELinuxHostTest.getDevicePolicyFile;
