@@ -16,6 +16,7 @@
 
 package android.server.wm.lifecycle;
 
+import static android.app.Instrumentation.ActivityMonitor;
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
@@ -574,9 +575,24 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     @Test
     @FlakyTest(bugId=127741025)
     public void testOnActivityResultAfterStop() throws Exception {
-        final Activity activity = new Launcher(LaunchForResultActivity.class)
-                .customizeIntent(LaunchForResultActivity.forwardFlag(EXTRA_FINISH_AFTER_RESUME))
+        final ActivityMonitor resultMonitor = getInstrumentation().addMonitor(
+                ResultActivity.class.getName(), null /* result */, false /* block */);
+        final ActivityMonitor launchMonitor = getInstrumentation().addMonitor(
+                LaunchForResultActivity.class.getName(), null/* result */, false /* block */);
+        new Launcher(LaunchForResultActivity.class)
+                // TODO (b/127741025) temporarily use setNoInstance, because startActivitySync will
+                // cause launch timeout when more than 2 activities start consecutively.
+                .setNoInstance()
+                .setExpectedState(ON_STOP)
                 .launch();
+        final Activity activity = getInstrumentation()
+                .waitForMonitorWithTimeout(launchMonitor, 5000);
+        waitAndAssertActivityStates(state(activity, ON_STOP));
+        final Activity resultActivity = getInstrumentation()
+                .waitForMonitorWithTimeout(resultMonitor, 5000);
+        waitAndAssertActivityStates(state(resultActivity, ON_TOP_POSITION_GAINED));
+        getInstrumentation().runOnMainSync(resultActivity::finish);
+
         final boolean isTranslucent = isTranslucent(activity);
 
         final List<List<LifecycleLog.ActivityCallback>> expectedSequences;
