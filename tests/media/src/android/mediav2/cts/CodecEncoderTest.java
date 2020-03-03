@@ -52,7 +52,9 @@ public class CodecEncoderTest extends CodecTestBase {
     private static final String LOG_TAG = CodecEncoderTest.class.getSimpleName();
     // files are in WorkDir.getMediaDirString();
     private static final String mInputAudioFile = "bbb_2ch_44kHz_s16le.raw";
-    private static final String mInputVideoFile = "bbb_cif_yuv420p.yuv";
+    private static final String mInputVideoFile = "bbb_cif_yuv420p_30fps.yuv";
+    private final int INP_FRM_WIDTH = 352;
+    private final int INP_FRM_HEIGHT = 288;
 
     private final String mMime;
     private final int[] mBitrates;
@@ -115,35 +117,78 @@ public class CodecEncoderTest extends CodecTestBase {
         int offset = mNumBytesSubmitted;
         for (int i = 0; i < planes.length; ++i) {
             ByteBuffer buf = planes[i].getBuffer();
-            int width, height, rowStride, pixelStride, x, y;
-            rowStride = planes[i].getRowStride();
-            pixelStride = planes[i].getPixelStride();
-            if (i == 0) {
-                width = imageWidth;
-                height = imageHeight;
-            } else {
+            int width = imageWidth;
+            int height = imageHeight;
+            int tileWidth = INP_FRM_WIDTH;
+            int tileHeight = INP_FRM_HEIGHT;
+            int rowStride = planes[i].getRowStride();
+            int pixelStride = planes[i].getPixelStride();
+            if (i != 0) {
                 width = imageWidth / 2;
                 height = imageHeight / 2;
+                tileWidth = INP_FRM_WIDTH / 2;
+                tileHeight = INP_FRM_HEIGHT / 2;
             }
             if (pixelStride == 1) {
-                if (width == rowStride) {
+                if (width == rowStride && width == tileWidth && height == tileHeight) {
                     buf.put(mInputData, offset, width * height);
                 } else {
-                    for (y = 0; y < height; ++y) {
-                        buf.put(mInputData, offset + y * width, width);
+                    for (int z = 0; z < height; z += tileHeight) {
+                        int rowsToCopy = Math.min(height - z, tileHeight);
+                        for (int y = 0; y < rowsToCopy; y++) {
+                            for (int x = 0; x < width; x += tileWidth) {
+                                int colsToCopy = Math.min(width - x, tileWidth);
+                                buf.position((z + y) * rowStride + x);
+                                buf.put(mInputData, offset + y * tileWidth, colsToCopy);
+                            }
+                        }
                     }
                 }
             } else {
                 // do it pixel-by-pixel
-                for (y = 0; y < height; ++y) {
-                    int lineOffset = y * rowStride;
-                    for (x = 0; x < width; ++x) {
-                        buf.position(lineOffset + x * pixelStride);
-                        buf.put(mInputData[offset + y * width + x]);
+                for (int z = 0; z < height; z += tileHeight) {
+                    int rowsToCopy = Math.min(height - z, tileHeight);
+                    for (int y = 0; y < rowsToCopy; y++) {
+                        int lineOffset = (z + y) * rowStride;
+                        for (int x = 0; x < width; x += tileWidth) {
+                            int colsToCopy = Math.min(width - x, tileWidth);
+                            for (int w = 0; w < colsToCopy; w++) {
+                                buf.position(lineOffset + (x + w) * pixelStride);
+                                buf.put(mInputData[offset + y * tileWidth + w]);
+                            }
+                        }
+                    }
+                }
+            }
+            offset += tileWidth * tileHeight;
+        }
+    }
+
+    void fillByteBuffer(ByteBuffer inputBuffer) {
+        int offset = 0, frmOffset = mNumBytesSubmitted;
+        for (int plane = 0; plane < 3; plane++) {
+            int width = mWidth;
+            int height = mHeight;
+            int tileWidth = INP_FRM_WIDTH;
+            int tileHeight = INP_FRM_HEIGHT;
+            if (plane != 0) {
+                width = mWidth / 2;
+                height = mHeight / 2;
+                tileWidth = INP_FRM_WIDTH / 2;
+                tileHeight = INP_FRM_HEIGHT / 2;
+            }
+            for (int k = 0; k < height; k += tileHeight) {
+                int rowsToCopy = Math.min(height - k, tileHeight);
+                for (int j = 0; j < rowsToCopy; j++) {
+                    for (int i = 0; i < width; i += tileWidth) {
+                        int colsToCopy = Math.min(width - i, tileWidth);
+                        inputBuffer.position(offset + (k + j) * width + i);
+                        inputBuffer.put(mInputData, frmOffset + j * tileWidth, colsToCopy);
                     }
                 }
             }
             offset += width * height;
+            frmOffset += tileWidth * tileHeight;
         }
     }
 
@@ -159,23 +204,34 @@ public class CodecEncoderTest extends CodecTestBase {
                 pts += mNumBytesSubmitted * 1000000L / (2 * mChannels * mRate);
                 size = Math.min(inputBuffer.capacity(), mInputData.length - mNumBytesSubmitted);
                 inputBuffer.put(mInputData, mNumBytesSubmitted, size);
+                if (mNumBytesSubmitted + size >= mInputData.length && mSignalEOSWithLastFrame) {
+                    flags |= MediaCodec.BUFFER_FLAG_END_OF_STREAM;
+                    mSawInputEOS = true;
+                }
+                mNumBytesSubmitted += size;
             } else {
                 pts += mInputCount * 1000000L / mRate;
                 size = mWidth * mHeight * 3 / 2;
-                if (mNumBytesSubmitted + size > mInputData.length) {
+                int frmSize = INP_FRM_WIDTH * INP_FRM_HEIGHT * 3 / 2;
+                if (mNumBytesSubmitted + frmSize > mInputData.length) {
                     fail("received partial frame to encode");
                 } else {
                     Image img = mCodec.getInputImage(bufferIndex);
                     if (img != null) {
                         fillImage(img);
                     } else {
-                        inputBuffer.put(mInputData, mNumBytesSubmitted, size);
+                        if (mWidth == INP_FRM_WIDTH && mHeight == INP_FRM_HEIGHT) {
+                            inputBuffer.put(mInputData, mNumBytesSubmitted, size);
+                        } else {
+                            fillByteBuffer(inputBuffer);
+                        }
                     }
                 }
-            }
-            if (mNumBytesSubmitted + size >= mInputData.length && mSignalEOSWithLastFrame) {
-                flags |= MediaCodec.BUFFER_FLAG_END_OF_STREAM;
-                mSawInputEOS = true;
+                if (mNumBytesSubmitted + frmSize >= mInputData.length && mSignalEOSWithLastFrame) {
+                    flags |= MediaCodec.BUFFER_FLAG_END_OF_STREAM;
+                    mSawInputEOS = true;
+                }
+                mNumBytesSubmitted += frmSize;
             }
             if (ENABLE_LOGS) {
                 Log.v(LOG_TAG, "input: id: " + bufferIndex + " size: " + size + " pts: " + pts +
@@ -183,7 +239,6 @@ public class CodecEncoderTest extends CodecTestBase {
             }
             mCodec.queueInputBuffer(bufferIndex, 0, size, pts, flags);
             mInputCount++;
-            mNumBytesSubmitted += size;
         }
     }
 
@@ -254,11 +309,14 @@ public class CodecEncoderTest extends CodecTestBase {
                         , 96000, 192000}, new int[]{1, 2}},
 
                 // Video - CodecMime, arrays of bit-rates, height, width
-                {MediaFormat.MIMETYPE_VIDEO_AVC, new int[]{512000}, new int[]{352}, new int[]{288}},
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, new int[]{512000}, new int[]{352},
-                        new int[]{288}},
-                {MediaFormat.MIMETYPE_VIDEO_VP8, new int[]{512000}, new int[]{352}, new int[]{288}},
-                {MediaFormat.MIMETYPE_VIDEO_VP9, new int[]{512000}, new int[]{352}, new int[]{288}},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, new int[]{512000}, new int[]{176, 352, 352, 480}
+                        , new int[]{144, 240, 288, 360}},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, new int[]{512000}, new int[]{176, 352, 352,
+                        480}, new int[]{144, 240, 288, 360}},
+                {MediaFormat.MIMETYPE_VIDEO_VP8, new int[]{512000}, new int[]{176, 352, 352, 480}
+                        , new int[]{144, 240, 288, 360}},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, new int[]{512000}, new int[]{176, 352, 352, 480}
+                        , new int[]{144, 240, 288, 360}},
         });
     }
 
