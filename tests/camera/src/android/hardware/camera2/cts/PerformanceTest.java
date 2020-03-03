@@ -285,16 +285,18 @@ public class PerformanceTest {
      */
     @Test
     public void testSingleCapture() throws Exception {
-        int[] YUV_FORMAT = {ImageFormat.YUV_420_888};
-        testSingleCaptureForFormat(YUV_FORMAT, null, /*addPreviewDelay*/ false);
-        int[] PRIVATE_FORMAT = {ImageFormat.PRIVATE};
-        testSingleCaptureForFormat(PRIVATE_FORMAT, "private", /*addPreviewDelay*/ true);
         int[] JPEG_FORMAT = {ImageFormat.JPEG};
         testSingleCaptureForFormat(JPEG_FORMAT, "jpeg", /*addPreviewDelay*/ true);
-        int[] RAW_FORMAT = {ImageFormat.RAW_SENSOR};
-        testSingleCaptureForFormat(RAW_FORMAT, "raw", /*addPreviewDelay*/ true);
-        int[] RAW_JPEG_FORMATS = {ImageFormat.RAW_SENSOR, ImageFormat.JPEG};
-        testSingleCaptureForFormat(RAW_JPEG_FORMATS, "raw_jpeg", /*addPreviewDelay*/ true);
+        if (!mTestRule.isPerfMeasure()) {
+            int[] YUV_FORMAT = {ImageFormat.YUV_420_888};
+            testSingleCaptureForFormat(YUV_FORMAT, null, /*addPreviewDelay*/ false);
+            int[] PRIVATE_FORMAT = {ImageFormat.PRIVATE};
+            testSingleCaptureForFormat(PRIVATE_FORMAT, "private", /*addPreviewDelay*/ true);
+            int[] RAW_FORMAT = {ImageFormat.RAW_SENSOR};
+            testSingleCaptureForFormat(RAW_FORMAT, "raw", /*addPreviewDelay*/ true);
+            int[] RAW_JPEG_FORMATS = {ImageFormat.RAW_SENSOR, ImageFormat.JPEG};
+            testSingleCaptureForFormat(RAW_JPEG_FORMATS, "raw_jpeg", /*addPreviewDelay*/ true);
+        }
     }
 
     private String appendFormatDescription(String message, String formatDescription) {
