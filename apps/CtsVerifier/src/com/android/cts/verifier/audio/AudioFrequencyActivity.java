@@ -40,6 +40,9 @@ public class AudioFrequencyActivity extends PassFailButtons.Activity {
 
     public int mMaxLevel = 0;
 
+    //
+    // TODO - These should be refactored into a RefMicActivity class
+    // i.e. AudioFrequencyActivity <- RefMicActivity
     private OnBtnClickListener mBtnClickListener = new OnBtnClickListener();
     //
     // Common UI Handling

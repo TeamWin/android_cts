@@ -3565,8 +3565,8 @@
         <!-- ProAudio test invokes the "Loopback" App -->
         <activity android:name="org.drrickorang.loopback"/>
 
-        <activity android:name=".audio.AudioLoopbackActivity"
-                  android:label="@string/audio_loopback_test">
+        <activity android:name=".audio.AudioLoopbackLatencyActivity"
+                  android:label="@string/audio_loopback_latency_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
