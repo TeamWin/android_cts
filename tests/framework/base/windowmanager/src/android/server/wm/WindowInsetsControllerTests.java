@@ -16,6 +16,10 @@
 
 package android.server.wm;
 
+import static android.view.WindowInsets.Type.ime;
+import static android.view.WindowInsets.Type.navigationBars;
+import static android.view.WindowInsets.Type.statusBars;
+import static android.view.WindowInsets.Type.systemBars;
 import static android.view.WindowInsetsController.BEHAVIOR_SHOW_BARS_BY_SWIPE;
 import static android.view.WindowInsetsController.BEHAVIOR_SHOW_BARS_BY_TOUCH;
 import static android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE;
@@ -24,6 +28,7 @@ import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assume.assumeTrue;
 
+import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.view.MotionEvent;
@@ -31,6 +36,7 @@ import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsets.Type;
 import android.view.WindowInsetsAnimation;
+import android.widget.TextView;
 
 import androidx.test.filters.FlakyTest;
 
@@ -159,6 +165,16 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         PollingCheck.waitFor(TIMEOUT, () -> !rootView.getRootWindowInsets().isVisible(types));
     }
 
+    @Test
+    public void testHideOnCreate() throws Exception {
+        final TestHideOnCreateActivity activity = startActivity(TestHideOnCreateActivity.class);
+        final View rootView = activity.getWindow().getDecorView();
+        ANIMATION_CALLBACK.waitForFinishing(TIMEOUT);
+        PollingCheck.waitFor(TIMEOUT,
+                () -> !rootView.getRootWindowInsets().isVisible(statusBars())
+                        && !rootView.getRootWindowInsets().isVisible(navigationBars()));
+    }
+
     private static void hideInsets(View view, int types) throws InterruptedException {
         ANIMATION_CALLBACK.reset();
         getInstrumentation().runOnMainSync(() -> {
@@ -238,4 +254,18 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
     }
 
     public static class TestActivity extends FocusableActivity { }
+
+    public static class TestHideOnCreateActivity extends FocusableActivity {
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            View content = new TextView(this);
+            setContentView(content);
+            ANIMATION_CALLBACK.reset();
+            getWindow().getDecorView().setWindowInsetsAnimationCallback(ANIMATION_CALLBACK);
+            getWindow().getInsetsController().hide(statusBars());
+            content.getWindowInsetsController().hide(navigationBars());
+        }
+    }
 }
