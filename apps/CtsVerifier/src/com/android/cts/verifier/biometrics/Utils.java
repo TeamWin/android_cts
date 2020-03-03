@@ -76,6 +76,24 @@ public class Utils {
         keyGenerator.generateKey();
     }
 
+    static void createUserAuthenticationKey(String keyName, int timeout, int type,
+            boolean useStrongBox) throws Exception {
+        KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+        keyStore.load(null);
+        KeyGenerator keyGenerator = KeyGenerator.getInstance(
+                KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore");
+
+        KeyGenParameterSpec.Builder builder = new KeyGenParameterSpec.Builder(keyName,
+                KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
+                .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
+                .setUserAuthenticationRequired(true)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
+                .setIsStrongBoxBacked(useStrongBox)
+                .setUserAuthenticationParameters(timeout, type);
+        keyGenerator.init(builder.build());
+        keyGenerator.generateKey();
+    }
+
     static Cipher initCipher(String keyName) throws Exception {
         KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
         keyStore.load(null);
