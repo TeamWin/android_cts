@@ -36,6 +36,7 @@
     //is being sent.
     Bug: 129348724 android.intent.action.DEFINE (public in API 29)
     Bug: 129348724 android.intent.action.TRANSLATE (public in API 29)
+    Bug: 150153196 android.intent.action.LOAD_DATA (system in API 30)
 -->
 <dynamicConfig>
     <entry key ="intent_whitelist">
@@ -53,5 +54,6 @@
       <value>android.intent.action.TIMELINE_POST_VISIT_BADGE</value>
       <value>android.intent.action.DEFINE</value>
       <value>android.intent.action.TRANSLATE</value>
+      <value>android.intent.action.LOAD_DATA</value>
     </entry>
 </dynamicConfig>
