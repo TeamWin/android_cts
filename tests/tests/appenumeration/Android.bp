@@ -25,6 +25,7 @@ android_test {
         "ctstestrunner-axt",
         "compatibility-device-util-axt",
 	    "androidx.test.ext.junit",
+        "hamcrest-library",
     ],
 
     srcs: ["src/**/*.java"],
