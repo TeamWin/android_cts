@@ -43,7 +43,7 @@ public class TextClassificationSessionIdTest {
     }
 
     @Test
-    public void flattenToString() {
+    public void getValue() {
         mTcm.setTextClassifier(TextClassifier.NO_OP);
         TextClassifier textClassifier = mTcm.createTextClassificationSession(
                 new TextClassificationContext.Builder(
@@ -58,6 +58,6 @@ public class TextClassificationSessionIdTest {
         TextClassificationSessionId sessionId = startedEvent.getSessionId();
 
         assertThat(sessionId).isNotNull();
-        assertThat(sessionId.flattenToString()).isNotEmpty();
+        assertThat(sessionId.getValue()).isNotEmpty();
     }
 }
