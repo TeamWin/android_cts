@@ -22,7 +22,7 @@
     <uses-permission android:name="android.permission.READ_CONTACTS"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
-    <application>
+    <application android:forceQueryable="true">
         <activity android:name=".SimpleActivity" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
