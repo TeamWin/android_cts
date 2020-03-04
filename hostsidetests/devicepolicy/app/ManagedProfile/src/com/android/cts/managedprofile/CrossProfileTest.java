@@ -254,11 +254,14 @@ public class CrossProfileTest extends BaseManagedProfileTest {
 
     private boolean isPackageInstalledForUser(String packageName, UserHandle user) {
         try {
+            sUiAutomation.adoptShellPermissionIdentity(INTERACT_ACROSS_USERS_PERMISSION);
             mContext.createContextAsUser(user, /* flags= */ 0).getPackageManager()
                     .getPackageInfo(packageName, /* flags= */ 0);
             return true;
         } catch (PackageManager.NameNotFoundException e) {
             return false;
+        } finally {
+            sUiAutomation.dropShellPermissionIdentity();
         }
     }
 
