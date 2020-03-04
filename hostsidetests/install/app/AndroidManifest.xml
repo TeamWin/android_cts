@@ -15,9 +15,6 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="android.cts.install">
-    <!-- TODO(b/149812155): Remove the declaration after b/149812155 resolved.-->
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
-
     <application>
         <uses-library android:name="android.test.runner"/>
         <receiver android:name="com.android.cts.install.lib.LocalIntentSender"
