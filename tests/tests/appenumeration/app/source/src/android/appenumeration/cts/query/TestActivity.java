@@ -69,9 +69,21 @@ public class TestActivity extends Activity {
             sendQueryIntentServices(remoteCallback, queryIntent);
         } else if ("android.appenumeration.cts.action.QUERY_INTENT_PROVIDERS".equals(action)) {
             sendQueryIntentProviders(remoteCallback, queryIntent);
+        } else if ("android.appenumeration.cts.action.GET_INSTALLED_PACKAGES".equals(action)) {
+            sendGetInstalledPackages(remoteCallback, queryIntent.getIntExtra("flags", 0));
         } else {
             sendError(remoteCallback, new Exception("unknown action " + action));
         }
+    }
+
+    private void sendGetInstalledPackages(RemoteCallback remoteCallback, int flags) {
+        String[] packages =
+                getPackageManager().getInstalledPackages(flags)
+                        .stream().map(p -> p.packageName).distinct().toArray(String[]::new);
+        Bundle result = new Bundle();
+        result.putStringArray(EXTRA_RETURN_RESULT, packages);
+        remoteCallback.sendResult(result);
+        finish();
     }
 
     private void sendQueryIntentActivities(RemoteCallback remoteCallback, Intent queryIntent) {
