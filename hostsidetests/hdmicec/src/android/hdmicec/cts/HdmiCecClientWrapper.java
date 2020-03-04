@@ -259,6 +259,33 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         return false;
     }
 
+    /** Gets all the messages received from the given source device during a period of duration
+     * seconds.
+     */
+    public List<CecMessage> getAllMessages(CecDevice source, int duration) throws Exception {
+        List<CecMessage> receivedMessages = new ArrayList<>();
+        long startTime = System.currentTimeMillis();
+        long endTime = startTime;
+        Pattern pattern = Pattern.compile("(.*>>)(.*?)" +
+                "(" + source + "\\p{XDigit}):(.*)",
+            Pattern.CASE_INSENSITIVE);
+
+        while ((endTime - startTime <= duration)) {
+            if (mInputConsole.ready()) {
+                String line = mInputConsole.readLine();
+                if (pattern.matcher(line).matches()) {
+                    CecMessage message = getOperandFromMessage(line);
+                    if (!receivedMessages.contains(message)) {
+                        receivedMessages.add(message);
+                    }
+                }
+            }
+            endTime = System.currentTimeMillis();
+        }
+        return receivedMessages;
+    }
+
+
     /**
      * Looks for the CEC expectedMessage broadcast on the cec-client communication channel and
      * returns the first line that contains that message within default timeout. If the CEC message
@@ -485,6 +512,14 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     public CecDevice getDestinationFromMessage(String message) {
         String param = getNibbles(message).substring(1, 2);
         return CecDevice.getDevice(hexStringToInt(param));
+    }
+
+    /**
+     * Gets the operand from a CEC message.
+     */
+    public CecMessage getOperandFromMessage(String message) {
+        String param = getNibbles(message).substring(2, 4);
+        return CecMessage.getMessage(hexStringToInt(param));
     }
 
     private String getNibbles(String message) {
