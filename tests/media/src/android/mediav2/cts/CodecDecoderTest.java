@@ -87,7 +87,7 @@ public class CodecDecoderTest extends CodecTestBase {
         mIsAudio = mMime.startsWith("audio/");
     }
 
-    private short[] setUpReference() throws IOException {
+    private short[] setUpAudioReference() throws IOException {
         File refFile = new File(mInpPrefix + mRefFile);
         short[] refData;
         try (FileInputStream refStream = new FileInputStream(refFile)) {
@@ -201,13 +201,14 @@ public class CodecDecoderTest extends CodecTestBase {
                 ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
                 mOutputBuff.saveToMemory(buf, info);
             } else {
+                // tests both getOutputImage and getOutputBuffer. Can do time division
+                // multiplexing but lets allow it for now
                 Image img = mCodec.getOutputImage(bufferIndex);
-                if (img != null) {
-                    mOutputBuff.checksum(img);
-                } else {
-                    ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
-                    mOutputBuff.checksum(buf, info.size);
-                }
+                assertTrue(img != null);
+                mOutputBuff.checksum(img);
+
+                ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
+                mOutputBuff.checksum(buf, info.size);
             }
         }
         if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
@@ -228,7 +229,7 @@ public class CodecDecoderTest extends CodecTestBase {
             throws InterruptedException {
         int frameCount = 0;
         if (mIsCodecInAsyncMode) {
-            // dequeue output after inputEOS is expected to be done in waitForAllOutputs()
+            // output processing after queuing EOS is done in waitForAllOutputs()
             while (!mAsyncHandle.hasSeenError() && !mSawInputEOS && frameCount < list.size()) {
                 Pair<Integer, MediaCodec.BufferInfo> element = mAsyncHandle.getWork();
                 if (element != null) {
@@ -244,7 +245,7 @@ public class CodecDecoderTest extends CodecTestBase {
             }
         } else {
             MediaCodec.BufferInfo outInfo = new MediaCodec.BufferInfo();
-            // dequeue output after inputEOS is expected to be done in waitForAllOutputs()
+            // output processing after queuing EOS is done in waitForAllOutputs()
             while (!mSawInputEOS && frameCount < list.size()) {
                 int outputBufferId = mCodec.dequeueOutputBuffer(outInfo, Q_DEQ_TIMEOUT_US);
                 if (outputBufferId >= 0) {
@@ -464,6 +465,10 @@ public class CodecDecoderTest extends CodecTestBase {
         OutputManager test = new OutputManager();
         for (String decoder : listOfDecoders) {
             mCodec = MediaCodec.createByCodecName(decoder);
+            assertTrue("codec name act/got: " + mCodec.getName() + '/' + decoder,
+                    mCodec.getName().equals(decoder));
+            assertTrue("error! codec canonical name is null",
+                    mCodec.getCanonicalName() != null && !mCodec.getCanonicalName().isEmpty());
             int loopCounter = 0;
             for (boolean eosType : boolStates) {
                 for (boolean isAsync : boolStates) {
@@ -522,7 +527,7 @@ public class CodecDecoderTest extends CodecTestBase {
             }
             mCodec.release();
             if (mSaveToMem && mRefFile != null && mRmsError >= 0) {
-                short[] refData = setUpReference();
+                short[] refData = setUpAudioReference();
                 assertTrue(String.format("%s rms error too high", mTestFile),
                         ref.getRmsError(refData) <= mRmsError);
             }
