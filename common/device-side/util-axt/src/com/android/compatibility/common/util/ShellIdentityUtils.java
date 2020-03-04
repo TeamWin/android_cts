@@ -360,4 +360,21 @@ public class ShellIdentityUtils {
             uiAutomation.dropShellPermissionIdentity();
         }
     }
+
+    /**
+     * Run an arbitrary piece of code while holding shell permissions.
+     *
+     * @param runnable an expression that performs the desired operation with shell permissions
+     * @return the return value of the expression
+     */
+    public static void invokeWithShellPermissions(Runnable runnable) {
+        final UiAutomation uiAutomation =
+                InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            runnable.run();
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
 }
