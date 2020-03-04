@@ -24,6 +24,7 @@ import its.objects
 
 import numpy as np
 
+CIRCLE_TOL = 0.05  # contour area vs ideal circle area pi*((w+h)/4)**2
 COLOR = 0  # [0: black, 255: white]
 NAME = os.path.basename(__file__).split('.')[0]
 NUM_STEPS = 10
@@ -106,13 +107,14 @@ def find_center_circle(img, name, color, min_area, debug):
             radius = (shape['width'] + shape['height']) / 4
             colour = img_bw[shape['cty']][shape['ctx']]
             circlish = round((math.pi * radius**2) / area, 4)
-            if colour == color:
+            if colour == color and (1-CIRCLE_TOL <= circlish <= 1+CIRCLE_TOL):
                 circles.append([shape['ctx'], shape['cty'], radius, circlish,
                                 area])
 
     if debug:
         circles.sort(key=lambda x: abs(x[3]-1.0))  # sort for best circles
         print 'circles [x, y, r, pi*r**2/area, area]:', circles
+
     # find circle closest to center
     circles.sort(key=lambda x: distance(x[0]-img_ctr[0], x[1]-img_ctr[1]))
     circle = circles[0]
