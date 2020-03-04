@@ -19,7 +19,8 @@
 
     <uses-sdk android:minSdkVersion="23" android:targetSdkVersion="26"/>
 
-    <application android:hasCode="false"
+    <application android:forceQueryable="true"
+                 android:hasCode="false"
                  android:label="Empty Test App"
     />
 
