@@ -402,4 +402,19 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
         assertThat(hdmiCecClient.getParamsFromMessage(message)).isEqualTo(OFF);
         assertWithMessage("Device not muted").that(isDeviceMuted()).isTrue();
     }
+
+    /**
+     * Test 11.2.15-18
+     * Tests that the device doesn't broadcast <Set System Audio Mode>
+     * messages if TV responds with a <Feature Abort> message to directly addressed
+     * <Set System Audio Mode> message within the required maximum response time of 1 second.
+     */
+    @Test
+    public void cect_11_2_15_18_SystemAudioModeWithFeatureAbortWithinTime() throws Exception {
+        initiateSystemAudioModeFromDut();
+        hdmiCecClient.sendCecMessage(CecDevice.TV, AUDIO_DEVICE, CecMessage.FEATURE_ABORT,
+                hdmiCecClient.formatParams(CecMessage.SET_SYSTEM_AUDIO_MODE + "04"));
+        hdmiCecClient.checkOutputDoesNotContainMessage(CecDevice.BROADCAST,
+                CecMessage.SET_SYSTEM_AUDIO_MODE);
+    }
 }
