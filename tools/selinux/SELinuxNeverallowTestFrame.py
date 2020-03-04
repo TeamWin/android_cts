@@ -16,7 +16,7 @@ src_header = """/*
  * limitations under the License.
  */
 
-package android.cts.security;
+package android.security.cts;
 
 import android.platform.test.annotations.RestrictedBuildTest;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;

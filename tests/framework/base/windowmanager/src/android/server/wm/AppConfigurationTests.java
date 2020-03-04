@@ -23,10 +23,10 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
-import static android.server.wm.WindowManagerState.dpToPx;
-import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.ComponentNameUtils.getWindowName;
 import static android.server.wm.StateLogger.logE;
+import static android.server.wm.WindowManagerState.STATE_RESUMED;
+import static android.server.wm.WindowManagerState.dpToPx;
 import static android.server.wm.app.Components.BROADCAST_RECEIVER_ACTIVITY;
 import static android.server.wm.app.Components.DIALOG_WHEN_LARGE_ACTIVITY;
 import static android.server.wm.app.Components.LANDSCAPE_ORIENTATION_ACTIVITY;
@@ -35,9 +35,7 @@ import static android.server.wm.app.Components.NIGHT_MODE_ACTIVITY;
 import static android.server.wm.app.Components.PORTRAIT_ORIENTATION_ACTIVITY;
 import static android.server.wm.app.Components.RESIZEABLE_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
-import static android.server.wm.translucentapp.Components.TRANSLUCENT_LANDSCAPE_ACTIVITY;
 import static android.server.wm.translucentapp26.Components.SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY;
-import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Surface.ROTATION_0;
 import static android.view.Surface.ROTATION_180;
 import static android.view.Surface.ROTATION_270;
@@ -61,7 +59,6 @@ import android.platform.test.annotations.Presubmit;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.SizeInfo;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -439,20 +436,6 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
         final SizeInfo finalReportedSizes = getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY);
         assertEquals("Applied orientation must not be influenced by previously visible activity",
                 initialOrientation, finalReportedSizes.orientation);
-    }
-
-    // TODO(b/70870253): This test seems malfunction.
-    @Ignore("b/70870253")
-    @Test
-    public void testNonFullscreenActivityProhibited() {
-        // We do not wait for the activity as it should not launch based on the restrictions around
-        // specifying orientation. We instead start an activity known to launch immediately after
-        // so that we can ensure processing the first activity occurred.
-        launchActivityNoWait(TRANSLUCENT_LANDSCAPE_ACTIVITY);
-        launchActivity(PORTRAIT_ORIENTATION_ACTIVITY);
-
-        assertFalse("target SDK > 26 non-fullscreen activity should not reach onResume",
-                mWmState.containsActivity(TRANSLUCENT_LANDSCAPE_ACTIVITY));
     }
 
     @Test

@@ -921,9 +921,9 @@ public class AugmentedLoginActivityTest
         // Change field value
         mActivity.onUsername((v) -> v.setText("DOH"));
 
-        // Trigger autofill again
+        // Trigger autofill again, by forcing a manual autofill request
         sAugmentedReplier.addResponse(NO_AUGMENTED_RESPONSE);
-        mActivity.onUsername(View::performClick);
+        mActivity.forceAutofillOnUsername();
         final AugmentedFillRequest request2 = sAugmentedReplier.getNextFillRequest();
 
         // Assert 2nd request
@@ -931,6 +931,48 @@ public class AugmentedLoginActivityTest
 
         // Make sure UIs were not shown
         mUiBot.assertNoDatasetsEver();
+        mAugmentedUiBot.assertUiNeverShown();
+    }
+
+    @Test
+    @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
+    public void testAugmentedAutoFill_mainServiceDisabled_tappingSecondTimeNotTrigger()
+            throws Exception {
+        // Set services
+        Helper.disableAutofillService(sContext);
+        enableAugmentedService();
+
+        // Set expectations
+        final EditText username = mActivity.getUsername();
+        final AutofillId usernameId = username.getAutofillId();
+        final AutofillValue initialValue = username.getAutofillValue();
+        sAugmentedReplier.addResponse(NO_AUGMENTED_RESPONSE);
+
+        // Trigger autofill by focusing on the field
+        mActivity.onUsername(View::requestFocus);
+        final AugmentedFillRequest request1 = sAugmentedReplier.getNextFillRequest();
+
+        // Assert request
+        assertBasicRequestInfo(request1, mActivity, usernameId, initialValue);
+
+        // Make sure UIs were not shown
+        mUiBot.assertNoDatasetsEver();
+        mAugmentedUiBot.assertUiNeverShown();
+
+        // Change field value
+        mActivity.onUsername((v) -> v.setText("DOH"));
+
+        // Tap on the field again
+        sAugmentedReplier.addResponse(NO_AUGMENTED_RESPONSE);
+        mActivity.onUsername(View::performClick);
+
+        // Assert no fill requests
+        sAugmentedReplier.assertNoUnhandledFillRequests();
+
+        // Make sure standard Autofill UI is not shown.
+        mUiBot.assertNoDatasetsEver();
+
+        // Make sure Augmented Autofill UI is not shown.
         mAugmentedUiBot.assertUiNeverShown();
     }
 
