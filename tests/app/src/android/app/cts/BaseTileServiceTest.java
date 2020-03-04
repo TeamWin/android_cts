@@ -54,8 +54,7 @@ public abstract class BaseTileServiceTest {
     protected Context mContext;
 
     final static String DUMP_COMMAND =
-            "dumpsys activity service com.android.systemui/.SystemUIService dependency "
-                    + "DumpController qstilehost";
+            "dumpsys activity service com.android.systemui/.SystemUIService QSTileHost";
 
     // Time between checks for state we expect.
     protected static final long CHECK_DELAY = 250;
