@@ -200,6 +200,7 @@ public class BlobStoreManagerTest {
             assertThat(sessionId).isGreaterThan(0L);
             try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
                 assertThat(session).isNotNull();
+                session.allowPublicAccess();
             }
             assertThrows(SecurityException.class, () -> openSessionFromPkg(sessionId, HELPER_PKG));
             assertThrows(SecurityException.class, () -> openSessionFromPkg(sessionId, HELPER_PKG2));
@@ -207,6 +208,7 @@ public class BlobStoreManagerTest {
             try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
                 blobData.writeToSession(session, 0, blobData.getFileSize());
                 blobData.readFromSessionAndVerifyDigest(session);
+                session.allowPublicAccess();
             }
             assertThrows(SecurityException.class, () -> openSessionFromPkg(sessionId, HELPER_PKG));
             assertThrows(SecurityException.class, () -> openSessionFromPkg(sessionId, HELPER_PKG2));
@@ -503,19 +505,72 @@ public class BlobStoreManagerTest {
             assertThat(sessionId).isGreaterThan(0L);
 
             try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
+                blobData.writeToSession(session);
+
                 session.allowSameSignatureAccess();
-                session.allowPackageAccess("com.example", "test_bytes".getBytes());
+                session.allowPackageAccess(HELPER_PKG3, HELPER_PKG3_CERT_SHA256);
 
                 assertThat(session.isSameSignatureAccessAllowed()).isTrue();
-                assertThat(session.isPackageAccessAllowed("com.example", "test_bytes".getBytes()))
+                assertThat(session.isPackageAccessAllowed(HELPER_PKG3, HELPER_PKG3_CERT_SHA256))
                         .isTrue();
                 assertThat(session.isPublicAccessAllowed()).isFalse();
 
-                session.allowPublicAccess();
-                assertThat(session.isPublicAccessAllowed()).isTrue();
+                final CompletableFuture<Integer> callback = new CompletableFuture<>();
+                session.commit(mContext.getMainExecutor(), callback::complete);
+                assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
+                        .isEqualTo(0);
             }
+
+            assertPkgCanAccess(blobData, HELPER_PKG);
+            assertPkgCannotAccess(blobData, HELPER_PKG2);
+            assertPkgCanAccess(blobData, HELPER_PKG3);
         } finally {
             blobData.delete();
+        }
+    }
+
+    @Test
+    public void testMixedAccessType_fromMultiplePackages() throws Exception {
+        final DummyBlobData blobData = new DummyBlobData(mContext);
+        blobData.prepare();
+        final TestServiceConnection connection1 = bindToHelperService(HELPER_PKG);
+        final TestServiceConnection connection2 = bindToHelperService(HELPER_PKG2);
+        final TestServiceConnection connection3 = bindToHelperService(HELPER_PKG3);
+        try {
+            final long sessionId = createSession(blobData.getBlobHandle());
+            assertThat(sessionId).isGreaterThan(0L);
+
+            try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
+                blobData.writeToSession(session);
+
+                session.allowSameSignatureAccess();
+                session.allowPackageAccess(HELPER_PKG2, HELPER_PKG2_CERT_SHA256);
+
+                assertThat(session.isSameSignatureAccessAllowed()).isTrue();
+                assertThat(session.isPackageAccessAllowed(HELPER_PKG2, HELPER_PKG2_CERT_SHA256))
+                        .isTrue();
+                assertThat(session.isPublicAccessAllowed()).isFalse();
+
+                final CompletableFuture<Integer> callback = new CompletableFuture<>();
+                session.commit(mContext.getMainExecutor(), callback::complete);
+                assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
+                        .isEqualTo(0);
+            }
+
+            assertPkgCanAccess(blobData, connection1);
+            assertPkgCanAccess(blobData, connection2);
+            assertPkgCannotAccess(blobData, connection3);
+
+            commitBlobFromPkg(blobData, ICommandReceiver.FLAG_ACCESS_TYPE_PUBLIC, connection2);
+
+            assertPkgCanAccess(blobData, connection1);
+            assertPkgCanAccess(blobData, connection2);
+            assertPkgCanAccess(blobData, connection3);
+        } finally {
+            blobData.delete();
+            connection1.unbind();
+            connection2.unbind();
+            connection3.unbind();
         }
     }
 
@@ -813,10 +868,15 @@ public class BlobStoreManagerTest {
 
     private void commitBlobFromPkg(DummyBlobData blobData, TestServiceConnection serviceConnection)
             throws Exception {
+        commitBlobFromPkg(blobData, ICommandReceiver.FLAG_ACCESS_TYPE_PRIVATE, serviceConnection);
+    }
+
+    private void commitBlobFromPkg(DummyBlobData blobData, int accessTypeFlags,
+            TestServiceConnection serviceConnection) throws Exception {
         final ICommandReceiver commandReceiver = serviceConnection.getCommandReceiver();
         try (ParcelFileDescriptor pfd = blobData.openForRead()) {
             assertThat(commandReceiver.commit(blobData.getBlobHandle(),
-                    pfd, TIMEOUT_COMMIT_CALLBACK_SEC, blobData.getFileSize()))
+                    pfd, accessTypeFlags, TIMEOUT_COMMIT_CALLBACK_SEC, blobData.getFileSize()))
                             .isEqualTo(0);
         }
     }

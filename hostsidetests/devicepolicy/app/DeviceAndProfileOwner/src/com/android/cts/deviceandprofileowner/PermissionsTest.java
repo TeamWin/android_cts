@@ -18,6 +18,7 @@ package com.android.cts.deviceandprofileowner;
 import static android.Manifest.permission.READ_CONTACTS;
 import static android.Manifest.permission.WRITE_CONTACTS;
 
+import android.Manifest.permission;
 import android.app.AppOpsManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
@@ -36,8 +37,12 @@ import android.support.test.uiautomator.Until;
 import android.test.suitebuilder.annotation.Suppress;
 import android.util.Log;
 
+import com.google.android.collect.Sets;
+
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -75,6 +80,14 @@ public class PermissionsTest extends BaseDeviceAdminTest {
             .clazz(android.widget.TextView.class.getName())
             .pkg("android");
     private static final String CRASH_WATCHER_ID = "CRASH";
+
+    private static final Set<String> LOCATION_PERMISSIONS = Sets.newHashSet(
+            permission.ACCESS_FINE_LOCATION,
+            permission.ACCESS_BACKGROUND_LOCATION,
+            permission.ACCESS_COARSE_LOCATION);
+
+    public static final String AUTO_GRANTED_PERMISSIONS_CHANNEL_ID =
+            "alerting auto granted permissions";
 
     private PermissionBroadcastReceiver mReceiver;
     private PackageManager mPackageManager;
@@ -297,6 +310,23 @@ public class PermissionsTest extends BaseDeviceAdminTest {
                 DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED);
     }
 
+    public void testUserNotifiedOfLocationPermissionGrant() throws Exception {
+        for (String locationPermission : LOCATION_PERMISSIONS) {
+            CountDownLatch notificationLatch = initLocationPermissionNotificationLatch();
+
+            //TODO: Switch to using assertSetPermissionGrantState once we figrue out what to do
+            // regarding app-ops associated with permissions.
+            mDevicePolicyManager.setPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
+                    PERMISSION_APP_PACKAGE_NAME, locationPermission,
+                    DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED);
+
+            assertPermissionGrantState(locationPermission, PackageManager.PERMISSION_GRANTED);
+            assertTrue(String.format("Did not receive notification for permission %s",
+                    locationPermission), notificationLatch.await(60, TimeUnit.SECONDS));
+            NotificationListener.getInstance().clearListeners();
+        }
+    }
+
     private void assertPermissionRequest(int expected) throws Exception {
         assertPermissionRequest(READ_CONTACTS, expected);
     }
@@ -460,5 +490,17 @@ public class PermissionsTest extends BaseDeviceAdminTest {
             Log.d(TAG, "Grant state retrieved " + result.intValue());
             return result.intValue();
         }
+    }
+
+    private CountDownLatch initLocationPermissionNotificationLatch() {
+        CountDownLatch notificationCounterLatch = new CountDownLatch(1);
+        NotificationListener.getInstance().addListener((notification) -> {
+            if (notification.getPackageName().equals("com.google.android.permissioncontroller") &&
+                    notification.getNotification().getChannelId().equals(
+                            AUTO_GRANTED_PERMISSIONS_CHANNEL_ID)) {
+                notificationCounterLatch.countDown();
+            }
+        });
+        return notificationCounterLatch;
     }
 }

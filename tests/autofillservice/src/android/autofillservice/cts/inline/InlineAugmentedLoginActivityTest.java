@@ -31,6 +31,7 @@ import android.autofillservice.cts.augmented.AugmentedLoginActivity;
 import android.autofillservice.cts.augmented.CannedAugmentedFillResponse;
 import android.autofillservice.cts.augmented.CtsAugmentedAutofillService.AugmentedFillRequest;
 import android.os.Process;
+import android.view.View;
 import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillValue;
 import android.widget.EditText;
@@ -96,7 +97,7 @@ public class InlineAugmentedLoginActivityTest
                 .build());
 
         // Trigger auto-fill
-        mActivity.forceAutofillOnUsername();
+        mActivity.onUsername(View::requestFocus);
         mUiBot.waitForIdle();
         sReplier.getNextFillRequest();
         final AugmentedFillRequest request1 = sAugmentedReplier.getNextFillRequest();
@@ -144,7 +145,7 @@ public class InlineAugmentedLoginActivityTest
                 .build());
 
         // Trigger auto-fill
-        mActivity.forceAutofillOnUsername();
+        mActivity.onUsername(View::requestFocus);
         mUiBot.waitForIdle();
         sReplier.getNextFillRequest();
         final AugmentedFillRequest request1 = sAugmentedReplier.getNextFillRequest();

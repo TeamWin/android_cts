@@ -2099,7 +2099,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, testName, mUserId, params);
     }
 
-    private void installAppPermissionAppAsUser()
+    protected void installAppPermissionAppAsUser()
             throws FileNotFoundException, DeviceNotAvailableException {
         installAppAsUser(PERMISSIONS_APP_APK, false, mUserId);
     }
