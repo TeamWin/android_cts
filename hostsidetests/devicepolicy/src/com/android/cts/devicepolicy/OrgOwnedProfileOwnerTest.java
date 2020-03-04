@@ -444,6 +444,10 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testPersonalAppsSuspensionNormalApp() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
         installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
         // Initially the app should be launchable.
         assertCanStartPersonalApp(DEVICE_ADMIN_PKG, true);
