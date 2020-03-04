@@ -16,6 +16,7 @@ android_test {
     name: "CtsLibcoreOkHttpTestCases",
     defaults: ["cts_support_defaults"],
     platform_apis: true,
+    min_sdk_version: "29",
     static_libs: [
         "bouncycastle-unbundled",
         "cts-core-test-runner-axt",
