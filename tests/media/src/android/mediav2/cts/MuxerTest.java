@@ -30,7 +30,6 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
@@ -382,17 +381,21 @@ public class MuxerTest {
             new File(mOutPath).delete();
         }
 
-        @Parameterized.Parameters
+        @Parameterized.Parameters(name = "{index}({2})")
         public static Collection<Object[]> input() {
             return Arrays.asList(new Object[][]{
-                    {MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4, "bbb_cif_768kbps_30fps_avc.mp4"},
-                    {MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM, "bbb_cif_768kbps_30fps_vp9.mkv"},
-                    {MediaMuxer.OutputFormat.MUXER_OUTPUT_3GPP, "bbb_cif_768kbps_30fps_h263.mp4"},
-                    {MediaMuxer.OutputFormat.MUXER_OUTPUT_OGG, "bbb_stereo_48kHz_192kbps_opus.ogg"},
+                    {MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4, "bbb_cif_768kbps_30fps_avc.mp4",
+                            "mp4"},
+                    {MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM, "bbb_cif_768kbps_30fps_vp9.mkv",
+                            "webm"},
+                    {MediaMuxer.OutputFormat.MUXER_OUTPUT_3GPP, "bbb_cif_768kbps_30fps_h263.mp4",
+                            "3gpp"},
+                    {MediaMuxer.OutputFormat.MUXER_OUTPUT_OGG, "bbb_stereo_48kHz_192kbps_opus.ogg",
+                            "ogg"},
             });
         }
 
-        public TestApi(int outFormat, String srcFile) {
+        public TestApi(int outFormat, String srcFile, String testName) {
             mOutFormat = outFormat;
             mSrcFile = srcFile;
         }
@@ -662,36 +665,36 @@ public class MuxerTest {
             new File(mOutPath).delete();
         }
 
-        @Parameterized.Parameters
+        @Parameterized.Parameters(name = "{index}({3})")
         public static Collection<Object[]> input() {
             return Arrays.asList(new Object[][]{
                     // audio, video are 3 sec
                     {MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4, "bbb_cif_768kbps_30fps_mpeg4" +
-                            ".mkv", "bbb_stereo_48kHz_192kbps_aac.mp4"},
+                            ".mkv", "bbb_stereo_48kHz_192kbps_aac.mp4", "mp4"},
                     {MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM, "bbb_cif_768kbps_30fps_vp9.mkv"
-                            , "bbb_stereo_48kHz_192kbps_vorbis.ogg"},
+                            , "bbb_stereo_48kHz_192kbps_vorbis.ogg", "webm"},
                     {MediaMuxer.OutputFormat.MUXER_OUTPUT_3GPP, "bbb_cif_768kbps_30fps_h263.mp4"
-                            , "bbb_mono_16kHz_20kbps_amrwb.amr"},
+                            , "bbb_mono_16kHz_20kbps_amrwb.amr", "3gpp"},
 
                     // audio 3 sec, video 10 sec
                     {MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4, "bbb_qcif_512kbps_30fps_avc" +
-                            ".mp4", "bbb_stereo_48kHz_192kbps_aac.mp4"},
+                            ".mp4", "bbb_stereo_48kHz_192kbps_aac.mp4", "mp4"},
                     {MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM, "bbb_qcif_512kbps_30fps_vp9.webm"
-                            , "bbb_stereo_48kHz_192kbps_vorbis.ogg"},
+                            , "bbb_stereo_48kHz_192kbps_vorbis.ogg", "webm"},
                     {MediaMuxer.OutputFormat.MUXER_OUTPUT_3GPP, "bbb_qcif_512kbps_30fps_h263.3gp"
-                            , "bbb_mono_16kHz_20kbps_amrwb.amr"},
+                            , "bbb_mono_16kHz_20kbps_amrwb.amr", "3gpp"},
 
                     // audio 10 sec, video 3 sec
                     {MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4, "bbb_cif_768kbps_30fps_mpeg4" +
-                            ".mkv", "bbb_stereo_48kHz_128kbps_aac.mp4"},
+                            ".mkv", "bbb_stereo_48kHz_128kbps_aac.mp4", "mp4"},
                     {MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM, "bbb_cif_768kbps_30fps_vp9.mkv"
-                            , "bbb_stereo_48kHz_128kbps_vorbis.ogg"},
+                            , "bbb_stereo_48kHz_128kbps_vorbis.ogg", "webm"},
                     {MediaMuxer.OutputFormat.MUXER_OUTPUT_3GPP, "bbb_cif_768kbps_30fps_h263.mp4"
-                            , "bbb_mono_8kHz_8kbps_amrnb.3gp"},
+                            , "bbb_mono_8kHz_8kbps_amrnb.3gp", "3gpp"},
             });
         }
 
-        public TestMultiTrack(int outFormat, String srcFileA, String srcFileB) {
+        public TestMultiTrack(int outFormat, String srcFileA, String srcFileB, String testName) {
             mOutFormat = outFormat;
             mSrcFileA = srcFileA;
             mSrcFileB = srcFileB;
@@ -794,28 +797,28 @@ public class MuxerTest {
             new File(mOutPath).delete();
         }
 
-        @Parameterized.Parameters
+        @Parameterized.Parameters(name = "{index}({3})")
         public static Collection<Object[]> input() {
             return Arrays.asList(new Object[][]{
                     {MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4,
                             "bbb_cif_768kbps_30fps_hevc_stereo_48kHz_192kbps_aac.mp4",
-                            new int[]{0}},
+                            new int[]{0}, "mp4"},
                     {MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM,
                             "bbb_cif_768kbps_30fps_vp8_stereo_48kHz_192kbps_vorbis.webm",
-                            new int[]{0}},
+                            new int[]{0}, "webm"},
                     {MediaMuxer.OutputFormat.MUXER_OUTPUT_3GPP,
                             "bbb_cif_768kbps_30fps_mpeg4_mono_16kHz_20kbps_amrwb.3gp",
-                            new int[]{0}},
+                            new int[]{0}, "3gpp"},
                     {MediaMuxer.OutputFormat.MUXER_OUTPUT_OGG, "bbb_stereo_48kHz_192kbps_opus.ogg",
-                            new int[]{10}},
+                            new int[]{10}, "ogg"},
                     {MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4, "bbb_cif_768kbps_30fps_avc.mp4",
-                            new int[]{6, 50, 77}},
+                            new int[]{6, 50, 77}, "mp4"},
                     {MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM, "bbb_cif_768kbps_30fps_vp9.mkv",
-                            new int[]{8, 44}},
+                            new int[]{8, 44}, "webm"},
             });
         }
 
-        public TestOffsetPts(int outFormat, String file, int[] offsetIndices) {
+        public TestOffsetPts(int outFormat, String file, int[] offsetIndices, String testName) {
             mOutFormat = outFormat;
             mSrcFile = file;
             mOffsetIndices = offsetIndices;
@@ -937,7 +940,7 @@ public class MuxerTest {
         private native boolean nativeTestSimpleMux(String srcPath, String outPath, String mime,
                 String selector);
 
-        @Parameterized.Parameters
+        @Parameterized.Parameters(name = "{index}({0})")
         public static Collection<Object[]> input() {
             return Arrays.asList(new Object[][]{
                     // Video Codecs
