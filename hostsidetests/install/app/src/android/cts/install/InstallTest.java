@@ -22,6 +22,14 @@ import static com.android.cts.install.lib.InstallUtils.getPackageInstaller;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.pm.PackageInstaller;
+
+import androidx.test.platform.app.InstrumentationRegistry;
+
 import com.android.cts.install.lib.Install;
 import com.android.cts.install.lib.InstallUtils;
 import com.android.cts.install.lib.TestApp;
@@ -36,6 +44,9 @@ import org.junit.runners.Parameterized.Parameters;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 @RunWith(Parameterized.class)
 public final class InstallTest {
@@ -99,6 +110,7 @@ public final class InstallTest {
 
     @Test
     public void assert_preReboot_phase() throws Exception {
+        assertNoSessionCommitBroadcastSent();
         assertThat(mSessionRule.retrieveSessionInfo().isStagedSessionReady()).isTrue();
         mInstallRule.assertPackageVersion(mInstallType, VERSION_CODE_INVALID);
     }
@@ -107,6 +119,7 @@ public final class InstallTest {
     public void assert_postReboot_phase() throws Exception {
         assertThat(mSessionRule.retrieveSessionInfo().isStagedSessionApplied()).isTrue();
         mInstallRule.assertPackageVersion(mInstallType, VERSION_CODE_TARGET);
+        assertNoSessionCommitBroadcastSent();
     }
 
     @Test
@@ -132,5 +145,30 @@ public final class InstallTest {
             install.setEnableRollback();
         }
         return install;
+    }
+
+    private static void assertNoSessionCommitBroadcastSent() throws InterruptedException {
+        BlockingQueue<PackageInstaller.SessionInfo> committedSessions = new LinkedBlockingQueue<>();
+        BroadcastReceiver sessionCommittedReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                try {
+                    PackageInstaller.SessionInfo info =
+                            intent.getParcelableExtra(PackageInstaller.EXTRA_SESSION);
+                    committedSessions.put(info);
+                } catch (InterruptedException e) {
+                    throw new AssertionError(e);
+                }
+            }
+        };
+
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        context.registerReceiver(sessionCommittedReceiver,
+                new IntentFilter(PackageInstaller.ACTION_SESSION_COMMITTED));
+
+        PackageInstaller.SessionInfo info = committedSessions.poll(10, TimeUnit.SECONDS);
+        context.unregisterReceiver(sessionCommittedReceiver);
+
+        assertThat(info).isNull();
     }
 }
