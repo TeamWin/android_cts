@@ -144,25 +144,36 @@ public class VibratorTest {
         mVibrator.hasAmplitudeControl();
     }
 
+    /**
+     * For devices with vibrator we assert the IsVibrating state, for devices without vibrator just
+     * ensure it won't crash with IsVibrating call.
+     */
+    private void assertIsVibrating(boolean expected) {
+        final boolean isVibrating = mVibrator.isVibrating();
+        if (mVibrator.hasVibrator()) {
+            assertEquals(isVibrating, expected);
+        }
+    }
+
     @Test
     public void testVibratorIsVibrating() {
         final UiAutomation ui = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         ui.adoptShellPermissionIdentity("android.permission.ACCESS_VIBRATOR_STATE");
-        assertEquals(mVibrator.isVibrating(), false);
+        assertIsVibrating(false);
         mVibrator.vibrate(1000);
-        assertEquals(mVibrator.isVibrating(), true);
+        assertIsVibrating(true);
         mVibrator.cancel();
-        assertEquals(mVibrator.isVibrating(), false);
+        assertIsVibrating(false);
     }
 
     @Test
     public void testVibratorVibratesNoLongerThanDuration() {
         final UiAutomation ui = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         ui.adoptShellPermissionIdentity("android.permission.ACCESS_VIBRATOR_STATE");
-        assertEquals(mVibrator.isVibrating(), false);
+        assertIsVibrating(false);
         mVibrator.vibrate(100);
         SystemClock.sleep(150);
-        assertEquals(mVibrator.isVibrating(), false);
+        assertIsVibrating(false);
     }
 
     @Test
@@ -179,7 +190,7 @@ public class VibratorTest {
                 .times(1)).onVibratorStateChanged(false);
 
         mVibrator.vibrate(1000);
-        assertEquals(mVibrator.isVibrating(), true);
+        assertIsVibrating(true);
 
         verify(mListener1, timeout(CALLBACK_TIMEOUT_MILLIS)
                 .times(1)).onVibratorStateChanged(true);
@@ -193,7 +204,7 @@ public class VibratorTest {
         mVibrator.removeVibratorStateListener(mListener2);
 
         mVibrator.cancel();
-        assertEquals(mVibrator.isVibrating(), false);
+        assertIsVibrating(false);
     }
 
     private static void sleep(long millis) {
