@@ -41,6 +41,7 @@ import android.hardware.camera2.params.InputConfiguration;
 import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.multiprocess.camera.cts.ErrorLoggingService;
 import android.hardware.multiprocess.camera.cts.TestConstants;
+import android.media.Image;
 import android.media.ImageReader;
 import android.os.Bundle;
 import android.util.Log;
@@ -444,35 +445,38 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
         }
     }
 
-    // Find the last frame number received in results and failures.
-    private long findLastFrameNumber(SimpleCaptureCallback captureListener) {
-        long lastFrameNumber = -1;
-        while (captureListener.hasMoreResults()) {
-            TotalCaptureResult result = captureListener.getTotalCaptureResult(0 /*timeout*/);
-            if (lastFrameNumber < result.getFrameNumber()) {
-                lastFrameNumber = result.getFrameNumber();
+    private void verifyCaptureResults(SimpleCaptureCallback resultListener,
+            SimpleImageReaderListener imageListener, int sequenceId, boolean offlineResults)
+            throws Exception {
+        long sequenceLastFrameNumber = resultListener.getCaptureSequenceLastFrameNumber(
+                sequenceId, 0 /*timeoutMs*/);
+
+        long lastFrameNumberReceived = -1;
+        while (resultListener.hasMoreResults()) {
+            TotalCaptureResult result = resultListener.getTotalCaptureResult(0 /*timeout*/);
+            if (lastFrameNumberReceived < result.getFrameNumber()) {
+                lastFrameNumberReceived = result.getFrameNumber();
+            }
+
+            if (imageListener != null) {
+                long resultTimestamp = result.get(CaptureResult.SENSOR_TIMESTAMP);
+                Image offlineImage = imageListener.getImage(CAPTURE_IMAGE_TIMEOUT_MS);
+                assertEquals("Offline image timestamp: " + offlineImage.getTimestamp() +
+                        " doesn't match with the result timestamp: " + resultTimestamp,
+                        offlineImage.getTimestamp(), resultTimestamp);
             }
         }
 
-        while (captureListener.hasMoreFailures()) {
-            ArrayList<CaptureFailure> failures = captureListener.getCaptureFailures(
+        while (resultListener.hasMoreFailures()) {
+            ArrayList<CaptureFailure> failures = resultListener.getCaptureFailures(
                     /*maxNumFailures*/ 1);
             for (CaptureFailure failure : failures) {
-                if (lastFrameNumber < failure.getFrameNumber()) {
-                    lastFrameNumber = failure.getFrameNumber();
+                if (lastFrameNumberReceived < failure.getFrameNumber()) {
+                    lastFrameNumberReceived = failure.getFrameNumber();
                 }
             }
         }
 
-        return lastFrameNumber;
-    }
-
-    private void verifyCaptureResults(SimpleCaptureCallback resultListener, int sequenceId,
-            boolean offlineResults) {
-        long sequenceLastFrameNumber = resultListener.getCaptureSequenceLastFrameNumber(
-                sequenceId, 0 /*timeoutMs*/);
-
-        long lastFrameNumberReceived = findLastFrameNumber(resultListener);
         String assertString = offlineResults ?
                 "Last offline frame number from " +
                 "onCaptureSequenceCompleted (%d) doesn't match the last frame number " +
@@ -575,8 +579,10 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
             verify(mockOfflineCb, times(0)).onError(offlineSession,
                     CameraOfflineSessionCallback.STATUS_INTERNAL_ERROR);
 
-            verifyCaptureResults(resultListener, repeatingSeqId, false /*offlineResults*/);
-            verifyCaptureResults(offlineResultListener, offlineSeqId, true /*offlineResults*/);
+            verifyCaptureResults(resultListener, null /*imageListener*/, repeatingSeqId,
+                    false /*offlineResults*/);
+            verifyCaptureResults(offlineResultListener, null /*imageListener*/, offlineSeqId,
+                    true /*offlineResults*/);
         } else {
             verify(mockOfflineCb, times(1)).onReady(offlineSession);
             verify(mockOfflineCb, times(0)).onSwitchFailed(offlineSession);
@@ -638,8 +644,9 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
                 default:
             }
 
-            // The repeating non-offline request should be completed after the switch returns.
-            verifyCaptureResults(resultListener, repeatingSeqId, false /*offlineResults*/);
+            // The repeating non-offline request should be done after the switch returns.
+            verifyCaptureResults(resultListener, null /*imageListener*/, repeatingSeqId,
+                    false /*offlineResults*/);
 
             if (testSequence != OfflineTestSequence.CloseOfflineSession) {
                 offlineCb.waitForState(BlockingOfflineSessionCallback.STATE_IDLE,
@@ -648,8 +655,9 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
                 verify(mockOfflineCb, times(0)).onError(offlineSession,
                         CameraOfflineSessionCallback.STATUS_INTERNAL_ERROR);
 
-                // The offline requests should be completed after we reach idle state.
-                verifyCaptureResults(offlineResultListener, offlineSeqId, true /*offlineResults*/);
+                // The offline requests should be done after we reach idle state.
+                verifyCaptureResults(offlineResultListener, imageListener, offlineSeqId,
+                        true /*offlineResults*/);
 
                 offlineSession.close();
             }
