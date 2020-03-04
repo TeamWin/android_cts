@@ -246,7 +246,19 @@ public class CrossProfileTest extends BaseManagedProfileTest {
     private void explicitlySetInteractAcrossProfilesAppOp(String packageName, int mode)
             throws Exception {
         for (UserHandle profile : mUserManager.getUserProfiles()) {
-            explicitlySetInteractAcrossProfilesAppOp(packageName, mode, profile);
+            if (isPackageInstalledForUser(packageName, profile)) {
+                explicitlySetInteractAcrossProfilesAppOp(packageName, mode, profile);
+            }
+        }
+    }
+
+    private boolean isPackageInstalledForUser(String packageName, UserHandle user) {
+        try {
+            mContext.createContextAsUser(user, /* flags= */ 0).getPackageManager()
+                    .getPackageInfo(packageName, /* flags= */ 0);
+            return true;
+        } catch (PackageManager.NameNotFoundException e) {
+            return false;
         }
     }
 
