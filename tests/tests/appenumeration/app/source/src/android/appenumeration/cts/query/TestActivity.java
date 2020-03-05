@@ -19,6 +19,7 @@ package android.appenumeration.cts.query;
 import static android.content.Intent.EXTRA_RETURN_RESULT;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
@@ -39,40 +40,52 @@ public class TestActivity extends Activity {
 
     private void handleIntent(Intent intent) {
         RemoteCallback remoteCallback = intent.getParcelableExtra("remoteCallback");
-        final String action = intent.getAction();
-        final Intent queryIntent = intent.getParcelableExtra(Intent.EXTRA_INTENT);
-        if ("android.appenumeration.cts.action.GET_PACKAGE_INFO".equals(action)) {
-            final String packageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
-            sendPackageInfo(remoteCallback, packageName);
-        } else if ("android.appenumeration.cts.action.START_FOR_RESULT".equals(action)) {
-            final String packageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
-            int requestCode = RESULT_FIRST_USER + callbacks.size();
-            callbacks.put(requestCode, remoteCallback);
-            startActivityForResult(
-                    new Intent("android.appenumeration.cts.action.SEND_RESULT").setComponent(
-                            new ComponentName(packageName, getClass().getCanonicalName())),
-                    requestCode);
-            // don't send anything... await result callback
-        } else if ("android.appenumeration.cts.action.SEND_RESULT".equals(action)) {
-            try {
-                setResult(RESULT_OK,
-                        getIntent().putExtra(
-                                Intent.EXTRA_RETURN_RESULT,
-                                getPackageManager().getPackageInfo(getCallingPackage(), 0)));
-            } catch (PackageManager.NameNotFoundException e) {
-                setResult(RESULT_FIRST_USER, new Intent().putExtra("error", e));
+        try {
+            final String action = intent.getAction();
+            final Intent queryIntent = intent.getParcelableExtra(Intent.EXTRA_INTENT);
+            if ("android.appenumeration.cts.action.GET_PACKAGE_INFO".equals(action)) {
+                final String packageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
+                sendPackageInfo(remoteCallback, packageName);
+            } else if ("android.appenumeration.cts.action.START_FOR_RESULT".equals(action)) {
+                final String packageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
+                int requestCode = RESULT_FIRST_USER + callbacks.size();
+                callbacks.put(requestCode, remoteCallback);
+                startActivityForResult(
+                        new Intent("android.appenumeration.cts.action.SEND_RESULT").setComponent(
+                                new ComponentName(packageName, getClass().getCanonicalName())),
+                        requestCode);
+                // don't send anything... await result callback
+            } else if ("android.appenumeration.cts.action.SEND_RESULT".equals(action)) {
+                try {
+                    setResult(RESULT_OK,
+                            getIntent().putExtra(
+                                    Intent.EXTRA_RETURN_RESULT,
+                                    getPackageManager().getPackageInfo(getCallingPackage(), 0)));
+                } catch (PackageManager.NameNotFoundException e) {
+                    setResult(RESULT_FIRST_USER, new Intent().putExtra("error", e));
+                }
+                finish();
+            } else if ("android.appenumeration.cts.action.QUERY_INTENT_ACTIVITIES".equals(action)) {
+                sendQueryIntentActivities(remoteCallback, queryIntent);
+            } else if ("android.appenumeration.cts.action.QUERY_INTENT_SERVICES".equals(action)) {
+                sendQueryIntentServices(remoteCallback, queryIntent);
+            } else if ("android.appenumeration.cts.action.QUERY_INTENT_PROVIDERS".equals(action)) {
+                sendQueryIntentProviders(remoteCallback, queryIntent);
+            } else if ("android.appenumeration.cts.action.START_DIRECTLY".equals(action)) {
+                try {
+                    startActivity(queryIntent);
+                    remoteCallback.sendResult(new Bundle());
+                } catch (ActivityNotFoundException e) {
+                    sendError(remoteCallback, e);
+                }
+                finish();
+            } else if ("android.appenumeration.cts.action.GET_INSTALLED_PACKAGES".equals(action)) {
+                sendGetInstalledPackages(remoteCallback, queryIntent.getIntExtra("flags", 0));
+            } else {
+                sendError(remoteCallback, new Exception("unknown action " + action));
             }
-            finish();
-        } else if ("android.appenumeration.cts.action.QUERY_INTENT_ACTIVITIES".equals(action)) {
-            sendQueryIntentActivities(remoteCallback, queryIntent);
-        } else if ("android.appenumeration.cts.action.QUERY_INTENT_SERVICES".equals(action)) {
-            sendQueryIntentServices(remoteCallback, queryIntent);
-        } else if ("android.appenumeration.cts.action.QUERY_INTENT_PROVIDERS".equals(action)) {
-            sendQueryIntentProviders(remoteCallback, queryIntent);
-        } else if ("android.appenumeration.cts.action.GET_INSTALLED_PACKAGES".equals(action)) {
-            sendGetInstalledPackages(remoteCallback, queryIntent.getIntExtra("flags", 0));
-        } else {
-            sendError(remoteCallback, new Exception("unknown action " + action));
+        } catch (Exception e) {
+            sendError(remoteCallback, e);
         }
     }
 
