@@ -16,6 +16,11 @@
 
 package com.android.cts.appdataisolation.appb;
 
+import static com.android.cts.appdataisolation.common.FileUtils.assertDirDoesNotExist;
+import static com.android.cts.appdataisolation.common.FileUtils.assertDirIsAccessible;
+import static com.android.cts.appdataisolation.common.FileUtils.assertDirIsNotAccessible;
+import static com.android.cts.appdataisolation.common.FileUtils.assertFileIsAccessible;
+
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -23,20 +28,15 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.cts.appdataisolation.common.FileUtils;
-
 import org.junit.Before;
 import org.junit.Test;
+
+import java.io.IOException;
 
 @SmallTest
 public class AppBTests {
 
     private static final String APPA_PKG = "com.android.cts.appdataisolation.appa";
-
-    private static final String JAVA_FILE_PERMISSION_DENIED_MSG =
-            "open failed: EACCES (Permission denied)";
-    private static final String JAVA_FILE_NOT_FOUND_MSG =
-            "open failed: ENOENT (No such file or directory)";
 
     private Context mContext;
 
@@ -49,10 +49,21 @@ public class AppBTests {
     public void testCannotAccessAppADataDir() throws NameNotFoundException {
         ApplicationInfo applicationInfo = mContext.getPackageManager().getApplicationInfo(APPA_PKG,
                 0);
-        FileUtils.assertDirDoesNotExist(applicationInfo.dataDir);
-        FileUtils.assertDirDoesNotExist(applicationInfo.deviceProtectedDataDir);
-        FileUtils.assertDirDoesNotExist("/data/data/" + APPA_PKG);
-        FileUtils.assertDirDoesNotExist("/data/misc/profiles/cur/0/" + APPA_PKG);
-        FileUtils.assertDirIsNotAccessible("/data/misc/profiles/ref");
+        assertDirDoesNotExist(applicationInfo.dataDir);
+        assertDirDoesNotExist(applicationInfo.deviceProtectedDataDir);
+        assertDirDoesNotExist("/data/data/" + APPA_PKG);
+        assertDirDoesNotExist("/data/misc/profiles/cur/0/" + APPA_PKG);
+        assertDirIsNotAccessible("/data/misc/profiles/ref");
+    }
+
+    @Test
+    public void testCanAccessAppADataDir() throws NameNotFoundException, IOException {
+        ApplicationInfo applicationInfo = mContext.getPackageManager().getApplicationInfo(APPA_PKG,
+                0);
+        assertDirIsAccessible(applicationInfo.dataDir);
+        assertDirIsAccessible(applicationInfo.deviceProtectedDataDir);
+        assertDirIsAccessible("/data/data/" + APPA_PKG);
+        assertFileIsAccessible("/data/misc/profiles/cur/0/" + APPA_PKG + "/primary.prof");
+        assertDirIsNotAccessible("/data/misc/profiles/ref");
     }
 }
