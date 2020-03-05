@@ -23,13 +23,13 @@ import static android.server.wm.app.Components.NO_RELAUNCH_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.app.Components.TRANSLUCENT_ACTIVITY;
 import static android.server.wm.app.Components.TestActivity.COMMAND_NAVIGATE_UP_TO;
+import static android.server.wm.app.Components.TestActivity.COMMAND_START_ACTIVITIES;
 import static android.server.wm.app.Components.TestActivity.EXTRA_INTENT;
 import static android.server.wm.app.Components.TestActivity.EXTRA_INTENTS;
-import static android.server.wm.app.Components.TestActivity.COMMAND_START_ACTIVITIES;
 import static android.server.wm.app27.Components.SDK_27_LAUNCHING_ACTIVITY;
 import static android.server.wm.second.Components.SECOND_ACTIVITY;
-
 import static android.view.Display.DEFAULT_DISPLAY;
+
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertEquals;
@@ -41,6 +41,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.CommandSession.ActivitySession;
+import android.server.wm.app.Components;
 import android.server.wm.intent.Activities;
 
 import androidx.test.rule.ActivityTestRule;
@@ -126,6 +127,26 @@ public class StartActivityTests extends ActivityManagerTestBase {
 
         waitAndAssertActivityState(TRANSLUCENT_ACTIVITY, STATE_STOPPED,
                 "Activity should be stopped");
+        mWmState.assertResumedActivity("Test Activity should be remained on top and resumed",
+                TEST_ACTIVITY);
+    }
+
+    @Test
+    public void testStartActivityFromFinishingActivity() {
+        // launch TEST_ACTIVITY from LAUNCHING_ACTIVITY
+        getLaunchActivityBuilder()
+                .setTargetActivity(TEST_ACTIVITY)
+                .setFinishBeforeLaunch(true)
+                .execute();
+
+        // launch LAUNCHING_ACTIVITY again
+        getLaunchActivityBuilder()
+                .setTargetActivity(LAUNCHING_ACTIVITY)
+                .setUseInstrumentation()
+                .execute();
+
+        // make sure TEST_ACTIVITY is still on top and resumed
+        mWmState.computeState(TEST_ACTIVITY);
         mWmState.assertResumedActivity("Test Activity should be remained on top and resumed",
                 TEST_ACTIVITY);
     }
