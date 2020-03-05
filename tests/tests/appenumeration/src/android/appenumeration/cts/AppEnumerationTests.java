@@ -16,7 +16,11 @@
 
 package android.appenumeration.cts;
 
+import static android.content.pm.PackageManager.MATCH_SYSTEM_ONLY;
+
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
@@ -24,6 +28,7 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.ConditionVariable;
@@ -37,6 +42,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SystemUtil;
 
+import org.hamcrest.Matchers;
 import org.hamcrest.core.IsNull;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -145,6 +151,20 @@ public class AppEnumerationTests {
     public static void tearDown() {
         if (!sGlobalFeatureEnabled) return;
         sResponseThread.quit();
+    }
+
+    @Test
+    public void systemPackagesQueryable_notEnabled() throws Exception {
+        final Resources resources = Resources.getSystem();
+        assertFalse(
+                "config_forceSystemPackagesQueryable must not be true.",
+                resources.getBoolean(resources.getIdentifier(
+                        "config_forceSystemPackagesQueryable", "bool", "android")));
+
+        // now let's assert that that the actual set of system apps is limited
+        assertThat("Not all system apps should be visible.",
+                getInstalledPackages(QUERIES_NOTHING_PERM, MATCH_SYSTEM_ONLY).length,
+                greaterThan(getInstalledPackages(QUERIES_NOTHING, MATCH_SYSTEM_ONLY).length));
     }
 
     @Test
@@ -376,6 +396,12 @@ public class AppEnumerationTests {
             throws Exception {
         Bundle response = sendCommand(sourcePackageName, null, queryIntent, PKG_BASE +
                 "cts.action.QUERY_INTENT_PROVIDERS");
+        return response.getStringArray(Intent.EXTRA_RETURN_RESULT);
+    }
+
+    private String[] getInstalledPackages(String sourcePackageNames, int flags) throws Exception {
+        Bundle response = sendCommand(sourcePackageNames, null, new Intent().putExtra("flags", flags),
+                "android.appenumeration.cts.action.GET_INSTALLED_PACKAGES");
         return response.getStringArray(Intent.EXTRA_RETURN_RESULT);
     }
 
