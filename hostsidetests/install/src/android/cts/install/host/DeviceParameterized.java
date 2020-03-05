@@ -20,6 +20,7 @@ import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.testtype.ITestInformationReceiver;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
+import org.junit.runner.Description;
 import org.junit.runner.Runner;
 import org.junit.runners.Parameterized;
 import org.junit.runners.model.InitializationError;
@@ -94,6 +95,14 @@ public final class DeviceParameterized extends Parameterized implements ITestInf
         @Override
         public TestInformation getTestInformation() {
             return mTestInformation;
+        }
+
+        @Override
+        public Description getDescription() {
+            // Make sure it includes test class name when generating parameterized test suites.
+            Description desc = Description.createSuiteDescription(getTestClass().getJavaClass());
+            getChildren().forEach(method -> desc.addChild(describeChild(method)));
+            return desc;
         }
     }
 }

@@ -52,6 +52,8 @@ public class TestApp {
             "TestAppBv1.apk");
     public static final TestApp B2 = new TestApp("Bv2", B, 2, /*isApex*/false,
             "TestAppBv2.apk");
+    public static final TestApp B3 = new TestApp("Bv3", B, 3, /*isApex*/false,
+            "TestAppBv3.apk");
 
     public static final TestApp C1 = new TestApp("Cv1", C, 1, /*isApex*/false,
             "TestAppCv1.apk");
