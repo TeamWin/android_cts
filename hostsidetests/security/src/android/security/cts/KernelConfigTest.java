@@ -319,4 +319,20 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
                    + "and it must be empty or start with one of the following "
                    + "prefixes: " + whitelistedPathPrefixExample, pathIsWhitelisted);
     }
+
+    /**
+     * Test that the kernel enables fs-verity and its built-in signature support.
+     */
+    @CddTest(requirement="9.10")
+    public void testConfigFsVerity() throws Exception {
+        if (PropertyUtil.getFirstApiLevel(mDevice) < 30 &&
+                PropertyUtil.getPropertyInt(mDevice, "ro.apk_verity.mode") != 2) {
+            return;
+        }
+        assertTrue("Linux kernel must have fs-verity enabled: CONFIG_FS_VERITY=y",
+                configSet.contains("CONFIG_FS_VERITY=y"));
+        assertTrue("Linux kernel must have fs-verity's builtin signature enabled: "
+                + "CONFIG_FS_VERITY_BUILTIN_SIGNATURES=y",
+                configSet.contains("CONFIG_FS_VERITY_BUILTIN_SIGNATURES=y"));
+    }
 }
