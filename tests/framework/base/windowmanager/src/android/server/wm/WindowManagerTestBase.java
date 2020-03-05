@@ -98,10 +98,13 @@ public class WindowManagerTestBase extends MultiDisplayTestBase {
             }
         }
 
-        void waitAndAssertWindowFocusState(boolean hasFocus) throws InterruptedException {
+        void waitAndAssertWindowFocusState(boolean hasFocus) {
             synchronized (mLockWindowFocus) {
                 if (mHasWindowFocus != hasFocus) {
-                    mLockWindowFocus.wait(TIMEOUT_WINDOW_FOCUS_CHANGED);
+                    try {
+                        mLockWindowFocus.wait(TIMEOUT_WINDOW_FOCUS_CHANGED);
+                    } catch (InterruptedException e) {
+                    }
                 }
             }
             assertWindowFocusState(hasFocus);
