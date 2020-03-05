@@ -66,6 +66,12 @@ public class FileUtils {
         assertFileDoesNotExist(path, "FILE_DOES_NOT_EXIST");
     }
 
+    public static void assertFileIsAccessible(String path) throws IOException {
+        try (FileInputStream is = new FileInputStream(path)) {
+            is.read();
+        }
+    }
+
     public static void assertFileDoesNotExist(String path, String name) {
         // Make sure parent dir exists
         File directory = new File(path);
