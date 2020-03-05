@@ -33,6 +33,7 @@ import com.google.android.exoplayer2.util.MimeTypes;
 import com.google.android.exoplayer2.video.ColorInfo;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.util.ArrayList;
 
 public class MockMediaParserOutputConsumer implements MediaParser.OutputConsumer {
@@ -81,13 +82,19 @@ public class MockMediaParserOutputConsumer implements MediaParser.OutputConsumer
 
     @Override
     public void onSampleData(int trackIndex, MediaParser.InputReader inputReader)
-            throws IOException, InterruptedException {
-        mFakeExtractorOutput
-                .track(trackIndex, C.TRACK_TYPE_UNKNOWN)
-                .sampleData(
-                        new ExtractorInputAdapter(inputReader),
-                        (int) inputReader.getLength(),
-                        false);
+            throws IOException {
+        try {
+            mFakeExtractorOutput
+                    .track(trackIndex, C.TRACK_TYPE_UNKNOWN)
+                    .sampleData(
+                            new ExtractorInputAdapter(inputReader),
+                            (int) inputReader.getLength(),
+                            false);
+        } catch (InterruptedException e) {
+            // TODO: Remove this exception replacement once we update the ExoPlayer
+            // version.
+            throw new InterruptedIOException();
+        }
     }
 
     @Override
