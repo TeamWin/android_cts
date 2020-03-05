@@ -48,7 +48,7 @@ public class DeviceIdentifierTest extends DeviceTestCase implements IBuildReceiv
         assertNotNull(mBuildHelper);
         assertNull(
                 getDevice().installPackage(mBuildHelper.getTestFile(DEVICE_IDENTIFIER_APK), false,
-                        false));
+                        true));
     }
 
     @Override
