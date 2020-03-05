@@ -19,6 +19,9 @@ package com.android.cts.verifier.wifi.testcase;
 import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
 import static android.net.wifi.WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS;
 
+import static com.android.cts.verifier.wifi.TestUtils.SCAN_RESULT_TYPE_OPEN;
+import static com.android.cts.verifier.wifi.TestUtils.SCAN_RESULT_TYPE_PSK;
+
 import android.annotation.NonNull;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -37,9 +40,11 @@ import android.util.Pair;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.wifi.BaseTestCase;
 import com.android.cts.verifier.wifi.CallbackUtils;
+import com.android.cts.verifier.wifi.TestUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -68,13 +73,20 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
 
     private final boolean mSetBssid;
     private final boolean mSetRequiresAppInteraction;
+    private final boolean mSimulateConnectionFailure;
 
     public NetworkSuggestionTestCase(Context context, boolean setBssid,
-                                     boolean setRequiresAppInteraction) {
+            boolean setRequiresAppInteraction) {
+        this(context, setBssid, setRequiresAppInteraction, false);
+    }
+
+    public NetworkSuggestionTestCase(Context context, boolean setBssid,
+            boolean setRequiresAppInteraction, boolean simulateConnectionFailure) {
         super(context);
         mExecutorService = Executors.newSingleThreadScheduledExecutor();
         mSetBssid = setBssid;
         mSetRequiresAppInteraction = setRequiresAppInteraction;
+        mSimulateConnectionFailure = simulateConnectionFailure;
     }
 
     // Create a network specifier based on the test type.
@@ -87,6 +99,12 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
         if (mSetRequiresAppInteraction) {
             builder.setIsAppInteractionRequired(true);
         }
+        // Use a random password to simulate connection failure.
+        if (TestUtils.isScanResultForWpa2Network(scanResult)) {
+            builder.setWpa2Passphrase(mTestUtils.generateRandomPassphrase());
+        } else if (TestUtils.isScanResultForWpa3Network(scanResult)) {
+            builder.setWpa3Passphrase(mTestUtils.generateRandomPassphrase());
+        }
         return builder.build();
     }
 
@@ -96,50 +114,73 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
         }
     }
 
+    private static class ConnectionStatusListener implements
+            WifiManager.SuggestionConnectionStatusListener {
+        private final CountDownLatch mCountDownLatch;
+        public WifiNetworkSuggestion wifiNetworkSuggestion = null;
+        public int failureReason = -1;
+
+        ConnectionStatusListener(CountDownLatch countDownLatch) {
+            mCountDownLatch = countDownLatch;
+        }
+
+        @Override
+        public void onConnectionStatus(
+                WifiNetworkSuggestion wifiNetworkSuggestion, int failureReason) {
+            this.wifiNetworkSuggestion = wifiNetworkSuggestion;
+            this.failureReason = failureReason;
+            mCountDownLatch.countDown();
+        }
+    }
+
     @Override
     protected boolean executeTest() throws InterruptedException {
-        // Step 1: Scan and find any open network around.
-        if (DBG) Log.v(TAG, "Scan and find an open network");
-        ScanResult openNetwork = mTestUtils.startScanAndFindAnyOpenNetworkInResults();
-        if (openNetwork == null) {
+        // Step: Scan and find any open network around.
+        if (DBG) Log.v(TAG, "Scan and find a network");
+        ScanResult testNetwork = mTestUtils.startScanAndFindAnyMatchingNetworkInResults(
+                mSimulateConnectionFailure ? SCAN_RESULT_TYPE_PSK : SCAN_RESULT_TYPE_OPEN);
+        if (testNetwork == null) {
             setFailureReason(mContext.getString(R.string.wifi_status_scan_failure));
             return false;
         }
 
-        // Step 1.a (Optional): Register for the post connection broadcast.
+        // Step (Optional): Register for the post connection broadcast.
         final CountDownLatch countDownLatchForPostConnectionBcast = new CountDownLatch(1);
-        if (mSetRequiresAppInteraction) {
-            IntentFilter intentFilter =
-                    new IntentFilter(WifiManager.ACTION_WIFI_NETWORK_SUGGESTION_POST_CONNECTION);
-            // Post connection broadcast receiver.
-            mBroadcastReceiver = new BroadcastReceiver() {
-                @Override
-                public void onReceive(Context context, Intent intent) {
-                    if (DBG) Log.v(TAG, "Broadcast onReceive " + intent);
-                    if (!intent.getAction().equals(
-                            WifiManager.ACTION_WIFI_NETWORK_SUGGESTION_POST_CONNECTION)) {
-                        return;
-                    }
-                    if (DBG) Log.v(TAG, "Post connection broadcast received");
-                    countDownLatchForPostConnectionBcast.countDown();
+        IntentFilter intentFilter =
+                new IntentFilter(WifiManager.ACTION_WIFI_NETWORK_SUGGESTION_POST_CONNECTION);
+        // Post connection broadcast receiver.
+        mBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (DBG) Log.v(TAG, "Broadcast onReceive " + intent);
+                if (!intent.getAction().equals(
+                        WifiManager.ACTION_WIFI_NETWORK_SUGGESTION_POST_CONNECTION)) {
+                    return;
                 }
-            };
-            // Register the receiver for post connection broadcast.
-            mContext.registerReceiver(mBroadcastReceiver, intentFilter);
-        }
+                if (DBG) Log.v(TAG, "Post connection broadcast received");
+                countDownLatchForPostConnectionBcast.countDown();
+            }
+        };
+        // Register the receiver for post connection broadcast.
+        mContext.registerReceiver(mBroadcastReceiver, intentFilter);
+        final CountDownLatch countDownLatchForConnectionStatusListener = new CountDownLatch(1);
+        ConnectionStatusListener connectionStatusListener =
+                new ConnectionStatusListener(countDownLatchForConnectionStatusListener);
+        mWifiManager.addSuggestionConnectionStatusListener(
+                Executors.newSingleThreadExecutor(), connectionStatusListener);
 
-        // Step 1.b: Register network callback to wait for connection state.
+        // Step: Register network callback to wait for connection state.
         mNetworkRequest = new NetworkRequest.Builder()
                 .addTransportType(TRANSPORT_WIFI)
                 .build();
         mNetworkCallback = new CallbackUtils.NetworkCallback(CALLBACK_TIMEOUT_MS);
         mConnectivityManager.registerNetworkCallback(mNetworkRequest, mNetworkCallback);
 
-        // Step 2: Create a suggestion for the chosen open network depending on the type of test.
-        WifiNetworkSuggestion networkSuggestion = createNetworkSuggestion(openNetwork);
+        // Step: Create a suggestion for the chosen open network depending on the type of test.
+        WifiNetworkSuggestion networkSuggestion = createNetworkSuggestion(testNetwork);
         mNetworkSuggestions.add(networkSuggestion);
 
-        // Step 4: Add a network suggestions.
+        // Step: Add a network suggestions.
         if (DBG) Log.v(TAG, "Adding suggestion");
         mListener.onTestMsgReceived(mContext.getString(R.string.wifi_status_suggestion_add));
         if (mWifiManager.addNetworkSuggestions(mNetworkSuggestions)
@@ -147,8 +188,14 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
             setFailureReason(mContext.getString(R.string.wifi_status_suggestion_add_failure));
             return false;
         }
+        if (DBG) Log.v(TAG, "Getting suggestion");
+        List<WifiNetworkSuggestion> retrievedSuggestions = mWifiManager.getNetworkSuggestions();
+        if (!Objects.equals(mNetworkSuggestions, retrievedSuggestions)) {
+            setFailureReason(mContext.getString(R.string.wifi_status_suggestion_get_failure));
+            return false;
+        }
 
-        // Step 5: Trigger scans periodically to trigger network selection quicker.
+        // Step: Trigger scans periodically to trigger network selection quicker.
         if (DBG) Log.v(TAG, "Triggering scan periodically");
         mExecutorService.scheduleAtFixedRate(() -> {
             if (!mWifiManager.startScan()) {
@@ -156,33 +203,49 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
             }
         }, 0, PERIODIC_SCAN_INTERVAL_MS, TimeUnit.MILLISECONDS);
 
-        // Step 6: Wait for connection.
-        if (DBG) Log.v(TAG, "Waiting for connection");
-        mListener.onTestMsgReceived(mContext.getString(
-                R.string.wifi_status_suggestion_wait_for_connect));
-        Pair<Boolean, Network> cbStatusForAvailable = mNetworkCallback.waitForAvailable();
-        if (!cbStatusForAvailable.first) {
-            Log.e(TAG, "Failed to get network available callback");
-            setFailureReason(mContext.getString(R.string.wifi_status_network_cb_timeout));
-            return false;
+        // Step: Wait for connection/unavailable.
+        if (!mSimulateConnectionFailure) {
+            if (DBG) Log.v(TAG, "Waiting for connection");
+            mListener.onTestMsgReceived(mContext.getString(
+                    R.string.wifi_status_suggestion_wait_for_connect));
+            Pair<Boolean, Network> cbStatusForAvailable = mNetworkCallback.waitForAvailable();
+            if (!cbStatusForAvailable.first) {
+                Log.e(TAG, "Failed to get network available callback");
+                setFailureReason(mContext.getString(R.string.wifi_status_network_cb_timeout));
+                return false;
+            }
+            mListener.onTestMsgReceived(
+                    mContext.getString(R.string.wifi_status_suggestion_connect));
+        } else {
+            if (DBG) Log.v(TAG, "Ensure no connection");
+            mListener.onTestMsgReceived(mContext.getString(
+                    R.string.wifi_status_suggestion_ensure_no_connect));
+            Pair<Boolean, Network> cbStatusForAvailable = mNetworkCallback.waitForAvailable();
+            if (cbStatusForAvailable.first) {
+                Log.e(TAG, "Unexpectedly got network available callback");
+                setFailureReason(mContext.getString(R.string.wifi_status_network_available_error));
+                return false;
+            }
+            mListener.onTestMsgReceived(
+                    mContext.getString(R.string.wifi_status_suggestion_not_connected));
         }
-        mListener.onTestMsgReceived(
-                mContext.getString(R.string.wifi_status_suggestion_connect));
 
-        // Step 7: Ensure that we connected to the suggested network (optionally, the correct
-        // BSSID).
-        if (!mTestUtils.isConnected("\"" + openNetwork.SSID + "\"",
-                // TODO: This might fail if there are other BSSID's for the same network & the
-                //  device decided to connect/roam to a different BSSID. We don't turn off roaming
-                //  for suggestions.
-                mSetBssid ? openNetwork.BSSID : null)) {
-            Log.e(TAG, "Failed to connected to a wrong network");
-            setFailureReason(mContext.getString(R.string.wifi_status_connected_to_other_network));
-            return false;
+        // Step: Ensure that we connected to the suggested network (optionally, the correct BSSID).
+        if (!mSimulateConnectionFailure) {
+            if (!mTestUtils.isConnected("\"" + testNetwork.SSID + "\"",
+                    // TODO: This might fail if there are other BSSID's for the same network & the
+                    //  device decided to connect/roam to a different BSSID. We don't turn off
+                    //  roaming for suggestions.
+                    mSetBssid ? testNetwork.BSSID : null)) {
+                Log.e(TAG, "Failed to connected to the network");
+                setFailureReason(
+                        mContext.getString(R.string.wifi_status_connected_to_other_network));
+                return false;
+            }
         }
 
+        // Step (Optional): Ensure we received the post connect broadcast.
         if (mSetRequiresAppInteraction) {
-            // Step 7 (Optional): Ensure we received the post connect broadcast.
             if (DBG) Log.v(TAG, "Wait for post connection broadcast");
             mListener.onTestMsgReceived(
                     mContext.getString(
@@ -197,8 +260,35 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
             mListener.onTestMsgReceived(
                     mContext.getString(R.string.wifi_status_suggestion_post_connect_bcast));
         }
+        // Step (Optional): Ensure we received the connection status listener.
+        if (mSimulateConnectionFailure) {
+            if (DBG) Log.v(TAG, "Wait for connection status listener");
+            mListener.onTestMsgReceived(
+                    mContext.getString(
+                            R.string.wifi_status_suggestion_wait_for_connection_status));
+            if (!countDownLatchForConnectionStatusListener.await(
+                    CALLBACK_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                Log.e(TAG, "Failed to receive connection status");
+                setFailureReason(mContext.getString(
+                        R.string.wifi_status_suggestion_connection_status_failure));
+                return false;
+            }
+            if (DBG) Log.v(TAG, "Received connection status");
+            if (!Objects.equals(connectionStatusListener.wifiNetworkSuggestion, networkSuggestion)
+                    || connectionStatusListener.failureReason
+                    != WifiManager.STATUS_SUGGESTION_CONNECTION_FAILURE_AUTHENTICATION) {
+                Log.e(TAG, "Received wrong connection status for "
+                        + connectionStatusListener.wifiNetworkSuggestion
+                        + " with reason: " + connectionStatusListener.failureReason);
+                setFailureReason(mContext.getString(
+                        R.string.wifi_status_suggestion_connection_status_failure));
+                return false;
+            }
+            mListener.onTestMsgReceived(
+                    mContext.getString(R.string.wifi_status_suggestion_connection_status));
+        }
 
-        // Step 8: Remove the suggestions from the app.
+        // Step: Remove the suggestions from the app.
         if (DBG) Log.v(TAG, "Removing suggestion");
         mListener.onTestMsgReceived(mContext.getString(R.string.wifi_status_suggestion_remove));
         if (mWifiManager.removeNetworkSuggestions(mNetworkSuggestions)
@@ -207,15 +297,19 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
             return false;
         }
 
-        // Step 9: Ensure we don't disconnect immediately on suggestion removal.
-        mListener.onTestMsgReceived(
-                mContext.getString(R.string.wifi_status_suggestion_wait_for_disconnect));
-        if (DBG) Log.v(TAG, "Ensuring we don't disconnect immediately");
-        boolean cbStatusForLost = mNetworkCallback.waitForLost();
-        if (cbStatusForLost) {
-            Log.e(TAG, "Disconnected from the network immediately");
-            setFailureReason(mContext.getString(R.string.wifi_status_suggestion_disconnected));
-            return false;
+        // Step: Ensure we disconnect immediately on suggestion removal.
+        if (!mSimulateConnectionFailure) {
+            mListener.onTestMsgReceived(
+                    mContext.getString(R.string.wifi_status_suggestion_wait_for_disconnect));
+            if (DBG) Log.v(TAG, "Ensuring we disconnect immediately");
+            boolean cbStatusForLost = mNetworkCallback.waitForLost();
+            if (!cbStatusForLost) {
+                setFailureReason(
+                        mContext.getString(R.string.wifi_status_suggestion_not_disconnected));
+                return false;
+            }
+            mListener.onTestMsgReceived(
+                    mContext.getString(R.string.wifi_status_suggestion_disconnected));
         }
 
         // All done!
