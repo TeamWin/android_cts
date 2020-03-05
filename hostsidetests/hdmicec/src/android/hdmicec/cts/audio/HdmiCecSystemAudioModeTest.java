@@ -181,6 +181,21 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
     }
 
     /**
+     * Test 11.2.15-5
+     * Tests that the device sends a <Set System Audio Mode> ["Off"]
+     * message when a <System Audio Mode Request> is received with no operands
+     */
+    @Test
+    public void cect_11_2_15_5_SetSystemAudioModeOff() throws Exception {
+        sendSystemAudioModeInitiation();
+        String message = hdmiCecClient.checkExpectedOutput(CecMessage.SET_SYSTEM_AUDIO_MODE);
+        assertThat(hdmiCecClient.getParamsFromMessage(message)).isEqualTo(ON);
+        sendSystemAudioModeTermination();
+        message = hdmiCecClient.checkExpectedOutput(CecMessage.SET_SYSTEM_AUDIO_MODE);
+        assertThat(hdmiCecClient.getParamsFromMessage(message)).isEqualTo(OFF);
+    }
+
+    /**
      * Test 11.2.15-7
      * Tests that the device responds correctly to a <Give System Audio Mode Status>
      * message when the System Audio Mode is "Off".
