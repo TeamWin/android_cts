@@ -16,32 +16,46 @@
 
 package com.android.cts.appdataisolation.appa;
 
+import static com.android.cts.appdataisolation.common.FileUtils.assertDirDoesNotExist;
+import static com.android.cts.appdataisolation.common.FileUtils.assertDirIsAccessible;
+import static com.android.cts.appdataisolation.common.FileUtils.assertDirIsNotAccessible;
+import static com.android.cts.appdataisolation.common.FileUtils.assertFileDoesNotExist;
+import static com.android.cts.appdataisolation.common.FileUtils.assertFileExists;
+import static com.android.cts.appdataisolation.common.FileUtils.touchFile;
+
+import static org.junit.Assert.assertTrue;
+
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.pm.ApplicationInfo;
+import android.os.RemoteException;
+import android.support.test.uiautomator.UiDevice;
+import android.view.KeyEvent;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.cts.appdataisolation.common.FileUtils;
-
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 /*
  * This class is a helper class for AppDataIsolationTests to assert and check data stored in app.
  */
 @SmallTest
 public class AppATests {
 
+    private static final String APPB_PKG = "com.android.cts.appdataisolation.appb";
+
     private final static String CE_DATA_FILE_NAME = "ce_data_file";
     private final static String DE_DATA_FILE_NAME = "de_data_file";
 
-    private static final String JAVA_FILE_PERMISSION_DENIED_MSG =
-            "open failed: EACCES (Permission denied)";
-    private static final String JAVA_FILE_NOT_FOUND_MSG =
-            "open failed: ENOENT (No such file or directory)";
-
     private Context mContext;
+    private UiDevice mDevice;
     private String mCePath;
     private String mDePath;
 
@@ -50,51 +64,114 @@ public class AppATests {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mCePath = mContext.getApplicationInfo().dataDir;
         mDePath = mContext.getApplicationInfo().deviceProtectedDataDir;
+        mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
     }
 
     @Test
-    public void testCreateCeDeAppData() throws IOException {
-        FileUtils.assertFileDoesNotExist(mCePath, CE_DATA_FILE_NAME);
-        FileUtils.assertFileDoesNotExist(mCePath, DE_DATA_FILE_NAME);
-        FileUtils.assertFileDoesNotExist(mDePath, CE_DATA_FILE_NAME);
-        FileUtils.assertFileDoesNotExist(mDePath, DE_DATA_FILE_NAME);
+    public void testCreateCeDeAppData() throws Exception {
+        assertFileDoesNotExist(mCePath, CE_DATA_FILE_NAME);
+        assertFileDoesNotExist(mCePath, DE_DATA_FILE_NAME);
+        assertFileDoesNotExist(mDePath, CE_DATA_FILE_NAME);
+        assertFileDoesNotExist(mDePath, DE_DATA_FILE_NAME);
 
-        FileUtils.touchFile(mCePath, CE_DATA_FILE_NAME);
-        FileUtils.touchFile(mDePath, DE_DATA_FILE_NAME);
+        touchFile(mCePath, CE_DATA_FILE_NAME);
+        touchFile(mDePath, DE_DATA_FILE_NAME);
 
-        FileUtils.assertFileExists(mCePath, CE_DATA_FILE_NAME);
-        FileUtils.assertFileDoesNotExist(mCePath, DE_DATA_FILE_NAME);
-        FileUtils.assertFileDoesNotExist(mDePath, CE_DATA_FILE_NAME);
-        FileUtils.assertFileExists(mDePath, DE_DATA_FILE_NAME);
+        assertFileExists(mCePath, CE_DATA_FILE_NAME);
+        assertFileDoesNotExist(mCePath, DE_DATA_FILE_NAME);
+        assertFileDoesNotExist(mDePath, CE_DATA_FILE_NAME);
+        assertFileExists(mDePath, DE_DATA_FILE_NAME);
     }
 
     @Test
     public void testAppACeDataExists() {
-        FileUtils.assertFileExists(mCePath, CE_DATA_FILE_NAME);
+        assertFileExists(mCePath, CE_DATA_FILE_NAME);
     }
 
     @Test
     public void testAppACeDataDoesNotExist() {
-        FileUtils.assertFileDoesNotExist(mCePath, CE_DATA_FILE_NAME);
+        assertFileDoesNotExist(mCePath, CE_DATA_FILE_NAME);
     }
 
     @Test
     public void testAppADeDataExists() {
-        FileUtils.assertFileExists(mDePath, DE_DATA_FILE_NAME);
+        assertFileExists(mDePath, DE_DATA_FILE_NAME);
     }
 
     @Test
     public void testAppADeDataDoesNotExist() {
-        FileUtils.assertFileDoesNotExist(mDePath, DE_DATA_FILE_NAME);
+        assertFileDoesNotExist(mDePath, DE_DATA_FILE_NAME);
     }
 
     @Test
     public void testAppACurProfileDataAccessible() {
-        FileUtils.assertDirIsAccessible("/data/misc/profiles/cur/0/" + mContext.getPackageName());
+        assertDirIsAccessible("/data/misc/profiles/cur/0/" + mContext.getPackageName());
     }
 
     @Test
     public void testAppARefProfileDataNotAccessible() {
-        FileUtils.assertDirIsNotAccessible("/data/misc/profiles/ref");
+        assertDirIsNotAccessible("/data/misc/profiles/ref");
+    }
+
+    @Test
+    public void testCannotAccessAppBDataDir() throws Exception {
+        ApplicationInfo applicationInfo = mContext.getPackageManager().getApplicationInfo(APPB_PKG,
+                0);
+        assertDirDoesNotExist(applicationInfo.dataDir);
+        assertDirDoesNotExist(applicationInfo.deviceProtectedDataDir);
+        assertDirDoesNotExist("/data/data/" + APPB_PKG);
+        assertDirDoesNotExist("/data/misc/profiles/cur/0/" + APPB_PKG);
+        assertDirIsNotAccessible("/data/misc/profiles/ref");
+    }
+
+    @Test
+    public void testUnlockDevice() throws Exception {
+        mDevice.wakeUp();
+        mDevice.waitForIdle();
+        mDevice.pressMenu();
+        mDevice.waitForIdle();
+        mDevice.pressKeyCode(KeyEvent.KEYCODE_1);
+        mDevice.pressKeyCode(KeyEvent.KEYCODE_2);
+        mDevice.pressKeyCode(KeyEvent.KEYCODE_3);
+        mDevice.pressKeyCode(KeyEvent.KEYCODE_4);
+        mDevice.pressKeyCode(KeyEvent.KEYCODE_5);
+        mDevice.waitForIdle();
+        mDevice.pressEnter();
+        mDevice.waitForIdle();
+        mDevice.pressHome();
+        mDevice.waitForIdle();
+    }
+
+    @Test
+    public void testAppAUnlockDeviceAndVerifyCeDeDataExist() throws Exception {
+
+        final CountDownLatch unlocked = new CountDownLatch(1);
+        final CountDownLatch bootCompleted = new CountDownLatch(1);
+        final BroadcastReceiver receiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                switch(intent.getAction()) {
+                    case Intent.ACTION_USER_UNLOCKED:
+                        unlocked.countDown();
+                        break;
+                    case Intent.ACTION_BOOT_COMPLETED:
+                        bootCompleted.countDown();
+                        break;
+                }
+            }
+        };
+        mContext.registerReceiver(receiver, new IntentFilter(Intent.ACTION_USER_UNLOCKED));
+        mContext.registerReceiver(receiver, new IntentFilter(Intent.ACTION_BOOT_COMPLETED));
+
+        testUnlockDevice();
+
+        assertTrue("User not unlocked", unlocked.await(1, TimeUnit.MINUTES));
+        assertTrue("No locked boot complete", bootCompleted.await(1, TimeUnit.MINUTES));
+
+        // The test app process should be still running, make sure CE DE now is available
+        testAppACeDataExists();
+        testAppADeDataExists();
+        testAppACurProfileDataAccessible();
+        testAppARefProfileDataNotAccessible();
     }
 }
