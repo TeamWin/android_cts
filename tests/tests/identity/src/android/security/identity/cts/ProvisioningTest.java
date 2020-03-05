@@ -135,22 +135,22 @@ public class ProvisioningTest {
         PersonalizationData personalizationData =
                 new PersonalizationData.Builder()
                         .addAccessControlProfile(noAuthProfile)
-                        .setEntry(mdlNs, "First name", idsNoAuth, Util.cborEncodeString("Alan"))
-                        .setEntry(mdlNs, "Last name", idsNoAuth, Util.cborEncodeString("Turing"))
-                        .setEntry(mdlNs, "Home address", idsNoAuth,
+                        .putEntry(mdlNs, "First name", idsNoAuth, Util.cborEncodeString("Alan"))
+                        .putEntry(mdlNs, "Last name", idsNoAuth, Util.cborEncodeString("Turing"))
+                        .putEntry(mdlNs, "Home address", idsNoAuth,
                                 Util.cborEncodeString("Maida Vale, London, England"))
-                        .setEntry(mdlNs, "Birth date", idsNoAuth, Util.cborEncodeString("19120623"))
-                        .setEntry(mdlNs, "Cryptanalyst", idsNoAuth, Util.cborEncodeBoolean(true))
-                        .setEntry(mdlNs, "Portrait image", idsNoAuth, Util.cborEncodeBytestring(
+                        .putEntry(mdlNs, "Birth date", idsNoAuth, Util.cborEncodeString("19120623"))
+                        .putEntry(mdlNs, "Cryptanalyst", idsNoAuth, Util.cborEncodeBoolean(true))
+                        .putEntry(mdlNs, "Portrait image", idsNoAuth, Util.cborEncodeBytestring(
                             new byte[]{0x01, 0x02}))
-                        .setEntry(mdlNs, "Height", idsNoAuth, Util.cborEncodeInt(180))
-                        .setEntry(mdlNs, "Neg Item", idsNoAuth, Util.cborEncodeInt(-42))
-                        .setEntry(mdlNs, "Int Two Bytes", idsNoAuth, Util.cborEncodeInt(0x101))
-                        .setEntry(mdlNs, "Int Four Bytes", idsNoAuth, Util.cborEncodeInt(0x10001))
-                        .setEntry(mdlNs, "Int Eight Bytes", idsNoAuth,
+                        .putEntry(mdlNs, "Height", idsNoAuth, Util.cborEncodeInt(180))
+                        .putEntry(mdlNs, "Neg Item", idsNoAuth, Util.cborEncodeInt(-42))
+                        .putEntry(mdlNs, "Int Two Bytes", idsNoAuth, Util.cborEncodeInt(0x101))
+                        .putEntry(mdlNs, "Int Four Bytes", idsNoAuth, Util.cborEncodeInt(0x10001))
+                        .putEntry(mdlNs, "Int Eight Bytes", idsNoAuth,
                                 Util.cborEncodeInt(0x100000001L))
-                        .setEntry(mdlNs, "driving_privileges", idsNoAuth, drivingPrivileges)
-                        .setEntry(mdlNs, "No Access", idsNoAcp,
+                        .putEntry(mdlNs, "driving_privileges", idsNoAuth, drivingPrivileges)
+                        .putEntry(mdlNs, "No Access", idsNoAcp,
                                 Util.cborEncodeString("Cannot be retrieved"))
                         .build();
 
@@ -291,13 +291,13 @@ public class ProvisioningTest {
         PersonalizationData personalizationData =
                 new PersonalizationData.Builder()
                         .addAccessControlProfile(noAuthProfile)
-                        .setEntry("org.example.barfoo", "Bar", idsNoAuth,
+                        .putEntry("org.example.barfoo", "Bar", idsNoAuth,
                                 Util.cborEncodeString("Foo"))
-                        .setEntry("org.example.barfoo", "Foo", idsNoAuth,
+                        .putEntry("org.example.barfoo", "Foo", idsNoAuth,
                                 Util.cborEncodeString("Bar"))
-                        .setEntry("org.example.foobar", "Foo", idsNoAuth,
+                        .putEntry("org.example.foobar", "Foo", idsNoAuth,
                                 Util.cborEncodeString("Bar"))
-                        .setEntry("org.example.foobar", "Bar", idsNoAuth,
+                        .putEntry("org.example.foobar", "Bar", idsNoAuth,
                                 Util.cborEncodeString("Foo"))
                         .build();
 
@@ -480,7 +480,7 @@ public class ProvisioningTest {
                 null,
                 null);
 
-        Collection<String> resultNamespaces = rd.getNamespaceNames();
+        Collection<String> resultNamespaces = rd.getNamespaces();
         assertEquals(resultNamespaces.size(), 1);
         assertEquals("org.iso.18013-5.2019", resultNamespaces.iterator().next());
         assertEquals(12, rd.getEntryNames("org.iso.18013-5.2019").size());
@@ -628,7 +628,7 @@ public class ProvisioningTest {
                 null,
                 null);
 
-        Collection<String> resultNamespaces = rd.getNamespaceNames();
+        Collection<String> resultNamespaces = rd.getNamespaces();
         assertEquals(resultNamespaces.size(), 1);
         assertEquals("org.iso.18013-5.2019", resultNamespaces.iterator().next());
         assertEquals(6, rd.getEntryNames("org.iso.18013-5.2019").size());
@@ -667,7 +667,7 @@ public class ProvisioningTest {
                 null,
                 null);
 
-        Collection<String> resultNamespaces = rd.getNamespaceNames();
+        Collection<String> resultNamespaces = rd.getNamespaces();
         assertEquals(resultNamespaces.size(), 1);
         assertEquals("org.iso.18013-5.2019", resultNamespaces.iterator().next());
         assertEquals(1, rd.getEntryNames("org.iso.18013-5.2019").size());
@@ -724,7 +724,7 @@ public class ProvisioningTest {
                 null,
                 null);
 
-        Collection<String> resultNamespaces = rd.getNamespaceNames();
+        Collection<String> resultNamespaces = rd.getNamespaces();
         assertEquals(resultNamespaces.size(), 1);
         assertEquals("org.iso.18013-5.2019", resultNamespaces.iterator().next());
         assertEquals(7, rd.getEntryNames("org.iso.18013-5.2019").size());
@@ -769,7 +769,7 @@ public class ProvisioningTest {
                 null,
                 null);
 
-        Collection<String> resultNamespaces = rd.getNamespaceNames();
+        Collection<String> resultNamespaces = rd.getNamespaces();
         assertEquals(resultNamespaces.size(), 1);
         assertEquals("org.iso.18013-5.2019", resultNamespaces.iterator().next());
         assertEquals(3, rd.getEntryNames("org.iso.18013-5.2019").size());
@@ -821,7 +821,7 @@ public class ProvisioningTest {
         // that do not exist in the credential.
         //
         // Additionally, each namespace should have exactly the items requested, in the same order.
-        Collection<String> resultNamespaces = rd.getNamespaceNames();
+        Collection<String> resultNamespaces = rd.getNamespaces();
         assertEquals(resultNamespaces.size(), 3);
 
 
