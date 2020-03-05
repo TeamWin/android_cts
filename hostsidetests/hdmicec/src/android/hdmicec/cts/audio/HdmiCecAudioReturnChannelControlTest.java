@@ -65,6 +65,26 @@ public final class HdmiCecAudioReturnChannelControlTest extends BaseHostJUnit4Te
     }
 
     /**
+     * Test 11.2.17-2
+     * Tests that the device sends a directly addressed <Terminate ARC> message
+     * when it wants to terminate ARC.
+     */
+    @Test
+    public void cect_11_2_17_2_TerminateArc() throws Exception {
+        checkArcIsInitiated();
+        hdmiCecClient.sendCecMessage(CecDevice.TV, CecDevice.BROADCAST,
+                CecMessage.REPORT_PHYSICAL_ADDRESS,
+                hdmiCecClient.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS,
+                        HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH));
+        getDevice().executeShellCommand("input keyevent KEYCODE_SLEEP");
+        try {
+            hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecMessage.TERMINATE_ARC);
+        } finally {
+            getDevice().executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        }
+    }
+
+    /**
      * Test 11.2.17-3
      * Tests that the device sends a directly addressed <Initiate ARC>
      * message when it is requested to initiate ARC.
