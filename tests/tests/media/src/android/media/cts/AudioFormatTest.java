@@ -21,6 +21,7 @@ import android.os.Parcel;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
 
+@NonMediaMainlineTest
 public class AudioFormatTest extends CtsAndroidTestCase {
 
     // -----------------------------------------------------------------

@@ -29,6 +29,7 @@ android_test_helper_app {
         "cts",
         "vts",
         "general-tests",
+        "sts",
     ],
     // sign this app with a different cert than CtsPermissionDeclareApp
     certificate: ":cts-testkey2",

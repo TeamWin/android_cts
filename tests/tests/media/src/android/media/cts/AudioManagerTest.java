@@ -60,8 +60,6 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.SoundEffectConstants;
 
-import androidx.test.filters.FlakyTest;
-
 import com.android.compatibility.common.util.CddTest;
 import com.android.internal.annotations.GuardedBy;
 
@@ -69,6 +67,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@NonMediaMainlineTest
 public class AudioManagerTest extends InstrumentationTestCase {
     private final static String TAG = "AudioManagerTest";
 
@@ -1365,13 +1364,6 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
-    // See b/142395610 - This test isn't flaky but when run in test-mapping it
-    // fails on AOSP branches. There is some kind of state that CtsAppTestCases
-    // leaves the system in that causes this test to fail consistently.
-    // CtsMediaTestCases by itself in test-mapping passes.
-    // Disabling via Flaky to prevent this running and breaking
-    // greenness tracking for Droidcop until we can root-cause the dependency.
-    @FlakyTest
     public void testPriorityOnlyChannelsCanBypassDnd() throws Exception {
         final String NOTIFICATION_CHANNEL_ID = "test_id";
         if (mSkipRingerTests || !mSupportNotificationPolicyAccess) {

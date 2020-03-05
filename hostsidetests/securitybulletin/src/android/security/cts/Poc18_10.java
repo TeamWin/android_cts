@@ -42,7 +42,7 @@ public class Poc18_10 extends SecurityTestCase {
      */
     @SecurityTest
     public void testPocCVE_2018_9490() throws Exception {
-        int code = AdbUtils.runPocGetExitStatus("/data/local/tmp/CVE-2018-9490", getDevice(), 60);
+        int code = AdbUtils.runProxyAutoConfig("CVE-2018-9490", getDevice());
         assertTrue(code != 139); // 128 + signal 11
     }
 }

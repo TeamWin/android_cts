@@ -1592,6 +1592,14 @@ void AHardwareBufferGLTest::SetUpFramebuffer(int width, int height, int layer,
         GL_RGBA8, GL_DEPTH_COMPONENT16, GL_STENCIL_INDEX8, GL_DEPTH24_STENCIL8
     };
     GLuint& fbo = mFramebuffers[mWhich];
+    GLbitfield clear_bits[] = {
+        GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_STENCIL_BUFFER_BIT,
+        GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT
+    };
+
+    glClearColor(0.f, 0.f, 0.f, 0.f);
+    glClearDepthf(1.0f);
+    glClearStencil(0);
     glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     for (int i = 0; i < 4; ++i) {
@@ -1618,7 +1626,8 @@ void AHardwareBufferGLTest::SetUpFramebuffer(int width, int height, int layer,
                 glGenRenderbuffers(1, &renderbuffer);
                 glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
                 ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
-                if (GetParam().stride & kGlFormat) {
+                bool isGlFormat = GetParam().stride & kGlFormat;
+                if (isGlFormat) {
                     glRenderbufferStorage(GL_RENDERBUFFER, GetParam().format, width, height);
                 } else {
                     glEGLImageTargetRenderbufferStorageOES(GL_RENDERBUFFER,
@@ -1626,6 +1635,8 @@ void AHardwareBufferGLTest::SetUpFramebuffer(int width, int height, int layer,
                 }
                 glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment_points[i],
                                           GL_RENDERBUFFER, renderbuffer);
+                if (isGlFormat)
+                    glClear(clear_bits[i]);
                 break;
             }
             case kRenderbuffer: {
@@ -1636,6 +1647,7 @@ void AHardwareBufferGLTest::SetUpFramebuffer(int width, int height, int layer,
                 glRenderbufferStorage(GL_RENDERBUFFER, default_formats[i], width, height);
                 glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment_points[i],
                                           GL_RENDERBUFFER, renderbuffer);
+                glClear(clear_bits[i]);
                 break;
             }
             default: FAIL() << "Unrecognized binding type";

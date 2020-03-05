@@ -50,4 +50,24 @@ public class Poc17_05 extends SecurityTestCase {
             }, null);
         }
     }
+
+    /*
+     * CVE-2016-5862
+     */
+    @SecurityTest(minPatchLevel = "2017-05")
+    public void testPocCVE_2016_5862() throws Exception {
+        if (containsDriver(getDevice(), "/dev/snd/controlC0")) {
+            AdbUtils.runPocNoOutput("CVE-2016-5862",getDevice(), 60);
+        }
+    }
+
+    /**
+     * CVE-2016-5867
+     */
+    @SecurityTest(minPatchLevel = "2017-05")
+    public void testPocCVE_2016_5867() throws Exception {
+        if (containsDriver(getDevice(), "/dev/snd/controlC0")) {
+            AdbUtils.runPocAssertExitStatusNotVulnerable("CVE-2016-5867", getDevice(), 60);
+        }
+    }
 }

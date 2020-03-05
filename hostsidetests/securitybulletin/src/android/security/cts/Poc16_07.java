@@ -42,4 +42,13 @@ public class Poc16_07 extends SecurityTestCase {
     public void testPocCVE_2014_9803() throws Exception {
         AdbUtils.runPocAssertExitStatusNotVulnerable("CVE-2014-9803", getDevice(), 60);
     }
+
+    /**
+     * b/27903498
+     */
+    @SecurityTest(minPatchLevel = "2016-07")
+    public void testPocCVE_2016_3747() throws Exception {
+        getOomCatcher().setHighMemoryTest();
+        AdbUtils.runPocAssertNoCrashes("CVE-2016-3747", getDevice(), "mediaserver");
+    }
 }
