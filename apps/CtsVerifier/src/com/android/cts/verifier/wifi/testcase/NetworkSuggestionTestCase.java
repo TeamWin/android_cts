@@ -188,6 +188,12 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
             setFailureReason(mContext.getString(R.string.wifi_status_suggestion_add_failure));
             return false;
         }
+        if (DBG) Log.v(TAG, "Getting suggestion");
+        List<WifiNetworkSuggestion> retrievedSuggestions = mWifiManager.getNetworkSuggestions();
+        if (!Objects.equals(mNetworkSuggestions, retrievedSuggestions)) {
+            setFailureReason(mContext.getString(R.string.wifi_status_suggestion_get_failure));
+            return false;
+        }
 
         // Step: Trigger scans periodically to trigger network selection quicker.
         if (DBG) Log.v(TAG, "Triggering scan periodically");

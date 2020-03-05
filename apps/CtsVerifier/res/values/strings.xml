@@ -1670,6 +1670,7 @@
 
     <string name="wifi_status_suggestion_add">Adding suggestions to the device.</string>
     <string name="wifi_status_suggestion_add_failure">Failed to add suggestions.</string>
+    <string name="wifi_status_suggestion_get_failure">Failed to get suggestions.</string>
     <string name="wifi_status_suggestion_remove">Removing suggestions from the device.</string>
     <string name="wifi_status_suggestion_remove_failure">Failed to remove suggestions.</string>
     <string name="wifi_status_suggestion_wait_for_connect">Waiting for network connection. Please click \"Yes\" in the notification that pops up for approving the request.</string>
