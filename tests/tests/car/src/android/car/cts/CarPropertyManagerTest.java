@@ -15,6 +15,7 @@
  */
 package android.car.cts;
 
+import static org.testng.Assert.assertThrows;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -251,9 +252,11 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         for (CarPropertyConfig cfg : configs) {
             if (cfg.getAccess() == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE
                     && cfg.getPropertyType() == Boolean.class) {
-                // Get the current value, and set a different value to the property and verify it.
+                // In R, there is no property which is writable for third-party apps.
                 for (int areaId : getAreaIdsHelper(cfg)) {
-                    assertTrue(setBooleanPropertyHelper(cfg.getPropertyId(), areaId));
+                    assertThrows(SecurityException.class,
+                            () -> mCarPropertyManager.setBooleanProperty(
+                                    cfg.getPropertyId(), areaId,true));
                 }
             }
         }
@@ -340,31 +343,6 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         currentEventUI = speedListenerUI.receivedEvent(vehicleSpeed);
         Thread.sleep(WAIT_CALLBACK);
         assertEquals(currentEventUI, speedListenerUI.receivedEvent(vehicleSpeed));
-    }
-
-    /**
-     * Returns true if set boolean value successfully.
-     * @param propId
-     * @param areaId
-     * @return
-     */
-    private boolean setBooleanPropertyHelper(int propId, int areaId) {
-        boolean currentValue = mCarPropertyManager.getBooleanProperty(propId, areaId);
-        boolean expectedValue = !currentValue;
-        try {
-            mCarPropertyManager.setBooleanProperty(propId, areaId, expectedValue);
-            Thread.sleep(WAIT_CALLBACK);
-            currentValue = mCarPropertyManager.getBooleanProperty(propId, areaId);
-            return expectedValue == currentValue;
-        } catch (Exception e) {
-            Log.e(TAG, new StringBuilder()
-                        .append("Failed to verify Property Id: 0x")
-                        .append(toHexString(propId))
-                        .append(", in areaId: 0x")
-                        .append(toHexString(areaId))
-                        .toString());
-        }
-        return false;
     }
 
     private int[] getAreaIdsHelper(CarPropertyConfig config) {
