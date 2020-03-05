@@ -22,6 +22,15 @@
         <uses-library android:name="android.test.runner"/>
         <receiver android:name="com.android.cts.install.lib.LocalIntentSender"
                   android:exported="true"/>
+        <!-- This activity is necessary to register the test app as the default home activity (i.e.
+             to receive SESSION_COMMITTED broadcasts.) -->
+        <activity android:name=".LauncherActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME"/>
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

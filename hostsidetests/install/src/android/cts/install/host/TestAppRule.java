@@ -32,10 +32,10 @@ import org.junit.rules.ExternalResource;
 final class TestAppRule extends ExternalResource {
     private static final String TAG = TestAppRule.class.getSimpleName();
     private static final String SHIM_APEX_PACKAGE_NAME = "com.android.apex.cts.shim";
-    private final BaseHostJUnit4Test mBaseHostJUnit4Test;
+    private final BaseHostJUnit4Test mHostTest;
 
-    TestAppRule(BaseHostJUnit4Test baseHostJUnit4Test) {
-        mBaseHostJUnit4Test = baseHostJUnit4Test;
+    TestAppRule(BaseHostJUnit4Test hostTest) {
+        mHostTest = hostTest;
     }
 
     @Override
@@ -53,11 +53,11 @@ final class TestAppRule extends ExternalResource {
     }
 
     private void cleanUpTestPackages() throws DeviceNotAvailableException {
-        mBaseHostJUnit4Test.getDevice().executeShellCommand(
+        mHostTest.getDevice().executeShellCommand(
                 "pm uninstall com.android.cts.install.lib.testapp.A");
-        mBaseHostJUnit4Test.getDevice().executeShellCommand(
+        mHostTest.getDevice().executeShellCommand(
                 "pm uninstall com.android.cts.install.lib.testapp.B");
-        mBaseHostJUnit4Test.getDevice().executeShellCommand(
+        mHostTest.getDevice().executeShellCommand(
                 "for i in $(pm list staged-sessions --only-sessionid --only-parent); "
                         + "do pm install-abandon $i; done");
         uninstallShimApexIfNecessary();
@@ -83,25 +83,25 @@ final class TestAppRule extends ExternalResource {
         // Non system version is active, need to uninstall it and reboot the device.
         Log.i(TAG, "Uninstalling shim apex");
         final String errorMessage =
-                mBaseHostJUnit4Test.getDevice().uninstallPackage(SHIM_APEX_PACKAGE_NAME);
+                mHostTest.getDevice().uninstallPackage(SHIM_APEX_PACKAGE_NAME);
         if (errorMessage != null) {
             Log.e(TAG, "Failed to uninstall " + SHIM_APEX_PACKAGE_NAME + " : " + errorMessage);
             return;
         }
 
-        mBaseHostJUnit4Test.getDevice().reboot();
+        mHostTest.getDevice().reboot();
         ITestDevice.ApexInfo shim = getShimApex();
         assertThat(shim.versionCode).isEqualTo(1L);
         assertThat(shim.sourceDir).startsWith("/system");
     }
 
     private boolean isUpdatingApexSupported() throws DeviceNotAvailableException {
-        final String updatable = mBaseHostJUnit4Test.getDevice().getProperty("ro.apex.updatable");
+        final String updatable = mHostTest.getDevice().getProperty("ro.apex.updatable");
         return updatable != null && updatable.equals("true");
     }
 
     private ITestDevice.ApexInfo getShimApex() throws DeviceNotAvailableException {
-        return mBaseHostJUnit4Test.getDevice().getActiveApexes().stream().filter(
+        return mHostTest.getDevice().getActiveApexes().stream().filter(
                 apex -> apex.name.equals(SHIM_APEX_PACKAGE_NAME)).findAny().orElseThrow(
                 () -> new AssertionError("Can't find " + SHIM_APEX_PACKAGE_NAME));
     }

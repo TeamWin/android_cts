@@ -41,6 +41,8 @@ import java.util.List;
 @UseParametersRunnerFactory(DeviceParameterized.RunnerFactory.class)
 public final class InstallTest extends BaseHostJUnit4Test {
     private static final String PACKAGE_NAME = "android.cts.install";
+    private static final String CUSTOMIZED_LAUNCHER_COMPONENT =
+            PACKAGE_NAME + "/" + PACKAGE_NAME + ".LauncherActivity";
     private static final String PHASE_FORMAT_SUFFIX = "[%s_Staged%b_Rollback%b]";
 
     private static final String CLEAN_UP_PHASE = "cleanUp_phase";
@@ -54,6 +56,9 @@ public final class InstallTest extends BaseHostJUnit4Test {
 
     @Rule
     public TestAppRule mTestAppRule = new TestAppRule(this);
+
+    @Rule
+    public LauncherRule mLauncherRule = new LauncherRule(this, CUSTOMIZED_LAUNCHER_COMPONENT);
 
     @Parameter(0)
     public INSTALL_TYPE mInstallType;
