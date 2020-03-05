@@ -1142,6 +1142,12 @@ public class ImsServiceTest {
             return;
         }
 
+        // Trigger carrier config changed
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putBoolean(CarrierConfigManager.KEY_USE_RCS_SIP_OPTIONS_BOOL, true);
+        bundle.putBoolean(CarrierConfigManager.KEY_USE_RCS_PRESENCE_BOOL, true);
+        overrideCarrierConfig(bundle);
+
         triggerFrameworkConnectToLocalImsServiceBindRcsFeature();
 
         ProvisioningManager provisioningManager =
