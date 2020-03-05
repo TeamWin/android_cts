@@ -80,8 +80,6 @@ public class BlobStoreManagerTest {
     private Context mContext;
     private BlobStoreManager mBlobStoreManager;
 
-    private final ArrayList<Long> mCreatedSessionIds = new ArrayList<>();
-
     private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
     @Before
@@ -89,17 +87,6 @@ public class BlobStoreManagerTest {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mBlobStoreManager = (BlobStoreManager) mContext.getSystemService(
                 Context.BLOB_STORE_SERVICE);
-        clearAllBlobsData();
-    }
-
-    @After
-    public void tearDown() {
-        clearAllBlobsData();
-    }
-
-    private void clearAllBlobsData() {
-        executeCmd("cmd blob_store clear-all-sessions");
-        executeCmd("cmd blob_store clear-all-blobs");
     }
 
     @Test
@@ -107,7 +94,7 @@ public class BlobStoreManagerTest {
         final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
-            final long sessionId = createSession(blobData.getBlobHandle());
+            final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
             assertThat(mBlobStoreManager.openSession(sessionId)).isNotNull();
         } finally {
@@ -156,7 +143,7 @@ public class BlobStoreManagerTest {
         final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
-            final long sessionId = createSession(blobData.getBlobHandle());
+            final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
             // Verify that session can be opened.
             assertThat(mBlobStoreManager.openSession(sessionId)).isNotNull();
@@ -174,7 +161,7 @@ public class BlobStoreManagerTest {
         final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
-            final long sessionId = createSession(blobData.getBlobHandle());
+            final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
             try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
                 blobData.writeToSession(session, 0, blobData.getFileSize());
@@ -196,7 +183,7 @@ public class BlobStoreManagerTest {
         final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
-            final long sessionId = createSession(blobData.getBlobHandle());
+            final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
             try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
                 assertThat(session).isNotNull();
@@ -222,7 +209,7 @@ public class BlobStoreManagerTest {
         final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
-            final long sessionId = createSession(blobData.getBlobHandle());
+            final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
 
             try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
@@ -247,7 +234,7 @@ public class BlobStoreManagerTest {
         final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
-            final long sessionId = createSession(blobData.getBlobHandle());
+            final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
 
             // Verify session can be opened for read/write.
@@ -283,7 +270,7 @@ public class BlobStoreManagerTest {
         final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
-            final long sessionId = createSession(blobData.getBlobHandle());
+            final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
 
             try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
@@ -309,7 +296,7 @@ public class BlobStoreManagerTest {
         final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
-            final long sessionId = createSession(blobData.getBlobHandle());
+            final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
 
             try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
@@ -332,7 +319,7 @@ public class BlobStoreManagerTest {
         final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
-            final long sessionId = createSession(blobData.getBlobHandle());
+            final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
 
             try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
@@ -358,7 +345,7 @@ public class BlobStoreManagerTest {
         final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
-            final long sessionId = createSession(blobData.getBlobHandle());
+            final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
 
             try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
@@ -381,7 +368,7 @@ public class BlobStoreManagerTest {
         final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
-            final long sessionId = createSession(blobData.getBlobHandle());
+            final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
 
             try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
@@ -407,7 +394,7 @@ public class BlobStoreManagerTest {
         final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
-            final long sessionId = createSession(blobData.getBlobHandle());
+            final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
 
             try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
@@ -434,7 +421,7 @@ public class BlobStoreManagerTest {
         final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
-            final long sessionId = createSession(blobData.getBlobHandle());
+            final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
 
             try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
@@ -463,7 +450,7 @@ public class BlobStoreManagerTest {
         final TestServiceConnection connection2 = bindToHelperService(HELPER_PKG2);
         final TestServiceConnection connection3 = bindToHelperService(HELPER_PKG3);
         try {
-            final long sessionId = createSession(blobData.getBlobHandle());
+            final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
 
             try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
@@ -501,7 +488,7 @@ public class BlobStoreManagerTest {
         final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
-            final long sessionId = createSession(blobData.getBlobHandle());
+            final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
 
             try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
@@ -537,7 +524,7 @@ public class BlobStoreManagerTest {
         final TestServiceConnection connection2 = bindToHelperService(HELPER_PKG2);
         final TestServiceConnection connection3 = bindToHelperService(HELPER_PKG3);
         try {
-            final long sessionId = createSession(blobData.getBlobHandle());
+            final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
 
             try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
@@ -579,7 +566,7 @@ public class BlobStoreManagerTest {
         final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
-            final long sessionId = createSession(blobData.getBlobHandle());
+            final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
 
             try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
@@ -610,7 +597,7 @@ public class BlobStoreManagerTest {
         final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
-            final long sessionId = createSession(blobData.getBlobHandle());
+            final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
 
             try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
@@ -647,7 +634,7 @@ public class BlobStoreManagerTest {
         final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
-            final long sessionId = createSession(blobData.getBlobHandle());
+            final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
 
             try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
@@ -714,7 +701,7 @@ public class BlobStoreManagerTest {
                 .queryStatsForUid(UUID_DEFAULT, Process.myUid());
 
         // Create a session and write some data.
-        final long sessionId = createSession(blobData.getBlobHandle());
+        final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
         assertThat(sessionId).isGreaterThan(0L);
         try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
             blobData.writeToSession(session, 0, partialFileSize);
@@ -971,17 +958,5 @@ public class BlobStoreManagerTest {
             mCommandReceiver = null;
             mContext.unbindService(this);
         }
-    }
-
-    private long createSession(BlobHandle blobHandle) throws Exception {
-        final long sessionId = mBlobStoreManager.createSession(blobHandle);
-        mCreatedSessionIds.add(sessionId);
-        return sessionId;
-    }
-
-    private String executeCmd(String cmd) {
-        final String result = runShellCommand(cmd).trim();
-        Log.d(TAG, "Output of <" + cmd + ">: <" + result + ">");
-        return result;
     }
 }
