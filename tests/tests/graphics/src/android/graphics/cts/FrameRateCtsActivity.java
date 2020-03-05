@@ -251,6 +251,12 @@ public class FrameRateCtsActivity extends Activity {
                 mSurface = null;
             }
             if (mSurfaceControl != null) {
+                SurfaceControl.Transaction transaction = new SurfaceControl.Transaction();
+                try {
+                    transaction.reparent(mSurfaceControl, null).apply();
+                } finally {
+                    transaction.close();
+                }
                 mSurfaceControl.release();
                 mSurfaceControl = null;
             }
