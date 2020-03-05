@@ -20,6 +20,8 @@ import static org.testng.Assert.assertThrows;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.telephony.SubscriptionInfo;
+import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
@@ -69,6 +71,19 @@ public class DeviceIdentifiersTest extends BaseDeviceAdminTest {
             assertEquals(String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE, "Build#getSerial"),
                     ShellIdentityUtils.invokeStaticMethodWithShellPermissions(Build::getSerial),
                     Build.getSerial());
+            SubscriptionManager subscriptionManager =
+                    (SubscriptionManager) mContext.getSystemService(
+                            Context.TELEPHONY_SUBSCRIPTION_SERVICE);
+            int subId = subscriptionManager.getDefaultSubscriptionId();
+            if (subId != SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
+                SubscriptionInfo expectedSubInfo =
+                        ShellIdentityUtils.invokeMethodWithShellPermissions(subscriptionManager,
+                                (sm) -> sm.getActiveSubscriptionInfo(subId));
+                SubscriptionInfo actualSubInfo = subscriptionManager.getActiveSubscriptionInfo(
+                        subId);
+                assertEquals(String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE, "getIccId"),
+                        expectedSubInfo.getIccId(), actualSubInfo.getIccId());
+            }
         } catch (SecurityException e) {
             fail("The profile owner with the READ_PHONE_STATE permission must be able to access "
                     + "the device IDs: " + e);
