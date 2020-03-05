@@ -18,6 +18,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.android.cts.launcherapps.simpleapp">
 
+    <uses-permission android:name="android.permission.READ_CALENDAR"/>
     <uses-permission android:name="android.permission.READ_CONTACTS"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
@@ -79,6 +80,10 @@
         <receiver android:name=".SimpleRemoteReceiver" android:process=":receiver"
                   android:exported="true">
         </receiver>
+        <provider android:name=".SimpleProvider" android:process=":remote"
+                  android:authorities="com.android.cts.launcherapps.simpleapp.provider"
+                  android:exported="false" >
+        </provider>
     </application>
 
 </manifest>
