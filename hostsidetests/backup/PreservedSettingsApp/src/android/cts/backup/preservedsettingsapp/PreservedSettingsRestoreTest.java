@@ -114,6 +114,11 @@ public class PreservedSettingsRestoreTest {
     @Test
     public void cleanupDevice() throws Exception {
         SystemUtil.runWithShellPermissionIdentity(() -> {
+            // "Touch" the affected settings so that we're the last package that modified them.
+            modifySettings();
+            // Reset all secure settings modified by this package.
+            Settings.Secure.resetToDefaults(mContentResolver, null);
+
             Settings.Secure.putString(mContentResolver, OVERRIDEABLE_SETTING,
                     getOriginalSettingValue(OVERRIDEABLE_SETTING),
                     /* overrideableByRestore */ true);
