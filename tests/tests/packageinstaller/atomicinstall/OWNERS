@@ -1,2 +1,3 @@
 # Bug component: 36137
-include /hostsidetests/stagedinstall/OWNERS
+patb@google.com
+toddke@google.com
