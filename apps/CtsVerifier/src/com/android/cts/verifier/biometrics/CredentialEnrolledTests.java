@@ -36,15 +36,20 @@ import java.util.concurrent.Executor;
  * This test checks that when a credential is enrolled, and biometrics are not enrolled,
  * BiometricManager and BiometricPrompt receive the correct results.
  */
-public class CredentialEnrolledTests extends PassFailButtons.Activity {
+public class CredentialEnrolledTests extends AbstractBaseTest {
     private static final String TAG = "CredentialEnrolledTests";
 
-    boolean mBiometricManagerPass;
-    boolean mBiometricPromptSetAllowedAuthenticatorsPass;
-    boolean mBiometricPromptSetDeviceCredentialAllowedPass;
+    private boolean mBiometricManagerPass;
+    private boolean mBiometricPromptSetAllowedAuthenticatorsPass;
+    private boolean mBiometricPromptSetDeviceCredentialAllowedPass;
 
     private final Handler mHandler = new Handler(Looper.getMainLooper());
     private final Executor mExecutor = mHandler::post;
+
+    @Override
+    protected String getTag() {
+        return TAG;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -154,9 +159,10 @@ public class CredentialEnrolledTests extends PassFailButtons.Activity {
         });
     }
 
-    private void showToastAndLog(String s) {
-        Log.d(TAG, s);
-        Toast.makeText(this, s, Toast.LENGTH_SHORT).show();
+    @Override
+    protected boolean isOnPauseAllowed() {
+        // Allow user to go to Settings, etc to figure out why this test isn't passing.
+        return !mBiometricManagerPass;
     }
 
     private void updatePassButton() {
