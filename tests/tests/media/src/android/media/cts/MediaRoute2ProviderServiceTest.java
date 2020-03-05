@@ -360,7 +360,7 @@ public class MediaRoute2ProviderServiceTest {
             }
         });
 
-        CountDownLatch onControllerCreatedLatch = new CountDownLatch(1);
+        CountDownLatch onTransferredLatch = new CountDownLatch(1);
         CountDownLatch onControllerUpdatedForSelectLatch = new CountDownLatch(1);
         CountDownLatch onControllerUpdatedForDeselectLatch = new CountDownLatch(1);
         CountDownLatch onControllerUpdatedForTransferLatch = new CountDownLatch(1);
@@ -370,9 +370,10 @@ public class MediaRoute2ProviderServiceTest {
             @Override
             public void onTransferred(RoutingController oldController,
                     RoutingController newController) {
-                if (newController != null && SESSION_ID_1.equals(newController.getOriginalId())) {
+                if (SESSION_ID_1.equals(newController.getOriginalId())) {
+                    assertEquals(mRouter2.getSystemController(), oldController);
                     controllers.add(newController);
-                    onControllerCreatedLatch.countDown();
+                    onTransferredLatch.countDown();
                 }
             }
         };
@@ -412,7 +413,7 @@ public class MediaRoute2ProviderServiceTest {
 
             mRouter2.transferTo(routeToCreateSession);
             assertTrue(onCreateSessionLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
-            assertTrue(onControllerCreatedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            assertTrue(onTransferredLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
             assertFalse(controllers.isEmpty());
 
             RoutingController controller = controllers.get(0);
@@ -473,25 +474,25 @@ public class MediaRoute2ProviderServiceTest {
         });
 
 
-        CountDownLatch onControllerCreatedLatch = new CountDownLatch(1);
-        CountDownLatch onControllerReleasedLatch = new CountDownLatch(1);
+        CountDownLatch onTransferredLatch = new CountDownLatch(1);
+        CountDownLatch onStoppedLatch = new CountDownLatch(1);
         List<RoutingController> controllers = new ArrayList<>();
 
         TransferCallback transferCallback = new TransferCallback() {
             @Override
             public void onTransferred(RoutingController oldController,
                     RoutingController newController) {
-                if (newController != null) {
-                    if (SESSION_ID_1.equals(newController.getOriginalId())) {
-                        controllers.add(newController);
-                        onControllerCreatedLatch.countDown();
-                    }
-                } else {
-                    // newController == null means that the oldController is released
-                    if (SESSION_ID_1.equals(oldController.getOriginalId())) {
-                        assertTrue(oldController.isReleased());
-                        onControllerReleasedLatch.countDown();
-                    }
+                if (SESSION_ID_1.equals(newController.getOriginalId())) {
+                    assertEquals(mRouter2.getSystemController(), oldController);
+                    controllers.add(newController);
+                    onTransferredLatch.countDown();
+                }
+            }
+            @Override
+            public void onStopped(RoutingController controller){
+                if (SESSION_ID_1.equals(controller.getOriginalId())) {
+                    assertTrue(controller.isReleased());
+                    onStoppedLatch.countDown();
                 }
             }
         };
@@ -505,11 +506,11 @@ public class MediaRoute2ProviderServiceTest {
 
             mRouter2.transferTo(routeToCreateSession);
             assertTrue(onCreateSessionLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
-            assertTrue(onControllerCreatedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            assertTrue(onTransferredLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
             assertFalse(controllers.isEmpty());
 
             mService.notifySessionReleased(SESSION_ID_1);
-            assertTrue(onControllerReleasedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            assertTrue(onStoppedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
         } finally {
             mRouter2.unregisterRouteCallback(dummyCallback);
             mRouter2.unregisterTransferCallback(transferCallback);
