@@ -20,6 +20,7 @@ import com.android.compatibility.common.util.CrashUtils;
 import com.android.ddmlib.NullOutputReceiver;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.device.NativeDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 
 import java.io.BufferedOutputStream;
@@ -27,6 +28,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.concurrent.TimeoutException;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.concurrent.TimeUnit;
@@ -36,7 +38,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.regex.Pattern;
+import java.lang.Thread;
 import static org.junit.Assert.*;
+import junit.framework.Assert;
 
 public class AdbUtils {
 
@@ -57,7 +62,7 @@ public class AdbUtils {
     /**
      * Pushes and runs a binary to the selected device
      *
-     * @param pocName a string path to poc from the /res folder
+     * @param pocName name of the poc binary
      * @param device device to be ran on
      * @return the console output from the binary
      */
@@ -69,15 +74,35 @@ public class AdbUtils {
     /**
      * Pushes and runs a binary to the selected device
      *
-     * @param pocName a string path to poc from the /res folder
+     * @param pocName name of the poc binary
      * @param device device to be ran on
      * @param timeout time to wait for output in seconds
      * @return the console output from the binary
      */
     public static String runPoc(String pocName, ITestDevice device, int timeout) throws Exception {
+        return runPoc(pocName, device, timeout, null);
+    }
+
+    /**
+     * Pushes and runs a binary to the selected device
+     *
+     * @param pocName name of the poc binary
+     * @param device device to be ran on
+     * @param timeout time to wait for output in seconds
+     * @param arguments the input arguments for the poc
+     * @return the console output from the binary
+     */
+    public static String runPoc(String pocName, ITestDevice device, int timeout, String arguments)
+            throws Exception {
         device.executeShellCommand("chmod +x /data/local/tmp/" + pocName);
         CollectingOutputReceiver receiver = new CollectingOutputReceiver();
-        device.executeShellCommand("/data/local/tmp/" + pocName, receiver, timeout, TimeUnit.SECONDS, 0);
+        if (arguments != null) {
+            device.executeShellCommand("/data/local/tmp/" + pocName + " " + arguments, receiver,
+                    timeout, TimeUnit.SECONDS, 0);
+        } else {
+            device.executeShellCommand("/data/local/tmp/" + pocName, receiver, timeout,
+                    TimeUnit.SECONDS, 0);
+        }
         String output = receiver.getOutput();
         return output;
     }
@@ -85,16 +110,35 @@ public class AdbUtils {
     /**
      * Pushes and runs a binary to the selected device and ignores any of its output.
      *
-     * @param pocName a string path to poc from the /res folder
+     * @param pocName name of the poc binary
      * @param device device to be ran on
      * @param timeout time to wait for output in seconds
      */
     public static void runPocNoOutput(String pocName, ITestDevice device, int timeout)
             throws Exception {
+        runPocNoOutput(pocName, device, timeout, null);
+    }
+
+    /**
+     * Pushes and runs a binary with arguments to the selected device and
+     * ignores any of its output.
+     *
+     * @param pocName name of the poc binary
+     * @param device device to be ran on
+     * @param timeout time to wait for output in seconds
+     * @param arguments input arguments for the poc
+     */
+    public static void runPocNoOutput(String pocName, ITestDevice device, int timeout,
+            String arguments) throws Exception {
         device.executeShellCommand("chmod +x /data/local/tmp/" + pocName);
         NullOutputReceiver receiver = new NullOutputReceiver();
-        device.executeShellCommand("/data/local/tmp/" + pocName, receiver, timeout,
-                TimeUnit.SECONDS, 0);
+        if (arguments != null) {
+            device.executeShellCommand("/data/local/tmp/" + pocName + " " + arguments, receiver,
+                    timeout, TimeUnit.SECONDS, 0);
+        } else {
+            device.executeShellCommand("/data/local/tmp/" + pocName, receiver, timeout,
+                    TimeUnit.SECONDS, 0);
+        }
     }
 
     /**
@@ -198,9 +242,17 @@ public class AdbUtils {
      * Utility function to help check the exit code of a shell command
      */
     public static int runCommandGetExitCode(String cmd, ITestDevice device) throws Exception {
-      return Integer.parseInt(
-          AdbUtils.runCommandLine( "(" + cmd + ") > /dev/null 2>&1; echo $?",
-            device).replaceAll("[^0-9]", ""));
+        long time = System.currentTimeMillis();
+        String exitStatus = runCommandLine(
+                "(" + cmd + ") > /dev/null 2>&1; echo $?", device).trim();
+        time = System.currentTimeMillis() - time;
+        try {
+            return Integer.parseInt(exitStatus);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(String.format(
+                    "Could not get the exit status (%s) for '%s' (%d ms).",
+                    exitStatus, cmd, time));
+        }
     }
 
     /**
@@ -230,11 +282,18 @@ public class AdbUtils {
             throws Exception {
         device.executeShellCommand("chmod +x /data/local/tmp/" + pocName);
         CollectingOutputReceiver receiver = new CollectingOutputReceiver();
-        device.executeShellCommand("/data/local/tmp/" + pocName + " > /dev/null 2>&1; echo $?",
-                                   receiver, timeout, TimeUnit.SECONDS, 0);
-
-        String exitStatus = receiver.getOutput().replaceAll("[^0-9]", "");
-        return Integer.parseInt(exitStatus);
+        String cmd = "/data/local/tmp/" + pocName + " > /dev/null 2>&1; echo $?";
+        long time = System.currentTimeMillis();
+        device.executeShellCommand(cmd, receiver, timeout, TimeUnit.SECONDS, 0);
+        time = System.currentTimeMillis() - time;
+        String exitStatus = receiver.getOutput().trim();
+        try {
+            return Integer.parseInt(exitStatus);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(String.format(
+                    "Could not get the exit status (%s) for '%s' (%d ms).",
+                    exitStatus, cmd, time));
+        }
     }
 
     /**
@@ -268,8 +327,7 @@ public class AdbUtils {
     public static void runPocAssertNoCrashes(String pocName, ITestDevice device,
             String... processPatternStrings) throws Exception {
         AdbUtils.runCommandLine("logcat -c", device);
-        // account for the poc timer of 5 minutes (+15 seconds for safety)
-        AdbUtils.runPocNoOutput(pocName, device, 315);
+        AdbUtils.runPocNoOutput(pocName, device, SecurityTestCase.TIMEOUT_NONDETERMINISTIC);
         assertNoCrashes(device, processPatternStrings);
     }
 
@@ -322,5 +380,40 @@ public class AdbUtils {
             } catch (JSONException e) {}
         }
         fail(error.toString());
+     }
+
+    /**
+     * Executes a given poc within a given timeout. Returns error if the
+     * given poc doesnt complete its execution within timeout. It also deletes
+     * the list of files provided.
+     *
+     * @param runner the thread which will be run
+     * @param timeout the timeout within which the thread's execution should
+     *        complete
+     * @param device device to be ran on
+     * @param inputFiles list of files to be deleted
+     */
+    public static void runWithTimeoutDeleteFiles(Runnable runner, int timeout, ITestDevice device,
+            String[] inputFiles) throws Exception {
+        Thread t = new Thread(runner);
+        t.start();
+        boolean test_failed = false;
+        try {
+            t.join(timeout);
+        } catch (InterruptedException e) {
+            test_failed = true;
+        } finally {
+            if (inputFiles != null) {
+                for (String tempFile : inputFiles) {
+                    AdbUtils.runCommandLine("rm /data/local/tmp/" + tempFile, device);
+                }
+            }
+            if (test_failed) {
+                fail("PoC was interrupted");
+            }
+        }
+        if (t.isAlive()) {
+            Assert.fail("PoC not completed within timeout of " + timeout + " ms");
+        }
     }
 }

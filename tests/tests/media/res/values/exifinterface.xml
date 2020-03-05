@@ -28,6 +28,10 @@
         <item>0.0</item>
         <item>0.0</item>
         <item>0.0</item>
+        <!--Whether Make information exists-->
+        <item>true</item>
+        <item>160</item>
+        <item>8</item>
         <item>SAMSUNG</item>
         <item>SM-N900S</item>
         <item>2.200</item>
@@ -61,11 +65,15 @@
         <item>0</item>
         <item>false</item>
         <item>true</item>
-        <item>572</item>
+        <item>584</item>
         <item>24</item>
         <item>0.0</item>
         <item>0.0</item>
         <item>0.0</item>
+        <!--Whether Make information exists-->
+        <item>true</item>
+        <item>414</item>
+        <item>4</item>
         <item>LGE</item>
         <item>Nexus 5</item>
         <item>2.400</item>
@@ -93,7 +101,7 @@
     </array>
     <array name="lg_g4_iso_800_dng">
         <item>true</item>
-        <item>0</item>
+        <item>12570</item>
         <item>15179</item>
         <item>256</item>
         <item>144</item>
@@ -104,6 +112,10 @@
         <item>53.834507</item>
         <item>10.69585</item>
         <item>0.0</item>
+        <!--Whether Make information exists-->
+        <item>true</item>
+        <item>102</item>
+        <item>4</item>
         <item>LGE</item>
         <item>LG-H815</item>
         <item>1.800</item>
@@ -137,11 +149,15 @@
         <item />
         <item />
         <item>true</item>
-        <item>1662</item>
+        <item>1692</item>
         <item>24</item>
         <item>53.834507</item>
         <item>10.69585</item>
         <item>0.0</item>
+        <!--Whether Make information exists-->
+        <item>true</item>
+        <item>84</item>
+        <item>4</item>
         <item>LGE</item>
         <item>LG-H815</item>
         <item>1.800</item>
@@ -175,11 +191,15 @@
         <item />
         <item />
         <item>true</item>
-        <item>3143</item>
+        <item>3155</item>
         <item>24</item>
         <item>37.423</item>
         <item>-122.162</item>
         <item>0.0</item>
+        <!--Whether Make information exists-->
+        <item>true</item>
+        <item>210</item>
+        <item>4</item>
         <item>htc</item>
         <item>Nexus 9</item>
         <item>1.2904</item>
@@ -218,6 +238,10 @@
         <item>0.0</item>
         <item>0.0</item>
         <item>0.0</item>
+        <!--Whether Make information exists-->
+        <item>true</item>
+        <item>32104</item>
+        <item>5</item>
         <item>SONY</item>
         <item>DSC-RX100M3</item>
         <item>2.0000</item>
@@ -256,6 +280,10 @@
         <item>0.0</item>
         <item>0.0</item>
         <item>0.0</item>
+        <!--Whether Make information exists-->
+        <item>true</item>
+        <item>288</item>
+        <item>6</item>
         <item>Canon</item>
         <item>Canon PowerShot G7 X</item>
         <item>8.0000</item>
@@ -294,6 +322,10 @@
         <item>0.0</item>
         <item>0.0</item>
         <item>0.0</item>
+        <!--Whether Make information exists-->
+        <item>true</item>
+        <item>318</item>
+        <item>9</item>
         <item>FUJIFILM</item>
         <item>X20</item>
         <item>3.6000</item>
@@ -321,7 +353,7 @@
     </array>
     <array name="nikon_1aw1_nef">
         <item>true</item>
-        <item>0</item>
+        <item>963072</item>
         <item>57600</item>
         <item>160</item>
         <item>120</item>
@@ -332,6 +364,10 @@
         <item>53.83652</item>
         <item>10.69828</item>
         <item>0.0</item>
+        <!--Whether Make information exists-->
+        <item>true</item>
+        <item>336</item>
+        <item>18</item>
         <item>NIKON CORPORATION</item>
         <item>NIKON 1 AW1</item>
         <item>5.6000</item>
@@ -370,6 +406,10 @@
         <item>0.0</item>
         <item>0.0</item>
         <item>0.0</item>
+        <!--Whether Make information exists-->
+        <item>true</item>
+        <item>298</item>
+        <item>6</item>
         <item>NIKON</item>
         <item>COOLPIX P7800</item>
         <item>2.0000</item>
@@ -408,6 +448,10 @@
         <item>0.0</item>
         <item>0.0</item>
         <item>0.0</item>
+        <!--Whether Make information exists-->
+        <item>true</item>
+        <item>266</item>
+        <item>20</item>
         <item>PENTAX</item>
         <item>PENTAX K-5</item>
         <item>8.0000</item>
@@ -446,6 +490,10 @@
         <item>0.0</item>
         <item>0.0</item>
         <item>0.0</item>
+        <!--Whether Make information exists-->
+        <item>true</item>
+        <item>2148</item>
+        <item>24</item>
         <item>OLYMPUS IMAGING CORP.</item>
         <item>E-PL3</item>
         <item>8.0000</item>
@@ -484,6 +532,10 @@
         <item>0.0</item>
         <item>0.0</item>
         <item>0.0</item>
+        <!--Whether Make information exists-->
+        <item>true</item>
+        <item>874</item>
+        <item>10</item>
         <item>Panasonic</item>
         <item>DMC-GM5</item>
         <item>8.0000</item>
@@ -522,6 +574,10 @@
         <item>0.0</item>
         <item>0.0</item>
         <item>0.0</item>
+        <!--Whether Make information exists-->
+        <item>true</item>
+        <item>98</item>
+        <item>8</item>
         <item>SAMSUNG</item>
         <item>NX3000</item>
         <item>5.6000</item>

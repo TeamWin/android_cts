@@ -16,6 +16,7 @@
 
 package android.checkpoint.cts;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.CtsDownstreamingTest;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceTestCase;
@@ -30,6 +31,9 @@ public class CheckpointHostTest extends DeviceTestCase {
 
     @CtsDownstreamingTest
     public void testLogEntries() throws Exception {
+        // This test is build also as a part of GTS, which runs also on older releases.
+        if (ApiLevelUtil.isBefore(getDevice(), "Q")) return;
+
         // Clear buffer to make it easier to find new logs
         getDevice().executeShellCommand("logcat --clear");
 

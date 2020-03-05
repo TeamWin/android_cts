@@ -34,6 +34,7 @@ import org.junit.runner.RunWith;
  * Java applications should use the client facing AudioManager APIs for Audio management.
  */
 
+@NonMediaMainlineTest
 @RunWith(AndroidJUnit4.class)
 @SmallTest
 @AppModeFull(reason = "Instant applications do not have permission MODIFY_AUDIO_SETTINGS")

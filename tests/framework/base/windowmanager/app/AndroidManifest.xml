@@ -532,6 +532,10 @@
                <action android:name="android.service.vr.VrListenerService" />
            </intent-filter>
         </service>
+
+        <receiver
+            android:name=".ToastReceiver"
+            android:exported="true" />
     </application>
 </manifest>
 

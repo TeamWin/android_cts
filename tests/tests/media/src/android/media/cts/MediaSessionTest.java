@@ -51,6 +51,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+@NonMediaMainlineTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 public class MediaSessionTest extends AndroidTestCase {
     // The maximum time to wait for an operation that is expected to succeed.

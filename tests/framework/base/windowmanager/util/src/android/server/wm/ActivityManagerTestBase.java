@@ -500,11 +500,14 @@ public abstract class ActivityManagerTestBase {
         injectMotion(downTime, upTime, MotionEvent.ACTION_UP, x, y, displayId);
     }
 
+    protected void tapOnCenter(Rect bounds, int displayId) {
+        final int tapX = bounds.left + bounds.width() / 2;
+        final int tapY = bounds.top + bounds.height() / 2;
+        tapOnDisplay(tapX, tapY, displayId);
+    }
+
     protected void tapOnStackCenter(ActivityManagerState.ActivityStack stack) {
-        final Rect sideStackBounds = stack.getBounds();
-        final int tapX = sideStackBounds.left + sideStackBounds.width() / 2;
-        final int tapY = sideStackBounds.top + sideStackBounds.height() / 2;
-        tapOnDisplay(tapX, tapY, stack.mDisplayId);
+        tapOnCenter(stack.getBounds(), stack.mDisplayId);
     }
 
     private static void injectMotion(long downTime, long eventTime, int action,
