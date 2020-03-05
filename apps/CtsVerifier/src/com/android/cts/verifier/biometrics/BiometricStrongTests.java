@@ -63,6 +63,8 @@ public class BiometricStrongTests extends AbstractBaseTest {
     private static final String KEY_NAME_NO_STRONGBOX = "key_without_strongbox";
     private static final byte[] PAYLOAD = new byte[] {1, 2, 3, 4, 5, 6};
 
+    // TODO: Build these lists in a smarter way. For now, when adding a test to this list, please
+    // double check the logic in isOnPauseAllowed()
     private boolean mHasStrongBox;
     private Button mCheckAndEnrollButton;
     private Button mAuthenticateWithoutStrongBoxButton;
@@ -237,6 +239,30 @@ public class BiometricStrongTests extends AbstractBaseTest {
                 updatePassButton();
             });
         });
+    }
+
+    @Override
+    protected boolean isOnPauseAllowed() {
+        // Test hasn't started yet, user may need to go to Settings to remove enrollments
+        if (mCheckAndEnrollButton.isEnabled()) {
+            return true;
+        }
+
+        // Key invalidation test is currently the last test. Thus, if every other test is currently
+        // completed, let's allow onPause (allow tester to go into settings multiple times if
+        // needed).
+        if (mAuthenticateWithoutStrongBoxPassed && mAuthenticateWithStrongBoxPassed
+                && mAuthenticateUIPassed && mAuthenticateCredential1Passed
+                && mAuthenticateCredential2Passed && mAuthenticateCredential3Passed
+                && mCheckInvalidInputsPassed && mRejectThenAuthenticatePassed) {
+            return true;
+        }
+
+        if (mCurrentlyEnrolling) {
+            return true;
+        }
+
+        return false;
     }
 
     private boolean isKeyInvalidated(String keyName) {

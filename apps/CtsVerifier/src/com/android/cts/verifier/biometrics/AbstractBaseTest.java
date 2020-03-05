@@ -45,6 +45,7 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
     private static final int REQUEST_ENROLL = 1;
 
     abstract protected String getTag();
+    abstract protected boolean isOnPauseAllowed();
 
     protected final Handler mHandler = new Handler(Looper.getMainLooper());
     protected final Executor mExecutor = mHandler::post;
@@ -57,6 +58,21 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mBiometricManager = getSystemService(BiometricManager.class);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        // Assume we only enable the pass button when all tests pass. There actually  isn't a way
+        // to easily do something like `this.isTestPassed()`
+        if (!getPassButton().isEnabled() && !isOnPauseAllowed()) {
+            showToastAndLog("This test must be completed without going onPause");
+            // Do not allow the test to continue if it loses foreground. Testers must start over.
+            // 1) This is to avoid any potential change to the current enrollment / biometric state.
+            // 2) The authentication UI must not affect the caller's activity lifecycle.
+            finish();
+        }
     }
 
     @Override
