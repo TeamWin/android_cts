@@ -118,6 +118,7 @@ public abstract class BaseTestActivity extends PassFailButtons.Activity implemen
             public void run() {
                 if (reason != null) {
                     mWifiInfo.append(reason);
+                    mWifiInfo.append("\n");
                 }
                 getPassButton().setEnabled(false);
                 mWifiInfo.append(getString(R.string.wifi_status_test_failed));
