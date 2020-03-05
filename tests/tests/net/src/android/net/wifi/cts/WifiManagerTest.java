@@ -16,7 +16,7 @@
 
 package android.net.wifi.cts;
 
-import static android.net.NetworkCapabilitiesProto.TRANSPORT_WIFI;
+import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
 import static android.net.wifi.WifiConfiguration.INVALID_NETWORK_ID;
 import static android.net.wifi.WifiManager.TrafficStateCallback.DATA_ACTIVITY_INOUT;
 
@@ -50,6 +50,7 @@ import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
 import android.support.test.uiautomator.UiDevice;
+import android.telephony.TelephonyManager;
 import android.test.AndroidTestCase;
 import android.text.TextUtils;
 import android.util.ArraySet;
@@ -64,6 +65,7 @@ import com.android.compatibility.common.util.SystemUtil;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
@@ -83,8 +85,9 @@ public class WifiManagerTest extends AndroidTestCase {
     private static MySync mMySync;
     private List<ScanResult> mScanResults = null;
     private NetworkInfo mNetworkInfo;
-    private Object mLock = new Object();
+    private final Object mLock = new Object();
     private UiDevice mUiDevice;
+    private boolean mWasVerboseLoggingEnabled;
 
     // Please refer to WifiManager
     private static final int MIN_RSSI = -100;
@@ -185,6 +188,13 @@ public class WifiManagerTest extends AndroidTestCase {
         mWifiManager = (WifiManager) getContext().getSystemService(Context.WIFI_SERVICE);
         mConnectivityManager = getContext().getSystemService(ConnectivityManager.class);
         assertNotNull(mWifiManager);
+
+        // turn on verbose logging for tests
+        mWasVerboseLoggingEnabled = ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.isVerboseLoggingEnabled());
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.setVerboseLoggingEnabled(true));
+
         mWifiLock = mWifiManager.createWifiLock(TAG);
         mWifiLock.acquire();
         if (!mWifiManager.isWifiEnabled())
@@ -197,8 +207,8 @@ public class WifiManagerTest extends AndroidTestCase {
             mMySync.expectedState = STATE_NULL;
         }
 
-        List<WifiConfiguration> savedNetworks = ShellIdentityUtils.invokeMethodWithShellPermissions(
-                mWifiManager, (wm) -> wm.getConfiguredNetworks());
+        List<WifiConfiguration> savedNetworks = ShellIdentityUtils.invokeWithShellPermissions(
+                mWifiManager::getConfiguredNetworks);
         assertFalse("Need at least one saved network", savedNetworks.isEmpty());
     }
 
@@ -213,6 +223,8 @@ public class WifiManagerTest extends AndroidTestCase {
             setWifiEnabled(true);
         mWifiLock.release();
         mContext.unregisterReceiver(mReceiver);
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.setVerboseLoggingEnabled(mWasVerboseLoggingEnabled));
         Thread.sleep(DURATION);
         super.tearDown();
     }
@@ -1183,6 +1195,7 @@ public class WifiManagerTest extends AndroidTestCase {
     private static class TestNetworkCallback extends ConnectivityManager.NetworkCallback {
         private final Object mLock;
         public boolean onAvailableCalled = false;
+        public Network network;
         public NetworkCapabilities networkCapabilities;
 
         TestNetworkCallback(Object lock) {
@@ -1194,6 +1207,7 @@ public class WifiManagerTest extends AndroidTestCase {
                 LinkProperties linkProperties, boolean blocked) {
             synchronized (mLock) {
                 onAvailableCalled = true;
+                this.network = network;
                 this.networkCapabilities = networkCapabilities;
                 mLock.notify();
             }
@@ -1542,5 +1556,79 @@ public class WifiManagerTest extends AndroidTestCase {
             }
             uiAutomation.dropShellPermissionIdentity();
         }
+    }
+
+    /**
+     * Test that the wifi country code is either null, or a length-2 string.
+     */
+    public void testGetCountryCode() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+
+        String wifiCountryCode = ShellIdentityUtils.invokeWithShellPermissions(
+                mWifiManager::getCountryCode);
+
+        if (wifiCountryCode == null) {
+            return;
+        }
+        assertEquals(2, wifiCountryCode.length());
+
+        // assert that the country code is all uppercase
+        assertEquals(wifiCountryCode.toUpperCase(Locale.US), wifiCountryCode);
+
+        String telephonyCountryCode = getContext().getSystemService(TelephonyManager.class)
+                .getNetworkCountryIso();
+        assertEquals(telephonyCountryCode, wifiCountryCode.toLowerCase(Locale.US));
+    }
+
+    /**
+     * Test that {@link WifiManager#getCurrentNetwork()} returns a Network obeject consistent
+     * with {@link ConnectivityManager#registerNetworkCallback} when connected to a Wifi network,
+     * and returns null when not connected.
+     */
+    public void testGetCurrentNetwork() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+
+        // wait for Wifi to be connected
+        PollingCheck.check(
+                "Wifi not connected - Please ensure there is a saved network in range of this "
+                        + "device",
+                20000,
+                () -> mWifiManager.getConnectionInfo().getNetworkId() != -1);
+
+        Network wifiCurrentNetwork = ShellIdentityUtils.invokeWithShellPermissions(
+                mWifiManager::getCurrentNetwork);
+        assertNotNull(wifiCurrentNetwork);
+
+        TestNetworkCallback networkCallbackListener = new TestNetworkCallback(mLock);
+        synchronized (mLock) {
+            try {
+                // File a request for wifi network.
+                mConnectivityManager.registerNetworkCallback(
+                        new NetworkRequest.Builder()
+                                .addTransportType(TRANSPORT_WIFI)
+                                .build(),
+                        networkCallbackListener);
+                // now wait for callback
+                mLock.wait(DURATION);
+            } catch (InterruptedException e) {
+            }
+        }
+        assertTrue(networkCallbackListener.onAvailableCalled);
+        Network connectivityCurrentNetwork = networkCallbackListener.network;
+        assertEquals(connectivityCurrentNetwork, wifiCurrentNetwork);
+
+        setWifiEnabled(false);
+        PollingCheck.check(
+                "Wifi not disconnected!",
+                20000,
+                () -> mWifiManager.getConnectionInfo().getNetworkId() == -1);
+
+        assertNull(ShellIdentityUtils.invokeWithShellPermissions(mWifiManager::getCurrentNetwork));
     }
 }
