@@ -17,6 +17,8 @@
 package com.android.cts.launcherapps.simpleapp;
 
 import android.app.Service;
+import android.content.ContentProviderClient;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -41,6 +43,8 @@ public class SimpleService4 extends Service {
     private static final String EXTRA_ACTION = "action";
     private static final String EXTRA_MESSENGER = "messenger";
     private static final String EXTRA_PROCESS_NAME = "process";
+    private static final String STUB_PROVIDER_AUTHORITY =
+            "com.android.cts.launcherapps.simpleapp.provider";
 
     private static final int ACTION_NONE = 0;
     private static final int ACTION_FINISH = 1;
@@ -48,11 +52,16 @@ public class SimpleService4 extends Service {
     private static final int ACTION_ANR = 3;
     private static final int ACTION_NATIVE_CRASH = 4;
     private static final int ACTION_KILL = 5;
-    private static final int EXIT_CODE = 123;
+    private static final int ACTION_ACQUIRE_STABLE_PROVIDER = 6;
+    private static final int ACTION_KILL_PROVIDER = 7;
     private static final int CRASH_SIGNAL = OsConstants.SIGSEGV;
+
+    static final String METHOD_EXIT = "exit";
+    static final int EXIT_CODE = 123;
 
     private static final int CMD_PID = 1;
     private Handler mHandler;
+    private ContentProviderClient mProviderClient;
 
     @Override
     public void onCreate() {
@@ -113,6 +122,17 @@ public class SimpleService4 extends Service {
                 case ACTION_KILL:
                     Process.sendSignal(Process.myPid(), OsConstants.SIGKILL);
                     break; // Shoudln't reachable
+                case ACTION_ACQUIRE_STABLE_PROVIDER:
+                    ContentResolver cr = getContentResolver();
+                    mProviderClient = cr.acquireContentProviderClient(
+                            STUB_PROVIDER_AUTHORITY);
+                    break;
+                case ACTION_KILL_PROVIDER:
+                    try {
+                        mProviderClient.call(METHOD_EXIT, null, null);
+                    } catch (RemoteException e) {
+                    }
+                    break;
                 case ACTION_NONE:
                 default:
                     break;
