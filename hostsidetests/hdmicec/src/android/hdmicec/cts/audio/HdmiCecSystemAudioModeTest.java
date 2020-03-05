@@ -179,7 +179,19 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
         assertWithMessage("Device not muted").that(reportedVolume).isGreaterThan(127);
     }
 
-    private void lookForDirectlyAddressedSetSystemAudioModeOnToTv() throws Exception {
+    private void initateSystemAudioModeFromTuner() throws Exception {
+        getDevice().reboot();
+        hdmiCecClient.sendCecMessage(CecDevice.TUNER_1, AUDIO_DEVICE,
+                CecMessage.SYSTEM_AUDIO_MODE_REQUEST,
+                hdmiCecClient.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS,
+                        HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH));
+        handleSetSystemAudioModeOnToTv();
+    }
+
+    private void handleSetSystemAudioModeOnToTv() throws Exception {
+        hdmiCecClient.checkExpectedOutput(CecMessage.REQUEST_ACTIVE_SOURCE);
+        hdmiCecClient.sendCecMessage(CecDevice.TV, CecDevice.BROADCAST, CecMessage.ACTIVE_SOURCE,
+                hdmiCecClient.formatParams("2000"));
         String message = hdmiCecClient.checkExpectedOutput(CecDevice.TV,
                 CecMessage.SET_SYSTEM_AUDIO_MODE);
         assertThat(hdmiCecClient.getParamsFromMessage(message)).isEqualTo(ON);
@@ -193,10 +205,7 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
         hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecMessage.INITIATE_ARC);
         hdmiCecClient.sendCecMessage(CecDevice.TV, CecDevice.AUDIO_SYSTEM,
                 CecMessage.ARC_INITIATED);
-        hdmiCecClient.checkExpectedOutput(CecMessage.REQUEST_ACTIVE_SOURCE);
-        hdmiCecClient.sendCecMessage(CecDevice.TV, CecDevice.BROADCAST, CecMessage.ACTIVE_SOURCE,
-                hdmiCecClient.formatParams("2000"));
-        lookForDirectlyAddressedSetSystemAudioModeOnToTv();
+        handleSetSystemAudioModeOnToTv();
     }
 
     @After
@@ -412,6 +421,22 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
     @Test
     public void cect_11_2_15_18_SystemAudioModeWithFeatureAbortWithinTime() throws Exception {
         initiateSystemAudioModeFromDut();
+        hdmiCecClient.sendCecMessage(CecDevice.TV, AUDIO_DEVICE, CecMessage.FEATURE_ABORT,
+                hdmiCecClient.formatParams(CecMessage.SET_SYSTEM_AUDIO_MODE + "04"));
+        hdmiCecClient.checkOutputDoesNotContainMessage(CecDevice.BROADCAST,
+                CecMessage.SET_SYSTEM_AUDIO_MODE);
+    }
+
+    /**
+     * Test 11.2.15-19
+     * Tests that the device doesn't broadcast <Set System Audio Mode>
+     * messages if TV responds with a <Feature Abort> message to directly addressed
+     * <Set System Audio Mode> message within the required maximum response time of 1 second.
+     * The <Set System Audio Mode> message should be initiated from logical address 3.
+     */
+    @Test
+    public void cect_11_2_15_19_SystemAudioModeWithFeatureAbortWithinTime() throws Exception {
+        initateSystemAudioModeFromTuner();
         hdmiCecClient.sendCecMessage(CecDevice.TV, AUDIO_DEVICE, CecMessage.FEATURE_ABORT,
                 hdmiCecClient.formatParams(CecMessage.SET_SYSTEM_AUDIO_MODE + "04"));
         hdmiCecClient.checkOutputDoesNotContainMessage(CecDevice.BROADCAST,
