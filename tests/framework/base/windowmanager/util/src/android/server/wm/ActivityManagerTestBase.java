@@ -83,6 +83,7 @@ import static android.server.wm.app.Components.BroadcastReceiverActivity.EXTRA_D
 import static android.server.wm.app.Components.BroadcastReceiverActivity.EXTRA_FINISH_BROADCAST;
 import static android.server.wm.app.Components.BroadcastReceiverActivity.EXTRA_MOVE_BROADCAST_TO_BACK;
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
+import static android.server.wm.app.Components.LaunchingActivity.KEY_FINISH_BEFORE_LAUNCH;
 import static android.server.wm.app.Components.PipActivity.ACTION_EXPAND_PIP;
 import static android.server.wm.app.Components.PipActivity.ACTION_SET_REQUESTED_ORIENTATION;
 import static android.server.wm.app.Components.PipActivity.EXTRA_PIP_ORIENTATION;
@@ -1919,6 +1920,7 @@ public abstract class ActivityManagerTestBase {
         private boolean mMultipleTask;
         private boolean mAllowMultipleInstances = true;
         private boolean mLaunchTaskBehind;
+        private boolean mFinishBeforeLaunch;
         private int mDisplayId = INVALID_DISPLAY;
         private int mWindowingMode = -1;
         private int mActivityType = ACTIVITY_TYPE_UNDEFINED;
@@ -1985,6 +1987,11 @@ public abstract class ActivityManagerTestBase {
 
         public LaunchActivityBuilder setUseApplicationContext(boolean useApplicationContext) {
             mUseApplicationContext = useApplicationContext;
+            return this;
+        }
+
+        public LaunchActivityBuilder setFinishBeforeLaunch(boolean finishBeforeLaunch) {
+            mFinishBeforeLaunch = finishBeforeLaunch;
             return this;
         }
 
@@ -2161,6 +2168,9 @@ public abstract class ActivityManagerTestBase {
             }
             if (mReorderToFront) {
                 commandBuilder.append(" --ez " + KEY_REORDER_TO_FRONT + " true");
+            }
+            if (mFinishBeforeLaunch) {
+                commandBuilder.append(" --ez " + KEY_FINISH_BEFORE_LAUNCH + " true");
             }
             if (mDisplayId != INVALID_DISPLAY) {
                 commandBuilder.append(" --ei " + KEY_DISPLAY_ID + " ").append(mDisplayId);
