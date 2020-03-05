@@ -16,6 +16,8 @@
 
 package android.hdmicec.cts.audio;
 
+import static org.junit.Assume.assumeNoException;
+
 import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.HdmiCecClientWrapper;
@@ -35,6 +37,16 @@ public final class HdmiCecAudioReturnChannelControlTest extends BaseHostJUnit4Te
 
     @Rule
     public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(AUDIO_DEVICE, this);
+
+    private void checkArcIsInitiated(){
+        try {
+            hdmiCecClient.sendCecMessage(CecDevice.TV, AUDIO_DEVICE,
+                    CecMessage.REQUEST_ARC_INITIATION);
+            hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecMessage.INITIATE_ARC);
+        } catch(Exception e) {
+            assumeNoException(e);
+        }
+    }
 
     /**
      * Test 11.2.17-1
@@ -66,5 +78,22 @@ public final class HdmiCecAudioReturnChannelControlTest extends BaseHostJUnit4Te
         hdmiCecClient.sendCecMessage(CecDevice.TV, AUDIO_DEVICE,
                 CecMessage.REQUEST_ARC_INITIATION);
         hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecMessage.INITIATE_ARC);
+    }
+
+    /**
+     * Test 11.2.17-4
+     * Tests that the device sends a directly addressed <Terminate ARC> message
+     * when it is requested to terminate ARC.
+     */
+    @Test
+    public void cect_11_2_17_4_RequestToTerminateArc() throws Exception {
+        checkArcIsInitiated();
+        hdmiCecClient.sendCecMessage(CecDevice.TV, CecDevice.BROADCAST,
+                CecMessage.REPORT_PHYSICAL_ADDRESS,
+                hdmiCecClient.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS,
+                        HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH));
+        hdmiCecClient.sendCecMessage(CecDevice.TV, AUDIO_DEVICE,
+                CecMessage.REQUEST_ARC_TERMINATION);
+        hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecMessage.TERMINATE_ARC);
     }
 }
