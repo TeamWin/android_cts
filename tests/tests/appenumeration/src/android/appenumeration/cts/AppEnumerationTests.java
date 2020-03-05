@@ -16,6 +16,37 @@
 
 package android.appenumeration.cts;
 
+import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_PACKAGES;
+import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGE_INFO;
+import static android.appenumeration.cts.Constants.ACTION_MANIFEST_ACTIVITY;
+import static android.appenumeration.cts.Constants.ACTION_MANIFEST_PROVIDER;
+import static android.appenumeration.cts.Constants.ACTION_MANIFEST_SERVICE;
+import static android.appenumeration.cts.Constants.ACTION_QUERY_ACTIVITIES;
+import static android.appenumeration.cts.Constants.ACTION_QUERY_PROVIDERS;
+import static android.appenumeration.cts.Constants.ACTION_QUERY_SERVICES;
+import static android.appenumeration.cts.Constants.ACTION_START_DIRECTLY;
+import static android.appenumeration.cts.Constants.ACTION_START_FOR_RESULT;
+import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_DUMMY_ACTIVITY;
+import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_TEST;
+import static android.appenumeration.cts.Constants.ALL_QUERIES_TARGETING_Q_PACKAGES;
+import static android.appenumeration.cts.Constants.EXTRA_ERROR;
+import static android.appenumeration.cts.Constants.EXTRA_FLAGS;
+import static android.appenumeration.cts.Constants.EXTRA_REMOTE_CALLBACK;
+import static android.appenumeration.cts.Constants.QUERIES_ACTIVITY_ACTION;
+import static android.appenumeration.cts.Constants.QUERIES_NOTHING;
+import static android.appenumeration.cts.Constants.QUERIES_NOTHING_PERM;
+import static android.appenumeration.cts.Constants.QUERIES_NOTHING_Q;
+import static android.appenumeration.cts.Constants.QUERIES_NOTHING_SHARED_USER;
+import static android.appenumeration.cts.Constants.QUERIES_PACKAGE;
+import static android.appenumeration.cts.Constants.QUERIES_PROVIDER_AUTH;
+import static android.appenumeration.cts.Constants.QUERIES_SERVICE_ACTION;
+import static android.appenumeration.cts.Constants.QUERIES_UNEXPORTED_ACTIVITY_ACTION;
+import static android.appenumeration.cts.Constants.QUERIES_UNEXPORTED_PROVIDER_AUTH;
+import static android.appenumeration.cts.Constants.QUERIES_UNEXPORTED_SERVICE_ACTION;
+import static android.appenumeration.cts.Constants.TARGET_FILTERS;
+import static android.appenumeration.cts.Constants.TARGET_FORCEQUERYABLE;
+import static android.appenumeration.cts.Constants.TARGET_NO_API;
+import static android.appenumeration.cts.Constants.TARGET_SHARED_USER;
 import static android.content.pm.PackageManager.MATCH_SYSTEM_ONLY;
 
 import static org.hamcrest.Matchers.greaterThan;
@@ -43,7 +74,6 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SystemUtil;
 
-import org.hamcrest.Matchers;
 import org.hamcrest.core.IsNull;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -62,57 +92,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @RunWith(AndroidJUnit4.class)
 public class AppEnumerationTests {
-
-    private static final String PKG_BASE = "android.appenumeration.";
-
-    /** A package with no published API and so isn't queryable by anything but package name */
-    private static final String TARGET_NO_API = PKG_BASE + "noapi";
-    /** A package that declares itself force queryable, making it visible to all other packages */
-    private static final String TARGET_FORCEQUERYABLE = PKG_BASE + "forcequeryable";
-    /** A package that exposes itself via various intent filters (activities, services, etc.) */
-    private static final String TARGET_FILTERS = PKG_BASE + "filters";
-    /** A package that exposes nothing, but is part of a shared user */
-    private static final String TARGET_SHARED_USER = PKG_BASE + "noapi.shareduid";
-
-    /** A package that queries nothing, but is part of a shared user */
-    private static final String QUERIES_NOTHING_SHARED_USER =
-            PKG_BASE + "queries.nothing.shareduid";
-    /** A package that has no queries tag or permission to query any specific packages */
-    private static final String QUERIES_NOTHING = PKG_BASE + "queries.nothing";
-    /** A package that has no queries tag or permissions but targets Q */
-    private static final String QUERIES_NOTHING_Q = PKG_BASE + "queries.nothing.q";
-    /** A package that has no queries but gets the QUERY_ALL_PACKAGES permission */
-    private static final String QUERIES_NOTHING_PERM = PKG_BASE + "queries.nothing.haspermission";
-    /** A package that queries for the action in {@link #TARGET_FILTERS} activity filter */
-    private static final String QUERIES_ACTIVITY_ACTION = PKG_BASE + "queries.activity.action";
-    /** A package that queries for the action in {@link #TARGET_FILTERS} service filter */
-    private static final String QUERIES_SERVICE_ACTION = PKG_BASE + "queries.service.action";
-    /** A package that queries for the authority in {@link #TARGET_FILTERS} provider */
-    private static final String QUERIES_PROVIDER_AUTH = PKG_BASE + "queries.provider.authority";
-    /** Queries for the unexported action in {@link #TARGET_FILTERS} activity filter */
-    private static final String QUERIES_UNEXPORTED_ACTIVITY_ACTION =
-            PKG_BASE + "queries.activity.action.unexported";
-    /** Queries for the unexported action in {@link #TARGET_FILTERS} service filter */
-    private static final String QUERIES_UNEXPORTED_SERVICE_ACTION =
-            PKG_BASE + "queries.service.action.unexported";
-    /** Queries for the unexported authority in {@link #TARGET_FILTERS} provider */
-    private static final String QUERIES_UNEXPORTED_PROVIDER_AUTH =
-            PKG_BASE + "queries.provider.authority.unexported";
-    /** A package that queries for {@link #TARGET_NO_API} package */
-    private static final String QUERIES_PACKAGE = PKG_BASE + "queries.pkg";
-
-    private static final String[] ALL_QUERIES_TARGETING_Q_PACKAGES = {
-            QUERIES_NOTHING,
-            QUERIES_NOTHING_PERM,
-            QUERIES_ACTIVITY_ACTION,
-            QUERIES_SERVICE_ACTION,
-            QUERIES_PROVIDER_AUTH,
-            QUERIES_UNEXPORTED_ACTIVITY_ACTION,
-            QUERIES_UNEXPORTED_SERVICE_ACTION,
-            QUERIES_UNEXPORTED_PROVIDER_AUTH,
-            QUERIES_PACKAGE,
-            QUERIES_NOTHING_SHARED_USER
-    };
 
     private static Handler sResponseHandler;
     private static HandlerThread sResponseThread;
@@ -230,31 +209,31 @@ public class AppEnumerationTests {
     @Test
     public void queriesNothing_cannotSeeFilters() throws Exception {
         assertNotQueryable(QUERIES_NOTHING, TARGET_FILTERS,
-                "android.appenumeration.action.ACTIVITY", this::queryIntentActivities);
+                ACTION_MANIFEST_ACTIVITY, this::queryIntentActivities);
         assertNotQueryable(QUERIES_NOTHING, TARGET_FILTERS,
-                "android.appenumeration.action.SERVICE", this::queryIntentServices);
+                ACTION_MANIFEST_SERVICE, this::queryIntentServices);
         assertNotQueryable(QUERIES_NOTHING, TARGET_FILTERS,
-                "android.appenumeration.action.PROVIDER", this::queryIntentProviders);
+                ACTION_MANIFEST_PROVIDER, this::queryIntentProviders);
     }
 
     @Test
     public void queriesActivityAction_canSeeFilters() throws Exception {
         assertQueryable(QUERIES_ACTIVITY_ACTION, TARGET_FILTERS,
-                "android.appenumeration.action.ACTIVITY", this::queryIntentActivities);
+                ACTION_MANIFEST_ACTIVITY, this::queryIntentActivities);
         assertQueryable(QUERIES_SERVICE_ACTION, TARGET_FILTERS,
-                "android.appenumeration.action.SERVICE", this::queryIntentServices);
+                ACTION_MANIFEST_SERVICE, this::queryIntentServices);
         assertQueryable(QUERIES_PROVIDER_AUTH, TARGET_FILTERS,
-                "android.appenumeration.action.PROVIDER", this::queryIntentProviders);
+                ACTION_MANIFEST_PROVIDER, this::queryIntentProviders);
     }
 
     @Test
     public void queriesNothingHasPermission_canSeeFilters() throws Exception {
         assertQueryable(QUERIES_NOTHING_PERM, TARGET_FILTERS,
-                "android.appenumeration.action.ACTIVITY", this::queryIntentActivities);
+                ACTION_MANIFEST_ACTIVITY, this::queryIntentActivities);
         assertQueryable(QUERIES_NOTHING_PERM, TARGET_FILTERS,
-                "android.appenumeration.action.SERVICE", this::queryIntentServices);
+                ACTION_MANIFEST_SERVICE, this::queryIntentServices);
         assertQueryable(QUERIES_NOTHING_PERM, TARGET_FILTERS,
-                "android.appenumeration.action.PROVIDER", this::queryIntentProviders);
+                ACTION_MANIFEST_PROVIDER, this::queryIntentProviders);
     }
 
     @Test
@@ -391,63 +370,58 @@ public class AppEnumerationTests {
     private PackageInfo getPackageInfo(String sourcePackageName, String targetPackageName)
             throws Exception {
         Bundle response = sendCommand(sourcePackageName, targetPackageName,
-                null /*queryIntent*/, PKG_BASE + "cts.action.GET_PACKAGE_INFO");
+                null /*queryIntent*/, ACTION_GET_PACKAGE_INFO);
         return response.getParcelable(Intent.EXTRA_RETURN_RESULT);
     }
 
     private PackageInfo startForResult(String sourcePackageName, String targetPackageName)
             throws Exception {
         Bundle response = sendCommand(sourcePackageName, targetPackageName,
-                null /*queryIntent*/, PKG_BASE + "cts.action.START_FOR_RESULT");
+                null /*queryIntent*/, ACTION_START_FOR_RESULT);
         return response.getParcelable(Intent.EXTRA_RETURN_RESULT);
     }
 
     private String[] queryIntentActivities(String sourcePackageName, Intent queryIntent)
             throws Exception {
-        Bundle response = sendCommand(sourcePackageName, null, queryIntent, PKG_BASE +
-                        "cts.action.QUERY_INTENT_ACTIVITIES");
+        Bundle response = sendCommand(sourcePackageName, null, queryIntent, ACTION_QUERY_ACTIVITIES);
         return response.getStringArray(Intent.EXTRA_RETURN_RESULT);
     }
 
     private String[] queryIntentServices(String sourcePackageName, Intent queryIntent)
             throws Exception {
-        Bundle response = sendCommand(sourcePackageName, null, queryIntent, PKG_BASE +
-                "cts.action.QUERY_INTENT_SERVICES");
+        Bundle response = sendCommand(sourcePackageName, null, queryIntent, ACTION_QUERY_SERVICES);
         return response.getStringArray(Intent.EXTRA_RETURN_RESULT);
     }
 
     private String[] queryIntentProviders(String sourcePackageName, Intent queryIntent)
             throws Exception {
-        Bundle response = sendCommand(sourcePackageName, null, queryIntent, PKG_BASE +
-                "cts.action.QUERY_INTENT_PROVIDERS");
+        Bundle response = sendCommand(sourcePackageName, null, queryIntent, ACTION_QUERY_PROVIDERS);
         return response.getStringArray(Intent.EXTRA_RETURN_RESULT);
     }
 
     private String[] getInstalledPackages(String sourcePackageNames, int flags) throws Exception {
-        Bundle response = sendCommand(sourcePackageNames, null, new Intent().putExtra("flags", flags),
-                "android.appenumeration.cts.action.GET_INSTALLED_PACKAGES");
+        Bundle response = sendCommand(sourcePackageNames, null, new Intent().putExtra(EXTRA_FLAGS,
+                flags), ACTION_GET_INSTALLED_PACKAGES);
         return response.getStringArray(Intent.EXTRA_RETURN_RESULT);
     }
 
     private void startExplicitIntent(String sourcePackage, String targetPackage) throws Exception {
         sendCommand(sourcePackage, targetPackage,
                 new Intent().setComponent(new ComponentName(targetPackage,
-                        "android.appenumeration.testapp.DummyActivity")),
-                "android.appenumeration.cts.action.START_DIRECTLY");
+                        ACTIVITY_CLASS_DUMMY_ACTIVITY)),
+                ACTION_START_DIRECTLY);
     }
 
     private void startImplicitIntent(String sourcePackage) throws Exception {
-        sendCommand(sourcePackage, TARGET_FILTERS,
-                new Intent("android.appenumeration.action.ACTIVITY"),
-                "android.appenumeration.cts.action.START_DIRECTLY");
+        sendCommand(sourcePackage, TARGET_FILTERS, new Intent(ACTION_MANIFEST_ACTIVITY),
+                ACTION_START_DIRECTLY);
     }
 
     private Bundle sendCommand(String sourcePackageName, @Nullable String targetPackageName,
             @Nullable Intent queryIntent, String action)
             throws Exception {
         final Intent intent = new Intent(action)
-                .setComponent(new ComponentName(
-                        sourcePackageName, PKG_BASE + "cts.query.TestActivity"))
+                .setComponent(new ComponentName(sourcePackageName, ACTIVITY_CLASS_TEST))
                 // data uri unique to each activity start to ensure actual launch and not just
                 // redisplay
                 .setData(Uri.parse("test://" + name.getMethodName()
@@ -469,15 +443,15 @@ public class AppEnumerationTests {
                     latch.open();
                 },
                 sResponseHandler);
-        intent.putExtra("remoteCallback", callback);
+        intent.putExtra(EXTRA_REMOTE_CALLBACK, callback);
         InstrumentationRegistry.getInstrumentation().getContext().startActivity(intent);
         if (!latch.block(TimeUnit.SECONDS.toMillis(10))) {
             throw new TimeoutException(
                     "Latch timed out while awiating a response from " + sourcePackageName);
         }
         final Bundle bundle = resultReference.get();
-        if (bundle != null && bundle.containsKey("error")) {
-            throw (Exception) Objects.requireNonNull(bundle.getSerializable("error"));
+        if (bundle != null && bundle.containsKey(EXTRA_ERROR)) {
+            throw (Exception) Objects.requireNonNull(bundle.getSerializable(EXTRA_ERROR));
         }
         return bundle;
     }
