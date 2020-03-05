@@ -31,7 +31,7 @@ CONVERGED_3A = [[2, 2, 2], [2, 5, 2], [2, 6, 2]]  # [AE, AF, AWB]
 #             3: PASSIVE_UNFOCUSED, 4: ACTIVE_SCAN, 5: FOCUS_LOCKED,
 #             6: NOT_FOCUSED_LOCKED}
 # AWB_STATES: {0: INACTIVE, 1: SEARCHING, 2: CONVERGED, 3: LOCKED}
-DELAY_CAPTURE = 0.55  # delay in first capture to sync events (sec)
+DELAY_CAPTURE = 1.5  # delay in first capture to sync events (sec)
 DELAY_DISPLAY = 3.0  # time when display turns OFF (sec)
 FPS = 30
 FRAME_SHIFT = 5.0  # number of frames to shift to try and find scene change
@@ -56,17 +56,16 @@ def mask_3a_settling_frames(cap_data):
             converged_frame = i
             break
     print 'Frames index where 3A converges: %d' % converged_frame
-    assert converged_frame != -1, '3A does not converge'
     return converged_frame
 
 
 def determine_if_scene_changed(cap_data, converged_frame):
     scene_changed = False
     bright_changed = False
-    settled_frame_brightness = cap_data[converged_frame]['avg']
+    start_frame_brightness = cap_data[0]['avg']
     for i in range(converged_frame, len(cap_data)):
         if cap_data[i]['avg'] <= (
-                settled_frame_brightness * (1.0 - BRIGHT_CHANGE_TOL)):
+                start_frame_brightness * (1.0 - BRIGHT_CHANGE_TOL)):
             bright_changed = True
         if cap_data[i]['flag'] == 1:
             scene_changed = True
@@ -75,7 +74,6 @@ def determine_if_scene_changed(cap_data, converged_frame):
 
 def toggle_screen(chart_host_id, state, delay):
     t0 = time.time()
-    print 'tablet event start'
     screen_id_arg = ('screen=%s' % chart_host_id)
     state_id_arg = 'state=%s' % state
     delay_arg = 'delay=%.3f' % delay
@@ -88,49 +86,48 @@ def toggle_screen(chart_host_id, state, delay):
     print 'tablet event %s: %.3f' % (state, t)
 
 
-def capture_frames(delay, burst):
+def capture_frames(cam, delay, burst):
     """Capture frames."""
     cap_data_list = []
-    with its.device.ItsSession() as cam:
-        req = its.objects.auto_capture_request()
-        req['android.control.afMode'] = CONTINUOUS_PICTURE_MODE
-        fmt = {'format': 'yuv', 'width': W, 'height': H}
-        t0 = time.time()
-        time.sleep(delay)
-        print 'cap event start:', time.time() - t0
-        caps = cam.do_capture([req]*NUM_FRAMES, fmt)
-        print 'cap event stop:', time.time() - t0
-        # extract frame metadata and frame
-        for i, cap in enumerate(caps):
-            cap_data = {}
-            md = cap['metadata']
-            exp = md['android.sensor.exposureTime']
-            iso = md['android.sensor.sensitivity']
-            fd = md['android.lens.focalLength']
-            ae_state = md['android.control.aeState']
-            af_state = md['android.control.afState']
-            awb_state = md['android.control.awbState']
-            fd_str = 'infinity'
-            if fd != 0.0:
-                fd_str = str(round(1.0E2/fd, 2)) + 'cm'
-            scene_change_flag = md['android.control.afSceneChange']
-            assert scene_change_flag in [0, 1], 'afSceneChange not in [0,1]'
-            img = its.image.convert_capture_to_rgb_image(cap)
-            its.image.write_image(img, '%s_%d_%d.jpg' % (NAME, burst+1, i))
-            tile = its.image.get_image_patch(img, 0.45, 0.45, 0.1, 0.1)
-            g = its.image.compute_image_means(tile)[1]
-            print '%d, iso: %d, exp: %.2fms, fd: %s, avg: %.3f' % (
-                    i, iso, exp*1E-6, fd_str, g),
-            print '[ae,af,awb]: [%d,%d,%d], change: %d' % (
-                    ae_state, af_state, awb_state, scene_change_flag)
-            cap_data['exp'] = exp
-            cap_data['iso'] = iso
-            cap_data['fd'] = fd
-            cap_data['3a_state'] = [ae_state, af_state, awb_state]
-            cap_data['avg'] = g
-            cap_data['flag'] = scene_change_flag
-            cap_data_list.append(cap_data)
-        return cap_data_list
+    req = its.objects.auto_capture_request()
+    req['android.control.afMode'] = CONTINUOUS_PICTURE_MODE
+    fmt = {'format': 'yuv', 'width': W, 'height': H}
+    t0 = time.time()
+    time.sleep(delay)
+    print 'cap event start:', time.time() - t0
+    caps = cam.do_capture([req]*NUM_FRAMES, fmt)
+    print 'cap event stop:', time.time() - t0
+    # extract frame metadata and frame
+    for i, cap in enumerate(caps):
+        cap_data = {}
+        md = cap['metadata']
+        exp = md['android.sensor.exposureTime']
+        iso = md['android.sensor.sensitivity']
+        fd = md['android.lens.focalLength']
+        ae_state = md['android.control.aeState']
+        af_state = md['android.control.afState']
+        awb_state = md['android.control.awbState']
+        fd_str = 'infinity'
+        if fd != 0.0:
+            fd_str = str(round(1.0E2/fd, 2)) + 'cm'
+        scene_change_flag = md['android.control.afSceneChange']
+        assert scene_change_flag in [0, 1], 'afSceneChange not in [0,1]'
+        img = its.image.convert_capture_to_rgb_image(cap)
+        its.image.write_image(img, '%s_%d_%d.jpg' % (NAME, burst, i))
+        tile = its.image.get_image_patch(img, 0.45, 0.45, 0.1, 0.1)
+        g = its.image.compute_image_means(tile)[1]
+        print '%d, iso: %d, exp: %.2fms, fd: %s, avg: %.3f' % (
+                i, iso, exp*1E-6, fd_str, g),
+        print '[ae,af,awb]: [%d,%d,%d], change: %d' % (
+                ae_state, af_state, awb_state, scene_change_flag)
+        cap_data['exp'] = exp
+        cap_data['iso'] = iso
+        cap_data['fd'] = fd
+        cap_data['3a_state'] = [ae_state, af_state, awb_state]
+        cap_data['avg'] = g
+        cap_data['flag'] = scene_change_flag
+        cap_data_list.append(cap_data)
+    return cap_data_list
 
 
 def main():
@@ -148,52 +145,72 @@ def main():
                              its.caps.read_3a(props))
         cam.do_3a()
 
-    # do captures with scene change
-    chart_host_id = get_cmd_line_args()
-    cap_delay = DELAY_CAPTURE
-    scene_delay = DELAY_DISPLAY
-    for burst in range(NUM_BURSTS):
-        if chart_host_id:
-            print '\nToggling tablet. Scene change at %.3fs.' % scene_delay
-            multiprocessing.Process(name='p1', target=toggle_screen,
-                                    args=(chart_host_id, 'OFF',
-                                          scene_delay,)).start()
-        else:
-            print '\nWave hand in front of camera to create scene change.'
-        cap_data = capture_frames(cap_delay, burst+1)
-
-        # find frame where 3A converges
-        converged_frame = mask_3a_settling_frames(cap_data)
-
-        # turn tablet back on to return to baseline scene state
-        if chart_host_id:
-            toggle_screen(chart_host_id, 'ON', 0)
-
-        # determine if brightness changed and/or scene change flag asserted
-        scene_changed, bright_changed = determine_if_scene_changed(
-                cap_data, converged_frame)
-        if not scene_changed:
-            if bright_changed:
-                print ' No scene change, but brightness change.'
-                scene_delay -= FRAME_SHIFT/FPS  # tablet-off earlier
+        # do captures with scene change
+        chart_host_id = get_cmd_line_args()
+        scene_delay = DELAY_DISPLAY
+        for burst in range(NUM_BURSTS):
+            print 'burst number: %d' % burst
+            # create scene change by turning off chart display & capture frames
+            if chart_host_id:
+                print '\nToggling tablet. Scene change at %.3fs.' % scene_delay
+                multiprocessing.Process(name='p1', target=toggle_screen,
+                                        args=(chart_host_id, 'OFF',
+                                              scene_delay,)).start()
             else:
-                print ' No scene change, no brightness change.'
-                if cap_data[NUM_FRAMES-1]['avg'] < 0.1:
-                    print ' Scene dark entire capture. Shift later.'
-                    scene_delay += FRAME_SHIFT/FPS  # tablet-off later
+                print '\nWave hand in front of camera to create scene change.'
+            cap_data = capture_frames(cam, DELAY_CAPTURE, burst)
+
+            # find frame where 3A converges
+            converged_frame = mask_3a_settling_frames(cap_data)
+
+            # turn tablet back on to return to baseline scene state
+            if chart_host_id:
+                toggle_screen(chart_host_id, 'ON', 0)
+
+            # determine if brightness changed and/or scene change flag asserted
+            scene_changed, bright_changed = determine_if_scene_changed(
+                    cap_data, converged_frame)
+
+            # handle different capture cases
+            if converged_frame > -1:  # 3A converges
+                if scene_changed:
+                    if bright_changed:
+                        print ' scene & brightness change on burst %d.' % burst
+                        sys.exit(0)
+                    else:
+                        msg = ' scene change, but no brightness change.'
+                        assert False, msg
+                else:  # shift scene change timing if no scene change
+                    scene_shift = FRAME_SHIFT / FPS
+                    if bright_changed:
+                        print ' No scene change, but brightness change.'
+                        print 'Shift %.3fs earlier' % scene_shift
+                        scene_delay -= scene_shift  # tablet-off earlier
+                    else:
+                        scene_shift = FRAME_SHIFT / FPS * NUM_BURSTS
+                        print ' No scene change, no brightness change.'
+                        if cap_data[NUM_FRAMES-1]['avg'] < 0.2:
+                            print ' Scene dark entire capture.',
+                            print 'Shift %.3fs later.' % scene_shift
+                            scene_delay += scene_shift  # tablet-off later
+                        else:
+                            print ' Scene light entire capture.',
+                            print 'Shift %.3fs earlier.' % scene_shift
+                            scene_delay -= scene_shift  # tablet-off earlier
+
+            else:  # 3A does not converge
+                if bright_changed:
+                    scene_shift = FRAME_SHIFT / FPS
+                    print ' 3A does not converge, but brightness change.',
+                    print 'Shift %.3fs later' % scene_shift
+                    scene_delay += scene_shift  # tablet-off earlier
                 else:
-                    print ' Scene light entire capture. Shift earlier.'
-                    scene_delay -= FRAME_SHIFT/FPS  # tablet-off earlier
-            print ' Retry with tablet turning OFF earlier.'
-        elif scene_changed and bright_changed:
-            print ' scene & brightness change on burst %d.' % (burst+1)
-            break
-        elif scene_changed and not bright_changed:
-            msg = ' scene change, but no brightness change.'
-            assert False, msg
-        if burst == NUM_BURSTS - 1:
-            msg = 'No scene change in %dx tries' % NUM_BURSTS
-            assert False, msg
+                    msg = ' 3A does not converge with no brightness change.'
+                    assert False, msg
+
+        # fail out if too many tries
+        msg = 'No scene change in %dx tries' % NUM_BURSTS
+        assert False, msg
 
 
 if __name__ == '__main__':
