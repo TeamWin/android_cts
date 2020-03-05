@@ -12,23 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test {
-    name: "CtsAppEnumerationTestCases",
-    defaults: ["cts_defaults"],
-    // Tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "vts",
-        "general-tests",
-    ],
-    static_libs: [
-        "ctstestrunner-axt",
-        "compatibility-device-util-axt",
-	    "androidx.test.ext.junit",
-        "hamcrest-library",
-	    "CtsAppEnumerationTestLib",
-    ],
-
+java_library {
+    name: "CtsAppEnumerationTestLib",
     srcs: ["src/**/*.java"],
-    sdk_version: "test_current",
 }
