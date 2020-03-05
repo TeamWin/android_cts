@@ -19,9 +19,11 @@ package com.android.cts.verifier.wifi.testcase;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
 import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
 
+import static com.android.cts.verifier.wifi.TestUtils.SCAN_RESULT_TYPE_OPEN;
+import static com.android.cts.verifier.wifi.TestUtils.SCAN_RESULT_TYPE_PSK;
+
 import android.annotation.IntDef;
 import android.annotation.NonNull;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.MacAddress;
@@ -37,6 +39,7 @@ import android.util.Pair;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.wifi.BaseTestCase;
 import com.android.cts.verifier.wifi.CallbackUtils;
+import com.android.cts.verifier.wifi.TestUtils;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -57,11 +60,13 @@ public class NetworkRequestTestCase extends BaseTestCase {
     public static final int NETWORK_SPECIFIER_SPECIFIC_SSID_BSSID = 0;
     public static final int NETWORK_SPECIFIER_PATTERN_SSID_BSSID = 1;
     public static final int NETWORK_SPECIFIER_UNAVAILABLE_SSID_BSSID = 2;
+    public static final int NETWORK_SPECIFIER_INVALID_CREDENTIAL = 3;
 
     @IntDef(prefix = { "NETWORK_SPECIFIER_" }, value = {
             NETWORK_SPECIFIER_SPECIFIC_SSID_BSSID,
             NETWORK_SPECIFIER_PATTERN_SSID_BSSID,
             NETWORK_SPECIFIER_UNAVAILABLE_SSID_BSSID,
+            NETWORK_SPECIFIER_INVALID_CREDENTIAL
     })
     @Retention(RetentionPolicy.SOURCE)
     public @interface NetworkSpecifierType{}
@@ -106,6 +111,16 @@ public class NetworkRequestTestCase extends BaseTestCase {
                 configBuilder.setSsid(UNAVAILABLE_SSID);
                 configBuilder.setBssid(bssid);
                 break;
+            case NETWORK_SPECIFIER_INVALID_CREDENTIAL:
+                configBuilder.setSsid(scanResult.SSID);
+                configBuilder.setBssid(MacAddress.fromString(scanResult.BSSID));
+                // Use a random password to simulate connection failure.
+                if (TestUtils.isScanResultForWpa2Network(scanResult)) {
+                    configBuilder.setWpa2Passphrase(mTestUtils.generateRandomPassphrase());
+                } else if (TestUtils.isScanResultForWpa3Network(scanResult)) {
+                    configBuilder.setWpa3Passphrase(mTestUtils.generateRandomPassphrase());
+                }
+                break;
             default:
                 throw new IllegalStateException("Unknown specifier type specifier");
         }
@@ -121,26 +136,28 @@ public class NetworkRequestTestCase extends BaseTestCase {
 
     @Override
     protected boolean executeTest() throws InterruptedException {
-        // Step 1: Scan and find any open network around.
+        // Step: Scan and find any open network around.
         if (DBG) Log.v(TAG, "Scan and find an open network");
-        ScanResult openNetwork = mTestUtils.startScanAndFindAnyOpenNetworkInResults();
-        if (openNetwork == null) {
+        ScanResult testNetwork = mTestUtils.startScanAndFindAnyMatchingNetworkInResults(
+                mNetworkSpecifierType == NETWORK_SPECIFIER_INVALID_CREDENTIAL
+                        ? SCAN_RESULT_TYPE_PSK : SCAN_RESULT_TYPE_OPEN);
+        if (testNetwork == null) {
             setFailureReason(mContext.getString(R.string.wifi_status_scan_failure));
             return false;
         }
 
-        // Step 2: Create a specifier for the chosen open network depending on the type of test.
-        NetworkSpecifier wns = createNetworkSpecifier(openNetwork);
+        // Step: Create a specifier for the chosen open network depending on the type of test.
+        NetworkSpecifier wns = createNetworkSpecifier(testNetwork);
         if (wns == null) return false;
 
-        // Step 3: Create a network request with specifier.
+        // Step: Create a network request with specifier.
         mNetworkRequest = new NetworkRequest.Builder()
                 .addTransportType(TRANSPORT_WIFI)
                 .setNetworkSpecifier(wns)
                 .removeCapability(NET_CAPABILITY_INTERNET)
                 .build();
 
-        // Step 4: Send the network request
+        // Step: Send the network request
         if (DBG) Log.v(TAG, "Request network using " + mNetworkRequest);
         mNetworkCallback = new CallbackUtils.NetworkCallback(CALLBACK_TIMEOUT_MS);
         mListener.onTestMsgReceived(
@@ -148,10 +165,17 @@ public class NetworkRequestTestCase extends BaseTestCase {
         mConnectivityManager.requestNetwork(mNetworkRequest, mNetworkCallback,
                 NETWORK_REQUEST_TIMEOUT_MS);
 
-        // Step 5: Wait for the network available/unavailable callback.
-        if (mNetworkSpecifierType == NETWORK_SPECIFIER_UNAVAILABLE_SSID_BSSID) {
-            mListener.onTestMsgReceived(
-                    mContext.getString(R.string.wifi_status_network_wait_for_unavailable));
+        // Step: Wait for the network available/unavailable callback.
+        if (mNetworkSpecifierType == NETWORK_SPECIFIER_UNAVAILABLE_SSID_BSSID
+                || mNetworkSpecifierType == NETWORK_SPECIFIER_INVALID_CREDENTIAL) {
+            if (mNetworkSpecifierType == NETWORK_SPECIFIER_UNAVAILABLE_SSID_BSSID) {
+                mListener.onTestMsgReceived(
+                        mContext.getString(R.string.wifi_status_network_wait_for_unavailable));
+            } else {
+                mListener.onTestMsgReceived(
+                        mContext.getString(R.string
+                                .wifi_status_network_wait_for_unavailable_invalid_credential));
+            }
             if (DBG) Log.v(TAG, "Waiting for network unavailable callback");
             boolean cbStatusForUnavailable = mNetworkCallback.waitForUnavailable();
             if (!cbStatusForUnavailable) {
