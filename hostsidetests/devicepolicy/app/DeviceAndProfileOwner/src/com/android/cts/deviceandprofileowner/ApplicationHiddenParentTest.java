@@ -29,7 +29,9 @@ public class ApplicationHiddenParentTest extends BaseDeviceAdminTest {
     private PackageManager mPackageManager;
 
     private static final String SYSTEM_PACKAGE_TO_HIDE = "com.android.keychain";
-    private static final String NON_SYSTEM_PACKAGE_TO_HIDE = "com.android.cts.permissionapp";
+    private static final String NON_SYSTEM_NON_INSTALLED_PACKAGE = "com.android.cts.permissionapp";
+    private static final String NON_SYSTEM_INSTALLED_PACKAGE =
+            "com.android.cts.deviceandprofileowner";
 
     @Override
     protected void setUp() throws Exception {
@@ -71,15 +73,51 @@ public class ApplicationHiddenParentTest extends BaseDeviceAdminTest {
     public void testSetApplicationHidden_nonSystemPackage() {
         assertThrows(IllegalArgumentException.class, () -> {
             mParentDevicePolicyManager.setApplicationHidden(ADMIN_RECEIVER_COMPONENT,
-                    NON_SYSTEM_PACKAGE_TO_HIDE, true);
+                    NON_SYSTEM_NON_INSTALLED_PACKAGE, true);
             mParentDevicePolicyManager.isApplicationHidden(ADMIN_RECEIVER_COMPONENT,
-                    NON_SYSTEM_PACKAGE_TO_HIDE);
+                    NON_SYSTEM_NON_INSTALLED_PACKAGE);
         });
         assertThrows(IllegalArgumentException.class, () -> {
             mParentDevicePolicyManager.setApplicationHidden(ADMIN_RECEIVER_COMPONENT,
-                    NON_SYSTEM_PACKAGE_TO_HIDE, false);
+                    NON_SYSTEM_NON_INSTALLED_PACKAGE, false);
             mParentDevicePolicyManager.isApplicationHidden(ADMIN_RECEIVER_COMPONENT,
-                    NON_SYSTEM_PACKAGE_TO_HIDE);
+                    NON_SYSTEM_NON_INSTALLED_PACKAGE);
         });
     }
+
+    public void testSetApplicationHidden_nonSystemPackageStackTrace() {
+        StackTraceElement[] stackTrace1 = new StackTraceElement[0];
+        StackTraceElement[] stackTrace2 = new StackTraceElement[0];
+        String message1 = "";
+        String message2 = "";
+
+        // Scenario 1: Non-system non-installed package
+        try {
+            mParentDevicePolicyManager.setApplicationHidden(ADMIN_RECEIVER_COMPONENT,
+                    NON_SYSTEM_NON_INSTALLED_PACKAGE, true);
+        } catch (IllegalArgumentException e) {
+            stackTrace1 = e.getStackTrace();
+            message1 = e.getMessage();
+        }
+
+        // Scenario 2: Non-system installed package
+        try {
+            mParentDevicePolicyManager.setApplicationHidden(ADMIN_RECEIVER_COMPONENT,
+                    NON_SYSTEM_INSTALLED_PACKAGE, true);
+        } catch (IllegalArgumentException e) {
+            stackTrace2 = e.getStackTrace();
+            message2 = e.getMessage();
+        }
+
+        // Ensure the messages and stack traces of both scenarios are equal
+        assertThat(message1).isEqualTo(message2);
+        assertThat(stackTrace1.length).isEqualTo(stackTrace2.length);
+        for (int i = 0; i < stackTrace1.length; i++) {
+            if (stackTrace1[i].getClassName().equals(this.getClass().getName())) {
+                continue;
+            }
+            assertThat(stackTrace1[i].toString()).isEqualTo(stackTrace2[i].toString());
+        }
+    }
+
 }
