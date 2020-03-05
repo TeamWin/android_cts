@@ -2407,6 +2407,10 @@
                   android:label="@string/wifi_test_network_request_unavailable"
                   android:configChanges="keyboardHidden|orientation|screenSize" />
 
+        <activity android:name=".wifi.NetworkRequestInvalidCredentialNetworkSpecifierTestActivity"
+                  android:label="@string/wifi_test_network_request_invalid_credential"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
+
         <activity android:name=".wifi.NetworkSuggestionSsidTestActivity"
                   android:label="@string/wifi_test_network_suggestion_ssid"
                   android:configChanges="keyboardHidden|orientation|screenSize" />
@@ -2417,6 +2421,10 @@
 
         <activity android:name=".wifi.NetworkSuggestionSsidPostConnectTestActivity"
                   android:label="@string/wifi_test_network_suggestion_ssid_post_connect"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".wifi.NetworkSuggestionConnectionFailureTestActivity"
+                  android:label="@string/wifi_test_network_suggestion_connection_failure"
                   android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity android:name=".p2p.GoNegRequesterTestListActivity"
