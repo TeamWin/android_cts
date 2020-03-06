@@ -58,7 +58,7 @@ class RuntimeMessageCollectionTest {
             val start = System.currentTimeMillis()
             runWithShellPermissionIdentity {
                 appOpsManager.noteOp(AppOpsManager.OPSTR_READ_CONTACTS, appUid, APP_PKG,
-                        TEST_FEATURE_ID, MESSAGE)
+                        TEST_ATTRIBUTION_TAG, MESSAGE)
             }
             while (System.currentTimeMillis() - start < TIMEOUT_MILLIS) {
                 sleep(200)
@@ -68,7 +68,7 @@ class RuntimeMessageCollectionTest {
                     if (message != null && message.packageName.equals(APP_PKG)) {
                         assertThat(message.op).isEqualTo(AppOpsManager.OPSTR_READ_CONTACTS)
                         assertThat(message.uid).isEqualTo(appUid)
-                        assertThat(message.featureId).isEqualTo(TEST_FEATURE_ID)
+                        assertThat(message.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
                         assertThat(message.message).isEqualTo(MESSAGE)
                         assertThat(message.samplingStrategy)
                                 .isEqualTo(RUNTIME_APP_OP_ACCESS__SAMPLING_STRATEGY__RARELY_USED)

@@ -18,7 +18,7 @@ package android.app.appops.cts;
 
 interface IAppOpsUserClient {
     void noteSyncOp();
-    void noteSyncOpWithFeature(String featureId);
+    void noteSyncOpWithAttribution(String attributionTag);
     void callBackIntoService();
     void noteNonPermissionSyncOp();
     void noteSyncOpTwice();
@@ -30,7 +30,7 @@ interface IAppOpsUserClient {
     void noteSyncOpOtherUid();
     void noteSyncOpOtherUidNative();
     void noteAsyncOp();
-    void noteAsyncOpWithFeature(String featureId);
+    void noteAsyncOpWithAttribution(String attributionTag);
     void noteAsyncOpWithCustomMessage();
     void noteAsyncOpNative();
     void noteAsyncOpNativeWithCustomMessage();
