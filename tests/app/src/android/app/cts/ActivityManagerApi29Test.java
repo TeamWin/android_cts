@@ -17,6 +17,7 @@ package android.app.cts;
 
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_ALL;
+import static android.app.ActivityManager.PROCESS_CAPABILITY_FOREGROUND_LOCATION;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_NONE;
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.MODE_FOREGROUND;
@@ -38,6 +39,7 @@ import android.app.AppOpsManager.HistoricalOp;
 import android.app.AppOpsManager.HistoricalOps;
 import android.app.AppOpsManager.HistoricalOpsRequest;
 import android.app.Instrumentation;
+import android.app.cts.android.app.cts.tools.WaitForBroadcast;
 import android.app.cts.android.app.cts.tools.WatchUidRunner;
 import android.content.Context;
 import android.content.Intent;
@@ -46,7 +48,6 @@ import android.permission.cts.PermissionUtils;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
 
-import androidx.test.filters.Suppress;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -69,17 +70,27 @@ import java.util.concurrent.TimeUnit;
  * when the process is in background state.
  */
 @RunWith(AndroidJUnit4.class)
-@Suppress
+//@Suppress
 public class ActivityManagerApi29Test {
     private static final String PACKAGE_NAME = "android.app.cts.activitymanager.api29";
     private static final String SIMPLE_ACTIVITY = ".SimpleActivity";
+    private static final String ACTION_SIMPLE_ACTIVITY_START_RESULT =
+            "android.app.cts.activitymanager.api29.SimpleActivity.RESULT";
+    private static final String ACTION_SERVICE_START_RESULT =
+            "android.app.cts.activitymanager.api29.LocationForegroundService.RESULT";
     private static final String SERVICE_NAME = ".LocationForegroundService";
     private static final String PROPERTY_PERMISSIONS_HUB_ENABLED = "permissions_hub_enabled";
     private static final int WAITFOR_MSEC = 10000;
     private static final int NOTEOP_COUNT = 5;
-    private static Instrumentation sInstrumentation = InstrumentationRegistry.getInstrumentation();
-    private static Context sContext = sInstrumentation.getContext();
-    private static AppOpsManager sAppOps =
+
+    //TODO: remove this when development is done.
+    private static final int TEMP_PROCESS_CAPABILITY_FOREGROUND_LOCATION = 1 << 31;
+
+    private static final Instrumentation sInstrumentation =
+            InstrumentationRegistry.getInstrumentation();
+    private static final Context sContext = sInstrumentation.getContext();
+    private static final Context sTargetContext = sInstrumentation.getTargetContext();
+    private static final AppOpsManager sAppOps =
             (AppOpsManager) sContext.getSystemService(AppOpsManager.class);
     private static Intent sActivityIntent;
     private static Intent sServiceIntent = new Intent().setClassName(
@@ -142,21 +153,21 @@ public class ActivityManagerApi29Test {
         sActivityIntent = new Intent(Intent.ACTION_MAIN)
                 .setClassName(PACKAGE_NAME, PACKAGE_NAME + SIMPLE_ACTIVITY)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        sContext.startActivity(sActivityIntent);
+        sTargetContext.startActivity(sActivityIntent);
     }
 
     private void stopSimpleActivity() {
         sActivityIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 .putExtra("finish", true);
-        sContext.startActivity(sActivityIntent);
+        sTargetContext.startActivity(sActivityIntent);
     }
 
     private void startSimpleService() {
-        sContext.startForegroundService(sServiceIntent);
+        sTargetContext.startForegroundService(sServiceIntent);
     }
 
     private void stopSimpleService() {
-        sContext.stopService(sServiceIntent);
+        sTargetContext.stopService(sServiceIntent);
     }
 
     /**
@@ -198,7 +209,7 @@ public class ActivityManagerApi29Test {
         // Wait for state and capability change.
         // BG started FGS does not have location capability.
         mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE,
-                new Integer(PROCESS_CAPABILITY_NONE));
+                new Integer(TEMP_PROCESS_CAPABILITY_FOREGROUND_LOCATION));
 
         startSimpleActivity();
         mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP,
@@ -209,7 +220,7 @@ public class ActivityManagerApi29Test {
 
         stopSimpleActivity();
         mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE,
-                new Integer(PROCESS_CAPABILITY_NONE));
+                new Integer(TEMP_PROCESS_CAPABILITY_FOREGROUND_LOCATION));
 
         // AppOps location access should be denied.
         assertEquals(MODE_IGNORED, noteOp(OPSTR_COARSE_LOCATION));
@@ -231,23 +242,33 @@ public class ActivityManagerApi29Test {
      */
     @Test
     public void testAppOpsHistoricalOps() throws Exception {
-        startSimpleActivity();
-        startSimpleService();
-        // Wait for state and capability change.
-        mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP,
-                new Integer(PROCESS_CAPABILITY_ALL));
-
         runWithShellPermissionIdentity(
                 () ->  sAppOps.setHistoryParameters(AppOpsManager.HISTORICAL_MODE_ENABLED_ACTIVE,
                         1000, 10)
         );
+        WaitForBroadcast waiter = new WaitForBroadcast(sInstrumentation.getTargetContext());
+        waiter.prepare(ACTION_SIMPLE_ACTIVITY_START_RESULT);
+        startSimpleActivity();
+        mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP,
+                new Integer(PROCESS_CAPABILITY_ALL));
+        waiter.doWait(WAITFOR_MSEC);
+
+        waiter = new WaitForBroadcast(sInstrumentation.getTargetContext());
+        waiter.prepare(ACTION_SERVICE_START_RESULT);
+        startSimpleService();
+        waiter.doWait(WAITFOR_MSEC);
+
         for (int i = 0; i < NOTEOP_COUNT; i++) {
             noteOp(OPSTR_COARSE_LOCATION);
         }
 
         stopSimpleActivity();
+        // The callingPackage to start FGS is in background.
         mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE,
-                new Integer(PROCESS_CAPABILITY_NONE));
+                new Integer(TEMP_PROCESS_CAPABILITY_FOREGROUND_LOCATION));
+        for (int i = 0; i < NOTEOP_COUNT; i++) {
+            noteOp(OPSTR_COARSE_LOCATION);
+        }
         stopSimpleService();
         mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY,
                 new Integer(PROCESS_CAPABILITY_NONE));
@@ -272,7 +293,7 @@ public class ActivityManagerApi29Test {
             assertEquals(NOTEOP_COUNT, hOp.getAccessCount(UID_STATE_TOP,
                     UID_STATE_FOREGROUND_SERVICE, AppOpsManager.OP_FLAGS_ALL));
             assertEquals(NOTEOP_COUNT, hOp.getForegroundAccessCount(OP_FLAGS_ALL));
-            assertEquals(0, hOp.getForegroundRejectCount(OP_FLAGS_ALL));
+            assertEquals(NOTEOP_COUNT, hOp.getForegroundRejectCount(OP_FLAGS_ALL));
             assertEquals(0, hOp.getBackgroundAccessCount(OP_FLAGS_ALL));
             // denied access one time in background.
             assertEquals(NOTEOP_COUNT, hOp.getBackgroundRejectCount(OP_FLAGS_ALL)); }
@@ -288,7 +309,7 @@ public class ActivityManagerApi29Test {
         startSimpleService();
         // Wait for state and capability change.
         mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE,
-                new Integer(PROCESS_CAPABILITY_NONE));
+                new Integer(TEMP_PROCESS_CAPABILITY_FOREGROUND_LOCATION));
 
         // Non-Top started FGS do not have while-in-use permission, camera/microphone access is
         // denied.
@@ -308,7 +329,7 @@ public class ActivityManagerApi29Test {
         // Tell the activity to finalize.
         stopSimpleActivity();
         mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE,
-                new Integer(PROCESS_CAPABILITY_NONE));
+                new Integer(TEMP_PROCESS_CAPABILITY_FOREGROUND_LOCATION));
 
         // App not in Top, camera/microphone access should be denied.
         assertEquals(MODE_IGNORED, noteOp(OPSTR_CAMERA));
