@@ -16,6 +16,7 @@
 
 package android.view.inputmethod.cts;
 
+import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
 import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
 import static android.widget.PopupWindow.INPUT_METHOD_NOT_NEEDED;
@@ -27,26 +28,35 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.app.Instrumentation;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.Process;
 import android.os.SystemClock;
 import android.text.TextUtils;
 import android.view.View;
+import android.view.ViewTreeObserver;
+import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.TestActivity;
 import android.view.inputmethod.cts.util.TestUtils;
+import android.view.inputmethod.cts.util.WindowFocusHandleService;
 import android.view.inputmethod.cts.util.WindowFocusStealer;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
@@ -63,6 +73,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 @MediumTest
@@ -90,6 +102,18 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
             return layout;
         });
         return editTextRef.get();
+    }
+
+    public EditText launchTestActivity(String marker,
+            @NonNull AtomicBoolean outEditHasWindowFocusRef) {
+        final EditText editText = launchTestActivity(marker);
+        editText.post(() -> {
+            final ViewTreeObserver observerForEditText = editText.getViewTreeObserver();
+            observerForEditText.addOnWindowFocusChangeListener((hasFocus) ->
+                outEditHasWindowFocusRef.set(editText.hasWindowFocus()));
+            outEditHasWindowFocusRef.set(editText.hasWindowFocus());
+        });
+        return editText;
     }
 
     private static String getTestMarker() {
@@ -415,6 +439,98 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
             // "showSoftInput" must not happen when setShowSoftInputOnFocus(false) is called.
             notExpectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
                     NOT_EXPECT_TIMEOUT);
+        }
+    }
+
+    @Test
+    public void testMultiWindowFocusHandleOnDifferentUiThread() throws Exception {
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        try (ServiceSession session = new ServiceSession(instrumentation.getContext());
+             MockImeSession imeSession = MockImeSession.create(
+                     instrumentation.getContext(), instrumentation.getUiAutomation(),
+                     new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+            final AtomicBoolean popupTextHasWindowFocus = new AtomicBoolean(false);
+            final AtomicBoolean popupTextHasViewFocus = new AtomicBoolean(false);
+            final AtomicBoolean editTextHasWindowFocus = new AtomicBoolean(false);
+
+            // Start a TestActivity and verify the edit text will receive focus and keyboard shown.
+            final String marker = getTestMarker();
+            final EditText editText = launchTestActivity(marker, editTextHasWindowFocus);
+
+            // Wait until the MockIme gets bound to the TestActivity.
+            expectBindInput(stream, Process.myPid(), TIMEOUT);
+
+            // Emulate tap event
+            CtsTouchUtils.emulateTapOnViewCenter(instrumentation, null, editText);
+            TestUtils.waitOnMainUntil(() -> editTextHasWindowFocus.get(), TIMEOUT);
+
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
+
+            // Create a popupTextView which from Service with different UI thread.
+            final TextView popupTextView = session.getService().getPopupTextView(
+                    popupTextHasWindowFocus);
+            assertTrue(popupTextView.getHandler().getLooper()
+                    != session.getService().getMainLooper());
+
+            // Verify popupTextView will also receive window focus change and soft keyboard shown
+            // after tapping the view.
+            final String marker1 = getTestMarker();
+            popupTextView.post(() -> {
+                popupTextView.setPrivateImeOptions(marker1);
+                popupTextHasViewFocus.set(popupTextView.requestFocus());
+            });
+            TestUtils.waitOnMainUntil(() -> popupTextHasViewFocus.get(), TIMEOUT);
+
+            CtsTouchUtils.emulateTapOnViewCenter(instrumentation, null, popupTextView);
+            TestUtils.waitOnMainUntil(() -> popupTextHasWindowFocus.get()
+                            && !editTextHasWindowFocus.get(), TIMEOUT);
+            expectEvent(stream, editorMatcher("onStartInput", marker1), TIMEOUT);
+            expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
+
+            // Emulate tap event for editText again, verify soft keyboard and window focus will
+            // come back.
+            CtsTouchUtils.emulateTapOnViewCenter(instrumentation, null, editText);
+            TestUtils.waitOnMainUntil(() -> editTextHasWindowFocus.get()
+                    && !popupTextHasWindowFocus.get(), TIMEOUT);
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
+        }
+    }
+
+    private static class ServiceSession implements ServiceConnection, AutoCloseable {
+        private final Context mContext;
+
+        ServiceSession(Context context) {
+            mContext = context;
+            Intent service = new Intent(mContext, WindowFocusHandleService.class);
+            mContext.bindService(service, this, Context.BIND_AUTO_CREATE);
+
+            // Wait for service bound.
+            try {
+                TestUtils.waitOnMainUntil(() -> WindowFocusHandleService.getInstance() != null, 5,
+                        "WindowFocusHandleService should be bound");
+            } catch (TimeoutException e) {
+                fail("WindowFocusHandleService should be bound");
+            }
+        }
+
+        @Override
+        public void close() throws Exception {
+            mContext.unbindService(this);
+        }
+
+        WindowFocusHandleService getService() {
+            return WindowFocusHandleService.getInstance();
+        }
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
         }
     }
 }
