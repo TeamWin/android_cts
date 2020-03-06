@@ -68,6 +68,7 @@ import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -673,6 +674,87 @@ public class BitmapTest {
             HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE)) {
             Bitmap bitmap = Bitmap.wrapHardwareBuffer(hwBuffer, ColorSpace.get(Named.CIE_LAB));
         }
+    }
+
+    private void assertMatches(HardwareBuffer hwBuffer, HardwareBuffer hwBuffer2) {
+        assertEquals(hwBuffer, hwBuffer2);
+        assertEquals(hwBuffer.hashCode(), hwBuffer2.hashCode());
+        assertEquals(hwBuffer.getWidth(), hwBuffer2.getWidth());
+        assertEquals(hwBuffer.getHeight(), hwBuffer2.getHeight());
+        assertEquals(hwBuffer.getFormat(), hwBuffer2.getFormat());
+        assertEquals(hwBuffer.getLayers(), hwBuffer2.getLayers());
+        assertEquals(hwBuffer.getUsage(), hwBuffer2.getUsage());
+    }
+
+    @Test
+    public void testGetHardwareBufferMatchesWrapped() {
+        try (HardwareBuffer hwBuffer = createTestBuffer(128, 128, false)) {
+            Bitmap bitmap = Bitmap.wrapHardwareBuffer(hwBuffer, ColorSpace.get(Named.SRGB));
+            assertNotNull(bitmap);
+
+            try (HardwareBuffer hwBuffer2 = bitmap.getHardwareBuffer()) {
+                assertNotNull(hwBuffer2);
+                assertMatches(hwBuffer, hwBuffer2);
+            }
+            bitmap.recycle();
+        }
+    }
+
+    private static Object[] parametersFor_testGetHardwareBufferConfig() {
+        return new Object[] {Config.ARGB_8888, Config.RGBA_F16, Config.RGB_565};
+    }
+
+    @Test
+    @Parameters(method = "parametersFor_testGetHardwareBufferConfig")
+    public void testGetHardwareBufferConfig(Config config) {
+        Bitmap bitmap = Bitmap.createBitmap(10, 10, config);
+        bitmap = bitmap.copy(Config.HARDWARE, false);
+        if (bitmap == null) {
+            fail("Failed to copy to HARDWARE with Config " + config);
+        }
+        try (HardwareBuffer hwBuffer = bitmap.getHardwareBuffer()) {
+            assertNotNull(hwBuffer);
+            assertEquals(hwBuffer.getWidth(), 10);
+            assertEquals(hwBuffer.getHeight(), 10);
+        }
+    }
+
+    @Test
+    public void testGetHardwareBufferTwice() {
+        Bitmap bitmap = Bitmap.createBitmap(10, 10, Config.ARGB_8888);
+        bitmap = bitmap.copy(Config.HARDWARE, false);
+        try (HardwareBuffer hwBuffer = bitmap.getHardwareBuffer()) {
+            assertNotNull(hwBuffer);
+            try (HardwareBuffer hwBuffer2 = bitmap.getHardwareBuffer()) {
+                assertNotNull(hwBuffer2);
+                assertMatches(hwBuffer, hwBuffer2);
+            }
+        }
+    }
+
+    @Test
+    public void testGetHardwareBufferMatches() {
+        Bitmap bitmap = Bitmap.createBitmap(10, 10, Config.ARGB_8888);
+        bitmap = bitmap.copy(Config.HARDWARE, false);
+        try (HardwareBuffer hwBuffer = bitmap.getHardwareBuffer()) {
+            HashSet<HardwareBuffer> set = new HashSet<HardwareBuffer>();
+            set.add(hwBuffer);
+            assertTrue(set.contains(bitmap.getHardwareBuffer()));
+        }
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testGetHardwareBufferNonHardware() {
+        Bitmap bitmap = Bitmap.createBitmap(10, 10, Config.ARGB_8888);
+        bitmap.getHardwareBuffer();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testGetHardwareBufferRecycled() {
+        Bitmap bitmap = Bitmap.createBitmap(10, 10, Config.ARGB_8888);
+        bitmap = bitmap.copy(Config.HARDWARE, false);
+        bitmap.recycle();
+        bitmap.getHardwareBuffer();
     }
 
     @Test
