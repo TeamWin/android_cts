@@ -61,6 +61,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeoutException;
 
 @RunWith(AndroidJUnit4.class)
 public class MediaStorageTest {
@@ -74,6 +75,9 @@ public class MediaStorageTest {
     private Context mContext;
     private ContentResolver mContentResolver;
     private int mUserId;
+
+    private static int currentAttempt = 0;
+    private static final int MAX_NUMBER_OF_ATTEMPT = 10;
 
     @Before
     public void setUp() throws Exception {
@@ -441,9 +445,19 @@ public class MediaStorageTest {
         runShellCommand(InstrumentationRegistry.getInstrumentation(), cmd);
     }
 
-    static File stageFile(File file) throws IOException {
-        file.getParentFile().mkdirs();
-        file.createNewFile();
-        return file;
+    static File stageFile(File file) throws Exception {
+        // Sometimes file creation fails due to slow permission update, try more times 
+        while(currentAttempt < MAX_NUMBER_OF_ATTEMPT) {
+            try {
+                file.getParentFile().mkdirs();
+                file.createNewFile();
+                return file;
+            } catch(IOException e) {
+                currentAttempt++;
+                // wait 500ms
+                Thread.sleep(500);
+            }
+        } 
+        throw new TimeoutException("File creation failed due to slow permission update");
     }
 }
