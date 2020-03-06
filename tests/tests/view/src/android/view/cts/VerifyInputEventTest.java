@@ -163,8 +163,8 @@ public class VerifyInputEventTest {
         compareMotions(downEvent, verified);
 
         // Send UP event for consistency
-        MotionEvent upEvent = MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_UP,
-                point.x, point.y, 0 /*metaState*/);
+        MotionEvent upEvent = MotionEvent.obtain(downTime, SystemClock.uptimeMillis(),
+                MotionEvent.ACTION_UP, point.x, point.y, 0 /*metaState*/);
         mAutomation.injectInputEvent(upEvent, true);
         waitForMotion();
     }
@@ -212,8 +212,67 @@ public class VerifyInputEventTest {
         assertNull(verified);
 
         // Send UP event for consistency
-        MotionEvent upEvent = MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_UP,
-                point.x, point.y, 0 /*metaState*/);
+        MotionEvent upEvent = MotionEvent.obtain(downTime, SystemClock.uptimeMillis(),
+                MotionEvent.ACTION_UP, point.x, point.y, 0 /*metaState*/);
+        mAutomation.injectInputEvent(upEvent, true);
+        waitForMotion();
+    }
+
+    /**
+     * Ensure that injected key events that contain a real device id get injected as virtual
+     * device events, to prevent misrepresentation of actual hardware.
+     * The verified events should contain the virtual device id, which is consistent with what the
+     * app receives.
+     */
+    @Test
+    public void testDeviceIdBecomesVirtualForInjectedKeys() {
+        final long downTime = SystemClock.uptimeMillis();
+        KeyEvent downEvent = new KeyEvent(downTime, downTime, KeyEvent.ACTION_DOWN,
+                KeyEvent.KEYCODE_A, 0 /*repeat*/, 0 /*metaState*/,
+                1/*deviceId*/, 0 /*scanCode*/);
+        mAutomation.injectInputEvent(downEvent, true);
+        KeyEvent received = waitForKey();
+        assertEquals(INJECTED_EVENT_DEVICE_ID, received.getDeviceId());
+
+        // This event can still be verified, however.
+        VerifiedInputEvent verified = mInputManager.verifyInputEvent(received);
+        assertEquals(INJECTED_EVENT_DEVICE_ID, verified.getDeviceId());
+
+        // Send UP event for consistency
+        KeyEvent upEvent = new KeyEvent(downTime, SystemClock.uptimeMillis(), KeyEvent.ACTION_UP,
+                KeyEvent.KEYCODE_A, 0 /*repeat*/, 0 /*metaState*/,
+                1/*deviceId*/, 0 /*scanCode*/);
+        mAutomation.injectInputEvent(upEvent, true);
+        waitForKey();
+    }
+
+    /**
+     * Ensure that injected motion events that contain a real device id get injected as virtual
+     * device events, to prevent misrepresentation of actual hardware.
+     * The verified events should contain the virtual device id, which is consistent with what the
+     * app receives.
+     */
+    @Test
+    public void testDeviceIdBecomesVirtualForInjectedMotions() {
+        final View view = mActivity.getWindow().getDecorView();
+        final Point point = getViewCenterOnScreen(view);
+        final long downTime = SystemClock.uptimeMillis();
+        MotionEvent downEvent = MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_DOWN,
+                point.x, point.y, 1 /*pressure*/, 1 /*size*/, 0 /*metaState*/,
+                0 /*xPrecision*/, 0 /*yPrecision*/, 1 /*deviceId*/, 0 /*edgeFlags*/);
+        mAutomation.injectInputEvent(downEvent, true);
+        MotionEvent received = waitForMotion();
+        assertEquals(INJECTED_EVENT_DEVICE_ID, received.getDeviceId());
+
+        // This event can still be verified, however.
+        VerifiedInputEvent verified = mInputManager.verifyInputEvent(received);
+        assertEquals(INJECTED_EVENT_DEVICE_ID, verified.getDeviceId());
+
+        // Send UP event for consistency
+        MotionEvent upEvent = MotionEvent.obtain(downTime, SystemClock.uptimeMillis(),
+                MotionEvent.ACTION_UP, point.x, point.y, 0 /*pressure*/, 1 /*size*/,
+                0 /*metaState*/, 0 /*xPrecision*/, 0 /*yPrecision*/,
+                1 /*deviceId*/, 0 /*edgeFlags*/);
         mAutomation.injectInputEvent(upEvent, true);
         waitForMotion();
     }
