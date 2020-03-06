@@ -32,6 +32,7 @@ import android.media.session.MediaSession;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.util.Log;
 import android.view.KeyEvent;
 
 import androidx.test.InstrumentationRegistry;
@@ -54,7 +55,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Test media activity which has called {@link Activity#setMediaController}.
+ * Test {@link MediaSessionTestActivity} which has called {@link Activity#setMediaController}.
  */
 @NonMediaMainlineTest
 @LargeTest
@@ -122,7 +123,13 @@ public class MediaActivityTest {
 
         for (int stream : mStreamVolumeMap.keySet()) {
             int volume = mStreamVolumeMap.get(stream);
-            mAudioManager.setStreamVolume(stream, volume, 0);
+            try {
+                mAudioManager.setStreamVolume(stream, volume, /* flag= */ 0);
+            } catch (SecurityException e) {
+                Log.w(TAG, "Failed to restore volume. The test probably had changed DnD mode"
+                        + ", stream=" + stream + ", originalVolume="
+                        + volume + ", currentVolume=" + mAudioManager.getStreamVolume(stream));
+            }
         }
     }
 
@@ -202,7 +209,7 @@ public class MediaActivityTest {
 
         sendKeyEvent(testKeyEvent);
 
-        assertTrue(latch.await(WAIT_TIME_MS * 10, TimeUnit.MILLISECONDS));
+        assertTrue(latch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
     }
 
     @Test
