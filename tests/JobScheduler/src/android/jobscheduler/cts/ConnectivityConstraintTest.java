@@ -30,6 +30,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.os.UserHandle;
+import android.platform.test.annotations.RequiresDevice;
 import android.util.Log;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
@@ -46,6 +47,7 @@ import java.util.concurrent.TimeUnit;
  * Similarly, requires that the phone be connected to a wifi hotspot, or else the test will fail.
  */
 @TargetApi(21)
+@RequiresDevice // Emulators don't always have access to wifi/network
 public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
     private static final String TAG = "ConnectivityConstraintTest";
     private static final String RESTRICT_BACKGROUND_GET_CMD =
