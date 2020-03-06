@@ -212,8 +212,10 @@ public class TestConfiguration {
             //        new ViewPressedModifier()),
             //new LayoutInfo(R.layout.ratingbar_5, "ratingbar_5_pressed",
             //        new ViewPressedModifier()),
-            new LayoutInfo(R.layout.searchview, "searchview_query",
-                    new SearchViewModifier(SearchViewModifier.QUERY)),
+            // Temporarily remove tests for the SearchView widget with no hint. The "X" icon has
+            // indeterminate rendering behavior on 480dpi devices, but we don't know why yet.
+            //new LayoutInfo(R.layout.searchview, "searchview_query",
+            //        new SearchViewModifier(SearchViewModifier.QUERY)),
             new LayoutInfo(R.layout.searchview, "searchview_query_hint",
                     new SearchViewModifier(SearchViewModifier.QUERY_HINT)),
             new LayoutInfo(R.layout.seekbar_0, "seekbar_0"),
