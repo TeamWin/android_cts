@@ -17,9 +17,11 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.app.appops.cts.appwithduplicatefeature">
-  <feature android:featureId="feature1" android:label="@string/dummyLabel" />
-  <feature android:featureId="feature1" android:label="@string/dummyLabel" />
+    package="android.app.appops.cts.appwithattributioninheritingfromexisting">
+  <attribution android:tag="attribution" android:label="@string/dummyLabel" />
+  <attribution android:tag="attribution2" android:label="@string/dummyLabel">
+      <inherit-from android:tag="attribution" />
+  </attribution>
 
   <application />
 

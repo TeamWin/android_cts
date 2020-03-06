@@ -19,14 +19,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.app.appops.cts.apptoblame"
     android:version="2">
-  <feature android:featureId="feature1" android:label="@string/dummyLabel" />
-  <feature android:featureId="feature6" android:label="@string/dummyLabel">
-    <inherit-from android:featureId="feature2" />
-  </feature>
-  <feature android:featureId="feature7" android:label="@string/dummyLabel">
-    <inherit-from android:featureId="feature4" />
-    <inherit-from android:featureId="feature5" />
-  </feature>
+  <attribution android:tag="attribution1" android:label="@string/dummyLabel" />
+  <attribution android:tag="attribution6" android:label="@string/dummyLabel">
+    <inherit-from android:tag="attribution2" />
+  </attribution>
+  <attribution android:tag="attribution7" android:label="@string/dummyLabel">
+    <inherit-from android:tag="attribution4" />
+    <inherit-from android:tag="attribution5" />
+  </attribution>
 
   <application />
 
