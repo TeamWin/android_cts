@@ -16,6 +16,9 @@
 
 package android.content.cts;
 
+import static android.content.ContentResolver.NOTIFY_INSERT;
+import static android.content.ContentResolver.NOTIFY_UPDATE;
+
 import android.accounts.Account;
 import android.content.ContentProviderClient;
 import android.content.ContentResolver;
@@ -50,11 +53,17 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 public class ContentResolverTest extends AndroidTestCase {
+    private static final String TAG = "ContentResolverTest";
+
     private final static String COLUMN_ID_NAME = "_id";
     private final static String COLUMN_KEY_NAME = "key";
     private final static String COLUMN_VALUE_NAME = "value";
@@ -1245,7 +1254,12 @@ public class ContentResolverTest extends AndroidTestCase {
         mContentResolver.unregisterContentObserver(mco);
     }
 
-    public void testNotifyChange_Multiple() {
+    /**
+     * Verify that callers using the {@link Iterable} version of
+     * {@link ContentResolver#notifyChange} are correctly split and delivered to
+     * disjoint listeners.
+     */
+    public void testNotifyChange_MultipleSplit() {
         final MockContentObserver observer1 = new MockContentObserver();
         final MockContentObserver observer2 = new MockContentObserver();
 
@@ -1264,6 +1278,46 @@ public class ContentResolverTest extends AndroidTestCase {
             @Override
             protected boolean check() {
                 return observer1.hadOnChanged() && observer2.hadOnChanged();
+            }
+        }.run();
+
+        mContentResolver.unregisterContentObserver(observer1);
+        mContentResolver.unregisterContentObserver(observer2);
+    }
+
+    /**
+     * Verify that callers using the {@link Iterable} version of
+     * {@link ContentResolver#notifyChange} are correctly grouped and delivered
+     * to overlapping listeners, including untouched flags.
+     */
+    public void testNotifyChange_MultipleFlags() {
+        final MockContentObserver observer1 = new MockContentObserver();
+        final MockContentObserver observer2 = new MockContentObserver();
+
+        mContentResolver.registerContentObserver(LEVEL1_URI, false, observer1);
+        mContentResolver.registerContentObserver(LEVEL2_URI, false, observer2);
+
+        mContentResolver.notifyChange(
+                Arrays.asList(LEVEL1_URI), null, 0);
+        mContentResolver.notifyChange(
+                Arrays.asList(LEVEL1_URI, LEVEL2_URI), null, NOTIFY_INSERT);
+        mContentResolver.notifyChange(
+                Arrays.asList(LEVEL2_URI), null, NOTIFY_UPDATE);
+
+        final List<Change> expected1 = Arrays.asList(
+                new Change(false, Arrays.asList(LEVEL1_URI), 0),
+                new Change(false, Arrays.asList(LEVEL1_URI), NOTIFY_INSERT));
+
+        final List<Change> expected2 = Arrays.asList(
+                new Change(false, Arrays.asList(LEVEL1_URI), 0),
+                new Change(false, Arrays.asList(LEVEL1_URI, LEVEL2_URI), NOTIFY_INSERT),
+                new Change(false, Arrays.asList(LEVEL2_URI), NOTIFY_UPDATE));
+
+        new PollingCheck() {
+            @Override
+            protected boolean check() {
+                return observer1.hadChanges(expected1)
+                        && observer2.hadChanges(expected2);
             }
         }.run();
 
@@ -1411,8 +1465,45 @@ public class ContentResolverTest extends AndroidTestCase {
         assertNull(response);
     }
 
-    private class MockContentObserver extends ContentObserver {
+    public static class Change {
+        public final boolean selfChange;
+        public final Iterable<Uri> uris;
+        public final int flags;
+
+        public Change(boolean selfChange, Iterable<Uri> uris, int flags) {
+            this.selfChange = selfChange;
+            this.uris = uris;
+            this.flags = flags;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("onChange(%b, %s, %d)",
+                    selfChange, asSet(uris).toString(), flags);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (other instanceof Change) {
+                final Change change = (Change) other;
+                return change.selfChange == selfChange &&
+                        Objects.equals(asSet(change.uris), asSet(uris)) &&
+                        change.flags == flags;
+            } else {
+                return false;
+            }
+        }
+
+        private static Set<Uri> asSet(Iterable<Uri> uris) {
+            final Set<Uri> asSet = new HashSet<>();
+            uris.forEach(asSet::add);
+            return asSet;
+        }
+    }
+
+    private static class MockContentObserver extends ContentObserver {
         private boolean mHadOnChanged = false;
+        private List<Change> mChanges = new ArrayList<>();
 
         public MockContentObserver() {
             super(null);
@@ -1424,9 +1515,12 @@ public class ContentResolverTest extends AndroidTestCase {
         }
 
         @Override
-        public synchronized void onChange(boolean selfChange) {
-            super.onChange(selfChange);
+        public synchronized void onChange(boolean selfChange, Iterable<Uri> uris, int flags) {
+            final Change change = new Change(selfChange, uris, flags);
+            Log.v(TAG, change.toString());
+
             mHadOnChanged = true;
+            mChanges.add(change);
         }
 
         public synchronized boolean hadOnChanged() {
@@ -1435,6 +1529,10 @@ public class ContentResolverTest extends AndroidTestCase {
 
         public synchronized void reset() {
             mHadOnChanged = false;
+        }
+
+        public synchronized boolean hadChanges(Collection<Change> changes) {
+            return mChanges.containsAll(changes);
         }
     }
 }
