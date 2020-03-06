@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 import android.app.appsearch.AppSearchBatchResult;
 import android.app.appsearch.AppSearchEmail;
 import android.app.appsearch.AppSearchManager;
+import android.app.appsearch.AppSearchResult;
 import android.app.appsearch.AppSearchSchema;
 import android.app.appsearch.AppSearchSchema.PropertyConfig;
 import android.content.Context;
@@ -60,13 +61,13 @@ public class AppSearchManagerTest {
                         .setTokenizerType(PropertyConfig.TOKENIZER_TYPE_PLAIN)
                         .build()
                 ).build();
-        mAppSearch.setSchema(emailSchema);
+        assertThat(mAppSearch.setSchema(emailSchema).isSuccess()).isTrue();
     }
 
     @Test
     public void testPutDocuments() throws Exception {
         // Schema registration
-        mAppSearch.setSchema(AppSearchEmail.SCHEMA);
+        assertThat(mAppSearch.setSchema(AppSearchEmail.SCHEMA).isSuccess()).isTrue();
 
         // Index a document
         AppSearchEmail email = new AppSearchEmail.Builder("uri1")
@@ -78,7 +79,8 @@ public class AppSearchManagerTest {
 
         AppSearchBatchResult result = mAppSearch.putDocuments(ImmutableList.of(email));
         assertThat(result.isSuccess()).isTrue();
-        assertThat(result.getResults()).containsExactly("uri1", null);
+        assertThat(result.getSuccesses()).containsExactly(
+                "uri1", AppSearchResult.newSuccessfulResult(null));
         assertThat(result.getFailures()).isEmpty();
     }
 }
