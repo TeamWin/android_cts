@@ -27,6 +27,7 @@ android_test {
         "androidx.test.rules",
         "ctstestrunner-axt",
         "cts-install-lib",
+        "core-test-rules", // for libcore.dalvik.system.CloseGuardSupport
     ],
     srcs: ["src/**/*.java"],
     platform_apis: true,
