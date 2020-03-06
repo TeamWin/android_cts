@@ -104,7 +104,9 @@ NOT_YET_MANDATED = {
                 ['test_channel_saturation', 29]
         ],
         'scene1_2': [],
-        'scene2_a': [],
+        'scene2_a': [
+                ['test_jpeg_quality', 30]
+        ],
         'scene2_b': [
                 ['test_auto_per_frame_control', NOT_YET_MANDATED_ALL]
         ],
