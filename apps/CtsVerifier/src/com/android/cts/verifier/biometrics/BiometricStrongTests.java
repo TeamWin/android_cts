@@ -48,7 +48,7 @@ import javax.crypto.IllegalBlockSizeException;
  * Ensure that this result is consistent with the configuration in core/res/res/values/config.xml
  *
  * Ensure that invoking {@link Settings.ACTION_BIOMETRIC_ENROLL} with its corresponding
- * {@link Settings.EXTRA_BIOMETRIC_MINIMUM_STRENGTH_REQUIRED} enrolls a
+ * {@link Settings.EXTRA_BIOMETRIC_AUTHENTICATORS_ALLOWED} enrolls a
  * {@link BiometricManager.Authenticators.BIOMETRIC_STRONG} authenticator. This can be done by
  * authenticating a {@link BiometricPrompt.CryptoObject}.
  *
