@@ -45,6 +45,13 @@
         <option name="test-file-name" value="CtsDragAndDropTargetAppSdk23.apk"/>
         <option name="test-file-name" value="CtsDeviceAlertWindowTestAppSdk25.apk"/>
     </target_preparer>
+    <!-- Necessary for Automotive devices - no-op for other Android verticals -->
+    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <option name="run-command"
+                value="settings put secure android.car.ENABLE_INITIAL_NOTICE_SCREEN_TO_USER 0" />
+        <option name="teardown-command"
+                value="settings put secure android.car.ENABLE_INITIAL_NOTICE_SCREEN_TO_USER 1" />
+    </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest">
         <option name="package" value="android.server.wm.cts"/>
         <option name="runtime-hint" value="1h"/>
