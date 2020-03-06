@@ -53,7 +53,7 @@ import java.util.stream.Collectors;
  * This class is the base class of MixedProfileOwnerTest, MixedDeviceOwnerTest and
  * MixedManagedProfileOwnerTest and is abstract to avoid running spurious tests.
  *
- * NOTE: Not all tests are executed in the subclasses.  Sometimes, if a test is not applicable to
+ * NOTE: Not all tests are executed in the subclasses. Sometimes, if a test is not applicable to
  * a subclass, they override it with an empty method.
  */
 public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
@@ -84,8 +84,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             = "com.android.cts.apprestrictions.targetapp";
     private static final String APP_RESTRICTIONS_TARGET_APP_APK = "CtsAppRestrictionsTargetApp.apk";
 
-    private static final String CERT_INSTALLER_PKG = "com.android.cts.certinstaller";
-    private static final String CERT_INSTALLER_APK = "CtsCertInstallerApp.apk";
+    public static final String CERT_INSTALLER_PKG = "com.android.cts.certinstaller";
+    public static final String CERT_INSTALLER_APK = "CtsCertInstallerApp.apk";
 
     protected static final String DELEGATE_APP_PKG = "com.android.cts.delegate";
     private static final String DELEGATE_APP_APK = "CtsDelegateApp.apk";
