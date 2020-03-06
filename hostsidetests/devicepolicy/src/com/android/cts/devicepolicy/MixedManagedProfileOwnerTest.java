@@ -232,38 +232,24 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
         if (!mHasFeature) {
             return;
         }
-
         setUpDelegatedCertInstallerAndRunTests(() -> {
             runDeviceTestsAsUser("com.android.cts.certinstaller",
                     ".DelegatedDeviceIdAttestationTest",
                     "testGenerateKeyPairWithDeviceIdAttestationExpectingFailure", mUserId);
-
-            markProfileOwnerOnOrganizationOwnedDevice();
-
-            runDeviceTestsAsUser("com.android.cts.certinstaller",
-                    ".DelegatedDeviceIdAttestationTest",
-                    "testGenerateKeyPairWithDeviceIdAttestationExpectingSuccess", mUserId);
+            // Positive test case lives in
+            // OrgOwnedProfileOwnerTest#testDelegatedCertInstallerDeviceIdAttestation
         });
-
-        // Clean up:
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DelegatedCertInstallerHelper",
-                "testManualWipeProfile", mUserId);
     }
     @Test
     public void testDeviceIdAttestationForProfileOwner() throws Exception {
         if (!mHasFeature) {
             return;
         }
-
         // Test that Device ID attestation for the profile owner does not work without grant.
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DeviceIdAttestationTest",
                 "testFailsWithoutProfileOwnerIdsGrant", mUserId);
-
-        // Test that Device ID attestation for the profile owner works with a grant.
-        markProfileOwnerOnOrganizationOwnedDevice();
-
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DeviceIdAttestationTest",
-                "testSucceedsWithProfileOwnerIdsGrant", mUserId);
+        // Positive test case lives in
+        // OrgOwnedProfileOwnerTest#testDeviceIdAttestationForProfileOwner
     }
 
     @Test
