@@ -3923,27 +3923,24 @@ public class ViewTest {
         assertFalse(mockView.isInTouchMode());
         assertFalse(fitWindowsView.isInTouchMode());
 
-        // Mouse events should not affect touch mode.
+        // Mouse events should trigger touch mode.
         final MotionEvent event =
                 CtsMouseUtil.obtainMouseEvent(MotionEvent.ACTION_SCROLL, mockView, 0, 0);
         mInstrumentation.sendPointerSync(event);
-        assertFalse(fitWindowsView.isInTouchMode());
-
-        event.setAction(MotionEvent.ACTION_DOWN);
-        mInstrumentation.sendPointerSync(event);
-        assertFalse(fitWindowsView.isInTouchMode());
-
-        // Stylus events should not affect touch mode.
-        event.setSource(InputDevice.SOURCE_STYLUS);
-        mInstrumentation.sendPointerSync(event);
-        assertFalse(fitWindowsView.isInTouchMode());
-
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mockView);
         assertTrue(fitWindowsView.isInTouchMode());
 
-        // Mouse events should not affect touch mode.
-        event.setSource(InputDevice.SOURCE_MOUSE);
+        mInstrumentation.sendKeySync(keyEvent);
+        assertFalse(fitWindowsView.isInTouchMode());
+
         event.setAction(MotionEvent.ACTION_DOWN);
+        mInstrumentation.sendPointerSync(event);
+        assertTrue(fitWindowsView.isInTouchMode());
+
+        mInstrumentation.sendKeySync(keyEvent);
+        assertFalse(fitWindowsView.isInTouchMode());
+
+        // Stylus events should trigger touch mode.
+        event.setSource(InputDevice.SOURCE_STYLUS);
         mInstrumentation.sendPointerSync(event);
         assertTrue(fitWindowsView.isInTouchMode());
     }
