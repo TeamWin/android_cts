@@ -40,7 +40,7 @@ import javax.crypto.Cipher;
  * Ensure that this result is consistent with the configuration in core/res/res/values/config.xml
  *
  * Ensure that invoking {@link Settings.ACTION_BIOMETRIC_ENROLL} with its corresponding
- * {@link Settings.EXTRA_BIOMETRIC_MINIMUM_STRENGTH_REQUIRED} enrolls a biometric that meets or
+ * {@link Settings.EXTRA_BIOMETRIC_AUTHENTICATORS_ALLOWED} enrolls a biometric that meets or
  * exceeds {@link BiometricManager.Authenticators.BIOMETRIC_WEAK}.
  *
  * Ensure that the BiometricPrompt UI displays all fields in the public API surface.
