@@ -38,9 +38,12 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
     private static final String PACKAGE_NAME_APP2 = "com.android.app2";
     private static final String PACKAGE_NAME_APP3 = "com.android.app3";
 
-    public static String ACTION_START_FGS_RESULT =
+    //TODO: remove this when development is done.
+    private static final int TEMP_PROCESS_CAPABILITY_FOREGROUND_LOCATION = 1 << 31;
+
+    private static final String ACTION_START_FGS_RESULT =
             "android.app.stubs.LocalForegroundService.RESULT";
-    public static String ACTION_START_FGSL_RESULT =
+    private static final String ACTION_START_FGSL_RESULT =
             "android.app.stubs.LocalForegroundServiceLocation.RESULT";
 
     private static final int WAITFOR_MSEC = 10000;
@@ -88,7 +91,7 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
             // Package1 is in FGS state, but won't get location capability.
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_NONE));
+                    new Integer(TEMP_PROCESS_CAPABILITY_FOREGROUND_LOCATION));
             // stop FGSL
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE_LOCATION,
@@ -108,7 +111,7 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
             // Package1 is in STATE_FG_SERVICE, but won't get location capability.
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_NONE));
+                    new Integer(TEMP_PROCESS_CAPABILITY_FOREGROUND_LOCATION));
             // stop FGSL.
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE_LOCATION,
@@ -167,7 +170,7 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
             // Package2 won't have location capability because package1 is not in TOP state.
             uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_NONE));
+                    new Integer(TEMP_PROCESS_CAPABILITY_FOREGROUND_LOCATION));
             waiter.doWait(WAITFOR_MSEC);
 
             CommandReceiver.sendCommand(mContext,
@@ -243,7 +246,7 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
             // Package2 won't have location capability.
             uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_NONE));
+                    new Integer(TEMP_PROCESS_CAPABILITY_FOREGROUND_LOCATION));
             // Stop FGSL in package2.
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE_LOCATION,
@@ -271,7 +274,7 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
             // Package2 won't have location capability.
             uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_NONE));
+                    new Integer(TEMP_PROCESS_CAPABILITY_FOREGROUND_LOCATION));
             waiter.doWait(WAITFOR_MSEC);
             // stop FGSL in package2.
             CommandReceiver.sendCommand(mContext,

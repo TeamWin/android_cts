@@ -1774,7 +1774,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             mWatchers[0].waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_TOP,
                     new Integer(PROCESS_CAPABILITY_FOREGROUND_LOCATION
-                            | PROCESS_CAPABILITY_ALL_IMPLICIT));
+                            | PROCESS_CAPABILITY_ALL));
 
             // Start a FGS
             CommandReceiver.sendCommand(mContext,
@@ -1805,7 +1805,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             // Verify app1 does NOT have capability.
             mWatchers[1].waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_NONE));
+                    new Integer(PROCESS_CAPABILITY_ALL_IMPLICIT));
 
             // Bind App 0 -> App 2, include capability.
             bundle = new Bundle();
