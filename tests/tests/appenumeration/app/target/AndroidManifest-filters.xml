@@ -22,6 +22,7 @@
         <activity android:name="android.appenumeration.testapp.DummyActivity">
             <intent-filter>
                 <action android:name="android.appenumeration.action.ACTIVITY" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
         <service android:name="android.appenumeration.testapp.DummyService">
@@ -42,23 +43,23 @@
             </intent-filter>
         </receiver>
 
-        <activity android:name="android.appenumeration.testapp.DummyActivity"
+        <activity android:name="android.appenumeration.testapp.DummyActivityNotExported"
                   android:exported="false">
             <intent-filter>
                 <action android:name="android.appenumeration.action.ACTIVITY_UNEXPORTED" />
             </intent-filter>
         </activity>
-        <service android:name="android.appenumeration.testapp.DummyService"
+        <service android:name="android.appenumeration.testapp.DummyServiceNotExported"
                  android:exported="false">
             <intent-filter>
                 <action android:name="android.appenumeration.action.SERVICE_UNEXPORTED" />
             </intent-filter>
         </service>
-        <provider android:name="android.appenumeration.testapp.DummyProvider"
+        <provider android:name="android.appenumeration.testapp.DummyProviderNotExported"
                   android:authorities="android.appenumeration.testapp.unexported"
                   android:exported="false" >
         </provider>
-        <receiver android:name="android.appenumeration.testapp.DummyReceiver"
+        <receiver android:name="android.appenumeration.testapp.DummyReceiverNotExported"
                   android:exported="false">
             <intent-filter>
                 <action android:name="android.appenumeration.action.BROADCAST_UNEXPORTED" />

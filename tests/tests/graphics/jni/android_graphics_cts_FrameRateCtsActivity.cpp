@@ -219,8 +219,12 @@ jboolean surfaceControlPostBuffer(JNIEnv*, jclass, jlong surfaceControlLong, jin
     Surface* surface = reinterpret_cast<Surface*>(surfaceControlLong);
     ASurfaceControl* surfaceControl = surface->getSurfaceControl();
     // Android's Color.* values are represented as ARGB. Convert to RGBA.
-    int rgbaColor = ((argbColor >> 16) & 0xff) | ((argbColor >> 8) & 0xff) |
-            ((argbColor >> 0) & 0xff) | ((argbColor >> 24) & 0xff);
+    int32_t rgbaColor = 0;
+    int8_t* rgbaColorBytes = reinterpret_cast<int8_t*>(&rgbaColor);
+    rgbaColorBytes[0] = (argbColor >> 16) & 0xff;
+    rgbaColorBytes[1] = (argbColor >> 8) & 0xff;
+    rgbaColorBytes[2] = (argbColor >> 0) & 0xff;
+    rgbaColorBytes[3] = (argbColor >> 24) & 0xff;
 
     Buffer buffer(surface->getWidth(), surface->getHeight(), rgbaColor);
     if (!buffer.isValid()) {

@@ -17,12 +17,14 @@
 package android.app.cts;
 
 import android.app.ActivityManager;
+import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.ApplicationExitInfo;
 import android.app.Instrumentation;
 import android.app.cts.android.app.cts.tools.WatchUidRunner;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Debug;
 import android.os.Handler;
@@ -86,6 +88,8 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
     private static final int ACTION_ANR = 3;
     private static final int ACTION_NATIVE_CRASH = 4;
     private static final int ACTION_KILL = 5;
+    private static final int ACTION_ACQUIRE_STABLE_PROVIDER = 6;
+    private static final int ACTION_KILL_PROVIDER = 7;
     private static final int EXIT_CODE = 123;
     private static final int CRASH_SIGNAL = OsConstants.SIGSEGV;
 
@@ -266,6 +270,11 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
     // Start the target package
     private void startService(int commandCode, String serviceName, boolean waitForGone,
             boolean other) {
+        startService(commandCode, serviceName, waitForGone, true, other);
+    }
+
+    private void startService(int commandCode, String serviceName, boolean waitForGone,
+            boolean waitForIdle, boolean other) {
         Intent intent = new Intent(EXIT_ACTION);
         intent.setClassName(STUB_PACKAGE_NAME, serviceName);
         intent.putExtra(EXTRA_ACTION, commandCode);
@@ -274,7 +283,9 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         UserHandle user = other ? mOtherUserHandle : mCurrentUserHandle;
         WatchUidRunner watcher = other ? mOtherUidWatcher : mWatcher;
         mContext.startServiceAsUser(intent, user);
-        watcher.waitFor(WatchUidRunner.CMD_IDLE, null);
+        if (waitForIdle) {
+            watcher.waitFor(WatchUidRunner.CMD_IDLE, null);
+        }
         if (waitForGone) {
             waitForGone(watcher);
         }
@@ -493,6 +504,11 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         // Remove old records to avoid interference with the test.
         clearHistoricalExitInfo();
 
+        // Enable a compat feature
+        executeShellCmd("am compat enable " + PackageManager.FILTER_APPLICATION_QUERY
+                + " " + STUB_PACKAGE_NAME);
+        mInstrumentation.getUiAutomation().grantRuntimePermission(
+                STUB_PACKAGE_NAME, android.Manifest.permission.READ_CALENDAR);
         long now = System.currentTimeMillis();
 
         // Start a process and do nothing
@@ -506,8 +522,10 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
                         android.Manifest.permission.REAL_GET_TASKS);
         assertTrue(meminfo != null && meminfo.length == 1);
 
-        // kill background processes
-        executeShellCmd("am kill " + STUB_PACKAGE_NAME);
+        // Disable the compat feature
+        executeShellCmd("am compat disable " + PackageManager.FILTER_APPLICATION_QUERY
+                + " " + STUB_PACKAGE_NAME);
+
         waitForGone(mWatcher);
         long now2 = System.currentTimeMillis();
 
@@ -520,11 +538,41 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
 
         ApplicationExitInfo info = list.get(0);
         verify(info, mStubPackagePid, mStubPackageUid, STUB_PACKAGE_NAME,
-                ApplicationExitInfo.REASON_OTHER, null, "kill background", now, now2);
+                ApplicationExitInfo.REASON_OTHER, null, "PlatformCompat overrides", now, now2);
 
         // Also verify that we get the expected meminfo
         assertEquals(meminfo[0].getTotalPss(), info.getPss());
         assertEquals(meminfo[0].getTotalRss(), info.getRss());
+    }
+
+    public void testPermissionChange() throws Exception {
+        // Remove old records to avoid interference with the test.
+        clearHistoricalExitInfo();
+
+        // Grant the read calendar permission
+        mInstrumentation.getUiAutomation().grantRuntimePermission(
+                STUB_PACKAGE_NAME, android.Manifest.permission.READ_CALENDAR);
+        long now = System.currentTimeMillis();
+
+        // Start a process and do nothing
+        startService(ACTION_FINISH, STUB_SERVICE_NAME, false, false);
+
+        // Revoke the read calendar permission
+        mInstrumentation.getUiAutomation().revokeRuntimePermission(
+                STUB_PACKAGE_NAME, android.Manifest.permission.READ_CALENDAR);
+        waitForGone(mWatcher);
+        long now2 = System.currentTimeMillis();
+
+        List<ApplicationExitInfo> list = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                STUB_PACKAGE_NAME, mStubPackagePid, 1,
+                mActivityManager::getHistoricalProcessExitReasons,
+                android.Manifest.permission.DUMP);
+
+        assertTrue(list != null && list.size() == 1);
+
+        ApplicationExitInfo info = list.get(0);
+        verify(info, mStubPackagePid, mStubPackageUid, STUB_PACKAGE_NAME,
+                ApplicationExitInfo.REASON_PERMISSION_CHANGE, null, null, now, now2);
     }
 
     public void testCrash() throws Exception {
@@ -569,6 +617,76 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         assertTrue(list != null && list.size() == 1);
         verify(list.get(0), mStubPackagePid, mStubPackageUid, STUB_PACKAGE_NAME,
                 ApplicationExitInfo.REASON_CRASH_NATIVE, null, null, now, now2);
+    }
+
+    public void testUserRequested() throws Exception {
+        // Remove old records to avoid interference with the test.
+        clearHistoricalExitInfo();
+
+        long now = System.currentTimeMillis();
+
+        // Start a process and do nothing
+        startService(ACTION_NONE, STUB_SERVICE_NAME, false, false);
+
+        // Force stop the test package
+        executeShellCmd("am force-stop " + STUB_PACKAGE_NAME);
+
+        // Wait the process gone
+        waitForGone(mWatcher);
+
+        long now2 = System.currentTimeMillis();
+        List<ApplicationExitInfo> list = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                STUB_PACKAGE_NAME, mStubPackagePid, 1,
+                mActivityManager::getHistoricalProcessExitReasons,
+                android.Manifest.permission.DUMP);
+
+        assertTrue(list != null && list.size() == 1);
+        verify(list.get(0), mStubPackagePid, mStubPackageUid, STUB_PACKAGE_NAME,
+                ApplicationExitInfo.REASON_USER_REQUESTED, null, null, now, now2);
+    }
+
+    public void testDependencyDied() throws Exception {
+        // Remove old records to avoid interference with the test.
+        clearHistoricalExitInfo();
+
+        // Start a process and acquire the provider
+        startService(ACTION_ACQUIRE_STABLE_PROVIDER, STUB_SERVICE_NAME, false, false);
+
+        final ActivityManager am = mContext.getSystemService(ActivityManager.class);
+        long now = System.currentTimeMillis();
+        final long timeout = now + WAITFOR_MSEC;
+        int providerPid = -1;
+        while (now < timeout && providerPid < 0) {
+            sleep(1000);
+            List<RunningAppProcessInfo> list = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    am, (m) -> m.getRunningAppProcesses(),
+                    android.Manifest.permission.REAL_GET_TASKS);
+            for (RunningAppProcessInfo info: list) {
+                if (info.processName.equals(STUB_REMOTE_ROCESS_NAME)) {
+                    providerPid = info.pid;
+                    break;
+                }
+            }
+            now = System.currentTimeMillis();
+        }
+        assertTrue(providerPid > 0);
+
+        now = System.currentTimeMillis();
+        // Now let the provider exit itself
+        startService(ACTION_KILL_PROVIDER, STUB_SERVICE_NAME, false, false, false);
+
+        // Wait for both of the processes gone
+        waitForGone(mWatcher);
+        final long now2 = System.currentTimeMillis();
+
+        List<ApplicationExitInfo> list = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                STUB_PACKAGE_NAME, mStubPackagePid, 1,
+                mActivityManager::getHistoricalProcessExitReasons,
+                android.Manifest.permission.DUMP);
+
+        assertTrue(list != null && list.size() == 1);
+        verify(list.get(0), mStubPackagePid, mStubPackageUid, STUB_PACKAGE_NAME,
+                ApplicationExitInfo.REASON_DEPENDENCY_DIED, null, null, now, now2);
     }
 
     public void testMultipleProcess() throws Exception {
@@ -738,9 +856,31 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         verify(list.get(1), mStubPackageOtherUserPid, mStubPackageOtherUid, STUB_ROCESS_NAME,
                 ApplicationExitInfo.REASON_SIGNALED, OsConstants.SIGKILL, null, now2, now3);
 
-        int otherUserId = mOtherUserId;
+        // Get the full user permission in order to start service as other user
+        mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
+                android.Manifest.permission.INTERACT_ACROSS_USERS,
+                android.Manifest.permission.INTERACT_ACROSS_USERS_FULL);
+        // Start the process in a secondary user and do nothing
+        startService(ACTION_NONE, STUB_SERVICE_NAME, false, true);
+        // drop the permissions
+        mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
+
+        long now6 = System.currentTimeMillis();
         // Stop the test user
         assertTrue(stopUser(mOtherUserId, true, true));
+        // Wait for being killed
+        waitForGone(mOtherUidWatcher);
+
+        long now7 = System.currentTimeMillis();
+        list = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                STUB_PACKAGE_NAME, 0, 1, mOtherUserId,
+                this::getHistoricalProcessExitReasonsAsUser,
+                android.Manifest.permission.DUMP,
+                android.Manifest.permission.INTERACT_ACROSS_USERS);
+        verify(list.get(0), mStubPackageOtherUserPid, mStubPackageOtherUid, STUB_ROCESS_NAME,
+                ApplicationExitInfo.REASON_USER_STOPPED, null, null, now6, now7);
+
+        int otherUserId = mOtherUserId;
         // Now remove the other user
         removeUser(mOtherUserId);
         mOtherUidWatcher.finish();
