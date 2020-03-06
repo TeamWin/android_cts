@@ -184,14 +184,17 @@ public class BiometricWeakTests extends AbstractBaseTest {
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-
-        if (!mCurrentlyEnrolling) {
-            // Do not allow the test to continue if it loses foreground. Testers must start over.
-            // This is to avoid any potential change to the current enrollment / biometric state.
-            finish();
+    protected boolean isOnPauseAllowed() {
+        // Test hasn't started yet, user may need to go to Settings to remove enrollments
+        if (mEnrollButton.isEnabled()) {
+            return true;
         }
+
+        if (mCurrentlyEnrolling) {
+            return true;
+        }
+
+        return false;
     }
 
     private void updatePassButton() {

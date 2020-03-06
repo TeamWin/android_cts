@@ -181,15 +181,49 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
     }
 
     /**
-     * Test 11.2.15-7
-     * Tests that the device responds correctly to a <Give System Audio Mode Status>
-     * message when the System Audio Mode is "Off".
+     * Test 11.2.15-5
+     * Tests that the device sends a <Set System Audio Mode> ["Off"]
+     * message when a <System Audio Mode Request> is received with no operands
      */
     @Test
+    public void cect_11_2_15_5_SetSystemAudioModeOff() throws Exception {
+        sendSystemAudioModeInitiation();
+        String message = hdmiCecClient.checkExpectedOutput(CecMessage.SET_SYSTEM_AUDIO_MODE);
+        assertThat(hdmiCecClient.getParamsFromMessage(message)).isEqualTo(ON);
+        sendSystemAudioModeTermination();
+        message = hdmiCecClient.checkExpectedOutput(CecMessage.SET_SYSTEM_AUDIO_MODE);
+        assertThat(hdmiCecClient.getParamsFromMessage(message)).isEqualTo(OFF);
+    }
+
+    /**
+     * Test 11.2.15-6
+     * Tests that the device sends a <Set System Audio Mode> ["Off"]
+     * message before going into standby when System Audio Mode is on.
+     */
+    @Test
+    public void cect_11_2_15_6_SystemAudioModeOffBeforeStandby() throws Exception {
+        try {
+            getDevice().executeShellCommand("input keyevent KEYCODE_WAKEUP");
+            sendSystemAudioModeInitiation();
+            String message = hdmiCecClient.checkExpectedOutput(CecMessage.SET_SYSTEM_AUDIO_MODE);
+            assertThat(hdmiCecClient.getParamsFromMessage(message)).isEqualTo(ON);
+            getDevice().executeShellCommand("input keyevent KEYCODE_SLEEP");
+            message = hdmiCecClient.checkExpectedOutput(CecMessage.SET_SYSTEM_AUDIO_MODE);
+            assertThat(hdmiCecClient.getParamsFromMessage(message)).isEqualTo(OFF);
+        } finally {
+            getDevice().executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        }
+    }
+
+    /**
+    * Test 11.2.15-7
+    * Tests that the device responds correctly to a <Give System Audio Mode Status>
+    * message when the System Audio Mode is "Off".
+    */
+   @Test
     public void cect_11_2_15_7_SystemAudioModeStatusOff() throws Exception {
         hdmiCecClient.sendCecMessage(CecDevice.TV, AUDIO_DEVICE,
-                CecMessage.SET_SYSTEM_AUDIO_MODE,
-                hdmiCecClient.formatParams(OFF));
+                CecMessage.SET_SYSTEM_AUDIO_MODE, hdmiCecClient.formatParams(OFF));
         hdmiCecClient.sendCecMessage(CecDevice.TV, AUDIO_DEVICE,
                 CecMessage.GIVE_SYSTEM_AUDIO_MODE_STATUS);
         String message = hdmiCecClient.checkExpectedOutput(CecDevice.TV,

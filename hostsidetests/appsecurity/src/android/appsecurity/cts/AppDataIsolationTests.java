@@ -16,7 +16,10 @@
 
 package android.appsecurity.cts;
 
-import static org.junit.Assert.assertNotNull;
+import static android.appsecurity.cts.Utils.waitForBootCompleted;
+import static com.google.common.truth.Truth.assertThat;
+
+import static org.junit.Assert.fail;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
@@ -32,6 +35,8 @@ import org.junit.runner.RunWith;
 public class AppDataIsolationTests extends BaseAppSecurityTest {
 
     private static final String APPA_APK = "CtsAppDataIsolationAppA.apk";
+    private static final String APP_SHARED_A_APK = "CtsAppDataIsolationAppSharedA.apk";
+    private static final String APP_DIRECT_BOOT_A_APK = "CtsAppDataIsolationAppDirectBootA.apk";
     private static final String APPA_PKG = "com.android.cts.appdataisolation.appa";
     private static final String APPA_CLASS =
             "com.android.cts.appdataisolation.appa.AppATests";
@@ -46,26 +51,44 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
             "testAppACurProfileDataAccessible";
     private static final String APPA_METHOD_CHECK_REF_PROFILE_NOT_ACCESSIBLE =
             "testAppARefProfileDataNotAccessible";
+    private static final String APPA_METHOD_UNLOCK_DEVICE_AND_VERIFY_CE_DE_EXIST =
+            "testAppAUnlockDeviceAndVerifyCeDeDataExist";
+    private static final String APPA_METHOD_CANNOT_ACCESS_APPB_DIR = "testCannotAccessAppBDataDir";
+
+    private static final String APPA_METHOD_TEST_UNLOCK_DEVICE =
+            "testUnlockDevice";
 
     private static final String APPB_APK = "CtsAppDataIsolationAppB.apk";
+    private static final String APP_SHARED_B_APK = "CtsAppDataIsolationAppSharedB.apk";
     private static final String APPB_PKG = "com.android.cts.appdataisolation.appb";
     private static final String APPB_CLASS =
             "com.android.cts.appdataisolation.appb.AppBTests";
     private static final String APPB_METHOD_CANNOT_ACCESS_APPA_DIR = "testCannotAccessAppADataDir";
+    private static final String APPB_METHOD_CAN_ACCESS_APPA_DIR = "testCanAccessAppADataDir";
+
+    private static final String FBE_MODE_NATIVE = "native";
+    private static final String FBE_MODE_EMULATED = "emulated";
 
     @Before
     public void setUp() throws Exception {
         Utils.prepareSingleUser(getDevice());
         getDevice().uninstallPackage(APPA_PKG);
+        getDevice().uninstallPackage(APPB_PKG);
     }
 
     @After
     public void tearDown() throws Exception {
         getDevice().uninstallPackage(APPA_PKG);
+        getDevice().uninstallPackage(APPB_PKG);
     }
 
     private void forceStopPackage(String packageName) throws Exception {
         getDevice().executeShellCommand("am force-stop " + packageName);
+    }
+
+    private void reboot() throws Exception {
+        getDevice().reboot();
+        waitForBootCompleted(getDevice());
     }
 
     @Test
@@ -93,7 +116,123 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_DE_DATA_EXISTS);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CUR_PROFILE_ACCESSIBLE);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_REF_PROFILE_NOT_ACCESSIBLE);
+    }
 
+    @Test
+    public void testAppAbleToAccessItsDataAfterReboot() throws Exception {
+        // Install AppA and verify no data stored
+        new InstallMultiple().addApk(APPA_APK).run();
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CE_DATA_DOES_NOT_EXIST);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_DE_DATA_DOES_NOT_EXIST);
+
+        // Create data in CE and DE storage
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CREATE_CE_DE_DATA);
+
+        // Verify CE and DE storage contains data, cur profile is accessible and ref profile is
+        // not accessible
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CE_DATA_EXISTS);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_DE_DATA_EXISTS);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CUR_PROFILE_ACCESSIBLE);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_REF_PROFILE_NOT_ACCESSIBLE);
+
+        // Reboot and verify CE and DE storage contains data, cur profile is accessible and
+        // ref profile is not accessible
+        reboot();
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CE_DATA_EXISTS);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_DE_DATA_EXISTS);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CUR_PROFILE_ACCESSIBLE);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_REF_PROFILE_NOT_ACCESSIBLE);
+    }
+
+    private boolean isFbeModeEmulated() throws Exception {
+        String mode = getDevice().executeShellCommand("sm get-fbe-mode").trim();
+        if (mode.equals(FBE_MODE_EMULATED)) {
+            return true;
+        } else if (mode.equals(FBE_MODE_NATIVE)) {
+            return false;
+        }
+        fail("Unknown FBE mode: " + mode);
+        return false;
+    }
+
+    @Test
+    public void testDirectBootModeWorks() throws Exception {
+        // Install AppA and verify no data stored
+        new InstallMultiple().addApk(APP_DIRECT_BOOT_A_APK).run();
+        new InstallMultiple().addApk(APPB_APK).run();
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CE_DATA_DOES_NOT_EXIST);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_DE_DATA_DOES_NOT_EXIST);
+
+        // Create data in CE and DE storage
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CREATE_CE_DE_DATA);
+
+        // Verify CE and DE storage contains data, cur profile is accessible and ref profile is
+        // not accessible
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CE_DATA_EXISTS);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_DE_DATA_EXISTS);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CUR_PROFILE_ACCESSIBLE);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_REF_PROFILE_NOT_ACCESSIBLE);
+
+        try {
+            // Setup screenlock
+            getDevice().executeShellCommand("settings put global require_password_to_decrypt 0");
+            getDevice().executeShellCommand("locksettings set-disabled false");
+            getDevice().executeShellCommand("locksettings set-pin 12345");
+
+            // Give enough time for vold to update keys
+            Thread.sleep(15000);
+
+            // Follow DirectBootHostTest, reboot system into known state with keys ejected
+            if (isFbeModeEmulated()) {
+                final String res = getDevice().executeShellCommand("sm set-emulate-fbe true");
+                assertThat(res).contains("Emulation not supported");
+                getDevice().waitForDeviceNotAvailable(30000);
+                getDevice().waitForDeviceOnline(120000);
+            } else {
+                getDevice().rebootUntilOnline();
+            }
+            waitForBootCompleted(getDevice());
+
+            // Verify DE data is still readable and writeable, while CE data is not accessible
+            runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_DE_DATA_EXISTS);
+            runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CE_DATA_DOES_NOT_EXIST);
+            runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CUR_PROFILE_ACCESSIBLE);
+            runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_REF_PROFILE_NOT_ACCESSIBLE);
+            // Verify cannot access other apps data
+            runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CANNOT_ACCESS_APPB_DIR);
+
+            // Unlock device and verify CE DE data still exist, without killing the process, as
+            // test process usually will be killed after the test
+            runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_UNLOCK_DEVICE_AND_VERIFY_CE_DE_EXIST);
+
+            // Reboot and verify CE and DE storage contains data, cur profile is accessible and
+            // ref profile is not accessible
+            runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CE_DATA_EXISTS);
+            runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_DE_DATA_EXISTS);
+            runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CUR_PROFILE_ACCESSIBLE);
+            runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_REF_PROFILE_NOT_ACCESSIBLE);
+        } finally {
+            try {
+                // Always try to unlock first, then clear screenlock setting
+                try {
+                    runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_TEST_UNLOCK_DEVICE);
+                } catch (Exception e) {}
+                getDevice().executeShellCommand("locksettings clear --old 12345");
+                getDevice().executeShellCommand("locksettings set-disabled true");
+                getDevice().executeShellCommand(
+                        "settings delete global require_password_to_decrypt");
+            } finally {
+                // Get ourselves back into a known-good state
+                if (isFbeModeEmulated()) {
+                    getDevice().executeShellCommand("sm set-emulate-fbe false");
+                    getDevice().waitForDeviceNotAvailable(30000);
+                    getDevice().waitForDeviceOnline();
+                } else {
+                    getDevice().rebootUntilOnline();
+                }
+                getDevice().waitForDeviceAvailable();
+            }
+        }
     }
 
     @Test
@@ -117,5 +256,13 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
         new InstallMultiple().addApk(APPB_APK).run();
 
         runDeviceTests(APPB_PKG, APPB_CLASS, APPB_METHOD_CANNOT_ACCESS_APPA_DIR);
+    }
+
+    @Test
+    public void testSharedAppAbleToAccessOtherAppDataDir() throws Exception {
+        new InstallMultiple().addApk(APP_SHARED_A_APK).run();
+        new InstallMultiple().addApk(APP_SHARED_B_APK).run();
+
+        runDeviceTests(APPB_PKG, APPB_CLASS, APPB_METHOD_CAN_ACCESS_APPA_DIR);
     }
 }

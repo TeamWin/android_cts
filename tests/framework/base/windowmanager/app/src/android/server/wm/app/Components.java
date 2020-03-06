@@ -478,6 +478,10 @@ public class Components extends ComponentsBase {
         public static final String KEY_DISPLAY_ID = "display_id";
     }
 
+    public static class LaunchingActivity {
+        public static final String KEY_FINISH_BEFORE_LAUNCH = "finish_before_launch";
+    }
+
     private static ComponentName component(String className) {
         return component(Components.class, className);
     }

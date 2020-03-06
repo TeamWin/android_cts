@@ -60,6 +60,7 @@ public class ChoreographerNativeTest {
     private static native void nativeTestMultipleRefreshRateCallbacks(long ptr);
     private static native void nativeTestAttemptToAddRefreshRateCallbackTwiceDoesNotAddTwice(
             long ptr);
+    private static native void nativeTestRefreshRateCallbackMixedWithFrameCallbacks(long ptr);
 
     private Context mContext;
     private DisplayManager mDisplayManager;
@@ -149,6 +150,13 @@ public class ChoreographerNativeTest {
     @Test
     public void testAttemptToAddRefreshRateCallbackTwiceDoesNotAddTwice() {
         nativeTestAttemptToAddRefreshRateCallbackTwiceDoesNotAddTwice(mChoreographerPtr);
+    }
+
+    @UiThreadTest
+    @SmallTest
+    @Test
+    public void testRefreshRateCallbackMixedWithFrameCallbacks() {
+        nativeTestRefreshRateCallbackMixedWithFrameCallbacks(mChoreographerPtr);
     }
 
 }

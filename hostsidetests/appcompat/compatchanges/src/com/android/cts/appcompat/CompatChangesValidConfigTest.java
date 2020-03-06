@@ -62,9 +62,9 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
         }
 
         static Change fromString(String line) {
-            long changeId = -1;
+            long changeId = 0;
             String changeName;
-            int targetSdk = -1;
+            int targetSdk = 0;
             boolean disabled = false;
             boolean hasOverrides = false;
 
@@ -100,7 +100,7 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
             Element element = (Element) node;
             long changeId = Long.parseLong(element.getAttribute("id"));
             String changeName = element.getAttribute("name");
-            int targetSdk = -1;
+            int targetSdk = 0;
             if (element.hasAttribute("enableAfterTargetSdk")) {
                 targetSdk = Integer.parseInt(element.getAttribute("enableAfterTargetSdk"));
             }
@@ -129,6 +129,25 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
                 && this.targetSdk == that.targetSdk
                 && this.disabled == that.disabled
                 && this.hasOverrides == that.hasOverrides;
+        }
+        @Override
+        public String toString() {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("ChangeId(" + changeId);
+            if (changeName != null && !changeName.isEmpty()) {
+                sb.append("; name=" + changeName);
+            }
+            if (targetSdk != 0) {
+                sb.append("; enableAfterTargetSdk=" + targetSdk);
+            }
+            if (disabled) {
+                sb.append("; disabled");
+            }
+            if (hasOverrides) {
+                sb.append("; packageOverrides={something}");
+            }
+            sb.append(")");
+            return sb.toString();
         }
     }
 

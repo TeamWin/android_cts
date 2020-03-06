@@ -40,7 +40,7 @@ import java.util.concurrent.Executor;
 
 import javax.crypto.Cipher;
 
-public class CredentialCryptoTests extends PassFailButtons.Activity {
+public class CredentialCryptoTests extends AbstractBaseTest {
     private static final String TAG = "CredentialCryptoTests";
 
     private static final String KEY_NAME_STRONGBOX = "credential_timed_key_strongbox";
@@ -55,6 +55,17 @@ public class CredentialCryptoTests extends PassFailButtons.Activity {
 
     private boolean mCredentialTimedKeyStrongBoxPassed;
     private boolean mCredentialTimedKeyNoStrongBoxPassed;
+
+    @Override
+    protected String getTag() {
+        return TAG;
+    }
+
+    @Override
+    protected boolean isOnPauseAllowed() {
+        // Tests haven't started yet
+        return !mCredentialTimedKeyStrongBoxPassed && !mCredentialTimedKeyNoStrongBoxPassed;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -162,10 +173,5 @@ public class CredentialCryptoTests extends PassFailButtons.Activity {
             showToastAndLog("All tests passed");
             getPassButton().setEnabled(true);
         }
-    }
-
-    private void showToastAndLog(String s) {
-        Log.d(TAG, s);
-        Toast.makeText(this, s, Toast.LENGTH_SHORT).show();
     }
 }
