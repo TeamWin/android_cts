@@ -21,7 +21,6 @@ import android.app.appsearch.AppSearchBatchResult;
 import android.app.appsearch.AppSearchDocument;
 import android.app.appsearch.AppSearchEmail;
 import android.app.appsearch.AppSearchManager;
-import android.app.appsearch.AppSearchResult;
 import android.app.appsearch.AppSearchSchema;
 import android.app.appsearch.AppSearchSchema.PropertyConfig;
 import android.content.Context;
@@ -29,20 +28,13 @@ import android.content.Context;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.internal.util.ConcurrentUtils;
-
 import com.google.common.collect.ImmutableList;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-
 @RunWith(AndroidJUnit4.class)
 public class AppSearchManagerTest {
-    private final Executor mExecutor = ConcurrentUtils.DIRECT_EXECUTOR;
     private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
     private final AppSearchManager mAppSearch = mContext.getSystemService(AppSearchManager.class);
 
@@ -87,15 +79,14 @@ public class AppSearchManagerTest {
 
         AppSearchBatchResult result = mAppSearch.putDocuments(ImmutableList.of(email));
         assertThat(result.isSuccess()).isTrue();
-        assertThat(result.getSuccesses()).containsExactly(
-                "uri1", AppSearchResult.newSuccessfulResult(null));
+        assertThat(result.getSuccesses()).containsExactly("uri1", null);
         assertThat(result.getFailures()).isEmpty();
     }
 
     @Test
     public void testGetDocuments() throws Exception {
         // Schema registration
-        mAppSearch.setSchema(AppSearchEmail.SCHEMA);
+        assertThat(mAppSearch.setSchema(AppSearchEmail.SCHEMA).isSuccess()).isTrue();
 
         // Index a document
         AppSearchEmail inEmail =
@@ -108,17 +99,10 @@ public class AppSearchManagerTest {
         assertThat(mAppSearch.putDocuments(ImmutableList.of(inEmail)).isSuccess()).isTrue();
 
         // Get the document
-        CompletableFuture<List<AppSearchDocument>> getFuture = new CompletableFuture<>();
-        mAppSearch.getDocuments(ImmutableList.of("uri1"), mExecutor, (list, err) -> {
-            if (list != null) {
-                getFuture.complete(list);
-            } else {
-                getFuture.completeExceptionally(err);
-            }
-        });
-        List<AppSearchDocument> outDocuments = getFuture.get();
-        assertThat(outDocuments).hasSize(1);
-        AppSearchEmail outEmail = new AppSearchEmail(outDocuments.get(0));
-        assertThat(outEmail).isEqualTo(inEmail);
+        AppSearchBatchResult<String, AppSearchDocument> getResult =
+                mAppSearch.getDocuments(ImmutableList.of("uri1"));
+        assertThat(getResult.isSuccess()).isTrue();
+        assertThat(getResult.getFailures()).isEmpty();
+        assertThat(getResult.getSuccesses()).containsExactly("uri1", inEmail);
     }
 }
