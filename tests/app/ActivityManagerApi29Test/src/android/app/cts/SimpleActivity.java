@@ -24,6 +24,9 @@ import android.os.Bundle;
  * A simple activity to install for various users to test LauncherApps.
  */
 public class SimpleActivity extends Activity {
+    public static String ACTION_SIMPLE_ACTIVITY_START_RESULT =
+            "android.app.cts.activitymanager.api29.SimpleActivity.RESULT";
+
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
@@ -32,6 +35,14 @@ public class SimpleActivity extends Activity {
     @Override
     public void onStart() {
         super.onStart();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Intent reply = new Intent(ACTION_SIMPLE_ACTIVITY_START_RESULT);
+        reply.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+        sendBroadcast(reply);
     }
 
     @Override
