@@ -195,6 +195,13 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
         assertCannotCreateManagedProfile(mPrimaryUserId);
     }
 
+    private void sendWipeProfileBroadcast(int userId) throws Exception {
+        final String cmd = "am broadcast --receiver-foreground --user " + userId
+                + " -a com.android.cts.comp.WIPE_DATA"
+                + " com.android.cts.comp/.WipeDataReceiver";
+        getDevice().executeShellCommand(cmd);
+    }
+
     @Test
     public void testWipeData_secondaryUser() throws Exception {
         if (!mHasFeature || !canCreateAdditionalUsers(1)) {
@@ -204,11 +211,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
         addDisallowRemoveUserRestriction();
         // The PO of the managed user should be allowed to delete it, even though the disallow
         // remove user restriction is set.
-        runDeviceTestsAsUser(
-                COMP_DPC_PKG,
-                MANAGEMENT_TEST,
-                "testWipeData",
-                secondaryUserId);
+        sendWipeProfileBroadcast(secondaryUserId);
         waitUntilUserRemoved(secondaryUserId);
     }
 
@@ -220,7 +223,8 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
         int secondaryUserId = setupManagedSecondaryUser();
         addDisallowRemoveUserRestriction();
         assertMetricsLogged(getDevice(), () -> {
-            runDeviceTestsAsUser(COMP_DPC_PKG, MANAGEMENT_TEST, "testWipeData", secondaryUserId);
+            sendWipeProfileBroadcast(secondaryUserId);
+            waitUntilUserRemoved(secondaryUserId);
         }, WIPE_DATA_WITH_REASON_DEVICE_POLICY_EVENT);
     }
 
