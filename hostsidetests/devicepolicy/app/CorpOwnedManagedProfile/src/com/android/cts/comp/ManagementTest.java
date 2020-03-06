@@ -72,10 +72,6 @@ public class ManagementTest extends AndroidTestCase {
                 DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE));
     }
 
-    public void testWipeData() {
-        mDevicePolicyManager.wipeData(0);
-    }
-
     public void testCreateSecondaryUser() throws Exception {
         ComponentName admin = AdminReceiver.getComponentName(mContext);
         assertNotNull(mDevicePolicyManager.createAndManageUser(admin, "secondary-user",
