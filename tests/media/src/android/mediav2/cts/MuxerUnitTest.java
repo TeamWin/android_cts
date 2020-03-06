@@ -259,7 +259,6 @@ public class MuxerUnitTest {
         }
 
         @Test
-        @Ignore("TODO(b/146423844)")
         public void testIfAddTrackSucceedsAfterStart() throws IOException {
             MediaMuxer muxer = new MediaMuxer(mOutLoc, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
             try {
@@ -356,7 +355,6 @@ public class MuxerUnitTest {
         }
 
         @Test
-        @Ignore("TODO(b/146423844)")
         public void testIdempotentStart() throws IOException {
             MediaMuxer muxer = new MediaMuxer(mOutLoc, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
             MediaFormat format = new MediaFormat();
@@ -491,7 +489,6 @@ public class MuxerUnitTest {
         }
 
         @Test
-        @Ignore("TODO(b/146423844)")
         public void testSimpleStartStopMuxer() throws IOException {
             MediaMuxer muxer = new MediaMuxer(mOutLoc, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
             MediaFormat format = new MediaFormat();
@@ -877,7 +874,6 @@ public class MuxerUnitTest {
         }
 
         @Test
-        @Ignore("TODO(b/146423844)")
         public void testSimpleStartStopMuxer() {
             assertTrue(nativeTestSimpleStartStop(mOutLoc));
         }
