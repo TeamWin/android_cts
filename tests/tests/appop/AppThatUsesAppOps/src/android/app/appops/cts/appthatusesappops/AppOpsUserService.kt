@@ -25,7 +25,7 @@ import android.app.Service
 import android.app.SyncNotedAppOp
 import android.app.appops.cts.IAppOpsUserClient
 import android.app.appops.cts.IAppOpsUserService
-import android.app.appops.cts.TEST_FEATURE_ID
+import android.app.appops.cts.TEST_ATTRIBUTION_TAG
 import android.app.appops.cts.eventually
 import android.content.Intent
 import android.os.IBinder
@@ -136,7 +136,7 @@ class AppOpsUserService : Service() {
                 forwardThrowableFrom {
                     client.noteSyncOp()
 
-                    assertThat(noted.map { it.first.featureId to it.first.op })
+                    assertThat(noted.map { it.first.attributionTag to it.first.op })
                         .containsExactly(null to OPSTR_COARSE_LOCATION)
                     assertThat(noted[0].second.map { it.methodName })
                         .contains("callApiThatNotesSyncOpAndCheckLog")
@@ -159,11 +159,14 @@ class AppOpsUserService : Service() {
                 }
             }
 
-            override fun callApiThatNotesSyncOpWithFeatureAndCheckLog(client: IAppOpsUserClient) {
+            override fun callApiThatNotesSyncOpWithAttributionAndCheckLog(
+                client: IAppOpsUserClient
+            ) {
                 forwardThrowableFrom {
-                    client.noteSyncOpWithFeature(TEST_FEATURE_ID)
+                    client.noteSyncOpWithAttribution(TEST_ATTRIBUTION_TAG)
 
-                    assertThat(noted.map { it.first.featureId }).containsExactly(TEST_FEATURE_ID)
+                    assertThat(noted.map { it.first.attributionTag })
+                            .containsExactly(TEST_ATTRIBUTION_TAG)
                 }
             }
 
@@ -340,7 +343,7 @@ class AppOpsUserService : Service() {
                     client.noteAsyncOp()
 
                     eventually {
-                        assertThat(asyncNoted.map { it.featureId to it.op })
+                        assertThat(asyncNoted.map { it.attributionTag to it.op })
                             .containsExactly(null to OPSTR_COARSE_LOCATION)
                     }
                     assertThat(noted).isEmpty()
@@ -348,15 +351,15 @@ class AppOpsUserService : Service() {
                 }
             }
 
-            override fun callApiThatNotesAsyncOpWithFeatureAndCheckLog(
+            override fun callApiThatNotesAsyncOpWithAttributionAndCheckLog(
                 client: IAppOpsUserClient
             ) {
                 forwardThrowableFrom {
-                    client.noteAsyncOpWithFeature(TEST_FEATURE_ID)
+                    client.noteAsyncOpWithAttribution(TEST_ATTRIBUTION_TAG)
 
                     eventually {
-                        assertThat(asyncNoted.map { it.featureId })
-                            .containsExactly(TEST_FEATURE_ID)
+                        assertThat(asyncNoted.map { it.attributionTag })
+                            .containsExactly(TEST_ATTRIBUTION_TAG)
                     }
                 }
             }

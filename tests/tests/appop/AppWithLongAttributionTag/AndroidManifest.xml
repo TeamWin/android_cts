@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <!--
-  ~ Copyright (C) 2019 The Android Open Source Project
+  ~ Copyright (C) 2020 The Android Open Source Project
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -17,11 +17,8 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.app.appops.cts.appwithfeatureinheritingfromexisting">
-  <feature android:featureId="feature1" android:label="@string/dummyLabel" />
-  <feature android:featureId="feature2" android:label="@string/dummyLabel">
-      <inherit-from android:featureId="feature1" />
-  </feature>
+    package="android.app.appops.cts.appwithlongattributiontag">
+  <attribution android:tag="1xxxx_xxxx2xxxx_xxxx3xxxx_xxxx4xxxx_xxxx5xxxx_xxxxB" android:label="@string/dummyLabel" />
 
   <application />
 
