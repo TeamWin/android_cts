@@ -1362,7 +1362,7 @@ public class ImsServiceTest {
             verifyIntKey(provisioningManager, mIntQueue,
                     ProvisioningManager.KEY_RCS_PUBLISH_TIMER_SEC, 5);
             verifyIntKey(provisioningManager, mIntQueue,
-                    ProvisioningManager.KEY_RCS_PUBLISH_TIMER_EXTENDED_SEC, 5);
+                    ProvisioningManager.KEY_RCS_PUBLISH_OFFLINE_AVAILABILITY_TIMER_SEC, 5);
             verifyIntKey(provisioningManager, mIntQueue,
                     ProvisioningManager.KEY_RCS_CAPABILITY_DISCOVERY_ENABLED, 0);
             verifyIntKey(provisioningManager, mIntQueue,
