@@ -27,6 +27,9 @@ public class LocationForegroundService extends Service {
     private static final String NOTIFICATION_CHANNEL_ID =
             LocationForegroundService.class.getSimpleName();
 
+    public static String ACTION_SERVICE_START_RESULT =
+            "android.app.cts.activitymanager.api29.LocationForegroundService.RESULT";
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         getSystemService(NotificationManager.class).createNotificationChannel(
@@ -37,6 +40,8 @@ public class LocationForegroundService extends Service {
                 .setSmallIcon(R.drawable.black)
                 .build();
         startForeground(1, status);
+        sendBroadcast(
+                new Intent(ACTION_SERVICE_START_RESULT).setFlags(Intent.FLAG_RECEIVER_FOREGROUND));
         return START_STICKY;
     }
 
