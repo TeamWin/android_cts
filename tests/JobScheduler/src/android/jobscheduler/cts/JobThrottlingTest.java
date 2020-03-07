@@ -39,6 +39,7 @@ import android.os.PowerManager;
 import android.os.SystemClock;
 import android.os.Temperature;
 import android.os.UserHandle;
+import android.platform.test.annotations.RequiresDevice;
 import android.provider.Settings;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
@@ -50,7 +51,6 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.AppStandbyUtils;
 import com.android.compatibility.common.util.BatteryUtils;
-import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.ThermalUtils;
 
 import org.junit.After;
@@ -237,6 +237,7 @@ public class JobThrottlingTest {
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
     }
 
+    @RequiresDevice // Emulators don't always have access to wifi/network
     @Test
     public void testBackgroundConnectivityJobsThrottled() throws Exception {
         if (!mHasWifi) {
@@ -315,6 +316,7 @@ public class JobThrottlingTest {
                 mTestAppInterface.awaitJobStart(3_000));
     }
 
+    @RequiresDevice // Emulators don't always have access to wifi/network
     @Test
     public void testJobsInRestrictedBucket_WithRequiredNetwork() throws Exception {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);

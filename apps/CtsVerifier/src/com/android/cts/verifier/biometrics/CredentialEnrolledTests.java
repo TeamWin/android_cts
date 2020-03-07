@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.biometrics;
 
+import android.content.Intent;
 import android.hardware.biometrics.BiometricManager;
 import android.hardware.biometrics.BiometricManager.Authenticators;
 import android.hardware.biometrics.BiometricPrompt;
@@ -23,6 +24,7 @@ import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
@@ -39,6 +41,15 @@ import java.util.concurrent.Executor;
 public class CredentialEnrolledTests extends AbstractBaseTest {
     private static final String TAG = "CredentialEnrolledTests";
 
+    private static final int REQUEST_ENROLL_WHEN_NONE_ENROLLED = 1;
+    private static final int REQUEST_ENROLL_WHEN_ENROLLED = 2;
+
+    private Button mEnrollButton;
+    private Button mBiometricManagerButton;
+    private Button mBPSetAllowedAuthenticatorsButton;
+    private Button mBPSetDeviceCredentialAllowedButton;
+
+    private boolean mEnrollPass;
     private boolean mBiometricManagerPass;
     private boolean mBiometricPromptSetAllowedAuthenticatorsPass;
     private boolean mBiometricPromptSetDeviceCredentialAllowedPass;
@@ -58,10 +69,23 @@ public class CredentialEnrolledTests extends AbstractBaseTest {
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
 
+        final BiometricManager bm = getSystemService(BiometricManager.class);
+
+        mEnrollButton = findViewById(R.id.enroll_credential_button);
+        mEnrollButton.setOnClickListener((view) -> {
+            final int biometricResult = bm.canAuthenticate(Authenticators.DEVICE_CREDENTIAL);
+            if (biometricResult != BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED) {
+                showToastAndLog("Please ensure you do not have a PIN/Pattern/Password set");
+                return;
+            }
+
+            requestCredentialEnrollment(REQUEST_ENROLL_WHEN_NONE_ENROLLED);
+        });
+
         // Test BiometricManager#canAuthenticate(DEVICE_CREDENTIAL)
-        final Button bmButton = findViewById(R.id.bm_button);
-        bmButton.setOnClickListener((view) -> {
-            final BiometricManager bm = getSystemService(BiometricManager.class);
+        mBiometricManagerButton = findViewById(R.id.bm_button);
+        mBiometricManagerButton.setOnClickListener((view) -> {
+
 
             final int biometricResult = bm.canAuthenticate(Authenticators.BIOMETRIC_WEAK);
             switch (biometricResult) {
@@ -80,7 +104,7 @@ public class CredentialEnrolledTests extends AbstractBaseTest {
 
             final int credentialResult = bm.canAuthenticate(Authenticators.DEVICE_CREDENTIAL);
             if (credentialResult == BiometricManager.BIOMETRIC_SUCCESS) {
-                bmButton.setEnabled(false);
+                mBiometricManagerButton.setEnabled(false);
                 mBiometricManagerPass = true;
                 updatePassButton();
             } else {
@@ -91,9 +115,8 @@ public class CredentialEnrolledTests extends AbstractBaseTest {
         });
 
         // Test setAllowedAuthenticators(DEVICE_CREDENTIAL)
-        final Button bpSetAllowedAuthenticatorsButton =
-                findViewById(R.id.setAllowedAuthenticators_button);
-        bpSetAllowedAuthenticatorsButton.setOnClickListener((view) -> {
+        mBPSetAllowedAuthenticatorsButton = findViewById(R.id.setAllowedAuthenticators_button);
+        mBPSetAllowedAuthenticatorsButton.setOnClickListener((view) -> {
             BiometricPrompt.Builder builder = new BiometricPrompt.Builder(this);
             builder.setTitle("Title");
             builder.setSubtitle("Subtitle");
@@ -108,7 +131,7 @@ public class CredentialEnrolledTests extends AbstractBaseTest {
                             final int authenticator = result.getAuthenticationType();
                             if (authenticator ==
                                     BiometricPrompt.AUTHENTICATION_RESULT_TYPE_DEVICE_CREDENTIAL) {
-                                bpSetAllowedAuthenticatorsButton.setEnabled(false);
+                                mBPSetAllowedAuthenticatorsButton.setEnabled(false);
                                 mBiometricPromptSetAllowedAuthenticatorsPass = true;
                                 updatePassButton();
                             } else {
@@ -124,9 +147,8 @@ public class CredentialEnrolledTests extends AbstractBaseTest {
         });
 
         // Test setDeviceCredentialAllowed(true)
-        final Button bpSetDeviceCredentialAllowedButton =
-                findViewById(R.id.setDeviceCredentialAllowed_button);
-        bpSetDeviceCredentialAllowedButton.setOnClickListener((view) -> {
+        mBPSetDeviceCredentialAllowedButton = findViewById(R.id.setDeviceCredentialAllowed_button);
+        mBPSetDeviceCredentialAllowedButton.setOnClickListener((view) -> {
             BiometricPrompt.Builder builder = new BiometricPrompt.Builder(this);
             builder.setTitle("Title");
             builder.setSubtitle("Subtitle");
@@ -141,7 +163,7 @@ public class CredentialEnrolledTests extends AbstractBaseTest {
                             final int authenticator = result.getAuthenticationType();
                             if (authenticator ==
                                     BiometricPrompt.AUTHENTICATION_RESULT_TYPE_DEVICE_CREDENTIAL) {
-                                bpSetDeviceCredentialAllowedButton.setEnabled(false);
+                                mBPSetDeviceCredentialAllowedButton.setEnabled(false);
                                 mBiometricPromptSetDeviceCredentialAllowedPass = true;
                                 updatePassButton();
                             } else {
@@ -165,8 +187,47 @@ public class CredentialEnrolledTests extends AbstractBaseTest {
         return !mBiometricManagerPass;
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_ENROLL_WHEN_NONE_ENROLLED) {
+            if (resultCode == RESULT_OK) {
+                final BiometricManager bm = getSystemService(BiometricManager.class);
+                final int result = bm.canAuthenticate(Authenticators.DEVICE_CREDENTIAL);
+                if (result == BiometricManager.BIOMETRIC_SUCCESS) {
+                    // Request enrollment one more time. Ensure that we receive RESULT_CANCELED
+                    requestCredentialEnrollment(REQUEST_ENROLL_WHEN_ENROLLED);
+                } else {
+                    showToastAndLog("Unexpected result: " + result + ". Please ensure that tapping"
+                            + " the button sends you to credential enrollment, and that you have"
+                            + " enrolled a credential.");
+                }
+            } else {
+                showToastAndLog("Unexpected result after enroll: " + resultCode);
+            }
+        } else if (requestCode == REQUEST_ENROLL_WHEN_ENROLLED) {
+            if (resultCode == RESULT_CANCELED) {
+                mEnrollPass = true;
+                mEnrollButton.setEnabled(false);
+                mBiometricManagerButton.setEnabled(true);
+                mBPSetAllowedAuthenticatorsButton.setEnabled(true);
+                mBPSetDeviceCredentialAllowedButton.setEnabled(true);
+            } else {
+                showToastAndLog("Unexpected result when requesting enrolling with"
+                        + " pre-existing credential: " + resultCode);
+            }
+        }
+    }
+
+    private void requestCredentialEnrollment(int requestCode) {
+        final Intent enrollIntent = new Intent(Settings.ACTION_BIOMETRIC_ENROLL);
+        enrollIntent.putExtra(Settings.EXTRA_BIOMETRIC_AUTHENTICATORS_ALLOWED,
+                Authenticators.DEVICE_CREDENTIAL);
+
+        startActivityForResult(enrollIntent, requestCode);
+    }
+
     private void updatePassButton() {
-        if (mBiometricManagerPass && mBiometricPromptSetAllowedAuthenticatorsPass
+        if (mEnrollPass && mBiometricManagerPass && mBiometricPromptSetAllowedAuthenticatorsPass
                 && mBiometricPromptSetDeviceCredentialAllowedPass) {
             showToastAndLog("All tests passed");
             getPassButton().setEnabled(true);
