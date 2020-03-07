@@ -25,7 +25,6 @@ import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 
 import org.junit.After;
@@ -37,7 +36,7 @@ import org.junit.runner.RunWith;
  * Test IInputMethodManager#shellComman verifies callers.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class ShellCommandFromAppTest extends BaseHostJUnit4Test {
+public class ShellCommandFromAppTest extends RebootFreeHostTestBase {
 
     /**
      * {@code true} if {@link #tearDown()} needs to be fully executed.
