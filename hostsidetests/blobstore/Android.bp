@@ -42,7 +42,7 @@ android_test_helper_app {
       "testng",
   ],
   manifest : "test-apps/BlobStoreHostTestHelper/AndroidManifest.xml",
-  platform_apis: true,
+  sdk_version: "test_current",
   // Tag this module as a cts test artifact
   test_suites: [
     "cts",
