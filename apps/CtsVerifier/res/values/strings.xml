@@ -242,9 +242,9 @@
     <string name="biometric_test_credential_not_enrolled_bp_setDeviceCredentialAllowed_button">Check BiometricPrompt setDeviceCredentialAllowed(true)</string>
 
     <string name="biometric_test_credential_enrolled_label">2) Credential Enrolled Tests</string>
-    <string name="biometric_test_credential_enrolled_instructions">This test checks that the BiometricManager/BiometricPrompt
-        APIs return results consistent with credential (PIN/Pattern/Password) state. Before starting this test, please ensure that you DO
-        have a credential set up.</string>
+    <string name="biometric_test_credential_enrolled_instructions">This test checks that apps are able to request credential enrollment, and that the BiometricManager/BiometricPrompt
+        APIs return results consistent with credential (PIN/Pattern/Password) state.</string>
+    <string name="biometric_test_credential_enroll_button">Enroll credential</string>
     <string name="biometric_test_credential_enrolled_bm_button">Check BiometricManager</string>
     <string name="biometric_test_credential_enrolled_bp_setAllowedAuthenticators_button">Check BiometricPrompt setAllowedAuthenticators(DEVICE_CREDENTIAL)</string>
     <string name="biometric_test_credential_enrolled_bp_setDeviceCredentialAllowed_button">Check BiometricPrompt setDeviceCredentialAllowed(true)</string>
@@ -278,7 +278,7 @@
 
     <string name="biometric_test_strong_label">4) Strong Biometrics + Crypto</string>
     <string name="biometric_test_strong_instructions">This test checks that the Settings.ACTION_BIOMETRIC_ENROLL and its corresponding
-        EXTRA_BIOMETRIC_MINIMUM_STRENGTH_REQUIRED APIs enroll only a STRONG biometric. Please ensure that the device
+        EXTRA_BIOMETRIC_AUTHENTICATOR_REQUIREMENTS APIs enroll only a STRONG biometric. Please ensure that the device
         does NOT have ANY biometrics enrolled before starting this test. After passing the first part of the test, it will check various use cases
         when authentication is invoked with the STRONG biometric.</string>
     <string name="biometric_test_strong_check_and_enroll_button">Start enrollment</string>
@@ -292,7 +292,7 @@
 
     <string name="biometric_test_weak_label">5) Weak Biometrics</string>
     <string name="biometric_test_weak_instructions">This test checks that the Settings.ACTION_BIOMETRIC_ENROLL and its corresponding
-        EXTRA_BIOMETRIC_MINIMUM_STRENGTH_REQUIRED APIs enroll a biometric that meets or exceeds WEAK. Please ensure that the device
+        EXTRA_BIOMETRIC_AUTHENTICATOR_REQUIREMENTS APIs enroll a biometric that meets or exceeds WEAK. Please ensure that the device
         does NOT have ANY biometrics enrolled before starting this test. After passing the first part of the test, it will check various use cases
         when authentication is invoked.</string>
     <string name="biometric_test_weak_enroll">Start enrollment</string>

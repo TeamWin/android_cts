@@ -33,6 +33,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.content.cts.permission.TEST_GRANTED" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 
     <!-- Used for ContextTest#testCreatePackageContextAsUser -->
     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" />

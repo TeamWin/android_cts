@@ -42,7 +42,8 @@ import java.util.concurrent.Executor;
  */
 public abstract class AbstractBaseTest extends PassFailButtons.Activity {
 
-    private static final int REQUEST_ENROLL = 1;
+    private static final int REQUEST_ENROLL_WHEN_NONE_ENROLLED = 1;
+    private static final int REQUEST_ENROLL_WHEN_ENROLLED = 2;
 
     abstract protected String getTag();
     abstract protected boolean isOnPauseAllowed();
@@ -51,6 +52,10 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
     protected final Executor mExecutor = mHandler::post;
 
     protected boolean mCurrentlyEnrolling;
+
+    // Not great to keep this here, but we use it to check that requesting enrollment of a
+    // combination that was just enrolled results in RESULT_CANCELED.
+    private int mRequestedStrength;
 
     BiometricManager mBiometricManager;
 
@@ -77,9 +82,22 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_ENROLL) {
-            mCurrentlyEnrolling = false;
-            onBiometricEnrollFinished();
+        mCurrentlyEnrolling = false;
+
+        if (requestCode == REQUEST_ENROLL_WHEN_NONE_ENROLLED) {
+            if (resultCode == RESULT_OK) {
+                startBiometricEnroll(REQUEST_ENROLL_WHEN_ENROLLED, mRequestedStrength);
+            } else {
+                showToastAndLog("Unexpected result when requesting enrollment when not enrolled"
+                        + " yet: " + resultCode);
+            }
+        } else if (requestCode == REQUEST_ENROLL_WHEN_ENROLLED) {
+            if (resultCode == RESULT_CANCELED) {
+                onBiometricEnrollFinished();
+            } else {
+                showToastAndLog("Unexpected result when requesting enrollment when already"
+                        + " enrolled: " + resultCode);
+            }
         }
     }
 
@@ -93,8 +111,10 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
 
     void checkAndEnroll(Button enrollButton, int requestedStrength,
             int[] acceptableConfigStrengths) {
+        mRequestedStrength = requestedStrength;
+
         // Check that no biometrics (of any strength) are enrolled
-        int result = mBiometricManager.canAuthenticate(requestedStrength);
+        int result = mBiometricManager.canAuthenticate(Authenticators.BIOMETRIC_WEAK);
         if (result == BiometricManager.BIOMETRIC_SUCCESS) {
             showToastAndLog("Please ensure that all biometrics are removed before starting"
                     + " this test");
@@ -124,16 +144,20 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
                 getPassButton().setEnabled(true);
             }
         } else if (result == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED) {
-            mCurrentlyEnrolling = true;
-            final Intent enrollIntent = new Intent(Settings.ACTION_BIOMETRIC_ENROLL);
-            enrollIntent.putExtra(Settings.EXTRA_BIOMETRIC_MINIMUM_STRENGTH_REQUIRED,
-                    requestedStrength);
-
-            startActivityForResult(enrollIntent, REQUEST_ENROLL);
+            startBiometricEnroll(REQUEST_ENROLL_WHEN_NONE_ENROLLED, requestedStrength);
         } else {
             showToastAndLog("Unexpected result: " + result + ". Please ensure you have removed"
                     + "all biometric enrollments.");
         }
+    }
+
+    private void startBiometricEnroll(int requestCode, int requestedStrength) {
+        mCurrentlyEnrolling = true;
+        final Intent enrollIntent = new Intent(Settings.ACTION_BIOMETRIC_ENROLL);
+        enrollIntent.putExtra(Settings.EXTRA_BIOMETRIC_AUTHENTICATORS_ALLOWED,
+                requestedStrength);
+
+        startActivityForResult(enrollIntent, requestCode);
     }
 
     void testBiometricUI(Utils.VerifyRandomContents contents, int allowedAuthenticators) {
