@@ -18,6 +18,8 @@ package android.telecom.cts;
 
 import static android.telecom.cts.TestUtils.*;
 
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+
 import android.content.ComponentName;
 import android.content.Context;
 import android.media.AudioManager;
@@ -26,6 +28,8 @@ import android.telecom.Call;
 import android.telecom.Connection;
 import android.telecom.ConnectionService;
 import android.telecom.PhoneAccountHandle;
+
+import androidx.test.InstrumentationRegistry;
 
 import java.util.Collection;
 
@@ -59,7 +63,9 @@ public class ConnectionServiceTest extends BaseTelecomTestWithMockServices {
         // Add second connection (add existing connection)
         final MockConnection connection = new MockConnection();
         connection.setOnHold();
-        CtsConnectionService.addExistingConnectionToTelecom(TEST_PHONE_ACCOUNT_HANDLE, connection);
+        runWithShellPermissionIdentity(() ->
+                CtsConnectionService.addExistingConnectionToTelecom(TEST_PHONE_ACCOUNT_HANDLE,
+                        connection));
         assertNumCalls(mInCallCallbacks.getService(), 2);
         mInCallCallbacks.lock.drainPermits();
         final Call call = mInCallCallbacks.getService().getLastCall();
@@ -81,8 +87,9 @@ public class ConnectionServiceTest extends BaseTelecomTestWithMockServices {
                 "com.android.services.telephony.TelephonyConnectionService");
         // This command will fail and a SecurityException will be thrown by Telecom. The Exception
         // will then be absorbed by the ConnectionServiceAdapter.
-        CtsConnectionService.addExistingConnectionToTelecom(new PhoneAccountHandle(invalidName,
-                "Test"), connection);
+        runWithShellPermissionIdentity(() ->
+                CtsConnectionService.addExistingConnectionToTelecom(
+                        new PhoneAccountHandle(invalidName, "Test"), connection));
         // Make sure that only the original Call exists.
         assertNumCalls(mInCallCallbacks.getService(), 1);
         mInCallCallbacks.lock.drainPermits();
@@ -103,8 +110,9 @@ public class ConnectionServiceTest extends BaseTelecomTestWithMockServices {
         connection.setOnHold();
         ComponentName validName = new ComponentName(PACKAGE, COMPONENT);
         // This command will fail because the PhoneAccount is not registered to Telecom currently.
-        CtsConnectionService.addExistingConnectionToTelecom(new PhoneAccountHandle(validName,
-                "Invalid Account Id"), connection);
+        runWithShellPermissionIdentity(() ->
+                CtsConnectionService.addExistingConnectionToTelecom(
+                        new PhoneAccountHandle(validName, "Invalid Account Id"), connection));
         // Make sure that only the original Call exists.
         assertNumCalls(mInCallCallbacks.getService(), 1);
         mInCallCallbacks.lock.drainPermits();
@@ -243,19 +251,28 @@ public class ConnectionServiceTest extends BaseTelecomTestWithMockServices {
             return;
         }
 
-        // Need to add a call to ensure ConnectionService is up and bound.
-        placeAndVerifyCall();
-        verifyConnectionForOutgoingCall().setActive();
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.MODIFY_PHONE_STATE");
+        try {
+            // Need to add a call to ensure ConnectionService is up and bound.
+            placeAndVerifyCall();
+            verifyConnectionForOutgoingCall().setActive();
 
-        final MockConnection connection = new MockConnection();
-        connection.setActive();
-        connection.setCallDirection(Call.Details.DIRECTION_INCOMING);
-        CtsConnectionService.addExistingConnectionToTelecom(TEST_PHONE_ACCOUNT_HANDLE, connection);
-        assertNumCalls(mInCallCallbacks.getService(), 2);
-        mInCallCallbacks.lock.drainPermits();
-        final Call call = mInCallCallbacks.getService().getLastCall();
-        assertCallState(call, Call.STATE_ACTIVE);
-        assertEquals(Call.Details.DIRECTION_INCOMING, call.getDetails().getCallDirection());
+            final MockConnection connection = new MockConnection();
+            connection.setActive();
+            connection.setCallDirection(Call.Details.DIRECTION_INCOMING);
+            CtsConnectionService.addExistingConnectionToTelecom(TEST_PHONE_ACCOUNT_HANDLE,
+                    connection);
+            assertNumCalls(mInCallCallbacks.getService(), 2);
+            mInCallCallbacks.lock.drainPermits();
+            final Call call = mInCallCallbacks.getService().getLastCall();
+            assertCallState(call, Call.STATE_ACTIVE);
+            assertEquals(Call.Details.DIRECTION_INCOMING, call.getDetails().getCallDirection());
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+
     }
 
     public void testCallDirectionOutgoing() {
@@ -263,25 +280,33 @@ public class ConnectionServiceTest extends BaseTelecomTestWithMockServices {
             return;
         }
 
-        // Ensure CS is up and bound.
-        placeAndVerifyCall();
-        verifyConnectionForOutgoingCall().setActive();
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.MODIFY_PHONE_STATE");
+        try {
+            // Ensure CS is up and bound.
+            placeAndVerifyCall();
+            verifyConnectionForOutgoingCall().setActive();
 
-        final MockConnection connection = new MockConnection();
-        connection.setActive();
-        connection.setCallDirection(Call.Details.DIRECTION_OUTGOING);
-        connection.setConnectTimeMillis(1000L);
-        assertEquals(1000L, connection.getConnectTimeMillis());
-        connection.setConnectionStartElapsedRealtimeMillis(100L);
-        assertEquals(100L, connection.getConnectionStartElapsedRealtimeMillis());
+            final MockConnection connection = new MockConnection();
+            connection.setActive();
+            connection.setCallDirection(Call.Details.DIRECTION_OUTGOING);
+            connection.setConnectTimeMillis(1000L);
+            assertEquals(1000L, connection.getConnectTimeMillis());
+            connection.setConnectionStartElapsedRealtimeMillis(100L);
+            assertEquals(100L, connection.getConnectionStartElapsedRealtimeMillis());
 
-        CtsConnectionService.addExistingConnectionToTelecom(TEST_PHONE_ACCOUNT_HANDLE, connection);
-        assertNumCalls(mInCallCallbacks.getService(), 2);
-        mInCallCallbacks.lock.drainPermits();
-        final Call call = mInCallCallbacks.getService().getLastCall();
-        assertCallState(call, Call.STATE_ACTIVE);
-        assertEquals(Call.Details.DIRECTION_OUTGOING, call.getDetails().getCallDirection());
-        assertEquals(1000L, call.getDetails().getConnectTimeMillis());
+            CtsConnectionService.addExistingConnectionToTelecom(TEST_PHONE_ACCOUNT_HANDLE,
+                    connection);
+            assertNumCalls(mInCallCallbacks.getService(), 2);
+            mInCallCallbacks.lock.drainPermits();
+            final Call call = mInCallCallbacks.getService().getLastCall();
+            assertCallState(call, Call.STATE_ACTIVE);
+            assertEquals(Call.Details.DIRECTION_OUTGOING, call.getDetails().getCallDirection());
+            assertEquals(1000L, call.getDetails().getConnectTimeMillis());
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
     }
 
     public void testGetAllConnections() {
@@ -289,33 +314,42 @@ public class ConnectionServiceTest extends BaseTelecomTestWithMockServices {
             return;
         }
 
-        // Add first connection (outgoing call)
-        placeAndVerifyCall();
-        final Connection connection1 = verifyConnectionForOutgoingCall();
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.MODIFY_PHONE_STATE");
+        try {
+            // Add first connection (outgoing call)
+            placeAndVerifyCall();
+            final Connection connection1 = verifyConnectionForOutgoingCall();
 
-        Collection<Connection> connections = CtsConnectionService.getAllConnectionsFromTelecom();
-        assertEquals(1, connections.size());
-        assertTrue(connections.contains(connection1));
-        // Need to move this to active since we reject the 3rd incoming call below if this is in
-        // dialing state (b/23428950).
-        connection1.setActive();
-        assertCallState(mInCallCallbacks.getService().getLastCall(), Call.STATE_ACTIVE);
+            Collection<Connection> connections =
+                    CtsConnectionService.getAllConnectionsFromTelecom();
+            assertEquals(1, connections.size());
+            assertTrue(connections.contains(connection1));
+            // Need to move this to active since we reject the 3rd incoming call below if this is in
+            // dialing state (b/23428950).
+            connection1.setActive();
+            assertCallState(mInCallCallbacks.getService().getLastCall(), Call.STATE_ACTIVE);
 
-        // Add second connection (add existing connection)
-        final Connection connection2 = new MockConnection();
-        connection2.setActive();
-        CtsConnectionService.addExistingConnectionToTelecom(TEST_PHONE_ACCOUNT_HANDLE, connection2);
-        assertNumCalls(mInCallCallbacks.getService(), 2);
-        mInCallCallbacks.lock.drainPermits();
-        connections = CtsConnectionService.getAllConnectionsFromTelecom();
-        assertEquals(2, connections.size());
-        assertTrue(connections.contains(connection2));
+            // Add second connection (add existing connection)
+            final Connection connection2 = new MockConnection();
+            connection2.setActive();
+            CtsConnectionService.addExistingConnectionToTelecom(TEST_PHONE_ACCOUNT_HANDLE,
+                            connection2);
+            assertNumCalls(mInCallCallbacks.getService(), 2);
+            mInCallCallbacks.lock.drainPermits();
+            connections = CtsConnectionService.getAllConnectionsFromTelecom();
+            assertEquals(2, connections.size());
+            assertTrue(connections.contains(connection2));
 
-        // Add third connection (incoming call)
-        addAndVerifyNewIncomingCall(createTestNumber(), null);
-        final Connection connection3 = verifyConnectionForIncomingCall();
-        connections = CtsConnectionService.getAllConnectionsFromTelecom();
-        assertEquals(3, connections.size());
-        assertTrue(connections.contains(connection3));
+            // Add third connection (incoming call)
+            addAndVerifyNewIncomingCall(createTestNumber(), null);
+            final Connection connection3 = verifyConnectionForIncomingCall();
+            connections = CtsConnectionService.getAllConnectionsFromTelecom();
+            assertEquals(3, connections.size());
+            assertTrue(connections.contains(connection3));
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
     }
 }
