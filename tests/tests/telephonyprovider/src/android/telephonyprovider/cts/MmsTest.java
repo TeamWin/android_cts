@@ -161,7 +161,8 @@ public class MmsTest {
         Uri mmsUri1 = saveMmsWithMessageBoxUri(MMS_SUBJECT_TWO, Sms.MESSAGE_TYPE_SENT);
         assertThat(mmsUri1).isNotNull();
 
-        Cursor msgCursor = mContentResolver.query(Sent.CONTENT_URI, null, null, null);
+        Cursor msgCursor = mContentResolver.query(Sent.CONTENT_URI, null, null, null,
+                Telephony.Mms.DATE_SENT + " ASC");
         assertThat(msgCursor.getCount()).isEqualTo(2);
 
         assertThat(msgCursor.moveToFirst()).isEqualTo(true);
@@ -179,7 +180,8 @@ public class MmsTest {
         Uri mmsUri1 = saveMmsWithMessageBoxUri(MMS_SUBJECT_TWO, Sms.MESSAGE_TYPE_DRAFT);
         assertThat(mmsUri1).isNotNull();
 
-        Cursor msgCursor = mContentResolver.query(Draft.CONTENT_URI, null, null, null);
+        Cursor msgCursor = mContentResolver.query(Draft.CONTENT_URI, null, null, null,
+                Telephony.Mms.DATE_SENT + " ASC");
         assertThat(msgCursor.getCount()).isEqualTo(2);
 
         assertThat(msgCursor.moveToFirst()).isEqualTo(true);
@@ -197,7 +199,8 @@ public class MmsTest {
         Uri mmsUri1 = saveMmsWithMessageBoxUri(MMS_SUBJECT_TWO, Sms.MESSAGE_TYPE_INBOX);
         assertThat(mmsUri1).isNotNull();
 
-        Cursor msgCursor = mContentResolver.query(Inbox.CONTENT_URI, null, null, null);
+        Cursor msgCursor = mContentResolver.query(Inbox.CONTENT_URI, null, null, null,
+                Telephony.Mms.DATE_SENT + " ASC");
         assertThat(msgCursor.getCount()).isEqualTo(2);
 
         assertThat(msgCursor.moveToFirst()).isEqualTo(true);
@@ -232,7 +235,7 @@ public class MmsTest {
 
         Cursor cursor = mContentResolver
                 .query(Telephony.Mms.CONTENT_URI, null, null, null,
-                Telephony.Mms.DATE_SENT + " ASC");
+                        Telephony.Mms.DATE_SENT + " ASC");
 
         assertThat(cursor.getCount() >= 5).isEqualTo(true);
         assertThat(cursor.moveToFirst()).isEqualTo(true);
