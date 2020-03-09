@@ -141,6 +141,7 @@ public class WindowManagerState {
     private int mRotation;
     private int mLastOrientation;
     private boolean mDisplayFrozen;
+    private boolean mSanityCheckFocusedWindow = true;
 
     static String appStateToString(int appState) {
         switch (appState) {
@@ -237,6 +238,11 @@ public class WindowManagerState {
         return TYPE_NAVIGATION_BAR == navState.getType();
     }
 
+    /** Enable/disable the mFocusedWindow check during the computeState.*/
+    void setSanityCheckWithFocusedWindow(boolean sanityCheckFocusedWindow) {
+        mSanityCheckFocusedWindow = sanityCheckFocusedWindow;
+    }
+
     public void computeState() {
         // It is possible the system is in the middle of transition to the right state when we get
         // the dump. We try a few times to get the information we need before giving up.
@@ -264,7 +270,7 @@ public class WindowManagerState {
             }
 
             retry = mRootTasks.isEmpty() || mTopFocusedTaskId == -1 || mWindowStates.isEmpty()
-                    || mFocusedApp == null
+                    || mFocusedApp == null || (mSanityCheckFocusedWindow && mFocusedWindow == null)
                     || (mTopResumedActivityRecord == null || mResumedActivitiesInStacks.isEmpty())
                     && !mKeyguardControllerState.keyguardShowing;
         } while (retry && retriesLeft-- > 0);
