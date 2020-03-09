@@ -168,7 +168,7 @@ public class IdentityCredentialAuthentication extends PassFailButtons.Activity {
         idsProfile0.add(new AccessControlProfileId(0));
         PersonalizationData pd = new PersonalizationData.Builder()
                                  .addAccessControlProfile(acp)
-                                 .setEntry("org.iso.18013-5.2019", "Foo", idsProfile0, barCbor)
+                                 .putEntry("org.iso.18013-5.2019", "Foo", idsProfile0, barCbor)
                                  .build();
         byte[] proofOfProvisioningSignature = wc.personalize(pd);
 
