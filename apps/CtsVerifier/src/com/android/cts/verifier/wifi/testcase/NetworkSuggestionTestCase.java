@@ -37,6 +37,7 @@ import android.net.NetworkRequest;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiNetworkSuggestion;
+import android.os.SystemClock;
 import android.util.Log;
 import android.util.Pair;
 
@@ -64,6 +65,7 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
 
     private static final int PERIODIC_SCAN_INTERVAL_MS = 10_000;
     private static final int CALLBACK_TIMEOUT_MS = 40_000;
+    private static final int CAPABILITIES_CHANGED_FOR_METERED_TIMEOUT_MS = 80_000;
 
     private final Object mLock = new Object();
     private final ScheduledExecutorService mExecutorService;
@@ -144,6 +146,30 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
             this.failureReason = failureReason;
             mCountDownLatch.countDown();
         }
+    }
+
+    // TODO(b/150890482): Capabilities changed callback can occur multiple times (for ex: RSSI
+    // change) & the sufficiency checks may result in ths change taking longer to take effect.
+    // This method accounts for both of these situations.
+    private boolean waitForNetworkToBeMetered() throws InterruptedException {
+        long startTimeMillis = SystemClock.elapsedRealtime();
+        while (SystemClock.elapsedRealtime()
+                < startTimeMillis + CAPABILITIES_CHANGED_FOR_METERED_TIMEOUT_MS) {
+            // Wait for the suggestion to be marked metered now.
+            if (!mNetworkCallback.waitForCapabilitiesChanged()) {
+                Log.e(TAG, "Network capabilities did not change");
+                continue;
+            }
+            if (mNetworkCallback.getNetworkCapabilities()
+                    .hasCapability(NET_CAPABILITY_NOT_METERED)) {
+                Log.e(TAG, "Network meteredness check failed "
+                        + mNetworkCallback.getNetworkCapabilities());
+                continue;
+            }
+            // Network marked metered.
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -322,18 +348,8 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
                 setFailureReason(mContext.getString(R.string.wifi_status_suggestion_add_failure));
                 return false;
             }
-            // Wait for the suggestion to be marked metered now.
-            if (!mNetworkCallback.waitForCapabilitiesChanged()) {
-                Log.e(TAG, "Network capabilities did not change");
-                setFailureReason(
-                        mContext.getString(
-                                R.string.wifi_status_suggestion_capabilities_not_changed));
-                return false;
-            }
-            if (mNetworkCallback.getNetworkCapabilities()
-                    .hasCapability(NET_CAPABILITY_NOT_METERED)) {
-                Log.e(TAG, "Network meteredness check failed "
-                        + mNetworkCallback.getNetworkCapabilities());
+            if (!waitForNetworkToBeMetered()) {
+                Log.e(TAG, "Network was not marked metered");
                 setFailureReason(mContext.getString(
                         R.string.wifi_status_suggestion_metered_check_failed));
                 return false;
