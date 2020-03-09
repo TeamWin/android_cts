@@ -2427,6 +2427,10 @@
                   android:label="@string/wifi_test_network_suggestion_connection_failure"
                   android:configChanges="keyboardHidden|orientation|screenSize" />
 
+        <activity android:name=".wifi.NetworkSuggestionModificationInPlaceTestActivity"
+                  android:label="@string/wifi_test_network_suggestion_modification_in_place"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
+
         <activity android:name=".p2p.GoNegRequesterTestListActivity"
                 android:label="@string/p2p_go_neg_requester"
                 android:configChanges="keyboardHidden|orientation|screenSize" />
