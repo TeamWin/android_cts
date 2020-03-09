@@ -148,6 +148,15 @@ public class MediaStoreTest {
     }
 
     @Test
+    public void testGetRecentExternalVolumeNames() {
+        Set<String> volumeNames = MediaStore.getRecentExternalVolumeNames(getContext());
+
+        assertFalse(volumeNames.contains(MediaStore.VOLUME_INTERNAL));
+        assertFalse(volumeNames.contains(MediaStore.VOLUME_EXTERNAL));
+        assertTrue(volumeNames.contains(MediaStore.VOLUME_EXTERNAL_PRIMARY));
+    }
+
+    @Test
     public void testGetStorageVolume() throws Exception {
         Assume.assumeFalse(MediaStore.VOLUME_EXTERNAL.equals(mVolumeName));
 
