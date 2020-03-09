@@ -66,13 +66,10 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
-import androidx.test.filters.FlakyTest;
-
 import com.android.compatibility.common.util.ImeAwareEditText;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestUtils;
 import com.android.cts.mockime.ImeCommand;
-import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.MockImeSession;
 
@@ -296,19 +293,9 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     public void testLaunchSingleHomeActivityOnDisplayWithDecorations() {
         createManagedHomeActivitySession(SINGLE_HOME_ACTIVITY);
 
-        // Create new virtual display with system decoration support.
-        final DisplayContent newDisplay = createManagedExternalDisplaySession()
-                .setShowSystemDecorations(true)
-                .createVirtualDisplay();
-
         // If default home doesn't support multi-instance, default secondary home activity
         // should be automatically launched on the new display.
-        waitAndAssertActivityStateOnDisplay(getDefaultSecondaryHomeComponent(), STATE_RESUMED,
-                newDisplay.mId, "Activity launched on secondary display must be resumed");
-
-        tapOnDisplayCenter(newDisplay.mId);
-        assertEquals("Top activity must be home type", ACTIVITY_TYPE_HOME,
-                mWmState.getFrontStackActivityType(newDisplay.mId));
+        assertSecondaryHomeResumedOnNewDisplay(getDefaultSecondaryHomeComponent());
     }
 
     /**
@@ -319,19 +306,9 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     public void testLaunchSingleSecondaryHomeActivityOnDisplayWithDecorations() {
         createManagedHomeActivitySession(SINGLE_SECONDARY_HOME_ACTIVITY);
 
-        // Create new virtual display with system decoration support.
-        final DisplayContent newDisplay = createManagedExternalDisplaySession()
-                .setShowSystemDecorations(true)
-                .createVirtualDisplay();
-
         // If provided secondary home doesn't support multi-instance, default secondary home
         // activity should be automatically launched on the new display.
-        waitAndAssertActivityStateOnDisplay(getDefaultSecondaryHomeComponent(), STATE_RESUMED,
-                newDisplay.mId, "Activity launched on secondary display must be resumed");
-
-        tapOnDisplayCenter(newDisplay.mId);
-        assertEquals("Top activity must be home type", ACTIVITY_TYPE_HOME,
-                mWmState.getFrontStackActivityType(newDisplay.mId));
+        assertSecondaryHomeResumedOnNewDisplay(getDefaultSecondaryHomeComponent());
     }
 
     /**
@@ -341,21 +318,10 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     @Test
     public void testLaunchHomeActivityOnDisplayWithDecorations() {
         createManagedHomeActivitySession(HOME_ACTIVITY);
-        final VirtualDisplaySession virtualDisplaySession = createManagedVirtualDisplaySession();
-
-        // Create new virtual display with system decoration support.
-        final DisplayContent newDisplay = createManagedExternalDisplaySession()
-                .setShowSystemDecorations(true)
-                .createVirtualDisplay();
 
         // If default home doesn't have SECONDARY_HOME category, default secondary home
         // activity should be automatically launched on the new display.
-        waitAndAssertActivityStateOnDisplay(getDefaultSecondaryHomeComponent(), STATE_RESUMED,
-                newDisplay.mId, "Activity launched on secondary display must be resumed");
-
-        tapOnDisplayCenter(newDisplay.mId);
-        assertEquals("Top activity must be home type", ACTIVITY_TYPE_HOME,
-                mWmState.getFrontStackActivityType(newDisplay.mId));
+        assertSecondaryHomeResumedOnNewDisplay(getDefaultSecondaryHomeComponent());
     }
 
     /**
@@ -365,15 +331,18 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     @Test
     public void testLaunchSecondaryHomeActivityOnDisplayWithDecorations() {
         createManagedHomeActivitySession(SECONDARY_HOME_ACTIVITY);
-        final VirtualDisplaySession virtualDisplaySession = createManagedVirtualDisplaySession();
 
+        // Provided secondary home activity should be automatically launched on the new display.
+        assertSecondaryHomeResumedOnNewDisplay(SECONDARY_HOME_ACTIVITY);
+    }
+
+    private void assertSecondaryHomeResumedOnNewDisplay(ComponentName homeComponentName) {
         // Create new virtual display with system decoration support.
         final DisplayContent newDisplay = createManagedExternalDisplaySession()
                 .setShowSystemDecorations(true)
                 .createVirtualDisplay();
 
-        // Provided secondary home activity should be automatically launched on the new display.
-        waitAndAssertActivityStateOnDisplay(SECONDARY_HOME_ACTIVITY, STATE_RESUMED,
+        waitAndAssertActivityStateOnDisplay(homeComponentName, STATE_RESUMED,
                 newDisplay.mId, "Activity launched on secondary display must be resumed");
 
         tapOnDisplayCenter(newDisplay.mId);
