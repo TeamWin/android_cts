@@ -1583,6 +1583,16 @@ public class StagefrightTest {
      before any existing test methods
      ***********************************************************/
 
+    @Test
+    @SecurityTest(minPatchLevel = "2019-03")
+    public void testStagefright_cve_2019_1989() throws Exception {
+        Object obj[] = getFrameInfo(R.raw.cve_2019_1989_info);
+        int[] isHeader = (int[])obj [0];
+        int[] frameSizes = (int[])obj [1];
+        doStagefrightTestRawBlob(R.raw.cve_2019_1989_h264, "video/avc",
+                1920, 1080, frameSizes, isHeader, new CrashUtils.Config());
+    }
+
     private void doStagefrightTest(final int rid, CrashUtils.Config config) throws Exception {
         NetworkSecurityPolicy policy = NetworkSecurityPolicy.getInstance();
         policy.setCleartextTrafficPermitted(true);
