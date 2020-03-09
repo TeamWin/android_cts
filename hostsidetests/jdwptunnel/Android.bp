@@ -27,7 +27,8 @@ java_test_host {
     data: [
         // Include the JDI classes in the testcases directory.
         ":jdi-support",
-        ":CtsJdwpTunnelSampleApp",
+        ":CtsJdwpTunnelDebuggableSampleApp",
+        ":CtsJdwpTunnelProfileableSampleApp",
     ],
 
     // Tag this module as a cts test artifact
@@ -37,5 +38,5 @@ java_test_host {
         "general-tests",
     ],
 
-    // LOCAL_CTS_TEST_PACKAGE := android.host.jdwptunnel
+    // LOCAL_CTS_TEST_PACKAGE := android.host.jdwptunnel.*
 }
