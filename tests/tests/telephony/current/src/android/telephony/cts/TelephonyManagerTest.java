@@ -1062,6 +1062,11 @@ public class TelephonyManagerTest {
         } catch (InterruptedException e) {
             fail("interrupted");
         }
+
+        // Try calling the API that doesn't provide feedback. We have no way of knowing if it
+        // succeeds, so just make sure nothing crashes.
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                tp -> tp.setSystemSelectionChannels(Collections.emptyList()));
     }
 
     @Test
