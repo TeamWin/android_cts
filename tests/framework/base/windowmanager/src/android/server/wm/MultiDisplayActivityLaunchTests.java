@@ -848,7 +848,6 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
         getPendingIntentActivity(TEST_ACTIVITY).send(mContext, resultCode, null /* intent */,
                 null /* onFinished */, null /* handler */, null /* requiredPermission */,
                 options.toBundle());
-        waitAndAssertActivityState(TOP_ACTIVITY, STATE_STOPPED, "Activity should be stopped");
         waitAndAssertTopResumedActivity(TEST_ACTIVITY, displayContent.mId,
                 "Activity launched on secondary display and on top");
     }
