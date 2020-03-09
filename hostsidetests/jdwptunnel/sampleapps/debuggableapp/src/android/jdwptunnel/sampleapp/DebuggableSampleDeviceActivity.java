@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.jdwptunnel.sampleapp;
+package android.jdwptunnel.sampleapp.debuggable;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -24,7 +24,7 @@ import android.os.Bundle;
  *
  * <p>This serves as a simple target application/activity to attach a debugger to.
  */
-public final class SampleDeviceActivity extends Activity {
+public final class DebuggableSampleDeviceActivity extends Activity {
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
