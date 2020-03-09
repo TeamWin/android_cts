@@ -45,19 +45,23 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
                                                 + "(; name=(?<changeName>[^;]+))?"
                                                 + "(; enableAfterTargetSdk=(?<targetSdk>[0-9]+))?"
                                                 + "(; (?<disabled>disabled))?"
+                                                + "(; (?<loggingOnly>loggingOnly))?"
                                                 + "(; packageOverrides=(?<overrides>[^\\)]+))?"
                                                 + "\\)");
         long changeId;
         String changeName;
         int targetSdk;
         boolean disabled;
+        boolean loggingOnly;
         boolean hasOverrides;
 
-        private Change(long changeId, String changeName, int targetSdk, boolean disabled, boolean hasOverrides) {
+        private Change(long changeId, String changeName, int targetSdk, boolean disabled,
+                boolean loggingOnly, boolean hasOverrides) {
             this.changeId = changeId;
             this.changeName = changeName;
             this.targetSdk = targetSdk;
             this.disabled = disabled;
+            this.loggingOnly = loggingOnly;
             this.hasOverrides = hasOverrides;
         }
 
@@ -66,6 +70,7 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
             String changeName;
             int targetSdk = 0;
             boolean disabled = false;
+            boolean loggingOnly = false;
             boolean hasOverrides = false;
 
             Matcher matcher = CHANGE_REGEX.matcher(line);
@@ -90,10 +95,13 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
             if (matcher.group("disabled") != null) {
                 disabled = true;
             }
+            if (matcher.group("loggingOnly") != null) {
+                loggingOnly = true;
+            }
             if (matcher.group("overrides") != null) {
                 hasOverrides = true;
             }
-            return new Change(changeId, changeName, targetSdk, disabled, hasOverrides);
+            return new Change(changeId, changeName, targetSdk, disabled, loggingOnly, hasOverrides);
         }
 
         static Change fromNode(Node node) {
@@ -108,8 +116,12 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
             if (element.hasAttribute("disabled")) {
                 disabled = true;
             }
+            boolean loggingOnly = false;
+            if (element.hasAttribute("loggingOnly")) {
+                loggingOnly = true;
+            }
             boolean hasOverrides = false;
-            return new Change(changeId, changeName, targetSdk, disabled, hasOverrides);
+            return new Change(changeId, changeName, targetSdk, disabled, loggingOnly, hasOverrides);
         }
         @Override
         public int hashCode() {
@@ -128,6 +140,7 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
                 && Objects.equals(this.changeName, that.changeName)
                 && this.targetSdk == that.targetSdk
                 && this.disabled == that.disabled
+                && this.loggingOnly == that.loggingOnly
                 && this.hasOverrides == that.hasOverrides;
         }
         @Override
