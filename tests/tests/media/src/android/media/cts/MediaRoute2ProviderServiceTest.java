@@ -121,7 +121,7 @@ public class MediaRoute2ProviderServiceTest {
                 SESSION_ID_1, "" /* clientPackageName */)
                 .addSelectedRoute(ROUTE_ID1)
                 .build();
-        mService.notifySessionCreated(sessionInfo1, MediaRoute2ProviderService.REQUEST_ID_NONE);
+        mService.notifySessionCreated(MediaRoute2ProviderService.REQUEST_ID_NONE, sessionInfo1);
         assertEquals(1, mService.getAllSessionInfo().size());
         assertEquals(sessionInfo1, mService.getAllSessionInfo().get(0));
         assertEquals(sessionInfo1, mService.getSessionInfo(SESSION_ID_1));
@@ -132,7 +132,7 @@ public class MediaRoute2ProviderServiceTest {
                 .addSelectedRoute(ROUTE_ID2)
                 .build();
         mService.notifySessionCreated(
-                sessionInfo2, MediaRoute2ProviderService.REQUEST_ID_NONE);
+                MediaRoute2ProviderService.REQUEST_ID_NONE, sessionInfo2);
         assertEquals(2, mService.getAllSessionInfo().size());
         assertEquals(sessionInfo2, mService.getSessionInfo(SESSION_ID_2));
 
@@ -302,7 +302,7 @@ public class MediaRoute2ProviderServiceTest {
                         .addSelectableRoute(ROUTE_ID4_TO_SELECT_AND_DESELECT)
                         .addTransferableRoute(ROUTE_ID5_TO_TRANSFER_TO)
                         .build();
-                mService.notifySessionCreated(info, requestId);
+                mService.notifySessionCreated(requestId, info);
                 onCreateSessionLatch.countDown();
             }
 
@@ -467,7 +467,7 @@ public class MediaRoute2ProviderServiceTest {
                         .addSelectableRoute(ROUTE_ID4_TO_SELECT_AND_DESELECT)
                         .addTransferableRoute(ROUTE_ID5_TO_TRANSFER_TO)
                         .build();
-                mService.notifySessionCreated(info, requestId);
+                mService.notifySessionCreated(requestId, info);
                 onCreateSessionLatch.countDown();
             }
         });
