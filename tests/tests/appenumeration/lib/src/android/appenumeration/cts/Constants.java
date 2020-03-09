@@ -84,8 +84,11 @@ public class Constants {
             PKG_BASE + "cts.action.QUERY_INTENT_PROVIDERS";
     public static final String ACTION_GET_INSTALLED_PACKAGES =
             PKG_BASE + "cts.action.GET_INSTALLED_PACKAGES";
+    public static final String ACTION_START_SENDER_FOR_RESULT =
+            PKG_BASE + "cts.action.START_SENDER_FOR_RESULT";
 
     public static final String EXTRA_REMOTE_CALLBACK = "remoteCallback";
     public static final String EXTRA_ERROR = "error";
     public static final String EXTRA_FLAGS = "flags";
+
 }
