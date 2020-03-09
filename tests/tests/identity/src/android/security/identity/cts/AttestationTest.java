@@ -26,7 +26,6 @@ import android.security.identity.IdentityCredentialStore;
 import androidx.test.InstrumentationRegistry;
 
 import org.junit.Test;
-import org.junit.Ignore;
 
 import com.google.common.primitives.Bytes;
 
@@ -49,7 +48,6 @@ public class AttestationTest {
     public static final int KM_TAG_ATTESTATION_APPLICATION_ID = 709;
     public static final int KM_TAG_IDENTITY_CREDENTIAL_KEY = 721;
 
-    @Ignore("Not ready until SW implementation produces correct attestations")
     @Test
     public void attestationTest() throws Exception {
         Context appContext = InstrumentationRegistry.getTargetContext();
