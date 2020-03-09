@@ -21,8 +21,11 @@ import android.app.appsearch.AppSearchBatchResult;
 import android.app.appsearch.AppSearchDocument;
 import android.app.appsearch.AppSearchEmail;
 import android.app.appsearch.AppSearchManager;
+import android.app.appsearch.AppSearchResult;
 import android.app.appsearch.AppSearchSchema;
 import android.app.appsearch.AppSearchSchema.PropertyConfig;
+import android.app.appsearch.SearchResults;
+import android.app.appsearch.SearchSpec;
 import android.content.Context;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -30,13 +33,23 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.google.common.collect.ImmutableList;
 
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 @RunWith(AndroidJUnit4.class)
 public class AppSearchManagerTest {
     private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
     private final AppSearchManager mAppSearch = mContext.getSystemService(AppSearchManager.class);
+
+    @After
+    public void tearDown() {
+        mAppSearch.deleteAll();
+    }
 
     @Test
     public void testGetService() {
@@ -65,7 +78,7 @@ public class AppSearchManagerTest {
     }
 
     @Test
-    public void testPutDocuments() throws Exception {
+    public void testPutDocuments() {
         // Schema registration
         assertThat(mAppSearch.setSchema(AppSearchEmail.SCHEMA).isSuccess()).isTrue();
 
@@ -84,7 +97,7 @@ public class AppSearchManagerTest {
     }
 
     @Test
-    public void testGetDocuments() throws Exception {
+    public void testGetDocuments() {
         // Schema registration
         assertThat(mAppSearch.setSchema(AppSearchEmail.SCHEMA).isSuccess()).isTrue();
 
@@ -99,10 +112,94 @@ public class AppSearchManagerTest {
         assertThat(mAppSearch.putDocuments(ImmutableList.of(inEmail)).isSuccess()).isTrue();
 
         // Get the document
-        AppSearchBatchResult<String, AppSearchDocument> getResult =
-                mAppSearch.getDocuments(ImmutableList.of("uri1"));
-        assertThat(getResult.isSuccess()).isTrue();
-        assertThat(getResult.getFailures()).isEmpty();
-        assertThat(getResult.getSuccesses()).containsExactly("uri1", inEmail);
+        List<AppSearchDocument> outDocuments = doGet("uri1");
+        assertThat(outDocuments).hasSize(1);
+        AppSearchEmail outEmail = new AppSearchEmail(outDocuments.get(0));
+        assertThat(outEmail).isEqualTo(inEmail);
+    }
+
+    @Test
+    public void testQuery() {
+        // Schema registration
+        assertThat(mAppSearch.setSchema(AppSearchEmail.SCHEMA).isSuccess()).isTrue();
+
+        // Index a document
+        AppSearchEmail inEmail =
+                new AppSearchEmail.Builder("uri1")
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+
+        assertThat(mAppSearch.putDocuments(ImmutableList.of(inEmail)).isSuccess()).isTrue();
+
+        // Query for the document
+        List<AppSearchDocument> results = doQuery("body");
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0)).isEqualTo(inEmail);
+
+        // Multi-term query
+        results = doQuery("body email");
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0)).isEqualTo(inEmail);
+    }
+
+    @Test
+    public void testQuery_TypeFilter() {
+        // Schema registration
+        assertThat(mAppSearch.setSchema(AppSearchEmail.SCHEMA).isSuccess()).isTrue();
+
+        // Index a document
+        AppSearchEmail inEmail =
+                new AppSearchEmail.Builder("uri1")
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+        AppSearchDocument inDoc =
+                new AppSearchDocument.Builder("uri2", "Test").setProperty("foo", "body").build();
+
+        assertThat(mAppSearch.putDocuments(ImmutableList.of(inEmail, inDoc)).isSuccess()).isTrue();
+
+        // Query for the documents
+        List<AppSearchDocument> results = doQuery("body");
+        assertThat(results).hasSize(2);
+        assertThat(results).containsExactly(inEmail, inDoc);
+
+        // Query only for Document
+        results = doQuery("body", "Test");
+        assertThat(results).hasSize(1);
+        assertThat(results).containsExactly(inDoc);
+    }
+
+    private List<AppSearchDocument> doGet(String... uris) {
+        AppSearchBatchResult<String, AppSearchDocument> result =
+                mAppSearch.getDocuments(Arrays.asList(uris));
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(result.getSuccesses()).hasSize(uris.length);
+        assertThat(result.getFailures()).isEmpty();
+        List<AppSearchDocument> list = new ArrayList<>(uris.length);
+        for (String uri : uris) {
+            list.add(result.getSuccesses().get(uri));
+        }
+        return list;
+    }
+
+    private List<AppSearchDocument> doQuery(String queryExpression, String... schemaTypes) {
+        AppSearchResult<SearchResults> result = mAppSearch.query(
+                queryExpression,
+                SearchSpec.newBuilder()
+                        .setSchemaTypes(schemaTypes)
+                        .setTermMatchType(SearchSpec.TERM_MATCH_TYPE_EXACT_ONLY)
+                        .build());
+        assertThat(result.isSuccess()).isTrue();
+        List<AppSearchDocument> documents = new ArrayList<>();
+        SearchResults searchResults = result.getResultValue();
+        while (searchResults.hasNext()) {
+            documents.add(searchResults.next().getDocument());
+        }
+        return documents;
     }
 }
