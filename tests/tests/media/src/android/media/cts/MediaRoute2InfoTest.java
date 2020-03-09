@@ -49,7 +49,6 @@ public class MediaRoute2InfoTest {
     public static final String TEST_NAME = "test_name";
     public static final String TEST_ROUTE_TYPE_0 = "test_route_type_0";
     public static final String TEST_ROUTE_TYPE_1 = "test_route_type_1";
-    public static final int TEST_DEVICE_TYPE = MediaRoute2Info.DEVICE_TYPE_REMOTE_SPEAKER;
     public static final Uri TEST_ICON_URI = Uri.parse("https://developer.android.com");
     public static final String TEST_DESCRIPTION = "test_description";
     public static final int TEST_CONNECTION_STATE = MediaRoute2Info.CONNECTION_STATE_CONNECTING;
@@ -113,7 +112,6 @@ public class MediaRoute2InfoTest {
         MediaRoute2Info routeInfo = new MediaRoute2Info.Builder(TEST_ID, TEST_NAME)
                 .addFeature(TEST_ROUTE_TYPE_0)
                 .addFeature(TEST_ROUTE_TYPE_1)
-                .setDeviceType(TEST_DEVICE_TYPE)
                 .setIconUri(TEST_ICON_URI)
                 .setDescription(TEST_DESCRIPTION)
                 .setConnectionState(TEST_CONNECTION_STATE)
@@ -131,7 +129,6 @@ public class MediaRoute2InfoTest {
         assertEquals(TEST_ROUTE_TYPE_0, routeInfo.getFeatures().get(0));
         assertEquals(TEST_ROUTE_TYPE_1, routeInfo.getFeatures().get(1));
 
-        assertEquals(TEST_DEVICE_TYPE, routeInfo.getDeviceType());
         assertEquals(TEST_ICON_URI, routeInfo.getIconUri());
         assertEquals(TEST_DESCRIPTION, routeInfo.getDescription());
         assertEquals(TEST_CONNECTION_STATE, routeInfo.getConnectionState());
@@ -184,38 +181,6 @@ public class MediaRoute2InfoTest {
     }
 
     @Test
-    public void testhasAnyFeaturesReturnsFalse() {
-        MediaRoute2Info routeInfo = new MediaRoute2Info.Builder(TEST_ID, TEST_NAME)
-                .addFeature(TEST_ROUTE_TYPE_0)
-                .addFeature(TEST_ROUTE_TYPE_1)
-                .build();
-
-        List<String> testRouteTypes = new ArrayList<>();
-        testRouteTypes.add("non_matching_route_type_1");
-        testRouteTypes.add("non_matching_route_type_2");
-        testRouteTypes.add("non_matching_route_type_3");
-        testRouteTypes.add("non_matching_route_type_4");
-
-        assertFalse(routeInfo.hasAnyFeatures(testRouteTypes));
-    }
-
-    @Test
-    public void testhasAnyFeaturesReturnsTrue() {
-        MediaRoute2Info routeInfo = new MediaRoute2Info.Builder(TEST_ID, TEST_NAME)
-                .addFeature(TEST_ROUTE_TYPE_0)
-                .addFeature(TEST_ROUTE_TYPE_1)
-                .build();
-
-        List<String> testRouteTypes = new ArrayList<>();
-        testRouteTypes.add("non_matching_route_type_1");
-        testRouteTypes.add("non_matching_route_type_2");
-        testRouteTypes.add("non_matching_route_type_3");
-        testRouteTypes.add(TEST_ROUTE_TYPE_1);
-
-        assertTrue(routeInfo.hasAnyFeatures(testRouteTypes));
-    }
-
-    @Test
     public void testEqualsCreatedWithSameArguments() {
         Bundle extras = new Bundle();
         extras.putString(TEST_KEY, TEST_VALUE);
@@ -223,7 +188,6 @@ public class MediaRoute2InfoTest {
         MediaRoute2Info routeInfo1 = new MediaRoute2Info.Builder(TEST_ID, TEST_NAME)
                 .addFeature(TEST_ROUTE_TYPE_0)
                 .addFeature(TEST_ROUTE_TYPE_1)
-                .setDeviceType(TEST_DEVICE_TYPE)
                 .setIconUri(TEST_ICON_URI)
                 .setDescription(TEST_DESCRIPTION)
                 .setConnectionState(TEST_CONNECTION_STATE)
@@ -237,7 +201,6 @@ public class MediaRoute2InfoTest {
         MediaRoute2Info routeInfo2 = new MediaRoute2Info.Builder(TEST_ID, TEST_NAME)
                 .addFeature(TEST_ROUTE_TYPE_0)
                 .addFeature(TEST_ROUTE_TYPE_1)
-                .setDeviceType(TEST_DEVICE_TYPE)
                 .setIconUri(TEST_ICON_URI)
                 .setDescription(TEST_DESCRIPTION)
                 .setConnectionState(TEST_CONNECTION_STATE)
@@ -260,7 +223,6 @@ public class MediaRoute2InfoTest {
         MediaRoute2Info routeInfo1 = new MediaRoute2Info.Builder(TEST_ID, TEST_NAME)
                 .addFeature(TEST_ROUTE_TYPE_0)
                 .addFeature(TEST_ROUTE_TYPE_1)
-                .setDeviceType(TEST_DEVICE_TYPE)
                 .setIconUri(TEST_ICON_URI)
                 .setDescription(TEST_DESCRIPTION)
                 .setConnectionState(TEST_CONNECTION_STATE)
@@ -285,7 +247,6 @@ public class MediaRoute2InfoTest {
         MediaRoute2Info routeInfo = new MediaRoute2Info.Builder(TEST_ID, TEST_NAME)
                 .addFeature(TEST_ROUTE_TYPE_0)
                 .addFeature(TEST_ROUTE_TYPE_1)
-                .setDeviceType(TEST_DEVICE_TYPE)
                 .setIconUri(TEST_ICON_URI)
                 .setDescription(TEST_DESCRIPTION)
                 .setConnectionState(TEST_CONNECTION_STATE)
@@ -299,9 +260,6 @@ public class MediaRoute2InfoTest {
         // Now, we will use copy constructor
         assertNotEquals(routeInfo, new MediaRoute2Info.Builder(routeInfo)
                 .addFeature("randomRouteType")
-                .build());
-        assertNotEquals(routeInfo, new MediaRoute2Info.Builder(routeInfo)
-                .setDeviceType(TEST_DEVICE_TYPE + 1)
                 .build());
         assertNotEquals(routeInfo, new MediaRoute2Info.Builder(routeInfo)
                 .setIconUri(Uri.parse("randomUri"))
@@ -335,7 +293,6 @@ public class MediaRoute2InfoTest {
         MediaRoute2Info routeInfo = new MediaRoute2Info.Builder(TEST_ID, TEST_NAME)
                 .addFeature(TEST_ROUTE_TYPE_0)
                 .addFeature(TEST_ROUTE_TYPE_1)
-                .setDeviceType(TEST_DEVICE_TYPE)
                 .setIconUri(TEST_ICON_URI)
                 .setDescription(TEST_DESCRIPTION)
                 .setConnectionState(TEST_CONNECTION_STATE)
@@ -372,7 +329,6 @@ public class MediaRoute2InfoTest {
         MediaRoute2Info routeInfo = new MediaRoute2Info.Builder(TEST_ID, TEST_NAME)
                 .addFeature(TEST_ROUTE_TYPE_0)
                 .addFeature(TEST_ROUTE_TYPE_1)
-                .setDeviceType(TEST_DEVICE_TYPE)
                 .setIconUri(TEST_ICON_URI)
                 .setDescription(TEST_DESCRIPTION)
                 .setConnectionState(TEST_CONNECTION_STATE)
