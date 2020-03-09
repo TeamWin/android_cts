@@ -16,10 +16,10 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.jdwptunnel.sampleapp">
+    package="android.jdwptunnel.sampleapp.debuggable">
 
     <application android:debuggable="true">
-        <activity android:name=".SampleDeviceActivity" >
+        <activity android:name=".DebuggableSampleDeviceActivity" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
