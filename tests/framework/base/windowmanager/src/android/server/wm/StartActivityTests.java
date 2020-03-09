@@ -37,6 +37,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 
 import android.app.Activity;
+import android.app.WindowConfiguration;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
@@ -44,9 +46,7 @@ import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.app.Components;
 import android.server.wm.intent.Activities;
 
-import androidx.test.rule.ActivityTestRule;
 
-import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -58,34 +58,50 @@ import java.util.Arrays;
 @Presubmit
 public class StartActivityTests extends ActivityManagerTestBase {
 
-    @Rule
-    public final ActivityTestRule<TestActivity2> mTestActivity2Rule =
-            new ActivityTestRule<>(TestActivity2.class, false /* initialTouchMode */,
-                    false /* launchActivity */);
+    @Test
+    public void testStartHomeIfNoActivities() {
+        final ComponentName defaultHome = getDefaultHomeComponent();
+        final int[] allActivityTypes = Arrays.copyOf(ALL_ACTIVITY_TYPE_BUT_HOME,
+                ALL_ACTIVITY_TYPE_BUT_HOME.length + 1);
+        allActivityTypes[allActivityTypes.length - 1] = WindowConfiguration.ACTIVITY_TYPE_HOME;
+        removeStacksWithActivityTypes(allActivityTypes);
+
+        waitAndAssertTopResumedActivity(defaultHome, DEFAULT_DISPLAY,
+                "Home activity should be restarted after force-finish");
+
+        stopTestPackage(defaultHome.getPackageName());
+
+        waitAndAssertTopResumedActivity(defaultHome, DEFAULT_DISPLAY,
+                "Home activity should be restarted after force-stop");
+    }
 
     /**
-     * Ensures {@link Activity} can only be launched from an {@link Activity}
-     * {@link android.content.Context}.
+     * Ensures {@link Activity} without {@link Intent#FLAG_ACTIVITY_NEW_TASK} can only be launched
+     * from an {@link Activity} {@link android.content.Context}.
      */
     @Test
     public void testStartActivityContexts() {
-        // Launch Activity from application context.
+        // Note by default LaunchActivityBuilder will use LAUNCHING_ACTIVITY to launch the target.
+
+        // Launch Activity from application context without FLAG_ACTIVITY_NEW_TASK.
         getLaunchActivityBuilder()
                 .setTargetActivity(TEST_ACTIVITY)
                 .setUseApplicationContext(true)
                 .setSuppressExceptions(true)
+                .setWaitForLaunched(false)
                 .execute();
 
-        // Launch second Activity from Activity Context to ensure previous Activity has launched.
-        final Activity testActivity2 = mTestActivity2Rule.launchActivity(null);
+        // Launch another activity from activity to ensure previous one has done.
+        getLaunchActivityBuilder()
+                .setTargetActivity(NO_RELAUNCH_ACTIVITY)
+                .execute();
 
-        mWmState.computeState(testActivity2.getComponentName());
+        mWmState.computeState(NO_RELAUNCH_ACTIVITY);
 
         // Verify Activity was not started.
         assertFalse(mWmState.containsActivity(TEST_ACTIVITY));
         mWmState.assertResumedActivity(
-                "Activity launched from activity context should be present",
-                testActivity2.getComponentName());
+                "Activity launched from activity context should be present", NO_RELAUNCH_ACTIVITY);
     }
 
     /**
@@ -272,8 +288,5 @@ public class StartActivityTests extends ActivityManagerTestBase {
             taskIds[i + 1] = mWmState.getTaskByActivity(intents[i].getComponent()).getTaskId();
         }
         return taskIds;
-    }
-
-    public static class TestActivity2 extends Activity {
     }
 }
