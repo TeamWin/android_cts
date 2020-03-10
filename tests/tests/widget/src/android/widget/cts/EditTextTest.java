@@ -35,6 +35,7 @@ import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.util.Xml;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.EditText;
 import android.widget.TextView.BufferType;
 
@@ -49,6 +50,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
+
+import java.util.List;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -364,6 +367,22 @@ public class EditTextTest {
         final Context context = InstrumentationRegistry.getTargetContext();
         final EditText editText = new EditText(context);
         assertEquals(Layout.BREAK_STRATEGY_SIMPLE, editText.getBreakStrategy());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testOnInitializeA11yNodeInfo_hasAccessibilityActions() {
+        mEditText1.setText("android");
+        final AccessibilityNodeInfo info = AccessibilityNodeInfo.obtain();
+        mEditText1.onInitializeAccessibilityNodeInfo(info);
+        List<AccessibilityNodeInfo.AccessibilityAction> actionList = info.getActionList();
+        assertTrue("info's isLongClickable should be true",
+                info.isLongClickable());
+        assertTrue("info should have ACTION_LONG_CLICK",
+                actionList.contains(AccessibilityNodeInfo.AccessibilityAction.ACTION_LONG_CLICK));
+        assertTrue("info should have ACTION_SET_TEXT",
+                actionList.contains(AccessibilityNodeInfo.AccessibilityAction.ACTION_SET_TEXT));
+
     }
 
     private class MockEditText extends EditText {
