@@ -134,12 +134,12 @@ public class BlobStoreManagerTest {
     }
 
     @Test
-    public void testDeleteSession_invalidArguments() throws Exception {
-        assertThrows(IllegalArgumentException.class, () -> mBlobStoreManager.openSession(-1));
+    public void testAbandonSession_invalidArguments() throws Exception {
+        assertThrows(IllegalArgumentException.class, () -> mBlobStoreManager.abandonSession(-1));
     }
 
     @Test
-    public void testDeleteSession() throws Exception {
+    public void testAbandonSession() throws Exception {
         final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
@@ -148,7 +148,7 @@ public class BlobStoreManagerTest {
             // Verify that session can be opened.
             assertThat(mBlobStoreManager.openSession(sessionId)).isNotNull();
 
-            mBlobStoreManager.deleteSession(sessionId);
+            mBlobStoreManager.abandonSession(sessionId);
             // Verify that trying to open session after it is deleted will throw.
             assertThrows(SecurityException.class, () -> mBlobStoreManager.openSession(sessionId));
         } finally {
@@ -205,7 +205,7 @@ public class BlobStoreManagerTest {
     }
 
     @Test
-    public void testAbandonSession() throws Exception {
+    public void testOpenSessionAndAbandon() throws Exception {
         final DummyBlobData blobData = new DummyBlobData(mContext);
         blobData.prepare();
         try {
