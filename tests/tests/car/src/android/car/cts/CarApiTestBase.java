@@ -20,6 +20,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.car.Car;
+import android.car.FuelType;
+import android.car.PortLocationType;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ServiceConnection;
@@ -32,6 +34,8 @@ import com.android.compatibility.common.util.FeatureUtil;
 
 import org.junit.After;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -39,6 +43,17 @@ public abstract class CarApiTestBase {
     protected static final long DEFAULT_WAIT_TIMEOUT_MS = 1000;
 
     private Car mCar;
+
+    // Enums in FuelType
+    final static List<Integer> EXPECTED_FUEL_TYPES =
+            Arrays.asList(FuelType.UNKNOWN, FuelType.UNLEADED, FuelType.LEADED, FuelType.DIESEL_1,
+                    FuelType.DIESEL_2, FuelType.BIODIESEL, FuelType.E85, FuelType.LPG, FuelType.CNG,
+                    FuelType.LNG, FuelType.ELECTRIC, FuelType.HYDROGEN, FuelType.OTHER);
+    // Enums in PortLocationType
+    final static List<Integer> EXPECTED_PORT_LOCATIONS =
+            Arrays.asList(PortLocationType.UNKNOWN, PortLocationType.FRONT_LEFT,
+                    PortLocationType.FRONT_RIGHT, PortLocationType.REAR_RIGHT,
+                    PortLocationType.REAR_LEFT, PortLocationType.FRONT, PortLocationType.REAR);
 
     private final DefaultServiceConnectionListener mConnectionListener =
             new DefaultServiceConnectionListener();
