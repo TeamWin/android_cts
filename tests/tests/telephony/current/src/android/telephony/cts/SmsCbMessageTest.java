@@ -18,8 +18,13 @@
 package android.telephony.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
 import android.content.ContentValues;
+import android.database.Cursor;
 import android.provider.Telephony;
 import android.telephony.CbGeoUtils;
 import android.telephony.SmsCbCmasInfo;
@@ -61,7 +66,7 @@ public class SmsCbMessageTest {
 
     private static final int TEST_MAX_WAIT_TIME = 0;
     private static final List<CbGeoUtils.Geometry> TEST_GEOS = new ArrayList<>();
-    private static final int TEST_RECEIVED_TIME = 11000;
+    private static final long TEST_RECEIVED_TIME = 11000;
     private static final int TEST_SLOT = 0;
     private static final int TEST_SUB_ID = 1;
 
@@ -228,5 +233,79 @@ public class SmsCbMessageTest {
         ContentValues cv = mSmsCbMessage.getContentValues();
         int serial = cv.getAsInteger(Telephony.CellBroadcasts.SERIAL_NUMBER);
         assertEquals(TEST_SERIAL, serial);
+    }
+
+    @Test
+    public void testCreateFromCursor() {
+        Cursor cursor = mock(Cursor.class);
+        doReturn(0).when(cursor).getColumnIndexOrThrow(eq(
+                Telephony.CellBroadcasts.GEOGRAPHICAL_SCOPE));
+        doReturn(TEST_GEO_SCOPE).when(cursor).getInt(0);
+
+        doReturn(1).when(cursor).getColumnIndexOrThrow(eq(
+                Telephony.CellBroadcasts.SERIAL_NUMBER));
+        doReturn(TEST_SERIAL).when(cursor).getInt(1);
+
+        doReturn(2).when(cursor).getColumnIndexOrThrow(eq(
+                Telephony.CellBroadcasts.SERVICE_CATEGORY));
+        doReturn(TEST_SERVICE_CATEGORY).when(cursor).getInt(2);
+
+        doReturn(3).when(cursor).getColumnIndexOrThrow(eq(
+                Telephony.CellBroadcasts.LANGUAGE_CODE));
+        doReturn(TEST_LANGUAGE).when(cursor).getString(3);
+
+        doReturn(4).when(cursor).getColumnIndexOrThrow(eq(
+                Telephony.CellBroadcasts.MESSAGE_BODY));
+        doReturn(TEST_BODY).when(cursor).getString(4);
+
+        doReturn(5).when(cursor).getColumnIndexOrThrow(eq(
+                Telephony.CellBroadcasts.MESSAGE_FORMAT));
+        doReturn(TEST_MESSAGE_FORMAT).when(cursor).getInt(5);
+
+        doReturn(6).when(cursor).getColumnIndexOrThrow(eq(
+                Telephony.CellBroadcasts.MESSAGE_PRIORITY));
+        doReturn(TEST_PRIORITY).when(cursor).getInt(6);
+
+        doReturn(7).when(cursor).getColumnIndexOrThrow(eq(
+                Telephony.CellBroadcasts.SLOT_INDEX));
+        doReturn(TEST_SLOT).when(cursor).getInt(7);
+
+        doReturn(8).when(cursor).getColumnIndexOrThrow(eq(
+                Telephony.CellBroadcasts.SUBSCRIPTION_ID));
+        doReturn(TEST_SUB_ID).when(cursor).getInt(8);
+
+        doReturn(-1).when(cursor).getColumnIndexOrThrow(eq(
+                Telephony.CellBroadcasts.PLMN));
+
+        doReturn(-1).when(cursor).getColumnIndexOrThrow(eq(
+                Telephony.CellBroadcasts.LAC));
+
+        doReturn(-1).when(cursor).getColumnIndexOrThrow(eq(
+                Telephony.CellBroadcasts.CID));
+
+        doReturn(-1).when(cursor).getColumnIndex(eq(
+                Telephony.CellBroadcasts.ETWS_WARNING_TYPE));
+
+        doReturn(-1).when(cursor).getColumnIndex(eq(
+                Telephony.CellBroadcasts.CMAS_MESSAGE_CLASS));
+
+        doReturn(9).when(cursor).getColumnIndex(eq(
+                Telephony.CellBroadcasts.GEOMETRIES));
+        // return empty string here to be parsed into empty array list
+        doReturn("").when(cursor).getString(9);
+
+        doReturn(10).when(cursor).getColumnIndexOrThrow(eq(
+                Telephony.CellBroadcasts.RECEIVED_TIME));
+        doReturn(TEST_RECEIVED_TIME).when(cursor).getLong(10);
+
+        doReturn(11).when(cursor).getColumnIndexOrThrow(eq(
+                Telephony.CellBroadcasts.MAXIMUM_WAIT_TIME));
+        doReturn(TEST_MAX_WAIT_TIME).when(cursor).getInt(11);
+
+        SmsCbMessage cbMessage = SmsCbMessage.createFromCursor(cursor);
+        assertEquals(TEST_SERIAL, cbMessage.getSerialNumber());
+        assertEquals(TEST_BODY, cbMessage.getMessageBody());
+        assertNull(cbMessage.getEtwsWarningInfo());
+        assertNull(cbMessage.getCmasWarningInfo());
     }
 }
