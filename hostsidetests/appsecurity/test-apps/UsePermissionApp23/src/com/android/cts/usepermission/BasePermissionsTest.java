@@ -38,6 +38,7 @@ import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.Direction;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
+import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.support.test.uiautomator.UiScrollable;
 import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
@@ -366,6 +367,17 @@ public abstract class BasePermissionsTest {
         }
     }
 
+    private boolean scrollToAndGetTextObject(String text) {
+        UiScrollable scroller = new UiScrollable(new UiSelector().scrollable(true));
+        try {
+            // Swipe far away from the edges to avoid not triggering swipes
+            scroller.setSwipeDeadZonePercentage(0.25);
+            return scroller.scrollTextIntoView(text);
+        } catch (UiObjectNotFoundException e) {
+            throw new AssertionError("View with text '" + text + "' was not found!", e);
+        }
+    }
+
     private void setPermissionGrantState(String[] permissions, boolean granted,
             boolean legacyApp) throws Exception {
         getUiDevice().pressBack();
@@ -403,6 +415,7 @@ public abstract class BasePermissionsTest {
         for (String permission : permissions) {
             // Find the permission screen
             String permissionLabel = getPermissionLabel(permission);
+            scrollToAndGetTextObject(permissionLabel);
 
             UiObject2 permissionView = null;
             long start = System.currentTimeMillis();
