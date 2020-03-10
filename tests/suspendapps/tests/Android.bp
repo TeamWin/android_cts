@@ -19,6 +19,7 @@ android_test {
     srcs: [
         "src/**/*.java",
         ":CtsSuspendHelpersConstants",
+        ":CtsSuspendHelpersAidl",
     ],
 
     static_libs: [
