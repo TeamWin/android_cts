@@ -24,6 +24,7 @@ import android.os.Looper;
 import android.test.InstrumentationTestCase;
 
 import java.util.Arrays;
+import java.util.Collection;
 
 public class ContentObserverTest extends InstrumentationTestCase {
     private static final Uri CONTENT_URI = Uri.parse("content://uri");
@@ -185,7 +186,7 @@ public class ContentObserverTest extends InstrumentationTestCase {
         }
 
         @Override
-        public void onChange(boolean selfChange, Iterable<Uri> uris, int flags) {
+        public void onChange(boolean selfChange, Collection<Uri> uris, int flags) {
             super.onChange(selfChange, uris, flags);
             synchronized (this) {
                 mChangeCount++;
