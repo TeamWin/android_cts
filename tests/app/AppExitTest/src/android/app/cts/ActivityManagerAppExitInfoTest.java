@@ -472,6 +472,9 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         // Start a process and block its main thread
         startService(ACTION_ANR, STUB_SERVICE_NAME, false, false);
 
+        // Sleep for a while to make sure it's already blocking its main thread.
+        sleep(WAITFOR_MSEC);
+
         Monitor monitor = new Monitor(mInstrumentation);
 
         Intent intent = new Intent();
