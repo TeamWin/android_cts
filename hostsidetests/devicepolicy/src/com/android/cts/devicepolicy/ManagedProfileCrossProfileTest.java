@@ -491,6 +491,9 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
         }
         installAllDummyApps();
         getDevice().clearLogcat();
+        // Increase logcat size because the test is reading from it.
+        String command = "logcat -G 16M";
+        getDevice().executeShellCommand(command);
 
         runWorkProfileDeviceTest(
                 ".CrossProfileTest",
