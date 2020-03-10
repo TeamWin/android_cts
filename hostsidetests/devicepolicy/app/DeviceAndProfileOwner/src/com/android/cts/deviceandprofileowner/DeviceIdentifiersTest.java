@@ -112,8 +112,10 @@ public class DeviceIdentifiersTest extends BaseDeviceAdminTest {
             boolean mayReturnNull) {
         try {
             T object = provider.get();
-            if (!mayReturnNull) {
+            if (mayReturnNull) {
                 assertNull(object);
+            } else {
+                fail("Expected SecurityException, received " + object);
             }
         } catch (SecurityException ignored) {
             // assertion succeeded
