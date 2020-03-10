@@ -106,6 +106,47 @@ public class ImsCallProfileTest {
     }
 
     @Test
+    public void testProprietaryExtrasNullCallExtras() {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        ImsStreamMediaProfile testProfile = new ImsStreamMediaProfile(1, 1, 1, 1, 1);
+        // pass in null for bundle
+        ImsCallProfile data = new ImsCallProfile(ImsCallProfile.SERVICE_TYPE_NORMAL,
+                ImsCallProfile.CALL_TYPE_VOICE_N_VIDEO, null /*bundle*/, testProfile);
+
+        Parcel dataParceled = Parcel.obtain();
+        data.writeToParcel(dataParceled, 0);
+        dataParceled.setDataPosition(0);
+        ImsCallProfile unparceledData =
+                ImsCallProfile.CREATOR.createFromParcel(dataParceled);
+        dataParceled.recycle();
+
+        assertNotNull(unparceledData.getProprietaryCallExtras());
+    }
+
+    @Test
+    public void testProprietaryExtrasEmptyExtras() {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        // Empty bundle
+        Bundle testBundle = new Bundle();
+        ImsStreamMediaProfile testProfile = new ImsStreamMediaProfile(1, 1, 1, 1, 1);
+        ImsCallProfile data = new ImsCallProfile(ImsCallProfile.SERVICE_TYPE_NORMAL,
+                ImsCallProfile.CALL_TYPE_VOICE_N_VIDEO, testBundle, testProfile);
+
+        Parcel dataParceled = Parcel.obtain();
+        data.writeToParcel(dataParceled, 0);
+        dataParceled.setDataPosition(0);
+        ImsCallProfile unparceledData =
+                ImsCallProfile.CREATOR.createFromParcel(dataParceled);
+        dataParceled.recycle();
+
+        assertNotNull(unparceledData.getProprietaryCallExtras());
+    }
+
+    @Test
     public void testCallExtras() {
         if (!ImsUtils.shouldTestImsService()) {
             return;
