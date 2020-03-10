@@ -155,19 +155,18 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
         long startTimeMillis = SystemClock.elapsedRealtime();
         while (SystemClock.elapsedRealtime()
                 < startTimeMillis + CAPABILITIES_CHANGED_FOR_METERED_TIMEOUT_MS) {
+            // Network marked metered.
+            if (!mNetworkCallback.getNetworkCapabilities()
+                    .hasCapability(NET_CAPABILITY_NOT_METERED)) {
+                return true;
+            } else {
+                Log.w(TAG, "Network meteredness check failed. "
+                        + mNetworkCallback.getNetworkCapabilities());
+            }
             // Wait for the suggestion to be marked metered now.
             if (!mNetworkCallback.waitForCapabilitiesChanged()) {
-                Log.e(TAG, "Network capabilities did not change");
-                continue;
+                Log.w(TAG, "Network capabilities did not change");
             }
-            if (mNetworkCallback.getNetworkCapabilities()
-                    .hasCapability(NET_CAPABILITY_NOT_METERED)) {
-                Log.e(TAG, "Network meteredness check failed "
-                        + mNetworkCallback.getNetworkCapabilities());
-                continue;
-            }
-            // Network marked metered.
-            return true;
         }
         return false;
     }
