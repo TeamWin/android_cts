@@ -1414,6 +1414,64 @@ public class ContextTest extends AndroidTestCase {
         }.run();
     }
 
+    /** The receiver should get the broadcast if it has all the permissions. */
+    public void testSendBroadcastWithMultiplePermissions_receiverHasAllPermissions()
+            throws Exception {
+        final ResultReceiver receiver = new ResultReceiver();
+
+        registerBroadcastReceiver(receiver, new IntentFilter(ResultReceiver.MOCK_ACTION));
+
+        mContext.sendBroadcastWithMultiplePermissions(
+                new Intent(ResultReceiver.MOCK_ACTION),
+                new String[] { // this test APK has both these permissions
+                        android.Manifest.permission.ACCESS_WIFI_STATE,
+                        android.Manifest.permission.ACCESS_NETWORK_STATE,
+                });
+
+        new PollingCheck(BROADCAST_TIMEOUT) {
+            @Override
+            protected boolean check() {
+                return receiver.hasReceivedBroadCast();
+            }
+        }.run();
+    }
+
+    /** The receiver should not get the broadcast if it does not have all the permissions. */
+    public void testSendBroadcastWithMultiplePermissions_receiverHasSomePermissions()
+            throws Exception {
+        final ResultReceiver receiver = new ResultReceiver();
+
+        registerBroadcastReceiver(receiver, new IntentFilter(ResultReceiver.MOCK_ACTION));
+
+        mContext.sendBroadcastWithMultiplePermissions(
+                new Intent(ResultReceiver.MOCK_ACTION),
+                new String[] { // this test APK only has ACCESS_WIFI_STATE
+                        android.Manifest.permission.ACCESS_WIFI_STATE,
+                        android.Manifest.permission.NETWORK_STACK,
+                });
+
+        Thread.sleep(BROADCAST_TIMEOUT);
+        assertFalse(receiver.hasReceivedBroadCast());
+    }
+
+    /** The receiver should not get the broadcast if it has none of the permissions. */
+    public void testSendBroadcastWithMultiplePermissions_receiverHasNoPermissions()
+            throws Exception {
+        final ResultReceiver receiver = new ResultReceiver();
+
+        registerBroadcastReceiver(receiver, new IntentFilter(ResultReceiver.MOCK_ACTION));
+
+        mContext.sendBroadcastWithMultiplePermissions(
+                new Intent(ResultReceiver.MOCK_ACTION),
+                new String[] { // this test APK has neither of these permissions
+                        android.Manifest.permission.NETWORK_SETTINGS,
+                        android.Manifest.permission.NETWORK_STACK,
+                });
+
+        Thread.sleep(BROADCAST_TIMEOUT);
+        assertFalse(receiver.hasReceivedBroadCast());
+    }
+
     public void testEnforceCallingOrSelfUriPermission() {
         try {
             Uri uri = Uri.parse("content://ctstest");
