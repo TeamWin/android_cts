@@ -195,7 +195,15 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         return name != null && name.contains(".");
     }
 
+    private static boolean isShortComponentName(String name) {
+        return name != null && name.contains("/.");
+    }
+
+    /** The dump output of ActivityManager uses short component name. */
     static String getActivityComponentName(final String packageName, final String activityName) {
+        if (isShortComponentName(activityName)) {
+            return activityName;
+        }
         return packageName + "/" + (isFullyQualifiedActivityName(activityName) ? "" : ".") +
                 activityName;
     }
@@ -226,7 +234,14 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         return getWindowName(componentName, activityName);
     }
 
+    /** The dump output of WindowManager uses fully qualified component name. */
     static String getWindowName(final String packageName, final String activityName) {
+        if (isShortComponentName(activityName)) {
+            final int sep = activityName.indexOf('/');
+            final String pkg = activityName.substring(0, sep);
+            final String cls = activityName.substring(sep + 1);
+            return pkg + "/" + pkg + cls;
+        }
         return getBaseWindowName(packageName, !isFullyQualifiedActivityName(activityName))
                 + activityName;
     }

@@ -17,6 +17,7 @@
 package android.server.cts;
 
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -31,14 +32,37 @@ public class TestActivity extends AbstractLifecycleLogActivity {
     // Sets the fixed orientation (can be one of {@link ActivityInfo.ScreenOrientation}
     private static final String EXTRA_FIXED_ORIENTATION = "fixed_orientation";
 
+    // The target activity names for ACTION_START_ACTIVITIES.
+    private static final String EXTRA_NAMES = "names";
+
+    // The target activity flags for ACTION_START_ACTIVITIES.
+    private static final String EXTRA_FLAGS = "flags";
+
     // Finishes the activity
     private static final String ACTION_FINISH_SELF = "android.server.cts.TestActivity.finish_self";
+
+    // Calls startActivities with the provided targets.
+    private static final String ACTION_START_ACTIVITIES =
+            "android.server.cts.TestActivity.start_activities";
 
     private BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent != null && intent.getAction().equals(ACTION_FINISH_SELF)) {
+            final String action = intent.getAction();
+            if (ACTION_FINISH_SELF.equals(action)) {
                 finish();
+            } else if (ACTION_START_ACTIVITIES.equals(action)) {
+                final int[] flags = intent.getIntArrayExtra(EXTRA_FLAGS);
+                final String[] names = intent.getStringArrayExtra(EXTRA_NAMES);
+                final Intent[] intents = new Intent[names.length];
+                for (int i = 0; i < intents.length; i++) {
+                    Log.i(TAG, "Start activities[" + i + "]=" + names[i]
+                            + " fl=0x" + Integer.toHexString(flags[i]));
+                    intents[i] = new Intent()
+                            .setComponent(ComponentName.unflattenFromString(names[i]))
+                            .addFlags(flags[i]);
+                }
+                startActivities(intents);
             }
         }
     };
@@ -57,7 +81,10 @@ public class TestActivity extends AbstractLifecycleLogActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        registerReceiver(mReceiver, new IntentFilter(ACTION_FINISH_SELF));
+        final IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(ACTION_FINISH_SELF);
+        intentFilter.addAction(ACTION_START_ACTIVITIES);
+        registerReceiver(mReceiver, intentFilter);
     }
 
     @Override
