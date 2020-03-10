@@ -17,7 +17,7 @@
 package android.app.appops.cts
 
 import android.app.AppOpsManager
-import android.app.AppOpsManager.AppOpsCollector
+import android.app.AppOpsManager.OnOpNotedCallback
 import android.app.AppOpsManager.OPSTR_ACCESS_ACCESSIBILITY
 import android.app.AppOpsManager.OPSTR_CAMERA
 import android.app.AppOpsManager.OPSTR_COARSE_LOCATION
@@ -138,8 +138,8 @@ class AppOpsLoggingTest {
     }
 
     private fun setNotedAppOpsCollector() {
-        appOpsManager.setNotedAppOpsCollector(
-                object : AppOpsCollector() {
+        appOpsManager.setOnOpNotedCallback(Executor { it.run() },
+                object : OnOpNotedCallback() {
                     override fun onNoted(op: SyncNotedAppOp) {
                         noted.add(op to Throwable().stackTrace)
                     }
@@ -150,11 +150,6 @@ class AppOpsLoggingTest {
 
                     override fun onAsyncNoted(asyncOp: AsyncNotedAppOp) {
                         asyncNoted.add(asyncOp)
-                    }
-
-                    override fun getAsyncNotedExecutor(): Executor {
-                        // Execute callbacks immediately
-                        return Executor { it.run() }
                     }
                 })
     }
@@ -685,7 +680,7 @@ class AppOpsLoggingTest {
 
     @After
     fun removeNotedAppOpsCollector() {
-        appOpsManager.setNotedAppOpsCollector(null)
+        appOpsManager.setOnOpNotedCallback(null, null)
     }
 
     @After
