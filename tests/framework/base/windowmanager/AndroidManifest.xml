@@ -165,8 +165,6 @@
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$TransitionDestinationActivity"
                   android:theme="@style/window_activity_transitions" />
 
-        <activity android:name="android.server.wm.StartActivityTests$TestActivity2" />
-
         <activity android:name="android.server.wm.MultiDisplaySystemDecorationTests$ImeTestActivity"
                   android:resizeableActivity="true"
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen" />

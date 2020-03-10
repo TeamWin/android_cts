@@ -28,6 +28,8 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -36,6 +38,17 @@ import org.junit.Test;
  */
 @Presubmit
 public class SplashscreenTests extends ActivityManagerTestBase {
+
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+        mWmState.setSanityCheckWithFocusedWindow(false);
+    }
+
+    @After
+    public void tearDown() {
+        mWmState.setSanityCheckWithFocusedWindow(true);
+    }
 
     @Test
     public void testSplashscreenContent() {
