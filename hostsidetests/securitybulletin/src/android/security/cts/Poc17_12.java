@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,19 @@
 package android.security.cts;
 
 import android.platform.test.annotations.SecurityTest;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
-@SecurityTest
+import static org.junit.Assert.*;
+
+@RunWith(DeviceJUnit4ClassRunner.class)
 public class Poc17_12 extends SecurityTestCase {
 
     /**
      * b/38045794
      */
+    @Test
     @SecurityTest(minPatchLevel = "2017-12")
     public void testPocCVE_2017_6262() throws Exception {
         if(containsDriver(getDevice(),"/dev/dri/renderD128")) {
@@ -34,6 +40,7 @@ public class Poc17_12 extends SecurityTestCase {
     /**
      * b/63662821
      */
+    @Test
     @SecurityTest(minPatchLevel = "2017-12")
     public void testPocCVE_2017_14904() throws Exception {
         AdbUtils.runPocAssertNoCrashes("CVE-2017-14904", getDevice(), "mediaserver");
