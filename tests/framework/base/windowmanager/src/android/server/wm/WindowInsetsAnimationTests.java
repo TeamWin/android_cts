@@ -24,6 +24,7 @@ import static android.view.WindowInsetsAnimation.Callback.DISPATCH_MODE_CONTINUE
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -184,6 +185,7 @@ public class WindowInsetsAnimationTests extends WindowManagerTestBase {
 
         getWmState().waitFor(state -> !state.isWindowVisible("StatusBar"),
                 "Waiting for status bar to be hidden");
+        assertFalse(getWmState().isWindowVisible("StatusBar"));
 
         verifyZeroInteractions(mActivity.mCallback);
     }
