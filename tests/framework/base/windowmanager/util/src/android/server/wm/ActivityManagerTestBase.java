@@ -1153,6 +1153,19 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
+    ComponentName getDefaultHomeComponent() {
+        final Intent intent = new Intent(ACTION_MAIN);
+        intent.addCategory(CATEGORY_HOME);
+        intent.addFlags(FLAG_ACTIVITY_NEW_TASK);
+        final ResolveInfo resolveInfo =
+                mContext.getPackageManager().resolveActivity(intent, MATCH_DEFAULT_ONLY);
+        if (resolveInfo == null) {
+            throw new AssertionError("Home activity not found");
+        }
+        return new ComponentName(resolveInfo.activityInfo.packageName,
+                resolveInfo.activityInfo.name);
+    }
+
     /**
      * HomeActivitySession is used to replace the default home component, so that you can use
      * your preferred home for testing within the session. The original default home will be
@@ -1166,16 +1179,7 @@ public abstract class ActivityManagerTestBase {
         HomeActivitySession(ComponentName sessionHome) {
             mSessionHome = sessionHome;
             mPackageManager = mContext.getPackageManager();
-
-            final Intent intent = new Intent(ACTION_MAIN);
-            intent.addCategory(CATEGORY_HOME);
-            intent.addFlags(FLAG_ACTIVITY_NEW_TASK);
-            final ResolveInfo resolveInfo =
-                    mPackageManager.resolveActivity(intent, MATCH_DEFAULT_ONLY);
-            if (resolveInfo != null) {
-                mOrigHome = new ComponentName(resolveInfo.activityInfo.packageName,
-                        resolveInfo.activityInfo.name);
-            }
+            mOrigHome = getDefaultHomeComponent();
 
             SystemUtil.runWithShellPermissionIdentity(
                     () -> mPackageManager.setComponentEnabledSetting(mSessionHome,

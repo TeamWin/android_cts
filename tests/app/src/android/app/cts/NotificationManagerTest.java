@@ -825,6 +825,8 @@ public class NotificationManagerTest extends AndroidTestCase {
             mNotificationManager.setAutomaticZenRuleState(id1, onCondition1);
             mNotificationManager.setAutomaticZenRuleState(id2, onCondition2);
 
+            Thread.sleep(300); // wait for rules to be applied - it's done asynchronously
+
             mRuleIds.add(id1);
             mRuleIds.add(id2);
             assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
