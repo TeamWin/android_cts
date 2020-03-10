@@ -249,7 +249,7 @@ class ItsSession(object):
             ch = self.sock.recv(1)
             if len(ch) == 0:
                 # Socket was probably closed; otherwise don't get empty strings
-                raise its.error.Error('Problem with socket on device side')
+                raise its.error.SocketError(self.device_id, 'Problem with socket on device side')
             chars.append(ch)
         line = ''.join(chars)
         jobj = json.loads(line)
