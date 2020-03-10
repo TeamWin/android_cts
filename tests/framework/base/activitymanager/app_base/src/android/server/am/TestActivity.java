@@ -16,8 +16,10 @@
 
 package android.server.am;
 
-import static android.server.am.Components.TestActivity.TEST_ACTIVITY_ACTION_FINISH_SELF;
 import static android.server.am.Components.TestActivity.EXTRA_FIXED_ORIENTATION;
+import static android.server.am.Components.TestActivity.EXTRA_INTENTS;
+import static android.server.am.Components.TestActivity.TEST_ACTIVITY_ACTION_FINISH_SELF;
+import static android.server.am.Components.TestActivity.TEST_ACTIVITY_ACTION_START_ACTIVITIES;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -25,14 +27,21 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.os.Bundle;
+import android.os.Parcelable;
+
+import java.util.Arrays;
 
 public class TestActivity extends AbstractLifecycleLogActivity {
 
     private BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent != null && TEST_ACTIVITY_ACTION_FINISH_SELF.equals(intent.getAction())) {
+            final String action = intent.getAction();
+            if (TEST_ACTIVITY_ACTION_FINISH_SELF.equals(action)) {
                 finish();
+            } else if (TEST_ACTIVITY_ACTION_START_ACTIVITIES.equals(action)) {
+                final Parcelable[] intents = intent.getParcelableArrayExtra(EXTRA_INTENTS);
+                startActivities(Arrays.copyOf(intents, intents.length, Intent[].class));
             }
         }
     };
@@ -51,7 +60,10 @@ public class TestActivity extends AbstractLifecycleLogActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        registerReceiver(mReceiver, new IntentFilter(TEST_ACTIVITY_ACTION_FINISH_SELF));
+        final IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(TEST_ACTIVITY_ACTION_FINISH_SELF);
+        intentFilter.addAction(TEST_ACTIVITY_ACTION_START_ACTIVITIES);
+        registerReceiver(mReceiver, intentFilter);
     }
 
     @Override
