@@ -1526,7 +1526,7 @@ public class ContentResolverTest extends AndroidTestCase {
         }
 
         @Override
-        public synchronized void onChange(boolean selfChange, Iterable<Uri> uris, int flags) {
+        public synchronized void onChange(boolean selfChange, Collection<Uri> uris, int flags) {
             final Change change = new Change(selfChange, uris, flags);
             Log.v(TAG, change.toString());
 
