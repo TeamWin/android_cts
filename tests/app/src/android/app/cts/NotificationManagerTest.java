@@ -3048,6 +3048,7 @@ public class NotificationManagerTest extends AndroidTestCase {
                     .setShortLabel(BUBBLE_SHORTCUT_ID_DYNAMIC)
                     .setIcon(Icon.createWithResource(mContext, R.drawable.icon_black))
                     .setIntent(shortcutIntent)
+                    .setLongLived(true)
                     .build();
             scmanager.addDynamicShortcuts(Arrays.asList(shortcut));
 
@@ -3158,6 +3159,7 @@ public class NotificationManagerTest extends AndroidTestCase {
                     .setShortLabel(BUBBLE_SHORTCUT_ID_DYNAMIC)
                     .setIcon(Icon.createWithResource(mContext, R.drawable.icon_black))
                     .setIntent(shortcutIntent)
+                    .setLongLived(true)
                     .build();
             scmanager.addDynamicShortcuts(Arrays.asList(shortcut));
 
