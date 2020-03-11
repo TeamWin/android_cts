@@ -77,4 +77,5 @@ android_test {
         "mts",
     ],
     host_required: ["cts-dynamic-config"],
+    min_sdk_version: "29",
 }

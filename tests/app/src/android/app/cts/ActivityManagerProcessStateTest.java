@@ -1863,7 +1863,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_BIND_SERVICE,
                     STUB_PACKAGE_NAME, mAppInfo[0].packageName, 0, null);
             mWatchers[0].waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_BOUND_TOP,
-                    new Integer(PROCESS_CAPABILITY_ALL_IMPLICIT));
+                    new Integer(PROCESS_CAPABILITY_NONE));
 
             // Bind Stub -> App 1, include capability (TOP)
             Bundle bundle = new Bundle();

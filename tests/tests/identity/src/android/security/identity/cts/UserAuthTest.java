@@ -229,9 +229,9 @@ public class UserAuthTest {
                 new PersonalizationData.Builder()
                         .addAccessControlProfile(authTenSecTimeoutProfile)
                         .addAccessControlProfile(freeForAllProfile)
-                        .setEntry(mdlNs, "Accessible to all (0)", idsProfile0,
+                        .putEntry(mdlNs, "Accessible to all (0)", idsProfile0,
                                 Util.cborEncodeString("foo0"))
-                        .setEntry(mdlNs, "Accessible to auth-with-10-sec-timeout (1)", idsProfile1,
+                        .putEntry(mdlNs, "Accessible to auth-with-10-sec-timeout (1)", idsProfile1,
                                 Util.cborEncodeString("foo1"))
                         .build();
         byte[] proofOfProvisioningSignature = wc.personalize(personalizationData);
@@ -301,7 +301,7 @@ public class UserAuthTest {
             entriesToRequest,
             null,  // sessionTranscript
             null); // readerSignature
-        resultNamespaces = rd.getNamespaceNames();
+        resultNamespaces = rd.getNamespaces();
         assertEquals(1, resultNamespaces.size());
         assertEquals("org.iso.18013-5.2019", resultNamespaces.iterator().next());
         entryNames = rd.getEntryNames("org.iso.18013-5.2019");
@@ -334,7 +334,7 @@ public class UserAuthTest {
                 entriesToRequest,
                 null,  // sessionTranscript
                 null); // readerSignature
-        resultNamespaces = rd.getNamespaceNames();
+        resultNamespaces = rd.getNamespaces();
         assertEquals(1, resultNamespaces.size());
         assertEquals("org.iso.18013-5.2019", resultNamespaces.iterator().next());
         entryNames = rd.getEntryNames("org.iso.18013-5.2019");
@@ -368,7 +368,7 @@ public class UserAuthTest {
             entriesToRequest,
             null,  // sessionTranscript
             null); // readerSignature
-        resultNamespaces = rd.getNamespaceNames();
+        resultNamespaces = rd.getNamespaces();
         assertEquals(1, resultNamespaces.size());
         assertEquals("org.iso.18013-5.2019", resultNamespaces.iterator().next());
         entryNames = rd.getEntryNames("org.iso.18013-5.2019");

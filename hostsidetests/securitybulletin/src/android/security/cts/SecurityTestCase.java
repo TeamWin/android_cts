@@ -16,19 +16,27 @@
 
 package android.security.cts;
 
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.device.NativeDevice;
-import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.ddmlib.Log;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.runner.RunWith;
 
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-import com.android.ddmlib.Log;
 import java.util.concurrent.Callable;
 import java.math.BigInteger;
 
-public class SecurityTestCase extends DeviceTestCase {
+import static org.junit.Assert.*;
+import static org.junit.Assume.*;
+
+public class SecurityTestCase extends BaseHostJUnit4Test {
 
     private static final String LOG_TAG = "SecurityTestCase";
     private static final int RADIX_HEX = 16;
@@ -45,10 +53,8 @@ public class SecurityTestCase extends DeviceTestCase {
     /**
      * Waits for device to be online, marks the most recent boottime of the device
      */
-    @Override
+    @Before
     public void setUp() throws Exception {
-        super.setUp();
-
         getDevice().waitForDeviceAvailable();
         getDevice().disableAdbRoot();
         updateKernelStartTime();
@@ -62,7 +68,7 @@ public class SecurityTestCase extends DeviceTestCase {
      * Makes sure the phone is online, and the ensure the current boottime is within 2 seconds
      * (due to rounding) of the previous boottime to check if The phone has crashed.
      */
-    @Override
+    @After
     public void tearDown() throws Exception {
         oomCatcher.stop(getDevice().getSerialNumber());
 

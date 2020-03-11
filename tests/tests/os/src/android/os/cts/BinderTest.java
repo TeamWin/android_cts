@@ -381,6 +381,22 @@ public class BinderTest extends ActivityTestsBase {
         Binder.restoreCallingIdentity(token);
     }
 
+    public void testClearCallingWorkSource() {
+        final long token = Binder.clearCallingWorkSource();
+        Binder.restoreCallingWorkSource(token);
+    }
+
+    public void testSetCallingWorkSourceUid() {
+        final int otherUid = android.os.Process.myUid() + 1;
+        assertFalse(Binder.getCallingWorkSourceUid() == otherUid);
+
+        final long token = Binder.setCallingWorkSourceUid(otherUid);
+        assertTrue(Binder.getCallingWorkSourceUid() == otherUid);
+        Binder.restoreCallingWorkSource(token);
+
+        assertFalse(Binder.getCallingWorkSourceUid() == otherUid);
+    }
+
     public void testInterfaceRelatedMethods() {
         assertNull(mBinder.getInterfaceDescriptor());
         mBinder.attachInterface(new MockIInterface(), DESCRIPTOR_GOOGLE);

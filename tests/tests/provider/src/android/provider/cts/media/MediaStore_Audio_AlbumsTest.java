@@ -202,6 +202,7 @@ public class MediaStore_Audio_AlbumsTest {
 
             // Delete item and confirm art is cleaned up
             mContentResolver.delete(mediaUri, null, null);
+            MediaStore.waitForIdle(mContentResolver);
 
             try {
                 mContentResolver.loadThumbnail(mediaUri, new Size(32, 32), null);

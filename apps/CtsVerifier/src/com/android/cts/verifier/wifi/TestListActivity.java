@@ -97,6 +97,10 @@ public class TestListActivity extends PassFailButtons.TestListActivity {
                 R.string.wifi_test_network_suggestion_connection_failure,
                 NetworkSuggestionConnectionFailureTestActivity.class.getName(),
                 new Intent(this, NetworkSuggestionConnectionFailureTestActivity.class), null));
+        adapter.add(TestListAdapter.TestListItem.newTest(this,
+                R.string.wifi_test_network_suggestion_modification_in_place,
+                NetworkSuggestionModificationInPlaceTestActivity.class.getName(),
+                new Intent(this, NetworkSuggestionModificationInPlaceTestActivity.class), null));
 
         adapter.registerDataSetObserver(new DataSetObserver() {
             @Override

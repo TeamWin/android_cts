@@ -16,15 +16,19 @@
 
 package android.security.cts;
 
-import static org.junit.Assert.assertTrue;
-
 import android.platform.test.annotations.SecurityTest;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
-@SecurityTest
+import static org.junit.Assert.*;
+
+@RunWith(DeviceJUnit4ClassRunner.class)
 public class Poc19_07 extends SecurityTestCase {
     /**
      * Bug-137282168
      */
+    @Test
     @SecurityTest(minPatchLevel = "2019-07")
     public void testPocBug_137282168() throws Exception {
         assertFalse("Heap buffer overflow encountered",
@@ -34,6 +38,7 @@ public class Poc19_07 extends SecurityTestCase {
     /**
      * Bug-137878930
      */
+    @Test
     @SecurityTest(minPatchLevel = "2019-07")
     public void testPocBug_137878930() throws Exception {
         assertFalse("Heap use after free encountered",

@@ -56,8 +56,8 @@ class AppOpsUserService : Service() {
             private val asyncNoted = mutableListOf<AsyncNotedAppOp>()
 
             private fun setNotedAppOpsCollector() {
-                appOpsManager.setNotedAppOpsCollector(
-                        object : AppOpsManager.AppOpsCollector() {
+                appOpsManager.setOnOpNotedCallback(mainExecutor,
+                        object : AppOpsManager.OnOpNotedCallback() {
                             override fun onNoted(op: SyncNotedAppOp) {
                                 noted.add(op to Throwable().stackTrace)
                             }
@@ -73,6 +73,10 @@ class AppOpsUserService : Service() {
             }
 
             init {
+                try {
+                    appOpsManager.setOnOpNotedCallback(null, null)
+                } catch (ignored: IllegalStateException) {
+                }
                 setNotedAppOpsCollector()
             }
 
@@ -94,7 +98,7 @@ class AppOpsUserService : Service() {
                 client: IAppOpsUserClient
             ) {
                 forwardThrowableFrom {
-                    appOpsManager.setNotedAppOpsCollector(null)
+                    appOpsManager.setOnOpNotedCallback(null, null)
 
                     client.noteSyncOp()
 
@@ -114,7 +118,7 @@ class AppOpsUserService : Service() {
                 client: IAppOpsUserClient
             ) {
                 forwardThrowableFrom {
-                    appOpsManager.setNotedAppOpsCollector(null)
+                    appOpsManager.setOnOpNotedCallback(null, null)
 
                     client.noteAsyncOp()
 

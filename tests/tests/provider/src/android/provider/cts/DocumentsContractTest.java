@@ -260,6 +260,12 @@ public class DocumentsContractTest {
     }
 
     @Test
+    public void testManageMode() {
+        assertFalse(DocumentsContract.isManageMode(URI_RED));
+        assertTrue(DocumentsContract.isManageMode(DocumentsContract.setManageMode(URI_RED)));
+    }
+
+    @Test
     public void testCreateDocument() throws Exception {
         doReturn(DOC_RESULT).when(mProvider).createDocument(DOC_RED, MIME_TYPE, DISPLAY_NAME);
         assertEquals(URI_RESULT, createDocument(mResolver, URI_RED, MIME_TYPE, DISPLAY_NAME));

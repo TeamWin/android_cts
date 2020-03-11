@@ -29,7 +29,7 @@
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="runner" value="androidx.test.runner.AndroidJUnitRunner" />
         <option name="package" value="android.app.cts.appexit" />
-        <option name="runtime-hint" value="1m9s" />
+        <option name="runtime-hint" value="2m9s" />
         <option name="hidden-api-checks" value="false"/>
     </test>
 

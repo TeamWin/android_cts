@@ -29,7 +29,6 @@ import android.test.suitebuilder.annotation.SmallTest;
 import static com.google.common.truth.Truth.assertThat;
 import androidx.test.runner.AndroidJUnit4;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Before;
@@ -85,14 +84,9 @@ public class CarInfoManagerTest extends CarApiTestBase {
     @Test
     public void testGetFuelTypes() throws Exception {
         assertNotNull(mCarInfoManager.getFuelTypes());
-
         int[] actualResults = mCarInfoManager.getFuelTypes();
-        List<Integer> expectedResults =
-            Arrays.asList(FuelType.UNKNOWN, FuelType.UNLEADED, FuelType.LEADED, FuelType.DIESEL_1,
-                FuelType.DIESEL_2, FuelType.BIODIESEL, FuelType.E85, FuelType.LPG, FuelType.CNG,
-                FuelType.LNG, FuelType.ELECTRIC, FuelType.HYDROGEN, FuelType.OTHER);
         for (int result : actualResults) {
-            assertThat(expectedResults).contains(result);
+            assertThat(result).isIn(EXPECTED_FUEL_TYPES);
         }
 
     }
@@ -120,7 +114,7 @@ public class CarInfoManagerTest extends CarApiTestBase {
                 SCAME, GBT_DC);
 
         for (int result : actualResults) {
-            assertThat(expectedResults).contains(result);
+            assertThat(result).isIn(expectedResults);
         }
     }
 
@@ -136,7 +130,7 @@ public class CarInfoManagerTest extends CarApiTestBase {
                 VehicleAreaSeat.SEAT_ROW_2_LEFT, VehicleAreaSeat.SEAT_ROW_2_CENTER,
                 VehicleAreaSeat.SEAT_ROW_2_RIGHT, VehicleAreaSeat.SEAT_ROW_3_LEFT,
                 VehicleAreaSeat.SEAT_ROW_3_CENTER, VehicleAreaSeat.SEAT_ROW_1_RIGHT);
-        assertThat(expectedResult).contains(mCarInfoManager.getDriverSeat());
+        assertThat(mCarInfoManager.getDriverSeat()).isIn(expectedResult);
     }
 
     /**
@@ -145,11 +139,7 @@ public class CarInfoManagerTest extends CarApiTestBase {
      */
     @Test
     public void testGetEvPortLocation() throws Exception {
-        List<Integer> expectedResult =
-            Arrays.asList(PortLocationType.UNKNOWN, PortLocationType.FRONT_LEFT,
-                PortLocationType.FRONT_RIGHT, PortLocationType.REAR_RIGHT,
-                PortLocationType.REAR_LEFT, PortLocationType.FRONT, PortLocationType.REAR);
-        assertThat(expectedResult).contains(mCarInfoManager.getEvPortLocation());
+        assertThat(mCarInfoManager.getEvPortLocation()).isIn(EXPECTED_PORT_LOCATIONS);
     }
 
     /**
@@ -158,10 +148,6 @@ public class CarInfoManagerTest extends CarApiTestBase {
      */
     @Test
     public void testGetFuelDoorLocation() throws Exception {
-        List<Integer> expectedResult =
-            Arrays.asList(PortLocationType.UNKNOWN, PortLocationType.FRONT_LEFT,
-                        PortLocationType.FRONT_RIGHT, PortLocationType.REAR_RIGHT,
-                        PortLocationType.REAR_LEFT, PortLocationType.FRONT, PortLocationType.REAR);
-        assertThat(expectedResult).contains(mCarInfoManager.getFuelDoorLocation());
+        assertThat(mCarInfoManager.getFuelDoorLocation()).isIn(EXPECTED_PORT_LOCATIONS);
     }
 }

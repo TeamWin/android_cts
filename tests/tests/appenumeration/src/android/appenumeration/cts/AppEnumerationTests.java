@@ -43,6 +43,7 @@ import static android.appenumeration.cts.Constants.QUERIES_SERVICE_ACTION;
 import static android.appenumeration.cts.Constants.QUERIES_UNEXPORTED_ACTIVITY_ACTION;
 import static android.appenumeration.cts.Constants.QUERIES_UNEXPORTED_PROVIDER_AUTH;
 import static android.appenumeration.cts.Constants.QUERIES_UNEXPORTED_SERVICE_ACTION;
+import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_ACTION;
 import static android.appenumeration.cts.Constants.TARGET_FILTERS;
 import static android.appenumeration.cts.Constants.TARGET_FORCEQUERYABLE;
 import static android.appenumeration.cts.Constants.TARGET_NO_API;
@@ -55,6 +56,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
+import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -66,6 +68,7 @@ import android.os.Bundle;
 import android.os.ConditionVariable;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Parcelable;
 import android.os.RemoteCallback;
 
 import androidx.annotation.Nullable;
@@ -92,7 +95,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @RunWith(AndroidJUnit4.class)
 public class AppEnumerationTests {
-
     private static Handler sResponseHandler;
     private static HandlerThread sResponseThread;
 
@@ -254,6 +256,11 @@ public class AppEnumerationTests {
     }
 
     @Test
+    public void queriesWildcardAction_canSeeTargets() throws Exception {
+        assertVisible(QUERIES_WILDCARD_ACTION, TARGET_FILTERS);
+    }
+
+    @Test
     public void queriesProviderAuthority_canSeeTarget() throws Exception {
         assertVisible(QUERIES_PROVIDER_AUTH, TARGET_FILTERS);
     }
@@ -290,6 +297,21 @@ public class AppEnumerationTests {
         // caller
         assertVisible(QUERIES_NOTHING, QUERIES_NOTHING_PERM);
     }
+
+    @Test
+    public void whenStartedViaIntentSender_canSeeCaller() throws Exception {
+        // let's first make sure that the target cannot see the caller.
+        assertNotVisible(QUERIES_NOTHING, QUERIES_NOTHING_Q);
+        // now let's start the target via pending intent and make sure that it can see the caller
+        // as part of that call
+        PackageInfo packageInfo = startSenderForResult(QUERIES_NOTHING_Q, QUERIES_NOTHING);
+        assertThat(packageInfo, IsNull.notNullValue());
+        assertThat(packageInfo.packageName, is(QUERIES_NOTHING_Q));
+        // and finally let's re-run the last check to make sure that the target can still see the
+        // caller
+        assertVisible(QUERIES_NOTHING, QUERIES_NOTHING_Q);
+    }
+
 
     @Test
     public void sharedUserMember_canSeeOtherMember() throws Exception {
@@ -335,7 +357,7 @@ public class AppEnumerationTests {
         }
     }
 
-    interface ThrowingBiFunction<T,U,R> {
+    interface ThrowingBiFunction<T, U, R> {
         R apply(T arg1, U arg2) throws Exception;
     }
 
@@ -352,6 +374,7 @@ public class AppEnumerationTests {
             }
         }
     }
+
     private void assertQueryable(String sourcePackageName, String targetPackageName,
             String intentAction, ThrowingBiFunction<String, Intent, String[]> commandMethod)
             throws Exception {
@@ -381,9 +404,25 @@ public class AppEnumerationTests {
         return response.getParcelable(Intent.EXTRA_RETURN_RESULT);
     }
 
+    private PackageInfo startSenderForResult(String sourcePackageName, String targetPackageName)
+            throws Exception {
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                InstrumentationRegistry.getInstrumentation().getContext(), 100,
+                new Intent("android.appenumeration.cts.action.SEND_RESULT").setComponent(
+                        new ComponentName(targetPackageName,
+                                "android.appenumeration.cts.query.TestActivity")),
+                PendingIntent.FLAG_ONE_SHOT);
+
+        Bundle response = sendCommand(sourcePackageName, targetPackageName,
+                pendingIntent /*queryIntent*/, Constants.ACTION_START_SENDER_FOR_RESULT);
+        return response.getParcelable(Intent.EXTRA_RETURN_RESULT);
+    }
+
+
     private String[] queryIntentActivities(String sourcePackageName, Intent queryIntent)
             throws Exception {
-        Bundle response = sendCommand(sourcePackageName, null, queryIntent, ACTION_QUERY_ACTIVITIES);
+        Bundle response =
+                sendCommand(sourcePackageName, null, queryIntent, ACTION_QUERY_ACTIVITIES);
         return response.getStringArray(Intent.EXTRA_RETURN_RESULT);
     }
 
@@ -418,21 +457,23 @@ public class AppEnumerationTests {
     }
 
     private Bundle sendCommand(String sourcePackageName, @Nullable String targetPackageName,
-            @Nullable Intent queryIntent, String action)
+            @Nullable Parcelable intentExtra, String action)
             throws Exception {
         final Intent intent = new Intent(action)
                 .setComponent(new ComponentName(sourcePackageName, ACTIVITY_CLASS_TEST))
                 // data uri unique to each activity start to ensure actual launch and not just
                 // redisplay
-                .setData(Uri.parse("test://" + name.getMethodName()
-                      + (targetPackageName != null
-                      ? targetPackageName : UUID.randomUUID().toString())))
+                .setData(Uri.parse("test://" + UUID.randomUUID().toString()))
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
         if (targetPackageName != null) {
             intent.putExtra(Intent.EXTRA_PACKAGE_NAME, targetPackageName);
         }
-        if (queryIntent != null) {
-            intent.putExtra(Intent.EXTRA_INTENT, queryIntent);
+        if (intentExtra != null) {
+            if (intentExtra instanceof Intent) {
+                intent.putExtra(Intent.EXTRA_INTENT, intentExtra);
+            } else if (intentExtra instanceof PendingIntent) {
+                intent.putExtra("pendingIntent", intentExtra);
+            }
         }
 
         final ConditionVariable latch = new ConditionVariable();

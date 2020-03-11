@@ -59,6 +59,8 @@ public class SimpleService4 extends Service {
     static final String METHOD_EXIT = "exit";
     static final int EXIT_CODE = 123;
 
+    private static final int WAITFOR_SETTLE_DOWN = 2000;
+
     private static final int CMD_PID = 1;
     private Handler mHandler;
     private ContentProviderClient mProviderClient;
@@ -71,8 +73,10 @@ public class SimpleService4 extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         sendPidBack(intent);
-        // perform the action after return from here.
-        mHandler.post(() -> doAction(intent));
+        // perform the action after return from here,
+        // make a delay, otherwise the system might try to restart the service
+        // if the process dies before the system realize it's asking for START_NOT_STICKY.
+        mHandler.postDelayed(() -> doAction(intent), WAITFOR_SETTLE_DOWN);
         return START_NOT_STICKY;
     }
 

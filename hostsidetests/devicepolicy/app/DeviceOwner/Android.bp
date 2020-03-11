@@ -35,7 +35,6 @@ android_test_helper_app {
         "compatibility-device-util-axt",
         "androidx.test.rules",
         "cts-security-test-support-library",
-        "testng",
         "truth-prebuilt",
         "androidx.legacy_legacy-support-v4",
     ],

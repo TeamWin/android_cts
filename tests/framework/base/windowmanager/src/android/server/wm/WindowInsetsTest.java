@@ -29,6 +29,7 @@ import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
 import android.view.DisplayCutout;
 import android.view.WindowInsets;
+import android.view.WindowInsets.Type;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
@@ -72,6 +73,7 @@ public class WindowInsetsTest {
         assertEquals(Insets.of(13, 14, 15, 16), insets.getMandatorySystemGestureInsets());
         assertEquals(Insets.of(17, 18, 19, 20), insets.getTappableElementInsets());
         assertSame(CUTOUT, insets.getDisplayCutout());
+        assertEquals(getCutoutSafeInsets(insets), insets.getInsets(Type.displayCutout()));
     }
 
     @Test
@@ -114,6 +116,7 @@ public class WindowInsetsTest {
         assertNull(insets.getDisplayCutout());
         assertFalse(insets.isConsumed());
         assertTrue(insets.consumeDisplayCutout().isConsumed());
+        assertEquals(Insets.NONE, insets.getInsets(Type.displayCutout()));
     }
 
     @Test
@@ -137,6 +140,7 @@ public class WindowInsetsTest {
         assertEquals(Insets.of(1, 2, 3, 4), insets.getSystemWindowInsets());
         assertEquals(Insets.of(5, 6, 7, 8), insets.getStableInsets());
         assertSame(CUTOUT, insets.getDisplayCutout());
+        assertEquals(getCutoutSafeInsets(insets), insets.getInsets(Type.displayCutout()));
     }
 
     @Test
@@ -197,6 +201,7 @@ public class WindowInsetsTest {
         assertEquals(Insets.NONE, consumed.getSystemGestureInsets());
         assertEquals(Insets.NONE, consumed.getMandatorySystemGestureInsets());
         assertEquals(Insets.NONE, consumed.getTappableElementInsets());
+        assertEquals(Insets.NONE, consumed.getInsets(Type.displayCutout()));
     }
 
     @Test
@@ -217,6 +222,7 @@ public class WindowInsetsTest {
         assertEquals(Insets.NONE, consumed.getSystemGestureInsets());
         assertEquals(Insets.NONE, consumed.getMandatorySystemGestureInsets());
         assertEquals(Insets.NONE, consumed.getTappableElementInsets());
+        assertEquals(Insets.NONE, consumed.getInsets(Type.displayCutout()));
     }
 
     @Test
@@ -237,6 +243,8 @@ public class WindowInsetsTest {
         assertEquals(insets.getSystemGestureInsets(), consumed.getSystemGestureInsets());
         assertEquals(insets.getMandatorySystemGestureInsets(), consumed.getMandatorySystemGestureInsets());
         assertEquals(insets.getTappableElementInsets(), consumed.getTappableElementInsets());
+        assertEquals(
+                insets.getInsets(Type.displayCutout()), consumed.getInsets(Type.displayCutout()));
     }
 
     @Test
@@ -395,6 +403,8 @@ public class WindowInsetsTest {
         assertEquals(applyInset(insets.getTappableElementInsets()),
                 insetInsets.getTappableElementInsets());
         assertEquals(applyInset(getCutoutSafeInsets(insets)), getCutoutSafeInsets(insetInsets));
+        assertEquals(applyInset(getCutoutSafeInsets(insets)),
+                insetInsets.getInsets(Type.displayCutout()));
     }
 
     @Test
@@ -415,6 +425,7 @@ public class WindowInsetsTest {
         assertEquals(Insets.NONE, insetInsets.getMandatorySystemGestureInsets());
         assertEquals(Insets.NONE, insetInsets.getTappableElementInsets());
         assertNull(insetInsets.getDisplayCutout());
+        assertEquals(Insets.NONE, insetInsets.getInsets(Type.displayCutout()));
     }
 
     @Test

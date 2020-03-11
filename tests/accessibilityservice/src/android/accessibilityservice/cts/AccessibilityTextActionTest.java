@@ -495,9 +495,9 @@ public class AccessibilityTextActionTest {
                 EXTRA_DATA_RENDERING_INFO_KEY , arg));
         assertNotNull(info.getExtraRenderingInfo());
         extraRenderingInfo = info.getExtraRenderingInfo();
-        assertNotNull(extraRenderingInfo.getLayoutParams());
-        assertEquals(expectedWidthInPx, extraRenderingInfo.getLayoutParams().getWidth());
-        assertEquals(expectedHeightInPx, extraRenderingInfo.getLayoutParams().getHeight());
+        assertNotNull(extraRenderingInfo.getLayoutSize());
+        assertEquals(expectedWidthInPx, extraRenderingInfo.getLayoutSize().getWidth());
+        assertEquals(expectedHeightInPx, extraRenderingInfo.getLayoutSize().getHeight());
         assertEquals(expectedTextSize, extraRenderingInfo.getTextSizeInPx(), 0f);
         assertEquals(TypedValue.COMPLEX_UNIT_DIP, extraRenderingInfo.getTextSizeUnit());
 
@@ -523,8 +523,8 @@ public class AccessibilityTextActionTest {
         assertTrue("Refresh failed", info.refreshWithExtraData(
                 EXTRA_DATA_RENDERING_INFO_KEY, new Bundle()));
         assertNotNull(info.getExtraRenderingInfo());
-        assertNotNull(info.getExtraRenderingInfo().getLayoutParams());
-        final Size size = info.getExtraRenderingInfo().getLayoutParams();
+        assertNotNull(info.getExtraRenderingInfo().getLayoutSize());
+        final Size size = info.getExtraRenderingInfo().getLayoutSize();
         assertEquals(ViewGroup.LayoutParams.MATCH_PARENT, size.getWidth());
         assertEquals(ViewGroup.LayoutParams.WRAP_CONTENT, size.getHeight());
     }

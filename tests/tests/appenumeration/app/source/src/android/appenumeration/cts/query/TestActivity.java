@@ -24,15 +24,18 @@ import static android.appenumeration.cts.Constants.ACTION_QUERY_SERVICES;
 import static android.appenumeration.cts.Constants.ACTION_SEND_RESULT;
 import static android.appenumeration.cts.Constants.ACTION_START_DIRECTLY;
 import static android.appenumeration.cts.Constants.ACTION_START_FOR_RESULT;
+import static android.appenumeration.cts.Constants.ACTION_START_SENDER_FOR_RESULT;
 import static android.appenumeration.cts.Constants.EXTRA_ERROR;
 import static android.appenumeration.cts.Constants.EXTRA_FLAGS;
 import static android.appenumeration.cts.Constants.EXTRA_REMOTE_CALLBACK;
 import static android.content.Intent.EXTRA_RETURN_RESULT;
 
 import android.app.Activity;
+import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -92,6 +95,16 @@ public class TestActivity extends Activity {
                 finish();
             } else if (ACTION_GET_INSTALLED_PACKAGES.equals(action)) {
                 sendGetInstalledPackages(remoteCallback, queryIntent.getIntExtra(EXTRA_FLAGS, 0));
+            } else if (ACTION_START_SENDER_FOR_RESULT.equals(action)) {
+                PendingIntent pendingIntent = intent.getParcelableExtra("pendingIntent");
+                int requestCode = RESULT_FIRST_USER + callbacks.size();
+                callbacks.put(requestCode, remoteCallback);
+                try {
+                    startIntentSenderForResult(pendingIntent.getIntentSender(), requestCode, null,
+                            0, 0, 0);
+                } catch (IntentSender.SendIntentException e) {
+                    sendError(remoteCallback, e);
+                }
             } else {
                 sendError(remoteCallback, new Exception("unknown action " + action));
             }

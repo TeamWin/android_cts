@@ -24,19 +24,21 @@ import its.objects
 
 import numpy as np
 
+CIRCLE_COLOR = 0  # [0: black, 255: white]
 CIRCLE_TOL = 0.05  # contour area vs ideal circle area pi*((w+h)/4)**2
-COLOR = 0  # [0: black, 255: white]
+LINE_COLOR = (255, 0, 0)  # red
+LINE_THICKNESS = 5
+MIN_AREA_RATIO = 0.00015  # based on 2000/(4000x3000) pixels
+MIN_CIRCLE_PTS = 25
 NAME = os.path.basename(__file__).split('.')[0]
 NUM_STEPS = 10
-MIN_AREA_RATIO = 0.00015  # Based on 2000/(4000x3000) pixels
-MIN_CIRCLE_PTS = 25
 OFFSET_RTOL = 0.10
 RADIUS_RTOL = 0.10
 ZOOM_MAX_THRESH = 10.0
 ZOOM_MIN_THRESH = 2.0
 
 
-def distance(x, y):
+def distance((x, y)):
     return math.sqrt(x**2 + y**2)
 
 
@@ -116,13 +118,19 @@ def find_center_circle(img, name, color, min_area, debug):
         print 'circles [x, y, r, pi*r**2/area, area]:', circles
 
     # find circle closest to center
-    circles.sort(key=lambda x: distance(x[0]-img_ctr[0], x[1]-img_ctr[1]))
+    circles.sort(key=lambda x: distance((x[0]-img_ctr[0], x[1]-img_ctr[1])))
     circle = circles[0]
+
+    # mark image center
+    size = gray.shape
+    cv2.drawMarker(img, (size[1]/2, size[0]/2), LINE_COLOR,
+                   markerType=cv2.MARKER_CROSS, markerSize=LINE_THICKNESS*10,
+                   thickness=LINE_THICKNESS)
 
     # add circle to saved image
     center_i = (int(round(circle[0], 0)), int(round(circle[1], 0)))
     radius_i = int(round(circle[2], 0))
-    cv2.circle(img, center_i, radius_i, (255, 0, 0), 5)
+    cv2.circle(img, center_i, radius_i, LINE_COLOR, LINE_THICKNESS)
     its.image.write_image(img/255.0, name)
 
     if not circles:
@@ -137,7 +145,8 @@ def main():
     """Test the camera zoom behavior."""
 
     z_test_list = []
-    circle = {}
+    fls = []
+    circles = []
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
         its.caps.skip_unless(its.caps.zoom_ratio_range(props))
@@ -166,13 +175,15 @@ def main():
             img = img.astype(np.uint8)
 
             # Find the circles in img
-            circle[i] = find_center_circle(
-                    img, '%s_%s.jpg' % (NAME, round(z, 2)), COLOR,
+            circle = find_center_circle(
+                    img, '%s_%s.jpg' % (NAME, round(z, 2)), CIRCLE_COLOR,
                     min_area=MIN_AREA_RATIO*size[0]*size[1]*z*z, debug=debug)
-            if circle_cropped(circle[i], size):
+            if circle_cropped(circle, size):
                 print 'zoom %.2f is too large! Skip further captures' % z
                 break
+            circles.append(circle)
             z_test_list.append(z)
+            fls.append(cap['metadata']['android.lens.focalLength'])
 
     # assert some range is tested before circles get too big
     zoom_max_thresh = ZOOM_MAX_THRESH
@@ -182,27 +193,37 @@ def main():
             z_test_list[-1], zoom_max_thresh)
     assert z_test_list[-1] >= zoom_max_thresh, msg
 
-    # print 'circles:', circle
-    radius_init = float(circle[0][2])
-    offset_init = [circle[0][0]-size[0]/2,
-                   circle[0][1]-size[1]/2]
-    z_init = float(z_test_list[0])
+    # initialize relative size w/ zoom[0] for diff zoom ratio checks
+    radius_0 = float(circles[0][2])
+    z_0 = float(z_test_list[0])
+
     for i, z in enumerate(z_test_list):
-        print '\nZoom: %.2f' % z
-        offset_x_abs = (circle[i][0] - size[0] / 2)
-        offset_y_abs = (circle[i][1] - size[1] / 2)
+        print '\nZoom: %.2f, fl: %.2f' % (z, fls[i])
+        offset_abs = ((circles[i][0] - size[0]/2), (circles[i][1] - size[1]/2))
         print 'Circle r: %.1f, center offset x, y: %d, %d' % (
-                circle[i][2], offset_x_abs, offset_y_abs)
-        z_ratio = z/z_init
-        radius_ratio = circle[i][2]/radius_init
+                circles[i][2], offset_abs[0], offset_abs[1])
+        z_ratio = z / z_0
+
+        # check relative size against zoom[0]
+        radius_ratio = circles[i][2]/radius_0
+        print 'radius_ratio: %.3f' % radius_ratio
         msg = 'zoom: %.2f, radius ratio: %.2f, RTOL: %.2f' % (
                 z_ratio, radius_ratio, RADIUS_RTOL)
         assert np.isclose(z_ratio, radius_ratio, rtol=RADIUS_RTOL), msg
-        offset_rel = (distance(offset_x_abs, offset_y_abs) / radius_ratio /
-                      distance(offset_init[0], offset_init[1]))
-        msg = 'zoom: %.2f, offset(rel): %.2f, RTOL: %.2f' % (
-                z, offset_rel, OFFSET_RTOL)
-        assert np.isclose(offset_rel, 1.0, rtol=OFFSET_RTOL), msg
+
+        # check relative offset against init vals w/ no focal length change
+        if i == 0 or fls[i-1] != fls[i]:  # set init values
+            z_init = float(z_test_list[i])
+            offset_init = (circles[i][0] - size[0] / 2,
+                           circles[i][1] - size[1] / 2)
+        else:  # check
+            z_ratio = z / z_init
+            offset_rel = (distance(offset_abs) / z_ratio /
+                          distance(offset_init))
+            print 'offset_rel: %.3f' % offset_rel
+            msg = 'zoom: %.2f, offset(rel): %.2f, RTOL: %.2f' % (
+                    z, offset_rel, OFFSET_RTOL)
+            assert np.isclose(offset_rel, 1.0, rtol=OFFSET_RTOL), msg
 
 
 if __name__ == '__main__':

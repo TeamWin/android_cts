@@ -202,13 +202,13 @@ public class ReaderAuthTest {
                         .addAccessControlProfile(readerAProfile)
                         .addAccessControlProfile(readerBProfile)
                         .addAccessControlProfile(readerCProfile)
-                        .setEntry(mdlNs, "Accessible to A", idsReaderAuthA,
+                        .putEntry(mdlNs, "Accessible to A", idsReaderAuthA,
                                 Util.cborEncodeString("foo"))
-                        .setEntry(mdlNs, "Accessible to B", idsReaderAuthB,
+                        .putEntry(mdlNs, "Accessible to B", idsReaderAuthB,
                                 Util.cborEncodeString("bar"))
-                        .setEntry(mdlNs, "Accessible to A or B", idsReaderAuthAorB,
+                        .putEntry(mdlNs, "Accessible to A or B", idsReaderAuthAorB,
                                 Util.cborEncodeString("baz"))
-                        .setEntry(mdlNs, "Accessible to C", idsReaderAuthC,
+                        .putEntry(mdlNs, "Accessible to C", idsReaderAuthC,
                                 Util.cborEncodeString("bat"))
                         .build();
         byte[] proofOfProvisioningSignature = wc.personalize(personalizationData);
@@ -291,7 +291,7 @@ public class ReaderAuthTest {
         //
         rd = retrieveForReader(credential, eKeyPair, readerKeyPairA, certChainForA, requestMessage,
                 entriesToRequest);
-        resultNamespaces = rd.getNamespaceNames();
+        resultNamespaces = rd.getNamespaces();
         assertEquals(1, resultNamespaces.size());
         assertEquals("org.iso.18013-5.2019", resultNamespaces.iterator().next());
         entryNames = rd.getRetrievedEntryNames("org.iso.18013-5.2019");
@@ -324,7 +324,7 @@ public class ReaderAuthTest {
         eKeyPair = credential.createEphemeralKeyPair();
         rd = retrieveForReader(credential, eKeyPair, readerKeyPairA, certChainForA,
                 requestMessage2, entriesToRequest);
-        resultNamespaces = rd.getNamespaceNames();
+        resultNamespaces = rd.getNamespaces();
         assertEquals(1, resultNamespaces.size());
         assertEquals("org.iso.18013-5.2019", resultNamespaces.iterator().next());
         entryNames = rd.getRetrievedEntryNames("org.iso.18013-5.2019");
@@ -345,7 +345,7 @@ public class ReaderAuthTest {
         eKeyPair = credential.createEphemeralKeyPair();
         rd = retrieveForReader(credential, eKeyPair, readerKeyPairA, certChainForAwithC,
                 requestMessage, entriesToRequest);
-        resultNamespaces = rd.getNamespaceNames();
+        resultNamespaces = rd.getNamespaces();
         assertEquals(1, resultNamespaces.size());
         assertEquals("org.iso.18013-5.2019", resultNamespaces.iterator().next());
         entryNames = rd.getRetrievedEntryNames("org.iso.18013-5.2019");
@@ -361,7 +361,7 @@ public class ReaderAuthTest {
         eKeyPair = credential.createEphemeralKeyPair();
         rd = retrieveForReader(credential, eKeyPair, readerKeyPairB, certChainForB, requestMessage,
                 entriesToRequest);
-        resultNamespaces = rd.getNamespaceNames();
+        resultNamespaces = rd.getNamespaces();
         assertEquals(1, resultNamespaces.size());
         assertEquals("org.iso.18013-5.2019", resultNamespaces.iterator().next());
         entryNames = rd.getRetrievedEntryNames("org.iso.18013-5.2019");
@@ -376,7 +376,7 @@ public class ReaderAuthTest {
         eKeyPair = credential.createEphemeralKeyPair();
         rd = retrieveForReader(credential, eKeyPair, readerKeyPairB, certChainForBwithC,
                 requestMessage, entriesToRequest);
-        resultNamespaces = rd.getNamespaceNames();
+        resultNamespaces = rd.getNamespaces();
         assertEquals(1, resultNamespaces.size());
         assertEquals("org.iso.18013-5.2019", resultNamespaces.iterator().next());
         entryNames = rd.getRetrievedEntryNames("org.iso.18013-5.2019");
@@ -412,7 +412,7 @@ public class ReaderAuthTest {
             entriesToRequest,
             null,
             null);
-        resultNamespaces = rd.getNamespaceNames();
+        resultNamespaces = rd.getNamespaces();
         assertEquals(1, resultNamespaces.size());
         assertEquals("org.iso.18013-5.2019", resultNamespaces.iterator().next());
         entryNames = rd.getRetrievedEntryNames("org.iso.18013-5.2019");

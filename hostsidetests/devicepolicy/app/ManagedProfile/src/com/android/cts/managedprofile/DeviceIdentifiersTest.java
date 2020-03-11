@@ -15,8 +15,6 @@
  */
 package com.android.cts.managedprofile;
 
-import static org.testng.Assert.assertThrows;
-
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -27,7 +25,7 @@ import android.telephony.TelephonyManager;
  */
 public class DeviceIdentifiersTest extends BaseManagedProfileTest {
 
-    public void testProfileOwnerOnPersonalDeviceCannotGetDeviceIdentifiers() throws Exception {
+    public void testProfileOwnerOnPersonalDeviceCannotGetDeviceIdentifiers() {
         // The profile owner with the READ_PHONE_STATE permission should still receive a
         // SecurityException when querying for device identifiers if it's not on an
         // organization-owned device.
@@ -36,22 +34,35 @@ public class DeviceIdentifiersTest extends BaseManagedProfileTest {
         // Allow the APIs to also return null if the telephony feature is not supported.
         boolean hasTelephonyFeature =
                 mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
-        if (hasTelephonyFeature) {
-            assertThrows(SecurityException.class, telephonyManager::getDeviceId);
-            assertThrows(SecurityException.class, telephonyManager::getImei);
-            assertThrows(SecurityException.class, telephonyManager::getMeid);
-            assertThrows(SecurityException.class, telephonyManager::getSubscriberId);
-            assertThrows(SecurityException.class, telephonyManager::getSimSerialNumber);
-            assertThrows(SecurityException.class, telephonyManager::getNai);
-            assertThrows(SecurityException.class, Build::getSerial);
-        } else {
-            assertNull(telephonyManager.getDeviceId());
-            assertNull(telephonyManager.getImei());
-            assertNull(telephonyManager.getMeid());
-            assertNull(telephonyManager.getSubscriberId());
-            assertNull(telephonyManager.getSimSerialNumber());
-            assertNull(telephonyManager.getNai());
-            assertNull(Build.getSerial());
+
+        boolean mayReturnNull = !hasTelephonyFeature;
+
+        assertAccessDenied(telephonyManager::getDeviceId, mayReturnNull);
+        assertAccessDenied(telephonyManager::getImei, mayReturnNull);
+        assertAccessDenied(telephonyManager::getMeid, mayReturnNull);
+        assertAccessDenied(telephonyManager::getSubscriberId, mayReturnNull);
+        assertAccessDenied(telephonyManager::getSimSerialNumber, mayReturnNull);
+        assertAccessDenied(telephonyManager::getNai, mayReturnNull);
+        assertAccessDenied(Build::getSerial, mayReturnNull);
+    }
+
+    private static <T> void assertAccessDenied(ThrowingProvider<T> provider,
+            boolean mayReturnNull) {
+        try {
+            T object = provider.get();
+            if (mayReturnNull) {
+                assertNull(object);
+            } else {
+                fail("Expected SecurityException, received " + object);
+            }
+        } catch (SecurityException ignored) {
+            // assertion succeeded
+        } catch (Throwable th) {
+            fail("Expected SecurityException but was: " + th);
         }
+    }
+
+    private interface ThrowingProvider<T> {
+        T get() throws Throwable;
     }
 }

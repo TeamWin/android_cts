@@ -32,6 +32,7 @@ import static org.junit.Assert.fail;
 
 import android.annotation.Nullable;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.net.ConnectivityManager;
 import android.net.ConnectivityManager.NetworkCallback;
 import android.net.Network;
@@ -186,6 +187,17 @@ public class SubscriptionManagerTest {
         int[] subIds = mSm.getSubscriptionIds(slotId);
         assertNotNull(subIds);
         assertTrue(ArrayUtils.contains(subIds, mSubId));
+    }
+
+    @Test
+    public void testGetResourcesForSubId() {
+        if (!isSupported()) return;
+        Resources r = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                (sm) -> sm.getResourcesForSubId(InstrumentationRegistry.getContext(), mSubId));
+        // this is an old method which returns mcc/mnc as ints, so use the old SM.getMcc/Mnc methods
+        // because they also use ints
+        assertEquals(mSm.getActiveSubscriptionInfo(mSubId).getMcc(), r.getConfiguration().mcc);
+        assertEquals(mSm.getActiveSubscriptionInfo(mSubId).getMnc(), r.getConfiguration().mnc);
     }
 
     @Test

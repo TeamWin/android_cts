@@ -2520,6 +2520,16 @@ public class TelephonyManagerTest {
     }
 
     @Test
+    public void testIsDataCapableExists() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        //Simple test to make sure that isDataCapable exists and does not crash.
+        mTelephonyManager.isDataCapable();
+    }
+
+    @Test
     public void testDisAllowedNetworkTypes() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;

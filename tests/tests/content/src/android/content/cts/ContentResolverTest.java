@@ -45,6 +45,7 @@ import androidx.test.InstrumentationRegistry;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.internal.util.ArrayUtils;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -1465,6 +1466,16 @@ public class ContentResolverTest extends AndroidTestCase {
         assertNull(response);
     }
 
+    public void testEncodeDecode() {
+        final Uri expected = Uri.parse("content://com.example/item/23");
+        final File file = ContentResolver.encodeToFile(expected);
+        assertNotNull(file);
+
+        final Uri actual = ContentResolver.decodeFromFile(file);
+        assertNotNull(actual);
+        assertEquals(expected, actual);
+    }
+
     public static class Change {
         public final boolean selfChange;
         public final Iterable<Uri> uris;
@@ -1515,7 +1526,7 @@ public class ContentResolverTest extends AndroidTestCase {
         }
 
         @Override
-        public synchronized void onChange(boolean selfChange, Iterable<Uri> uris, int flags) {
+        public synchronized void onChange(boolean selfChange, Collection<Uri> uris, int flags) {
             final Change change = new Change(selfChange, uris, flags);
             Log.v(TAG, change.toString());
 

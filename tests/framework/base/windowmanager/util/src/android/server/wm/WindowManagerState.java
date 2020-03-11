@@ -51,6 +51,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.android.server.wm.nano.AppTransitionProto;
+import com.android.server.wm.nano.DisplayAreaProto;
 import com.android.server.wm.nano.DisplayFramesProto;
 import com.android.server.wm.nano.IdentifierProto;
 import com.android.server.wm.nano.KeyguardControllerProto;
@@ -60,9 +61,11 @@ import com.android.server.wm.nano.DisplayContentProto;
 import com.android.server.wm.nano.PinnedStackControllerProto;
 import com.android.server.wm.nano.RootWindowContainerProto;
 import com.android.server.wm.nano.TaskProto;
+import com.android.server.wm.nano.WindowContainerChildProto;
 import com.android.server.wm.nano.WindowContainerProto;
 import com.android.server.wm.nano.WindowFramesProto;
 import com.android.server.wm.nano.WindowManagerServiceDumpProto;
+import com.android.server.wm.nano.WindowTokenProto;
 import com.android.server.wm.nano.WindowStateAnimatorProto;
 import com.android.server.wm.nano.WindowStateProto;
 import com.android.server.wm.nano.WindowSurfaceControllerProto;
@@ -119,6 +122,7 @@ public class WindowManagerState {
     // Must be kept in sync with 'default_minimal_size_resizable_task' dimen from frameworks/base.
     private static final int DEFAULT_RESIZABLE_TASK_SIZE_DP = 220;
 
+    private RootWindowContainer mRoot = null;
     // Displays in z-order with the top most at the front of the list, starting with primary.
     private final List<DisplayContent> mDisplays = new ArrayList<>();
     // Stacks in z-order with the top most at the front of the list, starting with primary display.
@@ -243,6 +247,47 @@ public class WindowManagerState {
         mSanityCheckFocusedWindow = sanityCheckFocusedWindow;
     }
 
+    /**
+     * For a given WindowContainer, traverse down the hierarchy and add all children of type
+     * {@code T} to {@code outChildren}.
+     */
+    private static <T extends WindowContainer> void collectDescendantsOfType(Class<T> clazz,
+            WindowContainer root, List<T> outChildren) {
+        collectDescendantsOfTypeIf(clazz, t -> true, root, outChildren);
+    }
+
+    /**
+     * For a given WindowContainer, traverse down the hierarchy and add all children of type
+     * {@code T} to {@code outChildren} if the child passes the test {@code predicate}.
+     */
+    private static <T extends WindowContainer> void collectDescendantsOfTypeIf(Class<T> clazz,
+            Predicate<T> predicate, WindowContainer root, List<T> outChildren) {
+        // Traverse top to bottom
+        for (int i = root.mChildren.size()-1; i >= 0; i--) {
+            final WindowContainer child = root.mChildren.get(i);
+            if (clazz.isInstance(child)) {
+                if(predicate.test(clazz.cast(child))) {
+                    outChildren.add(clazz.cast(child));
+                }
+            }
+            collectDescendantsOfTypeIf(clazz, predicate, child, outChildren);
+        }
+    }
+
+    /**
+     * For a given WindowContainer, traverse down the hierarchy and add all immediate children of
+     * type {@code T} to {@code outChildren}.
+     */
+    private static <T extends WindowContainer> void collectChildrenOfType(Class<T> clazz,
+            WindowContainer root, List<T> outChildren) {
+        for (int i = root.mChildren.size()-1; i >= 0; i--) {
+            final WindowContainer child = root.mChildren.get(i);
+            if (clazz.isInstance(child)) {
+                outChildren.add(clazz.cast(child));
+            }
+        }
+    }
+
     public void computeState() {
         // It is possible the system is in the middle of transition to the right state when we get
         // the dump. We try a few times to get the information we need before giving up.
@@ -316,6 +361,26 @@ public class WindowManagerState {
         }
     }
 
+    /** Update WindowManagerState state for a newly added DisplayContent. */
+    private void updateForDisplayContent(DisplayContent display) {
+        if (display.mResumedActivity != null) {
+            mResumedActivitiesInDisplays.add(display.mResumedActivity);
+        }
+
+        for (int i = 0; i < display.mRootTasks.size(); i++) {
+            ActivityTask task = display.mRootTasks.get(i);
+            mRootTasks.add(task);
+            if (task.mResumedActivity != null) {
+                mResumedActivitiesInStacks.add(task.mResumedActivity);
+            }
+        }
+
+        if (display.mDefaultPinnedStackBounds != null) {
+            mDefaultPinnedStackBounds = display.mDefaultPinnedStackBounds;
+            mPinnedStackMovementBounds = display.mPinnedStackMovementBounds;
+        }
+    }
+
     private void parseSysDumpProto(byte[] sysDump) throws InvalidProtocolBufferNanoException {
         reset();
 
@@ -324,10 +389,11 @@ public class WindowManagerState {
         if (state.focusedWindow != null) {
             mFocusedWindow = state.focusedWindow.title;
         }
-
-        for (int i = 0; i < root.displays.length; i++) {
-            final DisplayContentProto display = root.displays[i];
-            mDisplays.add(new DisplayContent(display, this));
+        mRoot = new RootWindowContainer(root);
+        collectDescendantsOfType(DisplayContent.class, mRoot, mDisplays);
+        for (int i = 0; i < mDisplays.size(); i++) {
+            DisplayContent display = mDisplays.get(i);
+            updateForDisplayContent(display);
         }
         mKeyguardControllerState = new KeyguardControllerState(root.keyguardController);
         mFocusedApp = state.focusedApp;
@@ -343,9 +409,7 @@ public class WindowManagerState {
             mPendingActivities.add(root.pendingActivities[i].title);
         }
 
-        for (int i = 0; i < root.windows.length; i++) {
-            mWindowStates.add(new WindowState(root.windows[i]));
-        }
+        collectDescendantsOfType(WindowState.class, mRoot, mWindowStates);
 
         if (state.inputMethodWindow != null) {
             mInputMethodWindowAppToken = Integer.toHexString(state.inputMethodWindow.hashCode);
@@ -356,6 +420,7 @@ public class WindowManagerState {
     }
 
     private void reset() {
+        mRoot = null;
         mDisplays.clear();
         mRootTasks.clear();
         mWindowStates.clear();
@@ -917,12 +982,16 @@ public class WindowManagerState {
     }
 
     public static class DisplayContent extends ActivityContainer {
+        static Predicate<ActivityTask> isRootAndNotTaskOrganized
+                = t -> !t.mCreatedByOrganizer && t.isRootTask();
 
         public int mId;
         ArrayList<ActivityTask> mRootTasks = new ArrayList<>();
         int mFocusedRootTaskId;
         String mResumedActivity;
         boolean mSingleTaskInstance;
+        Rect mDefaultPinnedStackBounds = null;
+        Rect mPinnedStackMovementBounds = null;
 
         private Rect mDisplayRect = new Rect();
         private Rect mAppRect = new Rect();
@@ -935,30 +1004,19 @@ public class WindowManagerState {
         private String mLastTransition;
         private String mAppTransitionState;
 
-        DisplayContent(DisplayContentProto proto, WindowManagerState amState) {
+        DisplayContent(DisplayContentProto proto) {
             super(proto.windowContainer);
             mId = proto.id;
             mFocusedRootTaskId = proto.focusedRootTaskId;
             mSingleTaskInstance = proto.singleTaskInstance;
             if (proto.resumedActivity != null) {
                 mResumedActivity = proto.resumedActivity.title;
-                amState.mResumedActivitiesInDisplays.add(mResumedActivity);
             }
-            for (int i = 0; i < proto.tasks.length; i++) {
-                ActivityTask task = new ActivityTask(proto.tasks[i]);
-                if (task.mCreatedByOrganizer) {
-                    // TODO(b/149338177): figure out how CTS tests deal with organizer. For now,
-                    //                    don't treat them as regular stacks
-                    // Skip tasks created by an organizer
-                    continue;
-                }
-                mRootTasks.add(task);
-                // Also update activity manager state
-                amState.mRootTasks.add(task);
-                if (task.mResumedActivity != null) {
-                    amState.mResumedActivitiesInStacks.add(task.mResumedActivity);
-                }
-            }
+            // TODO(b/149338177): figure out how CTS tests deal with organizer. For now,
+            //                    don't treat them as regular stacks
+            // Skip tasks created by an organizer
+            collectDescendantsOfTypeIf(ActivityTask.class, isRootAndNotTaskOrganized, this,
+                                       mRootTasks);
 
             mDpi = proto.dpi;
             DisplayInfoProto infoProto = proto.displayInfo;
@@ -987,8 +1045,8 @@ public class WindowManagerState {
 
             PinnedStackControllerProto pinnedStackProto = proto.pinnedStackController;
             if (pinnedStackProto != null) {
-                amState.mDefaultPinnedStackBounds = extract(pinnedStackProto.defaultBounds);
-                amState.mPinnedStackMovementBounds = extract(pinnedStackProto.movementBounds);
+                mDefaultPinnedStackBounds = extract(pinnedStackProto.defaultBounds);
+                mPinnedStackMovementBounds = extract(pinnedStackProto.movementBounds);
             }
 
         }
@@ -1084,12 +1142,8 @@ public class WindowManagerState {
                 mResumedActivity = proto.resumedActivity.title;
             }
 
-            for (int i = 0;  i < proto.tasks.length; i++) {
-                mTasks.add(new ActivityTask(proto.tasks[i]));
-            }
-            for (int i = 0;  i < proto.activities.length; i++) {
-                mActivities.add(new Activity(proto.activities[i], this));
-            }
+            collectChildrenOfType(ActivityTask.class, this, mTasks);
+            collectChildrenOfType(Activity.class, this, mActivities);
         }
 
         public int getResizeMode() {
@@ -1098,6 +1152,9 @@ public class WindowManagerState {
 
         public int getTaskId() {
             return mTaskId;
+        }
+        boolean isRootTask() {
+            return mTaskId == mRootTaskId;
         }
 
         public int getRootTaskId() {
@@ -1180,9 +1237,9 @@ public class WindowManagerState {
         public boolean translucent;
         ActivityTask task;
 
-        Activity(ActivityRecordProto proto, ActivityTask parent) {
+        Activity(ActivityRecordProto proto, WindowContainer parent) {
             super(proto.windowToken.windowContainer);
-            task = parent;
+            task = (ActivityTask) parent;
             name = proto.name;
             state = proto.state;
             visible = proto.visible;
@@ -1295,16 +1352,82 @@ public class WindowManagerState {
         }
     }
 
+    public static class RootWindowContainer extends WindowContainer {
+        RootWindowContainer(RootWindowContainerProto proto) {
+            super(proto.windowContainer);
+        }
+    }
+    public static class DisplayArea extends WindowContainer {
+        DisplayArea(DisplayAreaProto proto) {
+            super(proto.windowContainer);
+        }
+    }
+    public static class WindowToken extends WindowContainer {
+        WindowToken(WindowTokenProto proto) {
+            super(proto.windowContainer);
+        }
+    }
+
+    /**
+     * Represents WindowContainer classes such as DisplayContent.WindowContainers and
+     * DisplayContent.NonAppWindowContainers. This can be expanded into a specific class
+     * if we need track and assert some state in the future.
+     */
+    public static class GenericWindowContainer extends WindowContainer {
+        GenericWindowContainer(WindowContainerProto proto) {
+            super(proto);
+        }
+    }
+
+    static WindowContainer getWindowContainer(WindowContainerChildProto proto,
+            WindowContainer parent) {
+        if (proto.displayContent != null) {
+           return new DisplayContent(proto.displayContent);
+        }
+
+        if (proto.displayArea != null) {
+           return new DisplayArea(proto.displayArea);
+        }
+
+        if (proto.task != null) {
+           return new ActivityTask(proto.task);
+        }
+
+        if (proto.activity != null) {
+           return new Activity(proto.activity, parent);
+        }
+
+        if (proto.windowToken != null) {
+           return new WindowToken(proto.windowToken);
+        }
+
+        if (proto.window != null) {
+           return new WindowState(proto.window);
+        }
+
+        if (proto.windowContainer != null) {
+           return new GenericWindowContainer(proto.windowContainer);
+        }
+        return null;
+    }
+
     static abstract class WindowContainer extends ConfigurationContainer {
 
         protected boolean mFullscreen;
         protected Rect mBounds;
         protected int mOrientation;
         protected List<WindowState> mSubWindows = new ArrayList<>();
+        protected List<WindowContainer> mChildren = new ArrayList<>();
 
         WindowContainer(WindowContainerProto proto) {
             super(proto.configurationContainer);
             mOrientation = proto.orientation;
+            for (int i = 0; i < proto.children.length; i++) {
+                final WindowContainer child = getWindowContainer(proto.children[i], this);
+                if (child != null) {
+                    mChildren.add(child);
+                }
+            }
         }
 
         Rect getBounds() {
@@ -1385,12 +1508,7 @@ public class WindowManagerState {
             } else {
                 mWindowType = 0;
             }
-            for (int i = 0; i < proto.childWindows.length; i++) {
-                WindowStateProto childProto = proto.childWindows[i];
-                WindowState childWindow = new WindowState(childProto);
-                mSubWindows.add(childWindow);
-                mSubWindows.addAll(childWindow.getWindows());
-            }
+            collectDescendantsOfType(WindowState.class, this, mSubWindows);
         }
 
         @NonNull
