@@ -18,6 +18,9 @@ package com.android.cts.packageinstaller;
 
 import android.content.Intent;
 import android.content.pm.PackageInstaller;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.provider.Settings;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiObject2;
@@ -32,14 +35,6 @@ public class ManualPackageInstallTest extends BasePackageInstallTest {
     private static final int AUTOMATOR_WAIT_TIMEOUT = 5000;
     private static final int INSTALL_WAIT_TIME = 5000;
 
-    private static final BySelector POPUP_BUTTON_SELECTOR = By
-            .clazz(android.widget.Button.class.getName())
-            .res("android:id/button1")
-            .pkg("com.android.settings");
-    private static final BySelector POPUP_IMAGE_SELECTOR = By
-            .clazz(android.widget.ImageView.class.getName())
-            .res("com.android.settings:id/admin_support_icon")
-            .pkg("com.android.settings");
     private static final BySelector INSTALL_BUTTON_SELECTOR = By.text(Pattern.compile("Install",
             Pattern.CASE_INSENSITIVE));
 
@@ -106,12 +101,35 @@ public class ManualPackageInstallTest extends BasePackageInstallTest {
     }
 
     private void automateDismissInstallBlockedDialog() {
-        mDevice.wait(Until.hasObject(POPUP_IMAGE_SELECTOR), AUTOMATOR_WAIT_TIMEOUT);
-        UiObject2 icon = mDevice.findObject(POPUP_IMAGE_SELECTOR);
+        mDevice.wait(Until.hasObject(getPopUpImageSelector()), AUTOMATOR_WAIT_TIMEOUT);
+        UiObject2 icon = mDevice.findObject(getPopUpImageSelector());
         assertNotNull("Policy transparency dialog icon not found", icon);
         // "OK" button only present in the dialog if it is blocked by policy.
-        UiObject2 button = mDevice.findObject(POPUP_BUTTON_SELECTOR);
+        UiObject2 button = mDevice.findObject(getPopUpButtonSelector());
         assertNotNull("OK button not found", button);
         button.click();
+    }
+
+    private String getSettingsPackageName() {
+        String settingsPackageName = "com.android.settings";
+        ResolveInfo resolveInfo = mPackageManager.resolveActivity(
+                new Intent(Settings.ACTION_SETTINGS), PackageManager.MATCH_SYSTEM_ONLY);
+        if (resolveInfo != null && resolveInfo.activityInfo != null) {
+            settingsPackageName = resolveInfo.activityInfo.packageName;
+        }
+        return settingsPackageName;
+    }
+
+    private BySelector getPopUpButtonSelector() {
+        return By.clazz(android.widget.Button.class.getName())
+                .res("android:id/button1")
+                .pkg(getSettingsPackageName());
+    }
+
+    private BySelector getPopUpImageSelector() {
+        final String settingsPackageName = getSettingsPackageName();
+        return By.clazz(android.widget.ImageView.class.getName())
+                .res(settingsPackageName + ":id/admin_support_icon")
+                .pkg(settingsPackageName);
     }
 }
