@@ -48,7 +48,6 @@ import org.junit.runner.RunWith;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -147,7 +146,7 @@ public class BitmapRegionDecoderTest {
             InputStream is = obtainInputStream(RES_IDS[i]);
             try {
                 BitmapRegionDecoder decoder =
-                        BitmapRegionDecoder.newInstance(is, false);
+                        BitmapRegionDecoder.newInstance(is);
                 assertEquals(WIDTHS[i], decoder.getWidth());
                 assertEquals(HEIGHTS[i], decoder.getHeight());
             } catch (IOException e) {
@@ -167,7 +166,7 @@ public class BitmapRegionDecoderTest {
             byte[] imageData = obtainByteArray(RES_IDS[i]);
             try {
                 BitmapRegionDecoder decoder = BitmapRegionDecoder
-                        .newInstance(imageData, 0, imageData.length, false);
+                        .newInstance(imageData, 0, imageData.length);
                 assertEquals(WIDTHS[i], decoder.getWidth());
                 assertEquals(HEIGHTS[i], decoder.getHeight());
             } catch (IOException e) {
@@ -182,15 +181,14 @@ public class BitmapRegionDecoderTest {
         for (int i = 0; i < RES_IDS.length; ++i) {
             String filepath = obtainPath(i);
             ParcelFileDescriptor pfd = obtainParcelDescriptor(filepath);
-            FileDescriptor fd = pfd.getFileDescriptor();
             try {
                 BitmapRegionDecoder decoder1 =
-                        BitmapRegionDecoder.newInstance(filepath, false);
+                        BitmapRegionDecoder.newInstance(filepath);
                 assertEquals(WIDTHS[i], decoder1.getWidth());
                 assertEquals(HEIGHTS[i], decoder1.getHeight());
 
                 BitmapRegionDecoder decoder2 =
-                        BitmapRegionDecoder.newInstance(fd, false);
+                        BitmapRegionDecoder.newInstance(pfd);
                 assertEquals(WIDTHS[i], decoder2.getWidth());
                 assertEquals(HEIGHTS[i], decoder2.getHeight());
             } catch (IOException e) {
@@ -211,7 +209,7 @@ public class BitmapRegionDecoderTest {
                     opts.inPreferredConfig = COLOR_CONFIGS[k];
 
                     InputStream is1 = obtainInputStream(RES_IDS[i]);
-                    BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is1, false);
+                    BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is1);
                     InputStream is2 = obtainInputStream(RES_IDS[i]);
                     Bitmap wholeImage = BitmapFactory.decodeStream(is2, null, opts);
 
@@ -239,7 +237,7 @@ public class BitmapRegionDecoderTest {
                     opts.inBitmap = null;
 
                     InputStream is1 = obtainInputStream(RES_IDS[i]);
-                    BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is1, false);
+                    BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is1);
                     InputStream is2 = obtainInputStream(RES_IDS[i]);
                     Bitmap wholeImage = BitmapFactory.decodeStream(is2, null, opts);
 
@@ -271,7 +269,7 @@ public class BitmapRegionDecoderTest {
 
                     byte[] imageData = obtainByteArray(RES_IDS[i]);
                     BitmapRegionDecoder decoder = BitmapRegionDecoder
-                            .newInstance(imageData, 0, imageData.length, false);
+                            .newInstance(imageData, 0, imageData.length);
                     Bitmap wholeImage = BitmapFactory.decodeByteArray(imageData,
                             0, imageData.length, opts);
 
@@ -298,8 +296,7 @@ public class BitmapRegionDecoderTest {
                     opts.inSampleSize = SAMPLESIZES[j];
                     opts.inPreferredConfig = COLOR_CONFIGS[k];
 
-                    BitmapRegionDecoder decoder =
-                        BitmapRegionDecoder.newInstance(filepath, false);
+                    BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(filepath);
                     Bitmap wholeImage = BitmapFactory.decodeFile(filepath, opts);
                     if (RES_IDS[i] == R.drawable.webp_test && COLOR_CONFIGS[k] == Config.RGB_565) {
                         compareRegionByRegion(decoder, opts, MSE_MARGIN_WEB_P_CONFIG_RGB_565,
@@ -309,10 +306,7 @@ public class BitmapRegionDecoderTest {
                     }
 
                     ParcelFileDescriptor pfd1 = obtainParcelDescriptor(filepath);
-                    FileDescriptor fd1 = pfd1.getFileDescriptor();
-                    decoder = BitmapRegionDecoder.newInstance(fd1, false);
-                    ParcelFileDescriptor pfd2 = obtainParcelDescriptor(filepath);
-                    FileDescriptor fd2 = pfd2.getFileDescriptor();
+                    decoder = BitmapRegionDecoder.newInstance(pfd1);
                     if (RES_IDS[i] == R.drawable.webp_test && COLOR_CONFIGS[k] == Config.RGB_565) {
                         compareRegionByRegion(decoder, opts, MSE_MARGIN_WEB_P_CONFIG_RGB_565,
                                               wholeImage);
@@ -328,7 +322,7 @@ public class BitmapRegionDecoderTest {
     @Test
     public void testRecycle() throws IOException {
         InputStream is = obtainInputStream(RES_IDS[0]);
-        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is, false);
+        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is);
         decoder.recycle();
         assertTrue(decoder.isRecycled());
         try {
@@ -369,7 +363,7 @@ public class BitmapRegionDecoderTest {
 
         for (int i = 0; i < NUM_TEST_IMAGES; i++) {
             InputStream is = obtainInputStream(RES_IDS[i]);
-            BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is, false);
+            BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is);
             for (int j = 0; j < SAMPLESIZES.length; j++) {
                 int sampleSize = SAMPLESIZES[j];
                 defaultOpts.inSampleSize = sampleSize;
@@ -437,7 +431,7 @@ public class BitmapRegionDecoderTest {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inPreferredConfig = Bitmap.Config.HARDWARE;
         InputStream is = obtainInputStream(RES_IDS[0]);
-        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is, false);
+        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is);
         Bitmap hardwareBitmap = decoder.decodeRegion(new Rect(0, 0, 10, 10), options);
         assertNotNull(hardwareBitmap);
         // Test that checks that correct bitmap was obtained is in uirendering/HardwareBitmapTests
@@ -454,7 +448,7 @@ public class BitmapRegionDecoderTest {
                     opts.inPreferredConfig = COLOR_CONFIGS[k];
 
                     InputStream is1 = obtainInputStream(RES_IDS[i]);
-                    BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is1, false);
+                    BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is1);
                     Bitmap region = decoder.decodeRegion(
                             new Rect(0, 0, TILE_SIZE, TILE_SIZE), opts);
                     decoder.recycle();
@@ -477,7 +471,7 @@ public class BitmapRegionDecoderTest {
 
                     String assetName = ASSET_NAMES[i];
                     InputStream is1 = obtainInputStream(assetName);
-                    BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is1, false);
+                    BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is1);
                     Bitmap region = decoder.decodeRegion(
                             new Rect(0, 0, SMALL_TILE_SIZE, SMALL_TILE_SIZE), opts);
                     decoder.recycle();
@@ -501,7 +495,7 @@ public class BitmapRegionDecoderTest {
 
         // sRGB
         BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(
-                obtainInputStream(ASSET_NAMES[3]), false);
+                obtainInputStream(ASSET_NAMES[3]));
         Bitmap region = decoder.decodeRegion(
                 new Rect(0, 0, SMALL_TILE_SIZE, SMALL_TILE_SIZE), opts);
         decoder.recycle();
@@ -509,7 +503,7 @@ public class BitmapRegionDecoderTest {
         assertEquals(ColorSpace.get(ColorSpace.Named.SRGB), region.getColorSpace());
 
         // DisplayP3
-        decoder = BitmapRegionDecoder.newInstance(obtainInputStream(ASSET_NAMES[1]), false);
+        decoder = BitmapRegionDecoder.newInstance(obtainInputStream(ASSET_NAMES[1]));
         region = decoder.decodeRegion(new Rect(0, 0, SMALL_TILE_SIZE, SMALL_TILE_SIZE), opts);
         decoder.recycle();
 
@@ -525,7 +519,7 @@ public class BitmapRegionDecoderTest {
                 opts.inPreferredColorSpace = ColorSpace.get(ColorSpace.Named.DISPLAY_P3);
 
                 InputStream is1 = obtainInputStream(RES_IDS[i]);
-                BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is1, false);
+                BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is1);
                 Bitmap region = decoder.decodeRegion(new Rect(0, 0, TILE_SIZE, TILE_SIZE), opts);
                 decoder.recycle();
 
@@ -542,7 +536,7 @@ public class BitmapRegionDecoderTest {
         opts.inPreferredColorSpace = ColorSpace.get(ColorSpace.Named.ADOBE_RGB);
 
         InputStream is1 = obtainInputStream(ASSET_NAMES[0]);
-        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is1, false);
+        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is1);
         Bitmap region = decoder.decodeRegion(new Rect(0, 0, SMALL_TILE_SIZE, SMALL_TILE_SIZE), opts);
         decoder.recycle();
 
@@ -557,7 +551,7 @@ public class BitmapRegionDecoderTest {
         opts.inPreferredColorSpace = ColorSpace.get(ColorSpace.Named.ADOBE_RGB);
 
         InputStream is1 = obtainInputStream(ASSET_NAMES[1]); // Display P3
-        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is1, false);
+        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is1);
         Bitmap region = decoder.decodeRegion(new Rect(0, 0, SMALL_TILE_SIZE, SMALL_TILE_SIZE), opts);
         decoder.recycle();
 
@@ -570,7 +564,7 @@ public class BitmapRegionDecoderTest {
         // This image normally decodes to F16, but if there is an inBitmap,
         // decoding will match the Config of that Bitmap.
         InputStream is = obtainInputStream(ASSET_NAMES[0]); // F16
-        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is, false);
+        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is);
 
         Options opts = new BitmapFactory.Options();
         for (Bitmap.Config config : new Bitmap.Config[] {
@@ -597,7 +591,7 @@ public class BitmapRegionDecoderTest {
         Options opts = new BitmapFactory.Options();
         opts.inPreferredColorSpace = ColorSpace.get(ColorSpace.Named.CIE_LAB);
         InputStream is1 = obtainInputStream(RES_IDS[0]);
-        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is1, false);
+        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is1);
         Bitmap region = decoder.decodeRegion(new Rect(0, 0, TILE_SIZE, TILE_SIZE), opts);
     }
 
@@ -610,7 +604,7 @@ public class BitmapRegionDecoderTest {
                 x -> Math.pow(x, 1.0f / 2.2f), x -> Math.pow(x, 2.2f),
                 0, 1);
         InputStream is1 = obtainInputStream(RES_IDS[0]);
-        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is1, false);
+        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is1);
         Bitmap region = decoder.decodeRegion(new Rect(0, 0, TILE_SIZE, TILE_SIZE), opts);
     }
 
@@ -621,7 +615,7 @@ public class BitmapRegionDecoderTest {
                 .copy(Config.HARDWARE, false);
         opts.inBitmap = bitmap;
         InputStream is = obtainInputStream(RES_IDS[0]);
-        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is, false);
+        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is);
         decoder.decodeRegion(new Rect(0, 0, TILE_SIZE, TILE_SIZE), opts);
     }
 
@@ -633,7 +627,7 @@ public class BitmapRegionDecoderTest {
 
         opts.inBitmap = bitmap;
         InputStream is = obtainInputStream(RES_IDS[0]);
-        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is, false);
+        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is);
         assertThrows(IllegalArgumentException.class, () -> {
             decoder.decodeRegion(new Rect(0, 0, TILE_SIZE, TILE_SIZE), opts);
         });
@@ -642,7 +636,7 @@ public class BitmapRegionDecoderTest {
     @Test
     public void testHeif() throws IOException {
         InputStream is = obtainInputStream(R.raw.heifwriter_input);
-        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is, false);
+        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is);
         Bitmap region = decoder.decodeRegion(new Rect(0, 0, TILE_SIZE, TILE_SIZE), null);
         assertNotNull(region);
 
