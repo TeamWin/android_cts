@@ -15,8 +15,6 @@
  */
 package com.android.cts.deviceowner;
 
-import static org.testng.Assert.assertThrows;
-
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -35,7 +33,7 @@ public class DeviceIdentifiersTest extends BaseDeviceOwnerTest {
             "An unexpected value was received by the device owner with the READ_PHONE_STATE "
                     + "permission when invoking %s";
 
-    public void testDeviceOwnerCanGetDeviceIdentifiersWithPermission() throws Exception {
+    public void testDeviceOwnerCanGetDeviceIdentifiersWithPermission() {
         // The device owner with the READ_PHONE_STATE permission should have access to all device
         // identifiers. However since the TelephonyManager methods can return null this method
         // verifies that the device owner with the READ_PHONE_STATE permission receives the same
@@ -45,25 +43,25 @@ public class DeviceIdentifiersTest extends BaseDeviceOwnerTest {
         try {
             assertEquals(String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE, "getDeviceId"),
                     ShellIdentityUtils.invokeMethodWithShellPermissions(telephonyManager,
-                            (tm) -> tm.getDeviceId()), telephonyManager.getDeviceId());
+                            TelephonyManager::getDeviceId), telephonyManager.getDeviceId());
             assertEquals(String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE, "getImei"),
                     ShellIdentityUtils.invokeMethodWithShellPermissions(telephonyManager,
-                            (tm) -> tm.getImei()), telephonyManager.getImei());
+                            TelephonyManager::getImei), telephonyManager.getImei());
             assertEquals(String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE, "getMeid"),
                     ShellIdentityUtils.invokeMethodWithShellPermissions(telephonyManager,
-                            (tm) -> tm.getMeid()), telephonyManager.getMeid());
+                            TelephonyManager::getMeid), telephonyManager.getMeid());
             assertEquals(String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE, "getSubscriberId"),
                     ShellIdentityUtils.invokeMethodWithShellPermissions(telephonyManager,
-                            (tm) -> tm.getSubscriberId()), telephonyManager.getSubscriberId());
+                            TelephonyManager::getSubscriberId), telephonyManager.getSubscriberId());
             assertEquals(
                     String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE, "getSimSerialNumber"),
                     ShellIdentityUtils.invokeMethodWithShellPermissions(telephonyManager,
-                            (tm) -> tm.getSimSerialNumber()),
+                            TelephonyManager::getSimSerialNumber),
                     telephonyManager.getSimSerialNumber());
             assertEquals(
                     String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE, "getNai"),
                     ShellIdentityUtils.invokeMethodWithShellPermissions(telephonyManager,
-                            (tm) -> tm.getNai()), telephonyManager.getNai());
+                            TelephonyManager::getNai), telephonyManager.getNai());
             assertEquals(String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE, "Build#getSerial"),
                     ShellIdentityUtils.invokeStaticMethodWithShellPermissions(Build::getSerial),
                     Build.getSerial());
@@ -86,7 +84,7 @@ public class DeviceIdentifiersTest extends BaseDeviceOwnerTest {
         }
     }
 
-    public void testDeviceOwnerCannotGetDeviceIdentifiersWithoutPermission() throws Exception {
+    public void testDeviceOwnerCannotGetDeviceIdentifiersWithoutPermission() {
         // The device owner without the READ_PHONE_STATE permission should still receive a
         // SecurityException when querying for device identifiers.
         TelephonyManager telephonyManager = (TelephonyManager) mContext.getSystemService(
@@ -94,22 +92,35 @@ public class DeviceIdentifiersTest extends BaseDeviceOwnerTest {
         // Allow the APIs to also return null if the telephony feature is not supported.
         boolean hasTelephonyFeature =
                 mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
-        if (hasTelephonyFeature) {
-            assertThrows(SecurityException.class, telephonyManager::getDeviceId);
-            assertThrows(SecurityException.class, telephonyManager::getImei);
-            assertThrows(SecurityException.class, telephonyManager::getMeid);
-            assertThrows(SecurityException.class, telephonyManager::getSubscriberId);
-            assertThrows(SecurityException.class, telephonyManager::getSimSerialNumber);
-            assertThrows(SecurityException.class, telephonyManager::getNai);
-            assertThrows(SecurityException.class, Build::getSerial);
-        } else {
-            assertNull(telephonyManager.getDeviceId());
-            assertNull(telephonyManager.getImei());
-            assertNull(telephonyManager.getMeid());
-            assertNull(telephonyManager.getSubscriberId());
-            assertNull(telephonyManager.getSimSerialNumber());
-            assertNull(telephonyManager.getNai());
-            assertNull(Build.getSerial());
+
+        boolean mayReturnNull = !hasTelephonyFeature;
+
+        assertAccessDenied(telephonyManager::getDeviceId, mayReturnNull);
+        assertAccessDenied(telephonyManager::getImei, mayReturnNull);
+        assertAccessDenied(telephonyManager::getMeid, mayReturnNull);
+        assertAccessDenied(telephonyManager::getSubscriberId, mayReturnNull);
+        assertAccessDenied(telephonyManager::getSimSerialNumber, mayReturnNull);
+        assertAccessDenied(telephonyManager::getNai, mayReturnNull);
+        assertAccessDenied(Build::getSerial, mayReturnNull);
+    }
+
+    private static <T> void assertAccessDenied(ThrowingProvider<T> provider,
+            boolean mayReturnNull) {
+        try {
+            T object = provider.get();
+            if (mayReturnNull) {
+                assertNull(object);
+            } else {
+                fail("Expected SecurityException, received " + object);
+            }
+        } catch (SecurityException ignored) {
+            // assertion succeeded
+        } catch (Throwable th) {
+            fail("Expected SecurityException but was: " + th);
         }
+    }
+
+    private interface ThrowingProvider<T> {
+        T get() throws Throwable;
     }
 }
