@@ -55,6 +55,7 @@ android_test {
         "cts-keystore-user-auth-helper-library",
         "platformprotosnano",
         "cts-wm-util",
+        "testng",
     ],
     srcs: ["src/android/keystore/**/*.java"],
     // Can't use public/test API only because some tests use hidden API
