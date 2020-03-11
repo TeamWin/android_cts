@@ -20,7 +20,7 @@ import static android.os.Process.myUid;
 import static com.android.compatibility.common.util.ShellIdentityUtils.invokeMethodWithShellPermissions;
 import static com.android.compatibility.common.util.ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn;
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
-
+import static com.android.compatibility.common.util.TestUtils.BooleanSupplierWithThrow;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.fail;
@@ -33,6 +33,7 @@ import android.car.Car;
 import android.car.user.CarUserManager;
 import android.car.user.CarUserManager.UserLifecycleListener;
 import android.content.pm.PackageManager;
+import android.os.PowerManager;
 import android.os.SystemClock;
 import android.os.UserHandle;
 import android.util.Log;
@@ -59,7 +60,7 @@ public final class CarUserManagerTest extends CarApiTestBase {
     /**
      * Constant used to wait for a condition that is triggered by checking a condition.
      */
-    private static final int SWITCH_TIMEOUT_USING_CHECK_MS = 30_000;
+    private static final int SWITCH_TIMEOUT_USING_CHECK_MS = 40_000;
 
     /**
      * Constant used to wait blindly, when there is no condition that can be checked.
@@ -67,9 +68,14 @@ public final class CarUserManagerTest extends CarApiTestBase {
     private static final int SWITCH_TIMEOUT_WITHOUT_CHECK_MS = 10_000;
 
     /**
+     * Constant used to wait blindly, when there is no condition that can be checked.
+     */
+    private static final int SUSPEND_TIMEOUT_MS = 5_000;
+
+    /**
      * How long to sleep (multiple times) while waiting for a condition.
      */
-    private static final int SMALL_NAP_MS = 500;
+    private static final int SMALL_NAP_MS = 100;
 
     private static CarUserManager sCarUserManager;
 
@@ -91,7 +97,7 @@ public final class CarUserManagerTest extends CarApiTestBase {
         }
 
         sCarUserManager = (CarUserManager) getCar().getCarManager(Car.CAR_USER_SERVICE);
-        sNewUserId = createNewUser("CarUserManagerTest");
+        sNewUserId = createNewUser("CarUserManagerTest", /* isGuestUser= */ false);
         Log.i(TAG, "setUp(): myUid=" + myUid() + ", currentUser=" + sInitialUserId
                 + ", newUser=" + sNewUserId);
     }
@@ -180,7 +186,6 @@ public final class CarUserManagerTest extends CarApiTestBase {
         };
         Log.d(TAG, "registering listener: " + listener);
 
-
         AtomicBoolean executedRef = new AtomicBoolean();
         sCarUserManager.addListener((r) -> {
             executedRef.set(true);
@@ -216,10 +221,49 @@ public final class CarUserManagerTest extends CarApiTestBase {
         }
     }
 
+
+    /**
+     * Tests resume behabior when current user is ephemeral guest, a new guest user should be
+     * created and switched to.
+     */
+    @Test
+    public void testGuestUserResumeToNewGuestUser() throws Exception {
+        // Create new guest user
+        int guestUserId = createNewUser("TestGuest", /* isGuestUser= */ true);
+
+        // Wait for this user to be active
+        switchUser(guestUserId);
+        waitForCurrentUser(guestUserId, SWITCH_TIMEOUT_USING_CHECK_MS);
+        waitUntil("Timeout: current user is not initialized: " + guestUserId,
+                SWITCH_TIMEOUT_USING_CHECK_MS, () -> isCurrentUserInitialized());
+
+        // Emulate suspend to RAM
+        suspendToRamAndResume();
+
+        // Wait for current user to be valid guest user, otherwise
+        assertWithMessage("not resumed to new guest user and current user is: %s", getCurrentUser())
+                .that(waitUntil("Timeout: current user is not valid guest user",
+                        SWITCH_TIMEOUT_USING_CHECK_MS,
+                        () -> (isCurrentUserValidGuestUser() && getCurrentUser() != guestUserId)))
+                .isTrue();
+    }
+
+    /**
+     * Tests resume behavior when current user is  persistent user
+     */
+    @Test
+    public void testPersistentUserResumeToUser() throws Exception {
+        switchUser(sNewUserId);
+        suspendToRamAndResume();
+
+        assertWithMessage("not resumed to previous user: %s", sNewUserId)
+                .that(getCurrentUser()).isEqualTo(sNewUserId);
+    }
+
     /**
      * Used to temporarily revoke the permission.
      */
-    private void toggleInteractAcrossUsersPermission(boolean enabled) {
+    private static void toggleInteractAcrossUsersPermission(boolean enabled) {
         String permission = "android.permission.INTERACT_ACROSS_USERS";
         String pkgName = sContext.getPackageName();
         UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
@@ -235,12 +279,12 @@ public final class CarUserManagerTest extends CarApiTestBase {
     }
 
     /**
-     * Creates a new Android user.
+     * Creates a new Android user, returning its id.
      */
-    private int createNewUser(String name) {
+    private int createNewUser(String name, boolean isGuestUser) {
         Log.i(TAG, "Creating new user " + name);
         int newUserId = invokeMethodWithShellPermissions(sCarUserManager,
-                (um) -> um.createUser(name));
+                (um) -> um.createUser(name, isGuestUser));
         Log.i(TAG, "New user created with id " + newUserId);
         return newUserId;
     }
@@ -267,25 +311,66 @@ public final class CarUserManagerTest extends CarApiTestBase {
     }
 
     /**
-     * Waits until the current Android user is {@code userId}, or fail if it times out.
+     * Wait until the current Android user is {@code userId}, or fail if it times out.
      */
     private static void waitForCurrentUser(int userId, long timeoutMs) {
-        Log.i(TAG, "Waiting until current user is " + userId);
-        long deadline = System.currentTimeMillis() + timeoutMs;
-        do {
-            int actualUserId = getCurrentUser();
-            if (actualUserId == userId) {
-                Log.d(TAG, "the wait is over!");
-                return;
-            }
-            Log.d(TAG, "still on " + actualUserId + "; sleeping " + SMALL_NAP_MS + "ms");
-            SystemClock.sleep(SMALL_NAP_MS);
-        } while (System.currentTimeMillis() < deadline);
-        fail("didn't switch to user " + userId + " in " + timeoutMs + " ms");
+        waitUntil("didn't switch to user" + userId + " in " + timeoutMs + " ms", 
+                timeoutMs, () -> (getCurrentUser() == userId));
     }
 
     private static int getCurrentUser() {
         // TODO: should use Activity.getCurrentUser(), but that's a @SystemApi (not @TestApi)
         return Integer.parseInt(runShellCommand("am get-current-user"));
+    }
+
+    private static void suspendToRamAndResume() throws Exception {
+        Log.d(TAG, "Emulate suspend to RAM and resume");
+        PowerManager powerManager = sContext.getSystemService(PowerManager.class);
+        runShellCommand("cmd car_service suspend");
+        // Check for suspend success
+        waitUntil("Suspsend is not successful",
+                SUSPEND_TIMEOUT_MS, () -> !powerManager.isScreenOn());
+        // Force turn off garage mode
+        runShellCommand("cmd car_service garage-mode off");
+        runShellCommand("cmd car_service resume");
+    }
+
+    private static boolean isCurrentUserValidGuestUser() {
+        Log.d(TAG, "checking isCurrentUserValidGuestUser");
+        for (String msg : runShellCommand("cmd user list -v").split("\\r?\\n")) {
+            if (msg.contains("(current)") && !msg.contains("DISABLED")) {
+                // If current user is valid,  check before exit
+                return msg.contains("GUEST");
+            }
+        }
+        return false;
+    }
+
+    private static boolean isCurrentUserInitialized() {
+        for (String msg : runShellCommand("cmd user list -v").split("\\r?\\n")) {
+            if (msg.contains("(current)")) {
+                return msg.contains("INITIALIZED");
+            }
+        }
+        return false;
+    }
+
+    private static boolean waitUntil(String msg, long timeoutMs,
+            BooleanSupplierWithThrow condition) {
+        long deadline = SystemClock.elapsedRealtime() + timeoutMs;
+        do {
+            try {
+                if (condition.getAsBoolean()) {
+                    return true;
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Exception in waitUntil: " + msg);
+                throw new RuntimeException(e);
+            }
+            SystemClock.sleep(SMALL_NAP_MS);
+        } while (SystemClock.elapsedRealtime() < deadline);
+
+        fail(msg + " after: " + timeoutMs + "ms");
+        return false;
     }
 }
