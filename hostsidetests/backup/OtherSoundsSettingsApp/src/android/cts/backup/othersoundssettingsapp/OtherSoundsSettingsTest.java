@@ -21,9 +21,12 @@ import static androidx.test.InstrumentationRegistry.getInstrumentation;
 import static com.android.compatibility.common.util.BackupUtils.LOCAL_TRANSPORT_TOKEN;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.ContentResolver;
+import android.content.Context;
 import android.os.ParcelFileDescriptor;
+import android.os.Vibrator;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
 
@@ -143,6 +146,14 @@ public class OtherSoundsSettingsTest {
      */
     @Test
     public void testOtherSoundsSettings_touchVibration() throws Exception {
+        Vibrator mVibrator =
+                (Vibrator)
+                        getInstrumentation()
+                                .getTargetContext()
+                                .getSystemService(Context.VIBRATOR_SERVICE);
+        assumeTrue(
+                "Device Under Test does not have a vibrator, skipping.", mVibrator.hasVibrator());
+
         int originalValue =
                 Settings.System.getInt(
                         mContentResolver, Settings.System.HAPTIC_FEEDBACK_ENABLED, -1);
