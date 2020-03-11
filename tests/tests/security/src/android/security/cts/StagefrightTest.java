@@ -1249,6 +1249,13 @@ public class StagefrightTest {
      to prevent merge conflicts, add O tests below this comment,
      before any existing test methods
      ***********************************************************/
+
+    @Test
+    @SecurityTest(minPatchLevel = "2018-07")
+    public void testStagefright_cve_2018_9412() throws Exception {
+        doStagefrightTest(R.raw.cve_2018_9412, 180000);
+    }
+
     @Test
     @SecurityTest(minPatchLevel = "2019-05")
     public void testStagefright_cve_2019_2334() throws Exception {
