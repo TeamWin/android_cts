@@ -18,11 +18,8 @@ package android.server.wm;
 
 import static android.app.ActivityTaskManager.INVALID_STACK_ID;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
-import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
-import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
-import static android.content.pm.ActivityInfo.RESIZE_MODE_RESIZEABLE;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.ComponentNameUtils.getWindowName;
 import static android.server.wm.StateLogger.logAlways;
@@ -538,8 +535,9 @@ public class WindowManagerStateHelper extends WindowManagerState {
         // Check visibility of activity and window.
         assertEquals("Activity=" + getActivityName(activityName) + " must" + (visible ? "" : " NOT")
                 + " be visible.", visible, isActivityVisible(activityName));
-        assertEquals("Window=" + windowName + " must" + (visible ? "" : " NOT") + " be visible.",
-                visible, isWindowVisible(windowName));
+        assertEquals("Window=" + windowName + " must" + (visible ? "" : " NOT")
+                        + " have shown surface.",
+                visible, isWindowSurfaceShown(windowName));
     }
 
     void assertHomeActivityVisible(boolean visible) {
@@ -609,7 +607,7 @@ public class WindowManagerStateHelper extends WindowManagerState {
 
     public void assertWindowDisplayed(final String windowName) {
         waitForValidState(WaitForValidActivityState.forWindow(windowName));
-        assertTrue(windowName + "is visible", isWindowVisible(windowName));
+        assertTrue(windowName + "is visible", isWindowSurfaceShown(windowName));
     }
 
     void waitAndAssertImeWindowShownOnDisplay(int displayId) {
@@ -617,10 +615,11 @@ public class WindowManagerStateHelper extends WindowManagerState {
                 condition -> condition
                         .setResultSupplier(this::getImeWindowState)
                         .setResultValidator(
-                                w -> w != null && w.isShown() && w.getDisplayId() == displayId));
+                                w -> w != null && w.isSurfaceShown()
+                                        && w.getDisplayId() == displayId));
 
         assertNotNull("IME window must exist", imeWinState);
-        assertTrue("IME window must be shown", imeWinState.isShown());
+        assertTrue("IME window must be shown", imeWinState.isSurfaceShown());
         assertEquals("IME window must be on the given display", displayId,
                 imeWinState.getDisplayId());
     }
