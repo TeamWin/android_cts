@@ -27,6 +27,7 @@ android_test_helper_app {
     static_libs: ["androidx.test.rules", "cts-rollback-lib", "cts-install-lib"],
     manifest : "app/AndroidManifest.xml",
     java_resources:  [
+        ":ApexKeyRotationTestV2_SignedBobRot",
         ":StagedInstallTestApexV2",
         ":StagedInstallTestApexV3",
     ],
