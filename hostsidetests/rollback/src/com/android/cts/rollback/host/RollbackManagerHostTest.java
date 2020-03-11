@@ -135,6 +135,20 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
     }
 
     /**
+     * Tests staged rollbacks to system version involving only apex.
+     */
+    @Test
+    public void testApexOnlySystemVersionStagedRollback() throws Exception {
+        assumeTrue("Device does not support updating APEX", isApexUpdateSupported());
+
+        run("testApexOnlySystemVersion_EnableRollback");
+        getDevice().reboot();
+        run("testApexOnlySystemVersion_CommitRollback");
+        getDevice().reboot();
+        run("testApexOnlySystemVersion_ConfirmRollback");
+    }
+
+    /**
      * Tests staged rollbacks involving only apex.
      */
     @Test
@@ -163,6 +177,20 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
         run("testApexRollbackExpirationUpdateApex");
         getDevice().reboot();
         run("testApexRollbackExpirationConfirmExpiration");
+    }
+
+    /**
+     * Tests staged rollbacks involving apex with rotated keys.
+     */
+    @Test
+    public void testApexKeyRotationStagedRollback() throws Exception {
+        assumeTrue("Device does not support updating APEX", isApexUpdateSupported());
+
+        run("testApexKeyRotation_EnableRollback");
+        getDevice().reboot();
+        run("testApexKeyRotation_CommitRollback");
+        getDevice().reboot();
+        run("testApexKeyRotation_CofirmRollback");
     }
 
 }

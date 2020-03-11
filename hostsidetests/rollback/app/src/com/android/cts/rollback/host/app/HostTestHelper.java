@@ -47,6 +47,9 @@ import java.io.IOException;
 public class HostTestHelper {
     private static final String TAG = "RollbackTest";
 
+    private static final TestApp Apex2SignedBobRot = new TestApp(
+            "Apex2SignedBobRot", TestApp.Apex, 2, /*isApex*/true,
+            "com.android.apex.cts.shim.v2_signed_bob_rot.apex");
 
     /**
      * Adopts common permissions needed to test rollbacks.
@@ -158,8 +161,7 @@ public class HostTestHelper {
      * Test rollbacks of staged installs involving only apex.
      * Install first version phase.
      *
-     * <p> We can't rollback to version 1, which is already installed, so we start by installing
-     * version 2. The test ultimately rolls back from 3 to 2.
+     * <p> We start by installing version 2. The test ultimately rolls back from 3 to 2.
      */
     @Test
     public void testApexOnlyInstallFirstVersion() throws Exception {
@@ -229,6 +231,42 @@ public class HostTestHelper {
         // At this point, the host test driver will reboot the device to complete the uninstall.
     }
 
+    /**
+     * Test rollback to system version involving apex only
+     */
+    @Test
+    public void testApexOnlySystemVersion_EnableRollback() throws Exception {
+        assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(1);
+        Install.single(TestApp.Apex2).setStaged().setEnableRollback().commit();
+    }
+
+    @Test
+    public void testApexOnlySystemVersion_CommitRollback() throws Exception {
+        assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(2);
+        RollbackInfo available = RollbackUtils.getAvailableRollback(TestApp.Apex);
+        assertThat(available).isStaged();
+        assertThat(available).packagesContainsExactly(
+                Rollback.from(TestApp.Apex2).to(TestApp.Apex1));
+
+        RollbackUtils.rollback(available.getRollbackId(), TestApp.Apex2);
+        RollbackInfo committed = RollbackUtils.getCommittedRollbackById(available.getRollbackId());
+        assertThat(committed).isNotNull();
+        assertThat(committed).isStaged();
+        assertThat(committed).packagesContainsExactly(
+                Rollback.from(TestApp.Apex2).to(TestApp.Apex1));
+        assertThat(committed).causePackagesContainsExactly(TestApp.Apex2);
+        assertThat(committed.getCommittedSessionId()).isNotEqualTo(-1);
+
+        // Note: The app is not rolled back until after the rollback is staged
+        // and the device has been rebooted.
+        InstallUtils.waitForSessionReady(committed.getCommittedSessionId());
+        assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(2);
+    }
+
+    @Test
+    public void testApexOnlySystemVersion_ConfirmRollback() throws Exception {
+        assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(1);
+    }
 
     /**
      * Test rollbacks of staged installs involving apex and apk.
@@ -354,5 +392,42 @@ public class HostTestHelper {
     public void testApexRollbackExpirationConfirmExpiration() throws Exception {
         assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(3);
         assertThat(RollbackUtils.getAvailableRollback(TestApp.Apex)).isNull();
+    }
+
+    /**
+     * Test rollback with key downgrade for apex only
+     */
+    @Test
+    public void testApexKeyRotation_EnableRollback() throws Exception {
+        assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(1);
+        Install.single(Apex2SignedBobRot).setStaged().setEnableRollback().commit();
+    }
+
+    @Test
+    public void testApexKeyRotation_CommitRollback() throws Exception {
+        assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(2);
+        RollbackInfo available = RollbackUtils.getAvailableRollback(TestApp.Apex);
+        assertThat(available).isStaged();
+        assertThat(available).packagesContainsExactly(
+                Rollback.from(Apex2SignedBobRot).to(TestApp.Apex1));
+
+        RollbackUtils.rollback(available.getRollbackId(), Apex2SignedBobRot);
+        RollbackInfo committed = RollbackUtils.getCommittedRollbackById(available.getRollbackId());
+        assertThat(committed).isNotNull();
+        assertThat(committed).isStaged();
+        assertThat(committed).packagesContainsExactly(
+                Rollback.from(Apex2SignedBobRot).to(TestApp.Apex1));
+        assertThat(committed).causePackagesContainsExactly(Apex2SignedBobRot);
+        assertThat(committed.getCommittedSessionId()).isNotEqualTo(-1);
+
+        // Note: The app is not rolled back until after the rollback is staged
+        // and the device has been rebooted.
+        InstallUtils.waitForSessionReady(committed.getCommittedSessionId());
+        assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(2);
+    }
+
+    @Test
+    public void testApexKeyRotation_CofirmRollback() throws Exception {
+        assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(1);
     }
 }

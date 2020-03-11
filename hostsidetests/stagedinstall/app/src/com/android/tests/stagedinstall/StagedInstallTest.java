@@ -487,6 +487,21 @@ public class StagedInstallTest {
     }
 
     @Test
+    public void testInstallV2Apex_Commit() throws Exception {
+        int sessionId = stageSingleApk(TestApp.Apex2).assertSuccessful().getSessionId();
+        waitForIsReadyBroadcast(sessionId);
+        assertSessionReady(sessionId);
+        storeSessionId(sessionId);
+    }
+
+    @Test
+    public void testInstallV2Apex_VerifyPostReboot() throws Exception {
+        int sessionId = retrieveLastSessionId();
+        assertSessionApplied(sessionId);
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(2);
+    }
+
+    @Test
     public void testInstallV2SignedBobApex_Commit() throws Exception {
         int sessionId = stageSingleApk(Apex2SignedBobRot).assertSuccessful().getSessionId();
         waitForIsReadyBroadcast(sessionId);
@@ -514,6 +529,21 @@ public class StagedInstallTest {
         int sessionId = retrieveLastSessionId();
         assertSessionApplied(sessionId);
         assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(3);
+    }
+
+    @Test
+    public void testInstallV3SignedBobApex_Commit() throws Exception {
+        int sessionId = stageSingleApk(Apex2SignedBobRot).assertSuccessful().getSessionId();
+        waitForIsReadyBroadcast(sessionId);
+        assertSessionReady(sessionId);
+        storeSessionId(sessionId);
+    }
+
+    @Test
+    public void testInstallV3SignedBobApex_VerifyPostReboot() throws Exception {
+        int sessionId = retrieveLastSessionId();
+        assertSessionApplied(sessionId);
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(2);
     }
 
     @Test
@@ -575,6 +605,25 @@ public class StagedInstallTest {
         assertSessionFailed(sessionId);
         // Apex shouldn't be downgraded.
         assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(3);
+    }
+
+    @Test
+    public void testStagedInstallDowngradeApexToSystemVersion_DebugBuild_Commit()
+            throws Exception {
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(2);
+        int sessionId = stageDowngradeSingleApk(TestApp.Apex1).assertSuccessful().getSessionId();
+        waitForIsReadyBroadcast(sessionId);
+        assertSessionReady(sessionId);
+        storeSessionId(sessionId);
+    }
+
+    @Test
+    public void testStagedInstallDowngradeApexToSystemVersion_DebugBuild_VerifyPostReboot()
+            throws Exception {
+        int sessionId = retrieveLastSessionId();
+        assertSessionApplied(sessionId);
+        // Apex should be downgraded.
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(1);
     }
 
     @Test
@@ -767,7 +816,6 @@ public class StagedInstallTest {
     // Once updated with a new rotated key (bob), further updates with old key (alice) should fail
     @Test
     public void testAfterRotationOldKeyIsRejected() throws Exception {
-        // Assume updateWithDifferentKey_Commit has been run already
         assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(2);
         int sessionId = stageSingleApk(TestApp.Apex3).assertSuccessful().getSessionId();
         PackageInstaller.SessionInfo info =
@@ -779,7 +827,6 @@ public class StagedInstallTest {
     // Once updated with a new rotated key (bob), further updates with new key (bob) should pass
     @Test
     public void testAfterRotationNewKeyCanUpdateFurther_CommitPostReboot() throws Exception {
-        // Assume updateWithDifferentKey_Commit has been run already
         assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(2);
         int sessionId = stageSingleApk(Apex3SignedBobRot).assertSuccessful().getSessionId();
         PackageInstaller.SessionInfo info =
@@ -797,7 +844,6 @@ public class StagedInstallTest {
     @Test
     public void testAfterRotationNewKeyCanUpdateFurtherWithoutLineage()
             throws Exception {
-        // Assume updateWithDifferentKey_Commit has been run already
         assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(2);
         int sessionId = stageSingleApk(Apex3SignedBob).assertSuccessful().getSessionId();
         PackageInstaller.SessionInfo info =

@@ -268,6 +268,18 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
 
     @Test
     @LargeTest
+    public void testStagedInstallDowngradeApexToSystemVersion_DebugBuild() throws Exception {
+        assumeThat(getDevice().getBuildFlavor(), not(endsWith("-user")));
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
+        installV2Apex();
+        runPhase("testStagedInstallDowngradeApexToSystemVersion_DebugBuild_Commit");
+        getDevice().reboot();
+        runPhase("testStagedInstallDowngradeApexToSystemVersion_DebugBuild_VerifyPostReboot");
+    }
+
+    @Test
+    @LargeTest
     public void testInstallStagedApex_SameGrade() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
 
@@ -282,6 +294,12 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testInstallApex_DeviceDoesNotSupportApex_Fails");
     }
 
+    private void installV2Apex()throws Exception {
+        runPhase("testInstallV2Apex_Commit");
+        getDevice().reboot();
+        runPhase("testInstallV2Apex_VerifyPostReboot");
+    }
+
     private void installV2SignedBobApex() throws Exception {
         runPhase("testInstallV2SignedBobApex_Commit");
         getDevice().reboot();
@@ -294,13 +312,18 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testInstallV3Apex_VerifyPostReboot");
     }
 
+    private void installV3SignedBobApex() throws Exception {
+        runPhase("testInstallV3SignedBobApex_Commit");
+        getDevice().reboot();
+        runPhase("testInstallV3SignedBobApex_VerifyPostReboot");
+    }
+
     @Test
     public void testFailsInvalidApexInstall() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
         runPhase("testFailsInvalidApexInstall_Commit");
         runPhase("testFailsInvalidApexInstall_AbandonSessionIsNoop");
     }
-
 
     @Test
     public void testStagedApkSessionCallbacks() throws Exception {
