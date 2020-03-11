@@ -26,7 +26,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.Debug;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
@@ -42,6 +41,7 @@ import android.system.Os;
 import android.system.OsConstants;
 import android.test.InstrumentationTestCase;
 import android.text.TextUtils;
+import android.util.DebugUtils;
 import android.util.Log;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
@@ -472,6 +472,9 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         // Start a process and block its main thread
         startService(ACTION_ANR, STUB_SERVICE_NAME, false, false);
 
+        // Sleep for a while to make sure it's already blocking its main thread.
+        sleep(WAITFOR_MSEC);
+
         Monitor monitor = new Monitor(mInstrumentation);
 
         Intent intent = new Intent();
@@ -514,13 +517,17 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         // Start a process and do nothing
         startService(ACTION_FINISH, STUB_SERVICE_NAME, false, false);
 
+        // Enable high frequency memory sampling
+        executeShellCmd("dumpsys procstats --start-testing");
+        // Sleep for a while to wait for the sampling of memory info
+        sleep(10000);
+        // Stop the high frequency memory sampling
+        executeShellCmd("dumpsys procstats --stop-testing");
         // Get the memory info from it.
-        Debug.MemoryInfo[] meminfo =
-                ShellIdentityUtils.invokeMethodWithShellPermissions(
-                        new int[] {mStubPackagePid},
-                        mActivityManager::getProcessMemoryInfo,
-                        android.Manifest.permission.REAL_GET_TASKS);
-        assertTrue(meminfo != null && meminfo.length == 1);
+        String dump = executeShellCmd("dumpsys activity processes " + STUB_PACKAGE_NAME);
+        assertNotNull(dump);
+        final String lastPss = extractMemString(dump, " lastPss=", ' ');
+        final String lastRss = extractMemString(dump, " lastRss=", '\n');
 
         // Disable the compat feature
         executeShellCmd("am compat disable " + PackageManager.FILTER_APPLICATION_QUERY
@@ -541,8 +548,19 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
                 ApplicationExitInfo.REASON_OTHER, null, "PlatformCompat overrides", now, now2);
 
         // Also verify that we get the expected meminfo
-        assertEquals(meminfo[0].getTotalPss(), info.getPss());
-        assertEquals(meminfo[0].getTotalRss(), info.getRss());
+        assertEquals(lastPss, DebugUtils.sizeValueToString(
+                info.getPss() * 1024, new StringBuilder()));
+        assertEquals(lastRss, DebugUtils.sizeValueToString(
+                info.getRss() * 1024, new StringBuilder()));
+    }
+
+    private String extractMemString(String dump, String prefix, char nextSep) {
+        int start = dump.indexOf(prefix);
+        assertTrue(start >= 0);
+        start += prefix.length();
+        int end = dump.indexOf(nextSep, start);
+        assertTrue(end > start);
+        return dump.substring(start, end);
     }
 
     public void testPermissionChange() throws Exception {

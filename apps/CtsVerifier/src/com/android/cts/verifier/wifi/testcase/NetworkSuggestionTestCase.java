@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.wifi.testcase;
 
+import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED;
 import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
 import static android.net.wifi.WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS;
 
@@ -28,12 +29,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
+import android.net.LinkProperties;
 import android.net.MacAddress;
 import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiNetworkSuggestion;
+import android.os.SystemClock;
 import android.util.Log;
 import android.util.Pair;
 
@@ -43,6 +47,7 @@ import com.android.cts.verifier.wifi.CallbackUtils;
 import com.android.cts.verifier.wifi.TestUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
@@ -60,10 +65,13 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
 
     private static final int PERIODIC_SCAN_INTERVAL_MS = 10_000;
     private static final int CALLBACK_TIMEOUT_MS = 40_000;
+    private static final int CAPABILITIES_CHANGED_FOR_METERED_TIMEOUT_MS = 80_000;
 
     private final Object mLock = new Object();
     private final ScheduledExecutorService mExecutorService;
     private final List<WifiNetworkSuggestion> mNetworkSuggestions = new ArrayList<>();
+    private final WifiNetworkSuggestion.Builder mNetworkSuggestionBuilder =
+            new WifiNetworkSuggestion.Builder();
 
     private ConnectivityManager mConnectivityManager;
     private NetworkRequest mNetworkRequest;
@@ -74,6 +82,7 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
     private final boolean mSetBssid;
     private final boolean mSetRequiresAppInteraction;
     private final boolean mSimulateConnectionFailure;
+    private final boolean mSetMeteredPostConnection;
 
     public NetworkSuggestionTestCase(Context context, boolean setBssid,
             boolean setRequiresAppInteraction) {
@@ -82,30 +91,36 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
 
     public NetworkSuggestionTestCase(Context context, boolean setBssid,
             boolean setRequiresAppInteraction, boolean simulateConnectionFailure) {
+        this(context, setBssid, setRequiresAppInteraction, simulateConnectionFailure, false);
+    }
+
+    public NetworkSuggestionTestCase(Context context, boolean setBssid,
+            boolean setRequiresAppInteraction, boolean simulateConnectionFailure,
+            boolean setMeteredPostConnection) {
         super(context);
         mExecutorService = Executors.newSingleThreadScheduledExecutor();
         mSetBssid = setBssid;
         mSetRequiresAppInteraction = setRequiresAppInteraction;
         mSimulateConnectionFailure = simulateConnectionFailure;
+        mSetMeteredPostConnection = true;
     }
 
     // Create a network specifier based on the test type.
     private WifiNetworkSuggestion createNetworkSuggestion(@NonNull ScanResult scanResult) {
-        WifiNetworkSuggestion.Builder builder = new WifiNetworkSuggestion.Builder();
-        builder.setSsid(scanResult.SSID);
+        mNetworkSuggestionBuilder.setSsid(scanResult.SSID);
         if (mSetBssid) {
-            builder.setBssid(MacAddress.fromString(scanResult.BSSID));
+            mNetworkSuggestionBuilder.setBssid(MacAddress.fromString(scanResult.BSSID));
         }
         if (mSetRequiresAppInteraction) {
-            builder.setIsAppInteractionRequired(true);
+            mNetworkSuggestionBuilder.setIsAppInteractionRequired(true);
         }
         // Use a random password to simulate connection failure.
         if (TestUtils.isScanResultForWpa2Network(scanResult)) {
-            builder.setWpa2Passphrase(mTestUtils.generateRandomPassphrase());
+            mNetworkSuggestionBuilder.setWpa2Passphrase(mTestUtils.generateRandomPassphrase());
         } else if (TestUtils.isScanResultForWpa3Network(scanResult)) {
-            builder.setWpa3Passphrase(mTestUtils.generateRandomPassphrase());
+            mNetworkSuggestionBuilder.setWpa3Passphrase(mTestUtils.generateRandomPassphrase());
         }
-        return builder.build();
+        return mNetworkSuggestionBuilder.build();
     }
 
     private void setFailureReason(String reason) {
@@ -131,6 +146,29 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
             this.failureReason = failureReason;
             mCountDownLatch.countDown();
         }
+    }
+
+    // TODO(b/150890482): Capabilities changed callback can occur multiple times (for ex: RSSI
+    // change) & the sufficiency checks may result in ths change taking longer to take effect.
+    // This method accounts for both of these situations.
+    private boolean waitForNetworkToBeMetered() throws InterruptedException {
+        long startTimeMillis = SystemClock.elapsedRealtime();
+        while (SystemClock.elapsedRealtime()
+                < startTimeMillis + CAPABILITIES_CHANGED_FOR_METERED_TIMEOUT_MS) {
+            // Network marked metered.
+            if (!mNetworkCallback.getNetworkCapabilities()
+                    .hasCapability(NET_CAPABILITY_NOT_METERED)) {
+                return true;
+            } else {
+                Log.w(TAG, "Network meteredness check failed. "
+                        + mNetworkCallback.getNetworkCapabilities());
+            }
+            // Wait for the suggestion to be marked metered now.
+            if (!mNetworkCallback.waitForCapabilitiesChanged()) {
+                Log.w(TAG, "Network capabilities did not change");
+            }
+        }
+        return false;
     }
 
     @Override
@@ -286,6 +324,37 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
             }
             mListener.onTestMsgReceived(
                     mContext.getString(R.string.wifi_status_suggestion_connection_status));
+        }
+
+        if (mSetMeteredPostConnection) {
+            // ensure that the network is not metered before change.
+            if (!mNetworkCallback.getNetworkCapabilities()
+                    .hasCapability(NET_CAPABILITY_NOT_METERED)) {
+                Log.e(TAG, "Network meteredness check failed "
+                        + mNetworkCallback.getNetworkCapabilities());
+                setFailureReason(mContext.getString(
+                        R.string.wifi_status_suggestion_metered_check_failed));
+                return false;
+            }
+            if (DBG) Log.v(TAG, "Mark suggestion metered after connection");
+            mListener.onTestMsgReceived(
+                    mContext.getString(R.string.wifi_status_suggestion_metered_change));
+            WifiNetworkSuggestion modifiedSuggestion = mNetworkSuggestionBuilder
+                    .setIsMetered(true)
+                    .build();
+            if (mWifiManager.addNetworkSuggestions(Arrays.asList(modifiedSuggestion))
+                    != STATUS_NETWORK_SUGGESTIONS_SUCCESS) {
+                setFailureReason(mContext.getString(R.string.wifi_status_suggestion_add_failure));
+                return false;
+            }
+            if (!waitForNetworkToBeMetered()) {
+                Log.e(TAG, "Network was not marked metered");
+                setFailureReason(mContext.getString(
+                        R.string.wifi_status_suggestion_metered_check_failed));
+                return false;
+            }
+            mListener.onTestMsgReceived(
+                    mContext.getString(R.string.wifi_status_suggestion_metered_changed));
         }
 
         // Step: Remove the suggestions from the app.

@@ -1684,6 +1684,10 @@
     <string name="wifi_status_suggestion_connection_status">Received connection status.</string>
     <string name="wifi_status_suggestion_connection_status_failure">Failed to receive connection status.</string>
     <string name="wifi_status_suggestion_wait_for_disconnect">Ensuring device does disconnect from the network after removing suggestions.</string>
+    <string name="wifi_status_suggestion_metered_change">Marking the network metered.</string>
+    <string name="wifi_status_suggestion_metered_check_failed">Network meteredness check failed.</string>
+    <string name="wifi_status_suggestion_metered_changed">Network marked metered successfully.</string>
+    <string name="wifi_status_suggestion_capabilities_not_changed">Network capabilities did not change.</string>
     <string name="wifi_status_suggestion_not_disconnected">Did not disconnect from the network.</string>
     <string name="wifi_status_suggestion_disconnected">Disconnected from the network.</string>
 
@@ -1709,6 +1713,8 @@
     <string name="wifi_test_network_suggestion_ssid_post_connect_info">Tests whether the API can be used to suggest a network with SSID to the device and the device connects to it and sends the post connect broadcast back to the app.</string>
     <string name="wifi_test_network_suggestion_connection_failure">Network suggestion connection failure.</string>
     <string name="wifi_test_network_suggestion_connection_failure_info">Tests whether the SuggestionConnectionStatusListener API can be used to listen to connection failures for suggested networks.</string>
+    <string name="wifi_test_network_suggestion_modification_in_place">Network suggestion modification in place.</string>
+    <string name="wifi_test_network_suggestion_modification_in_place_info">Tests whether the suggested network params can be modified in place when connected to it.</string>
 
     <!-- Strings for P2pTestActivity -->
     <string name="p2p_test">Wi-Fi Direct Test</string>
