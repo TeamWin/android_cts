@@ -408,15 +408,6 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testAfterRotationNewKeyCanUpdateFurtherWithoutLineage");
     }
 
-    @Test
-    @LargeTest
-    public void testKeyDowngradeFailIfMismatch() throws Exception {
-        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
-
-        installV3SignedBobApex();
-        runPhase("testKeyDowngradeFailIfMismatch");
-    }
-
     private boolean isUpdatingApexSupported() throws Exception {
         final String updatable = getDevice().getProperty("ro.apex.updatable");
         return updatable != null && updatable.equals("true");
