@@ -15,8 +15,8 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.telephonyprovider.host.cts">
-    <uses-sdk android:targetSdkVersion="30"/>
+          package="android.telephonyprovider.device.cts">
+    <uses-sdk android:targetSdkVersion="28"/>
     <application
         android:debuggable="true">
         <uses-library android:name="android.test.runner" />
@@ -24,6 +24,6 @@
 
     <instrumentation
         android:name="androidx.test.runner.AndroidJUnitRunner"
-        android:targetPackage="android.telephonyprovider.host.cts" />
+        android:targetPackage="android.telephonyprovider.device.cts" />
 
 </manifest>
