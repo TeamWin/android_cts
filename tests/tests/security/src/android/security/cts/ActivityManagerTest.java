@@ -34,6 +34,7 @@ import androidx.test.InstrumentationRegistry;
 import junit.framework.TestCase;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -74,6 +75,34 @@ public class ActivityManagerTest extends TestCase {
         } catch (NoSuchMethodException e) {
             // Patched devices should throw this exception
         }
+    }
+
+    // b/144285917
+    @SecurityTest(minPatchLevel = "2020-05")
+    public void testActivityManager_attachNullApplication() {
+        SecurityException securityException = null;
+        Exception unexpectedException = null;
+        try {
+            final Object iam = ActivityManager.class.getDeclaredMethod("getService").invoke(null);
+            Class.forName("android.app.IActivityManager").getDeclaredMethod("attachApplication",
+                    Class.forName("android.app.IApplicationThread"), long.class)
+                    .invoke(iam, null /* thread */, 0 /* startSeq */);
+        } catch (SecurityException e) {
+            securityException = e;
+        } catch (InvocationTargetException e) {
+            if (e.getCause() instanceof SecurityException) {
+                securityException = (SecurityException) e.getCause();
+            } else {
+                unexpectedException = e;
+            }
+        } catch (Exception e) {
+            unexpectedException = e;
+        }
+        if (unexpectedException != null) {
+            Log.w("ActivityManagerTest", "Unexpected exception", unexpectedException);
+        }
+
+        assertNotNull("Expect SecurityException by attaching null application", securityException);
     }
 
     public void testIsAppInForegroundNormal() throws Exception {
