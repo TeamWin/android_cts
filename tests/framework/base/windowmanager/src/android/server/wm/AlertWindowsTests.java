@@ -133,7 +133,7 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
 
     private boolean allWindowsHidden(List<WindowManagerState.WindowState> windows) {
         for (WindowManagerState.WindowState ws : windows) {
-            if (ws.isShown()) {
+            if (ws.isSurfaceShown()) {
                 return false;
             }
         }
