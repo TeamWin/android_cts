@@ -2055,6 +2055,18 @@ public class ParcelTest extends AndroidTestCase {
         p.recycle();
     }
 
+    public void testReadParcelableCreator() {
+        MockClassLoader mcl = new MockClassLoader();
+        final String signatureString  = "1234567890abcdef";
+        Signature s = new Signature(signatureString);
+
+        Parcel p = Parcel.obtain();
+        p.writeParcelableCreator(s);
+        p.setDataPosition(0);
+        assertSame(Signature.CREATOR, p.readParcelableCreator(mcl));
+        p.recycle();
+    }
+
     public void testReadParcelableArray() {
         Parcel p;
         MockClassLoader mcl = new MockClassLoader();
