@@ -27,7 +27,7 @@ import com.google.common.collect.ImmutableSet;
 public class TelephonyProviderHostTest extends CompatChangeGatingTestCase {
 
     protected static final String TEST_APK = "TelephonyProviderDeviceTest.apk";
-    protected static final String TEST_PKG = "android.telephonyprovider.cts";
+    protected static final String TEST_PKG = "android.telephonyprovider.device.cts";
 
     private static final long APN_READING_PERMISSION_CHANGE_ID = 124107808L;
 
