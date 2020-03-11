@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.telephonyprovider.host.cts;
+package android.telephonyprovider.device.cts;
 
 import android.content.ContentResolver;
 import android.database.Cursor;
