@@ -16,6 +16,8 @@
 package android.car.cts;
 
 import static org.testng.Assert.assertThrows;
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -26,6 +28,7 @@ import static java.lang.Integer.toHexString;
 
 import android.car.Car;
 import android.car.VehicleAreaSeat;
+import android.car.VehicleAreaType;
 import android.car.VehiclePropertyIds;
 import android.car.hardware.CarPropertyConfig;
 import android.car.hardware.CarPropertyValue;
@@ -43,6 +46,7 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.CddTest;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -235,6 +239,47 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     }
 
     @Test
+    public void testGetIntArrayProperty() {
+        List<CarPropertyConfig> allConfigs = mCarPropertyManager.getPropertyList();
+        for (CarPropertyConfig cfg : allConfigs) {
+            if (cfg.getAccess() == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_NONE
+                    || cfg.getAccess() == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE
+                    || cfg.getPropertyType() != Integer[].class) {
+                // skip the test if the property is not readable or not an int array type property.
+                continue;
+            }
+            switch (cfg.getPropertyId()) {
+                case VehiclePropertyIds.INFO_FUEL_TYPE:
+                    int[] fuelTypes = mCarPropertyManager.getIntArrayProperty(cfg.getPropertyId(),
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL);
+                    verifyEnumsRange(EXPECTED_FUEL_TYPES, fuelTypes);
+                    break;
+                case VehiclePropertyIds.INFO_MULTI_EV_PORT_LOCATIONS:
+                    int[] evPortLocations = mCarPropertyManager.getIntArrayProperty(
+                            cfg.getPropertyId(),VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL);
+                    verifyEnumsRange(EXPECTED_PORT_LOCATIONS, evPortLocations);
+                    break;
+                default:
+                    int[] areaIds = getAreaIdsHelper(cfg);
+                    for(int areaId : areaIds) {
+                        mCarPropertyManager.getIntArrayProperty(cfg.getPropertyId(), areaId);
+                    }
+            }
+        }
+    }
+
+    private void verifyEnumsRange(List<Integer> expectedResults, int[] results) {
+        assertThat(results).isNotNull();
+        // If the property is not implemented in cars, getIntArrayProperty returns an empty array.
+        if (results.length == 0) {
+            return;
+        }
+        for (int result : results) {
+            assertThat(result).isIn(expectedResults);
+        }
+    }
+
+    @Test
     public void testIsPropertyAvailable() {
         List<CarPropertyConfig> configs = mCarPropertyManager.getPropertyList(mPropertyIds);
 
@@ -262,7 +307,6 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         }
     }
 
-
     @Test
     public void testRegisterCallback() throws Exception {
         //Test on registering a invalid property
@@ -285,7 +329,7 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                 CarPropertyManager.SENSOR_RATE_NORMAL);
         mCarPropertyManager.registerCallback(speedListenerUI, vehicleSpeed,
                 CarPropertyManager.SENSOR_RATE_FASTEST);
-
+        // TODO(b/149778976): Use CountDownLatch in listener instead of waitingTime
         Thread.sleep(WAIT_CALLBACK);
         assertNotEquals(0, speedListenerNormal.receivedEvent(vehicleSpeed));
         assertNotEquals(0, speedListenerUI.receivedEvent(vehicleSpeed));
@@ -314,7 +358,7 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         CarPropertyEventCounter speedListenerUI = new CarPropertyEventCounter();
 
         mCarPropertyManager.registerCallback(speedListenerNormal, vehicleSpeed,
-            CarPropertyManager.SENSOR_RATE_NORMAL);
+                CarPropertyManager.SENSOR_RATE_NORMAL);
 
         // test on unregistering a callback that was never registered
         try {
@@ -324,7 +368,7 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         }
 
         mCarPropertyManager.registerCallback(speedListenerUI, vehicleSpeed,
-            CarPropertyManager.SENSOR_RATE_UI);
+                CarPropertyManager.SENSOR_RATE_UI);
         Thread.sleep(WAIT_CALLBACK);
 
         mCarPropertyManager.unregisterCallback(speedListenerNormal, vehicleSpeed);
@@ -345,6 +389,40 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         assertEquals(currentEventUI, speedListenerUI.receivedEvent(vehicleSpeed));
     }
 
+    @Test
+    public void testUnregisterWithPropertyId() throws Exception {
+        // Ignores the test if wheel_tick property does not exist in the car.
+        Assume.assumeTrue("WheelTick is not available, skip unregisterCallback test",
+                mCarPropertyManager.isPropertyAvailable(
+                        VehiclePropertyIds.WHEEL_TICK, VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL));
+
+        CarPropertyEventCounter speedAndWheelTicksListener = new CarPropertyEventCounter();
+        mCarPropertyManager.registerCallback(speedAndWheelTicksListener,
+                VehiclePropertyIds.PERF_VEHICLE_SPEED, CarPropertyManager.SENSOR_RATE_FAST);
+        mCarPropertyManager.registerCallback(speedAndWheelTicksListener,
+                VehiclePropertyIds.WHEEL_TICK, CarPropertyManager.SENSOR_RATE_FAST);
+
+        // TODO(b/149778976): Use CountDownLatch in listener instead of waitingTime
+        Thread.sleep(WAIT_CALLBACK);
+        mCarPropertyManager.unregisterCallback(speedAndWheelTicksListener,
+                VehiclePropertyIds.PERF_VEHICLE_SPEED);
+        int currentSpeedEvents = speedAndWheelTicksListener.receivedEvent(
+                VehiclePropertyIds.PERF_VEHICLE_SPEED);
+        int currentWheelTickEvents = speedAndWheelTicksListener.receivedEvent(
+                VehiclePropertyIds.WHEEL_TICK);
+
+        Thread.sleep(WAIT_CALLBACK);
+        int speedEventsAfterUnregister = speedAndWheelTicksListener.receivedEvent(
+                VehiclePropertyIds.PERF_VEHICLE_SPEED);
+        int wheelTicksEventsAfterUnregister = speedAndWheelTicksListener.receivedEvent(
+                VehiclePropertyIds.WHEEL_TICK);
+
+        assertThat(currentSpeedEvents).isEqualTo(speedEventsAfterUnregister);
+        assertThat(wheelTicksEventsAfterUnregister).isGreaterThan(currentWheelTickEvents);
+    }
+
+
+    // Returns {0} if the property is global property, otherwise query areaId for CarPropertyConfig
     private int[] getAreaIdsHelper(CarPropertyConfig config) {
         if (config.isGlobalProperty()) {
             int[] areaIds = {0};
