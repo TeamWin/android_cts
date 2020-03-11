@@ -16,7 +16,7 @@
 
 package android.hdmicec.cts.playback;
 
-import static org.junit.Assert.assertEquals;
+import static com.google.common.truth.Truth.assertThat;
 
 import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.CecMessage;
@@ -51,6 +51,6 @@ public final class HdmiCecLogicalAddressTest extends BaseHostJUnit4Test {
         device.executeShellCommand("reboot");
         device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
         String message = hdmiCecClient.checkExpectedOutput(CecMessage.REPORT_PHYSICAL_ADDRESS);
-        assertEquals(PLAYBACK_DEVICE, hdmiCecClient.getSourceFromMessage(message));
+        assertThat(hdmiCecClient.getSourceFromMessage(message)).isEqualTo(PLAYBACK_DEVICE);
     }
 }
