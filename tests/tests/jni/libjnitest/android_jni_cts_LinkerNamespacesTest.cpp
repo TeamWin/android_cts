@@ -55,6 +55,7 @@ static const std::string kProductLibraryPath = "/product/" LIB_DIR;
 static const std::vector<std::regex> kSystemPathRegexes = {
     std::regex("/system/lib(64)?"),
     std::regex("/apex/com\\.android\\.[^/]*/lib(64)?"),
+    std::regex("/system/lib/arm(64)?"), // when CTS runs in ARM ABI on non-ARM CPU. http://b/149852946
 };
 
 static const std::string kWebViewPlatSupportLib = "libwebviewchromium_plat_support.so";
@@ -449,4 +450,20 @@ extern "C" JNIEXPORT jstring JNICALL Java_android_jni_cts_LinkerNamespacesHelper
       return env->NewStringUTF(error_str.c_str());
     }
     return nullptr;
+}
+
+extern "C" JNIEXPORT jint JNICALL Java_android_jni_cts_LinkerNamespacesHelper_getLibAbi(
+        JNIEnv* env,
+        jclass clazz) {
+#ifdef __aarch64__
+    return 1; // ARM64
+#elif __arm__
+    return 2;
+#elif __x86_64__
+    return 3;
+#elif i386
+    return 4;
+#else
+    return 0;
+#endif
 }
