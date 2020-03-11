@@ -29,6 +29,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashSet;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -37,7 +38,7 @@ public class BuildVersionTest extends TestCase {
     private static final String LOG_TAG = "BuildVersionTest";
     private static final int EXPECTED_SDK = 29;
     private static final String EXPECTED_BUILD_VARIANT = "user";
-    private static final String EXPECTED_TAG = "release-keys";
+    private static final String EXPECTED_KEYS = "release-keys";
     private static final String PLATFORM_VERSIONS_FILE = "platform_versions.txt";
 
     @SuppressWarnings("deprecation")
@@ -82,7 +83,10 @@ public class BuildVersionTest extends TestCase {
         String[] buildNumberVariant = fingerprintSegs[4].split(":");
         String buildVariant = buildNumberVariant[1];
         assertEquals("Variant", EXPECTED_BUILD_VARIANT, buildVariant);
-        assertEquals("Tag", EXPECTED_TAG, fingerprintSegs[5]);
+
+        List<String> buildTagsList = Arrays.asList(fingerprintSegs[5].split(","));
+        boolean containsReleaseKeys = buildTagsList.contains(EXPECTED_KEYS);
+        assertTrue("Keys", containsReleaseKeys);
     }
 
     public void testPartitions() {
