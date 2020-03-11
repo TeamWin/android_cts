@@ -61,7 +61,7 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
     @Rule
     public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(AUDIO_DEVICE, this);
 
-    private void lookForLog(String expectedOut) throws Exception {
+    private void lookForLogFromHdmiCecAudioManager(String expectedOut) throws Exception {
         ITestDevice device = getDevice();
         TimeUnit.SECONDS.sleep(WAIT_TIME);
         String logs = device.executeAdbCommand("logcat", "-v", "brief", "-d", CLASS + ":I", "*:S");
@@ -106,7 +106,7 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
         // Start the APK and wait for it to complete.
         device.executeShellCommand(START_COMMAND + "android.hdmicec.app.REPORT_VOLUME");
         try {
-            lookForLog("Device muted.");
+            lookForLogFromHdmiCecAudioManager("Device muted.");
             return true;
         } catch(Exception e) {
             return false;
