@@ -225,4 +225,11 @@ public class NotificationChannelTest extends AndroidTestCase {
         channel.setImportantConversation(true);
         assertTrue(channel.isImportantConversation());
     }
+
+    public void testHasUserSetSound() {
+        NotificationChannel channel = new NotificationChannel("a", "a", IMPORTANCE_DEFAULT);
+        channel.lockFields(NotificationChannel.USER_LOCKED_SOUND);
+
+        assertTrue(channel.hasUserSetSound());
+    }
 }
