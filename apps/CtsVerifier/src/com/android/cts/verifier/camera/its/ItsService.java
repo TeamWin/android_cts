@@ -92,6 +92,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -664,6 +665,13 @@ public class ItsService extends Service implements SensorEventListener {
 
         public void processSocketCommand(String cmd)
                 throws ItsException {
+            // Default locale must be set to "en-us"
+            Locale locale = Locale.getDefault();
+            if (!Locale.US.equals(locale)) {
+                Logt.e(TAG, "Default language is not set to " + Locale.US + "!");
+                stopSelf();
+            }
+
             // Each command is a serialized JSON object.
             try {
                 JSONObject cmdObj = new JSONObject(cmd);
