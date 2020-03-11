@@ -27,6 +27,7 @@ import android.media.AudioDeviceCallback;
 import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 import android.media.AudioTrack;
+import android.media.MediaRecorder;
 
 import android.os.Bundle;
 import android.os.Handler;
@@ -50,15 +51,14 @@ public class AudioLoopbackActivity extends AudioFrequencyActivity {
 
     public static final int BYTES_PER_FRAME = 2;
 
-    NativeAudioThread nativeAudioThread = null;
+    NativeAnalyzerThread mNativeAnalyzerThread = null;
 
     private int mSamplingRate = 44100;
     private int mMinBufferSizeInFrames = 0;
     private static final double CONFIDENCE_THRESHOLD = 0.6;
-    private Correlation mCorrelation = new Correlation();
 
-    // TODO: remove this variable
-    private int mNumFramesToIgnore = 0;
+    private double mLatencyMillis;
+    private double mConfidence;
 
     OnBtnClickListener mBtnClickListener = new OnBtnClickListener();
     Context mContext;
@@ -90,13 +90,13 @@ public class AudioLoopbackActivity extends AudioFrequencyActivity {
                 case R.id.audio_general_headset_yes:
                     Log.i(TAG, "User confirms Headset Port existence");
                     mLoopbackPlugReady.setEnabled(true);
-                    recordHeasetPortFound(true);
+                    recordHeadsetPortFound(true);
                     mHeadsetPortYes.setEnabled(false);
                     mHeadsetPortNo.setEnabled(false);
                     break;
                 case R.id.audio_general_headset_no:
                     Log.i(TAG, "User denies Headset Port existence");
-                    recordHeasetPortFound(false);
+                    recordHeadsetPortFound(false);
                     getPassButton().setEnabled(true);
                     mHeadsetPortYes.setEnabled(false);
                     mHeadsetPortNo.setEnabled(false);
@@ -158,6 +158,7 @@ public class AudioLoopbackActivity extends AudioFrequencyActivity {
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
         setInfoResources(R.string.audio_loopback_test, R.string.audio_loopback_info, -1);
+
     }
 
     /**
@@ -191,39 +192,41 @@ public class AudioLoopbackActivity extends AudioFrequencyActivity {
      */
     private void startAudioTest() {
         getPassButton().setEnabled(false);
+        mTestButton.setEnabled(false);
+        mLatencyMillis = 0.0;
+        mConfidence = 0.0;
 
-        //get system defaults for sampling rate, buffers.
-        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        String value = am.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER);
-        mMinBufferSizeInFrames = Integer.parseInt(value);
-
-        int minBufferSizeInBytes = BYTES_PER_FRAME * mMinBufferSizeInFrames;
-
-        mSamplingRate = AudioTrack.getNativeOutputSampleRate(AudioManager.STREAM_MUSIC);
-
-        Log.i(TAG, String.format("startAudioTest sr:%d , buffer:%d frames",
-                mSamplingRate, mMinBufferSizeInFrames));
-
-        nativeAudioThread = new NativeAudioThread();
-        if (nativeAudioThread != null) {
-            nativeAudioThread.setMessageHandler(mMessageHandler);
-            nativeAudioThread.mSessionId = 0;
-            nativeAudioThread.setParams(mSamplingRate,
-                    minBufferSizeInBytes,
-                    minBufferSizeInBytes,
-                    0x03 /*voice recognition*/,
-                    mNumFramesToIgnore);
-            nativeAudioThread.start();
+        mNativeAnalyzerThread = new NativeAnalyzerThread();
+        if (mNativeAnalyzerThread != null) {
+            mNativeAnalyzerThread.setMessageHandler(mMessageHandler);
+            // This value matches AAUDIO_INPUT_PRESET_VOICE_RECOGNITION
+            mNativeAnalyzerThread.setInputPreset(MediaRecorder.AudioSource.VOICE_RECOGNITION);
+            mNativeAnalyzerThread.startTest();
 
             try {
                 Thread.sleep(200);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
-            nativeAudioThread.runTest();
-
         }
+    }
+
+    private void handleTestCompletion() {
+        recordTestResults();
+        boolean resultValid = mConfidence >= CONFIDENCE_THRESHOLD
+                && mLatencyMillis > 1.0;
+        getPassButton().setEnabled(resultValid);
+
+        // Make sure the test thread is finished. It should already be done.
+        if (mNativeAnalyzerThread != null) {
+            try {
+                mNativeAnalyzerThread.stopTest(2 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        showWait(false);
+        mTestButton.setEnabled(true);
     }
 
     /**
@@ -233,45 +236,35 @@ public class AudioLoopbackActivity extends AudioFrequencyActivity {
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             switch(msg.what) {
-                case NativeAudioThread.NATIVE_AUDIO_THREAD_MESSAGE_REC_STARTED:
+                case NativeAnalyzerThread.NATIVE_AUDIO_THREAD_MESSAGE_REC_STARTED:
                     Log.v(TAG,"got message native rec started!!");
                     showWait(true);
                     mResultText.setText("Test Running...");
                     break;
-                case NativeAudioThread.NATIVE_AUDIO_THREAD_MESSAGE_REC_ERROR:
+                case NativeAnalyzerThread.NATIVE_AUDIO_THREAD_MESSAGE_OPEN_ERROR:
                     Log.v(TAG,"got message native rec can't start!!");
-                    showWait(false);
-                    mResultText.setText("Test Error.");
+                    mResultText.setText("Test Error opening streams.");
+                    handleTestCompletion();
                     break;
-                case NativeAudioThread.NATIVE_AUDIO_THREAD_MESSAGE_REC_COMPLETE:
-                case NativeAudioThread.NATIVE_AUDIO_THREAD_MESSAGE_REC_COMPLETE_ERRORS:
-                    if (nativeAudioThread != null) {
-                        Log.v(TAG,"Finished recording.");
-                        double [] waveData = nativeAudioThread.getWaveData();
-                        mCorrelation.computeCorrelation(waveData, mSamplingRate);
-                        mResultText.setText(String.format(
-                                "Test Finished\nLatency:%.2f ms\nConfidence: %.2f",
-                                mCorrelation.mEstimatedLatencyMs,
-                                mCorrelation.mEstimatedLatencyConfidence));
-
-                        recordTestResults();
-                        if (mCorrelation.mEstimatedLatencyConfidence >= CONFIDENCE_THRESHOLD) {
-                            getPassButton().setEnabled(true);
-                        }
-
-                        //close
-                        if (nativeAudioThread != null) {
-                            nativeAudioThread.isRunning = false;
-                            try {
-                                nativeAudioThread.finish();
-                                nativeAudioThread.join();
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                            nativeAudioThread = null;
-                        }
-                        showWait(false);
+                case NativeAnalyzerThread.NATIVE_AUDIO_THREAD_MESSAGE_REC_ERROR:
+                    Log.v(TAG,"got message native rec can't start!!");
+                    mResultText.setText("Test Error while recording.");
+                    handleTestCompletion();
+                    break;
+                case NativeAnalyzerThread.NATIVE_AUDIO_THREAD_MESSAGE_REC_COMPLETE_ERRORS:
+                    mResultText.setText("Test FAILED due to errors.");
+                    handleTestCompletion();
+                    break;
+                case NativeAnalyzerThread.NATIVE_AUDIO_THREAD_MESSAGE_REC_COMPLETE:
+                    if (mNativeAnalyzerThread != null) {
+                        mLatencyMillis = mNativeAnalyzerThread.getLatencyMillis();
+                        mConfidence = mNativeAnalyzerThread.getConfidence();
                     }
+                    mResultText.setText(String.format(
+                            "Test Finished\nLatency:%.2f ms\nConfidence: %.2f",
+                            mLatencyMillis,
+                            mConfidence));
+                    handleTestCompletion();
                     break;
                 default:
                     break;
@@ -286,13 +279,13 @@ public class AudioLoopbackActivity extends AudioFrequencyActivity {
 
         getReportLog().addValue(
                 "Estimated Latency",
-                mCorrelation.mEstimatedLatencyMs,
+                mLatencyMillis,
                 ResultType.LOWER_BETTER,
                 ResultUnit.MS);
 
         getReportLog().addValue(
                 "Confidence",
-                mCorrelation.mEstimatedLatencyConfidence,
+                mConfidence,
                 ResultType.HIGHER_BETTER,
                 ResultUnit.NONE);
 
@@ -318,7 +311,7 @@ public class AudioLoopbackActivity extends AudioFrequencyActivity {
         Log.v(TAG,"Results Recorded");
     }
 
-    private void recordHeasetPortFound(boolean found) {
+    private void recordHeadsetPortFound(boolean found) {
         getReportLog().addValue(
                 "User Reported Headset Port",
                 found ? 1.0 : 0,
