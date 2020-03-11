@@ -227,6 +227,7 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
         put("SDM429", null);
         put("SDM439", null);
         put("QM215", null);
+        put("BENGAL", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("DEFAULT", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y",
             "CONFIG_UNMAP_KERNEL_AT_EL0=y"});
     }};
