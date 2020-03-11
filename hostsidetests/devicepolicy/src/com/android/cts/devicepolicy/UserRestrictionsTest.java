@@ -258,7 +258,8 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
 
     /** Installs admin package and makes it a profile owner for a given user. */
     private void setPoAsUser(int userId) throws Exception {
-        installAppAsUser(DEVICE_ADMIN_APK, userId);
+        installAppAsUser(DEVICE_ADMIN_APK,
+                /* grantPermissions */ true, /* dontKillApp */ true, userId);
         assertTrue("Failed to set profile owner",
                 setProfileOwner(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
                         userId, /* expectFailure */ false));
