@@ -137,11 +137,11 @@ public class KeyguardTests extends KeyguardTestBase {
         mWmState.computeState(SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY);
         mWmState.assertVisibility(SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY, true);
         lockScreenSession.gotoKeyguard(SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY);
-        mWmState.waitFor((wmState) -> wmState.allWindowsVisible(
+        mWmState.waitFor((wmState) -> wmState.allWindowSurfacesShown(
                 getWindowName(SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY)),
                 "Wait for all windows visible for " + SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY);
         mWmState.assertVisibility(SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY, true);
-        assertTrue(mWmState.allWindowsVisible(
+        assertTrue(mWmState.allWindowSurfacesShown(
                 getWindowName(SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY)));
         mWmState.assertKeyguardShowingAndOccluded();
     }
@@ -548,7 +548,7 @@ public class KeyguardTests extends KeyguardTestBase {
         WindowState wallpaper =
                 mWmState.findFirstWindowWithType(TYPE_WALLPAPER);
         assertNotNull(wallpaper);
-        assertTrue(wallpaper.isShown());
+        assertTrue(wallpaper.isSurfaceShown());
     }
 
     @Test

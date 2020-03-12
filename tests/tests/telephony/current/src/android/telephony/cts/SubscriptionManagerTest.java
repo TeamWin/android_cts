@@ -686,7 +686,7 @@ public class SubscriptionManagerTest {
             setPreferredDataSubId(SubscriptionManager.DEFAULT_SUBSCRIPTION_ID);
         }
 
-        List<SubscriptionInfo> subscriptionInfos = mSm.getActiveAndHiddenSubscriptionInfoList();
+        List<SubscriptionInfo> subscriptionInfos = mSm.getCompleteActiveSubscriptionInfoList();
 
         for (SubscriptionInfo subInfo : subscriptionInfos) {
             // Only test on opportunistic subscriptions.

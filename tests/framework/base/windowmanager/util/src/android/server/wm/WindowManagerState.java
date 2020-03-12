@@ -833,7 +833,7 @@ public class WindowManagerState {
     }
 
     public List<WindowState> getMatchingVisibleWindowState(final String windowName) {
-        return getMatchingWindows(ws -> ws.isShown() && windowName.equals(ws.getName()))
+        return getMatchingWindows(ws -> ws.isSurfaceShown() && windowName.equals(ws.getName()))
                 .collect(Collectors.toList());
     }
 
@@ -905,11 +905,11 @@ public class WindowManagerState {
         return false;
     }
 
-    /** Check if at least one window which matches provided window name is visible. */
-    boolean isWindowVisible(String windowName) {
+    /** Check if at least one window which matches the specified name has shown it's surface. */
+    boolean isWindowSurfaceShown(String windowName) {
         for (WindowState window : mWindowStates) {
             if (window.getName().equals(windowName)) {
-                if (window.isShown()) {
+                if (window.isSurfaceShown()) {
                     return true;
                 }
             }
@@ -917,19 +917,31 @@ public class WindowManagerState {
         return false;
     }
 
-    boolean allWindowsVisible(String windowName) {
-        boolean allVisible = false;
+    /** Check if at least one window which matches provided window name is visible. */
+    boolean isWindowVisible(String windowName) {
         for (WindowState window : mWindowStates) {
             if (window.getName().equals(windowName)) {
-                if (!window.isShown()) {
+                if (window.isVisible()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    boolean allWindowSurfacesShown(String windowName) {
+        boolean allShown = false;
+        for (WindowState window : mWindowStates) {
+            if (window.getName().equals(windowName)) {
+                if (!window.isSurfaceShown()) {
                     log("[VISIBLE] not visible" + windowName);
                     return false;
                 }
                 log("[VISIBLE] visible" + windowName);
-                allVisible = true;
+                allShown = true;
             }
         }
-        return allVisible;
+        return allShown;
     }
 
     WindowState findFirstWindowWithType(int type) {
@@ -1416,6 +1428,7 @@ public class WindowManagerState {
         protected boolean mFullscreen;
         protected Rect mBounds;
         protected int mOrientation;
+        protected boolean mVisible;
         protected List<WindowState> mSubWindows = new ArrayList<>();
         protected List<WindowContainer> mChildren = new ArrayList<>();
 
@@ -1428,6 +1441,7 @@ public class WindowManagerState {
                     mChildren.add(child);
                 }
             }
+            mVisible = proto.visible;
         }
 
         Rect getBounds() {
@@ -1436,6 +1450,10 @@ public class WindowManagerState {
 
         boolean isFullscreen() {
             return mFullscreen;
+        }
+
+        boolean isVisible() {
+            return mVisible;
         }
 
         List<WindowState> getWindows() {
@@ -1572,7 +1590,7 @@ public class WindowManagerState {
             return mCrop;
         }
 
-        public boolean isShown() {
+        public boolean isSurfaceShown() {
             return mShown;
         }
 

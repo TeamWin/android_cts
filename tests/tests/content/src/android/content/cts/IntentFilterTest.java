@@ -16,7 +16,9 @@
 
 package android.content.cts;
 
+import static android.content.IntentFilter.MATCH_CATEGORY_HOST;
 import static android.content.IntentFilter.MATCH_CATEGORY_SCHEME_SPECIFIC_PART;
+import static android.content.IntentFilter.MATCH_CATEGORY_TYPE;
 import static android.os.PatternMatcher.PATTERN_LITERAL;
 import static android.os.PatternMatcher.PATTERN_PREFIX;
 import static android.os.PatternMatcher.PATTERN_SIMPLE_GLOB;
@@ -483,6 +485,24 @@ public class IntentFilterTest extends AndroidTestCase {
                 MatchCondition.data(IntentFilter.NO_MATCH_DATA, "scheme:a1b"));
     }
 
+    public void testSchemeSpecificPartsWithWildCards() throws Exception {
+        IntentFilter filter = new Match(null, null, null, new String[]{"scheme"},
+                null, null, null, null, new String[]{"ssp1"},
+                new int[]{PATTERN_LITERAL, PATTERN_LITERAL});
+        checkMatches(filter,
+                MatchCondition.data(IntentFilter.NO_MATCH_DATA, null, true),
+                MatchCondition.data(MATCH_CATEGORY_SCHEME_SPECIFIC_PART, "scheme:ssp1", true),
+                MatchCondition.data(MATCH_CATEGORY_SCHEME_SPECIFIC_PART, "*:ssp1", true),
+                MatchCondition.data(MATCH_CATEGORY_SCHEME_SPECIFIC_PART, "scheme:*", true),
+                MatchCondition.data(MATCH_CATEGORY_SCHEME_SPECIFIC_PART, "*:*", true),
+                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "scheme:ssp12", true));
+
+        checkMatches(filter,
+                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "*:ssp1", false),
+                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "scheme:*", false),
+                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "*:*", false));
+    }
+
     public void testAuthorities() {
         for (int i = 0; i < 10; i++) {
             mIntentFilter.addDataAuthority(HOST + i, String.valueOf(PORT + i));
@@ -533,6 +553,49 @@ public class IntentFilterTest extends AndroidTestCase {
                 MatchCondition.data(IntentFilter.MATCH_CATEGORY_HOST, "scheme1://authority2/"),
                 MatchCondition.data(IntentFilter.MATCH_CATEGORY_PORT, "scheme1://authority1:100/"),
                 MatchCondition.data(IntentFilter.NO_MATCH_DATA, "scheme1://authority1:200/"));
+    }
+
+    public void testAuthoritiesWithWildcards() throws Exception {
+        IntentFilter filter = new Match(null, null, null, new String[]{"scheme1"},
+                new String[]{"authority1"}, new String[]{null});
+        checkMatches(filter,
+                MatchCondition.data(IntentFilter.NO_MATCH_DATA, null, true),
+                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "scheme1:*", true),
+                MatchCondition.data(IntentFilter.MATCH_CATEGORY_HOST, "scheme1://*/", true),
+                MatchCondition.data(IntentFilter.MATCH_CATEGORY_HOST, "scheme1://*:100/", true),
+                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "scheme1://*/", false),
+                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "scheme1://*:100/", false));
+
+        filter = new Match(null, null, null, new String[]{"scheme1"},
+                new String[]{"authority1"}, new String[]{"100"});
+        checkMatches(filter,
+                MatchCondition.data(IntentFilter.NO_MATCH_DATA, null, true),
+                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "scheme1:*", true),
+                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "scheme1://*/", true),
+                MatchCondition.data(IntentFilter.MATCH_CATEGORY_PORT, "scheme1://*:100/", true),
+                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "scheme1://*:200/", true),
+                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "*:foo", true),
+                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "*://authority1/", true),
+                MatchCondition.data(IntentFilter.MATCH_CATEGORY_PORT, "*://authority1:100/", true),
+                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "*://authority1:200/", true),
+                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "*:*", true),
+                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "*://*/", true),
+                MatchCondition.data(IntentFilter.MATCH_CATEGORY_PORT, "*://*:100/", true),
+                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "*://*:200/", true));
+
+        checkMatches(filter,
+                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "scheme1://*/", false),
+                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "scheme1://*:100/", false),
+                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "*://authority1:100/", false),
+                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "*://*/", false),
+                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "*://*:100/", false));
+
+        filter = new Match(null, null, null, new String[]{"scheme1"},
+                new String[]{"*"}, null);
+        checkMatches(filter,
+                MatchCondition.data(IntentFilter.MATCH_CATEGORY_HOST, "scheme1://", true),
+                MatchCondition.data(IntentFilter.MATCH_CATEGORY_HOST, "scheme1://", false),
+                MatchCondition.data(IntentFilter.MATCH_CATEGORY_HOST, "scheme1://*", true));
     }
 
     public void testDataTypes() throws MalformedMimeTypeException {
@@ -680,6 +743,129 @@ public class IntentFilterTest extends AndroidTestCase {
                 new MatchCondition(IntentFilter.MATCH_CATEGORY_EMPTY, "action1", null, null, null),
                 new MatchCondition(IntentFilter.MATCH_CATEGORY_EMPTY, "action2", null, null, null),
                 new MatchCondition(IntentFilter.NO_MATCH_ACTION, "action3", null, null, null));
+    }
+
+    public void testActionWildCards() throws Exception {
+        IntentFilter filter = new Match(new String[]{"action1"}, null, null, null, null, null);
+        checkMatches(filter,
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_EMPTY, null, null, null, null, true),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_EMPTY, "*", null, null, null, true),
+                new MatchCondition(
+                        IntentFilter.NO_MATCH_ACTION, "action3", null, null, null, true));
+
+        checkMatches(filter,
+                new MatchCondition(IntentFilter.NO_MATCH_ACTION, "*", null, null, null, false));
+
+    }
+
+    public void testAppEnumerationContactProviders() throws Exception {
+        // sample contact source
+        IntentFilter filter = new Match(new String[]{Intent.ACTION_VIEW},
+                new String[]{Intent.CATEGORY_DEFAULT},
+                new String[]{"vnd.android.cursor.item/vnd.com.someapp.profile"},
+                new String[]{"content"},
+                new String[]{"com.android.contacts"},
+                null /*ports*/);
+
+        // app that would like to match all contact sources
+        checkMatches(filter,
+                new MatchCondition(MATCH_CATEGORY_TYPE,
+                        Intent.ACTION_VIEW,
+                        null /*categories*/,
+                        "vnd.android.cursor.item/*",
+                        "content://com.android.contacts",
+                        true));
+    }
+
+    public void testAppEnumerationDocumentEditor() throws Exception {
+        // sample document editor
+        IntentFilter filter = new Match(
+                new String[]{
+                        Intent.ACTION_VIEW,
+                        Intent.ACTION_EDIT,
+                        "com.app.android.intent.action.APP_EDIT",
+                        "com.app.android.intent.action.APP_VIEW"},
+                new String[]{Intent.CATEGORY_DEFAULT},
+                new String[]{
+                        "application/msword",
+                        "application/vnd.oasis.opendocument.text",
+                        "application/rtf",
+                        "text/rtf",
+                        "text/plain",
+                        "application/pdf",
+                        "application/x-pdf",
+                        "application/docm"},
+                null /*schemes*/,
+                null /*authorities*/,
+                null /*ports*/);
+
+        // app that would like to match all doc editors
+        checkMatches(filter,
+                new MatchCondition(MATCH_CATEGORY_TYPE,
+                        Intent.ACTION_VIEW,
+                        new String[]{Intent.CATEGORY_DEFAULT},
+                        "*/*",
+                        "content://com.example.fileprovider",
+                        true));
+
+    }
+
+    public void testAppEnumerationDeepLinks() throws Exception {
+        // Sample app that supports deep-links
+        IntentFilter filter = new Match(
+                new String[]{Intent.ACTION_VIEW},
+                new String[]{
+                        Intent.CATEGORY_DEFAULT,
+                        Intent.CATEGORY_BROWSABLE},
+                null /*types*/,
+                new String[]{"http", "https"},
+                new String[]{"arbitrary-site.com"},
+                null /*ports*/);
+
+        // Browser that would like to see all deep-linkable http/s app, but not all apps
+        checkMatches(filter,
+                new MatchCondition(MATCH_CATEGORY_HOST,
+                        Intent.ACTION_VIEW,
+                        new String[]{Intent.CATEGORY_BROWSABLE},
+                        null,
+                        "https://*",
+                        true));
+        checkMatches(filter,
+                new MatchCondition(MATCH_CATEGORY_HOST,
+                        Intent.ACTION_VIEW,
+                        new String[]{Intent.CATEGORY_BROWSABLE},
+                        null,
+                        "http://*",
+                        true));
+    }
+
+    public void testAppEnumerationCustomShareSheet() throws Exception {
+        // Sample share target
+        IntentFilter filter = new Match(
+                new String[]{Intent.ACTION_SEND},
+                new String[]{Intent.CATEGORY_DEFAULT},
+                new String[]{"*/*"},
+                null /*schemes*/,
+                null /*authorities*/,
+                null /*ports*/);
+
+        // App with custom share sheet that would like to see all jpeg targets
+        checkMatches(filter,
+                new MatchCondition(MATCH_CATEGORY_TYPE,
+                        Intent.ACTION_SEND,
+                        null /*categories*/,
+                        "image/jpeg",
+                        "content://com.example.fileprovider",
+                        true));
+        // App with custom share sheet that would like to see all jpeg targets that don't specify
+        // a host
+        checkMatches(filter,
+                new MatchCondition(MATCH_CATEGORY_TYPE,
+                        Intent.ACTION_SEND,
+                        null /*categories*/,
+                        "image/jpeg",
+                        "content:",
+                        true));
     }
 
     public void testWriteToXml() throws IllegalArgumentException, IllegalStateException,
@@ -1102,18 +1288,27 @@ public class IntentFilterTest extends AndroidTestCase {
         public final String mimeType;
         public final Uri data;
         public final String[] categories;
+        public final boolean wildcardSupported;
 
         public static MatchCondition data(int result, String data) {
             return new MatchCondition(result, null, null, null, data);
         }
+        public static MatchCondition data(int result, String data, boolean wildcardSupported) {
+            return new MatchCondition(result, null, null, null, data, wildcardSupported);
+        }
 
         MatchCondition(int result, String action, String[] categories, String mimeType,
                 String data) {
+            this(result, action, categories, mimeType, data, false);
+        }
+        MatchCondition(int result, String action, String[] categories, String mimeType,
+                String data, boolean wildcardSupported) {
             this.result = result;
             this.action = action;
             this.mimeType = mimeType;
             this.data = data != null ? Uri.parse(data) : null;
             this.categories = categories;
+            this.wildcardSupported = wildcardSupported;
         }
     }
 
@@ -1130,7 +1325,7 @@ public class IntentFilterTest extends AndroidTestCase {
                 }
             }
             int result = filter.match(mc.action, mc.mimeType, mc.data != null ? mc.data.getScheme()
-                    : null, mc.data, categories, "test");
+                    : null, mc.data, categories, "test", mc.wildcardSupported);
             if ((result & IntentFilter.MATCH_CATEGORY_MASK) !=
                     (mc.result & IntentFilter.MATCH_CATEGORY_MASK)) {
                 StringBuilder msg = new StringBuilder();
