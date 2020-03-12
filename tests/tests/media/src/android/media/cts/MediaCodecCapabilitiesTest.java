@@ -772,8 +772,14 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
             type.equalsIgnoreCase(MediaFormat.MIMETYPE_VIDEO_VP9      ));
     }
 
+    private boolean isLowRamDevice()
+    {
+        return ((ActivityManager)mContext.getSystemService(Context.ACTIVITY_SERVICE)).
+            isLowRamDevice();
+    }
+
     public void testGetMaxSupportedInstances() {
-        final int MAX_INSTANCES = 32;
+        final int MAX_INSTANCES = isLowRamDevice() ? 16 : 32;
         StringBuilder xmlOverrides = new StringBuilder();
         MediaCodecList allCodecs = new MediaCodecList(MediaCodecList.ALL_CODECS);
         for (MediaCodecInfo info : allCodecs.getCodecInfos()) {
