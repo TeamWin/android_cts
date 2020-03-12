@@ -94,10 +94,8 @@ public class PreservedSettingsRestoreTest {
 
     @Test
     public void modifySettings() {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-                Settings.Secure.putString(mContentResolver, OVERRIDEABLE_SETTING,
-                        OVERRIDEABLE_SETTING_NEW_VALUE, /* overrideableByRestore */ true);
-        });
+        Settings.Secure.putString(mContentResolver, OVERRIDEABLE_SETTING,
+                OVERRIDEABLE_SETTING_NEW_VALUE, /* overrideableByRestore */ true);
         Settings.Secure.putString(mContentResolver, NON_OVERRIDEABLE_SETTING,
                 NON_OVERRIDEABLE_SETTING_NEW_VALUE);
     }
