@@ -1673,8 +1673,8 @@
     <string name="wifi_status_suggestion_get_failure">Failed to get suggestions.</string>
     <string name="wifi_status_suggestion_remove">Removing suggestions from the device.</string>
     <string name="wifi_status_suggestion_remove_failure">Failed to remove suggestions.</string>
-    <string name="wifi_status_suggestion_wait_for_connect">Waiting for network connection. Please click \"Yes\" in the notification that pops up for approving the request.</string>
-    <string name="wifi_status_suggestion_ensure_no_connect">Ensuring no network connection. Please click \"Yes\" in the notification that pops up for approving the request.</string>
+    <string name="wifi_status_suggestion_wait_for_connect">Waiting for network connection. Please click \"Allow\" in the dialog that pops up for approving the app.</string>
+    <string name="wifi_status_suggestion_ensure_no_connect">Ensuring no network connection. Please click \"Allow\" in the dialog that pops up for approving the app.</string>
     <string name="wifi_status_suggestion_connect">Connected to the network.</string>
     <string name="wifi_status_suggestion_not_connected">Did not connect to the network.</string>
     <string name="wifi_status_suggestion_wait_for_post_connect_bcast">Waiting for post connection broadcast.</string>
