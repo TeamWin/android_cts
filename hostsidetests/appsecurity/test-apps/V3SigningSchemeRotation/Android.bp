@@ -20,6 +20,7 @@ android_test_helper_app {
         "cts",
         "vts",
         "general-tests",
+        "sts",
     ],
     srcs: ["src/**/*.java"],
     sdk_version: "current",
