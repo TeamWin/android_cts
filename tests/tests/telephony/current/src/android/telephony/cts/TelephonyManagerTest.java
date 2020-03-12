@@ -54,7 +54,6 @@ import android.telephony.AccessNetworkConstants;
 import android.telephony.Annotation.RadioPowerState;
 import android.telephony.AvailableNetworkInfo;
 import android.telephony.CallAttributes;
-import android.telephony.CallForwardingInfo;
 import android.telephony.CallQuality;
 import android.telephony.CarrierConfigManager;
 import android.telephony.CellLocation;
@@ -550,6 +549,10 @@ public class TelephonyManagerTest {
         mTelephonyManager.getAndUpdateDefaultRespondViaMessageApplication();
     }
 
+    /**
+     * Due to the corresponding API is hidden in R and will be public in S, this test
+     * is commented and will be un-commented in Android S.
+     *
     @Test
     public void testGetCallForwarding() {
         List<Integer> callForwardingReasons = new ArrayList<>();
@@ -581,7 +584,12 @@ public class TelephonyManagerTest {
             assertTrue(callForwardingInfo.getTimeoutSeconds() >= 0);
         }
     }
+     */
 
+    /**
+     * Due to the corresponding API is hidden in R and will be public in S, this test
+     * is commented and will be un-commented in Android S.
+     *
     @Test
     public void testSetCallForwarding() {
         List<Integer> callForwardingReasons = new ArrayList<>();
@@ -598,10 +606,12 @@ public class TelephonyManagerTest {
                     CallForwardingInfo.STATUS_ACTIVE,
                     callForwardingReasonToEnable,
                     TEST_FORWARD_NUMBER,
-                    1 /** time seconds */);
+                    // time seconds
+                    1);
             Log.d(TAG, "[testSetCallForwarding] Enable Call Forwarding. Status: "
-                    + CallForwardingInfo.STATUS_ACTIVE + " Reason: " + callForwardingReasonToEnable
-                    + " Number: " + TEST_FORWARD_NUMBER + " Time Seconds: 1");
+                    + CallForwardingInfo.STATUS_ACTIVE + " Reason: "
+                    + callForwardingReasonToEnable + " Number: " + TEST_FORWARD_NUMBER
+                    + " Time Seconds: 1");
             ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                     (tm) -> tm.setCallForwarding(callForwardingInfoToEnable));
         }
@@ -612,7 +622,8 @@ public class TelephonyManagerTest {
                     CallForwardingInfo.STATUS_INACTIVE,
                     callForwardingReasonToDisable,
                     TEST_FORWARD_NUMBER,
-                    1 /** time seconds */);
+                    // time seconds
+                    1);
             Log.d(TAG, "[testSetCallForwarding] Disable Call Forwarding. Status: "
                     + CallForwardingInfo.STATUS_INACTIVE + " Reason: "
                     + callForwardingReasonToDisable + " Number: " + TEST_FORWARD_NUMBER
@@ -621,7 +632,12 @@ public class TelephonyManagerTest {
                     (tm) -> tm.setCallForwarding(callForwardingInfoToDisable));
         }
     }
+    */
 
+    /**
+     * Due to the corresponding API is hidden in R and will be public in S, this test
+     * is commented and will be un-commented in Android S.
+     *
     @Test
     public void testGetCallWaitingStatus() {
         Set<Integer> callWaitingStatus = new HashSet<Integer>();
@@ -634,7 +650,12 @@ public class TelephonyManagerTest {
                 mTelephonyManager, (tm) -> tm.getCallWaitingStatus());
         assertTrue(callWaitingStatus.contains(status));
     }
+     */
 
+    /**
+     * Due to the corresponding API is hidden in R and will be public in S, this test
+     * is commented and will be un-commented in Android S.
+     *
     @Test
     public void testSetCallWaitingStatus() {
         ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
@@ -642,6 +663,7 @@ public class TelephonyManagerTest {
         ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.setCallWaitingStatus(false));
     }
+     */
 
     @Test
     public void testCellLocationFinePermission() {
