@@ -37,6 +37,30 @@ import java.io.IOException;
 @RunWith(AndroidJUnit4.class)
 public class MediaParserTest {
 
+    @Test
+    public void testCreationByName() {
+        testCreationByName("exo.MatroskaParser");
+        testCreationByName("exo.FragmentedMp4Parser");
+        testCreationByName("exo.Mp4Parser");
+        testCreationByName("exo.Mp3Parser");
+        testCreationByName("exo.AdtsParser");
+        testCreationByName("exo.Ac3Parser");
+        testCreationByName("exo.TsParser");
+        testCreationByName("exo.FlvParser");
+        testCreationByName("exo.OggParser");
+        testCreationByName("exo.PsParser");
+        testCreationByName("exo.WavParser");
+        testCreationByName("exo.AmrParser");
+        testCreationByName("exo.Ac4Parser");
+        testCreationByName("exo.FlacParser");
+        try {
+            testCreationByName("exo.ExtractorThatDoesNotExist");
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+            // Expected.
+        }
+    }
+
     // OGG.
 
     @Test
@@ -338,6 +362,11 @@ public class MediaParserTest {
     @Test
     public void testFragmented() throws IOException, InterruptedException {
         testExtractAsset("mp4/sample_fragmented.mp4");
+    }
+
+    private static void testCreationByName(String name) {
+        MediaParser.createByName(
+                name, new MockMediaParserOutputConsumer(new FakeExtractorOutput()));
     }
 
     private static void testSniffAsset(String assetPath, String expectedParserName)
