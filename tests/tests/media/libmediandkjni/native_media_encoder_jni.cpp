@@ -213,7 +213,6 @@ void NativeEncoder::run() {
     int32_t nFrameCount = 0;
 
     while (nFrameCount < framesToEncode) {
-
         // apply frame-specific settings
         for (;paramItr != dynamicParams.end()
                 && (*paramItr)->frameNum() <= nFrameCount; ++paramItr) {
@@ -228,7 +227,7 @@ void NativeEncoder::run() {
         }
 
         AMediaCodecBufferInfo info;
-        int status = AMediaCodec_dequeueOutputBuffer(mEnc.get(), &info, 5000);
+        int status = AMediaCodec_dequeueOutputBuffer(mEnc.get(), &info, 5000000);
         if (status >= 0) {
             ALOGV("got encoded buffer[%d] of size=%d @%lld us flags=%x",
                     nFrameCount, info.size, (long long)info.presentationTimeUs, info.flags);
@@ -248,6 +247,8 @@ void NativeEncoder::run() {
             mStats.setOutputFormat(format);
             ALOGV("format changed: %s", AMediaFormat_toString(format.get()));
         } else if (status == AMEDIACODEC_INFO_TRY_AGAIN_LATER) {
+            ALOGE("no frame in 5 seconds, assume stuck");
+            break;
         } else {
             ALOGV("Invalid status : %d", status);
         }
