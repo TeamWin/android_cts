@@ -17,6 +17,7 @@
 package android.accessibilityservice.cts;
 
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
+import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -27,13 +28,18 @@ import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.cts.activities.AccessibilityTestActivity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
+import android.graphics.Point;
 import android.graphics.Rect;
+import android.hardware.display.DisplayManager;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
+import android.view.Display;
 import android.view.SurfaceControlViewHost;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.accessibility.AccessibilityNodeInfo;
+import android.view.accessibility.AccessibilityWindowInfo;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
@@ -49,6 +55,7 @@ import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Tests that AccessibilityNodeInfos from an embedded hierarchy that is present to another
@@ -131,7 +138,7 @@ public class AccessibilityEmbeddedHierarchyTest {
     }
 
     @Test
-    public void testEmbeddedViewHasCorrectBoundAfterHostViewMove() {
+    public void testEmbeddedViewHasCorrectBoundAfterHostViewMove() throws TimeoutException {
         final AccessibilityNodeInfo target =
                 findEmbeddedAccessibilityNodeInfo(sUiAutomation.getRootInActiveWindow());
 
@@ -140,14 +147,13 @@ public class AccessibilityEmbeddedHierarchyTest {
         final Rect oldEmbeddedViewBoundsInScreen = new Rect();
         target.getBoundsInScreen(oldEmbeddedViewBoundsInScreen);
 
-        // Move Host SurfaceView from (0, 0) to (100, 100).
-        mActivity.requestNewLayoutForTest();
+        // Move Host SurfaceView from (0, 0) to (50, 50).
+        mActivity.requestNewLayoutForTest(50, 50);
 
-        final AccessibilityNodeInfo newTarget =
-                findEmbeddedAccessibilityNodeInfo(sUiAutomation.getRootInActiveWindow());
-        final AccessibilityNodeInfo parent = newTarget.getParent();
+        target.refresh();
+        final AccessibilityNodeInfo parent = target.getParent();
 
-        newTarget.getBoundsInScreen(newEmbeddedViewBoundsInScreen);
+        target.getBoundsInScreen(newEmbeddedViewBoundsInScreen);
         parent.getBoundsInScreen(hostViewBoundsInScreen);
 
         assertTrue("hostViewBoundsInScreen" + hostViewBoundsInScreen.toShortString()
@@ -158,6 +164,22 @@ public class AccessibilityEmbeddedHierarchyTest {
                         + " shouldn't be the same with oldEmbeddedViewBoundsInScreen"
                         + oldEmbeddedViewBoundsInScreen.toShortString(),
                 newEmbeddedViewBoundsInScreen.equals(oldEmbeddedViewBoundsInScreen));
+    }
+
+    @Test
+    public void testEmbeddedViewIsInvisibleAfterMovingOutOfScreen() throws TimeoutException {
+        final AccessibilityNodeInfo target =
+                findEmbeddedAccessibilityNodeInfo(sUiAutomation.getRootInActiveWindow());
+        assertTrue("Embedded view should be visible at beginning.",
+                target.isVisibleToUser());
+
+        // Move Host SurfaceView out of screen
+        final Point screenSize = getScreenSize();
+        mActivity.requestNewLayoutForTest(screenSize.x, screenSize.y);
+
+        target.refresh();
+        assertFalse("Embedded view should be invisible after moving out of screen.",
+                target.isVisibleToUser());
     }
 
     private AccessibilityNodeInfo findEmbeddedAccessibilityNodeInfo(AccessibilityNodeInfo root) {
@@ -177,6 +199,15 @@ public class AccessibilityEmbeddedHierarchyTest {
         return null;
     }
 
+    private Point getScreenSize() {
+        final DisplayManager dm = sInstrumentation.getContext().getSystemService(
+                DisplayManager.class);
+        final Display display = dm.getDisplay(Display.DEFAULT_DISPLAY);
+        final DisplayMetrics metrics = new DisplayMetrics();
+        display.getRealMetrics(metrics);
+        return new Point(metrics.widthPixels, metrics.heightPixels);
+    }
+
     /**
      * This class is an dummy {@link android.app.Activity} used to perform embedded hierarchy
      * testing of the accessibility feature by interaction with the UI widgets.
@@ -187,9 +218,6 @@ public class AccessibilityEmbeddedHierarchyTest {
 
         private static final int DEFAULT_WIDTH = 150;
         private static final int DEFAULT_HEIGHT = 150;
-
-        private static final int POSITION_X = 50;
-        private static final int POSITION_Y = 50;
 
         private SurfaceView mSurfaceView;
         private SurfaceControlViewHost mViewHost;
@@ -234,12 +262,20 @@ public class AccessibilityEmbeddedHierarchyTest {
             }
         }
 
-        public void requestNewLayoutForTest() {
-            sInstrumentation.runOnMainSync(() -> {
-                mSurfaceView.setX(POSITION_X);
-                mSurfaceView.setY(POSITION_Y);
-                mSurfaceView.requestLayout();
-            });
+        public void requestNewLayoutForTest(int x, int y) throws TimeoutException {
+            sUiAutomation.executeAndWaitForEvent(
+                    () -> sInstrumentation.runOnMainSync(() -> {
+                        mSurfaceView.setX(x);
+                        mSurfaceView.setY(y);
+                        mSurfaceView.requestLayout();
+                    }),
+                    (event) -> {
+                        final Rect boundsInScreen = new Rect();
+                        final AccessibilityWindowInfo window =
+                                sUiAutomation.getRootInActiveWindow().getWindow();
+                        window.getBoundsInScreen(boundsInScreen);
+                        return !boundsInScreen.isEmpty();
+                    }, DEFAULT_TIMEOUT_MS);
         }
     }
 }
