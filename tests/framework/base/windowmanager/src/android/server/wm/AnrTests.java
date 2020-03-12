@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.server.wm.app.Components.HOST_ACTIVITY;
 import static android.server.wm.app.Components.UNRESPONSIVE_ACTIVITY;
 import static android.server.wm.app.Components.UnresponsiveActivity;
 import static android.server.wm.app.Components.UnresponsiveActivity.EXTRA_DELAY_UI_THREAD_MS;
@@ -26,8 +27,10 @@ import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.fail;
 
+import android.content.ComponentName;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.app.Components.RenderService;
 import android.provider.Settings;
 import android.server.wm.settings.SettingsSession;
 import android.support.test.uiautomator.By;
@@ -75,11 +78,13 @@ public class AnrTests extends ActivityManagerTestBase {
     public void teardown() {
         mHideDialogSetting.close();
         stopTestPackage(UNRESPONSIVE_ACTIVITY.getPackageName());
+        stopTestPackage(HOST_ACTIVITY.getPackageName());
     }
 
     @Test
     public void slowOnCreateWithKeyEventTriggersAnr() {
-        startUnresponsiveActivity(EXTRA_ON_CREATE_DELAY_MS, false /* waitForCompletion */);
+        startUnresponsiveActivity(EXTRA_ON_CREATE_DELAY_MS, false /* waitForCompletion */,
+                UNRESPONSIVE_ACTIVITY);
         // wait for app to be focused
         mWmState.waitAndAssertAppFocus(UNRESPONSIVE_ACTIVITY.getPackageName(),
                 2000 /* waitTime_ms */);
@@ -93,7 +98,8 @@ public class AnrTests extends ActivityManagerTestBase {
 
     @Test
     public void slowUiThreadWithKeyEventTriggersAnr() {
-        startUnresponsiveActivity(EXTRA_DELAY_UI_THREAD_MS, true /* waitForCompletion */);
+        startUnresponsiveActivity(EXTRA_DELAY_UI_THREAD_MS, true /* waitForCompletion */,
+                UNRESPONSIVE_ACTIVITY);
         injectKey(KeyEvent.KEYCODE_BACK, false /* longpress */, false /* sync */);
         clickCloseAppOnAnrDialog();
         assertEventLogsContainsAnr(UnresponsiveActivity.PROCESS_NAME);
@@ -101,7 +107,8 @@ public class AnrTests extends ActivityManagerTestBase {
 
     @Test
     public void slowOnKeyEventHandleTriggersAnr() {
-        startUnresponsiveActivity(EXTRA_ON_KEYDOWN_DELAY_MS, true /* waitForCompletion */);
+        startUnresponsiveActivity(EXTRA_ON_KEYDOWN_DELAY_MS, true /* waitForCompletion */,
+                UNRESPONSIVE_ACTIVITY);
         injectKey(KeyEvent.KEYCODE_BACK, false /* longpress */, false /* sync */);
         clickCloseAppOnAnrDialog();
         assertEventLogsContainsAnr(UnresponsiveActivity.PROCESS_NAME);
@@ -109,7 +116,8 @@ public class AnrTests extends ActivityManagerTestBase {
 
     @Test
     public void slowOnTouchEventHandleTriggersAnr() {
-        startUnresponsiveActivity(EXTRA_ON_MOTIONEVENT_DELAY_MS, true /* waitForCompletion */);
+        startUnresponsiveActivity(EXTRA_ON_MOTIONEVENT_DELAY_MS, true /* waitForCompletion */,
+                UNRESPONSIVE_ACTIVITY);
 
         // TODO(b/143566069) investigate why we need multiple taps on display to trigger anr.
         mWmState.computeState();
@@ -119,6 +127,24 @@ public class AnrTests extends ActivityManagerTestBase {
 
         clickCloseAppOnAnrDialog();
         assertEventLogsContainsAnr(UnresponsiveActivity.PROCESS_NAME);
+    }
+
+    /**
+     * Verify embedded windows can trigger ANR and the verify embedded app is blamed.
+     */
+    @Test
+    public void embeddedWindowTriggersAnr() {
+        startUnresponsiveActivity(EXTRA_ON_MOTIONEVENT_DELAY_MS, true  /* waitForCompletion */,
+                HOST_ACTIVITY);
+
+        // TODO(b/143566069) investigate why we need multiple taps on display to trigger anr.
+        mWmState.computeState();
+        tapOnDisplayCenterAsync(DEFAULT_DISPLAY);
+        SystemClock.sleep(1000);
+        tapOnDisplayCenterAsync(DEFAULT_DISPLAY);
+
+        clickCloseAppOnAnrDialog();
+        assertEventLogsContainsAnr(RenderService.PROCESS_NAME);
     }
 
     private void assertEventLogsContainsAnr(String processName) {
@@ -147,9 +173,10 @@ public class AnrTests extends ActivityManagerTestBase {
         fail("Could not find anr dialog");
     }
 
-    private void startUnresponsiveActivity(String delayTypeExtra, boolean waitForCompletion) {
+    private void startUnresponsiveActivity(String delayTypeExtra, boolean waitForCompletion,
+            ComponentName activity) {
         String flags = waitForCompletion ? " -W -n " : " -n ";
-        String startCmd = "am start" + flags + UNRESPONSIVE_ACTIVITY.flattenToString() +
+        String startCmd = "am start" + flags + activity.flattenToString() +
                 " --ei " + delayTypeExtra + " 30000";
         executeShellCommand(startCmd);
     }
