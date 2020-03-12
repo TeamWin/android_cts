@@ -331,6 +331,8 @@ public class BinderTest extends ActivityTestsBase {
         assertTrue(mBinder.unlinkToDeath(new MockDeathRecipient(), 0));
 
         assertTrue(mBinder.pingBinder());
+
+        assertTrue(IBinder.getSuggestedMaxIpcSizeBytes() > 0);
     }
 
     public void testFlushPendingCommands() {
