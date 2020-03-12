@@ -50,6 +50,7 @@ public class Components extends ComponentsBase {
     public static final ComponentName FONT_SCALE_NO_RELAUNCH_ACTIVITY =
             component("FontScaleNoRelaunchActivity");
     public static final ComponentName FREEFORM_ACTIVITY = component("FreeformActivity");
+    public static final ComponentName HOST_ACTIVITY = component("HostActivity");
     public static final ComponentName KEYGUARD_LOCK_ACTIVITY = component("KeyguardLockActivity");
     public static final ComponentName LANDSCAPE_ORIENTATION_ACTIVITY =
             component("LandscapeOrientationActivity");
@@ -443,6 +444,10 @@ public class Components extends ComponentsBase {
         public static final String EXTRA_ON_KEYDOWN_DELAY_MS = "ON_KEYDOWN_DELAY_MS";
         public static final String EXTRA_ON_MOTIONEVENT_DELAY_MS = "ON_MOTIONEVENT_DELAY_MS";
         public static final String PROCESS_NAME = ".unresponsive_activity_process";
+    }
+
+    public static class RenderService {
+        public static final String PROCESS_NAME = ".render_process";
     }
 
     /**
