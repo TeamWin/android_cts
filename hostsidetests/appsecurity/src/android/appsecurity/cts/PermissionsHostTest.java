@@ -82,6 +82,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
                 true));
 
         runDeviceTests(REVIEW_HELPER_PKG, REVIEW_HELPER_TEST_CLASS, "approveReviewPermissions");
+        getDevice().uninstallPackage(REVIEW_HELPER_PKG);
     }
 
     @Override
@@ -494,6 +495,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
 
         runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest22",
                 "testAssertNoCalendarAccess");
+        getDevice().uninstallPackage(REVIEW_HELPER_PKG);
     }
 
     public void testDenyGrantCalendarDuringReview() throws Exception {
@@ -506,6 +508,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
 
         runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest22",
                 "testAssertCalendarAccess");
+        getDevice().uninstallPackage(REVIEW_HELPER_PKG);
     }
 
     public void testDenyGrantDenyCalendarDuringReview() throws Exception {
@@ -519,6 +522,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
 
         runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest22",
                 "testAssertNoCalendarAccess");
+        getDevice().uninstallPackage(REVIEW_HELPER_PKG);
     }
 
     public void testCancelReview() throws Exception {
@@ -536,6 +540,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
 
         runDeviceTests(REVIEW_HELPER_PKG, REVIEW_HELPER_TEST_CLASS,
                 "assertNoReviewPermissionsNeeded");
+        getDevice().uninstallPackage(REVIEW_HELPER_PKG);
     }
 
     public void testReviewPermissionWhenServiceIsBound() throws Exception {
@@ -547,6 +552,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
         // Check if service of APK_22 has permissions
         runDeviceTests(REVIEW_HELPER_PKG, REVIEW_HELPER_TEST_CLASS,
                 "reviewPermissionWhenServiceIsBound");
+        getDevice().uninstallPackage(REVIEW_HELPER_PKG);
     }
 
     private void runDeviceTests(String packageName, String testClassName, String testMethodName)
