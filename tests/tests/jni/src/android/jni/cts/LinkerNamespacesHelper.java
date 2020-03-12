@@ -19,6 +19,7 @@ package android.jni.cts;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.os.Build;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -187,6 +188,10 @@ class LinkerNamespacesHelper {
 
         Collections.addAll(systemLibs, PUBLIC_SYSTEM_LIBRARIES);
         Collections.addAll(systemLibs, OPTIONAL_SYSTEM_LIBRARIES);
+	// System path could contain public ART libraries on foreign arch. http://b/149852946
+        if (isForeignArchitecture()) {
+            Collections.addAll(systemLibs, PUBLIC_ART_LIBRARIES);
+        }
 
         if (InstrumentationRegistry.getContext().getPackageManager().
                 hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) {
@@ -407,6 +412,22 @@ class LinkerNamespacesHelper {
     }
 
     public static native String tryDlopen(String lib);
+
+    private static boolean isForeignArchitecture() {
+        int libAbi = getLibAbi();
+        String cpuAbi = android.os.SystemProperties.get("ro.product.cpu.abi");
+        if ((libAbi == 1 || libAbi == 2) && !cpuAbi.startsWith("arm")) {
+            return true;
+        } else if ((libAbi == 3 || libAbi == 4) && !cpuAbi.startsWith("x86")) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @return ABI type of the JNI library. 1: ARM64, 2:ARM, 3: x86_64, 4: x86, 0: others
+     */
+    private static native int getLibAbi();
 }
 
 class ClassNamespaceA1 {

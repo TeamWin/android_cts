@@ -44,7 +44,9 @@ public class Constants {
     public static final String QUERIES_NOTHING = PKG_BASE + "queries.nothing";
     /** A package that queries nothing, but is part of a shared user */
     public static final String QUERIES_NOTHING_SHARED_USER = PKG_BASE + "queries.nothing.shareduid";
-    /** A package that exposes nothing, but is part of a shared user */
+    /** A package that queries via wildcard action. */
+    public static final String QUERIES_WILDCARD_ACTION = PKG_BASE + "queries.wildcard.action";
+    /** A package that queries for {@link #TARGET_NO_API} package */
     public static final String TARGET_SHARED_USER = PKG_BASE + "noapi.shareduid";
     /** A package that exposes itself via various intent filters (activities, services, etc.) */
     public static final String TARGET_FILTERS = PKG_BASE + "filters";
@@ -63,7 +65,8 @@ public class Constants {
             QUERIES_UNEXPORTED_SERVICE_ACTION,
             QUERIES_UNEXPORTED_PROVIDER_AUTH,
             QUERIES_PACKAGE,
-            QUERIES_NOTHING_SHARED_USER
+            QUERIES_NOTHING_SHARED_USER,
+            QUERIES_WILDCARD_ACTION
     };
 
     public static final String ACTIVITY_CLASS_TEST = PKG_BASE + "cts.query.TestActivity";

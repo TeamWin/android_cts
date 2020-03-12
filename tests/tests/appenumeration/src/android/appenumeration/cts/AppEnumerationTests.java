@@ -43,6 +43,7 @@ import static android.appenumeration.cts.Constants.QUERIES_SERVICE_ACTION;
 import static android.appenumeration.cts.Constants.QUERIES_UNEXPORTED_ACTIVITY_ACTION;
 import static android.appenumeration.cts.Constants.QUERIES_UNEXPORTED_PROVIDER_AUTH;
 import static android.appenumeration.cts.Constants.QUERIES_UNEXPORTED_SERVICE_ACTION;
+import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_ACTION;
 import static android.appenumeration.cts.Constants.TARGET_FILTERS;
 import static android.appenumeration.cts.Constants.TARGET_FORCEQUERYABLE;
 import static android.appenumeration.cts.Constants.TARGET_NO_API;
@@ -94,7 +95,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @RunWith(AndroidJUnit4.class)
 public class AppEnumerationTests {
-
     private static Handler sResponseHandler;
     private static HandlerThread sResponseThread;
 
@@ -253,6 +253,11 @@ public class AppEnumerationTests {
     @Test
     public void queriesServiceAction_canSeeTarget() throws Exception {
         assertVisible(QUERIES_SERVICE_ACTION, TARGET_FILTERS);
+    }
+
+    @Test
+    public void queriesWildcardAction_canSeeTargets() throws Exception {
+        assertVisible(QUERIES_WILDCARD_ACTION, TARGET_FILTERS);
     }
 
     @Test
@@ -458,9 +463,7 @@ public class AppEnumerationTests {
                 .setComponent(new ComponentName(sourcePackageName, ACTIVITY_CLASS_TEST))
                 // data uri unique to each activity start to ensure actual launch and not just
                 // redisplay
-                .setData(Uri.parse("test://" + name.getMethodName()
-                        + (targetPackageName != null
-                        ? targetPackageName : UUID.randomUUID().toString())))
+                .setData(Uri.parse("test://" + UUID.randomUUID().toString()))
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
         if (targetPackageName != null) {
             intent.putExtra(Intent.EXTRA_PACKAGE_NAME, targetPackageName);

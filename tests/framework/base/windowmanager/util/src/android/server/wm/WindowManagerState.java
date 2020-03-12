@@ -905,7 +905,7 @@ public class WindowManagerState {
         return false;
     }
 
-    /** Check if at least one window which matches provided window name is visible. */
+    /** Check if at least one window which matches the specified name has shown it's surface. */
     boolean isWindowSurfaceShown(String windowName) {
         for (WindowState window : mWindowStates) {
             if (window.getName().equals(windowName)) {
