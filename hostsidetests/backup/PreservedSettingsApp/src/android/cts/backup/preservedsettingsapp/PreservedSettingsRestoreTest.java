@@ -20,6 +20,7 @@ import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.app.UiAutomation;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -31,6 +32,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.SystemUtil;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -60,6 +62,7 @@ public class PreservedSettingsRestoreTest {
     private ContentResolver mContentResolver;
     private File mSharedPreferencesFile;
     private SharedPreferences mSharedPreferences;
+    private UiAutomation mUiAutomation;
 
     @Before
     public void setUp() throws Exception {
@@ -69,6 +72,14 @@ public class PreservedSettingsRestoreTest {
         mSharedPreferencesFile.createNewFile();
         mSharedPreferences = mContext.getSharedPreferences(mSharedPreferencesFile,
                 Context.MODE_PRIVATE);
+        mUiAutomation = getInstrumentation().getUiAutomation();
+
+        mUiAutomation.adoptShellPermissionIdentity();
+    }
+
+    @After
+    public void tearDown() {
+        mUiAutomation.dropShellPermissionIdentity();
     }
 
     @Test
@@ -113,19 +124,17 @@ public class PreservedSettingsRestoreTest {
 
     @Test
     public void cleanupDevice() throws Exception {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            // "Touch" the affected settings so that we're the last package that modified them.
-            modifySettings();
-            // Reset all secure settings modified by this package.
-            Settings.Secure.resetToDefaults(mContentResolver, null);
+        // "Touch" the affected settings so that we're the last package that modified them.
+        modifySettings();
+        // Reset all secure settings modified by this package.
+        Settings.Secure.resetToDefaults(mContentResolver, null);
 
-            Settings.Secure.putString(mContentResolver, OVERRIDEABLE_SETTING,
-                    getOriginalSettingValue(OVERRIDEABLE_SETTING),
-                    /* overrideableByRestore */ true);
-            Settings.Secure.putString(mContentResolver, NON_OVERRIDEABLE_SETTING,
-                    getOriginalSettingValue(NON_OVERRIDEABLE_SETTING),
-                    /* overrideableByRestore */ true);
-        });
+        Settings.Secure.putString(mContentResolver, OVERRIDEABLE_SETTING,
+                getOriginalSettingValue(OVERRIDEABLE_SETTING),
+                /* overrideableByRestore */ true);
+        Settings.Secure.putString(mContentResolver, NON_OVERRIDEABLE_SETTING,
+                getOriginalSettingValue(NON_OVERRIDEABLE_SETTING),
+                /* overrideableByRestore */ true);
 
         Settings.Global.putString(mContentResolver,
                 FeatureFlagUtils.SETTINGS_DO_NOT_RESTORE_PRESERVED,
