@@ -69,7 +69,7 @@ public class JobThrottlingTest {
     private static final String TAG = JobThrottlingTest.class.getSimpleName();
     private static final long BACKGROUND_JOBS_EXPECTED_DELAY = 3_000;
     private static final long POLL_INTERVAL = 500;
-    private static final long DEFAULT_WAIT_TIMEOUT = 1000;
+    private static final long DEFAULT_WAIT_TIMEOUT = 2000;
     private static final long SHELL_TIMEOUT = 3_000;
 
     enum Bucket {
@@ -84,6 +84,7 @@ public class JobThrottlingTest {
     private Context mContext;
     private UiDevice mUiDevice;
     private PowerManager mPowerManager;
+    private int mTestJobId;
     private int mTestPackageUid;
     private boolean mDeviceInDoze;
     private boolean mDeviceIdleEnabled;
@@ -127,8 +128,8 @@ public class JobThrottlingTest {
         mPowerManager = mContext.getSystemService(PowerManager.class);
         mDeviceInDoze = mPowerManager.isDeviceIdleMode();
         mTestPackageUid = mContext.getPackageManager().getPackageUid(TEST_APP_PACKAGE, 0);
-        int testJobId = (int) (SystemClock.uptimeMillis() / 1000);
-        mTestAppInterface = new TestAppInterface(mContext, testJobId);
+        mTestJobId = (int) (SystemClock.uptimeMillis() / 1000);
+        mTestAppInterface = new TestAppInterface(mContext, mTestJobId);
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ACTION_DEVICE_IDLE_MODE_CHANGED);
         intentFilter.addAction(ACTION_LIGHT_DEVICE_IDLE_MODE_CHANGED);
@@ -173,6 +174,7 @@ public class JobThrottlingTest {
         assumeTrue("device idle not enabled", mDeviceIdleEnabled);
 
         sendScheduleJobBroadcast(false);
+        runJob();
         assertTrue("Job did not start after scheduling",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
         toggleDeviceIdleState(true);
@@ -190,6 +192,7 @@ public class JobThrottlingTest {
         assumeTrue("device idle not enabled", mDeviceIdleEnabled);
 
         sendScheduleJobBroadcast(false);
+        runJob();
         assertTrue("Job did not start after scheduling",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
         toggleDeviceIdleState(true);
@@ -208,6 +211,7 @@ public class JobThrottlingTest {
     @Test
     public void testJobStoppedWhenRestricted() throws Exception {
         sendScheduleJobBroadcast(false);
+        runJob();
         assertTrue("Job did not start after scheduling",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
         setTestPackageRestricted(true);
@@ -248,6 +252,7 @@ public class JobThrottlingTest {
         setWifiState(true, mCm, mWifiManager);
         assumeTrue("device idle not enabled", mDeviceIdleEnabled);
         mTestAppInterface.scheduleJob(false, true);
+        runJob();
         assertTrue("Job did not start after scheduling",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
         ThermalUtils.overrideThermalStatus(Temperature.THROTTLING_CRITICAL);
@@ -275,6 +280,7 @@ public class JobThrottlingTest {
         setTestPackageStandbyBucket(Bucket.RESTRICTED);
         Thread.sleep(DEFAULT_WAIT_TIMEOUT);
         sendScheduleJobBroadcast(false);
+        runJob();
         assertTrue("Parole job didn't start in RESTRICTED bucket",
                 mTestAppInterface.awaitJobStart(3_000));
 
@@ -335,27 +341,33 @@ public class JobThrottlingTest {
         setTestPackageStandbyBucket(Bucket.RESTRICTED);
         Thread.sleep(DEFAULT_WAIT_TIMEOUT);
         mTestAppInterface.scheduleJob(false, true);
+        runJob();
         assertFalse("New job started in RESTRICTED bucket", mTestAppInterface.awaitJobStart(3_000));
 
         // Slowly add back required bucket constraints.
 
         // Battery charging and high.
         BatteryUtils.runDumpsysBatterySetPluggedIn(true);
+        runJob();
         assertFalse("New job started in RESTRICTED bucket", mTestAppInterface.awaitJobStart(3_000));
         BatteryUtils.runDumpsysBatterySetLevel(100);
+        runJob();
         assertFalse("New job started in RESTRICTED bucket", mTestAppInterface.awaitJobStart(3_000));
 
         // Device is idle.
         setScreenState(false);
+        runJob();
         assertFalse("New job started in RESTRICTED bucket", mTestAppInterface.awaitJobStart(3_000));
         triggerJobIdle();
+        runJob();
         assertFalse("New job started in RESTRICTED bucket", mTestAppInterface.awaitJobStart(3_000));
 
         // Add network
         setAirplaneMode(false);
         setWifiState(true, mCm, mWifiManager);
+        runJob();
         assertTrue("New job didn't start in RESTRICTED bucket",
-                mTestAppInterface.awaitJobStart(3_000));
+                mTestAppInterface.awaitJobStart(5_000));
     }
 
     @Test
@@ -549,6 +561,14 @@ public class JobThrottlingTest {
         mUiDevice.executeShellCommand("cmd activity idle-maintenance");
         // Wait a moment to let that happen before proceeding.
         Thread.sleep(2_000);
+    }
+
+    /** Asks (not forces) JobScheduler to run the job if constraints are met. */
+    private void runJob() throws Exception {
+        // Since connectivity is a functional constraint, calling the "run" command without force
+        // will only get the job to run if the constraint is satisfied.
+        mUiDevice.executeShellCommand("cmd jobscheduler run -s"
+                + " -u " + UserHandle.myUserId() + " " + TEST_APP_PACKAGE + " " + mTestJobId);
     }
 
     private boolean isAirplaneModeOn() throws IOException {
