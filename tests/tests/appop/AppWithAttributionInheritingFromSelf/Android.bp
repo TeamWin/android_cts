@@ -13,7 +13,7 @@
 // limitations under the License.
 
 android_test_helper_app {
-    name: "AppWithDuplicateFeature",
+    name: "AppWithAttributionInheritingFromSelf",
 
     test_suites: [
         "cts",
