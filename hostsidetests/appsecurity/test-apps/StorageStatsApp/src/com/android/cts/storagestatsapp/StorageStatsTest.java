@@ -230,7 +230,11 @@ public class StorageStatsTest extends InstrumentationTestCase {
         // TODO: remove this once 34723223 is fixed
         logCommand("sync");
 
-        final long manualSize = getSizeManual(Environment.getExternalStorageDirectory(), true);
+        long manualSize = getSizeManual(Environment.getExternalStorageDirectory(), true);
+        // Since scoped storage, we can't walk the Android/ tree anymore; so pass in this
+        // app's files and cache dirs directly.
+        manualSize += getSizeManual(getContext().getExternalFilesDir(null), true);
+        manualSize += getSizeManual(getContext().getExternalCacheDir(), true);
         final long statsSize = stats.queryExternalStatsForUser(UUID_DEFAULT, user).getTotalBytes();
 
         assertMostlyEquals(manualSize, statsSize);
