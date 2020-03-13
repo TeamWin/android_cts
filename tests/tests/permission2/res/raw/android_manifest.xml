@@ -1726,7 +1726,7 @@
 
     <!-- @SystemApi Allows an internal user to use privileged SecureElement APIs.
          @hide -->
-    <permission android:name="android.permission.SECURE_ELEMENT_PRIVILEGED"
+    <permission android:name="android.permission.SECURE_ELEMENT_PRIVILEGED_OPERATION"
         android:protectionLevel="signature|privileged" />
 
     <!-- @SystemApi Allows an internal user to use privileged ConnectivityManager APIs.
