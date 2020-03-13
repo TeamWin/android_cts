@@ -17,6 +17,7 @@ package android.os.cts.batterysaving;
 
 import static com.android.compatibility.common.util.BatteryUtils.enableBatterySaver;
 import static com.android.compatibility.common.util.BatteryUtils.runDumpsysBatteryUnplug;
+import static com.android.compatibility.common.util.TestUtils.waitUntil;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -112,36 +113,38 @@ public class BatterySaverTest extends BatterySavingTestBase {
 
             enableBatterySaver(true);
 
-            // Allow time for UI change.
-            Thread.sleep(1000);
             assertTrue(powerManager.isPowerSaveMode());
             assertEquals(PowerManager.LOCATION_MODE_ALL_DISABLED_WHEN_SCREEN_OFF,
                     powerManager.getLocationPowerSaveMode());
-            assertEquals(Configuration.UI_MODE_NIGHT_YES,
-                    getContext().getResources().getConfiguration().uiMode
-                        & Configuration.UI_MODE_NIGHT_MASK);
+            // UI change can take a while to propagate, so need to wait for this check.
+            waitUntil("UI mode didn't change to " + Configuration.UI_MODE_NIGHT_YES,
+                    () -> Configuration.UI_MODE_NIGHT_YES ==
+                            (getContext().getResources().getConfiguration().uiMode
+                                    & Configuration.UI_MODE_NIGHT_MASK));
 
             uiModeManager.enableCarMode(0);
-            // Allow time for UI change.
-            Thread.sleep(1000);
 
+            // Wait for UI change first before checking location mode since we can then be
+            // confident that the broadcast has been processed.
+            waitUntil("UI mode didn't change to " + Configuration.UI_MODE_NIGHT_NO,
+                    () -> Configuration.UI_MODE_NIGHT_NO ==
+                            (getContext().getResources().getConfiguration().uiMode
+                                    & Configuration.UI_MODE_NIGHT_MASK));
             final int locationPowerSaveMode = powerManager.getLocationPowerSaveMode();
             assertTrue("Location power save mode didn't change from " + locationPowerSaveMode,
                     locationPowerSaveMode == PowerManager.LOCATION_MODE_FOREGROUND_ONLY
                             || locationPowerSaveMode == PowerManager.LOCATION_MODE_NO_CHANGE);
-            assertEquals(Configuration.UI_MODE_NIGHT_NO,
-                getContext().getResources().getConfiguration().uiMode
-                    & Configuration.UI_MODE_NIGHT_MASK);
 
             uiModeManager.disableCarMode(0);
-            // Allow time for UI change.
-            Thread.sleep(1000);
 
+            // Wait for UI change first before checking location mode since we can then be
+            // confident that the broadcast has been processed.
+            waitUntil("UI mode didn't change to " + Configuration.UI_MODE_NIGHT_YES,
+                    () -> Configuration.UI_MODE_NIGHT_YES ==
+                            (getContext().getResources().getConfiguration().uiMode
+                                    & Configuration.UI_MODE_NIGHT_MASK));
             assertEquals(PowerManager.LOCATION_MODE_ALL_DISABLED_WHEN_SCREEN_OFF,
                 powerManager.getLocationPowerSaveMode());
-            assertEquals(Configuration.UI_MODE_NIGHT_YES,
-                getContext().getResources().getConfiguration().uiMode
-                    & Configuration.UI_MODE_NIGHT_MASK);
         } finally {
             uiModeManager.disableCarMode(0);
             SettingsUtils.delete(SettingsUtils.NAMESPACE_GLOBAL, "battery_saver_constants");
