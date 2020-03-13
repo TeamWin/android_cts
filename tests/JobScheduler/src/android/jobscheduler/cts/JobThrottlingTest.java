@@ -217,7 +217,7 @@ public class JobThrottlingTest {
         sendScheduleJobBroadcast(false);
         assertFalse("Job started for restricted app",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
-        mTestAppInterface.startAndKeepTestActivity();
+        mTestAppInterface.startAndKeepWaitForResumeTestActivity();
         assertTrue("Job did not start when app had an activity",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
     }
