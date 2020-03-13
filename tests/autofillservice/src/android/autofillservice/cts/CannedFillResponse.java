@@ -596,7 +596,7 @@ public final class CannedFillResponse {
             final Dataset.Builder builder = mPresentation != null
                     ? mInlinePresentation == null
                     ? new Dataset.Builder(mPresentation)
-                    : new Dataset.Builder(mPresentation, mInlinePresentation)
+                    : new Dataset.Builder(mPresentation).setInlinePresentation(mInlinePresentation)
                     : mInlinePresentation == null
                             ? new Dataset.Builder()
                             : new Dataset.Builder(mInlinePresentation);
@@ -631,7 +631,7 @@ public final class CannedFillResponse {
                         }
                     } else {
                         if (inlinePresentation != null) {
-                            builder.setInlinePresentation(autofillId, value,
+                            builder.setFieldInlinePresentation(autofillId, value,
                                     filter != null ? filter.second : null, inlinePresentation);
                         } else {
                             if (filter == null) {
