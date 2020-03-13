@@ -29,17 +29,17 @@ using namespace android;
 // Note op from native code
 extern "C" JNIEXPORT void JNICALL
 Java_android_app_appops_cts_AppOpsLoggingTestKt_nativeNoteOp(JNIEnv* env, jobject obj,
-        jint op, jint uid, jstring jCallingPackageName, jstring jFeatureId, jstring jMessage) {
+        jint op, jint uid, jstring jCallingPackageName, jstring jAttributionTag, jstring jMessage) {
     AppOpsManager appOpsManager;
 
     const char *nativeCallingPackageName = env->GetStringUTFChars(jCallingPackageName, 0);
     String16 callingPackageName(nativeCallingPackageName);
 
-    const char *nativeFeatureId;
-    std::unique_ptr<String16> featureId;
-    if (jFeatureId != nullptr) {
-        nativeFeatureId = env->GetStringUTFChars(jFeatureId, 0);
-        featureId = std::unique_ptr<String16>(new String16(nativeFeatureId));
+    const char *nativeAttributionTag;
+    std::unique_ptr<String16> attributionTag;
+    if (jAttributionTag != nullptr) {
+        nativeAttributionTag = env->GetStringUTFChars(jAttributionTag, 0);
+        attributionTag = std::unique_ptr<String16>(new String16(nativeAttributionTag));
     }
 
     const char *nativeMessage;
@@ -51,12 +51,12 @@ Java_android_app_appops_cts_AppOpsLoggingTestKt_nativeNoteOp(JNIEnv* env, jobjec
         message = new String16();
     }
 
-    appOpsManager.noteOp(op, uid, callingPackageName, featureId, *message);
+    appOpsManager.noteOp(op, uid, callingPackageName, attributionTag, *message);
 
     env->ReleaseStringUTFChars(jCallingPackageName, nativeCallingPackageName);
 
-    if (jFeatureId != nullptr) {
-        env->ReleaseStringUTFChars(jFeatureId, nativeFeatureId);
+    if (jAttributionTag != nullptr) {
+        env->ReleaseStringUTFChars(jAttributionTag, nativeAttributionTag);
     }
 
     if (jMessage != nullptr) {

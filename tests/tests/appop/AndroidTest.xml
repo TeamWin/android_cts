@@ -37,12 +37,12 @@
         <option name="push-file" key="CtsAppToBlame1.apk" value="/data/local/tmp/cts/appops/CtsAppToBlame1.apk" />
         <option name="push-file" key="CtsAppToBlame2.apk" value="/data/local/tmp/cts/appops/CtsAppToBlame2.apk" />
         <option name="push-file" key="CtsAppToCollect.apk" value="/data/local/tmp/cts/appops/CtsAppToCollect.apk" />
-        <option name="push-file" key="AppWithDuplicateFeature.apk" value="/data/local/tmp/cts/appops/AppWithDuplicateFeature.apk" />
-        <option name="push-file" key="AppWithFeatureInheritingFromExisting.apk" value="/data/local/tmp/cts/appops/AppWithFeatureInheritingFromExisting.apk" />
-        <option name="push-file" key="AppWithFeatureInheritingFromSameAsOther.apk" value="/data/local/tmp/cts/appops/AppWithFeatureInheritingFromSameAsOther.apk" />
-        <option name="push-file" key="AppWithFeatureInheritingFromSelf.apk" value="/data/local/tmp/cts/appops/AppWithFeatureInheritingFromSelf.apk" />
-        <option name="push-file" key="AppWithLongFeatureIdFeature.apk" value="/data/local/tmp/cts/appops/AppWithLongFeatureIdFeature.apk" />
-        <option name="push-file" key="AppWithTooManyFeatures.apk" value="/data/local/tmp/cts/appops/AppWithTooManyFeatures.apk" />
+        <option name="push-file" key="AppWithDuplicateAttribution.apk" value="/data/local/tmp/cts/appops/AppWithDuplicateAttribution.apk" />
+        <option name="push-file" key="AppWithAttributionInheritingFromExisting.apk" value="/data/local/tmp/cts/appops/AppWithAttributionInheritingFromExisting.apk" />
+        <option name="push-file" key="AppWithAttributionInheritingFromSameAsOther.apk" value="/data/local/tmp/cts/appops/AppWithAttributionInheritingFromSameAsOther.apk" />
+        <option name="push-file" key="AppWithAttributionInheritingFromSelf.apk" value="/data/local/tmp/cts/appops/AppWithAttributionInheritingFromSelf.apk" />
+        <option name="push-file" key="AppWithLongAttributionTag.apk" value="/data/local/tmp/cts/appops/AppWithLongAttributionTag.apk" />
+        <option name="push-file" key="AppWithTooManyAttributions.apk" value="/data/local/tmp/cts/appops/AppWithTooManyAttributions.apk" />
     </target_preparer>
 
     <!-- Remove additional apps if installed -->
