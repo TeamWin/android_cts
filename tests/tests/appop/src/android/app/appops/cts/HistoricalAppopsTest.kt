@@ -201,7 +201,7 @@ class HistoricalAppopsTest {
     }
 
     @Test
-    fun testGetHistoricalAggregationOverFeatures() {
+    fun testGetHistoricalAggregationOverAttributions() {
         // Configure historical registry behavior.
         appOpsManager.setHistoryParameters(
                 AppOpsManager.HISTORICAL_MODE_ENABLED_ACTIVE,
@@ -212,17 +212,19 @@ class HistoricalAppopsTest {
 
         UidStateForceActivity.waitForResumed()
 
-        appOpsManager.noteOp(OPSTR_REQUEST_DELETE_PACKAGES, uid, packageName, "firstFeature", null)
-        appOpsManager.noteOp(OPSTR_REQUEST_DELETE_PACKAGES, uid, packageName, "secondFeature", null)
+        appOpsManager.noteOp(OPSTR_REQUEST_DELETE_PACKAGES, uid, packageName, "firstAttribution",
+                null)
+        appOpsManager.noteOp(OPSTR_REQUEST_DELETE_PACKAGES, uid, packageName, "secondAttribution",
+                null)
 
         val memOps = getHistoricalOps(appOpsManager, uid = uid)!!
 
         assertThat(memOps.getUidOpsAt(0).getPackageOpsAt(0).getOp(OPSTR_REQUEST_DELETE_PACKAGES)!!
                 .getForegroundAccessCount(OP_FLAGS_ALL)).isEqualTo(2)
-        assertThat(memOps.getUidOpsAt(0).getPackageOpsAt(0).getFeatureOps("firstFeature")!!
+        assertThat(memOps.getUidOpsAt(0).getPackageOpsAt(0).getAttributedOps("firstAttribution")!!
                 .getOp(OPSTR_REQUEST_DELETE_PACKAGES)!!.getForegroundAccessCount(OP_FLAGS_ALL))
                 .isEqualTo(1)
-        assertThat(memOps.getUidOpsAt(0).getPackageOpsAt(0).getFeatureOps("secondFeature")!!
+        assertThat(memOps.getUidOpsAt(0).getPackageOpsAt(0).getAttributedOps("secondAttribution")!!
                 .getOp(OPSTR_REQUEST_DELETE_PACKAGES)!!.getForegroundAccessCount(OP_FLAGS_ALL))
                 .isEqualTo(1)
 

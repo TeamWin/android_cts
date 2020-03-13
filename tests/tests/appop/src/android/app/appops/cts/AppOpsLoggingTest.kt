@@ -78,7 +78,7 @@ private external fun nativeNoteOp(
     op: Int,
     uid: Int,
     packageName: String,
-    featureId: String? = null,
+    attributionTag: String? = null,
     message: String? = null
 )
 
@@ -168,15 +168,16 @@ class AppOpsLoggingTest {
         assertThat(noted).isEmpty()
         assertThat(asyncNoted).isEmpty()
 
-        assertThat(selfNoted.map { it.first.featureId to it.first.op })
+        assertThat(selfNoted.map { it.first.attributionTag to it.first.op })
             .containsExactly(null to OPSTR_COARSE_LOCATION)
     }
 
     @Test
-    fun selfNoteAndCheckFeature() {
-        appOpsManager.noteOpNoThrow(OPSTR_COARSE_LOCATION, myUid, myPackage, TEST_FEATURE_ID, null)
+    fun selfNoteAndCheckAttribution() {
+        appOpsManager.noteOpNoThrow(OPSTR_COARSE_LOCATION, myUid, myPackage, TEST_ATTRIBUTION_TAG,
+                null)
 
-        assertThat(selfNoted.map { it.first.featureId }).containsExactly(TEST_FEATURE_ID)
+        assertThat(selfNoted.map { it.first.attributionTag }).containsExactly(TEST_ATTRIBUTION_TAG)
     }
 
     @Test
@@ -188,7 +189,7 @@ class AppOpsLoggingTest {
 
         // All native notes will be reported as async notes
         eventually {
-            assertThat(asyncNoted[0].featureId).isEqualTo(null)
+            assertThat(asyncNoted[0].attributionTag).isEqualTo(null)
             // There is always a message.
             assertThat(asyncNoted[0].message).isNotEqualTo(null)
             assertThat(asyncNoted[0].op).isEqualTo(OPSTR_COARSE_LOCATION)
@@ -197,13 +198,13 @@ class AppOpsLoggingTest {
     }
 
     @Test
-    fun nativeSelfNoteWithFeatureAndMsgAndCheckLog() {
+    fun nativeSelfNoteWithAttributionAndMsgAndCheckLog() {
         nativeNoteOp(strOpToOp(OPSTR_COARSE_LOCATION), myUid, myPackage,
-            featureId = TEST_FEATURE_ID, message = "testMsg")
+            attributionTag = TEST_ATTRIBUTION_TAG, message = "testMsg")
 
         // All native notes will be reported as async notes
         eventually {
-            assertThat(asyncNoted[0].featureId).isEqualTo(TEST_FEATURE_ID)
+            assertThat(asyncNoted[0].attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
             assertThat(asyncNoted[0].message).isEqualTo("testMsg")
         }
     }
@@ -232,9 +233,9 @@ class AppOpsLoggingTest {
     }
 
     @Test
-    fun noteSyncWithFeatureOpAndCheckLog() {
+    fun noteSyncWithAttributionOpAndCheckLog() {
         rethrowThrowableFrom {
-            testService.callApiThatNotesSyncOpWithFeatureAndCheckLog(AppOpsUserClient(context))
+            testService.callApiThatNotesSyncOpWithAttributionAndCheckLog(AppOpsUserClient(context))
         }
     }
 
@@ -341,9 +342,9 @@ class AppOpsLoggingTest {
     }
 
     @Test
-    fun noteAsyncOpWithFeatureAndCheckLog() {
+    fun noteAsyncOpWithAttributionAndCheckLog() {
         rethrowThrowableFrom {
-            testService.callApiThatNotesAsyncOpWithFeatureAndCheckLog(AppOpsUserClient(context))
+            testService.callApiThatNotesAsyncOpWithAttributionAndCheckLog(AppOpsUserClient(context))
         }
     }
 
@@ -381,13 +382,13 @@ class AppOpsLoggingTest {
      */
     @Test
     fun getWifiScanResults() {
-        val wifiManager = context.createFeatureContext(TEST_FEATURE_ID)
+        val wifiManager = context.createAttributionContext(TEST_ATTRIBUTION_TAG)
             .getSystemService(WifiManager::class.java)
 
         val results = wifiManager.scanResults
 
         assertThat(noted[0].first.op).isEqualTo(OPSTR_FINE_LOCATION)
-        assertThat(noted[0].first.featureId).isEqualTo(TEST_FEATURE_ID)
+        assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
         assertThat(noted[0].second.map { it.methodName }).contains("getWifiScanResults")
     }
 
@@ -399,13 +400,13 @@ class AppOpsLoggingTest {
         assumeTrue("Device does not support bluetooth",
                 context.packageManager.hasSystemFeature(FEATURE_BLUETOOTH))
 
-        val btManager = context.createFeatureContext(TEST_FEATURE_ID)
+        val btManager = context.createAttributionContext(TEST_ATTRIBUTION_TAG)
                 .getSystemService(BluetoothManager::class.java)
 
         btManager.adapter.startDiscovery()
         try {
             assertThat(noted[0].first.op).isEqualTo(OPSTR_FINE_LOCATION)
-            assertThat(noted[0].first.featureId).isEqualTo(TEST_FEATURE_ID)
+            assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
             assertThat(noted[0].second.map { it.methodName }).contains("getBTScanResults")
         } finally {
             btManager.adapter.cancelDiscovery()
@@ -417,7 +418,7 @@ class AppOpsLoggingTest {
      */
     @Test
     fun getLastKnownLocation() {
-        val locationManager = context.createFeatureContext(TEST_FEATURE_ID)
+        val locationManager = context.createAttributionContext(TEST_ATTRIBUTION_TAG)
             .getSystemService(LocationManager::class.java)
 
         assumeTrue("Device does not have a network provider",
@@ -428,7 +429,7 @@ class AppOpsLoggingTest {
 
         assertThat(noted.map { it.first.op }).containsAnyOf(OPSTR_COARSE_LOCATION,
             OPSTR_FINE_LOCATION)
-        assertThat(noted[0].first.featureId).isEqualTo(TEST_FEATURE_ID)
+        assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
         assertThat(noted[0].second.map { it.methodName }).contains("getLastKnownLocation")
     }
 
@@ -437,7 +438,7 @@ class AppOpsLoggingTest {
      */
     @Test
     fun getAsyncLocation() {
-        val locationManager = context.createFeatureContext(TEST_FEATURE_ID)
+        val locationManager = context.createAttributionContext(TEST_ATTRIBUTION_TAG)
             .getSystemService(LocationManager::class.java)
 
         assumeTrue("Device does not have a network provider",
@@ -467,7 +468,7 @@ class AppOpsLoggingTest {
         eventually {
             assertThat(asyncNoted.map { it.op }).containsAnyOf(OPSTR_COARSE_LOCATION,
                 OPSTR_FINE_LOCATION)
-            assertThat(asyncNoted[0].featureId).isEqualTo(TEST_FEATURE_ID)
+            assertThat(asyncNoted[0].attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
 
             assertThat(asyncNoted[0].message).contains(locationListener::class.java.name)
             assertThat(asyncNoted[0].message).contains(
@@ -484,7 +485,7 @@ class AppOpsLoggingTest {
 
         val gotProximityAlert = CompletableFuture<Unit>()
 
-        val locationManager = context.createFeatureContext(TEST_FEATURE_ID)
+        val locationManager = context.createAttributionContext(TEST_ATTRIBUTION_TAG)
             .getSystemService(LocationManager::class.java)!!
 
         val proximityAlertReceiver = object : BroadcastReceiver() {
@@ -511,7 +512,7 @@ class AppOpsLoggingTest {
 
                 eventually {
                     assertThat(asyncNoted.map { it.op }).contains(OPSTR_FINE_LOCATION)
-                    assertThat(asyncNoted[0].featureId).isEqualTo(TEST_FEATURE_ID)
+                    assertThat(asyncNoted[0].attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
 
                     assertThat(asyncNoted[0].message).contains(
                         proximityAlertReceiverPendingIntent::class.java.name)
@@ -532,11 +533,11 @@ class AppOpsLoggingTest {
      */
     @Test
     fun readFromContactsProvider() {
-        context.createFeatureContext(TEST_FEATURE_ID).contentResolver
+        context.createAttributionContext(TEST_ATTRIBUTION_TAG).contentResolver
             .query(ContactsContract.Contacts.CONTENT_URI, null, null, null, null)
 
         assertThat(noted.map { it.first.op }).containsExactly(OPSTR_READ_CONTACTS)
-        assertThat(noted[0].first.featureId).isEqualTo(TEST_FEATURE_ID)
+        assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
         assertThat(noted[0].second.map { it.methodName }).contains("readFromContactsProvider")
     }
 
@@ -545,11 +546,11 @@ class AppOpsLoggingTest {
      */
     @Test
     fun writeToContactsProvider() {
-        context.createFeatureContext(TEST_FEATURE_ID).contentResolver
+        context.createAttributionContext(TEST_ATTRIBUTION_TAG).contentResolver
             .insert(ContactsContract.RawContacts.CONTENT_URI, ContentValues())
 
         assertThat(noted.map { it.first.op }).containsExactly(OPSTR_WRITE_CONTACTS)
-        assertThat(noted[0].first.featureId).isEqualTo(TEST_FEATURE_ID)
+        assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
         assertThat(noted[0].second.map { it.methodName }).contains("writeToContactsProvider")
     }
 
@@ -560,13 +561,13 @@ class AppOpsLoggingTest {
     fun getCellInfo() {
         assumeTrue(context.packageManager.hasSystemFeature(FEATURE_TELEPHONY))
 
-        val telephonyManager = context.createFeatureContext(TEST_FEATURE_ID)
+        val telephonyManager = context.createAttributionContext(TEST_ATTRIBUTION_TAG)
             .getSystemService(TelephonyManager::class.java)
 
         telephonyManager.allCellInfo
 
         assertThat(noted[0].first.op).isEqualTo(OPSTR_FINE_LOCATION)
-        assertThat(noted[0].first.featureId).isEqualTo(TEST_FEATURE_ID)
+        assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
         assertThat(noted[0].second.map { it.methodName }).contains("getCellInfo")
     }
 
@@ -591,7 +592,7 @@ class AppOpsLoggingTest {
 
         eventually {
             assertThat(asyncNoted[0].op).isEqualTo(OPSTR_CAMERA)
-            assertThat(asyncNoted[0].featureId).isEqualTo(context.featureId)
+            assertThat(asyncNoted[0].attributionTag).isEqualTo(context.attributionTag)
             assertThat(asyncNoted[0].message).contains(cameraManager.cameraIdList[0])
         }
     }
@@ -600,17 +601,17 @@ class AppOpsLoggingTest {
      * Realistic end-to-end test for opening camera
      */
     @Test
-    fun openCameraWithFeature() {
-        openCamera(context.createFeatureContext(TEST_FEATURE_ID))
+    fun openCameraWithAttribution() {
+        openCamera(context.createAttributionContext(TEST_ATTRIBUTION_TAG))
     }
 
     /**
-     * Realistic end-to-end test for opening camera. This uses the default (==null) feature. This
-     * is interesting as null feature handling is more complex in native code.
+     * Realistic end-to-end test for opening camera. This uses the default (==null) attribution.
+     * This is interesting as null attribution handling is more complex in native code.
      */
     @Test
-    fun openCameraWithDefaultFeature() {
-        openCamera(context.createFeatureContext(null))
+    fun openCameraWithDefaultAttribution() {
+        openCamera(context.createAttributionContext(null))
     }
 
     /**
@@ -620,13 +621,13 @@ class AppOpsLoggingTest {
     fun getMultiSimSupport() {
         assumeTrue(context.packageManager.hasSystemFeature(FEATURE_TELEPHONY))
 
-        val telephonyManager = context.createFeatureContext(TEST_FEATURE_ID)
+        val telephonyManager = context.createAttributionContext(TEST_ATTRIBUTION_TAG)
             .getSystemService(TelephonyManager::class.java)
 
         telephonyManager.isMultiSimSupported
 
         assertThat(noted[0].first.op).isEqualTo(OPSTR_READ_PHONE_STATE)
-        assertThat(noted[0].first.featureId).isEqualTo(TEST_FEATURE_ID)
+        assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
         assertThat(noted[0].second.map { it.methodName }).contains("getMultiSimSupport")
     }
 
@@ -635,13 +636,13 @@ class AppOpsLoggingTest {
      */
     @Test
     fun getWallpaper() {
-        val wallpaperManager = context.createFeatureContext(TEST_FEATURE_ID)
+        val wallpaperManager = context.createAttributionContext(TEST_ATTRIBUTION_TAG)
                 .getSystemService(WallpaperManager::class.java)
 
         wallpaperManager.getWallpaperFile(FLAG_SYSTEM)
 
         assertThat(noted[0].first.op).isEqualTo(OPSTR_READ_EXTERNAL_STORAGE)
-        assertThat(noted[0].first.featureId).isEqualTo(TEST_FEATURE_ID)
+        assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
         assertThat(noted[0].second.map { it.methodName }).contains("getWallpaper")
     }
 
@@ -650,13 +651,13 @@ class AppOpsLoggingTest {
      */
     @Test
     fun isInCall() {
-        val telecomManager = context.createFeatureContext(TEST_FEATURE_ID)
+        val telecomManager = context.createAttributionContext(TEST_ATTRIBUTION_TAG)
                 .getSystemService(TelecomManager::class.java)
 
         telecomManager.isInCall()
 
         assertThat(noted[0].first.op).isEqualTo(OPSTR_READ_PHONE_STATE)
-        assertThat(noted[0].first.featureId).isEqualTo(TEST_FEATURE_ID)
+        assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
         assertThat(noted[0].second.map { it.methodName }).contains("isInCall")
     }
 
@@ -665,13 +666,13 @@ class AppOpsLoggingTest {
      */
     @Test
     fun startActivity() {
-        context.createFeatureContext(TEST_FEATURE_ID).startActivity(
+        context.createAttributionContext(TEST_ATTRIBUTION_TAG).startActivity(
                 Intent().setComponent(ComponentName(TEST_SERVICE_PKG,
                         TEST_SERVICE_PKG + ".AutoClosingActivity"))
                         .setFlags(FLAG_ACTIVITY_NEW_TASK))
 
         assertThat(noted[0].first.op).isEqualTo(OPSTR_FINE_LOCATION)
-        assertThat(noted[0].first.featureId).isEqualTo(TEST_FEATURE_ID)
+        assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
         assertThat(noted[0].second.map { it.methodName }).contains("startActivity")
     }
 
@@ -706,10 +707,10 @@ class AppOpsLoggingTest {
             }
         }
 
-        override fun noteSyncOpWithFeature(featureId: String) {
+        override fun noteSyncOpWithAttribution(attributionTag: String) {
             runWithShellPermissionIdentity {
                 appOpsManager.noteOpNoThrow(OPSTR_COARSE_LOCATION, getCallingUid(),
-                    TEST_SERVICE_PKG, featureId, null)
+                    TEST_SERVICE_PKG, attributionTag, null)
             }
         }
 
@@ -789,13 +790,13 @@ class AppOpsLoggingTest {
             }
         }
 
-        override fun noteAsyncOpWithFeature(featureId: String) {
+        override fun noteAsyncOpWithAttribution(attributionTag: String) {
             val callingUid = getCallingUid()
 
             handler.post {
                 runWithShellPermissionIdentity {
                     appOpsManager.noteOpNoThrow(OPSTR_COARSE_LOCATION, callingUid, TEST_SERVICE_PKG,
-                        featureId, null)
+                        attributionTag, null)
                 }
             }
         }

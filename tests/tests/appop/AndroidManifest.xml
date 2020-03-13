@@ -19,11 +19,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.app.appops.cts"
     android:targetSandboxVersion="2">
-  <feature android:featureId="testFeature" android:label="@string/dummyLabel" />
-  <feature android:featureId="firstFeature" android:label="@string/dummyLabel" />
-  <feature android:featureId="secondFeature" android:label="@string/dummyLabel" />
-  <feature android:featureId="firstProxyFeature" android:label="@string/dummyLabel" />
-  <feature android:featureId="secondProxyFeature" android:label="@string/dummyLabel" />
+  <attribution android:tag="testAttribution" android:label="@string/dummyLabel" />
+  <attribution android:tag="firstAttribution" android:label="@string/dummyLabel" />
+  <attribution android:tag="secondAttribution" android:label="@string/dummyLabel" />
+  <attribution android:tag="firstProxyAttribution" android:label="@string/dummyLabel" />
+  <attribution android:tag="secondProxyAttribution" android:label="@string/dummyLabel" />
 
   <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
   <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
