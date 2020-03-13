@@ -16,6 +16,8 @@ package android.slice.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
+import android.content.pm.PackageManager;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -54,9 +56,12 @@ public class SliceManagerTest {
     private static final Uri BASE_URI = Uri.parse("content://android.slice.cts.local/main");
     private final Context mContext = InstrumentationRegistry.getContext();
     private final SliceManager mSliceManager = mContext.getSystemService(SliceManager.class);
+    private static final String FEATURE_WATCH = "android.hardware.type.watch";
+    private final boolean isWatch = mContext.getPackageManager().hasSystemFeature(FEATURE_WATCH);
 
     @Before
     public void setup() {
+        assumeFalse(isWatch);
         LocalSliceProvider.sProxy = mock(SliceProvider.class);
         try {
             mSliceManager.unpinSlice(BASE_URI);
@@ -66,6 +71,9 @@ public class SliceManagerTest {
 
     @After
     public void teardown() throws Exception {
+       if (isWatch) {
+            return;
+        }
         try {
             mSliceManager.unpinSlice(BASE_URI);
         } catch (Exception e) {
@@ -74,6 +82,7 @@ public class SliceManagerTest {
 
     @Test
     public void testPinSlice() throws Exception {
+        assumeFalse(isWatch);
         mSliceManager.pinSlice(BASE_URI, Collections.emptySet());
 
         verify(LocalSliceProvider.sProxy, timeout(2000)).onSlicePinned(eq(BASE_URI));
@@ -81,6 +90,7 @@ public class SliceManagerTest {
 
     @Test
     public void testUnpinSlice() throws Exception {
+        assumeFalse(isWatch);
         mSliceManager.pinSlice(BASE_URI, Collections.emptySet());
 
         verify(LocalSliceProvider.sProxy, timeout(2000)).onSlicePinned(eq(BASE_URI));
@@ -92,6 +102,7 @@ public class SliceManagerTest {
 
     @Test
     public void testPinList() {
+        assumeFalse(isWatch);
         Uri uri = BASE_URI;
         Uri longerUri = uri.buildUpon().appendPath("something").build();
         try {
@@ -111,6 +122,7 @@ public class SliceManagerTest {
 
     @Test
     public void testMapIntentToUri() {
+        assumeFalse(isWatch);
         Intent intent = new Intent("android.slice.cts.action.TEST_ACTION");
         intent.setPackage("android.slice.cts");
         intent.putExtra("path", "intent");
@@ -127,6 +139,7 @@ public class SliceManagerTest {
 
     @Test
     public void testOnCreatePermissionSlice() {
+        assumeFalse(isWatch);
         LocalSliceProvider.sAnswer = invocation -> {
             throw new SecurityException("No slices allowed");
         };
