@@ -111,6 +111,7 @@ public class TestMediaCodec extends SecurityTestCase {
     @Test
     @SecurityTest(minPatchLevel = "2017-05")
     public void testPocCVE_2017_0589() throws Exception {
+        getOomCatcher().setHighMemoryTest();
         String inputFiles[] = {"cve_2017_0589.hevc"};
         runHevcDecodeMemTest(inputFiles, "--input " + AdbUtils.TMP_PATH + inputFiles[0]
                 + " --save_output 0" + " --num_frames -1", getDevice());
