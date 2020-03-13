@@ -375,7 +375,7 @@ public class ItsUtils {
 
                     CameraCharacteristics physicalChar =
                             manager.getCameraCharacteristics(physicalId);
-                    hwLevel = characteristics.get(
+                    hwLevel = physicalChar.get(
                             CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
                     if (hwLevel == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY ||
                             hwLevel ==
@@ -384,6 +384,18 @@ public class ItsUtils {
                         continue;
                     }
 
+                    int[] physicalActualCapabilities = physicalChar.get(
+                            CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+                    boolean physicalHaveBC = false;
+                    for (int capability : physicalActualCapabilities) {
+                        if (capability == BACKWARD_COMPAT) {
+                            physicalHaveBC = true;
+                            break;
+                        }
+                    }
+                    if (!physicalHaveBC) {
+                        continue;
+                    }
                     // To reduce duplicate tests, only additionally test hidden physical cameras
                     // with different focal length compared to the default focal length of the
                     // logical camera.
