@@ -31,6 +31,7 @@ import android.security.keystore.KeyProperties;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.cts.verifier.PassFailButtons;
@@ -45,17 +46,34 @@ import java.util.concurrent.Executor;
  * {timeout, authenticator, strongbox}. Extending classes currently consist of:
  * {@link UserAuthenticationCredentialCipherTest} for testing {@link javax.crypto.Cipher}.
  */
-public abstract class AbstractUserAuthenticationCredentialTest extends PassFailButtons.Activity {
+public abstract class AbstractUserAuthenticationTest extends PassFailButtons.Activity {
 
     private static final String TAG = "AbstractUserAuthenticationCredentialTest";
 
     private static final int TIMED_KEY_DURATION = 1;
     private static final byte[] PAYLOAD = new byte[] {1, 2, 3, 4, 5, 6};
 
+    abstract class ExpectedResults {
+        abstract boolean shouldCredentialUnlockPerUseKey();
+        abstract boolean shouldCredentialUnlockTimedKey();
+        abstract boolean shouldBiometricUnlockPerUseKey();
+        abstract boolean shouldBiometricUnlockTimedKey();
+    }
+
     /**
      * @return Log tag.
      */
     abstract String getTag();
+
+    abstract int getInstructionsResourceId();
+
+    abstract ExpectedResults getExpectedResults();
+
+    /**
+     * @return The authenticators allowed to unlock the cryptographic operation. See
+     * {@link KeyProperties#AUTH_DEVICE_CREDENTIAL} and {@link KeyProperties#AUTH_BIOMETRIC_STRONG}
+     */
+    abstract int getKeyAuthenticators();
 
     /**
      * Due to the differences between auth-per-use operations and time-based operations, the
@@ -82,14 +100,14 @@ public abstract class AbstractUserAuthenticationCredentialTest extends PassFailB
 
     private BiometricManager mBiometricManager;
 
-    private Button mUnlockPerUseWithCredentialButton;
-    private Button mUnlockTimedWithCredentialButton;
-    private Button mAttemptPerUseWithBiometricButton;
-    private Button mAttemptTimedWithBiometricButton;
-    private Button mUnlockPerUseWithCredentialButtonStrongbox;
-    private Button mUnlockTimedWithCredentialButtonStrongbox;
-    private Button mAttemptPerUseWithBiometricButtonStrongbox;
-    private Button mAttemptTimedWithBiometricButtonStrongbox;
+    private Button mCredentialPerUseButton;
+    private Button mCredentialTimedButton;
+    private Button mBiometricPerUseButton;
+    private Button mBiometricTimedButton;
+    private Button mCredentialPerUseButton_strongbox;
+    private Button mCredentialTimedButton_strongbox;
+    private Button mBiometricPerUseButton_strongbox;
+    private Button mBiometricTimedButton_strongbox;
 
     private Button[] mButtons;
 
@@ -102,28 +120,31 @@ public abstract class AbstractUserAuthenticationCredentialTest extends PassFailB
 
         mBiometricManager = getSystemService(BiometricManager.class);
 
-        mUnlockPerUseWithCredentialButton = findViewById(R.id.per_use_auth_with_credential);
-        mUnlockTimedWithCredentialButton = findViewById(R.id.duration_auth_with_credential);
-        mAttemptPerUseWithBiometricButton = findViewById(R.id.per_use_auth_with_biometric);
-        mAttemptTimedWithBiometricButton = findViewById(R.id.duration_auth_with_biometric);
-        mUnlockPerUseWithCredentialButtonStrongbox
+        TextView instructionsText = findViewById(R.id.instructions);
+        instructionsText.setText(getInstructionsResourceId());
+
+        mCredentialPerUseButton = findViewById(R.id.per_use_auth_with_credential);
+        mCredentialTimedButton = findViewById(R.id.duration_auth_with_credential);
+        mBiometricPerUseButton = findViewById(R.id.per_use_auth_with_biometric);
+        mBiometricTimedButton = findViewById(R.id.duration_auth_with_biometric);
+        mCredentialPerUseButton_strongbox
                 = findViewById(R.id.per_use_auth_with_credential_strongbox);
-        mUnlockTimedWithCredentialButtonStrongbox
+        mCredentialTimedButton_strongbox
                 = findViewById(R.id.duration_auth_with_credential_strongbox);
-        mAttemptPerUseWithBiometricButtonStrongbox
+        mBiometricPerUseButton_strongbox
                 = findViewById(R.id.per_use_auth_with_biometric_strongbox);
-        mAttemptTimedWithBiometricButtonStrongbox
+        mBiometricTimedButton_strongbox
                 = findViewById(R.id.duration_auth_with_biometric_strongbox);
 
         mButtons = new Button[] {
-                mUnlockPerUseWithCredentialButton,
-                mUnlockTimedWithCredentialButton,
-                mAttemptPerUseWithBiometricButton,
-                mAttemptTimedWithBiometricButton,
-                mUnlockPerUseWithCredentialButtonStrongbox,
-                mUnlockTimedWithCredentialButtonStrongbox,
-                mAttemptPerUseWithBiometricButtonStrongbox,
-                mAttemptTimedWithBiometricButtonStrongbox
+                mCredentialPerUseButton,
+                mCredentialTimedButton,
+                mBiometricPerUseButton,
+                mBiometricTimedButton,
+                mCredentialPerUseButton_strongbox,
+                mCredentialTimedButton_strongbox,
+                mBiometricPerUseButton_strongbox,
+                mBiometricTimedButton_strongbox
         };
 
         final boolean hasStrongBox = getPackageManager().hasSystemFeature(
@@ -133,101 +154,101 @@ public abstract class AbstractUserAuthenticationCredentialTest extends PassFailB
                         == BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE;
 
         if (!hasStrongBox) {
-            mUnlockPerUseWithCredentialButtonStrongbox.setVisibility(View.GONE);
-            mUnlockTimedWithCredentialButtonStrongbox.setVisibility(View.GONE);
-            mAttemptPerUseWithBiometricButtonStrongbox.setVisibility(View.GONE);
-            mAttemptTimedWithBiometricButtonStrongbox.setVisibility(View.GONE);
+            mCredentialPerUseButton_strongbox.setVisibility(View.GONE);
+            mCredentialTimedButton_strongbox.setVisibility(View.GONE);
+            mBiometricPerUseButton_strongbox.setVisibility(View.GONE);
+            mBiometricTimedButton_strongbox.setVisibility(View.GONE);
         }
 
         if (noStrongBiometricHardware) {
-            mAttemptPerUseWithBiometricButton.setVisibility(View.GONE);
-            mAttemptTimedWithBiometricButton.setVisibility(View.GONE);
-            mAttemptPerUseWithBiometricButtonStrongbox.setVisibility(View.GONE);
-            mAttemptTimedWithBiometricButtonStrongbox.setVisibility(View.GONE);
+            mBiometricPerUseButton.setVisibility(View.GONE);
+            mBiometricTimedButton.setVisibility(View.GONE);
+            mBiometricPerUseButton_strongbox.setVisibility(View.GONE);
+            mBiometricTimedButton_strongbox.setVisibility(View.GONE);
         }
 
         // No strongbox
 
-        mUnlockPerUseWithCredentialButton.setOnClickListener((view) -> {
+        mCredentialPerUseButton.setOnClickListener((view) -> {
             testCredentialBoundEncryption("key1",
                     0 /* timeout */,
                     false /* useStrongBox */,
                     Authenticators.DEVICE_CREDENTIAL,
-                    true /* shouldKeyBeUsable */,
+                    getExpectedResults().shouldCredentialUnlockPerUseKey(),
                     PAYLOAD,
-                    mUnlockPerUseWithCredentialButton);
+                    mCredentialPerUseButton);
         });
 
-        mUnlockTimedWithCredentialButton.setOnClickListener((view) -> {
+        mCredentialTimedButton.setOnClickListener((view) -> {
             testCredentialBoundEncryption("key2",
                     TIMED_KEY_DURATION /* timeout */,
                     false /* useStrongBox */,
                     Authenticators.DEVICE_CREDENTIAL,
-                    true /* shouldKeyBeUsable */,
+                    getExpectedResults().shouldCredentialUnlockTimedKey(),
                     PAYLOAD,
-                    mUnlockTimedWithCredentialButton);
+                    mCredentialTimedButton);
         });
 
-        mAttemptPerUseWithBiometricButton.setOnClickListener((view) -> {
+        mBiometricPerUseButton.setOnClickListener((view) -> {
             testCredentialBoundEncryption("key3",
                     0 /* timeout */,
                     false /* useStrongBox */,
                     Authenticators.BIOMETRIC_STRONG,
-                    false /* shouldKeyBeUsable */,
+                    getExpectedResults().shouldBiometricUnlockPerUseKey(),
                     PAYLOAD,
-                    mAttemptPerUseWithBiometricButton);
+                    mBiometricPerUseButton);
         });
 
-        mAttemptTimedWithBiometricButton.setOnClickListener((view) -> {
+        mBiometricTimedButton.setOnClickListener((view) -> {
             testCredentialBoundEncryption("key4",
                     TIMED_KEY_DURATION /* timeout */,
                     false /* useStrongBox */,
                     Authenticators.BIOMETRIC_STRONG,
-                    false /* shouldKeyBeUsable */,
+                    getExpectedResults().shouldBiometricUnlockTimedKey(),
                     PAYLOAD,
-                    mAttemptTimedWithBiometricButton);
+                    mBiometricTimedButton);
         });
 
         // Strongbox
 
-        mUnlockPerUseWithCredentialButtonStrongbox.setOnClickListener((view) -> {
+        mCredentialPerUseButton_strongbox.setOnClickListener((view) -> {
             testCredentialBoundEncryption("key5",
                     0 /* timeout */,
                     true /* useStrongBox */,
                     Authenticators.DEVICE_CREDENTIAL,
-                    true /* shouldKeyBeUsable */,
+                    getExpectedResults().shouldCredentialUnlockPerUseKey(),
                     PAYLOAD,
-                    mUnlockPerUseWithCredentialButtonStrongbox);
+                    mCredentialPerUseButton_strongbox);
         });
 
-        mUnlockTimedWithCredentialButtonStrongbox.setOnClickListener((view) -> {
+        mCredentialTimedButton_strongbox.setOnClickListener((view) -> {
             testCredentialBoundEncryption("key6",
                     TIMED_KEY_DURATION /* timeout */,
                     true /* useStrongBox */,
                     Authenticators.DEVICE_CREDENTIAL,
-                    true /* shouldKeyBeUsable */,
+                    getExpectedResults().shouldCredentialUnlockTimedKey(),
                     PAYLOAD,
-                    mUnlockTimedWithCredentialButtonStrongbox);
+                    mCredentialTimedButton_strongbox);
         });
 
-        mAttemptPerUseWithBiometricButtonStrongbox.setOnClickListener((view) -> {
+        mBiometricPerUseButton_strongbox.setOnClickListener((view) -> {
             testCredentialBoundEncryption("key7",
                     0 /* timeout */,
                     true /* useStrongBox */,
                     Authenticators.BIOMETRIC_STRONG,
-                    false /* shouldKeyBeUsable */,
+                    getExpectedResults().shouldBiometricUnlockPerUseKey(),
                     PAYLOAD,
-                    mAttemptPerUseWithBiometricButtonStrongbox);
+                    mBiometricPerUseButton_strongbox);
         });
 
-        mAttemptTimedWithBiometricButtonStrongbox.setOnClickListener((view) -> {
+        mBiometricTimedButton_strongbox.setOnClickListener((view) -> {
             testCredentialBoundEncryption("key8",
                     TIMED_KEY_DURATION /* timeout */,
                     true /* useStrongBox */,
                     Authenticators.BIOMETRIC_STRONG,
-                    false /* shouldKeyBeUsable */,
+                    getExpectedResults().shouldBiometricUnlockTimedKey(),
                     PAYLOAD,
-                    mAttemptTimedWithBiometricButtonStrongbox);
+                    mBiometricTimedButton_strongbox);
         });
     }
 
@@ -258,15 +279,16 @@ public abstract class AbstractUserAuthenticationCredentialTest extends PassFailB
         }
 
         try {
-            if (mBiometricManager.canAuthenticate(Authenticators.DEVICE_CREDENTIAL)
+            if (mBiometricManager.canAuthenticate(allowedAuthenticators)
                     != BiometricManager.BIOMETRIC_SUCCESS) {
-                showToastAndLog("Please ensure you have a PIN/Pattern/Password set up.");
+                showToastAndLog("Please ensure you have the authenticator combination set up: "
+                        + allowedAuthenticators);
                 return;
             }
 
             Utils.createUserAuthenticationKey(keyName,
                     timeout,
-                    KeyProperties.AUTH_DEVICE_CREDENTIAL,
+                    getKeyAuthenticators(),
                     useStrongBox /* useStrongBox */);
 
             CryptoObject crypto;
@@ -285,6 +307,7 @@ public abstract class AbstractUserAuthenticationCredentialTest extends PassFailB
             builder.setTitle("Please authenticate");
             builder.setAllowedAuthenticators(allowedAuthenticators);
 
+            // The BiometricPrompt API requires a negative button if credential is not allowed.
             if ((allowedAuthenticators & Authenticators.DEVICE_CREDENTIAL) == 0) {
                 builder.setNegativeButton("Cancel", mExecutor, (dialog, which) -> {
                     // Do nothing

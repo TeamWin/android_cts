@@ -20,9 +20,10 @@ import android.security.keystore.KeyProperties;
 
 import com.android.cts.verifier.R;
 
-public class UserAuthenticationCredentialCipherTest extends AbstractUserAuthenticationCipherTest {
+public class UserAuthenticationBiometricOrCredentialCipherTest
+        extends AbstractUserAuthenticationCipherTest {
 
-    private static final String TAG = "UserAuthenticationCredentialCipherTest";
+    private static final String TAG = "UserAuthenticationBiometricOrCredentialCipherTest";
 
     @Override
     String getTag() {
@@ -31,7 +32,7 @@ public class UserAuthenticationCredentialCipherTest extends AbstractUserAuthenti
 
     @Override
     int getInstructionsResourceId() {
-        return R.string.biometric_test_set_user_authentication_credential_instructions;
+        return R.string.biometric_test_set_user_authentication_biometric_or_credential_instructions;
     }
 
     @Override
@@ -49,18 +50,18 @@ public class UserAuthenticationCredentialCipherTest extends AbstractUserAuthenti
 
             @Override
             boolean shouldBiometricUnlockPerUseKey() {
-                return false;
+                return true;
             }
 
             @Override
             boolean shouldBiometricUnlockTimedKey() {
-                return false;
+                return true;
             }
         };
     }
 
     @Override
     int getKeyAuthenticators() {
-        return KeyProperties.AUTH_DEVICE_CREDENTIAL;
+        return KeyProperties.AUTH_DEVICE_CREDENTIAL | KeyProperties.AUTH_BIOMETRIC_STRONG;
     }
 }

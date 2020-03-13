@@ -299,19 +299,25 @@
     <string name="biometric_test_weak_enroll">Start enrollment</string>
     <string name="biometric_test_weak_authenticate">Authenticate</string>
 
-    <string name="biometric_test_set_user_authentication_credential_label">4a: setUserAuthParams: Credential, Cipher</string>
+    <string name="biometric_test_set_user_authentication_credential_cipher_label">4a: setUserAuthParams: Credential, Cipher</string>
+    <string name="biometric_test_set_user_authentication_biometric_cipher_label">4b: setUserAuthParams: Biometric, Cipher</string>
+    <string name="biometric_test_set_user_authentication_biometric_credential_cipher_label">4c: setUserAuthParams: Biometric|Credential, Cipher</string>
     <string name="biometric_test_set_user_authentication_credential_instructions">This test checks the correctness of the KeyGenParameterSpec.Builder#setUserAuthenticationParameters(int, int) API for AUTH_DEVICE_CREDENTIAL.
         Buttons for completed tasks will become invisible. It\'s normal for buttons to be disabled for a few seconds during this test.</string>
+    <string name="biometric_test_set_user_authentication_biometric_instructions">This test checks the correctness of the KeyGenParameterSpec.Builder#setUserAuthenticationParameters(int, int) API for AUTH_BIOMETRIC_STRONG.
+        Buttons for completed tasks will become invisible. It\'s normal for buttons to be disabled for a few seconds during this test.</string>
+    <string name="biometric_test_set_user_authentication_biometric_or_credential_instructions">This test checks the correctness of the KeyGenParameterSpec.Builder#setUserAuthenticationParameters(int, int) API for AUTH_BIOMETRIC_STRONG|AUTH_DEVICE_CREDENTIAL.
+        Buttons for completed tasks will become invisible. It\'s normal for buttons to be disabled for a few seconds during this test.</string>
     <!-- no strongbox-->
-    <string name="biometric_test_set_user_authentication_credential_per_use_auth_with_credential">Unlock auth-per-use key with credential</string>
-    <string name="biometric_test_set_user_authentication_credential_duration_auth_with_credential">Unlock time-based key with credential</string>
-    <string name="biometric_test_set_user_authentication_credential_per_use_auth_with_biometric">Attempt to unlock auth-per-use key with biometric</string>
-    <string name="biometric_test_set_user_authentication_credential_duration_auth_with_biometric">Attempt to unlock time-based key with biometric</string>
+    <string name="biometric_test_set_user_authentication_credential_per_use_auth_with_credential">auth-per-use key with credential</string>
+    <string name="biometric_test_set_user_authentication_credential_duration_auth_with_credential">time-based key with credential</string>
+    <string name="biometric_test_set_user_authentication_credential_per_use_auth_with_biometric">auth-per-use key with biometric</string>
+    <string name="biometric_test_set_user_authentication_credential_duration_auth_with_biometric">time-based key with biometric</string>
     <!-- strongbox -->
-    <string name="biometric_test_set_user_authentication_credential_per_use_auth_with_credential_strongbox">Unlock auth-per-use key with credential (strongbox)</string>
-    <string name="biometric_test_set_user_authentication_credential_duration_auth_with_credential_strongbox">Unlock time-based key with credential (strongbox)</string>
-    <string name="biometric_test_set_user_authentication_credential_per_use_auth_with_biometric_strongbox">Attempt to unlock auth-per-use key with biometric (strongbox)</string>
-    <string name="biometric_test_set_user_authentication_credential_duration_auth_with_biometric_strongbox">Attempt to unlock time-based key with biometric (strongbox)</string>
+    <string name="biometric_test_set_user_authentication_credential_per_use_auth_with_credential_strongbox">auth-per-use key with credential (strongbox)</string>
+    <string name="biometric_test_set_user_authentication_credential_duration_auth_with_credential_strongbox">time-based key with credential (strongbox)</string>
+    <string name="biometric_test_set_user_authentication_credential_per_use_auth_with_biometric_strongbox">auth-per-use key with biometric (strongbox)</string>
+    <string name="biometric_test_set_user_authentication_credential_duration_auth_with_biometric_strongbox">time-based key with biometric (strongbox)</string>
 
     <!-- Strings for lock bound keys test -->
     <string name="sec_lock_bound_key_test">Lock Bound Keys Test</string>
