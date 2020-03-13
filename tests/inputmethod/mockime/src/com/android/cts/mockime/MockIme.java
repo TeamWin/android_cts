@@ -286,6 +286,8 @@ public final class MockIme extends InputMethodService {
                     case "getDisplayId":
                         return getSystemService(WindowManager.class)
                                 .getDefaultDisplay().getDisplayId();
+                    case "verifyLayoutInflaterContext":
+                        return getLayoutInflater().getContext() == this;
                 }
             }
             return ImeEvent.RETURN_VALUE_UNAVAILABLE;
