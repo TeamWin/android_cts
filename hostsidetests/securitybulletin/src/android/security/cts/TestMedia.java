@@ -48,6 +48,38 @@ public class TestMedia extends SecurityTestCase {
      * existing test methods
      ******************************************************************************/
 
+    /**
+     * b/62948670
+     * Vulnerability Behaviour: SIGSEGV in mediaserver or omx@1.0-service
+     */
+    @SecurityTest(minPatchLevel = "2017-11")
+    public void testPocCVE_2017_0840() throws Exception {
+        String processPatternStrings[] = {"mediaserver", "omx@\\d+?\\.\\d+?-service"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0840", null, getDevice(),
+                processPatternStrings);
+    }
+
+    /**
+     * b/69065651
+     * Vulnerability Behaviour: SIGSEGV in mediaserver or omx@1.0-service
+     */
+    @SecurityTest(minPatchLevel = "2018-02")
+    public void testPocCVE_2017_13241() throws Exception {
+        String processPatternStrings[] = {"mediaserver", "omx@\\d+?\\.\\d+?-service"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-13241", null, getDevice(),
+                processPatternStrings);
+    }
+
+    /**
+     * b/30033990
+     * Vulnerability Behaviour: SIGSEGV in mediaserver or omx@1.0-service
+     */
+    @SecurityTest(minPatchLevel = "2016-10")
+    public void testPocCVE_2016_3909() throws Exception {
+        String processPatternStrings[] = {"mediaserver", "omx@\\d+?\\.\\d+?-service"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2016-3909", null, getDevice(),
+                processPatternStrings);
+    }
 
     /******************************************************************************
      * To prevent merge conflicts, add tests for P below this comment, before any
