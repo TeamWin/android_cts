@@ -333,6 +333,11 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         Log.d(TAG, "executed[" + cmd + "]; output[" + output.trim() + "]");
     }
 
+    private String executeShellCommand(String cmd) throws IOException {
+        final UiDevice uiDevice = UiDevice.getInstance(mInstrumentation);
+        return uiDevice.executeShellCommand(cmd).trim();
+    }
+
     private void setForcedAppStandby(String packageName, boolean enabled) throws IOException {
         final StringBuilder cmdBuilder = new StringBuilder("appops set ")
                 .append(packageName)
@@ -737,7 +742,11 @@ public class ActivityManagerTest extends InstrumentationTestCase {
 
         ActivityReceiverFilter appStartedReceiver = new ActivityReceiverFilter(
                 ACTIVITY_LAUNCHED_ACTION);
+        boolean disabled = "0".equals(executeShellCommand("cmd deviceidle enabled light"));
         try {
+            if (disabled) {
+                executeAndLogShellCommand("cmd deviceidle enable light");
+            }
             intent = new Intent(Intent.ACTION_MAIN);
             intent.setClassName(SIMPLE_PACKAGE_NAME, SIMPLE_PACKAGE_NAME + SIMPLE_ACTIVITY);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -810,6 +819,9 @@ public class ActivityManagerTest extends InstrumentationTestCase {
             toggleScreenOn(true);
             appStartedReceiver.close();
 
+            if (disabled) {
+                executeAndLogShellCommand("cmd deviceidle disable light");
+            }
             SystemUtil.runWithShellPermissionIdentity(() -> {
                 mActivityManager.forceStopPackage(SIMPLE_PACKAGE_NAME);
             });
