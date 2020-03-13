@@ -91,51 +91,61 @@ public class CrashUtilsTest {
 
     @Test
     public void testValidCrash() throws Exception {
-        Assert.assertTrue(CrashUtils.securityCrashDetected(mCrashes, true,
-                Pattern.compile("synthetic_process_0")));
+        Assert.assertTrue(CrashUtils.securityCrashDetected(mCrashes, new CrashUtils.Config()
+                .checkMinAddress(true)
+                .setProcessPatterns(Pattern.compile("synthetic_process_0"))));
     }
 
     @Test
     public void testMissingName() throws Exception {
-        Assert.assertFalse(CrashUtils.securityCrashDetected(mCrashes, true,
-                Pattern.compile("")));
+        Assert.assertFalse(CrashUtils.securityCrashDetected(mCrashes, new CrashUtils.Config()
+                .checkMinAddress(true)
+                .setProcessPatterns(Pattern.compile(""))));
     }
 
     @Test
     public void testSIGABRT() throws Exception {
-        Assert.assertFalse(CrashUtils.securityCrashDetected(mCrashes, true,
-                Pattern.compile("installd")));
+        Assert.assertFalse(CrashUtils.securityCrashDetected(mCrashes, new CrashUtils.Config()
+                .checkMinAddress(true)
+                .setProcessPatterns(Pattern.compile("installd"))));
     }
 
     @Test
     public void testFaultAddressBelowMin() throws Exception {
-        Assert.assertFalse(CrashUtils.securityCrashDetected(mCrashes, true,
-                Pattern.compile("synthetic_process_1")));
+        Assert.assertFalse(CrashUtils.securityCrashDetected(mCrashes, new CrashUtils.Config()
+                .checkMinAddress(true)
+                .setProcessPatterns(Pattern.compile("synthetic_process_1"))));
     }
 
     @Test
     public void testIgnoreMinAddressCheck() throws Exception {
-        Assert.assertTrue(CrashUtils.securityCrashDetected(mCrashes, false,
-                Pattern.compile("synthetic_process_1")));
+        Assert.assertTrue(CrashUtils.securityCrashDetected(mCrashes, new CrashUtils.Config()
+                .checkMinAddress(false)
+                .setProcessPatterns(Pattern.compile("synthetic_process_1"))));
     }
 
     @Test
     public void testBadAbortMessage() throws Exception {
-        Assert.assertFalse(CrashUtils.securityCrashDetected(mCrashes, true,
-                Pattern.compile("generic")));
+        Assert.assertFalse(CrashUtils.securityCrashDetected(mCrashes, new CrashUtils.Config()
+                .checkMinAddress(true)
+                .setProcessPatterns(Pattern.compile("generic"))));
     }
 
     @Test
     public void testGoodAndBadCrashes() throws Exception {
-        Assert.assertTrue(CrashUtils.securityCrashDetected(mCrashes, true,
-                Pattern.compile("synthetic_process_0"), Pattern.compile("generic")));
+        Assert.assertTrue(CrashUtils.securityCrashDetected(mCrashes, new CrashUtils.Config()
+                .checkMinAddress(true)
+                .setProcessPatterns(
+                        Pattern.compile("synthetic_process_0"),
+                        Pattern.compile("generic"))));
     }
 
     @Test
     public void testNullFaultAddress() throws Exception {
         JSONArray crashes = new JSONArray();
         crashes.put(createCrashJson(8373, 8414, "loo", "com.android.bluetooth", null, "SIGSEGV"));
-        Assert.assertTrue(CrashUtils.securityCrashDetected(crashes, true,
-                Pattern.compile("com\\.android\\.bluetooth")));
+        Assert.assertTrue(CrashUtils.securityCrashDetected(crashes, new CrashUtils.Config()
+                .checkMinAddress(true)
+                .setProcessPatterns(Pattern.compile("com\\.android\\.bluetooth"))));
     }
 }
