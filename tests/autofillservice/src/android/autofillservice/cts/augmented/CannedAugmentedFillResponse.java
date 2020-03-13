@@ -177,7 +177,7 @@ public final class CannedAugmentedFillResponse {
                         new android.service.autofill.Dataset.Builder();
                 for (Pair<AutofillId, AutofillValue> pair : dataset.getValues()) {
                     final AutofillId id = pair.first;
-                    datasetBuilder.setInlinePresentation(id, pair.second, null,
+                    datasetBuilder.setFieldInlinePresentation(id, pair.second, null,
                             dataset.mFieldPresentationById.get(id));
                 }
                 list.add(datasetBuilder.build());
