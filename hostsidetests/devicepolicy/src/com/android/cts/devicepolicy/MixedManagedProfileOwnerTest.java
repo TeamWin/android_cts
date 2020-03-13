@@ -200,14 +200,14 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Override
     @Test
-    public void testSetAutoTime() {
+    public void testSetAutoTimeEnabled() {
         // Managed profile owner cannot set auto time unless it is called by the profile owner of
         // an organization-owned managed profile.
     }
 
     @Override
     @Test
-    public void testSetAutoTimeZone() {
+    public void testSetAutoTimeZoneEnabled() {
         // Managed profile owner cannot set auto time zone unless it is called by the profile
         // owner of an organization-owned managed profile.
     }

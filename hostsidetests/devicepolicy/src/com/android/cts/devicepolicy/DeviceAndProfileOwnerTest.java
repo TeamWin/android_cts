@@ -1944,12 +1944,12 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testSetAutoTime() throws Exception {
+    public void testSetAutoTimeEnabled() throws Exception {
         if (!mHasFeature) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".DevicePolicyLoggingTest", "testSetAutoTime");
+            executeDeviceTestMethod(".DevicePolicyLoggingTest", "testSetAutoTimeEnabled");
         }, new DevicePolicyEventWrapper.Builder(EventId.SET_AUTO_TIME_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
                     .setBoolean(true)
@@ -1961,12 +1961,12 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testSetAutoTimeZone() throws Exception {
+    public void testSetAutoTimeZoneEnabled() throws Exception {
         if (!mHasFeature) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {
-                    executeDeviceTestMethod(".TimeManagementTest", "testSetAutoTimeZone");
+                    executeDeviceTestMethod(".TimeManagementTest", "testSetAutoTimeZoneEnabled");
                 }, new DevicePolicyEventWrapper.Builder(EventId.SET_AUTO_TIME_ZONE_VALUE)
                         .setAdminPackageName(DEVICE_ADMIN_PKG)
                         .setBoolean(true)
