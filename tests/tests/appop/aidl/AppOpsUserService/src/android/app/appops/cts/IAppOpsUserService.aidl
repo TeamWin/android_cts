@@ -23,7 +23,7 @@ interface IAppOpsUserService {
     void disableCollectorAndCallASyncOpsWhichWillBeCollected(in IAppOpsUserClient client);
     void callApiThatNotesSyncOpAndCheckLog(in IAppOpsUserClient client);
     void callApiThatNotesSyncOpAndClearLog(in IAppOpsUserClient client);
-    void callApiThatNotesSyncOpWithFeatureAndCheckLog(in IAppOpsUserClient client);
+    void callApiThatNotesSyncOpWithAttributionAndCheckLog(in IAppOpsUserClient client);
     void callApiThatCallsBackIntoServiceAndCheckLog(in IAppOpsUserClient client);
     void callApiThatNotesSyncOpFromNativeCodeAndCheckLog(in IAppOpsUserClient client);
     void callApiThatNotesSyncOpFromNativeCodeAndCheckMessage(in IAppOpsUserClient client);
@@ -38,7 +38,7 @@ interface IAppOpsUserService {
     void callApiThatNotesSyncOpOtherUidAndCheckLog(in IAppOpsUserClient client);
     void callApiThatNotesSyncOpOtherUidNativelyAndCheckLog(in IAppOpsUserClient client);
     void callApiThatNotesAsyncOpAndCheckLog(in IAppOpsUserClient client);
-    void callApiThatNotesAsyncOpWithFeatureAndCheckLog(in IAppOpsUserClient client);
+    void callApiThatNotesAsyncOpWithAttributionAndCheckLog(in IAppOpsUserClient client);
     void callApiThatNotesAsyncOpAndCheckDefaultMessage(in IAppOpsUserClient client);
     void callApiThatNotesAsyncOpAndCheckCustomMessage(in IAppOpsUserClient client);
     void callApiThatNotesAsyncOpNativelyAndCheckCustomMessage(in IAppOpsUserClient client);

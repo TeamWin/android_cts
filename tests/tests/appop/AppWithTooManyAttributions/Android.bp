@@ -13,7 +13,7 @@
 // limitations under the License.
 
 android_test_helper_app {
-    name: "AppWithLongFeatureIdFeature",
+    name: "AppWithTooManyAttributions",
 
     test_suites: [
         "cts",

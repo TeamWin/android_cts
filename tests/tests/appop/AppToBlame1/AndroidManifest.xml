@@ -19,11 +19,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.app.appops.cts.apptoblame"
     android:version="1">
-  <feature android:featureId="feature1" android:label="@string/dummyLabel" />
-  <feature android:featureId="feature2" android:label="@string/dummyLabel" />
-  <feature android:featureId="feature3" android:label="@string/dummyLabel" />
-  <feature android:featureId="feature4" android:label="@string/dummyLabel" />
-  <feature android:featureId="feature5" android:label="@string/dummyLabel" />
+  <attribution android:tag="attribution1" android:label="@string/dummyLabel" />
+  <attribution android:tag="attribution2" android:label="@string/dummyLabel" />
+  <attribution android:tag="attribution3" android:label="@string/dummyLabel" />
+  <attribution android:tag="attribution4" android:label="@string/dummyLabel" />
+  <attribution android:tag="attribution5" android:label="@string/dummyLabel" />
 
   <application />
 
