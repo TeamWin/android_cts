@@ -116,6 +116,24 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
         });
     }
 
+    @Test
+    public void verifyLayoutInflaterContext() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+            expectEvent(stream, event -> "onStartInputView".equals(event.getEventName()), TIMEOUT);
+
+            final ImeCommand command = imeSession.verifyLayoutInflaterContext();
+            assertTrue("InputMethodService.getLayoutInflater().getContext() must be equal to"
+                    + " InputMethodService.this",
+                    expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
+        }
+    }
+
     private void verifyImeConsumesBackButton(int backDisposition) throws Exception {
         try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getContext(),
