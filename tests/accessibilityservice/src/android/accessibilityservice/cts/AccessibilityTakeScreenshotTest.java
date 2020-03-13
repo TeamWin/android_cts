@@ -105,6 +105,14 @@ public class AccessibilityTakeScreenshotTest {
                 callback));
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testTakeScreenshotWithNonDefaultDisplay_GetIllegalArgumentException() {
+        final Consumer callback = mock(Consumer.class);
+        // DisplayId isn't the default display, should throw illegalArgument exception.
+        mService.takeScreenshot(Display.DEFAULT_DISPLAY + 1,
+                mContext.getMainExecutor(), callback);
+    }
+
     private void verifyScreenshotResult(AccessibilityService.ScreenshotResult screenshot) {
         assertNotNull(screenshot);
         final HardwareBuffer hardwareBuffer = screenshot.getHardwareBuffer();

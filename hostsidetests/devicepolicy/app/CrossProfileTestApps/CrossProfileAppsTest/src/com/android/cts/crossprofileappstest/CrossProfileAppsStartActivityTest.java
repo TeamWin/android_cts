@@ -25,6 +25,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import android.app.Activity;
+import android.app.ActivityOptions;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -202,6 +203,32 @@ public class CrossProfileAppsStartActivityTest {
     }
 
     @Test
+    public void testCanStartMainActivityByIntent_withOptionsBundle() throws Exception {
+        Intent mainActivityIntent = new Intent();
+        mainActivityIntent.setComponent(MainActivity.getComponentName(mContext));
+
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mCrossProfileApps,
+                    crossProfileApps ->
+                            mCrossProfileApps.startActivity(
+                                    mainActivityIntent,
+                                    mTargetUser,
+                                    /* callingActivity= */ null,
+                                    ActivityOptions.makeBasic().toBundle()));
+
+            // Look for the text view to verify that MainActivity is started.
+            UiObject2 textView = mDevice.wait(Until.findObject(By.res(ID_USER_TEXTVIEW)),
+                    TIMEOUT_WAIT_UI);
+            assertNotNull("Failed to start main activity in target user", textView);
+            assertEquals("Main Activity is started in wrong user",
+                    String.valueOf(mUserSerialNumber), textView.getText());
+        } catch (Exception e) {
+            fail("unable to start main activity via CrossProfileApps#startActivity: " + e);
+        }
+    }
+
+    @Test
     public void testCanStartNonMainActivityByIntent() {
         Intent nonMainActivityIntent = new Intent();
         nonMainActivityIntent.setComponent(NonMainActivity.getComponentName(mContext));
@@ -250,8 +277,8 @@ public class CrossProfileAppsStartActivityTest {
     }
 
     /**
-     * Calls {@link CrossProfileApps#startActivity(Intent, UserHandle, Activity)}. This can then be used by
-     * host-side tests.
+     * Calls {@link CrossProfileApps#startActivity(Intent, UserHandle, Activity)}. This can then be
+     * used by host-side tests.
      */
     @Test
     public void testStartActivityByIntent_noAsserts() throws Exception {
