@@ -982,4 +982,18 @@ public class MockImeSession implements AutoCloseable {
         final Bundle params = new Bundle();
         return callCommandInternal("getDisplayId", params);
     }
+
+    /**
+     * Verifies {@code InputMethodService.getLayoutInflater().getContext()} is equal to
+     * {@code InputMethodService.this}.
+     *
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand verifyLayoutInflaterContext() {
+        final Bundle params = new Bundle();
+        return callCommandInternal("verifyLayoutInflaterContext", params);
+    }
 }
