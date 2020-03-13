@@ -84,6 +84,7 @@ import com.android.internal.telephony.uicc.IccUtils;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.security.MessageDigest;
@@ -1448,6 +1449,7 @@ public class TelephonyManagerTest {
      * Verifies that {@link TelephonyManager#getIsimImpu()} does not throw any exception when called
      * and has the correct permissions.
      */
+    @Ignore("API moved back to @hide for Android R.")
     @Test
     public void testGetIsimImpu() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
