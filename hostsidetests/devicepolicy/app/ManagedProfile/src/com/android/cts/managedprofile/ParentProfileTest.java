@@ -85,8 +85,8 @@ public class ParentProfileTest extends BaseManagedProfileTest {
             .add("isDeviceIdAttestationSupported")
             .add("isUniqueDeviceAttestationSupported")
             .add("wipeData")
-            .add("getAutoTime")
-            .add("setAutoTime")
+            .add("getAutoTimeEnabled")
+            .add("setAutoTimeEnabled")
             .add("addUserRestriction")
             .add("clearUserRestriction")
             .add("getUserRestrictions")
@@ -169,10 +169,11 @@ public class ParentProfileTest extends BaseManagedProfileTest {
 
     public void testCannotCallAutoTimeMethodsOnParentProfile() {
         assertThrows(SecurityException.class,
-                () -> mParentDevicePolicyManager.setAutoTime(ADMIN_RECEIVER_COMPONENT, true));
+                () -> mParentDevicePolicyManager.setAutoTimeEnabled(ADMIN_RECEIVER_COMPONENT,
+                        true));
 
         assertThrows(SecurityException.class,
-                () -> mParentDevicePolicyManager.getAutoTime(ADMIN_RECEIVER_COMPONENT));
+                () -> mParentDevicePolicyManager.getAutoTimeEnabled(ADMIN_RECEIVER_COMPONENT));
     }
 
     public void testCannotCallSetDefaultSmsApplicationOnParentProfile() {
