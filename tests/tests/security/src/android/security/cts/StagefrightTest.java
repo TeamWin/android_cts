@@ -545,8 +545,10 @@ public class StagefrightTest extends InstrumentationTestCase {
             Pattern.compile("android\\.hardware\\.drm@\\d+?\\.\\d+?-service"),
             Pattern.compile("android\\.hardware\\.drm@\\d+?\\.\\d+?-service\\.clearkey"),
             Pattern.compile("android\\.hardware\\.drm@\\d+?\\.\\d+?-service\\.widevine"),
+            Pattern.compile("omx@\\d+?\\.\\d+?-service"),  // name:omx@1.0-service
             Pattern.compile("android\\.process\\.media"),
             Pattern.compile("mediadrmserver"),
+            Pattern.compile("mediaextractor"),
             Pattern.compile("media\\.extractor"),
             Pattern.compile("media\\.metrics"),
             Pattern.compile("mediaserver"),
