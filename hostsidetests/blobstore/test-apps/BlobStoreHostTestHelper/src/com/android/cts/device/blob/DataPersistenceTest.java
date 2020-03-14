@@ -31,7 +31,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Base64;
-import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -53,19 +52,20 @@ public class DataPersistenceTest {
 
     private Context mContext;
     private BlobStoreManager mBlobStoreManager;
-    private Random mRandom;
 
     @Before
     public void setUp() {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mBlobStoreManager = (BlobStoreManager) mContext.getSystemService(
                 Context.BLOB_STORE_SERVICE);
-        mRandom = new Random(22 /* seed */);
     }
 
     @Test
     public void testCreateSession() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData(mContext, mRandom, "test_data_blob");
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext)
+                .setRandomSeed(22)
+                .setFileName("test_blob_data")
+                .build();
         blobData.prepare();
 
         final long sessionId = createSession(blobData.getBlobHandle());
@@ -84,7 +84,10 @@ public class DataPersistenceTest {
     @Test
     public void testOpenSessionAndWrite() throws Exception {
         final long sessionId = readSessionIdFromDisk();
-        final DummyBlobData blobData = new DummyBlobData(mContext, mRandom, "test_data_blob");
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext)
+                .setRandomSeed(22)
+                .setFileName("test_blob_data")
+                .build();
         try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
             assertThat(session.getSize()).isEqualTo(PARTIAL_FILE_LENGTH_BYTES);
             blobData.writeToSession(session, PARTIAL_FILE_LENGTH_BYTES,
