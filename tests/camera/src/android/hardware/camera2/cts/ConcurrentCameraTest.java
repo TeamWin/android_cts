@@ -186,7 +186,7 @@ public class ConcurrentCameraTest extends Camera2ConcurrentAndroidTestCase {
     /**
      * Generates a list of combinations used for mandatory stream combination testing.
      * Each combination(GeneratedEntry) corresponds to a camera id advertised by
-     * getConcurrentStreamingCameraIds().
+     * getConcurrentCameraIds().
      */
     private List<HashMap<String, GeneratedEntry>> generateStreamSelections(
             Set<String> cameraIdCombination) {
