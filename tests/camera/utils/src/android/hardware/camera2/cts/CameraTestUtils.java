@@ -525,6 +525,8 @@ public class CameraTestUtils extends Assert {
                 new LinkedBlockingQueue<TotalCaptureResult>();
         private final LinkedBlockingQueue<CaptureFailure> mFailureQueue =
                 new LinkedBlockingQueue<>();
+        private final LinkedBlockingQueue<Integer> mAbortQueue =
+                new LinkedBlockingQueue<>();
         // Pair<CaptureRequest, Long> is a pair of capture request and timestamp.
         private final LinkedBlockingQueue<Pair<CaptureRequest, Long>> mCaptureStartQueue =
                 new LinkedBlockingQueue<>();
@@ -565,6 +567,16 @@ public class CameraTestUtils extends Assert {
             } catch (InterruptedException e) {
                 throw new UnsupportedOperationException(
                         "Can't handle InterruptedException in onCaptureFailed");
+            }
+        }
+
+        @Override
+        public void onCaptureSequenceAborted(CameraCaptureSession session, int sequenceId) {
+            try {
+                mAbortQueue.put(sequenceId);
+            } catch (InterruptedException e) {
+                throw new UnsupportedOperationException(
+                        "Can't handle InterruptedException in onCaptureAborted");
             }
         }
 
@@ -747,6 +759,35 @@ public class CameraTestUtils extends Assert {
         }
 
         /**
+         * Get an array list of aborted capture sequence ids with maxNumAborts entries
+         * at most. If it times out before maxNumAborts are received, return the aborted sequences
+         * received so far.
+         *
+         * @param maxNumAborts The maximal number of aborted sequences to return. If it times out
+         *                     before the maximal number of aborts are received, return the received
+         *                     failed sequences so far.
+         * @throws UnsupportedOperationException If an error happens while waiting on the failed
+         *                                       sequences.
+         */
+        public ArrayList<Integer> geAbortedSequences(long maxNumAborts) {
+            ArrayList<Integer> abortList = new ArrayList<>();
+            try {
+                for (int i = 0; i < maxNumAborts; i++) {
+                    Integer abortSequence = mAbortQueue.poll(CAPTURE_RESULT_TIMEOUT_MS,
+                            TimeUnit.MILLISECONDS);
+                    if (abortSequence == null) {
+                        break;
+                    }
+                    abortList.add(abortSequence);
+                }
+            }  catch (InterruptedException e) {
+                throw new UnsupportedOperationException("Unhandled interrupted exception", e);
+            }
+
+            return abortList;
+        }
+
+        /**
          * Wait until the capture start of a request and expected timestamp arrives or it times
          * out after a number of capture starts.
          *
@@ -811,11 +852,17 @@ public class CameraTestUtils extends Assert {
             return !mFailureQueue.isEmpty();
         }
 
+        public boolean hasMoreAbortedSequences()
+        {
+            return !mAbortQueue.isEmpty();
+        }
+
         public void drain() {
             mQueue.clear();
             mNumFramesArrived.getAndSet(0);
             mFailureQueue.clear();
             mCaptureStartQueue.clear();
+            mAbortQueue.clear();
         }
     }
 

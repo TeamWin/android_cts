@@ -87,6 +87,9 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
 
         /** Offline session running in parallel with reinitialized regular capture session */
         InitializeRegularSession,
+
+        /** Trigger repeating sequence abort during offline switch */
+        RepeatingSequenceAbort,
     }
 
     /**
@@ -411,6 +414,39 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
     }
 
     /**
+     * Test for aborted repeating sequences when switching to offline mode
+     *
+     * <p>Verify that clients receive the expected sequence abort callbacks when switching
+     * to offline session.</p>
+     */
+    @Test
+    public void testRepeatingSequenceAbort() throws Exception {
+        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
+            try {
+                Log.i(TAG, "Testing camera2 API for camera device " + mCameraIdsUnderTest[i]);
+
+                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
+                            " does not support color outputs, skipping");
+                    continue;
+                }
+
+                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isOfflineProcessingSupported()) {
+                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
+                            " does not support offline processing, skipping");
+                    continue;
+                }
+
+                openDevice(mCameraIdsUnderTest[i]);
+                camera2OfflineSessionTest(mCameraIdsUnderTest[i], mOrderedStillSizes.get(0),
+                        ImageFormat.JPEG, OfflineTestSequence.RepeatingSequenceAbort);
+            } finally {
+                closeDevice();
+            }
+        }
+    }
+
+    /**
      * Test that both shared and surface group outputs are not advertised as
      * capable working in offline mode.
      *
@@ -516,6 +552,7 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
         ImageReader privateReader = null;
         ImageReader yuvCallbackReader = null;
         ImageReader jpegReader = null;
+        int repeatingSeqId = -1;
 
         // Update preview size.
         updatePreviewSurface(previewSize);
@@ -541,10 +578,6 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
         previewRequest.addTarget(mPreviewSurface);
         stillCaptureRequest.addTarget(mReaderSurface);
 
-        // Start preview.
-        int repeatingSeqId = mSession.setRepeatingRequest(previewRequest.build(), resultListener,
-                mHandler);
-        checkInitialResults(resultListener);
 
         ArrayList<Integer> allowedOfflineStates = new ArrayList<Integer>();
         allowedOfflineStates.add(BlockingOfflineSessionCallback.STATE_READY);
@@ -559,8 +592,22 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
             offlineRequestList.add(stillCaptureRequest.build());
         }
 
+        if (testSequence != OfflineTestSequence.RepeatingSequenceAbort) {
+            repeatingSeqId = mSession.setRepeatingRequest(previewRequest.build(), resultListener,
+                    mHandler);
+            checkInitialResults(resultListener);
+        }
+
         int offlineSeqId = mSession.captureBurst(offlineRequestList, offlineResultListener,
                 mHandler);
+
+        if (testSequence == OfflineTestSequence.RepeatingSequenceAbort) {
+            // Submit the preview repeating request after the offline burst so it can be delayed
+            // long enough and fail to reach the camera processing pipeline.
+            repeatingSeqId = mSession.setRepeatingRequest(previewRequest.build(), resultListener,
+                    mHandler);
+        }
+
         CameraOfflineSession offlineSession = mSession.switchToOffline(offlineSurfaces,
                 new HandlerExecutor(mHandler), offlineCb);
         assertNotNull("Invalid offline session", offlineSession);
@@ -588,6 +635,16 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
             verify(mockOfflineCb, times(0)).onSwitchFailed(offlineSession);
 
             switch (testSequence) {
+                case RepeatingSequenceAbort:
+                    ArrayList<Integer> abortedSeq = resultListener.geAbortedSequences(
+                            1 /*maxNumbAborts*/);
+                    assertNotNull("No aborted capture sequence ids present", abortedSeq);
+                    assertTrue("Unexpected number of aborted capture sequence ids : " +
+                            abortedSeq.size() + " expected 1", abortedSeq.size() == 1);
+                    assertTrue("Unexpected abort capture sequence id: " +
+                            abortedSeq.get(0).intValue() + " expected capture sequence id: " +
+                            repeatingSeqId, abortedSeq.get(0).intValue() == repeatingSeqId);
+                    break;
                 case CloseDeviceAndOpenRemote:
                     // According to the documentation, closing the initial camera device and
                     // re-opening the same device from a different client after successful
@@ -644,9 +701,11 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
                 default:
             }
 
-            // The repeating non-offline request should be done after the switch returns.
-            verifyCaptureResults(resultListener, null /*imageListener*/, repeatingSeqId,
-                    false /*offlineResults*/);
+            if (testSequence != OfflineTestSequence.RepeatingSequenceAbort) {
+                // The repeating non-offline request should be done after the switch returns.
+                verifyCaptureResults(resultListener, null /*imageListener*/, repeatingSeqId,
+                        false /*offlineResults*/);
+            }
 
             if (testSequence != OfflineTestSequence.CloseOfflineSession) {
                 offlineCb.waitForState(BlockingOfflineSessionCallback.STATE_IDLE,
