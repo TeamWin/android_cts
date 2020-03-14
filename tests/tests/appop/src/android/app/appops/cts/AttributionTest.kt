@@ -31,16 +31,16 @@ private const val APK_PATH = "/data/local/tmp/cts/appops/"
 
 private const val APP_PKG = "android.app.appops.cts.apptoblame"
 
-private const val FEATURE_1 = "feature1"
-private const val FEATURE_2 = "feature2"
-private const val FEATURE_3 = "feature3"
-private const val FEATURE_4 = "feature4"
-private const val FEATURE_5 = "feature5"
-private const val FEATURE_6 = "feature6"
-private const val FEATURE_7 = "feature7"
+private const val ATTRIBUTION_1 = "attribution1"
+private const val ATTRIBUTION_2 = "attribution2"
+private const val ATTRIBUTION_3 = "attribution3"
+private const val ATTRIBUTION_4 = "attribution4"
+private const val ATTRIBUTION_5 = "attribution5"
+private const val ATTRIBUTION_6 = "attribution6"
+private const val ATTRIBUTION_7 = "attribution7"
 
 @AppModeFull(reason = "Test relies on seeing other apps. Instant apps can't see other apps")
-class FeatureTest {
+class AttributionTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context = instrumentation.targetContext
     private val appOpsManager = context.getSystemService(AppOpsManager::class.java)
@@ -57,22 +57,22 @@ class FeatureTest {
         installApk("CtsAppToBlame1.apk")
     }
 
-    private fun noteForFeature(feature: String) {
+    private fun noteForAttribution(attribution: String) {
         // Make sure note times as distinct
         sleep(1)
 
         runWithShellPermissionIdentity {
-            appOpsManager.noteOpNoThrow(OPSTR_WIFI_SCAN, appUid, APP_PKG, feature, null)
+            appOpsManager.noteOpNoThrow(OPSTR_WIFI_SCAN, appUid, APP_PKG, attribution, null)
         }
     }
 
     @Test
     fun inheritNotedAppOpsOnUpgrade() {
-        noteForFeature(FEATURE_1)
-        noteForFeature(FEATURE_2)
-        noteForFeature(FEATURE_3)
-        noteForFeature(FEATURE_4)
-        noteForFeature(FEATURE_5)
+        noteForAttribution(ATTRIBUTION_1)
+        noteForAttribution(ATTRIBUTION_2)
+        noteForAttribution(ATTRIBUTION_3)
+        noteForAttribution(ATTRIBUTION_4)
+        noteForAttribution(ATTRIBUTION_5)
 
         val beforeUpdate = getOpEntry(appUid, APP_PKG, OPSTR_WIFI_SCAN)!!
         installApk("CtsAppToBlame2.apk")
@@ -80,51 +80,59 @@ class FeatureTest {
         eventually {
             val afterUpdate = getOpEntry(appUid, APP_PKG, OPSTR_WIFI_SCAN)!!
 
-            // Feature 1 is unchanged
-            assertThat(afterUpdate.features[FEATURE_1]!!.getLastAccessTime(OP_FLAGS_ALL))
-                    .isEqualTo(beforeUpdate.features[FEATURE_1]!!.getLastAccessTime(OP_FLAGS_ALL))
+            // Attribution 1 is unchanged
+            assertThat(afterUpdate.attributedOpEntries[ATTRIBUTION_1]!!
+                    .getLastAccessTime(OP_FLAGS_ALL))
+                    .isEqualTo(beforeUpdate.attributedOpEntries[ATTRIBUTION_1]!!
+                            .getLastAccessTime(OP_FLAGS_ALL))
 
-            // Feature 3 disappeared (i.e. was added into "null" feature)
-            assertThat(afterUpdate.features[null]!!.getLastAccessTime(OP_FLAGS_ALL))
-                    .isEqualTo(beforeUpdate.features[FEATURE_3]!!.getLastAccessTime(OP_FLAGS_ALL))
+            // Attribution 3 disappeared (i.e. was added into "null" attribution)
+            assertThat(afterUpdate.attributedOpEntries[null]!!.getLastAccessTime(OP_FLAGS_ALL))
+                    .isEqualTo(beforeUpdate.attributedOpEntries[ATTRIBUTION_3]!!
+                            .getLastAccessTime(OP_FLAGS_ALL))
 
-            // Feature 6 inherits from feature 2
-            assertThat(afterUpdate.features[FEATURE_6]!!.getLastAccessTime(OP_FLAGS_ALL))
-                    .isEqualTo(beforeUpdate.features[FEATURE_2]!!.getLastAccessTime(OP_FLAGS_ALL))
+            // Attribution 6 inherits from attribution 2
+            assertThat(afterUpdate.attributedOpEntries[ATTRIBUTION_6]!!
+                    .getLastAccessTime(OP_FLAGS_ALL))
+                    .isEqualTo(beforeUpdate.attributedOpEntries[ATTRIBUTION_2]!!
+                            .getLastAccessTime(OP_FLAGS_ALL))
 
-            // Feature 7 inherits from feature 4 and 5. 5 was noted after 4, hence 4 is removed
-            assertThat(afterUpdate.features[FEATURE_7]!!.getLastAccessTime(OP_FLAGS_ALL))
-                    .isEqualTo(beforeUpdate.features[FEATURE_5]!!.getLastAccessTime(OP_FLAGS_ALL))
+            // Attribution 7 inherits from attribution 4 and 5. 5 was noted after 4, hence 4 is
+            // removed
+            assertThat(afterUpdate.attributedOpEntries[ATTRIBUTION_7]!!
+                    .getLastAccessTime(OP_FLAGS_ALL))
+                    .isEqualTo(beforeUpdate.attributedOpEntries[ATTRIBUTION_5]!!
+                            .getLastAccessTime(OP_FLAGS_ALL))
         }
     }
 
     @Test(expected = AssertionError::class)
     fun cannotInheritFromSelf() {
-        installApk("AppWithFeatureInheritingFromSelf.apk")
+        installApk("AppWithAttributionInheritingFromSelf.apk")
     }
 
     @Test(expected = AssertionError::class)
-    fun noDuplicateFeatures() {
-        installApk("AppWithDuplicateFeature.apk")
+    fun noDuplicateAttributions() {
+        installApk("AppWithDuplicateAttribution.apk")
     }
 
     @Test(expected = AssertionError::class)
     fun cannotInheritFromExisting() {
-        installApk("AppWithFeatureInheritingFromExisting.apk")
+        installApk("AppWithAttributionInheritingFromExisting.apk")
     }
 
     @Test(expected = AssertionError::class)
     fun cannotInheritFromSameAsOther() {
-        installApk("AppWithFeatureInheritingFromSameAsOther.apk")
+        installApk("AppWithAttributionInheritingFromSameAsOther.apk")
     }
 
     @Test(expected = AssertionError::class)
-    fun cannotUseVeryLongFeatureIDs() {
-        installApk("AppWithLongFeatureIdFeature.apk")
+    fun cannotUseVeryLongAttributionTags() {
+        installApk("AppWithLongAttributionTag.apk")
     }
 
     @Test(expected = AssertionError::class)
-    fun cannotUseTooManyFeatures() {
-        installApk("AppWithTooManyFeatures.apk")
+    fun cannotUseTooManyAttributions() {
+        installApk("AppWithTooManyAttributions.apk")
     }
 }

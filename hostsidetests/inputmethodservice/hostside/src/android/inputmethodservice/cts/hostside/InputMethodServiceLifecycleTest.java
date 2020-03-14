@@ -37,6 +37,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.After;
 import org.junit.Before;
@@ -50,7 +51,7 @@ import java.util.concurrent.TimeoutException;
  * Test general lifecycle events around InputMethodService.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class InputMethodServiceLifecycleTest extends RebootFreeHostTestBase {
+public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
 
     private static final long WAIT_TIMEOUT = TimeUnit.SECONDS.toMillis(1);
     private static final long PACKAGE_OP_TIMEOUT = TimeUnit.SECONDS.toMillis(7);

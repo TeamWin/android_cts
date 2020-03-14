@@ -45,11 +45,15 @@ import android.test.InstrumentationTestCase;
 import android.util.Log;
 
 import com.android.compatibility.common.util.AnrMonitor;
+import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -79,6 +83,12 @@ public class ActivityManagerTest extends InstrumentationTestCase {
     private static final String ACTIVITY_TIME_TRACK_INFO = "com.android.cts.TIME_TRACK_INFO";
 
     private static final String PACKAGE_NAME_APP1 = "com.android.app1";
+
+    private static final String MCC_TO_UPDATE = "987";
+    private static final String MNC_TO_UPDATE = "654";
+    private static final String SHELL_COMMAND_GET_CONFIG = "am get-config";
+    private static final String SHELL_COMMAND_RESULT_CONFIG_NAME_MCC = "mcc";
+    private static final String SHELL_COMMAND_RESULT_CONFIG_NAME_MNC = "mnc";
 
     // Return states of the ActivityReceiverFilter.
     public static final int RESULT_PASS = 1;
@@ -333,6 +343,11 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         Log.d(TAG, "executed[" + cmd + "]; output[" + output.trim() + "]");
     }
 
+    private String executeShellCommand(String cmd) throws IOException {
+        final UiDevice uiDevice = UiDevice.getInstance(mInstrumentation);
+        return uiDevice.executeShellCommand(cmd).trim();
+    }
+
     private void setForcedAppStandby(String packageName, boolean enabled) throws IOException {
         final StringBuilder cmdBuilder = new StringBuilder("appops set ")
                 .append(packageName)
@@ -423,6 +438,49 @@ public class ActivityManagerTest extends InstrumentationTestCase {
     public void testGetDeviceConfigurationInfo() {
         ConfigurationInfo conInf = mActivityManager.getDeviceConfigurationInfo();
         assertNotNull(conInf);
+    }
+
+    public void testUpdateMccMncConfiguration() throws Exception {
+        // Store the original mcc mnc to set back
+        String[] mccMncConfigOriginal = new String[2];
+        // Store other configs to check they won't be affected
+        Set<String> otherConfigsOriginal = new HashSet<String>();
+        getMccMncConfigsAndOthers(mccMncConfigOriginal, otherConfigsOriginal);
+
+        String[] mccMncConfigToUpdate = new String[] {MCC_TO_UPDATE, MNC_TO_UPDATE};
+        boolean success = ShellIdentityUtils.invokeMethodWithShellPermissions(mActivityManager,
+                (am) -> am.updateMccMncConfiguration(mccMncConfigToUpdate[0],
+                        mccMncConfigToUpdate[1]));
+
+        if (success) {
+            String[] mccMncConfigUpdated = new String[2];
+            Set<String> otherConfigsUpdated = new HashSet<String>();
+            getMccMncConfigsAndOthers(mccMncConfigUpdated, otherConfigsUpdated);
+            // Check the mcc mnc are updated as expected
+            assertTrue(Arrays.equals(mccMncConfigToUpdate, mccMncConfigUpdated));
+            // Check other configs are not changed
+            assertTrue(otherConfigsOriginal.equals(otherConfigsUpdated));
+        }
+
+        // Set mcc mnc configs back in the end of the test
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mActivityManager,
+                (am) -> am.updateMccMncConfiguration(mccMncConfigOriginal[0],
+                        mccMncConfigOriginal[1]));
+    }
+
+    private void getMccMncConfigsAndOthers(String[] mccMncConfigs, Set<String> otherConfigs)
+            throws Exception {
+        String[] configs = SystemUtil.runShellCommand(
+                mInstrumentation, SHELL_COMMAND_GET_CONFIG).split(" |\\-");
+        for (String config : configs) {
+            if (config.startsWith(SHELL_COMMAND_RESULT_CONFIG_NAME_MCC)) {
+                mccMncConfigs[0] = config.substring(SHELL_COMMAND_RESULT_CONFIG_NAME_MCC.length());
+            } else if (config.startsWith(SHELL_COMMAND_RESULT_CONFIG_NAME_MNC)) {
+                mccMncConfigs[1] = config.substring(SHELL_COMMAND_RESULT_CONFIG_NAME_MNC.length());
+            } else {
+                otherConfigs.add(config);
+            }
+        }
     }
 
     /**
@@ -737,7 +795,11 @@ public class ActivityManagerTest extends InstrumentationTestCase {
 
         ActivityReceiverFilter appStartedReceiver = new ActivityReceiverFilter(
                 ACTIVITY_LAUNCHED_ACTION);
+        boolean disabled = "0".equals(executeShellCommand("cmd deviceidle enabled light"));
         try {
+            if (disabled) {
+                executeAndLogShellCommand("cmd deviceidle enable light");
+            }
             intent = new Intent(Intent.ACTION_MAIN);
             intent.setClassName(SIMPLE_PACKAGE_NAME, SIMPLE_PACKAGE_NAME + SIMPLE_ACTIVITY);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -810,6 +872,9 @@ public class ActivityManagerTest extends InstrumentationTestCase {
             toggleScreenOn(true);
             appStartedReceiver.close();
 
+            if (disabled) {
+                executeAndLogShellCommand("cmd deviceidle disable light");
+            }
             SystemUtil.runWithShellPermissionIdentity(() -> {
                 mActivityManager.forceStopPackage(SIMPLE_PACKAGE_NAME);
             });
