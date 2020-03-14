@@ -34,7 +34,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Base64;
-import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -59,7 +58,6 @@ public class DataCleanupTest {
     private Context mContext;
     private Instrumentation mInstrumentation;
     private BlobStoreManager mBlobStoreManager;
-    private Random mRandom;
 
     @Before
     public void setUp() {
@@ -67,12 +65,14 @@ public class DataCleanupTest {
         mContext = mInstrumentation.getContext();
         mBlobStoreManager = (BlobStoreManager) mContext.getSystemService(
                 Context.BLOB_STORE_SERVICE);
-        mRandom = new Random(24 /* seed */);
     }
 
     @Test
     public void testCreateSession() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData(mContext, mRandom, "test_data_blob");
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext)
+                .setRandomSeed(24)
+                .setFileName("test_blob_data")
+                .build();
         blobData.prepare();
 
         final long sessionId = createSession(blobData.getBlobHandle());
@@ -106,8 +106,11 @@ public class DataCleanupTest {
 
     @Test
     public void testCommitBlob() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData(mContext, mRandom,
-                "test_data_blob", "test_data_blob");
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext)
+                .setRandomSeed(24)
+                .setFileName("test_blob_data")
+                .setLabel("test_data_blob_label")
+                .build();
         blobData.prepare();
 
         final long sessionId = createSession(blobData.getBlobHandle());
