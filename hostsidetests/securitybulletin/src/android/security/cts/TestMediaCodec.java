@@ -84,6 +84,17 @@ public class TestMediaCodec extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/35430570
+     * Vulnerability Behaviour: SIGSEGV in self
+     **/
+    @SecurityTest(minPatchLevel = "2017-11")
+    public void testPocCVE_2017_0851() throws Exception {
+        String inputFiles[] = {"cve_2017_0851.hevc"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0851",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
      * b/68299873
      **/
     @Test
@@ -185,6 +196,28 @@ public class TestMediaCodec extends SecurityTestCase {
      * To prevent merge conflicts, add MPEG2 decoder tests for N below this comment,
      * before any existing test methods
      ******************************************************************************/
+
+    /**
+     * b/38328132
+     * Vulnerability Behaviour: SIGSEGV in self
+     */
+    @SecurityTest(minPatchLevel = "2017-12")
+    public void testPocCVE_2017_13150() throws Exception {
+        String inputFiles[] = {"cve_2017_13150.m2v"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-13150",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
+     * b/64550583
+     * Vulnerability Behaviour: SIGSEGV in self
+     **/
+    @SecurityTest(minPatchLevel = "2018-01")
+    public void testPocCVE_2017_13205() throws Exception {
+        String inputFiles[] = {"cve_2017_13205.m2v"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-13205",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
 
     /**
      * b/34203195
