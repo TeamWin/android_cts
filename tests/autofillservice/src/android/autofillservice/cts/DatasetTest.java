@@ -58,22 +58,29 @@ public class DatasetTest {
     @Test
     public void testBuilder_nullPresentation() {
         assertThrows(NullPointerException.class, () -> new Dataset.Builder((RemoteViews) null));
-        assertThrows(NullPointerException.class, () -> new Dataset.Builder(null,
-                mInlinePresentation));
     }
 
     @Test
     public void testBuilder_nullInlinePresentation() {
         assertThrows(NullPointerException.class,
                 () -> new Dataset.Builder((InlinePresentation) null));
-        assertThrows(NullPointerException.class, () -> new Dataset.Builder(mPresentation, null));
     }
 
     @Test
     public void testBuilder_validPresentations() {
         assertThat(new Dataset.Builder(mPresentation)).isNotNull();
         assertThat(new Dataset.Builder(mInlinePresentation)).isNotNull();
-        assertThat(new Dataset.Builder(mPresentation, mInlinePresentation)).isNotNull();
+    }
+
+    @Test
+    public void testBuilder_setNullInlinePresentation() {
+        final Dataset.Builder builder = new Dataset.Builder(mPresentation);
+        assertThrows(NullPointerException.class, () -> builder.setInlinePresentation(null));
+    }
+
+    @Test
+    public void testBuilder_setInlinePresentation() {
+        assertThat(new Dataset.Builder().setInlinePresentation(mInlinePresentation)).isNotNull();
     }
 
     @Test
@@ -163,8 +170,8 @@ public class DatasetTest {
     }
 
     @Test
-    public void testBuilder_setInlinePresentations() {
-        assertThat(new Dataset.Builder().setInlinePresentation(mId, mValue, mFilter,
+    public void testBuilder_setFieldInlinePresentations() {
+        assertThat(new Dataset.Builder().setFieldInlinePresentation(mId, mValue, mFilter,
                 mInlinePresentation)).isNotNull();
     }
 
@@ -180,6 +187,8 @@ public class DatasetTest {
         builder.setValue(mId, mValue, mPresentation);
         assertThat(builder.build()).isNotNull();
         assertThrows(IllegalStateException.class, () -> builder.build());
+        assertThrows(IllegalStateException.class,
+                () -> builder.setInlinePresentation(mInlinePresentation));
         assertThrows(IllegalStateException.class, () -> builder.setValue(mId, mValue));
         assertThrows(IllegalStateException.class,
                 () -> builder.setValue(mId, mValue, mPresentation));
@@ -192,6 +201,7 @@ public class DatasetTest {
         assertThrows(IllegalStateException.class,
                 () -> builder.setValue(mId, mValue, mFilter, mPresentation, mInlinePresentation));
         assertThrows(IllegalStateException.class,
-                () -> builder.setInlinePresentation(mId, mValue, mFilter, mInlinePresentation));
+                () -> builder.setFieldInlinePresentation(mId, mValue, mFilter,
+                        mInlinePresentation));
     }
 }

@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import android.os.LocaleList;
 import android.os.Parcel;
 import android.util.Size;
 import android.view.inline.InlinePresentationSpec;
@@ -32,7 +33,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
-import android.os.LocaleList;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -55,6 +55,23 @@ public class InlineSuggestionsRequestTest {
         assertThrows(IllegalStateException.class,
                 () -> new InlineSuggestionsRequest.Builder(presentationSpecs)
                         .setMaxSuggestionCount(1).build());
+    }
+
+    @Test
+    public void testEmptyPresentationSpecsThrowsException() {
+        assertThrows(IllegalStateException.class,
+                () -> new InlineSuggestionsRequest.Builder(new ArrayList<>())
+                        .setMaxSuggestionCount(1).build());
+    }
+
+    @Test
+    public void testZeroMaxSuggestionCountThrowsException() {
+        ArrayList<InlinePresentationSpec> presentationSpecs = new ArrayList<>();
+        presentationSpecs.add(new InlinePresentationSpec.Builder(new Size(100, 100),
+                new Size(400, 100)).build());
+        assertThrows(IllegalStateException.class,
+                () -> new InlineSuggestionsRequest.Builder(presentationSpecs)
+                        .setMaxSuggestionCount(0).build());
     }
 
     @Test
@@ -81,6 +98,8 @@ public class InlineSuggestionsRequestTest {
     @Test
     public void testInlineSuggestionsRequestParcelizeDeparcelize() {
         ArrayList<InlinePresentationSpec> presentationSpecs = new ArrayList<>();
+        presentationSpecs.add(
+                new InlinePresentationSpec.Builder(new Size(100, 100), new Size(400, 400)).build());
         InlineSuggestionsRequest request =
                 new InlineSuggestionsRequest.Builder(presentationSpecs).build();
         Parcel p = Parcel.obtain();

@@ -1,4 +1,4 @@
-// Copyright (C) 2014 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,20 +13,30 @@
 // limitations under the License.
 
 android_test_helper_app {
-    name: "CtsV3SigningSchemeRotationTest",
+    name: "CtsSessionInspectorAppA",
     defaults: ["cts_support_defaults"],
+    manifest: "AndroidManifestA.xml",
+    sdk_version: "test_current",
+    srcs: ["src/**/*.java"],
+    static_libs: ["androidx.test.rules"],
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
         "vts",
         "general-tests",
-        "sts",
     ],
+}
+android_test_helper_app {
+    name: "CtsSessionInspectorAppB",
+    defaults: ["cts_support_defaults"],
+    manifest: "AndroidManifestB.xml",
+    sdk_version: "test_current",
     srcs: ["src/**/*.java"],
-    sdk_version: "current",
     static_libs: ["androidx.test.rules"],
-    libs: ["android.test.base.stubs"],
-    dex_preopt: {
-        enabled: false,
-    },
+    // tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ],
 }
