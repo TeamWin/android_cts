@@ -40,6 +40,7 @@ android_test_helper_app {
     name: "CtsBlobStoreTestHelper",
     defaults: ["cts_defaults"],
     static_libs: [
+        "androidx.test.ext.junit",
         "truth-prebuilt",
         "BlobStoreTestUtils",
     ],
@@ -60,6 +61,7 @@ android_test_helper_app {
     name: "CtsBlobStoreTestHelperDiffSig",
     defaults: ["cts_defaults"],
     static_libs: [
+        "androidx.test.ext.junit",
         "truth-prebuilt",
         "BlobStoreTestUtils",
     ],
@@ -84,6 +86,7 @@ android_test_helper_app {
     name: "CtsBlobStoreTestHelperDiffSig2",
     defaults: ["cts_defaults"],
     static_libs: [
+        "androidx.test.ext.junit",
         "truth-prebuilt",
         "BlobStoreTestUtils",
     ],
