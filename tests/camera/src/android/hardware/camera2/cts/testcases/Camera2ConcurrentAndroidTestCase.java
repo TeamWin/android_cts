@@ -124,7 +124,7 @@ public class Camera2ConcurrentAndroidTestCase extends Camera2ParameterizedTestCa
             }
         }
         mConcurrentCameraIdCombinations =
-                CameraTestUtils.getConcurrentStreamingCameraIds(mCameraManager, mAdoptShellPerm);
+                CameraTestUtils.getConcurrentCameraIds(mCameraManager, mAdoptShellPerm);
         assertNotNull("Unable to get concurrent camera combinations",
                 mConcurrentCameraIdCombinations);
         mCameraTestInfos = new HashMap<String, CameraTestInfo>();
