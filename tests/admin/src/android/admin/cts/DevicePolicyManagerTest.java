@@ -1114,29 +1114,29 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testSetProtectedPackages_failIfNotDeviceOwner() {
+    public void testSetUserControlDisabledPackages_failIfNotDeviceOwner() {
         if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping testSetProtectedPackages_failIfNotDeviceOwner()");
+            Log.w(TAG, "Skipping testSetUserControlDisabledPackages_failIfNotDeviceOwner()");
             return;
         }
         final String TEST_PACKAGE_NAME = "package1";
         List<String> packages = new ArrayList<>();
         packages.add(TEST_PACKAGE_NAME);
         try {
-            mDevicePolicyManager.setProtectedPackages(mComponent, packages);
-            fail("setProtectedPackages did not throw expected SecurityException");
+            mDevicePolicyManager.setUserControlDisabledPackages(mComponent, packages);
+            fail("setUserControlDisabledPackages did not throw expected SecurityException");
         } catch(SecurityException e) {
         }
     }
 
-    public void testGetProtectedPackages_failIfNotDeviceOwner() {
+    public void testGetUserControlDisabledPackages_failIfNotDeviceOwner() {
         if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping testGetProtectedPackages_failIfNotDeviceOwner()");
+            Log.w(TAG, "Skipping testGetUserControlDisabledPackages_failIfNotDeviceOwner()");
             return;
         }
         try {
-            mDevicePolicyManager.getProtectedPackages(mComponent);
-            fail("getProtectedPackages did not throw expected SecurityException");
+            mDevicePolicyManager.getUserControlDisabledPackages(mComponent);
+            fail("getUserControlDisabledPackages did not throw expected SecurityException");
         } catch(SecurityException e) {
         }
     }
