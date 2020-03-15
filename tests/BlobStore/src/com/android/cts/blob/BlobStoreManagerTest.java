@@ -17,12 +17,14 @@ package com.android.cts.blob;
 
 import static android.os.storage.StorageManager.UUID_DEFAULT;
 
-import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+import static com.android.utils.blob.Utils.acquireLease;
+import static com.android.utils.blob.Utils.assertLeasedBlobs;
+import static com.android.utils.blob.Utils.assertNoLeasedBlobs;
+import static com.android.utils.blob.Utils.releaseLease;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
-import static org.testng.Assert.expectThrows;
 
 import android.app.blob.BlobHandle;
 import android.app.blob.BlobStoreManager;
@@ -41,13 +43,11 @@ import com.android.cts.blob.R;
 import com.android.cts.blob.ICommandReceiver;
 import com.android.utils.blob.DummyBlobData;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -91,7 +91,7 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testGetCreateSession() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData(mContext);
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
         try {
             final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
@@ -104,7 +104,7 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testCreateBlobHandle_invalidArguments() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData(mContext);
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
         final BlobHandle handle = blobData.getBlobHandle();
         try {
@@ -140,7 +140,7 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testAbandonSession() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData(mContext);
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
         try {
             final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
@@ -158,7 +158,7 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testOpenReadWriteSession() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData(mContext);
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
         try {
             final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
@@ -180,7 +180,7 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testOpenSession_fromAnotherPkg() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData(mContext);
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
         try {
             final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
@@ -206,7 +206,7 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testOpenSessionAndAbandon() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData(mContext);
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
         try {
             final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
@@ -231,7 +231,7 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testCloseSession() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData(mContext);
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
         try {
             final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
@@ -267,21 +267,16 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testAllowPublicAccess() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData(mContext);
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
         try {
             final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
 
-            try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
-                blobData.writeToSession(session);
+            commitBlob(blobData, session -> {
                 session.allowPublicAccess();
-
-                final CompletableFuture<Integer> callback = new CompletableFuture<>();
-                session.commit(mContext.getMainExecutor(), callback::complete);
-                assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
-                        .isEqualTo(0);
-            }
+                assertThat(session.isPublicAccessAllowed()).isTrue();
+            });
 
             assertPkgCanAccess(blobData, HELPER_PKG);
             assertPkgCanAccess(blobData, HELPER_PKG2);
@@ -293,7 +288,7 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testAllowPublicAccess_abandonedSession() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData(mContext);
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
         try {
             final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
@@ -316,21 +311,16 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testAllowSameSignatureAccess() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData(mContext);
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
         try {
             final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
 
-            try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
-                blobData.writeToSession(session);
+            commitBlob(blobData, session -> {
                 session.allowSameSignatureAccess();
-
-                final CompletableFuture<Integer> callback = new CompletableFuture<>();
-                session.commit(mContext.getMainExecutor(), callback::complete);
-                assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
-                        .isEqualTo(0);
-            }
+                assertThat(session.isSameSignatureAccessAllowed()).isTrue();
+            });
 
             assertPkgCanAccess(blobData, HELPER_PKG);
             assertPkgCannotAccess(blobData, HELPER_PKG2);
@@ -342,7 +332,7 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testAllowSameSignatureAccess_abandonedSession() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData(mContext);
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
         try {
             final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
@@ -365,21 +355,17 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testAllowPackageAccess() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData(mContext);
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
         try {
             final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
 
-            try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
-                blobData.writeToSession(session);
+            commitBlob(blobData, session -> {
                 session.allowPackageAccess(HELPER_PKG2, HELPER_PKG2_CERT_SHA256);
-
-                final CompletableFuture<Integer> callback = new CompletableFuture<>();
-                session.commit(mContext.getMainExecutor(), callback::complete);
-                assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
-                        .isEqualTo(0);
-            }
+                assertThat(session.isPackageAccessAllowed(HELPER_PKG2, HELPER_PKG2_CERT_SHA256))
+                        .isTrue();
+            });
 
             assertPkgCannotAccess(blobData, HELPER_PKG);
             assertPkgCanAccess(blobData, HELPER_PKG2);
@@ -391,22 +377,20 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testAllowPackageAccess_allowMultiple() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData(mContext);
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
         try {
             final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
 
-            try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
-                blobData.writeToSession(session);
+            commitBlob(blobData, session -> {
                 session.allowPackageAccess(HELPER_PKG2, HELPER_PKG2_CERT_SHA256);
                 session.allowPackageAccess(HELPER_PKG3, HELPER_PKG3_CERT_SHA256);
-
-                final CompletableFuture<Integer> callback = new CompletableFuture<>();
-                session.commit(mContext.getMainExecutor(), callback::complete);
-                assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
-                        .isEqualTo(0);
-            }
+                assertThat(session.isPackageAccessAllowed(HELPER_PKG2, HELPER_PKG2_CERT_SHA256))
+                        .isTrue();
+                assertThat(session.isPackageAccessAllowed(HELPER_PKG3, HELPER_PKG3_CERT_SHA256))
+                        .isTrue();
+            });
 
             assertPkgCannotAccess(blobData, HELPER_PKG);
             assertPkgCanAccess(blobData, HELPER_PKG2);
@@ -418,7 +402,7 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testAllowPackageAccess_abandonedSession() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData(mContext);
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
         try {
             final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
@@ -444,7 +428,7 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testPrivateAccess() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData(mContext);
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
         final TestServiceConnection connection1 = bindToHelperService(HELPER_PKG);
         final TestServiceConnection connection2 = bindToHelperService(HELPER_PKG2);
@@ -453,14 +437,7 @@ public class BlobStoreManagerTest {
             final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
 
-            try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
-                blobData.writeToSession(session);
-
-                final CompletableFuture<Integer> callback = new CompletableFuture<>();
-                session.commit(mContext.getMainExecutor(), callback::complete);
-                assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
-                        .isEqualTo(0);
-            }
+            commitBlob(blobData);
 
             assertPkgCannotAccess(blobData, connection1);
             assertPkgCannotAccess(blobData, connection2);
@@ -485,28 +462,20 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testMixedAccessType() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData(mContext);
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
         try {
             final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
 
-            try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
-                blobData.writeToSession(session);
-
+            commitBlob(blobData, session -> {
                 session.allowSameSignatureAccess();
                 session.allowPackageAccess(HELPER_PKG3, HELPER_PKG3_CERT_SHA256);
-
                 assertThat(session.isSameSignatureAccessAllowed()).isTrue();
                 assertThat(session.isPackageAccessAllowed(HELPER_PKG3, HELPER_PKG3_CERT_SHA256))
                         .isTrue();
                 assertThat(session.isPublicAccessAllowed()).isFalse();
-
-                final CompletableFuture<Integer> callback = new CompletableFuture<>();
-                session.commit(mContext.getMainExecutor(), callback::complete);
-                assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
-                        .isEqualTo(0);
-            }
+            });
 
             assertPkgCanAccess(blobData, HELPER_PKG);
             assertPkgCannotAccess(blobData, HELPER_PKG2);
@@ -518,7 +487,7 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testMixedAccessType_fromMultiplePackages() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData(mContext);
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
         final TestServiceConnection connection1 = bindToHelperService(HELPER_PKG);
         final TestServiceConnection connection2 = bindToHelperService(HELPER_PKG2);
@@ -527,22 +496,14 @@ public class BlobStoreManagerTest {
             final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
 
-            try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
-                blobData.writeToSession(session);
-
+            commitBlob(blobData, session -> {
                 session.allowSameSignatureAccess();
                 session.allowPackageAccess(HELPER_PKG2, HELPER_PKG2_CERT_SHA256);
-
                 assertThat(session.isSameSignatureAccessAllowed()).isTrue();
                 assertThat(session.isPackageAccessAllowed(HELPER_PKG2, HELPER_PKG2_CERT_SHA256))
                         .isTrue();
                 assertThat(session.isPublicAccessAllowed()).isFalse();
-
-                final CompletableFuture<Integer> callback = new CompletableFuture<>();
-                session.commit(mContext.getMainExecutor(), callback::complete);
-                assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
-                        .isEqualTo(0);
-            }
+            });
 
             assertPkgCanAccess(blobData, connection1);
             assertPkgCanAccess(blobData, connection2);
@@ -563,7 +524,7 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testSessionCommit() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData(mContext);
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
         try {
             final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
@@ -594,7 +555,7 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testOpenBlob() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData(mContext);
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
         try {
             final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
@@ -631,43 +592,75 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testAcquireReleaseLease() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData(mContext);
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
         try {
             final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
 
-            try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
-                blobData.writeToSession(session);
-
-                final CompletableFuture<Integer> callback = new CompletableFuture<>();
-                session.commit(mContext.getMainExecutor(), callback::complete);
-                assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
-                        .isEqualTo(0);
-            }
+            commitBlob(blobData);
 
             assertThrows(IllegalArgumentException.class, () ->
-                    mBlobStoreManager.acquireLease(blobData.getBlobHandle(),
+                    acquireLease(mContext, blobData.getBlobHandle(),
                             R.string.test_desc, blobData.getExpiryTimeMillis() + 1000));
+            assertNoLeasedBlobs(mBlobStoreManager);
 
-            mBlobStoreManager.acquireLease(blobData.getBlobHandle(), R.string.test_desc,
+            acquireLease(mContext, blobData.getBlobHandle(), R.string.test_desc,
                     blobData.getExpiryTimeMillis() - 1000);
-            mBlobStoreManager.acquireLease(blobData.getBlobHandle(), R.string.test_desc);
-            // TODO: verify acquiring lease took effect.
-            mBlobStoreManager.releaseLease(blobData.getBlobHandle());
+            assertLeasedBlobs(mBlobStoreManager, blobData.getBlobHandle());
+            acquireLease(mContext, blobData.getBlobHandle(), R.string.test_desc);
+            assertLeasedBlobs(mBlobStoreManager, blobData.getBlobHandle());
+            releaseLease(mContext, blobData.getBlobHandle());
+            assertNoLeasedBlobs(mBlobStoreManager);
 
-            mBlobStoreManager.acquireLease(blobData.getBlobHandle(), "Test description",
+            acquireLease(mContext, blobData.getBlobHandle(), "Test description",
                     blobData.getExpiryTimeMillis() - 20000);
-            mBlobStoreManager.acquireLease(blobData.getBlobHandle(), "Test description two");
-            mBlobStoreManager.releaseLease(blobData.getBlobHandle());
+            assertLeasedBlobs(mBlobStoreManager, blobData.getBlobHandle());
+            acquireLease(mContext, blobData.getBlobHandle(), "Test description two");
+            assertLeasedBlobs(mBlobStoreManager, blobData.getBlobHandle());
+            releaseLease(mContext, blobData.getBlobHandle());
+            assertNoLeasedBlobs(mBlobStoreManager);
         } finally {
             blobData.delete();
         }
     }
 
     @Test
+    public void testAcquireLease_multipleLeases() throws Exception {
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
+        final DummyBlobData blobData2 = new DummyBlobData.Builder(mContext)
+                .setRandomSeed(42)
+                .build();
+        blobData.prepare();
+        blobData2.prepare();
+        try {
+            commitBlob(blobData);
+
+            acquireLease(mContext, blobData.getBlobHandle(), R.string.test_desc,
+                    blobData.getExpiryTimeMillis() - 1000);
+            assertLeasedBlobs(mBlobStoreManager, blobData.getBlobHandle());
+
+            commitBlob(blobData2);
+
+            acquireLease(mContext, blobData2.getBlobHandle(), "Test desc2",
+                    blobData.getExpiryTimeMillis() - 2000);
+            assertLeasedBlobs(mBlobStoreManager, blobData.getBlobHandle(),
+                    blobData2.getBlobHandle());
+
+            releaseLease(mContext, blobData.getBlobHandle());
+            assertLeasedBlobs(mBlobStoreManager, blobData2.getBlobHandle());
+
+            releaseLease(mContext, blobData2.getBlobHandle());
+            assertNoLeasedBlobs(mBlobStoreManager);
+        } finally {
+            blobData.delete();
+            blobData2.delete();
+        }
+    }
+
+    @Test
     public void testAcquireReleaseLease_invalidArguments() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData(mContext);
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
         try {
             assertThrows(NullPointerException.class, () -> mBlobStoreManager.acquireLease(
@@ -689,7 +682,7 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testStorageAttributedToSelf() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData(mContext);
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
         final long partialFileSize = 3373L;
 
@@ -744,7 +737,8 @@ public class BlobStoreManagerTest {
                     .isEqualTo(0);
         }
 
-        mBlobStoreManager.acquireLease(blobData.getBlobHandle(), R.string.test_desc);
+        acquireLease(mContext, blobData.getBlobHandle(), R.string.test_desc);
+        assertLeasedBlobs(mBlobStoreManager, blobData.getBlobHandle());
 
         afterStatsForPkg = storageStatsManager
                 .queryStatsForPackage(UUID_DEFAULT, mContext.getPackageName(), mContext.getUser());
@@ -758,7 +752,8 @@ public class BlobStoreManagerTest {
         assertThat(afterStatsForUid.getDataBytes() - beforeStatsForUid.getDataBytes())
                 .isEqualTo(totalFileSize);
 
-        mBlobStoreManager.releaseLease(blobData.getBlobHandle());
+        releaseLease(mContext, blobData.getBlobHandle());
+        assertNoLeasedBlobs(mBlobStoreManager);
 
         afterStatsForPkg = storageStatsManager
                 .queryStatsForPackage(UUID_DEFAULT, mContext.getPackageName(), mContext.getUser());
@@ -774,7 +769,7 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testStorageAttribution_acquireLease() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData(mContext);
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
 
         final StorageStatsManager storageStatsManager = mContext.getSystemService(
@@ -851,6 +846,31 @@ public class BlobStoreManagerTest {
         } finally {
             serviceConnection.unbind();
         }
+    }
+
+    private void commitBlob(DummyBlobData blobData) throws Exception {
+        commitBlob(blobData, null);
+    }
+
+    private void commitBlob(DummyBlobData blobData,
+            AccessModifier accessModifier) throws Exception {
+        final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
+        assertThat(sessionId).isGreaterThan(0L);
+        try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
+            blobData.writeToSession(session);
+
+            if (accessModifier != null) {
+                accessModifier.modify(session);
+            }
+            final CompletableFuture<Integer> callback = new CompletableFuture<>();
+            session.commit(mContext.getMainExecutor(), callback::complete);
+            assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
+                    .isEqualTo(0);
+        }
+    }
+
+    private interface AccessModifier {
+        void modify(BlobStoreManager.Session session) throws Exception;
     }
 
     private void commitBlobFromPkg(DummyBlobData blobData, TestServiceConnection serviceConnection)

@@ -849,11 +849,11 @@ public class CameraTestUtils extends Assert {
         return idsForTesting.toArray(new String[idsForTesting.size()]);
     }
 
-    public static Set<Set<String>> getConcurrentStreamingCameraIds(CameraManager manager,
+    public static Set<Set<String>> getConcurrentCameraIds(CameraManager manager,
             boolean getSystemCameras)
             throws CameraAccessException {
         Set<String> cameraIds = new HashSet<String>(Arrays.asList(getCameraIdListForTesting(manager, getSystemCameras)));
-        Set<Set<String>> combinations =  manager.getConcurrentStreamingCameraIds();
+        Set<Set<String>> combinations =  manager.getConcurrentCameraIds();
         Set<Set<String>> correctComb = new HashSet<Set<String>>();
         for (Set<String> comb : combinations) {
             Set<String> filteredIds = new HashSet<String>();
