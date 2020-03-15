@@ -127,6 +127,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
         }
         verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS, "testCannotStartActivityWithImplicitIntent");
         verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS, "testCanStartMainActivityByIntent");
+        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS, "testCanStartMainActivityByIntent_withOptionsBundle");
         verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS, "testCanStartNonMainActivityByIntent");
         verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS, "testCanStartNotExportedActivityByIntent");
         verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS, "testCannotStartActivityInOtherPackageByIntent");

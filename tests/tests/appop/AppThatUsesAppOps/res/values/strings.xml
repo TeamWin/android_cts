@@ -16,5 +16,5 @@
   -->
 
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="dummyLabel">A feature</string>
+    <string name="dummyLabel">An attribution</string>
 </resources>

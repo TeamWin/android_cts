@@ -30,6 +30,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 import com.android.tradefed.util.CommandResult;
 import com.android.tradefed.util.CommandStatus;
@@ -48,7 +49,7 @@ import java.util.concurrent.TimeoutException;
  * Test IME APIs for multi-user environment.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class MultiUserTest extends RebootFreeHostTestBase {
+public class MultiUserTest extends BaseHostJUnit4Test {
     private static final long USER_SWITCH_TIMEOUT = TimeUnit.SECONDS.toMillis(60);
     private static final long USER_SWITCH_POLLING_INTERVAL = TimeUnit.MILLISECONDS.toMillis(100);
     private static final long IME_COMMAND_TIMEOUT = TimeUnit.SECONDS.toMillis(7);

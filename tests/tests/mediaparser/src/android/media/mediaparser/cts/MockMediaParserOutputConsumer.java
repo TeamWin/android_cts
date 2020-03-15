@@ -47,7 +47,7 @@ public class MockMediaParserOutputConsumer implements MediaParser.OutputConsumer
     }
 
     @Override
-    public void onSeekMap(MediaParser.SeekMap seekMap) {
+    public void onSeekMapFound(MediaParser.SeekMap seekMap) {
         mFakeExtractorOutput.seekMap(
                 new SeekMap() {
                     @Override
@@ -57,7 +57,7 @@ public class MockMediaParserOutputConsumer implements MediaParser.OutputConsumer
 
                     @Override
                     public long getDurationUs() {
-                        return seekMap.getDurationUs();
+                        return seekMap.getDurationMicros();
                     }
 
                     @Override
@@ -68,12 +68,12 @@ public class MockMediaParserOutputConsumer implements MediaParser.OutputConsumer
     }
 
     @Override
-    public void onTracksFound(int numberOfTracks) {
+    public void onTrackCountFound(int numberOfTracks) {
         // Do nothing.
     }
 
     @Override
-    public void onTrackData(int trackIndex, MediaParser.TrackData trackData) {
+    public void onTrackDataFound(int trackIndex, MediaParser.TrackData trackData) {
         while (mTrackOutputs.size() <= trackIndex) {
             mTrackOutputs.add(mFakeExtractorOutput.track(trackIndex, C.TRACK_TYPE_UNKNOWN));
         }
@@ -81,7 +81,7 @@ public class MockMediaParserOutputConsumer implements MediaParser.OutputConsumer
     }
 
     @Override
-    public void onSampleData(int trackIndex, MediaParser.InputReader inputReader)
+    public void onSampleDataFound(int trackIndex, MediaParser.InputReader inputReader)
             throws IOException {
         try {
             mFakeExtractorOutput
@@ -115,7 +115,7 @@ public class MockMediaParserOutputConsumer implements MediaParser.OutputConsumer
     }
 
     private static SeekPoint toExoPlayerSeekPoint(MediaParser.SeekPoint seekPoint) {
-        return new SeekPoint(seekPoint.timeUs, seekPoint.position);
+        return new SeekPoint(seekPoint.timeMicros, seekPoint.position);
     }
 
     private static Format toExoPlayerFormat(MediaParser.TrackData trackData) {

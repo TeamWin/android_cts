@@ -29,8 +29,10 @@ import android.app.usage.StorageStatsManager;
 import android.content.Intent;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.IBinder;
+import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
+import android.os.RemoteException;
 
 import com.android.cts.blob.ICommandReceiver;
 import com.android.utils.blob.Utils;
@@ -66,7 +68,7 @@ public class BlobStoreTestService extends Service {
                     return callback.get(timeoutSec, TimeUnit.SECONDS);
                 }
             } catch (IOException | InterruptedException | TimeoutException | ExecutionException e) {
-                throw new RuntimeException(e);
+                throw new IllegalStateException(e);
             }
         }
 
@@ -77,7 +79,7 @@ public class BlobStoreTestService extends Service {
             try {
                 return blobStoreManager.openBlob(blobHandle);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new IllegalStateException(e);
             }
         }
 
@@ -90,7 +92,7 @@ public class BlobStoreTestService extends Service {
                     assertThat(session).isNotNull();
                 }
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new IllegalStateException(e);
             }
         }
 
@@ -99,9 +101,10 @@ public class BlobStoreTestService extends Service {
             final BlobStoreManager blobStoreManager = getSystemService(
                     BlobStoreManager.class);
             try {
-                blobStoreManager.acquireLease(blobHandle, "Test description");
+                Utils.acquireLease(BlobStoreTestService.this, blobHandle, "Test description");
+                assertThat(blobStoreManager.getLeasedBlobs()).contains(blobHandle);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new IllegalStateException(e);
             }
         }
 
@@ -110,9 +113,10 @@ public class BlobStoreTestService extends Service {
             final BlobStoreManager blobStoreManager = getSystemService(
                     BlobStoreManager.class);
             try {
-                blobStoreManager.releaseLease(blobHandle);
+                Utils.releaseLease(BlobStoreTestService.this, blobHandle);
+                assertThat(blobStoreManager.getLeasedBlobs()).doesNotContain(blobHandle);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new IllegalStateException(e);
             }
         }
 
@@ -124,7 +128,7 @@ public class BlobStoreTestService extends Service {
                 return storageStatsManager
                         .queryStatsForPackage(UUID_DEFAULT, getPackageName(), getUser());
             } catch (IOException | NameNotFoundException e) {
-                throw new RuntimeException(e);
+                throw new IllegalStateException(e);
             }
         }
 
@@ -136,7 +140,17 @@ public class BlobStoreTestService extends Service {
                 return storageStatsManager
                         .queryStatsForUid(UUID_DEFAULT, Process.myUid());
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new IllegalStateException(e);
+            }
+        }
+
+        @Override
+        public boolean onTransact(int code, Parcel data, Parcel reply, int flags)
+                throws RemoteException {
+            try {
+                return super.onTransact(code, data, reply, flags);
+            } catch (AssertionError e) {
+                throw new IllegalStateException(e);
             }
         }
     }

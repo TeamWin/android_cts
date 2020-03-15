@@ -16,6 +16,7 @@
 
 package android.view.inputmethod.cts;
 
+import static android.view.WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
 import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
 import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
@@ -494,6 +495,63 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
             CtsTouchUtils.emulateTapOnViewCenter(instrumentation, null, editText);
             TestUtils.waitOnMainUntil(() -> editTextHasWindowFocus.get()
                     && !popupTextHasWindowFocus.get(), TIMEOUT);
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
+        }
+    }
+
+    @Test
+    public void testKeyboardStateAfterImeFocusableFlagChanged() throws Exception {
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        try (MockImeSession imeSession = MockImeSession.create(
+                     instrumentation.getContext(), instrumentation.getUiAutomation(),
+                     new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+            final AtomicReference<EditText> editTextRef = new AtomicReference<>();
+            final String marker = getTestMarker();
+            final TestActivity testActivity = TestActivity.startSync(activity-> {
+                // Initially set activity window to not IME focusable.
+                activity.getWindow().addFlags(FLAG_ALT_FOCUSABLE_IM);
+
+                final LinearLayout layout = new LinearLayout(activity);
+                layout.setOrientation(LinearLayout.VERTICAL);
+
+                final EditText editText = new EditText(activity);
+                editText.setPrivateImeOptions(marker);
+                editText.setHint("editText");
+                editTextRef.set(editText);
+                editText.requestFocus();
+
+                layout.addView(editText);
+                return layout;
+            });
+            // Wait until the MockIme gets bound to the TestActivity.
+            expectBindInput(stream, Process.myPid(), TIMEOUT);
+
+            // Emulate tap event, expect there is no "onStartInput", and "showSoftInput" happened.
+            final EditText editText = editTextRef.get();
+            CtsTouchUtils.emulateTapOnViewCenter(instrumentation, null, editText);
+            notExpectEvent(stream, editorMatcher("onStartInput", marker), NOT_EXPECT_TIMEOUT);
+            notExpectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
+                    NOT_EXPECT_TIMEOUT);
+
+            // Set testActivity window to be IME focusable.
+            testActivity.getWindow().getDecorView().post(() -> {
+                final WindowManager.LayoutParams params = testActivity.getWindow().getAttributes();
+                testActivity.getWindow().clearFlags(FLAG_ALT_FOCUSABLE_IM);
+                editTextRef.get().requestFocus();
+            });
+
+            // Make sure test activity's window has changed to be IME focusable.
+            TestUtils.waitOnMainUntil(() -> WindowManager.LayoutParams.mayUseInputMethod(
+                    testActivity.getWindow().getAttributes().flags), TIMEOUT);
+
+            // Emulate tap event again.
+            CtsTouchUtils.emulateTapOnViewCenter(instrumentation, null, editText);
+            assertTrue(TestUtils.getOnMainSync(() -> editText.hasFocus()
+                    && editText.hasWindowFocus()));
+
+            // "onStartInput", and "showSoftInput" must happen when editText became IME focusable.
             expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
             expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
         }
