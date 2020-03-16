@@ -450,8 +450,21 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
+    private void setUpNotifListener() {
+        try {
+            toggleListenerAccess(TestNotificationListener.getId(),
+                    InstrumentationRegistry.getInstrumentation(), true);
+            mListener = TestNotificationListener.getInstance();
+            mListener.resetData();
+            assertNotNull(mListener);
+        } catch (IOException e) {
+        }
+    }
+
     private void sendAndVerifyBubble(final int id, Notification.Builder builder,
             Notification.BubbleMetadata data, boolean shouldBeBubble) {
+        setUpNotifListener();
+
         final Intent intent = new Intent(mContext, BubbledActivity.class);
 
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -478,50 +491,48 @@ public class NotificationManagerTest extends AndroidTestCase {
         Notification notif = builder.build();
         mNotificationManager.notify(id, notif);
 
-        if (!checkNotificationExistence(id, /*shouldExist=*/ true, shouldBeBubble)) {
-            fail("couldn't find posted notification bubble with id=" + id);
-        }
+        verifyNotificationBubbleState(id, shouldBeBubble);
     }
 
-    private StatusBarNotification getNotification(int id) {
-        // notification is a bit asynchronous so it may take a few ms to appear in
-        // getActiveNotifications()
-        // we will check for it for up to 300ms before giving up
-        for (int tries = 3; tries-- > 0;) {
-            // Need reset flag.
-            final StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
-            for (StatusBarNotification sbn : sbns) {
-                if (sbn.getId() == id) {
-                    return sbn;
+    /**
+     * Make sure {@link #setUpNotifListener()} is called prior to sending the notif and verifying
+     * in this method.
+     */
+    private void verifyNotificationBubbleState(int id, boolean shouldBeBubble) {
+        try {
+            // FLAG_BUBBLE relies on notification being posted, wait for notification listener
+            Thread.sleep(500);
+        } catch (InterruptedException ex) {
+        }
+
+        for (StatusBarNotification sbn : mListener.mPosted) {
+            if (sbn.getId() == id) {
+                boolean isBubble = (sbn.getNotification().flags & FLAG_BUBBLE) != 0;
+                if (isBubble != shouldBeBubble) {
+                    final String failure = shouldBeBubble
+                            ? "Notification with id= " + id + " wasn't a bubble"
+                            : "Notification with id= " + id + " was a bubble and shouldn't be";
+                    fail(failure);
+                } else {
+                    // pass
+                    return;
                 }
             }
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException ex) {
-                // pass
-            }
         }
-        return null;
+        fail("Couldn't find posted notification with id= " + id);
     }
 
     private boolean checkNotificationExistence(int id, boolean shouldExist) {
-        return checkNotificationExistence(id, shouldExist, false /* shouldBeBubble */);
-    }
-
-    private boolean checkNotificationExistence(int id, boolean shouldExist,
-            boolean shouldBeBubble) {
         // notification is a bit asynchronous so it may take a few ms to appear in
         // getActiveNotifications()
         // we will check for it for up to 300ms before giving up
         boolean found = false;
-        boolean isBubble = false;
         for (int tries = 3; tries--> 0;) {
             // Need reset flag.
             found = false;
             final StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
             for (StatusBarNotification sbn : sbns) {
-                isBubble = (sbn.getNotification().flags & FLAG_BUBBLE) != 0;
-                Log.d(TAG, "Found " + sbn.getKey() + " Bubble? " + isBubble);
+                Log.d(TAG, "Found " + sbn.getKey());
                 if (sbn.getId() == id) {
                     found = true;
                     break;
@@ -534,7 +545,7 @@ public class NotificationManagerTest extends AndroidTestCase {
                 // pass
             }
         }
-        return (found == shouldExist) && (isBubble == shouldBeBubble);
+        return found == shouldExist;
     }
 
     private void assertNotificationCount(int expectedCount) {
@@ -2769,7 +2780,7 @@ public class NotificationManagerTest extends AndroidTestCase {
                 badNumberString);
     }
 
-    public void testNotificationManagerBubblePolicy_flagForMessage_failsNoRemoteInput()
+    public void testNotificationManagerBubblePolicy_flagForMessage_passesNoRemoteInput()
             throws InterruptedException {
         // turn on bubbles globally
         toggleBubbleSetting(true);
@@ -2787,7 +2798,8 @@ public class NotificationManagerTest extends AndroidTestCase {
                                 SystemClock.currentThreadTimeMillis(), person)
                 )
                 .setSmallIcon(android.R.drawable.sym_def_app_icon);
-        sendAndVerifyBubble(1, nb, null /* use default metadata */, false);
+        boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
+        sendAndVerifyBubble(1, nb, null /* use default metadata */, shouldBeBubble);
     }
 
     public void testNotificationManagerBubblePolicy_flagForMessage_succeeds()
@@ -2831,13 +2843,12 @@ public class NotificationManagerTest extends AndroidTestCase {
         try {
             // turn on bubbles globally
             toggleBubbleSetting(true);
+
+            setUpNotifListener();
+
             mContext.startService(serviceIntent);
 
-            if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
-                    true /* shouldExist */, false /* shouldBeBubble */)) {
-                fail("found bubble notification id=" + BUBBLE_NOTIF_ID
-                        + " when it should just be a notification");
-            }
+            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, false /* shouldBeBubble */);
         } finally {
             mContext.stopService(serviceIntent);
         }
@@ -2850,14 +2861,13 @@ public class NotificationManagerTest extends AndroidTestCase {
         try {
             // turn on bubbles globally
             toggleBubbleSetting(true);
+
+            setUpNotifListener();
+
             mContext.startService(serviceIntent);
 
             boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
-            if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
-                    true /* shouldExist */, shouldBeBubble)) {
-                fail("couldn't find posted notification bubble with id=" + BUBBLE_NOTIF_ID);
-            }
-
+            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, shouldBeBubble);
         } finally {
             mContext.stopService(serviceIntent);
         }
@@ -2871,13 +2881,12 @@ public class NotificationManagerTest extends AndroidTestCase {
         try {
             // turn on bubbles globally
             toggleBubbleSetting(true);
+
+            setUpNotifListener();
+
             mContext.startService(serviceIntent);
 
-            if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
-                    true /* shouldExist */, false /* shouldBeBubble */)) {
-                fail("couldn't find posted notification with id=" + BUBBLE_NOTIF_ID
-                        + " or it was a bubble when it shouldn't be");
-            }
+            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, false /* shouldBeBubble */);
         } finally {
             mContext.stopService(serviceIntent);
         }
@@ -2907,13 +2916,12 @@ public class NotificationManagerTest extends AndroidTestCase {
         try {
             // turn on bubbles globally
             toggleBubbleSetting(true);
+
+            setUpNotifListener();
+
             mContext.startService(serviceIntent);
 
-            if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
-                    true /* shouldExist */, false /* shouldBeBubble */)) {
-                fail("couldn't find posted notification with id=" + BUBBLE_NOTIF_ID
-                        + " or it was a bubble when it shouldn't be");
-            }
+            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, false /* shouldBeBubble */);
         } finally {
             mContext.stopService(serviceIntent);
         }
@@ -2927,13 +2935,12 @@ public class NotificationManagerTest extends AndroidTestCase {
         try {
             // turn on bubbles globally
             toggleBubbleSetting(true);
+
+            setUpNotifListener();
+
             mContext.startService(serviceIntent);
 
-            if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
-                    true /* shouldExist */, false /* shouldBeBubble */)) {
-                fail("couldn't find posted notification with id=" + BUBBLE_NOTIF_ID
-                        + " or it was a bubble when it shouldn't be");
-            }
+            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, false /* shouldBeBubble */);
         } finally {
             mContext.stopService(serviceIntent);
         }
@@ -2944,17 +2951,16 @@ public class NotificationManagerTest extends AndroidTestCase {
             // turn on bubbles globally
             toggleBubbleSetting(true);
 
+            setUpNotifListener();
+
             // Start & get the activity
             SendBubbleActivity a = startSendBubbleActivity();
 
             // Send a bubble that doesn't fulfill policy from foreground
-            a.sendInvalidBubble(4000, false /* autoExpand */);
+            a.sendInvalidBubble(false /* autoExpand */);
 
             // Just because app is foreground, doesn't mean they get to bubble
-            if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
-                    true /* shouldExist */, false /* shouldBeBubble */)) {
-                fail("couldn't find posted notification bubble with id=" + BUBBLE_NOTIF_ID);
-            }
+            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, false /* shouldBeBubble */);
         } finally {
             cleanupSendBubbleActivity();
         }
@@ -2964,6 +2970,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         try {
             // turn on bubbles globally
             toggleBubbleSetting(true);
+
+            setUpNotifListener();
 
             // make ourselves foreground so we can auto-expand the bubble & check the intent flags
             SendBubbleActivity a = startSendBubbleActivity();
@@ -2979,10 +2987,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             a.sendBubble(true /* autoExpand */, false /* suppressNotif */);
 
             boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
-            if (!checkNotificationExistence(BUBBLE_NOTIF_ID,
-                    true /* shouldExist */, shouldBeBubble)) {
-                fail("couldn't find posted notification bubble with id=" + BUBBLE_NOTIF_ID);
-            }
+            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, shouldBeBubble);
 
             InstrumentationRegistry.getInstrumentation().waitForIdleSync();
 
@@ -3084,7 +3089,6 @@ public class NotificationManagerTest extends AndroidTestCase {
 
             boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
             sendAndVerifyBubble(1, nb, data, shouldBeBubble);
-
         } finally {
             // remove the shortcut
             scmanager.removeAllDynamicShortcuts();
@@ -3152,6 +3156,8 @@ public class NotificationManagerTest extends AndroidTestCase {
             // turn on bubbles globally
             toggleBubbleSetting(true);
 
+            setUpNotifListener();
+
             // Make dynamic shortcut
             Intent shortcutIntent = new Intent(mContext, SendBubbleActivity.class);
             shortcutIntent.setAction(Intent.ACTION_VIEW);
@@ -3196,12 +3202,13 @@ public class NotificationManagerTest extends AndroidTestCase {
             boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
             sendAndVerifyBubble(1, nb, data, shouldBeBubble);
 
+            mListener.resetData();
+
             // Now lets delete the shortcut and make sure the notif has been updated to not
             // be a bubble.
             scmanager.removeAllDynamicShortcuts();
 
-            checkNotificationExistence(1, true /* should exist */, false /* should be bubble */);
-
+            verifyNotificationBubbleState(1, false /* should be bubble */);
         } finally {
             // remove the shortcut
             scmanager.removeAllDynamicShortcuts();
@@ -3213,14 +3220,18 @@ public class NotificationManagerTest extends AndroidTestCase {
             // turn on bubbles globally
             toggleBubbleSetting(true);
 
+            setUpNotifListener();
+
             // make ourselves foreground so we can specify suppress notification flag
             SendBubbleActivity a = startSendBubbleActivity();
 
             // send the bubble with notification suppressed
             a.sendBubble(false /* autoExpand */, true /* suppressNotif */);
+            boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
+            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, shouldBeBubble);
 
             // check for the notification
-            StatusBarNotification sbnSuppressed = getNotification(BUBBLE_NOTIF_ID);
+            StatusBarNotification sbnSuppressed = mListener.mPosted.get(0);
             assertNotNull(sbnSuppressed);
             // check for suppression state
             Notification.BubbleMetadata metadata =
@@ -3228,11 +3239,14 @@ public class NotificationManagerTest extends AndroidTestCase {
             assertNotNull(metadata);
             assertTrue(metadata.isNotificationSuppressed());
 
+            mListener.resetData();
+
             // send the bubble with notification NOT suppressed
             a.sendBubble(false /* autoExpand */, false /* suppressNotif */);
+            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, shouldBeBubble);
 
             // check for the notification
-            StatusBarNotification sbnNotSuppressed = getNotification(BUBBLE_NOTIF_ID);
+            StatusBarNotification sbnNotSuppressed = mListener.mPosted.get(0);
             assertNotNull(sbnNotSuppressed);
             // check for suppression state
             metadata = sbnNotSuppressed.getNotification().getBubbleMetadata();
@@ -3243,6 +3257,8 @@ public class NotificationManagerTest extends AndroidTestCase {
 
             // turn off bubbles globally
             toggleBubbleSetting(false);
+
+            mListener.resetData();
         }
     }
 
