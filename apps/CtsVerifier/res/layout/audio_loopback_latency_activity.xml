@@ -23,56 +23,20 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/scrollView"
-    >
+        android:id="@+id/scrollView">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-        >
+            android:orientation="vertical">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:scrollbars="vertical"
-                android:gravity="bottom"
-                android:id="@+id/audio_general_headset_port_exists"
-                android:text="@string/audio_general_headset_port_exists" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-            >
-
-                <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/audio_general_headset_no"
-                    android:text="@string/audio_general_headset_no"
-                    android:nextFocusForward="@+id/audio_general_headset_yes"
-                    android:nextFocusDown="@+id/audio_loopback_plug_ready_btn"
-                    android:nextFocusRight="@+id/audio_general_headset_yes" />
-
-                <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/audio_general_headset_yes"
-                    android:text="@string/audio_general_headset_yes"
-                    android:nextFocusForward="@+id/audio_loopback_plug_ready_btn"
-                    android:nextFocusDown="@+id/audio_loopback_plug_ready_btn"
-                    android:nextFocusLeft="@+id/audio_general_headset_no"
-                    android:nextFocusRight="@+id/audio_loopback_plug_ready_btn" />
-
-            </LinearLayout>
+            <include layout="@layout/audio_loopback_layout"/>
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:id="@+id/audio_loopback_headset_port"
-            >
+                android:id="@+id/audio_loopback_headset_port">
 
                 <TextView
                     android:layout_width="match_parent"
@@ -97,8 +61,7 @@
                     android:orientation="vertical"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:id="@+id/audio_loopback_layout"
-                >
+                    android:id="@+id/audio_loopback_layout">
 
                     <TextView
                         android:layout_width="wrap_content"

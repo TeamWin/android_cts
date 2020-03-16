@@ -29,7 +29,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -37,10 +36,8 @@ import android.widget.Toast;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;  // needed to access resource in CTSVerifier project namespace.
 
-import java.util.List;
-
 public class ProAudioActivity
-        extends PassFailButtons.Activity
+        extends AudioLoopbackBaseActivity
         implements View.OnClickListener {
     private static final String TAG = ProAudioActivity.class.getName();
     private static final boolean DEBUG = false;
@@ -261,9 +258,9 @@ public class ProAudioActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
         setContentView(R.layout.pro_audio);
+
+        super.onCreate(savedInstanceState);
 
         mAudioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
         mAudioManager.registerAudioDeviceCallback(new ConnectListener(), new Handler());
@@ -301,7 +298,7 @@ public class ProAudioActivity
         // Round-trip Latency
         mRoundTripLatencyTxt = (TextView)findViewById(R.id.proAudioRoundTripLbl);
         mRoundTripConfidenceTxt = (TextView)findViewById(R.id.proAudioConfidenceLbl);
-        ((Button)findViewById(R.id.proAudio_runRoundtripBtn)).setOnClickListener(this);
+        findViewById(R.id.proAudio_runRoundtripBtn).setOnClickListener(this);
 
         // HDMI
         mHDMISupportLbl = (TextView)findViewById(R.id.proAudioHDMISupportLbl);
