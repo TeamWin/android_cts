@@ -299,12 +299,15 @@
     <string name="biometric_test_weak_enroll">Start enrollment</string>
     <string name="biometric_test_weak_authenticate">Authenticate</string>
 
-    <string name="biometric_test_set_user_authentication_credential_cipher_label">4a: Credential, Cipher</string>
-    <string name="biometric_test_set_user_authentication_biometric_cipher_label">4b: Biometric, Cipher</string>
-    <string name="biometric_test_set_user_authentication_biometric_credential_cipher_label">4c: Biometric|Credential, Cipher</string>
-    <string name="biometric_test_set_user_authentication_credential_signature_label">4d: Credential, Signature</string>
-    <string name="biometric_test_set_user_authentication_biometric_signature_label">4e: Biometric, Signature</string>
-    <string name="biometric_test_set_user_authentication_biometric_or_credential_signature_label">4f: Biometric|Credential, Signature</string>
+    <string name="biometric_test_set_user_authentication_credential_cipher_label">4a: Cipher, Credential</string>
+    <string name="biometric_test_set_user_authentication_biometric_cipher_label">4b: Cipher, Biometric</string>
+    <string name="biometric_test_set_user_authentication_biometric_credential_cipher_label">4c: Cipher, Biometric|Credential</string>
+    <string name="biometric_test_set_user_authentication_credential_signature_label">4d: Signature, Credential</string>
+    <string name="biometric_test_set_user_authentication_biometric_signature_label">4e: Signature, Biometric</string>
+    <string name="biometric_test_set_user_authentication_biometric_or_credential_signature_label">4f: Signature, Biometric|Credential</string>
+    <string name="biometric_test_set_user_authentication_credential_mac_label">4g: MAC, Credential</string>
+    <string name="biometric_test_set_user_authentication_biometric_mac_label">4h: MAC, Biometric</string>
+    <string name="biometric_test_set_user_authentication_biometric_or_credential_mac_label">4h: MAC, Biometric|Credential</string>
     <string name="biometric_test_set_user_authentication_credential_instructions">This test checks the correctness of the KeyGenParameterSpec.Builder#setUserAuthenticationParameters(int, int) API for AUTH_DEVICE_CREDENTIAL.
         Buttons for completed tasks will become invisible. It\'s normal for buttons to be disabled for a few seconds during this test.</string>
     <string name="biometric_test_set_user_authentication_biometric_instructions">This test checks the correctness of the KeyGenParameterSpec.Builder#setUserAuthenticationParameters(int, int) API for AUTH_BIOMETRIC_STRONG.

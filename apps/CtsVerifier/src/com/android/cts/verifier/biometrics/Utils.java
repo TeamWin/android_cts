@@ -37,6 +37,7 @@ import java.util.Random;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
+import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 
 public class Utils {
@@ -103,9 +104,20 @@ public class Utils {
         // TODO: This can be used to verify signature
         // PublicKey publicKey = keyStore.getCertificate(keyName).getPublicKey();
 
-        Signature signature = Signature.getInstance("SHA512withECDSA");
+        Signature signature = Signature.getInstance("SHA256withECDSA");
         signature.initSign(privateKey);
         return signature;
+    }
+
+    static Mac initMac(String keyName) throws Exception {
+        KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+        keyStore.load(null);
+
+        SecretKey secretKey = (SecretKey) keyStore.getKey(keyName, null);
+
+        Mac mac = Mac.getInstance("HmacSHA256");
+        mac.init(secretKey);
+        return mac;
     }
 
     static byte[] doEncrypt(Cipher cipher, byte[] data) throws Exception {

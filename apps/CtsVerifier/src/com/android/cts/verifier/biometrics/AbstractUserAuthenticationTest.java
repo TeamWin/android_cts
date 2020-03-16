@@ -322,6 +322,7 @@ public abstract class AbstractUserAuthenticationTest extends PassFailButtons.Act
                     // next test to start.
                     disableTestsForFewSeconds();
 
+                    Exception exception = null;
                     boolean keyUsed;
                     try {
                         if (!requiresCryptoObject) {
@@ -333,11 +334,15 @@ public abstract class AbstractUserAuthenticationTest extends PassFailButtons.Act
                         keyUsed = true;
                     } catch (Exception e) {
                         keyUsed = false;
+                        exception = e;
                     }
 
                     if (keyUsed != shouldKeyBeUsable) {
                         showToastAndLog("Test failed. shouldKeyBeUsable: " + shouldKeyBeUsable
-                                + " keyUsed: " + keyUsed);
+                                + " keyUsed: " + keyUsed + " Exception: " + exception);
+                        if (exception != null) {
+                            exception.printStackTrace();
+                        }
                     } else {
                         // Set them to invisible, because for this test, disabled actually means
                         // something else. For the initialization of some keys, its success/failure
