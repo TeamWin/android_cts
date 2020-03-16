@@ -211,7 +211,7 @@ public class AccessibilityEmbeddedHierarchyTest {
 
             View layout = getLayoutInflater().inflate(
                     R.layout.accessibility_embedded_hierarchy_test_embedded_side, null);
-            mViewHost.addView(layout, DEFAULT_WIDTH, DEFAULT_HEIGHT);
+            mViewHost.setView(layout, DEFAULT_WIDTH, DEFAULT_HEIGHT);
             mCountDownLatch.countDown();
         }
 

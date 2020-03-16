@@ -967,28 +967,32 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testSetProtectedPackages() throws Exception {
+    public void testSetUserControlDisabledPackages() throws Exception {
         if (!mHasFeature) {
             return;
         }
         try {
             installAppAsUser(SIMPLE_APP_APK, mPrimaryUserId);
             assertMetricsLogged(getDevice(),
-                    () -> executeDeviceTestMethod(".ProtectedPackagesTest",
-                            "testSetProtectedPackages"),
-                    new DevicePolicyEventWrapper.Builder(EventId.SET_PACKAGES_PROTECTED_VALUE)
+                    () -> executeDeviceTestMethod(".UserControlDisabledPackagesTest",
+                            "testSetUserControlDisabledPackages"),
+                    new DevicePolicyEventWrapper.Builder(
+                            EventId.SET_USER_CONTROL_DISABLED_PACKAGES_VALUE)
                             .setAdminPackageName(DEVICE_OWNER_PKG)
                             .setStrings(new String[] {SIMPLE_APP_PKG})
                             .build());
             forceStopPackageForUser(SIMPLE_APP_PKG, mPrimaryUserId);
-            executeDeviceTestMethod(".ProtectedPackagesTest", "testForceStopForProtectedPackages");
+            executeDeviceTestMethod(".UserControlDisabledPackagesTest",
+                    "testForceStopWithUserControlDisabled");
             // Reboot and verify protected packages are persisted
             rebootAndWaitUntilReady();
-            executeDeviceTestMethod(".ProtectedPackagesTest", "testForceStopForProtectedPackages");
-            executeDeviceTestMethod(".ProtectedPackagesTest", "testClearProtectedPackages");
+            executeDeviceTestMethod(".UserControlDisabledPackagesTest",
+                    "testForceStopWithUserControlDisabled");
+            executeDeviceTestMethod(".UserControlDisabledPackagesTest",
+                    "testClearSetUserControlDisabledPackages");
             forceStopPackageForUser(SIMPLE_APP_PKG, mPrimaryUserId);
-            executeDeviceTestMethod(".ProtectedPackagesTest",
-                    "testForceStopForUnprotectedPackages");
+            executeDeviceTestMethod(".UserControlDisabledPackagesTest",
+                    "testForceStopWithUserControlEnabled");
         } finally {
             getDevice().uninstallPackage(SIMPLE_APP_APK);
         }

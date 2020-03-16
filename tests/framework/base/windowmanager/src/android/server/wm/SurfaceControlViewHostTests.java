@@ -117,7 +117,7 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
 
         mEmbeddedLayoutParams = new WindowManager.LayoutParams(width, height,
                 WindowManager.LayoutParams.TYPE_APPLICATION, 0, PixelFormat.OPAQUE);
-        mVr.addView(v, mEmbeddedLayoutParams);
+        mVr.setView(v, mEmbeddedLayoutParams);
     }
 
     @Override

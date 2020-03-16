@@ -76,7 +76,7 @@ public class RenderService extends Service {
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(metrics.widthPixels,
                 metrics.heightPixels, TYPE_APPLICATION, 0,
                 PixelFormat.OPAQUE);
-        surfaceControlViewHost.addView(embeddedView, lp);
+        surfaceControlViewHost.setView(embeddedView, lp);
         return surfaceControlViewHost;
     }
 
