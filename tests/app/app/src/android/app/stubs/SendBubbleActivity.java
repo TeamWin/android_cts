@@ -28,7 +28,6 @@ import android.content.Intent;
 import android.graphics.drawable.Icon;
 import android.os.Bundle;
 import android.os.SystemClock;
-import android.util.Log;
 
 /**
  * Used by NotificationManagerTest for testing policy around bubbles, this activity is able to
@@ -59,7 +58,7 @@ public class SendBubbleActivity extends Activity {
      * Sends a notification that has bubble metadata but the rest of the notification isn't
      * configured correctly so the system won't allow it to bubble.
      */
-    public void sendInvalidBubble(int i, boolean autoExpand) {
+    public void sendInvalidBubble(boolean autoExpand) {
         Context context = getApplicationContext();
 
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, new Intent(), 0);
@@ -75,7 +74,6 @@ public class SendBubbleActivity extends Activity {
         NotificationManager noMan = (NotificationManager) context.getSystemService(
                 Context.NOTIFICATION_SERVICE);
         noMan.notify(BUBBLE_NOTIF_ID, n);
-        Log.d(TAG, "posting bubble: " + n + ", " + i);
     }
 
     /** Sends a notification that is properly configured to bubble. */
