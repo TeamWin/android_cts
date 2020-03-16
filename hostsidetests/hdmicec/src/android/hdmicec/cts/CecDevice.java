@@ -51,8 +51,8 @@ public enum CecDevice {
         }
     }
 
-    public static String getDeviceType(CecDevice device) {
-        switch (device) {
+    public String getDeviceType() {
+        switch (this) {
             case PLAYBACK_1:
             case PLAYBACK_2:
             case PLAYBACK_3:
