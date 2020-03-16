@@ -36,6 +36,7 @@ import static android.server.wm.app.Components.LAUNCH_INTO_PINNED_STACK_PIP_ACTI
 import static android.server.wm.app.Components.NON_RESIZEABLE_ACTIVITY;
 import static android.server.wm.app.Components.PIP_ACTIVITY;
 import static android.server.wm.app.Components.PIP_ACTIVITY2;
+import static android.server.wm.app.Components.PIP_ACTIVITY_WITH_MINIMAL_SIZE;
 import static android.server.wm.app.Components.PIP_ACTIVITY_WITH_SAME_AFFINITY;
 import static android.server.wm.app.Components.PIP_ON_STOP_ACTIVITY;
 import static android.server.wm.app.Components.PipActivity.ACTION_ENTER_PIP;
@@ -81,6 +82,8 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.database.ContentObserver;
 import android.graphics.Rect;
@@ -120,9 +123,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     private static final String TAG = PinnedStackTests.class.getSimpleName();
 
     private static final String APP_OPS_OP_ENTER_PICTURE_IN_PICTURE = "PICTURE_IN_PICTURE";
-    private static final int APP_OPS_MODE_ALLOWED = 0;
     private static final int APP_OPS_MODE_IGNORED = 1;
-    private static final int APP_OPS_MODE_ERRORED = 2;
 
     private static final int ROTATION_0 = 0;
     private static final int ROTATION_90 = 1;
@@ -245,6 +246,31 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
         assertPinnedStackExists();
         assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
+    }
+
+    // TODO: launch/size pip to a size smaller than limitation and verify the minWidth/minHeight
+    // is respected after b/149338177.
+    @Test
+    public void testEnterPipWithMinimalSize() throws Exception {
+        // Launch a PiP activity with minimal size specified
+        launchActivity(PIP_ACTIVITY_WITH_MINIMAL_SIZE, EXTRA_ENTER_PIP, "true");
+        // Wait for animation complete since we are comparing size
+        waitForEnterPipAnimationComplete(PIP_ACTIVITY_WITH_MINIMAL_SIZE);
+        assertPinnedStackExists();
+
+        // query the minimal size
+        final PackageManager pm = getInstrumentation().getTargetContext().getPackageManager();
+        final ActivityInfo info = pm.getActivityInfo(
+                PIP_ACTIVITY_WITH_MINIMAL_SIZE, 0 /* flags */);
+        final Size minSize = new Size(info.windowLayout.minWidth, info.windowLayout.minHeight);
+
+        // compare the bounds with minimal size
+        final Rect pipBounds = getPinnedStackBounds();
+        assertTrue("Pinned stack bounds is no smaller than minimal",
+                (pipBounds.width() == minSize.getWidth()
+                        && pipBounds.height() >= minSize.getHeight())
+                        || (pipBounds.height() == minSize.getHeight()
+                        && pipBounds.width() >= minSize.getWidth()));
     }
 
     @Test
