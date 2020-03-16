@@ -162,6 +162,16 @@
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
                   android:exported="true"
         />
+        <activity android:name=".PipActivityWithMinimalSize"
+                  android:resizeableActivity="false"
+                  android:supportsPictureInPicture="true"
+                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
+                  android:exported="true"
+                  android:taskAffinity="nobody.but.PipActivity">
+                  <layout android:minWidth="100dp"
+                          android:minHeight="80dp"
+                  />
+        </activity>
         <activity android:name=".FreeformActivity"
                   android:resizeableActivity="true"
                   android:taskAffinity="nobody.but.FreeformActivity"
