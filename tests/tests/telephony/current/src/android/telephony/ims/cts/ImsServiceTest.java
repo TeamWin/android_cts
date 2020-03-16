@@ -722,8 +722,8 @@ public class ImsServiceTest {
         };
 
         final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        // Latch will count down here (we callback on the state during registration).
         try {
+            // First try without the correct permissions.
             ImsManager imsManager = getContext().getSystemService(ImsManager.class);
             ImsMmTelManager mmTelManager = imsManager.getImsMmTelManager(sTestSub);
             mmTelManager.registerImsRegistrationCallback(getContext().getMainExecutor(), callback);
@@ -732,6 +732,7 @@ public class ImsServiceTest {
             //expected
         }
 
+        // Latch will count down here (we callback on the state during registration).
         try {
             automan.adoptShellPermissionIdentity();
             ImsManager imsManager = getContext().getSystemService(ImsManager.class);
@@ -761,6 +762,16 @@ public class ImsServiceTest {
         assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WLAN, waitForIntResult(mQueue));
         assertEquals(ImsReasonInfo.CODE_LOCAL_HO_NOT_FEASIBLE, waitForIntResult(mQueue));
 
+        // Ensure null ImsReasonInfo still results in non-null callback value.
+        sServiceConnector.getCarrierService().getImsRegistration().onTechnologyChangeFailed(
+                ImsRegistrationImplBase.REGISTRATION_TECH_IWLAN, null);
+        assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WLAN, waitForIntResult(mQueue));
+        assertEquals(ImsReasonInfo.CODE_UNSPECIFIED, waitForIntResult(mQueue));
+
+        // Ensure null ImsReasonInfo still results in non-null callback.
+        sServiceConnector.getCarrierService().getImsRegistration().onDeregistered(null);
+        assertEquals(ImsReasonInfo.CODE_UNSPECIFIED, waitForIntResult(mQueue));
+
         try {
             automan.adoptShellPermissionIdentity();
             ImsManager imsManager = getContext().getSystemService(ImsManager.class);
@@ -778,7 +789,6 @@ public class ImsServiceTest {
         } catch (SecurityException e) {
             //expected
         }
-
     }
 
     @Ignore("RCS APIs not public yet")
