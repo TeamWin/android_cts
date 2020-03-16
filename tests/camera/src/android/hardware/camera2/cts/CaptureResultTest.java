@@ -729,8 +729,8 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
             waiverKeys.add(CaptureResult.STATISTICS_OIS_SAMPLES);
         }
 
-        if (staticInfo.getAvailableBokehCapsChecked().length == 0) {
-            waiverKeys.add(CaptureResult.CONTROL_BOKEH_MODE);
+        if (staticInfo.getAvailableExtendedSceneModeCapsChecked().length == 0) {
+            waiverKeys.add(CaptureResult.CONTROL_EXTENDED_SCENE_MODE);
         }
 
         if (!staticInfo.isRotateAndCropSupported()) {
@@ -998,7 +998,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         resultKeys.add(CaptureResult.CONTROL_POST_RAW_SENSITIVITY_BOOST);
         resultKeys.add(CaptureResult.CONTROL_ENABLE_ZSL);
         resultKeys.add(CaptureResult.CONTROL_AF_SCENE_CHANGE);
-        resultKeys.add(CaptureResult.CONTROL_BOKEH_MODE);
+        resultKeys.add(CaptureResult.CONTROL_EXTENDED_SCENE_MODE);
         resultKeys.add(CaptureResult.CONTROL_ZOOM_RATIO);
         resultKeys.add(CaptureResult.EDGE_MODE);
         resultKeys.add(CaptureResult.FLASH_MODE);

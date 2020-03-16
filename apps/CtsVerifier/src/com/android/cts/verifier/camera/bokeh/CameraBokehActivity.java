@@ -222,19 +222,19 @@ public class CameraBokehActivity extends PassFailButtons.Activity
                 CameraCharacteristics characteristics =
                         mCameraManager.getCameraCharacteristics(id);
                 Key<Capability[]> key =
-                        CameraCharacteristics.CONTROL_AVAILABLE_BOKEH_CAPABILITIES;
-                Capability[] bokehCaps = characteristics.get(key);
+                        CameraCharacteristics.CONTROL_AVAILABLE_EXTENDED_SCENE_MODE_CAPABILITIES;
+                Capability[] extendedSceneModeCaps = characteristics.get(key);
 
-                if (bokehCaps == null) {
+                if (extendedSceneModeCaps == null) {
                     continue;
                 }
 
                 ArrayList<Capability> nonOffModes = new ArrayList<>();
-                for (Capability bokehCap : bokehCaps) {
-                    int mode = bokehCap.getMode();
-                    if (mode == CameraMetadata.CONTROL_BOKEH_MODE_STILL_CAPTURE ||
-                            mode == CameraMetadata.CONTROL_BOKEH_MODE_CONTINUOUS) {
-                        nonOffModes.add(bokehCap);
+                for (Capability cap : extendedSceneModeCaps) {
+                    int mode = cap.getMode();
+                    if (mode == CameraMetadata.CONTROL_EXTENDED_SCENE_MODE_BOKEH_STILL_CAPTURE ||
+                            mode == CameraMetadata.CONTROL_EXTENDED_SCENE_MODE_BOKEH_CONTINUOUS) {
+                        nonOffModes.add(cap);
                     }
                 }
 
@@ -277,9 +277,9 @@ public class CameraBokehActivity extends PassFailButtons.Activity
         // Must be kept in sync with camera bokeh mode manually
         mModeNames = new SparseArray(2);
         mModeNames.append(
-                CameraMetadata.CONTROL_BOKEH_MODE_STILL_CAPTURE, "STILL_CAPTURE");
+                CameraMetadata.CONTROL_EXTENDED_SCENE_MODE_BOKEH_STILL_CAPTURE, "STILL_CAPTURE");
         mModeNames.append(
-                CameraMetadata.CONTROL_BOKEH_MODE_CONTINUOUS, "CONTINUOUS");
+                CameraMetadata.CONTROL_EXTENDED_SCENE_MODE_BOKEH_CONTINUOUS, "CONTINUOUS");
 
         mNextButton = findViewById(R.id.next_button);
         mNextButton.setOnClickListener(v -> {
@@ -638,7 +638,8 @@ public class CameraBokehActivity extends PassFailButtons.Activity
             }
 
             // For BOKEH_MODE_STILL_CAPTURE, add 2 combinations: one streaming, one still capture.
-            if (bokehCap.getMode() == CaptureRequest.CONTROL_BOKEH_MODE_STILL_CAPTURE) {
+            if (bokehCap.getMode() ==
+                    CaptureRequest.CONTROL_EXTENDED_SCENE_MODE_BOKEH_STILL_CAPTURE) {
                 CameraCombination combination2 = new CameraCombination(
                         index, bokehCap.getMode(), previewSize.getWidth(),
                         previewSize.getHeight(), mCameraId,
@@ -783,8 +784,8 @@ public class CameraBokehActivity extends PassFailButtons.Activity
 
             /* Set bokeh mode and start streaming */
             int bokehMode = mNextCombination.mMode;
-            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_BOKEH_MODE, bokehMode);
-            mStillCaptureRequestBuilder.set(CaptureRequest.CONTROL_BOKEH_MODE, bokehMode);
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_EXTENDED_SCENE_MODE, bokehMode);
+            mStillCaptureRequestBuilder.set(CaptureRequest.CONTROL_EXTENDED_SCENE_MODE, bokehMode);
             mPreviewRequest = mPreviewRequestBuilder.build();
             mStillCaptureRequest = mStillCaptureRequestBuilder.build();
 

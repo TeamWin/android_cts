@@ -463,7 +463,7 @@ public final class CameraDeviceInfo extends DeviceInfo {
         charsKeyNames.add(CameraCharacteristics.CONTROL_AWB_LOCK_AVAILABLE.getName());
         charsKeyNames.add(CameraCharacteristics.CONTROL_AVAILABLE_MODES.getName());
         charsKeyNames.add(CameraCharacteristics.CONTROL_POST_RAW_SENSITIVITY_BOOST_RANGE.getName());
-        charsKeyNames.add(CameraCharacteristics.CONTROL_AVAILABLE_BOKEH_CAPABILITIES.getName());
+        charsKeyNames.add(CameraCharacteristics.CONTROL_AVAILABLE_EXTENDED_SCENE_MODE_CAPABILITIES.getName());
         charsKeyNames.add(CameraCharacteristics.CONTROL_ZOOM_RATIO_RANGE.getName());
         charsKeyNames.add(CameraCharacteristics.EDGE_AVAILABLE_EDGE_MODES.getName());
         charsKeyNames.add(CameraCharacteristics.FLASH_INFO_AVAILABLE.getName());
