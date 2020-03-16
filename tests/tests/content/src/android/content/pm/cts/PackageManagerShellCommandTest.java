@@ -377,6 +377,18 @@ public class PackageManagerShellCommandTest {
         assertEquals("base, config.mdpi, config.xxhdpi", getSplits(TEST_APP_PACKAGE));
     }
 
+    @Test
+    public void testAppInstallErrDuplicate() throws Exception {
+        if (!mStreaming) {
+            return;
+        }
+        String split = createApkPath(TEST_HW5);
+        String commandResult = executeShellCommand(
+                "pm " + mInstall + " -t -g " + split + " " + split);
+        assertEquals("Failure [failed to add file(s)]\n", commandResult);
+        assertFalse(isAppInstalled(TEST_APP_PACKAGE));
+    }
+
     private String createUpdateSession(String packageName) throws IOException {
         return createSession("-p " + packageName);
     }
