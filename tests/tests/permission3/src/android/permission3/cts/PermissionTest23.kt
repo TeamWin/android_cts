@@ -309,7 +309,6 @@ class PermissionTest23 : BaseUsePermissionTest() {
             android.Manifest.permission.WRITE_CALENDAR,
             android.Manifest.permission.WRITE_CONTACTS,
             android.Manifest.permission.READ_SMS,
-            android.Manifest.permission.READ_PHONE_STATE,
             android.Manifest.permission.READ_CALL_LOG,
             android.Manifest.permission.WRITE_CALL_LOG,
             android.Manifest.permission.ADD_VOICEMAIL,
