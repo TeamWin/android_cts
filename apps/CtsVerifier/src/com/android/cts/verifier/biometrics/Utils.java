@@ -28,7 +28,11 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import java.security.KeyPair;
 import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.Signature;
 import java.util.Random;
 
 import javax.crypto.Cipher;
@@ -76,24 +80,6 @@ public class Utils {
         keyGenerator.generateKey();
     }
 
-    static void createUserAuthenticationKey(String keyName, int timeout, int type,
-            boolean useStrongBox) throws Exception {
-        KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
-        keyStore.load(null);
-        KeyGenerator keyGenerator = KeyGenerator.getInstance(
-                KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore");
-
-        KeyGenParameterSpec.Builder builder = new KeyGenParameterSpec.Builder(keyName,
-                KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
-                .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
-                .setUserAuthenticationRequired(true)
-                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
-                .setIsStrongBoxBacked(useStrongBox)
-                .setUserAuthenticationParameters(timeout, type);
-        keyGenerator.init(builder.build());
-        keyGenerator.generateKey();
-    }
-
     static Cipher initCipher(String keyName) throws Exception {
         KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
         keyStore.load(null);
@@ -106,8 +92,29 @@ public class Utils {
         return cipher;
     }
 
+    static Signature initSignature(String keyName) throws Exception {
+        KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+        keyStore.load(null);
+
+        KeyStore.Entry entry = keyStore.getEntry(keyName, null);
+
+        PrivateKey privateKey = ((KeyStore.PrivateKeyEntry) entry).getPrivateKey();
+
+        // TODO: This can be used to verify signature
+        // PublicKey publicKey = keyStore.getCertificate(keyName).getPublicKey();
+
+        Signature signature = Signature.getInstance("SHA512withECDSA");
+        signature.initSign(privateKey);
+        return signature;
+    }
+
     static byte[] doEncrypt(Cipher cipher, byte[] data) throws Exception {
         return cipher.doFinal(data);
+    }
+
+    static byte[] doSign(Signature signature, byte[] data) throws Exception {
+        signature.update(data);
+        return signature.sign();
     }
 
     static void showInstructionDialog(Context context, int titleRes, int messageRes,

@@ -21,47 +21,46 @@ import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 
 import java.security.KeyPairGenerator;
-import java.security.KeyStore;
+import java.security.Signature;
+import java.security.spec.ECGenParameterSpec;
 
-import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
-
-public abstract class AbstractUserAuthenticationCipherTest extends AbstractUserAuthenticationTest {
-    private Cipher mCipher;
+public abstract class AbstractUserAuthenticationSignatureTest
+        extends AbstractUserAuthenticationTest {
+    private Signature mSignature;
 
     @Override
     void createUserAuthenticationKey(String keyName, int timeout, int authType,
             boolean useStrongBox) throws Exception {
         KeyGenParameterSpec.Builder builder = new KeyGenParameterSpec.Builder(
-                keyName, KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT);
-        builder.setBlockModes(KeyProperties.BLOCK_MODE_CBC)
-                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
+                keyName, KeyProperties.PURPOSE_SIGN);
+        builder.setDigests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
+                .setAlgorithmParameterSpec(new ECGenParameterSpec("secp256r1"))
                 .setUserAuthenticationRequired(true)
-                .setUserAuthenticationParameters(timeout, authType)
-                .setIsStrongBoxBacked(useStrongBox);
+                .setIsStrongBoxBacked(useStrongBox)
+                .setUserAuthenticationParameters(timeout, authType);
 
-        KeyGenerator keyGenerator = KeyGenerator.getInstance(
-                KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore");
-        keyGenerator.init(builder.build());
-        keyGenerator.generateKey();
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(
+                KeyProperties.KEY_ALGORITHM_EC, "AndroidKeyStore");
+        keyPairGenerator.initialize(builder.build());
+        keyPairGenerator.generateKeyPair();
     }
 
     @Override
     void initializeKeystoreOperation(String keyName) throws Exception {
-        mCipher = Utils.initCipher(keyName);
+        mSignature = Utils.initSignature(keyName);
     }
 
     @Override
     BiometricPrompt.CryptoObject getCryptoObject() {
-        return new BiometricPrompt.CryptoObject(mCipher);
+        return new BiometricPrompt.CryptoObject(mSignature);
     }
 
     @Override
     void doKeystoreOperation(byte[] payload) throws Exception {
         try {
-            Utils.doEncrypt(mCipher, payload);
+            Utils.doSign(mSignature, payload);
         } finally {
-            mCipher = null;
+            mSignature = null;
         }
     }
 }

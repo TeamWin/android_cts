@@ -67,6 +67,9 @@ public abstract class AbstractUserAuthenticationTest extends PassFailButtons.Act
 
     abstract int getInstructionsResourceId();
 
+    abstract void createUserAuthenticationKey(String keyName, int timeout, int authType,
+            boolean useStrongBox) throws Exception;
+
     abstract ExpectedResults getExpectedResults();
 
     /**
@@ -286,10 +289,7 @@ public abstract class AbstractUserAuthenticationTest extends PassFailButtons.Act
                 return;
             }
 
-            Utils.createUserAuthenticationKey(keyName,
-                    timeout,
-                    getKeyAuthenticators(),
-                    useStrongBox /* useStrongBox */);
+            createUserAuthenticationKey(keyName, timeout, getKeyAuthenticators(), useStrongBox);
 
             CryptoObject crypto;
 

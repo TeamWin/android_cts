@@ -232,7 +232,7 @@
     <string name="biometric_test_category_credential">1) Credential Tests</string>
     <string name="biometric_test_category_strong">2) Strong Biometric Tests</string>
     <string name="biometric_test_category_weak">3) Weak Biometric Tests</string>
-    <string name="biometric_test_category_combination">4) Biometric+Credential Tests</string>
+    <string name="biometric_test_category_combination">4) setUserAuthParams Tests</string>
 
     <string name="biometric_test_credential_not_enrolled_label">1a: Credential Not Enrolled Tests</string>
     <string name="biometric_test_credential_not_enrolled_instructions">This test checks that the BiometricManager/BiometricPrompt
@@ -299,9 +299,12 @@
     <string name="biometric_test_weak_enroll">Start enrollment</string>
     <string name="biometric_test_weak_authenticate">Authenticate</string>
 
-    <string name="biometric_test_set_user_authentication_credential_cipher_label">4a: setUserAuthParams: Credential, Cipher</string>
-    <string name="biometric_test_set_user_authentication_biometric_cipher_label">4b: setUserAuthParams: Biometric, Cipher</string>
-    <string name="biometric_test_set_user_authentication_biometric_credential_cipher_label">4c: setUserAuthParams: Biometric|Credential, Cipher</string>
+    <string name="biometric_test_set_user_authentication_credential_cipher_label">4a: Credential, Cipher</string>
+    <string name="biometric_test_set_user_authentication_biometric_cipher_label">4b: Biometric, Cipher</string>
+    <string name="biometric_test_set_user_authentication_biometric_credential_cipher_label">4c: Biometric|Credential, Cipher</string>
+    <string name="biometric_test_set_user_authentication_credential_signature_label">4d: Credential, Signature</string>
+    <string name="biometric_test_set_user_authentication_biometric_signature_label">4e: Biometric, Signature</string>
+    <string name="biometric_test_set_user_authentication_biometric_or_credential_signature_label">4f: Biometric|Credential, Signature</string>
     <string name="biometric_test_set_user_authentication_credential_instructions">This test checks the correctness of the KeyGenParameterSpec.Builder#setUserAuthenticationParameters(int, int) API for AUTH_DEVICE_CREDENTIAL.
         Buttons for completed tasks will become invisible. It\'s normal for buttons to be disabled for a few seconds during this test.</string>
     <string name="biometric_test_set_user_authentication_biometric_instructions">This test checks the correctness of the KeyGenParameterSpec.Builder#setUserAuthenticationParameters(int, int) API for AUTH_BIOMETRIC_STRONG.
