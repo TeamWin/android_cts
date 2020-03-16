@@ -440,54 +440,68 @@ public class Persistence {
     }
 
     public static class StateDump {
-        final List<StackState> mStacks;
+        private static final String TASKS_KEY = "tasks";
+        private static final String RESUMED_ACTIVITY_KEY = "resumedActivity";
 
-        public static StateDump fromStacks(List<WindowManagerState.ActivityTask> activityTasks,
+        /**
+         * The component name of the resumedActivity in this state, empty string if there is none.
+         */
+        private String mResumedActivity;
+
+        /**
+         * The Tasks in this stack ordered from most recent to least recent.
+         */
+        private List<TaskState> mTasks;
+
+        public static StateDump fromTasks(List<WindowManagerState.ActivityTask> activityTasks,
                 List<WindowManagerState.ActivityTask> baseStacks) {
-            List<StackState> stacks = new ArrayList<>();
-            for (WindowManagerState.ActivityTask stack : trimStacks(activityTasks,
-                    baseStacks)) {
-                stacks.add(new StackState(stack));
+            List<TaskState> tasks = new ArrayList<>();
+            for (WindowManagerState.ActivityTask task : trimTasks(activityTasks, baseStacks)) {
+                tasks.add(new TaskState(task));
             }
-
-            return new StateDump(stacks);
+            return new StateDump(tasks);
         }
 
-        public StateDump(List<StackState> stacks) {
-            mStacks = stacks;
+        private StateDump(String resumedActivity, List<TaskState> tasks) {
+            mResumedActivity = resumedActivity;
+            mTasks = tasks;
+        }
+
+        public StateDump(List<TaskState> tasks) {
+            mTasks = tasks;
         }
 
         JSONObject toJson() throws JSONException {
-            JSONArray stacks = new JSONArray();
-            for (StackState stack : mStacks) {
-                stacks.put(stack.toJson());
+            JSONArray tasks = new JSONArray();
+            for (TaskState task : mTasks) {
+                tasks.put(task.toJson());
             }
 
-            return new JSONObject().put("stacks", stacks);
+            return new JSONObject().put("tasks", tasks);
         }
 
         static StateDump fromJson(JSONObject object) throws JSONException {
-            JSONArray jsonTasks = object.getJSONArray("stacks");
-            List<StackState> stacks = new ArrayList<>();
+            JSONArray jsonTasks = object.getJSONArray(TASKS_KEY);
+            List<TaskState> tasks = new ArrayList<>();
 
             for (int i = 0; i < jsonTasks.length(); i++) {
-                stacks.add(StackState.fromJson((JSONObject) jsonTasks.get(i)));
+                tasks.add(TaskState.fromJson((JSONObject) jsonTasks.get(i)));
             }
 
-            return new StateDump(stacks);
+            return new StateDump(object.optString(RESUMED_ACTIVITY_KEY, ""), tasks);
         }
 
         /**
-         * To make the state dump non device specific we remove every stack that was present
-         * in the system before recording, by their ID. For example a stack containing the launcher
+         * To make the state dump non device specific we remove every task that was present
+         * in the system before recording, by their ID. For example a task containing the launcher
          * activity.
          */
-        public static List<WindowManagerState.ActivityTask> trimStacks(
+        public static List<WindowManagerState.ActivityTask> trimTasks(
                 List<WindowManagerState.ActivityTask> toTrim,
                 List<WindowManagerState.ActivityTask> trimFrom) {
 
-            for (WindowManagerState.ActivityTask stack : trimFrom) {
-                toTrim.removeIf(t -> t.getRootTaskId() == stack.getRootTaskId());
+            for (WindowManagerState.ActivityTask task : trimFrom) {
+                toTrim.removeIf(t -> t.getRootTaskId() == task.getRootTaskId());
             }
 
             return toTrim;
@@ -498,86 +512,12 @@ public class Persistence {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             StateDump stateDump = (StateDump) o;
-            return Objects.equals(mStacks, stateDump.mStacks);
+            return Objects.equals(mTasks, stateDump.mTasks);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(mStacks);
-        }
-    }
-
-    /**
-     * A simplified JSON version of the information in {@link WindowManagerState.ActivityTask}
-     */
-    public static class StackState {
-        private static final String TASKS_KEY = "tasks";
-        private static final String RESUMED_ACTIVITY_KEY = "resumedActivity";
-
-        /**
-         * The component name of the resumedActivity in this Stack, empty string if there is none.
-         */
-        private final String mResumedActivity;
-        /**
-         * The Tasks in this stack ordered from most recent to least recent.
-         */
-        private final List<TaskState> mTasks;
-
-        public StackState(String resumedActivity, List<TaskState> tasks) {
-            mResumedActivity = resumedActivity;
-            mTasks = tasks;
-        }
-
-        public StackState(WindowManagerState.ActivityTask stack) {
-            this.mResumedActivity = stack.getResumedActivity();
-            mTasks = new ArrayList<>();
-            for (WindowManagerState.ActivityTask task : stack.getTasks()) {
-                this.mTasks.add(new TaskState(task));
-            }
-        }
-
-        JSONObject toJson() throws JSONException {
-            JSONArray jsonTasks = new JSONArray();
-
-            for (TaskState task : mTasks) {
-                jsonTasks.put(task.toJson());
-            }
-
-            return new JSONObject()
-                    .put(TASKS_KEY, jsonTasks)
-                    .put(RESUMED_ACTIVITY_KEY, mResumedActivity);
-        }
-
-        static StackState fromJson(JSONObject object) throws JSONException {
-            JSONArray jsonTasks = object.getJSONArray(TASKS_KEY);
-            List<TaskState> tasks = new ArrayList<>();
-
-            for (int i = 0; i < jsonTasks.length(); i++) {
-                tasks.add(TaskState.fromJson((JSONObject) jsonTasks.get(i)));
-            }
-
-            return new StackState(object.optString(RESUMED_ACTIVITY_KEY, ""), tasks);
-        }
-
-        public String getResumedActivity() {
-            return mResumedActivity;
-        }
-
-        public List<TaskState> getTasks() {
-            return mTasks;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            StackState stack = (StackState) o;
-            return Objects.equals(mTasks, stack.mTasks);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(mResumedActivity, mTasks);
+            return Objects.hash(mTasks);
         }
     }
 
