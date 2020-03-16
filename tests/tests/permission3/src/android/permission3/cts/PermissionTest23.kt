@@ -16,6 +16,7 @@
 
 package android.permission3.cts
 
+import androidx.test.filters.FlakyTest
 import org.junit.Before
 import org.junit.Test
 
@@ -228,6 +229,7 @@ class PermissionTest23 : BaseUsePermissionTest() {
         assertAppHasPermission(android.Manifest.permission.READ_CONTACTS, false)
     }
 
+    @FlakyTest
     @Test
     fun testNoResidualPermissionsOnUninstall() {
         // Grant all permissions
