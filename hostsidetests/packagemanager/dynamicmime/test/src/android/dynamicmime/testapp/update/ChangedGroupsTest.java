@@ -20,7 +20,6 @@ import static android.dynamicmime.common.Constants.APK_FIRST_GROUP;
 import static android.dynamicmime.common.Constants.APK_SECOND_GROUP;
 import static android.dynamicmime.common.Constants.GROUP_FIRST;
 import static android.dynamicmime.common.Constants.GROUP_SECOND;
-import static android.dynamicmime.common.Constants.GROUP_UNDEFINED;
 import static android.dynamicmime.common.Constants.MIME_TEXT_PLAIN;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -36,14 +35,12 @@ public class ChangedGroupsTest extends BaseUpdateTest {
     @Test
     public void testUpdateRemoveEmptyGroup() {
         assertMimeGroupIsEmpty(GROUP_FIRST);
-        assertMimeGroupIsNull(GROUP_SECOND);
-        assertMimeGroupIsNull(GROUP_UNDEFINED);
+        assertMimeGroupUndefined(GROUP_SECOND);
 
         updateApp();
 
-        assertMimeGroupIsNull(GROUP_FIRST);
+        assertMimeGroupUndefined(GROUP_FIRST);
         assertMimeGroupIsEmpty(GROUP_SECOND);
-        assertMimeGroupIsNull(GROUP_UNDEFINED);
     }
 
     @Test
@@ -51,14 +48,12 @@ public class ChangedGroupsTest extends BaseUpdateTest {
         setMimeGroup(GROUP_FIRST, MIME_TEXT_PLAIN);
 
         assertMimeGroup(GROUP_FIRST, MIME_TEXT_PLAIN);
-        assertMimeGroupIsNull(GROUP_SECOND);
-        assertMimeGroupIsNull(GROUP_UNDEFINED);
+        assertMimeGroupUndefined(GROUP_SECOND);
 
         updateApp();
 
-        assertMimeGroupIsNull(GROUP_FIRST);
+        assertMimeGroupUndefined(GROUP_FIRST);
         assertMimeGroupIsEmpty(GROUP_SECOND);
-        assertMimeGroupIsNull(GROUP_UNDEFINED);
     }
 
     @Override

@@ -36,11 +36,6 @@ public class AppCommands implements MimeGroupCommands {
         mAppMimeGroups.set(mimeGroup, mimeTypes.toArray(new String[0]));
     }
 
-    @Override
-    public void clearMimeGroup(String mimeGroup) {
-        mAppMimeGroups.clear(mimeGroup);
-    }
-
     @Nullable
     @Override
     public Set<String> getMimeGroupInternal(String mimeGroup) {
