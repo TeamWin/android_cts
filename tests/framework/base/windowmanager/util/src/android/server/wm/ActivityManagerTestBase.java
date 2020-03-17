@@ -546,26 +546,25 @@ public abstract class ActivityManagerTestBase {
     }
 
     /**
-     * Move around center of the specific display to ensures the display to be focused without
-     * triggering potential clicked event to impact the test environment.
+     * Insert an input event (ACTION_DOWN -> ACTION_CANCEL) to ensures the display to be focused
+     * without triggering potential clicked to impact the test environment.
      * (e.g: Keyguard credential activated unexpectedly.)
      *
      * @param displayId the display ID to gain focused by inject swipe action
      */
-    protected void moveAroundCenterSync(int displayId) {
+    protected void touchAndCancelOnDisplayCenterSync(int displayId) {
         final Rect bounds = mWmState.getDisplay(displayId).getDisplayRect();
+        final int x = bounds.left + bounds.width() / 2;
+        final int y = bounds.top + bounds.height() / 2;
         final long downTime = SystemClock.uptimeMillis();
+        injectMotion(downTime, downTime, MotionEvent.ACTION_DOWN, x, y, displayId, true /* sync */);
+
+        final long eventTime = SystemClock.uptimeMillis();
         final int touchSlop = ViewConfiguration.get(mContext).getScaledTouchSlop();
-        final int downX = bounds.left + bounds.width() / 2;
-        final int downY = bounds.top + bounds.height() / 2;
-        injectMotion(downTime, downTime, MotionEvent.ACTION_DOWN, downX, downY, displayId, true);
-
-        final int moveX = downX + Float.floatToIntBits(touchSlop / 2.0f);
-        final int moveY = downY + Float.floatToIntBits(touchSlop / 2.0f);
-        injectMotion(downTime, downTime, MotionEvent.ACTION_MOVE, moveX, moveY, displayId, true);
-
-        final long upTime = SystemClock.uptimeMillis();
-        injectMotion(downTime, upTime, MotionEvent.ACTION_UP, moveX, moveY, displayId, true);
+        final int tapX = x + Math.round(touchSlop / 2.0f);
+        final int tapY = y + Math.round(touchSlop / 2.0f);
+        injectMotion(downTime, eventTime, MotionEvent.ACTION_CANCEL, tapX, tapY, displayId,
+                true /* sync */);
     }
 
     protected void tapOnDisplaySync(int x, int y, int displayId) {
@@ -1238,7 +1237,7 @@ public abstract class ActivityManagerTestBase {
         public LockScreenSession enterAndConfirmLockCredential() {
             // Ensure focus will switch to default display. Meanwhile we cannot tap on center area,
             // which may tap on input credential area.
-            moveAroundCenterSync(DEFAULT_DISPLAY);
+            touchAndCancelOnDisplayCenterSync(DEFAULT_DISPLAY);
 
             waitForDeviceIdle(3000);
             SystemUtil.runWithShellPermissionIdentity(() ->
@@ -1280,7 +1279,7 @@ public abstract class ActivityManagerTestBase {
 
         LockScreenSession unlockDevice() {
             // Make sure the unlock button event is send to the default display.
-            moveAroundCenterSync(DEFAULT_DISPLAY);
+            touchAndCancelOnDisplayCenterSync(DEFAULT_DISPLAY);
 
             pressUnlockButton();
             return this;
