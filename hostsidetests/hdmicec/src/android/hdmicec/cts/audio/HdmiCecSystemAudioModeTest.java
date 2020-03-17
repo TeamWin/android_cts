@@ -19,9 +19,6 @@ package android.hdmicec.cts.audio;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import static org.junit.Assert.assertThat;
-import static org.hamcrest.CoreMatchers.is;
-
 import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.HdmiCecClientWrapper;
@@ -153,14 +150,14 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
                 CecMessage.SYSTEM_AUDIO_MODE_REQUEST,
                 hdmiCecClient.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS));
         String message = hdmiCecClient.checkExpectedOutput(CecMessage.SET_SYSTEM_AUDIO_MODE);
-        assertThat(hdmiCecClient.getParamsFromMessage(message), is(ON));
+        assertThat(hdmiCecClient.getParamsFromMessage(message)).isEqualTo(ON);
 
         /* Repeat test for device 0x3 (TUNER_1) */
         hdmiCecClient.sendCecMessage(CecDevice.TUNER_1, AUDIO_DEVICE,
                 CecMessage.SYSTEM_AUDIO_MODE_REQUEST,
                 hdmiCecClient.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS));
         message = hdmiCecClient.checkExpectedOutput(CecMessage.SET_SYSTEM_AUDIO_MODE);
-        assertThat(hdmiCecClient.getParamsFromMessage(message), is(ON));
+        assertThat(hdmiCecClient.getParamsFromMessage(message)).isEqualTo(ON);
     }
 
     /**
