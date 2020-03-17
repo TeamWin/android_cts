@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.sharesheet.cts;
+package android.sharesheet.cts.packages;
 
 import android.app.Activity;
 import android.content.Context;
@@ -21,7 +21,7 @@ import android.os.Bundle;
 
 import java.lang.Override;
 
-public class CtsSharesheetDeviceActivity extends Activity {
+public class LabelTestActivity extends Activity {
 
     @Override
     public void onCreate(Bundle icicle) {
