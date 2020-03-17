@@ -16,7 +16,7 @@
 
 package android.hdmicec.cts.playback;
 
-import static org.junit.Assert.assertEquals;
+import static com.google.common.truth.Truth.assertThat;
 
 import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.CecMessage;
@@ -51,6 +51,6 @@ public final class HdmiCecOneTouchPlayTest extends BaseHostJUnit4Test {
         device.executeShellCommand("input keyevent KEYCODE_HOME");
         hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecMessage.TEXT_VIEW_ON);
         String message = hdmiCecClient.checkExpectedOutput(CecMessage.ACTIVE_SOURCE);
-        assertEquals(PHYSICAL_ADDRESS, hdmiCecClient.getParamsFromMessage(message));
+        assertThat(hdmiCecClient.getParamsFromMessage(message)).isEqualTo(PHYSICAL_ADDRESS);
     }
 }
