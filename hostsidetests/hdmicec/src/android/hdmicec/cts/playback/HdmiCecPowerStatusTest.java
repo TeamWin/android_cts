@@ -16,7 +16,7 @@
 
 package android.hdmicec.cts.playback;
 
-import static org.junit.Assert.assertEquals;
+import static com.google.common.truth.Truth.assertThat;
 
 import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.CecMessage;
@@ -59,7 +59,7 @@ public final class HdmiCecPowerStatusTest extends BaseHostJUnit4Test {
         hdmiCecClient.sendCecMessage(CecDevice.TV, CecMessage.GIVE_POWER_STATUS);
         String message = hdmiCecClient.checkExpectedOutput(CecDevice.TV,
                                                             CecMessage.REPORT_POWER_STATUS);
-        assertEquals(ON, hdmiCecClient.getParamsFromMessage(message));
+        assertThat(hdmiCecClient.getParamsFromMessage(message)).isEqualTo(ON);
     }
 
     /**
@@ -78,7 +78,7 @@ public final class HdmiCecPowerStatusTest extends BaseHostJUnit4Test {
             hdmiCecClient.sendCecMessage(CecDevice.TV, CecMessage.GIVE_POWER_STATUS);
             String message = hdmiCecClient.checkExpectedOutput(CecDevice.TV,
                                                               CecMessage.REPORT_POWER_STATUS);
-            assertEquals(OFF, hdmiCecClient.getParamsFromMessage(message));
+            assertThat(hdmiCecClient.getParamsFromMessage(message)).isEqualTo(OFF);
         } finally {
             /* Wake up the device */
             device.executeShellCommand("input keyevent KEYCODE_WAKEUP");

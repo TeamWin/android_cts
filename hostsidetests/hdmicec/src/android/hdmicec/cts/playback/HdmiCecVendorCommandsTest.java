@@ -16,7 +16,7 @@
 
 package android.hdmicec.cts.playback;
 
-import static org.junit.Assert.assertNotEquals;
+import static com.google.common.truth.Truth.assertThat;
 
 import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.CecMessage;
@@ -51,7 +51,8 @@ public final class HdmiCecVendorCommandsTest extends BaseHostJUnit4Test {
         for (CecDevice cecDevice : CecDevice.values()) {
             hdmiCecClient.sendCecMessage(cecDevice, CecMessage.GIVE_DEVICE_VENDOR_ID);
             String message = hdmiCecClient.checkExpectedOutput(CecMessage.DEVICE_VENDOR_ID);
-            assertNotEquals(INCORRECT_VENDOR_ID, hdmiCecClient.getParamsFromMessage(message));
+            assertThat(hdmiCecClient.getParamsFromMessage(message)).
+                    isNotEqualTo(INCORRECT_VENDOR_ID);
         }
     }
 
@@ -66,6 +67,6 @@ public final class HdmiCecVendorCommandsTest extends BaseHostJUnit4Test {
         device.executeShellCommand("reboot");
         device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
         String message = hdmiCecClient.checkExpectedOutput(CecMessage.DEVICE_VENDOR_ID);
-        assertNotEquals(INCORRECT_VENDOR_ID, hdmiCecClient.getParamsFromMessage(message));
+        assertThat(hdmiCecClient.getParamsFromMessage(message)).isNotEqualTo(INCORRECT_VENDOR_ID);
     }
 }
