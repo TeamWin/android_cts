@@ -45,15 +45,11 @@ import android.test.InstrumentationTestCase;
 import android.util.Log;
 
 import com.android.compatibility.common.util.AnrMonitor;
-import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -440,6 +436,10 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         assertNotNull(conInf);
     }
 
+    /**
+     * Due to the corresponding API is hidden in R and will be public in S, this test
+     * is commented and will be un-commented in Android S.
+     *
     public void testUpdateMccMncConfiguration() throws Exception {
         // Store the original mcc mnc to set back
         String[] mccMncConfigOriginal = new String[2];
@@ -467,21 +467,30 @@ public class ActivityManagerTest extends InstrumentationTestCase {
                 (am) -> am.updateMccMncConfiguration(mccMncConfigOriginal[0],
                         mccMncConfigOriginal[1]));
     }
+     */
 
+    /**
+     * Due to the corresponding API is hidden in R and will be public in S, this method
+     * for test "testUpdateMccMncConfiguration" is commented and will be un-commented in
+     * Android S.
+     *
     private void getMccMncConfigsAndOthers(String[] mccMncConfigs, Set<String> otherConfigs)
             throws Exception {
         String[] configs = SystemUtil.runShellCommand(
                 mInstrumentation, SHELL_COMMAND_GET_CONFIG).split(" |\\-");
         for (String config : configs) {
             if (config.startsWith(SHELL_COMMAND_RESULT_CONFIG_NAME_MCC)) {
-                mccMncConfigs[0] = config.substring(SHELL_COMMAND_RESULT_CONFIG_NAME_MCC.length());
+                mccMncConfigs[0] = config.substring(
+                        SHELL_COMMAND_RESULT_CONFIG_NAME_MCC.length());
             } else if (config.startsWith(SHELL_COMMAND_RESULT_CONFIG_NAME_MNC)) {
-                mccMncConfigs[1] = config.substring(SHELL_COMMAND_RESULT_CONFIG_NAME_MNC.length());
+                mccMncConfigs[1] = config.substring(
+                        SHELL_COMMAND_RESULT_CONFIG_NAME_MNC.length());
             } else {
                 otherConfigs.add(config);
             }
         }
     }
+    */
 
     /**
      * Simple test for {@link ActivityManager#isUserAMonkey()} - verifies its false.
