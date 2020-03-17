@@ -21,7 +21,6 @@ import com.android.cts.verifier.audio.wavelib.*;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 
-import android.content.Context;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Bundle;
@@ -80,8 +79,6 @@ public class AudioFrequencyVoiceRecognitionActivity extends AudioFrequencyActivi
     private boolean mTestsDone[] = new boolean[TEST_COUNT];
     final OnBtnClickListener mBtnClickListener = new OnBtnClickListener();
 
-    private Context mContext;
-
     private Button mButtonTestTone;
     private ProgressBar mProgressTone;
     private TextView mResultTestTone;
@@ -136,7 +133,6 @@ public class AudioFrequencyVoiceRecognitionActivity extends AudioFrequencyActivi
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.audio_frequency_voice_recognition_activity);
-        mContext = this;
 
         mSPlayer = new SoundPlayerObject();
         playerSetSource(SOURCE_TONE);
@@ -391,11 +387,11 @@ public class AudioFrequencyVoiceRecognitionActivity extends AudioFrequencyActivi
     private void playerSetSource(int sourceIndex) {
         switch (sourceIndex) {
             case SOURCE_TONE:
-                mSPlayer.setSoundWithResId(getApplicationContext(), R.raw.onekhztone);
+                mSPlayer.setSoundWithResId(mContext, R.raw.onekhztone);
                 break;
             default:
             case SOURCE_NOISE:
-                mSPlayer.setSoundWithResId(getApplicationContext(),
+                mSPlayer.setSoundWithResId(mContext,
                         R.raw.stereo_mono_white_noise_48);
                 break;
         }
@@ -769,7 +765,7 @@ public class AudioFrequencyVoiceRecognitionActivity extends AudioFrequencyActivi
             mCurrentTest = mTestId;
             sendMessage(mTestId, TEST_STARTED,"");
             mUsbMicConnected =
-                    UsbMicrophoneTester.getIsMicrophoneConnected(getApplicationContext());
+                    UsbMicrophoneTester.getIsMicrophoneConnected(mContext);
         };
         public void record(int durationMs) {
             mSRecorder.startRecording();
