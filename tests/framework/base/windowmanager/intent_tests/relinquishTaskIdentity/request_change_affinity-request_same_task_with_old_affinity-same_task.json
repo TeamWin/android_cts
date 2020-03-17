@@ -25,49 +25,41 @@
     ]
   },
   "initialState": {
-    "stacks": [
+    "tasks": [
       {
-        "tasks": [
+        "activities": [
           {
-            "activities": [
-              {
-                "name": "android.server.wm.cts\/android.server.wm.intent.Activities$TaskAffinity1Activity",
-                "state": "RESUMED"
-              },
-              {
-                "name": "android.server.wm.cts\/android.server.wm.intent.Activities$RelinquishTaskIdentityActivity",
-                "state": "STOPPED"
-              }
-            ]
+            "name": "android.server.wm.cts/android.server.wm.intent.Activities$TaskAffinity1Activity",
+            "state": "RESUMED"
+          },
+          {
+            "name": "android.server.wm.cts/android.server.wm.intent.Activities$RelinquishTaskIdentityActivity",
+            "state": "STOPPED"
           }
-        ],
-        "resumedActivity": "android.server.wm.cts\/android.server.wm.intent.Activities$TaskAffinity1Activity"
+        ]
       }
-    ]
+    ],
+    "resumedActivity": "android.server.wm.cts/android.server.wm.intent.Activities$TaskAffinity1Activity"
   },
   "endState": {
-    "stacks": [
+    "tasks": [
       {
-        "tasks": [
+        "activities": [
           {
-            "activities": [
-              {
-                "name": "android.server.wm.cts\/android.server.wm.intent.Activities$RegularActivity",
-                "state": "RESUMED"
-              },
-              {
-                "name": "android.server.wm.cts\/android.server.wm.intent.Activities$TaskAffinity1Activity",
-                "state": "STOPPED"
-              },
-              {
-                "name": "android.server.wm.cts\/android.server.wm.intent.Activities$RelinquishTaskIdentityActivity",
-                "state": "STOPPED"
-              }
-            ]
+            "name": "android.server.wm.cts/android.server.wm.intent.Activities$RegularActivity",
+            "state": "RESUMED"
+          },
+          {
+            "name": "android.server.wm.cts/android.server.wm.intent.Activities$TaskAffinity1Activity",
+            "state": "STOPPED"
+          },
+          {
+            "name": "android.server.wm.cts/android.server.wm.intent.Activities$RelinquishTaskIdentityActivity",
+            "state": "STOPPED"
           }
-        ],
-        "resumedActivity": "android.server.wm.cts\/android.server.wm.intent.Activities$RegularActivity"
+        ]
       }
-    ]
+    ],
+    "resumedActivity": "android.server.wm.cts/android.server.wm.intent.Activities$RegularActivity"
   }
 }

@@ -29,10 +29,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
-import android.net.LinkProperties;
 import android.net.MacAddress;
 import android.net.Network;
-import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
@@ -76,6 +74,7 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
     private ConnectivityManager mConnectivityManager;
     private NetworkRequest mNetworkRequest;
     private CallbackUtils.NetworkCallback mNetworkCallback;
+    private ConnectionStatusListener mConnectionStatusListener;
     private BroadcastReceiver mBroadcastReceiver;
     private String mFailureReason;
 
@@ -202,10 +201,10 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
         // Register the receiver for post connection broadcast.
         mContext.registerReceiver(mBroadcastReceiver, intentFilter);
         final CountDownLatch countDownLatchForConnectionStatusListener = new CountDownLatch(1);
-        ConnectionStatusListener connectionStatusListener =
+        mConnectionStatusListener =
                 new ConnectionStatusListener(countDownLatchForConnectionStatusListener);
         mWifiManager.addSuggestionConnectionStatusListener(
-                Executors.newSingleThreadExecutor(), connectionStatusListener);
+                Executors.newSingleThreadExecutor(), mConnectionStatusListener);
 
         // Step: Register network callback to wait for connection state.
         mNetworkRequest = new NetworkRequest.Builder()
@@ -312,12 +311,12 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
                 return false;
             }
             if (DBG) Log.v(TAG, "Received connection status");
-            if (!Objects.equals(connectionStatusListener.wifiNetworkSuggestion, networkSuggestion)
-                    || connectionStatusListener.failureReason
+            if (!Objects.equals(mConnectionStatusListener.wifiNetworkSuggestion, networkSuggestion)
+                    || mConnectionStatusListener.failureReason
                     != WifiManager.STATUS_SUGGESTION_CONNECTION_FAILURE_AUTHENTICATION) {
                 Log.e(TAG, "Received wrong connection status for "
-                        + connectionStatusListener.wifiNetworkSuggestion
-                        + " with reason: " + connectionStatusListener.failureReason);
+                        + mConnectionStatusListener.wifiNetworkSuggestion
+                        + " with reason: " + mConnectionStatusListener.failureReason);
                 setFailureReason(mContext.getString(
                         R.string.wifi_status_suggestion_connection_status_failure));
                 return false;
@@ -403,6 +402,9 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
         mExecutorService.shutdownNow();
         if (mBroadcastReceiver != null) {
             mContext.unregisterReceiver(mBroadcastReceiver);
+        }
+        if (mConnectionStatusListener != null) {
+            mWifiManager.removeSuggestionConnectionStatusListener(mConnectionStatusListener);
         }
         mWifiManager.removeNetworkSuggestions(new ArrayList<>());
         super.tearDown();
