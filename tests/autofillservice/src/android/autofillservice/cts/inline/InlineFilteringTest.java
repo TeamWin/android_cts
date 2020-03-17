@@ -99,6 +99,9 @@ public class InlineFilteringTest extends AbstractLoginActivityTestCase {
         mUiBot.assertSuggestionStrip(1);
 
         mUiBot.selectSuggestion(0);
+        // TODO(b/151702075): Find a better way to wait for the views to update.
+        Thread.sleep(/* millis= */ 1000);
+        mUiBot.waitForIdle();
         mActivity.assertAutoFilled();
     }
 }
