@@ -267,7 +267,7 @@ public class EuiccManagerTest {
         assertEquals(EuiccManager.ERROR_EUICC_MISSING, 10006);
         assertEquals(EuiccManager.ERROR_UNSUPPORTED_VERSION, 10007);
         assertEquals(EuiccManager.ERROR_SIM_MISSING, 10008);
-        assertEquals(EuiccManager.ERROR_EUICC_GSMA_INSTALL_ERROR, 10009);
+        assertEquals(EuiccManager.ERROR_INSTALL_PROFILE, 10009);
         assertEquals(EuiccManager.ERROR_DISALLOWED_BY_PPR, 10010);
         assertEquals(EuiccManager.ERROR_ADDRESS_MISSING, 10011);
         assertEquals(EuiccManager.ERROR_CERTIFICATE_ERROR, 10012);
