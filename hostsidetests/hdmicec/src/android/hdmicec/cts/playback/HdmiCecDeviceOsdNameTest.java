@@ -16,7 +16,7 @@
 
 package android.hdmicec.cts.playback;
 
-import static org.junit.Assert.assertEquals;
+import static com.google.common.truth.Truth.assertThat;
 
 import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.CecMessage;
@@ -55,7 +55,7 @@ public final class HdmiCecDeviceOsdNameTest extends BaseHostJUnit4Test {
         }
         hdmiCecClient.sendCecMessage(CecDevice.TV, CecMessage.GIVE_OSD_NAME);
         String message = hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecMessage.SET_OSD_NAME);
-        assertEquals(deviceName, hdmiCecClient.getAsciiStringFromMessage(message));
+        assertThat(hdmiCecClient.getAsciiStringFromMessage(message)).isEqualTo(deviceName);
     }
 
     /**
@@ -73,7 +73,7 @@ public final class HdmiCecDeviceOsdNameTest extends BaseHostJUnit4Test {
             hdmiCecClient.sendCecMessage(CecDevice.TV, CecMessage.GIVE_OSD_NAME);
             String message = hdmiCecClient.checkExpectedOutput(CecDevice.TV,
                     CecMessage.SET_OSD_NAME);
-            assertEquals(testName, hdmiCecClient.getAsciiStringFromMessage(message));
+            assertThat(hdmiCecClient.getAsciiStringFromMessage(message)).isEqualTo(testName);
         } finally {
             device.executeShellCommand("settings put global device_name '" + originalName + "'");
         }
