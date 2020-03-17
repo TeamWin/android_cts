@@ -546,7 +546,8 @@ public class TelephonyManagerTest {
             assertFalse(TextUtils.isEmpty(result));
         }
 
-        TelephonyManager.getDefaultRespondViaMessageApplication(getContext(), false);
+        mTelephonyManager.getDefaultRespondViaMessageApplication();
+        mTelephonyManager.getAndUpdateDefaultRespondViaMessageApplication();
     }
 
     @Test
