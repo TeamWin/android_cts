@@ -383,4 +383,19 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
                 });
     }
 
+    void testNegativeButtonCallback(int allowedAuthenticators, Runnable successRunnable) {
+        final BiometricPrompt.Builder builder = new BiometricPrompt.Builder(this);
+        builder.setTitle("Press the negative button");
+        builder.setAllowedAuthenticators(allowedAuthenticators);
+        builder.setNegativeButton("Press me", mExecutor, (dialog1, which1) -> {
+            mExecutor.execute(successRunnable);
+        });
+
+        final BiometricPrompt prompt = builder.build();
+        prompt.authenticate(new CancellationSignal(), mExecutor,
+                new AuthenticationCallback() {
+            // Do nothing
+        });
+    }
+
 }

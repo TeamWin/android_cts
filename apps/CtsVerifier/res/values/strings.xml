@@ -272,6 +272,8 @@
     <string name="biometric_test_invalid_inputs">Test invalid inputs</string>
     <!-- Rejecting does not end the authentication lifecycle -->
     <string name="biometric_test_reject_first">Reject, then authenticate</string>
+    <!-- Negative button callback is received -->
+    <string name="biometric_test_negative_button_button">Test Negative Button</string>
 
     <string name="biometric_test_reject_continues_instruction_title">Instructions</string>
     <string name="biometric_test_reject_continues_instruction_contents">Please authenticate with a non-enrolled biometric before authenticating with the actual enrolled biometric.</string>
