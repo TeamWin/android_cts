@@ -19,17 +19,18 @@ package android.location.cts.coarse;
 import static android.location.LocationManager.GPS_PROVIDER;
 import static android.location.LocationManager.NETWORK_PROVIDER;
 import static android.location.LocationManager.PASSIVE_PROVIDER;
+import static android.provider.Settings.Secure.LOCATION_COARSE_ACCURACY_M;
 
 import static androidx.test.ext.truth.location.LocationSubject.assertThat;
 
 import static com.android.compatibility.common.util.LocationUtils.createLocation;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.location.Criteria;
@@ -37,9 +38,11 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.location.cts.common.LocationListenerCapture;
 import android.location.cts.common.LocationPendingIntentCapture;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.provider.Settings;
 import android.util.Log;
 
 import androidx.test.core.app.ApplicationProvider;
@@ -64,14 +67,15 @@ public class LocationManagerCoarseTest {
 
     private static final long TIMEOUT_MS = 5000;
 
-    // 2000m is the default grid size used by location fudger
-    private static final float MAX_COARSE_FUDGE_DISTANCE_M = 2500f;
+    private static final float MIN_COARSE_FUDGE_DISTANCE_M = 2000f;
 
     private static final String TEST_PROVIDER = "test_provider";
 
     private Random mRandom;
     private Context mContext;
     private LocationManager mManager;
+
+    private float mMaxCoarseFudgeDistanceM;
 
     @Before
     public void setUp() throws Exception {
@@ -84,6 +88,13 @@ public class LocationManagerCoarseTest {
         mRandom = new Random(seed);
         mContext = ApplicationProvider.getApplicationContext();
         mManager = mContext.getSystemService(LocationManager.class);
+
+        float coarseLocationAccuracyM = Settings.Secure.getFloat(
+                mContext.getContentResolver(),
+                LOCATION_COARSE_ACCURACY_M,
+                MIN_COARSE_FUDGE_DISTANCE_M);
+        mMaxCoarseFudgeDistanceM = (float) Math.sqrt(
+                2 * coarseLocationAccuracyM * coarseLocationAccuracyM);
 
         assertNotNull(mManager);
 
@@ -115,11 +126,20 @@ public class LocationManagerCoarseTest {
     }
 
     @Test
+    public void testMinCoarseLocationDistance() {
+        assertThat(Settings.Secure.getFloat(
+                mContext.getContentResolver(),
+                LOCATION_COARSE_ACCURACY_M,
+                MIN_COARSE_FUDGE_DISTANCE_M)).isAtLeast(MIN_COARSE_FUDGE_DISTANCE_M);
+    }
+
+    @Test
     public void testGetLastKnownLocation() {
         Location loc = createLocation(TEST_PROVIDER, mRandom);
 
         mManager.setTestProviderLocation(TEST_PROVIDER, loc);
-        assertThat(mManager.getLastKnownLocation(TEST_PROVIDER)).isNearby(loc, MAX_COARSE_FUDGE_DISTANCE_M);
+        assertThat(mManager.getLastKnownLocation(TEST_PROVIDER)).isNearby(loc,
+                mMaxCoarseFudgeDistanceM);
     }
 
     @Test
@@ -136,28 +156,32 @@ public class LocationManagerCoarseTest {
     @Test
     public void testRequestLocationUpdates() throws Exception {
         Location loc = createLocation(TEST_PROVIDER, mRandom);
-        Bundle extras = new Bundle();
-        extras.putParcelable(Location.EXTRA_NO_GPS_LOCATION, new Location(loc));
-        loc.setExtras(extras);
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
+            Bundle extras = new Bundle();
+            extras.putParcelable(Location.EXTRA_NO_GPS_LOCATION, new Location(loc));
+            loc.setExtras(extras);
+        }
 
         try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
-            mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0, directExecutor(), capture);
+            mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0, Runnable::run, capture);
             mManager.setTestProviderLocation(TEST_PROVIDER, loc);
-            assertThat(capture.getNextLocation(TIMEOUT_MS)).isNearby(loc, MAX_COARSE_FUDGE_DISTANCE_M);
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isNearby(loc, mMaxCoarseFudgeDistanceM);
         }
     }
 
     @Test
     public void testRequestLocationUpdates_PendingIntent() throws Exception {
         Location loc = createLocation(TEST_PROVIDER, mRandom);
-        Bundle extras = new Bundle();
-        extras.putParcelable(Location.EXTRA_NO_GPS_LOCATION, new Location(loc));
-        loc.setExtras(extras);
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
+            Bundle extras = new Bundle();
+            extras.putParcelable(Location.EXTRA_NO_GPS_LOCATION, new Location(loc));
+            loc.setExtras(extras);
+        }
 
         try (LocationPendingIntentCapture capture = new LocationPendingIntentCapture(mContext)) {
             mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0, capture.getPendingIntent());
             mManager.setTestProviderLocation(TEST_PROVIDER, loc);
-            assertThat(capture.getNextLocation(TIMEOUT_MS)).isNearby(loc, MAX_COARSE_FUDGE_DISTANCE_M);
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isNearby(loc, mMaxCoarseFudgeDistanceM);
         }
     }
 
@@ -233,9 +257,5 @@ public class LocationManagerCoarseTest {
         Thread.sleep(200);
         long clockms = SystemClock.currentGnssTimeClock().millis();
         assertTrue(System.currentTimeMillis() - clockms < 1000);
-    }
-
-    private static Executor directExecutor() {
-        return Runnable::run;
     }
 }
