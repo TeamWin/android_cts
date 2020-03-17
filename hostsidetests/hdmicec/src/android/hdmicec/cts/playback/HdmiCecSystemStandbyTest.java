@@ -16,7 +16,7 @@
 
 package android.hdmicec.cts.playback;
 
-import static org.junit.Assert.assertEquals;
+import static com.google.common.truth.Truth.assertThat;
 
 import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.CecMessage;
@@ -67,7 +67,7 @@ public final class HdmiCecSystemStandbyTest extends BaseHostJUnit4Test {
             hdmiCecClient.sendCecMessage(source, destination, CecMessage.STANDBY);
             TimeUnit.SECONDS.sleep(5);
             String wakeState = device.executeShellCommand("dumpsys power | grep mWakefulness=");
-            assertEquals("mWakefulness=Asleep", wakeState.trim());
+            assertThat(wakeState.trim()).isEqualTo("mWakefulness=Asleep");
         } finally {
             /* Wake up the device */
             device.executeShellCommand("input keyevent KEYCODE_WAKEUP");

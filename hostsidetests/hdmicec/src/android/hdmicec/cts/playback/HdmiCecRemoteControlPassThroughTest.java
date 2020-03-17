@@ -16,7 +16,7 @@
 
 package android.hdmicec.cts.playback;
 
-import static org.junit.Assert.assertEquals;
+import static com.google.common.truth.Truth.assertThat;
 
 import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.HdmiCecClientWrapper;
@@ -76,7 +76,7 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHostJUnit4Tes
             }
         }
         device.executeAdbCommand("logcat", "-c");
-        assertEquals(expectedOut, testString);
+        assertThat(testString).isEqualTo(expectedOut);
     }
 
     /**
