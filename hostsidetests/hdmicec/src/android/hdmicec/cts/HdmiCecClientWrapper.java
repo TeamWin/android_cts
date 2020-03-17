@@ -16,8 +16,8 @@
 
 package android.hdmicec.cts;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assume.assumeTrue;
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
@@ -68,13 +68,13 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     protected void before() throws Throwable {
         ITestDevice testDevice;
         testDevice = testObject.getDevice();
-        assertNotNull("Device not set", testDevice);
+        assertWithMessage("Device not set").that(testDevice).isNotNull();
 
-        assumeTrue(isHdmiCecFeatureSupported(testDevice));
+        assertThat(isHdmiCecFeatureSupported(testDevice)).isTrue();
 
         String deviceTypeCsv = testDevice.executeShellCommand("getprop ro.hdmi.device_type").trim();
         List<String> deviceType = Arrays.asList(deviceTypeCsv.replaceAll("\\s+", "").split(","));
-        assumeTrue(deviceType.contains(CecDevice.getDeviceType(targetDevice)));
+        assertThat(deviceType.contains(CecDevice.getDeviceType(targetDevice))).isTrue();
 
         this.init();
     };
