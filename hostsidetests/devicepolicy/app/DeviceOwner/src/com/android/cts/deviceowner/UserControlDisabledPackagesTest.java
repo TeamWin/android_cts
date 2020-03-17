@@ -21,13 +21,14 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import java.util.ArrayList;
+import java.util.Collections;
 
 /**
- * Test {@link DevicePolicyManager#setProtectedPackages} and
- * {@link DevicePolicyManager#getProtectedPackages}
+ * Test {@link DevicePolicyManager#setUserControlDisabledPackages} and
+ * {@link DevicePolicyManager#getUserControlDisabledPackages}
  * Hostside test uses "am force-stop" and verifies that app is not stopped.
  */
-public class ProtectedPackagesTest extends BaseDeviceOwnerTest {
+public class UserControlDisabledPackagesTest extends BaseDeviceOwnerTest {
 
     private static final String TEST_APP_APK = "CtsEmptyTestApp.apk";
     private static final String TEST_APP_PKG = "android.packageinstaller.emptytestapp.cts";
@@ -36,10 +37,10 @@ public class ProtectedPackagesTest extends BaseDeviceOwnerTest {
     private static final String SIMPLE_APP_ACTIVITY =
             "com.android.cts.launcherapps.simpleapp.SimpleActivityImmediateExit";
 
-    public void testSetProtectedPackages() throws Exception {
+    public void testSetUserControlDisabledPackages() throws Exception {
         ArrayList<String> protectedPackages= new ArrayList<>();
         protectedPackages.add(SIMPLE_APP_PKG);
-        mDevicePolicyManager.setProtectedPackages(getWho(), protectedPackages);
+        mDevicePolicyManager.setUserControlDisabledPackages(getWho(), protectedPackages);
 
         // Launch app so that the app exits stopped state.
         Intent intent = new Intent(Intent.ACTION_MAIN);
@@ -49,21 +50,23 @@ public class ProtectedPackagesTest extends BaseDeviceOwnerTest {
 
     }
 
-    public void testForceStopForProtectedPackages() throws Exception {
+    public void testForceStopWithUserControlDisabled() throws Exception {
         final ArrayList<String> pkgs = new ArrayList<>();
         pkgs.add(SIMPLE_APP_PKG);
         assertFalse(isPackageStopped(SIMPLE_APP_PKG));
-        assertEquals(pkgs, mDevicePolicyManager.getProtectedPackages(getWho()));
+        assertEquals(pkgs, mDevicePolicyManager.getUserControlDisabledPackages(getWho()));
     }
 
-    public void testClearProtectedPackages() throws Exception {
+    public void testClearSetUserControlDisabledPackages() throws Exception {
         final ArrayList<String> pkgs = new ArrayList<>();
-        mDevicePolicyManager.setProtectedPackages(getWho(), pkgs);
-        assertEquals(pkgs, mDevicePolicyManager.getProtectedPackages(getWho()));
+        mDevicePolicyManager.setUserControlDisabledPackages(getWho(), pkgs);
+        assertEquals(pkgs, mDevicePolicyManager.getUserControlDisabledPackages(getWho()));
     }
 
-    public void testForceStopForUnprotectedPackages() throws Exception {
+    public void testForceStopWithUserControlEnabled() throws Exception {
         assertTrue(isPackageStopped(SIMPLE_APP_PKG));
+        assertEquals(Collections.emptyList(),
+                mDevicePolicyManager.getUserControlDisabledPackages(getWho()));
     }
 
     private boolean isPackageStopped(String packageName) throws Exception {

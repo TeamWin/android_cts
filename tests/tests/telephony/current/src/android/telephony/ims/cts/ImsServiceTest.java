@@ -722,8 +722,8 @@ public class ImsServiceTest {
         };
 
         final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        // Latch will count down here (we callback on the state during registration).
         try {
+            // First try without the correct permissions.
             ImsManager imsManager = getContext().getSystemService(ImsManager.class);
             ImsMmTelManager mmTelManager = imsManager.getImsMmTelManager(sTestSub);
             mmTelManager.registerImsRegistrationCallback(getContext().getMainExecutor(), callback);
@@ -732,6 +732,7 @@ public class ImsServiceTest {
             //expected
         }
 
+        // Latch will count down here (we callback on the state during registration).
         try {
             automan.adoptShellPermissionIdentity();
             ImsManager imsManager = getContext().getSystemService(ImsManager.class);
@@ -761,6 +762,16 @@ public class ImsServiceTest {
         assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WLAN, waitForIntResult(mQueue));
         assertEquals(ImsReasonInfo.CODE_LOCAL_HO_NOT_FEASIBLE, waitForIntResult(mQueue));
 
+        // Ensure null ImsReasonInfo still results in non-null callback value.
+        sServiceConnector.getCarrierService().getImsRegistration().onTechnologyChangeFailed(
+                ImsRegistrationImplBase.REGISTRATION_TECH_IWLAN, null);
+        assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WLAN, waitForIntResult(mQueue));
+        assertEquals(ImsReasonInfo.CODE_UNSPECIFIED, waitForIntResult(mQueue));
+
+        // Ensure null ImsReasonInfo still results in non-null callback.
+        sServiceConnector.getCarrierService().getImsRegistration().onDeregistered(null);
+        assertEquals(ImsReasonInfo.CODE_UNSPECIFIED, waitForIntResult(mQueue));
+
         try {
             automan.adoptShellPermissionIdentity();
             ImsManager imsManager = getContext().getSystemService(ImsManager.class);
@@ -778,7 +789,6 @@ public class ImsServiceTest {
         } catch (SecurityException e) {
             //expected
         }
-
     }
 
     @Ignore("RCS APIs not public yet")
@@ -1425,6 +1435,49 @@ public class ImsServiceTest {
                     new Pair<>(TEST_CONFIG_KEY, TEST_CONFIG_VALUE_STRING)));
             assertEquals(TEST_CONFIG_VALUE_STRING,
                     provisioningManager.getProvisioningStringValue(TEST_CONFIG_KEY));
+
+            automan.adoptShellPermissionIdentity();
+            provisioningManager.unregisterProvisioningChangedCallback(callback);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+    }
+
+    @Ignore("The ProvisioningManager constants were moved back to @hide for now, don't want to "
+            + "completely remove test.")
+    @Test
+    public void testProvisioningManagerConstants() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        triggerFrameworkConnectToCarrierImsService();
+
+        ProvisioningManager provisioningManager =
+                ProvisioningManager.createForSubscriptionId(sTestSub);
+
+        // This is a little bit gross looking, but on P devices, I can not define classes that
+        // extend ProvisioningManager.Callback (because it doesn't exist), so this has to
+        // happen as an anon class here.
+        LinkedBlockingQueue<Pair<Integer, Integer>> mIntQueue = new LinkedBlockingQueue<>();
+        LinkedBlockingQueue<Pair<Integer, String>> mStringQueue = new LinkedBlockingQueue<>();
+        ProvisioningManager.Callback callback = new ProvisioningManager.Callback() {
+            @Override
+            public void onProvisioningIntChanged(int item, int value) {
+                mIntQueue.offer(new Pair<>(item, value));
+            }
+
+            @Override
+            public void onProvisioningStringChanged(int item, String value) {
+                mStringQueue.offer(new Pair<>(item, value));
+            }
+        };
+
+        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            automan.adoptShellPermissionIdentity();
+            provisioningManager.registerProvisioningChangedCallback(getContext().getMainExecutor(),
+                    callback);
 
             verifyStringKey(provisioningManager, mStringQueue,
                     ProvisioningManager.KEY_AMR_CODEC_MODE_SET_VALUES, "1,2");

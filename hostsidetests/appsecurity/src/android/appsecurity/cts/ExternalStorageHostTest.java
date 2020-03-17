@@ -655,9 +655,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
 
                 runDeviceTests(WRITE_PKG_2, WRITE_PKG + ".WriteGiftTest",
                         "testNotIsExternalStorageLegacy", user);
-                updateAppOp(WRITE_PKG_2, user, "android:request_install_packages", true);
-                runDeviceTests(WRITE_PKG_2, WRITE_PKG + ".WriteGiftTest",
-                        "testIsExternalStorageLegacy", user);
             }
         } finally {
             getDevice().uninstallPackage(WRITE_PKG);
