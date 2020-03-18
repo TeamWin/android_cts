@@ -1116,7 +1116,8 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testCanBubble_ranking() throws Exception {
-        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
+        if ((mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH))
+            || isAutomotive()) {
             return;
         }
 
@@ -2441,6 +2442,10 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testNotificationManagerBubblePolicy_flagForMessage_failsNoRemoteInput()
             throws InterruptedException {
+        if (isAutomotive()) {
+            // Automotive does not support notification bubbles.
+            return;
+        }
         try {
             // turn on bubbles globally
             toggleBubbleSetting(true);
@@ -2467,6 +2472,10 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testNotificationManagerBubblePolicy_flagForMessage_succeeds()
             throws InterruptedException {
+        if (isAutomotive()) {
+            // Automotive does not support notification bubbles.
+            return;
+        }
         try {
             // turn on bubbles globally
             toggleBubbleSetting(true);
@@ -2504,6 +2513,10 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testNotificationManagerBubblePolicy_flagForPhonecall() throws InterruptedException {
+        if (isAutomotive()) {
+            // Automotive does not support notification bubbles.
+            return;
+        }
         Intent serviceIntent = new Intent(mContext, BubblesTestService.class);
         serviceIntent.putExtra(EXTRA_TEST_CASE, TEST_SUCCESS);
 
@@ -2527,6 +2540,10 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testNotificationManagerBubblePolicy_flagForPhonecallFailsNoPerson()
             throws InterruptedException {
+        if (isAutomotive()) {
+            // Automotive does not support notification bubbles.
+            return;
+        }
         Intent serviceIntent = new Intent(mContext, BubblesTestService.class);
         serviceIntent.putExtra(EXTRA_TEST_CASE, TEST_NO_PERSON);
 
@@ -2549,6 +2566,10 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testNotificationManagerBubblePolicy_flagForPhonecallFailsNoForeground()
             throws InterruptedException {
+        if (isAutomotive()) {
+            // Automotive does not support notification bubbles.
+            return;
+        }
         try {
             // turn on bubbles globally
             toggleBubbleSetting(true);
@@ -2571,6 +2592,10 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testNotificationManagerBubblePolicy_flagForPhonecallFailsNoCategory()
             throws InterruptedException {
+        if (isAutomotive()) {
+            // Automotive does not support notification bubbles.
+            return;
+        }
         Intent serviceIntent = new Intent(mContext, BubblesTestService.class);
         serviceIntent.putExtra(EXTRA_TEST_CASE, TEST_NO_CATEGORY);
 
@@ -2595,6 +2620,10 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testNotificationManagerBubblePolicy_flagForPhonecallFailsNoMetadata()
             throws InterruptedException {
+        if (isAutomotive()) {
+            // Automotive does not support notification bubbles.
+            return;
+        }
         Intent serviceIntent = new Intent(mContext, BubblesTestService.class);
         serviceIntent.putExtra(EXTRA_TEST_CASE, TEST_NO_BUBBLE_METADATA);
 
@@ -2617,6 +2646,10 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testNotificationManagerBubblePolicy_noFlagForAppNotForeground()
             throws InterruptedException {
+        if (isAutomotive()) {
+            // Automotive does not support notification bubbles.
+            return;
+        }
         try {
             // turn on bubbles globally
             toggleBubbleSetting(true);
@@ -2630,6 +2663,10 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testNotificationManagerBubblePolicy_flagForAppForeground() throws Exception {
+        if (isAutomotive()) {
+            // Automotive does not support notification bubbles.
+            return;
+        }
         try {
             // turn on bubbles globally
             toggleBubbleSetting(true);
@@ -2704,6 +2741,10 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testNotificationManagerBubblePolicy_noFlag_notEmbeddable() throws Exception {
+        if (isAutomotive()) {
+            // Automotive does not support notification bubbles.
+            return;
+        }
         Person person = new Person.Builder()
                 .setName("bubblebot")
                 .build();
@@ -2740,6 +2781,10 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testNotificationManagerBubblePolicy_noFlag_notDocumentLaunchModeAlways() throws Exception {
+        if (isAutomotive()) {
+            // Automotive does not support notification bubbles.
+            return;
+        }
         Person person = new Person.Builder()
                 .setName("bubblebot")
                 .build();
@@ -2773,5 +2818,9 @@ public class NotificationManagerTest extends AndroidTestCase {
                         .setIcon(Icon.createWithResource(mContext, R.drawable.black));
 
         sendAndVerifyBubble(1, nb, metadataBuilder.build(), false);
+    }
+
+    private boolean isAutomotive() {
+        return mPackageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 }
