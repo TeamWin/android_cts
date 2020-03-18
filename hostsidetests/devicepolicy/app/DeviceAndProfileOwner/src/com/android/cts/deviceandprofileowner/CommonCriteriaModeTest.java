@@ -21,9 +21,11 @@ public class CommonCriteriaModeTest extends BaseDeviceAdminTest {
         try {
             // Default to false
             assertFalse(mDevicePolicyManager.isCommonCriteriaModeEnabled(ADMIN_RECEIVER_COMPONENT));
+            assertFalse(mDevicePolicyManager.isCommonCriteriaModeEnabled(null));
 
             mDevicePolicyManager.setCommonCriteriaModeEnabled(ADMIN_RECEIVER_COMPONENT, true);
             assertTrue(mDevicePolicyManager.isCommonCriteriaModeEnabled(ADMIN_RECEIVER_COMPONENT));
+            assertTrue(mDevicePolicyManager.isCommonCriteriaModeEnabled(null));
         } finally {
             mDevicePolicyManager.setCommonCriteriaModeEnabled(ADMIN_RECEIVER_COMPONENT, false);
         }
