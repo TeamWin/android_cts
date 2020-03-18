@@ -24,7 +24,6 @@ import android.app.cts.android.app.cts.tools.WatchUidRunner;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -71,6 +70,8 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
             "com.android.cts.launcherapps.simpleapp.SimpleService4";
     private static final String STUB_SERVICE_REMOTE_NAME =
             "com.android.cts.launcherapps.simpleapp.SimpleService5";
+    private static final String STUB_SERVICE_ISOLATED_NAME =
+            "com.android.cts.launcherapps.simpleapp.SimpleService6";
     private static final String STUB_RECEIVER_NAMWE =
             "com.android.cts.launcherapps.simpleapp.SimpleReceiver";
     private static final String STUB_ROCESS_NAME = STUB_PACKAGE_NAME;
@@ -106,6 +107,9 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
     private int mStubPackageOtherUid;
     private int mStubPackageOtherUserPid;
     private int mStubPackageRemoteOtherUserPid;
+    private int mStubPackageIsolatedUid;
+    private int mStubPackageIsolatedPid;
+    private String mStubPackageIsolatedProcessName;
     private WatchUidRunner mWatcher;
     private WatchUidRunner mOtherUidWatcher;
     private ActivityManager mActivityManager;
@@ -152,7 +156,6 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
                 mStubPackagePid = msg.arg1;
                 assertTrue(mStubPackagePid > 0);
             }
-            didSomething = true;
         } else if (STUB_REMOTE_ROCESS_NAME.equals(processName)) {
             if (mOtherUserId != 0 && UserHandle.getUserId(msg.arg2) == mOtherUserId) {
                 mStubPackageRemoteOtherUserPid = msg.arg1;
@@ -161,13 +164,17 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
                 mStubPackageRemotePid = msg.arg1;
                 assertTrue(mStubPackageRemotePid > 0);
             }
-            didSomething = true;
+        } else { // must be isolated process
+            mStubPackageIsolatedPid = msg.arg1;
+            mStubPackageIsolatedUid = msg.arg2;
+            mStubPackageIsolatedProcessName = processName;
+            assertTrue(mStubPackageIsolatedPid > 0);
+            assertTrue(mStubPackageIsolatedUid > 0);
+            assertNotNull(processName);
         }
 
-        if (didSomething) {
-            if (mLatch != null) {
-                mLatch.countDown();
-            }
+        if (mLatch != null) {
+            mLatch.countDown();
         }
     }
 
@@ -289,6 +296,16 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         if (waitForGone) {
             waitForGone(watcher);
         }
+        awaitForLatch(mLatch);
+    }
+
+    private void startIsolatedService(int commandCode, String serviceName) {
+        Intent intent = new Intent(EXIT_ACTION);
+        intent.setClassName(STUB_PACKAGE_NAME, serviceName);
+        intent.putExtra(EXTRA_ACTION, commandCode);
+        intent.putExtra(EXTRA_MESSENGER, mMessenger);
+        mLatch = new CountDownLatch(1);
+        mContext.startServiceAsUser(intent, mCurrentUserHandle);
         awaitForLatch(mLatch);
     }
 
@@ -507,51 +524,36 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         // Remove old records to avoid interference with the test.
         clearHistoricalExitInfo();
 
-        // Enable a compat feature
-        executeShellCmd("am compat enable " + PackageManager.FILTER_APPLICATION_QUERY
-                + " " + STUB_PACKAGE_NAME);
-        mInstrumentation.getUiAutomation().grantRuntimePermission(
-                STUB_PACKAGE_NAME, android.Manifest.permission.READ_CALENDAR);
         long now = System.currentTimeMillis();
 
-        // Start a process and do nothing
-        startService(ACTION_FINISH, STUB_SERVICE_NAME, false, false);
+        // Start an isolated process and do nothing
+        startIsolatedService(ACTION_NONE, STUB_SERVICE_ISOLATED_NAME);
 
-        // Enable high frequency memory sampling
-        executeShellCmd("dumpsys procstats --start-testing");
-        // Sleep for a while to wait for the sampling of memory info
-        sleep(10000);
-        // Stop the high frequency memory sampling
-        executeShellCmd("dumpsys procstats --stop-testing");
-        // Get the memory info from it.
-        String dump = executeShellCmd("dumpsys activity processes " + STUB_PACKAGE_NAME);
-        assertNotNull(dump);
-        final String lastPss = extractMemString(dump, " lastPss=", ' ');
-        final String lastRss = extractMemString(dump, " lastRss=", '\n');
+        final WatchUidRunner watcher = new WatchUidRunner(mInstrumentation,
+                mStubPackageIsolatedUid, WAITFOR_MSEC);
 
-        // Disable the compat feature
-        executeShellCmd("am compat disable " + PackageManager.FILTER_APPLICATION_QUERY
-                + " " + STUB_PACKAGE_NAME);
+        // Finish the service in the isolated process
+        startIsolatedService(ACTION_FINISH, STUB_SERVICE_ISOLATED_NAME);
 
-        waitForGone(mWatcher);
+        try {
+            // Isolated process should have been killed as long as its service is done.
+            waitForGone(watcher);
+        } finally {
+            watcher.finish();
+        }
         long now2 = System.currentTimeMillis();
 
         List<ApplicationExitInfo> list = ShellIdentityUtils.invokeMethodWithShellPermissions(
-                STUB_PACKAGE_NAME, mStubPackagePid, 1,
+                STUB_PACKAGE_NAME, mStubPackageIsolatedPid, 1,
                 mActivityManager::getHistoricalProcessExitReasons,
                 android.Manifest.permission.DUMP);
 
         assertTrue(list != null && list.size() == 1);
 
         ApplicationExitInfo info = list.get(0);
-        verify(info, mStubPackagePid, mStubPackageUid, STUB_PACKAGE_NAME,
-                ApplicationExitInfo.REASON_OTHER, null, "PlatformCompat overrides", now, now2);
-
-        // Also verify that we get the expected meminfo
-        assertEquals(lastPss, DebugUtils.sizeValueToString(
-                info.getPss() * 1024, new StringBuilder()));
-        assertEquals(lastRss, DebugUtils.sizeValueToString(
-                info.getRss() * 1024, new StringBuilder()));
+        verify(info, mStubPackageIsolatedPid, mStubPackageIsolatedUid,
+                mStubPackageIsolatedProcessName, ApplicationExitInfo.REASON_OTHER, null,
+                "isolated not needed", now, now2);
     }
 
     private String extractMemString(String dump, String prefix, char nextSep) {
@@ -575,6 +577,18 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         // Start a process and do nothing
         startService(ACTION_FINISH, STUB_SERVICE_NAME, false, false);
 
+        // Enable high frequency memory sampling
+        executeShellCmd("dumpsys procstats --start-testing");
+        // Sleep for a while to wait for the sampling of memory info
+        sleep(10000);
+        // Stop the high frequency memory sampling
+        executeShellCmd("dumpsys procstats --stop-testing");
+        // Get the memory info from it.
+        String dump = executeShellCmd("dumpsys activity processes " + STUB_PACKAGE_NAME);
+        assertNotNull(dump);
+        final String lastPss = extractMemString(dump, " lastPss=", ' ');
+        final String lastRss = extractMemString(dump, " lastRss=", '\n');
+
         // Revoke the read calendar permission
         mInstrumentation.getUiAutomation().revokeRuntimePermission(
                 STUB_PACKAGE_NAME, android.Manifest.permission.READ_CALENDAR);
@@ -591,6 +605,12 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         ApplicationExitInfo info = list.get(0);
         verify(info, mStubPackagePid, mStubPackageUid, STUB_PACKAGE_NAME,
                 ApplicationExitInfo.REASON_PERMISSION_CHANGE, null, null, now, now2);
+
+        // Also verify that we get the expected meminfo
+        assertEquals(lastPss, DebugUtils.sizeValueToString(
+                info.getPss() * 1024, new StringBuilder()));
+        assertEquals(lastRss, DebugUtils.sizeValueToString(
+                info.getRss() * 1024, new StringBuilder()));
     }
 
     public void testCrash() throws Exception {
