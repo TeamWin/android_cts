@@ -4,5 +4,10 @@
       "name": "CtsUserspaceRebootHostSideTestCases",
       "keywords": ["primary-device"]
     }
+  ],
+  "postsubmit": [
+    {
+      "name": "CtsUserspaceRebootHostSideTestCases"
+    }
   ]
 }
