@@ -46,6 +46,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.PersistableBundle;
+import android.os.Process;
 import android.os.RemoteException;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
@@ -84,6 +85,7 @@ import com.android.internal.telephony.uicc.IccUtils;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.security.MessageDigest;
@@ -536,6 +538,18 @@ public class TelephonyManagerTest {
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                 (tm) -> tm.resetIms(tm.getSlotIndex()));
 
+        // Verify TelephonyManager.getCarrierPrivilegeStatus
+        List<Integer> validCarrierPrivilegeStatus = new ArrayList<>();
+        validCarrierPrivilegeStatus.add(TelephonyManager.CARRIER_PRIVILEGE_STATUS_HAS_ACCESS);
+        validCarrierPrivilegeStatus.add(TelephonyManager.CARRIER_PRIVILEGE_STATUS_NO_ACCESS);
+        validCarrierPrivilegeStatus.add(
+                TelephonyManager.CARRIER_PRIVILEGE_STATUS_RULES_NOT_LOADED);
+        validCarrierPrivilegeStatus.add(
+                TelephonyManager.CARRIER_PRIVILEGE_STATUS_ERROR_LOADING_RULES);
+        int carrierPrivilegeStatusResult = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.getCarrierPrivilegeStatus(Process.myUid()));
+        assertTrue(validCarrierPrivilegeStatus.contains(carrierPrivilegeStatusResult));
+
         // Verify TelephonyManager.getCarrierPrivilegedPackagesForAllActiveSubscriptions
         List<String> resultForGetCarrierPrivilegedApis =
                 ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
@@ -545,7 +559,8 @@ public class TelephonyManagerTest {
             assertFalse(TextUtils.isEmpty(result));
         }
 
-        TelephonyManager.getDefaultRespondViaMessageApplication(getContext(), false);
+        mTelephonyManager.getDefaultRespondViaMessageApplication();
+        mTelephonyManager.getAndUpdateDefaultRespondViaMessageApplication();
     }
 
     @Test
@@ -1448,6 +1463,7 @@ public class TelephonyManagerTest {
      * Verifies that {@link TelephonyManager#getIsimImpu()} does not throw any exception when called
      * and has the correct permissions.
      */
+    @Ignore("API moved back to @hide for Android R.")
     @Test
     public void testGetIsimImpu() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
@@ -2517,16 +2533,6 @@ public class TelephonyManagerTest {
         } catch (SecurityException se) {
             fail("testSetAllowedNetworkTypes: SecurityException not expected");
         }
-    }
-
-    @Test
-    public void testIsDataCapableExists() {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            return;
-        }
-
-        //Simple test to make sure that isDataCapable exists and does not crash.
-        mTelephonyManager.isDataCapable();
     }
 
     @Test

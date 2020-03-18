@@ -19,9 +19,6 @@ package android.hdmicec.cts.audio;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import static org.junit.Assert.assertThat;
-import static org.hamcrest.CoreMatchers.is;
-
 import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.HdmiCecClientWrapper;
@@ -64,7 +61,7 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
     @Rule
     public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(AUDIO_DEVICE, this);
 
-    private void lookForLog(String expectedOut) throws Exception {
+    private void lookForLogFromHdmiCecAudioManager(String expectedOut) throws Exception {
         ITestDevice device = getDevice();
         TimeUnit.SECONDS.sleep(WAIT_TIME);
         String logs = device.executeAdbCommand("logcat", "-v", "brief", "-d", CLASS + ":I", "*:S");
@@ -109,7 +106,7 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
         // Start the APK and wait for it to complete.
         device.executeShellCommand(START_COMMAND + "android.hdmicec.app.REPORT_VOLUME");
         try {
-            lookForLog("Device muted.");
+            lookForLogFromHdmiCecAudioManager("Device muted.");
             return true;
         } catch(Exception e) {
             return false;
@@ -153,14 +150,14 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
                 CecMessage.SYSTEM_AUDIO_MODE_REQUEST,
                 hdmiCecClient.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS));
         String message = hdmiCecClient.checkExpectedOutput(CecMessage.SET_SYSTEM_AUDIO_MODE);
-        assertThat(hdmiCecClient.getParamsFromMessage(message), is(ON));
+        assertThat(hdmiCecClient.getParamsFromMessage(message)).isEqualTo(ON);
 
         /* Repeat test for device 0x3 (TUNER_1) */
         hdmiCecClient.sendCecMessage(CecDevice.TUNER_1, AUDIO_DEVICE,
                 CecMessage.SYSTEM_AUDIO_MODE_REQUEST,
                 hdmiCecClient.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS));
         message = hdmiCecClient.checkExpectedOutput(CecMessage.SET_SYSTEM_AUDIO_MODE);
-        assertThat(hdmiCecClient.getParamsFromMessage(message), is(ON));
+        assertThat(hdmiCecClient.getParamsFromMessage(message)).isEqualTo(ON);
     }
 
     /**

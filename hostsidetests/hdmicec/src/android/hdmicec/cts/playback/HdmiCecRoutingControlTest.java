@@ -16,7 +16,7 @@
 
 package android.hdmicec.cts.playback;
 
-import static org.junit.Assert.assertEquals;
+import static com.google.common.truth.Truth.assertThat;
 
 import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.CecMessage;
@@ -59,8 +59,7 @@ public final class HdmiCecRoutingControlTest extends BaseHostJUnit4Test {
                 CecMessage.SET_STREAM_PATH,
                 hdmiCecClient.formatParams(HdmiCecConstants.PHYSICAL_ADDRESS));
         String message = hdmiCecClient.checkExpectedOutput(CecMessage.ACTIVE_SOURCE);
-        assertEquals(HdmiCecConstants.PHYSICAL_ADDRESS,
-                hdmiCecClient.getParamsFromMessage(message));
+        assertThat(hdmiCecClient.getParamsFromMessage(message)).isEqualTo(PHYSICAL_ADDRESS);
     }
 
     /**
@@ -75,7 +74,7 @@ public final class HdmiCecRoutingControlTest extends BaseHostJUnit4Test {
         hdmiCecClient.sendCecMessage(CecDevice.TV, CecDevice.BROADCAST,
             CecMessage.REQUEST_ACTIVE_SOURCE);
         String message = hdmiCecClient.checkExpectedOutput(CecMessage.ACTIVE_SOURCE);
-        assertEquals(PHYSICAL_ADDRESS, hdmiCecClient.getParamsFromMessage(message));
+        assertThat(hdmiCecClient.getParamsFromMessage(message)).isEqualTo(PHYSICAL_ADDRESS);
     }
 
     /**
@@ -91,8 +90,7 @@ public final class HdmiCecRoutingControlTest extends BaseHostJUnit4Test {
             device.executeShellCommand("input keyevent KEYCODE_SLEEP");
             String message = hdmiCecClient.checkExpectedOutput(CecDevice.TV,
                     CecMessage.INACTIVE_SOURCE);
-            assertEquals(HdmiCecConstants.PHYSICAL_ADDRESS,
-                    hdmiCecClient.getParamsFromMessage(message));
+            assertThat(hdmiCecClient.getParamsFromMessage(message)).isEqualTo(PHYSICAL_ADDRESS);
         } finally {
             /* Wake up the device */
             device.executeShellCommand("input keyevent KEYCODE_WAKEUP");

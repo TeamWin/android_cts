@@ -1436,6 +1436,49 @@ public class ImsServiceTest {
             assertEquals(TEST_CONFIG_VALUE_STRING,
                     provisioningManager.getProvisioningStringValue(TEST_CONFIG_KEY));
 
+            automan.adoptShellPermissionIdentity();
+            provisioningManager.unregisterProvisioningChangedCallback(callback);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+    }
+
+    @Ignore("The ProvisioningManager constants were moved back to @hide for now, don't want to "
+            + "completely remove test.")
+    @Test
+    public void testProvisioningManagerConstants() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        triggerFrameworkConnectToCarrierImsService();
+
+        ProvisioningManager provisioningManager =
+                ProvisioningManager.createForSubscriptionId(sTestSub);
+
+        // This is a little bit gross looking, but on P devices, I can not define classes that
+        // extend ProvisioningManager.Callback (because it doesn't exist), so this has to
+        // happen as an anon class here.
+        LinkedBlockingQueue<Pair<Integer, Integer>> mIntQueue = new LinkedBlockingQueue<>();
+        LinkedBlockingQueue<Pair<Integer, String>> mStringQueue = new LinkedBlockingQueue<>();
+        ProvisioningManager.Callback callback = new ProvisioningManager.Callback() {
+            @Override
+            public void onProvisioningIntChanged(int item, int value) {
+                mIntQueue.offer(new Pair<>(item, value));
+            }
+
+            @Override
+            public void onProvisioningStringChanged(int item, String value) {
+                mStringQueue.offer(new Pair<>(item, value));
+            }
+        };
+
+        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            automan.adoptShellPermissionIdentity();
+            provisioningManager.registerProvisioningChangedCallback(getContext().getMainExecutor(),
+                    callback);
+
             verifyStringKey(provisioningManager, mStringQueue,
                     ProvisioningManager.KEY_AMR_CODEC_MODE_SET_VALUES, "1,2");
             verifyStringKey(provisioningManager, mStringQueue,

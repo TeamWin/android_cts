@@ -11,17 +11,14 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
+ * limitations under the License
  */
 
-package android.linkerconfig.cts.utils.elements;
+package android.server.wm.app;
 
-
-import java.util.ArrayList;
-import java.util.List;
-
-public class Link {
-    public Namespace from, to;
-    public List<String> libraries = new ArrayList<>();
-    public boolean allowAll;
+/**
+ * An activity that has the same behavior as {@link PipActivity} and specifies
+ * minimal dimension in its manifest.
+ */
+public class PipActivityWithMinimalSize extends PipActivity {
 }

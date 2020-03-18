@@ -16,6 +16,7 @@
 package android.car.cts;
 
 import static android.os.Process.myUid;
+import static android.os.UserHandle.USER_SYSTEM;
 
 import static com.android.compatibility.common.util.ShellIdentityUtils.invokeMethodWithShellPermissions;
 import static com.android.compatibility.common.util.ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn;
@@ -23,6 +24,8 @@ import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 import static com.android.compatibility.common.util.TestUtils.BooleanSupplierWithThrow;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import static org.testng.Assert.assertThrows;
@@ -32,6 +35,7 @@ import android.app.UiAutomation;
 import android.car.Car;
 import android.car.user.CarUserManager;
 import android.car.user.CarUserManager.UserLifecycleListener;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.PowerManager;
 import android.os.SystemClock;
@@ -46,6 +50,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
@@ -79,6 +84,8 @@ public final class CarUserManagerTest extends CarApiTestBase {
 
     private static CarUserManager sCarUserManager;
 
+    private PackageManager mPackageManager;
+
     private static int sInitialUserId = UserHandle.myUserId();
     private static int sNewUserId = UserHandle.USER_NULL;
 
@@ -100,6 +107,8 @@ public final class CarUserManagerTest extends CarApiTestBase {
         sNewUserId = createNewUser("CarUserManagerTest", /* isGuestUser= */ false);
         Log.i(TAG, "setUp(): myUid=" + myUid() + ", currentUser=" + sInitialUserId
                 + ", newUser=" + sNewUserId);
+
+        mPackageManager = sContext.getPackageManager();
     }
 
     @AfterClass
@@ -276,6 +285,37 @@ public final class CarUserManagerTest extends CarApiTestBase {
             invokeMethodWithShellPermissionsNoReturn(automan, (a) -> a
                     .revokeRuntimePermission(pkgName, permission));
         }
+    }
+
+    @Test
+    public void testPackageInstalledForSystemAndFullUser() throws Exception {
+        String[] packages = sContext.getResources()
+                .getStringArray(R.array.installed_system_and_full);
+        for (String pkg : packages) {
+            assertWithMessage(pkg + " should be installed for system user.")
+                    .that(isInstalled(pkg, USER_SYSTEM)).isTrue();
+            assertWithMessage(pkg + " should be installed for system user.")
+                    .that(isInstalled(pkg, sNewUserId)).isTrue();
+        }
+    }
+
+    @Test
+    public void testPackageInstalledForFullUserOnly() throws Exception {
+        String[] packages = sContext.getResources()
+                .getStringArray(R.array.installed_full_only);
+        for (String pkg : packages) {
+            assertWithMessage(pkg + " should not be installed for system user.")
+                    .that(isInstalled(pkg, USER_SYSTEM)).isFalse();
+            assertWithMessage(pkg + " should be installed for full user")
+                    .that(isInstalled(pkg, sNewUserId)).isTrue();
+        }
+    }
+
+    private boolean isInstalled(String packageName, int userId) {
+        List<PackageInfo> packages = new ArrayList<PackageInfo>();
+        packages = mPackageManager.getInstalledPackagesAsUser(/*PackageInfoFlags = */ 0, userId);
+        return packages.stream().filter(pkg -> pkg.packageName.equals(packageName))
+                .findAny().orElse(null) != null;
     }
 
     /**
