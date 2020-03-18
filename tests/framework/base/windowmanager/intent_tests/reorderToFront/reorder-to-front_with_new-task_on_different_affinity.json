@@ -48,8 +48,7 @@
                     }
                 ]
             }
-        ],
-        "resumedActivity": "android.server.wm.cts/android.server.wm.intent.Activities$TaskAffinity2Activity"
+        ]
     },
     "endState": {
         "tasks": [
@@ -77,7 +76,6 @@
                     }
                 ]
             }
-        ],
-        "resumedActivity": "android.server.wm.cts/android.server.wm.intent.Activities$TaskAffinity1Activity"
+        ]
     }
 }

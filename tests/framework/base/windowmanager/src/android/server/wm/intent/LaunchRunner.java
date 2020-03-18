@@ -20,7 +20,7 @@ import static android.server.wm.intent.Persistence.LaunchFromIntent.prepareSeria
 import static android.server.wm.intent.StateComparisonException.assertEndStatesEqual;
 import static android.server.wm.intent.StateComparisonException.assertInitialStateEqual;
 
-import static androidx.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static com.google.common.collect.Iterables.getLast;
 
@@ -312,9 +312,6 @@ public class LaunchRunner {
      */
     public StateDump waitDumpAndTrimForVerification(Activity activity, StateDump expected) {
         mTestBase.getWmState().waitForValidState(activity.getComponentName());
-        // The last activity that was launched before the dump could still be in an intermediate
-        // lifecycle state. wait an extra 3 seconds for it to settle
-        SystemClock.sleep(BEFORE_DUMP_TIMEOUT);
         mTestBase.getWmState().waitForWithAmState(
                 am -> StateDump.fromTasks(am.getRootTasks(), mBaseTasks).equals(expected),
                 "the activity states match up with what we recorded");
