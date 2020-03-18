@@ -19,13 +19,13 @@
        android:targetSandboxVersion="2">
 
   <application android:extractNativeLibs="true"
-               android:enableGwpAsan="true">
+               android:gwpAsanMode="always">
     <processes>
       <process />
       <process android:process=":gwp_asan_enabled"
-               android:enableGwpAsan="true" />
+               android:gwpAsanMode="always" />
       <process android:process=":gwp_asan_disabled"
-               android:enableGwpAsan="false" />
+               android:gwpAsanMode="never" />
       <process android:process=":gwp_asan_default" />
     </processes>
     <uses-library android:name="android.test.runner" />
