@@ -19,20 +19,11 @@ package android.autofillservice.cts.inline;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.Helper.getContext;
-import static android.autofillservice.cts.Timeouts.MOCK_IME_TIMEOUT_MS;
 import static android.autofillservice.cts.inline.InstrumentedAutoFillServiceInlineEnabled.SERVICE_NAME;
-
-import static com.android.cts.mockime.ImeEventStreamTestUtils.expectBindInput;
-
-import static org.junit.Assume.assumeTrue;
 
 import android.autofillservice.cts.AbstractLoginActivityTestCase;
 import android.autofillservice.cts.CannedFillResponse;
 import android.autofillservice.cts.Helper;
-import android.os.Process;
-
-import com.android.cts.mockime.ImeEventStream;
-import com.android.cts.mockime.MockImeSession;
 
 import org.junit.Test;
 
@@ -52,8 +43,6 @@ public class InlineFilteringTest extends AbstractLoginActivityTestCase {
     @Test
     public void testFiltering_filtersByPrefix() throws Exception {
         enableService();
-        final MockImeSession mockImeSession = sMockImeSessionRule.getMockImeSession();
-        assumeTrue("MockIME not available", mockImeSession != null);
 
         // Set expectations.
         final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
@@ -72,36 +61,29 @@ public class InlineFilteringTest extends AbstractLoginActivityTestCase {
         sReplier.addResponse(builder.build());
         mActivity.expectAutoFill("test", "tweet");
 
-        final ImeEventStream stream = mockImeSession.openEventStream();
-        mockImeSession.callRequestShowSelf(0);
-        // Wait until the MockIme gets bound to the TestActivity.
-        expectBindInput(stream, Process.myPid(), MOCK_IME_TIMEOUT_MS);
-
         // Trigger autofill, then make sure it's showing initially.
         mUiBot.selectByRelativeId(ID_USERNAME);
-        mUiBot.waitForIdle();
+        mUiBot.waitForIdleSync();
         mUiBot.assertSuggestionStrip(2);
         sReplier.getNextFillRequest();
 
         // Filter out one of the datasets.
         mActivity.onUsername((v) -> v.setText("t"));
-        mUiBot.waitForIdle();
+        mUiBot.waitForIdleSync();
         mUiBot.assertSuggestionStrip(1);
 
         // Filter out both datasets.
         mActivity.onUsername((v) -> v.setText("ta"));
-        mUiBot.waitForIdle();
+        mUiBot.waitForIdleSync();
         mUiBot.assertNoSuggestionStripEver();
 
         // Backspace to bring back one dataset.
         mActivity.onUsername((v) -> v.setText("t"));
-        mUiBot.waitForIdle();
+        mUiBot.waitForIdleSync();
         mUiBot.assertSuggestionStrip(1);
 
         mUiBot.selectSuggestion(0);
-        // TODO(b/151702075): Find a better way to wait for the views to update.
-        Thread.sleep(/* millis= */ 1000);
-        mUiBot.waitForIdle();
+        mUiBot.waitForIdleSync();
         mActivity.assertAutoFilled();
     }
 }
