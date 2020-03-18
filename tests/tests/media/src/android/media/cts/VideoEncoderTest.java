@@ -50,6 +50,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.HashMap;
@@ -81,6 +82,7 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
         private int mMediaBuffersEnqueuedCount;
         // Media buffers decoded.
         private int mMediaBuffersDecodedCount;
+        private final AtomicReference<String> errorMsg = new AtomicReference(null);
 
         public VideoStorage() {
             mStream = new LinkedList<Pair<ByteBuffer, BufferInfo>>();
@@ -141,7 +143,10 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
                 }
                 public void onError(MediaCodec codec, MediaCodec.CodecException e) {
                     Log.i(TAG, "got codec exception", e);
-                    fail("received codec error during decode" + e);
+                    errorMsg.set("received codec error during decode" + e);
+                    synchronized (condition) {
+                        condition.notifyAll();
+                    }
                 }
                 public void onOutputFormatChanged(MediaCodec codec, MediaFormat format) {
                     Log.i(TAG, "got output format " + format);
@@ -158,6 +163,7 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
                 }
             }
             decoder.stop();
+            assertNull(errorMsg.get(), errorMsg.get());
             // All enqueued media data buffers should have got decoded.
             if (mMediaBuffersEnqueuedCount != mMediaBuffersDecodedCount) {
                 Log.i(TAG, "mMediaBuffersEnqueuedCount:" + mMediaBuffersEnqueuedCount);
@@ -473,6 +479,7 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
         private LinkedList<Integer> mEncInputBuffers = new LinkedList<Integer>();
 
         private int mEncInputBufferSize = -1;
+        private final AtomicReference<String> errorMsg = new AtomicReference(null);
 
         @Override
         public boolean processLoop(
@@ -495,7 +502,7 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
                 mEncoder.start();
 
                 // main loop - process GL ops as only main thread has GL context
-                while (!mCompleted) {
+                while (!mCompleted && errorMsg.get() == null) {
                     Pair<Integer, BufferInfo> decBuffer = null;
                     int encBuffer = -1;
                     synchronized (mCondition) {
@@ -546,6 +553,7 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
             } finally {
                 close();
             }
+            assertNull(errorMsg.get(), errorMsg.get());
             return !skipped;
         }
 
@@ -635,7 +643,13 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
 
         @Override
         public void onError(MediaCodec mediaCodec, MediaCodec.CodecException e) {
-            fail("received error on " + mediaCodec.getName() + ": " + e);
+            String codecName = null;
+            try {
+                codecName = mediaCodec.getName();
+            } catch (Exception ex) {
+                codecName = "(error getting codec name)";
+            }
+            errorMsg.set("received error on " + codecName + ": " + e);
         }
 
         @Override
@@ -690,6 +704,8 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
         private LinkedList<Pair<Integer, BufferInfo>> mBuffersToRender =
             new LinkedList<Pair<Integer, BufferInfo>>();
 
+        private final AtomicReference<String> errorMsg = new AtomicReference(null);
+
         @Override
         public boolean processLoop(
                 String path, String outMime, String videoEncName,
@@ -716,7 +732,7 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
                 mEncoder.start();
 
                 // main loop - process GL ops as only main thread has GL context
-                while (!mCompleted) {
+                while (!mCompleted && errorMsg.get() == null) {
                     BufferInfo info = null;
                     synchronized (mCondition) {
                         try {
@@ -784,6 +800,7 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
                     mDecSurface = null;
                 }
             }
+            assertNull(errorMsg.get(), errorMsg.get());
             return !skipped;
         }
 
@@ -867,7 +884,13 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
 
         @Override
         public void onError(MediaCodec mediaCodec, MediaCodec.CodecException e) {
-            fail("received error on " + mediaCodec.getName() + ": " + e);
+            String codecName = null;
+            try {
+                codecName = mediaCodec.getName();
+            } catch (Exception ex) {
+                codecName = "(error getting codec name)";
+            }
+            errorMsg.set("received error on " + codecName + ": " + e);
         }
 
         @Override
