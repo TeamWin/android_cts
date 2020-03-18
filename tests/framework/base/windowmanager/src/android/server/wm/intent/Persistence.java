@@ -441,17 +441,11 @@ public class Persistence {
 
     public static class StateDump {
         private static final String TASKS_KEY = "tasks";
-        private static final String RESUMED_ACTIVITY_KEY = "resumedActivity";
-
-        /**
-         * The component name of the resumedActivity in this state, empty string if there is none.
-         */
-        private String mResumedActivity;
 
         /**
          * The Tasks in this stack ordered from most recent to least recent.
          */
-        private List<TaskState> mTasks;
+        private final List<TaskState> mTasks;
 
         public static StateDump fromTasks(List<WindowManagerState.ActivityTask> activityTasks,
                 List<WindowManagerState.ActivityTask> baseStacks) {
@@ -462,12 +456,7 @@ public class Persistence {
             return new StateDump(tasks);
         }
 
-        private StateDump(String resumedActivity, List<TaskState> tasks) {
-            mResumedActivity = resumedActivity;
-            mTasks = tasks;
-        }
-
-        public StateDump(List<TaskState> tasks) {
+        private StateDump(List<TaskState> tasks) {
             mTasks = tasks;
         }
 
@@ -477,7 +466,7 @@ public class Persistence {
                 tasks.put(task.toJson());
             }
 
-            return new JSONObject().put("tasks", tasks);
+            return new JSONObject().put(TASKS_KEY, tasks);
         }
 
         static StateDump fromJson(JSONObject object) throws JSONException {
@@ -488,7 +477,7 @@ public class Persistence {
                 tasks.add(TaskState.fromJson((JSONObject) jsonTasks.get(i)));
             }
 
-            return new StateDump(object.optString(RESUMED_ACTIVITY_KEY, ""), tasks);
+            return new StateDump(tasks);
         }
 
         /**
@@ -523,18 +512,38 @@ public class Persistence {
 
     public static class TaskState {
 
+        private static final String STATE_RESUMED = "RESUMED";
         private static final String ACTIVITIES_KEY = "activities";
+
+        /**
+         * The component name of the resumedActivity in this state, empty string if there is none.
+         */
+        private final String mResumedActivity;
 
         /**
          * The activities in this task ordered from most recent to least recent.
          */
-        private List<ActivityState> mActivities = new ArrayList<>();
+        private final List<ActivityState> mActivities = new ArrayList<>();
 
-        public TaskState(List<ActivityState> activities) {
-            mActivities = activities;
+        private TaskState(JSONArray jsonActivities) throws JSONException {
+            String resumedActivity = "";
+            for (int i = 0; i < jsonActivities.length(); i++) {
+                final ActivityState activity =
+                        ActivityState.fromJson((JSONObject) jsonActivities.get(i));
+                // The json file shouldn't define multiple resumed activities, but it is fine that
+                // the test will fail when comparing to the real state.
+                if (STATE_RESUMED.equals(activity.getState())) {
+                    resumedActivity = activity.getName();
+                }
+                mActivities.add(activity);
+            }
+
+            mResumedActivity = resumedActivity;
         }
 
         public TaskState(WindowManagerState.ActivityTask state) {
+            final String resumedActivity = state.getResumedActivity();
+            mResumedActivity = resumedActivity != null ? resumedActivity : "";
             for (WindowManagerState.Activity activity : state.getActivities()) {
                 this.mActivities.add(new ActivityState(activity));
             }
@@ -552,14 +561,7 @@ public class Persistence {
         }
 
         static TaskState fromJson(JSONObject object) throws JSONException {
-            JSONArray jsonActivities = object.getJSONArray(ACTIVITIES_KEY);
-            List<ActivityState> activities = new ArrayList<>();
-
-            for (int i = 0; i < jsonActivities.length(); i++) {
-                activities.add(ActivityState.fromJson((JSONObject) jsonActivities.get(i)));
-            }
-
-            return new TaskState(activities);
+            return new TaskState(object.getJSONArray(ACTIVITIES_KEY));
         }
 
         public List<ActivityState> getActivities() {
@@ -571,12 +573,13 @@ public class Persistence {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             TaskState task = (TaskState) o;
-            return Objects.equals(mActivities, task.mActivities);
+            return Objects.equals(mResumedActivity, task.mResumedActivity)
+                    && Objects.equals(mActivities, task.mActivities);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(mActivities);
+            return Objects.hash(mResumedActivity, mActivities);
         }
     }
 
