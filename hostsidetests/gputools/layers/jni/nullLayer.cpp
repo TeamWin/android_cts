@@ -22,7 +22,8 @@
 #define xstr(a) str(a)
 #define str(a) #a
 
-#define LOG_TAG "nullLayer" xstr(LAYERNAME)
+#define LAYER_FULL_NAME "VK_LAYER_ANDROID_nullLayer" xstr(LAYERNAME)
+#define LOG_TAG LAYER_FULL_NAME
 
 #define ALOGI(msg, ...) \
     __android_log_print(ANDROID_LOG_INFO, LOG_TAG, (msg), __VA_ARGS__)
@@ -35,8 +36,8 @@ class StaticLogMessage {
             ALOGI("%s", msg);
     }
 };
-StaticLogMessage g_initMessage("nullLayer" xstr(LAYERNAME) " loaded");
-
+StaticLogMessage
+    g_initMessage("VK_LAYER_ANDROID_nullLayer" xstr(LAYERNAME) " loaded");
 
 namespace {
 
@@ -68,7 +69,10 @@ VkResult getProperties(const uint32_t count, const T *properties, uint32_t *pCou
 }
 
 static const VkLayerProperties LAYER_PROPERTIES = {
-    "VK_LAYER_ANDROID_nullLayer" xstr(LAYERNAME), VK_MAKE_VERSION(1, 0, VK_HEADER_VERSION), 1, "Layer: nullLayer" xstr(LAYERNAME),
+    LAYER_FULL_NAME,
+    VK_MAKE_VERSION(1, 0, VK_HEADER_VERSION),
+    1,
+    "Layer: nullLayer" xstr(LAYERNAME),
 };
 
 VKAPI_ATTR VkResult VKAPI_CALL EnumerateInstanceLayerProperties(uint32_t *pCount, VkLayerProperties *pProperties) {
@@ -97,7 +101,7 @@ VKAPI_ATTR VkResult VKAPI_CALL nullCreateDevice(VkPhysicalDevice physicalDevice,
 
     VkLayerDeviceCreateInfo *layerCreateInfo = (VkLayerDeviceCreateInfo*)pCreateInfo->pNext;
 
-    const char* msg = "nullCreateDevice called in nullLayer" xstr(LAYERNAME);
+    const char *msg = "nullCreateDevice called in " LAYER_FULL_NAME;
     ALOGI("%s", msg);
 
     // Step through the pNext chain until we get to the link function
@@ -134,7 +138,7 @@ VKAPI_ATTR VkResult VKAPI_CALL nullCreateInstance(const VkInstanceCreateInfo* pC
 
     VkLayerInstanceCreateInfo *layerCreateInfo = (VkLayerInstanceCreateInfo *)pCreateInfo->pNext;
 
-    const char* msg = "nullCreateInstance called in nullLayer" xstr(LAYERNAME);
+    const char *msg = "nullCreateInstance called in " LAYER_FULL_NAME;
     ALOGI("%s", msg);
 
     // Step through the pNext chain until we get to the link function
