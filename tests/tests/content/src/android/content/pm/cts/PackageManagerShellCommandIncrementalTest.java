@@ -121,7 +121,7 @@ public class PackageManagerShellCommandIncrementalTest {
         assertEquals(null, getSplits(TEST_APP_PACKAGE));
     }
 
-    @Ignore("Re-enable after idsig updated.")
+    @Ignore("TODO(b/150809360): Re-enable after SELinux rules are in.")
     @Test
     public void testInstallWithIdSig() throws Exception {
         final Context context = InstrumentationRegistry.getInstrumentation().getContext();

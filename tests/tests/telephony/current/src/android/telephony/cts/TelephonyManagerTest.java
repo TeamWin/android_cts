@@ -46,6 +46,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.PersistableBundle;
+import android.os.Process;
 import android.os.RemoteException;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
@@ -54,7 +55,6 @@ import android.telephony.AccessNetworkConstants;
 import android.telephony.Annotation.RadioPowerState;
 import android.telephony.AvailableNetworkInfo;
 import android.telephony.CallAttributes;
-import android.telephony.CallForwardingInfo;
 import android.telephony.CallQuality;
 import android.telephony.CarrierConfigManager;
 import android.telephony.CellLocation;
@@ -537,6 +537,18 @@ public class TelephonyManagerTest {
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                 (tm) -> tm.resetIms(tm.getSlotIndex()));
 
+        // Verify TelephonyManager.getCarrierPrivilegeStatus
+        List<Integer> validCarrierPrivilegeStatus = new ArrayList<>();
+        validCarrierPrivilegeStatus.add(TelephonyManager.CARRIER_PRIVILEGE_STATUS_HAS_ACCESS);
+        validCarrierPrivilegeStatus.add(TelephonyManager.CARRIER_PRIVILEGE_STATUS_NO_ACCESS);
+        validCarrierPrivilegeStatus.add(
+                TelephonyManager.CARRIER_PRIVILEGE_STATUS_RULES_NOT_LOADED);
+        validCarrierPrivilegeStatus.add(
+                TelephonyManager.CARRIER_PRIVILEGE_STATUS_ERROR_LOADING_RULES);
+        int carrierPrivilegeStatusResult = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.getCarrierPrivilegeStatus(Process.myUid()));
+        assertTrue(validCarrierPrivilegeStatus.contains(carrierPrivilegeStatusResult));
+
         // Verify TelephonyManager.getCarrierPrivilegedPackagesForAllActiveSubscriptions
         List<String> resultForGetCarrierPrivilegedApis =
                 ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
@@ -546,9 +558,14 @@ public class TelephonyManagerTest {
             assertFalse(TextUtils.isEmpty(result));
         }
 
-        TelephonyManager.getDefaultRespondViaMessageApplication(getContext(), false);
+        mTelephonyManager.getDefaultRespondViaMessageApplication();
+        mTelephonyManager.getAndUpdateDefaultRespondViaMessageApplication();
     }
 
+    /**
+     * Due to the corresponding API is hidden in R and will be public in S, this test
+     * is commented and will be un-commented in Android S.
+     *
     @Test
     public void testGetCallForwarding() {
         List<Integer> callForwardingReasons = new ArrayList<>();
@@ -580,7 +597,12 @@ public class TelephonyManagerTest {
             assertTrue(callForwardingInfo.getTimeoutSeconds() >= 0);
         }
     }
+     */
 
+    /**
+     * Due to the corresponding API is hidden in R and will be public in S, this test
+     * is commented and will be un-commented in Android S.
+     *
     @Test
     public void testSetCallForwarding() {
         List<Integer> callForwardingReasons = new ArrayList<>();
@@ -597,10 +619,12 @@ public class TelephonyManagerTest {
                     CallForwardingInfo.STATUS_ACTIVE,
                     callForwardingReasonToEnable,
                     TEST_FORWARD_NUMBER,
-                    1 /** time seconds */);
+                    // time seconds
+                    1);
             Log.d(TAG, "[testSetCallForwarding] Enable Call Forwarding. Status: "
-                    + CallForwardingInfo.STATUS_ACTIVE + " Reason: " + callForwardingReasonToEnable
-                    + " Number: " + TEST_FORWARD_NUMBER + " Time Seconds: 1");
+                    + CallForwardingInfo.STATUS_ACTIVE + " Reason: "
+                    + callForwardingReasonToEnable + " Number: " + TEST_FORWARD_NUMBER
+                    + " Time Seconds: 1");
             ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                     (tm) -> tm.setCallForwarding(callForwardingInfoToEnable));
         }
@@ -611,7 +635,8 @@ public class TelephonyManagerTest {
                     CallForwardingInfo.STATUS_INACTIVE,
                     callForwardingReasonToDisable,
                     TEST_FORWARD_NUMBER,
-                    1 /** time seconds */);
+                    // time seconds
+                    1);
             Log.d(TAG, "[testSetCallForwarding] Disable Call Forwarding. Status: "
                     + CallForwardingInfo.STATUS_INACTIVE + " Reason: "
                     + callForwardingReasonToDisable + " Number: " + TEST_FORWARD_NUMBER
@@ -620,7 +645,12 @@ public class TelephonyManagerTest {
                     (tm) -> tm.setCallForwarding(callForwardingInfoToDisable));
         }
     }
+    */
 
+    /**
+     * Due to the corresponding API is hidden in R and will be public in S, this test
+     * is commented and will be un-commented in Android S.
+     *
     @Test
     public void testGetCallWaitingStatus() {
         Set<Integer> callWaitingStatus = new HashSet<Integer>();
@@ -633,7 +663,12 @@ public class TelephonyManagerTest {
                 mTelephonyManager, (tm) -> tm.getCallWaitingStatus());
         assertTrue(callWaitingStatus.contains(status));
     }
+     */
 
+    /**
+     * Due to the corresponding API is hidden in R and will be public in S, this test
+     * is commented and will be un-commented in Android S.
+     *
     @Test
     public void testSetCallWaitingStatus() {
         ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
@@ -641,6 +676,7 @@ public class TelephonyManagerTest {
         ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.setCallWaitingStatus(false));
     }
+     */
 
     @Test
     public void testCellLocationFinePermission() {
@@ -2519,16 +2555,6 @@ public class TelephonyManagerTest {
         } catch (SecurityException se) {
             fail("testSetAllowedNetworkTypes: SecurityException not expected");
         }
-    }
-
-    @Test
-    public void testIsDataCapableExists() {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            return;
-        }
-
-        //Simple test to make sure that isDataCapable exists and does not crash.
-        mTelephonyManager.isDataCapable();
     }
 
     @Test
