@@ -135,7 +135,6 @@ public class MultiDisplayLockedKeyguardTests extends MultiDisplayTestBase {
         mWmState.assertVisibility(DISMISS_KEYGUARD_ACTIVITY, true);
     }
 
-    @FlakyTest(bugId = 141674516)
     @Test
     public void testDismissKeyguard_whileOccluded_secondaryDisplay() {
         final LockScreenSession lockScreenSession =
