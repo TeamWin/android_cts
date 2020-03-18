@@ -18,6 +18,8 @@ package android.appsecurity.cts;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 
+import com.google.common.collect.ImmutableSet;
+
 /**
  * Set of tests that verify behavior of
  * {@link android.provider.DocumentsContract} and related intents.
@@ -26,6 +28,8 @@ public class DocumentsTest extends DocumentsTestCase {
     private static final String PROVIDER_PKG = "com.android.cts.documentprovider";
     private static final String PROVIDER_APK = "CtsDocumentProvider.apk";
     private static final String DUMMYIME_APK = "CtsDummyIme.apk";
+
+    private static final long RESTRICT_STORAGE_ACCESS_FRAMEWORK = 141600225L;
 
     @Override
     protected void setUp() throws Exception {
@@ -63,10 +67,6 @@ public class DocumentsTest extends DocumentsTestCase {
 
     public void testTree() throws Exception {
         runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testTree");
-    }
-
-    public void testTree_blockFromTree() throws Exception {
-        runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testTree_blockFromTree");
     }
 
     public void testGetContent_rootsShowing() throws Exception {
@@ -118,5 +118,19 @@ public class DocumentsTest extends DocumentsTestCase {
 
     public void testEject() throws Exception {
         runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testEject");
+    }
+
+    public void testRestrictStorageAccessFrameworkEnabled_blockFromTree() throws Exception {
+        runDeviceCompatTest(CLIENT_PKG, ".DocumentsClientTest",
+                "testRestrictStorageAccessFrameworkEnabled_blockFromTree",
+                /* enabledChanges */ ImmutableSet.of(RESTRICT_STORAGE_ACCESS_FRAMEWORK),
+                /* disabledChanges */ ImmutableSet.of());
+    }
+
+    public void testRestrictStorageAccessFrameworkDisabled_notBlockFromTree() throws Exception {
+        runDeviceCompatTest(CLIENT_PKG, ".DocumentsClientTest",
+                "testRestrictStorageAccessFrameworkDisabled_notBlockFromTree",
+                /* enabledChanges */ ImmutableSet.of(),
+                /* disabledChanges */ ImmutableSet.of(RESTRICT_STORAGE_ACCESS_FRAMEWORK));
     }
 }
