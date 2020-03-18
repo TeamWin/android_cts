@@ -135,14 +135,15 @@
 
         <service android:name="android.app.stubs.LocalStoppedService" />
 
-        <service android:name="android.app.stubs.LocalForegroundService">
+        <service android:name="android.app.stubs.LocalForegroundService"
+                 android:foregroundServiceType="camera|microphone">
             <intent-filter>
                 <action android:name="android.app.stubs.FOREGROUND_SERVICE" />
             </intent-filter>
         </service>
 
         <service android:name="android.app.stubs.LocalForegroundServiceLocation"
-                android:foregroundServiceType="location">
+                android:foregroundServiceType="location|camera|microphone">
             <intent-filter>
                 <action android:name="android.app.stubs.FOREGROUND_SERVICE_LOCATION" />
             </intent-filter>
