@@ -491,7 +491,6 @@ public final class CameraDeviceInfo extends DeviceInfo {
         charsKeyNames.add(CameraCharacteristics.SCALER_CROPPING_TYPE.getName());
         charsKeyNames.add(CameraCharacteristics.SCALER_MANDATORY_STREAM_COMBINATIONS.getName());
         charsKeyNames.add(CameraCharacteristics.SCALER_MANDATORY_CONCURRENT_STREAM_COMBINATIONS.getName());
-        charsKeyNames.add(CameraCharacteristics.SCALER_AVAILABLE_ROTATE_AND_CROP_MODES.getName());
         charsKeyNames.add(CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT1.getName());
         charsKeyNames.add(CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT2.getName());
         charsKeyNames.add(CameraCharacteristics.SENSOR_CALIBRATION_TRANSFORM1.getName());
