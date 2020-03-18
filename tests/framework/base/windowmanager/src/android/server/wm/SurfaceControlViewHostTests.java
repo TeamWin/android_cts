@@ -61,7 +61,6 @@ import org.junit.Test;
  *     atest CtsWindowManagerDeviceTestCases:SurfaceControlViewHostTests
  */
 @Presubmit
-@FlakyTest
 public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
     private final ActivityTestRule<Activity> mActivityRule = new ActivityTestRule<>(Activity.class);
 
