@@ -34,7 +34,6 @@ import android.Manifest.permission.READ_CELL_BROADCASTS
 import android.Manifest.permission.READ_CONTACTS
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.Manifest.permission.READ_PHONE_NUMBERS
-import android.Manifest.permission.READ_PHONE_STATE
 import android.Manifest.permission.READ_SMS
 import android.Manifest.permission.RECEIVE_MMS
 import android.Manifest.permission.RECEIVE_SMS
@@ -123,7 +122,7 @@ class RuntimePermissionProperties {
             WRITE_CALENDAR, SEND_SMS, RECEIVE_SMS, READ_SMS, RECEIVE_MMS, RECEIVE_WAP_PUSH,
             READ_CELL_BROADCASTS, READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE,
             ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION, READ_CALL_LOG, WRITE_CALL_LOG,
-            PROCESS_OUTGOING_CALLS, READ_PHONE_STATE, READ_PHONE_NUMBERS, CALL_PHONE,
+            PROCESS_OUTGOING_CALLS, READ_PHONE_NUMBERS, CALL_PHONE,
             ADD_VOICEMAIL, USE_SIP, ANSWER_PHONE_CALLS, ACCEPT_HANDOVER, RECORD_AUDIO, CAMERA,
             BODY_SENSORS)
 
