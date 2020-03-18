@@ -58,9 +58,11 @@ import android.system.Os;
 import android.system.OsConstants;
 import android.util.Log;
 import android.view.Display;
+import android.view.ViewConfiguration;
 import android.view.WindowManager;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.core.app.ApplicationProvider;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
@@ -97,7 +99,7 @@ public class StrictModeTest {
     private StrictMode.VmPolicy mVmPolicy;
 
     private Context getContext() {
-        return InstrumentationRegistry.getContext();
+        return ApplicationProvider.getApplicationContext();
     }
 
     @Before
@@ -637,8 +639,7 @@ public class StrictModeTest {
                 .createWindowContext(TYPE_APPLICATION_OVERLAY, null /* options */);
         assertNoViolation(() -> visualContext.getSystemService(WINDOW_SERVICE));
 
-        Intent intent = new Intent(InstrumentationRegistry.getInstrumentation().getTargetContext(),
-                SimpleTestActivity.class);
+        Intent intent = new Intent(getContext(), SimpleTestActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         final Activity activity = InstrumentationRegistry.getInstrumentation()
                 .startActivitySync(intent);
@@ -663,8 +664,7 @@ public class StrictModeTest {
                 displayContext.createWindowContext(TYPE_APPLICATION_OVERLAY, null /* options */);
         assertNoViolation(windowContext::getDisplay);
 
-        Intent intent = new Intent(InstrumentationRegistry.getInstrumentation().getTargetContext(),
-                SimpleTestActivity.class);
+        Intent intent = new Intent(getContext(), SimpleTestActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         final Activity activity = InstrumentationRegistry.getInstrumentation()
                 .startActivitySync(intent);
@@ -676,6 +676,37 @@ public class StrictModeTest {
             return;
         }
         fail("Expected to get incorrect use exception from calling getDisplay() on Application");
+    }
+
+    @Test
+    public void testIncorrectContextUse_GetViewConfiguration() throws Exception {
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder()
+                        .detectIncorrectContextUse()
+                        .penaltyLog()
+                        .build());
+
+        final Context baseContext = getContext();
+        assertViolation(
+                "Tried to access UI constants from a non-visual Context.",
+                () -> ViewConfiguration.get(baseContext));
+
+        final Display display = baseContext.getSystemService(DisplayManager.class)
+                .getDisplay(DEFAULT_DISPLAY);
+        final Context displayContext = baseContext.createDisplayContext(display);
+        assertViolation(
+                "Tried to access UI constants from a non-visual Context.",
+                () -> ViewConfiguration.get(displayContext));
+
+        final Context windowContext =
+                displayContext.createWindowContext(TYPE_APPLICATION_OVERLAY, null /* options */);
+        assertNoViolation(() -> ViewConfiguration.get(windowContext));
+
+        Intent intent = new Intent(baseContext, SimpleTestActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Activity activity = InstrumentationRegistry.getInstrumentation()
+                .startActivitySync(intent);
+        assertNoViolation(() -> ViewConfiguration.get(activity));
     }
 
     private static void runWithRemoteServiceBound(Context context, Consumer<ISecondary> consumer)

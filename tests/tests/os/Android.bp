@@ -18,6 +18,7 @@ android_test {
     compile_multilib: "both",
     static_libs: [
         "android.hidl.manager-V1.0-java",
+        "androidx.test.core",
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
