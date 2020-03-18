@@ -16,6 +16,8 @@ package android.slice.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assume.assumeFalse;
+import android.content.pm.PackageManager;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -54,9 +56,12 @@ public class SliceBindingTest {
     private static final Uri BASE_URI = Uri.parse("content://android.slice.cts/");
     private final Context mContext = InstrumentationRegistry.getContext();
     private final SliceManager mSliceManager = mContext.getSystemService(SliceManager.class);
+    private static final String FEATURE_WATCH = "android.hardware.type.watch";
+    private final boolean isWatch = mContext.getPackageManager().hasSystemFeature(FEATURE_WATCH);
 
     @Test
     public void testProcess() {
+        assumeFalse(isWatch);
         sFlag = false;
         mSliceManager.bindSlice(BASE_URI.buildUpon().appendPath("set_flag").build(),
                 Collections.emptySet());
@@ -71,6 +76,7 @@ public class SliceBindingTest {
 
     @Test
     public void testSliceUri() {
+        assumeFalse(isWatch);
         Slice s = mSliceManager.bindSlice(BASE_URI,
                 Collections.emptySet());
         assertEquals(BASE_URI, s.getUri());
@@ -78,6 +84,7 @@ public class SliceBindingTest {
 
     @Test
     public void testSubSlice() {
+        assumeFalse(isWatch);
         Uri uri = BASE_URI.buildUpon().appendPath("subslice").build();
         Slice s = mSliceManager.bindSlice(uri, Collections.emptySet());
         assertEquals(uri, s.getUri());
@@ -93,6 +100,7 @@ public class SliceBindingTest {
 
     @Test
     public void testText() {
+        assumeFalse(isWatch);
         Uri uri = BASE_URI.buildUpon().appendPath("text").build();
         Slice s = mSliceManager.bindSlice(uri,
                 Collections.emptySet());
@@ -107,6 +115,7 @@ public class SliceBindingTest {
 
     @Test
     public void testIcon() {
+        assumeFalse(isWatch);
         Uri uri = BASE_URI.buildUpon().appendPath("icon").build();
         Slice s = mSliceManager.bindSlice(uri,
                 Collections.emptySet());
@@ -121,6 +130,7 @@ public class SliceBindingTest {
 
     @Test
     public void testAction() {
+        assumeFalse(isWatch);
         sFlag = false;
         CountDownLatch latch = new CountDownLatch(1);
         BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -155,6 +165,7 @@ public class SliceBindingTest {
 
     @Test
     public void testInt() {
+        assumeFalse(isWatch);
         Uri uri = BASE_URI.buildUpon().appendPath("int").build();
         Slice s = mSliceManager.bindSlice(uri, Collections.emptySet());
         assertEquals(uri, s.getUri());
@@ -167,6 +178,7 @@ public class SliceBindingTest {
 
     @Test
     public void testTimestamp() {
+        assumeFalse(isWatch);
         Uri uri = BASE_URI.buildUpon().appendPath("timestamp").build();
         Slice s = mSliceManager.bindSlice(uri,
                 Collections.emptySet());
@@ -180,6 +192,7 @@ public class SliceBindingTest {
 
     @Test
     public void testHints() {
+        assumeFalse(isWatch);
         // Note this tests that hints are propagated through to the client but not that any specific
         // hints have any effects.
         Uri uri = BASE_URI.buildUpon().appendPath("hints").build();
@@ -194,6 +207,7 @@ public class SliceBindingTest {
 
     @Test
     public void testHasHints() {
+        assumeFalse(isWatch);
         Uri uri = BASE_URI.buildUpon().appendPath("hints").build();
         Slice s = mSliceManager.bindSlice(uri, Collections.emptySet());
 
@@ -203,6 +217,7 @@ public class SliceBindingTest {
 
     @Test
     public void testBundle() {
+        assumeFalse(isWatch);
         Uri uri = BASE_URI.buildUpon().appendPath("bundle").build();
         Slice s = mSliceManager.bindSlice(uri, Collections.emptySet());
         assertEquals(uri, s.getUri());
@@ -217,6 +232,7 @@ public class SliceBindingTest {
 
     @Test
     public void testGetDescendants() {
+        assumeFalse(isWatch);
         Collection<Uri> allUris = mSliceManager.getSliceDescendants(BASE_URI);
         assertEquals(SliceProvider.PATHS.length, allUris.size());
         Iterator<Uri> it = allUris.iterator();
@@ -230,6 +246,7 @@ public class SliceBindingTest {
 
     @Test
     public void testGetSliceSpec() {
+        assumeFalse(isWatch);
         Uri uri = BASE_URI.buildUpon().appendPath("spec").build();
         Slice s = mSliceManager.bindSlice(uri, Collections.emptySet());
         assertEquals(new SliceSpec(SliceProvider.SPEC_TYPE, SliceProvider.SPEC_REV), s.getSpec());
