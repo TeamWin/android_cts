@@ -808,7 +808,7 @@ TEST_P(NdkBinderTest_Aidl, GetInterfaceHash) {
   EXPECT_OK(iface->getInterfaceHash(&res));
   if (GetParam().shouldBeOld) {
     // aidl_api/libbinder_ndk_test_interface/1/.hash
-    EXPECT_EQ("8d903ce236a40b41624907c4d1d7a651eca9f763", res);
+    EXPECT_EQ("d755ae773aaabd1c48d22b823e29501ee387aff1", res);
   } else {
     EXPECT_EQ("notfrozen", res);
   }
