@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 public final class SecureElementPermissionTest {
     // Needed because SECURE_ELEMENT_PRIVILEGED_PERMISSION is a systemapi
     public static final String SECURE_ELEMENT_PRIVILEGED_PERMISSION =
-            "android.permission.SECURE_ELEMENT_PRIVILEGED";
+            "android.permission.SECURE_ELEMENT_PRIVILEGED_OPERATION";
 
     @Test
     public void testSecureElementPrivilegedPermission() {
@@ -59,8 +59,8 @@ public final class SecureElementPermissionTest {
                 .collect(Collectors.toList());
 
         if (nonSpecialPackages.size() > 1) {
-            fail("Only one app on the device is allowed to hold the SECURE_ELEMENT_PRIVILEGED " +
-                 "permission.");
+            fail("Only one app on the device is allowed to hold the "
+                    + "SECURE_ELEMENT_PRIVILEGED_OPERATION permission.");
         }
     }
 }
