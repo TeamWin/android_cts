@@ -64,7 +64,7 @@ public class RcsUceAdapterTest {
     private static final Uri TEST_NUMBER_URI =
             Uri.fromParts(PhoneAccount.SCHEME_TEL, "6505551212", null);
     private static final Uri LISTENER_URI = Uri.withAppendedPath(Telephony.SimInfo.CONTENT_URI,
-            Telephony.SimInfo.COLUMN_IMS_RCS_UCE_ENABLED);
+            Telephony.SimInfo.IMS_RCS_UCE_ENABLED);
     private static HandlerThread sHandlerThread;
 
     private ContentObserver mUceObserver;
