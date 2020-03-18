@@ -21,8 +21,10 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
+import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+import static android.server.wm.CommandSession.ActivityCallback.ON_CONFIGURATION_CHANGED;
 import static android.server.wm.ComponentNameUtils.getWindowName;
 import static android.server.wm.StateLogger.logE;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
@@ -32,6 +34,7 @@ import static android.server.wm.app.Components.DIALOG_WHEN_LARGE_ACTIVITY;
 import static android.server.wm.app.Components.LANDSCAPE_ORIENTATION_ACTIVITY;
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
 import static android.server.wm.app.Components.NIGHT_MODE_ACTIVITY;
+import static android.server.wm.app.Components.NO_RELAUNCH_ACTIVITY;
 import static android.server.wm.app.Components.PORTRAIT_ORIENTATION_ACTIVITY;
 import static android.server.wm.app.Components.RESIZEABLE_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
@@ -952,5 +955,59 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
 
     private SizeInfo getAppSizeInfo(ActivitySession activitySession) {
         return activitySession.getAppConfigInfo().sizeInfo;
+    }
+
+    /**
+     * Verify that reported display sizes are different for multiple activities with different
+     * configurations running in the same process.
+     */
+    @Test
+    public void testDisplaySizeInSplitScreen() {
+        assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
+
+        // Launch two activities in split-screen
+        final ActivitySession primaryActivitySession = createManagedActivityClientSession()
+                .startActivity(getLaunchActivityBuilder()
+                        .setUseInstrumentation()
+                        .setTargetActivity(RESIZEABLE_ACTIVITY)
+                        .setWindowingMode(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY)
+                        .setWaitForLaunched(true));
+
+        final ActivitySession secondaryActivitySession = createManagedActivityClientSession()
+                .startActivity(getLaunchActivityBuilder()
+                        .setUseInstrumentation()
+                        .setNewTask(true)
+                        .setMultipleTask(true)
+                        .setTargetActivity(NO_RELAUNCH_ACTIVITY)
+                        .setWindowingMode(WINDOWING_MODE_SPLIT_SCREEN_SECONDARY)
+                        .setWaitForLaunched(true));
+
+        // Resize split-screen to make sure that sizes are not the same.
+        separateTestJournal();
+        final int STACK_SIZE = 400;
+        resizeDockedStack(STACK_SIZE, STACK_SIZE, STACK_SIZE, STACK_SIZE);
+
+        waitForOrFail("Activity must receive a configuration change",
+                () -> hasConfigChanged(primaryActivitySession));
+        waitForOrFail("Activity must receive a configuration change",
+                () -> hasConfigChanged(secondaryActivitySession));
+
+        // Check if the sizes reported to activities are different.
+        final SizeInfo primarySizeInfo = primaryActivitySession.getConfigInfo().sizeInfo;
+        final SizeInfo secondarySizeInfo = secondaryActivitySession.getConfigInfo().sizeInfo;
+        final SizeInfo appSizeInfo = secondaryActivitySession.getAppConfigInfo().sizeInfo;
+        // Second activity size info should match the application, since the process is tracking the
+        // configuration of the activity that was added last.
+        assertSizesAreSame(secondarySizeInfo, appSizeInfo);
+        // Primary and secondary activity sizes must be different, since the sizes of the windows
+        // after resize are different.
+        assertNotEquals(primarySizeInfo.displayWidth, secondarySizeInfo.displayWidth);
+        assertNotEquals(primarySizeInfo.displayHeight, secondarySizeInfo.displayHeight);
+    }
+
+    private boolean hasConfigChanged(ActivitySession activitySession) {
+        final List<CommandSession.ActivityCallback> callbackHistory =
+                activitySession.takeCallbackHistory();
+        return callbackHistory != null && callbackHistory.contains(ON_CONFIGURATION_CHANGED);
     }
 }
