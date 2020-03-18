@@ -35,7 +35,7 @@
             </intent-filter>
         </activity>
         <service android:name="LocationForegroundService"
-            android:foregroundServiceType="location"
+            android:foregroundServiceType="location|camera|microphone"
             android:exported="true">
         </service>
     </application>
