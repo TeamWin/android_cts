@@ -51,7 +51,7 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 @RunWith(Parameterized.class)
-@AppModeFull // TODO(Instant) Figure out which APIs should work.
+@AppModeFull
 public class PackageManagerShellCommandTest {
     private static final String TEST_APP_PACKAGE = "com.example.helloworld";
 
@@ -74,8 +74,9 @@ public class PackageManagerShellCommandTest {
 
     @Parameters
     public static Iterable<Object> initParameters() {
-        return Arrays.asList(DATA_LOADER_TYPE_NONE, DATA_LOADER_TYPE_STREAMING,
-                             DATA_LOADER_TYPE_INCREMENTAL);
+        return Arrays.asList(DATA_LOADER_TYPE_NONE, DATA_LOADER_TYPE_STREAMING/*,
+                             TODO(b/150809360): Re-enable after SELinux rules are in.
+                             DATA_LOADER_TYPE_INCREMENTAL*/);
     }
 
     private boolean mStreaming = false;

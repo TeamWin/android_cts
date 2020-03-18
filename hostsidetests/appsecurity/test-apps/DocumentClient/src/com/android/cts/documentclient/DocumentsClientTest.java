@@ -357,19 +357,58 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         }
     }
 
-    public void testTree_blockFromTree() throws Exception {
+    public void testRestrictStorageAccessFrameworkEnabled_blockFromTree() throws Exception {
         if (!supportedHardware()) return;
 
         final Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
         mActivity.startActivityForResult(intent, REQUEST_CODE);
 
         mDevice.waitForIdle();
+
+        // save button is disabled for the storage root
+        assertFalse(findSaveButton().isEnabled());
+
+        findDocument("Download").click();
+        mDevice.waitForIdle();
+
+        // save button is disabled for Download folder
+        assertFalse(findSaveButton().isEnabled());
+
         findRoot("CtsCreate").click();
+        mDevice.waitForIdle();
+
+        // save button is disabled for CtsCreate root
+        assertFalse(findSaveButton().isEnabled());
+
+        findDocument("DIR2").click();
+
+        mDevice.waitForIdle();
+        // save button is enabled for dir2
+        assertTrue(findSaveButton().isEnabled());
+    }
+
+    public void testRestrictStorageAccessFrameworkDisabled_notBlockFromTree() throws Exception {
+        if (!supportedHardware()) return;
+
+        final Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+        mActivity.startActivityForResult(intent, REQUEST_CODE);
 
         mDevice.waitForIdle();
 
-        // save button is disabled for root
-        assertFalse(findSaveButton().isEnabled());
+        // save button is enabled for for the storage root
+        assertTrue(findSaveButton().isEnabled());
+
+        findDocument("Download").click();
+        mDevice.waitForIdle();
+
+        // save button is enabled for Download folder
+        assertTrue(findSaveButton().isEnabled());
+
+        findRoot("CtsCreate").click();
+        mDevice.waitForIdle();
+
+        // save button is enabled for CtsCreate root
+        assertTrue(findSaveButton().isEnabled());
 
         findDocument("DIR2").click();
 
@@ -660,14 +699,6 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
 
         // assert the default root is internal storage root
         assertToolbarTitleEquals(title);
-
-        // save button is disabled for the root
-        assertFalse(findSaveButton().isEnabled());
-
-        findDocument("Download").click();
-        mDevice.waitForIdle();
-        // save button is disabled for Download folder
-        assertFalse(findSaveButton().isEnabled());
 
         // no Downloads root
         assertFalse(findRoot("Downloads").exists());
