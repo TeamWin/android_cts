@@ -1569,7 +1569,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testPrintingPolicy() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !hasDeviceFeature("android.software.print")) {
             return;
         }
         installAppAsUser(PRINTING_APP_APK, mUserId);
