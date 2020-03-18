@@ -687,6 +687,8 @@ public class UsageStatsTest {
                 mUsageStatsManager.getAppStandbyBucket(mTargetPackage));
     }
 
+    // TODO(148887416): get this test to work for instant apps
+    @AppModeFull(reason = "Test APK Activity not found when installed as an instant app")
     @Test
     public void testIsAppInactive_Charging() throws Exception {
         setStandByBucket(TEST_APP_PKG, "rare");
