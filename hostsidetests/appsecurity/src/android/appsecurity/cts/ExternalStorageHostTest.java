@@ -16,6 +16,7 @@
 
 package android.appsecurity.cts;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -23,10 +24,17 @@ import static org.junit.Assert.assertTrue;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.Log;
+import com.android.server.role.RoleManagerServiceDumpProto;
+import com.android.server.role.RoleProto;
+import com.android.server.role.RoleUserStateProto;
+import com.android.tradefed.device.CollectingByteOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.AbiUtils;
+
+import com.google.protobuf.MessageLite;
+import com.google.protobuf.Parser;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -38,7 +46,6 @@ import org.junit.runner.RunWith;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -659,6 +666,51 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         } finally {
             getDevice().uninstallPackage(WRITE_PKG);
             getDevice().uninstallPackage(WRITE_PKG_2);
+        }
+    }
+
+    private <T extends MessageLite> T getDump(Parser<T> parser, String command) throws Exception {
+        final CollectingByteOutputReceiver receiver = new CollectingByteOutputReceiver();
+        getDevice().executeShellCommand(command, receiver);
+        return parser.parseFrom(receiver.getOutput());
+    }
+
+    private List<RoleUserStateProto> getAllUsersRoleStates() throws Exception {
+        final RoleManagerServiceDumpProto dumpProto =
+                getDump(RoleManagerServiceDumpProto.parser(), "dumpsys role --proto");
+        final List<RoleUserStateProto> res = new ArrayList<>();
+        for (RoleUserStateProto userState : dumpProto.getUserStatesList()) {
+            for (int i : mUsers) {
+                if (i == userState.getUserId()) {
+                    res.add(userState);
+                    break;
+                }
+            }
+        }
+        return res;
+    }
+
+    @Test
+    public void testSystemGalleryExists() throws Exception {
+        final List<RoleUserStateProto> usersRoleStates = getAllUsersRoleStates();
+
+        assertEquals("Unexpected number of users returned by dumpsys role",
+                mUsers.length, usersRoleStates.size());
+
+        for (RoleUserStateProto userState : usersRoleStates) {
+            final List<RoleProto> roles = userState.getRolesList();
+            boolean systemGalleryRoleFound = false;
+
+            // Iterate through the roles until we find the System Gallery role
+            for (RoleProto roleProto : roles) {
+                if ("android.app.role.SYSTEM_GALLERY".equals(roleProto.getName())) {
+                    assertEquals(1, roleProto.getHoldersList().size());
+                    systemGalleryRoleFound = true;
+                    break;
+                }
+            }
+            assertTrue("SYSTEM_GALLERY not defined for user " + userState.getUserId(),
+                    systemGalleryRoleFound);
         }
     }
 
