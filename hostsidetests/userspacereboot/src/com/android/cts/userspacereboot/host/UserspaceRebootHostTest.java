@@ -107,12 +107,43 @@ public class UserspaceRebootHostTest extends BaseHostJUnit4Test  {
         assertUserspaceRebootSucceed();
     }
 
-    // TODO(ioffe): this should also cover other lock scenarios.
     @Test
     public void testUserspaceReboot_verifyCeStorageIsUnlocked() throws Exception {
         assumeTrue("Userspace reboot not supported on the device",
                 getDevice().getBooleanProperty(USERSPACE_REBOOT_SUPPORTED_PROP, false));
         try {
+            getDevice().executeShellV2Command("cmd lock_settings set-pin 1543");
+            installApk(BOOT_COMPLETED_TEST_APP_APK);
+            runDeviceTest(BOOT_COMPLETED_TEST_APP_PACKAGE_NAME, "BootCompletedUserspaceRebootTest",
+                    "prepareFile");
+            rebootUserspaceAndWaitForBootComplete();
+            assertUserspaceRebootSucceed();
+            // Sleep for 30s to make sure that system_server has sent out BOOT_COMPLETED broadcast.
+            Thread.sleep(Duration.ofSeconds(30).toMillis());
+            getDevice().executeShellV2Command("am wait-for-broadcast-idle");
+            runDeviceTest(BOOT_COMPLETED_TEST_APP_PACKAGE_NAME, "BootCompletedUserspaceRebootTest",
+                    "testVerifyCeStorageUnlocked");
+            runDeviceTest(BOOT_COMPLETED_TEST_APP_PACKAGE_NAME, "BootCompletedUserspaceRebootTest",
+                    "testVerifyReceivedBootCompletedBroadcast");
+        } finally {
+            getDevice().executeShellV2Command("cmd lock_settings clear --old 1543");
+        }
+    }
+
+    /**
+     * Tests that CE storage is unlocked after userspace reboot with fs-checkpointing.
+     */
+    @Test
+    public void testUserspaceRebootWithCheckpoint_verifyCeStorageIsUnlocked() throws Exception {
+        assumeTrue("Userspace reboot not supported on the device",
+                getDevice().getBooleanProperty(USERSPACE_REBOOT_SUPPORTED_PROP, false));
+        assumeTrue("Device doesn't support fs checkpointing", isFsCheckpointingSupported());
+        try {
+            CommandResult result = getDevice().executeShellV2Command("sm start-checkpoint 1");
+            Thread.sleep(500);
+            assertWithMessage("Failed to start checkpoint : %s", result.getStderr()).that(
+                    result.getStatus()).isEqualTo(CommandStatus.SUCCESS);
+            rebootUserspaceAndWaitForBootComplete();
             getDevice().executeShellV2Command("cmd lock_settings set-pin 1543");
             installApk(BOOT_COMPLETED_TEST_APP_APK);
             runDeviceTest(BOOT_COMPLETED_TEST_APP_PACKAGE_NAME, "BootCompletedUserspaceRebootTest",
