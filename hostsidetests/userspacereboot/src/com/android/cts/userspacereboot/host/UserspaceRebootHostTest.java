@@ -141,7 +141,7 @@ public class UserspaceRebootHostTest extends BaseHostJUnit4Test  {
     }
 
     private void rebootUserspaceAndWaitForBootComplete() throws Exception {
-        assertThat(getDevice().setProperty("test.userspace_reboot.requested", "1")).isTrue();
+        setProperty("test.userspace_reboot.requested", "1");
         getDevice().rebootUserspaceUntilOnline();
         assertWithMessage("Device did not boot withing 2 minutes").that(
                 getDevice().waitForBootComplete(Duration.ofMinutes(2).toMillis())).isTrue();
@@ -156,5 +156,18 @@ public class UserspaceRebootHostTest extends BaseHostJUnit4Test  {
         assertWithMessage(
                 "Userspace reboot failed and fallback to full reboot was triggered. Boot reason: "
                         + "%s", bootReason).that(result).isTrue();
+    }
+
+    /**
+     * A wrapper over {@code adb shell setprop name value}.
+     *
+     * This is a temporary workaround until issues with {@code getDevice().setProperty()} API are
+     * resolved.
+     */
+    private void setProperty(String name, String value) throws Exception {
+        final String cmd = String.format("\"setprop %s %s\"", name, value);
+        final CommandResult result = getDevice().executeShellV2Command(cmd);
+        assertWithMessage("Failed to call adb shell %s: %s", cmd, result.getStderr())
+            .that(result.getStatus()).isEqualTo(CommandStatus.SUCCESS);
     }
 }
