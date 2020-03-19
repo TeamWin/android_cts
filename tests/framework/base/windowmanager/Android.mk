@@ -43,7 +43,9 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     CtsMockInputMethodLib \
     metrics-helper-lib \
 
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant gts
+
+LOCAL_MIN_SDK_VERSION := 4
 
 LOCAL_SDK_VERSION := test_current
 

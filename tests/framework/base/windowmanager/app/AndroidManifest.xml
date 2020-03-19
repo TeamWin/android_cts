@@ -536,6 +536,9 @@
         <receiver
             android:name=".ToastReceiver"
             android:exported="true" />
+        <activity
+            android:name=".PresentationActivity"
+            android:exported="true" />
     </application>
 </manifest>
 
