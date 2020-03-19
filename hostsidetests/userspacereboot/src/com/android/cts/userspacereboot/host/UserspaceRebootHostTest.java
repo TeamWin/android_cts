@@ -131,20 +131,6 @@ public class UserspaceRebootHostTest extends BaseHostJUnit4Test  {
         }
     }
 
-    @Test
-    public void testBootReasonProperty_shutdown_aborted() throws Exception {
-        getDevice().reboot("userspace_failed,shutdown_aborted");
-        assertThat(getDevice().getProperty("sys.boot.reason")).isEqualTo(
-                "reboot,userspace_failed,shutdown_aborted");
-    }
-
-    @Test
-    public void testBootReasonProperty_mount_userdata_failed() throws Exception {
-        getDevice().reboot("mount_userdata_failed");
-        assertThat(getDevice().getProperty("sys.boot.reason")).isEqualTo(
-                "reboot,mount_userdata_failed");
-    }
-
     // TODO(b/135984674): add test case that forces unmount of f2fs userdata.
 
     private boolean isFsCheckpointingSupported() throws Exception {
