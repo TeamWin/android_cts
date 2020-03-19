@@ -29,17 +29,27 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+/**
+ * A test app called from {@link com.android.cts.userspacereboot.host.UserspaceRebootHostTest} to
+ * verify basic properties around userspace reboot.
+ */
 @RunWith(JUnit4.class)
 public class BasicUserspaceRebootTest {
 
     private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
 
+    /**
+     * Tests that {@link PowerManager#isRebootingUserspaceSupported()} returns {@code true}.
+     */
     @Test
     public void testUserspaceRebootIsSupported() {
         PowerManager powerManager = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
         assertThat(powerManager.isRebootingUserspaceSupported()).isTrue();
     }
 
+    /**
+     * Tests that {@link PowerManager#isRebootingUserspaceSupported()} returns {@code false}.
+     */
     @Test
     public void testUserspaceRebootIsNotSupported() {
         PowerManager powerManager = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
