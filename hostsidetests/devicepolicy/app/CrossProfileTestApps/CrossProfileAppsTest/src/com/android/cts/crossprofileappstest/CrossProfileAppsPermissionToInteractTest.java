@@ -18,6 +18,8 @@ package com.android.cts.crossprofileappstest;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.fail;
+
 import android.app.AppOpsManager;
 import android.content.Context;
 import android.content.Intent;
@@ -129,10 +131,13 @@ public class CrossProfileAppsPermissionToInteractTest {
     }
 
     @Test
-    public void testCreateRequestInteractAcrossProfilesIntent_canNotRequestInteraction_returnsNull() {
-        Intent intent = mCrossProfileApps.createRequestInteractAcrossProfilesIntent();
-
-        assertThat(intent).isNull();
+    public void testCreateRequestInteractAcrossProfilesIntent_canNotRequestInteraction_throwsSecurityException() {
+        try {
+            mCrossProfileApps.createRequestInteractAcrossProfilesIntent();
+        } catch (SecurityException e) {
+            return;
+        }
+        fail("Should throw a Security Exception");
     }
 
     /**
