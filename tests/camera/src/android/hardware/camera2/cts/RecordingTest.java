@@ -1168,8 +1168,13 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                                 ", num of frames produced: " + resultListener.getTotalNumFrames());
             }
 
-            // Validation.
-            validateRecording(videoSz, durationMs, frameDurationMs, FRMDRP_RATE_TOLERANCE);
+            if (isPerfMeasure()) {
+                // Only measure the largest video recording size when measuring perf
+                break;
+            } else {
+                // Validation.
+                validateRecording(videoSz, durationMs, frameDurationMs, FRMDRP_RATE_TOLERANCE);
+            }
         }
         if (maxVideoFrameRate != -1) {
             // At least one CamcorderProfile is present, check FPS
