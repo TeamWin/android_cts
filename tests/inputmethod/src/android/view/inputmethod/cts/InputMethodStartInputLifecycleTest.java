@@ -35,6 +35,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.DisableScreenDozeRule;
 import android.view.inputmethod.cts.util.TestActivity;
 import android.view.inputmethod.cts.util.TestUtils;
+import android.view.inputmethod.cts.util.UnlockScreenRule;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
@@ -61,6 +62,8 @@ import java.util.concurrent.atomic.AtomicReference;
 public class InputMethodStartInputLifecycleTest {
     @Rule
     public final DisableScreenDozeRule mDisableScreenDozeRule = new DisableScreenDozeRule();
+    @Rule
+    public final UnlockScreenRule mUnlockScreenRule = new UnlockScreenRule();
 
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
 
