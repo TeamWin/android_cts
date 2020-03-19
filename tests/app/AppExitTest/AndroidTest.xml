@@ -26,6 +26,16 @@
         <option name="test-file-name" value="CtsSimpleApp.apk" />
         <option name="test-file-name" value="CtsAppExitTestCases.apk" />
     </target_preparer>
+    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <option name="run-command"
+            value="pm grant android.app.cts.appexit android.permission.PACKAGE_USAGE_STATS" />
+        <option name="run-command"
+            value="pm grant android.app.cts.appexit android.permission.READ_LOGS" />
+        <option name="teardown-command"
+            value="pm revoke android.app.cts.appexit android.permission.PACKAGE_USAGE_STATS"/>
+        <option name="teardown-command"
+            value="pm revoke android.app.cts.appexit android.permission.READ_LOGS"/>
+    </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="runner" value="androidx.test.runner.AndroidJUnitRunner" />
         <option name="package" value="android.app.cts.appexit" />

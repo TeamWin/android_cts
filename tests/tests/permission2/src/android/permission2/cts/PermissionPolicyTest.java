@@ -402,9 +402,6 @@ public class PermissionPolicyTest {
                 case "runtime": {
                     protectionLevel |= PermissionInfo.PROTECTION_FLAG_RUNTIME_ONLY;
                 } break;
-                case "telephony": {
-                    protectionLevel |= PermissionInfo.PROTECTION_FLAG_TELEPHONY;
-                } break;
                 case "companion": {
                     protectionLevel |= PermissionInfo.PROTECTION_FLAG_COMPANION;
                 } break;

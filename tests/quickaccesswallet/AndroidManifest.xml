@@ -24,10 +24,6 @@
     <uses-permission android:name="android.permission.NFC"/>
     <!-- Required to test QuickAccessWalletClient feature availability -->
     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" />
-    <uses-permission android:name="android.permission.MANAGE_USERS" />
-    <uses-permission android:name="android.permission.CREATE_USERS" />
-    <!-- Required to bind to the QuickAccessWalletService -->
-    <uses-permission android:name="android.permission.BIND_QUICK_ACCESS_WALLET_SERVICE" />
 
     <application>
         <uses-library android:name="android.test.runner" />

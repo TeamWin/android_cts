@@ -60,6 +60,9 @@ public class CtsRootlessGpuDebugHostTest extends BaseHostJUnit4Test {
     // - Ensure we can still use system properties if no layers loaded via Settings (testSystemPropertyEnableVulkan)
     // - Ensure we can find layers in separate specified app and load them in a debuggable app (testDebugLayerLoadExternalVulkan)
     // - Ensure we can find layers in separate specified app and load them in an injectLayers app (testInjectLayerLoadExternalVulkan)
+    // - Ensure we can enumerate the instance extension advertised by implicitly enabled layer (testInstanceExtensionPropertiesFromImplicitLayerVulkanBasic)
+    // - Ensure we can only enumerate first instance extension closest to application
+    //   when multiple implicitly enabled layers advertise the same extension (testInstanceExtensionPropertiesFromImplicitLayerVulkanMultipleLayers)
     // Negative Vulkan tests
     // - Ensure we cannot push a layer to non-debuggable app (testReleaseLayerLoadVulkan)
     // - Ensure non-debuggable app ignores the new Settings (testReleaseLayerLoadVulkan)
@@ -93,10 +96,14 @@ public class CtsRootlessGpuDebugHostTest extends BaseHostJUnit4Test {
     private static final String VK_LAYER_A_LIB = VK_LAYER_LIB_PREFIX + "A.so";
     private static final String VK_LAYER_B_LIB = VK_LAYER_LIB_PREFIX + "B.so";
     private static final String VK_LAYER_C_LIB = VK_LAYER_LIB_PREFIX + "C.so";
+    private static final String VK_LAYER_D_LIB = VK_LAYER_LIB_PREFIX + "D.so";
+    private static final String VK_LAYER_E_LIB = VK_LAYER_LIB_PREFIX + "E.so";
     private static final String VK_LAYER_NAME_PREFIX = "VK_LAYER_ANDROID_nullLayer";
     private static final String VK_LAYER_A = VK_LAYER_NAME_PREFIX + "A";
     private static final String VK_LAYER_B = VK_LAYER_NAME_PREFIX + "B";
     private static final String VK_LAYER_C = VK_LAYER_NAME_PREFIX + "C";
+    private static final String VK_LAYER_D = VK_LAYER_NAME_PREFIX + "D";
+    private static final String VK_LAYER_E = VK_LAYER_NAME_PREFIX + "E";
     private static final String DEBUG_APP = "android.rootlessgpudebug.DEBUG.app";
     private static final String RELEASE_APP = "android.rootlessgpudebug.RELEASE.app";
     private static final String INJECT_APP = "android.rootlessgpudebug.INJECT.app";
@@ -191,6 +198,15 @@ public class CtsRootlessGpuDebugHostTest extends BaseHostJUnit4Test {
         } else {
             Assert.assertFalse(layerName + " was enumerated", result.found);
         }
+    }
+
+    /**
+     * Check whether an extension is properly advertised by only checking the log after startTime.
+     */
+    private void assertVkExtension(String startTime, String extensionName, int specVersion) throws Exception {
+        String searchString = extensionName + ": " + specVersion;
+        LogScanResult result = scanLog(TAG + ",RootlessGpuDebug", searchString, startTime);
+        Assert.assertTrue(extensionName + "with spec version: " + specVersion + " was not advertised", result.found);
     }
 
     /**
@@ -518,13 +534,16 @@ public class CtsRootlessGpuDebugHostTest extends BaseHostJUnit4Test {
         assertVkLayerLoading(appStartTime, VK_LAYER_B, false);
     }
 
-
-    public void testLayerLoadExternalVulkan(final String APP_NAME) throws Exception {
+    /**
+     * The common functionality to load layers from an external package.
+     * Returns the app start time.
+     */
+    public String testLayerLoadExternalVulkan(final String APP_NAME, String layers) throws Exception {
 
         // Set up layers to be loaded
         applySetting("enable_gpu_debug_layers", "1");
         applySetting("gpu_debug_app", APP_NAME);
-        applySetting("gpu_debug_layers", VK_LAYER_C);
+        applySetting("gpu_debug_layers", layers);
 
         // Specify the external app that hosts layers
         applySetting("gpu_debug_layer_app", LAYERS_APP);
@@ -533,8 +552,11 @@ public class CtsRootlessGpuDebugHostTest extends BaseHostJUnit4Test {
         String appStartTime = getTime();
         getDevice().executeAdbCommand("shell", "am", "start", "-n", APP_NAME + "/" + ACTIVITY);
 
-        // Check that our external layer was loaded
-        assertVkLayerLoading(appStartTime, VK_LAYER_C, true);
+        String[] layerNames = layers.split(":");
+        for (String layerName : layerNames) {
+            assertVkLayerLoading(appStartTime, layerName, true);
+        }
+        return appStartTime;
     }
 
     /**
@@ -542,7 +564,7 @@ public class CtsRootlessGpuDebugHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testDebugLayerLoadExternalVulkan() throws Exception {
-        testLayerLoadExternalVulkan(DEBUG_APP);
+        testLayerLoadExternalVulkan(DEBUG_APP, VK_LAYER_C);
     }
 
     /**
@@ -550,7 +572,27 @@ public class CtsRootlessGpuDebugHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testInjectLayerLoadExternalVulkan() throws Exception {
-        testLayerLoadExternalVulkan(INJECT_APP);
+        testLayerLoadExternalVulkan(INJECT_APP, VK_LAYER_C);
+    }
+
+    /**
+     * Test that the instance extension is advertised properly from the implicitly enabled layer.
+     */
+    @Test
+    public void testInstanceExtensionPropertiesFromImplicitLayerVulkanBasic() throws Exception {
+        String appStartTime = testLayerLoadExternalVulkan(DEBUG_APP, VK_LAYER_D);
+        assertVkExtension(appStartTime, "VK_EXT_debug_utils", 1);
+    }
+
+    /**
+     * Test that when there are multiple implicit layers are enabled, if there are several instance
+     * extensions with the same extension names advertised by multiple layers, only the extension
+     * that is closer to the application is advertised by the loader.
+     */
+    @Test
+    public void testInstanceExtensionPropertiesFromImplicitLayerVulkanMultipleLayers() throws Exception {
+        String appStartTime = testLayerLoadExternalVulkan(DEBUG_APP, VK_LAYER_E + ":" + VK_LAYER_D);
+        assertVkExtension(appStartTime, "VK_EXT_debug_utils", 2);
     }
 
     /**

@@ -73,6 +73,14 @@
             </intent-filter>
         </service>
 
+        <service android:name=".SimpleService6" android:exported="true"
+                android:isolatedProcess="true">
+            <intent-filter>
+                <action android:name="com.android.cts.launchertests.simpleapp.EXIT_ACTION" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
+
         <receiver android:name=".SimpleReceiverStartService" android:exported="true">
         </receiver>
         <receiver android:name=".SimpleReceiver" android:exported="true">

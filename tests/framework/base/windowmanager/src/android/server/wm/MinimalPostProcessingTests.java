@@ -35,7 +35,6 @@ import androidx.test.filters.FlakyTest;
 import org.junit.Test;
 
 @Presubmit
-@FlakyTest(detail = "Promote once confirmed non-flaky")
 public class MinimalPostProcessingTests extends ActivityManagerTestBase {
     private static final boolean PREFER_MPP = true;
     private static final boolean NOT_PREFER_MPP = false;
