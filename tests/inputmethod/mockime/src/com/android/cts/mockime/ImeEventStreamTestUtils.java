@@ -291,6 +291,19 @@ public final class ImeEventStreamTestUtils {
     }
 
     /**
+     * Checks if {@code eventName} has occurred and given {@param key} has value {@param value}.
+     * @param eventName event name to check.
+     * @param key the key that should be checked.
+     * @param value the expected value for the given {@param key}.
+     */
+    public static void expectEventWithKeyValue(@NonNull ImeEventStream stream,
+            @NonNull String eventName, @NonNull String key, int value, long timeout)
+            throws TimeoutException {
+        expectEvent(stream, event -> TextUtils.equals(eventName, event.getEventName())
+                && value == event.getArguments().getInt(key), timeout);
+    }
+
+    /**
      * Waits until {@code MockIme} does not send {@code "onInputViewLayoutChanged"} event
      * for a certain period of time ({@code stableThresholdTime} msec).
      *
