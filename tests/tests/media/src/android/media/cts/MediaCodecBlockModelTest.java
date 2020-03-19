@@ -207,8 +207,8 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             MediaCodec.OutputFrame frame = codec.getOutputFrame(index);
             boolean eos = (frame.getFlags() & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0;
 
-            if (mGraphic && frame.getGraphicBlock() != null) {
-                frame.getGraphicBlock().recycle();
+            if (mGraphic && frame.getHardwareBuffer() != null) {
+                frame.getHardwareBuffer().close();
             }
             if (!mGraphic && frame.getLinearBlock() != null) {
                 frame.getLinearBlock().recycle();
@@ -232,8 +232,8 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             boolean eos = (frame.getFlags() & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0;
 
             boolean render = false;
-            if (frame.getGraphicBlock() != null) {
-                frame.getGraphicBlock().recycle();
+            if (frame.getHardwareBuffer() != null) {
+                frame.getHardwareBuffer().close();
                 render = true;
             }
             codec.releaseOutputBuffer(index, render);
