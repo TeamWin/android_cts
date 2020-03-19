@@ -16,6 +16,7 @@
 
 package com.android.cts.launcherapps.simpleapp;
 
+import android.app.ActivityManager;
 import android.app.Service;
 import android.content.ContentProviderClient;
 import android.content.ContentResolver;
@@ -32,6 +33,10 @@ import android.os.RemoteException;
 import android.system.OsConstants;
 import android.util.Log;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+
 /**
  * A simple service which accepts various test command.
  */
@@ -43,6 +48,7 @@ public class SimpleService4 extends Service {
     private static final String EXTRA_ACTION = "action";
     private static final String EXTRA_MESSENGER = "messenger";
     private static final String EXTRA_PROCESS_NAME = "process";
+    private static final String EXTRA_COOKIE = "cookie";
     private static final String STUB_PROVIDER_AUTHORITY =
             "com.android.cts.launcherapps.simpleapp.provider";
 
@@ -73,6 +79,7 @@ public class SimpleService4 extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         sendPidBack(intent);
+        setCookieIfNeeded(intent);
         // perform the action after return from here,
         // make a delay, otherwise the system might try to restart the service
         // if the process dies before the system realize it's asking for START_NOT_STICKY.
@@ -86,7 +93,11 @@ public class SimpleService4 extends Service {
     }
 
     protected String getProcessName() {
-        return getPackageName();
+        try (BufferedReader reader = new BufferedReader(new FileReader("/proc/self/cmdline"))) {
+            return reader.readLine().trim();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void sendPidBack(Intent intent) {
@@ -141,6 +152,14 @@ public class SimpleService4 extends Service {
                 default:
                     break;
             }
+        }
+    }
+
+    private void setCookieIfNeeded(final Intent intent) {
+        if (intent.hasExtra(EXTRA_COOKIE)) {
+            byte[] cookie = intent.getByteArrayExtra(EXTRA_COOKIE);
+            ActivityManager am = getSystemService(ActivityManager.class);
+            am.setProcessStateSummary(cookie);
         }
     }
 }

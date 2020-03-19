@@ -730,7 +730,7 @@
     <!-- @SystemApi Allows accessing the messages on ICC
          @hide Used internally. -->
     <permission android:name="android.permission.ACCESS_MESSAGES_ON_ICC"
-        android:protectionLevel="signature|telephony" />
+        android:protectionLevel="signature" />
 
     <!-- Used for runtime permissions related to user's SMS messages. -->
     <permission-group android:name="android.permission-group.SMS"
@@ -1102,13 +1102,12 @@
          grants your app this permission. If you don't need this permission, be sure your <a
          href="{@docRoot}guide/topics/manifest/uses-sdk-element.html#target">{@code
          targetSdkVersion}</a> is 4 or higher.
-         <p>Protection level: dangerous
+         <p>Protection level: normal
     -->
     <permission android:name="android.permission.READ_PHONE_STATE"
-        android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_readPhoneState"
         android:description="@string/permdesc_readPhoneState"
-        android:protectionLevel="dangerous" />
+        android:protectionLevel="normal" />
 
     <!-- Allows read access to the device's phone number(s). This is a subset of the capabilities
          granted by {@link #READ_PHONE_STATE} but is exposed to instant applications.
@@ -1690,7 +1689,7 @@
          @hide This should only be used by Settings and SystemUI.
     -->
     <permission android:name="android.permission.NETWORK_SETTINGS"
-        android:protectionLevel="signature|telephony" />
+        android:protectionLevel="signature" />
 
     <!-- Allows holder to request bluetooth/wifi scan bypassing global "use location" setting and
          location permissions.
@@ -1833,7 +1832,7 @@
 
     <!-- @SystemApi Allows an internal user to use privileged SecureElement APIs.
          @hide -->
-    <permission android:name="android.permission.SECURE_ELEMENT_PRIVILEGED"
+    <permission android:name="android.permission.SECURE_ELEMENT_PRIVILEGED_OPERATION"
         android:protectionLevel="signature|privileged" />
 
     <!-- @deprecated This permission used to allow too broad access to sensitive methods and all its
@@ -2124,7 +2123,7 @@
     <!-- @SystemApi Allows granting runtime permissions to telephony related components.
          @hide -->
     <permission android:name="android.permission.GRANT_RUNTIME_PERMISSIONS_TO_TELEPHONY_DEFAULTS"
-        android:protectionLevel="signature|telephony" />
+        android:protectionLevel="signature" />
 
     <!-- Allows modification of the telephony state - power on, mmi, etc.
          Does not include placing calls.
@@ -2152,7 +2151,7 @@
     <!-- @SystemApi Allows listen permission to always reported signal strength.
          @hide Used internally. -->
     <permission android:name="android.permission.LISTEN_ALWAYS_REPORTED_SIGNAL_STRENGTH"
-        android:protectionLevel="signature|telephony" />
+        android:protectionLevel="signature" />
 
     <!-- @SystemApi Protects the ability to register any PhoneAccount with
          PhoneAccount#CAPABILITY_SIM_SUBSCRIPTION. This capability indicates that the PhoneAccount
@@ -2265,21 +2264,21 @@
 
     <!-- Must be required by a telephony data service to ensure that only the
          system can bind to it.
-         <p>Protection level: signature|telephony
+         <p>Protection level: signature
          @SystemApi
          @hide
     -->
     <permission android:name="android.permission.BIND_TELEPHONY_DATA_SERVICE"
-        android:protectionLevel="signature|telephony" />
+        android:protectionLevel="signature" />
 
     <!-- Must be required by a NetworkService to ensure that only the
          system can bind to it.
-         <p>Protection level: signature|telephony
+         <p>Protection level: signature
          @SystemApi
          @hide
     -->
     <permission android:name="android.permission.BIND_TELEPHONY_NETWORK_SERVICE"
-                android:protectionLevel="signature|telephony" />
+                android:protectionLevel="signature" />
 
     <!-- @SystemApi Allows an application to manage embedded subscriptions (those on a eUICC)
          through EuiccManager APIs.
@@ -2291,19 +2290,19 @@
 
     <!-- @SystemApi Must be required by an EuiccService to ensure that only the system can bind to
          it.
-         <p>Protection level: signature|telephony
+         <p>Protection level: signature
          @hide
     -->
     <permission android:name="android.permission.BIND_EUICC_SERVICE"
-                android:protectionLevel="signature|telephony" />
+                android:protectionLevel="signature" />
 
     <!-- Required for reading information about carrier apps from SystemConfigManager.
-         <p>Protection level: signature|telephony
+         <p>Protection level: signature
          @SystemApi
          @hide
     -->
     <permission android:name="android.permission.READ_CARRIER_APP_INFO"
-        android:protectionLevel="signature|telephony" />
+        android:protectionLevel="signature" />
 
     <!-- ================================== -->
     <!-- Permissions for sdcard interaction -->
@@ -2423,7 +2422,7 @@
          types of interactions
          @hide -->
     <permission android:name="android.permission.INTERACT_ACROSS_USERS_FULL"
-        android:protectionLevel="signature|installer|telephony" />
+        android:protectionLevel="signature|installer" />
     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS_FULL" />
 
     <!-- Allows interaction across profiles in the same profile group. -->
@@ -2661,7 +2660,7 @@
          @hide
      -->
     <permission android:name="android.permission.SUGGEST_TELEPHONY_TIME_AND_ZONE"
-        android:protectionLevel="signature|telephony" />
+        android:protectionLevel="signature" />
 
     <!-- Allows applications like settings to suggest the user's manually chosen time / time zone.
          <p>Not for use by third-party applications.
@@ -3085,7 +3084,7 @@
     @hide -->
     // TODO: remove telephony once decouple settings activity from phone process
     <permission android:name="android.permission.STATUS_BAR_SERVICE"
-        android:protectionLevel="signature|telephony" />
+        android:protectionLevel="signature" />
 
     <!-- Allows an application to bind to third party quick settings tiles.
          <p>Should only be requested by the System, should be required by
@@ -3143,7 +3142,7 @@
          @hide
     -->
     <permission android:name="android.permission.INTERNAL_SYSTEM_WINDOW"
-        android:protectionLevel="signature|telephony" />
+        android:protectionLevel="signature" />
 
     <!-- @SystemApi Allows an application to use
          {@link android.view.WindowManager.LayoutsParams#SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS}
@@ -3220,7 +3219,7 @@
          @hide
     -->
     <permission android:name="android.permission.SET_ACTIVITY_WATCHER"
-        android:protectionLevel="signature|telephony" />
+        android:protectionLevel="signature" />
 
     <!-- @SystemApi Allows an application to call the activity manager shutdown() API
          to put the higher-level system there into a shutdown state.
@@ -3744,6 +3743,12 @@
     <permission android:name="android.permission.WHITELIST_RESTRICTED_PERMISSIONS"
                 android:protectionLevel="signature|installer" />
 
+    <!-- @SystemApi Allows an application to an exempt an app from having its permission be
+        auto-revoked when unused for an extended period of time.
+        @hide -->
+    <permission android:name="android.permission.WHITELIST_AUTO_REVOKE_PERMISSIONS"
+        android:protectionLevel="signature|installer" />
+
     <!-- @hide Allows an application to observe permission changes. -->
     <permission android:name="android.permission.OBSERVE_GRANT_REVOKE_PERMISSIONS"
         android:protectionLevel="signature|privileged" />
@@ -3757,7 +3762,7 @@
          @hide
          STOPSHIP b/145526313: Remove wellbeing protection flag from MANAGE_ROLE_HOLDERS. -->
     <permission android:name="android.permission.MANAGE_ROLE_HOLDERS"
-                android:protectionLevel="signature|installer|telephony|wellbeing" />
+                android:protectionLevel="signature|installer|wellbeing" />
 
     <!-- @SystemApi Allows an application to observe role holder changes.
          @hide -->
@@ -3994,7 +3999,7 @@
         @hide
     -->
    <permission android:name="android.permission.DEVICE_POWER"
-        android:protectionLevel="signature|telephony" />
+        android:protectionLevel="signature" />
 
     <!-- Allows toggling battery saver on the system.
          Superseded by DEVICE_POWER permission. @hide @SystemApi
@@ -4029,13 +4034,13 @@
          <p>Not for use by third-party applications.
     -->
     <permission android:name="android.permission.BROADCAST_SMS"
-        android:protectionLevel="signature|telephony" />
+        android:protectionLevel="signature" />
 
     <!-- Allows an application to broadcast a WAP PUSH receipt notification.
          <p>Not for use by third-party applications.
     -->
     <permission android:name="android.permission.BROADCAST_WAP_PUSH"
-        android:protectionLevel="signature|telephony" />
+        android:protectionLevel="signature" />
 
     <!-- @SystemApi Allows an application to broadcast privileged networking requests.
          <p>Not for use by third-party applications.
@@ -4701,13 +4706,13 @@
          {@link android.provider.BlockedNumberContract}.
          @hide -->
     <permission android:name="android.permission.READ_BLOCKED_NUMBERS"
-                android:protectionLevel="signature|telephony" />
+                android:protectionLevel="signature" />
 
     <!-- Allows the holder to write blocked numbers. See
          {@link android.provider.BlockedNumberContract}.
          @hide -->
     <permission android:name="android.permission.WRITE_BLOCKED_NUMBERS"
-                android:protectionLevel="signature|telephony" />
+                android:protectionLevel="signature" />
 
     <!-- Must be required by an {@link android.service.vr.VrListenerService}, to ensure that only
          the system can bind to it.
@@ -4867,7 +4872,7 @@
     <!-- @hide Permission that allows configuring appops.
      <p>Not for use by third-party applications. -->
     <permission android:name="android.permission.MANAGE_APPOPS"
-                android:protectionLevel="signature|telephony" />
+                android:protectionLevel="signature" />
 
     <!-- @hide Permission that allows background clipboard access.
          <p>Not for use by third-party applications. -->

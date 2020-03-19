@@ -63,7 +63,7 @@ public class LocalForegroundServiceLocation extends LocalForegroundService {
                         .setContentTitle(getNotificationTitle(mNotificationId))
                         .setSmallIcon(R.drawable.black)
                         .build();
-                startForeground(mNotificationId, notification, type);
+                startForeground(mNotificationId, notification);
                 //assertEquals(type, getForegroundServiceType());
                 break;
             default:
