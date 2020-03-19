@@ -15,7 +15,7 @@
  */
 package android.car.cts;
 
-import static org.junit.Assert.assertNotNull;
+import static com.google.common.truth.Truth.assertThat;
 
 import android.car.Car;
 import android.car.CarInfoManager;
@@ -26,14 +26,14 @@ import android.car.VehicleAreaSeat;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.suitebuilder.annotation.SmallTest;
 
-import static com.google.common.truth.Truth.assertThat;
 import androidx.test.runner.AndroidJUnit4;
 
-import java.util.Arrays;
-import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.Arrays;
+import java.util.List;
 
 @SmallTest
 @RequiresDevice
@@ -54,22 +54,24 @@ public class CarInfoManagerTest extends CarApiTestBase {
 
     @Test
     public void testVehicleId() throws Exception {
-        assertNotNull(mCarInfoManager.getVehicleId());
+        // Not support to get vehicle Id.
+        assertThat(mCarInfoManager.getVehicleId()).isEmpty();
     }
 
     @Test
     public void testGetManufacturer() throws Exception {
-        assertNotNull(mCarInfoManager.getManufacturer());
+        assertThat(mCarInfoManager.getManufacturer()).isNotNull();;
     }
 
     @Test
     public void testGetModel() throws Exception {
-        assertNotNull(mCarInfoManager.getModel());
+        assertThat(mCarInfoManager.getModel()).isNotNull();
     }
 
     @Test
     public void testGetModelYear() throws Exception {
-        assertNotNull(mCarInfoManager.getModelYear());
+        assertThat(mCarInfoManager.getModelYear()).isNotNull();
+        assertThat(mCarInfoManager.getModelYearInInteger()).isAtLeast(0);
     }
 
     @Test
@@ -83,7 +85,7 @@ public class CarInfoManagerTest extends CarApiTestBase {
      */
     @Test
     public void testGetFuelTypes() throws Exception {
-        assertNotNull(mCarInfoManager.getFuelTypes());
+        assertThat(mCarInfoManager.getFuelTypes()).isNotNull();
         int[] actualResults = mCarInfoManager.getFuelTypes();
         for (int result : actualResults) {
             assertThat(result).isIn(EXPECTED_FUEL_TYPES);
@@ -103,7 +105,7 @@ public class CarInfoManagerTest extends CarApiTestBase {
      */
     @Test
     public void testGetEvConnectorTypes() throws Exception {
-        assertNotNull(mCarInfoManager.getEvConnectorTypes());
+        assertThat(mCarInfoManager.getEvConnectorTypes()).isNotNull();
 
         int[] actualResults = mCarInfoManager.getEvConnectorTypes();
         List<Integer> expectedResults =
