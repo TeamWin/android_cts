@@ -32,6 +32,10 @@ import android.os.RemoteException;
 import android.system.OsConstants;
 import android.util.Log;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+
 /**
  * A simple service which accepts various test command.
  */
@@ -86,7 +90,11 @@ public class SimpleService4 extends Service {
     }
 
     protected String getProcessName() {
-        return getPackageName();
+        try (BufferedReader reader = new BufferedReader(new FileReader("/proc/self/cmdline"))) {
+            return reader.readLine().trim();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void sendPidBack(Intent intent) {

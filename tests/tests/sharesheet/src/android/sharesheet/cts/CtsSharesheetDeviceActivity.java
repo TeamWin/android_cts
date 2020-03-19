@@ -21,13 +21,13 @@ import android.os.Bundle;
 
 import java.lang.Override;
 
-/**
- * TODO: Add JavaDoc.
- */
 public class CtsSharesheetDeviceActivity extends Activity {
 
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
+        // This activity may be opened to ensure click behavior functions properly.
+        // To ensure test repeatability do not stay open.
+        finish();
     }
 }

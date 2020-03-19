@@ -29,12 +29,14 @@ import android.util.Log;
 
 import java.util.Objects;
 import java.util.concurrent.Callable;
+import java.util.regex.Pattern;
 
 public class AudioRestrictionTest extends BaseDeviceAdminTest {
     private static final String TAG = AudioRestrictionTest.class.getSimpleName();
     private AudioManager mAudioManager;
     private PackageManager mPackageManager;
     private boolean mUseFixedVolume;
+    private boolean mUseFullVolume;
     private final Callable<Boolean> mCheckIfMasterVolumeMuted = new Callable<Boolean>() {
         @Override
         public Boolean call() throws Exception {
@@ -49,6 +51,7 @@ public class AudioRestrictionTest extends BaseDeviceAdminTest {
         mPackageManager = mContext.getPackageManager();
         mUseFixedVolume = mContext.getResources().getBoolean(
                 Resources.getSystem().getIdentifier("config_useFixedVolume", "bool", "android"));
+        mUseFullVolume = isFullVolumeDevice();
     }
 
     // Here we test that DISALLOW_ADJUST_VOLUME disallows to unmute volume.
@@ -86,7 +89,8 @@ public class AudioRestrictionTest extends BaseDeviceAdminTest {
     }
 
     public void testDisallowAdjustVolume() throws Exception {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT) || mUseFixedVolume) {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT)
+                || mUseFixedVolume || mUseFullVolume) {
             return;
         }
 
@@ -185,5 +189,18 @@ public class AudioRestrictionTest extends BaseDeviceAdminTest {
             }
             Thread.sleep(200);
         }
+    }
+
+    private boolean isFullVolumeDevice() {
+        String commandOutput = runShellCommand("dumpsys audio");
+
+        for (String line : commandOutput.split("\\r?\\n")) {
+            if (Pattern.matches("\\s*mHdmiCecSink=true", line)
+                    || (Pattern.matches("\\s*mHdmiPlayBackClient=", line)
+                    && !Pattern.matches("=null$", line))) {
+                return true;
+            }
+        }
+        return false;
     }
 }

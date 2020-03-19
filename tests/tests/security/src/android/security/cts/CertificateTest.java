@@ -93,7 +93,7 @@ public class CertificateTest extends AndroidTestCase {
      * For questions, comments, and code reviews please contact security@android.com.
      */
     public void testNoRemovedWfaCertificates() throws Exception {
-        if (!supportPasspoint()) {
+        if (!isWifiSupported()) {
             return;
         }
         Set<String> expectedCertificates = new HashSet<>(
@@ -104,7 +104,7 @@ public class CertificateTest extends AndroidTestCase {
     }
 
     public void testNoAddedWfaCertificates() throws Exception {
-        if (!supportPasspoint()) {
+        if (!isWifiSupported()) {
             return;
         }
         Set<String> expectedCertificates = new HashSet<String>(
@@ -114,8 +114,8 @@ public class CertificateTest extends AndroidTestCase {
         assertEquals("Unknown WFA CA certificates", Collections.EMPTY_SET, deviceWfaCertificates);
     }
 
-    private boolean supportPasspoint() {
-        return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI_PASSPOINT);
+    private boolean isWifiSupported() {
+        return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI);
     }
 
     private KeyStore createWfaKeyStore() throws CertificateException, IOException,

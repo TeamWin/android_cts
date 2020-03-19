@@ -20,8 +20,4 @@ package com.android.cts.launcherapps.simpleapp;
  * A simple service which extends SimpleService4
  */
 public class SimpleService5 extends SimpleService4 {
-    @Override
-    protected String getProcessName() {
-        return getPackageName() + ":remote";
-    }
 }

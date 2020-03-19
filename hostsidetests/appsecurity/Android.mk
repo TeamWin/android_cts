@@ -28,6 +28,9 @@ LOCAL_JAVA_LIBRARIES := \
 	truth-prebuilt \
 	hamcrest-library
 
+LOCAL_STATIC_JAVA_LIBRARIES := \
+	CompatChangeGatingTestBase
+
 LOCAL_JAVA_RESOURCE_DIRS := res
 
 LOCAL_CTS_TEST_PACKAGE := android.appsecurity

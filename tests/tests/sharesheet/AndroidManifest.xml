@@ -24,17 +24,45 @@
          failure -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
-    <application android:requestLegacyExternalStorage="true">
-        <uses-library android:name="android.test.runner" />
+    <application 
+        android:requestLegacyExternalStorage="true"
+        android:label="@string/test_app_label">
 
-        <!-- Add activities, services, etc here to test sharesheet API -->
-        
-        <activity android:name="CtsSharesheetDeviceActivity" >
+        <uses-library android:name="android.test.runner" />
+    
+        <activity android:name=".CtsSharesheetDeviceActivity">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="test/cts" />
+            </intent-filter>
+
+            <!-- Used to provide Sharing Shortcuts -->
+            <meta-data android:name="android.app.shortcuts"
+                    android:resource="@xml/shortcuts"/>
+
+            <meta-data android:name="android.service.chooser.chooser_target_service"
+                    android:value=".CtsSharesheetChooserTargetService"/>
+
         </activity>
+
+        <service android:name=".CtsSharesheetChooserTargetService"
+            android:permission="android.permission.BIND_CHOOSER_TARGET_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.chooser.ChooserTargetService" />
+            </intent-filter>
+        </service>
+
+        <activity-alias android:name=".ExtraInitialIntentTestActivity"
+                        android:label="@string/test_extra_initial_intents_label"
+                        android:targetActivity=".CtsSharesheetDeviceActivity"/>
+
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

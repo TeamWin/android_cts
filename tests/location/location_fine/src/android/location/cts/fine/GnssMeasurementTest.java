@@ -100,13 +100,13 @@ public class GnssMeasurementTest {
         measurement.resetBasebandCn0DbHz();
         assertFalse(measurement.hasBasebandCn0DbHz());
 
-        assertTrue(measurement.hasReceiverInterSignalBiasNanos());
-        measurement.resetReceiverInterSignalBiasNanos();
-        assertFalse(measurement.hasReceiverInterSignalBiasNanos());
+        assertTrue(measurement.hasFullInterSignalBiasNanos());
+        measurement.resetFullInterSignalBiasNanos();
+        assertFalse(measurement.hasFullInterSignalBiasNanos());
 
-        assertTrue(measurement.hasReceiverInterSignalBiasUncertaintyNanos());
-        measurement.resetReceiverInterSignalBiasUncertaintyNanos();
-        assertFalse(measurement.hasReceiverInterSignalBiasUncertaintyNanos());
+        assertTrue(measurement.hasFullInterSignalBiasUncertaintyNanos());
+        measurement.resetFullInterSignalBiasUncertaintyNanos();
+        assertFalse(measurement.hasFullInterSignalBiasUncertaintyNanos());
 
         assertTrue(measurement.hasSatelliteInterSignalBiasNanos());
         measurement.resetSatelliteInterSignalBiasNanos();
@@ -134,8 +134,8 @@ public class GnssMeasurementTest {
         measurement.setPseudorangeRateUncertaintyMetersPerSecond(10.0);
         measurement.setReceivedSvTimeNanos(11);
         measurement.setReceivedSvTimeUncertaintyNanos(12);
-        measurement.setReceiverInterSignalBiasNanos(1.3);
-        measurement.setReceiverInterSignalBiasUncertaintyNanos(2.5);
+        measurement.setFullInterSignalBiasNanos(1.3);
+        measurement.setFullInterSignalBiasUncertaintyNanos(2.5);
         measurement.setSatelliteInterSignalBiasNanos(5.4);
         measurement.setSatelliteInterSignalBiasUncertaintyNanos(10.0);
         measurement.setSnrInDb(13.0);
@@ -162,8 +162,8 @@ public class GnssMeasurementTest {
         assertEquals(10.0, measurement.getPseudorangeRateUncertaintyMetersPerSecond(), DELTA);
         assertEquals(11, measurement.getReceivedSvTimeNanos());
         assertEquals(12, measurement.getReceivedSvTimeUncertaintyNanos());
-        assertEquals(1.3, measurement.getReceiverInterSignalBiasNanos(), DELTA);
-        assertEquals(2.5, measurement.getReceiverInterSignalBiasUncertaintyNanos(), DELTA);
+        assertEquals(1.3, measurement.getFullInterSignalBiasNanos(), DELTA);
+        assertEquals(2.5, measurement.getFullInterSignalBiasUncertaintyNanos(), DELTA);
         assertEquals(5.4, measurement.getSatelliteInterSignalBiasNanos(), DELTA);
         assertEquals(10.0, measurement.getSatelliteInterSignalBiasUncertaintyNanos(), DELTA);
         assertEquals(13.0, measurement.getSnrInDb(), DELTA);
