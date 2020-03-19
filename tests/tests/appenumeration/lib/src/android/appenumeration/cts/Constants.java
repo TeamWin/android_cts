@@ -46,6 +46,17 @@ public class Constants {
     public static final String QUERIES_NOTHING_SHARED_USER = PKG_BASE + "queries.nothing.shareduid";
     /** A package that queries via wildcard action. */
     public static final String QUERIES_WILDCARD_ACTION = PKG_BASE + "queries.wildcard.action";
+    /** A package that queries for all BROWSABLE intents. */
+    public static final String QUERIES_WILDCARD_BROWSABLE = PKG_BASE + "queries.wildcard.browsable";
+    /** A package that queries for all profile / contact targets. */
+    public static final String QUERIES_WILDCARD_CONTACTS = PKG_BASE + "queries.wildcard.contacts";
+    /** A package that queries for document viewer / editor targets. */
+    public static final String QUERIES_WILDCARD_EDITOR = PKG_BASE + "queries.wildcard.editor";
+    /** A package that queries for all jpeg share targets. */
+    public static final String QUERIES_WILDCARD_SHARE = PKG_BASE + "queries.wildcard.share";
+    /** A package that queries for all web intent browsable targets. */
+    public static final String QUERIES_WILDCARD_WEB = PKG_BASE + "queries.wildcard.web";
+
     /** A package that queries for {@link #TARGET_NO_API} package */
     public static final String TARGET_SHARED_USER = PKG_BASE + "noapi.shareduid";
     /** A package that exposes itself via various intent filters (activities, services, etc.) */
@@ -54,8 +65,16 @@ public class Constants {
     public static final String TARGET_FORCEQUERYABLE = PKG_BASE + "forcequeryable";
     /** A package with no published API and so isn't queryable by anything but package name */
     public static final String TARGET_NO_API = PKG_BASE + "noapi";
+    /** A package that offers an activity used for opening / editing file types */
+    public static final String TARGET_EDITOR = PKG_BASE + "editor.activity";
+    /** A package that offers an activity used viewing a contact / profile */
+    public static final String TARGET_CONTACTS = PKG_BASE + "contacts.activity";
+    /** A package that offers an content sharing activity */
+    public static final String TARGET_SHARE = PKG_BASE + "share.activity";
+    /** A package that offers an activity that handles browsable web intents for a specific host */
+    public static final String TARGET_WEB = PKG_BASE + "web.activity";
 
-    public static final String[] ALL_QUERIES_TARGETING_Q_PACKAGES = {
+    public static final String[] ALL_QUERIES_TARGETING_R_PACKAGES = {
             QUERIES_NOTHING,
             QUERIES_NOTHING_PERM,
             QUERIES_ACTIVITY_ACTION,
@@ -66,7 +85,12 @@ public class Constants {
             QUERIES_UNEXPORTED_PROVIDER_AUTH,
             QUERIES_PACKAGE,
             QUERIES_NOTHING_SHARED_USER,
-            QUERIES_WILDCARD_ACTION
+            QUERIES_WILDCARD_ACTION,
+            QUERIES_WILDCARD_BROWSABLE,
+            QUERIES_WILDCARD_CONTACTS,
+            QUERIES_WILDCARD_EDITOR,
+            QUERIES_WILDCARD_SHARE,
+            QUERIES_WILDCARD_WEB,
     };
 
     public static final String ACTIVITY_CLASS_TEST = PKG_BASE + "cts.query.TestActivity";
