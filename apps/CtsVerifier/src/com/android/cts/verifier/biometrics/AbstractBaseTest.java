@@ -43,7 +43,6 @@ import java.util.concurrent.Executor;
 public abstract class AbstractBaseTest extends PassFailButtons.Activity {
 
     private static final int REQUEST_ENROLL_WHEN_NONE_ENROLLED = 1;
-    private static final int REQUEST_ENROLL_WHEN_ENROLLED = 2;
 
     abstract protected String getTag();
     abstract protected boolean isOnPauseAllowed();
@@ -72,7 +71,7 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
         // Assume we only enable the pass button when all tests pass. There actually  isn't a way
         // to easily do something like `this.isTestPassed()`
         if (!getPassButton().isEnabled() && !isOnPauseAllowed()) {
-            showToastAndLog("This test must be completed without going onPause");
+            showToastAndLog("This test must be completed without pausing the app");
             // Do not allow the test to continue if it loses foreground. Testers must start over.
             // 1) This is to avoid any potential change to the current enrollment / biometric state.
             // 2) The authentication UI must not affect the caller's activity lifecycle.
@@ -85,19 +84,7 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
         mCurrentlyEnrolling = false;
 
         if (requestCode == REQUEST_ENROLL_WHEN_NONE_ENROLLED) {
-            if (resultCode == RESULT_OK) {
-                startBiometricEnroll(REQUEST_ENROLL_WHEN_ENROLLED, mRequestedStrength);
-            } else {
-                showToastAndLog("Unexpected result when requesting enrollment when not enrolled"
-                        + " yet: " + resultCode);
-            }
-        } else if (requestCode == REQUEST_ENROLL_WHEN_ENROLLED) {
-            if (resultCode == RESULT_CANCELED) {
-                onBiometricEnrollFinished();
-            } else {
-                showToastAndLog("Unexpected result when requesting enrollment when already"
-                        + " enrolled: " + resultCode);
-            }
+            onBiometricEnrollFinished();
         }
     }
 
@@ -394,6 +381,21 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
                                 });
                     }
                 });
+    }
+
+    void testNegativeButtonCallback(int allowedAuthenticators, Runnable successRunnable) {
+        final BiometricPrompt.Builder builder = new BiometricPrompt.Builder(this);
+        builder.setTitle("Press the negative button");
+        builder.setAllowedAuthenticators(allowedAuthenticators);
+        builder.setNegativeButton("Press me", mExecutor, (dialog1, which1) -> {
+            mExecutor.execute(successRunnable);
+        });
+
+        final BiometricPrompt prompt = builder.build();
+        prompt.authenticate(new CancellationSignal(), mExecutor,
+                new AuthenticationCallback() {
+            // Do nothing
+        });
     }
 
 }
