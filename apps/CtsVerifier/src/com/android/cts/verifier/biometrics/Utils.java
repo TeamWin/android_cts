@@ -28,11 +28,16 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import java.security.KeyPair;
 import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.Signature;
 import java.util.Random;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
+import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 
 public class Utils {
@@ -88,8 +93,40 @@ public class Utils {
         return cipher;
     }
 
+    static Signature initSignature(String keyName) throws Exception {
+        KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+        keyStore.load(null);
+
+        KeyStore.Entry entry = keyStore.getEntry(keyName, null);
+
+        PrivateKey privateKey = ((KeyStore.PrivateKeyEntry) entry).getPrivateKey();
+
+        // TODO: This can be used to verify signature
+        // PublicKey publicKey = keyStore.getCertificate(keyName).getPublicKey();
+
+        Signature signature = Signature.getInstance("SHA256withECDSA");
+        signature.initSign(privateKey);
+        return signature;
+    }
+
+    static Mac initMac(String keyName) throws Exception {
+        KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+        keyStore.load(null);
+
+        SecretKey secretKey = (SecretKey) keyStore.getKey(keyName, null);
+
+        Mac mac = Mac.getInstance("HmacSHA256");
+        mac.init(secretKey);
+        return mac;
+    }
+
     static byte[] doEncrypt(Cipher cipher, byte[] data) throws Exception {
         return cipher.doFinal(data);
+    }
+
+    static byte[] doSign(Signature signature, byte[] data) throws Exception {
+        signature.update(data);
+        return signature.sign();
     }
 
     static void showInstructionDialog(Context context, int titleRes, int messageRes,
