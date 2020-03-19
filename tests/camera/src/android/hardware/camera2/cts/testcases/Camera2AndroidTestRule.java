@@ -91,8 +91,10 @@ public class Camera2AndroidTestRule extends ExternalResource {
     private Context mContext;
 
     private static final String CAMERA_ID_INSTR_ARG_KEY = "camera-id";
+    private static final String CAMERA_PERF_MEASURE = "perf-measure";
     private static final Bundle mBundle = InstrumentationRegistry.getArguments();
     private static final String mOverrideCameraId = mBundle.getString(CAMERA_ID_INSTR_ARG_KEY);
+    private static final String mPerfMeasure = mBundle.getString(CAMERA_PERF_MEASURE);
 
     public Camera2AndroidTestRule(Context context) {
         mContext = context;
@@ -180,6 +182,10 @@ public class Camera2AndroidTestRule extends ExternalResource {
 
     public CameraErrorCollector getCollector() {
         return mCollector;
+    }
+
+    public boolean isPerfMeasure() {
+        return mPerfMeasure != null && mPerfMeasure.equals("on");
     }
 
     private String[] deriveCameraIdsUnderTest() throws Exception {
