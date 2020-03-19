@@ -53,6 +53,7 @@ import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.ViewTreeObserver;
+import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.widget.ImageView;
@@ -491,6 +492,43 @@ public class PopupWindowTest {
         verifyPosition(popup, R.id.anchor_lower_right,
                 RIGHT, EQUAL_TO, RIGHT, BOTTOM, LESS_THAN, BOTTOM,
                 offsetX, offsetY, gravity);
+    }
+
+    @Test
+    public void testShowAsDropDown_ClipToScreen_Overlap_OutOfScreen() throws Throwable {
+        final PopupWindow popup = createPopupWindow(createPopupContent(CONTENT_SIZE_DP,
+                CONTENT_SIZE_DP));
+        final View upperLeftAnchor = mActivity.findViewById(R.id.anchor_upper_left);
+
+        popup.setIsClippedToScreen(true);
+        popup.setOverlapAnchor(true);
+        popup.setAnimationStyle(0);
+        popup.setExitTransition(null);
+        popup.setEnterTransition(null);
+
+        final int appBarHeight = mActivity.getActionBar().getHeight();
+        Rect appFrame = new Rect();
+        Window window = mActivity.getWindow();
+        window.getDecorView().getWindowVisibleDisplayFrame(appFrame);
+        final int appFrameTop = appFrame.top;
+        final int appFrameLeft = appFrame.left;
+        final int offsetX = -1 * (mActivity.findViewById(R.id.anchor_upper_left).getWidth());
+        final int offsetY = -1 * (appBarHeight + appFrameTop);
+        final int gravity = Gravity.TOP | Gravity.START;
+
+        int[] viewOnScreenXY = new int[2];
+
+        mActivityRule.runOnUiThread(() -> popup.showAsDropDown(
+                upperLeftAnchor, offsetX, offsetY, gravity));
+        mInstrumentation.waitForIdleSync();
+
+        assertTrue(popup.isShowing());
+
+        popup.getContentView().getLocationOnScreen(viewOnScreenXY);
+        assertEquals(appFrameLeft, viewOnScreenXY[0]);
+        assertEquals(appFrameTop, viewOnScreenXY[1]);
+
+        dismissPopup();
     }
 
     @Test
