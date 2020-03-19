@@ -387,8 +387,9 @@ public class MediaParserTest {
         MockMediaParserInputReader mockInput =
                 new MockMediaParserInputReader(
                         new FakeExtractorInput.Builder().setData(assetBytes).build());
-        MediaParser mediaParser =
-                MediaParser.create(new MockMediaParserOutputConsumer(new FakeExtractorOutput()));
+        MockMediaParserOutputConsumer outputConsumer =
+                new MockMediaParserOutputConsumer(new FakeExtractorOutput());
+        MediaParser mediaParser = MediaParser.create(outputConsumer);
 
         mediaParser.advance(mockInput);
         if (expectedParserName != null) {
@@ -399,6 +400,30 @@ public class MediaParserTest {
 
         while (mediaParser.advance(mockInput)) {
             // Do nothing.
+        }
+
+        // If the SeekMap is seekable, test seeking in the stream.
+        MediaParser.SeekMap seekMap = outputConsumer.getSeekMap();
+        assertThat(seekMap).isNotNull();
+        if (seekMap.isSeekable()) {
+            long durationUs = seekMap.getDurationMicros();
+            for (int j = 0; j < 4; j++) {
+                outputConsumer.clearTrackOutputs();
+                long timeUs =
+                        durationUs == MediaParser.SeekMap.UNKNOWN_DURATION
+                                ? 0
+                                : (durationUs * j) / 3;
+                MediaParser.SeekPoint seekPoint = seekMap.getSeekPoints(timeUs).first;
+                mockInput.reset();
+                mockInput.setPosition((int) seekPoint.position);
+                mediaParser.seek(seekPoint);
+                while (mediaParser.advance(mockInput)) {
+                    // Do nothing.
+                }
+                if (durationUs == MediaParser.SeekMap.UNKNOWN_DURATION) {
+                    break;
+                }
+            }
         }
     }
 }
