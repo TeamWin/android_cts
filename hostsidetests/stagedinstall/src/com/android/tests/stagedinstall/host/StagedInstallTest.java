@@ -312,12 +312,6 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testInstallV3Apex_VerifyPostReboot");
     }
 
-    private void installV3SignedBobApex() throws Exception {
-        runPhase("testInstallV3SignedBobApex_Commit");
-        getDevice().reboot();
-        runPhase("testInstallV3SignedBobApex_VerifyPostReboot");
-    }
-
     @Test
     public void testFailsInvalidApexInstall() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
@@ -361,7 +355,13 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
      * Here alice means the original default key that cts.shim.v1 package was signed with and
      * bob is the new key alice rotates to. Where ambiguous, we will refer keys as alice and bob
      * instead of "old key" and "new key".
+     *
+     * By default, rotated keys have rollback capability enabled for old keys. When we remove
+     * rollback capability from a key, it is called "Distrusting Event" and the distrusted key can
+     * not update the app anymore.
      */
+
+    // Should not be able to update with a key that has not been rotated.
     @Test
     public void testUpdateWithDifferentKeyButNoRotation() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
@@ -369,6 +369,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testUpdateWithDifferentKeyButNoRotation");
     }
 
+    // Should be able to update with a key that has been rotated.
     @Test
     @LargeTest
     public void testUpdateWithDifferentKey() throws Exception {
@@ -379,15 +380,31 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testUpdateWithDifferentKey_VerifyPostReboot");
     }
 
+    // Should not be able to update with a key that is no longer trusted (i.e, has no
+    // rollback capability)
     @Test
     @LargeTest
-    public void testAfterRotationOldKeyIsRejected() throws Exception {
+    public void testUntrustedOldKeyIsRejected() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
 
         installV2SignedBobApex();
-        runPhase("testAfterRotationOldKeyIsRejected");
+        runPhase("testUntrustedOldKeyIsRejected");
     }
 
+    // Should be able to update with an old key which is trusted
+    @Test
+    @LargeTest
+    public void testTrustedOldKeyIsAccepted() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
+        runPhase("testTrustedOldKeyIsAccepted_Commit");
+        getDevice().reboot();
+        runPhase("testTrustedOldKeyIsAccepted_CommitPostReboot");
+        getDevice().reboot();
+        runPhase("testTrustedOldKeyIsAccepted_VerifyPostReboot");
+    }
+
+    // Should be able to update further with rotated key
     @Test
     @LargeTest
     public void testAfterRotationNewKeyCanUpdateFurther() throws Exception {
