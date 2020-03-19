@@ -52,10 +52,6 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
 
     protected boolean mCurrentlyEnrolling;
 
-    // Not great to keep this here, but we use it to check that requesting enrollment of a
-    // combination that was just enrolled results in RESULT_CANCELED.
-    private int mRequestedStrength;
-
     BiometricManager mBiometricManager;
 
     @Override
@@ -98,8 +94,6 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
 
     void checkAndEnroll(Button enrollButton, int requestedStrength,
             int[] acceptableConfigStrengths) {
-        mRequestedStrength = requestedStrength;
-
         // Check that no biometrics (of any strength) are enrolled
         int result = mBiometricManager.canAuthenticate(Authenticators.BIOMETRIC_WEAK);
         if (result == BiometricManager.BIOMETRIC_SUCCESS) {
