@@ -2837,7 +2837,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_cross_profile_permission_disabled_by_default">Cross profile permission disabled by default</string>
     <string name="provisioning_byod_cross_profile_permission_disabled_by_default_instruction">
         Press the Go button to go to Settings &gt; Apps &amp; notifications &gt; Special app access >\n
-        Connected personal and work apps.\n
+        Connected work and personal apps.\n
         Choose the \"Cross profile test app\" from the list and check that the switch is disabled.\n
         Go back to CTS Verifier and mark the test as \"Pass\" or \"Fail\".
     </string>
@@ -2845,7 +2845,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_cross_profile_permission_enabled_instruction">
         Press the Go button to open the \"Cross Profile Test App\".\n
         Press the \"Open Settings\" button to go to Settings &gt; Apps &amp; notifications &gt; Special app access >
-        Connected personal and work apps > Cross profile test app, then enable the switch.\n
+        Connected work and personal apps > Cross profile test app, then enable the switch.\n
         Verify that when you go back it takes you to the \"Cross Profile Test App\".\n
         Now verify that it shows \"INTERACTING ACROSS PROFILES ALLOWED\" message.\n
         Go back to CTS Verifier and mark the test as \"Pass\" or \"Fail\".
@@ -2854,7 +2854,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_cross_profile_permission_disabled_instruction">
         Press the Go button to open the \"Cross Profile Test App\".\n
         Press the \"Open Settings\" button to go to Settings &gt; Apps &amp; notifications &gt; Special app access >
-        Connected personal and work apps > Cross profile test app, then disable the switch.\n
+        Connected work and personal apps > Cross profile test app, then disable the switch.\n
         Verify that when you go back it takes you to the \"Cross Profile Test App\".\n
         Now verify that it shows \"INTERACTING ACROSS PROFILES NOT ALLOWED\" message.\n
         Go back to CTS Verifier and mark the test as \"Pass\" or \"Fail\".
