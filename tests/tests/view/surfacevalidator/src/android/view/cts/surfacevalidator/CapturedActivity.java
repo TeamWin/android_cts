@@ -36,6 +36,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.provider.Settings;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
@@ -48,6 +49,8 @@ import android.view.PointerIcon;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
+
+import android.server.wm.settings.SettingsSession;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -65,6 +68,15 @@ public class CapturedActivity extends Activity {
         public int failFrames;
         public final SparseArray<Bitmap> failures = new SparseArray<>();
     }
+
+    private static class ImmersiveConfirmationSetting extends SettingsSession<String> {
+        ImmersiveConfirmationSetting() {
+            super(Settings.Secure.getUriFor(
+                Settings.Secure.IMMERSIVE_MODE_CONFIRMATIONS),
+                Settings.Secure::getString, Settings.Secure::putString);
+        }
+    }
+  private ImmersiveConfirmationSetting mSettingsSession;
 
     private static final String TAG = "CapturedActivity";
     private static final int PERMISSION_CODE = 1;
@@ -100,6 +112,9 @@ public class CapturedActivity extends Activity {
         // longer duration to capture the expected number of frames
         mOnEmbedded = packageManager.hasSystemFeature(PackageManager.FEATURE_EMBEDDED);
 
+        mSettingsSession = new ImmersiveConfirmationSetting();
+        mSettingsSession.set("confirmed");
+
         getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN);
         // Set the NULL pointer icon so that it won't obstruct the captured image.
@@ -113,6 +128,11 @@ public class CapturedActivity extends Activity {
 
         mCountDownLatch = new CountDownLatch(1);
         bindMediaProjectionService();
+    }
+
+    @Override
+    public void onStop() {
+        mSettingsSession.close();
     }
 
     public void dismissPermissionDialog() {
