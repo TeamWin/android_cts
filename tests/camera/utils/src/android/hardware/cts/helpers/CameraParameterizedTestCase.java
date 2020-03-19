@@ -44,13 +44,22 @@ public class CameraParameterizedTestCase {
     public boolean mAdoptShellPerm;
 
     private static final String CAMERA_ID_INSTR_ARG_KEY = "camera-id";
+    private static final String CAMERA_PERF_MEASURE = "perf-measure";
     private static final Bundle mBundle = InstrumentationRegistry.getArguments();
     protected static final String mOverrideCameraId = mBundle.getString(CAMERA_ID_INSTR_ARG_KEY);
+    protected static final String mPerfMeasure = mBundle.getString(CAMERA_PERF_MEASURE);
+
+    public boolean isPerfMeasure() {
+        return mPerfMeasure != null && mPerfMeasure.equals("on");
+    }
 
     @Parameters
     public static Iterable<? extends Object> data() {
         List<Boolean> adoptShellPerm = new ArrayList<Boolean>();
-        adoptShellPerm.add(true);
+        // Only add adoptShellPerm(true) of camera id is not overridden.
+        if (mPerfMeasure == null || !mPerfMeasure.equals("on")) {
+            adoptShellPerm.add(true);
+        }
         adoptShellPerm.add(false);
         return adoptShellPerm;
     }
