@@ -18,5 +18,8 @@ package com.android.cts.userspacereboot.bootcompleted;
 
 import android.app.Activity;
 
+/**
+ * An empty launcher activity.
+ */
 public class LauncherActivity extends Activity {
 }
