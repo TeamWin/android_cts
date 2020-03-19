@@ -85,6 +85,13 @@
                 android:layout_centerInParent="true"
                 android:text="@string/biometric_test_reject_first"
                 android:enabled="false"/>
+            <Button
+                android:id="@+id/authenticate_negative_button_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text="@string/biometric_test_negative_button_button"
+                android:enabled="false"/>
 
             <Space
                 android:layout_width="match_parent"

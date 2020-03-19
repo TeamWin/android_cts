@@ -25,11 +25,8 @@ import android.os.CancellationSignal;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
-import android.util.Log;
 import android.widget.Button;
-import android.widget.Toast;
 
-import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
 import java.util.concurrent.Executor;
@@ -41,8 +38,7 @@ import java.util.concurrent.Executor;
 public class CredentialEnrolledTests extends AbstractBaseTest {
     private static final String TAG = "CredentialEnrolledTests";
 
-    private static final int REQUEST_ENROLL_WHEN_NONE_ENROLLED = 1;
-    private static final int REQUEST_ENROLL_WHEN_ENROLLED = 2;
+    private static final int REQUEST_ENROLL = 1;
 
     private Button mEnrollButton;
     private Button mBiometricManagerButton;
@@ -79,7 +75,7 @@ public class CredentialEnrolledTests extends AbstractBaseTest {
                 return;
             }
 
-            requestCredentialEnrollment(REQUEST_ENROLL_WHEN_NONE_ENROLLED);
+            requestCredentialEnrollment(REQUEST_ENROLL);
         });
 
         // Test BiometricManager#canAuthenticate(DEVICE_CREDENTIAL)
@@ -189,31 +185,19 @@ public class CredentialEnrolledTests extends AbstractBaseTest {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_ENROLL_WHEN_NONE_ENROLLED) {
-            if (resultCode == RESULT_OK) {
-                final BiometricManager bm = getSystemService(BiometricManager.class);
-                final int result = bm.canAuthenticate(Authenticators.DEVICE_CREDENTIAL);
-                if (result == BiometricManager.BIOMETRIC_SUCCESS) {
-                    // Request enrollment one more time. Ensure that we receive RESULT_CANCELED
-                    requestCredentialEnrollment(REQUEST_ENROLL_WHEN_ENROLLED);
-                } else {
-                    showToastAndLog("Unexpected result: " + result + ". Please ensure that tapping"
-                            + " the button sends you to credential enrollment, and that you have"
-                            + " enrolled a credential.");
-                }
-            } else {
-                showToastAndLog("Unexpected result after enroll: " + resultCode);
-            }
-        } else if (requestCode == REQUEST_ENROLL_WHEN_ENROLLED) {
-            if (resultCode == RESULT_CANCELED) {
+        if (requestCode == REQUEST_ENROLL) {
+            final BiometricManager bm = getSystemService(BiometricManager.class);
+            final int result = bm.canAuthenticate(Authenticators.DEVICE_CREDENTIAL);
+            if (result == BiometricManager.BIOMETRIC_SUCCESS) {
                 mEnrollPass = true;
                 mEnrollButton.setEnabled(false);
                 mBiometricManagerButton.setEnabled(true);
                 mBPSetAllowedAuthenticatorsButton.setEnabled(true);
                 mBPSetDeviceCredentialAllowedButton.setEnabled(true);
             } else {
-                showToastAndLog("Unexpected result when requesting enrolling with"
-                        + " pre-existing credential: " + resultCode);
+                showToastAndLog("Unexpected result: " + result + ". Please ensure that tapping"
+                        + " the button sends you to credential enrollment, and that you have"
+                        + " enrolled a credential.");
             }
         }
     }
