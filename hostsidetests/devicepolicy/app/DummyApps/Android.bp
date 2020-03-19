@@ -33,6 +33,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
     manifest: "dummyapp1/AndroidManifest.xml",
@@ -59,6 +60,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
     manifest: "dummyapp2/AndroidManifest.xml",
@@ -85,6 +87,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
     manifest: "dummyapp3/AndroidManifest.xml",
@@ -111,6 +114,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
     manifest: "dummyapp4/AndroidManifest.xml",

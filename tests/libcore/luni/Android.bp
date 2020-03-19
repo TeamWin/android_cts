@@ -53,6 +53,7 @@ android_test {
         "cts",
         "mts",
         "vts",
+        "vts10",
         "general-tests",
     ],
     java_resources: [
