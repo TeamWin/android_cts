@@ -263,14 +263,14 @@ public class CrossProfileAppsPermissionHostSideTest extends BaseDevicePolicyTest
     }
 
     @Test
-    public void testCreateRequestInteractAcrossProfilesIntent_canNotRequestInteraction_returnsNull()
+    public void testCreateRequestInteractAcrossProfilesIntent_canNotRequestInteraction_throwsSecurityException()
             throws Exception {
         installAppAsUser(TEST_WITH_REQUESTED_PERMISSION_APK, mPrimaryUserId);
 
         runDeviceTestsAsUser(
                 TEST_WITH_REQUESTED_PERMISSION_PACKAGE,
                 TEST_WITH_REQUESTED_PERMISSION_CLASS,
-                "testCreateRequestInteractAcrossProfilesIntent_canNotRequestInteraction_returnsNull",
+                "testCreateRequestInteractAcrossProfilesIntent_canNotRequestInteraction_throwsSecurityException",
                 mProfileId,
                 Collections.EMPTY_MAP);
     }
