@@ -28,7 +28,7 @@ import static android.appenumeration.cts.Constants.ACTION_START_DIRECTLY;
 import static android.appenumeration.cts.Constants.ACTION_START_FOR_RESULT;
 import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_DUMMY_ACTIVITY;
 import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_TEST;
-import static android.appenumeration.cts.Constants.ALL_QUERIES_TARGETING_Q_PACKAGES;
+import static android.appenumeration.cts.Constants.ALL_QUERIES_TARGETING_R_PACKAGES;
 import static android.appenumeration.cts.Constants.EXTRA_ERROR;
 import static android.appenumeration.cts.Constants.EXTRA_FLAGS;
 import static android.appenumeration.cts.Constants.EXTRA_REMOTE_CALLBACK;
@@ -44,10 +44,19 @@ import static android.appenumeration.cts.Constants.QUERIES_UNEXPORTED_ACTIVITY_A
 import static android.appenumeration.cts.Constants.QUERIES_UNEXPORTED_PROVIDER_AUTH;
 import static android.appenumeration.cts.Constants.QUERIES_UNEXPORTED_SERVICE_ACTION;
 import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_ACTION;
+import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_BROWSABLE;
+import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_CONTACTS;
+import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_EDITOR;
+import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_SHARE;
+import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_WEB;
+import static android.appenumeration.cts.Constants.TARGET_CONTACTS;
+import static android.appenumeration.cts.Constants.TARGET_EDITOR;
 import static android.appenumeration.cts.Constants.TARGET_FILTERS;
 import static android.appenumeration.cts.Constants.TARGET_FORCEQUERYABLE;
 import static android.appenumeration.cts.Constants.TARGET_NO_API;
+import static android.appenumeration.cts.Constants.TARGET_SHARE;
 import static android.appenumeration.cts.Constants.TARGET_SHARED_USER;
+import static android.appenumeration.cts.Constants.TARGET_WEB;
 import static android.content.pm.PackageManager.MATCH_SYSTEM_ONLY;
 
 import static org.hamcrest.Matchers.greaterThan;
@@ -326,6 +335,31 @@ public class AppEnumerationTests {
         assertVisible(QUERIES_PACKAGE, QUERIES_NOTHING_SHARED_USER);
     }
 
+    @Test
+    public void queriesWildcardContacts() throws Exception {
+        assertNotVisible(QUERIES_NOTHING, TARGET_CONTACTS);
+        assertVisible(QUERIES_WILDCARD_CONTACTS, TARGET_CONTACTS);
+    }
+
+    @Test
+    public void queriesWildcardWeb() throws Exception {
+        assertNotVisible(QUERIES_NOTHING, TARGET_WEB);
+        assertVisible(QUERIES_WILDCARD_BROWSABLE, TARGET_WEB);
+        assertVisible(QUERIES_WILDCARD_WEB, TARGET_WEB);
+    }
+
+    @Test
+    public void queriesWildcardEditor() throws Exception {
+        assertNotVisible(QUERIES_NOTHING, TARGET_EDITOR);
+        assertVisible(QUERIES_WILDCARD_EDITOR, TARGET_EDITOR);
+    }
+
+    @Test
+    public void queriesWildcardShareSheet() throws Exception {
+        assertNotVisible(QUERIES_NOTHING, TARGET_SHARE);
+        assertVisible(QUERIES_WILDCARD_SHARE, TARGET_SHARE);
+    }
+
     private void assertVisible(String sourcePackageName, String targetPackageName)
             throws Exception {
         if (!sGlobalFeatureEnabled) return;
@@ -335,7 +369,7 @@ public class AppEnumerationTests {
 
 
     private void setFeatureEnabledForAll(Boolean enabled) {
-        for (String pkgName : ALL_QUERIES_TARGETING_Q_PACKAGES) {
+        for (String pkgName : ALL_QUERIES_TARGETING_R_PACKAGES) {
             setFeatureEnabledForAll(pkgName, enabled);
         }
         setFeatureEnabledForAll(QUERIES_NOTHING_Q, enabled == null ? null : false);
