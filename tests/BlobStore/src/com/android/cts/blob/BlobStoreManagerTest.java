@@ -37,8 +37,12 @@ import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
+import android.os.SystemClock;
+import android.provider.DeviceConfig;
 import android.util.Log;
 
+import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.ThrowingRunnable;
 import com.android.cts.blob.R;
 import com.android.cts.blob.ICommandReceiver;
 import com.android.utils.blob.DummyBlobData;
@@ -48,10 +52,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
+import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -65,6 +71,12 @@ public class BlobStoreManagerTest {
     private static final long TIMEOUT_COMMIT_CALLBACK_SEC = 5;
 
     private static final long TIMEOUT_BIND_SERVICE_SEC = 2;
+
+    // TODO: Make it a @TestApi or move the test using this to a different location.
+    // Copy of DeviceConfig.NAMESPACE_BLOBSTORE constant
+    public static final String NAMESPACE_BLOBSTORE = "blobstore";
+    public static final String KEY_LEASE_ACQUISITION_WAIT_DURATION_MS =
+            "lease_acquisition_wait_time_ms";
 
     private static final String HELPER_PKG = "com.android.cts.blob.helper";
     private static final String HELPER_PKG2 = "com.android.cts.blob.helper2";
@@ -659,6 +671,35 @@ public class BlobStoreManagerTest {
     }
 
     @Test
+    public void testAcquireRelease_deleteImmediately() throws Exception {
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
+        blobData.prepare();
+        final long waitDurationMs = TimeUnit.SECONDS.toMillis(1);
+        runWithKeyValue(KEY_LEASE_ACQUISITION_WAIT_DURATION_MS, String.valueOf(waitDurationMs),
+                () -> {
+                    try {
+                        commitBlob(blobData);
+
+                        acquireLease(mContext, blobData.getBlobHandle(), R.string.test_desc,
+                                blobData.getExpiryTimeMillis());
+                        assertLeasedBlobs(mBlobStoreManager, blobData.getBlobHandle());
+
+                        SystemClock.sleep(waitDurationMs);
+
+                        releaseLease(mContext, blobData.getBlobHandle());
+                        assertNoLeasedBlobs(mBlobStoreManager);
+
+                        assertThrows(SecurityException.class, () -> mBlobStoreManager.acquireLease(
+                                blobData.getBlobHandle(), R.string.test_desc,
+                                blobData.getExpiryTimeMillis()));
+                        assertNoLeasedBlobs(mBlobStoreManager);
+                    } finally {
+                        blobData.delete();
+                    }
+                });
+    }
+
+    @Test
     public void testAcquireReleaseLease_invalidArguments() throws Exception {
         final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
@@ -845,6 +886,31 @@ public class BlobStoreManagerTest {
                     .isEqualTo(0L);
         } finally {
             serviceConnection.unbind();
+        }
+    }
+
+    private static void runWithKeyValue(String key, String value, ThrowingRunnable runnable)
+            throws Exception {
+        final AtomicReference<String> previousValue = new AtomicReference<>();
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            previousValue.set(DeviceConfig.getProperty(NAMESPACE_BLOBSTORE, key));
+            Log.i(TAG, key + " previous value: " + previousValue.get());
+            assertThat(DeviceConfig.setProperty(NAMESPACE_BLOBSTORE, key, value,
+                    false /* makeDefault */)).isTrue();
+            Log.i(TAG, key + " value set: " + value);
+        });
+        try {
+            runnable.run();
+        } finally {
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                final String currentValue = DeviceConfig.getProperty(
+                        NAMESPACE_BLOBSTORE, key);
+                if (!Objects.equals(previousValue.get(), currentValue)) {
+                    assertThat(DeviceConfig.setProperty(NAMESPACE_BLOBSTORE,
+                            key, previousValue.get(), false /* makeDefault */)).isTrue();
+                    Log.i(TAG, key + " value restored: " + previousValue.get());
+                }
+            });
         }
     }
 
