@@ -2519,17 +2519,6 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                     CaptureRequest.DISTORTION_CORRECTION_MODE_OFF);
         }
 
-        // Scaler settings
-        if (mStaticInfo.areKeysAvailable(
-                CameraCharacteristics.SCALER_AVAILABLE_ROTATE_AND_CROP_MODES)) {
-            List<Integer> rotateAndCropModes = Arrays.asList(toObject(
-                props.get(CameraCharacteristics.SCALER_AVAILABLE_ROTATE_AND_CROP_MODES)));
-            if (rotateAndCropModes.contains(SCALER_ROTATE_AND_CROP_AUTO)) {
-                mCollector.expectKeyValueEquals(request, SCALER_ROTATE_AND_CROP,
-                        CaptureRequest.SCALER_ROTATE_AND_CROP_AUTO);
-            }
-        }
-
         // TODO: use the list of keys from CameraCharacteristics to avoid expecting
         //       keys which are not available by this CameraDevice.
     }

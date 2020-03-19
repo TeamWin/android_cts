@@ -2315,53 +2315,6 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
         }
     }
 
-    /**
-     * Check rotate-and-crop camera reporting.
-     * Every device must report NONE; if actually supporting feature, must report NONE, 90, AUTO at
-     * least.
-     */
-    @Test
-    public void testRotateAndCropCharacteristics() {
-        for (int i = 0; i < mAllCameraIds.length; i++) {
-            Log.i(TAG, "testRotateAndCropCharacteristics: Testing camera ID " + mAllCameraIds[i]);
-
-            CameraCharacteristics c = mCharacteristics.get(i);
-
-            if (!arrayContains(mCameraIdsUnderTest, mAllCameraIds[i])) {
-                // Skip hidden physical cameras
-                continue;
-            }
-
-            int[] availableRotateAndCropModes = c.get(
-                    CameraCharacteristics.SCALER_AVAILABLE_ROTATE_AND_CROP_MODES);
-            assertTrue("availableRotateAndCropModes must not be null",
-                     availableRotateAndCropModes != null);
-            boolean foundAuto = false;
-            boolean foundNone = false;
-            boolean found90 = false;
-            for (int mode :  availableRotateAndCropModes) {
-                switch(mode) {
-                    case CameraCharacteristics.SCALER_ROTATE_AND_CROP_NONE:
-                        foundNone = true;
-                        break;
-                    case CameraCharacteristics.SCALER_ROTATE_AND_CROP_90:
-                        found90 = true;
-                        break;
-                    case CameraCharacteristics.SCALER_ROTATE_AND_CROP_AUTO:
-                        foundAuto = true;
-                        break;
-                }
-            }
-            if (availableRotateAndCropModes.length > 1) {
-                assertTrue("To support SCALER_ROTATE_AND_CROP: NONE, 90, and AUTO must be included",
-                        foundNone && found90 && foundAuto);
-            } else {
-                assertTrue("If only one SCALER_ROTATE_AND_CROP value is supported, it must be NONE",
-                        foundNone);
-            }
-        }
-    }
-
     private boolean matchParametersToCharacteritics(Camera.Parameters params,
             Camera.CameraInfo info, CameraCharacteristics ch) {
         Integer facing = ch.get(CameraCharacteristics.LENS_FACING);
