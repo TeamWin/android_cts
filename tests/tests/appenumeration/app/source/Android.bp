@@ -162,3 +162,63 @@ android_test_helper_app {
         "general-tests",
     ],
 }
+
+android_test_helper_app {
+    name: "CtsAppEnumerationWildcardBrowsableActivitySource",
+    manifest: "AndroidManifest-queriesWildcard-browsableActivity.xml",
+    defaults: ["CtsAppEnumerationQueriesDefaults"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ],
+}
+
+android_test_helper_app {
+    name: "CtsAppEnumerationWildcardContactsActivitySource",
+    manifest: "AndroidManifest-queriesWildcard-contactsActivity.xml",
+    defaults: ["CtsAppEnumerationQueriesDefaults"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ],
+}
+
+android_test_helper_app {
+    name: "CtsAppEnumerationWildcardDocumentEditorActivitySource",
+    manifest: "AndroidManifest-queriesWildcard-documentEditorActivity.xml",
+    defaults: ["CtsAppEnumerationQueriesDefaults"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ],
+}
+
+android_test_helper_app {
+    name: "CtsAppEnumerationWildcardShareActivitySource",
+    manifest: "AndroidManifest-queriesWildcard-shareActivity.xml",
+    defaults: ["CtsAppEnumerationQueriesDefaults"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ],
+}
+
+android_test_helper_app {
+    name: "CtsAppEnumerationWildcardWebActivitySource",
+    manifest: "AndroidManifest-queriesWildcard-webActivity.xml",
+    defaults: ["CtsAppEnumerationQueriesDefaults"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ],
+}

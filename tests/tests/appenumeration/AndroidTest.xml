@@ -29,6 +29,10 @@
         <option name="test-file-name" value="CtsAppEnumerationForceQueryable.apk" />
         <option name="test-file-name" value="CtsAppEnumerationFilters.apk" />
         <option name="test-file-name" value="CtsAppEnumerationNoApi.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationContactsActivityTarget.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationDocumentsActivityTarget.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationShareActivityTarget.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationWebActivityTarget.apk" />
         <option name="test-file-name" value="CtsAppEnumerationSharedUidSource.apk" />
         <option name="test-file-name" value="CtsAppEnumerationSharedUidTarget.apk" />
         <option name="test-file-name" value="CtsAppEnumerationQueriesNothing.apk" />
@@ -42,6 +46,11 @@
         <option name="test-file-name" value="CtsAppEnumerationQueriesPackage.apk" />
         <option name="test-file-name" value="CtsAppEnumerationQueriesNothingTargetsQ.apk" />
         <option name="test-file-name" value="CtsAppEnumerationQueriesNothingHasPermission.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationWildcardBrowsableActivitySource.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationWildcardContactsActivitySource.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationWildcardDocumentEditorActivitySource.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationWildcardShareActivitySource.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationWildcardWebActivitySource.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.appenumeration.cts" />
