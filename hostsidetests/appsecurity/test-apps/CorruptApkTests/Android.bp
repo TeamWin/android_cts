@@ -19,6 +19,7 @@ android_test_import {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ]
 }
@@ -30,6 +31,7 @@ android_test_import {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ]
 }
@@ -41,6 +43,7 @@ android_test_import {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ]
 }
