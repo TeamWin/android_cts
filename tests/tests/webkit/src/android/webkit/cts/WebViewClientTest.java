@@ -631,8 +631,7 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
      * Modifications to this test should be reflected in that test as necessary. See
      * http://go/modifying-webview-cts.
      */
-    // TODO(ntfschr): re-enable when https://crbug.com/1006953 is fixed and dropped into Android.
-    public void disabled_testOnSafeBrowsingHitBackToSafety() throws Throwable {
+    public void testOnSafeBrowsingHitBackToSafety() throws Throwable {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
         }
@@ -672,8 +671,7 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
      * Modifications to this test should be reflected in that test as necessary. See
      * http://go/modifying-webview-cts.
      */
-    // TODO(ntfschr): re-enable when https://crbug.com/1006953 is fixed and dropped into Android.
-    public void disabled_testOnSafeBrowsingHitProceed() throws Throwable {
+    public void testOnSafeBrowsingHitProceed() throws Throwable {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
         }
@@ -734,26 +732,22 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
         }
     }
 
-    // TODO(ntfschr): re-enable when https://crbug.com/1006953 is fixed and dropped into Android.
-    public void disabled_testOnSafeBrowsingMalwareCode() throws Throwable {
+    public void testOnSafeBrowsingMalwareCode() throws Throwable {
         testOnSafeBrowsingCode(TEST_SAFE_BROWSING_MALWARE_URL,
                 WebViewClient.SAFE_BROWSING_THREAT_MALWARE);
     }
 
-    // TODO(ntfschr): re-enable when https://crbug.com/1006953 is fixed and dropped into Android.
-    public void disabled_testOnSafeBrowsingPhishingCode() throws Throwable {
+    public void testOnSafeBrowsingPhishingCode() throws Throwable {
         testOnSafeBrowsingCode(TEST_SAFE_BROWSING_PHISHING_URL,
                 WebViewClient.SAFE_BROWSING_THREAT_PHISHING);
     }
 
-    // TODO(ntfschr): re-enable when https://crbug.com/1006953 is fixed and dropped into Android.
-    public void disabled_testOnSafeBrowsingUnwantedSoftwareCode() throws Throwable {
+    public void testOnSafeBrowsingUnwantedSoftwareCode() throws Throwable {
         testOnSafeBrowsingCode(TEST_SAFE_BROWSING_UNWANTED_SOFTWARE_URL,
                 WebViewClient.SAFE_BROWSING_THREAT_UNWANTED_SOFTWARE);
     }
 
-    // TODO(ntfschr): re-enable when https://crbug.com/1006953 is fixed and dropped into Android.
-    public void disabled_testOnSafeBrowsingBillingCode() throws Throwable {
+    public void testOnSafeBrowsingBillingCode() throws Throwable {
         testOnSafeBrowsingCode(TEST_SAFE_BROWSING_BILLING_URL,
                 WebViewClient.SAFE_BROWSING_THREAT_BILLING);
     }
