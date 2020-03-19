@@ -16,6 +16,7 @@
 
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -25,6 +26,8 @@ import android.graphics.Rect;
 import android.support.test.uiautomator.UiObject2;
 import android.view.View;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.concurrent.TimeoutException;
@@ -45,19 +48,53 @@ public class LoginWithCustomHighlightActivityTest
         };
     }
 
+    @Before
+    public void setup() {
+        MyDrawable.initStatus();
+    }
+
+    @After
+    public void teardown() {
+        MyDrawable.clearStatus();
+    }
+
     @Test
-    public void testAutofillCustomHighligth() throws Exception {
+    public void testAutofillCustomHighligth_singleField_noHighligth() throws Exception {
+        testAutofillCustomHighligth(/* singleField= */true);
+
+        MyDrawable.assertDrawableNotDrawn();
+    }
+
+    @Test
+    public void testAutofillCustomHighligth_multipleFields_hasHighligth() throws Exception {
+        testAutofillCustomHighligth(/* singleField= */false);
+
+        final Rect bounds = MyDrawable.getAutofilledBounds();
+        assertThat(bounds).isNotNull();
+        assertThat(bounds.right).isEqualTo(mActivity.getUsername().getWidth());
+        assertThat(bounds.bottom).isEqualTo(mActivity.getUsername().getHeight());
+    }
+
+    private void testAutofillCustomHighligth(boolean singleField) throws Exception {
         // Set service.
         enableService();
 
+        final CannedDataset.Builder datasetBuilder = new CannedDataset.Builder()
+                .setField(ID_USERNAME, "dude")
+                .setPresentation(createPresentation("The Dude"));
+        if (!singleField) {
+            datasetBuilder.setField(ID_PASSWORD, "sweet");
+        }
+
         // Set expectations.
         final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
-                .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, "dude")
-                        .setPresentation(createPresentation("The Dude"))
-                        .build());
+                .addDataset(datasetBuilder.build());
         sReplier.addResponse(builder.build());
-        mActivity.expectAutoFill("dude");
+        if (singleField) {
+            mActivity.expectAutoFill("dude");
+        } else {
+            mActivity.expectAutoFill("dude", "sweet");
+        }
 
         // Dynamically set password to make sure it's sanitized.
         mActivity.onPassword((v) -> v.setText("I AM GROOT"));
@@ -73,11 +110,6 @@ public class LoginWithCustomHighlightActivityTest
 
         // Check the results.
         mActivity.assertAutoFilled();
-
-        final Rect bounds = MyDrawable.getAutofilledBounds();
-        assertThat(bounds).isNotNull();
-        assertThat(bounds.right).isEqualTo(mActivity.getUsername().getWidth());
-        assertThat(bounds.bottom).isEqualTo(mActivity.getUsername().getHeight());
     }
 
     /**
