@@ -21,10 +21,13 @@ import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.ApplicationExitInfo;
 import android.app.Instrumentation;
 import android.app.cts.android.app.cts.tools.WatchUidRunner;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.DropBoxManager;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
@@ -45,8 +48,10 @@ import android.util.Log;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.internal.util.ArrayUtils;
 import com.android.internal.util.MemInfoReader;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.FileDescriptor;
@@ -82,6 +87,7 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
     private static final String EXTRA_ACTION = "action";
     private static final String EXTRA_MESSENGER = "messenger";
     private static final String EXTRA_PROCESS_NAME = "process";
+    private static final String EXTRA_COOKIE = "cookie";
 
     private static final int ACTION_NONE = 0;
     private static final int ACTION_FINISH = 1;
@@ -123,6 +129,7 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
     private UserHandle mCurrentUserHandle;
     private int mOtherUserId;
     private UserHandle mOtherUserHandle;
+    private DropBoxManager.Entry mAnrEntry;
 
     @Override
     protected void setUp() throws Exception {
@@ -277,15 +284,18 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
     // Start the target package
     private void startService(int commandCode, String serviceName, boolean waitForGone,
             boolean other) {
-        startService(commandCode, serviceName, waitForGone, true, other);
+        startService(commandCode, serviceName, waitForGone, true, other, false, null);
     }
 
     private void startService(int commandCode, String serviceName, boolean waitForGone,
-            boolean waitForIdle, boolean other) {
+            boolean waitForIdle, boolean other, boolean includeCookie, byte[] cookie) {
         Intent intent = new Intent(EXIT_ACTION);
         intent.setClassName(STUB_PACKAGE_NAME, serviceName);
         intent.putExtra(EXTRA_ACTION, commandCode);
         intent.putExtra(EXTRA_MESSENGER, mMessenger);
+        if (includeCookie) {
+            intent.putExtra(EXTRA_COOKIE, cookie);
+        }
         mLatch = new CountDownLatch(1);
         UserHandle user = other ? mOtherUserHandle : mCurrentUserHandle;
         WatchUidRunner watcher = other ? mOtherUidWatcher : mWatcher;
@@ -481,6 +491,21 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         // Remove old records to avoid interference with the test.
         clearHistoricalExitInfo();
 
+        final DropBoxManager dbox = mContext.getSystemService(DropBoxManager.class);
+        final CountDownLatch dboxLatch = new CountDownLatch(1);
+        final BroadcastReceiver receiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                final String tag_anr = "data_app_anr";
+                if (tag_anr.equals(intent.getStringExtra(DropBoxManager.EXTRA_TAG))) {
+                    mAnrEntry = dbox.getNextEntry(tag_anr, intent.getLongExtra(
+                            DropBoxManager.EXTRA_TIME, 0) - 1);
+                    dboxLatch.countDown();
+                }
+            }
+        };
+        mContext.registerReceiver(receiver,
+                new IntentFilter(DropBoxManager.ACTION_DROPBOX_ENTRY_ADDED));
         final long timeout = Settings.Global.getInt(mContext.getContentResolver(),
                 Settings.Global.BROADCAST_FG_CONSTANTS, 10 * 1000) * 3;
 
@@ -500,6 +525,10 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         // This will result an ANR
         mContext.sendOrderedBroadcast(intent, null);
 
+        // Wait for the early ANR
+        monitor.waitFor(Monitor.WAIT_FOR_EARLY_ANR, timeout);
+        // Continue, so we could collect ANR traces
+        monitor.sendCommand(Monitor.CMD_CONTINUE);
         // Wait for the ANR
         monitor.waitFor(Monitor.WAIT_FOR_ANR, timeout);
         // Kill it
@@ -508,16 +537,49 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         waitForGone(mWatcher);
         long now2 = System.currentTimeMillis();
 
+        awaitForLatch(dboxLatch);
+        assertTrue(mAnrEntry != null);
+
         List<ApplicationExitInfo> list = ShellIdentityUtils.invokeMethodWithShellPermissions(
                 STUB_PACKAGE_NAME, mStubPackagePid, 1,
                 mActivityManager::getHistoricalProcessExitReasons,
                 android.Manifest.permission.DUMP);
 
         assertTrue(list != null && list.size() == 1);
-        verify(list.get(0), mStubPackagePid, mStubPackageUid, STUB_PACKAGE_NAME,
+        ApplicationExitInfo info = list.get(0);
+        verify(info, mStubPackagePid, mStubPackageUid, STUB_PACKAGE_NAME,
                 ApplicationExitInfo.REASON_ANR, null, null, now, now2);
 
+        // Verify the traces
+
+        // Read from dropbox
+        final String dboxTrace = mAnrEntry.getText(0x100000 /* 1M */);
+        assertFalse(TextUtils.isEmpty(dboxTrace));
+
+        // Read the input stream from the ApplicationExitInfo
+        String trace = ShellIdentityUtils.invokeMethodWithShellPermissions(info, (i) -> {
+            try (BufferedInputStream input = new BufferedInputStream(i.getTraceInputStream())) {
+                StringBuilder sb = new StringBuilder();
+                byte[] buf = new byte[8192];
+                while (true) {
+                    final int len = input.read(buf, 0, buf.length);
+                    if (len <= 0) {
+                        break;
+                    }
+                    sb.append(new String(buf, 0, len));
+                }
+                return sb.toString();
+            } catch (IOException e) {
+                return null;
+            }
+        }, android.Manifest.permission.DUMP);
+        assertFalse(TextUtils.isEmpty(trace));
+        assertTrue(trace.indexOf(Integer.toString(info.getPid())) >= 0);
+        assertTrue(trace.indexOf("Cmd line: " + STUB_PACKAGE_NAME) >= 0);
+        assertTrue(dboxTrace.indexOf(trace) >= 0);
+
         monitor.finish();
+        mContext.unregisterReceiver(receiver);
     }
 
     public void testOther() throws Exception {
@@ -711,7 +773,7 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
 
         now = System.currentTimeMillis();
         // Now let the provider exit itself
-        startService(ACTION_KILL_PROVIDER, STUB_SERVICE_NAME, false, false, false);
+        startService(ACTION_KILL_PROVIDER, STUB_SERVICE_NAME, false, false, false, false, null);
 
         // Wait for both of the processes gone
         waitForGone(mWatcher);
@@ -809,25 +871,39 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         // Create the test user, we'll remove it during tearDown
         prepareTestUser();
 
+        final byte[] cookie0 = {(byte) 0x00, (byte) 0x01, (byte) 0x02, (byte) 0x03,
+                (byte) 0x04, (byte) 0x05, (byte) 0x06, (byte) 0x07};
+        final byte[] cookie1 = {(byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x04,
+                (byte) 0x05, (byte) 0x06, (byte) 0x07, (byte) 0x08};
+        final byte[] cookie2 = {(byte) 0x02, (byte) 0x03, (byte) 0x04, (byte) 0x05,
+                (byte) 0x06, (byte) 0x07, (byte) 0x08, (byte) 0x01};
+        final byte[] cookie3 = {(byte) 0x03, (byte) 0x04, (byte) 0x05, (byte) 0x06,
+                (byte) 0x07, (byte) 0x08, (byte) 0x01, (byte) 0x02};
+        final byte[] cookie4 = {(byte) 0x04, (byte) 0x05, (byte) 0x06, (byte) 0x07,
+                (byte) 0x08, (byte) 0x01, (byte) 0x02, (byte) 0x03};
+        final byte[] cookie5 = null;
+
         long now = System.currentTimeMillis();
 
-        // Start a process and exit itself
-        startService(ACTION_EXIT, STUB_SERVICE_NAME, true, false);
+        // Start a process and do nothing
+        startService(ACTION_NONE, STUB_SERVICE_NAME, false, true, false, true, cookie0);
+        // request to exit by itself with a different cookie
+        startService(ACTION_EXIT, STUB_SERVICE_NAME, true, false, false, true, cookie1);
 
         long now2 = System.currentTimeMillis();
 
         // Start the process in a secondary user and kill itself
-        startService(ACTION_KILL, STUB_SERVICE_NAME, true, true);
+        startService(ACTION_KILL, STUB_SERVICE_NAME, true, true, true, true, cookie2);
 
         long now3 = System.currentTimeMillis();
 
         // Start a remote process in a secondary user and exit
-        startService(ACTION_EXIT, STUB_SERVICE_REMOTE_NAME, true, true);
+        startService(ACTION_EXIT, STUB_SERVICE_REMOTE_NAME, true, true, true, true, cookie3);
 
         long now4 = System.currentTimeMillis();
 
         // Start a remote process and kill itself
-        startService(ACTION_KILL, STUB_SERVICE_REMOTE_NAME, true, false);
+        startService(ACTION_KILL, STUB_SERVICE_REMOTE_NAME, true, true, false, true, cookie4);
 
         long now5 = System.currentTimeMillis();
         // drop the permissions
@@ -865,9 +941,10 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
 
         assertTrue(list != null && list.size() == 2);
         verify(list.get(0), mStubPackageRemotePid, mStubPackageUid, STUB_REMOTE_ROCESS_NAME,
-                ApplicationExitInfo.REASON_SIGNALED, OsConstants.SIGKILL, null, now4, now5);
+                ApplicationExitInfo.REASON_SIGNALED, OsConstants.SIGKILL, null, now4, now5,
+                cookie4);
         verify(list.get(1), mStubPackagePid, mStubPackageUid, STUB_ROCESS_NAME,
-                ApplicationExitInfo.REASON_EXIT_SELF, EXIT_CODE, null, now, now2);
+                ApplicationExitInfo.REASON_EXIT_SELF, EXIT_CODE, null, now, now2, cookie1);
 
         // Now try the other user
         try {
@@ -890,16 +967,17 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         assertTrue(list != null && list.size() == 2);
         verify(list.get(0), mStubPackageRemoteOtherUserPid, mStubPackageOtherUid,
                 STUB_REMOTE_ROCESS_NAME, ApplicationExitInfo.REASON_EXIT_SELF, EXIT_CODE,
-                null, now3, now4);
+                null, now3, now4, cookie3);
         verify(list.get(1), mStubPackageOtherUserPid, mStubPackageOtherUid, STUB_ROCESS_NAME,
-                ApplicationExitInfo.REASON_SIGNALED, OsConstants.SIGKILL, null, now2, now3);
+                ApplicationExitInfo.REASON_SIGNALED, OsConstants.SIGKILL, null,
+                now2, now3, cookie2);
 
         // Get the full user permission in order to start service as other user
         mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
                 android.Manifest.permission.INTERACT_ACROSS_USERS,
                 android.Manifest.permission.INTERACT_ACROSS_USERS_FULL);
         // Start the process in a secondary user and do nothing
-        startService(ACTION_NONE, STUB_SERVICE_NAME, false, true);
+        startService(ACTION_NONE, STUB_SERVICE_NAME, false, true, true, true, cookie5);
         // drop the permissions
         mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
 
@@ -916,7 +994,7 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
                 android.Manifest.permission.DUMP,
                 android.Manifest.permission.INTERACT_ACROSS_USERS);
         verify(list.get(0), mStubPackageOtherUserPid, mStubPackageOtherUid, STUB_ROCESS_NAME,
-                ApplicationExitInfo.REASON_USER_STOPPED, null, null, now6, now7);
+                ApplicationExitInfo.REASON_USER_STOPPED, null, null, now6, now7, cookie5);
 
         int otherUserId = mOtherUserId;
         // Now remove the other user
@@ -947,13 +1025,20 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
 
         assertTrue(list != null && list.size() == 2);
         verify(list.get(0), mStubPackageRemotePid, mStubPackageUid, STUB_REMOTE_ROCESS_NAME,
-                ApplicationExitInfo.REASON_SIGNALED, OsConstants.SIGKILL, null, now4, now5);
+                ApplicationExitInfo.REASON_SIGNALED, OsConstants.SIGKILL, null, now4, now5,
+                cookie4);
         verify(list.get(1), mStubPackagePid, mStubPackageUid, STUB_ROCESS_NAME,
-                ApplicationExitInfo.REASON_EXIT_SELF, EXIT_CODE, null, now, now2);
+                ApplicationExitInfo.REASON_EXIT_SELF, EXIT_CODE, null, now, now2, cookie1);
     }
 
     private void verify(ApplicationExitInfo info, int pid, int uid, String processName,
             int reason, Integer status, String description, long before, long after) {
+        verify(info, pid, uid, processName, reason, status, description, before, after, null);
+    }
+
+    private void verify(ApplicationExitInfo info, int pid, int uid, String processName,
+            int reason, Integer status, String description, long before, long after,
+            byte[] cookie) {
         assertNotNull(info);
         assertEquals(pid, info.getPid());
         assertEquals(uid, info.getRealUid());
@@ -967,13 +1052,17 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         }
         assertTrue(before <= info.getTimestamp());
         assertTrue(after >= info.getTimestamp());
+        assertTrue(ArrayUtils.equals(info.getProcessStateSummary(), cookie,
+                cookie == null ? 0 : cookie.length));
     }
 
     /**
      * A utility class interact with "am monitor"
      */
     private static class Monitor {
-        static final String WAIT_FOR_ANR = "Waiting after early ANR...  available commands:";
+        static final String WAIT_FOR_EARLY_ANR = "Waiting after early ANR...  available commands:";
+        static final String WAIT_FOR_ANR = "Waiting after ANR...  available commands:";
+        static final String CMD_CONTINUE = "c";
         static final String CMD_KILL = "k";
 
         final Instrumentation mInstrumentation;

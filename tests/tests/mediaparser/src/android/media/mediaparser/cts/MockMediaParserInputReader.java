@@ -30,6 +30,16 @@ public class MockMediaParserInputReader implements MediaParser.SeekableInputRead
         mFakeExtractorInput = fakeExtractorInput;
     }
 
+    public void reset() {
+        mFakeExtractorInput.reset();
+    }
+
+    public void setPosition(int position) {
+        mFakeExtractorInput.setPosition(position);
+    }
+
+    // SeekableInputReader implementation.
+
     @Override
     public int read(byte[] buffer, int offset, int readLength) throws IOException {
         return mFakeExtractorInput.read(buffer, offset, readLength);

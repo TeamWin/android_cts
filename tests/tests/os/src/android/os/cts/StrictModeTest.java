@@ -626,10 +626,11 @@ public class StrictModeTest {
                         .penaltyLog()
                         .build());
 
+        final String wmClassName = WindowManager.class.getSimpleName();
         inspectViolation(
                 () -> getContext().getApplicationContext().getSystemService(WindowManager.class),
                 info -> assertThat(info.getStackTrace()).contains(
-                        "Tried to access visual service " + WINDOW_SERVICE));
+                        "Tried to access visual service " + wmClassName));
 
         final Display display = getContext().getSystemService(DisplayManager.class)
                 .getDisplay(DEFAULT_DISPLAY);

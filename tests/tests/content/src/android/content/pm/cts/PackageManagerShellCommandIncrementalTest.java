@@ -31,7 +31,6 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -121,7 +120,6 @@ public class PackageManagerShellCommandIncrementalTest {
         assertEquals(null, getSplits(TEST_APP_PACKAGE));
     }
 
-    @Ignore("TODO(b/150809360): Re-enable after SELinux rules are in.")
     @Test
     public void testInstallWithIdSig() throws Exception {
         final Context context = InstrumentationRegistry.getInstrumentation().getContext();

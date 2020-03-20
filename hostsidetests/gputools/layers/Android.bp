@@ -70,6 +70,46 @@ cc_test_library {
 }
 
 cc_test_library {
+    name: "libVkLayer_nullLayerD",
+    gtest: false,
+    srcs: ["jni/nullLayer.cpp"],
+    cflags: [
+        "-Wall",
+        "-Werror",
+        "-fvisibility=hidden",
+        "-DLAYERNAME=D",
+        "-DDEBUGUTILSPECVERSION=1",
+    ],
+    shared_libs: [
+        "libandroid",
+        "libvulkan",
+        "liblog",
+    ],
+    stl: "c++_shared",
+    sdk_version: "current",
+}
+
+cc_test_library {
+    name: "libVkLayer_nullLayerE",
+    gtest: false,
+    srcs: ["jni/nullLayer.cpp"],
+    cflags: [
+        "-Wall",
+        "-Werror",
+        "-fvisibility=hidden",
+        "-DLAYERNAME=E",
+        "-DDEBUGUTILSPECVERSION=2",
+    ],
+    shared_libs: [
+        "libandroid",
+        "libvulkan",
+        "liblog",
+    ],
+    stl: "c++_shared",
+    sdk_version: "current",
+}
+
+cc_test_library {
     name: "libGLES_glesLayerA",
     gtest: false,
     srcs: ["jni/glesLayer.cpp"],
@@ -143,6 +183,8 @@ android_test_helper_app {
         "libVkLayer_nullLayerA",
         "libVkLayer_nullLayerB",
         "libVkLayer_nullLayerC",
+        "libVkLayer_nullLayerD",
+        "libVkLayer_nullLayerE",
     ],
     use_embedded_native_libs: false,
     stl: "c++_shared",

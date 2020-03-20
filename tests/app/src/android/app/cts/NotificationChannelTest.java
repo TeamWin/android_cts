@@ -28,7 +28,6 @@ import android.net.Uri;
 import android.os.Parcel;
 import android.provider.Settings;
 import android.test.AndroidTestCase;
-import android.text.TextUtils;
 
 public class NotificationChannelTest extends AndroidTestCase {
 
@@ -83,7 +82,7 @@ public class NotificationChannelTest extends AndroidTestCase {
         channel.setDeleted(true);
         channel.setFgServiceShown(true);
         channel.setVibrationPattern(new long[] {299, 4562});
-        channel.setBlockableSystem(true);
+        channel.setBlockable(true);
         channel.setConversationId("parent_channel", "conversation 1");
         channel.setImportantConversation(true);
         Parcel parcel = Parcel.obtain();
@@ -190,8 +189,8 @@ public class NotificationChannelTest extends AndroidTestCase {
     public void testIsBlockableSystem() {
         NotificationChannel channel =
                 new NotificationChannel("1", "one", IMPORTANCE_DEFAULT);
-        channel.setBlockableSystem(true);
-        assertTrue(channel.isBlockableSystem());
+        channel.setBlockable(true);
+        assertTrue(channel.isBlockable());
     }
 
     public void testIsImportanceLockedByOEM() {
@@ -203,9 +202,9 @@ public class NotificationChannelTest extends AndroidTestCase {
 
     public void testSystemBlockable() {
         NotificationChannel channel = new NotificationChannel("a", "ab", IMPORTANCE_DEFAULT);
-        assertEquals(false, channel.isBlockableSystem());
-        channel.setBlockableSystem(true);
-        assertEquals(true, channel.isBlockableSystem());
+        assertEquals(false, channel.isBlockable());
+        channel.setBlockable(true);
+        assertEquals(true, channel.isBlockable());
     }
 
     public void testOriginalImportance() {
