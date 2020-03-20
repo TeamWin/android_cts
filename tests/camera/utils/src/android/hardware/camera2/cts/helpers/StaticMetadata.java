@@ -2538,26 +2538,6 @@ public class StaticMetadata {
     }
 
     /**
-     * Check if rotate and crop is supported
-     */
-    public boolean isRotateAndCropSupported() {
-        int[] availableRotateAndCropModes = mCharacteristics.get(
-                CameraCharacteristics.SCALER_AVAILABLE_ROTATE_AND_CROP_MODES);
-
-        if (availableRotateAndCropModes == null) {
-            return false;
-        }
-
-        for (int mode : availableRotateAndCropModes) {
-            if (mode != CameraMetadata.SCALER_ROTATE_AND_CROP_NONE) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * Check if distortion correction is supported.
      */
     public boolean isDistortionCorrectionSupported() {

@@ -35,6 +35,10 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.Scanner;
 
+/**
+ * A test app called from {@link com.android.cts.userspacereboot.host.UserspaceRebootHostTest} to
+ * verify CE storage related properties of userspace reboot.
+ */
 @RunWith(JUnit4.class)
 public class BootCompletedUserspaceRebootTest {
 
@@ -50,6 +54,12 @@ public class BootCompletedUserspaceRebootTest {
     private final Context mDeContext =
             getInstrumentation().getContext().createDeviceProtectedStorageContext();
 
+    /**
+     * Writes to a file in CE storage of {@link BootCompletedUserspaceRebootTest}.
+     *
+     * <p>Reading content of this file is used by other test cases in this class to verify that CE
+     * storage is unlocked after userspace reboot.
+     */
     @Test
     public void prepareFile() throws Exception {
         try (OutputStreamWriter writer = new OutputStreamWriter(
@@ -58,6 +68,9 @@ public class BootCompletedUserspaceRebootTest {
         }
     }
 
+    /**
+     * Tests that CE storage is unlocked by reading content of a file in CE storage.
+     */
     @Test
     public void testVerifyCeStorageUnlocked() throws Exception {
         UserManager um = getInstrumentation().getContext().getSystemService(UserManager.class);
@@ -68,6 +81,10 @@ public class BootCompletedUserspaceRebootTest {
         }
     }
 
+    /**
+     * Tests that {@link BootCompletedUserspaceRebootTest} received a {@link
+     * Intent.ACTION_BOOT_COMPLETED} broadcast.
+     */
     @Test
     public void testVerifyReceivedBootCompletedBroadcast() throws Exception {
         try (Scanner scanner = new Scanner(mDeContext.openFileInput(RECEIVED_BROADCASTS_FILE))) {
@@ -76,6 +93,9 @@ public class BootCompletedUserspaceRebootTest {
         }
     }
 
+    /**
+     * Receiver of {@link Intent.ACTION_BOOT_COMPLETED} broadcast.
+     */
     public static class BootReceiver extends BroadcastReceiver {
 
         @Override

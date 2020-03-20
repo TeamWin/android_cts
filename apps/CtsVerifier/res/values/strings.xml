@@ -229,11 +229,12 @@
     <!-- Strings for BiometricTest -->
     <string name="biometric_test">Biometric Tests</string>
 
-    <string name="biometric_test_category_credential">Credential Tests</string>
-    <string name="biometric_test_category_strong">Strong Biometric Tests</string>
-    <string name="biometric_test_category_weak">Weak Biometric Tests</string>
+    <string name="biometric_test_category_credential">1) Credential Tests</string>
+    <string name="biometric_test_category_strong">2) Strong Biometric Tests</string>
+    <string name="biometric_test_category_weak">3) Weak Biometric Tests</string>
+    <string name="biometric_test_category_combination">4) setUserAuthParams Tests</string>
 
-    <string name="biometric_test_credential_not_enrolled_label">1) Credential Not Enrolled Tests</string>
+    <string name="biometric_test_credential_not_enrolled_label">1a: Credential Not Enrolled Tests</string>
     <string name="biometric_test_credential_not_enrolled_instructions">This test checks that the BiometricManager/BiometricPrompt
         APIs return results consistent with credential (PIN/Pattern/Password) state. Before starting this test, please ensure that you do
         NOT have a credential set up.</string>
@@ -241,7 +242,7 @@
     <string name="biometric_test_credential_not_enrolled_bp_setAllowedAuthenticators_button">Check BiometricPrompt setAllowedAuthenticators(DEVICE_CREDENTIAL)</string>
     <string name="biometric_test_credential_not_enrolled_bp_setDeviceCredentialAllowed_button">Check BiometricPrompt setDeviceCredentialAllowed(true)</string>
 
-    <string name="biometric_test_credential_enrolled_label">2) Credential Enrolled Tests</string>
+    <string name="biometric_test_credential_enrolled_label">1b: Credential Enrolled Tests</string>
     <string name="biometric_test_credential_enrolled_instructions">This test checks that apps are able to request credential enrollment, and that the BiometricManager/BiometricPrompt
         APIs return results consistent with credential (PIN/Pattern/Password) state.</string>
     <string name="biometric_test_credential_enroll_button">Enroll credential</string>
@@ -249,7 +250,7 @@
     <string name="biometric_test_credential_enrolled_bp_setAllowedAuthenticators_button">Check BiometricPrompt setAllowedAuthenticators(DEVICE_CREDENTIAL)</string>
     <string name="biometric_test_credential_enrolled_bp_setDeviceCredentialAllowed_button">Check BiometricPrompt setDeviceCredentialAllowed(true)</string>
 
-    <string name="biometric_test_credential_crypto_label">3) Credential Crypto</string>
+    <string name="biometric_test_credential_crypto_label">1c: Credential Crypto</string>
     <string name="biometric_test_credential_crypto_instructions">This test checks that PIN/Pattern/Password successfully unlocks the relevant KeyStore operations. Please
         ensure that you have a PIN/Pattern/Password set up.</string>
     <string name="biometric_test_credential_crypto_timed_key_strongbox">Create and unlock timed key (StrongBox)</string>
@@ -271,12 +272,14 @@
     <string name="biometric_test_invalid_inputs">Test invalid inputs</string>
     <!-- Rejecting does not end the authentication lifecycle -->
     <string name="biometric_test_reject_first">Reject, then authenticate</string>
+    <!-- Negative button callback is received -->
+    <string name="biometric_test_negative_button_button">Test Negative Button</string>
 
     <string name="biometric_test_reject_continues_instruction_title">Instructions</string>
     <string name="biometric_test_reject_continues_instruction_contents">Please authenticate with a non-enrolled biometric before authenticating with the actual enrolled biometric.</string>
     <string name="biometric_test_reject_continues_instruction_continue">Continue</string>
 
-    <string name="biometric_test_strong_label">4) Strong Biometrics + Crypto</string>
+    <string name="biometric_test_strong_label">2a: Strong Biometrics + Crypto</string>
     <string name="biometric_test_strong_instructions">This test checks that the Settings.ACTION_BIOMETRIC_ENROLL and its corresponding
         EXTRA_BIOMETRIC_AUTHENTICATOR_REQUIREMENTS APIs enroll only a STRONG biometric. Please ensure that the device
         does NOT have ANY biometrics enrolled before starting this test. After passing the first part of the test, it will check various use cases
@@ -290,13 +293,39 @@
     <string name="biometric_test_strong_authenticate_invalidated_instruction_contents">Before starting the next test, please add another enrollment to your strong biometric sensor. If only one enrollment is supported, please remove the current enrollment, then enroll.</string>
     <string name="biometric_test_strong_authenticate_invalidated_instruction_continue">Continue</string>
 
-    <string name="biometric_test_weak_label">5) Weak Biometrics</string>
+    <string name="biometric_test_weak_label">3a: Weak Biometrics</string>
     <string name="biometric_test_weak_instructions">This test checks that the Settings.ACTION_BIOMETRIC_ENROLL and its corresponding
         EXTRA_BIOMETRIC_AUTHENTICATOR_REQUIREMENTS APIs enroll a biometric that meets or exceeds WEAK. Please ensure that the device
         does NOT have ANY biometrics enrolled before starting this test. After passing the first part of the test, it will check various use cases
         when authentication is invoked.</string>
     <string name="biometric_test_weak_enroll">Start enrollment</string>
     <string name="biometric_test_weak_authenticate">Authenticate</string>
+
+    <string name="biometric_test_set_user_authentication_credential_cipher_label">4a: Cipher, Credential</string>
+    <string name="biometric_test_set_user_authentication_biometric_cipher_label">4b: Cipher, Biometric</string>
+    <string name="biometric_test_set_user_authentication_biometric_credential_cipher_label">4c: Cipher, Biometric|Credential</string>
+    <string name="biometric_test_set_user_authentication_credential_signature_label">4d: Signature, Credential</string>
+    <string name="biometric_test_set_user_authentication_biometric_signature_label">4e: Signature, Biometric</string>
+    <string name="biometric_test_set_user_authentication_biometric_or_credential_signature_label">4f: Signature, Biometric|Credential</string>
+    <string name="biometric_test_set_user_authentication_credential_mac_label">4g: MAC, Credential</string>
+    <string name="biometric_test_set_user_authentication_biometric_mac_label">4h: MAC, Biometric</string>
+    <string name="biometric_test_set_user_authentication_biometric_or_credential_mac_label">4h: MAC, Biometric|Credential</string>
+    <string name="biometric_test_set_user_authentication_credential_instructions">This test checks the correctness of the KeyGenParameterSpec.Builder#setUserAuthenticationParameters(int, int) API for AUTH_DEVICE_CREDENTIAL.
+        Buttons for completed tasks will become invisible. It\'s normal for buttons to be disabled for a few seconds during this test.</string>
+    <string name="biometric_test_set_user_authentication_biometric_instructions">This test checks the correctness of the KeyGenParameterSpec.Builder#setUserAuthenticationParameters(int, int) API for AUTH_BIOMETRIC_STRONG.
+        Buttons for completed tasks will become invisible. It\'s normal for buttons to be disabled for a few seconds during this test.</string>
+    <string name="biometric_test_set_user_authentication_biometric_or_credential_instructions">This test checks the correctness of the KeyGenParameterSpec.Builder#setUserAuthenticationParameters(int, int) API for AUTH_BIOMETRIC_STRONG|AUTH_DEVICE_CREDENTIAL.
+        Buttons for completed tasks will become invisible. It\'s normal for buttons to be disabled for a few seconds during this test.</string>
+    <!-- no strongbox-->
+    <string name="biometric_test_set_user_authentication_credential_per_use_auth_with_credential">auth-per-use key with credential</string>
+    <string name="biometric_test_set_user_authentication_credential_duration_auth_with_credential">time-based key with credential</string>
+    <string name="biometric_test_set_user_authentication_credential_per_use_auth_with_biometric">auth-per-use key with biometric</string>
+    <string name="biometric_test_set_user_authentication_credential_duration_auth_with_biometric">time-based key with biometric</string>
+    <!-- strongbox -->
+    <string name="biometric_test_set_user_authentication_credential_per_use_auth_with_credential_strongbox">auth-per-use key with credential (strongbox)</string>
+    <string name="biometric_test_set_user_authentication_credential_duration_auth_with_credential_strongbox">time-based key with credential (strongbox)</string>
+    <string name="biometric_test_set_user_authentication_credential_per_use_auth_with_biometric_strongbox">auth-per-use key with biometric (strongbox)</string>
+    <string name="biometric_test_set_user_authentication_credential_duration_auth_with_biometric_strongbox">time-based key with biometric (strongbox)</string>
 
     <!-- Strings for lock bound keys test -->
     <string name="sec_lock_bound_key_test">Lock Bound Keys Test</string>
@@ -2808,7 +2837,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_cross_profile_permission_disabled_by_default">Cross profile permission disabled by default</string>
     <string name="provisioning_byod_cross_profile_permission_disabled_by_default_instruction">
         Press the Go button to go to Settings &gt; Apps &amp; notifications &gt; Special app access >\n
-        Connected personal and work apps.\n
+        Connected work and personal apps.\n
         Choose the \"Cross profile test app\" from the list and check that the switch is disabled.\n
         Go back to CTS Verifier and mark the test as \"Pass\" or \"Fail\".
     </string>
@@ -2816,7 +2845,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_cross_profile_permission_enabled_instruction">
         Press the Go button to open the \"Cross Profile Test App\".\n
         Press the \"Open Settings\" button to go to Settings &gt; Apps &amp; notifications &gt; Special app access >
-        Connected personal and work apps > Cross profile test app, then enable the switch.\n
+        Connected work and personal apps > Cross profile test app, then enable the switch.\n
         Verify that when you go back it takes you to the \"Cross Profile Test App\".\n
         Now verify that it shows \"INTERACTING ACROSS PROFILES ALLOWED\" message.\n
         Go back to CTS Verifier and mark the test as \"Pass\" or \"Fail\".
@@ -2825,7 +2854,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_cross_profile_permission_disabled_instruction">
         Press the Go button to open the \"Cross Profile Test App\".\n
         Press the \"Open Settings\" button to go to Settings &gt; Apps &amp; notifications &gt; Special app access >
-        Connected personal and work apps > Cross profile test app, then disable the switch.\n
+        Connected work and personal apps > Cross profile test app, then disable the switch.\n
         Verify that when you go back it takes you to the \"Cross Profile Test App\".\n
         Now verify that it shows \"INTERACTING ACROSS PROFILES NOT ALLOWED\" message.\n
         Go back to CTS Verifier and mark the test as \"Pass\" or \"Fail\".

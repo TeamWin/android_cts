@@ -733,10 +733,6 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
             waiverKeys.add(CaptureResult.CONTROL_BOKEH_MODE);
         }
 
-        if (!staticInfo.isRotateAndCropSupported()) {
-            waiverKeys.add(CaptureResult.SCALER_ROTATE_AND_CROP);
-        }
-
         if (staticInfo.isHardwareLevelAtLeastFull()) {
             return waiverKeys;
         }
@@ -851,7 +847,6 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         waiverKeys.add(CaptureResult.STATISTICS_FACE_DETECT_MODE);
         waiverKeys.add(CaptureResult.FLASH_MODE);
         waiverKeys.add(CaptureResult.SCALER_CROP_REGION);
-        waiverKeys.add(CaptureResult.SCALER_ROTATE_AND_CROP);
 
         return waiverKeys;
     }
@@ -1024,7 +1019,6 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         resultKeys.add(CaptureResult.NOISE_REDUCTION_MODE);
         resultKeys.add(CaptureResult.REQUEST_PIPELINE_DEPTH);
         resultKeys.add(CaptureResult.SCALER_CROP_REGION);
-        resultKeys.add(CaptureResult.SCALER_ROTATE_AND_CROP);
         resultKeys.add(CaptureResult.SENSOR_EXPOSURE_TIME);
         resultKeys.add(CaptureResult.SENSOR_FRAME_DURATION);
         resultKeys.add(CaptureResult.SENSOR_SENSITIVITY);

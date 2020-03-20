@@ -45,6 +45,7 @@ import android.os.Process;
 import android.provider.Settings;
 import android.provider.Settings.Global;
 import android.provider.Settings.Secure;
+import android.util.Log;
 
 import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
@@ -73,9 +74,6 @@ public class BatterySaverLocationTest extends BatterySavingTestBase {
     private static final String TAG = "BatterySaverLocationTest";
 
     private static final String TEST_PROVIDER_NAME = "test_provider";
-
-    private static final String READ_DEVICE_CONFIG_PERMISSION =
-            "android.permission.READ_DEVICE_CONFIG";
 
     @Rule
     public final RequiredFeatureRule mRequireLocationRule =
@@ -133,19 +131,9 @@ public class BatterySaverLocationTest extends BatterySavingTestBase {
                 "");
     }
 
-    private List<LocationRequest> getTestProviderCurrentRequests(String provider) {
-        getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
-                READ_DEVICE_CONFIG_PERMISSION);
-        try {
-            return mLocationManager.getTestProviderCurrentRequests(provider);
-        } finally {
-            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
-        }
-    }
-
     private boolean areOnlyIgnoreSettingsRequestsSentToProvider() {
         List<LocationRequest> requests =
-                getTestProviderCurrentRequests(TEST_PROVIDER_NAME);
+                mLocationManager.getTestProviderCurrentRequests(TEST_PROVIDER_NAME);
         for (LocationRequest request : requests) {
             if (!request.isLocationSettingsIgnored()) {
                 return false;
@@ -283,7 +271,7 @@ public class BatterySaverLocationTest extends BatterySavingTestBase {
         mLocationManager.requestLocationUpdates(
                 ignoreSettingsLocationRequest, new TestLocationListener(), Looper.getMainLooper());
         assertTrue("Not enough requests sent to provider",
-                getTestProviderCurrentRequests(TEST_PROVIDER_NAME).size() >= 2);
+                mLocationManager.getTestProviderCurrentRequests(TEST_PROVIDER_NAME).size() >= 2);
         assertFalse("Normal priority requests not sent to provider",
                 areOnlyIgnoreSettingsRequestsSentToProvider());
 
@@ -319,21 +307,21 @@ public class BatterySaverLocationTest extends BatterySavingTestBase {
         waitUntil("Normal location request still sent to provider",
                 this::areOnlyIgnoreSettingsRequestsSentToProvider);
         assertTrue("Not enough requests sent to provider",
-                getTestProviderCurrentRequests(TEST_PROVIDER_NAME).size() >= 1);
+                mLocationManager.getTestProviderCurrentRequests(TEST_PROVIDER_NAME).size() >= 1);
 
         // On again.
         turnOnScreen(true);
         waitUntil("Normal location request not sent to provider",
                 () -> !areOnlyIgnoreSettingsRequestsSentToProvider());
         assertTrue("Not enough requests sent to provider",
-                getTestProviderCurrentRequests(TEST_PROVIDER_NAME).size() >= 2);
+                mLocationManager.getTestProviderCurrentRequests(TEST_PROVIDER_NAME).size() >= 2);
 
         // Off again.
         turnOnScreen(false);
         waitUntil("Normal location request still sent to provider",
                 this::areOnlyIgnoreSettingsRequestsSentToProvider);
         assertTrue("Not enough requests sent to provider",
-                getTestProviderCurrentRequests(TEST_PROVIDER_NAME).size() >= 1);
+                mLocationManager.getTestProviderCurrentRequests(TEST_PROVIDER_NAME).size() >= 1);
 
 
         // Disable battery saver and make sure the kill switch is off.
@@ -341,7 +329,6 @@ public class BatterySaverLocationTest extends BatterySavingTestBase {
         waitUntil("Normal location request not sent to provider",
                 () -> !areOnlyIgnoreSettingsRequestsSentToProvider());
         assertTrue("Not enough requests sent to provider",
-                getTestProviderCurrentRequests(TEST_PROVIDER_NAME).size() >= 2);
+                mLocationManager.getTestProviderCurrentRequests(TEST_PROVIDER_NAME).size() >= 2);
     }
 }
-

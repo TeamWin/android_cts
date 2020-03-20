@@ -15,16 +15,10 @@
  */
 package android.car.cts;
 
-import static org.testng.Assert.assertThrows;
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
-import static java.lang.Integer.toHexString;
+import static org.testng.Assert.assertThrows;
 
 import android.car.Car;
 import android.car.VehicleAreaSeat;
@@ -37,7 +31,6 @@ import android.car.hardware.property.CarPropertyManager.CarPropertyEventCallback
 import android.platform.test.annotations.RequiresDevice;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.ArraySet;
-import android.util.Log;
 import android.util.SparseArray;
 
 import androidx.annotation.GuardedBy;
@@ -60,6 +53,7 @@ public class CarPropertyManagerTest extends CarApiTestBase {
 
     private static final String TAG = CarPropertyManagerTest.class.getSimpleName();
     private static final long WAIT_CALLBACK = 1500L;
+    private static final int NO_EVENTS = 0;
     private CarPropertyManager mCarPropertyManager;
     /** contains property Ids for the properties required by CDD*/
     private ArraySet<Integer> mPropertyIds = new ArraySet<>();
@@ -123,7 +117,7 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     @Test
     public void testGetPropertyList() {
         List<CarPropertyConfig> allConfigs = mCarPropertyManager.getPropertyList();
-        assertNotNull(allConfigs);
+        assertThat(allConfigs).isNotNull();
     }
 
     /**
@@ -133,7 +127,7 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     public void testGetPropertyListWithArraySet() {
         List<CarPropertyConfig> requiredConfigs = mCarPropertyManager.getPropertyList(mPropertyIds);
         // Vehicles need to implement all of those properties
-        assertEquals(mPropertyIds.size(), requiredConfigs.size());
+        assertThat(requiredConfigs.size()).isEqualTo(mPropertyIds.size());
     }
 
     /**
@@ -143,7 +137,7 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     public void testGetPropertyConfig() {
         List<CarPropertyConfig> allConfigs = mCarPropertyManager.getPropertyList();
         for (CarPropertyConfig cfg : allConfigs) {
-            assertNotNull(mCarPropertyManager.getCarPropertyConfig(cfg.getPropertyId()));
+            assertThat(mCarPropertyManager.getCarPropertyConfig(cfg.getPropertyId())).isNotNull();
         }
     }
 
@@ -156,8 +150,9 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         List<CarPropertyConfig> allConfigs = mCarPropertyManager.getPropertyList();
         for (CarPropertyConfig cfg : allConfigs) {
             if (cfg.isGlobalProperty()) {
-                assertEquals(0, mCarPropertyManager.getAreaId(cfg.getPropertyId(),
-                        VehicleAreaSeat.SEAT_ROW_1_LEFT));
+                assertThat(mCarPropertyManager.getAreaId(cfg.getPropertyId(),
+                        VehicleAreaSeat.SEAT_ROW_1_LEFT))
+                        .isEqualTo(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL);
             } else {
                 int[] areaIds = cfg.getAreaIds();
                 // Because areaId in propConfig must not be overlapped with each other.
@@ -165,7 +160,7 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                 for (int areaIdInConfig : areaIds) {
                     int areaIdByCarPropertyManager =
                             mCarPropertyManager.getAreaId(cfg.getPropertyId(), areaIdInConfig);
-                    assertEquals(areaIdInConfig, areaIdByCarPropertyManager);
+                    assertThat(areaIdByCarPropertyManager).isEqualTo(areaIdInConfig);
                 }
             }
         }
@@ -174,33 +169,34 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     @CddTest(requirement="2.5.1")
     @Test
     public void testMustSupportGearSelection() throws Exception {
-        assertTrue("Must support GEAR_SELECTION",
-            mCarPropertyManager.getPropertyList().stream().anyMatch(cfg -> cfg.getPropertyId() ==
-                VehiclePropertyIds.GEAR_SELECTION));
+        assertWithMessage("Must support GEAR_SELECTION")
+                .that(mCarPropertyManager.getCarPropertyConfig(VehiclePropertyIds.GEAR_SELECTION))
+                .isNotNull();
     }
 
     @CddTest(requirement="2.5.1")
     @Test
     public void testMustSupportNightMode() {
-        assertTrue("Must support NIGHT_MODE",
-            mCarPropertyManager.getPropertyList().stream().anyMatch(cfg -> cfg.getPropertyId() ==
-                VehiclePropertyIds.NIGHT_MODE));
+        assertWithMessage("Must support NIGHT_MODE")
+                .that(mCarPropertyManager.getCarPropertyConfig(VehiclePropertyIds.NIGHT_MODE))
+                .isNotNull();
     }
 
     @CddTest(requirement="2.5.1")
     @Test
     public void testMustSupportPerfVehicleSpeed() throws Exception {
-        assertTrue("Must support PERF_VEHICLE_SPEED",
-            mCarPropertyManager.getPropertyList().stream().anyMatch(cfg -> cfg.getPropertyId() ==
-                VehiclePropertyIds.PERF_VEHICLE_SPEED));
+        assertWithMessage("Must support PERF_VEHICLE_SPEED")
+                .that(mCarPropertyManager.getCarPropertyConfig(
+                        VehiclePropertyIds.PERF_VEHICLE_SPEED)).isNotNull();
     }
 
     @CddTest(requirement = "2.5.1")
     @Test
     public void testMustSupportParkingBrakeOn() throws Exception {
-        assertTrue("Must support PARKING_BRAKE_ON",
-            mCarPropertyManager.getPropertyList().stream().anyMatch(cfg -> cfg.getPropertyId() ==
-                VehiclePropertyIds.PARKING_BRAKE_ON));
+        assertWithMessage("Must support PARKING_BRAKE_ON")
+                .that(mCarPropertyManager.getCarPropertyConfig(VehiclePropertyIds.PARKING_BRAKE_ON))
+                .isNotNull();
+
     }
 
     @SuppressWarnings("unchecked")
@@ -286,7 +282,8 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         for (CarPropertyConfig cfg : configs) {
             int[] areaIds = getAreaIdsHelper(cfg);
             for (int areaId : areaIds) {
-                assertTrue(mCarPropertyManager.isPropertyAvailable(cfg.getPropertyId(), areaId));
+                assertThat(mCarPropertyManager.isPropertyAvailable(cfg.getPropertyId(), areaId))
+                        .isTrue();
             }
         }
     }
@@ -313,17 +310,17 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         int invalidPropertyId = -1;
         boolean isRegistered = mCarPropertyManager.registerCallback(
             new CarPropertyEventCounter(), invalidPropertyId, 0);
-        assertFalse(isRegistered);
+        assertThat(isRegistered).isFalse();
 
         // Test for continuous properties
         int vehicleSpeed = VehiclePropertyIds.PERF_VEHICLE_SPEED;
         CarPropertyEventCounter speedListenerNormal = new CarPropertyEventCounter();
         CarPropertyEventCounter speedListenerUI = new CarPropertyEventCounter();
 
-        assertEquals(0, speedListenerNormal.receivedEvent(vehicleSpeed));
-        assertEquals(0, speedListenerNormal.receivedError(vehicleSpeed));
-        assertEquals(0, speedListenerUI.receivedEvent(vehicleSpeed));
-        assertEquals(0, speedListenerUI.receivedError(vehicleSpeed));
+        assertThat(speedListenerNormal.receivedEvent(vehicleSpeed)).isEqualTo(NO_EVENTS);
+        assertThat(speedListenerNormal.receivedError(vehicleSpeed)).isEqualTo(NO_EVENTS);
+        assertThat(speedListenerUI.receivedEvent(vehicleSpeed)).isEqualTo(NO_EVENTS);
+        assertThat(speedListenerUI.receivedError(vehicleSpeed)).isEqualTo(NO_EVENTS);
 
         mCarPropertyManager.registerCallback(speedListenerNormal, vehicleSpeed,
                 CarPropertyManager.SENSOR_RATE_NORMAL);
@@ -331,9 +328,8 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                 CarPropertyManager.SENSOR_RATE_FASTEST);
         // TODO(b/149778976): Use CountDownLatch in listener instead of waitingTime
         Thread.sleep(WAIT_CALLBACK);
-        assertNotEquals(0, speedListenerNormal.receivedEvent(vehicleSpeed));
-        assertNotEquals(0, speedListenerUI.receivedEvent(vehicleSpeed));
-        assertTrue(speedListenerUI.receivedEvent(vehicleSpeed) >
+        assertThat(speedListenerNormal.receivedEvent(vehicleSpeed)).isGreaterThan(NO_EVENTS);
+        assertThat(speedListenerUI.receivedEvent(vehicleSpeed)).isGreaterThan(
                 speedListenerNormal.receivedEvent(vehicleSpeed));
 
         mCarPropertyManager.unregisterCallback(speedListenerUI);
@@ -344,8 +340,7 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         CarPropertyEventCounter nightModeListener = new CarPropertyEventCounter();
         mCarPropertyManager.registerCallback(nightModeListener, nightMode, 0);
         Thread.sleep(WAIT_CALLBACK);
-        assertEquals(1, nightModeListener.receivedEvent(nightMode));
-
+        assertThat(nightModeListener.receivedEvent(nightMode)).isEqualTo(1);
         mCarPropertyManager.unregisterCallback(nightModeListener);
 
     }
@@ -378,15 +373,15 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         int currentEventUI = speedListenerUI.receivedEvent(vehicleSpeed);
         Thread.sleep(WAIT_CALLBACK);
 
-        assertEquals(currentEventNormal, speedListenerNormal.receivedEvent(vehicleSpeed));
-        assertNotEquals(currentEventUI, speedListenerUI.receivedEvent(vehicleSpeed));
+        assertThat(speedListenerNormal.receivedEvent(vehicleSpeed)).isEqualTo(currentEventNormal);
+        assertThat(speedListenerUI.receivedEvent(vehicleSpeed)).isNotEqualTo(currentEventUI);
 
         mCarPropertyManager.unregisterCallback(speedListenerUI);
         Thread.sleep(WAIT_CALLBACK);
 
         currentEventUI = speedListenerUI.receivedEvent(vehicleSpeed);
         Thread.sleep(WAIT_CALLBACK);
-        assertEquals(currentEventUI, speedListenerUI.receivedEvent(vehicleSpeed));
+        assertThat(speedListenerUI.receivedEvent(vehicleSpeed)).isEqualTo(currentEventUI);
     }
 
     @Test
