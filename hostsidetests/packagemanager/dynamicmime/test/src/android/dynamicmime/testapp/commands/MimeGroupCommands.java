@@ -19,7 +19,6 @@ package android.dynamicmime.testapp.commands;
 import static android.dynamicmime.common.Constants.GROUP_FIRST;
 import static android.dynamicmime.common.Constants.GROUP_SECOND;
 import static android.dynamicmime.common.Constants.GROUP_THIRD;
-import static android.dynamicmime.common.Constants.GROUP_UNDEFINED;
 import static android.dynamicmime.common.Constants.PACKAGE_HELPER_APP;
 import static android.dynamicmime.common.Constants.PACKAGE_PREFERRED_APP;
 import static android.dynamicmime.common.Constants.PACKAGE_UPDATE_APP;
@@ -29,12 +28,11 @@ import android.util.ArraySet;
 
 import androidx.annotation.Nullable;
 
+import java.util.Collections;
 import java.util.Set;
 
 public interface MimeGroupCommands {
     void setMimeGroup(String mimeGroup, Set<String> mimeTypes);
-    void clearMimeGroup(String mimeGroup);
-
     @Nullable
     Set<String> getMimeGroupInternal(String mimeGroup);
 
@@ -60,11 +58,21 @@ public interface MimeGroupCommands {
         setMimeGroup(mimeGroup, new ArraySet<>(mimeTypes));
     }
 
+    default void clearMimeGroup(String mimeGroup) {
+        setMimeGroup(mimeGroup, Collections.emptySet());
+    }
+
     default void clearGroups() {
-        clearMimeGroup(GROUP_FIRST);
-        clearMimeGroup(GROUP_SECOND);
-        clearMimeGroup(GROUP_THIRD);
-        clearMimeGroup(GROUP_UNDEFINED);
+        safeClearMimeGroup(GROUP_FIRST);
+        safeClearMimeGroup(GROUP_SECOND);
+        safeClearMimeGroup(GROUP_THIRD);
+    }
+
+    default void safeClearMimeGroup(String mimeGroup) {
+        try {
+            clearMimeGroup(mimeGroup);
+        } catch (Throwable ignored) {
+        }
     }
 
     static MimeGroupCommands testApp(Context context) {
@@ -87,10 +95,6 @@ public interface MimeGroupCommands {
         return new MimeGroupCommands() {
             @Override
             public void setMimeGroup(String mimeGroup, Set<String> mimeTypes) {
-            }
-
-            @Override
-            public void clearMimeGroup(String mimeGroup) {
             }
 
             @Override
