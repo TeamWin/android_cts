@@ -18,6 +18,7 @@ package android.graphics.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -48,6 +49,9 @@ import org.junit.runner.RunWith;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -644,6 +648,120 @@ public class BitmapRegionDecoderTest {
         Bitmap full = decoder.decodeRegion(new Rect(0, 0, decoder.getWidth(), decoder.getHeight()),
                 null);
         assertNotNull(full);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testNullParcelFileDescriptor() throws IOException {
+        ParcelFileDescriptor pfd = null;
+        BitmapRegionDecoder.newInstance(pfd);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testNullFileDescriptor() throws IOException {
+        FileDescriptor fd = null;
+        BitmapRegionDecoder.newInstance(fd, false);
+    }
+
+    @Test
+    public void testNullInputStream() throws IOException {
+        InputStream is = null;
+        assertNull(BitmapRegionDecoder.newInstance(is));
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testNullPathName() throws IOException {
+        String pathName = null;
+        BitmapRegionDecoder.newInstance(pathName);
+    }
+
+    @Test(expected = IOException.class)
+    public void testEmptyPathName() throws IOException {
+        String pathName = "";
+        BitmapRegionDecoder.newInstance(pathName);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testNullByteArray() throws IOException {
+        byte[] data = null;
+        BitmapRegionDecoder.newInstance(data, 0, 0);
+    }
+
+    @Test(expected = ArrayIndexOutOfBoundsException.class)
+    public void testNegativeOffset() throws IOException {
+        byte[] data = new byte[10];
+        BitmapRegionDecoder.newInstance(data, -1, 10);
+    }
+
+    @Test(expected = ArrayIndexOutOfBoundsException.class)
+    public void testNegativeLength() throws IOException {
+        byte[] data = new byte[10];
+        BitmapRegionDecoder.newInstance(data, 0, -10);
+    }
+
+    @Test(expected = ArrayIndexOutOfBoundsException.class)
+    public void testTooLong() throws IOException {
+        byte[] data = new byte[10];
+        BitmapRegionDecoder.newInstance(data, 1, 10);
+    }
+
+    @Test(expected = IOException.class)
+    public void testEmptyByteArray() throws IOException {
+        byte[] data = new byte[0];
+        BitmapRegionDecoder.newInstance(data, 0, 0);
+    }
+
+    @Test(expected = IOException.class)
+    public void testEmptyInputStream() throws IOException {
+        InputStream is = new InputStream() {
+            @Override
+            public int read() {
+                return -1;
+            }
+        };
+        BitmapRegionDecoder.newInstance(is);
+    }
+
+    private static File createEmptyFile() throws IOException {
+        File dir = InstrumentationRegistry.getTargetContext().getFilesDir();
+        dir.mkdirs();
+        return File.createTempFile("emptyFile", "tmp", dir);
+    }
+
+    @Test
+    public void testEmptyFile() throws IOException {
+        File file = createEmptyFile();
+        String pathName = file.getAbsolutePath();
+        assertThrows(IOException.class, () -> {
+            BitmapRegionDecoder.newInstance(pathName);
+        });
+        file.delete();
+    }
+
+    @Test
+    public void testEmptyFileDescriptor() throws IOException {
+        File file = createEmptyFile();
+        FileInputStream fileStream = new FileInputStream(file);
+        FileDescriptor fd = fileStream.getFD();
+        assertThrows(IOException.class, () -> {
+            BitmapRegionDecoder.newInstance(fd, false);
+        });
+        file.delete();
+    }
+
+    @Test
+    public void testEmptyParcelFileDescriptor() throws IOException, FileNotFoundException {
+        File file = createEmptyFile();
+        ParcelFileDescriptor pfd = ParcelFileDescriptor.open(file,
+                ParcelFileDescriptor.MODE_READ_ONLY);
+        assertThrows(IOException.class, () -> {
+            BitmapRegionDecoder.newInstance(pfd);
+        });
+        file.delete();
+    }
+
+    @Test(expected = IOException.class)
+    public void testInvalidFileDescriptor() throws IOException {
+        BitmapRegionDecoder.newInstance(new FileDescriptor(), false);
     }
 
     private void compareRegionByRegion(BitmapRegionDecoder decoder,
