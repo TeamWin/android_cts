@@ -23,15 +23,10 @@ import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.Helper.UNUSED_AUTOFILL_VALUE;
 import static android.autofillservice.cts.Helper.getContext;
 import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
-import static android.autofillservice.cts.Timeouts.MOCK_IME_TIMEOUT_MS;
 import static android.autofillservice.cts.inline.InstrumentedAutoFillServiceInlineEnabled.SERVICE_NAME;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 
-import static com.android.cts.mockime.ImeEventStreamTestUtils.expectBindInput;
-
 import static com.google.common.truth.Truth.assertWithMessage;
-
-import static org.junit.Assume.assumeTrue;
 
 import android.autofillservice.cts.AbstractLoginActivityTestCase;
 import android.autofillservice.cts.AuthenticationActivity;
@@ -40,11 +35,7 @@ import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.Helper;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.content.IntentSender;
-import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
-
-import com.android.cts.mockime.ImeEventStream;
-import com.android.cts.mockime.MockImeSession;
 
 import org.junit.Test;
 
@@ -81,9 +72,6 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
         // Set service.
         enableService();
 
-        final MockImeSession mockImeSession = sMockImeSessionRule.getMockImeSession();
-        assumeTrue("MockIME not available", mockImeSession != null);
-
         // Prepare the authenticated response
         final IntentSender authentication = AuthenticationActivity.createSender(mContext, 1,
                 new CannedFillResponse.CannedDataset.Builder()
@@ -101,12 +89,6 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
         sReplier.addResponse(builder.build());
         mActivity.expectAutoFill("dude", "sweet");
 
-        final ImeEventStream stream = mockImeSession.openEventStream();
-        mockImeSession.callRequestShowSelf(0);
-
-        // Wait until the MockIme gets bound to the TestActivity.
-        expectBindInput(stream, Process.myPid(), MOCK_IME_TIMEOUT_MS);
-
         // Trigger auto-fill.
         assertSuggestionShownBySelectViewId(ID_USERNAME, /* childrenCount */ 1);
         sReplier.getNextFillRequest();
@@ -117,7 +99,6 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
         // Now tap on 1st field to show it again...
         assertSuggestionShownBySelectViewId(ID_USERNAME, /* childrenCount */ 1);
 
-        // TODO(b/149891961): add logic for cancelFirstAttempt
         if (cancelFirstAttempt) {
             // Trigger the auth dialog, but emulate cancel.
             AuthenticationActivity.setResultCode(RESULT_CANCELED);
@@ -146,9 +127,6 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
         // Set service.
         enableService();
 
-        final MockImeSession mockImeSession = sMockImeSessionRule.getMockImeSession();
-        assumeTrue("MockIME not available", mockImeSession != null);
-
         // Create the authentication intents
         final CannedDataset unlockedDataset = new CannedDataset.Builder()
                 .setField(ID_USERNAME, "dude")
@@ -168,12 +146,6 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
                 .build());
         // Set expectation for the activity
         mActivity.expectAutoFill("dude", "sweet");
-
-        final ImeEventStream stream = mockImeSession.openEventStream();
-        mockImeSession.callRequestShowSelf(0);
-
-        // Wait until the MockIme gets bound to the TestActivity.
-        expectBindInput(stream, Process.myPid(), MOCK_IME_TIMEOUT_MS);
 
         // Trigger auto-fill, make sure it's showing initially.
         assertSuggestionShownBySelectViewId(ID_USERNAME, /* childrenCount */ 1);
@@ -230,9 +202,6 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
         // Set service.
         enableService();
 
-        final MockImeSession mockImeSession = sMockImeSessionRule.getMockImeSession();
-        assumeTrue("MockIME not available", mockImeSession != null);
-
         // Prepare the authenticated response
         final CannedDataset dataset = new CannedDataset.Builder()
                 .setField(ID_USERNAME, "dude")
@@ -259,12 +228,6 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
 
         // Set expectation for the activity
         mActivity.expectAutoFill("dude", "sweet");
-
-        final ImeEventStream stream = mockImeSession.openEventStream();
-        mockImeSession.callRequestShowSelf(0);
-
-        // Wait until the MockIme gets bound to the TestActivity.
-        expectBindInput(stream, Process.myPid(), MOCK_IME_TIMEOUT_MS);
 
         // Trigger auto-fill, make sure it's showing initially.
         assertSuggestionShownBySelectViewId(ID_USERNAME, /* childrenCount */ 1);
