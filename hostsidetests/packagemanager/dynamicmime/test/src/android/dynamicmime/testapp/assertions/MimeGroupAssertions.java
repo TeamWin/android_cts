@@ -37,7 +37,7 @@ public abstract class MimeGroupAssertions {
         assertMimeGroupInternal(mimeGroup, Collections.emptySet());
     }
 
-    public final void assertMimeGroupIsNull(String mimeGroup) {
+    public final void assertMimeGroupUndefined(String mimeGroup) {
         assertMimeGroupInternal(mimeGroup, null);
     }
 

@@ -18,7 +18,6 @@ package android.dynamicmime.testapp;
 
 import static android.dynamicmime.common.Constants.GROUP_FIRST;
 import static android.dynamicmime.common.Constants.GROUP_SECOND;
-import static android.dynamicmime.common.Constants.GROUP_UNDEFINED;
 import static android.dynamicmime.common.Constants.MIME_ANY;
 import static android.dynamicmime.common.Constants.MIME_IMAGE_ANY;
 import static android.dynamicmime.common.Constants.MIME_IMAGE_JPEG;
@@ -140,47 +139,11 @@ public class SingleAppTest extends BaseDynamicMimeTest {
     }
 
     @Test
-    public void testResetToEmpty() {
-        setMimeGroup(GROUP_FIRST, MIME_TEXT_PLAIN, MIME_TEXT_XML);
-        setMimeGroup(GROUP_FIRST, (String[]) null);
-
-        assertMimeGroupIsEmpty(GROUP_FIRST);
-    }
-
-    @Test
     public void testClear() {
         setMimeGroup(GROUP_FIRST, MIME_TEXT_PLAIN, MIME_IMAGE_PNG);
         clearMimeGroup(GROUP_FIRST);
 
         assertMimeGroupIsEmpty(GROUP_FIRST);
-    }
-
-    @Test
-    public void testUndefinedGroupIsNullAfterAdd() {
-        addMimeTypeToGroup(GROUP_UNDEFINED, MIME_TEXT_PLAIN);
-
-        assertMimeGroupIsNull(GROUP_UNDEFINED);
-    }
-
-    @Test
-    public void testUndefinedGroupIsNullAfterSet() {
-        setMimeGroup(GROUP_UNDEFINED, MIME_TEXT_PLAIN);
-
-        assertMimeGroupIsNull(GROUP_UNDEFINED);
-    }
-
-    @Test
-    public void testUndefinedGroupIsNullAfterRemove() {
-        removeMimeTypeFromGroup(GROUP_UNDEFINED, MIME_TEXT_PLAIN);
-
-        assertMimeGroupIsNull(GROUP_UNDEFINED);
-    }
-
-    @Test
-    public void testUndefinedGroupIsNullAfterClear() {
-        clearMimeGroup(GROUP_UNDEFINED);
-
-        assertMimeGroupIsNull(GROUP_UNDEFINED);
     }
 
     @Test
@@ -194,22 +157,6 @@ public class SingleAppTest extends BaseDynamicMimeTest {
     @Test
     public void testDefinedGroupNotNullAfterClear() {
         setMimeGroup(GROUP_FIRST, MIME_TEXT_PLAIN);
-        clearMimeGroup(GROUP_FIRST);
-
-        assertMimeGroupIsEmpty(GROUP_FIRST);
-    }
-
-    @Test
-    public void testDefinedGroupNotNullAfterSetEmpty() {
-        setMimeGroup(GROUP_FIRST, (String[]) null);
-        clearMimeGroup(GROUP_FIRST);
-
-        assertMimeGroupIsEmpty(GROUP_FIRST);
-    }
-
-    @Test
-    public void testDefinedGroupNotNullAfterSetNull() {
-        setMimeGroup(GROUP_FIRST, (String[]) null);
         clearMimeGroup(GROUP_FIRST);
 
         assertMimeGroupIsEmpty(GROUP_FIRST);

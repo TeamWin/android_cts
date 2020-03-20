@@ -35,11 +35,6 @@ public class TestAppCommands implements MimeGroupCommands {
         mPM.setMimeGroup(mimeGroup, mimeTypes);
     }
 
-    @Override
-    public void clearMimeGroup(String mimeGroup) {
-        mPM.clearMimeGroup(mimeGroup);
-    }
-
     @Nullable
     @Override
     public Set<String> getMimeGroupInternal(String mimeGroup) {
