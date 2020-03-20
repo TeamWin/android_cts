@@ -126,14 +126,15 @@ public class LocationAccessCheckTest {
      */
     private static Boolean sCanAccessFineLocation = null;
 
+    private ServiceConnection mConnection;
     /**
      * Connected to {@value #TEST_APP_PKG} and make it access the location in the background
      */
-    private static void accessLocation() {
-        ServiceConnection connection = new ServiceConnection() {
+    private void accessLocation() {
+        mConnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
-                sContext.unbindService(this);
+                // ignore
             }
 
             @Override
@@ -146,7 +147,7 @@ public class LocationAccessCheckTest {
         // access to the location
         Intent testAppService = new Intent();
         testAppService.setComponent(new ComponentName(TEST_APP_PKG, TEST_APP_SERVICE));
-        sContext.bindService(testAppService, connection, BIND_AUTO_CREATE);
+        sContext.bindService(testAppService, mConnection, BIND_AUTO_CREATE);
     }
 
     /**
@@ -281,7 +282,6 @@ public class LocationAccessCheckTest {
      */
     private StatusBarNotification getNotification(boolean cancelNotification) throws Throwable {
         NotificationListenerService notificationService = NotificationListener.getInstance();
-
         long start = System.currentTimeMillis();
         while (true) {
             runLocationCheck();
@@ -524,6 +524,13 @@ public class LocationAccessCheckTest {
         runWithShellPermissionIdentity(
                 () -> DeviceConfig.resetToDefaults(RESET_MODE_PACKAGE_DEFAULTS,
                         DeviceConfig.NAMESPACE_PRIVACY));
+    }
+
+    @After
+    public void locationUnbind() {
+        if (mConnection != null) {
+            sContext.unbindService(mConnection);
+        }
     }
 
     @Test
