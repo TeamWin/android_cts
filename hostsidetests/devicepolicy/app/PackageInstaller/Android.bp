@@ -25,7 +25,7 @@ android_test_helper_app {
         "ctstestrunner-axt",
         "ub-uiautomator",
     ],
-    sdk_version: "test_current",
+    platform_apis: true,
     min_sdk_version: "21",
     // tag this module as a cts test artifact
     test_suites: [
