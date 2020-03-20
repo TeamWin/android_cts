@@ -58,11 +58,12 @@ public class AccessLocationOnCommand extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
+        (new Handler()).postDelayed(this::getLocation, BACKGROUND_ACCESS_SETTLE_TIME);
         return new Binder();
     }
 
     @Override
     public boolean onUnbind(Intent intent) {
-        return (new Handler()).postDelayed(this::getLocation, BACKGROUND_ACCESS_SETTLE_TIME);
+        return true;
     }
 }
