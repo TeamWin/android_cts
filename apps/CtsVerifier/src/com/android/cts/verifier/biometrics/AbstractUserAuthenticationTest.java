@@ -152,9 +152,7 @@ public abstract class AbstractUserAuthenticationTest extends PassFailButtons.Act
 
         final boolean hasStrongBox = getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_STRONGBOX_KEYSTORE);
-        final boolean noStrongBiometricHardware =
-                mBiometricManager.canAuthenticate(Authenticators.BIOMETRIC_STRONG)
-                        == BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE;
+        final boolean noStrongBiometricHardware = !hasStrongBiometrics();
 
         if (!hasStrongBox) {
             mCredentialPerUseButton_strongbox.setVisibility(View.GONE);
@@ -289,7 +287,26 @@ public abstract class AbstractUserAuthenticationTest extends PassFailButtons.Act
                 return;
             }
 
-            createUserAuthenticationKey(keyName, timeout, getKeyAuthenticators(), useStrongBox);
+            try {
+                createUserAuthenticationKey(keyName, timeout, getKeyAuthenticators(), useStrongBox);
+            } catch (Exception e) {
+                final boolean shouldKeyBeGeneratable;
+                if (getKeyAuthenticators() == KeyProperties.AUTH_BIOMETRIC_STRONG &&
+                        !hasStrongBiometrics()) {
+                    shouldKeyBeGeneratable = false;
+                } else {
+                    shouldKeyBeGeneratable = true;
+                }
+
+                if (!shouldKeyBeGeneratable) {
+                    Log.d(TAG, "Key not generatable (expected). Exception: " + e);
+                    testButton.setVisibility(View.INVISIBLE);
+                    updatePassButton();
+                    return;
+                } else {
+                    throw e;
+                }
+            }
 
             CryptoObject crypto;
 
@@ -367,6 +384,11 @@ public abstract class AbstractUserAuthenticationTest extends PassFailButtons.Act
             showToastAndLog("Failed during Crypto test: " + e);
             e.printStackTrace();
         }
+    }
+
+    private boolean hasStrongBiometrics() {
+        return mBiometricManager.canAuthenticate(Authenticators.BIOMETRIC_STRONG)
+                != BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE;
     }
 
     private void disableTestsForFewSeconds() {
