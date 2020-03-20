@@ -29,7 +29,6 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.ImageFormat;
-import android.hardware.Camera;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CaptureFailure;
@@ -38,9 +37,11 @@ import android.hardware.camera2.CameraOfflineSession.CameraOfflineSessionCallbac
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
+import android.hardware.camera2.params.InputConfiguration;
 import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.multiprocess.camera.cts.ErrorLoggingService;
 import android.hardware.multiprocess.camera.cts.TestConstants;
+import android.media.ImageReader;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.Size;
@@ -65,10 +66,27 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
     private final String REMOTE_PROCESS_NAME = "camera2ActivityProcess";
     private final java.lang.Class<?> REMOTE_PROCESS_CLASS = Camera2OfflineTestActivity.class;
 
+    private static final Size MANDATORY_STREAM_BOUND = new Size(1920, 1080);
     private static final int WAIT_FOR_FRAMES_TIMEOUT_MS = 3000;
     private static final int WAIT_FOR_STATE_TIMEOUT_MS = 5000;
     private static final int WAIT_FOR_REMOTE_ACTIVITY_LAUNCH_MS = 2000;
     private static final int WAIT_FOR_REMOTE_ACTIVITY_DESTROY_MS = 2000;
+
+    private enum OfflineTestSequence {
+        /** Regular offline switch without extra calls */
+        NoExtraSteps,
+
+        /** Offline switch followed by immediate offline session close */
+        CloseOfflineSession,
+
+        /** Offline switch followed in parallel with immediate device close and same device open
+         *  in a separate activity
+         */
+        CloseDeviceAndOpenRemote,
+
+        /** Offline session running in parallel with reinitialized regular capture session */
+        InitializeRegularSession,
+    }
 
     /**
      * Test offline switch behavior in case of invalid/bad input.
@@ -184,7 +202,7 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
 
                 openDevice(mCameraIdsUnderTest[i]);
                 camera2OfflineSessionTest(mCameraIdsUnderTest[i], mOrderedStillSizes.get(0),
-                        ImageFormat.JPEG, false /*closeDevice*/, false /*closeSession*/);
+                        ImageFormat.JPEG, OfflineTestSequence.NoExtraSteps);
             } finally {
                 closeDevice();
             }
@@ -226,7 +244,7 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
                         null /*bound*/);
                 openDevice(mCameraIdsUnderTest[i]);
                 camera2OfflineSessionTest(mCameraIdsUnderTest[i], depthJpegSizes.get(0),
-                        ImageFormat.DEPTH_JPEG, false /*closeDevice*/, false /*closeSession*/);
+                        ImageFormat.DEPTH_JPEG, OfflineTestSequence.NoExtraSteps);
             } finally {
                 closeDevice();
             }
@@ -267,7 +285,7 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
                         mCameraIdsUnderTest[i], mCameraManager, null /*bound*/);
                 openDevice(mCameraIdsUnderTest[i]);
                 camera2OfflineSessionTest(mCameraIdsUnderTest[i], heicSizes.get(0),
-                        ImageFormat.HEIC, false /*closeDevice*/, false /*closeSession*/);
+                        ImageFormat.HEIC, OfflineTestSequence.NoExtraSteps);
             } finally {
                 closeDevice();
             }
@@ -304,7 +322,7 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
 
                 openDevice(mCameraIdsUnderTest[i]);
                 camera2OfflineSessionTest(mCameraIdsUnderTest[i], mOrderedStillSizes.get(0),
-                        ImageFormat.JPEG, true /*closeDevice*/, false /*closeSession*/);
+                        ImageFormat.JPEG, OfflineTestSequence.CloseDeviceAndOpenRemote);
 
                 // Verify that the remote camera was opened correctly
                 List<ErrorLoggingService.LogEvent> allEvents = null;
@@ -351,7 +369,40 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
 
                 openDevice(mCameraIdsUnderTest[i]);
                 camera2OfflineSessionTest(mCameraIdsUnderTest[i], mOrderedStillSizes.get(0),
-                        ImageFormat.JPEG, false /*closeDevice*/, true /*closeSession*/);
+                        ImageFormat.JPEG, OfflineTestSequence.CloseOfflineSession);
+            } finally {
+                closeDevice();
+            }
+        }
+    }
+
+    /**
+     * Test camera offline session in case of new capture session
+     *
+     * <p>Verify that clients are able to initialize a new regular capture session
+     * in parallel with the offline session.</p>
+     */
+    @Test
+    public void testOfflineSessionWithRegularSession() throws Exception {
+        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
+            try {
+                Log.i(TAG, "Testing camera2 API for camera device " + mCameraIdsUnderTest[i]);
+
+                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
+                            " does not support color outputs, skipping");
+                    continue;
+                }
+
+                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isOfflineProcessingSupported()) {
+                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
+                            " does not support offline processing, skipping");
+                    continue;
+                }
+
+                openDevice(mCameraIdsUnderTest[i]);
+                camera2OfflineSessionTest(mCameraIdsUnderTest[i], mOrderedStillSizes.get(0),
+                        ImageFormat.JPEG, OfflineTestSequence.InitializeRegularSession);
             } finally {
                 closeDevice();
             }
@@ -434,16 +485,33 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
     }
 
     private void camera2OfflineSessionTest(String cameraId, Size offlineSize, int offlineFormat,
-            boolean closeDevice, boolean closeSession) throws Exception {
+            OfflineTestSequence testSequence) throws Exception {
         int remoteOfflinePID = -1;
+        Size previewSize = mOrderedPreviewSizes.get(0);
+        for (Size sz : mOrderedPreviewSizes) {
+            if (sz.getWidth() <= MANDATORY_STREAM_BOUND.getWidth() && sz.getHeight() <=
+                    MANDATORY_STREAM_BOUND.getHeight()) {
+                previewSize = sz;
+                break;
+            }
+        }
+        Size privateSize = previewSize;
+        if (mAllStaticInfo.get(cameraId).isPrivateReprocessingSupported()) {
+            privateSize = mAllStaticInfo.get(cameraId).getSortedSizesForInputFormat(
+                    ImageFormat.PRIVATE, MANDATORY_STREAM_BOUND).get(0);
+        }
+
         CaptureRequest.Builder previewRequest =
                 mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
         CaptureRequest.Builder stillCaptureRequest =
                 mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
-        Size previewSize = mOrderedPreviewSizes.get(0);
         SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
+        SimpleCaptureCallback regularResultListener = new SimpleCaptureCallback();
         SimpleCaptureCallback offlineResultListener = new SimpleCaptureCallback();
         SimpleImageReaderListener imageListener = new SimpleImageReaderListener();
+        ImageReader privateReader = null;
+        ImageReader yuvCallbackReader = null;
+        ImageReader jpegReader = null;
 
         // Update preview size.
         updatePreviewSurface(previewSize);
@@ -472,18 +540,7 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
         // Start preview.
         int repeatingSeqId = mSession.setRepeatingRequest(previewRequest.build(), resultListener,
                 mHandler);
-
-        CaptureResult result = resultListener.getCaptureResult(WAIT_FOR_FRAMES_TIMEOUT_MS);
-
-        Long timestamp = result.get(CaptureResult.SENSOR_TIMESTAMP);
-        assertNotNull("Can't read a capture result timestamp", timestamp);
-
-        CaptureResult result2 = resultListener.getCaptureResult(WAIT_FOR_FRAMES_TIMEOUT_MS);
-
-        Long timestamp2 = result2.get(CaptureResult.SENSOR_TIMESTAMP);
-        assertNotNull("Can't read a capture result 2 timestamp", timestamp2);
-
-        assertTrue("Bad timestamps", timestamp2 > timestamp);
+        checkInitialResults(resultListener);
 
         ArrayList<Integer> allowedOfflineStates = new ArrayList<Integer>();
         allowedOfflineStates.add(BlockingOfflineSessionCallback.STATE_READY);
@@ -524,23 +581,67 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
             verify(mockOfflineCb, times(1)).onReady(offlineSession);
             verify(mockOfflineCb, times(0)).onSwitchFailed(offlineSession);
 
-            if (closeDevice) {
-                // According to the documentation, closing the initial camera device and
-                // re-opening the same device from a different client after successful
-                // offline session switch must not have any noticeable impact on the
-                // offline processing.
-                closeDevice();
-                remoteOfflinePID = startRemoteOfflineTestProcess(cameraId);
-            }
+            switch (testSequence) {
+                case CloseDeviceAndOpenRemote:
+                    // According to the documentation, closing the initial camera device and
+                    // re-opening the same device from a different client after successful
+                    // offline session switch must not have any noticeable impact on the
+                    // offline processing.
+                    closeDevice();
+                    remoteOfflinePID = startRemoteOfflineTestProcess(cameraId);
 
-            if (closeSession) {
-                offlineSession.close();
+                    break;
+                case CloseOfflineSession:
+                    offlineSession.close();
+
+                    break;
+                case InitializeRegularSession:
+                    // According to the documentation, initializing a regular capture session
+                    // along with the offline session should not have any side effects.
+                    // We also don't want to re-use the same offline output surface as part
+                    // of the new  regular capture session.
+                    outputSurfaces.remove(mReaderSurface);
+
+                    // According to the specification, an active offline session must allow
+                    // camera devices to support at least one preview stream, one yuv stream
+                    // of size up-to 1080p, one jpeg stream with any supported size and
+                    // an extra input/output private pair in case reprocessing is also available.
+                    yuvCallbackReader = makeImageReader(previewSize, ImageFormat.YUV_420_888,
+                            1 /*maxNumImages*/, new SimpleImageReaderListener(), mHandler);
+                    outputSurfaces.add(yuvCallbackReader.getSurface());
+
+                    jpegReader = makeImageReader(offlineSize, ImageFormat.JPEG,
+                            1 /*maxNumImages*/, new SimpleImageReaderListener(), mHandler);
+                    outputSurfaces.add(jpegReader.getSurface());
+
+                    if (mAllStaticInfo.get(cameraId).isPrivateReprocessingSupported()) {
+                        privateReader = makeImageReader(privateSize, ImageFormat.PRIVATE,
+                                1 /*maxNumImages*/, new SimpleImageReaderListener(), mHandler);
+                        outputSurfaces.add(privateReader.getSurface());
+
+                        InputConfiguration inputConfig = new InputConfiguration(
+                                privateSize.getWidth(), privateSize.getHeight(),
+                                ImageFormat.PRIVATE);
+                        mSession = CameraTestUtils.configureReprocessableCameraSession(mCamera,
+                                inputConfig, outputSurfaces, mSessionListener, mHandler);
+
+                    } else {
+                        mSession = configureCameraSession(mCamera, outputSurfaces, mSessionListener,
+                                mHandler);
+                    }
+
+                    mSession.setRepeatingRequest(previewRequest.build(), regularResultListener,
+                            mHandler);
+
+                    break;
+                case NoExtraSteps:
+                default:
             }
 
             // The repeating non-offline request should be completed after the switch returns.
             verifyCaptureResults(resultListener, repeatingSeqId, false /*offlineResults*/);
 
-            if (!closeSession) {
+            if (testSequence != OfflineTestSequence.CloseOfflineSession) {
                 offlineCb.waitForState(BlockingOfflineSessionCallback.STATE_IDLE,
                         WAIT_FOR_STATE_TIMEOUT_MS);
                 verify(mockOfflineCb, times(1)).onIdle(offlineSession);
@@ -551,16 +652,47 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
                 verifyCaptureResults(offlineResultListener, offlineSeqId, true /*offlineResults*/);
 
                 offlineSession.close();
-                offlineCb.waitForState(BlockingOfflineSessionCallback.STATE_CLOSED,
-                        WAIT_FOR_STATE_TIMEOUT_MS);
             }
 
+            if (testSequence == OfflineTestSequence.InitializeRegularSession) {
+                checkInitialResults(regularResultListener);
+                stopPreview();
+
+                if (privateReader != null) {
+                    privateReader.close();
+                }
+
+                if (yuvCallbackReader != null) {
+                    yuvCallbackReader.close();
+                }
+
+                if (jpegReader != null) {
+                    jpegReader.close();
+                }
+            }
+
+            offlineCb.waitForState(BlockingOfflineSessionCallback.STATE_CLOSED,
+                  WAIT_FOR_STATE_TIMEOUT_MS);
             verify(mockOfflineCb, times(1)).onClosed(offlineSession);
         }
 
         closeImageReader();
 
         stopRemoteOfflineTestProcess(remoteOfflinePID);
+    }
+
+    private void checkInitialResults(SimpleCaptureCallback resultListener) {
+        CaptureResult result = resultListener.getCaptureResult(WAIT_FOR_FRAMES_TIMEOUT_MS);
+
+        Long timestamp = result.get(CaptureResult.SENSOR_TIMESTAMP);
+        assertNotNull("Can't read a capture result timestamp", timestamp);
+
+        CaptureResult result2 = resultListener.getCaptureResult(WAIT_FOR_FRAMES_TIMEOUT_MS);
+
+        Long timestamp2 = result2.get(CaptureResult.SENSOR_TIMESTAMP);
+        assertNotNull("Can't read a capture result 2 timestamp", timestamp2);
+
+        assertTrue("Bad timestamps", timestamp2 > timestamp);
     }
 
     private void camera2UnsupportedOfflineOutputTest(boolean useSurfaceGroup) throws Exception {
