@@ -3393,10 +3393,10 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
     <string name="device_owner_disable_statusbar_test">Disable status bar</string>
     <string name="device_owner_disable_statusbar_test_info">
-            Please press the below button to disable the status bar and verify that quick settings, notifications
-            and the assistant gesture are no longer available.\n
-            Next, press the button to reenable the status bar and verify that quick settings, notification
-            and the assistant gesture are available again.\n
+            Please press the below button to disable the status bar and verify that quick settings and notifications
+            are no longer available.\n
+            Next, press the button to reenable the status bar and verify that quick settings and notifications
+            are available again.\n
             Please mark the test accordingly.
     </string>
     <string name="device_owner_disable_statusbar_button">Disable status bar</string>
