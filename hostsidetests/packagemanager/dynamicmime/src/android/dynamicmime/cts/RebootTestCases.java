@@ -106,33 +106,8 @@ public class RebootTestCases extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void testResetToEmpty() throws DeviceNotAvailableException {
-        runTestWithReboot("SingleAppTest", "testResetToEmpty");
-    }
-
-    @Test
     public void testClear() throws DeviceNotAvailableException {
         runTestWithReboot("SingleAppTest", "testClear");
-    }
-
-    @Test
-    public void testUndefinedGroupIsNullAfterAdd() throws DeviceNotAvailableException {
-        runTestWithReboot("SingleAppTest", "testUndefinedGroupIsNullAfterAdd");
-    }
-
-    @Test
-    public void testUndefinedGroupIsNullAfterSet() throws DeviceNotAvailableException {
-        runTestWithReboot("SingleAppTest", "testUndefinedGroupIsNullAfterSet");
-    }
-
-    @Test
-    public void testUndefinedGroupIsNullAfterRemove() throws DeviceNotAvailableException {
-        runTestWithReboot("SingleAppTest", "testUndefinedGroupIsNullAfterRemove");
-    }
-
-    @Test
-    public void testUndefinedGroupIsNullAfterClear() throws DeviceNotAvailableException {
-        runTestWithReboot("SingleAppTest", "testUndefinedGroupIsNullAfterClear");
     }
 
     @Test
@@ -143,16 +118,6 @@ public class RebootTestCases extends BaseHostJUnit4Test {
     @Test
     public void testDefinedGroupNotNullAfterClear() throws DeviceNotAvailableException {
         runTestWithReboot("SingleAppTest", "testDefinedGroupNotNullAfterClear");
-    }
-
-    @Test
-    public void testDefinedGroupNotNullAfterSetEmpty() throws DeviceNotAvailableException {
-        runTestWithReboot("SingleAppTest", "testDefinedGroupNotNullAfterSetEmpty");
-    }
-
-    @Test
-    public void testDefinedGroupNotNullAfterSetNull() throws DeviceNotAvailableException {
-        runTestWithReboot("SingleAppTest", "testDefinedGroupNotNullAfterSetNull");
     }
 
     @Test
