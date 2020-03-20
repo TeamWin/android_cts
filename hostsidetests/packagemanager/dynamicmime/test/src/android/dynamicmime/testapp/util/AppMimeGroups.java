@@ -22,7 +22,6 @@ import static android.dynamicmime.common.Constants.EXTRA_GROUP;
 import static android.dynamicmime.common.Constants.EXTRA_MIMES;
 import static android.dynamicmime.common.Constants.EXTRA_REQUEST;
 import static android.dynamicmime.common.Constants.EXTRA_RESPONSE;
-import static android.dynamicmime.common.Constants.REQUEST_CLEAR;
 import static android.dynamicmime.common.Constants.REQUEST_GET;
 import static android.dynamicmime.common.Constants.REQUEST_SET;
 
@@ -57,10 +56,6 @@ public class AppMimeGroups {
         sendRequestAndAwait(mimeGroup, REQUEST_SET, mimeTypes);
     }
 
-    public void clear(String mimeGroup) {
-        sendRequestAndAwait(mimeGroup, REQUEST_CLEAR);
-    }
-
     public String[] get(String mimeGroup) {
         return sendRequestAndAwait(mimeGroup, REQUEST_GET)
                 .getStringArrayExtra(EXTRA_RESPONSE);
@@ -78,9 +73,10 @@ public class AppMimeGroups {
         mContext.sendBroadcast(getRequestIntent(mimeGroup, mimeTypes, request));
 
         Intent response = receiver.awaitForBroadcast(TimeUnit.SECONDS.toMillis(5L));
-        assertNotNull(response);
 
         mContext.unregisterReceiver(receiver);
+
+        assertNotNull(response);
 
         return response;
     }
