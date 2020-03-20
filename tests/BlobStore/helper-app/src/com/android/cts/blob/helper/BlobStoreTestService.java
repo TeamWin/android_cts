@@ -29,6 +29,7 @@ import android.app.usage.StorageStatsManager;
 import android.content.Intent;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.IBinder;
+import android.os.LimitExceededException;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
@@ -103,7 +104,7 @@ public class BlobStoreTestService extends Service {
             try {
                 Utils.acquireLease(BlobStoreTestService.this, blobHandle, "Test description");
                 assertThat(blobStoreManager.getLeasedBlobs()).contains(blobHandle);
-            } catch (IOException e) {
+            } catch (IOException | LimitExceededException e) {
                 throw new IllegalStateException(e);
             }
         }
