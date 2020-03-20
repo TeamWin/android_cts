@@ -337,6 +337,14 @@ public class SensorCtsHelper {
             case Sensor.TYPE_MAGNETIC_FIELD:
             case Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED:
             case Sensor.TYPE_HINGE_ANGLE:
+            case Sensor.TYPE_PROXIMITY:
+            case Sensor.TYPE_SIGNIFICANT_MOTION:
+            case Sensor.TYPE_STEP_DETECTOR:
+            case Sensor.TYPE_STEP_COUNTER:
+            case Sensor.TYPE_HEART_RATE:
+            case Sensor.TYPE_STATIONARY_DETECT:
+            case Sensor.TYPE_MOTION_DETECT:
+            case Sensor.TYPE_LOW_LATENCY_OFFBODY_DETECT:
                 return true;
 
             case Sensor.TYPE_PRESSURE:
@@ -374,7 +382,9 @@ public class SensorCtsHelper {
                 // than 360 degrees.
                 return 360f;
         }
-        return 0.0f;
+
+        // Any sensor not specified above must use a resolution of 1.
+        return 1.0f;
     }
 
     public static String sensorTypeShortString(int type) {

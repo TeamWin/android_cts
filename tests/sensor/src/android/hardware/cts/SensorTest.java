@@ -548,8 +548,8 @@ public class SensorTest extends SensorTestCase {
                 + " " + sensor.getName(), sensor.getMaximumRange() >= 0);
         assertTrue("Max power must be positive. Power=" + sensor.getPower() + " " +
                 sensor.getName(), sensor.getPower() >= 0);
-        assertTrue("Max resolution must be positive. Resolution=" + sensor.getResolution() +
-                " " + sensor.getName(), sensor.getResolution() >= 0);
+        assertTrue("Max resolution must be non-zero and positive. Resolution=" + sensor.getResolution() +
+                " " + sensor.getName(), sensor.getResolution() > 0);
         boolean hasHifiSensors = getContext().getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_HIFI_SENSORS);
         if (SensorCtsHelper.hasResolutionRequirement(sensor, hasHifiSensors)) {
@@ -558,6 +558,7 @@ public class SensorTest extends SensorTestCase {
                     sensor.getResolution() + " " + sensor.getName(),
                     sensor.getResolution() <= requiredResolution);
         }
+
         assertNotNull("Vendor name must not be null " + sensor.getName(), sensor.getVendor());
         assertTrue("Version must be positive version=" + sensor.getVersion() + " " +
                 sensor.getName(), sensor.getVersion() > 0);
