@@ -28,18 +28,12 @@ public class Constants {
     public static final String GROUP_FIRST = "group_first";
     public static final String GROUP_SECOND = "group_second";
     public static final String GROUP_THIRD = "group_third";
-    public static final String GROUP_UNDEFINED = "undefined";
 
     public static final String ALIAS_BOTH_GROUPS = "group_both";
     public static final String ALIAS_BOTH_GROUPS_AND_TYPE = "groups_and_type";
 
-    public static final String[] GROUPS = {
-            GROUP_FIRST, GROUP_SECOND, GROUP_UNDEFINED
-    };
-
-    public static final int REQUEST_CLEAR = 1;
-    public static final int REQUEST_SET = 2;
-    public static final int REQUEST_GET = 3;
+    public static final int REQUEST_SET = 1;
+    public static final int REQUEST_GET = 2;
 
     public static final String MIME_TEXT_PLAIN = "text/plain";
     public static final String MIME_TEXT_XML = "text/xml";
