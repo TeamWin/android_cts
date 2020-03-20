@@ -17,14 +17,17 @@
 package android.accessibilityservice.cts;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.accessibilityservice.AccessibilityService;
+import android.accessibilityservice.AccessibilityService.ScreenshotResult;
+import android.accessibilityservice.AccessibilityService.TakeScreenshotCallback;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.ColorSpace;
@@ -41,14 +44,21 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
-
-import java.util.function.Consumer;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 /**
  * Test cases for accessibility service takeScreenshot API.
  */
 @RunWith(AndroidJUnit4.class)
 public class AccessibilityTakeScreenshotTest {
+    /**
+     * The timeout for waiting screenshot had been taken done.
+     */
+    private static final long TIMEOUT_TAKE_SCREENSHOT_DONE_MILLIS = 1000;
+
     private InstrumentedAccessibilityServiceTestRule<StubTakeScreenshotService> mServiceRule =
             new InstrumentedAccessibilityServiceTestRule<>(StubTakeScreenshotService.class);
 
@@ -64,9 +74,14 @@ public class AccessibilityTakeScreenshotTest {
     private Context mContext;
     private Point mDisplaySize;
     private long mStartTestingTime;
+    @Mock
+    private TakeScreenshotCallback mCallback;
+    @Captor
+    private ArgumentCaptor<ScreenshotResult> mSuccessResultArgumentCaptor;
 
     @Before
     public void setUp() throws Exception {
+        MockitoAnnotations.initMocks(this);
         mService = mServiceRule.getService();
         mContext = mService.getApplicationContext();
 
@@ -80,37 +95,46 @@ public class AccessibilityTakeScreenshotTest {
 
     @Test
     public void testTakeScreenshot_GetScreenshotResult() {
-        mStartTestingTime = SystemClock.uptimeMillis();
-        Consumer<AccessibilityService.ScreenshotResult> screenshotConsumer =
-                new TakeScreenshotConsumer();
-        mService.takeScreenshot(Display.DEFAULT_DISPLAY, mContext.getMainExecutor(),
-                screenshotConsumer);
+        takeScreenshot();
+        verify(mCallback, timeout(TIMEOUT_TAKE_SCREENSHOT_DONE_MILLIS)).onSuccess(
+                mSuccessResultArgumentCaptor.capture());
+
+        verifyScreenshotResult(mSuccessResultArgumentCaptor.getValue());
     }
 
     @Test
     public void testTakeScreenshot_RequestIntervalTime() throws Exception {
-        final Consumer callback = mock(Consumer.class);
-        assertTrue(mService.takeScreenshot(Display.DEFAULT_DISPLAY, mContext.getMainExecutor(),
-                callback));
+        takeScreenshot();
+        verify(mCallback, timeout(TIMEOUT_TAKE_SCREENSHOT_DONE_MILLIS)).onSuccess(
+                mSuccessResultArgumentCaptor.capture());
+
         Thread.sleep(
                 AccessibilityService.ACCESSIBILITY_TAKE_SCREENSHOT_REQUEST_INTERVAL_TIMES_MS / 2);
         // Requests the API again during interval time from calling the first time.
-        assertFalse(mService.takeScreenshot(Display.DEFAULT_DISPLAY, mContext.getMainExecutor(),
-                callback));
+        takeScreenshot();
+        verify(mCallback, timeout(TIMEOUT_TAKE_SCREENSHOT_DONE_MILLIS)).onFailure(
+                AccessibilityService.ERROR_TAKE_SCREENSHOT_INTERVAL_TIME_SHORT);
+
         Thread.sleep(
                 AccessibilityService.ACCESSIBILITY_TAKE_SCREENSHOT_REQUEST_INTERVAL_TIMES_MS / 2 +
                         1);
         // Requests the API again after interval time from calling the first time.
-        assertTrue(mService.takeScreenshot(Display.DEFAULT_DISPLAY, mContext.getMainExecutor(),
-                callback));
+        takeScreenshot();
+        verify(mCallback, timeout(TIMEOUT_TAKE_SCREENSHOT_DONE_MILLIS)).onSuccess(
+                mSuccessResultArgumentCaptor.capture());
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testTakeScreenshotWithNonDefaultDisplay_GetIllegalArgumentException() {
-        final Consumer callback = mock(Consumer.class);
         // DisplayId isn't the default display, should throw illegalArgument exception.
         mService.takeScreenshot(Display.DEFAULT_DISPLAY + 1,
-                mContext.getMainExecutor(), callback);
+                mContext.getMainExecutor(), mCallback);
+    }
+
+    private void takeScreenshot() {
+        mStartTestingTime = SystemClock.uptimeMillis();
+        mService.takeScreenshot(Display.DEFAULT_DISPLAY, mContext.getMainExecutor(),
+                mCallback);
     }
 
     private void verifyScreenshotResult(AccessibilityService.ScreenshotResult screenshot) {
@@ -129,11 +153,5 @@ public class AccessibilityTakeScreenshotTest {
         // The bitmap should not be null for ScreenshotResult's payload.
         final Bitmap bitmap = Bitmap.wrapHardwareBuffer(hardwareBuffer, colorSpace);
         assertNotNull(bitmap);
-    }
-
-    class TakeScreenshotConsumer implements Consumer<AccessibilityService.ScreenshotResult> {
-        public void accept(AccessibilityService.ScreenshotResult screenshot) {
-            verifyScreenshotResult(screenshot);
-        }
     }
 }
