@@ -70,6 +70,13 @@
             android:process=":camera2ActivityProcess">
         </activity>
 
+        <activity android:name="android.hardware.camera2.cts.Camera2OfflineTestActivity"
+            android:label="RemoteCamera2OfflineTestActivity"
+            android:screenOrientation="landscape"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:process=":camera2ActivityProcess">
+        </activity>
+
         <activity android:name="android.hardware.multiprocess.camera.cts.MediaRecorderCameraActivity"
             android:label="RemoteMediaRecorderCameraActivity"
             android:screenOrientation="landscape"
