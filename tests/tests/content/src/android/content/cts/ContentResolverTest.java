@@ -25,6 +25,8 @@ import android.content.ContentResolver;
 import android.content.ContentResolver.MimeTypeInfo;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.database.ContentObserver;
 import android.database.Cursor;
@@ -1124,6 +1126,13 @@ public class ContentResolverTest extends AndroidTestCase {
         } catch (OperationCanceledException ex) {
             // expected
         }
+    }
+
+    public void testCheckUriPermission() {
+        assertEquals(PackageManager.PERMISSION_GRANTED, mContentResolver.checkUriPermission(
+                TABLE1_URI, android.os.Process.myUid(), Intent.FLAG_GRANT_READ_URI_PERMISSION));
+        assertEquals(PackageManager.PERMISSION_DENIED, mContentResolver.checkUriPermission(
+                TABLE1_URI, android.os.Process.myUid(), Intent.FLAG_GRANT_WRITE_URI_PERMISSION));
     }
 
     public void testRegisterContentObserver() {
