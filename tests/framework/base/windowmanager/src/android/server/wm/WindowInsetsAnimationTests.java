@@ -73,7 +73,6 @@ import androidx.test.filters.FlakyTest;
  *     atest CtsWindowManagerDeviceTestCases:WindowInsetsAnimationTests
  */
 @Presubmit
-@FlakyTest(detail = "Promote once confirmed non-flaky")
 public class WindowInsetsAnimationTests extends WindowManagerTestBase {
 
     TestActivity mActivity;
@@ -117,6 +116,7 @@ public class WindowInsetsAnimationTests extends WindowManagerTestBase {
     }
 
     @Test
+    @FlakyTest(detail = "Promote once confirmed non-flaky")
     public void testAnimationCallbacks_overlapping() {
         WindowInsets before = mActivity.mLastWindowInsets;
 
