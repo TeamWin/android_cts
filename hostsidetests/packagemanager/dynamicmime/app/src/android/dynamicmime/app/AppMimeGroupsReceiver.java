@@ -22,7 +22,6 @@ import static android.dynamicmime.common.Constants.EXTRA_GROUP;
 import static android.dynamicmime.common.Constants.EXTRA_MIMES;
 import static android.dynamicmime.common.Constants.EXTRA_REQUEST;
 import static android.dynamicmime.common.Constants.EXTRA_RESPONSE;
-import static android.dynamicmime.common.Constants.REQUEST_CLEAR;
 import static android.dynamicmime.common.Constants.REQUEST_GET;
 import static android.dynamicmime.common.Constants.REQUEST_SET;
 
@@ -49,22 +48,25 @@ public class AppMimeGroupsReceiver extends BroadcastReceiver {
         int requestCode = intent.getIntExtra(EXTRA_REQUEST, -1);
 
         Intent response = new Intent(ACTION_RESPONSE);
+        try {
+            handleRequest(context, mimeGroup, mimeTypes, requestCode, response);
+            context.sendBroadcast(response);
+        } catch (IllegalArgumentException ignored) {
+        }
+    }
+
+    private void handleRequest(Context context, String mimeGroup, String[] mimeTypes,
+            int requestCode, Intent response) {
         switch (requestCode) {
             case REQUEST_SET:
                 context.getPackageManager().setMimeGroup(mimeGroup, new ArraySet<>(mimeTypes));
-                break;
-            case REQUEST_CLEAR:
-                context.getPackageManager().clearMimeGroup(mimeGroup);
                 break;
             case REQUEST_GET:
                 response.putExtra(EXTRA_RESPONSE, getMimeGroup(context, mimeGroup));
                 break;
             default:
-                //do not respond with broadcast to indicate that something is wrong
-                return;
+                throw new IllegalArgumentException("Unexpected request");
         }
-
-        context.sendBroadcast(response);
     }
 
     private String[] getMimeGroup(Context context, String mimeGroup) {
