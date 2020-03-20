@@ -23,27 +23,17 @@ import static android.autofillservice.cts.Helper.findAutofillIdByResourceId;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.getContext;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
-import static android.autofillservice.cts.Timeouts.MOCK_IME_TIMEOUT_MS;
 import static android.autofillservice.cts.inline.InstrumentedAutoFillServiceInlineEnabled.SERVICE_NAME;
-
-import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
-import static com.android.cts.mockime.ImeEventStreamTestUtils.expectBindInput;
-import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
-
-import static org.junit.Assume.assumeTrue;
 
 import android.autofillservice.cts.AbstractLoginActivityTestCase;
 import android.autofillservice.cts.CannedFillResponse;
 import android.autofillservice.cts.Helper;
 import android.autofillservice.cts.InstrumentedAutoFillService;
-import android.os.Process;
 import android.service.autofill.FillContext;
-
-import com.android.cts.mockime.ImeEventStream;
-import com.android.cts.mockime.MockImeSession;
+import android.view.View;
 
 import org.junit.Test;
 
@@ -61,21 +51,11 @@ public class InlineLoginActivityTest extends AbstractLoginActivityTestCase {
         // Set service.
         enableService();
 
-        final MockImeSession mockImeSession = sMockImeSessionRule.getMockImeSession();
-        assumeTrue("MockIME not available", mockImeSession != null);
-
         sReplier.addResponse(CannedFillResponse.NO_RESPONSE);
 
-        final ImeEventStream stream = mockImeSession.openEventStream();
-        mockImeSession.callRequestShowSelf(0);
-
-        // Wait until the MockIme gets bound to the TestActivity.
-        expectBindInput(stream, Process.myPid(), MOCK_IME_TIMEOUT_MS);
-
         // Trigger auto-fill.
-        requestFocusOnUsername();
-        expectEvent(stream, editorMatcher("onStartInput", mActivity.getUsername().getId()),
-                MOCK_IME_TIMEOUT_MS);
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdleSync();
 
         sReplier.getNextFillRequest();
 
@@ -106,9 +86,6 @@ public class InlineLoginActivityTest extends AbstractLoginActivityTestCase {
         // Set service.
         enableService();
 
-        final MockImeSession mockImeSession = sMockImeSessionRule.getMockImeSession();
-        assumeTrue("MockIME not available", mockImeSession != null);
-
         final CannedFillResponse.Builder builder = new CannedFillResponse.Builder();
         for (int i = 0; i < numDatasets; i++) {
             builder.addDataset(new CannedFillResponse.CannedDataset.Builder()
@@ -122,34 +99,20 @@ public class InlineLoginActivityTest extends AbstractLoginActivityTestCase {
         sReplier.addResponse(builder.build());
         mActivity.expectAutoFill("dude" + selectedDatasetIndex, "sweet" + selectedDatasetIndex);
 
-        final ImeEventStream stream = mockImeSession.openEventStream();
-
-        // Wait until the MockIme gets bound to the TestActivity.
-        expectBindInput(stream, Process.myPid(), MOCK_IME_TIMEOUT_MS);
-
-        // Wait until IME is displaying.
-        mockImeSession.callRequestShowSelf(0);
-        expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
-                MOCK_IME_TIMEOUT_MS);
-        expectEvent(stream, event -> "onStartInputView".equals(event.getEventName()),
-                MOCK_IME_TIMEOUT_MS);
-
         // Dynamically set password to make sure it's sanitized.
-        mActivity.onPassword((v) -> v.setText("I AM GROOT"));
+        mActivity.syncRunOnUiThread(() ->  mActivity.onPassword((v) -> v.setText("I AM GROOT")));
+        mUiBot.waitForIdleSync();
 
         // Trigger auto-fill.
-        requestFocusOnUsername();
-        expectEvent(stream, editorMatcher("onStartInput", mActivity.getUsername().getId()),
-                MOCK_IME_TIMEOUT_MS);
-
-        // Wait until suggestion strip is updated
-        expectEvent(stream, event -> "onSuggestionViewUpdated".equals(event.getEventName()),
-                MOCK_IME_TIMEOUT_MS);
+        mActivity.onUsername(View::requestFocus);
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdleSync();
 
         mUiBot.assertSuggestionStrip(numDatasets);
         mUiBot.assertNoDatasetsEver();
 
         mUiBot.selectSuggestion(selectedDatasetIndex);
+        mUiBot.waitForIdleSync();
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -174,9 +137,6 @@ public class InlineLoginActivityTest extends AbstractLoginActivityTestCase {
         // Set service.
         enableService();
 
-        final MockImeSession mockImeSession = sMockImeSessionRule.getMockImeSession();
-        assumeTrue("MockIME not available", mockImeSession != null);
-
         final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
                 .addDataset(new CannedFillResponse.CannedDataset.Builder()
                         .setField(ID_USERNAME, "dude")
@@ -197,45 +157,26 @@ public class InlineLoginActivityTest extends AbstractLoginActivityTestCase {
         sReplier.addResponse(builder.build());
         mActivity.expectAutoFill("dude");
 
-        final ImeEventStream stream = mockImeSession.openEventStream();
-
-        // Wait until the MockIme gets bound to the TestActivity.
-        expectBindInput(stream, Process.myPid(), MOCK_IME_TIMEOUT_MS);
-
-        // Wait until IME is displaying.
-        mockImeSession.callRequestShowSelf(0);
-        expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
-                MOCK_IME_TIMEOUT_MS);
-        expectEvent(stream, event -> "onStartInputView".equals(event.getEventName()),
-                MOCK_IME_TIMEOUT_MS);
-
         // Trigger auto-fill.
-        requestFocusOnUsername();
-        expectEvent(stream, editorMatcher("onStartInput", mActivity.getUsername().getId()),
-                MOCK_IME_TIMEOUT_MS);
-
-        // Wait until suggestion strip is updated
-        expectEvent(stream, event -> "onSuggestionViewUpdated".equals(event.getEventName()),
-                MOCK_IME_TIMEOUT_MS);
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdleSync();
 
         mUiBot.assertNoDatasetsEver();
-
         mUiBot.assertSuggestionStrip(1);
 
         // Switch focus to password
-        requestFocusOnPassword();
-        expectEvent(stream, event -> "onSuggestionViewUpdated".equals(event.getEventName()),
-                MOCK_IME_TIMEOUT_MS);
+        mUiBot.selectByRelativeId(ID_PASSWORD);
+        mUiBot.waitForIdleSync();
 
         mUiBot.assertSuggestionStrip(2);
 
         // Switch focus back to username
-        requestFocusOnUsername();
-        expectEvent(stream, event -> "onSuggestionViewUpdated".equals(event.getEventName()),
-                MOCK_IME_TIMEOUT_MS);
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdleSync();
 
         mUiBot.assertSuggestionStrip(1);
         mUiBot.selectSuggestion(0);
+        mUiBot.waitForIdleSync();
 
         // Check the results.
         mActivity.assertAutoFilled();

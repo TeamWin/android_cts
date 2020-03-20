@@ -41,13 +41,22 @@ public class MockMediaParserOutputConsumer implements MediaParser.OutputConsumer
     private final FakeExtractorOutput mFakeExtractorOutput;
     private final ArrayList<TrackOutput> mTrackOutputs;
 
+    private MediaParser.SeekMap mSeekMap;
+
     public MockMediaParserOutputConsumer(FakeExtractorOutput fakeExtractorOutput) {
         mFakeExtractorOutput = fakeExtractorOutput;
         mTrackOutputs = new ArrayList<>();
     }
 
+    public void clearTrackOutputs() {
+        mFakeExtractorOutput.clearTrackOutputs();
+    }
+
+    // OutputConsumer implementation.
+
     @Override
     public void onSeekMapFound(MediaParser.SeekMap seekMap) {
+        mSeekMap = seekMap;
         mFakeExtractorOutput.seekMap(
                 new SeekMap() {
                     @Override
@@ -304,6 +313,10 @@ public class MockMediaParserOutputConsumer implements MediaParser.OutputConsumer
                             ? mediaFormat.getByteBuffer(MediaFormat.KEY_HDR_STATIC_INFO).array()
                             : null);
         }
+    }
+
+    public MediaParser.SeekMap getSeekMap() {
+        return mSeekMap;
     }
 
     // Internal classes.
