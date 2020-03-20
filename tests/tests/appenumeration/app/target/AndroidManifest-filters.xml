@@ -19,7 +19,10 @@
     package="android.appenumeration.filters">
     <application>
         <uses-library android:name="android.test.runner" />
-        <activity android:name="android.appenumeration.testapp.DummyActivity">
+        <activity android:name="android.appenumeration.testapp.DummyActivity"
+                  android:visibleToInstantApps="true">
+            <!-- Marked visible to instant apps to ensure this logic doesn't conflict with non
+                 instant filtering -->
             <intent-filter>
                 <action android:name="android.appenumeration.action.ACTIVITY" />
                 <category android:name="android.intent.category.DEFAULT" />
