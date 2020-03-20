@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,19 @@
 package android.security.cts;
 
 import android.platform.test.annotations.SecurityTest;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
-@SecurityTest
+import static org.junit.Assert.*;
+
+@RunWith(DeviceJUnit4ClassRunner.class)
 public class Poc17_11 extends SecurityTestCase {
 
     /**
      * b/36075131
      */
+    @Test
     @SecurityTest(minPatchLevel = "2017-11")
     public void testPocCVE_2017_0859() throws Exception {
         AdbUtils.runCommandLine("logcat -c", getDevice());

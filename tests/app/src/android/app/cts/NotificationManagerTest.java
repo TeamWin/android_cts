@@ -98,9 +98,11 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import junit.framework.Assert;
 
+import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -986,6 +988,38 @@ public class NotificationManagerTest extends AndroidTestCase {
                 fail("we got back other notifications besides the one we posted: "
                         + sbn.getKey());
             }
+        }
+    }
+
+    public void testSuspendPackage_withoutShellPermission() throws Exception {
+        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
+            return;
+        }
+
+        try {
+            Process proc = Runtime.getRuntime().exec("cmd notification suspend_package "
+                    + mContext.getPackageName());
+
+            // read output of command
+            BufferedReader reader =
+                    new BufferedReader(new InputStreamReader(proc.getInputStream()));
+            StringBuilder output = new StringBuilder();
+            String line = reader.readLine();
+            while (line != null) {
+                output.append(line);
+                line = reader.readLine();
+            }
+            reader.close();
+            final String outputString = output.toString();
+
+            proc.waitFor();
+
+            // check that the output string had an error / disallowed call since it didn't have
+            // shell permission to suspend the package
+            assertTrue(outputString.contains("Error"));
+            assertTrue(outputString.contains("Disallowed call"));
+        } catch (InterruptedException e) {
+            fail("Unsuccessful shell command");
         }
     }
 

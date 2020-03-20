@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,18 @@ package android.security.cts;
 
 import android.platform.test.annotations.SecurityTest;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.*;
 
-@SecurityTest
+@RunWith(DeviceJUnit4ClassRunner.class)
 public class Poc19_05 extends SecurityTestCase {
 
     /**
      * b/129556464
      */
+    @Test
     @SecurityTest(minPatchLevel = "2019-05")
     public void testPocCVE_2019_2052() throws Exception {
         int code = AdbUtils.runProxyAutoConfig("CVE-2019-2052", getDevice());
@@ -36,6 +39,7 @@ public class Poc19_05 extends SecurityTestCase {
     /**
      * b/129556111
      */
+    @Test
     @SecurityTest(minPatchLevel = "2019-05")
     public void testPocCVE_2019_2045() throws Exception {
         int code = AdbUtils.runProxyAutoConfig("CVE-2019-2045", getDevice());
@@ -45,6 +49,7 @@ public class Poc19_05 extends SecurityTestCase {
     /*
      * b/129556718
      */
+    @Test
     @SecurityTest(minPatchLevel = "2019-05")
     public void testPocCVE_2019_2047() throws Exception {
         int code = AdbUtils.runProxyAutoConfig("CVE-2019-2047", getDevice());
@@ -54,6 +59,7 @@ public class Poc19_05 extends SecurityTestCase {
     /**
      * CVE-2019-2257
      */
+    @Test
     @SecurityTest(minPatchLevel = "2019-05")
     public void testPocCVE_2019_2257() throws Exception {
         String result = AdbUtils.runCommandLine(
@@ -65,6 +71,7 @@ public class Poc19_05 extends SecurityTestCase {
     /**
      * b/117555811
      */
+    @Test
     @SecurityTest(minPatchLevel = "2019-05")
     public void testPocCVE_2019_2051() throws Exception {
         int code = AdbUtils.runProxyAutoConfig("CVE-2019-2051", getDevice());
