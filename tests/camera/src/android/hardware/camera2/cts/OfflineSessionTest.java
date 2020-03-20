@@ -24,6 +24,10 @@ import static org.mockito.Mockito.verify;
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
 import com.android.ex.camera2.blocking.BlockingOfflineSessionCallback;
 
+import android.app.Activity;
+import android.app.ActivityManager;
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraCaptureSession;
@@ -35,6 +39,9 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.OutputConfiguration;
+import android.hardware.multiprocess.camera.cts.ErrorLoggingService;
+import android.hardware.multiprocess.camera.cts.TestConstants;
+import android.os.Bundle;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
@@ -46,6 +53,7 @@ import org.junit.runners.Parameterized;
 import org.junit.Test;
 
 import java.lang.IllegalArgumentException;
+import java.util.concurrent.TimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,9 +62,13 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
     private static final String TAG = "OfflineSessionTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
     private static final boolean DEBUG = Log.isLoggable(TAG, Log.DEBUG);
+    private final String REMOTE_PROCESS_NAME = "camera2ActivityProcess";
+    private final java.lang.Class<?> REMOTE_PROCESS_CLASS = Camera2OfflineTestActivity.class;
 
     private static final int WAIT_FOR_FRAMES_TIMEOUT_MS = 3000;
     private static final int WAIT_FOR_STATE_TIMEOUT_MS = 5000;
+    private static final int WAIT_FOR_REMOTE_ACTIVITY_LAUNCH_MS = 2000;
+    private static final int WAIT_FOR_REMOTE_ACTIVITY_DESTROY_MS = 2000;
 
     /**
      * Test offline switch behavior in case of invalid/bad input.
@@ -171,8 +183,8 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
                 }
 
                 openDevice(mCameraIdsUnderTest[i]);
-                camera2OfflineSessionTest(mOrderedStillSizes.get(0), ImageFormat.JPEG,
-                        false /*closeDevice*/, false /*closeSession*/);
+                camera2OfflineSessionTest(mCameraIdsUnderTest[i], mOrderedStillSizes.get(0),
+                        ImageFormat.JPEG, false /*closeDevice*/, false /*closeSession*/);
             } finally {
                 closeDevice();
             }
@@ -213,8 +225,8 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
                         mCameraIdsUnderTest[i], mCameraManager, ImageFormat.DEPTH_JPEG,
                         null /*bound*/);
                 openDevice(mCameraIdsUnderTest[i]);
-                camera2OfflineSessionTest(depthJpegSizes.get(0), ImageFormat.DEPTH_JPEG,
-                        false /*closeDevice*/, false /*closeSession*/);
+                camera2OfflineSessionTest(mCameraIdsUnderTest[i], depthJpegSizes.get(0),
+                        ImageFormat.DEPTH_JPEG, false /*closeDevice*/, false /*closeSession*/);
             } finally {
                 closeDevice();
             }
@@ -254,8 +266,8 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
                 List<Size> heicSizes = CameraTestUtils.getSupportedHeicSizes(
                         mCameraIdsUnderTest[i], mCameraManager, null /*bound*/);
                 openDevice(mCameraIdsUnderTest[i]);
-                camera2OfflineSessionTest(heicSizes.get(0), ImageFormat.HEIC,
-                        false /*closeDevice*/, false /*closeSession*/);
+                camera2OfflineSessionTest(mCameraIdsUnderTest[i], heicSizes.get(0),
+                        ImageFormat.HEIC, false /*closeDevice*/, false /*closeSession*/);
             } finally {
                 closeDevice();
             }
@@ -263,13 +275,17 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
     }
 
     /**
-     * Test camera offline session behavior during inactive camera device.
+     * Test camera offline session behavior after close and reopen.
      *
-     * <p> Verify that closing the initial camera device does not impact the
-     * offline camera session.</p>
+     * <p> Verify that closing the initial camera device and opening the same
+     * sensor during offline processing does not have any unexpected side effects.</p>
      */
     @Test
-    public void testDeviceClose() throws Exception {
+    public void testDeviceCloseAndOpen() throws Exception {
+        ErrorLoggingService.ErrorServiceConnection errorConnection =
+                new ErrorLoggingService.ErrorServiceConnection(mContext);
+
+        errorConnection.start();
         for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
             try {
                 Log.i(TAG, "Testing camera2 API for camera device " + mCameraIdsUnderTest[i]);
@@ -287,12 +303,26 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
                 }
 
                 openDevice(mCameraIdsUnderTest[i]);
-                camera2OfflineSessionTest(mOrderedStillSizes.get(0), ImageFormat.JPEG,
-                        true /*closeDevice*/, false /*closeSession*/);
+                camera2OfflineSessionTest(mCameraIdsUnderTest[i], mOrderedStillSizes.get(0),
+                        ImageFormat.JPEG, true /*closeDevice*/, false /*closeSession*/);
+
+                // Verify that the remote camera was opened correctly
+                List<ErrorLoggingService.LogEvent> allEvents = null;
+                try {
+                    allEvents = errorConnection.getLog(WAIT_FOR_STATE_TIMEOUT_MS,
+                            TestConstants.EVENT_CAMERA_CONNECT);
+                } catch (TimeoutException e) {
+                    fail("Timed out waiting on remote offline process error log!");
+                }
+                assertNotNull("Failed to connect to camera device in remote offline process!",
+                        allEvents);
             } finally {
                 closeDevice();
+
             }
         }
+
+        errorConnection.stop();
     }
 
     /**
@@ -320,8 +350,8 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
                 }
 
                 openDevice(mCameraIdsUnderTest[i]);
-                camera2OfflineSessionTest(mOrderedStillSizes.get(0), ImageFormat.JPEG,
-                        false /*closeDevice*/, true /*closeSession*/);
+                camera2OfflineSessionTest(mCameraIdsUnderTest[i], mOrderedStillSizes.get(0),
+                        ImageFormat.JPEG, false /*closeDevice*/, true /*closeSession*/);
             } finally {
                 closeDevice();
             }
@@ -403,8 +433,9 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
                 sequenceLastFrameNumber, lastFrameNumberReceived);
     }
 
-    private void camera2OfflineSessionTest(Size offlineSize, int offlineFormat, boolean closeDevice,
-            boolean closeSession) throws Exception {
+    private void camera2OfflineSessionTest(String cameraId, Size offlineSize, int offlineFormat,
+            boolean closeDevice, boolean closeSession) throws Exception {
+        int remoteOfflinePID = -1;
         CaptureRequest.Builder previewRequest =
                 mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
         CaptureRequest.Builder stillCaptureRequest =
@@ -494,10 +525,12 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
             verify(mockOfflineCb, times(0)).onSwitchFailed(offlineSession);
 
             if (closeDevice) {
-                // According to specification, closing the initial camera device after
-                // successful offline session switch must not have any noticeable impact
-                // on the offline client.
+                // According to the documentation, closing the initial camera device and
+                // re-opening the same device from a different client after successful
+                // offline session switch must not have any noticeable impact on the
+                // offline processing.
                 closeDevice();
+                remoteOfflinePID = startRemoteOfflineTestProcess(cameraId);
             }
 
             if (closeSession) {
@@ -526,6 +559,8 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
         }
 
         closeImageReader();
+
+        stopRemoteOfflineTestProcess(remoteOfflinePID);
     }
 
     private void camera2UnsupportedOfflineOutputTest(boolean useSurfaceGroup) throws Exception {
@@ -573,5 +608,57 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
         }
 
         session.close();
+    }
+
+    private int startRemoteOfflineTestProcess(String cameraId) throws InterruptedException {
+        // Ensure no running activity process with same name
+        String cameraActivityName = mContext.getPackageName() + ":" + REMOTE_PROCESS_NAME;
+        ActivityManager activityManager = (ActivityManager) mContext.getSystemService(
+                Context.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningAppProcessInfo> list = activityManager.getRunningAppProcesses();
+        for (ActivityManager.RunningAppProcessInfo rai : list) {
+            if (cameraActivityName.equals(rai.processName)) {
+                fail("Remote offline session test activity already running");
+                return -1;
+            }
+        }
+
+        Activity activity = mActivityRule.getActivity();
+        Intent activityIntent = new Intent(activity, REMOTE_PROCESS_CLASS);
+        Bundle b = new Bundle();
+        b.putString(CameraTestUtils.OFFLINE_CAMERA_ID, cameraId);
+        activityIntent.putExtras(b);
+        activity.startActivity(activityIntent);
+        Thread.sleep(WAIT_FOR_REMOTE_ACTIVITY_LAUNCH_MS);
+
+        // Fail if activity isn't running
+        list = activityManager.getRunningAppProcesses();
+        for (ActivityManager.RunningAppProcessInfo rai : list) {
+            if (cameraActivityName.equals(rai.processName))
+                return rai.pid;
+        }
+
+        fail("Remote offline session test activity failed to start");
+
+        return -1;
+    }
+
+    private void stopRemoteOfflineTestProcess(int remotePID) throws InterruptedException {
+        if (remotePID < 0) {
+            return;
+        }
+
+        android.os.Process.killProcess(remotePID);
+        Thread.sleep(WAIT_FOR_REMOTE_ACTIVITY_DESTROY_MS);
+
+        ActivityManager activityManager = (ActivityManager) mContext.getSystemService(
+                Context.ACTIVITY_SERVICE);
+        String cameraActivityName = mContext.getPackageName() + ":" + REMOTE_PROCESS_NAME;
+        List<ActivityManager.RunningAppProcessInfo> list = activityManager.getRunningAppProcesses();
+        for (ActivityManager.RunningAppProcessInfo rai : list) {
+            if (cameraActivityName.equals(rai.processName))
+                fail("Remote offline session test activity is still running");
+        }
+
     }
 }
