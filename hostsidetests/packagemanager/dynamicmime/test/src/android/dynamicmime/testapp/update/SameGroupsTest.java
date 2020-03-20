@@ -19,7 +19,6 @@ package android.dynamicmime.testapp.update;
 import static android.dynamicmime.common.Constants.APK_BOTH_GROUPS;
 import static android.dynamicmime.common.Constants.GROUP_FIRST;
 import static android.dynamicmime.common.Constants.GROUP_SECOND;
-import static android.dynamicmime.common.Constants.GROUP_UNDEFINED;
 import static android.dynamicmime.common.Constants.MIME_TEXT_PLAIN;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -40,7 +39,6 @@ public class SameGroupsTest extends BaseUpdateTest {
 
         assertMimeGroup(GROUP_FIRST, MIME_TEXT_PLAIN);
         assertMimeGroupIsEmpty(GROUP_SECOND);
-        assertMimeGroupIsNull(GROUP_UNDEFINED);
     }
 
     @Override

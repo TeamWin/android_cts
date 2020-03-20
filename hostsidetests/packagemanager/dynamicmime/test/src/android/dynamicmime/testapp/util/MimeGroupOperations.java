@@ -56,11 +56,6 @@ public class MimeGroupOperations extends MimeGroupAssertions implements MimeGrou
         mCommands.setMimeGroup(mimeGroup, mimeTypes);
     }
 
-    @Override
-    public final void clearMimeGroup(String mimeGroup) {
-        mCommands.clearMimeGroup(mimeGroup);
-    }
-
     @Nullable
     @Override
     public Set<String> getMimeGroupInternal(String mimeGroup) {
