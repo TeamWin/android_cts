@@ -2082,6 +2082,45 @@ public class StaticMetadata {
     }
 
     /**
+     * Determine whether the current device supports a private reprocessing capability or not.
+     *
+     * @return {@code true} if the capability is supported, {@code false} otherwise.
+     *
+     * @throws IllegalArgumentException if {@code capability} was negative
+     */
+    public boolean isPrivateReprocessingSupported() {
+        return isCapabilitySupported(
+                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_PRIVATE_REPROCESSING);
+    }
+
+    /**
+     * Get sorted (descending order) size list for given input format. Remove the sizes larger than
+     * the bound. If the bound is null, don't do the size bound filtering.
+     *
+     * @param format input format
+     * @param bound maximum allowed size bound
+     *
+     * @return Sorted input size list (descending order)
+     */
+    public List<Size> getSortedSizesForInputFormat(int format, Size bound) {
+        Size[] availableSizes = getAvailableSizesForFormatChecked(format, StreamDirection.Input);
+        if (bound == null) {
+            return CameraTestUtils.getAscendingOrderSizes(Arrays.asList(availableSizes),
+                    /*ascending*/false);
+        }
+
+        List<Size> sizes = new ArrayList<Size>();
+        for (Size sz: availableSizes) {
+            if (sz.getWidth() <= bound.getWidth() && sz.getHeight() <= bound.getHeight()) {
+                sizes.add(sz);
+            }
+        }
+
+        return CameraTestUtils.getAscendingOrderSizes(sizes, /*ascending*/false);
+    }
+
+
+    /**
      * Determine whether or not all the {@code keys} are available characteristics keys
      * (as in {@link CameraCharacteristics#getKeys}.
      *
