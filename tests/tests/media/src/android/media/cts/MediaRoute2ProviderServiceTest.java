@@ -368,7 +368,7 @@ public class MediaRoute2ProviderServiceTest {
 
         TransferCallback transferCallback = new TransferCallback() {
             @Override
-            public void onTransferred(RoutingController oldController,
+            public void onTransfer(RoutingController oldController,
                     RoutingController newController) {
                 if (SESSION_ID_1.equals(newController.getOriginalId())) {
                     assertEquals(mRouter2.getSystemController(), oldController);
@@ -480,7 +480,7 @@ public class MediaRoute2ProviderServiceTest {
 
         TransferCallback transferCallback = new TransferCallback() {
             @Override
-            public void onTransferred(RoutingController oldController,
+            public void onTransfer(RoutingController oldController,
                     RoutingController newController) {
                 if (SESSION_ID_1.equals(newController.getOriginalId())) {
                     assertEquals(mRouter2.getSystemController(), oldController);
@@ -489,7 +489,7 @@ public class MediaRoute2ProviderServiceTest {
                 }
             }
             @Override
-            public void onStopped(RoutingController controller){
+            public void onStop(RoutingController controller){
                 if (SESSION_ID_1.equals(controller.getOriginalId())) {
                     assertTrue(controller.isReleased());
                     onStoppedLatch.countDown();
