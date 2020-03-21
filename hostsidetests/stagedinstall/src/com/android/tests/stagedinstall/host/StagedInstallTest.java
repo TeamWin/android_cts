@@ -532,6 +532,17 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testApexTargetingOldDevSdkFailsVerification");
     }
 
+    /**
+     * Apex should fail to install if apk-in-apex fails to get scanned
+     */
+    @Test
+    @LargeTest
+    public void testApexFailsToInstallIfApkInApexFailsToScan() throws Exception {
+        runPhase("testApexFailsToInstallIfApkInApexFailsToScan_Commit");
+        getDevice().reboot();
+        runPhase("testApexFailsToInstallIfApkInApexFailsToScan_VerifyPostReboot");
+    }
+
     @Test
     public void testCorruptedApexFailsVerification_b146895998() throws Exception {
         runPhase("testCorruptedApexFailsVerification_b146895998");
