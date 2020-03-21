@@ -1873,12 +1873,12 @@ public class StaticMetadata {
         return modes;
     }
 
-    public Capability[] getAvailableBokehCapsChecked() {
+    public Capability[] getAvailableExtendedSceneModeCapsChecked() {
         final Size FULL_HD = new Size(1920, 1080);
         Rect activeRect = getValueFromKeyNonNull(
                 CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
         Key<Capability[]> key =
-                CameraCharacteristics.CONTROL_AVAILABLE_BOKEH_CAPABILITIES;
+                CameraCharacteristics.CONTROL_AVAILABLE_EXTENDED_SCENE_MODE_CAPABILITIES;
         Capability[] caps = mCharacteristics.get(key);
         if (caps == null) {
             return new Capability[0];
@@ -1888,41 +1888,35 @@ public class StaticMetadata {
                 StaticMetadata.StreamDirection.Output);
         List<Size> yuvSizesList = Arrays.asList(yuvSizes);
         for (Capability cap : caps) {
-            int bokehMode = cap.getMode();
+            int extendedSceneMode = cap.getMode();
             Size maxStreamingSize = cap.getMaxStreamingSize();
             boolean maxStreamingSizeIsZero =
                     maxStreamingSize.getWidth() == 0 && maxStreamingSize.getHeight() == 0;
-            // Check bokeh mode is in range.
-            checkTrueForKey(key,
-                    String.format(" bokehMode %d is out of range [%d, %d]", bokehMode,
-                    CameraMetadata.CONTROL_BOKEH_MODE_OFF,
-                    CameraMetadata.CONTROL_BOKEH_MODE_CONTINUOUS),
-                    bokehMode <= CameraMetadata.CONTROL_BOKEH_MODE_CONTINUOUS &&
-                    bokehMode >= CameraMetadata.CONTROL_BOKEH_MODE_OFF);
-            switch (bokehMode) {
-                case CameraMetadata.CONTROL_BOKEH_MODE_STILL_CAPTURE:
+            switch (extendedSceneMode) {
+                case CameraMetadata.CONTROL_EXTENDED_SCENE_MODE_BOKEH_STILL_CAPTURE:
                     // STILL_CAPTURE: Must either be (0, 0), or one of supported yuv/private sizes.
                     // Because spec requires yuv and private sizes match, only check YUV sizes here.
                     checkTrueForKey(key,
-                            String.format(" maxStreamingSize [%d, %d] for bokeh mode " +
+                            String.format(" maxStreamingSize [%d, %d] for extended scene mode " +
                             "%d must be a supported YCBCR_420_888 size, or (0, 0)",
-                            maxStreamingSize.getWidth(), maxStreamingSize.getHeight(), bokehMode),
+                            maxStreamingSize.getWidth(), maxStreamingSize.getHeight(),
+                            extendedSceneMode),
                             yuvSizesList.contains(maxStreamingSize) || maxStreamingSizeIsZero);
                     break;
-                case CameraMetadata.CONTROL_BOKEH_MODE_CONTINUOUS:
+                case CameraMetadata.CONTROL_EXTENDED_SCENE_MODE_BOKEH_CONTINUOUS:
                     // CONTINUOUS: Must be one of supported yuv/private stream sizes.
                     checkTrueForKey(key,
-                            String.format(" maxStreamingSize [%d, %d] for bokeh mode " +
+                            String.format(" maxStreamingSize [%d, %d] for extended scene mode " +
                             "%d must be a supported YCBCR_420_888 size.",
-                            maxStreamingSize.getWidth(), maxStreamingSize.getHeight(), bokehMode),
-                            yuvSizesList.contains(maxStreamingSize));
+                            maxStreamingSize.getWidth(), maxStreamingSize.getHeight(),
+                            extendedSceneMode), yuvSizesList.contains(maxStreamingSize));
                     // Must be at least 1080p if sensor is at least 1080p.
                     if (activeRect.width() >= FULL_HD.getWidth() &&
                             activeRect.height() >= FULL_HD.getHeight()) {
                         checkTrueForKey(key,
-                                String.format(" maxStreamingSize [%d, %d] for bokeh mode %d must " +
-                                "be at least 1080p", maxStreamingSize.getWidth(),
-                                maxStreamingSize.getHeight(), bokehMode),
+                                String.format(" maxStreamingSize [%d, %d] for extended scene " +
+                                "mode %d must be at least 1080p", maxStreamingSize.getWidth(),
+                                maxStreamingSize.getHeight(), extendedSceneMode),
                                 maxStreamingSize.getWidth() >= FULL_HD.getWidth() &&
                                 maxStreamingSize.getHeight() >= FULL_HD.getHeight());
                     }
