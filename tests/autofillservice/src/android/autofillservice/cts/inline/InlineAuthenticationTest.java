@@ -162,17 +162,7 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
         mUiBot.waitForIdle();
         mUiBot.assertSuggestionStrip(1);
 
-        // Delete the char and assert it's not shown again...
-        mActivity.onUsername((v) -> v.setText("a"));
-        mUiBot.waitForIdle();
-        mUiBot.assertNoSuggestionStripEver();
-
-        // ...then type something again to show it, as the input will have 2 chars.
-        mActivity.onUsername((v) -> v.setText("aa"));
-        mUiBot.waitForIdle();
-        mUiBot.assertSuggestionStrip(1);
-
-        // ...and select it this time
+        // ...and select it
         mUiBot.selectSuggestion(0);
         mUiBot.waitForIdle();
         mUiBot.assertNoSuggestionStripEver();
