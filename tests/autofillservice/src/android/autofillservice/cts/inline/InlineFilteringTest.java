@@ -86,4 +86,76 @@ public class InlineFilteringTest extends AbstractLoginActivityTestCase {
         mUiBot.waitForIdleSync();
         mActivity.assertAutoFilled();
     }
+
+    @Test
+    public void testFiltering_privacy() throws Exception {
+        enableService();
+
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_USERNAME, "sergey")
+                        .setPresentation(createPresentation("sergey"))
+                        .setInlinePresentation(createInlinePresentation("sergey"))
+                        .build());
+        sReplier.addResponse(builder.build());
+
+        // Trigger autofill and enter the correct first char, then make sure it's showing initially.
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mActivity.onUsername((v) -> v.setText("s"));
+        mUiBot.waitForIdleSync();
+        mUiBot.assertSuggestionStrip(1);
+        sReplier.getNextFillRequest();
+
+        // Enter the wrong second char - filters out dataset.
+        mActivity.onUsername((v) -> v.setText("sa"));
+        mUiBot.waitForIdleSync();
+        mUiBot.assertNoSuggestionStripEver();
+
+        // Backspace to bring back the dataset.
+        mActivity.onUsername((v) -> v.setText("s"));
+        mUiBot.waitForIdleSync();
+        mUiBot.assertSuggestionStrip(1);
+
+        // Enter the correct second char, then check that suggestions are no longer shown.
+        mActivity.onUsername((v) -> v.setText("se"));
+        mUiBot.waitForIdleSync();
+        mUiBot.assertNoSuggestionStripEver();
+        mActivity.onUsername((v) -> v.setText(""));
+        mUiBot.waitForIdleSync();
+        mUiBot.assertNoSuggestionStripEver();
+    }
+
+    /**
+     * Tests that the privacy mechanism still works when the full text is replaced, as opposed to
+     * individual characters being added/removed.
+     */
+    @Test
+    public void testFiltering_privacy_textReplacement() throws Exception {
+        enableService();
+
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_USERNAME, "sergey")
+                        .setPresentation(createPresentation("sergey"))
+                        .setInlinePresentation(createInlinePresentation("sergey"))
+                        .build());
+        sReplier.addResponse(builder.build());
+
+        // Trigger autofill and enter a few correct chars, then make sure it's showing initially.
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mActivity.onUsername((v) -> v.setText("ser"));
+        mUiBot.waitForIdleSync();
+        mUiBot.assertSuggestionStrip(1);
+        sReplier.getNextFillRequest();
+
+        // Enter a couple different strings, then check that suggestions are no longer shown.
+        mActivity.onUsername((v) -> v.setText("aaa"));
+        mActivity.onUsername((v) -> v.setText("bbb"));
+        mActivity.onUsername((v) -> v.setText("ser"));
+        mUiBot.waitForIdleSync();
+        mUiBot.assertNoSuggestionStripEver();
+        mActivity.onUsername((v) -> v.setText(""));
+        mUiBot.waitForIdleSync();
+        mUiBot.assertNoSuggestionStripEver();
+    }
 }
