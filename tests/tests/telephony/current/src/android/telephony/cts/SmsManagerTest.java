@@ -684,7 +684,7 @@ public class SmsManagerTest {
                     deliveryIntents, fakeMessageId);
         } else if (mContext.getOpPackageName() != null) {
             getSmsManager().sendMultipartTextMessage(destAddr, null, parts, sentIntents,
-                    deliveryIntents, mContext.getOpPackageName());
+                    deliveryIntents, mContext.getOpPackageName(), mContext.getAttributionTag());
         } else {
             getSmsManager().sendMultipartTextMessage(destAddr, null, parts, sentIntents,
                     deliveryIntents);

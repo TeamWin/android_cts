@@ -900,10 +900,10 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     }
 
     /**
-     * Test bokeh mode controls.
+     * Test extended scene mode controls.
      */
     @Test
-    public void testBokehModes() throws Exception {
+    public void testExtendedSceneModes() throws Exception {
         for (String id : mCameraIdsUnderTest) {
             try {
                 if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
@@ -912,7 +912,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                 }
                 openDevice(id);
                 List<Range<Integer>> fpsRanges = getTargetFpsRangesUpTo30(mStaticInfo);
-                bokehModeTestByCamera(fpsRanges);
+                extendedSceneModeTestByCamera(fpsRanges);
             } finally {
                 closeDevice();
             }
@@ -2953,9 +2953,9 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
         }
     }
 
-    private void bokehModeTestByCamera(List<Range<Integer>> fpsRanges) throws Exception {
-        Capability[] bokehCaps = mStaticInfo.getAvailableBokehCapsChecked();
-        if (bokehCaps.length == 0) {
+    private void extendedSceneModeTestByCamera(List<Range<Integer>> fpsRanges) throws Exception {
+        Capability[] extendedSceneModeCaps = mStaticInfo.getAvailableExtendedSceneModeCapsChecked();
+        if (extendedSceneModeCaps.length == 0) {
             return;
         }
 
@@ -2963,17 +2963,17 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
         CaptureRequest.Builder requestBuilder =
                 mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
 
-        for (Capability bokehCap : bokehCaps) {
-            int mode = bokehCap.getMode();
-            requestBuilder.set(CaptureRequest.CONTROL_BOKEH_MODE, mode);
+        for (Capability cap : extendedSceneModeCaps) {
+            int mode = cap.getMode();
+            requestBuilder.set(CaptureRequest.CONTROL_EXTENDED_SCENE_MODE, mode);
 
-            // Test that OFF and CONTINUOUS mode doesn't slow down the frame rate
-            if (mode == CaptureRequest.CONTROL_BOKEH_MODE_OFF ||
-                    mode == CaptureRequest.CONTROL_BOKEH_MODE_CONTINUOUS) {
+            // Test that DISABLED and BOKEH_CONTINUOUS mode doesn't slow down the frame rate
+            if (mode == CaptureRequest.CONTROL_EXTENDED_SCENE_MODE_DISABLED ||
+                    mode == CaptureRequest.CONTROL_EXTENDED_SCENE_MODE_BOKEH_CONTINUOUS) {
                 verifyFpsNotSlowDown(requestBuilder, NUM_FRAMES_VERIFIED, fpsRanges);
             }
 
-            Range<Float> zoomRange = bokehCap.getZoomRatioRange();
+            Range<Float> zoomRange = cap.getZoomRatioRange();
             float[] zoomRatios = new float[]{zoomRange.getLower(), zoomRange.getUpper()};
             for (float ratio : zoomRatios) {
                 SimpleCaptureCallback listener = new SimpleCaptureCallback();
@@ -2981,7 +2981,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                 startPreview(requestBuilder, maxPreviewSize, listener);
                 waitForSettingsApplied(listener, NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY);
 
-                verifyCaptureResultForKey(CaptureResult.CONTROL_BOKEH_MODE,
+                verifyCaptureResultForKey(CaptureResult.CONTROL_EXTENDED_SCENE_MODE,
                         mode, listener, NUM_FRAMES_VERIFIED);
                 verifyCaptureResultForKey(CaptureResult.CONTROL_ZOOM_RATIO,
                         ratio, listener, NUM_FRAMES_VERIFIED);
