@@ -54,7 +54,7 @@ public class BurstCaptureTest extends Camera2SurfaceViewTestCase {
     public void testYuvBurst() throws Exception {
         final int YUV_BURST_SIZE = 100;
         testBurst(ImageFormat.YUV_420_888, YUV_BURST_SIZE, true/*checkFrameRate*/,
-                false/*testBokehMode*/);
+                false/*testStillBokeh*/);
     }
 
     /**
@@ -68,7 +68,7 @@ public class BurstCaptureTest extends Camera2SurfaceViewTestCase {
     public void testJpegBurst() throws Exception {
         final int JPEG_BURST_SIZE = 10;
         testBurst(ImageFormat.JPEG, JPEG_BURST_SIZE, false/*checkFrameRate*/,
-                false/*testBokehMode*/);
+                false/*testStillBokeh*/);
     }
 
     /**
@@ -104,10 +104,12 @@ public class BurstCaptureTest extends Camera2SurfaceViewTestCase {
                     continue;
                 }
 
-                Capability[] bokehCaps = staticInfo.getAvailableBokehCapsChecked();
+                Capability[] extendedSceneModeCaps =
+                        staticInfo.getAvailableExtendedSceneModeCapsChecked();
                 boolean supportStillBokeh = false;
-                for (Capability bokehCap : bokehCaps) {
-                    if (bokehCap.getMode() == CameraMetadata.CONTROL_BOKEH_MODE_STILL_CAPTURE) {
+                for (Capability cap : extendedSceneModeCaps) {
+                    if (cap.getMode() ==
+                            CameraMetadata.CONTROL_EXTENDED_SCENE_MODE_BOKEH_STILL_CAPTURE) {
                         supportStillBokeh = true;
                         break;
                     }
@@ -180,10 +182,10 @@ public class BurstCaptureTest extends Camera2SurfaceViewTestCase {
         burstBuilder.set(CaptureRequest.CONTROL_AE_LOCK, true);
         burstBuilder.set(CaptureRequest.CONTROL_AWB_LOCK, true);
         if (testStillBokeh) {
-            previewBuilder.set(CaptureRequest.CONTROL_BOKEH_MODE,
-                    CameraMetadata.CONTROL_BOKEH_MODE_STILL_CAPTURE);
-            burstBuilder.set(CaptureRequest.CONTROL_BOKEH_MODE,
-                    CameraMetadata.CONTROL_BOKEH_MODE_STILL_CAPTURE);
+            previewBuilder.set(CaptureRequest.CONTROL_EXTENDED_SCENE_MODE,
+                    CameraMetadata.CONTROL_EXTENDED_SCENE_MODE_BOKEH_STILL_CAPTURE);
+            burstBuilder.set(CaptureRequest.CONTROL_EXTENDED_SCENE_MODE,
+                    CameraMetadata.CONTROL_EXTENDED_SCENE_MODE_BOKEH_STILL_CAPTURE);
         }
 
         // Create session and start up preview
