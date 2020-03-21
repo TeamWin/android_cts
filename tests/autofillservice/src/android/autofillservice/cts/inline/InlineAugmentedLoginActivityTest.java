@@ -17,27 +17,17 @@
 package android.autofillservice.cts.inline;
 
 import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
-import static android.autofillservice.cts.Timeouts.MOCK_IME_TIMEOUT_MS;
+import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.augmented.AugmentedHelper.assertBasicRequestInfo;
-
-import static com.android.cts.mockime.ImeEventStreamTestUtils.expectBindInput;
-import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
-
-import static org.junit.Assume.assumeTrue;
 
 import android.autofillservice.cts.AutofillActivityTestRule;
 import android.autofillservice.cts.augmented.AugmentedAutofillAutoActivityLaunchTestCase;
 import android.autofillservice.cts.augmented.AugmentedLoginActivity;
 import android.autofillservice.cts.augmented.CannedAugmentedFillResponse;
 import android.autofillservice.cts.augmented.CtsAugmentedAutofillService.AugmentedFillRequest;
-import android.os.Process;
-import android.view.View;
 import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillValue;
 import android.widget.EditText;
-
-import com.android.cts.mockime.ImeEventStream;
-import com.android.cts.mockime.MockImeSession;
 
 import org.junit.Test;
 
@@ -57,28 +47,11 @@ public class InlineAugmentedLoginActivityTest
         };
     }
 
-    private void enableIME() throws Exception {
-        final MockImeSession mockImeSession = sMockImeSessionRule.getMockImeSession();
-        assumeTrue("MockIME not available", mockImeSession != null);
-        final ImeEventStream stream = mockImeSession.openEventStream();
-
-        // Wait until the MockIme gets bound to the TestActivity.
-        expectBindInput(stream, Process.myPid(), MOCK_IME_TIMEOUT_MS);
-
-        // Wait until IME is displaying.
-        mockImeSession.callRequestShowSelf(0);
-        expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
-                MOCK_IME_TIMEOUT_MS);
-        expectEvent(stream, event -> "onStartInputView".equals(event.getEventName()),
-                MOCK_IME_TIMEOUT_MS);
-    }
-
     @Test
     public void testAugmentedAutoFill_oneDatasetThenFilled() throws Exception {
         // Set services
         enableService();
         enableAugmentedService();
-        enableIME();
 
         // Set expectations
         final EditText username = mActivity.getUsername();
@@ -97,7 +70,7 @@ public class InlineAugmentedLoginActivityTest
                 .build());
 
         // Trigger auto-fill
-        mActivity.onUsername(View::requestFocus);
+        mUiBot.selectByRelativeId(ID_USERNAME);
         mUiBot.waitForIdle();
         sReplier.getNextFillRequest();
         final AugmentedFillRequest request1 = sAugmentedReplier.getNextFillRequest();
@@ -122,7 +95,6 @@ public class InlineAugmentedLoginActivityTest
         // Set services
         enableService();
         enableAugmentedService();
-        enableIME();
 
         // Set expectations
         final EditText username = mActivity.getUsername();
@@ -145,7 +117,7 @@ public class InlineAugmentedLoginActivityTest
                 .build());
 
         // Trigger auto-fill
-        mActivity.onUsername(View::requestFocus);
+        mUiBot.selectByRelativeId(ID_USERNAME);
         mUiBot.waitForIdle();
         sReplier.getNextFillRequest();
         final AugmentedFillRequest request1 = sAugmentedReplier.getNextFillRequest();

@@ -178,6 +178,13 @@ public final class UiBot {
         Log.v(TAG, "device idle in " + delta + "ms");
     }
 
+    public void waitForIdleSync() {
+        final long before = SystemClock.elapsedRealtimeNanos();
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+        final float delta = ((float) (SystemClock.elapsedRealtimeNanos() - before)) / 1_000_000;
+        Log.v(TAG, "device idle sync in " + delta + "ms");
+    }
+
     public void reset() {
         mOkToCallAssertNoDatasets = false;
     }

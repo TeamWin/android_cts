@@ -23,6 +23,7 @@ import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
 import static android.view.inputmethod.cts.util.TestUtils.waitOnMainUntil;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.EventFilterMode.CHECK_EXIT_EVENT_ONLY;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEventWithKeyValue;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
@@ -40,6 +41,7 @@ import android.os.SystemClock;
 import android.text.TextUtils;
 import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
+import android.view.View;
 import android.view.inputmethod.CursorAnchorInfo;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
@@ -199,6 +201,8 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             imeSession.callRequestHideSelf(0);
             expectEvent(stream, event -> "hideSoftInput".equals(event.getEventName()), TIMEOUT);
             expectEvent(stream, event -> "onFinishInputView".equals(event.getEventName()), TIMEOUT);
+            expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
+                    View.GONE, TIMEOUT);
         }
     }
 
@@ -217,6 +221,8 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             imeSession.callRequestShowSelf(0);
             expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
             expectEvent(stream, event -> "onStartInputView".equals(event.getEventName()), TIMEOUT);
+            expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
+                    View.VISIBLE, TIMEOUT);
         }
     }
 

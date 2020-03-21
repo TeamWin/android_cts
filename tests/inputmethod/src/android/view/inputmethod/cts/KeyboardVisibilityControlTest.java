@@ -19,6 +19,7 @@ package android.view.inputmethod.cts;
 import static android.view.inputmethod.cts.util.TestUtils.getOnMainSync;
 import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
 
+import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEventWithKeyValue;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
 
@@ -28,6 +29,7 @@ import static org.junit.Assert.assertTrue;
 import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.Pair;
+import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethod;
 import android.view.inputmethod.InputMethodManager;
@@ -155,6 +157,8 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
 
             expectEvent(stream, showSoftInputMatcher(InputMethod.SHOW_EXPLICIT), TIMEOUT);
             expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
+            expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
+                    View.VISIBLE, TIMEOUT);
 
             // Test hideSoftInputFromWindow() flow
             assertTrue("hideSoftInputFromWindow must success if the View has IME focus",
@@ -162,6 +166,8 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
 
             expectEvent(stream, hideSoftInputMatcher(), TIMEOUT);
             expectEvent(stream, onFinishInputViewMatcher(false), TIMEOUT);
+            expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
+                    View.GONE, TIMEOUT);
         }
     }
 

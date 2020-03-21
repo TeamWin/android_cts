@@ -1,5 +1,4 @@
-//
-// Copyright (C) 2014 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,37 +11,20 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
-android_test_helper_app {
-    name: "CtsDocumentClient",
+android_test {
+    name: "CtsWidgetApp",
     defaults: ["cts_support_defaults"],
     sdk_version: "test_current",
+    srcs: [
+        "src/**/*.java",
+    ],
     static_libs: [
-        "androidx.test.rules",
-        "compatibility-device-util-axt",
-        "ctstestrunner-axt",
-        "ub-uiautomator",
+        "androidx.appcompat_appcompat",
     ],
-    libs: [
-        "android.test.runner.stubs",
-        "android.test.base.stubs",
-    ],
-    srcs: ["src/**/*.java"],
-    // tag this module as a cts test artifact
     test_suites: [
         "cts",
         "vts",
         "general-tests",
-        "mts",
     ],
-    certificate: ":cts-testkey2",
-    optimize: {
-        enabled: false,
-    },
-    dex_preopt: {
-        enabled: false,
-    },
-    min_sdk_version: "29",
-    target_sdk_version: "29",
 }

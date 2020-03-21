@@ -25,7 +25,6 @@ import android.app.AppOpsManager.OPSTR_FINE_LOCATION
 import android.app.AppOpsManager.OPSTR_GET_ACCOUNTS
 import android.app.AppOpsManager.OPSTR_READ_CONTACTS
 import android.app.AppOpsManager.OPSTR_READ_EXTERNAL_STORAGE
-import android.app.AppOpsManager.OPSTR_READ_PHONE_STATE
 import android.app.AppOpsManager.OPSTR_WRITE_CONTACTS
 import android.app.AppOpsManager.strOpToOp
 import android.app.AsyncNotedAppOp
@@ -57,7 +56,6 @@ import android.os.IBinder
 import android.os.Looper
 import android.platform.test.annotations.AppModeFull
 import android.provider.ContactsContract
-import android.telecom.TelecomManager
 import android.telephony.TelephonyManager
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
@@ -618,23 +616,6 @@ class AppOpsLoggingTest {
     }
 
     /**
-     * Realistic end-to-end test for getting cell info
-     */
-    @Test
-    fun getMultiSimSupport() {
-        assumeTrue(context.packageManager.hasSystemFeature(FEATURE_TELEPHONY))
-
-        val telephonyManager = context.createAttributionContext(TEST_ATTRIBUTION_TAG)
-            .getSystemService(TelephonyManager::class.java)
-
-        telephonyManager.isMultiSimSupported
-
-        assertThat(noted[0].first.op).isEqualTo(OPSTR_READ_PHONE_STATE)
-        assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
-        assertThat(noted[0].second.map { it.methodName }).contains("getMultiSimSupport")
-    }
-
-    /**
      * Realistic end-to-end test for getting wallpaper
      */
     @Test
@@ -647,21 +628,6 @@ class AppOpsLoggingTest {
         assertThat(noted[0].first.op).isEqualTo(OPSTR_READ_EXTERNAL_STORAGE)
         assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
         assertThat(noted[0].second.map { it.methodName }).contains("getWallpaper")
-    }
-
-    /**
-     * Realistic end-to-end test for checking if currently in call
-     */
-    @Test
-    fun isInCall() {
-        val telecomManager = context.createAttributionContext(TEST_ATTRIBUTION_TAG)
-                .getSystemService(TelecomManager::class.java)
-
-        telecomManager.isInCall()
-
-        assertThat(noted[0].first.op).isEqualTo(OPSTR_READ_PHONE_STATE)
-        assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
-        assertThat(noted[0].second.map { it.methodName }).contains("isInCall")
     }
 
     /**

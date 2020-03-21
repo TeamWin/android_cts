@@ -410,14 +410,17 @@ public final class MockIme extends InputMethodService {
 
     private static final class KeyboardLayoutView extends LinearLayout {
         @NonNull
+        private final MockIme mMockIme;
+        @NonNull
         private final ImeSettings mSettings;
         @NonNull
         private final View.OnLayoutChangeListener mLayoutListener;
 
-        KeyboardLayoutView(Context context, @NonNull ImeSettings imeSettings,
+        KeyboardLayoutView(MockIme mockIme, @NonNull ImeSettings imeSettings,
                 @Nullable Consumer<ImeLayoutInfo> onInputViewLayoutChangedCallback) {
-            super(context);
+            super(mockIme);
 
+            mMockIme = mockIme;
             mSettings = imeSettings;
 
             setOrientation(VERTICAL);
@@ -508,6 +511,13 @@ public final class MockIme extends InputMethodService {
                             insets.getSystemWindowInsetTop(),
                             insets.getSystemWindowInsetRight(),
                             0 /* bottom */);
+        }
+
+        @Override
+        protected void onWindowVisibilityChanged(int visibility) {
+            mMockIme.getTracer().onWindowVisibilityChanged(() -> {
+                super.onWindowVisibilityChanged(visibility);
+            }, visibility);
         }
 
         @Override
@@ -859,6 +869,12 @@ public final class MockIme extends InputMethodService {
             arguments.putParcelable("editorInfo", editorInfo);
             arguments.putBoolean("restarting", restarting);
             recordEventInternal("onStartInput", runnable, arguments);
+        }
+
+        public void onWindowVisibilityChanged(@NonNull Runnable runnable, int visibility) {
+            final Bundle arguments = new Bundle();
+            arguments.putInt("visible", visibility);
+            recordEventInternal("onWindowVisibilityChanged", runnable, arguments);
         }
 
         public void onStartInputView(EditorInfo editorInfo, boolean restarting,
