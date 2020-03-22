@@ -16,6 +16,8 @@
 
 package android.widget.cts;
 
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -24,7 +26,11 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.os.ConditionVariable;
@@ -71,6 +77,13 @@ public class ToastTest {
     private static final int ACCESSIBILITY_STATE_WAIT_TIMEOUT_MS = 3000;
     private static final long TIME_FOR_UI_OPERATION  = 1000L;
     private static final long TIME_OUT = 5000L;
+    private static final String ACTION_TRANSLUCENT_ACTIVITY_RESUMED =
+            "android.widget.cts.app.TRANSLUCENT_ACTIVITY_RESUMED";
+    private static final String ACTION_TRANSLUCENT_ACTIVITY_FINISH =
+            "android.widget.cts.app.TRANSLUCENT_ACTIVITY_FINISH";
+    private static final ComponentName COMPONENT_TRANSLUCENT_ACTIVITY =
+            ComponentName.unflattenFromString("android.widget.cts.app/.TranslucentActivity");
+
     private Toast mToast;
     private Context mContext;
     private boolean mLayoutDone;
@@ -650,6 +663,24 @@ public class ToastTest {
         assertNotShowCustomToast(view);
     }
 
+    @Test
+    public void testCustomToastBlocked_whenBehindTranslucentActivity() throws Throwable {
+        ConditionVariable activityStarted = registerBlockingReceiver(
+                ACTION_TRANSLUCENT_ACTIVITY_RESUMED);
+        Intent intent = new Intent();
+        intent.setComponent(COMPONENT_TRANSLUCENT_ACTIVITY);
+        intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
+        activityStarted.block();
+        makeCustomToast();
+        View view = mToast.getView();
+
+        mActivityRule.runOnUiThread(mToast::show);
+
+        assertNotShowCustomToast(view);
+        mContext.sendBroadcast(new Intent(ACTION_TRANSLUCENT_ACTIVITY_FINISH));
+    }
+
     @UiThreadTest
     @Test
     public void testGetWindowParams_whenTextToast_returnsNull() {
@@ -663,6 +694,18 @@ public class ToastTest {
         Toast toast = new Toast(mContext);
         toast.setView(new TextView(mContext));
         assertNotNull(toast.getWindowParams());
+    }
+
+    private ConditionVariable registerBlockingReceiver(String action) {
+        ConditionVariable broadcastReceived = new ConditionVariable(false);
+        IntentFilter filter = new IntentFilter(action);
+        mContext.registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                broadcastReceived.open();
+            }
+        }, filter);
+        return broadcastReceived;
     }
 
     private void runOnMainAndDrawSync(@NonNull final View toastView,

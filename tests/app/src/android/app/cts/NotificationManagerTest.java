@@ -474,8 +474,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         final PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
 
         if (data == null) {
-            data = new Notification.BubbleMetadata.Builder()
-                    .createIntentBubble(pendingIntent,
+            data = new Notification.BubbleMetadata.Builder(pendingIntent,
                             Icon.createWithResource(mContext, R.drawable.black))
                     .build();
         }
@@ -3077,9 +3076,8 @@ public class NotificationManagerTest extends AndroidTestCase {
                 .setSmallIcon(android.R.drawable.sym_def_app_icon);
 
         // BubbleMetadata with manifest shortcut
-        Notification.BubbleMetadata data = new Notification.BubbleMetadata.Builder()
-                .createShortcutBubble(BUBBLE_SHORTCUT_ID_MANIFEST)
-                .build();
+        Notification.BubbleMetadata data =
+                new Notification.BubbleMetadata.Builder(BUBBLE_SHORTCUT_ID_MANIFEST).build();
 
         sendAndVerifyBubble(1, nb, data, false /* shouldBeBubble */);
     }
@@ -3134,9 +3132,9 @@ public class NotificationManagerTest extends AndroidTestCase {
                     .setSmallIcon(android.R.drawable.sym_def_app_icon);
 
             // BubbleMetadata with our dynamic shortcut ic
-            Notification.BubbleMetadata data = new Notification.BubbleMetadata.Builder()
-                    .createShortcutBubble(BUBBLE_SHORTCUT_ID_DYNAMIC)
-                    .build();
+            Notification.BubbleMetadata data =
+                    new Notification.BubbleMetadata.Builder(BUBBLE_SHORTCUT_ID_DYNAMIC)
+                            .build();
 
             boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
             sendAndVerifyBubble(1, nb, data, shouldBeBubble);
@@ -3181,9 +3179,9 @@ public class NotificationManagerTest extends AndroidTestCase {
                 .setSmallIcon(android.R.drawable.sym_def_app_icon);
 
         // BubbleMetadata with shortcut that doesn't exist
-        Notification.BubbleMetadata data = new Notification.BubbleMetadata.Builder()
-                .createShortcutBubble("shortcutDoesntExist")
-                .build();
+        Notification.BubbleMetadata data =
+                new Notification.BubbleMetadata.Builder("shortcutDoesntExist")
+                        .build();
 
         sendAndVerifyBubble(1, nb, data, false);
     }
@@ -3198,9 +3196,9 @@ public class NotificationManagerTest extends AndroidTestCase {
         toggleBubbleSetting(true);
 
         // BubbleMetadata with manifest shortcut
-        Notification.BubbleMetadata data = new Notification.BubbleMetadata.Builder()
-                .createShortcutBubble(BUBBLE_SHORTCUT_ID_MANIFEST)
-                .build();
+        Notification.BubbleMetadata data =
+                new Notification.BubbleMetadata.Builder(BUBBLE_SHORTCUT_ID_MANIFEST)
+                        .build();
 
         sendAndVerifyBubble(1, null /* use default notif builder */, data,
                 false /* shouldBeBubble */);
@@ -3257,10 +3255,10 @@ public class NotificationManagerTest extends AndroidTestCase {
                     .setActions(replyAction)
                     .setSmallIcon(android.R.drawable.sym_def_app_icon);
 
-            // BubbleMetadata with our dynamic shortcut ic
-            Notification.BubbleMetadata data = new Notification.BubbleMetadata.Builder()
-                    .createShortcutBubble(BUBBLE_SHORTCUT_ID_DYNAMIC)
-                    .build();
+            // BubbleMetadata with our dynamic shortcut
+            Notification.BubbleMetadata data =
+                    new Notification.BubbleMetadata.Builder(BUBBLE_SHORTCUT_ID_DYNAMIC)
+                            .build();
 
             boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
             sendAndVerifyBubble(1, nb, data, shouldBeBubble);

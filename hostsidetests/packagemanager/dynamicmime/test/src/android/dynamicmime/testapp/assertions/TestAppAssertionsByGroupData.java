@@ -29,6 +29,10 @@ class TestAppAssertionsByGroupData extends AssertionsByGroupData {
 
     @Override
     protected Set<String> getMimeGroup(String mimeGroup) {
-        return mContext.getPackageManager().getMimeGroup(mimeGroup);
+        try {
+            return mContext.getPackageManager().getMimeGroup(mimeGroup);
+        } catch (IllegalArgumentException exception) {
+            return null;
+        }
     }
 }

@@ -31,7 +31,11 @@ public class AppAssertionsByGroupData extends AssertionsByGroupData {
 
     @Override
     protected Set<String> getMimeGroup(String mimeGroup) {
-        String[] mimeTypes = mAppMimeGroups.get(mimeGroup);
-        return mimeTypes != null ? new ArraySet<>(mimeTypes) : null;
+        try {
+            String[] mimeTypes = mAppMimeGroups.get(mimeGroup);
+            return mimeTypes != null ? new ArraySet<>(mimeTypes) : null;
+        } catch (Throwable exception) {
+            return null;
+        }
     }
 }

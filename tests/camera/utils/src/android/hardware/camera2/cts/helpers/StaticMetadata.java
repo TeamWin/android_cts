@@ -1873,12 +1873,12 @@ public class StaticMetadata {
         return modes;
     }
 
-    public Capability[] getAvailableBokehCapsChecked() {
+    public Capability[] getAvailableExtendedSceneModeCapsChecked() {
         final Size FULL_HD = new Size(1920, 1080);
         Rect activeRect = getValueFromKeyNonNull(
                 CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
         Key<Capability[]> key =
-                CameraCharacteristics.CONTROL_AVAILABLE_BOKEH_CAPABILITIES;
+                CameraCharacteristics.CONTROL_AVAILABLE_EXTENDED_SCENE_MODE_CAPABILITIES;
         Capability[] caps = mCharacteristics.get(key);
         if (caps == null) {
             return new Capability[0];
@@ -1888,41 +1888,35 @@ public class StaticMetadata {
                 StaticMetadata.StreamDirection.Output);
         List<Size> yuvSizesList = Arrays.asList(yuvSizes);
         for (Capability cap : caps) {
-            int bokehMode = cap.getMode();
+            int extendedSceneMode = cap.getMode();
             Size maxStreamingSize = cap.getMaxStreamingSize();
             boolean maxStreamingSizeIsZero =
                     maxStreamingSize.getWidth() == 0 && maxStreamingSize.getHeight() == 0;
-            // Check bokeh mode is in range.
-            checkTrueForKey(key,
-                    String.format(" bokehMode %d is out of range [%d, %d]", bokehMode,
-                    CameraMetadata.CONTROL_BOKEH_MODE_OFF,
-                    CameraMetadata.CONTROL_BOKEH_MODE_CONTINUOUS),
-                    bokehMode <= CameraMetadata.CONTROL_BOKEH_MODE_CONTINUOUS &&
-                    bokehMode >= CameraMetadata.CONTROL_BOKEH_MODE_OFF);
-            switch (bokehMode) {
-                case CameraMetadata.CONTROL_BOKEH_MODE_STILL_CAPTURE:
+            switch (extendedSceneMode) {
+                case CameraMetadata.CONTROL_EXTENDED_SCENE_MODE_BOKEH_STILL_CAPTURE:
                     // STILL_CAPTURE: Must either be (0, 0), or one of supported yuv/private sizes.
                     // Because spec requires yuv and private sizes match, only check YUV sizes here.
                     checkTrueForKey(key,
-                            String.format(" maxStreamingSize [%d, %d] for bokeh mode " +
+                            String.format(" maxStreamingSize [%d, %d] for extended scene mode " +
                             "%d must be a supported YCBCR_420_888 size, or (0, 0)",
-                            maxStreamingSize.getWidth(), maxStreamingSize.getHeight(), bokehMode),
+                            maxStreamingSize.getWidth(), maxStreamingSize.getHeight(),
+                            extendedSceneMode),
                             yuvSizesList.contains(maxStreamingSize) || maxStreamingSizeIsZero);
                     break;
-                case CameraMetadata.CONTROL_BOKEH_MODE_CONTINUOUS:
+                case CameraMetadata.CONTROL_EXTENDED_SCENE_MODE_BOKEH_CONTINUOUS:
                     // CONTINUOUS: Must be one of supported yuv/private stream sizes.
                     checkTrueForKey(key,
-                            String.format(" maxStreamingSize [%d, %d] for bokeh mode " +
+                            String.format(" maxStreamingSize [%d, %d] for extended scene mode " +
                             "%d must be a supported YCBCR_420_888 size.",
-                            maxStreamingSize.getWidth(), maxStreamingSize.getHeight(), bokehMode),
-                            yuvSizesList.contains(maxStreamingSize));
+                            maxStreamingSize.getWidth(), maxStreamingSize.getHeight(),
+                            extendedSceneMode), yuvSizesList.contains(maxStreamingSize));
                     // Must be at least 1080p if sensor is at least 1080p.
                     if (activeRect.width() >= FULL_HD.getWidth() &&
                             activeRect.height() >= FULL_HD.getHeight()) {
                         checkTrueForKey(key,
-                                String.format(" maxStreamingSize [%d, %d] for bokeh mode %d must " +
-                                "be at least 1080p", maxStreamingSize.getWidth(),
-                                maxStreamingSize.getHeight(), bokehMode),
+                                String.format(" maxStreamingSize [%d, %d] for extended scene " +
+                                "mode %d must be at least 1080p", maxStreamingSize.getWidth(),
+                                maxStreamingSize.getHeight(), extendedSceneMode),
                                 maxStreamingSize.getWidth() >= FULL_HD.getWidth() &&
                                 maxStreamingSize.getHeight() >= FULL_HD.getHeight());
                     }
@@ -2080,6 +2074,45 @@ public class StaticMetadata {
 
         return availableCapabilities.contains(capability);
     }
+
+    /**
+     * Determine whether the current device supports a private reprocessing capability or not.
+     *
+     * @return {@code true} if the capability is supported, {@code false} otherwise.
+     *
+     * @throws IllegalArgumentException if {@code capability} was negative
+     */
+    public boolean isPrivateReprocessingSupported() {
+        return isCapabilitySupported(
+                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_PRIVATE_REPROCESSING);
+    }
+
+    /**
+     * Get sorted (descending order) size list for given input format. Remove the sizes larger than
+     * the bound. If the bound is null, don't do the size bound filtering.
+     *
+     * @param format input format
+     * @param bound maximum allowed size bound
+     *
+     * @return Sorted input size list (descending order)
+     */
+    public List<Size> getSortedSizesForInputFormat(int format, Size bound) {
+        Size[] availableSizes = getAvailableSizesForFormatChecked(format, StreamDirection.Input);
+        if (bound == null) {
+            return CameraTestUtils.getAscendingOrderSizes(Arrays.asList(availableSizes),
+                    /*ascending*/false);
+        }
+
+        List<Size> sizes = new ArrayList<Size>();
+        for (Size sz: availableSizes) {
+            if (sz.getWidth() <= bound.getWidth() && sz.getHeight() <= bound.getHeight()) {
+                sizes.add(sz);
+            }
+        }
+
+        return CameraTestUtils.getAscendingOrderSizes(sizes, /*ascending*/false);
+    }
+
 
     /**
      * Determine whether or not all the {@code keys} are available characteristics keys

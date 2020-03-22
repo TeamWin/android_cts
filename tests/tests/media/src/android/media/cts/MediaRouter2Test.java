@@ -181,7 +181,7 @@ public class MediaRouter2Test {
         // Create session with this route
         TransferCallback controllerCallback = new TransferCallback() {
             @Override
-            public void onTransferred(RoutingController oldController,
+            public void onTransfer(RoutingController oldController,
                     RoutingController newController) {
                 assertEquals(mRouter2.getSystemController(), oldController);
                 assertTrue(createRouteMap(newController.getSelectedRoutes()).containsKey(
@@ -191,7 +191,7 @@ public class MediaRouter2Test {
             }
 
             @Override
-            public void onTransferFailed(MediaRoute2Info requestedRoute) {
+            public void onTransferFailure(MediaRoute2Info requestedRoute) {
                 failureLatch.countDown();
             }
         };
@@ -230,14 +230,14 @@ public class MediaRouter2Test {
         // Create session with this route
         TransferCallback transferCallback = new TransferCallback() {
             @Override
-            public void onTransferred(RoutingController oldController,
+            public void onTransfer(RoutingController oldController,
                     RoutingController newController) {
                 controllers.add(newController);
                 successLatch.countDown();
             }
 
             @Override
-            public void onTransferFailed(MediaRoute2Info requestedRoute) {
+            public void onTransferFailure(MediaRoute2Info requestedRoute) {
                 assertEquals(route, requestedRoute);
                 failureLatch.countDown();
             }
@@ -252,7 +252,7 @@ public class MediaRouter2Test {
             mRouter2.transferTo(route);
             assertTrue(failureLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
 
-            // onTransferred should not be called.
+            // onTransfer should not be called.
             assertFalse(successLatch.await(WAIT_MS, TimeUnit.MILLISECONDS));
         } finally {
             releaseControllers(controllers);
@@ -274,7 +274,7 @@ public class MediaRouter2Test {
         // Create session with this route
         TransferCallback transferCallback = new TransferCallback() {
             @Override
-            public void onTransferred(RoutingController oldController,
+            public void onTransfer(RoutingController oldController,
                     RoutingController newController) {
                 createdControllers.add(newController);
                 if (successLatch1.getCount() > 0) {
@@ -285,7 +285,7 @@ public class MediaRouter2Test {
             }
 
             @Override
-            public void onTransferFailed(MediaRoute2Info requestedRoute) {
+            public void onTransferFailure(MediaRoute2Info requestedRoute) {
                 failureLatch.countDown();
             }
         };
@@ -307,7 +307,7 @@ public class MediaRouter2Test {
             mRouter2.transferTo(route2);
             assertTrue(successLatch2.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
 
-            // onTransferFailed should not be called.
+            // onTransferFailure should not be called.
             assertFalse(failureLatch.await(WAIT_MS, TimeUnit.MILLISECONDS));
 
             // Created controllers should have proper info
@@ -351,7 +351,7 @@ public class MediaRouter2Test {
         // Create session with this route
         TransferCallback transferCallback = new TransferCallback() {
             @Override
-            public void onTransferred(RoutingController oldController,
+            public void onTransfer(RoutingController oldController,
                     RoutingController newController) {
                 assertTrue(createRouteMap(newController.getSelectedRoutes())
                         .containsKey(ROUTE_ID1));
@@ -368,7 +368,7 @@ public class MediaRouter2Test {
             }
 
             @Override
-            public void onTransferFailed(MediaRoute2Info requestedRoute) {
+            public void onTransferFailure(MediaRoute2Info requestedRoute) {
                 failureLatch.countDown();
             }
         };
@@ -412,7 +412,7 @@ public class MediaRouter2Test {
         // Create session with this route
         TransferCallback transferCallback = new TransferCallback() {
             @Override
-            public void onTransferred(RoutingController oldController,
+            public void onTransfer(RoutingController oldController,
                     RoutingController newController) {
                 controllers.add(newController);
                 successLatch.countDown();
@@ -482,14 +482,14 @@ public class MediaRouter2Test {
         // Create session with this route
         TransferCallback transferCallback = new TransferCallback() {
             @Override
-            public void onTransferred(RoutingController oldController,
+            public void onTransfer(RoutingController oldController,
                     RoutingController newController) {
                 controllers.add(newController);
                 successLatch.countDown();
             }
 
             @Override
-            public void onTransferFailed(MediaRoute2Info requestedRoute) {
+            public void onTransferFailure(MediaRoute2Info requestedRoute) {
                 failureLatch.countDown();
             }
         };
@@ -525,7 +525,7 @@ public class MediaRouter2Test {
         MediaRoute2Info routeToBegin = routes.get(ROUTE_ID1);
         assertNotNull(routeToBegin);
 
-        final CountDownLatch onTransferredLatch = new CountDownLatch(1);
+        final CountDownLatch onTransferLatch = new CountDownLatch(1);
         final CountDownLatch onControllerUpdatedLatchForSelect = new CountDownLatch(1);
         final CountDownLatch onControllerUpdatedLatchForDeselect = new CountDownLatch(1);
         final List<RoutingController> controllers = new ArrayList<>();
@@ -534,20 +534,20 @@ public class MediaRouter2Test {
         // Create session with ROUTE_ID1
         TransferCallback transferCallback = new TransferCallback() {
             @Override
-            public void onTransferred(RoutingController oldController,
+            public void onTransfer(RoutingController oldController,
                     RoutingController newController) {
                 assertEquals(mRouter2.getSystemController(), oldController);
                 assertTrue(getOriginalRouteIds(newController.getSelectedRoutes()).contains(
                         ROUTE_ID1));
                 controllers.add(newController);
-                onTransferredLatch.countDown();
+                onTransferLatch.countDown();
             }
         };
 
         ControllerCallback controllerCallback = new ControllerCallback() {
             @Override
             public void onControllerUpdated(RoutingController controller) {
-                if (onTransferredLatch.getCount() != 0
+                if (onTransferLatch.getCount() != 0
                         || !TextUtils.equals(controllers.get(0).getId(), controller.getId())) {
                     return;
                 }
@@ -589,7 +589,7 @@ public class MediaRouter2Test {
             mRouter2.registerTransferCallback(mExecutor, transferCallback);
             mRouter2.registerControllerCallback(mExecutor, controllerCallback);
             mRouter2.transferTo(routeToBegin);
-            assertTrue(onTransferredLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            assertTrue(onTransferLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
 
             assertEquals(1, controllers.size());
             RoutingController controller = controllers.get(0);
@@ -624,27 +624,27 @@ public class MediaRouter2Test {
         MediaRoute2Info routeToBegin = routes.get(ROUTE_ID1);
         assertNotNull(routeToBegin);
 
-        final CountDownLatch onTransferredLatch = new CountDownLatch(1);
+        final CountDownLatch onTransferLatch = new CountDownLatch(1);
         final CountDownLatch onControllerUpdatedLatch = new CountDownLatch(1);
         final List<RoutingController> controllers = new ArrayList<>();
 
         // Create session with ROUTE_ID1
         TransferCallback transferCallback = new TransferCallback() {
             @Override
-            public void onTransferred(RoutingController oldController,
+            public void onTransfer(RoutingController oldController,
                     RoutingController newController) {
                 assertEquals(mRouter2.getSystemController(), oldController);
                 assertTrue(getOriginalRouteIds(newController.getSelectedRoutes()).contains(
                         ROUTE_ID1));
                 controllers.add(newController);
-                onTransferredLatch.countDown();
+                onTransferLatch.countDown();
             }
         };
 
         ControllerCallback controllerCallback = new ControllerCallback() {
             @Override
             public void onControllerUpdated(RoutingController controller) {
-                if (onTransferredLatch.getCount() != 0
+                if (onTransferLatch.getCount() != 0
                         || !TextUtils.equals(controllers.get(0).getId(), controller.getId())) {
                     return;
                 }
@@ -665,7 +665,7 @@ public class MediaRouter2Test {
             mRouter2.registerTransferCallback(mExecutor, transferCallback);
             mRouter2.registerControllerCallback(mExecutor, controllerCallback);
             mRouter2.transferTo(routeToBegin);
-            assertTrue(onTransferredLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            assertTrue(onTransferLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
 
             assertEquals(1, controllers.size());
             RoutingController controller = controllers.get(0);
@@ -693,26 +693,26 @@ public class MediaRouter2Test {
         MediaRoute2Info routeToBegin = routes.get(ROUTE_ID1);
         assertNotNull(routeToBegin);
 
-        final CountDownLatch onTransferredLatch = new CountDownLatch(1);
+        final CountDownLatch onTransferLatch = new CountDownLatch(1);
         final CountDownLatch onControllerUpdatedLatch = new CountDownLatch(1);
         final List<RoutingController> controllers = new ArrayList<>();
 
         // Create session with ROUTE_ID1
         TransferCallback transferCallback = new TransferCallback() {
             @Override
-            public void onTransferred(RoutingController oldController,
+            public void onTransfer(RoutingController oldController,
                     RoutingController newController) {
                 assertEquals(mRouter2.getSystemController(), oldController);
                 assertTrue(getOriginalRouteIds(newController.getSelectedRoutes()).contains(
                         ROUTE_ID1));
                 controllers.add(newController);
-                onTransferredLatch.countDown();
+                onTransferLatch.countDown();
             }
         };
         ControllerCallback controllerCallback = new ControllerCallback() {
             @Override
             public void onControllerUpdated(RoutingController controller) {
-                if (onTransferredLatch.getCount() != 0
+                if (onTransferLatch.getCount() != 0
                         || !TextUtils.equals(controllers.get(0).getId(), controller.getId())) {
                     return;
                 }
@@ -733,7 +733,7 @@ public class MediaRouter2Test {
             mRouter2.registerTransferCallback(mExecutor, transferCallback);
             mRouter2.registerControllerCallback(mExecutor, controllerCallback);
             mRouter2.transferTo(routeToBegin);
-            assertTrue(onTransferredLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            assertTrue(onTransferLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
 
             assertEquals(1, controllers.size());
 
@@ -752,7 +752,7 @@ public class MediaRouter2Test {
         }
     }
 
-    // TODO: Add tests for onStopped() when provider releases the session.
+    // TODO: Add tests for onStop() when provider releases the session.
     @Test
     public void testStop() throws Exception {
         final List<String> sampleRouteType = new ArrayList<>();
@@ -762,36 +762,36 @@ public class MediaRouter2Test {
         MediaRoute2Info routeTransferFrom = routes.get(ROUTE_ID1);
         assertNotNull(routeTransferFrom);
 
-        final CountDownLatch onTransferredLatch = new CountDownLatch(1);
+        final CountDownLatch onTransferLatch = new CountDownLatch(1);
         final CountDownLatch onControllerUpdatedLatch = new CountDownLatch(1);
-        final CountDownLatch onStoppedLatch = new CountDownLatch(1);
+        final CountDownLatch onStopLatch = new CountDownLatch(1);
         final List<RoutingController> controllers = new ArrayList<>();
 
         TransferCallback transferCallback = new TransferCallback() {
             @Override
-            public void onTransferred(RoutingController oldController,
+            public void onTransfer(RoutingController oldController,
                     RoutingController newController) {
                 assertEquals(mRouter2.getSystemController(), oldController);
                 assertTrue(getOriginalRouteIds(newController.getSelectedRoutes()).contains(
                         ROUTE_ID1));
                 controllers.add(newController);
-                onTransferredLatch.countDown();
+                onTransferLatch.countDown();
             }
             @Override
-            public void onStopped(RoutingController controller) {
-                if (onTransferredLatch.getCount() != 0
+            public void onStop(RoutingController controller) {
+                if (onTransferLatch.getCount() != 0
                         || !TextUtils.equals(
                         controllers.get(0).getId(), controller.getId())) {
                     return;
                 }
-                onStoppedLatch.countDown();
+                onStopLatch.countDown();
             }
         };
 
         ControllerCallback controllerCallback = new ControllerCallback() {
             @Override
             public void onControllerUpdated(RoutingController controller) {
-                if (onTransferredLatch.getCount() != 0
+                if (onTransferLatch.getCount() != 0
                         || !TextUtils.equals(controllers.get(0).getId(), controller.getId())) {
                     return;
                 }
@@ -807,7 +807,7 @@ public class MediaRouter2Test {
             mRouter2.registerTransferCallback(mExecutor, transferCallback);
             mRouter2.registerControllerCallback(mExecutor, controllerCallback);
             mRouter2.transferTo(routeTransferFrom);
-            assertTrue(onTransferredLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            assertTrue(onTransferLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
 
             assertEquals(1, controllers.size());
             RoutingController controller = controllers.get(0);
@@ -823,8 +823,8 @@ public class MediaRouter2Test {
             controller.selectRoute(routeToSelect);
             assertFalse(onControllerUpdatedLatch.await(WAIT_MS, TimeUnit.MILLISECONDS));
 
-            // onStopped should be called.
-            assertTrue(onStoppedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            // onStop should be called.
+            assertTrue(onStopLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
         } finally {
             releaseControllers(controllers);
             mRouter2.unregisterRouteCallback(routeCallback);
@@ -842,36 +842,36 @@ public class MediaRouter2Test {
         MediaRoute2Info routeTransferFrom = routes.get(ROUTE_ID1);
         assertNotNull(routeTransferFrom);
 
-        final CountDownLatch onTransferredLatch = new CountDownLatch(1);
+        final CountDownLatch onTransferLatch = new CountDownLatch(1);
         final CountDownLatch onControllerUpdatedLatch = new CountDownLatch(1);
-        final CountDownLatch onStoppedLatch = new CountDownLatch(1);
+        final CountDownLatch onStopLatch = new CountDownLatch(1);
         final List<RoutingController> controllers = new ArrayList<>();
 
         TransferCallback transferCallback = new TransferCallback() {
             @Override
-            public void onTransferred(RoutingController oldController,
+            public void onTransfer(RoutingController oldController,
                     RoutingController newController) {
                 assertEquals(mRouter2.getSystemController(), oldController);
                 assertTrue(getOriginalRouteIds(newController.getSelectedRoutes()).contains(
                         ROUTE_ID1));
                 controllers.add(newController);
-                onTransferredLatch.countDown();
+                onTransferLatch.countDown();
             }
             @Override
-            public void onStopped(RoutingController controller) {
-                if (onTransferredLatch.getCount() != 0
+            public void onStop(RoutingController controller) {
+                if (onTransferLatch.getCount() != 0
                         || !TextUtils.equals(
                                 controllers.get(0).getId(), controller.getId())) {
                     return;
                 }
-                onStoppedLatch.countDown();
+                onStopLatch.countDown();
             }
         };
 
         ControllerCallback controllerCallback = new ControllerCallback() {
             @Override
             public void onControllerUpdated(RoutingController controller) {
-                if (onTransferredLatch.getCount() != 0
+                if (onTransferLatch.getCount() != 0
                         || !TextUtils.equals(controllers.get(0).getId(), controller.getId())) {
                     return;
                 }
@@ -887,7 +887,7 @@ public class MediaRouter2Test {
             mRouter2.registerTransferCallback(mExecutor, transferCallback);
             mRouter2.registerControllerCallback(mExecutor, controllerCallback);
             mRouter2.transferTo(routeTransferFrom);
-            assertTrue(onTransferredLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            assertTrue(onTransferLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
 
             assertEquals(1, controllers.size());
             RoutingController controller = controllers.get(0);
@@ -904,8 +904,8 @@ public class MediaRouter2Test {
             controller.selectRoute(routeToSelect);
             assertFalse(onControllerUpdatedLatch.await(WAIT_MS, TimeUnit.MILLISECONDS));
 
-            // onStopped should be called.
-            assertTrue(onStoppedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            // onStop should be called.
+            assertTrue(onStopLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
         } finally {
             releaseControllers(controllers);
             mRouter2.unregisterRouteCallback(routeCallback);
@@ -1003,8 +1003,8 @@ public class MediaRouter2Test {
         routeCallback.onRoutesRemoved(null);
 
         TransferCallback transferCallback = new TransferCallback() {};
-        transferCallback.onTransferred(null, null);
-        transferCallback.onTransferFailed(null);
+        transferCallback.onTransfer(null, null);
+        transferCallback.onTransferFailure(null);
 
         OnGetControllerHintsListener listener = route -> null;
         listener.onGetControllerHints(null);
