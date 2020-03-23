@@ -68,7 +68,8 @@ import android.support.test.metricshelper.MetricsAsserts;
 import android.util.EventLog.Event;
 
 
-import androidx.test.filters.FlakyTest;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -78,6 +79,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntConsumer;
@@ -113,12 +115,11 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      * - am_activity_launch_time event is generated
      * In all three cases, verify the delay measurements are the same.
      */
-    @FlakyTest(bugId = 143855645)
     @Test
     public void testAppLaunchIsLogged() {
         launchAndWaitForActivity(TEST_ACTIVITY);
 
-        final LogMaker metricsLog = getMetricsLog(TEST_ACTIVITY, APP_TRANSITION);
+        final LogMaker metricsLog = waitForMetricsLog(TEST_ACTIVITY, APP_TRANSITION);
         final String[] deviceLogs = getDeviceLogsForComponents(mLogSeparator, TAG_ATM);
         final List<Event> eventLogs = getEventLogsForComponents(mLogSeparator,
                 EVENT_WM_ACTIVITY_LAUNCH_TIME);
@@ -138,7 +139,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
     private void assertMetricsLogs(ComponentName componentName,
             int category, LogMaker log, long preUptimeMs, long postUptimeMs) {
         assertNotNull("did not find the metrics log for: " + componentName
-                + " category:" + category, log);
+                + " category:" + categoryToString(category), log);
         int startUptimeSec =
                 ((Number) log.getTaggedData(APP_TRANSITION_DEVICE_UPTIME_SECONDS)).intValue();
         int preUptimeSec = (int) (TimeUnit.MILLISECONDS.toSeconds(preUptimeMs));
@@ -194,7 +195,6 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      * In both cases verify fully drawn delay measurements are equal.
      * See {@link Activity#reportFullyDrawn()}
      */
-    @FlakyTest(bugId = 143855645)
     @Test
     public void testAppFullyDrawnReportIsLogged() {
         launchAndWaitForActivity(REPORT_FULLY_DRAWN_ACTIVITY);
@@ -202,7 +202,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
         // Sleep until activity under test has reported drawn (after 500ms)
         sleep(1000);
 
-        final LogMaker metricsLog = getMetricsLog(REPORT_FULLY_DRAWN_ACTIVITY,
+        final LogMaker metricsLog = waitForMetricsLog(REPORT_FULLY_DRAWN_ACTIVITY,
                 APP_TRANSITION_REPORTED_DRAWN);
         final String[] deviceLogs = getDeviceLogsForComponents(mLogSeparator, TAG_ATM);
 
@@ -226,7 +226,6 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      * totalTime is set correctly. Make sure the reported value is consistent with value reported to
      * metrics logs. Verify we output the correct launch state.
      */
-    @FlakyTest(bugId = 143855645)
     @Test
     public void testAppWarmLaunchSetsWaitResultDelayData() {
         try (ActivitySessionClient client = createActivitySessionClient()) {
@@ -244,9 +243,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
         final String amStartOutput = SystemUtil.runShellCommand(
                 "am start -W " + TEST_ACTIVITY.flattenToShortString());
 
-        final LogMaker metricsLog = getMetricsLog(TEST_ACTIVITY, APP_TRANSITION);
-        assertNotNull("log should have windows drawn delay", metricsLog);
-
+        final LogMaker metricsLog = waitForMetricsLog(TEST_ACTIVITY, APP_TRANSITION);
         final int windowsDrawnDelayMs =
                 (int) metricsLog.getTaggedData(APP_TRANSITION_WINDOWS_DRAWN_DELAY_MS);
 
@@ -261,7 +258,6 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      * totalTime is set correctly. Make sure the reported value is consistent with value reported to
      * metrics logs. Verify we output the correct launch state.
      */
-    @FlakyTest(bugId = 143855645)
     @Test
     public void testAppHotLaunchSetsWaitResultDelayData() {
         SystemUtil.runShellCommand("am start -S -W " + TEST_ACTIVITY.flattenToShortString());
@@ -274,9 +270,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
         final String amStartOutput = SystemUtil.runShellCommand(
                 "am start -W " + TEST_ACTIVITY.flattenToShortString());
 
-        final LogMaker metricsLog = getMetricsLog(TEST_ACTIVITY, APP_TRANSITION);
-        assertNotNull("log should have windows drawn delay", metricsLog);
-
+        final LogMaker metricsLog = waitForMetricsLog(TEST_ACTIVITY, APP_TRANSITION);
         final int windowsDrawnDelayMs =
                 (int) metricsLog.getTaggedData(APP_TRANSITION_WINDOWS_DRAWN_DELAY_MS);
 
@@ -291,15 +285,12 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      * totalTime is set correctly. Make sure the reported value is consistent with value reported to
      * metrics logs. Verify we output the correct launch state.
      */
-    @FlakyTest(bugId = 143855645)
     @Test
     public void testAppColdLaunchSetsWaitResultDelayData() {
         final String amStartOutput = SystemUtil.runShellCommand(
                 "am start -S -W " + TEST_ACTIVITY.flattenToShortString());
 
-        final LogMaker metricsLog = getMetricsLog(TEST_ACTIVITY, APP_TRANSITION);
-        assertNotNull("log should have windows drawn delay", metricsLog);
-
+        final LogMaker metricsLog = waitForMetricsLog(TEST_ACTIVITY, APP_TRANSITION);
         final int windowsDrawnDelayMs =
                 (int) metricsLog.getTaggedData(APP_TRANSITION_WINDOWS_DRAWN_DELAY_MS);
 
@@ -314,7 +305,6 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      * receive a windows drawn message.
      * see b/117148004
      */
-    @FlakyTest(bugId = 143855645)
     @Test
     public void testLaunchOfVisibleApp() {
         // Launch an activity.
@@ -339,7 +329,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
         launchAndWaitForActivity(THIRD_ACTIVITY);
 
         long postUptimeMs = SystemClock.uptimeMillis();
-        metricsLog = getMetricsLog(THIRD_ACTIVITY, APP_TRANSITION);
+        metricsLog = waitForMetricsLog(THIRD_ACTIVITY, APP_TRANSITION);
         assertMetricsLogs(THIRD_ACTIVITY, APP_TRANSITION, metricsLog, mPreUptimeMs,
                 postUptimeMs);
         assertTransitionIsStartingWindow(metricsLog);
@@ -357,11 +347,8 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
                 .setWaitForLaunched(false)
                 .execute();
 
-        final LogMaker metricsLog = Condition.waitForResult(
-                new Condition<LogMaker>("APP_TRANSITION_CANCELLED")
-                        .setResultSupplier(() -> getMetricsLog(
-                                TRANSLUCENT_TOP_ACTIVITY, APP_TRANSITION_CANCELLED))
-                        .setResultValidator(log -> log != null));
+        final LogMaker metricsLog = waitForMetricsLog(TRANSLUCENT_TOP_ACTIVITY,
+                APP_TRANSITION_CANCELLED);
 
         assertNotNull("Metrics log APP_TRANSITION_CANCELLED not found", metricsLog);
     }
@@ -378,7 +365,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
         mPreUptimeMs = SystemClock.uptimeMillis();
         launchAndWaitForActivity(SECOND_ACTIVITY);
 
-        final LogMaker metricsLog = getMetricsLog(SECOND_ACTIVITY, APP_TRANSITION);
+        final LogMaker metricsLog = waitForMetricsLog(SECOND_ACTIVITY, APP_TRANSITION);
         final long postUptimeMs = SystemClock.uptimeMillis();
         assertMetricsLogs(SECOND_ACTIVITY, APP_TRANSITION, metricsLog, mPreUptimeMs, postUptimeMs);
         assertTransitionIsStartingWindow(metricsLog);
@@ -393,7 +380,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
     public void testTrampolineActivityLaunch() {
         // Launch a trampoline activity that will launch single task activity.
         launchAndWaitForActivity(ENTRY_POINT_ALIAS_ACTIVITY);
-        final LogMaker metricsLog = getMetricsLog(SINGLE_TASK_ACTIVITY, APP_TRANSITION);
+        final LogMaker metricsLog = waitForMetricsLog(SINGLE_TASK_ACTIVITY, APP_TRANSITION);
         final long postUptimeMs = SystemClock.uptimeMillis();
         assertMetricsLogs(SINGLE_TASK_ACTIVITY, APP_TRANSITION, metricsLog, mPreUptimeMs,
                         postUptimeMs);
@@ -431,18 +418,52 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
                 .execute();
     }
 
-    private LogMaker getMetricsLog(ComponentName componentName, int category) {
-        final Queue<LogMaker> startLogs = MetricsAsserts.findMatchingLogs(mMetricsReader,
-                new LogMaker(category));
-        for (LogMaker log : startLogs) {
-            final String actualClassName = (String) log.getTaggedData(FIELD_CLASS_NAME);
-            final String actualPackageName = log.getPackageName();
-            if (componentName.getClassName().equals(actualClassName) &&
-                    componentName.getPackageName().equals(actualPackageName)) {
+    @NonNull
+    private LogMaker waitForMetricsLog(ComponentName componentName, int category) {
+        final String categoryName = categoryToString(category);
+        final String message = componentName.toShortString() + " with category " + categoryName;
+        final LogMaker metricsLog = Condition.waitForResult(new Condition<LogMaker>(message)
+                .setResultSupplier(() -> getMetricsLog(componentName, category))
+                .setResultValidator(Objects::nonNull));
+        if (metricsLog != null) {
+            return metricsLog;
+        }
+
+        // Fallback to check again from raw event log. Not sure if sometimes MetricsAsserts cannot
+        // find the expected log.
+        final LogMaker template = new LogMaker(category);
+        final List<Event> eventLogs = getEventLogsForComponents(mLogSeparator,
+                android.util.EventLog.getTagCode("sysui_multi_action"));
+        for (Event event : eventLogs) {
+            final LogMaker log = new LogMaker((Object[]) event.getData());
+            if (isComponentMatched(log, componentName) && template.isSubsetOf(log)) {
                 return log;
             }
         }
-        return null;
+
+        throw new AssertionError("Log should have " + categoryName + " of " + componentName);
+    }
+
+    @Nullable
+    private LogMaker getMetricsLog(ComponentName componentName, int category) {
+        final Queue<LogMaker> startLogs = MetricsAsserts.findMatchingLogs(mMetricsReader,
+                new LogMaker(category));
+        return startLogs.stream().filter(log -> isComponentMatched(log, componentName))
+                .findFirst().orElse(null);
+    }
+
+    private static boolean isComponentMatched(LogMaker log, ComponentName componentName) {
+        final String actualClassName = (String) log.getTaggedData(FIELD_CLASS_NAME);
+        final String actualPackageName = log.getPackageName();
+        return componentName.getClassName().equals(actualClassName) &&
+                componentName.getPackageName().equals(actualPackageName);
+    }
+
+    private static String categoryToString(int category) {
+        return (category == APP_TRANSITION ? "APP_TRANSITION"
+                : category == APP_TRANSITION_CANCELLED ? "APP_TRANSITION_CANCELLED"
+                : category == APP_TRANSITION_REPORTED_DRAWN ? "APP_TRANSITION_REPORTED_DRAWN"
+                : "Unknown") + "(" + category + ")";
     }
 
     private static void assertLaunchComponentState(String amStartOutput, ComponentName component,
