@@ -27,6 +27,7 @@ public final class Timeouts {
     private static final long ONE_NAPTIME_TO_RULE_THEN_ALL_MS = 2_000;
 
     public static final long MOCK_IME_TIMEOUT_MS = 5_000;
+    public static final long DRAWABLE_TIMEOUT_MS = 5_000;
 
     /**
      * Timeout until framework binds / unbinds from service.
