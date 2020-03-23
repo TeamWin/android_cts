@@ -50,6 +50,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.TestActivity;
 import android.view.inputmethod.cts.util.TestUtils;
+import android.view.inputmethod.cts.util.UnlockScreenRule;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
@@ -64,6 +65,7 @@ import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -82,6 +84,9 @@ import java.util.function.Predicate;
 public class InputMethodServiceTest extends EndToEndImeTestBase {
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     private static final long EXPECTED_TIMEOUT = TimeUnit.SECONDS.toMillis(2);
+
+    @Rule
+    public final UnlockScreenRule mUnlockScreenRule = new UnlockScreenRule();
 
     private Instrumentation mInstrumentation;
 
