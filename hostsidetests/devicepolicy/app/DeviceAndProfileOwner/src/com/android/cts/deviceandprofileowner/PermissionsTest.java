@@ -495,7 +495,8 @@ public class PermissionsTest extends BaseDeviceAdminTest {
     private CountDownLatch initLocationPermissionNotificationLatch() {
         CountDownLatch notificationCounterLatch = new CountDownLatch(1);
         NotificationListener.getInstance().addListener((notification) -> {
-            if (notification.getPackageName().equals("com.google.android.permissioncontroller") &&
+            if (notification.getPackageName().equals(
+                    mPackageManager.getPermissionControllerPackageName()) &&
                     notification.getNotification().getChannelId().equals(
                             AUTO_GRANTED_PERMISSIONS_CHANNEL_ID)) {
                 notificationCounterLatch.countDown();
