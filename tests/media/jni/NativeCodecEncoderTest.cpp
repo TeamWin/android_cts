@@ -1028,11 +1028,13 @@ int registerAndroidMediaV2CtsEncoderTest(JNIEnv* env) {
     return env->RegisterNatives(c, methodTable, sizeof(methodTable) / sizeof(JNINativeMethod));
 }
 
+extern int registerAndroidMediaV2CtsCodecUnitTest(JNIEnv* env);
 extern int registerAndroidMediaV2CtsDecoderTest(JNIEnv* env);
 
 extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void*) {
     JNIEnv* env;
     if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) return JNI_ERR;
+    if (registerAndroidMediaV2CtsCodecUnitTest(env) != JNI_OK) return JNI_ERR;
     if (registerAndroidMediaV2CtsEncoderTest(env) != JNI_OK) return JNI_ERR;
     if (registerAndroidMediaV2CtsDecoderTest(env) != JNI_OK) return JNI_ERR;
     return JNI_VERSION_1_6;

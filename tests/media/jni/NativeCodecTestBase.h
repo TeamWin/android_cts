@@ -71,6 +71,7 @@ class CodecAsyncHandler {
     callbackObject getInput();
     callbackObject getOutput();
     callbackObject getWork();
+    bool isInputQueueEmpty();
     void clearQueues();
     void setOutputFormat(AMediaFormat* format);
     AMediaFormat* getOutputFormat();
