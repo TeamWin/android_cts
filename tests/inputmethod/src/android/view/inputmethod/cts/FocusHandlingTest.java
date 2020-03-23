@@ -40,6 +40,7 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.Process;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -447,6 +448,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
         }
     }
 
+    @AppModeFull(reason = "Instant apps cannot hold android.permission.SYSTEM_ALERT_WINDOW")
     @Test
     public void testMultiWindowFocusHandleOnDifferentUiThread() throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
@@ -571,8 +573,8 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
             // Wait for service bound.
             try {
-                TestUtils.waitOnMainUntil(() -> WindowFocusHandleService.getInstance() != null, 5,
-                        "WindowFocusHandleService should be bound");
+                TestUtils.waitOnMainUntil(() -> WindowFocusHandleService.getInstance() != null,
+                        TIMEOUT, "WindowFocusHandleService should be bound");
             } catch (TimeoutException e) {
                 fail("WindowFocusHandleService should be bound");
             }
