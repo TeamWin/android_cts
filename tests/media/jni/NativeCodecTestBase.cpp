@@ -129,6 +129,11 @@ callbackObject CodecAsyncHandler::getWork() {
     return element;
 }
 
+bool CodecAsyncHandler::isInputQueueEmpty() {
+    std::unique_lock<std::mutex> lock{mMutex};
+    return mCbInputQueue.empty();
+}
+
 void CodecAsyncHandler::clearQueues() {
     std::unique_lock<std::mutex> lock{mMutex};
     mCbInputQueue.clear();
