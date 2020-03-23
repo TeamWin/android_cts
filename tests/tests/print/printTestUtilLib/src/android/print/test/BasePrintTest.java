@@ -45,6 +45,7 @@ import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
+import android.platform.helpers.exceptions.TestHelperException;
 import android.print.PageRange;
 import android.print.PrintAttributes;
 import android.print.PrintDocumentAdapter;
@@ -589,45 +590,13 @@ public abstract class BasePrintTest {
         }
     }
 
-    protected void selectPrinter(String printerName) throws IOException, UiObjectNotFoundException {
-        selectPrinter(printerName, OPERATION_TIMEOUT_MILLIS);
+    protected void selectPrinter(String printerName) throws IOException, TestHelperException {
+        mPrintHelper.selectPrinter(printerName, OPERATION_TIMEOUT_MILLIS);
     }
 
     protected void selectPrinter(String printerName, long timeout) throws IOException,
-            UiObjectNotFoundException {
-        try {
-            UiDevice uiDevice = getUiDevice();
-            UiObject2 destinationSpinner = uiDevice.wait(Until.findObject(
-                    By.res("com.android.printspooler:id/destination_spinner")), timeout);
-
-            if (destinationSpinner != null) {
-                destinationSpinner.click();
-                getUiDevice().waitForIdle();
-            }
-
-            selectPrinterSpinnerOpen(printerName, timeout);
-        } catch (Exception e) {
-            dumpWindowHierarchy();
-            throw e;
-        }
-    }
-
-    protected void selectPrinterSpinnerOpen(String printerName, long timeout)
-            throws IOException, UiObjectNotFoundException {
-        try {
-            UiDevice uiDevice = getUiDevice();
-            UiObject2 printerOption = uiDevice.wait(Until.findObject(By.text(printerName)),
-                    timeout);
-            if (printerOption == null) {
-                throw new UiObjectNotFoundException(printerName + " not found");
-            }
-
-            printerOption.click();
-            getUiDevice().waitForIdle();
-        } catch (Exception e) {
-            dumpWindowHierarchy();
-            throw e;
-        }
+            TestHelperException {
+        mPrintHelper.selectPrinter(printerName, timeout);
     }
 
     protected void answerPrintServicesWarning(boolean confirm) throws UiObjectNotFoundException {
