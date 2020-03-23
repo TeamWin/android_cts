@@ -27,6 +27,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
 }
@@ -39,6 +40,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
 }
@@ -51,6 +53,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
 }
@@ -63,6 +66,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
 }
@@ -75,6 +79,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
 }
@@ -87,6 +92,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
 }
@@ -99,6 +105,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
 }
@@ -111,6 +118,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
 }
@@ -123,6 +131,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
 }
@@ -135,6 +144,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
 }
@@ -147,6 +157,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
 }
@@ -159,10 +170,10 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
 }
-
 android_test_helper_app {
     name: "CtsAppEnumerationWildcardBrowsableActivitySource",
     manifest: "AndroidManifest-queriesWildcard-browsableActivity.xml",

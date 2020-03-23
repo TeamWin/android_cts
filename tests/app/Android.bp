@@ -38,6 +38,7 @@ android_test {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
     instrumentation_for: "CtsAppTestStubs",
@@ -72,6 +73,7 @@ android_test {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
     sdk_version: "test_current",
@@ -107,6 +109,7 @@ android_test {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
     sdk_version: "test_current",
@@ -135,6 +138,7 @@ android_test {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
     manifest: "AppExitTest/AndroidManifest.xml",
