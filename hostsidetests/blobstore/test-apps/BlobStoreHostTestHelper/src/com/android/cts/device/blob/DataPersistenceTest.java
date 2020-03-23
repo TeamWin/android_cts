@@ -26,7 +26,6 @@ import android.os.ParcelFileDescriptor;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.utils.blob.DummyBlobData;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -38,27 +37,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 @RunWith(AndroidJUnit4.class)
-public class DataPersistenceTest {
-
-    private static final String KEY_SESSION_ID = "id";
-    private static final String KEY_DIGEST = "digest";
-    private static final String KEY_LABEL = "label";
-    private static final String KEY_EXPIRY = "expiry";
-    private static final String KEY_TAG = "tag";
-
-    private static final long PARTIAL_FILE_LENGTH_BYTES = 2002;
-    private static final long TIMEOUT_WAIT_FOR_IDLE_MS = 2_000;
-    private static final long TIMEOUT_COMMIT_CALLBACK_MS = 5_000;
-
-    private Context mContext;
-    private BlobStoreManager mBlobStoreManager;
-
-    @Before
-    public void setUp() {
-        mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        mBlobStoreManager = (BlobStoreManager) mContext.getSystemService(
-                Context.BLOB_STORE_SERVICE);
-    }
+public class DataPersistenceTest extends BaseBlobStoreDeviceTest {
 
     @Test
     public void testCreateSession() throws Exception {
@@ -112,11 +91,6 @@ public class DataPersistenceTest {
         try (ParcelFileDescriptor pfd = mBlobStoreManager.openBlob(blobHandle)) {
             assertThat(pfd).isNotNull();
         }
-    }
-
-    private long createSession(BlobHandle blobHandle) throws Exception {
-        final long sessionId = mBlobStoreManager.createSession(blobHandle);
-        return sessionId;
     }
 
     private void writeSessionIdToDisk(long sessionId) {
