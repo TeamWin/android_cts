@@ -33,6 +33,7 @@ import android.support.test.uiautomator.Until;
 import android.test.AndroidTestCase;
 
 import com.android.compatibility.common.util.CddTest;
+import com.android.compatibility.common.util.FeatureUtil;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -61,14 +62,15 @@ public class ScanningSettingsTest extends AndroidTestCase {
 
     @Override
     protected void setUp() {
+        if (FeatureUtil.isTV() || FeatureUtil.isAutomotive()) {
+            // TV and auto do not support the setting options of WIFI scanning and Bluetooth
+            // scanning
+            return;
+        }
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
 
         mPackageManager = mContext.getPackageManager();
-        if (isTv()) {
-            // TV does not support the setting options of WIFI scanning and Bluetooth scanning
-            return;
-        }
         final Intent launcherIntent = new Intent(Intent.ACTION_MAIN);
         launcherIntent.addCategory(Intent.CATEGORY_HOME);
         mLauncherPackage = mPackageManager.resolveActivity(launcherIntent,
@@ -77,7 +79,7 @@ public class ScanningSettingsTest extends AndroidTestCase {
 
     @CddTest(requirement = "7.4.2/C-2-1")
     public void testWifiScanningSettings() throws PackageManager.NameNotFoundException {
-        if (isTv()) {
+        if (FeatureUtil.isTV() || FeatureUtil.isAutomotive()) {
             return;
         }
         launchScanningSettings();
@@ -86,17 +88,12 @@ public class ScanningSettingsTest extends AndroidTestCase {
 
     @CddTest(requirement = "7.4.3/C-4-1")
     public void testBleScanningSettings() throws PackageManager.NameNotFoundException {
-        if (isTv()) {
+        if (FeatureUtil.isTV() || FeatureUtil.isAutomotive()) {
             return;
         }
         launchScanningSettings();
         toggleSettingAndVerify(BLUETOOTH_SCANNING_TITLE_RES,
                 Settings.Global.BLE_SCAN_ALWAYS_AVAILABLE);
-    }
-
-    private boolean isTv() {
-        return mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
-                && mPackageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK);
     }
 
     private void launchScanningSettings() {
