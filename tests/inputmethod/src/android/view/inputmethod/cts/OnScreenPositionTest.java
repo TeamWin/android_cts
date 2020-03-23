@@ -30,6 +30,7 @@ import android.text.TextUtils;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.TestActivity;
+import android.view.inputmethod.cts.util.UnlockScreenRule;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
@@ -43,6 +44,7 @@ import com.android.cts.mockime.ImeLayoutInfo;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -56,6 +58,9 @@ public class OnScreenPositionTest extends EndToEndImeTestBase {
     private static final long LAYOUT_STABLE_THRESHOLD = TimeUnit.SECONDS.toMillis(3);
 
     private static final String TEST_MARKER = "android.view.inputmethod.cts.OnScreenPositionTest";
+
+    @Rule
+    public final UnlockScreenRule mUnlockScreenRule = new UnlockScreenRule();
 
     public EditText launchTestActivity() {
         final AtomicReference<EditText> editTextRef = new AtomicReference<>();
