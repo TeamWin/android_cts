@@ -31,9 +31,6 @@ import android.content.Intent;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.DefaultLaunchProxy;
-import android.server.wm.CommandSession.LaunchInjector;
-
-import androidx.test.filters.FlakyTest;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -79,7 +76,6 @@ public class AmProfileTests extends ActivityManagerTestBase {
      * only different in the three configuration options.
      */
     @Test
-    @FlakyTest(bugId = 131005232)
     public void testAmProfileStartNoSamplingStreaming() throws Exception {
         testProfile(true, false, true);
     }
@@ -101,7 +97,6 @@ public class AmProfileTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 131005232)
     public void testAmStartStartProfilerNoSamplingStreaming() throws Exception {
         testProfile(false, false, true);
     }
