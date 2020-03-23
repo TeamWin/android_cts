@@ -206,7 +206,7 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testUserRestrictionsSetOnParentAreNotPersisted() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
             return;
         }
         int secondaryUserId = createUser();
@@ -233,7 +233,7 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testUserRestrictionsSetOnParentAreEnforced() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
             return;
         }
         int userId = createUser();
