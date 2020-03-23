@@ -60,7 +60,6 @@ android_test {
     test_suites: [
         "cts",
         "vts",
-        "general-tests",
         "sts",
     ],
     certificate: ":security_cts_test_certificate",
