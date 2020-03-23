@@ -99,7 +99,7 @@ class ReportExporter extends AsyncTask<Void, Void, String> {
             String versionName = Version.getVersionName(mContext);
             ResultHandler.writeResults(suiteName, versionName, SUITE_PLAN, SUITE_BUILD,
                     result, tempDir, START_MS, END_MS, REFERENCE_URL, LOG_URL,
-                    COMMAND_LINE_ARGS);
+                    COMMAND_LINE_ARGS, null);
 
             // copy formatting files to the temporary report directory
             copyFormattingFiles(tempDir);
