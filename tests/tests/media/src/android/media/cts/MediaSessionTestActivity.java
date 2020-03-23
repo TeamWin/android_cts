@@ -35,6 +35,9 @@ public class MediaSessionTestActivity extends Activity {
     public static final String KEY_SESSION_TOKEN = "KEY_SESSION_TOKEN";
     private static final String TAG = "MediaSessionTestActivity";
 
+    private boolean mDeviceLocked;
+    private boolean mResumed;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,20 +56,26 @@ public class MediaSessionTestActivity extends Activity {
         if (keyguardManager == null) {
             Log.i(TAG, "Unable to get KeyguardManager. Probably in the instant mode.");
         } else if (keyguardManager.isKeyguardLocked()) {
+            Log.i(TAG, "Device is locked. Try unlocking and bring activity foreground.");
+            mDeviceLocked = true;
             // Note: CTS requires 'no lock pattern or password is set on the device'.
             // However, try to dismiss keyguard for convenience.
             keyguardManager.requestDismissKeyguard(this,
                     new KeyguardManager.KeyguardDismissCallback() {
                         @Override
                         public void onDismissError() {
-                            fail("Running CTS needs device unlock. Manually unlock device because"
-                                    + " failed to dismiss keyguard.");
+                            finish();
                         }
 
                         @Override
                         public void onDismissCancelled() {
-                            fail("Running CTS needs device unlock. Manually unlock device because"
-                                    + " failed to dismiss keyguard.");
+                            finish();
+                        }
+
+                        @Override
+                        public void onDismissSucceeded() {
+                            mDeviceLocked = false;
+                            setMediaControllerIfInForeground();
                         }
                     });
         }
@@ -75,16 +84,25 @@ public class MediaSessionTestActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        MediaSession.Token token = getIntent().getParcelableExtra(KEY_SESSION_TOKEN);
-        if (token != null) {
-            MediaController controller = new MediaController(this, token);
-            setMediaController(controller);
-        }
+        mResumed = true;
+        setMediaControllerIfInForeground();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+        mResumed = false;
         setMediaController(null);
+    }
+
+    private void setMediaControllerIfInForeground() {
+        if (mDeviceLocked || !mResumed) {
+            return;
+        }
+        MediaSession.Token token = getIntent().getParcelableExtra(KEY_SESSION_TOKEN);
+        if (token != null) {
+            MediaController controller = new MediaController(this, token);
+            setMediaController(controller);
+        }
     }
 }
