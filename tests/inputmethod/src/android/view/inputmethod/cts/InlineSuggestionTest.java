@@ -25,7 +25,7 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Parcel;
 import android.util.Size;
-import android.view.View;
+import android.view.inline.InlineContentView;
 import android.view.inline.InlinePresentationSpec;
 import android.view.inputmethod.InlineSuggestion;
 import android.view.inputmethod.InlineSuggestionInfo;
@@ -78,7 +78,7 @@ public class InlineSuggestionTest {
     public void testInflateInvalidSizeThrowsException() {
         InlineSuggestion suggestion = createInlineSuggestion();
         Context context = InstrumentationRegistry.getTargetContext();
-        Consumer<View> mockConsumer = mock(Consumer.class);
+        Consumer<InlineContentView> mockConsumer = mock(Consumer.class);
 
         assertThrows(IllegalArgumentException.class,
                 () -> suggestion.inflate(context, new Size(10, 10), AsyncTask.THREAD_POOL_EXECUTOR,
@@ -90,7 +90,7 @@ public class InlineSuggestionTest {
         InlineSuggestion suggestion = createInlineSuggestion();
         Context context = InstrumentationRegistry.getTargetContext();
         CountDownLatch latch = new CountDownLatch(1);
-        Consumer<View> consumer = view -> {
+        Consumer<InlineContentView> consumer = view -> {
             assertThat(view).isNull();
             latch.countDown();
         };
@@ -103,7 +103,7 @@ public class InlineSuggestionTest {
     public void testInflateTwiceThrowsException() {
         InlineSuggestion suggestion = createInlineSuggestion();
         Context context = InstrumentationRegistry.getTargetContext();
-        Consumer<View> mockConsumer = mock(Consumer.class);
+        Consumer<InlineContentView> mockConsumer = mock(Consumer.class);
 
         suggestion.inflate(context, new Size(100, 100), AsyncTask.THREAD_POOL_EXECUTOR,
                 mockConsumer);
