@@ -41,6 +41,8 @@ public class TunerTest {
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getTargetContext();
+        InstrumentationRegistry
+                .getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
     }
 
     @After
@@ -50,7 +52,7 @@ public class TunerTest {
     @Test
     public void testTunerConstructor() throws Exception {
         if (!hasTuner()) return;
-        Tuner tuner = new Tuner(mContext, "123", 1);
+        Tuner tuner = new Tuner(mContext, null, 100);
         assertNotNull(tuner);
     }
 
