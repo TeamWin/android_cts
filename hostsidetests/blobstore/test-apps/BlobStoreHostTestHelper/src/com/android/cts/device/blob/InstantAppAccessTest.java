@@ -27,11 +27,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 @RunWith(AndroidJUnit4.class)
-public class InstantAppAccessTest {
+public class InstantAppAccessTest extends BaseBlobStoreDeviceTest {
     @Test
     public void testInstantAppAccess() {
-        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        assertThat(context.getPackageManager().isInstantApp()).isTrue();
-        assertThat(context.getSystemService(Context.BLOB_STORE_SERVICE)).isNull();
+        assertThat(mContext.getPackageManager().isInstantApp()).isTrue();
+        assertThat(mContext.getSystemService(Context.BLOB_STORE_SERVICE)).isNull();
     }
 }
