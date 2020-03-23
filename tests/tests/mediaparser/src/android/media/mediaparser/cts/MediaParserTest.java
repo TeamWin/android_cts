@@ -39,22 +39,22 @@ public class MediaParserTest {
 
     @Test
     public void testCreationByName() {
-        testCreationByName("exo.MatroskaParser");
-        testCreationByName("exo.FragmentedMp4Parser");
-        testCreationByName("exo.Mp4Parser");
-        testCreationByName("exo.Mp3Parser");
-        testCreationByName("exo.AdtsParser");
-        testCreationByName("exo.Ac3Parser");
-        testCreationByName("exo.TsParser");
-        testCreationByName("exo.FlvParser");
-        testCreationByName("exo.OggParser");
-        testCreationByName("exo.PsParser");
-        testCreationByName("exo.WavParser");
-        testCreationByName("exo.AmrParser");
-        testCreationByName("exo.Ac4Parser");
-        testCreationByName("exo.FlacParser");
+        testCreationByName(MediaParser.PARSER_NAME_MATROSKA);
+        testCreationByName(MediaParser.PARSER_NAME_FMP4);
+        testCreationByName(MediaParser.PARSER_NAME_MP4);
+        testCreationByName(MediaParser.PARSER_NAME_MP3);
+        testCreationByName(MediaParser.PARSER_NAME_ADTS);
+        testCreationByName(MediaParser.PARSER_NAME_AC3);
+        testCreationByName(MediaParser.PARSER_NAME_TS);
+        testCreationByName(MediaParser.PARSER_NAME_FLV);
+        testCreationByName(MediaParser.PARSER_NAME_OGG);
+        testCreationByName(MediaParser.PARSER_NAME_PS);
+        testCreationByName(MediaParser.PARSER_NAME_WAV);
+        testCreationByName(MediaParser.PARSER_NAME_AMR);
+        testCreationByName(MediaParser.PARSER_NAME_AC4);
+        testCreationByName(MediaParser.PARSER_NAME_FLAC);
         try {
-            testCreationByName("exo.ExtractorThatDoesNotExist");
+            testCreationByName("android.media.mediaparser.ExtractorThatDoesNotExist");
             Assert.fail();
         } catch (IllegalArgumentException e) {
             // Expected.
@@ -85,13 +85,14 @@ public class MediaParserTest {
 
     @Test
     public void testFlacHeaderOggSniff() throws IOException, InterruptedException {
-        testSniffAsset("ogg/flac_header", /* expectedExtractorName= */ "exo.OggParser");
+        testSniffAsset("ogg/flac_header", /* expectedExtractorName= */ MediaParser.PARSER_NAME_OGG);
     }
 
     @Test
     public void testOpusHeaderOggSniff() throws IOException, InterruptedException {
         try {
-            testSniffAsset("ogg/opus_header", /* expectedExtractorName= */ "exo.OggParser");
+            testSniffAsset(
+                    "ogg/opus_header", /* expectedExtractorName= */ MediaParser.PARSER_NAME_OGG);
             Assert.fail();
         } catch (MediaParser.UnrecognizedInputFormatException e) {
             // Expected.
@@ -101,7 +102,9 @@ public class MediaParserTest {
     @Test
     public void testInvalidHeaderOggSniff() throws IOException, InterruptedException {
         try {
-            testSniffAsset("ogg/invalid_ogg_header", /* expectedExtractorName= */ "exo.OggParser");
+            testSniffAsset(
+                    "ogg/invalid_ogg_header",
+                    /* expectedExtractorName= */ MediaParser.PARSER_NAME_OGG);
             Assert.fail();
         } catch (MediaParser.UnrecognizedInputFormatException e) {
             // Expected.
@@ -111,7 +114,8 @@ public class MediaParserTest {
     @Test
     public void testInvalidHeaderSniff() throws IOException, InterruptedException {
         try {
-            testSniffAsset("ogg/invalid_header", /* expectedExtractorName= */ "exo.OggParser");
+            testSniffAsset(
+                    "ogg/invalid_header", /* expectedExtractorName= */ MediaParser.PARSER_NAME_OGG);
             Assert.fail();
         } catch (MediaParser.UnrecognizedInputFormatException e) {
             // Expected.
