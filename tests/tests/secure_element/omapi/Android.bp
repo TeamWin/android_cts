@@ -31,4 +31,7 @@ android_test {
         "vts",
         "general-tests",
     ],
+    dist: {
+        targets: ["cts"],
+    },
 }
