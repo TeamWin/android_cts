@@ -21,6 +21,7 @@ java_test_host {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
         "sts",
     ],
@@ -51,6 +52,7 @@ cc_defaults {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "sts",
     ],
 }
