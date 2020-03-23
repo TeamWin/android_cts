@@ -19,6 +19,7 @@ android_test_helper_app {
         "arcts",
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
     srcs: ["src/**/*.java"],
