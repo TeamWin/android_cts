@@ -37,6 +37,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.provider.Settings;
+import android.server.wm.settings.SettingsSession;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
@@ -49,8 +50,6 @@ import android.view.PointerIcon;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
-
-import android.server.wm.settings.SettingsSession;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -76,7 +75,8 @@ public class CapturedActivity extends Activity {
                 Settings.Secure::getString, Settings.Secure::putString);
         }
     }
-  private ImmersiveConfirmationSetting mSettingsSession;
+
+    private ImmersiveConfirmationSetting mSettingsSession;
 
     private static final String TAG = "CapturedActivity";
     private static final int PERMISSION_CODE = 1;
@@ -132,6 +132,7 @@ public class CapturedActivity extends Activity {
 
     @Override
     public void onStop() {
+        super.onStop();
         mSettingsSession.close();
     }
 
