@@ -20,16 +20,13 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.testng.Assert.assertThrows;
 import static org.testng.Assert.fail;
 
-import android.app.Instrumentation;
 import android.app.blob.BlobHandle;
 import android.app.blob.BlobStoreManager;
-import android.content.Context;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 
 import com.android.utils.blob.DummyBlobData;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -41,31 +38,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 @RunWith(AndroidJUnit4.class)
-public class DataCleanupTest {
-    private static final long TIMEOUT_COMMIT_CALLBACK_MS = 5_000;
-
-    private static final long PARTIAL_FILE_LENGTH_BYTES = 2002;
-
-    private static final String KEY_SESSION_ID = "session";
-
-    private static final String KEY_DIGEST = "digest";
-    private static final String KEY_EXPIRY = "expiry";
-    private static final String KEY_LABEL = "label";
-    private static final String KEY_TAG = "tag";
-
-    private static final String KEY_ALLOW_PUBLIC = "public";
-
-    private Context mContext;
-    private Instrumentation mInstrumentation;
-    private BlobStoreManager mBlobStoreManager;
-
-    @Before
-    public void setUp() {
-        mInstrumentation = InstrumentationRegistry.getInstrumentation();
-        mContext = mInstrumentation.getContext();
-        mBlobStoreManager = (BlobStoreManager) mContext.getSystemService(
-                Context.BLOB_STORE_SERVICE);
-    }
+public class DataCleanupTest extends BaseBlobStoreDeviceTest {
 
     @Test
     public void testCreateSession() throws Exception {
@@ -141,11 +114,6 @@ public class DataCleanupTest {
         final BlobHandle blobHandle = getBlobHandleFromArgs();
         assertThrows(SecurityException.class,
                 () -> mBlobStoreManager.openBlob(blobHandle));
-    }
-
-    private long createSession(BlobHandle blobHandle) throws Exception {
-        final long sessionId = mBlobStoreManager.createSession(blobHandle);
-        return sessionId;
     }
 
     private void addSessionIdToResults(long sessionId) {
