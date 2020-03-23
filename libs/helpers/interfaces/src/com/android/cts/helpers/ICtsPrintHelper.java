@@ -26,4 +26,12 @@ public interface ICtsPrintHelper extends ICtsDeviceInteractionHelper {
      * already called PrintManager.print() to create the print job and start the UI.
      */
     void submitPrintJob();
+
+    /**
+     * Select a specific printer from the list of available printers.
+     *
+     * @param printerName name of the printer
+     * @param timeout timeout in milliseconds
+     */
+    void selectPrinter(String printerName, long timeout);
 }
