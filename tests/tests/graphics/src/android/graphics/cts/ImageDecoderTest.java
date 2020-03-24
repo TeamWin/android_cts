@@ -211,6 +211,7 @@ public class ImageDecoderTest {
     private interface SourceCreator extends IntFunction<ImageDecoder.Source> {};
 
     private SourceCreator[] mCreators = new SourceCreator[] {
+            resId -> ImageDecoder.createSource(getAsByteArray(resId)),
             resId -> ImageDecoder.createSource(getAsByteBufferWrap(resId)),
             resId -> ImageDecoder.createSource(getAsDirectByteBuffer(resId)),
             resId -> ImageDecoder.createSource(getAsReadOnlyByteBuffer(resId)),
@@ -1997,11 +1998,55 @@ public class ImageDecoderTest {
         }
     }
 
+    @Test(expected = ArrayIndexOutOfBoundsException.class)
+    public void testArrayOutOfBounds() {
+        byte[] array = new byte[10];
+        ImageDecoder.createSource(array, 1, 10);
+    }
+
+    @Test(expected = ArrayIndexOutOfBoundsException.class)
+    public void testOffsetOutOfBounds() {
+        byte[] array = new byte[10];
+        ImageDecoder.createSource(array, 10, 0);
+    }
+
+    @Test(expected = ArrayIndexOutOfBoundsException.class)
+    public void testLengthOutOfBounds() {
+        byte[] array = new byte[10];
+        ImageDecoder.createSource(array, 0, 11);
+    }
+
+    @Test(expected = ArrayIndexOutOfBoundsException.class)
+    public void testNegativeLength() {
+        byte[] array = new byte[10];
+        ImageDecoder.createSource(array, 0, -1);
+    }
+
+    @Test(expected = ArrayIndexOutOfBoundsException.class)
+    public void testNegativeOffset() {
+        byte[] array = new byte[10];
+        ImageDecoder.createSource(array, -1, 10);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testNullByteArray() {
+        ImageDecoder.createSource(null, 0, 0);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testNullByteArray2() {
+        byte[] array = null;
+        ImageDecoder.createSource(array);
+    }
+
+    @Test(expected = IOException.class)
+    public void testZeroLengthByteArray() throws IOException {
+        ImageDecoder.decodeDrawable(ImageDecoder.createSource(new byte[10], 0, 0));
+    }
+
     @Test(expected = IOException.class)
     public void testZeroLengthByteBuffer() throws IOException {
-        Drawable drawable = ImageDecoder.decodeDrawable(
-            ImageDecoder.createSource(ByteBuffer.wrap(new byte[10], 0, 0)));
-        fail("should not have reached here!");
+        ImageDecoder.decodeDrawable(ImageDecoder.createSource(ByteBuffer.wrap(new byte[10], 0, 0)));
     }
 
     private interface ByteBufferSupplier extends Supplier<ByteBuffer> {};
@@ -2090,6 +2135,24 @@ public class ImageDecoderTest {
             assertEquals("Mismatch for supplier " + i,
                     position, buffer.position());
         }
+    }
+
+    @Test
+    @Parameters(method = "getRecords")
+    public void testOffsetByteArray2(Record record) throws IOException {
+        ImageDecoder.Source src = ImageDecoder.createSource(getAsByteArray(record.resId));
+        Bitmap expected = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
+            decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+        });
+
+        final int offset = 10;
+        final int extra = 15;
+        final byte[] array = getAsByteArray(record.resId, offset, extra);
+        src = ImageDecoder.createSource(array, offset, array.length - (offset + extra));
+        Bitmap actual = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
+            decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+        });
+        assertTrue(actual.sameAs(expected));
     }
 
     @Test
