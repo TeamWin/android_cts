@@ -20,6 +20,8 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -29,6 +31,7 @@ import java.util.Collections;
  * Hostside test uses "am force-stop" and verifies that app is not stopped.
  */
 public class UserControlDisabledPackagesTest extends BaseDeviceOwnerTest {
+    private static final String TAG = "UserControlDisabledPackagesTest";
 
     private static final String TEST_APP_APK = "CtsEmptyTestApp.apk";
     private static final String TEST_APP_PKG = "android.packageinstaller.emptytestapp.cts";
@@ -53,8 +56,11 @@ public class UserControlDisabledPackagesTest extends BaseDeviceOwnerTest {
     public void testForceStopWithUserControlDisabled() throws Exception {
         final ArrayList<String> pkgs = new ArrayList<>();
         pkgs.add(SIMPLE_APP_PKG);
-        assertFalse(isPackageStopped(SIMPLE_APP_PKG));
+        // Check if package is part of UserControlDisabledPackages before checking if 
+        // package is stopped since it is a necessary condition to prevent stopping of
+        // package
         assertEquals(pkgs, mDevicePolicyManager.getUserControlDisabledPackages(getWho()));
+        assertFalse(isPackageStopped(SIMPLE_APP_PKG));
     }
 
     public void testClearSetUserControlDisabledPackages() throws Exception {
@@ -72,6 +78,8 @@ public class UserControlDisabledPackagesTest extends BaseDeviceOwnerTest {
     private boolean isPackageStopped(String packageName) throws Exception {
         PackageInfo packageInfo = mContext.getPackageManager()
                 .getPackageInfo(packageName, PackageManager.GET_META_DATA);
+        Log.d(TAG, "Application flags for " + packageName + " = "
+                + Integer.toHexString(packageInfo.applicationInfo.flags));
         return ((packageInfo.applicationInfo.flags & ApplicationInfo.FLAG_STOPPED)
                 == ApplicationInfo.FLAG_STOPPED) ? true : false;
     }
