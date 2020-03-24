@@ -33,7 +33,7 @@ public class ManagedProfileTimeoutTest extends BaseManagedProfileTest {
     @FlakyTest
     @Test
     public void testWorkProfileTimeoutBackground() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !mHasSecureLockScreen) {
             return;
         }
         setUpWorkProfileTimeout();
@@ -48,7 +48,7 @@ public class ManagedProfileTimeoutTest extends BaseManagedProfileTest {
     @LargeTest
     @Test
     public void testWorkProfileTimeoutIdleActivity() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !mHasSecureLockScreen) {
             return;
         }
         setUpWorkProfileTimeout();
@@ -63,7 +63,7 @@ public class ManagedProfileTimeoutTest extends BaseManagedProfileTest {
     @FlakyTest
     @Test
     public void testWorkProfileTimeoutUserActivity() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !mHasSecureLockScreen) {
             return;
         }
         setUpWorkProfileTimeout();
@@ -78,7 +78,7 @@ public class ManagedProfileTimeoutTest extends BaseManagedProfileTest {
     @FlakyTest
     @Test
     public void testWorkProfileTimeoutKeepScreenOnWindow() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !mHasSecureLockScreen) {
             return;
         }
         setUpWorkProfileTimeout();
