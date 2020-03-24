@@ -26,6 +26,7 @@ android_test {
         "androidx.annotation_annotation",
         "androidx.test.rules",
         "ctstestrunner-axt",
+        "cts-install-lib",
     ],
     srcs: ["src/**/*.java"],
     platform_apis: true,
