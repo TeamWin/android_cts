@@ -39,6 +39,7 @@ import org.junit.runner.RunWith;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
 public final class DeviceConfigApiTests {
@@ -95,7 +96,12 @@ public final class DeviceConfigApiTests {
      * Nullify properties in DeviceConfig API after completion of every test.
      */
     @After
-    public void cleanUp() {
+    public void cleanUp() throws Exception {
+        // first wait to make sure callbacks for SetProperties/SetProperty
+        // invoked in the test methods got emitted. So that the callbacks
+        // won't interfere with setPropertiesAndAssertSuccessfulChange invoked
+        // in nullifyProperty.
+        TimeUnit.MILLISECONDS.sleep(WAIT_FOR_PROPERTY_CHANGE_TIMEOUT_MILLIS);
         nullifyProperty(NAMESPACE1, KEY1);
         nullifyProperty(NAMESPACE2, KEY1);
         nullifyProperty(NAMESPACE1, KEY2);
