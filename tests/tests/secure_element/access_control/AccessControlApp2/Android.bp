@@ -8,6 +8,7 @@ android_test_import {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
         "cts-instant",
     ],
@@ -37,6 +38,10 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
+    dist: {
+        targets: ["cts"],
+    },
 }
