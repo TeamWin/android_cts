@@ -16,15 +16,28 @@
 
 package android.media.tv.tuner.cts;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import android.content.Context;
 import android.media.tv.tuner.Descrambler;
+import android.media.tv.tuner.LnbCallback;
+import android.media.tv.tuner.Lnb;
 import android.media.tv.tuner.Tuner;
+import android.media.tv.tuner.dvr.DvrPlayback;
+import android.media.tv.tuner.dvr.DvrRecorder;
+import android.media.tv.tuner.dvr.OnPlaybackStatusChangedListener;
+import android.media.tv.tuner.dvr.OnRecordStatusChangedListener;
+import android.media.tv.tuner.filter.FilterCallback;
+import android.media.tv.tuner.filter.FilterEvent;
+import android.media.tv.tuner.filter.Filter;
+import android.media.tv.tuner.filter.TimeFilter;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
+
+import java.util.concurrent.Executor;
 
 import org.junit.After;
 import org.junit.Before;
@@ -56,7 +69,117 @@ public class TunerTest {
         assertNotNull(tuner);
     }
 
+    @Test
+    public void testOpenLnb() throws Exception {
+        if (!hasTuner()) return;
+        Tuner tuner = new Tuner(mContext, null, 100);
+        Lnb lnb = tuner.openLnb(getExecutor(), getLnbCallback());
+        assertNotNull(lnb);
+    }
+
+    @Test
+    public void testLnbSetVoltage() throws Exception {
+        // TODO: move lnb-related tests to a separate file.
+        if (!hasTuner()) return;
+        Tuner tuner = new Tuner(mContext, null, 100);
+        Lnb lnb = tuner.openLnb(getExecutor(), getLnbCallback());
+        assertEquals(lnb.setVoltage(Lnb.VOLTAGE_5V), Tuner.RESULT_SUCCESS);
+    }
+
+    @Test
+    public void testLnbSetTone() throws Exception {
+        if (!hasTuner()) return;
+        Tuner tuner = new Tuner(mContext, null, 100);
+        Lnb lnb = tuner.openLnb(getExecutor(), getLnbCallback());
+        assertEquals(lnb.setTone(Lnb.TONE_NONE), Tuner.RESULT_SUCCESS);
+    }
+
+    @Test
+    public void testLnbSetPosistion() throws Exception {
+        if (!hasTuner()) return;
+        Tuner tuner = new Tuner(mContext, null, 100);
+        Lnb lnb = tuner.openLnb(getExecutor(), getLnbCallback());
+        assertEquals(
+                lnb.setSatellitePosition(Lnb.POSITION_A), Tuner.RESULT_SUCCESS);
+    }
+
+    @Test
+    public void testOpenFilter() throws Exception {
+        if (!hasTuner()) return;
+        Tuner tuner = new Tuner(mContext, null, 100);
+        Filter f = tuner.openFilter(
+                Filter.TYPE_TS, Filter.SUBTYPE_SECTION, 1000, getExecutor(), getFilterCallback());
+        assertNotNull(f);
+    }
+
+    @Test
+    public void testOpenTimeFilter() throws Exception {
+        if (!hasTuner()) return;
+        Tuner tuner = new Tuner(mContext, null, 100);
+        TimeFilter f = tuner.openTimeFilter();
+        assertNotNull(f);
+    }
+
+    @Test
+    public void testOpenDescrambler() throws Exception {
+        if (!hasTuner()) return;
+        Tuner tuner = new Tuner(mContext, null, 100);
+        Descrambler d = tuner.openDescrambler();
+        assertNotNull(d);
+    }
+
+    @Test
+    public void testOpenDvrRecorder() throws Exception {
+        if (!hasTuner()) return;
+        Tuner tuner = new Tuner(mContext, null, 100);
+        DvrRecorder d = tuner.openDvrRecorder(100, getExecutor(), getRecordListener());
+        assertNotNull(d);
+    }
+
+    @Test
+    public void testOpenDvPlayback() throws Exception {
+        if (!hasTuner()) return;
+        Tuner tuner = new Tuner(mContext, null, 100);
+        DvrPlayback d = tuner.openDvrPlayback(100, getExecutor(), getPlaybackListener());
+        assertNotNull(d);
+    }
+
     private boolean hasTuner() {
         return mContext.getPackageManager().hasSystemFeature("android.hardware.tv.tuner");
+    }
+
+    private Executor getExecutor() {
+        return Runnable::run;
+    }
+
+    private LnbCallback getLnbCallback() {
+        return new LnbCallback() {
+            @Override
+            public void onEvent(int lnbEventType) {}
+            @Override
+            public void onDiseqcMessage(byte[] diseqcMessage) {}
+        };
+    }
+
+    private FilterCallback getFilterCallback() {
+        return new FilterCallback() {
+            @Override
+            public void onFilterEvent(Filter filter, FilterEvent[] events) {}
+            @Override
+            public void onFilterStatusChanged(Filter filter, int status) {}
+        };
+    }
+
+    private OnRecordStatusChangedListener getRecordListener() {
+        return new OnRecordStatusChangedListener() {
+            @Override
+            public void onRecordStatusChanged(int status) {}
+        };
+    }
+    private OnPlaybackStatusChangedListener getPlaybackListener() {
+        return new OnPlaybackStatusChangedListener() {
+            @Override
+            public void onPlaybackStatusChanged(int status) {}
+        };
     }
 }
