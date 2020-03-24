@@ -184,7 +184,7 @@ public class AppStandbyTests {
         final int quota = APP_STANDBY_QUOTAS[bucketIndex];
 
         long startElapsed = SystemClock.elapsedRealtime();
-        final long freshWindowPoint = sAlarmHistory.getLast(1) + APP_STANDBY_WINDOW + 1;
+        final long freshWindowPoint = sAlarmHistory.getLast(1) + APP_STANDBY_WINDOW;
         if (freshWindowPoint > startElapsed) {
             Thread.sleep(freshWindowPoint - startElapsed);
             startElapsed = freshWindowPoint;
@@ -205,7 +205,7 @@ public class AppStandbyTests {
         scheduleAlarm(desiredTrigger, false, 0);
         Thread.sleep(desiredTrigger - SystemClock.elapsedRealtime());
         assertFalse("Alarm exceeding quota not deferred", waitForAlarm());
-        final long minTrigger = firstTrigger + 1 + APP_STANDBY_WINDOW;
+        final long minTrigger = firstTrigger + APP_STANDBY_WINDOW;
         Thread.sleep(minTrigger - SystemClock.elapsedRealtime());
         assertTrue("Alarm exceeding quota not delivered after expected delay", waitForAlarm());
     }
