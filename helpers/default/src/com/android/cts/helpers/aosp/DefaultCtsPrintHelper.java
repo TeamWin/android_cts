@@ -23,6 +23,7 @@ import android.platform.helpers.exceptions.TestHelperException;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
+import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.support.test.uiautomator.Until;
 import android.util.Log;
 
@@ -76,5 +77,33 @@ public class DefaultCtsPrintHelper implements ICtsPrintHelper {
         }
 
         printButton.click();
+    }
+
+    @Override
+    public void selectPrinter(String printerName, long timeout) throws TestHelperException {
+        Log.d(LOG_TAG, "Selecting printer " + printerName);
+        try {
+            UiObject2 destinationSpinner =
+                    mDevice.wait(
+                            Until.findObject(
+                                    By.res("com.android.printspooler:id/destination_spinner")),
+                            timeout);
+
+            if (destinationSpinner != null) {
+                destinationSpinner.click();
+                mDevice.waitForIdle();
+            }
+
+            UiObject2 printerOption = mDevice.wait(Until.findObject(By.text(printerName)), timeout);
+            if (printerOption == null) {
+                throw new UiObjectNotFoundException(printerName + " not found");
+            }
+
+            printerOption.click();
+            mDevice.waitForIdle();
+        } catch (Exception e) {
+            dumpWindowHierarchy();
+            throw new TestHelperException("Failed to select printer", e);
+        }
     }
 }
