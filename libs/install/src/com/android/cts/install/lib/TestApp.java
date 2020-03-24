@@ -18,6 +18,12 @@ package com.android.cts.install.lib;
 
 import android.content.pm.VersionedPackage;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.util.function.Function;
+
 /**
  * Collection of dummy apps used in tests.
  */
@@ -75,6 +81,7 @@ public class TestApp {
     private final long mVersionCode;
     private final String[] mResourceNames;
     private final boolean mIsApex;
+    private final Function<String, InputStream> mGetResourceStream;
 
     public TestApp(String name, String packageName, long versionCode, boolean isApex,
             String... resourceNames) {
@@ -83,6 +90,22 @@ public class TestApp {
         mVersionCode = versionCode;
         mResourceNames = resourceNames;
         mIsApex = isApex;
+        mGetResourceStream = (res) -> TestApp.class.getClassLoader().getResourceAsStream(res);
+    }
+
+    public TestApp(String name, String packageName, long versionCode, boolean isApex, File path) {
+        mName = name;
+        mPackageName = packageName;
+        mVersionCode = versionCode;
+        mResourceNames = new String[] { path.getName() };
+        mIsApex = isApex;
+        mGetResourceStream = (res) -> {
+            try {
+                return new FileInputStream(path);
+            } catch (FileNotFoundException e) {
+                return null;
+            }
+        };
     }
 
     public String getPackageName() {
@@ -106,7 +129,14 @@ public class TestApp {
         return mIsApex;
     }
 
-    String[] getResourceNames() {
+    public String[] getResourceNames() {
         return mResourceNames;
+    }
+
+    /**
+     * Returns an InputStream for the resource name.
+     */
+    public InputStream getResourceStream(String name) {
+        return mGetResourceStream.apply(name);
     }
 }

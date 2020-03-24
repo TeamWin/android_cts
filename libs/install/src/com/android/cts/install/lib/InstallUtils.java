@@ -32,10 +32,12 @@ import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.HandlerThread;
 
-
 import androidx.test.InstrumentationRegistry;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -175,6 +177,31 @@ public class InstallUtils {
     public static void commitExpectingFailure(Class expectedThrowableClass,
             String expectedFailMessage, Install install) {
         assertThrows(expectedThrowableClass, expectedFailMessage, () -> install.commit());
+    }
+
+    /**
+     * Mutates {@code installFlags} field of {@code params} by adding {@code
+     * additionalInstallFlags} to it.
+     */
+    @VisibleForTesting
+    public static void mutateInstallFlags(PackageInstaller.SessionParams params,
+            int additionalInstallFlags) {
+        final Class<?> clazz = params.getClass();
+        Field installFlagsField;
+        try {
+            installFlagsField = clazz.getDeclaredField("installFlags");
+        } catch (NoSuchFieldException e) {
+            throw new AssertionError("Unable to reflect over SessionParams.installFlags", e);
+        }
+
+        try {
+            int flags = installFlagsField.getInt(params);
+            flags |= additionalInstallFlags;
+            installFlagsField.setAccessible(true);
+            installFlagsField.setInt(params, flags);
+        } catch (IllegalAccessException e) {
+            throw new AssertionError("Unable to reflect over SessionParams.installFlags", e);
+        }
     }
 
     private static final String NO_RESPONSE = "NO RESPONSE";
