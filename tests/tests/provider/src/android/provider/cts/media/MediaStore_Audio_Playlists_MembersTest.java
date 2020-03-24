@@ -290,7 +290,7 @@ public class MediaStore_Audio_Playlists_MembersTest {
                     Members.DEFAULT_SORT_ORDER);
             assertEquals(1, c.getCount());
             c.moveToFirst();
-            assertEquals(2, c.getInt(c.getColumnIndex(Members.PLAY_ORDER)));
+            assertEquals(1, c.getInt(c.getColumnIndex(Members.PLAY_ORDER)));
             assertEquals(memberId, c.getLong(c.getColumnIndex(Members._ID)));
             final String expected2 = Audio2.getInstance().getContentValues(mVolumeName)
                     .getAsString(Members.DATA);
@@ -352,8 +352,8 @@ public class MediaStore_Audio_Playlists_MembersTest {
                     new long [] {mIdOfAudio1, mIdOfAudio2, mIdOfAudio3}, new int [] {1,2,3});
 
             // delete the middle item
-            mContentResolver.delete(Media.getContentUri(mVolumeName),
-                    Media._ID + "=" + mIdOfAudio2, null);
+            mContentResolver.delete(membersUri,
+                    Playlists.Members.AUDIO_ID + "=" + mIdOfAudio2, null);
 
             // check the remaining items are still in the right order, and the play_order of the
             // last item has been adjusted
