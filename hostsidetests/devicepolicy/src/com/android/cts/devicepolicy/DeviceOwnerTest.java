@@ -986,6 +986,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                     "testForceStopWithUserControlDisabled");
             // Reboot and verify protected packages are persisted
             rebootAndWaitUntilReady();
+            forceStopPackageForUser(SIMPLE_APP_PKG, mPrimaryUserId);
             executeDeviceTestMethod(".UserControlDisabledPackagesTest",
                     "testForceStopWithUserControlDisabled");
             executeDeviceTestMethod(".UserControlDisabledPackagesTest",
