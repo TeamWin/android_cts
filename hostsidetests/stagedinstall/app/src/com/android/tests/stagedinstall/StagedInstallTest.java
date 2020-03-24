@@ -927,12 +927,14 @@ public class StagedInstallTest {
         TestApp empty = new TestApp(null, null, -1,
                 apkFileName.endsWith(".apex"));
         int sessionId = Install.single(empty).setStaged().createSession();
-        PackageInstaller.Session session = InstallUtils.openPackageInstallerSession(sessionId);
-        writeApk(session, apkFileName, outputFileName);
-        // Commit the session (this will start the installation workflow).
-        Log.i(TAG, "Committing session for apk: " + apkFileName);
-        commitSession(sessionId);
-        return new StageSessionResult(sessionId, LocalIntentSender.getIntentSenderResult());
+        try (PackageInstaller.Session session =
+                     InstallUtils.openPackageInstallerSession(sessionId)) {
+            writeApk(session, apkFileName, outputFileName);
+            // Commit the session (this will start the installation workflow).
+            Log.i(TAG, "Committing session for apk: " + apkFileName);
+            commitSession(sessionId);
+            return new StageSessionResult(sessionId, LocalIntentSender.getIntentSenderResult());
+        }
     }
 
     private static StageSessionResult stageSingleApk(TestApp testApp) throws Exception {
