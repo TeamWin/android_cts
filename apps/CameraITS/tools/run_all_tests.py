@@ -415,6 +415,8 @@ def main():
         tot_tests = []
         tot_pass = 0
         for scene in scenes:
+            # unit is millisecond for execution time record in CtsVerifier
+            scene_start_time = int(round(time.time() * 1000))
             skip_code = None
             tests = [(s[:-3], os.path.join("tests", scene, s))
                      for s in os.listdir(os.path.join("tests", scene))
@@ -551,6 +553,9 @@ def main():
                 if test_failed:
                     summary += msg_short + "\n"
 
+            # unit is millisecond for execution time record in CtsVerifier
+            scene_end_time = int(round(time.time() * 1000))
+
             if numskip > 0:
                 skipstr = ", %d test%s skipped" % (
                     numskip, "s" if numskip > 1 else "")
@@ -580,6 +585,8 @@ def main():
             results[scene][result_key] = (ItsSession.RESULT_PASS if passed
                                           else ItsSession.RESULT_FAIL)
             results[scene][ItsSession.SUMMARY_KEY] = summary_path
+            results[scene][ItsSession.START_TIME_KEY] = scene_start_time
+            results[scene][ItsSession.END_TIME_KEY] = scene_end_time
 
         if tot_tests:
             print "Compatibility Score: %.f/100" % (100.0 * tot_pass / len(tot_tests))
