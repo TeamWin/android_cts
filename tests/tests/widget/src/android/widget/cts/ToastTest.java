@@ -650,6 +650,38 @@ public class ToastTest {
     }
 
     @Test
+    public void testTextToastAllowed_whenInTheForeground() throws Throwable {
+        makeToast();
+
+        mActivityRule.runOnUiThread(mToast::show);
+
+        assertShowAndHide(mToast);
+    }
+
+    @Test
+    public void testCustomToastAllowed_whenInTheForeground() throws Throwable {
+        makeCustomToast();
+        View view = mToast.getView();
+        // View has not been attached to screen yet
+        assertNull(view.getParent());
+
+        mActivityRule.runOnUiThread(mToast::show);
+
+        assertShowAndHideCustomToast(view);
+    }
+
+    @Test
+    public void testTextToastAllowed_whenInTheBackground() throws Throwable {
+        // Make it background
+        mActivityRule.finishActivity();
+        makeToast();
+
+        mActivityRule.runOnUiThread(mToast::show);
+
+        assertShowAndHide(mToast);
+    }
+
+    @Test
     public void testCustomToastBlocked_whenInTheBackground() throws Throwable {
         // Make it background
         mActivityRule.finishActivity();
