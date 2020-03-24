@@ -24,6 +24,7 @@ import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import android.content.pm.PackageInstaller;
+import android.platform.test.annotations.AppModeFull;
 import com.android.cts.install.lib.Install;
 import com.android.cts.install.lib.InstallUtils;
 import com.android.cts.install.lib.LocalIntentSender;
@@ -39,6 +40,7 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "Instant apps cannot create installer sessions")
 /**
  * Test for cts.install.lib.
  * <p>This test also tries to showcase how to use the library.
