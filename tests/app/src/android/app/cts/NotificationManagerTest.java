@@ -16,7 +16,6 @@
 
 package android.app.cts;
 
-import static android.app.Notification.CATEGORY_CALL;
 import static android.app.Notification.FLAG_BUBBLE;
 import static android.app.NotificationManager.IMPORTANCE_DEFAULT;
 import static android.app.NotificationManager.IMPORTANCE_HIGH;
@@ -47,11 +46,8 @@ import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_SCREEN_OF
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_SCREEN_ON;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_STATUS_BAR;
 import static android.app.stubs.BubblesTestService.EXTRA_TEST_CASE;
+import static android.app.stubs.BubblesTestService.TEST_CALL;
 import static android.app.stubs.BubblesTestService.TEST_MESSAGING;
-import static android.app.stubs.BubblesTestService.TEST_NO_BUBBLE_METADATA;
-import static android.app.stubs.BubblesTestService.TEST_NO_CATEGORY;
-import static android.app.stubs.BubblesTestService.TEST_NO_PERSON;
-import static android.app.stubs.BubblesTestService.TEST_SUCCESS;
 import static android.app.stubs.SendBubbleActivity.BUBBLE_NOTIF_ID;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_DOCUMENT;
@@ -2868,13 +2864,14 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testNotificationManagerBubblePolicy_flagForPhonecall() throws InterruptedException {
+    public void testNotificationManagerBubblePolicy_noflagForPhonecall()
+            throws InterruptedException {
         if (FeatureUtil.isAutomotive()) {
             // Automotive does not support notification bubbles.
             return;
         }
         Intent serviceIntent = new Intent(mContext, BubblesTestService.class);
-        serviceIntent.putExtra(EXTRA_TEST_CASE, TEST_SUCCESS);
+        serviceIntent.putExtra(EXTRA_TEST_CASE, TEST_CALL);
 
         try {
             // turn on bubbles globally
@@ -2884,97 +2881,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
             mContext.startService(serviceIntent);
 
-            boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
-            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, shouldBeBubble);
-        } finally {
-            mContext.stopService(serviceIntent);
-        }
-    }
-
-    public void testNotificationManagerBubblePolicy_flagForPhonecallFailsNoPerson()
-            throws InterruptedException {
-        if (FeatureUtil.isAutomotive()) {
-            // Automotive does not support notification bubbles.
-            return;
-        }
-        Intent serviceIntent = new Intent(mContext, BubblesTestService.class);
-        serviceIntent.putExtra(EXTRA_TEST_CASE, TEST_NO_PERSON);
-
-        try {
-            // turn on bubbles globally
-            toggleBubbleSetting(true);
-
-            setUpNotifListener();
-
-            mContext.startService(serviceIntent);
-
-            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, false /* shouldBeBubble */);
-        } finally {
-            mContext.stopService(serviceIntent);
-        }
-    }
-
-    public void testNotificationManagerBubblePolicy_flagForPhonecallFailsNoForeground()
-            throws InterruptedException {
-        if (FeatureUtil.isAutomotive()) {
-            // Automotive does not support notification bubbles.
-            return;
-        }
-        // turn on bubbles globally
-        toggleBubbleSetting(true);
-
-        Person person = new Person.Builder()
-                .setName("bubblebot")
-                .build();
-        Notification.Builder nb = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                .setContentTitle("foo")
-                .setCategory(CATEGORY_CALL)
-                .addPerson(person)
-                .setSmallIcon(android.R.drawable.sym_def_app_icon);
-        sendAndVerifyBubble(1, nb, null /* use default metadata */, false /* shouldBeBubble */);
-    }
-
-    public void testNotificationManagerBubblePolicy_flagForPhonecallFailsNoCategory()
-            throws InterruptedException {
-        if (FeatureUtil.isAutomotive()) {
-            // Automotive does not support notification bubbles.
-            return;
-        }
-        Intent serviceIntent = new Intent(mContext, BubblesTestService.class);
-        serviceIntent.putExtra(EXTRA_TEST_CASE, TEST_NO_CATEGORY);
-
-        try {
-            // turn on bubbles globally
-            toggleBubbleSetting(true);
-
-            setUpNotifListener();
-
-            mContext.startService(serviceIntent);
-
-            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, false /* shouldBeBubble */);
-        } finally {
-            mContext.stopService(serviceIntent);
-        }
-    }
-
-    public void testNotificationManagerBubblePolicy_flagForPhonecallFailsNoMetadata()
-            throws InterruptedException {
-        if (FeatureUtil.isAutomotive()) {
-            // Automotive does not support notification bubbles.
-            return;
-        }
-        Intent serviceIntent = new Intent(mContext, BubblesTestService.class);
-        serviceIntent.putExtra(EXTRA_TEST_CASE, TEST_NO_BUBBLE_METADATA);
-
-        try {
-            // turn on bubbles globally
-            toggleBubbleSetting(true);
-
-            setUpNotifListener();
-
-            mContext.startService(serviceIntent);
-
-            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, false /* shouldBeBubble */);
+            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, false);
         } finally {
             mContext.stopService(serviceIntent);
         }
