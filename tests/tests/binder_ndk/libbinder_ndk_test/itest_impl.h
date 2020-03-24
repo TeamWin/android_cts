@@ -224,9 +224,9 @@ class MyTest : public ::aidl::test_package::BnTest,
     *_aidl_return = in_value;
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
-  ::ndk::ScopedAStatus RepeatByteArray(
-      const std::vector<int8_t>& in_value, std::vector<int8_t>* out_repeated,
-      std::vector<int8_t>* _aidl_return) override {
+  ::ndk::ScopedAStatus RepeatByteArray(const std::vector<uint8_t>& in_value,
+                                       std::vector<uint8_t>* out_repeated,
+                                       std::vector<uint8_t>* _aidl_return) override {
     *out_repeated = in_value;
     *_aidl_return = in_value;
     return ::ndk::ScopedAStatus(AStatus_newOk());
@@ -341,8 +341,8 @@ class MyTest : public ::aidl::test_package::BnTest,
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
   ::ndk::ScopedAStatus RepeatNullableByteArray(
-      const std::optional<std::vector<int8_t>>& in_value,
-      std::optional<std::vector<int8_t>>* _aidl_return) override {
+      const std::optional<std::vector<uint8_t>>& in_value,
+      std::optional<std::vector<uint8_t>>* _aidl_return) override {
     *_aidl_return = in_value;
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
