@@ -1979,6 +1979,43 @@ public class PopupWindowTest {
         assertEquals(subPopupLocation[1] - deltaY, newSubPopupLocation[1]);
     }
 
+    @Test
+    public void testFocusAfterOrientation() throws Throwable {
+        int[] orientationValues = {ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE,
+                ActivityInfo.SCREEN_ORIENTATION_PORTRAIT};
+        int currentOrientation = mActivity.getResources().getConfiguration().orientation;
+        if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE) {
+            orientationValues[0] = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+            orientationValues[1] = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+        }
+
+        View content = createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP);
+        content.setFocusable(true);
+        mPopupWindow = createPopupWindow(content);
+        mPopupWindow.setFocusable(true);
+        mPopupWindow.setWidth(WindowManager.LayoutParams.MATCH_PARENT);
+        mPopupWindow.setHeight(WindowManager.LayoutParams.MATCH_PARENT);
+        showPopup(R.id.anchor_upper_left);
+        mInstrumentation.waitForIdleSync();
+        assertTrue(content.isFocused());
+
+        if (!hasDeviceFeature(PackageManager.FEATURE_SCREEN_PORTRAIT)) {
+            return;
+        }
+
+
+        for (int i = 0; i < 2; i++) {
+            final int orientation = orientationValues[i];
+            mActivity.runOnUiThread(() ->
+                    mActivity.setRequestedOrientation(orientation));
+            mActivity.waitForConfigurationChanged();
+            // Wait for main thread to be idle to make sure layout and draw have been performed
+            // before continuing.
+            mInstrumentation.waitForIdleSync();
+            assertTrue(content.isFocused());
+        }
+    }
+
     private void verifySubPopupPosition(PopupWindow subPopup, int mainAnchorId, int subAnchorId,
             int contentEdgeX, int operatorX, int anchorEdgeX,
             int contentEdgeY, int operatorY, int anchorEdgeY) throws Throwable {
