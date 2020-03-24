@@ -19,24 +19,25 @@ package android.util.cts;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.Manifest;
+import android.content.pm.PackageInstaller;
+import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
-import android.content.pm.PackageInstaller;
-import android.platform.test.annotations.AppModeFull;
 import com.android.cts.install.lib.Install;
 import com.android.cts.install.lib.InstallUtils;
 import com.android.cts.install.lib.LocalIntentSender;
 import com.android.cts.install.lib.TestApp;
 import com.android.cts.install.lib.Uninstall;
 
-import java.io.IOException;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.io.IOException;
+import java.lang.reflect.Field;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -165,5 +166,18 @@ public class InstallUtilTest {
         // Verify apps have not been installed
         assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(-1);
         assertThat(InstallUtils.getInstalledVersion(TestApp.B)).isEqualTo(-1);
+    }
+
+    @Test
+    public void testMutateInstallFlags() throws Exception {
+        PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(
+                PackageInstaller.SessionParams.MODE_FULL_INSTALL);
+        params.setInstallAsApex();
+        params.setStaged();
+        InstallUtils.mutateInstallFlags(params, 0x00080000);
+        final Class<?> clazz = params.getClass();
+        Field installFlagsField = clazz.getDeclaredField("installFlags");
+        int installFlags = installFlagsField.getInt(params);
+        assertThat(installFlags & 0x00080000).isEqualTo(0x00080000);
     }
 }
