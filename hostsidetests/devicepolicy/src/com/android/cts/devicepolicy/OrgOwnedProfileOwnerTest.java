@@ -458,6 +458,19 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         assertCanStartPersonalApp(DEVICE_ADMIN_PKG, true);
     }
 
+    @Test
+    public void testPersonalAppsSuspensionInstalledApp() throws Exception {
+        setPersonalAppsSuspended(true);
+
+        installAppAsUser(DUMMY_IME_APK, mPrimaryUserId);
+
+        // Wait until package install broadcast is processed
+        waitForBroadcastIdle();
+
+        assertCanStartPersonalApp(DUMMY_IME_PKG, false);
+        setPersonalAppsSuspended(false);
+    }
+
     private void setPersonalAppsSuspended(boolean suspended) throws DeviceNotAvailableException {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
                 suspended ? "testSuspendPersonalApps" : "testUnsuspendPersonalApps", mUserId);
@@ -469,8 +482,8 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
 
-        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
-        setupIme(mPrimaryUserId, DUMMY_IME_APK, DUMMY_IME_COMPONENT);
+        installAppAsUser(DUMMY_IME_APK, mPrimaryUserId);
+        setupIme(DUMMY_IME_COMPONENT, mPrimaryUserId);
         setPersonalAppsSuspended(true);
         // Active IME should not be suspended.
         assertCanStartPersonalApp(DUMMY_IME_PKG, true);
@@ -495,9 +508,7 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
-    private void setupIme(int userId, String imeApk, String imeComponent) throws Exception {
-        installAppAsUser(imeApk, userId);
-
+    private void setupIme(String imeComponent, int userId) throws Exception {
         // Wait until IMS service is registered by the system.
         waitForOutput("Failed waiting for IME to become available",
                 String.format("ime list --user %d -s -a", userId),
@@ -506,7 +517,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         executeShellCommand("ime enable " + imeComponent);
         executeShellCommand("ime set " + imeComponent);
     }
-
 
     private void assertCanStartPersonalApp(String packageName, boolean canStart)
             throws DeviceNotAvailableException {
