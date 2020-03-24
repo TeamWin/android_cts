@@ -224,41 +224,6 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
         return hdmiCecClient.getParamsFromMessage(message);
     }
 
-    private void reportAudioStatus_0_unmuted() throws  Exception {
-        unmuteDevice();
-        setDeviceVolume(0);
-        int reportedVolume = getDutAudioStatus();
-        /* Allow for a range of volume, since the actual volume set will depend on the device's
-        volume resolution. */
-        assertThat(reportedVolume).isEqualTo(0);
-    }
-
-    private void reportAudioStatus_50_unmuted() throws  Exception {
-        unmuteDevice();
-        setDeviceVolume(50);
-        int reportedVolume = (getDutAudioStatus() * 100) / 127;
-        /* Allow for a range of volume, since the actual volume set will depend on the device's
-        volume resolution. */
-        assertThat(reportedVolume).isIn(Range.closed(40, 60));
-    }
-
-    private void reportAudioStatus_100_unmuted() throws  Exception {
-        unmuteDevice();
-        setDeviceVolume(100);
-        int reportedVolume = getDutAudioStatus();
-        /* Allow for a range of volume, since the actual volume set will depend on the device's
-        volume resolution. */
-        assertThat(reportedVolume).isEqualTo(100);
-    }
-
-    private void reportAudioStatusMuted() throws  Exception {
-        muteDevice();
-        int reportedVolume = getDutAudioStatus();
-        /* If device is muted, the 8th bit of CEC message parameters is set and the volume will
-        be greater than 127. */
-        assertWithMessage("Device not muted").that(reportedVolume).isGreaterThan(127);
-    }
-
     private void initateSystemAudioModeFromTuner() throws Exception {
         getDevice().reboot();
         hdmiCecClient.sendCecMessage(CecDevice.TUNER_1, AUDIO_DEVICE,
@@ -431,26 +396,61 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
 
     /**
      * Test 11.2.15-9
-     * Tests that the device responds with a <Report Audio Status> message to a
-     * <Give Audio Status> message.
+     * Tests that the DUT responds with a <Report Audio Status> message with correct parameters
+     * to a <Give Audio Status> message when volume is set to 0% and not muted.
      */
     @Test
-    public void cect_11_2_15_9_ReportAudioStatus() throws Exception {
-        hdmiCecClient.sendCecMessage(CecDevice.TV, AUDIO_DEVICE,
-                CecMessage.SYSTEM_AUDIO_MODE_REQUEST,
-                hdmiCecClient.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS,
-                HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH));
-        /** Set volume to 0 % and check the <Report Audio Status> */
-        reportAudioStatus_0_unmuted();
+    public void cect_11_2_15_9_ReportAudioStatus_0_unmuted() throws Exception {
+        sendSystemAudioModeInitiation();
+        unmuteDevice();
+        setDeviceVolume(0);
+        int reportedVolume = getDutAudioStatus();
+        assertThat(reportedVolume).isEqualTo(0);
+    }
 
-        /** Set volume to 50 % and check the <Report Audio Status> */
-        reportAudioStatus_50_unmuted();
+    /**
+     * Test 11.2.15-9
+     * Tests that the DUT responds with a <Report Audio Status> message with correct parameters
+     * to a <Give Audio Status> message when volume is set to 50% and not muted.
+     */
+    @Test
+    public void cect_11_2_15_9_ReportAudioStatus_50_unmuted() throws Exception {
+        sendSystemAudioModeInitiation();
+        unmuteDevice();
+        setDeviceVolume(50);
+        int reportedVolume = getDutAudioStatus();
+        /* Allow for a range of volume, since the actual volume set will depend on the device's
+        volume resolution. */
+        assertThat(reportedVolume).isIn(Range.closed(46, 54));
+    }
 
-        /** Set volume to 100 % and check the <Report Audio Status> */
-        reportAudioStatus_100_unmuted();
+    /**
+     * Test 11.2.15-9
+     * Tests that the DUT responds with a <Report Audio Status> message with correct parameters
+     * to a <Give Audio Status> message when volume is set to 100% and not muted.
+     */
+    @Test
+    public void cect_11_2_15_9_ReportAudioStatus_100_unmuted() throws Exception {
+        sendSystemAudioModeInitiation();
+        unmuteDevice();
+        setDeviceVolume(100);
+        int reportedVolume = getDutAudioStatus();
+        assertThat(reportedVolume).isEqualTo(100);
+    }
 
-        /** Mute volume and check the <Report Audio Status> */
-        reportAudioStatusMuted();
+    /**
+     * Test 11.2.15-9
+     * Tests that the DUT responds with a <Report Audio Status> message with correct parameters
+     * to a <Give Audio Status> message when volume is muted.
+     */
+    @Test
+    public void cect_11_2_15_9_ReportAudioStatusMuted() throws Exception {
+        sendSystemAudioModeInitiation();
+        muteDevice();
+        int reportedVolume = getDutAudioStatus();
+        /* If device is muted, the 8th bit of CEC message parameters is set and the volume will
+        be greater than 127. */
+        assertWithMessage("Device not muted").that(reportedVolume).isGreaterThan(127);
     }
 
     /**
