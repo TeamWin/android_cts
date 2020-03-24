@@ -1,4 +1,4 @@
-// Copyright (C) 2018 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,14 +13,10 @@
 // limitations under the License.
 
 android_test {
-    name: "CtsPackageInstallTestCases",
+    name: "CtsPackageInstallAppOpDeniedTestCases",
     sdk_version: "test_current",
 
     srcs: ["src/**/*.kt"],
-    exclude_srcs: [
-        "src/android/packageinstaller/install/cts/ExternalSourcesTestAppOpDenied.kt",
-        "src/android/packageinstaller/install/cts/ExternalSourcesTestAppOpDefault.kt",
-    ],
 
     static_libs: [
         "ub-uiautomator",
