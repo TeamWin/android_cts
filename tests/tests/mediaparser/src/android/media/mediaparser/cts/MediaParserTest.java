@@ -18,6 +18,7 @@ package android.media.mediaparser.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.media.MediaFormat;
 import android.media.MediaParser;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -36,6 +37,60 @@ import java.io.IOException;
 
 @RunWith(AndroidJUnit4.class)
 public class MediaParserTest {
+
+    @Test
+    public void testGetAllParserNames() {
+        MediaFormat format = new MediaFormat();
+        // By not providing a mime type, MediaParser should return all parser names.
+        format.setString(MediaFormat.KEY_MIME, null);
+        assertThat(MediaParser.getParserNames(format))
+                .containsExactly(
+                        MediaParser.PARSER_NAME_MATROSKA,
+                        MediaParser.PARSER_NAME_FMP4,
+                        MediaParser.PARSER_NAME_MP4,
+                        MediaParser.PARSER_NAME_MP3,
+                        MediaParser.PARSER_NAME_ADTS,
+                        MediaParser.PARSER_NAME_AC3,
+                        MediaParser.PARSER_NAME_TS,
+                        MediaParser.PARSER_NAME_FLV,
+                        MediaParser.PARSER_NAME_OGG,
+                        MediaParser.PARSER_NAME_PS,
+                        MediaParser.PARSER_NAME_WAV,
+                        MediaParser.PARSER_NAME_AMR,
+                        MediaParser.PARSER_NAME_AC4,
+                        MediaParser.PARSER_NAME_FLAC);
+    }
+
+    @Test
+    public void testGetParserNamesByMimeType() {
+        // MimeTypes obtained from the W3C.
+        assertParsers(MediaParser.PARSER_NAME_MATROSKA)
+                .supportMimeTypes(
+                        "video/x-matroska", "audio/x-matroska", "video/x-webm", "audio/x-webm");
+        assertParsers(MediaParser.PARSER_NAME_MP4, MediaParser.PARSER_NAME_FMP4)
+                .supportMimeTypes("video/mp4", "audio/mp4", "application/mp4");
+        assertParsers(MediaParser.PARSER_NAME_MP3).supportMimeTypes("audio/mpeg");
+        assertParsers(MediaParser.PARSER_NAME_ADTS).supportMimeTypes("audio/aac");
+        assertParsers(MediaParser.PARSER_NAME_AC3).supportMimeTypes("audio/ac3");
+        assertParsers(MediaParser.PARSER_NAME_TS).supportMimeTypes("video/mp2t", "audio/mp2t");
+        assertParsers(MediaParser.PARSER_NAME_FLV).supportMimeTypes("video/x-flv");
+        assertParsers(MediaParser.PARSER_NAME_OGG)
+                .supportMimeTypes("video/ogg", "audio/ogg", "application/ogg");
+        assertParsers(MediaParser.PARSER_NAME_PS).supportMimeTypes("video/mp2p", "video/mp1s");
+        assertParsers(MediaParser.PARSER_NAME_WAV)
+                .supportMimeTypes("audio/vnd.wave", "audio/wav", "audio/wave", "audio/x-wav");
+        assertParsers(MediaParser.PARSER_NAME_AMR).supportMimeTypes("audio/amr");
+        assertParsers(MediaParser.PARSER_NAME_AC4).supportMimeTypes("audio/ac4");
+        assertParsers(MediaParser.PARSER_NAME_FLAC).supportMimeTypes("audio/flac", "audio/x-flac");
+    }
+
+    @Test
+    public void testGetParserNamesForUnsupportedMimeType() {
+        MediaFormat format = new MediaFormat();
+        // None of the parser supports WebVTT.
+        format.setString(MediaFormat.KEY_MIME, "text/vtt");
+        assertThat(MediaParser.getParserNames(format)).isEmpty();
+    }
 
     @Test
     public void testCreationByName() {
@@ -427,6 +482,28 @@ public class MediaParserTest {
                 if (durationUs == MediaParser.SeekMap.UNKNOWN_DURATION) {
                     break;
                 }
+            }
+        }
+    }
+
+    private static FluentMediaParserSubject assertParsers(String... names) {
+        return new FluentMediaParserSubject(names);
+    }
+
+    private static final class FluentMediaParserSubject {
+
+        private final String[] mediaParserNames;
+
+        private FluentMediaParserSubject(String[] mediaParserNames) {
+            this.mediaParserNames = mediaParserNames;
+        }
+
+        public void supportMimeTypes(String... mimeTypes) {
+            for (String mimeType : mimeTypes) {
+                MediaFormat format = new MediaFormat();
+                format.setString(MediaFormat.KEY_MIME, mimeType);
+                assertThat(MediaParser.getParserNames(format))
+                        .containsExactlyElementsIn(mediaParserNames);
             }
         }
     }
