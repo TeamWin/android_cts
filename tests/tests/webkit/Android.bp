@@ -32,6 +32,7 @@ android_test {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
     // uncomment when dalvik.annotation.Test* are removed or part of SDK

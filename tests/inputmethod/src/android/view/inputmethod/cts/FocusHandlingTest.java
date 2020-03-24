@@ -17,7 +17,6 @@
 package android.view.inputmethod.cts;
 
 import static android.view.WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
-import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
 import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
 import static android.widget.PopupWindow.INPUT_METHOD_NOT_NEEDED;
@@ -41,6 +40,7 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.Process;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -50,6 +50,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.TestActivity;
 import android.view.inputmethod.cts.util.TestUtils;
+import android.view.inputmethod.cts.util.UnlockScreenRule;
 import android.view.inputmethod.cts.util.WindowFocusHandleService;
 import android.view.inputmethod.cts.util.WindowFocusStealer;
 import android.widget.EditText;
@@ -70,6 +71,7 @@ import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -83,6 +85,9 @@ import java.util.concurrent.atomic.AtomicReference;
 public class FocusHandlingTest extends EndToEndImeTestBase {
     static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     static final long NOT_EXPECT_TIMEOUT = TimeUnit.SECONDS.toMillis(1);
+
+    @Rule
+    public final UnlockScreenRule mUnlockScreenRule = new UnlockScreenRule();
 
     private static final String TEST_MARKER_PREFIX =
             "android.view.inputmethod.cts.FocusHandlingTest";
@@ -443,6 +448,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
         }
     }
 
+    @AppModeFull(reason = "Instant apps cannot hold android.permission.SYSTEM_ALERT_WINDOW")
     @Test
     public void testMultiWindowFocusHandleOnDifferentUiThread() throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
@@ -567,8 +573,8 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
             // Wait for service bound.
             try {
-                TestUtils.waitOnMainUntil(() -> WindowFocusHandleService.getInstance() != null, 5,
-                        "WindowFocusHandleService should be bound");
+                TestUtils.waitOnMainUntil(() -> WindowFocusHandleService.getInstance() != null,
+                        TIMEOUT, "WindowFocusHandleService should be bound");
             } catch (TimeoutException e) {
                 fail("WindowFocusHandleService should be bound");
             }
