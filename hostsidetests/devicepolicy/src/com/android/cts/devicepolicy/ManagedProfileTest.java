@@ -54,11 +54,13 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void testManagedProfilesSupportedWithLockScreenOnly() throws Exception {
-        if (mHasFeature) {
-            // Managed profiles should be only supported if the device supports the secure lock
-            // screen feature.
-            assertTrue(mHasSecureLockScreen);
+        if (!mHasFeature || hasDeviceFeature("android.software.leanback")) {
+            return;
         }
+        // Managed profiles should be only supported if the device supports the secure lock
+        // screen feature.
+        // Exception is Android TV which does not support lock screen feature.
+        assertTrue(mHasSecureLockScreen);
     }
 
     @Test
