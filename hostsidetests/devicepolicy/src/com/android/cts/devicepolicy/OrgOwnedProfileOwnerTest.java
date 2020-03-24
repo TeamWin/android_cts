@@ -636,8 +636,17 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     private void toggleQuietMode(boolean quietModeEnable) throws Exception {
-        final String str = String.format("am start-activity -n %s --ez %s %s",
-                QUIET_MODE_TOGGLE_ACTIVITY, EXTRA_QUIET_MODE_STATE, quietModeEnable);
+        final String str;
+        // TV launcher uses intent filter priority to prevent 3p launchers replacing it
+        // this causes the activity that toggles quiet mode to be suspended
+        // and the profile would never start
+        if (hasDeviceFeature("android.software.leanback")) {
+            str = quietModeEnable ? String.format("am stop-user -f %d", mUserId)
+                    : String.format("am start-user %d", mUserId);
+        } else {
+            str = String.format("am start-activity -n %s --ez %s %s",
+                    QUIET_MODE_TOGGLE_ACTIVITY, EXTRA_QUIET_MODE_STATE, quietModeEnable);
+        }
         executeShellCommand(str);
     }
 
