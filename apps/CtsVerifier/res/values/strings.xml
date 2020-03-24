@@ -274,6 +274,8 @@
     <string name="biometric_test_reject_first">Reject, then authenticate</string>
     <!-- Negative button callback is received -->
     <string name="biometric_test_negative_button_button">Test Negative Button</string>
+    <!-- ERROR_CANCELED is received -->
+    <string name="biometric_test_cancellation_button">Test CancellationSignal</string>
 
     <string name="biometric_test_reject_continues_instruction_title">Instructions</string>
     <string name="biometric_test_reject_continues_instruction_contents">Please authenticate with a non-enrolled biometric before authenticating with the actual enrolled biometric.</string>

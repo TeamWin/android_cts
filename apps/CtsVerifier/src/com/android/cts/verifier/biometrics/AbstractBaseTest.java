@@ -392,4 +392,31 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
         });
     }
 
+    void testCancellationSignal(int allowedAuthenticators, Runnable successRunnable) {
+        final BiometricPrompt.Builder builder = new BiometricPrompt.Builder(this);
+        builder.setTitle("Do not authenticate");
+        builder.setDescription("The authentication prompt should be dismissed automatically in 5s");
+        builder.setAllowedAuthenticators(allowedAuthenticators);
+        if ((allowedAuthenticators & Authenticators.DEVICE_CREDENTIAL) == 0) {
+            builder.setNegativeButton("Negative button", mExecutor, (dialog, which) -> {
+                // do nothing
+            });
+        }
+
+        final CancellationSignal cancel = new CancellationSignal();
+        final BiometricPrompt prompt = builder.build();
+        prompt.authenticate(cancel, mExecutor, new AuthenticationCallback() {
+            @Override
+            public void onAuthenticationError(int errorCode, CharSequence errString) {
+                if (errorCode == BiometricPrompt.BIOMETRIC_ERROR_CANCELED) {
+                    successRunnable.run();
+                } else {
+                    showToastAndLog("Unexpected error: " + errorCode);
+                }
+            }
+        });
+
+        mHandler.postDelayed(cancel::cancel, 5000);
+    }
+
 }
