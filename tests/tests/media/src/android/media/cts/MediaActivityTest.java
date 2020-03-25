@@ -22,6 +22,7 @@ import static org.junit.Assert.fail;
 import static org.junit.Assert.assertTrue;
 import static org.testng.Assert.assertFalse;
 
+import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
@@ -62,7 +63,7 @@ import java.util.concurrent.TimeUnit;
 @RunWith(AndroidJUnit4.class)
 public class MediaActivityTest {
     private static final String TAG = "MediaActivityTest";
-    private static final int WAIT_TIME_MS = 1000;
+    private static final int WAIT_TIME_MS = 5000;
     private static final int TIME_SLICE = 50;
     private static final List<Integer> ALL_VOLUME_STREAMS = new ArrayList();
     static {
@@ -111,7 +112,19 @@ public class MediaActivityTest {
         Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra(MediaSessionTestActivity.KEY_SESSION_TOKEN, mSession.getSessionToken());
+
         mActivityRule.launchActivity(intent);
+
+        assertTrue(
+            "Failed to bring MediaSessionTestActivity due to the screen lock setting."
+                    + " Ensure screen lock isn't set before running CTS test.",
+            pollingCheck(() -> {
+                Activity activity = mActivityRule.getActivity();
+                if (activity == null) {
+                    return false;
+                }
+                return activity.getMediaController() != null;
+            }));
     }
 
     @After
@@ -119,6 +132,11 @@ public class MediaActivityTest {
         if (mSession != null) {
             mSession.release();
             mSession = null;
+        }
+
+        try {
+            mActivityRule.finishActivity();
+        } catch (IllegalStateException e) {
         }
 
         for (int stream : mStreamVolumeMap.keySet()) {
@@ -237,8 +255,15 @@ public class MediaActivityTest {
         final KeyEvent down = new KeyEvent(downTime, downTime, KeyEvent.ACTION_DOWN, keyCode, 0);
         final long upTime = SystemClock.uptimeMillis();
         final KeyEvent up = new KeyEvent(downTime, upTime, KeyEvent.ACTION_UP, keyCode, 0);
-        mInstrumentation.sendKeySync(down);
-        mInstrumentation.sendKeySync(up);
+        try {
+            mInstrumentation.sendKeySync(down);
+            mInstrumentation.sendKeySync(up);
+        } catch (SecurityException e) {
+            throw new IllegalStateException(
+                "MediaSessionTestActivity isn't in the foreground."
+                        + " Ensure no screen lock before running CTS test"
+                        + ", and do not touch screen while the test is running.");
+        }
     }
 
     private boolean checkAnyStreamVolumeChanged() {

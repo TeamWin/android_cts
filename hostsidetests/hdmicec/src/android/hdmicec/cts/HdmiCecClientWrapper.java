@@ -74,7 +74,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
 
         String deviceTypeCsv = testDevice.executeShellCommand("getprop ro.hdmi.device_type").trim();
         List<String> deviceType = Arrays.asList(deviceTypeCsv.replaceAll("\\s+", "").split(","));
-        assertThat(deviceType.contains(CecDevice.getDeviceType(targetDevice))).isTrue();
+        assertThat(deviceType.contains(targetDevice.getDeviceType())).isTrue();
 
         this.init();
     };

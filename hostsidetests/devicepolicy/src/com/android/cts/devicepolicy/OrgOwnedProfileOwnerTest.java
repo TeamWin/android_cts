@@ -206,7 +206,7 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testUserRestrictionsSetOnParentAreNotPersisted() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
             return;
         }
         int secondaryUserId = createUser();
@@ -233,7 +233,7 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testUserRestrictionsSetOnParentAreEnforced() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
             return;
         }
         int userId = createUser();
@@ -462,6 +462,19 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         assertCanStartPersonalApp(DEVICE_ADMIN_PKG, true);
     }
 
+    @Test
+    public void testPersonalAppsSuspensionInstalledApp() throws Exception {
+        setPersonalAppsSuspended(true);
+
+        installAppAsUser(DUMMY_IME_APK, mPrimaryUserId);
+
+        // Wait until package install broadcast is processed
+        waitForBroadcastIdle();
+
+        assertCanStartPersonalApp(DUMMY_IME_PKG, false);
+        setPersonalAppsSuspended(false);
+    }
+
     private void setPersonalAppsSuspended(boolean suspended) throws DeviceNotAvailableException {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
                 suspended ? "testSuspendPersonalApps" : "testUnsuspendPersonalApps", mUserId);
@@ -473,8 +486,8 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
 
-        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
-        setupIme(mPrimaryUserId, DUMMY_IME_APK, DUMMY_IME_COMPONENT);
+        installAppAsUser(DUMMY_IME_APK, mPrimaryUserId);
+        setupIme(DUMMY_IME_COMPONENT, mPrimaryUserId);
         setPersonalAppsSuspended(true);
         // Active IME should not be suspended.
         assertCanStartPersonalApp(DUMMY_IME_PKG, true);
@@ -499,9 +512,7 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
-    private void setupIme(int userId, String imeApk, String imeComponent) throws Exception {
-        installAppAsUser(imeApk, userId);
-
+    private void setupIme(String imeComponent, int userId) throws Exception {
         // Wait until IMS service is registered by the system.
         waitForOutput("Failed waiting for IME to become available",
                 String.format("ime list --user %d -s -a", userId),
@@ -510,7 +521,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         executeShellCommand("ime enable " + imeComponent);
         executeShellCommand("ime set " + imeComponent);
     }
-
 
     private void assertCanStartPersonalApp(String packageName, boolean canStart)
             throws DeviceNotAvailableException {
@@ -640,8 +650,17 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     private void toggleQuietMode(boolean quietModeEnable) throws Exception {
-        final String str = String.format("am start-activity -n %s --ez %s %s",
-                QUIET_MODE_TOGGLE_ACTIVITY, EXTRA_QUIET_MODE_STATE, quietModeEnable);
+        final String str;
+        // TV launcher uses intent filter priority to prevent 3p launchers replacing it
+        // this causes the activity that toggles quiet mode to be suspended
+        // and the profile would never start
+        if (hasDeviceFeature("android.software.leanback")) {
+            str = quietModeEnable ? String.format("am stop-user -f %d", mUserId)
+                    : String.format("am start-user %d", mUserId);
+        } else {
+            str = String.format("am start-activity -n %s --ez %s %s",
+                    QUIET_MODE_TOGGLE_ACTIVITY, EXTRA_QUIET_MODE_STATE, quietModeEnable);
+        }
         executeShellCommand(str);
     }
 

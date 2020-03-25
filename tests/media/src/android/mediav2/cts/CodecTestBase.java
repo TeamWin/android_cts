@@ -540,7 +540,7 @@ abstract class CodecTestBase {
     }
 
     static int getWidth(MediaFormat format) {
-        int width = format.getInteger(MediaFormat.KEY_WIDTH);
+        int width = format.getInteger(MediaFormat.KEY_WIDTH, -1);
         if (format.containsKey("crop-left") && format.containsKey("crop-right")) {
             width = format.getInteger("crop-right") + 1 - format.getInteger("crop-left");
         }
@@ -548,22 +548,24 @@ abstract class CodecTestBase {
     }
 
     static int getHeight(MediaFormat format) {
-        int height = format.getInteger(MediaFormat.KEY_HEIGHT);
+        int height = format.getInteger(MediaFormat.KEY_HEIGHT, -1);
         if (format.containsKey("crop-top") && format.containsKey("crop-bottom")) {
             height = format.getInteger("crop-bottom") + 1 - format.getInteger("crop-top");
         }
         return height;
     }
 
-    static boolean isFormatSimilar(MediaFormat inpFormat, MediaFormat outFormat) {
+    boolean isFormatSimilar(MediaFormat inpFormat, MediaFormat outFormat) {
         if (inpFormat == null || outFormat == null) return false;
         String inpMime = inpFormat.getString(MediaFormat.KEY_MIME);
-        String outMime = inpFormat.getString(MediaFormat.KEY_MIME);
+        String outMime = outFormat.getString(MediaFormat.KEY_MIME);
+        // not comparing input and output mimes because for a codec, mime is raw on one side and
+        // encoded type on the other
         if (outMime.startsWith("audio/")) {
-            return inpFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT) ==
-                    outFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT) &&
-                    inpFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE) ==
-                            outFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE) &&
+            return inpFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT, -1) ==
+                    outFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT, -2) &&
+                    inpFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE, -1) ==
+                            outFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE, -2) &&
                     inpMime.startsWith("audio/");
         } else if (outMime.startsWith("video/")) {
             return getWidth(inpFormat) == getWidth(outFormat) &&
