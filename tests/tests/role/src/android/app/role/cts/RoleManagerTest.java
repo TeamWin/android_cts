@@ -263,7 +263,7 @@ public class RoleManagerTest {
 
         clearPackageData(APP_PACKAGE_NAME);
         // Wait for the don't ask again to be forgotten.
-        Thread.sleep(2000);
+        Thread.sleep(5000);
 
         requestRole(ROLE_NAME);
         UiObject2 dontAskAgainCheck = findDontAskAgainCheck(false);
@@ -286,7 +286,7 @@ public class RoleManagerTest {
 
         uninstallPackage(APP_PACKAGE_NAME);
         // Wait for the don't ask again to be forgotten.
-        Thread.sleep(2000);
+        Thread.sleep(5000);
         installPackage(APP_APK_PATH);
 
         requestRole(ROLE_NAME);
