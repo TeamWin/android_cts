@@ -228,10 +228,12 @@ public class BlobStoreManagerTest {
                 // Verify session can be opened for read/write.
                 assertThat(session).isNotNull();
                 assertThat(session.openWrite(0, 0)).isNotNull();
+                assertThat(session.openRead()).isNotNull();
 
                 // Verify that trying to read/write to the session after it is abandoned will throw.
                 session.abandon();
                 assertThrows(IllegalStateException.class, () -> session.openWrite(0, 0));
+                assertThrows(IllegalStateException.class, () -> session.openRead());
             }
 
             // Verify that trying to open the session after it is abandoned will throw.
@@ -255,6 +257,7 @@ public class BlobStoreManagerTest {
                 session = mBlobStoreManager.openSession(sessionId);
                 assertThat(session).isNotNull();
                 assertThat(session.openWrite(0, 0)).isNotNull();
+                assertThat(session.openRead()).isNotNull();
             } finally {
                 session.close();
             }
@@ -263,12 +266,14 @@ public class BlobStoreManagerTest {
             // an exception.
             final BlobStoreManager.Session closedSession = session;
             assertThrows(IllegalStateException.class, () -> closedSession.openWrite(0, 0));
+            assertThrows(IllegalStateException.class, () -> closedSession.openRead());
 
             // Verify that the session can be opened again for read/write.
             try {
                 session = mBlobStoreManager.openSession(sessionId);
                 assertThat(session).isNotNull();
                 assertThat(session.openWrite(0, 0)).isNotNull();
+                assertThat(session.openRead()).isNotNull();
             } finally {
                 session.close();
             }
