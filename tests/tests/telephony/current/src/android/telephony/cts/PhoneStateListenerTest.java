@@ -274,6 +274,10 @@ public class PhoneStateListenerTest {
         assertTrue(mOnSignalStrengthChangedCalled);
     }
 
+    /**
+     * Due to the corresponding API is hidden in R and will be public in S, this test
+     * is commented and will be un-commented in Android S.
+     *
     @Test
     public void testOnAlwaysReportedSignalStrengthChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
@@ -294,8 +298,8 @@ public class PhoneStateListenerTest {
                 }
             };
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                    (tm) -> tm.listen(mListener,
-                            PhoneStateListener.LISTEN_ALWAYS_REPORTED_SIGNAL_STRENGTH));
+                (tm) -> tm.listen(mListener,
+                    PhoneStateListener.LISTEN_ALWAYS_REPORTED_SIGNAL_STRENGTH));
         });
         synchronized (mLock) {
             if (mSignalStrength == null) {
@@ -315,12 +319,16 @@ public class PhoneStateListenerTest {
         mSignalStrength.isGsm();
         mSignalStrength.getLevel();
     }
+    */
 
     /**
+     * Due to the corresponding API is hidden in R and will be public in S, this test
+     * is commented and will be un-commented in Android S.
+     *
      * Validate that SecurityException should be thrown when listen
      * with LISTEN_ALWAYS_REPORTED_SIGNAL_STRENGTH without LISTEN_ALWAYS_REPORTED_SIGNAL_STRENGTH
      * permission.
-     */
+     *
     @Test
     public void testOnAlwaysReportedSignalStrengthChangedWithoutPermission() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
@@ -342,7 +350,7 @@ public class PhoneStateListenerTest {
             };
             try {
                 mTelephonyManager.listen(mListener,
-                        PhoneStateListener.LISTEN_ALWAYS_REPORTED_SIGNAL_STRENGTH);
+                    PhoneStateListener.LISTEN_ALWAYS_REPORTED_SIGNAL_STRENGTH);
             } catch (SecurityException se) {
                 synchronized (mLock) {
                     mSecurityExceptionThrown = true;
@@ -359,6 +367,7 @@ public class PhoneStateListenerTest {
         assertThat(mSecurityExceptionThrown).isTrue();
         assertTrue(mSignalStrength == null);
     }
+    */
 
     @Test
     public void testOnSignalStrengthsChanged() throws Throwable {
