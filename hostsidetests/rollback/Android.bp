@@ -28,8 +28,6 @@ android_test_helper_app {
     manifest : "app/AndroidManifest.xml",
     java_resources:  [
         ":ApexKeyRotationTestV2_SignedBobRotRollback",
-        ":StagedInstallTestApexV2",
-        ":StagedInstallTestApexV3",
     ],
     sdk_version: "test_current",
     test_suites: ["device-tests"],
