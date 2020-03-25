@@ -35,13 +35,9 @@ public class DeviceIdAttestationTest extends BaseDeviceAdminTest {
     // Test that the same key generation request succeeds once the profile owner was granted
     // access to device identifiers.
     public void testSucceedsWithProfileOwnerIdsGrant() {
-        try {
-            if (mDevicePolicyManager.isDeviceIdAttestationSupported()) {
-                KeyGenerationUtils.generateKeyWithDeviceIdAttestationExpectingSuccess(
-                        mDevicePolicyManager, getWho());
-            }
-        } finally {
-            mDevicePolicyManager.wipeData(0);
+        if (mDevicePolicyManager.isDeviceIdAttestationSupported()) {
+            KeyGenerationUtils.generateKeyWithDeviceIdAttestationExpectingSuccess(
+                    mDevicePolicyManager, getWho());
         }
     }
 
