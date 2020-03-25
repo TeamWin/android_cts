@@ -86,6 +86,8 @@ public class ReaderAuthTest {
             KeyStoreException, CertificateException, NoSuchAlgorithmException, IOException,
             NoSuchProviderException, InvalidKeyException, SignatureException {
 
+        assumeTrue("IC HAL is not implemented", Util.isHalImplemented());
+
         // We create two reader keys - 'A' and 'B' - and then generate certificates for each of
         // them, signed by a third key 'C'. We then provision a document with four elements where
         // each element is configured to be accessible only by 'A', 'B', ('A' or 'B'), and 'C'
@@ -156,9 +158,6 @@ public class ReaderAuthTest {
         // Provision the credential.
         Context appContext = InstrumentationRegistry.getTargetContext();
         IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
-        if (Util.isHalOptional()) {
-            assumeTrue("IC HAL not found on device", store != null);
-        }
 
         String credentialName = "readerAuthTestCredential";
         store.deleteCredentialByName(credentialName);
