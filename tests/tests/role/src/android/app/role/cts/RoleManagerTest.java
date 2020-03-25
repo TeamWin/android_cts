@@ -270,7 +270,7 @@ public class RoleManagerTest {
 
         clearPackageData(APP_PACKAGE_NAME);
         // Wait for the don't ask again to be forgotten.
-        Thread.sleep(2000);
+        Thread.sleep(5000);
 
         TestUtils.waitUntil("Find and respond to request role UI", () -> {
             requestRole(ROLE_NAME);
@@ -301,7 +301,7 @@ public class RoleManagerTest {
 
         uninstallPackage(APP_PACKAGE_NAME);
         // Wait for the don't ask again to be forgotten.
-        Thread.sleep(2000);
+        Thread.sleep(5000);
         installPackage(APP_APK_PATH);
 
         TestUtils.waitUntil("Find and respond to request role UI", () -> {
