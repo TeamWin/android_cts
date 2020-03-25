@@ -641,6 +641,30 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
         testGetFrameAtTimeEditList(OPTION_CLOSEST, testCases);
     }
 
+    public void testGetFrameAtTimePreviousSyncEmptyNormalEditList() {
+        int[][] testCases = {
+                { 2133000, 60 }, { 2566334, 60 }, { 2666334, 60 }, { 3100000, 60 }, { 3266000, 90}};
+        testGetFrameAtTimeEmptyNormalEditList(OPTION_PREVIOUS_SYNC, testCases);
+    }
+
+    public void testGetFrameAtTimeNextSyncEmptyNormalEditList() {
+        int[][] testCases = {{ 2000000, 60 }, { 2133000, 60 }, { 2566334, 90 }, { 3100000, 90 },
+                { 3200000, 120}};
+        testGetFrameAtTimeEmptyNormalEditList(OPTION_NEXT_SYNC, testCases);
+    }
+
+    public void testGetFrameAtTimeClosestSyncEmptyNormalEditList() {
+        int[][] testCases = {
+                { 2133000, 60 }, { 2566334, 60 }, { 2666000, 90 }, { 3133000, 90 }, { 3200000, 90}};
+        testGetFrameAtTimeEmptyNormalEditList(OPTION_CLOSEST_SYNC, testCases);
+    }
+
+    public void testGetFrameAtTimeClosestEmptyNormalEditList() {
+        int[][] testCases = {
+                { 2133000, 60 }, { 2566000, 73 }, { 2666000, 76 }, { 3066001, 88 }, { 3255000, 94}};
+        testGetFrameAtTimeEmptyNormalEditList(OPTION_CLOSEST, testCases);
+    }
+
     private void testGetFrameAtTime(int option, int[][] testCases) {
         testGetFrameAt(testCases, (r) -> {
             List<Bitmap> bitmaps = new ArrayList<>();
@@ -656,6 +680,21 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
         params.setPreferredConfig(Bitmap.Config.ARGB_8888);
 
         testGetFrameAtEditList(testCases, (r) -> {
+            List<Bitmap> bitmaps = new ArrayList<>();
+            for (int i = 0; i < testCases.length; i++) {
+                Bitmap bitmap = r.getFrameAtTime(testCases[i][0], option, params);
+                assertEquals(Bitmap.Config.ARGB_8888, params.getActualConfig());
+                bitmaps.add(bitmap);
+            }
+            return bitmaps;
+        });
+    }
+
+    private void testGetFrameAtTimeEmptyNormalEditList(int option, int[][] testCases) {
+        MediaMetadataRetriever.BitmapParams params = new MediaMetadataRetriever.BitmapParams();
+        params.setPreferredConfig(Bitmap.Config.ARGB_8888);
+
+        testGetFrameAtEmptyNormalEditList(testCases, (r) -> {
             List<Bitmap> bitmaps = new ArrayList<>();
             for (int i = 0; i < testCases.length; i++) {
                 Bitmap bitmap = r.getFrameAtTime(testCases[i][0], option, params);
@@ -724,6 +763,11 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
                 testCases, bitmapRetriever);
     }
 
+    private void testGetFrameAtEmptyNormalEditList(int[][] testCases,
+            Function<MediaMetadataRetriever, List<Bitmap> > bitmapRetriever) {
+        testGetFrameAt(R.raw.binary_counter_320x240_30fps_600frames_empty_normal_editlist_entries,
+                testCases, bitmapRetriever);
+    }
     private void testGetFrameAt(int resId, int[][] testCases,
             Function<MediaMetadataRetriever, List<Bitmap> > bitmapRetriever) {
         if (!MediaUtils.hasCodecForResourceAndDomain(getContext(), resId, "video/")
