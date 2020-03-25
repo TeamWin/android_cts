@@ -424,8 +424,8 @@ public class MediaParserTest {
     }
 
     private static void testCreationByName(String name) {
-        MediaParser.createByName(
-                name, new MockMediaParserOutputConsumer(new FakeExtractorOutput()));
+        MediaParser.createByName(name, new MockMediaParserOutputConsumer(new FakeExtractorOutput()))
+                .release();
     }
 
     private static void testSniffAsset(String assetPath, String expectedParserName)
@@ -454,6 +454,7 @@ public class MediaParserTest {
         if (expectedParserName != null) {
             assertThat(expectedParserName).isEqualTo(mediaParser.getParserName());
             // We are only checking that the extractor is the right one.
+            mediaParser.release();
             return;
         }
 
@@ -484,6 +485,7 @@ public class MediaParserTest {
                 }
             }
         }
+        mediaParser.release();
     }
 
     private static FluentMediaParserSubject assertParsers(String... names) {
