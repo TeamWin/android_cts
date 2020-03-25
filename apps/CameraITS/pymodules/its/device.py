@@ -82,6 +82,8 @@ class ItsSession(object):
     RESULT_VALUES = {RESULT_PASS, RESULT_FAIL, RESULT_NOT_EXECUTED}
     RESULT_KEY = 'result'
     SUMMARY_KEY = 'summary'
+    START_TIME_KEY = 'start'
+    END_TIME_KEY = 'end'
 
     adb = "adb -d"
     device_id = ""

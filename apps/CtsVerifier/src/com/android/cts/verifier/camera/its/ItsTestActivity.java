@@ -237,6 +237,9 @@ public class ItsTestActivity extends DialogTestListActivity {
                         if (result.equals(RESULT_PASS) || result.equals(RESULT_FAIL)) {
                             boolean pass = result.equals(RESULT_PASS);
                             mExecutedScenes.put(key, pass);
+                            // Get start/end time per camera/scene for result history collection.
+                            mStartTime = sceneResult.getLong("start");
+                            mEndTime = sceneResult.getLong("end");
                             setTestResult(testId(cameraId, scene), pass ?
                                     TestResult.TEST_RESULT_PASSED : TestResult.TEST_RESULT_FAILED);
                             Log.e(TAG, "setTestResult for " + testId(cameraId, scene) + ": " + result);
