@@ -56,8 +56,12 @@
       <!-- Incremental installation test files -->
       <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
           <option name="cleanup" value="true" />
-          <option name="push" value="v4-only-original.apk->/data/local/tmp/cts/content/v4-only-original.apk" />
-          <option name="push" value="v4-only-original.apk.idsig->/data/local/tmp/cts/content/v4-only-original.apk.idsig" />
+          <option name="push" value="v4-digest-v2.apk->/data/local/tmp/cts/content/v4-digest-v2.apk" />
+          <option name="push" value="v4-digest-v2.apk.idsig->/data/local/tmp/cts/content/v4-digest-v2.apk.idsig" />
+          <option name="push" value="v4-digest-v3.apk->/data/local/tmp/cts/content/v4-digest-v3.apk" />
+          <option name="push" value="v4-digest-v3.apk.idsig->/data/local/tmp/cts/content/v4-digest-v3.apk.idsig" />
+          <option name="push" value="v4-digest-v2v3.apk->/data/local/tmp/cts/content/v4-digest-v2v3.apk" />
+          <option name="push" value="v4-digest-v2v3.apk.idsig->/data/local/tmp/cts/content/v4-digest-v2v3.apk.idsig" />
       </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
