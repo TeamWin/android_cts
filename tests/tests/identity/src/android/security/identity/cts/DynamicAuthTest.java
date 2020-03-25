@@ -60,11 +60,10 @@ public class DynamicAuthTest {
 
     @Test
     public void dynamicAuthTest() throws Exception {
+        assumeTrue("IC HAL is not implemented", Util.isHalImplemented());
+
         Context appContext = InstrumentationRegistry.getTargetContext();
         IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
-        if (Util.isHalOptional()) {
-            assumeTrue("IC HAL not found on device", store != null);
-        }
 
         String credentialName = "test";
 
