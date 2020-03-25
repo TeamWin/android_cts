@@ -107,7 +107,7 @@ public class CrossProfileAppsPermissionHostSideTest extends BaseDevicePolicyTest
     }
 
     @Test
-    public void testCanRequestInteractAcrossProfiles_packageNotWhitelisted_returnsFalse()
+    public void testCanRequestInteractAcrossProfiles_packageNotWhitelisted_returnsTrue()
             throws Exception {
         installAppAsUser(TEST_WITH_REQUESTED_PERMISSION_APK, mPrimaryUserId);
         addManagedProfileAndInstallRequiredPackages(TEST_WITH_REQUESTED_PERMISSION_APK);
@@ -115,7 +115,26 @@ public class CrossProfileAppsPermissionHostSideTest extends BaseDevicePolicyTest
         runDeviceTestsAsUser(
                 TEST_WITH_REQUESTED_PERMISSION_PACKAGE,
                 TEST_WITH_REQUESTED_PERMISSION_CLASS,
-                "testCanRequestInteractAcrossProfiles_returnsFalse",
+                "testCanRequestInteractAcrossProfiles_returnsTrue",
+                mPrimaryUserId,
+                Collections.EMPTY_MAP);
+    }
+
+    @Test
+    public void testCanRequestInteractAcrossProfiles_packageNotInstalled_returnsTrue()
+            throws Exception {
+        installAppAsUser(TEST_WITH_REQUESTED_PERMISSION_APK, mPrimaryUserId);
+        mProfileId = createManagedProfile(mPrimaryUserId);
+        getDevice().startUser(mProfileId, /*waitFlag= */true);
+        installAppAsUser(MANAGED_PROFILE_APK, mProfileId);
+        setProfileOwnerOrFail(MANAGED_PROFILE_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
+                mProfileId);
+        addDefaultCrossProfilePackage(mProfileId, TEST_WITH_REQUESTED_PERMISSION_PACKAGE);
+
+        runDeviceTestsAsUser(
+                TEST_WITH_REQUESTED_PERMISSION_PACKAGE,
+                TEST_WITH_REQUESTED_PERMISSION_CLASS,
+                "testCanRequestInteractAcrossProfiles_returnsTrue",
                 mPrimaryUserId,
                 Collections.EMPTY_MAP);
     }

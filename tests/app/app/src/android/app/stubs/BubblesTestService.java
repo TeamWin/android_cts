@@ -39,17 +39,14 @@ public class BubblesTestService extends Service {
     // Must configure foreground service notification in different ways for different tests
     public static final String EXTRA_TEST_CASE =
             "android.app.stubs.BubbleTestService.EXTRA_TEST_CASE";
-    public static final int TEST_SUCCESS = 0;
-    public static final int TEST_NO_PERSON = 1;
-    public static final int TEST_NO_CATEGORY = 2;
-    public static final int TEST_NO_BUBBLE_METADATA = 3;
-    public static final int TEST_MESSAGING = 4;
+    public static final int TEST_CALL = 0;
+    public static final int TEST_MESSAGING = 1;
 
     public static final int BUBBLE_NOTIF_ID = 1;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        final int testCase = intent.getIntExtra(EXTRA_TEST_CASE, TEST_SUCCESS);
+        final int testCase = intent.getIntExtra(EXTRA_TEST_CASE, TEST_CALL);
         Notification n = getNotificationForTest(testCase, getApplicationContext());
         startForeground(BUBBLE_NOTIF_ID, n);
         return START_STICKY;
@@ -75,15 +72,11 @@ public class BubblesTestService extends Service {
                 .setIcon(Icon.createWithResource(context, R.drawable.black))
                 .setIntent(pendingIntent)
                 .build();
-        if (testCase != TEST_NO_PERSON) {
-            nb.addPerson(person);
-        }
-        if (testCase != TEST_NO_CATEGORY && testCase != TEST_MESSAGING) {
+        nb.addPerson(person);
+        if (testCase != TEST_MESSAGING) {
             nb.setCategory(CATEGORY_CALL);
         }
-        if (testCase != TEST_NO_BUBBLE_METADATA) {
-            nb.setBubbleMetadata(data);
-        }
+        nb.setBubbleMetadata(data);
         if (testCase == TEST_MESSAGING) {
             // For messaging policy we need inline reply action
             RemoteInput remoteInput =
