@@ -39,8 +39,9 @@ public class ImeSettings {
 
     private static final String BACKGROUND_COLOR_KEY = "BackgroundColor";
     private static final String NAVIGATION_BAR_COLOR_KEY = "NavigationBarColor";
-    private static final String INPUT_VIEW_HEIGHT_WITHOUT_SYSTEM_WINDOW_INSET =
+    private static final String INPUT_VIEW_HEIGHT =
             "InputViewHeightWithoutSystemWindowInset";
+    private static final String DRAWS_BEHIND_NAV_BAR = "drawsBehindNavBar";
     private static final String WINDOW_FLAGS = "WindowFlags";
     private static final String WINDOW_FLAGS_MASK = "WindowFlagsMask";
     private static final String FULLSCREEN_MODE_ALLOWED = "FullscreenModeAllowed";
@@ -86,8 +87,12 @@ public class ImeSettings {
         return mBundle.getInt(NAVIGATION_BAR_COLOR_KEY);
     }
 
-    public int getInputViewHeightWithoutSystemWindowInset(int defaultHeight) {
-        return mBundle.getInt(INPUT_VIEW_HEIGHT_WITHOUT_SYSTEM_WINDOW_INSET, defaultHeight);
+    public int getInputViewHeight(int defaultHeight) {
+        return mBundle.getInt(INPUT_VIEW_HEIGHT, defaultHeight);
+    }
+
+    public boolean getDrawsBehindNavBar() {
+        return mBundle.getBoolean(DRAWS_BEHIND_NAV_BAR, false);
     }
 
     public int getWindowFlags(int defaultFlags) {
@@ -158,12 +163,21 @@ public class ImeSettings {
         }
 
         /**
-         * Sets the input view height measured from the bottom system window inset.
-         * @param height height of the soft input view. This does not include the system window
-         *               inset such as navigation bar
+         * Sets the input view height measured from the bottom of the screen.
+         *
+         * @param height height of the soft input view. This includes the system window inset such
+         *               as navigation bar.
          */
-        public Builder setInputViewHeightWithoutSystemWindowInset(int height) {
-            mBundle.putInt(INPUT_VIEW_HEIGHT_WITHOUT_SYSTEM_WINDOW_INSET, height);
+        public Builder setInputViewHeight(int height) {
+            mBundle.putInt(INPUT_VIEW_HEIGHT, height);
+            return this;
+        }
+
+        /**
+         * Sets whether IME draws behind navigation bar.
+         */
+        public Builder setDrawsBehindNavBar(boolean drawsBehindNavBar) {
+            mBundle.putBoolean(DRAWS_BEHIND_NAV_BAR, drawsBehindNavBar);
             return this;
         }
 
