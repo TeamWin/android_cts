@@ -34,6 +34,7 @@ import android.os.Looper;
 import android.telephony.Annotation.RadioPowerState;
 import android.telephony.Annotation.SimActivationState;
 import android.telephony.BarringInfo;
+import android.telephony.CellIdentity;
 import android.telephony.CellInfo;
 import android.telephony.CellLocation;
 import android.telephony.PhoneStateListener;
@@ -90,6 +91,7 @@ public class PhoneStateListenerTest {
     private boolean mSrvccStateChangedCalled;
     private boolean mOnBarringInfoChangedCalled;
     private boolean mSecurityExceptionThrown;
+    private boolean mOnRegistrationFailedCalled;
     @RadioPowerState private int mRadioPowerState;
     @SimActivationState private int mVoiceActivationState;
     private BarringInfo mBarringInfo;
@@ -1286,5 +1288,53 @@ public class PhoneStateListenerTest {
         // unknown. If any type is known, then all that are not reported are assumed to
         // be not barred.
         assertNotEquals(hasBarringTypeUnknown, hasBarringTypeKnown);
+    }
+
+    @Test
+    public void testOnRegistrationFailed() throws Throwable {
+        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
+            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
+            return;
+        }
+
+        TestThread t = new TestThread(new Runnable() {
+            public void run() {
+                Looper.prepare();
+
+                mListener = new PhoneStateListener() {
+                    @Override
+                    public void onRegistrationFailed(CellIdentity cid, String chosenPlmn,
+                            int domain, int causeCode, int additionalCauseCode) {
+                        synchronized (mLock) {
+                            mOnRegistrationFailedCalled = true;
+                            mLock.notify();
+                        }
+                    }
+                };
+                mTelephonyManager.listen(
+                        mListener, PhoneStateListener.LISTEN_REGISTRATION_FAILURE);
+
+                Looper.loop();
+            }
+        });
+
+        assertFalse(mOnBarringInfoChangedCalled);
+        t.start();
+
+        synchronized (mLock) {
+            if (!mOnBarringInfoChangedCalled) {
+                mLock.wait(WAIT_TIME);
+            }
+        }
+        t.checkException();
+
+        // Assert that in the WAIT_TIME interval, the listener wasn't invoked. While this is
+        // **technically** a flaky test, in practice this flake should happen approximately never
+        // as it would mean that a registered phone is failing to reselect during CTS at this
+        // exact moment.
+        //
+        // What the test is verifying is that there is no "auto" callback for registration
+        // failure because unlike other PSL registrants, this one is not called upon registration.
+        assertFalse(mOnRegistrationFailedCalled);
     }
 }
