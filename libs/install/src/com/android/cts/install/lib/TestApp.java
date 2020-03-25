@@ -57,24 +57,12 @@ public class TestApp {
             "TestAppCv1.apk");
 
     // Apex collection
-    public static final TestApp Apex1 =
-            new TestApp("Apex1", Apex, 1, /*isApex*/true,
-                    "com.android.apex.cts.shim.v1.apex");
-    public static final TestApp Apex2 =
-            new TestApp("Apex2", Apex, 2, /*isApex*/true,
+    public static final TestApp Apex1 = new TestApp("Apex1", Apex, 1, /*isApex*/true,
+            "com.android.apex.cts.shim.v1.apex");
+    public static final TestApp Apex2 = new TestApp("Apex2", Apex, 2, /*isApex*/true,
             "com.android.apex.cts.shim.v2.apex");
-    public static final TestApp ApexNoHashtree2 =
-            new TestApp("Apex2", Apex, 2, /*isApex*/true,
-                    "com.android.apex.cts.shim.v2_no_hashtree.apex");
-    public static final TestApp ApexWrongSha2 = new TestApp(
-            "ApexWrongSha2", Apex, 2, /*isApex*/true,
-            "com.android.apex.cts.shim.v2_wrong_sha.apex");
-    public static final TestApp Apex3 =
-            new TestApp("Apex3", Apex, 3, /*isApex*/true,
+    public static final TestApp Apex3 = new TestApp("Apex3", Apex, 3, /*isApex*/true,
             "com.android.apex.cts.shim.v3.apex");
-    public static final TestApp ApexNotPreInstalled =
-            new TestApp("ApexNotPreInstalled", NotPreInstalledApex, 3, /*isApex*/true,
-            "com.android.apex.cts.shim_not_pre_installed.apex");
 
     private final String mName;
     private final String mPackageName;
