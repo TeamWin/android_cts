@@ -538,27 +538,28 @@ public class CarrierApiTest extends AndroidTestCase {
         }
     }
 
+    static final int READ_PHONE_STATE_LISTENERS =
+            PhoneStateListener.LISTEN_CALL_FORWARDING_INDICATOR
+                    | PhoneStateListener.LISTEN_MESSAGE_WAITING_INDICATOR
+                    | PhoneStateListener.LISTEN_EMERGENCY_NUMBER_LIST;
+
+    static final int READ_PRECISE_PHONE_STATE_LISTENERS =
+            PhoneStateListener.LISTEN_PRECISE_DATA_CONNECTION_STATE
+                    | PhoneStateListener.LISTEN_CALL_DISCONNECT_CAUSES
+                    | PhoneStateListener.LISTEN_IMS_CALL_DISCONNECT_CAUSES
+                    | PhoneStateListener.LISTEN_REGISTRATION_FAILURE
+                    | PhoneStateListener.LISTEN_BARRING_INFO;
+
+    static final int CARRIER_PRIVILEGE_LISTENERS =
+            READ_PHONE_STATE_LISTENERS | READ_PRECISE_PHONE_STATE_LISTENERS;
+
     public void testPhoneStateListener() throws Exception {
         if (!hasCellular) return;
-        final AtomicReference<SecurityException> error = new AtomicReference<>();
-        final CountDownLatch latch = new CountDownLatch(1);
-        new Handler(mListenerThread.getLooper()).post(() -> {
-            PhoneStateListener listener = new PhoneStateListener() {};
-            try {
-                mTelephonyManager.listen(
-                        listener, PhoneStateListener.LISTEN_MESSAGE_WAITING_INDICATOR);
-                mTelephonyManager.listen(
-                        listener, PhoneStateListener.LISTEN_CALL_FORWARDING_INDICATOR);
-            } catch (SecurityException e) {
-                error.set(e);
-            } finally {
-                mTelephonyManager.listen(listener, PhoneStateListener.LISTEN_NONE);
-                latch.countDown();
-            }
-        });
-        assertTrue("Test timed out", latch.await(30L, TimeUnit.SECONDS));
-        if (error.get() != null) {
-            failMessage();
+        PhoneStateListener psl = new PhoneStateListener((Runnable r) -> { });
+        try {
+            mTelephonyManager.listen(psl, CARRIER_PRIVILEGE_LISTENERS);
+        } finally {
+            mTelephonyManager.listen(psl, PhoneStateListener.LISTEN_NONE);
         }
     }
 
