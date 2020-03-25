@@ -23,7 +23,7 @@ import static org.testng.Assert.assertTrue;
 
 import android.os.Parcel;
 import android.util.Size;
-import android.view.inline.InlinePresentationSpec;
+import android.widget.inline.InlinePresentationSpec;
 import android.view.inputmethod.InlineSuggestionInfo;
 
 import androidx.test.filters.SmallTest;
@@ -71,7 +71,7 @@ public class InlineSuggestionInfoTest {
                         InlineSuggestionInfo.TYPE_SUGGESTION, /* isPinned */ true);
 
         assertThat(info.getSource()).isEqualTo(InlineSuggestionInfo.SOURCE_AUTOFILL);
-        assertThat(info.getPresentationSpec()).isNotNull();
+        assertThat(info.getInlinePresentationSpec()).isNotNull();
         assertThat(info.getAutofillHints()).isNotNull();
         assertThat(info.getAutofillHints().length).isEqualTo(1);
         assertThat(info.getAutofillHints()[0]).isEqualTo("password");
