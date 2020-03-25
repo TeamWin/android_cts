@@ -72,6 +72,7 @@ import java.util.concurrent.TimeUnit;
 @RunWith(AndroidJUnit4.class)
 public class ToastTest {
     private static final String TEST_TOAST_TEXT = "test toast";
+    private static final String TEST_CUSTOM_TOAST_TEXT = "test custom toast";
     private static final String SETTINGS_ACCESSIBILITY_UI_TIMEOUT =
             "accessibility_non_interactive_ui_timeout_ms";
     private static final int ACCESSIBILITY_STATE_WAIT_TIMEOUT_MS = 3000;
@@ -151,24 +152,13 @@ public class ToastTest {
         view.getViewTreeObserver().removeOnGlobalLayoutListener(mLayoutListener);
     }
 
-    private final Toast.Callback mCallback = new Toast.Callback() {
-        @Override
-        public void onToastShown() {
-            mToastShown.open();
-        }
-        @Override
-        public void onToastHidden() {
-            mToastHidden.open();
-        }
-    };
-
     private void makeToast() throws Throwable {
         mToastShown = new ConditionVariable(false);
         mToastHidden = new ConditionVariable(false);
         mActivityRule.runOnUiThread(
                 () -> {
                     mToast = Toast.makeText(mContext, TEST_TOAST_TEXT, Toast.LENGTH_LONG);
-                    mToast.addCallback(mCallback);
+                    mToast.addCallback(new ConditionCallback(mToastShown, mToastHidden));
                 });
     }
 
@@ -178,7 +168,7 @@ public class ToastTest {
                     mToast = new Toast(mContext);
                     mToast.setDuration(Toast.LENGTH_LONG);
                     TextView view = new TextView(mContext);
-                    view.setText(TEST_TOAST_TEXT);
+                    view.setText(TEST_CUSTOM_TOAST_TEXT);
                     mToast.setView(view);
                 }
         );
@@ -632,7 +622,7 @@ public class ToastTest {
                 () -> {
                     mToast = Toast.makeText(mContext, TEST_TOAST_TEXT, Toast.LENGTH_LONG);
                     mToast.addCallback(testCallback);
-                    mToast.addCallback(mCallback);
+                    mToast.addCallback(new ConditionCallback(mToastShown, mToastHidden));
                     mToast.removeCallback(testCallback);
                 });
 
@@ -647,6 +637,68 @@ public class ToastTest {
     public void testAddCallback_whenNull_throws() throws Throwable {
         makeToast();
         mToast.addCallback(null);
+    }
+
+    @Test
+    public void testCallback_whenTextToast_isCalled() throws Throwable {
+        ConditionVariable toastShown = new ConditionVariable(false);
+        ConditionVariable toastHidden = new ConditionVariable(false);
+        mActivityRule.runOnUiThread(
+                () -> {
+                    mToast = Toast.makeText(mContext, TEST_TOAST_TEXT, Toast.LENGTH_LONG);
+                    mToast.addCallback(new ConditionCallback(toastShown, toastHidden));
+                });
+
+        mActivityRule.runOnUiThread(mToast::show);
+
+        assertTrue(toastShown.block(TIME_OUT));
+        assertTrue(toastHidden.block(TIME_OUT));
+    }
+
+    @Test
+    public void testCallback_whenCustomToast_isCalled() throws Throwable {
+        makeCustomToast();
+        ConditionVariable toastShown = new ConditionVariable(false);
+        ConditionVariable toastHidden = new ConditionVariable(false);
+        mActivityRule.runOnUiThread(
+                () -> mToast.addCallback(new ConditionCallback(toastShown, toastHidden)));
+
+        mActivityRule.runOnUiThread(mToast::show);
+
+        assertTrue(toastShown.block(TIME_OUT));
+        assertTrue(toastHidden.block(TIME_OUT));
+    }
+
+    @Test
+    public void testTextToastAllowed_whenInTheForeground() throws Throwable {
+        makeToast();
+
+        mActivityRule.runOnUiThread(mToast::show);
+
+        assertShowAndHide(mToast);
+    }
+
+    @Test
+    public void testCustomToastAllowed_whenInTheForeground() throws Throwable {
+        makeCustomToast();
+        View view = mToast.getView();
+        // View has not been attached to screen yet
+        assertNull(view.getParent());
+
+        mActivityRule.runOnUiThread(mToast::show);
+
+        assertShowAndHideCustomToast(view);
+    }
+
+    @Test
+    public void testTextToastAllowed_whenInTheBackground() throws Throwable {
+        // Make it background
+        mActivityRule.finishActivity();
+        makeToast();
+
+        mActivityRule.runOnUiThread(mToast::show);
+
+        assertShowAndHide(mToast);
     }
 
     @Test
@@ -745,5 +797,25 @@ public class ToastTest {
     private boolean isCar() {
         PackageManager pm = mContext.getPackageManager();
         return pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+    }
+
+    private static class ConditionCallback extends Toast.Callback {
+        private final ConditionVariable mToastShown;
+        private final ConditionVariable mToastHidden;
+
+        ConditionCallback(ConditionVariable toastShown, ConditionVariable toastHidden) {
+            mToastShown = toastShown;
+            mToastHidden = toastHidden;
+        }
+
+        @Override
+        public void onToastShown() {
+            mToastShown.open();
+        }
+
+        @Override
+        public void onToastHidden() {
+            mToastHidden.open();
+        }
     }
 }

@@ -64,6 +64,7 @@ import java.util.concurrent.TimeUnit;
 @RunWith(AndroidJUnit4.class)
 public class ToastTest {
     private static final String TEST_TOAST_TEXT = "test toast";
+    private static final String TEST_CUSTOM_TOAST_TEXT = "test custom toast";
     private static final String SETTINGS_ACCESSIBILITY_UI_TIMEOUT =
             "accessibility_non_interactive_ui_timeout_ms";
     private static final int ACCESSIBILITY_STATE_WAIT_TIMEOUT_MS = 3000;
@@ -124,6 +125,18 @@ public class ToastTest {
     private void makeToast() throws Throwable {
         mActivityRule.runOnUiThread(
                 () -> mToast = Toast.makeText(mContext, TEST_TOAST_TEXT, Toast.LENGTH_LONG));
+    }
+
+    private void makeCustomToast() throws Throwable {
+        mActivityRule.runOnUiThread(
+                () -> {
+                    mToast = new Toast(mContext);
+                    mToast.setDuration(Toast.LENGTH_LONG);
+                    TextView view = new TextView(mContext);
+                    view.setText(TEST_CUSTOM_TOAST_TEXT);
+                    mToast.setView(view);
+                }
+        );
     }
 
     @Test
@@ -486,6 +499,54 @@ public class ToastTest {
         Toast toast = Toast.makeText(mContext, R.string.text, Toast.LENGTH_LONG);
         toast.setView(null);
         toast.setText(null);
+    }
+
+    @Test
+    public void testTextToastAllowed_whenInTheForeground() throws Throwable {
+        makeToast();
+        View view = mToast.getView();
+
+        mActivityRule.runOnUiThread(mToast::show);
+
+        assertShowAndHide(view);
+    }
+
+    @Test
+    public void testCustomToastAllowed_whenInTheForeground() throws Throwable {
+        makeCustomToast();
+        View view = mToast.getView();
+        // View has not been attached to screen yet
+        assertNull(view.getParent());
+
+        mActivityRule.runOnUiThread(mToast::show);
+
+        assertShowAndHide(view);
+    }
+
+    @Test
+    public void testTextToastAllowed_whenInTheBackground() throws Throwable {
+        // Make it background
+        mActivityRule.finishActivity();
+        makeToast();
+        View view = mToast.getView();
+
+        mActivityRule.runOnUiThread(mToast::show);
+
+        assertShowAndHide(view);
+    }
+
+    @Test
+    public void testCustomToastAllowed_whenInTheBackground() throws Throwable {
+        // Make it background
+        mActivityRule.finishActivity();
+        makeCustomToast();
+        View view = mToast.getView();
+        // View has not been attached to screen yet
+        assertNull(view.getParent());
+
+        mActivityRule.runOnUiThread(mToast::show);
+
+        assertShowAndHide(view);
     }
 
     @UiThreadTest
