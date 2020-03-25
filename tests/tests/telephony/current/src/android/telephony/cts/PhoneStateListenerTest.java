@@ -51,7 +51,6 @@ import android.util.Log;
 import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
-import com.android.compatibility.common.util.TestThread;
 
 import org.junit.After;
 import org.junit.Before;
@@ -59,9 +58,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 
 public class PhoneStateListenerTest {
 
@@ -103,6 +100,8 @@ public class PhoneStateListenerTest {
     private final Object mLock = new Object();
     private static final String TAG = "android.telephony.cts.PhoneStateListenerTest";
     private static ConnectivityManager mCm;
+    private HandlerThread mHandlerThread;
+    private Handler mHandler;
     private static final List<Integer> DATA_CONNECTION_STATE = Arrays.asList(
             TelephonyManager.DATA_CONNECTED,
             TelephonyManager.DATA_DISCONNECTED,
@@ -135,6 +134,9 @@ public class PhoneStateListenerTest {
         mTelephonyManager =
                 (TelephonyManager)getContext().getSystemService(Context.TELEPHONY_SERVICE);
         mCm = (ConnectivityManager)getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        mHandlerThread = new HandlerThread("PhoneStateListenerTest");
+        mHandlerThread.start();
+        mHandler = new Handler(mHandlerThread.getLooper());
     }
 
     @After
@@ -142,6 +144,9 @@ public class PhoneStateListenerTest {
         if (mListener != null) {
             // unregister the listener
             mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_NONE);
+        }
+        if (mHandlerThread != null) {
+            mHandlerThread.quitSafely();
         }
     }
 
@@ -156,11 +161,6 @@ public class PhoneStateListenerTest {
         new PhoneStateListener();
     }
 
-    /*
-     * The tests below rely on the framework to immediately call the installed listener upon
-     * registration. There is no simple way to emulate state changes for testing the listeners.
-     */
-
     @Test
     public void testOnServiceStateChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
@@ -168,34 +168,26 @@ public class PhoneStateListenerTest {
             return;
         }
 
-        TestThread t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-
-                mListener = new PhoneStateListener() {
-                    @Override
-                    public void onServiceStateChanged(ServiceState serviceState) {
-                        synchronized(mLock) {
-                            mOnServiceStateChangedCalled = true;
-                            mLock.notify();
-                        }
-                    }
-                };
-                mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_SERVICE_STATE);
-
-                Looper.loop();
-            }
-        });
-
         assertFalse(mOnServiceStateChangedCalled);
-        t.start();
 
+        mHandler.post(() -> {
+            mListener = new PhoneStateListener() {
+                @Override
+                public void onServiceStateChanged(ServiceState serviceState) {
+                    synchronized (mLock) {
+                        mOnServiceStateChangedCalled = true;
+                        mLock.notify();
+                    }
+                }
+            };
+            mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_SERVICE_STATE);
+        });
         synchronized (mLock) {
             if (!mOnServiceStateChangedCalled){
                 mLock.wait(WAIT_TIME);
             }
         }
-        t.checkException();
+
         assertTrue(mOnServiceStateChangedCalled);
     }
 
@@ -206,34 +198,26 @@ public class PhoneStateListenerTest {
             return;
         }
 
-        TestThread t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-
-                mListener = new PhoneStateListener() {
-                    @Override
-                    public void onServiceStateChanged(ServiceState serviceState) {
-                        synchronized(mLock) {
-                            mOnServiceStateChangedCalled = true;
-                            mLock.notify();
-                        }
-                    }
-                };
-                mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_SERVICE_STATE);
-
-                Looper.loop();
-            }
-        });
-
         assertFalse(mOnServiceStateChangedCalled);
-        t.start();
 
+        mHandler.post(() -> {
+            mListener = new PhoneStateListener() {
+                @Override
+                public void onServiceStateChanged(ServiceState serviceState) {
+                    synchronized (mLock) {
+                        mOnServiceStateChangedCalled = true;
+                        mLock.notify();
+                    }
+                }
+            };
+            mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_SERVICE_STATE);
+        });
         synchronized (mLock) {
             if (!mOnServiceStateChangedCalled){
                 mLock.wait(WAIT_TIME);
             }
         }
-        t.checkException();
+
         assertTrue(mOnServiceStateChangedCalled);
 
         // reset and un-register
@@ -256,7 +240,7 @@ public class PhoneStateListenerTest {
                 mLock.wait(WAIT_TIME);
             }
         }
-        t.checkException();
+
         assertTrue(mOnServiceStateChangedCalled);
     }
 
@@ -267,34 +251,26 @@ public class PhoneStateListenerTest {
             return;
         }
 
-        TestThread t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-
-                mListener = new PhoneStateListener() {
-                    @Override
-                    public void onSignalStrengthChanged(int asu) {
-                        synchronized(mLock) {
-                            mOnSignalStrengthChangedCalled = true;
-                            mLock.notify();
-                        }
-                    }
-                };
-                mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_SIGNAL_STRENGTH);
-
-                Looper.loop();
-            }
-        });
-
         assertFalse(mOnSignalStrengthChangedCalled);
-        t.start();
 
+        mHandler.post(() -> {
+            mListener = new PhoneStateListener() {
+                @Override
+                public void onSignalStrengthChanged(int asu) {
+                    synchronized (mLock) {
+                        mOnSignalStrengthChangedCalled = true;
+                        mLock.notify();
+                    }
+                }
+            };
+            mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_SIGNAL_STRENGTH);
+        });
         synchronized (mLock) {
             if (!mOnSignalStrengthChangedCalled){
                 mLock.wait(WAIT_TIME);
             }
         }
-        t.checkException();
+
         assertTrue(mOnSignalStrengthChangedCalled);
     }
 
@@ -305,38 +281,29 @@ public class PhoneStateListenerTest {
             return;
         }
 
-        TestThread t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-
-                mListener = new PhoneStateListener() {
-                    @Override
-                    public void onSignalStrengthsChanged(SignalStrength signalStrength) {
-                        synchronized (mLock) {
-                            mSignalStrength = signalStrength;
-                            mLock.notify();
-                        }
-                    }
-                };
-                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                        (tm) -> tm.listen(mListener,
-                                PhoneStateListener.LISTEN_ALWAYS_REPORTED_SIGNAL_STRENGTH));
-
-                Looper.loop();
-            }
-        });
-
         assertTrue(mSignalStrength == null);
-        t.start();
 
+        mHandler.post(() -> {
+            mListener = new PhoneStateListener() {
+                @Override
+                public void onSignalStrengthsChanged(SignalStrength signalStrength) {
+                    synchronized (mLock) {
+                        mSignalStrength = signalStrength;
+                        mLock.notify();
+                    }
+                }
+            };
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.listen(mListener,
+                            PhoneStateListener.LISTEN_ALWAYS_REPORTED_SIGNAL_STRENGTH));
+        });
         synchronized (mLock) {
             if (mSignalStrength == null) {
                 mLock.wait(WAIT_TIME);
             }
         }
-        t.checkException();
-        assertTrue(mSignalStrength != null);
 
+        assertTrue(mSignalStrength != null);
         // Call SignalStrength methods to make sure they do not throw any exceptions
         mSignalStrength.getCdmaDbm();
         mSignalStrength.getCdmaEcio();
@@ -361,38 +328,34 @@ public class PhoneStateListenerTest {
             return;
         }
 
-        TestThread t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
+        assertTrue(mSignalStrength == null);
 
-                mListener = new PhoneStateListener() {
-                    @Override
-                    public void onSignalStrengthsChanged(SignalStrength signalStrength) {
-                        synchronized (mLock) {
-                            mSignalStrength = signalStrength;
-                            mLock.notify();
-                        }
+        mHandler.post(() -> {
+            mListener = new PhoneStateListener() {
+                @Override
+                public void onSignalStrengthsChanged(SignalStrength signalStrength) {
+                    synchronized (mLock) {
+                        mSignalStrength = signalStrength;
+                        mLock.notify();
                     }
-                };
-                try {
-                    mTelephonyManager.listen(mListener,
-                            PhoneStateListener.LISTEN_ALWAYS_REPORTED_SIGNAL_STRENGTH);
-                } catch (SecurityException se) {
+                }
+            };
+            try {
+                mTelephonyManager.listen(mListener,
+                        PhoneStateListener.LISTEN_ALWAYS_REPORTED_SIGNAL_STRENGTH);
+            } catch (SecurityException se) {
+                synchronized (mLock) {
                     mSecurityExceptionThrown = true;
                     mLock.notify();
                 }
-                Looper.loop();
             }
         });
-
-        assertTrue(mSignalStrength == null);
-        t.start();
-
         synchronized (mLock) {
             if (!mSecurityExceptionThrown) {
                 mLock.wait(WAIT_TIME);
             }
         }
+
         assertThat(mSecurityExceptionThrown).isTrue();
         assertTrue(mSignalStrength == null);
     }
@@ -403,37 +366,27 @@ public class PhoneStateListenerTest {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
             return;
         }
-
-        TestThread t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-
-                mListener = new PhoneStateListener() {
-                    @Override
-                    public void onSignalStrengthsChanged(SignalStrength signalStrength) {
-                        synchronized(mLock) {
-                            mSignalStrength = signalStrength;
-                            mLock.notify();
-                        }
-                    }
-                };
-                mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_SIGNAL_STRENGTHS);
-
-                Looper.loop();
-            }
-        });
-
         assertTrue(mSignalStrength == null);
-        t.start();
 
+        mHandler.post(() -> {
+            mListener = new PhoneStateListener() {
+                @Override
+                public void onSignalStrengthsChanged(SignalStrength signalStrength) {
+                    synchronized (mLock) {
+                        mSignalStrength = signalStrength;
+                        mLock.notify();
+                    }
+                }
+            };
+            mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_SIGNAL_STRENGTHS);
+        });
         synchronized (mLock) {
             if (mSignalStrength == null) {
                 mLock.wait(WAIT_TIME);
             }
         }
-        t.checkException();
-        assertTrue(mSignalStrength != null);
 
+        assertTrue(mSignalStrength != null);
         // Call SignalStrength methods to make sure they do not throw any exceptions
         mSignalStrength.getCdmaDbm();
         mSignalStrength.getCdmaEcio();
@@ -452,127 +405,94 @@ public class PhoneStateListenerTest {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
             return;
         }
-
-        TestThread t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-
-                mListener = new PhoneStateListener() {
-                    @Override
-                    public void onMessageWaitingIndicatorChanged(boolean mwi) {
-                        synchronized(mLock) {
-                            mOnMessageWaitingIndicatorChangedCalled = true;
-                            mLock.notify();
-                        }
-                    }
-                };
-                mTelephonyManager.listen(
-                        mListener, PhoneStateListener.LISTEN_MESSAGE_WAITING_INDICATOR);
-
-                Looper.loop();
-            }
-        });
-
         assertFalse(mOnMessageWaitingIndicatorChangedCalled);
-        t.start();
 
+        mHandler.post(() -> {
+            mListener = new PhoneStateListener() {
+                @Override
+                public void onMessageWaitingIndicatorChanged(boolean mwi) {
+                    synchronized (mLock) {
+                        mOnMessageWaitingIndicatorChangedCalled = true;
+                        mLock.notify();
+                    }
+                }
+            };
+            mTelephonyManager.listen(
+                    mListener, PhoneStateListener.LISTEN_MESSAGE_WAITING_INDICATOR);
+        });
         synchronized (mLock) {
             if (!mOnMessageWaitingIndicatorChangedCalled){
                 mLock.wait(WAIT_TIME);
             }
         }
-        t.checkException();
+
         assertTrue(mOnMessageWaitingIndicatorChangedCalled);
     }
 
-    /*
-     * The tests below rely on the framework to immediately call the installed listener upon
-     * registration. There is no simple way to emulate state changes for testing the listeners.
-     */
     @Test
     public void testOnPreciseCallStateChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
             return;
         }
-
-        TestThread t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-
-                mListener = new PhoneStateListener() {
-                    @Override
-                    public void onPreciseCallStateChanged(PreciseCallState preciseCallState) {
-                        synchronized (mLock) {
-                            mOnPreciseCallStateChangedCalled = true;
-                            mPreciseCallState = preciseCallState;
-                            mLock.notify();
-                        }
-                    }
-                };
-                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                        (tm) -> tm.listen(mListener, PhoneStateListener.LISTEN_PRECISE_CALL_STATE));
-                Looper.loop();
-            }
-        });
-
         assertThat(mOnPreciseCallStateChangedCalled).isFalse();
-        t.start();
 
+        mHandler.post(() -> {
+            mListener = new PhoneStateListener() {
+                @Override
+                public void onPreciseCallStateChanged(PreciseCallState preciseCallState) {
+                    synchronized (mLock) {
+                        mOnPreciseCallStateChangedCalled = true;
+                        mPreciseCallState = preciseCallState;
+                        mLock.notify();
+                    }
+                }
+            };
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.listen(mListener, PhoneStateListener.LISTEN_PRECISE_CALL_STATE));
+        });
         synchronized (mLock) {
             if (!mOnPreciseCallStateChangedCalled) {
                 mLock.wait(WAIT_TIME);
             }
         }
-        t.checkException();
         Log.d(TAG, "testOnPreciseCallStateChanged: " + mOnPreciseCallStateChangedCalled);
+
         assertThat(mOnPreciseCallStateChangedCalled).isTrue();
         assertThat(mPreciseCallState.getForegroundCallState()).isIn(PRECISE_CALL_STATE);
         assertThat(mPreciseCallState.getBackgroundCallState()).isIn(PRECISE_CALL_STATE);
         assertThat(mPreciseCallState.getRingingCallState()).isIn(PRECISE_CALL_STATE);
     }
 
-    /*
-     * The tests below rely on the framework to immediately call the installed listener upon
-     * registration. There is no simple way to emulate state changes for testing the listeners.
-     */
     @Test
     public void testOnCallDisconnectCauseChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
             return;
         }
-
-        TestThread t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-
-                mListener = new PhoneStateListener() {
-                    @Override
-                    public void onCallDisconnectCauseChanged(int disconnectCause,
-                                                             int preciseDisconnectCause) {
-                        synchronized (mLock) {
-                            mOnCallDisconnectCauseChangedCalled = true;
-                            mLock.notify();
-                        }
-                    }
-                };
-                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                            (tm) -> tm.listen(mListener,
-                                    PhoneStateListener.LISTEN_CALL_DISCONNECT_CAUSES));
-                Looper.loop();
-            }
-        });
-
         assertThat(mOnCallDisconnectCauseChangedCalled).isFalse();
-        t.start();
 
+        mHandler.post(() -> {
+            mListener = new PhoneStateListener() {
+                @Override
+                public void onCallDisconnectCauseChanged(int disconnectCause,
+                        int preciseDisconnectCause) {
+                    synchronized (mLock) {
+                        mOnCallDisconnectCauseChangedCalled = true;
+                        mLock.notify();
+                    }
+                }
+            };
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.listen(mListener,
+                            PhoneStateListener.LISTEN_CALL_DISCONNECT_CAUSES));
+        });
         synchronized (mLock) {
             if (!mOnCallDisconnectCauseChangedCalled){
                 mLock.wait(WAIT_TIME);
             }
         }
-        t.checkException();
+
         assertThat(mOnCallDisconnectCauseChangedCalled).isTrue();
     }
 
@@ -582,36 +502,28 @@ public class PhoneStateListenerTest {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
             return;
         }
-
-        TestThread t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-
-                mListener = new PhoneStateListener() {
-                    @Override
-                    public void onImsCallDisconnectCauseChanged(ImsReasonInfo imsReason) {
-                        synchronized (mLock) {
-                            mOnImsCallDisconnectCauseChangedCalled = true;
-                            mLock.notify();
-                        }
-                    }
-                };
-                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                        (tm) -> tm.listen(mListener,
-                                PhoneStateListener.LISTEN_IMS_CALL_DISCONNECT_CAUSES));
-                Looper.loop();
-            }
-        });
-
         assertThat(mOnImsCallDisconnectCauseChangedCalled).isFalse();
-        t.start();
 
+        mHandler.post(() -> {
+            mListener = new PhoneStateListener() {
+                @Override
+                public void onImsCallDisconnectCauseChanged(ImsReasonInfo imsReason) {
+                    synchronized (mLock) {
+                        mOnImsCallDisconnectCauseChangedCalled = true;
+                        mLock.notify();
+                    }
+                }
+            };
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.listen(mListener,
+                            PhoneStateListener.LISTEN_IMS_CALL_DISCONNECT_CAUSES));
+        });
         synchronized (mLock) {
             if (!mOnImsCallDisconnectCauseChangedCalled){
                 mLock.wait(WAIT_TIME);
             }
         }
-        t.checkException();
+
         assertThat(mOnImsCallDisconnectCauseChangedCalled).isTrue();
     }
 
@@ -621,169 +533,130 @@ public class PhoneStateListenerTest {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
             return;
         }
-        TestThread t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-
-                mListener = new PhoneStateListener(mSimpleExecutor) {
-                    @Override
-                    public void onSrvccStateChanged(int state) {
-                        synchronized (mLock) {
-                            mSrvccStateChangedCalled = true;
-                            mLock.notify();
-                        }
-                    }
-                };
-                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                        (tm) -> tm.listen(mListener,
-                                PhoneStateListener.LISTEN_SRVCC_STATE_CHANGED));
-                Looper.loop();
-            }
-        });
-
         assertThat(mSrvccStateChangedCalled).isFalse();
-        t.start();
 
+        mHandler.post(() -> {
+            mListener = new PhoneStateListener(mSimpleExecutor) {
+                @Override
+                public void onSrvccStateChanged(int state) {
+                    synchronized (mLock) {
+                        mSrvccStateChangedCalled = true;
+                        mLock.notify();
+                    }
+                }
+            };
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.listen(mListener,
+                            PhoneStateListener.LISTEN_SRVCC_STATE_CHANGED));
+        });
         synchronized (mLock) {
             if (!mSrvccStateChangedCalled){
                 mLock.wait(WAIT_TIME);
             }
         }
-        assertThat(mSrvccStateChangedCalled).isTrue();
-        t.checkException();
         Log.d(TAG, "testOnPhoneStateListenerExecutorWithSrvccChanged");
+
+        assertThat(mSrvccStateChangedCalled).isTrue();
     }
 
-    /*
-    * The tests below rely on the framework to immediately call the installed listener upon
-    * registration. There is no simple way to emulate state changes for testing the listeners.
-    */
     @Test
     public void testOnRadioPowerStateChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
             return;
         }
-        TestThread t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-
-                mListener = new PhoneStateListener() {
-                    @Override
-                    public void onRadioPowerStateChanged(int state) {
-                        synchronized(mLock) {
-                            mRadioPowerState = state;
-                            mOnRadioPowerStateChangedCalled = true;
-                            mLock.notify();
-                        }
-                    }
-                };
-                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                        (tm) -> tm.listen(mListener,
-                                PhoneStateListener.LISTEN_RADIO_POWER_STATE_CHANGED));
-                Looper.loop();
-            }
-        });
         assertThat(mOnRadioPowerStateChangedCalled).isFalse();
-        t.start();
 
+        mHandler.post(() -> {
+            mListener = new PhoneStateListener() {
+                @Override
+                public void onRadioPowerStateChanged(int state) {
+                    synchronized (mLock) {
+                        mRadioPowerState = state;
+                        mOnRadioPowerStateChangedCalled = true;
+                        mLock.notify();
+                    }
+                }
+            };
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.listen(mListener,
+                            PhoneStateListener.LISTEN_RADIO_POWER_STATE_CHANGED));
+        });
         synchronized (mLock) {
             if (!mOnRadioPowerStateChangedCalled){
                 mLock.wait(WAIT_TIME);
             }
         }
-        t.checkException();
         Log.d(TAG, "testOnRadioPowerStateChanged: " + mRadioPowerState);
+
         assertThat(mTelephonyManager.getRadioPowerState()).isEqualTo(mRadioPowerState);
     }
 
-    /*
-     * The tests below rely on the framework to immediately call the installed listener upon
-     * registration. There is no simple way to emulate state changes for testing the listeners.
-     */
     @Test
     public void testOnVoiceActivationStateChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
             return;
         }
-        TestThread t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-
-                mListener = new PhoneStateListener() {
-                    @Override
-                    public void onVoiceActivationStateChanged(int state) {
-                        synchronized(mLock) {
-                            mVoiceActivationState = state;
-                            mVoiceActivationStateChangedCalled = true;
-                            mLock.notify();
-                        }
-                    }
-                };
-                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                        (tm) -> tm.listen(mListener,
-                                PhoneStateListener.LISTEN_VOICE_ACTIVATION_STATE));
-                Looper.loop();
-            }
-        });
         assertThat(mVoiceActivationStateChangedCalled).isFalse();
-        t.start();
 
+        mHandler.post(() -> {
+            mListener = new PhoneStateListener() {
+                @Override
+                public void onVoiceActivationStateChanged(int state) {
+                    synchronized (mLock) {
+                        mVoiceActivationState = state;
+                        mVoiceActivationStateChangedCalled = true;
+                        mLock.notify();
+                    }
+                }
+            };
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.listen(mListener,
+                            PhoneStateListener.LISTEN_VOICE_ACTIVATION_STATE));
+        });
         synchronized (mLock) {
             if (!mVoiceActivationStateChangedCalled){
                 mLock.wait(WAIT_TIME);
             }
         }
-        t.checkException();
         Log.d(TAG, "onVoiceActivationStateChanged: " + mVoiceActivationState);
         int state = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.getVoiceActivationState());
+
         assertEquals(state, mVoiceActivationState);
     }
 
-    /*
-    * The tests below rely on the framework to immediately call the installed listener upon
-    * registration. There is no simple way to emulate state changes for testing the listeners.
-    */
     @Test
     public void testOnPreciseDataConnectionStateChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
             return;
         }
-
-        TestThread t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-
-                mListener = new PhoneStateListener() {
-                    @Override
-                    public void onPreciseDataConnectionStateChanged(
-                            PreciseDataConnectionState state) {
-                        synchronized(mLock) {
-                            mOnPreciseDataConnectionStateChanged = true;
-                            mPreciseDataConnectionState = state;
-                            mLock.notify();
-                        }
-                    }
-                };
-                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                        (tm) -> tm.listen(mListener,
-                                PhoneStateListener.LISTEN_PRECISE_DATA_CONNECTION_STATE));
-                Looper.loop();
-            }
-        });
-
         assertThat(mOnCallDisconnectCauseChangedCalled).isFalse();
-        t.start();
 
+        mHandler.post(() -> {
+            mListener = new PhoneStateListener() {
+                @Override
+                public void onPreciseDataConnectionStateChanged(
+                        PreciseDataConnectionState state) {
+                    synchronized (mLock) {
+                        mOnPreciseDataConnectionStateChanged = true;
+                        mPreciseDataConnectionState = state;
+                        mLock.notify();
+                    }
+                }
+            };
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.listen(mListener,
+                            PhoneStateListener.LISTEN_PRECISE_DATA_CONNECTION_STATE));
+        });
         synchronized (mLock) {
             if (!mOnPreciseDataConnectionStateChanged){
                 mLock.wait(WAIT_TIME);
             }
         }
-        t.checkException();
+
         assertThat(mOnPreciseDataConnectionStateChanged).isTrue();
         assertThat(mPreciseDataConnectionState.getState())
                 .isIn(DATA_CONNECTION_STATE);
@@ -816,37 +689,27 @@ public class PhoneStateListenerTest {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
             return;
         }
-
-        TestThread t = new TestThread(new Runnable() {
-            @Override
-            public void run() {
-                Looper.prepare();
-
-                mListener = new PhoneStateListener() {
-                    @Override
-                    public void onCallForwardingIndicatorChanged(boolean cfi) {
-                        synchronized(mLock) {
-                            mOnCallForwardingIndicatorChangedCalled = true;
-                            mLock.notify();
-                        }
-                    }
-                };
-                mTelephonyManager.listen(
-                        mListener, PhoneStateListener.LISTEN_CALL_FORWARDING_INDICATOR);
-
-                Looper.loop();
-            }
-        });
-
         assertFalse(mOnCallForwardingIndicatorChangedCalled);
-        t.start();
 
+        mHandler.post(() -> {
+            mListener = new PhoneStateListener() {
+                @Override
+                public void onCallForwardingIndicatorChanged(boolean cfi) {
+                    synchronized (mLock) {
+                        mOnCallForwardingIndicatorChangedCalled = true;
+                        mLock.notify();
+                    }
+                }
+            };
+            mTelephonyManager.listen(
+                    mListener, PhoneStateListener.LISTEN_CALL_FORWARDING_INDICATOR);
+        });
         synchronized (mLock) {
             if (!mOnCallForwardingIndicatorChangedCalled){
                 mLock.wait(WAIT_TIME);
             }
         }
-        t.checkException();
+
         assertTrue(mOnCallForwardingIndicatorChangedCalled);
     }
 
@@ -856,37 +719,27 @@ public class PhoneStateListenerTest {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
             return;
         }
+        assertFalse(mOnCellLocationChangedCalled);
 
         TelephonyManagerTest.grantLocationPermissions();
-
-        TestThread t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-
-                mListener = new PhoneStateListener() {
-                    @Override
-                    public void onCellLocationChanged(CellLocation location) {
-                        synchronized(mLock) {
-                            mOnCellLocationChangedCalled = true;
-                            mLock.notify();
-                        }
+        mHandler.post(() -> {
+            mListener = new PhoneStateListener() {
+                @Override
+                public void onCellLocationChanged(CellLocation location) {
+                    synchronized (mLock) {
+                        mOnCellLocationChangedCalled = true;
+                        mLock.notify();
                     }
-                };
-                mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_CELL_LOCATION);
-
-                Looper.loop();
-            }
+                }
+            };
+            mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_CELL_LOCATION);
         });
-
-        assertFalse(mOnCellLocationChangedCalled);
-        t.start();
-
         synchronized (mLock) {
             if (!mOnCellLocationChangedCalled){
                 mLock.wait(WAIT_TIME);
             }
         }
-        t.checkException();
+
         assertTrue(mOnCellLocationChangedCalled);
     }
 
@@ -896,35 +749,26 @@ public class PhoneStateListenerTest {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
             return;
         }
-
-        TestThread t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-
-                mListener = new PhoneStateListener() {
-                    @Override
-                    public void onCallStateChanged(int state, String incomingNumber) {
-                        synchronized(mLock) {
-                            mOnCallStateChangedCalled = true;
-                            mLock.notify();
-                        }
-                    }
-                };
-                mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_CALL_STATE);
-
-                Looper.loop();
-            }
-        });
-
         assertFalse(mOnCallStateChangedCalled);
-        t.start();
 
+        mHandler.post(() -> {
+            mListener = new PhoneStateListener() {
+                @Override
+                public void onCallStateChanged(int state, String incomingNumber) {
+                    synchronized (mLock) {
+                        mOnCallStateChangedCalled = true;
+                        mLock.notify();
+                    }
+                }
+            };
+            mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_CALL_STATE);
+        });
         synchronized (mLock) {
             if (!mOnCallStateChangedCalled){
                 mLock.wait(WAIT_TIME);
             }
         }
-        t.checkException();
+
         assertTrue(mOnCallStateChangedCalled);
     }
 
@@ -934,51 +778,42 @@ public class PhoneStateListenerTest {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
             return;
         }
-
-        TestThread t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-
-                mListener = new PhoneStateListener() {
-                    @Override
-                    public void onDataConnectionStateChanged(int state) {
-                        synchronized(mLock) {
-                            mOnDataConnectionStateChangedCalled = true;
-                            if (mOnDataConnectionStateChangedCalled
-                                    && mOnDataConnectionStateChangedWithNetworkTypeCalled) {
-                                mLock.notify();
-                            }
-                        }
-                    }
-                    @Override
-                    public void onDataConnectionStateChanged(int state, int networkType) {
-                        synchronized(mLock) {
-                            mOnDataConnectionStateChangedWithNetworkTypeCalled = true;
-                            if (mOnDataConnectionStateChangedCalled
-                                    && mOnDataConnectionStateChangedWithNetworkTypeCalled) {
-                                mLock.notify();
-                            }
-                        }
-                    }
-                };
-                mTelephonyManager.listen(
-                        mListener, PhoneStateListener.LISTEN_DATA_CONNECTION_STATE);
-
-                Looper.loop();
-            }
-        });
-
         assertFalse(mOnDataConnectionStateChangedCalled);
         assertFalse(mOnDataConnectionStateChangedWithNetworkTypeCalled);
-        t.start();
 
+        mHandler.post(() -> {
+            mListener = new PhoneStateListener() {
+                @Override
+                public void onDataConnectionStateChanged(int state) {
+                    synchronized (mLock) {
+                        mOnDataConnectionStateChangedCalled = true;
+                        if (mOnDataConnectionStateChangedCalled
+                                && mOnDataConnectionStateChangedWithNetworkTypeCalled) {
+                            mLock.notify();
+                        }
+                    }
+                }
+                @Override
+                public void onDataConnectionStateChanged(int state, int networkType) {
+                    synchronized (mLock) {
+                        mOnDataConnectionStateChangedWithNetworkTypeCalled = true;
+                        if (mOnDataConnectionStateChangedCalled
+                                && mOnDataConnectionStateChangedWithNetworkTypeCalled) {
+                            mLock.notify();
+                        }
+                    }
+                }
+            };
+            mTelephonyManager.listen(
+                    mListener, PhoneStateListener.LISTEN_DATA_CONNECTION_STATE);
+        });
         synchronized (mLock) {
             if (!mOnDataConnectionStateChangedCalled ||
                     !mOnDataConnectionStateChangedWithNetworkTypeCalled){
                 mLock.wait(WAIT_TIME);
             }
         }
-        t.checkException();
+
         assertTrue(mOnDataConnectionStateChangedCalled);
         assertTrue(mOnDataConnectionStateChangedWithNetworkTypeCalled);
     }
@@ -989,35 +824,26 @@ public class PhoneStateListenerTest {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
             return;
         }
-
-        TestThread t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-
-                mListener = new PhoneStateListener() {
-                    @Override
-                    public void onDataActivity(int direction) {
-                        synchronized(mLock) {
-                            mOnDataActivityCalled = true;
-                            mLock.notify();
-                        }
-                    }
-                };
-                mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_DATA_ACTIVITY);
-
-                Looper.loop();
-            }
-        });
-
         assertFalse(mOnDataActivityCalled);
-        t.start();
 
+        mHandler.post(() -> {
+            mListener =  new PhoneStateListener() {
+                @Override
+                public void onDataActivity(int direction) {
+                    synchronized (mLock) {
+                        mOnDataActivityCalled = true;
+                        mLock.notify();
+                    }
+                }
+            };
+            mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_DATA_ACTIVITY);
+        });
         synchronized (mLock) {
             if (!mOnDataActivityCalled){
                 mLock.wait(WAIT_TIME);
             }
         }
-        t.checkException();
+
         assertTrue(mOnDataActivityCalled);
     }
 
@@ -1027,37 +853,27 @@ public class PhoneStateListenerTest {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
             return;
         }
+        assertFalse(mOnDataActivityCalled);
 
         TelephonyManagerTest.grantLocationPermissions();
-
-        TestThread t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-
-                mListener = new PhoneStateListener() {
-                    @Override
-                    public void onCellInfoChanged(List<CellInfo> cellInfo) {
-                        synchronized(mLock) {
-                            mOnCellInfoChangedCalled = true;
-                            mLock.notify();
-                        }
+        mHandler.post(() -> {
+            mListener = new PhoneStateListener() {
+                @Override
+                public void onCellInfoChanged(List<CellInfo> cellInfo) {
+                    synchronized (mLock) {
+                        mOnCellInfoChangedCalled = true;
+                        mLock.notify();
                     }
-                };
-                mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_CELL_INFO);
-
-                Looper.loop();
-            }
+                }
+            };
+            mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_CELL_INFO);
         });
-
-        assertFalse(mOnDataActivityCalled);
-        t.start();
-
         synchronized (mLock) {
             if (!mOnCellInfoChangedCalled){
                 mLock.wait(WAIT_TIME);
             }
         }
-        t.checkException();
+
         assertTrue(mOnCellInfoChangedCalled);
     }
 
@@ -1067,36 +883,27 @@ public class PhoneStateListenerTest {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
             return;
         }
-
-        TestThread t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-
-                mListener = new PhoneStateListener() {
-                    @Override
-                    public void onUserMobileDataStateChanged(boolean state) {
-                        synchronized(mLock) {
-                            mOnUserMobileDataStateChanged = true;
-                            mLock.notify();
-                        }
-                    }
-                };
-                mTelephonyManager.listen(
-                        mListener, PhoneStateListener.LISTEN_USER_MOBILE_DATA_STATE);
-
-                Looper.loop();
-            }
-        });
-
         assertFalse(mOnUserMobileDataStateChanged);
-        t.start();
 
+        mHandler.post(() -> {
+            mListener = new PhoneStateListener() {
+                @Override
+                public void onUserMobileDataStateChanged(boolean state) {
+                    synchronized (mLock) {
+                        mOnUserMobileDataStateChanged = true;
+                        mLock.notify();
+                    }
+                }
+            };
+            mTelephonyManager.listen(
+                    mListener, PhoneStateListener.LISTEN_USER_MOBILE_DATA_STATE);
+        });
         synchronized (mLock) {
             if (!mOnUserMobileDataStateChanged){
                 mLock.wait(WAIT_TIME);
             }
         }
-        t.checkException();
+
         assertTrue(mOnUserMobileDataStateChanged);
     }
 
@@ -1106,45 +913,39 @@ public class PhoneStateListenerTest {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
             return;
         }
+
         TelephonyUtils.addTestEmergencyNumber(
                 InstrumentationRegistry.getInstrumentation(), TEST_EMERGENCY_NUMBER);
-        HandlerThread mPhoneStateListenerThread = new HandlerThread("PhoneStateListenerThread");
-        mPhoneStateListenerThread.start();
-        Handler mPhoneStateListenerHandler = new Handler(mPhoneStateListenerThread.getLooper());
-        final CountDownLatch latch = new CountDownLatch(1);
 
-        mPhoneStateListenerHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                mListener = new PhoneStateListener() {
-                    @Override
-                    public void onOutgoingEmergencySms(EmergencyNumber emergencyNumber) {
+        assertNull(mOnOutgoingSmsEmergencyNumberChanged);
+
+        mHandler.post(() -> {
+            mListener = new PhoneStateListener() {
+                @Override
+                public void onOutgoingEmergencySms(EmergencyNumber emergencyNumber) {
+                    synchronized (mLock) {
                         Log.i(TAG, "onOutgoingEmergencySms: emergencyNumber=" + emergencyNumber);
                         mOnOutgoingSmsEmergencyNumberChanged = emergencyNumber;
-                        latch.countDown();
+                        mLock.notify();
                     }
-                };
-                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                        (tm) -> tm.listen(mListener,
-                                PhoneStateListener.LISTEN_OUTGOING_EMERGENCY_SMS));
-            }
-        });
-        assertNull(mOnOutgoingSmsEmergencyNumberChanged);
-        SmsManager.getDefault().sendTextMessage(
+                }
+            };
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.listen(mListener,
+                            PhoneStateListener.LISTEN_OUTGOING_EMERGENCY_SMS));
+            SmsManager.getDefault().sendTextMessage(
                 TEST_EMERGENCY_NUMBER, null, "testOutgoingSmsListenerCts", null, null);
+        });
 
         try {
-            latch.await(5000, TimeUnit.MILLISECONDS);
+            synchronized (mLock) {
+                if (mOnOutgoingSmsEmergencyNumberChanged == null) {
+                    mLock.wait(WAIT_TIME);
+                }
+            }
         } catch (InterruptedException e) {
             Log.e(TAG, "Operation interrupted.");
         } finally {
-            mPhoneStateListenerHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_NONE);
-                }
-            });
-            mPhoneStateListenerThread.quitSafely();
             TelephonyUtils.removeTestEmergencyNumber(
                     InstrumentationRegistry.getInstrumentation(), TEST_EMERGENCY_NUMBER);
         }
@@ -1159,36 +960,27 @@ public class PhoneStateListenerTest {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
             return;
         }
-
-        TestThread t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-
-                mListener = new PhoneStateListener() {
-                    @Override
-                    public void onActiveDataSubscriptionIdChanged(int subId) {
-                        synchronized(mLock) {
-                            mOnActiveDataSubscriptionIdChanged = true;
-                            mLock.notify();
-                        }
-                    }
-                };
-                mTelephonyManager.listen(
-                        mListener, PhoneStateListener.LISTEN_ACTIVE_DATA_SUBSCRIPTION_ID_CHANGE);
-
-                Looper.loop();
-            }
-        });
-
         assertFalse(mOnActiveDataSubscriptionIdChanged);
-        t.start();
 
+        mHandler.post(() -> {
+            mListener = new PhoneStateListener() {
+                @Override
+                public void onActiveDataSubscriptionIdChanged(int subId) {
+                    synchronized (mLock) {
+                        mOnActiveDataSubscriptionIdChanged = true;
+                        mLock.notify();
+                    }
+                }
+            };
+            mTelephonyManager.listen(
+                    mListener, PhoneStateListener.LISTEN_ACTIVE_DATA_SUBSCRIPTION_ID_CHANGE);
+        });
         synchronized (mLock) {
             if (!mOnActiveDataSubscriptionIdChanged){
                 mLock.wait(WAIT_TIME);
             }
         }
-        t.checkException();
+
         assertTrue(mOnActiveDataSubscriptionIdChanged);
     }
 
@@ -1199,37 +991,27 @@ public class PhoneStateListenerTest {
             return;
         }
 
-        TestThread t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-
-                mListener = new PhoneStateListener() {
-                    @Override
-                    public void onBarringInfoChanged(BarringInfo barringInfo) {
-                        synchronized (mLock) {
-                            mOnBarringInfoChangedCalled = true;
-                            mBarringInfo = barringInfo;
-                            mLock.notify();
-                        }
-                    }
-                };
-
-                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                        (tm) -> tm.listen(mListener, PhoneStateListener.LISTEN_BARRING_INFO));
-
-                Looper.loop();
-            }
-        });
-
         assertFalse(mOnBarringInfoChangedCalled);
-        t.start();
+        mHandler.post(() -> {
+            mListener = new PhoneStateListener() {
+                @Override
+                public void onBarringInfoChanged(BarringInfo barringInfo) {
+                    synchronized (mLock) {
+                        mOnBarringInfoChangedCalled = true;
+                        mBarringInfo = barringInfo;
+                        mLock.notify();
+                    }
+                }
+            };
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.listen(mListener, PhoneStateListener.LISTEN_BARRING_INFO));
+        });
 
         synchronized (mLock) {
             if (!mOnBarringInfoChangedCalled) {
                 mLock.wait(WAIT_TIME);
             }
         }
-        t.checkException();
         assertTrue(mOnBarringInfoChangedCalled);
 
         assertBarringInfoSane(mBarringInfo);
@@ -1299,38 +1081,28 @@ public class PhoneStateListenerTest {
             return;
         }
 
-        TestThread t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-
-                mListener = new PhoneStateListener() {
-                    @Override
-                    public void onRegistrationFailed(CellIdentity cid, String chosenPlmn,
-                            int domain, int causeCode, int additionalCauseCode) {
-                        synchronized (mLock) {
-                            mOnRegistrationFailedCalled = true;
-                            mLock.notify();
-                        }
-                    }
-                };
-
-                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                        (tm) -> tm.listen(mListener,
-                                PhoneStateListener.LISTEN_REGISTRATION_FAILURE));
-
-                Looper.loop();
-            }
-        });
-
         assertFalse(mOnBarringInfoChangedCalled);
-        t.start();
+        mHandler.post(() -> {
+            mListener =  new PhoneStateListener() {
+                @Override
+                public void onRegistrationFailed(CellIdentity cid, String chosenPlmn,
+                        int domain, int causeCode, int additionalCauseCode) {
+                    synchronized (mLock) {
+                        mOnRegistrationFailedCalled = true;
+                        mLock.notify();
+                    }
+                }
+            };
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.listen(mListener,
+                            PhoneStateListener.LISTEN_REGISTRATION_FAILURE));
+        });
 
         synchronized (mLock) {
             if (!mOnBarringInfoChangedCalled) {
                 mLock.wait(WAIT_TIME);
             }
         }
-        t.checkException();
 
         // Assert that in the WAIT_TIME interval, the listener wasn't invoked. While this is
         // **technically** a flaky test, in practice this flake should happen approximately never
