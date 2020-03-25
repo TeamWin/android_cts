@@ -63,8 +63,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
             "com.android.cts.suspensionchecker.ActivityLaunchTest";
 
     protected int mUserId;
-    private boolean mHasProfileToRemove = true;
-    private boolean mHasSecondaryProfileToRemove = false;
     private static final String DISALLOW_CONFIG_LOCATION = "no_config_location";
     private static final String CALLED_FROM_PARENT = "calledFromParent";
 
@@ -90,17 +88,11 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         setProfileOwnerOrFail(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId);
         startUserAndWait(mUserId);
         restrictManagedProfileRemoval();
-        mHasProfileToRemove = true;
     }
 
     @Override
     public void tearDown() throws Exception {
-        if (mHasFeature && mHasProfileToRemove) {
-            removeOrgOwnedProfile();
-        }
-        if (mHasSecondaryProfileToRemove || !getUsersCreatedByTests().isEmpty()) {
-            removeTestUsers();
-        }
+        // Managed profile and other test users will be removed by BaseDevicePolicyTest.tearDown()
         super.tearDown();
     }
 
@@ -129,13 +121,11 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
         removeOrgOwnedProfile();
         assertHasNoUser(mUserId);
-        mHasProfileToRemove = false;
 
         try {
             installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
             assertTrue(setDeviceOwner(DEVICE_ADMIN_COMPONENT_FLATTENED,
                     mPrimaryUserId, /*expectFailure*/false));
-            mHasSecondaryProfileToRemove = true;
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".LockScreenInfoTest", "testLockInfoIsNull",
                     mPrimaryUserId);
         } finally {
@@ -211,7 +201,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         }
         int secondaryUserId = createUser();
         setPoAsUser(secondaryUserId);
-        mHasSecondaryProfileToRemove = true;
 
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
                 "testAddUserRestrictionDisallowConfigDateTime_onParent", mUserId);
@@ -221,7 +210,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
                 "testHasUserRestrictionDisallowConfigDateTime", secondaryUserId);
         removeOrgOwnedProfile();
         assertHasNoUser(mUserId);
-        mHasProfileToRemove = false;
 
         // Make sure the user restrictions are removed before continuing
         waitForBroadcastIdle();
