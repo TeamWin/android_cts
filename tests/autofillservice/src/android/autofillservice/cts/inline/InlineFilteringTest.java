@@ -158,4 +158,23 @@ public class InlineFilteringTest extends AbstractLoginActivityTestCase {
         mUiBot.waitForIdleSync();
         mUiBot.assertNoSuggestionStripEver();
     }
+
+    @Test
+    public void testFiltering_pinnedAreNotFiltered() throws Exception {
+        enableService();
+
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_USERNAME, "pinned")
+                        .setPresentation(createPresentation("pinned"))
+                        .setInlinePresentation(createPinnedInlinePresentation("pinned"))
+                        .build());
+        sReplier.addResponse(builder.build());
+
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mActivity.onUsername((v) -> v.setText("aaa"));
+        mUiBot.waitForIdleSync();
+        mUiBot.assertSuggestionStrip(1);
+        sReplier.getNextFillRequest();
+    }
 }
