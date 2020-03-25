@@ -74,7 +74,7 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
     @LargeTest
     @Test
     public void testQuietMode_defaultForegroundLauncher() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !mHasSecureLockScreen) {
             return;
         }
         // Add a lockscreen to test the case that profile with unified challenge can still
@@ -203,7 +203,7 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
     @LargeTest
     @Test
     public void testQuietMode_noCredentialRequest() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !mHasSecureLockScreen) {
             return;
         }
         // Set a separate work challenge so turning on the profile requires entering the
