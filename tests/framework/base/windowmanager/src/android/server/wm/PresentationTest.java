@@ -18,6 +18,8 @@ package android.server.wm;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertTrue;
+
 import android.content.Intent;
 import android.hardware.display.DisplayManager;
 import android.platform.test.annotations.Presubmit;
@@ -63,6 +65,28 @@ public class PresentationTest extends MultiDisplayTestBase {
     }
 
     @Test
+    public void testPresentationDismissAfterResizeDisplay() {
+        final VirtualDisplaySession virtualDisplaySession = createManagedVirtualDisplaySession();
+        WindowManagerState.DisplayContent display = virtualDisplaySession
+                        .setPresentationDisplay(true)
+                        .setPublicDisplay(true)
+                        .createDisplay();
+
+        assertThat(display.getFlags() & Display.FLAG_PRESENTATION)
+                .isEqualTo(Display.FLAG_PRESENTATION);
+
+        launchPresentationActivity(display.mId);
+        assertPresentationOnDisplay(display.mId);
+
+        virtualDisplaySession.resizeDisplay();
+
+        assertTrue("Presentation must dismiss on external public display",
+                mWmState.waitForWithAmState(
+                        state -> !isPresentationOnDisplay(state, display.mId),
+                        "Presentation window dismiss"));
+    }
+
+    @Test
     public void testPresentationBlockedOnNonPresentationDisplay() {
         WindowManagerState.DisplayContent display =
                 createManagedVirtualDisplaySession()
@@ -72,6 +96,15 @@ public class PresentationTest extends MultiDisplayTestBase {
         assertThat(display.getFlags() & Display.FLAG_PRESENTATION).isEqualTo(0);
         launchPresentationActivity(display.mId);
         assertNoPresentationDisplayed();
+    }
+
+    private boolean isPresentationOnDisplay(WindowManagerState windowManagerState, int displayId) {
+        final List<WindowManagerState.WindowState> states =
+                windowManagerState.getMatchingWindowType(TYPE_PRESENTATION);
+        for (WindowManagerState.WindowState ws : states) {
+            if (ws.getDisplayId() == displayId) return true;
+        }
+        return false;
     }
 
     private void assertNoPresentationDisplayed() {
