@@ -177,8 +177,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
                     .setLinearBlock(
                             input.block,
                             input.offset,
-                            written,
-                            null /* cryptoInfo */)
+                            written)
                     .setPresentationTimeUs(timestampUs)
                     .setFlags(
                             mSignaledEos ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0)
