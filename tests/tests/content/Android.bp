@@ -68,8 +68,12 @@ android_test {
     data: [
         // v4 signed version of android.appsecurity.cts.tinyapp
         // TODO(b/149354175): use built APKs instead - after soong gets v4 support
-        "data/v4-only-original.apk",
-        "data/v4-only-original.apk.idsig",
+        "data/v4-digest-v2.apk",
+        "data/v4-digest-v2.apk.idsig",
+        "data/v4-digest-v2v3.apk",
+        "data/v4-digest-v2v3.apk.idsig",
+        "data/v4-digest-v3.apk",
+        "data/v4-digest-v3.apk.idsig",
     ],
     platform_apis: true,
     // Tag this module as a cts test artifact
