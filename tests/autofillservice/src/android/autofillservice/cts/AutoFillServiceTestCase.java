@@ -431,6 +431,12 @@ public final class AutoFillServiceTestCase {
                             .build(), /* pinned= */ false);
         }
 
+        protected InlinePresentation createPinnedInlinePresentation(String message) {
+            return new InlinePresentation(new InlinePresentationBuilder(message).build(),
+                    new InlinePresentationSpec.Builder(new Size(100, 100), new Size(400, 100))
+                            .build(), /* pinned= */ true);
+        }
+
         @NonNull
         protected AutofillManager getAutofillManager() {
             return mContext.getSystemService(AutofillManager.class);
