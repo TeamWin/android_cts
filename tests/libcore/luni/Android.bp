@@ -21,6 +21,11 @@ android_test {
         "conscrypt-tests",
         "core-tests",
         "cts-core-test-runner-axt",
+
+        // Jars containing expectations files.
+        "libcore-expectations-knownfailures-jar",
+        "libcore-expectations-virtualdeviceknownfailures-jar",
+
         "mockito-target-minus-junit4",
         "time_zone_distro-tests",
         "time_zone_distro_installer-tests",
@@ -55,9 +60,5 @@ android_test {
         "vts",
         "vts10",
         "general-tests",
-    ],
-    java_resources: [
-        ":libcore-expectations-knownfailures",
-        ":libcore-expectations-virtualdeviceknownfailures",
     ],
 }
