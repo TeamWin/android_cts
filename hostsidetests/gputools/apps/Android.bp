@@ -43,7 +43,10 @@ android_test_helper_app {
     srcs: ["src/**/*.java"],
     sdk_version: "current",
     // tag this module as a cts test artifact
-    test_suites: ["cts"],
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
     compile_multilib: "both",
     jni_libs: ["libctsgputools_jni"],
     aaptflags: [
@@ -61,7 +64,10 @@ android_test_helper_app {
     srcs: ["src/**/*.java"],
     sdk_version: "current",
     // tag this module as a cts test artifact
-    test_suites: ["cts"],
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
     compile_multilib: "both",
     jni_libs: [
         "libctsgputools_jni",
@@ -81,7 +87,10 @@ android_test_helper_app {
     srcs: ["src/**/*.java"],
     sdk_version: "current",
     // tag this module as a cts test artifact
-    test_suites: ["cts"],
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
     compile_multilib: "both",
     jni_libs: [
         "libctsgputools_jni",
