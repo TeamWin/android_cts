@@ -94,6 +94,7 @@ android_test {
         "ub-uiautomator",
         "androidx.test.rules",
         "compatibility-device-util-axt",
+        "CtsExternalServiceCommon",
     ],
     srcs: [
         "AppExitTest/src/**/*.java",
