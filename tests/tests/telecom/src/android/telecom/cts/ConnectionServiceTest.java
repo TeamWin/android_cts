@@ -57,19 +57,25 @@ public class ConnectionServiceTest extends BaseTelecomTestWithMockServices {
             return;
         }
 
-        placeAndVerifyCall();
-        verifyConnectionForOutgoingCall();
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.MODIFY_PHONE_STATE");
+        try {
+            placeAndVerifyCall();
+            verifyConnectionForOutgoingCall();
 
-        // Add second connection (add existing connection)
-        final MockConnection connection = new MockConnection();
-        connection.setOnHold();
-        runWithShellPermissionIdentity(() ->
-                CtsConnectionService.addExistingConnectionToTelecom(TEST_PHONE_ACCOUNT_HANDLE,
-                        connection));
-        assertNumCalls(mInCallCallbacks.getService(), 2);
-        mInCallCallbacks.lock.drainPermits();
-        final Call call = mInCallCallbacks.getService().getLastCall();
-        assertCallState(call, Call.STATE_HOLDING);
+            // Add second connection (add existing connection)
+            final MockConnection connection = new MockConnection();
+            connection.setOnHold();
+            CtsConnectionService.addExistingConnectionToTelecom(TEST_PHONE_ACCOUNT_HANDLE,
+                            connection);
+            assertNumCalls(mInCallCallbacks.getService(), 2);
+            mInCallCallbacks.lock.drainPermits();
+            final Call call = mInCallCallbacks.getService().getLastCall();
+            assertCallState(call, Call.STATE_HOLDING);
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
     }
 
     public void testAddExistingConnection_invalidPhoneAccountPackageName() {
