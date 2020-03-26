@@ -342,6 +342,15 @@
                 android:resource="@xml/always_syncable_account_access_adapter" />
         </service>
 
+	<activity android:name="com.android.cts.content.StubCameraIntentHandlerActivity">
+           <intent-filter>
+                <action android:name="android.media.action.IMAGE_CAPTURE" />
+                <action android:name="android.media.action.IMAGE_CAPTURE_SECURE" />
+                <action android:name="android.media.action.VIDEO_CAPTURE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+	</activity>
+
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

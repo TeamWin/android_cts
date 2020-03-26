@@ -105,5 +105,8 @@ java_library {
         ":TestAppACrashingV2",
         ":TestAppASplitV1",
         ":TestAppASplitV2",
+        ":StagedInstallTestApexV1",
+        ":StagedInstallTestApexV2",
+        ":StagedInstallTestApexV3",
     ],
 }

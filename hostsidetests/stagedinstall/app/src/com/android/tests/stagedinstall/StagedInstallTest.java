@@ -105,27 +105,38 @@ public class StagedInstallTest {
     private static final Duration SLEEP_DURATION = Duration.ofMillis(200);
 
     private static final String SHIM_PACKAGE_NAME = "com.android.apex.cts.shim";
+    private static final String NOT_PREINSTALL_APEX_PACKAGE_NAME =
+            "com.android.apex.cts.shim_not_pre_installed";
     private static final TestApp TESTAPP_SAME_NAME_AS_APEX = new TestApp(
             "TestAppSamePackageNameAsApex", SHIM_PACKAGE_NAME, 1, /*isApex*/ false,
             "StagedInstallTestAppSamePackageNameAsApex.apk");
-    public static final TestApp Apex2DifferentCertificate = new TestApp(
+    private static final TestApp Apex2DifferentCertificate = new TestApp(
             "Apex2DifferentCertificate", SHIM_PACKAGE_NAME, 2, /*isApex*/true,
             "com.android.apex.cts.shim.v2_different_certificate.apex");
     private static final TestApp Apex2SignedBob = new TestApp(
             "Apex2SignedBob", SHIM_PACKAGE_NAME, 2, /*isApex*/true,
-                    "com.android.apex.cts.shim.v2_signed_bob.apex");
+            "com.android.apex.cts.shim.v2_signed_bob.apex");
     private static final TestApp Apex2SignedBobRot = new TestApp(
             "Apex2SignedBobRot", SHIM_PACKAGE_NAME, 2, /*isApex*/true,
-                    "com.android.apex.cts.shim.v2_signed_bob_rot.apex");
+            "com.android.apex.cts.shim.v2_signed_bob_rot.apex");
     private static final TestApp Apex2SignedBobRotRollback = new TestApp(
             "Apex2SignedBobRotRollback", SHIM_PACKAGE_NAME, 2, /*isApex*/true,
             "com.android.apex.cts.shim.v2_signed_bob_rot_rollback.apex");
+    private static final TestApp ApexNoHashtree2 = new TestApp(
+            "Apex2", SHIM_PACKAGE_NAME, 2, /*isApex*/true,
+            "com.android.apex.cts.shim.v2_no_hashtree.apex");
+    private static final TestApp ApexWrongSha2 = new TestApp(
+            "ApexWrongSha2", SHIM_PACKAGE_NAME, 2, /*isApex*/true,
+            "com.android.apex.cts.shim.v2_wrong_sha.apex");
     private static final TestApp Apex3SignedBob = new TestApp(
             "Apex3SignedBob", SHIM_PACKAGE_NAME, 3, /*isApex*/true,
-                    "com.android.apex.cts.shim.v3_signed_bob.apex");
+            "com.android.apex.cts.shim.v3_signed_bob.apex");
     private static final TestApp Apex3SignedBobRot = new TestApp(
             "Apex3SignedBobRot", SHIM_PACKAGE_NAME, 3, /*isApex*/true,
-                    "com.android.apex.cts.shim.v3_signed_bob_rot.apex");
+            "com.android.apex.cts.shim.v3_signed_bob_rot.apex");
+    private static final TestApp ApexNotPreInstalled = new TestApp(
+            "ApexNotPreInstalled", NOT_PREINSTALL_APEX_PACKAGE_NAME, 3, /*isApex*/true,
+            "com.android.apex.cts.shim_not_pre_installed.apex");
 
     @Before
     public void adoptShellPermissions() {
@@ -427,10 +438,8 @@ public class StagedInstallTest {
 
     @Test
     public void testInstallStagedNonPreInstalledApex_Fails() throws Exception {
-        assertThat(getInstalledVersion(TestApp.NotPreInstalledApex)).isEqualTo(-1);
-        int sessionId = stageSingleApk(
-                TestApp.ApexNotPreInstalled)
-                .assertSuccessful().getSessionId();
+        assertThat(getInstalledVersion(NOT_PREINSTALL_APEX_PACKAGE_NAME)).isEqualTo(-1);
+        int sessionId = stageSingleApk(ApexNotPreInstalled).assertSuccessful().getSessionId();
         PackageInstaller.SessionInfo sessionInfo = waitForBroadcast(sessionId);
         assertThat(sessionInfo).isStagedSessionFailed();
     }
@@ -438,8 +447,7 @@ public class StagedInstallTest {
     @Test
     public void testStageApkWithSameNameAsApexShouldFail_Commit() throws Exception {
         assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(1);
-        int sessionId = stageSingleApk(TESTAPP_SAME_NAME_AS_APEX)
-                .assertSuccessful().getSessionId();
+        int sessionId = stageSingleApk(TESTAPP_SAME_NAME_AS_APEX).assertSuccessful().getSessionId();
         waitForIsReadyBroadcast(sessionId);
         assertSessionReady(sessionId);
         storeSessionId(sessionId);
@@ -611,7 +619,7 @@ public class StagedInstallTest {
     @Test
     public void testFailsInvalidApexInstall_Commit() throws Exception {
         assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(1);
-        int sessionId = stageSingleApk(TestApp.ApexWrongSha2).assertSuccessful()
+        int sessionId = stageSingleApk(ApexWrongSha2).assertSuccessful()
                 .getSessionId();
         waitForIsFailedBroadcast(sessionId);
         assertSessionFailed(sessionId);
@@ -948,7 +956,7 @@ public class StagedInstallTest {
     @Test
     public void testInstallStagedNoHashtreeApex_Commit() throws Exception {
         assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(1);
-        int sessionId = stageSingleApk(TestApp.ApexNoHashtree2).assertSuccessful().getSessionId();
+        int sessionId = stageSingleApk(ApexNoHashtree2).assertSuccessful().getSessionId();
         waitForIsReadyBroadcast(sessionId);
         assertSessionReady(sessionId);
         storeSessionId(sessionId);
