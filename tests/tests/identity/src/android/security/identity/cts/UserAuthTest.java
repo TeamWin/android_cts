@@ -185,6 +185,8 @@ public class UserAuthTest {
     }
 
     void doTestUserAuth(DeviceLockSession dl, KeyguardManager keyguardManager) throws Exception {
+        assumeTrue("IC HAL is not implemented", Util.isHalImplemented());
+
         // This test creates two different access control profiles:
         //
         // - free for all
@@ -199,9 +201,6 @@ public class UserAuthTest {
         // Provision the credential.
         Context appContext = InstrumentationRegistry.getTargetContext();
         IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
-        if (Util.isHalOptional()) {
-            assumeTrue("IC HAL not found on device", store != null);
-        }
 
         store.deleteCredentialByName("test");
         WritableIdentityCredential wc = store.createCredential("test",
