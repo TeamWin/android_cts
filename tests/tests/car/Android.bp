@@ -28,6 +28,7 @@ android_test {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
     //TODO(b/72620511) Apps should not use platform APIs directly
