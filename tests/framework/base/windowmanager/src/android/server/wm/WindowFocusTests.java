@@ -128,7 +128,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
      * - The window which lost top-focus can receive display-unspecified cancel events.
      */
     @Test
-    public void testKeyReceiving() throws Exception {
+    public void testKeyReceiving() {
         final PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class,
                 DEFAULT_DISPLAY);
         sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_0, INVALID_DISPLAY);
@@ -199,7 +199,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
      * Test if the client is notified about window-focus lost after the new focused window is drawn.
      */
     @Test
-    public void testDelayLosingFocus() throws InterruptedException {
+    public void testDelayLosingFocus() {
         final LosingFocusActivity activity = startActivity(LosingFocusActivity.class,
                 DEFAULT_DISPLAY);
 
@@ -217,7 +217,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
      */
     @Test
     @FlakyTest(bugId = 135574991)
-    public void testPointerCapture() throws Exception {
+    public void testPointerCapture() {
         final PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class,
                 DEFAULT_DISPLAY);
 
@@ -237,6 +237,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
         secondaryActivity.waitAndAssertPointerCaptureState(true /* hasCapture */);
 
         tapOnCenterOfDisplay(DEFAULT_DISPLAY);
+        primaryActivity.waitAndAssertWindowFocusState(true);
 
         // Assert secondary activity lost pointer capture when it is not top focused.
         secondaryActivity.waitAndAssertPointerCaptureState(false /* hasCapture */);
@@ -246,7 +247,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
      * Test if the focused window can still have focus after it is moved to another display.
      */
     @Test
-    public void testDisplayChanged() throws Exception {
+    public void testDisplayChanged() {
         assumeTrue(supportsMultiDisplay());
 
         final PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class,
@@ -270,7 +271,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
      * that display.
      */
     @Test
-    public void testTapFocusableWindow() throws Exception {
+    public void testTapFocusableWindow() {
         assumeTrue(supportsMultiDisplay());
         assumeFalse(perDisplayFocusEnabled());
 
@@ -289,7 +290,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
      * window on that display.
      */
     @Test
-    public void testTapNonFocusableWindow() throws Exception {
+    public void testTapNonFocusableWindow() {
         assumeTrue(supportsMultiDisplay());
         assumeFalse(perDisplayFocusEnabled());
 
@@ -344,10 +345,13 @@ public class WindowFocusTests extends WindowManagerTestBase {
             }
         }
 
-        void waitAndAssertDisplayId(int displayId) throws InterruptedException {
+        void waitAndAssertDisplayId(int displayId) {
             synchronized (this) {
                 if (mDisplayId != displayId) {
-                    wait(TIMEOUT_DISPLAY_CHANGED);
+                    try {
+                        wait(TIMEOUT_DISPLAY_CHANGED);
+                    } catch (InterruptedException e) {
+                    }
                 }
                 assertEquals(getLogTag() + " must be moved to the display.",
                         displayId, mDisplayId);
@@ -362,10 +366,13 @@ public class WindowFocusTests extends WindowManagerTestBase {
             }
         }
 
-        void waitAndAssertPointerCaptureState(boolean hasCapture) throws InterruptedException {
+        void waitAndAssertPointerCaptureState(boolean hasCapture) {
             synchronized (mLockPointerCapture) {
                 if (mHasPointerCapture != hasCapture) {
-                    mLockPointerCapture.wait(TIMEOUT_POINTER_CAPTURE_CHANGED);
+                    try {
+                        mLockPointerCapture.wait(TIMEOUT_POINTER_CAPTURE_CHANGED);
+                    } catch (InterruptedException e) {
+                    }
                 }
                 assertEquals(getLogTag() + " must" + (hasCapture ? "" : " not")
                         + " have pointer capture.", hasCapture, mHasPointerCapture);
@@ -411,11 +418,13 @@ public class WindowFocusTests extends WindowManagerTestBase {
                     consumeKeyEvent(action, keyCode, flags));
         }
 
-        void waitAssertAndConsumeKeyEvent(int action, int keyCode, int flags)
-                throws InterruptedException {
+        void waitAssertAndConsumeKeyEvent(int action, int keyCode, int flags) {
             if (consumeKeyEvent(action, keyCode, flags) == null) {
                 synchronized (mLockKeyEvent) {
-                    mLockKeyEvent.wait(TIMEOUT_NEXT_KEY_EVENT);
+                    try {
+                        mLockKeyEvent.wait(TIMEOUT_NEXT_KEY_EVENT);
+                    } catch (InterruptedException e) {
+                    }
                 }
                 assertAndConsumeKeyEvent(action, keyCode, flags);
             }
@@ -493,6 +502,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
             final SecondaryActivity activity = WindowManagerTestBase.startActivity(
                     SecondaryActivity.class, displayId, false /* hasFocus */);
             tapOnCenterOfDisplay(displayId);
+            activity.waitAndAssertWindowFocusState(true);
             return activity;
         }
 
