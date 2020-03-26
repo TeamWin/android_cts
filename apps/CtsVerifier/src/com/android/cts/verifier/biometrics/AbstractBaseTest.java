@@ -52,10 +52,6 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
 
     protected boolean mCurrentlyEnrolling;
 
-    // Not great to keep this here, but we use it to check that requesting enrollment of a
-    // combination that was just enrolled results in RESULT_CANCELED.
-    private int mRequestedStrength;
-
     BiometricManager mBiometricManager;
 
     @Override
@@ -98,8 +94,6 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
 
     void checkAndEnroll(Button enrollButton, int requestedStrength,
             int[] acceptableConfigStrengths) {
-        mRequestedStrength = requestedStrength;
-
         // Check that no biometrics (of any strength) are enrolled
         int result = mBiometricManager.canAuthenticate(Authenticators.BIOMETRIC_WEAK);
         if (result == BiometricManager.BIOMETRIC_SUCCESS) {
@@ -396,6 +390,33 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
                 new AuthenticationCallback() {
             // Do nothing
         });
+    }
+
+    void testCancellationSignal(int allowedAuthenticators, Runnable successRunnable) {
+        final BiometricPrompt.Builder builder = new BiometricPrompt.Builder(this);
+        builder.setTitle("Do not authenticate");
+        builder.setDescription("The authentication prompt should be dismissed automatically in 5s");
+        builder.setAllowedAuthenticators(allowedAuthenticators);
+        if ((allowedAuthenticators & Authenticators.DEVICE_CREDENTIAL) == 0) {
+            builder.setNegativeButton("Negative button", mExecutor, (dialog, which) -> {
+                // do nothing
+            });
+        }
+
+        final CancellationSignal cancel = new CancellationSignal();
+        final BiometricPrompt prompt = builder.build();
+        prompt.authenticate(cancel, mExecutor, new AuthenticationCallback() {
+            @Override
+            public void onAuthenticationError(int errorCode, CharSequence errString) {
+                if (errorCode == BiometricPrompt.BIOMETRIC_ERROR_CANCELED) {
+                    successRunnable.run();
+                } else {
+                    showToastAndLog("Unexpected error: " + errorCode);
+                }
+            }
+        });
+
+        mHandler.postDelayed(cancel::cancel, 5000);
     }
 
 }
