@@ -27,6 +27,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
     manifest: "package1/AndroidManifest.xml",
@@ -47,6 +48,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
     manifest: "package2/AndroidManifest.xml",
@@ -67,6 +69,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
     manifest: "package3/AndroidManifest.xml",
@@ -87,6 +90,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
     manifest: "package4/AndroidManifest.xml",
@@ -107,6 +111,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
     manifest: "packageb/AndroidManifest.xml",
