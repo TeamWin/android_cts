@@ -22,6 +22,7 @@ import static android.view.contentcapture.ContentCaptureEvent.TYPE_SESSION_PAUSE
 import static android.view.contentcapture.ContentCaptureEvent.TYPE_SESSION_RESUMED;
 import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_APPEARED;
 import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_DISAPPEARED;
+import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_INSETS_CHANGED;
 import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_TEXT_CHANGED;
 import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_TREE_APPEARED;
 import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_TREE_APPEARING;
@@ -43,6 +44,8 @@ import android.view.contentcapture.ViewNode;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import com.android.compatibility.common.util.RetryableException;
 
 import java.util.List;
 
@@ -451,6 +454,27 @@ final class Assertions {
                 .isEqualTo(expectedId);
         assertWithMessage("Wrong text on %s (%s)", event, index).that(event.getText().toString())
                 .isEqualTo(expectedText);
+    }
+
+    /**
+     * Asserts the existence and contents of a {@link #TYPE_VIEW_TEXT_CHANGED} event.
+     */
+    public static void assertViewInsetsChanged(@NonNull List<ContentCaptureEvent> events) {
+        boolean insetsEventFound = false;
+        for (ContentCaptureEvent event : events) {
+            if (event.getType() == TYPE_VIEW_INSETS_CHANGED) {
+                assertWithMessage("Expected view insets to be non-null on %s", event)
+                    .that(event.getInsets()).isNotNull();
+                insetsEventFound = true;
+            }
+        }
+
+        if (!insetsEventFound) {
+            throw new RetryableException(
+                String.format(
+                    "Expected at least one VIEW_INSETS_CHANGED event in the set of events %s",
+                    events));
+        }
     }
 
     /**
