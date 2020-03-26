@@ -19,6 +19,7 @@ extern "C" {
 #endif /* __cplusplus */
 #define MAX_ENTRIES        (1024 * 1024)
 #define INITIAL_VAL        (0xBE)
+#define MINIMUM_ALIGNMENT  (16)
 
 #define DISABLE_MEM_ACCESS(mem, size)\
     mprotect((char *) mem, size, PROT_NONE);
@@ -43,9 +44,11 @@ typedef struct _map_struct_t {
 } map_struct_t;
 
 static void* (*real_memalign)(size_t, size_t) = NULL;
+#ifndef DISABLE_MALLOC_OVERLOADING
 static void* (*real_calloc)(size_t, size_t) = NULL;
 static void* (*real_malloc)(size_t) = NULL;
 static void* (*real_realloc)(void *ptr, size_t size) = NULL;
+#endif /* DISABLE_MALLOC_OVERLOADING */
 static void (*real_free)(void *) = NULL;
 static int s_memutils_initialized = 0;
 static int s_mem_map_index = 0;
