@@ -18,6 +18,10 @@ android_test {
     platform_apis: true,
     static_libs: [
         "cts-core-test-runner-axt",
+
+        // Jar containing expectations files.
+        "libcore-expectations-knownfailures-jar",
+
         "wycheproof",
     ],
     srcs: ["src/**/*.java"],
@@ -37,5 +41,4 @@ android_test {
         "vts10",
         "general-tests",
     ],
-    java_resources: [":libcore-expectations-knownfailures"],
 }
