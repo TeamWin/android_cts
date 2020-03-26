@@ -30,9 +30,7 @@ import android.security.keystore.UserNotAuthenticatedException;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Toast;
 
-import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
 import java.util.Arrays;
@@ -117,7 +115,7 @@ public class CredentialCryptoTests extends AbstractBaseTest {
     private void testTimedKey(String keyName, boolean useStrongBox) {
         // Create a key that's usable for 5s after credential has been authenticated
         try {
-            Utils.createCredentialBoundKey(keyName, useStrongBox /* useStrongBox */);
+            Utils.createTimeBoundSecretKey_deprecated(keyName, useStrongBox /* useStrongBox */);
         } catch (Exception e) {
             showToastAndLog("Unable to create key: " + e);
             return;
