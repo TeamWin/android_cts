@@ -20,6 +20,10 @@ android_test {
     static_libs: [
         "bouncycastle-unbundled",
         "cts-core-test-runner-axt",
+
+        // Jar containing expectations files.
+        "libcore-expectations-knownfailures-jar",
+
         "okhttp-nojarjar",
         "okhttp-tests-nojarjar",
     ],
@@ -40,5 +44,4 @@ android_test {
         "vts",
         "vts10",
     ],
-    java_resources: [":libcore-expectations-knownfailures"],
 }
