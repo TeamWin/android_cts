@@ -36,6 +36,8 @@ import android.util.Log;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
+import junit.framework.AssertionFailedError;
+
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -109,7 +111,12 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
 
         // Ensure that we leave WiFi in its previous state.
         if (mHasWifi && mWifiManager.isWifiEnabled() != mInitialWiFiState) {
-            setWifiState(mInitialWiFiState, mCm, mWifiManager);
+            try {
+                setWifiState(mInitialWiFiState, mCm, mWifiManager);
+            } catch (AssertionFailedError e) {
+                // Don't fail the test just because wifi state wasn't set in tearDown.
+                Log.e(TAG, "Failed to return wifi state to " + mInitialWiFiState, e);
+            }
         }
 
         super.tearDown();
@@ -499,7 +506,6 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
             assertTrue("Wifi must be " + (enable ? "connected to" : "disconnected from")
                             + " an access point for this test.",
                     tracker.waitForStateChange() || enable == wm.isWifiEnabled());
-            assertEquals(enable, !cm.isActiveNetworkMetered());
 
             cm.unregisterNetworkCallback(tracker);
         }
