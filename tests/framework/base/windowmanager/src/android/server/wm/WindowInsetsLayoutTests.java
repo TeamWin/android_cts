@@ -18,6 +18,7 @@ package android.server.wm;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_PANEL;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
@@ -198,6 +199,7 @@ public class WindowInsetsLayoutTests extends WindowManagerTestBase {
             attrs.type = TYPE_APPLICATION_PANEL;
             attrs.width = MATCH_PARENT;
             attrs.height = MATCH_PARENT;
+            attrs.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
             attrs.flags = FLAG_NOT_FOCUSABLE;
             attrs.setFitInsetsTypes(types);
             attrs.setFitInsetsSides(sides);
