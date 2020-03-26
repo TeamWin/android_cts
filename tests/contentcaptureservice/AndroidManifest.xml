@@ -54,6 +54,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".ResizingEditActivity"
+                  android:label="ReizingEdit"
+                  android:taskAffinity=".ResizingEditActivity"
+                  android:windowSoftInputMode="adjustResize"
+                  android:theme="@android:style/Theme.NoTitleBar">
+            <intent-filter>
+                <!-- This intent filter is not really needed by CTS, but it makes easier to launch
+                     this app during CTS development... -->
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
         <activity android:name=".ChildlessActivity"
                   android:label="Childless"
                   android:taskAffinity=".ChildlessActivity"
