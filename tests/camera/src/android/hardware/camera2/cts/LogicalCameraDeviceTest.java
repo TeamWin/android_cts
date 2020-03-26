@@ -848,6 +848,8 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                         CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE);
                 double physicalDiag = Math.sqrt(Math.pow(physicalSize.getWidth(), 2)
                         + Math.pow(physicalSize.getHeight(), 2));
+                Rect activeArraySize = staticInfo.getCharacteristics().get(
+                        CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
 
                 openDevice(id);
                 for (int template : sTemplates) {
@@ -858,8 +860,21 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                                 CaptureRequest.LENS_FOCAL_LENGTH);
                         assertNotNull("LENS_FOCAL_LENGTH must not be null", requestFocalLength);
 
+                        Float requestZoomRatio = requestBuilder.get(
+                                CaptureRequest.CONTROL_ZOOM_RATIO);
+                        assertNotNull("CONTROL_ZOOM_RATIO must not be null", requestZoomRatio);
+                        Rect requestCropRegion = requestBuilder.get(
+                                CaptureRequest.SCALER_CROP_REGION);
+                        assertNotNull("SCALER_CROP_REGION must not be null", requestCropRegion);
+                        float totalZoomRatio = Math.min(
+                                1.0f * activeArraySize.width() / requestCropRegion.width(),
+                                1.0f * activeArraySize.height() / requestCropRegion.height()) *
+                                requestZoomRatio;
+
                         double fov = 2 *
-                                Math.toDegrees(Math.atan2(physicalDiag/2, requestFocalLength));
+                                Math.toDegrees(Math.atan2(physicalDiag/(2 * totalZoomRatio),
+                                requestFocalLength));
+
                         Log.v(TAG, "Camera " +  id + " template " + template +
                                 "'s default FOV is " + fov);
                         mCollector.expectInRange("Camera " +  id + " template " + template +
