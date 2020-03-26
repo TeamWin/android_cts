@@ -499,6 +499,44 @@ public class MediaCasTest extends AndroidTestCase {
         }
     }
 
+    /**
+     * Test Resource Lost Event.
+     */
+    public void testResourceLostEvent() throws Exception {
+        MediaCas mediaCas = null;
+
+        try {
+            mediaCas = new MediaCas(getContext(), sClearKeySystemId, "TIS_Session_1",
+                android.media.tv.TvInputService.PRIORITY_HINT_USE_CASE_TYPE_LIVE);
+
+            mediaCas.provision(sProvisionStr);
+
+            byte[] pvtData = new byte[256];
+            mediaCas.setPrivateData(pvtData);
+
+            Session session = mediaCas.openSession();
+            if (session == null) {
+                fail("Can't open session for program");
+            }
+
+            Session streamSession = mediaCas.openSession();
+            if (streamSession == null) {
+                fail("Can't open session for stream");
+            }
+
+            final HandlerThread thread = new HandlerThread("EventListenerHandlerThread");
+            thread.start();
+            Handler handler = new Handler(thread.getLooper());
+            testForceResourceLost(mediaCas, handler);
+            thread.interrupt();
+
+        } finally {
+            if (mediaCas != null) {
+                mediaCas.close();
+            }
+        }
+    }
+
     private class TestEventListener implements MediaCas.EventListener {
         private final CountDownLatch mLatch = new CountDownLatch(1);
         private final MediaCas mMediaCas;
@@ -529,6 +567,14 @@ public class MediaCasTest extends AndroidTestCase {
             mMediaCas = mediaCas;
             mEvent = intent;
             mArg = scramblingMode;
+            mData = null;
+            mSession = null;
+        }
+
+        TestEventListener(MediaCas mediaCas) {
+            mMediaCas = mediaCas;
+            mEvent = 0;
+            mArg = 0;
             mData = null;
             mSession = null;
         }
@@ -578,6 +624,15 @@ public class MediaCasTest extends AndroidTestCase {
             }
             mLatch.countDown();
         }
+
+        @Override
+        public void onResourceLost(MediaCas mediaCas) {
+            Log.d(TAG, "Received MediaCas Resource Lost event");
+            if (mediaCas == mMediaCas) {
+                mIsIdential = true;
+            }
+            mLatch.countDown();
+        }
     }
 
     // helper to send an event and wait for echo
@@ -623,6 +678,14 @@ public class MediaCasTest extends AndroidTestCase {
         }
         assertTrue("Didn't receive Echo from openSession with scrambling mode: " + scramblingMode,
             listener.waitForResult());
+    }
+
+    // helper to force to lose resource and wait for Resource Lost event
+    private void testForceResourceLost(MediaCas mediaCas, Handler handler) throws Exception {
+        TestEventListener listener = new TestEventListener(mediaCas);
+        mediaCas.setEventListener(listener, handler);
+        mediaCas.forceResourceLost();
+        assertTrue("Didn't receive Resource Lost event ", listener.waitForResult());
     }
 
     // helper to descramble from the sample input (sInputBufferStr) and get output buffer
