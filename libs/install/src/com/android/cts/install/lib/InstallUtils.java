@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.fail;
 
+import android.app.UiAutomation;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -31,6 +32,7 @@ import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.SystemClock;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -48,25 +50,31 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class InstallUtils {
     private static final int NUM_MAX_POLLS = 5;
     private static final int POLL_WAIT_TIME_MILLIS = 200;
+    private static final long GET_UIAUTOMATION_TIMEOUT_MS = 60000;
+
+    private static UiAutomation getUiAutomation() {
+        final long start = SystemClock.uptimeMillis();
+        while (SystemClock.uptimeMillis() - start < GET_UIAUTOMATION_TIMEOUT_MS) {
+            UiAutomation ui = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+            if (ui != null) {
+                return ui;
+            }
+        }
+        throw new AssertionError("Failed to get UiAutomation");
+    }
 
     /**
      * Adopts the given shell permissions.
      */
     public static void adoptShellPermissionIdentity(String... permissions) {
-        InstrumentationRegistry
-                .getInstrumentation()
-                .getUiAutomation()
-                .adoptShellPermissionIdentity(permissions);
+        getUiAutomation().adoptShellPermissionIdentity(permissions);
     }
 
     /**
      * Drops all shell permissions.
      */
     public static void dropShellPermissionIdentity() {
-        InstrumentationRegistry
-                .getInstrumentation()
-                .getUiAutomation()
-                .dropShellPermissionIdentity();
+        getUiAutomation().dropShellPermissionIdentity();
     }
     /**
      * Returns the version of the given package installed on device.
