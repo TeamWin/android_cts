@@ -117,6 +117,9 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
             SystemUtil.runShellCommand(getInstrumentation(), "cmd devicestoragemonitor reset");
             mStorageStateChanged = false;
         }
+        SystemUtil.runShellCommand(getInstrumentation(),
+                "cmd jobscheduler reset-execution-quota -u current "
+                        + kJobServiceComponent.getPackageName());
 
         // The super method should be called at the end.
         super.tearDown();
