@@ -17,13 +17,16 @@
 package android.security.identity.cts;
 
 import android.security.identity.ResultData;
+import android.security.identity.IdentityCredentialStore;
 
+import android.content.Context;
 import android.os.SystemProperties;
 import android.security.keystore.KeyProperties;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.test.InstrumentationRegistry;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -1226,23 +1229,14 @@ Certificate:
         }
     }
 
-    // Returns true if, and only if, the Identity Credential HAL (and credstore) is optional for
-    // the device under test.
-    static boolean isHalOptional() {
-        int firstApiLevel = SystemProperties.getInt("ro.product.first_api_level", 0);
-        if (firstApiLevel == 0) {
-            // ro.product.first_api_level is not set and per
-            //
-            //  https://source.android.com/compatibility/cts/setup
-            //
-            // this is optional to set. In this case we simply just require the HAL.
-            return false;
+    // Returns true if, and only if, the Identity Credential HAL (and credstore) is implemented
+    // on the device under test.
+    static boolean isHalImplemented() {
+        Context appContext = InstrumentationRegistry.getTargetContext();
+        IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
+        if (store != null) {
+            return true;
         }
-        if (firstApiLevel >= 30) {
-            // Device launched with R or later, Identity Credential HAL is not optional.
-            return false;
-        }
-        // Device launched before R, Identity Credential HAL is optional.
-        return true;
+        return false;
     }
 }

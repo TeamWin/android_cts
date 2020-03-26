@@ -26,6 +26,7 @@ import android.security.identity.IdentityCredentialStore;
 import androidx.test.InstrumentationRegistry;
 
 import org.junit.Test;
+import static org.junit.Assume.assumeTrue;
 
 import com.google.common.primitives.Bytes;
 
@@ -50,6 +51,8 @@ public class AttestationTest {
 
     @Test
     public void attestationTest() throws Exception {
+        assumeTrue("IC HAL is not implemented", Util.isHalImplemented());
+
         Context appContext = InstrumentationRegistry.getTargetContext();
         IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
 
