@@ -29,6 +29,7 @@ import static android.appenumeration.cts.Constants.ACTION_START_FOR_RESULT;
 import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_DUMMY_ACTIVITY;
 import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_TEST;
 import static android.appenumeration.cts.Constants.ALL_QUERIES_TARGETING_R_PACKAGES;
+import static android.appenumeration.cts.Constants.EXTRA_DATA;
 import static android.appenumeration.cts.Constants.EXTRA_ERROR;
 import static android.appenumeration.cts.Constants.EXTRA_FLAGS;
 import static android.appenumeration.cts.Constants.EXTRA_REMOTE_CALLBACK;
@@ -52,12 +53,15 @@ import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_WEB;
 import static android.appenumeration.cts.Constants.TARGET_CONTACTS;
 import static android.appenumeration.cts.Constants.TARGET_EDITOR;
 import static android.appenumeration.cts.Constants.TARGET_FILTERS;
+import static android.appenumeration.cts.Constants.TARGET_FILTERS_APK;
 import static android.appenumeration.cts.Constants.TARGET_FORCEQUERYABLE;
 import static android.appenumeration.cts.Constants.TARGET_NO_API;
 import static android.appenumeration.cts.Constants.TARGET_SHARE;
 import static android.appenumeration.cts.Constants.TARGET_SHARED_USER;
 import static android.appenumeration.cts.Constants.TARGET_WEB;
 import static android.content.pm.PackageManager.MATCH_SYSTEM_ONLY;
+
+import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
@@ -367,6 +371,57 @@ public class AppEnumerationTests {
                 getPackageInfo(sourcePackageName, targetPackageName));
     }
 
+    @Test
+    public void broadcastAdded_notVisibleDoesNotReceive() throws Exception {
+        final Result result = sendCommand(QUERIES_NOTHING, TARGET_FILTERS, null,
+                Constants.ACTION_AWAIT_PACKAGE_ADDED);
+        runShellCommand("pm install " + TARGET_FILTERS_APK);
+        try {
+            result.await();
+            fail();
+        } catch (MissingBroadcastException e) {
+            // hooray
+        }
+    }
+
+    @Test
+    public void broadcastAdded_visibleReceives() throws Exception {
+        final Result result = sendCommand(QUERIES_ACTIVITY_ACTION, TARGET_FILTERS, null,
+                Constants.ACTION_AWAIT_PACKAGE_ADDED);
+        runShellCommand("pm install " + TARGET_FILTERS_APK);
+        try {
+            Assert.assertEquals(TARGET_FILTERS,
+                    Uri.parse(result.await().getString(EXTRA_DATA)).getSchemeSpecificPart());
+        } catch (MissingBroadcastException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void broadcastRemoved_notVisibleDoesNotReceive() throws Exception {
+        final Result result = sendCommand(QUERIES_NOTHING, TARGET_FILTERS, null,
+                Constants.ACTION_AWAIT_PACKAGE_REMOVED);
+        runShellCommand("pm install " + TARGET_FILTERS_APK);
+        try {
+            result.await();
+            fail();
+        } catch (MissingBroadcastException e) {
+            // hooray
+        }
+    }
+
+    @Test
+    public void broadcastRemoved_visibleReceives() throws Exception {
+        final Result result = sendCommand(QUERIES_ACTIVITY_ACTION, TARGET_FILTERS, null,
+                Constants.ACTION_AWAIT_PACKAGE_REMOVED);
+        runShellCommand("pm install " + TARGET_FILTERS_APK);
+        try {
+            Assert.assertEquals(TARGET_FILTERS,
+                    Uri.parse(result.await().getString(EXTRA_DATA)).getSchemeSpecificPart());
+        } catch (MissingBroadcastException e) {
+            fail();
+        }
+    }
 
     private void setFeatureEnabledForAll(Boolean enabled) {
         for (String pkgName : ALL_QUERIES_TARGETING_R_PACKAGES) {
@@ -426,14 +481,14 @@ public class AppEnumerationTests {
 
     private PackageInfo getPackageInfo(String sourcePackageName, String targetPackageName)
             throws Exception {
-        Bundle response = sendCommand(sourcePackageName, targetPackageName,
+        Bundle response = sendCommandBlocking(sourcePackageName, targetPackageName,
                 null /*queryIntent*/, ACTION_GET_PACKAGE_INFO);
         return response.getParcelable(Intent.EXTRA_RETURN_RESULT);
     }
 
     private PackageInfo startForResult(String sourcePackageName, String targetPackageName)
             throws Exception {
-        Bundle response = sendCommand(sourcePackageName, targetPackageName,
+        Bundle response = sendCommandBlocking(sourcePackageName, targetPackageName,
                 null /*queryIntent*/, ACTION_START_FOR_RESULT);
         return response.getParcelable(Intent.EXTRA_RETURN_RESULT);
     }
@@ -447,7 +502,7 @@ public class AppEnumerationTests {
                                 "android.appenumeration.cts.query.TestActivity")),
                 PendingIntent.FLAG_ONE_SHOT);
 
-        Bundle response = sendCommand(sourcePackageName, targetPackageName,
+        Bundle response = sendCommandBlocking(sourcePackageName, targetPackageName,
                 pendingIntent /*queryIntent*/, Constants.ACTION_START_SENDER_FOR_RESULT);
         return response.getParcelable(Intent.EXTRA_RETURN_RESULT);
     }
@@ -456,43 +511,49 @@ public class AppEnumerationTests {
     private String[] queryIntentActivities(String sourcePackageName, Intent queryIntent)
             throws Exception {
         Bundle response =
-                sendCommand(sourcePackageName, null, queryIntent, ACTION_QUERY_ACTIVITIES);
+                sendCommandBlocking(sourcePackageName, null, queryIntent, ACTION_QUERY_ACTIVITIES);
         return response.getStringArray(Intent.EXTRA_RETURN_RESULT);
     }
 
     private String[] queryIntentServices(String sourcePackageName, Intent queryIntent)
             throws Exception {
-        Bundle response = sendCommand(sourcePackageName, null, queryIntent, ACTION_QUERY_SERVICES);
+        Bundle response = sendCommandBlocking(sourcePackageName, null, queryIntent,
+                ACTION_QUERY_SERVICES);
         return response.getStringArray(Intent.EXTRA_RETURN_RESULT);
     }
 
     private String[] queryIntentProviders(String sourcePackageName, Intent queryIntent)
             throws Exception {
-        Bundle response = sendCommand(sourcePackageName, null, queryIntent, ACTION_QUERY_PROVIDERS);
+        Bundle response = sendCommandBlocking(sourcePackageName, null, queryIntent,
+                ACTION_QUERY_PROVIDERS);
         return response.getStringArray(Intent.EXTRA_RETURN_RESULT);
     }
 
     private String[] getInstalledPackages(String sourcePackageNames, int flags) throws Exception {
-        Bundle response = sendCommand(sourcePackageNames, null, new Intent().putExtra(EXTRA_FLAGS,
-                flags), ACTION_GET_INSTALLED_PACKAGES);
+        Bundle response = sendCommandBlocking(sourcePackageNames, null,
+                new Intent().putExtra(EXTRA_FLAGS, flags), ACTION_GET_INSTALLED_PACKAGES);
         return response.getStringArray(Intent.EXTRA_RETURN_RESULT);
     }
 
     private void startExplicitIntent(String sourcePackage, String targetPackage) throws Exception {
-        sendCommand(sourcePackage, targetPackage,
+        sendCommandBlocking(sourcePackage, targetPackage,
                 new Intent().setComponent(new ComponentName(targetPackage,
                         ACTIVITY_CLASS_DUMMY_ACTIVITY)),
                 ACTION_START_DIRECTLY);
     }
 
     private void startImplicitIntent(String sourcePackage) throws Exception {
-        sendCommand(sourcePackage, TARGET_FILTERS, new Intent(ACTION_MANIFEST_ACTIVITY),
+        sendCommandBlocking(sourcePackage, TARGET_FILTERS, new Intent(ACTION_MANIFEST_ACTIVITY),
                 ACTION_START_DIRECTLY);
     }
 
-    private Bundle sendCommand(String sourcePackageName, @Nullable String targetPackageName,
-            @Nullable Parcelable intentExtra, String action)
-            throws Exception {
+    interface Result {
+        Bundle await() throws Exception;
+    }
+
+    private Result sendCommand(String sourcePackageName,
+            @Nullable String targetPackageName,
+            @Nullable Parcelable intentExtra, String action) {
         final Intent intent = new Intent(action)
                 .setComponent(new ComponentName(sourcePackageName, ACTIVITY_CLASS_TEST))
                 // data uri unique to each activity start to ensure actual launch and not just
@@ -520,15 +581,24 @@ public class AppEnumerationTests {
                 sResponseHandler);
         intent.putExtra(EXTRA_REMOTE_CALLBACK, callback);
         InstrumentationRegistry.getInstrumentation().getContext().startActivity(intent);
-        if (!latch.block(TimeUnit.SECONDS.toMillis(10))) {
-            throw new TimeoutException(
-                    "Latch timed out while awiating a response from " + sourcePackageName);
-        }
-        final Bundle bundle = resultReference.get();
-        if (bundle != null && bundle.containsKey(EXTRA_ERROR)) {
-            throw (Exception) Objects.requireNonNull(bundle.getSerializable(EXTRA_ERROR));
-        }
-        return bundle;
+        return () -> {
+            if (!latch.block(TimeUnit.SECONDS.toMillis(10))) {
+                throw new TimeoutException(
+                        "Latch timed out while awiating a response from " + sourcePackageName);
+            }
+            final Bundle bundle = resultReference.get();
+            if (bundle != null && bundle.containsKey(EXTRA_ERROR)) {
+                throw (Exception) Objects.requireNonNull(bundle.getSerializable(EXTRA_ERROR));
+            }
+            return bundle;
+        };
+    }
+
+    private Bundle sendCommandBlocking(String sourcePackageName, @Nullable String targetPackageName,
+            @Nullable Parcelable intentExtra, String action)
+            throws Exception {
+        Result result = sendCommand(sourcePackageName, targetPackageName, intentExtra, action);
+        return result.await();
     }
 
 }
