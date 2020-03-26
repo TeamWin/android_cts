@@ -137,6 +137,9 @@ public class StagedInstallTest {
     private static final TestApp ApexNotPreInstalled = new TestApp(
             "ApexNotPreInstalled", NOT_PREINSTALL_APEX_PACKAGE_NAME, 3, /*isApex*/true,
             "com.android.apex.cts.shim_not_pre_installed.apex");
+    private static final TestApp Apex2SdkTargetP = new TestApp(
+            "StagedInstallTestApexV2_SdkTargetP", SHIM_PACKAGE_NAME, 1,
+            /*isApex*/true, "com.android.apex.cts.shim.v2_sdk_target_p.apex");
 
     @Before
     public void adoptShellPermissions() {
@@ -990,6 +993,18 @@ public class StagedInstallTest {
                         throw exc;
                     }
                 });
+    }
+
+    /**
+     * Should fail to verify apex targeting older dev sdk
+     */
+    @Test
+    public void testApexTargetingOldDevSdkFailsVerification() throws Exception {
+        int sessionId = stageSingleApk(Apex2SdkTargetP).assertSuccessful().getSessionId();
+        PackageInstaller.SessionInfo sessionInfo = waitForBroadcast(sessionId);
+        assertThat(sessionInfo).isStagedSessionFailed();
+        assertThat(sessionInfo.getStagedSessionErrorMessage())
+                .contains("Failed to parse APEX package");
     }
 
     private static long getInstalledVersion(String packageName) {
