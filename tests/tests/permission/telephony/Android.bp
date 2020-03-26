@@ -21,6 +21,7 @@ android_test {
     test_suites: [
         "cts",
         "vts",
+        "vts10",
         "general-tests",
     ],
     // Include both the 32 and 64 bit versions

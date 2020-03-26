@@ -23,5 +23,6 @@ android_test_helper_app {
         "cts",
         "sts",
         "vts",
+        "vts10",
     ],
 }
