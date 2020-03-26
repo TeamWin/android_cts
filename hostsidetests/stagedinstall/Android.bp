@@ -59,6 +59,7 @@ android_test_helper_app {
         ":StagedInstallTestApexV2_WithPreInstallHook",
         ":StagedInstallTestApexV2_WrongSha",
         ":StagedInstallTestAppSamePackageNameAsApex",
+        ":StagedInstallTestApexV2_SdkTargetP",
     ],
     static_libs: [
         "androidx.test.runner",
@@ -189,4 +190,11 @@ prebuilt_apex {
     src: "testdata/apex/com.android.apex.cts.shim.v2_no_hashtree.apex",
     filename: "com.android.apex.cts.shim.v2_no_hashtree.apex",
     installable: false,
+}
+
+prebuilt_apex {
+  name: "StagedInstallTestApexV2_SdkTargetP",
+  src: "testdata/apex/com.android.apex.cts.shim.v2_sdk_target_p.apex",
+  filename: "com.android.apex.cts.shim.v2_sdk_target_p.apex",
+  installable: false,
 }
