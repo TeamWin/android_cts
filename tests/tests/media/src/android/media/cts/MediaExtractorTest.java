@@ -23,6 +23,7 @@ import android.content.res.Resources;
 import android.icu.util.ULocale;
 import android.media.AudioFormat;
 import android.media.AudioPresentation;
+import android.media.DrmInitData;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaDataSource;
@@ -53,10 +54,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.UUID;
 
 
 public class MediaExtractorTest extends AndroidTestCase {
     private static final String TAG = "MediaExtractorTest";
+    private static final UUID UUID_WIDEVINE = new UUID(0xEDEF8BA979D64ACEL, 0xA3C827DCD51D21EDL);
+    private static final UUID UUID_PLAYREADY = new UUID(0x9A04F07998404286L, 0xAB92E65BE0885F95L);
 
     protected Resources mResources;
     protected MediaExtractor mExtractor;
@@ -369,6 +373,16 @@ public class MediaExtractorTest extends AndroidTestCase {
         // The backward-compatible track should have mime video/av01
         final String mimeType = trackFormat.getString(MediaFormat.KEY_MIME);
         assertEquals("video/av01", mimeType);
+    }
+
+    public void testGetDrmInitData() throws Exception {
+        setDataSource(R.raw.psshtest);
+        DrmInitData drmInitData = mExtractor.getDrmInitData();
+        assertEquals(drmInitData.getSchemeInitDataCount(), 2);
+        assertEquals(drmInitData.getSchemeInitDataAt(0).uuid, UUID_WIDEVINE);
+        assertEquals(drmInitData.get(UUID_WIDEVINE), drmInitData.getSchemeInitDataAt(0));
+        assertEquals(drmInitData.getSchemeInitDataAt(1).uuid, UUID_PLAYREADY);
+        assertEquals(drmInitData.get(UUID_PLAYREADY), drmInitData.getSchemeInitDataAt(1));
     }
 
     private void checkExtractorSamplesAndMetrics() {
