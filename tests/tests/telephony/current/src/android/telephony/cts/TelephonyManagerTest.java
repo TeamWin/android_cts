@@ -530,6 +530,8 @@ public class TelephonyManagerTest {
         mTelephonyManager.isVoicemailVibrationEnabled(defaultAccount);
         mTelephonyManager.getSubscriptionId(defaultAccount);
         mTelephonyManager.getCarrierConfig();
+        mTelephonyManager.isVoiceCapable();
+        mTelephonyManager.isSmsCapable();
         ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.isDataConnectionAllowed());
         ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
