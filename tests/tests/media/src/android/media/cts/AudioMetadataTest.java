@@ -20,6 +20,8 @@ import static org.junit.Assert.*;
 import static org.testng.Assert.assertThrows;
 
 import android.media.AudioMetadata;
+import android.media.AudioMetadataMap;
+import android.media.AudioMetadataReadMap;
 import android.util.Log;
 import androidx.test.runner.AndroidJUnit4;
 import org.junit.Test;
@@ -61,7 +63,7 @@ public class AudioMetadataTest {
 
     @Test
     public void testMap() throws Exception {
-        final AudioMetadata.Map audioMetadata = AudioMetadata.createMap();
+        final AudioMetadataMap audioMetadata = AudioMetadata.createMap();
 
         int ivalue;
         String svalue;
@@ -110,6 +112,9 @@ public class AudioMetadataTest {
         assertThrows(NullPointerException.class,
             () -> { audioMetadata.set(KEY_NUMBER, null); }
         );
+
+        // check creating a map from another map.
+        assertEquals(audioMetadata, audioMetadata.dup());
     }
 
     // Vendor keys created by direct override of the AudioMetadata interface.
@@ -154,7 +159,7 @@ public class AudioMetadataTest {
 
     @Test
     public void testVendorKeys() {
-        final AudioMetadata.Map audioMetadata = AudioMetadata.createMap();
+        final AudioMetadataMap audioMetadata = AudioMetadata.createMap();
 
         audioMetadata.set(KEY_VENDOR_INTEGER, 10);
         final int ivalue = audioMetadata.get(KEY_VENDOR_INTEGER);

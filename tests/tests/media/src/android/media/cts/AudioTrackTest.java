@@ -30,6 +30,7 @@ import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioMetadata;
+import android.media.AudioMetadataReadMap;
 import android.media.AudioPresentation;
 import android.media.AudioTimestamp;
 import android.media.AudioTrack;
@@ -2705,22 +2706,15 @@ public class AudioTrackTest {
             IllegalArgumentException.class,
             () -> {
                 final AudioTrack.TunerConfiguration badConfig =
-                    new AudioTrack.TunerConfiguration.Builder()
-                        .setContentId(0)
-                        .setSyncId(1)
-                        .build();
+                    new AudioTrack.TunerConfiguration(0 /* contentId */, 1 /* syncId */);
             });
 
         assertThrows(
             IllegalArgumentException.class,
             () -> {
                 final AudioTrack.TunerConfiguration badConfig =
-                    new AudioTrack.TunerConfiguration.Builder()
-                        .setContentId(1)
-                        .setSyncId(0)
-                        .build();
+                    new AudioTrack.TunerConfiguration(1 /* contentId*/, 0 /* syncId */);
             });
-
         assertThrows(
             IllegalArgumentException.class,
             () -> {
@@ -2741,10 +2735,7 @@ public class AudioTrackTest {
 
         // this should work.
         final AudioTrack.TunerConfiguration tunerConfiguration =
-            new AudioTrack.TunerConfiguration.Builder()
-                .setContentId(1)
-                .setSyncId(2)
-                .build();
+                new AudioTrack.TunerConfiguration(1 /* contentId */, 2 /* syncId */);
 
         assertEquals("contentId must be set", 1, tunerConfiguration.getContentId());
         assertEquals("syncId must be set", 2, tunerConfiguration.getSyncId());
@@ -2781,7 +2772,7 @@ public class AudioTrackTest {
 
 
         final AudioTrack.OnCodecFormatChangedListener listener =
-            (AudioTrack track, AudioMetadata.ReadMap readMap) -> {};
+            (AudioTrack track, AudioMetadataReadMap readMap) -> {};
 
         // add a synchronous executor.
         audioTrack.addOnCodecFormatChangedListener(new Executor() {
