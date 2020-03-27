@@ -45,6 +45,7 @@ import android.os.UserHandle;
 import android.os.storage.StorageManager;
 import android.provider.Settings;
 import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.UiScrollable;
 import android.support.test.uiautomator.UiSelector;
 import android.test.InstrumentationTestCase;
 
@@ -100,6 +101,8 @@ public class StorageTest extends InstrumentationTestCase {
         device.waitForIdle();
 
         if (!isTV(getContext())) {
+            UiScrollable uiScrollable = new UiScrollable(new UiSelector().scrollable(true));
+            uiScrollable.scrollTextIntoView("internal storage");
             device.findObject(new UiSelector().textContains("internal storage")).click();
             device.waitForIdle();
         }
