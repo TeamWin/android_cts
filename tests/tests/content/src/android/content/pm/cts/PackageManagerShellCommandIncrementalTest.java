@@ -47,12 +47,10 @@ import java.util.Optional;
 @RunWith(AndroidJUnit4.class)
 @AppModeFull
 public class PackageManagerShellCommandIncrementalTest {
-    private static final String TEST_APP_PACKAGE = "android.appsecurity.cts.tinyapp";
+    private static final String TEST_APP_PACKAGE = "com.example.helloworld";
 
     private static final String TEST_APK_PATH = "/data/local/tmp/cts/content/";
-    private static final String TEST_APK_V2 = "v4-digest-v2.apk";
-    private static final String TEST_APK_V3 = "v4-digest-v3.apk";
-    private static final String TEST_APK_V2_V3 = "v4-digest-v2v3.apk";
+    private static final String TEST_APK = "HelloWorld5.apk";
 
     private static String executeShellCommand(String command) throws IOException {
         final ParcelFileDescriptor stdout =
@@ -124,21 +122,10 @@ public class PackageManagerShellCommandIncrementalTest {
                 PackageManager.FEATURE_INCREMENTAL_DELIVERY));
     }
 
+    // TODO(b/152563692): move v2/v3 tests to appsecurity
     @Test
-    public void testInstallWithIdSigAndV2Digest() throws Exception {
-        installPackage(TEST_APK_V2);
-        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
-    }
-
-    @Test
-    public void testInstallWithIdSigAndV3Digest() throws Exception {
-        installPackage(TEST_APK_V3);
-        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
-    }
-
-    @Test
-    public void testInstallWithIdSigAndV2V3Digest() throws Exception {
-        installPackage(TEST_APK_V2_V3);
+    public void testInstallWithIdSig() throws Exception {
+        installPackage(TEST_APK);
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
     }
 
