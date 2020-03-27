@@ -184,6 +184,13 @@ public class WindowManagerStateHelper extends WindowManagerState {
                 "LastOrientation: " + orientation);
     }
 
+    void waitAndAssertLastOrientation(String message, int screenOrientation) {
+        if (screenOrientation != getLastOrientation()) {
+            waitForLastOrientation(screenOrientation);
+        }
+        assertEquals(message, screenOrientation, getLastOrientation());
+    }
+
     /**
      * Wait for orientation for the Activity
      */
