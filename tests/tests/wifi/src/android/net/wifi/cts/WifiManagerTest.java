@@ -2703,4 +2703,35 @@ public class WifiManagerTest extends AndroidTestCase {
             uiAutomation.dropShellPermissionIdentity();
         }
     }
+
+    /**
+     * Tests {@link WifiManager#isWapiSupported()} does not crash.
+     */
+    public void testIsWapiSupported() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        mWifiManager.isWapiSupported();
+    }
+
+    /**
+     * Tests {@link WifiManager#isP2pSupported()} returns true
+     * if this device supports it, otherwise, ensure no crash.
+     */
+    public void testIsP2pSupported() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+
+        if (WifiFeature.isP2pSupported(getContext())) {
+            // if this device supports P2P, ensure hw capability is correct.
+            assertTrue(mWifiManager.isP2pSupported());
+        } else {
+            // ensure no crash.
+            mWifiManager.isP2pSupported();
+        }
+
+    }
 }
