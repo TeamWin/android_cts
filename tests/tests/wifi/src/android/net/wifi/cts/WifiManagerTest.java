@@ -2666,6 +2666,32 @@ public class WifiManagerTest extends AndroidTestCase {
     }
 
     /**
+     * Tests {@link WifiManager#allowAutojoinPasspoint(String, boolean)}.
+     */
+    public void testAllowAutojoinPasspoint() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+
+        PasspointConfiguration passpointConfiguration = createPasspointConfiguration();
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            mWifiManager.addOrUpdatePasspointConfiguration(passpointConfiguration);
+            // Turn off auto-join
+            mWifiManager.allowAutojoinPasspoint(
+                    passpointConfiguration.getHomeSp().getFqdn(), false);
+            // Turn on auto-join
+            mWifiManager.allowAutojoinPasspoint(
+                    passpointConfiguration.getHomeSp().getFqdn(), true);
+        } finally {
+            mWifiManager.removePasspointConfiguration(passpointConfiguration.getHomeSp().getFqdn());
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
      * Tests {@link WifiManager#allowAutojoinGlobal(boolean)}.
      */
     public void testAllowAutojoinGlobal() throws Exception {
