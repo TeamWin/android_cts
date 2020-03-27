@@ -32,6 +32,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.Executor;
 
+import static org.testng.Assert.assertThrows;
+
 @NonMediaMainlineTest
 public class AudioTrackOffloadTest extends CtsAndroidTestCase {
     private static final String TAG = "AudioTrackOffloadTest";
@@ -39,6 +41,8 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
 
     private static final int BUFFER_SIZE_SEC = 3;
     private static final int PRESENTATION_END_TIMEOUT_MS = 8 * 1000; // 8s
+    private static final int AUDIOTRACK_DEFAULT_SAMPLE_RATE = 44100;
+    private static final int AUDIOTRACK_DEFAULT_CHANNEL_MASK = AudioFormat.CHANNEL_OUT_STEREO;
 
     private static final AudioAttributes DEFAULT_ATTR = new AudioAttributes.Builder().build();
 
@@ -70,54 +74,69 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
 
     public void testMP3AudioTrackOffload() throws Exception {
         testAudioTrackOffload(R.raw.sine1khzs40dblong,
-                              /* bitRateInkbps= */ 192,
-                              getAudioFormatWithEncoding(AudioFormat.ENCODING_MP3));
+                /* bitRateInkbps= */ 192,
+                getAudioFormatWithEncoding(AudioFormat.ENCODING_MP3));
     }
 
     public void testOpusAudioTrackOffload() throws Exception {
         testAudioTrackOffload(R.raw.testopus,
-                              /* bitRateInkbps= */ 118, // Average
-                              getAudioFormatWithEncoding(AudioFormat.ENCODING_OPUS));
+                /* bitRateInkbps= */ 118, // Average
+                getAudioFormatWithEncoding(AudioFormat.ENCODING_OPUS));
     }
 
-    /** Test offload of an audio resource that MUST be at least 3sec long. */
+    private AudioTrack getOffloadAudioTrack(@RawRes int audioRes, int bitRateInkbps,
+                                            AudioFormat audioFormat) {
+        if (!AudioManager.isOffloadedPlaybackSupported(audioFormat, DEFAULT_ATTR)) {
+            Log.i(TAG, "skipping testAudioTrackOffload as offload encoding "
+                    + audioFormat.getEncoding() + " is not supported");
+            // cannot test if offloading is not supported
+            return null;
+        }
+
+        int bufferSizeInBytes = bitRateInkbps * 1000 * BUFFER_SIZE_SEC / 8;
+        // format is offloadable, test playback head is progressing
+        AudioTrack track = new AudioTrack.Builder()
+                .setAudioAttributes(DEFAULT_ATTR)
+                .setAudioFormat(audioFormat)
+                .setTransferMode(AudioTrack.MODE_STREAM)
+                .setBufferSizeInBytes(bufferSizeInBytes)
+                .setOffloadedPlayback(true)
+                .build();
+        assertNotNull("Couldn't create offloaded AudioTrack", track);
+        assertEquals("Unexpected track sample rate", AUDIOTRACK_DEFAULT_SAMPLE_RATE,
+                track.getSampleRate());
+        assertEquals("Unexpected track channel mask", AUDIOTRACK_DEFAULT_CHANNEL_MASK,
+                track.getChannelConfiguration());
+        return track;
+    }
+
+    /**
+     * Test offload of an audio resource that MUST be at least 3sec long.
+     */
     private void testAudioTrackOffload(@RawRes int audioRes, int bitRateInkbps,
                                        AudioFormat audioFormat) throws Exception {
         AudioTrack track = null;
-        int bufferSizeInBytes3sec = bitRateInkbps * 1024 * 3 / 8;
         try (AssetFileDescriptor audioToOffload = getContext().getResources()
                 .openRawResourceFd(audioRes);
              InputStream audioInputStream = audioToOffload.createInputStream()) {
 
-            if (!AudioManager.isOffloadedPlaybackSupported(audioFormat, DEFAULT_ATTR)) {
-                Log.i(TAG, "skipping testAudioTrackOffload as offload encoding "
-                           + audioFormat.getEncoding() + " is not supported");
-                // cannot test if offloading is not supported
+            track = getOffloadAudioTrack(audioRes, bitRateInkbps, audioFormat);
+            if (track == null) {
                 return;
             }
-
-            // format is offloadable, test playback head is progressing
-            track = new AudioTrack.Builder()
-                    .setAudioAttributes(DEFAULT_ATTR)
-                    .setAudioFormat(audioFormat)
-                    .setTransferMode(AudioTrack.MODE_STREAM)
-                    .setBufferSizeInBytes(bufferSizeInBytes3sec)
-                    .setOffloadedPlayback(true).build();
-            assertNotNull("Couldn't create offloaded AudioTrack", track);
-            assertEquals("Unexpected track sample rate", 44100, track.getSampleRate());
-            assertEquals("Unexpected track channel config", AudioFormat.CHANNEL_OUT_STEREO,
-                    track.getChannelConfiguration());
 
             try {
                 track.registerStreamEventCallback(mExec, null);
                 fail("Shouldn't be able to register null StreamEventCallback");
-            } catch (Exception e) { }
+            } catch (Exception e) {
+            }
             track.registerStreamEventCallback(mExec, mCallback);
 
+            int bufferSizeInBytes3sec = bitRateInkbps * 1000 * 3 / 8;
             final byte[] data = new byte[bufferSizeInBytes3sec];
             final int read = audioInputStream.read(data);
             assertEquals("Could not read enough audio from the resource file",
-                         bufferSizeInBytes3sec, read);
+                    bufferSizeInBytes3sec, read);
 
             track.play();
             int written = 0;
@@ -129,13 +148,18 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
                 }
                 written += wrote;
             }
+
             try {
                 Thread.sleep(1 * 1000);
-                synchronized(mPresEndLock) {
+                synchronized (mPresEndLock) {
+                    track.setOffloadEndOfStream();
+
                     track.stop();
                     mPresEndLock.safeWait(PRESENTATION_END_TIMEOUT_MS);
                 }
-            } catch (InterruptedException e) { fail("Error while sleeping"); }
+            } catch (InterruptedException e) {
+                fail("Error while sleeping");
+            }
             synchronized (mEventCallbackLock) {
                 assertTrue("onDataRequest not called", mCallback.mDataRequestCount > 0);
             }
@@ -153,14 +177,78 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
                 track.unregisterStreamEventCallback(mCallback);
                 track.release();
             }
+        };
+    }
+
+    private AudioTrack allocNonOffloadAudioTrack() {
+        // Attrributes the AudioTrack are irrelevant in this case. We just need to provide
+        // an AudioTrack that IS NOT offloaded so that we can demonstrate failure.
+        AudioTrack track = new AudioTrack.Builder()
+                .setBufferSizeInBytes(2048/*arbitrary*/)
+                .build();
+
+        assert(track != null);
+        return track;
+    }
+
+     // Arbitrary values..
+    private static final int TEST_DELAY = 50;
+    private static final int TEST_PADDING = 100;
+    public void testOffloadPadding() {
+        AudioTrack track =
+                getOffloadAudioTrack(R.raw.sine1khzs40dblong,
+                /* bitRateInkbps= */ 192,
+                getAudioFormatWithEncoding(AudioFormat.ENCODING_MP3));
+        if (track == null) {
+            return;
         }
+
+        assertTrue(track.getOffloadPadding() >= 0);
+
+        track.setOffloadDelayPadding(0 /*delayInFrames*/, 0 /*paddingInFrames*/);
+
+        int offloadDelay;
+        offloadDelay = track.getOffloadDelay();
+        assertEquals(0, offloadDelay);
+
+        int padding = track.getOffloadPadding();
+        assertEquals(0, padding);
+
+        track.setOffloadDelayPadding(
+                TEST_DELAY /*delayInFrames*/,
+                TEST_PADDING /*paddingInFrames*/);
+        offloadDelay = track.getOffloadDelay();
+        assertEquals(TEST_DELAY, offloadDelay);
+        padding = track.getOffloadPadding();
+        assertEquals(TEST_PADDING, padding);
+    }
+
+    public void testIsOffloadedPlayback() {
+        // non-offloaded case
+        AudioTrack nonOffloadTrack = allocNonOffloadAudioTrack();
+        assertFalse(nonOffloadTrack.isOffloadedPlayback());
+
+        // offloaded case
+        AudioTrack offloadTrack =
+                getOffloadAudioTrack(R.raw.sine1khzs40dblong,
+                        /* bitRateInkbps= */ 192,
+                        getAudioFormatWithEncoding(AudioFormat.ENCODING_MP3));
+        assertTrue(offloadTrack.isOffloadedPlayback());
+    }
+
+    public void testSetOffloadEndOfStreamWithNonOffloadedTrack() {
+        // Non-offload case
+        AudioTrack nonOffloadTrack = allocNonOffloadAudioTrack();
+        assertFalse(nonOffloadTrack.isOffloadedPlayback());
+        org.testng.Assert.assertThrows(IllegalStateException.class,
+                () -> nonOffloadTrack.setOffloadEndOfStream());
     }
 
     private static AudioFormat getAudioFormatWithEncoding(int encoding) {
        return new AudioFormat.Builder()
             .setEncoding(encoding)
-            .setSampleRate(44100)
-            .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
+            .setSampleRate(AUDIOTRACK_DEFAULT_SAMPLE_RATE)
+            .setChannelMask(AUDIOTRACK_DEFAULT_CHANNEL_MASK)
             .build();
     }
 
