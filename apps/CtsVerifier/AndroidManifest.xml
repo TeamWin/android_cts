@@ -1572,7 +1572,7 @@
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
             <meta-data android:name="test_required_features"
-                       android:value="android.hardware.fingerprint:android.software.secure_lock_screen" />
+                       android:value="android.software.secure_lock_screen" />
         </activity>
 
         <activity android:name=".security.FingerprintBoundKeysTest"
