@@ -497,6 +497,14 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testInstallStagedNoHashtreeApex_VerifyPostReboot");
     }
 
+    /**
+     * Should fail to verify apex targeting older dev sdk
+     */
+    @Test
+    public void testApexTargetingOldDevSdkFailsVerification() throws Exception {
+        runPhase("testApexTargetingOldDevSdkFailsVerification");
+    }
+
     private boolean isUpdatingApexSupported() throws Exception {
         final String updatable = getDevice().getProperty("ro.apex.updatable");
         return updatable != null && updatable.equals("true");

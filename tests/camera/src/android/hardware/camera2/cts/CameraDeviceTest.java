@@ -2519,6 +2519,11 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                     CaptureRequest.DISTORTION_CORRECTION_MODE_OFF);
         }
 
+        // Check JPEG quality
+        if (mStaticInfo.isColorOutputSupported()) {
+            mCollector.expectKeyValueNotNull(request, JPEG_QUALITY);
+        }
+
         // TODO: use the list of keys from CameraCharacteristics to avoid expecting
         //       keys which are not available by this CameraDevice.
     }

@@ -1055,9 +1055,19 @@ public class PhoneStateListenerTest {
                     assertFalse(bsi.isConditionallyBarred());
                     assertEquals(0, bsi.getConditionalBarringFactor());
                     assertEquals(0, bsi.getConditionalBarringTimeSeconds());
+                    assertFalse(bsi.isBarred());
                     break;
 
                 case BarringInfo.BarringServiceInfo.BARRING_TYPE_NONE:
+                    hasBarringTypeKnown = true;
+                    // Unless conditional barring is active, all conditional barring fields
+                    // should be "unset".
+                    assertFalse(bsi.isConditionallyBarred());
+                    assertEquals(0, bsi.getConditionalBarringFactor());
+                    assertEquals(0, bsi.getConditionalBarringTimeSeconds());
+                    assertFalse(bsi.isBarred());
+                    break;
+
                 case BarringInfo.BarringServiceInfo.BARRING_TYPE_UNCONDITIONAL:
                     hasBarringTypeKnown = true;
                     // Unless conditional barring is active, all conditional barring fields
@@ -1065,6 +1075,7 @@ public class PhoneStateListenerTest {
                     assertFalse(bsi.isConditionallyBarred());
                     assertEquals(0, bsi.getConditionalBarringFactor());
                     assertEquals(0, bsi.getConditionalBarringTimeSeconds());
+                    assertTrue(bsi.isBarred());
                     break;
 
                 case BarringInfo.BarringServiceInfo.BARRING_TYPE_CONDITIONAL:
@@ -1074,6 +1085,7 @@ public class PhoneStateListenerTest {
                     // so isConditionallyBarred() can be either true or false (hence not checked).
                     assertNotEquals(0, bsi.getConditionalBarringFactor());
                     assertNotEquals(0, bsi.getConditionalBarringTimeSeconds());
+                    assertEquals(bsi.isBarred(), bsi.isConditionallyBarred());
                     break;
             }
         }

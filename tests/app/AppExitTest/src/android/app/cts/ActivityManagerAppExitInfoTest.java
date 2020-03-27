@@ -26,10 +26,15 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
+import android.externalservice.common.RunningServiceInfo;
+import android.externalservice.common.ServiceMessages;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.DropBoxManager;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
@@ -549,6 +554,8 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         ApplicationExitInfo info = list.get(0);
         verify(info, mStubPackagePid, mStubPackageUid, STUB_PACKAGE_NAME,
                 ApplicationExitInfo.REASON_ANR, null, null, now, now2);
+        assertEquals(mStubPackageUid, info.getPackageUid());
+        assertEquals(mStubPackageUid, info.getDefiningUid());
 
         // Verify the traces
 
@@ -586,16 +593,54 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         // Remove old records to avoid interference with the test.
         clearHistoricalExitInfo();
 
-        long now = System.currentTimeMillis();
+        final String servicePackage = "android.externalservice.service";
+        final String keyIBinder = "ibinder";
+        final CountDownLatch latch = new CountDownLatch(1);
+        final Bundle holder = new Bundle();
+        final ServiceConnection connection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                holder.putBinder(keyIBinder, service);
+                latch.countDown();
+            }
 
-        // Start an isolated process and do nothing
-        startIsolatedService(ACTION_NONE, STUB_SERVICE_ISOLATED_NAME);
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+            }
+        };
+
+        final Intent intent = new Intent();
+        intent.setComponent(new ComponentName(servicePackage,
+                servicePackage + ".ExternalServiceWithZygote"));
+
+        // Bind to that external service, which will become an isolated process
+        // running in the current package user id.
+        assertTrue(mContext.bindService(intent,
+                Context.BIND_AUTO_CREATE | Context.BIND_EXTERNAL_SERVICE,
+                AsyncTask.THREAD_POOL_EXECUTOR, connection));
+
+        awaitForLatch(latch);
+
+        final IBinder service = holder.getBinder(keyIBinder);
+        assertNotNull(service);
+
+        // Retrieve its uid/pd/package name info.
+        Messenger remote = new Messenger(service);
+        RunningServiceInfo id = identifyService(remote);
+        assertNotNull(id);
+
+        assertFalse(id.uid == 0 || id.pid == 0);
+        assertFalse(Process.myUid() == id.uid);
+        assertFalse(Process.myPid() == id.pid);
+        assertEquals(mContext.getPackageName(), id.packageName);
 
         final WatchUidRunner watcher = new WatchUidRunner(mInstrumentation,
-                mStubPackageIsolatedUid, WAITFOR_MSEC);
+                id.uid, WAITFOR_MSEC);
 
-        // Finish the service in the isolated process
-        startIsolatedService(ACTION_FINISH, STUB_SERVICE_ISOLATED_NAME);
+        long now = System.currentTimeMillis();
+
+        // Remove the service connection
+        mContext.unbindService(connection);
 
         try {
             // Isolated process should have been killed as long as its service is done.
@@ -603,19 +648,20 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         } finally {
             watcher.finish();
         }
+
         long now2 = System.currentTimeMillis();
-
-        List<ApplicationExitInfo> list = ShellIdentityUtils.invokeMethodWithShellPermissions(
-                STUB_PACKAGE_NAME, mStubPackageIsolatedPid, 1,
-                mActivityManager::getHistoricalProcessExitReasons,
-                android.Manifest.permission.DUMP);
-
+        final ActivityManager am = mContext.getSystemService(ActivityManager.class);
+        final List<ApplicationExitInfo> list = am.getHistoricalProcessExitReasons(null, id.pid, 1);
         assertTrue(list != null && list.size() == 1);
 
         ApplicationExitInfo info = list.get(0);
-        verify(info, mStubPackageIsolatedPid, mStubPackageIsolatedUid,
-                mStubPackageIsolatedProcessName, ApplicationExitInfo.REASON_OTHER, null,
+        verify(info, id.pid, id.uid, null, ApplicationExitInfo.REASON_OTHER, null,
                 "isolated not needed", now, now2);
+        assertEquals(Process.myUid(), info.getPackageUid());
+        assertEquals(mContext.getPackageManager().getPackageUid(servicePackage, 0),
+                info.getDefiningUid());
+        assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE,
+                info.getImportance());
     }
 
     private String extractMemString(String dump, String prefix, char nextSep) {
@@ -825,6 +871,40 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         assertTrue(list != null && list.size() == 1);
         verify(list.get(0), mStubPackageRemotePid, mStubPackageUid, STUB_REMOTE_ROCESS_NAME,
                 ApplicationExitInfo.REASON_EXIT_SELF, EXIT_CODE, null, now2, now3);
+    }
+
+    private RunningServiceInfo identifyService(Messenger service) throws Exception {
+        final CountDownLatch latch = new CountDownLatch(1);
+        class IdentifyHandler extends Handler {
+            IdentifyHandler() {
+                super(Looper.getMainLooper());
+            }
+
+            RunningServiceInfo mInfo;
+
+            @Override
+            public void handleMessage(Message msg) {
+                Log.d(TAG, "Received message: " + msg);
+                switch (msg.what) {
+                    case ServiceMessages.MSG_IDENTIFY_RESPONSE:
+                        msg.getData().setClassLoader(RunningServiceInfo.class.getClassLoader());
+                        mInfo = msg.getData().getParcelable(ServiceMessages.IDENTIFY_INFO);
+                        latch.countDown();
+                        break;
+                }
+                super.handleMessage(msg);
+            }
+        }
+
+        IdentifyHandler handler = new IdentifyHandler();
+        Messenger local = new Messenger(handler);
+
+        Message msg = Message.obtain(null, ServiceMessages.MSG_IDENTIFY);
+        msg.replyTo = local;
+        service.send(msg);
+        awaitForLatch(latch);
+
+        return handler.mInfo;
     }
 
     private void prepareTestUser() throws Exception {
@@ -1042,7 +1122,10 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         assertNotNull(info);
         assertEquals(pid, info.getPid());
         assertEquals(uid, info.getRealUid());
-        assertEquals(processName, info.getProcessName());
+        assertEquals(UserHandle.of(UserHandle.getUserId(uid)), info.getUserHandle());
+        if (processName != null) {
+            assertEquals(processName, info.getProcessName());
+        }
         assertEquals(reason, info.getReason());
         if (status != null) {
             assertEquals(status.intValue(), info.getStatus());

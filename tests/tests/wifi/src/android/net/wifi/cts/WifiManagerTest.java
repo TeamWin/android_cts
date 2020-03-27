@@ -86,6 +86,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -154,7 +155,9 @@ public class WifiManagerTest extends AndroidTestCase {
             = "com.android.managedprovisioning";
 
     private static final String TEST_SSID_UNQUOTED = "testSsid1";
-    private static final MacAddress TEST_MAC = MacAddress.fromString("aa:bb:cc:dd:ee:ff");
+    private static String TEST_IP_ADDRESS = "192.168.5.5";
+    private static String TEST_MAC_ADDRESS = "aa:bb:cc:dd:ee:ff";
+    private static final MacAddress TEST_MAC = MacAddress.fromString(TEST_MAC_ADDRESS);
     private static final String TEST_PASSPHRASE = "passphrase";
     private static final String PASSPOINT_INSTALLATION_FILE_WITH_CA_CERT =
             "assets/ValidPasspointProfile.base64";
@@ -1403,13 +1406,13 @@ public class WifiManagerTest extends AndroidTestCase {
         mWifiManager.setSoftApConfiguration(targetConfig);
         // Bssid set dodesn't support for tethered hotspot
         SoftApConfiguration currentConfig = mWifiManager.getSoftApConfiguration();
-        assertNull(currentConfig.getBssid());
         compareSoftApConfiguration(targetConfig, currentConfig);
     }
 
     private void compareSoftApConfiguration(SoftApConfiguration currentConfig,
         SoftApConfiguration testSoftApConfig) {
         assertEquals(currentConfig.getSsid(), testSoftApConfig.getSsid());
+        assertEquals(currentConfig.getBssid(), testSoftApConfig.getBssid());
         assertEquals(currentConfig.getSecurityType(), testSoftApConfig.getSecurityType());
         assertEquals(currentConfig.getPassphrase(), testSoftApConfig.getPassphrase());
         assertEquals(currentConfig.isHiddenSsid(), testSoftApConfig.isHiddenSsid());
@@ -2471,15 +2474,21 @@ public class WifiManagerTest extends AndroidTestCase {
 
         // Create and install a Passpoint configuration
         PasspointConfiguration passpointConfiguration = createPasspointConfiguration();
-        mWifiManager.addOrUpdatePasspointConfiguration(passpointConfiguration);
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            mWifiManager.addOrUpdatePasspointConfiguration(passpointConfiguration);
 
-        // Compare configurations
-        List<PasspointConfiguration> configurations = mWifiManager.getPasspointConfigurations();
-        assertNotNull(configurations);
-        assertEquals(passpointConfiguration, configurations.get(0));
+            // Compare configurations
+            List<PasspointConfiguration> configurations = mWifiManager.getPasspointConfigurations();
+            assertNotNull(configurations);
+            assertEquals(passpointConfiguration, configurations.get(0));
 
-        // Clean up
-        mWifiManager.removePasspointConfiguration(passpointConfiguration.getHomeSp().getFqdn());
+            // Clean up
+            mWifiManager.removePasspointConfiguration(passpointConfiguration.getHomeSp().getFqdn());
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
     }
 
     /**
@@ -2522,5 +2531,41 @@ public class WifiManagerTest extends AndroidTestCase {
         assertEquals(0, mProvisioningFailureStatus);
         // No completion callback expected
         assertFalse(mProvisioningComplete);
+    }
+
+    /**
+     * Tests {@link WifiManager#setTdlsEnabled(InetAddress, boolean)} does not crash.
+     */
+    public void testSetTdlsEnabled() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        // Trigger a scan & wait for connection to one of the saved networks.
+        mWifiManager.startScan();
+        waitForConnection();
+
+        InetAddress inetAddress = InetAddress.getByName(TEST_IP_ADDRESS);
+
+        mWifiManager.setTdlsEnabled(inetAddress, true);
+        Thread.sleep(50);
+        mWifiManager.setTdlsEnabled(inetAddress, false);
+    }
+
+    /**
+     * Tests {@link WifiManager#setTdlsEnabledWithMacAddress(String, boolean)} does not crash.
+     */
+    public void testSetTdlsEnabledWithMacAddress() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        // Trigger a scan & wait for connection to one of the saved networks.
+        mWifiManager.startScan();
+        waitForConnection();
+
+        mWifiManager.setTdlsEnabledWithMacAddress(TEST_MAC_ADDRESS, true);
+        Thread.sleep(50);
+        mWifiManager.setTdlsEnabledWithMacAddress(TEST_MAC_ADDRESS, false);
     }
 }
