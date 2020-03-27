@@ -26,9 +26,9 @@ import static org.junit.Assume.assumeFalse;
 import android.app.Activity;
 import android.graphics.Insets;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
-import android.util.Size;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowInsets;
@@ -61,11 +61,11 @@ public class WindowMetricsTests extends WindowManagerTestBase {
         final MetricsActivity activity = mMetricsActivity.launchActivity(null);
         activity.waitForLayout();
 
-        assertEquals(activity.mOnLayoutSize, activity.mOnCreateCurrentMetrics.getSize());
-        assertTrue(activity.mOnCreateMaximumMetrics.getSize().getWidth()
-                >= activity.mOnCreateCurrentMetrics.getSize().getWidth());
-        assertTrue(activity.mOnCreateMaximumMetrics.getSize().getHeight()
-                >= activity.mOnCreateCurrentMetrics.getSize().getHeight());
+        assertEquals(activity.mOnLayoutBounds, activity.mOnCreateCurrentMetrics.getBounds());
+        assertTrue(activity.mOnCreateMaximumMetrics.getBounds().width()
+                >= activity.mOnCreateCurrentMetrics.getBounds().width());
+        assertTrue(activity.mOnCreateMaximumMetrics.getBounds().height()
+                >= activity.mOnCreateCurrentMetrics.getBounds().height());
 
         assertEquals(activity.mOnLayoutInsets.getSystemWindowInsets(),
                 activity.mOnCreateCurrentMetrics.getWindowInsets().getSystemWindowInsets());
@@ -86,11 +86,11 @@ public class WindowMetricsTests extends WindowManagerTestBase {
         final Point displaySize = new Point();
         display.getSize(displaySize);
         final WindowMetrics windowMetrics = activity.getWindowManager().getCurrentWindowMetrics();
-        final Size size = getLegacySize(windowMetrics);
+        final Rect bounds = getLegacyBounds(windowMetrics);
         assertEquals("Reported display width must match window width",
-                displaySize.x, size.getWidth());
+                displaySize.x, bounds.width());
         assertEquals("Reported display height must match window height",
-                displaySize.y, size.getHeight());
+                displaySize.y, bounds.height());
 
         // Check max window size
         final Point realDisplaySize = new Point();
@@ -98,21 +98,19 @@ public class WindowMetricsTests extends WindowManagerTestBase {
         final WindowMetrics maxWindowMetrics = activity.getWindowManager()
                 .getMaximumWindowMetrics();
         assertEquals("Reported real display width must match max window size",
-                realDisplaySize.x, maxWindowMetrics.getSize().getWidth());
+                realDisplaySize.x, maxWindowMetrics.getBounds().width());
         assertEquals("Reported real display height must match max window size",
-                realDisplaySize.y, maxWindowMetrics.getSize().getHeight());
+                realDisplaySize.y, maxWindowMetrics.getBounds().height());
     }
 
-    private static Size getLegacySize(WindowMetrics windowMetrics) {
+    private static Rect getLegacyBounds(WindowMetrics windowMetrics) {
         WindowInsets windowInsets = windowMetrics.getWindowInsets();
         final Insets insetsWithCutout =
                 windowInsets.getInsetsIgnoringVisibility(navigationBars() | displayCutout());
 
-        final int insetsWidth = insetsWithCutout.left + insetsWithCutout.right;
-        final int insetsHeight = insetsWithCutout.top + insetsWithCutout.bottom;
-
-        Size size = windowMetrics.getSize();
-        return new Size(size.getWidth() - insetsWidth, size.getHeight() - insetsHeight);
+        final Rect bounds = windowMetrics.getBounds();
+        final Insets result = Insets.subtract(Insets.of(bounds), insetsWithCutout);
+        return new Rect(result.left, result.top, result.right, result.bottom);
     }
 
     public static class MetricsActivity extends Activity implements View.OnLayoutChangeListener {
@@ -122,7 +120,7 @@ public class WindowMetricsTests extends WindowManagerTestBase {
         private WindowMetrics mOnCreateMaximumMetrics;
         private WindowMetrics mOnCreateCurrentMetrics;
 
-        private Size mOnLayoutSize;
+        private Rect mOnLayoutBounds;
         private WindowInsets mOnLayoutInsets;
 
         @Override
@@ -136,8 +134,9 @@ public class WindowMetricsTests extends WindowManagerTestBase {
         @Override
         public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft,
                 int oldTop, int oldRight, int oldBottom) {
-            mOnLayoutSize = new Size(getWindow().getDecorView().getWidth(),
-                    getWindow().getDecorView().getHeight());
+            final View decorView = getWindow().getDecorView();
+            mOnLayoutBounds = new Rect(decorView.getTop(), decorView.getLeft(),
+                    decorView.getRight(), decorView.getBottom());
             mOnLayoutInsets = getWindow().getDecorView().getRootWindowInsets();
             mLayoutLatch.countDown();
         }
