@@ -49,16 +49,15 @@ struct AThermalTestContext {
 static jclass    gNativeThermalTest_class;
 static jmethodID gNativeThermalTest_thermalOverrideMethodID;
 
-int onStatusChange(void *data, AThermalStatus status) {
+void onStatusChange(void *data, AThermalStatus status) {
     AThermalTestContext *ctx = static_cast<AThermalTestContext *>(data);
     if (ctx == nullptr) {
-        return BAD_VALUE;
+        return;
     } else {
         std::lock_guard<std::mutex> guard(ctx->mMutex);
         ctx->mListenerStatus.push_back(status);
         ctx->mCv.notify_all();
     }
-    return OK;
 }
 
 static inline void setThermalStatusOverride(JNIEnv* env, jobject obj, int32_t level) {
