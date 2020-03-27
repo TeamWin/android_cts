@@ -45,3 +45,13 @@ Java_android_cts_tagging_Utils_nativeHeapPointerTag(JNIEnv *) {
   return 0;
 #endif
 }
+
+extern "C" __attribute__((no_sanitize("address", "hwaddress")))
+JNIEXPORT void JNICALL
+Java_android_cts_tagging_Utils_accessMistaggedPointer(JNIEnv *) {
+  int* p = new int[4];
+  int* mistagged_p = reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(p) + (1ULL << 56));
+  volatile int load = *mistagged_p;
+  (void)load;
+  delete[] p;
+}

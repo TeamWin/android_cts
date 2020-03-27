@@ -16,35 +16,75 @@
 
 package android.cts.tagging.none;
 
-import android.os.Build;
-import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
+import android.content.Context;
+import android.content.Intent;
 import android.cts.tagging.Utils;
+import android.os.Build;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.DropBoxReceiver;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
 public class TaggingTest {
+    private static final String NATIVE_CRASH_TAG = "data_app_native_crash";
+
+    private Context mContext;
+
+    @Before
+    public void setUp() {
+        mContext = InstrumentationRegistry.getTargetContext();
+    }
 
     @Test
     public void testHeapTaggingEnabled() {
-      // Skip the test if not Arm64.
-      if (Build.CPU_ABI.startsWith("arm64")) {
-        int tag = Utils.nativeHeapPointerTag();
-        if (Utils.kernelSupportsTaggedPointers()) {
-          assertNotEquals(0, tag);
-        } else {
-          assertEquals(0, tag);
+        // Skip the test if not Arm64.
+        if (Build.CPU_ABI.startsWith("arm64")) {
+            int tag = Utils.nativeHeapPointerTag();
+            if (Utils.kernelSupportsTaggedPointers()) {
+                assertNotEquals(0, tag);
+            } else {
+                assertEquals(0, tag);
+            }
         }
-      }
     }
 
     @Test
     public void testHeapTaggingDisabled() {
-      assertEquals(0, Utils.nativeHeapPointerTag());
+        assertEquals(0, Utils.nativeHeapPointerTag());
+    }
+
+    @Test
+    public void testMemoryTagChecksEnabled() throws Exception {
+        final DropBoxReceiver receiver =
+                new DropBoxReceiver(
+                        mContext,
+                        NATIVE_CRASH_TAG,
+                        mContext.getPackageName() + ":CrashProcess",
+                        "backtrace:");
+        Intent intent = new Intent();
+        intent.setClass(mContext, CrashActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
+
+        assertTrue(receiver.await());
+    }
+
+    @Test
+    public void testMemoryTagChecksDisabled() {
+        Utils.accessMistaggedPointer();
     }
 }

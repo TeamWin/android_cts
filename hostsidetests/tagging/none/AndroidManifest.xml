@@ -18,9 +18,11 @@
     package="android.cts.tagging.none">
 
     <uses-sdk android:targetSdkVersion="29" />
+    <uses-permission android:name="android.permission.READ_LOGS"/>
 
     <application android:debuggable="true">
         <uses-library android:name="android.test.runner" />
+        <activity android:name=".CrashActivity" android:process=":CrashProcess" />
     </application>
 
     <instrumentation
