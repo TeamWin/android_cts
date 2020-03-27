@@ -40,4 +40,5 @@ android_test {
     host_required: ["cts-dynamic-config"],
     sdk_version: "test_current",
     min_sdk_version: "29",
+    required: ["CtsMediaPreparerApp"],
 }
