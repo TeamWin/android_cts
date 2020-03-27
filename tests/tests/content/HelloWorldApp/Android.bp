@@ -43,6 +43,7 @@ android_test {
         "vts10",
         "general-tests",
     ],
+    v4_signature: true,
 }
 
 //-----------------------------------------------------------
@@ -57,4 +58,5 @@ android_test {
         "vts10",
         "general-tests",
     ],
+    v4_signature: true,
 }

@@ -86,6 +86,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -154,7 +155,9 @@ public class WifiManagerTest extends AndroidTestCase {
             = "com.android.managedprovisioning";
 
     private static final String TEST_SSID_UNQUOTED = "testSsid1";
-    private static final MacAddress TEST_MAC = MacAddress.fromString("aa:bb:cc:dd:ee:ff");
+    private static String TEST_IP_ADDRESS = "192.168.5.5";
+    private static String TEST_MAC_ADDRESS = "aa:bb:cc:dd:ee:ff";
+    private static final MacAddress TEST_MAC = MacAddress.fromString(TEST_MAC_ADDRESS);
     private static final String TEST_PASSPHRASE = "passphrase";
     private static final String PASSPOINT_INSTALLATION_FILE_WITH_CA_CERT =
             "assets/ValidPasspointProfile.base64";
@@ -383,9 +386,8 @@ public class WifiManagerTest extends AndroidTestCase {
             while (System.currentTimeMillis() < timeout
                     && mNetworkInfo.getState() != state)
                 mMySync.wait(WAIT_MSEC);
-            assertTrue(mNetworkInfo.getState() == state);
+            assertEquals(mNetworkInfo.getState(), state);
         }
-
     }
 
     private void waitForConnection() throws Exception {
@@ -394,6 +396,24 @@ public class WifiManagerTest extends AndroidTestCase {
 
     private void waitForDisconnection() throws Exception {
         waitForNetworkInfoState(NetworkInfo.State.DISCONNECTED);
+    }
+
+    private void ensureNotNetworkInfoState(NetworkInfo.State state) throws Exception {
+        synchronized (mMySync) {
+            long timeout = System.currentTimeMillis() + TIMEOUT_MSEC + WAIT_MSEC;
+            while (System.currentTimeMillis() < timeout) {
+                assertNotEquals(mNetworkInfo.getState(), state);
+                mMySync.wait(WAIT_MSEC);
+            }
+        }
+    }
+
+    private void ensureNotConnected() throws Exception {
+        ensureNotNetworkInfoState(NetworkInfo.State.CONNECTED);
+    }
+
+    private void ensureNotDisconnected() throws Exception {
+        ensureNotNetworkInfoState(NetworkInfo.State.DISCONNECTED);
     }
 
     private boolean existSSID(String ssid) {
@@ -2471,15 +2491,21 @@ public class WifiManagerTest extends AndroidTestCase {
 
         // Create and install a Passpoint configuration
         PasspointConfiguration passpointConfiguration = createPasspointConfiguration();
-        mWifiManager.addOrUpdatePasspointConfiguration(passpointConfiguration);
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            mWifiManager.addOrUpdatePasspointConfiguration(passpointConfiguration);
 
-        // Compare configurations
-        List<PasspointConfiguration> configurations = mWifiManager.getPasspointConfigurations();
-        assertNotNull(configurations);
-        assertEquals(passpointConfiguration, configurations.get(0));
+            // Compare configurations
+            List<PasspointConfiguration> configurations = mWifiManager.getPasspointConfigurations();
+            assertNotNull(configurations);
+            assertEquals(passpointConfiguration, configurations.get(0));
 
-        // Clean up
-        mWifiManager.removePasspointConfiguration(passpointConfiguration.getHomeSp().getFqdn());
+            // Clean up
+            mWifiManager.removePasspointConfiguration(passpointConfiguration.getHomeSp().getFqdn());
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
     }
 
     /**
@@ -2522,5 +2548,128 @@ public class WifiManagerTest extends AndroidTestCase {
         assertEquals(0, mProvisioningFailureStatus);
         // No completion callback expected
         assertFalse(mProvisioningComplete);
+    }
+
+    /**
+     * Tests {@link WifiManager#setTdlsEnabled(InetAddress, boolean)} does not crash.
+     */
+    public void testSetTdlsEnabled() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        // Trigger a scan & wait for connection to one of the saved networks.
+        mWifiManager.startScan();
+        waitForConnection();
+
+        InetAddress inetAddress = InetAddress.getByName(TEST_IP_ADDRESS);
+
+        mWifiManager.setTdlsEnabled(inetAddress, true);
+        Thread.sleep(50);
+        mWifiManager.setTdlsEnabled(inetAddress, false);
+    }
+
+    /**
+     * Tests {@link WifiManager#setTdlsEnabledWithMacAddress(String, boolean)} does not crash.
+     */
+    public void testSetTdlsEnabledWithMacAddress() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        // Trigger a scan & wait for connection to one of the saved networks.
+        mWifiManager.startScan();
+        waitForConnection();
+
+        mWifiManager.setTdlsEnabledWithMacAddress(TEST_MAC_ADDRESS, true);
+        Thread.sleep(50);
+        mWifiManager.setTdlsEnabledWithMacAddress(TEST_MAC_ADDRESS, false);
+    }
+
+    /**
+     * Tests {@link WifiManager#allowAutojoin(int, boolean)}.
+     */
+    public void testAllowAutojoin() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        // Trigger a scan & wait for connection to one of the saved networks.
+        mWifiManager.startScan();
+        waitForConnection();
+
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        List<WifiConfiguration> savedNetworks = null;
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            // disable autojoin on all networks.
+            savedNetworks = mWifiManager.getConfiguredNetworks();
+            for (WifiConfiguration network : savedNetworks) {
+                mWifiManager.allowAutojoin(network.networkId, false);
+            }
+            // trigger a disconnect and wait for disconnect.
+            mWifiManager.disconnect();
+            waitForDisconnection();
+
+            // Now trigger scan and ensure that the device does not connect to any networks.
+            mWifiManager.startScan();
+            ensureNotConnected();
+
+            // Now enable autojoin on all networks.
+            for (WifiConfiguration network : savedNetworks) {
+                mWifiManager.allowAutojoin(network.networkId, true);
+            }
+
+            // Trigger a scan & wait for connection to one of the saved networks.
+            mWifiManager.startScan();
+            waitForConnection();
+        } finally {
+            // Restore auto join state.
+            if (savedNetworks != null) {
+                for (WifiConfiguration network : savedNetworks) {
+                    mWifiManager.allowAutojoin(network.networkId, network.allowAutojoin);
+                }
+            }
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Tests {@link WifiManager#allowAutojoinGlobal(boolean)}.
+     */
+    public void testAllowAutojoinGlobal() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        // Trigger a scan & wait for connection to one of the saved networks.
+        mWifiManager.startScan();
+        waitForConnection();
+
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            // disable autojoin on all networks.
+            mWifiManager.allowAutojoinGlobal(false);
+
+            // trigger a disconnect and wait for disconnect.
+            mWifiManager.disconnect();
+            waitForDisconnection();
+
+            // Now trigger scan and ensure that the device does not connect to any networks.
+            mWifiManager.startScan();
+            ensureNotConnected();
+
+            // Now enable autojoin on all networks.
+            mWifiManager.allowAutojoinGlobal(true);
+
+            // Trigger a scan & wait for connection to one of the saved networks.
+            mWifiManager.startScan();
+            waitForConnection();
+        } finally {
+            // Re-enable auto join if the test fails for some reason.
+            mWifiManager.allowAutojoinGlobal(true);
+            uiAutomation.dropShellPermissionIdentity();
+        }
     }
 }

@@ -53,6 +53,8 @@ import com.android.compatibility.common.util.AppStandbyUtils;
 import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.ThermalUtils;
 
+import junit.framework.AssertionFailedError;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -249,6 +251,7 @@ public class JobThrottlingTest {
             return;
         }
         ensureSavedWifiNetwork(mWifiManager);
+        setAirplaneMode(false);
         setWifiState(true, mCm, mWifiManager);
         assumeTrue("device idle not enabled", mDeviceIdleEnabled);
         mTestAppInterface.scheduleJob(false, true);
@@ -260,6 +263,7 @@ public class JobThrottlingTest {
                 mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
         Thread.sleep(TestJobSchedulerReceiver.JOB_INITIAL_BACKOFF);
         ThermalUtils.overrideThermalNotThrottling();
+        runJob();
         assertTrue("Job did not start back from throttling",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
     }
@@ -454,11 +458,17 @@ public class JobThrottlingTest {
         }
         mTestAppInterface.cleanup();
         BatteryUtils.runDumpsysBatteryReset();
+        BatteryUtils.enableBatterySaver(false);
         removeTestAppFromTempWhitelist();
 
         // Ensure that we leave WiFi in its previous state.
         if (mWifiManager.isWifiEnabled() != mInitialWiFiState) {
-            setWifiState(mInitialWiFiState, mCm, mWifiManager);
+            try {
+                setWifiState(mInitialWiFiState, mCm, mWifiManager);
+            } catch (AssertionFailedError e) {
+                // Don't fail the test just because wifi state wasn't set in tearDown.
+                Log.e(TAG, "Failed to return wifi state to " + mInitialWiFiState, e);
+            }
         }
         Settings.Global.putString(mContext.getContentResolver(),
                 Settings.Global.JOB_SCHEDULER_CONSTANTS, mInitialJobSchedulerConstants);

@@ -177,7 +177,10 @@ android_test_helper_app {
     defaults: ["cts_support_defaults"],
     sdk_version: "current",
     // tag this module as a cts test artifact
-    test_suites: ["cts"],
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
     compile_multilib: "both",
     jni_libs: [
         "libVkLayer_nullLayerA",
@@ -195,7 +198,10 @@ android_test_helper_app {
     defaults: ["cts_support_defaults"],
     sdk_version: "current",
     // tag this module as a cts test artifact
-    test_suites: ["cts"],
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
     compile_multilib: "both",
     jni_libs: [
         "libGLES_glesLayerA",

@@ -1,4 +1,4 @@
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,18 +12,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-java_test_host {
-    name: "CtsGpuToolsHostTestCases",
-    srcs: ["src/**/*.java"],
-    // tag this module as a cts test artifact
+android_test {
+    name: "CtsWifiTestCases",
+    defaults: ["cts_defaults"],
+
+    // Include both the 32 and 64 bit versions
+    compile_multilib: "both",
+
+    libs: [
+        "android.test.base.stubs",
+    ],
+
+    srcs: [ "src/**/*.java" ],
+
+    static_libs: [
+        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
+        "junit",
+        "junit-params",
+        "truth-prebuilt",
+    ],
+
     test_suites: [
         "cts",
+        "vts",
+        "vts10",
         "general-tests",
+        "mts",
     ],
-    libs: [
-        "cts-tradefed",
-        "tradefed",
-        "compatibility-host-util",
-    ],
-    static_libs: ["platform-test-annotations-host"],
+
+    platform_apis: true,
 }

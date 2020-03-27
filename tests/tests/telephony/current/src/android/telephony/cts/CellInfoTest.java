@@ -994,6 +994,8 @@ public class CellInfoTest {
             verifyPlmnId(plmnId);
         }
 
+        verifyCsgInfo(tdscdma.getClosedSubscriberGroupInfo());
+
         // If the cell is reported as registered, then all the logical cell info must be reported
         if (isRegistered) {
             assertTrue("LAC is required for registered cells", lac != Integer.MAX_VALUE);
