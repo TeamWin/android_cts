@@ -537,7 +537,7 @@ public class WifiNetworkSpecifierTest extends AndroidTestCase {
                 .setSsid(removeDoubleQuotes(mTestNetwork.SSID))
                 .setWpa2EnterpriseConfig(new WifiEnterpriseConfig())
                 .build();
-        assertThat(specifier1.satisfiedBy(specifier2)).isTrue();
+        assertThat(specifier1.canBeSatisfiedBy(specifier2)).isTrue();
     }
 
     /**
@@ -557,6 +557,6 @@ public class WifiNetworkSpecifierTest extends AndroidTestCase {
                 .setSsid(removeDoubleQuotes(mTestNetwork.SSID))
                 .setWpa3EnterpriseConfig(new WifiEnterpriseConfig())
                 .build();
-        assertThat(specifier1.satisfiedBy(specifier2)).isTrue();
+        assertThat(specifier1.canBeSatisfiedBy(specifier2)).isTrue();
     }
 }
