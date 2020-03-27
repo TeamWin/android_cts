@@ -25,7 +25,6 @@ import static android.content.pm.PackageManager.GET_PERMISSIONS;
 import static android.content.pm.PackageManager.GET_PROVIDERS;
 import static android.content.pm.PackageManager.GET_RECEIVERS;
 import static android.content.pm.PackageManager.GET_SERVICES;
-import static android.content.pm.cts.ApplicationInfoTest.DIRECT_BOOT_UNAWARE_PACKAGE_NAME;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -34,7 +33,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -471,8 +469,6 @@ public class PackageManagerTest {
 
         assertFalse(mPackageManager.isDefaultApplicationIcon(mPackageManager.getActivityIcon(
                 new ComponentName(PACKAGE_NAME, ACTIVITY_NAME))));
-        assertTrue(mPackageManager.isDefaultApplicationIcon(mPackageManager.getActivityIcon(
-                new ComponentName(DIRECT_BOOT_UNAWARE_PACKAGE_NAME, ACTIVITY_NAME))));
 
         // getDrawable is called by ComponentInfo.loadIcon() which called by getActivityIcon()
         // method of PackageMaganer. Here is just assurance for its functionality.
