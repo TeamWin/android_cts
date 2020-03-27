@@ -1179,8 +1179,12 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
         }
+        assertTrue("Safe Browsing should be enabled by default",
+                mSettings.getSafeBrowsingEnabled());
         mSettings.setSafeBrowsingEnabled(false);
-        assertFalse(mSettings.getSafeBrowsingEnabled());
+        assertFalse("Can disable Safe Browsing", mSettings.getSafeBrowsingEnabled());
+        mSettings.setSafeBrowsingEnabled(true);
+        assertTrue("Can enable Safe Browsing", mSettings.getSafeBrowsingEnabled());
     }
 
     private  int[] getBitmapPixels(Bitmap bitmap, int x, int y, int width, int height) {
