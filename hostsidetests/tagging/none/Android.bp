@@ -23,6 +23,7 @@ android_test_helper_app {
     ],
     static_libs: [
 	"tagging-common-devicesidelib",
+        "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "androidx.test.rules",
         "androidx.test.core",
@@ -32,5 +33,5 @@ android_test_helper_app {
         "libtagging-common-devicesidelib-jni",
     ],
     srcs: ["src/**/*.java"],
-    sdk_version: "current",
+    sdk_version: "test_current",
 }
