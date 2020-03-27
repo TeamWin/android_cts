@@ -36,6 +36,27 @@ public class GnssStatusTest {
         verifyTestValues(gnssStatus);
     }
 
+    @Test
+    public void testBuilder_ClearSatellites() {
+        GnssStatus.Builder builder = new GnssStatus.Builder();
+        builder.addSatellite(GnssStatus.CONSTELLATION_GPS,
+                /* svid= */ 13,
+                /* cn0DbHz= */ 25.5f,
+                /* elevation= */ 2.0f,
+                /* azimuth= */ 255.1f,
+                /* hasEphemeris= */ true,
+                /* hasAlmanac= */ false,
+                /* usedInFix= */ true,
+                /* hasCarrierFrequency= */ true,
+                /* carrierFrequency= */ 1575420000f,
+                /* hasBasebandCn0DbHz= */ true,
+                /* basebandCn0DbHz= */ 20.5f);
+        builder.clearSatellites();
+
+        GnssStatus status = builder.build();
+        assertEquals(0, status.getSatelliteCount());
+    }
+
     private static GnssStatus getTestGnssStatus() {
         GnssStatus.Builder builder = new GnssStatus.Builder();
         builder.addSatellite(GnssStatus.CONSTELLATION_GPS,
