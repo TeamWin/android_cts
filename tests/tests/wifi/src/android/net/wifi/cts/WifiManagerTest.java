@@ -52,6 +52,7 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.net.wifi.WifiNetworkConnectionStatistics;
+import android.net.wifi.WifiNetworkSuggestion;
 import android.net.wifi.hotspot2.ConfigParser;
 import android.net.wifi.hotspot2.OsuProvider;
 import android.net.wifi.hotspot2.PasspointConfiguration;
@@ -155,13 +156,15 @@ public class WifiManagerTest extends AndroidTestCase {
             = "com.android.managedprovisioning";
 
     private static final String TEST_SSID_UNQUOTED = "testSsid1";
-    private static String TEST_IP_ADDRESS = "192.168.5.5";
-    private static String TEST_MAC_ADDRESS = "aa:bb:cc:dd:ee:ff";
+    private static final String TEST_IP_ADDRESS = "192.168.5.5";
+    private static final String TEST_MAC_ADDRESS = "aa:bb:cc:dd:ee:ff";
     private static final MacAddress TEST_MAC = MacAddress.fromString(TEST_MAC_ADDRESS);
     private static final String TEST_PASSPHRASE = "passphrase";
     private static final String PASSPOINT_INSTALLATION_FILE_WITH_CA_CERT =
             "assets/ValidPasspointProfile.base64";
     private static final String TYPE_WIFI_CONFIG = "application/x-wifi-config";
+    private static final String TEST_PSK_CAP = "[RSN-PSK-CCMP]";
+    private static final String TEST_BSSID = "00:01:02:03:04:05";
 
     private IntentFilter mIntentFilter;
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -2584,6 +2587,34 @@ public class WifiManagerTest extends AndroidTestCase {
         mWifiManager.setTdlsEnabledWithMacAddress(TEST_MAC_ADDRESS, true);
         Thread.sleep(50);
         mWifiManager.setTdlsEnabledWithMacAddress(TEST_MAC_ADDRESS, false);
+    }
+
+    public void testGetAllWifiConfigForMatchedNetworkSuggestion() {
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        ScanResult scanResult = new ScanResult();
+        scanResult.SSID = TEST_SSID;
+        scanResult.capabilities = TEST_PSK_CAP;
+        scanResult.BSSID = TEST_BSSID;
+        List<ScanResult> testList = Arrays.asList(scanResult);
+        WifiNetworkSuggestion suggestion = new WifiNetworkSuggestion.Builder()
+                .setSsid(TEST_SSID).setWpa2Passphrase(TEST_PASSPHRASE).build();
+
+        assertEquals(WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS,
+                mWifiManager.addNetworkSuggestions(Arrays.asList(suggestion)));
+        List<WifiConfiguration> matchedResult;
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            matchedResult = mWifiManager
+                    .getWifiConfigForMatchedNetworkSuggestionsSharedWithUser(testList);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+        // As suggestion is not approved, will return empty list.
+        assertTrue(matchedResult.isEmpty());
     }
 
     /**
