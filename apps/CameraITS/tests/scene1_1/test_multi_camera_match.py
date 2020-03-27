@@ -46,7 +46,8 @@ def main():
             if i == ids[0]:  # get_available_output_sizes returns sorted list
                 yuv_match_sizes = yuv_sizes[i]
             else:
-                list(set(yuv_sizes[i]).intersection(yuv_match_sizes))
+                yuv_match_sizes = list(
+                        set(yuv_sizes[i]).intersection(yuv_match_sizes))
 
         # find matched size for captures
         yuv_match_sizes.sort()
