@@ -64,6 +64,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
 
     private static final String SIMPLE_APP_APK ="CtsSimpleApp.apk";
     private static final String SIMPLE_APP_PKG = "com.android.cts.launcherapps.simpleapp";
+    private static final String SIMPLE_APP_ACTIVITY = SIMPLE_APP_PKG + ".SimpleActivity";
 
     private static final String WIFI_CONFIG_CREATOR_PKG =
             "com.android.cts.deviceowner.wificonfigcreator";
@@ -973,6 +974,8 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         }
         try {
             installAppAsUser(SIMPLE_APP_APK, mPrimaryUserId);
+            // launch the app once before starting the test.
+            startActivityAsUser(mPrimaryUserId, SIMPLE_APP_PKG, SIMPLE_APP_ACTIVITY);
             assertMetricsLogged(getDevice(),
                     () -> executeDeviceTestMethod(".UserControlDisabledPackagesTest",
                             "testSetUserControlDisabledPackages"),

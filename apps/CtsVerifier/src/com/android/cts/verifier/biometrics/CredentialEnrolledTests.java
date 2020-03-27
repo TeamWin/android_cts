@@ -44,11 +44,13 @@ public class CredentialEnrolledTests extends AbstractBaseTest {
     private Button mBiometricManagerButton;
     private Button mBPSetAllowedAuthenticatorsButton;
     private Button mBPSetDeviceCredentialAllowedButton;
+    private Button mCancellationButton;
 
     private boolean mEnrollPass;
     private boolean mBiometricManagerPass;
     private boolean mBiometricPromptSetAllowedAuthenticatorsPass;
     private boolean mBiometricPromptSetDeviceCredentialAllowedPass;
+    private boolean mCancellationPass;
 
     private final Handler mHandler = new Handler(Looper.getMainLooper());
     private final Executor mExecutor = mHandler::post;
@@ -81,7 +83,6 @@ public class CredentialEnrolledTests extends AbstractBaseTest {
         // Test BiometricManager#canAuthenticate(DEVICE_CREDENTIAL)
         mBiometricManagerButton = findViewById(R.id.bm_button);
         mBiometricManagerButton.setOnClickListener((view) -> {
-
 
             final int biometricResult = bm.canAuthenticate(Authenticators.BIOMETRIC_WEAK);
             switch (biometricResult) {
@@ -175,6 +176,15 @@ public class CredentialEnrolledTests extends AbstractBaseTest {
                         }
                     });
         });
+
+        mCancellationButton = findViewById(R.id.authenticate_cancellation_button);
+        mCancellationButton.setOnClickListener((view) -> {
+           testCancellationSignal(Authenticators.DEVICE_CREDENTIAL, () -> {
+               mCancellationButton.setEnabled(false);
+               mCancellationPass = true;
+               updatePassButton();
+           });
+        });
     }
 
     @Override
@@ -194,6 +204,7 @@ public class CredentialEnrolledTests extends AbstractBaseTest {
                 mBiometricManagerButton.setEnabled(true);
                 mBPSetAllowedAuthenticatorsButton.setEnabled(true);
                 mBPSetDeviceCredentialAllowedButton.setEnabled(true);
+                mCancellationButton.setEnabled(true);
             } else {
                 showToastAndLog("Unexpected result: " + result + ". Please ensure that tapping"
                         + " the button sends you to credential enrollment, and that you have"
@@ -212,7 +223,7 @@ public class CredentialEnrolledTests extends AbstractBaseTest {
 
     private void updatePassButton() {
         if (mEnrollPass && mBiometricManagerPass && mBiometricPromptSetAllowedAuthenticatorsPass
-                && mBiometricPromptSetDeviceCredentialAllowedPass) {
+                && mBiometricPromptSetDeviceCredentialAllowedPass && mCancellationPass) {
             showToastAndLog("All tests passed");
             getPassButton().setEnabled(true);
         }

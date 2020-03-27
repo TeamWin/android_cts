@@ -1403,13 +1403,13 @@ public class WifiManagerTest extends AndroidTestCase {
         mWifiManager.setSoftApConfiguration(targetConfig);
         // Bssid set dodesn't support for tethered hotspot
         SoftApConfiguration currentConfig = mWifiManager.getSoftApConfiguration();
-        assertNull(currentConfig.getBssid());
         compareSoftApConfiguration(targetConfig, currentConfig);
     }
 
     private void compareSoftApConfiguration(SoftApConfiguration currentConfig,
         SoftApConfiguration testSoftApConfig) {
         assertEquals(currentConfig.getSsid(), testSoftApConfig.getSsid());
+        assertEquals(currentConfig.getBssid(), testSoftApConfig.getBssid());
         assertEquals(currentConfig.getSecurityType(), testSoftApConfig.getSecurityType());
         assertEquals(currentConfig.getPassphrase(), testSoftApConfig.getPassphrase());
         assertEquals(currentConfig.isHiddenSsid(), testSoftApConfig.isHiddenSsid());
@@ -2471,15 +2471,21 @@ public class WifiManagerTest extends AndroidTestCase {
 
         // Create and install a Passpoint configuration
         PasspointConfiguration passpointConfiguration = createPasspointConfiguration();
-        mWifiManager.addOrUpdatePasspointConfiguration(passpointConfiguration);
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            mWifiManager.addOrUpdatePasspointConfiguration(passpointConfiguration);
 
-        // Compare configurations
-        List<PasspointConfiguration> configurations = mWifiManager.getPasspointConfigurations();
-        assertNotNull(configurations);
-        assertEquals(passpointConfiguration, configurations.get(0));
+            // Compare configurations
+            List<PasspointConfiguration> configurations = mWifiManager.getPasspointConfigurations();
+            assertNotNull(configurations);
+            assertEquals(passpointConfiguration, configurations.get(0));
 
-        // Clean up
-        mWifiManager.removePasspointConfiguration(passpointConfiguration.getHomeSp().getFqdn());
+            // Clean up
+            mWifiManager.removePasspointConfiguration(passpointConfiguration.getHomeSp().getFqdn());
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
     }
 
     /**
