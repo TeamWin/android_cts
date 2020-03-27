@@ -122,6 +122,9 @@ public class CellInfoTest {
     private static final int EARFCN_MAX = 262143;
     private static final int BANDWIDTH_LOW = 1400;  // kHz
     private static final int BANDWIDTH_HIGH = 20000;  // kHz
+    // 3GPP TS 36.101
+    private static final int BAND_MIN_LTE = 1;
+    private static final int BAND_MAX_LTE = 88;
 
     // The followings are parameters for testing CellIdentityWcdma
     // Location Area Code ranges from 0 to 65535.
@@ -139,6 +142,13 @@ public class CellInfoTest {
     // GSM Absolute RF Channel Number ranges from 0 to 65535.
     private static final int ARFCN = 1024;
 
+    // The followings are parameters for testing CellIdentityNr
+    // 3GPP TS 38.101-1 and 38.101-2
+    private static final int BAND_FR1_MIN_NR = 1;
+    private static final int BAND_FR1_MAX_NR = 95;
+    private static final int BAND_FR2_MIN_NR = 257;
+    private static final int BAND_FR2_MAX_NR = 261;
+
     // 3gpp 36.101 Sec 5.7.2
     private static final int CHANNEL_RASTER_EUTRAN = 100; //kHz
 
@@ -150,6 +160,7 @@ public class CellInfoTest {
     // See DeviceStateMonitor#CELL_INFO_INTERVAL_*
     private static final int MAX_CELLINFO_INTERVAL_MILLIS = 15000; // in AOSP the max is 10s
     private static final int RADIO_HAL_VERSION_1_2 = makeRadioVersion(1, 2);
+    private static final int RADIO_HAL_VERSION_1_5 = makeRadioVersion(1, 5);
 
     private PackageManager mPm;
     private TelephonyManager mTm;
@@ -538,6 +549,15 @@ public class CellInfoTest {
             verifyPlmnId(plmnId);
         }
 
+        if (mRadioHalVersion >= RADIO_HAL_VERSION_1_5) {
+            int[] bands = nr.getBands();
+            for (int band: bands) {
+                assertTrue("getBand out of range [1, 95] or [257, 261]",
+                        (band >= BAND_FR1_MIN_NR && band <= BAND_FR1_MAX_NR)
+                        || (band >= BAND_FR2_MIN_NR && band <= BAND_FR2_MAX_NR));
+            }
+        }
+
         // If the cell is reported as registered, then all the logical cell info must be reported
         if (isRegistered) {
             assertTrue("TAC is required for registered cells", tac != Integer.MAX_VALUE);
@@ -625,6 +645,14 @@ public class CellInfoTest {
         assertTrue(
                 "getEarfcn() out of range [" + minEarfcn + "," + maxEarfcn + "], earfcn=" + earfcn,
                 earfcn == Integer.MAX_VALUE || (earfcn >= minEarfcn && earfcn <= maxEarfcn));
+
+        if (mRadioHalVersion >= RADIO_HAL_VERSION_1_5) {
+            int[] bands = lte.getBands();
+            for (int band: bands) {
+                assertTrue("getBand out of range [1, 88]",
+                        band >= BAND_MIN_LTE && band <= BAND_MAX_LTE);
+            }
+        }
 
         String mobileNetworkOperator = lte.getMobileNetworkOperator();
         assertTrue("getMobileNetworkOperator() out of range [0, 999999], mobileNetworkOperator="
