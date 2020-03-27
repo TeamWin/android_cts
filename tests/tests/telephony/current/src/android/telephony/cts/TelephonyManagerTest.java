@@ -2346,6 +2346,31 @@ public class TelephonyManagerTest {
         }
     }
 
+    @Test
+    public void testGetSupportedModemCount() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        int supportedModemCount = mTelephonyManager.getSupportedModemCount();
+        int activeModemCount = mTelephonyManager.getActiveModemCount();
+        assertTrue(activeModemCount >= 0);
+        assertTrue(supportedModemCount >= activeModemCount);
+    }
+
+    @Test
+    public void testIsModemEnabledForSlot() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        int activeModemCount = mTelephonyManager.getActiveModemCount();
+        for (int i = 0; i < activeModemCount; i++) {
+            // Call isModemEnabledForSlot for each slot and verify no crash.
+            mTelephonyManager.isModemEnabledForSlot(i);
+        }
+    }
+
     /**
      * Validate Emergency Number address that only contains the dialable character.
      *
