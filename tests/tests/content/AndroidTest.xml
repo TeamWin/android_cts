@@ -56,12 +56,18 @@
       <!-- Incremental installation test files -->
       <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
           <option name="cleanup" value="true" />
-          <option name="push" value="v4-digest-v2.apk->/data/local/tmp/cts/content/v4-digest-v2.apk" />
-          <option name="push" value="v4-digest-v2.apk.idsig->/data/local/tmp/cts/content/v4-digest-v2.apk.idsig" />
-          <option name="push" value="v4-digest-v3.apk->/data/local/tmp/cts/content/v4-digest-v3.apk" />
-          <option name="push" value="v4-digest-v3.apk.idsig->/data/local/tmp/cts/content/v4-digest-v3.apk.idsig" />
-          <option name="push" value="v4-digest-v2v3.apk->/data/local/tmp/cts/content/v4-digest-v2v3.apk" />
-          <option name="push" value="v4-digest-v2v3.apk.idsig->/data/local/tmp/cts/content/v4-digest-v2v3.apk.idsig" />
+          <option name="push" value="HelloWorld5.apk.idsig->/data/local/tmp/cts/content/HelloWorld5.apk.idsig" />
+          <option name="push" value="HelloWorld5_hdpi-v4.apk.idsig->/data/local/tmp/cts/content/HelloWorld5_hdpi-v4.apk.idsig" />
+          <option name="push" value="HelloWorld5_mdpi-v4.apk.idsig->/data/local/tmp/cts/content/HelloWorld5_mdpi-v4.apk.idsig" />
+          <option name="push" value="HelloWorld5_xhdpi-v4.apk.idsig->/data/local/tmp/cts/content/HelloWorld5_xhdpi-v4.apk.idsig" />
+          <option name="push" value="HelloWorld5_xxhdpi-v4.apk.idsig->/data/local/tmp/cts/content/HelloWorld5_xxhdpi-v4.apk.idsig" />
+          <option name="push" value="HelloWorld5_xxxhdpi-v4.apk.idsig->/data/local/tmp/cts/content/HelloWorld5_xxxhdpi-v4.apk.idsig" />
+          <option name="push" value="HelloWorld7.apk.idsig->/data/local/tmp/cts/content/HelloWorld7.apk.idsig" />
+          <option name="push" value="HelloWorld7_hdpi-v4.apk.idsig->/data/local/tmp/cts/content/HelloWorld7_hdpi-v4.apk.idsig" />
+          <option name="push" value="HelloWorld7_mdpi-v4.apk.idsig->/data/local/tmp/cts/content/HelloWorld7_mdpi-v4.apk.idsig" />
+          <option name="push" value="HelloWorld7_xhdpi-v4.apk.idsig->/data/local/tmp/cts/content/HelloWorld7_xhdpi-v4.apk.idsig" />
+          <option name="push" value="HelloWorld7_xxhdpi-v4.apk.idsig->/data/local/tmp/cts/content/HelloWorld7_xxhdpi-v4.apk.idsig" />
+          <option name="push" value="HelloWorld7_xxxhdpi-v4.apk.idsig->/data/local/tmp/cts/content/HelloWorld7_xxxhdpi-v4.apk.idsig" />
       </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">

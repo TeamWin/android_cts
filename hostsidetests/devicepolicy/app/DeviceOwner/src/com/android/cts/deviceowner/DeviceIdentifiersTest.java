@@ -83,44 +83,4 @@ public class DeviceIdentifiersTest extends BaseDeviceOwnerTest {
                     + "the device IDs: " + e);
         }
     }
-
-    public void testDeviceOwnerCannotGetDeviceIdentifiersWithoutPermission() {
-        // The device owner without the READ_PHONE_STATE permission should still receive a
-        // SecurityException when querying for device identifiers.
-        TelephonyManager telephonyManager = (TelephonyManager) mContext.getSystemService(
-                Context.TELEPHONY_SERVICE);
-        // Allow the APIs to also return null if the telephony feature is not supported.
-        boolean hasTelephonyFeature =
-                mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
-
-        boolean mayReturnNull = !hasTelephonyFeature;
-
-        assertAccessDenied(telephonyManager::getDeviceId, mayReturnNull);
-        assertAccessDenied(telephonyManager::getImei, mayReturnNull);
-        assertAccessDenied(telephonyManager::getMeid, mayReturnNull);
-        assertAccessDenied(telephonyManager::getSubscriberId, mayReturnNull);
-        assertAccessDenied(telephonyManager::getSimSerialNumber, mayReturnNull);
-        assertAccessDenied(telephonyManager::getNai, mayReturnNull);
-        assertAccessDenied(Build::getSerial, mayReturnNull);
-    }
-
-    private static <T> void assertAccessDenied(ThrowingProvider<T> provider,
-            boolean mayReturnNull) {
-        try {
-            T object = provider.get();
-            if (mayReturnNull) {
-                assertNull(object);
-            } else {
-                fail("Expected SecurityException, received " + object);
-            }
-        } catch (SecurityException ignored) {
-            // assertion succeeded
-        } catch (Throwable th) {
-            fail("Expected SecurityException but was: " + th);
-        }
-    }
-
-    private interface ThrowingProvider<T> {
-        T get() throws Throwable;
-    }
 }

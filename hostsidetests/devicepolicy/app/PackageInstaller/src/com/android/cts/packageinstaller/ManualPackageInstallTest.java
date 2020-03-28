@@ -16,10 +16,12 @@
 
 package com.android.cts.packageinstaller;
 
+import android.app.UiAutomation;
 import android.content.Intent;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
@@ -37,6 +39,14 @@ public class ManualPackageInstallTest extends BasePackageInstallTest {
 
     private static final BySelector INSTALL_BUTTON_SELECTOR = By.text(Pattern.compile("Install",
             Pattern.CASE_INSENSITIVE));
+
+    private UiAutomation mUiAutomation;
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        mUiAutomation = getInstrumentation().getUiAutomation();
+    }
 
     public void testManualInstallSucceeded() throws Exception {
         assertInstallPackage();
@@ -112,10 +122,16 @@ public class ManualPackageInstallTest extends BasePackageInstallTest {
 
     private String getSettingsPackageName() {
         String settingsPackageName = "com.android.settings";
-        ResolveInfo resolveInfo = mPackageManager.resolveActivity(
-                new Intent(Settings.ACTION_SETTINGS), PackageManager.MATCH_SYSTEM_ONLY);
-        if (resolveInfo != null && resolveInfo.activityInfo != null) {
-            settingsPackageName = resolveInfo.activityInfo.packageName;
+        try {
+            mUiAutomation.adoptShellPermissionIdentity("android.permission.INTERACT_ACROSS_USERS");
+            ResolveInfo resolveInfo = mPackageManager.resolveActivityAsUser(
+                    new Intent(Settings.ACTION_SETTINGS), PackageManager.MATCH_SYSTEM_ONLY,
+                    UserHandle.USER_SYSTEM);
+            if (resolveInfo != null && resolveInfo.activityInfo != null) {
+                settingsPackageName = resolveInfo.activityInfo.packageName;
+            }
+        } finally {
+            mUiAutomation.dropShellPermissionIdentity();
         }
         return settingsPackageName;
     }

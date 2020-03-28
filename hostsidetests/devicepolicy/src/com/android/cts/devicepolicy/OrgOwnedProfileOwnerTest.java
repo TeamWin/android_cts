@@ -154,21 +154,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testProfileOwnerCannotGetDeviceIdentifiersWithoutPermission() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
-        // Revoke the READ_PHONE_STATE permission for the profile user ID to ensure the profile
-        // owner cannot access device identifiers without consent.
-        getDevice().executeShellCommand(
-                "pm revoke --user " + mUserId + " " + DEVICE_ADMIN_PKG
-                        + " android.permission.READ_PHONE_STATE");
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DeviceIdentifiersTest",
-                "testProfileOwnerCannotGetDeviceIdentifiersWithoutPermission", mUserId);
-    }
-
-    @Test
     public void testDevicePolicyManagerParentSupport() throws Exception {
         if (!mHasFeature) {
             return;

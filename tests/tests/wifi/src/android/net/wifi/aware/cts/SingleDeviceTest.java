@@ -826,12 +826,12 @@ public class SingleDeviceTest extends AndroidTestCase {
         PeerHandle handle = mock(PeerHandle.class);
         WifiAwareNetworkSpecifier networkSpecifier =
                 new WifiAwareNetworkSpecifier.Builder(session, handle).build();
-        assertFalse(networkSpecifier.satisfiedBy(null));
-        assertTrue(networkSpecifier.satisfiedBy(networkSpecifier));
+        assertFalse(networkSpecifier.canBeSatisfiedBy(null));
+        assertTrue(networkSpecifier.canBeSatisfiedBy(networkSpecifier));
 
         WifiAwareNetworkSpecifier anotherNetworkSpecifier =
                 new WifiAwareNetworkSpecifier.Builder(session, handle).setPmk(PMK_VALID).build();
-        assertFalse(networkSpecifier.satisfiedBy(anotherNetworkSpecifier));
+        assertFalse(networkSpecifier.canBeSatisfiedBy(anotherNetworkSpecifier));
     }
 
     /**
