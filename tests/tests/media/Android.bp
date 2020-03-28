@@ -60,6 +60,7 @@ android_test {
         "-0 .heic",
         "-0 .trp",
         "-0 .ota",
+        "-0 .mxmf",
     ],
     srcs: ["src/**/*.java"],
     // This test uses private APIs
