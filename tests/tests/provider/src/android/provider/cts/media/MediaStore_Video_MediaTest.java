@@ -410,6 +410,12 @@ public class MediaStore_Video_MediaTest {
             assertTrue(new String(c.getBlob(c.getColumnIndex(VideoColumns.XMP)))
                     .contains("exif:ShutterSpeedValue"));
 
+            // Confirm that we redacted location metadata
+            assertFalse(new String(c.getBlob(c.getColumnIndex(VideoColumns.XMP)))
+                    .contains("exif:GPSLatitude"));
+            assertFalse(new String(c.getBlob(c.getColumnIndex(VideoColumns.XMP)))
+                    .contains("exif:GPSLongitude"));
+
             // Confirm that timestamp was parsed
             assertEquals(1539711603000L, c.getLong(c.getColumnIndex(VideoColumns.DATE_TAKEN)));
 
