@@ -2185,8 +2185,9 @@ public class WifiManagerTest extends AndroidTestCase {
      * Note: This test assumes that the device only has 1 or more saved networks before the test.
      * The test will restore those when the test exits. But, it does not restore the softap
      * configuration, suggestions, etc which will also have been lost on factory reset.
+     * TODO(b/152637504): Re-enabel this test.
      */
-    public void testFactoryReset() throws Exception {
+    public void ignoreTestFactoryReset() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
             return;
