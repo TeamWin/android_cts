@@ -1,4 +1,4 @@
-// Copyright (C) 2015 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,27 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test_helper_app {
-    name: "CtsPackageInstallerApp",
+java_test_host {
+    name: "CtsCarHostTestCases",
     defaults: ["cts_defaults"],
+    // Only compile source java files in this apk.
     srcs: ["src/**/*.java"],
     libs: [
-        "android.test.runner.stubs",
-        "android.test.base.stubs",
+        "cts-tradefed",
+        "tradefed",
+        "compatibility-host-util",
+        "libprotobuf-java-full",
+        "truth-prebuilt",
     ],
-    static_libs: [
-        "androidx.legacy_legacy-support-v4",
-        "ctstestrunner-axt",
-        "ub-uiautomator",
-    ],
-    platform_apis: true,
-    min_sdk_version: "21",
     // tag this module as a cts test artifact
     test_suites: [
-        "arcts",
         "cts",
         "vts",
-        "vts10",
         "general-tests",
     ],
 }
