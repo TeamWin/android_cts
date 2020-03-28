@@ -573,10 +573,26 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
             MediaUtils.skipTest("no camera");
             return;
         }
+
+        int width;
+        int height;
+
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
         mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.DEFAULT);
         mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.DEFAULT);
         mMediaRecorder.setPreviewDisplay(mActivity.getSurfaceHolder().getSurface());
+        // Try to get camera profile for QUALITY_LOW; if unavailable,
+        // set the video size to default value.
+        CamcorderProfile profile = CamcorderProfile.get(
+                0 /* cameraId */, CamcorderProfile.QUALITY_LOW);
+        if (profile != null) {
+            width = profile.videoFrameWidth;
+            height = profile.videoFrameHeight;
+        } else {
+            width = VIDEO_WIDTH;
+            height = VIDEO_HEIGHT;
+        }
+        mMediaRecorder.setVideoSize(width, height);
         mMediaRecorder.setOutputFile(mOutFile);
         long maxFileSize = MAX_FILE_SIZE * 10;
         recordMedia(maxFileSize, mOutFile);
@@ -989,6 +1005,8 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         }
         long fileSize = 128 * 1024;
         long tolerance = 50 * 1024;
+        int width;
+        int height;
         List<String> recordFileList = new ArrayList<String>();
         mFileIndex = 0;
 
@@ -1094,7 +1112,18 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
         mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
         mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
-        mMediaRecorder.setVideoSize(VIDEO_WIDTH, VIDEO_HEIGHT);
+        // Try to get camera profile for QUALITY_LOW; if unavailable,
+        // set the video size to default value.
+        CamcorderProfile profile = CamcorderProfile.get(
+                0 /* cameraId */, CamcorderProfile.QUALITY_LOW);
+        if (profile != null) {
+            width = profile.videoFrameWidth;
+            height = profile.videoFrameHeight;
+        } else {
+            width = VIDEO_WIDTH;
+            height = VIDEO_HEIGHT;
+        }
+        mMediaRecorder.setVideoSize(width, height);
         mMediaRecorder.setVideoEncodingBitRate(256000);
         mMediaRecorder.setPreviewDisplay(mActivity.getSurfaceHolder().getSurface());
         mMediaRecorder.setMaxFileSize(fileSize);
