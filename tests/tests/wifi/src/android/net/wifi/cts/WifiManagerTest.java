@@ -2590,6 +2590,9 @@ public class WifiManagerTest extends AndroidTestCase {
         mWifiManager.setTdlsEnabledWithMacAddress(TEST_MAC_ADDRESS, false);
     }
 
+    /**
+     * Tests {@link WifiManager#getWifiConfigForMatchedNetworkSuggestionsSharedWithUser(List)}
+     */
     public void testGetAllWifiConfigForMatchedNetworkSuggestion() {
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         if (!WifiFeature.isWifiSupported(getContext())) {
@@ -2616,6 +2619,35 @@ public class WifiManagerTest extends AndroidTestCase {
         }
         // As suggestion is not approved, will return empty list.
         assertTrue(matchedResult.isEmpty());
+    }
+
+    /**
+     * Tests {@link WifiManager#getMatchingScanResults(List, List)}
+     */
+    public void testGetMatchingScanResults() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        // Create pair of ScanResult and WifiNetworkSuggestion
+        ScanResult scanResult = new ScanResult();
+        scanResult.SSID = TEST_SSID;
+        scanResult.capabilities = TEST_PSK_CAP;
+        scanResult.BSSID = TEST_BSSID;
+
+        WifiNetworkSuggestion suggestion = new WifiNetworkSuggestion.Builder()
+                .setSsid(TEST_SSID).setWpa2Passphrase(TEST_PASSPHRASE).build();
+
+        Map<WifiNetworkSuggestion, List<ScanResult>> matchedResults = mWifiManager
+                .getMatchingScanResults(Arrays.asList(suggestion), Arrays.asList(scanResult));
+        // Verify result is matched pair of ScanResult and WifiNetworkSuggestion
+        assertEquals(scanResult.SSID, matchedResults.get(suggestion).get(0).SSID);
+
+        // Change ScanResult to unmatched should return empty result.
+        scanResult.SSID = TEST_SSID_UNQUOTED;
+        matchedResults = mWifiManager
+                .getMatchingScanResults(Arrays.asList(suggestion), Arrays.asList(scanResult));
+        assertTrue(matchedResults.get(suggestion).isEmpty());
     }
 
     /**
