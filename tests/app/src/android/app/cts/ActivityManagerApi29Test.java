@@ -84,7 +84,7 @@ public class ActivityManagerApi29Test {
     private static final int NOTEOP_COUNT = 5;
 
     //TODO: remove this when development is done.
-    private static final int TEMP_PROCESS_CAPABILITY_FOREGROUND_LOCATION = 1 << 31;
+    private static final int DEBUG_PROCESS_CAPABILITY_FOREGROUND_LOCATION = 1 << 31;
 
     private static final Instrumentation sInstrumentation =
             InstrumentationRegistry.getInstrumentation();
@@ -209,7 +209,7 @@ public class ActivityManagerApi29Test {
         // Wait for state and capability change.
         // BG started FGS does not have location capability.
         mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE,
-                new Integer(TEMP_PROCESS_CAPABILITY_FOREGROUND_LOCATION));
+                new Integer(DEBUG_PROCESS_CAPABILITY_FOREGROUND_LOCATION));
 
         startSimpleActivity();
         mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP,
@@ -220,7 +220,7 @@ public class ActivityManagerApi29Test {
 
         stopSimpleActivity();
         mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE,
-                new Integer(TEMP_PROCESS_CAPABILITY_FOREGROUND_LOCATION));
+                new Integer(DEBUG_PROCESS_CAPABILITY_FOREGROUND_LOCATION));
 
         // AppOps location access should be denied.
         assertEquals(MODE_IGNORED, noteOp(OPSTR_COARSE_LOCATION));
@@ -265,7 +265,7 @@ public class ActivityManagerApi29Test {
         stopSimpleActivity();
         // The callingPackage to start FGS is in background.
         mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE,
-                new Integer(TEMP_PROCESS_CAPABILITY_FOREGROUND_LOCATION));
+                new Integer(DEBUG_PROCESS_CAPABILITY_FOREGROUND_LOCATION));
         for (int i = 0; i < NOTEOP_COUNT; i++) {
             noteOp(OPSTR_COARSE_LOCATION);
         }
@@ -309,7 +309,7 @@ public class ActivityManagerApi29Test {
         startSimpleService();
         // Wait for state and capability change.
         mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE,
-                new Integer(TEMP_PROCESS_CAPABILITY_FOREGROUND_LOCATION));
+                new Integer(DEBUG_PROCESS_CAPABILITY_FOREGROUND_LOCATION));
 
         // Non-Top started FGS do not have while-in-use permission, camera/microphone access is
         // denied.
@@ -329,7 +329,7 @@ public class ActivityManagerApi29Test {
         // Tell the activity to finalize.
         stopSimpleActivity();
         mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE,
-                new Integer(TEMP_PROCESS_CAPABILITY_FOREGROUND_LOCATION));
+                new Integer(DEBUG_PROCESS_CAPABILITY_FOREGROUND_LOCATION));
 
         // App not in Top, camera/microphone access should be denied.
         assertEquals(MODE_IGNORED, noteOp(OPSTR_CAMERA));
