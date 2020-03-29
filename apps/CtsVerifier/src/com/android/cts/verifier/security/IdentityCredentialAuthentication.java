@@ -16,70 +16,45 @@
 
 package com.android.cts.verifier.security;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
 import android.Manifest;
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.DialogFragment;
 import android.app.KeyguardManager;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.pm.PackageManager;
-import android.hardware.fingerprint.FingerprintManager;
+import android.hardware.biometrics.BiometricManager;
+import android.hardware.biometrics.BiometricManager.Authenticators;
+import android.hardware.biometrics.BiometricPrompt;
+import android.hardware.biometrics.BiometricPrompt.AuthenticationCallback;
+import android.hardware.biometrics.BiometricPrompt.AuthenticationResult;
+import android.hardware.biometrics.BiometricPrompt.CryptoObject;
 import android.os.Bundle;
 import android.os.CancellationSignal;
-import android.security.keystore.KeyGenParameterSpec;
-import android.security.keystore.KeyPermanentlyInvalidatedException;
-import android.security.keystore.KeyProperties;
-import android.security.keystore.UserNotAuthenticatedException;
-import android.util.Log;
-import android.view.View;
-import android.view.View.OnClickListener;
+import android.security.identity.AccessControlProfile;
+import android.security.identity.AccessControlProfileId;
+import android.security.identity.IdentityCredential;
+import android.security.identity.IdentityCredentialStore;
+import android.security.identity.PersonalizationData;
+import android.security.identity.ResultData;
+import android.security.identity.WritableIdentityCredential;
 import android.widget.Button;
 import android.widget.Toast;
 
-import android.security.identity.IdentityCredentialStore;
-import android.security.identity.WritableIdentityCredential;
-import android.security.identity.IdentityCredential;
-import android.security.identity.AccessControlProfile;
-import android.security.identity.AccessControlProfileId;
-import android.security.identity.ResultData;
-import android.security.identity.PersonalizationData;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.io.ByteArrayOutputStream;
-import co.nstant.in.cbor.CborBuilder;
-import co.nstant.in.cbor.CborEncoder;
-import co.nstant.in.cbor.CborException;
-import co.nstant.in.cbor.builder.MapBuilder;
-import java.security.cert.X509Certificate;
-import android.hardware.biometrics.BiometricPrompt.CryptoObject;
-import android.hardware.biometrics.BiometricPrompt;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
-import java.io.IOException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
+import java.io.ByteArrayOutputStream;
+import java.security.cert.X509Certificate;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.Map;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.KeyGenerator;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
+import co.nstant.in.cbor.CborBuilder;
+import co.nstant.in.cbor.CborEncoder;
+import co.nstant.in.cbor.CborException;
+import co.nstant.in.cbor.builder.MapBuilder;
 
 public class IdentityCredentialAuthentication extends PassFailButtons.Activity {
     private static final boolean DEBUG = false;
@@ -87,14 +62,14 @@ public class IdentityCredentialAuthentication extends PassFailButtons.Activity {
 
     private static final int BIOMETRIC_REQUEST_PERMISSION_CODE = 0;
 
-    private FingerprintManager mFingerprintManager;
+    private BiometricManager mBiometricManager;
     private KeyguardManager mKeyguardManager;
 
     protected int getTitleRes() {
         return R.string.sec_identity_credential_authentication_test;
     }
 
-    protected int getDescriptionRes() {
+    private int getDescriptionRes() {
         return R.string.sec_identity_credential_authentication_test_info;
     }
 
@@ -111,40 +86,21 @@ public class IdentityCredentialAuthentication extends PassFailButtons.Activity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] state) {
-        if (requestCode == BIOMETRIC_REQUEST_PERMISSION_CODE && state[0] == PackageManager.PERMISSION_GRANTED) {
-            mFingerprintManager = (FingerprintManager) getSystemService(Context.FINGERPRINT_SERVICE);
+        if (requestCode == BIOMETRIC_REQUEST_PERMISSION_CODE
+                && state[0] == PackageManager.PERMISSION_GRANTED) {
+            mBiometricManager = getSystemService(BiometricManager.class);
             mKeyguardManager = getSystemService(KeyguardManager.class);
             Button startTestButton = findViewById(R.id.sec_start_test_button);
 
             if (!mKeyguardManager.isKeyguardSecure()) {
                 // Show a message that the user hasn't set up a lock screen.
-                showToast( "Secure lock screen hasn't been set up.\n"
-                                + "Go to 'Settings -> Security -> Screen lock' to set up a lock screen");
+                showToast( "Secure lock screen hasn't been set up.\n Go to "
+                                + "'Settings -> Security -> Screen lock' to set up a lock screen");
                 startTestButton.setEnabled(false);
                 return;
             }
 
-            onPermissionsGranted();
-
-            startTestButton.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    startTest();
-                }
-            });
-        }
-    }
-
-    /**
-     * Fingerprint-specific check before allowing test to be started
-     */
-    protected void onPermissionsGranted() {
-        mFingerprintManager = getSystemService(FingerprintManager.class);
-        if (!mFingerprintManager.hasEnrolledFingerprints()) {
-            showToast("No fingerprints enrolled.\n"
-                    + "Go to 'Settings -> Security -> Fingerprint' to set up a fingerprint");
-            Button startTestButton = findViewById(R.id.sec_start_test_button);
-            startTestButton.setEnabled(false);
+            startTestButton.setOnClickListener(v -> startTest());
         }
     }
 
@@ -189,7 +145,8 @@ public class IdentityCredentialAuthentication extends PassFailButtons.Activity {
             entriesToRequest,
             null,  // sessionTranscript
             null); // readerSignature
-        if (rd.getStatus("org.iso.18013-5.2019", "Foo") != ResultData.STATUS_USER_AUTHENTICATION_FAILED) {
+        if (rd.getStatus("org.iso.18013-5.2019", "Foo")
+                != ResultData.STATUS_USER_AUTHENTICATION_FAILED) {
             return false;
         }
         return true;
@@ -218,8 +175,22 @@ public class IdentityCredentialAuthentication extends PassFailButtons.Activity {
             return;
         }
 
-        try {
+        final int result = mBiometricManager.canAuthenticate(Authenticators.BIOMETRIC_STRONG);
+        switch (result) {
+            case BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED:
+                showToast("No biometrics enrolled.\n"
+                        + "Go to 'Settings -> Security' to enroll");
+                Button startTestButton = findViewById(R.id.sec_start_test_button);
+                startTestButton.setEnabled(false);
+                return;
+            case BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE:
+                showToast("No strong biometrics, test passed.");
+                showToast("No Identity Credential support, test passed.");
+                getPassButton().setEnabled(true);
+                return;
+        }
 
+        try {
             provisionFoo(store);
 
             // First, check that Foo cannot be retrieved without authentication.
@@ -227,7 +198,8 @@ public class IdentityCredentialAuthentication extends PassFailButtons.Activity {
             IdentityCredential credentialWithoutAuth = store.getCredentialByName("test",
                     IdentityCredentialStore.CIPHERSUITE_ECDHE_HKDF_ECDSA_WITH_AES_256_GCM_SHA256);
             if (!getFooAndCheckNotRetrievable(credentialWithoutAuth)) {
-                showToast("Failed while checking that data element cannot be retrieved without authentication");
+                showToast("Failed while checking that data element cannot be retrieved without"
+                        + " authentication");
                 return;
             }
 
@@ -238,64 +210,47 @@ public class IdentityCredentialAuthentication extends PassFailButtons.Activity {
                     IdentityCredentialStore.CIPHERSUITE_ECDHE_HKDF_ECDSA_WITH_AES_256_GCM_SHA256);
             CryptoObject cryptoObject = new BiometricPrompt.CryptoObject(credentialWithAuth);
             BiometricPrompt.Builder builder = new BiometricPrompt.Builder(this);
+            builder.setAllowedAuthenticators(Authenticators.BIOMETRIC_STRONG);
             builder.setTitle("Identity Credential");
             builder.setDescription("Authenticate to unlock credential.");
             builder.setNegativeButton("Cancel",
                     getMainExecutor(),
-                    new DialogInterface.OnClickListener() {
-                                            @Override
-                                            public void onClick(DialogInterface dialogInterface, int i) {
-                                                showToast("Canceled biometric prompt.");
-                                            }
-                    });
-            BiometricPrompt prompt = builder.build();
-            prompt.authenticate(cryptoObject,
-                    new CancellationSignal(),
-                    getMainExecutor(),
-                    new BiometricPrompt.AuthenticationCallback() {
-                        @Override
-                        public void onAuthenticationError(int errorCode, CharSequence errString) {
-                            super.onAuthenticationError(errorCode, errString);
-                            showToast("onAuthenticationError " + errorCode + ": " + errString);
+                    (dialogInterface, i) -> showToast("Canceled biometric prompt."));
+            final BiometricPrompt prompt = builder.build();
+            final AuthenticationCallback callback = new AuthenticationCallback() {
+                @Override
+                public void onAuthenticationSucceeded(AuthenticationResult authResult) {
+                    try {
+                        // Check that Foo can be retrieved because we used
+                        // the CryptoObject to auth with.
+                        if (!getFooAndCheckRetrievable(credentialWithAuth)) {
+                            showToast("Failed while checking that data element can be"
+                                    + " retrieved with authentication");
+                            return;
                         }
-                        @Override
-                        public void onAuthenticationHelp(int helpCode, CharSequence helpString) {
-                            super.onAuthenticationHelp(helpCode, helpString);
-                            showToast("onAuthenticationHelp " + helpCode + ": " + helpString);
+
+                        // Finally, check that Foo cannot be retrieved again.
+                        IdentityCredential credentialWithoutAuth2 = store.getCredentialByName(
+                                "test",
+                                IdentityCredentialStore
+                                        .CIPHERSUITE_ECDHE_HKDF_ECDSA_WITH_AES_256_GCM_SHA256);
+                        if (!getFooAndCheckNotRetrievable(credentialWithoutAuth2)) {
+                            showToast("Failed while checking that data element cannot be"
+                                    + " retrieved without authentication");
+                            return;
                         }
-                        @Override
-                        public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult authResult) {
-                            super.onAuthenticationSucceeded(authResult);
-                            try {
-                                // Check that Foo can be retrieved because we used
-                                // the CryptoObject to auth with.
-                                if (!getFooAndCheckRetrievable(credentialWithAuth)) {
-                                    showToast("Failed while checking that data element can be retrieved with authentication");
-                                    return;
-                                }
 
-                                // Finally, check that Foo cannot be retrieved again.
-                                IdentityCredential credentialWithoutAuth2 = store.getCredentialByName("test",
-                                        IdentityCredentialStore.CIPHERSUITE_ECDHE_HKDF_ECDSA_WITH_AES_256_GCM_SHA256);
-                                if (!getFooAndCheckNotRetrievable(credentialWithoutAuth2)) {
-                                    showToast("Failed while checking that data element cannot be retrieved without authentication");
-                                    return;
-                                }
+                        showToast("Test passed.");
+                        getPassButton().setEnabled(true);
 
-                                showToast("Test passed.");
-                                getPassButton().setEnabled(true);
+                    } catch (Exception e) {
+                        showToast("Unexpection exception " + e);
+                    }
+                }
+            };
 
-                            } catch (Exception e) {
-                                showToast("Unexpection exception " + e);
-                            }
-                        }
-                        @Override
-                        public void onAuthenticationFailed() {
-                            super.onAuthenticationFailed();
-                            showToast("onAuthenticationFailed");
-                        }
-                });
-
+            prompt.authenticate(cryptoObject, new CancellationSignal(), getMainExecutor(),
+                    callback);
         } catch (Exception e) {
             showToast("Unexpection exception " + e);
         }
@@ -337,7 +292,7 @@ public class IdentityCredentialAuthentication extends PassFailButtons.Activity {
      *                                 type.
      * @return CBOR data conforming to the CDDL mentioned above.
      */
-    static @NonNull byte[] createItemsRequest(
+    private static @NonNull byte[] createItemsRequest(
             @NonNull Map<String, Collection<String>> entriesToRequest,
             @Nullable String docType) {
         CborBuilder builder = new CborBuilder();

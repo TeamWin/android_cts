@@ -52,6 +52,7 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.net.wifi.WifiNetworkConnectionStatistics;
+import android.net.wifi.WifiNetworkSuggestion;
 import android.net.wifi.hotspot2.ConfigParser;
 import android.net.wifi.hotspot2.OsuProvider;
 import android.net.wifi.hotspot2.PasspointConfiguration;
@@ -155,13 +156,15 @@ public class WifiManagerTest extends AndroidTestCase {
             = "com.android.managedprovisioning";
 
     private static final String TEST_SSID_UNQUOTED = "testSsid1";
-    private static String TEST_IP_ADDRESS = "192.168.5.5";
-    private static String TEST_MAC_ADDRESS = "aa:bb:cc:dd:ee:ff";
+    private static final String TEST_IP_ADDRESS = "192.168.5.5";
+    private static final String TEST_MAC_ADDRESS = "aa:bb:cc:dd:ee:ff";
     private static final MacAddress TEST_MAC = MacAddress.fromString(TEST_MAC_ADDRESS);
     private static final String TEST_PASSPHRASE = "passphrase";
     private static final String PASSPOINT_INSTALLATION_FILE_WITH_CA_CERT =
             "assets/ValidPasspointProfile.base64";
     private static final String TYPE_WIFI_CONFIG = "application/x-wifi-config";
+    private static final String TEST_PSK_CAP = "[RSN-PSK-CCMP]";
+    private static final String TEST_BSSID = "00:01:02:03:04:05";
 
     private IntentFilter mIntentFilter;
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -2182,8 +2185,9 @@ public class WifiManagerTest extends AndroidTestCase {
      * Note: This test assumes that the device only has 1 or more saved networks before the test.
      * The test will restore those when the test exits. But, it does not restore the softap
      * configuration, suggestions, etc which will also have been lost on factory reset.
+     * TODO(b/152637504): Re-enabel this test.
      */
-    public void testFactoryReset() throws Exception {
+    public void ignoreTestFactoryReset() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
             return;
@@ -2587,6 +2591,66 @@ public class WifiManagerTest extends AndroidTestCase {
     }
 
     /**
+     * Tests {@link WifiManager#getWifiConfigForMatchedNetworkSuggestionsSharedWithUser(List)}
+     */
+    public void testGetAllWifiConfigForMatchedNetworkSuggestion() {
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        ScanResult scanResult = new ScanResult();
+        scanResult.SSID = TEST_SSID;
+        scanResult.capabilities = TEST_PSK_CAP;
+        scanResult.BSSID = TEST_BSSID;
+        List<ScanResult> testList = Arrays.asList(scanResult);
+        WifiNetworkSuggestion suggestion = new WifiNetworkSuggestion.Builder()
+                .setSsid(TEST_SSID).setWpa2Passphrase(TEST_PASSPHRASE).build();
+
+        assertEquals(WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS,
+                mWifiManager.addNetworkSuggestions(Arrays.asList(suggestion)));
+        List<WifiConfiguration> matchedResult;
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            matchedResult = mWifiManager
+                    .getWifiConfigForMatchedNetworkSuggestionsSharedWithUser(testList);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+        // As suggestion is not approved, will return empty list.
+        assertTrue(matchedResult.isEmpty());
+    }
+
+    /**
+     * Tests {@link WifiManager#getMatchingScanResults(List, List)}
+     */
+    public void testGetMatchingScanResults() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        // Create pair of ScanResult and WifiNetworkSuggestion
+        ScanResult scanResult = new ScanResult();
+        scanResult.SSID = TEST_SSID;
+        scanResult.capabilities = TEST_PSK_CAP;
+        scanResult.BSSID = TEST_BSSID;
+
+        WifiNetworkSuggestion suggestion = new WifiNetworkSuggestion.Builder()
+                .setSsid(TEST_SSID).setWpa2Passphrase(TEST_PASSPHRASE).build();
+
+        Map<WifiNetworkSuggestion, List<ScanResult>> matchedResults = mWifiManager
+                .getMatchingScanResults(Arrays.asList(suggestion), Arrays.asList(scanResult));
+        // Verify result is matched pair of ScanResult and WifiNetworkSuggestion
+        assertEquals(scanResult.SSID, matchedResults.get(suggestion).get(0).SSID);
+
+        // Change ScanResult to unmatched should return empty result.
+        scanResult.SSID = TEST_SSID_UNQUOTED;
+        matchedResults = mWifiManager
+                .getMatchingScanResults(Arrays.asList(suggestion), Arrays.asList(scanResult));
+        assertTrue(matchedResults.get(suggestion).isEmpty());
+    }
+
+    /**
      * Tests {@link WifiManager#allowAutojoin(int, boolean)}.
      */
     public void testAllowAutojoin() throws Exception {
@@ -2635,6 +2699,32 @@ public class WifiManagerTest extends AndroidTestCase {
     }
 
     /**
+     * Tests {@link WifiManager#allowAutojoinPasspoint(String, boolean)}.
+     */
+    public void testAllowAutojoinPasspoint() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+
+        PasspointConfiguration passpointConfiguration = createPasspointConfiguration();
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            mWifiManager.addOrUpdatePasspointConfiguration(passpointConfiguration);
+            // Turn off auto-join
+            mWifiManager.allowAutojoinPasspoint(
+                    passpointConfiguration.getHomeSp().getFqdn(), false);
+            // Turn on auto-join
+            mWifiManager.allowAutojoinPasspoint(
+                    passpointConfiguration.getHomeSp().getFqdn(), true);
+        } finally {
+            mWifiManager.removePasspointConfiguration(passpointConfiguration.getHomeSp().getFqdn());
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
      * Tests {@link WifiManager#allowAutojoinGlobal(boolean)}.
      */
     public void testAllowAutojoinGlobal() throws Exception {
@@ -2671,5 +2761,36 @@ public class WifiManagerTest extends AndroidTestCase {
             mWifiManager.allowAutojoinGlobal(true);
             uiAutomation.dropShellPermissionIdentity();
         }
+    }
+
+    /**
+     * Tests {@link WifiManager#isWapiSupported()} does not crash.
+     */
+    public void testIsWapiSupported() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        mWifiManager.isWapiSupported();
+    }
+
+    /**
+     * Tests {@link WifiManager#isP2pSupported()} returns true
+     * if this device supports it, otherwise, ensure no crash.
+     */
+    public void testIsP2pSupported() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+
+        if (WifiFeature.isP2pSupported(getContext())) {
+            // if this device supports P2P, ensure hw capability is correct.
+            assertTrue(mWifiManager.isP2pSupported());
+        } else {
+            // ensure no crash.
+            mWifiManager.isP2pSupported();
+        }
+
     }
 }
