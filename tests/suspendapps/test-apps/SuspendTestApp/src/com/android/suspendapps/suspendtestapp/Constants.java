@@ -19,5 +19,4 @@ package com.android.suspendapps.suspendtestapp;
 public interface Constants {
     String PACKAGE_NAME = "com.android.suspendapps.suspendtestapp";
     String ANDROID_PACKAGE_NAME_2 = "com.android.suspendapps.suspendtestapp2";
-    String INSTRUMENTATION_PACKAGE = "android.suspendapps.cts";
 }
