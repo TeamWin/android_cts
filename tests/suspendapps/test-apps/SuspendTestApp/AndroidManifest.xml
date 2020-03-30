@@ -18,15 +18,17 @@
         package="com.android.suspendapps.suspendtestapp">
 
     <application android:label="Suspend Test App">
-        <activity android:name=".SuspendTestActivity"
+        <activity android:name="com.android.suspendapps.suspendtestapp.SuspendTestActivity"
                   android:exported="true" />
-        <receiver android:name=".SuspendTestReceiver"
+        <receiver android:name="com.android.suspendapps.suspendtestapp.SuspendTestReceiver"
                   android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MY_PACKAGE_SUSPENDED" />
                 <action android:name="android.intent.action.MY_PACKAGE_UNSUSPENDED" />
             </intent-filter>
         </receiver>
+        <service android:name="com.android.suspendapps.suspendtestapp.TestService"
+                 android:exported="true" />
     </application>
 
 </manifest>
