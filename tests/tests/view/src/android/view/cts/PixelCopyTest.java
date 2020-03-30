@@ -796,12 +796,12 @@ public class PixelCopyTest {
         assertBitmapNotColor("Left edge", bitmap, edgeColor, 2, bitmap.getHeight() / 2);
 
         assertBitmapColor("Bottom edge", bitmap, edgeColor,
-                bitmap.getWidth() / 2, bitmap.getHeight() - 1);
+                bitmap.getWidth() / 2, bitmap.getHeight() - 2);
         assertBitmapNotColor("Bottom edge", bitmap, edgeColor,
                 bitmap.getWidth() / 2, bitmap.getHeight() - 3);
 
         assertBitmapColor("Right edge", bitmap, edgeColor,
-                bitmap.getWidth() - 1, bitmap.getHeight() / 2);
+                bitmap.getWidth() - 2, bitmap.getHeight() / 2);
         assertBitmapNotColor("Right edge", bitmap, edgeColor,
                 bitmap.getWidth() - 3, bitmap.getHeight() / 2);
     }
