@@ -19,6 +19,7 @@ package android.location.cts.fine;
 import static org.junit.Assert.assertEquals;
 
 import android.location.GnssStatus;
+import android.os.Parcel;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
@@ -55,6 +56,18 @@ public class GnssStatusTest {
 
         GnssStatus status = builder.build();
         assertEquals(0, status.getSatelliteCount());
+    }
+
+    @Test
+    public void testRoundtrip() {
+        GnssStatus gnssStatus = getTestGnssStatus();
+
+        Parcel parcel = Parcel.obtain();
+        gnssStatus.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+
+        GnssStatus fromParcel = GnssStatus.CREATOR.createFromParcel(parcel);
+        assertEquals(gnssStatus, fromParcel);
     }
 
     private static GnssStatus getTestGnssStatus() {
