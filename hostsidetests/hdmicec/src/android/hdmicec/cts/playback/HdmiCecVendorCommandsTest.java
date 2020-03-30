@@ -18,11 +18,11 @@ package android.hdmicec.cts.playback;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
+import android.hdmicec.cts.LogicalAddress;
 import android.hdmicec.cts.RequiredPropertyRule;
 import android.hdmicec.cts.RequiredFeatureRule;
 
@@ -38,19 +38,19 @@ import org.junit.Test;
 /** HDMI CEC test to verify device vendor specific commands (Section 11.2.9) */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecVendorCommandsTest extends BaseHostJUnit4Test {
-    private static final CecDevice PLAYBACK_DEVICE = CecDevice.PLAYBACK_1;
+    private static final LogicalAddress PLAYBACK_DEVICE = LogicalAddress.PLAYBACK_1;
     private static final int INCORRECT_VENDOR_ID = 0x0;
 
-    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(CecDevice.PLAYBACK_1);
+    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(LogicalAddress.PLAYBACK_1);
 
     @Rule
     public RuleChain ruleChain =
         RuleChain
-            .outerRule(new RequiredFeatureRule(this, CecDevice.HDMI_CEC_FEATURE))
-            .around(new RequiredFeatureRule(this, CecDevice.LEANBACK_FEATURE))
+            .outerRule(new RequiredFeatureRule(this, LogicalAddress.HDMI_CEC_FEATURE))
+            .around(new RequiredFeatureRule(this, LogicalAddress.LEANBACK_FEATURE))
             .around(RequiredPropertyRule.asCsvContainsValue(
                 this,
-                CecDevice.HDMI_DEVICE_TYPE_PROPERTY,
+                LogicalAddress.HDMI_DEVICE_TYPE_PROPERTY,
                 PLAYBACK_DEVICE.getDeviceType()))
             .around(hdmiCecClient);
 
@@ -61,12 +61,12 @@ public final class HdmiCecVendorCommandsTest extends BaseHostJUnit4Test {
      */
     @Test
     public void cect_11_2_9_1_GiveDeviceVendorId() throws Exception {
-        for (CecDevice cecDevice : CecDevice.values()) {
+        for (LogicalAddress logicalAddress : LogicalAddress.values()) {
             // Skip the logical address of this device
-            if (cecDevice == PLAYBACK_DEVICE) {
+            if (logicalAddress == PLAYBACK_DEVICE) {
                 continue;
             }
-            hdmiCecClient.sendCecMessage(cecDevice, CecOperand.GIVE_DEVICE_VENDOR_ID);
+            hdmiCecClient.sendCecMessage(logicalAddress, CecOperand.GIVE_DEVICE_VENDOR_ID);
             String message = hdmiCecClient.checkExpectedOutput(CecOperand.DEVICE_VENDOR_ID);
             assertThat(CecMessage.getParams(message)).isNotEqualTo(INCORRECT_VENDOR_ID);
         }

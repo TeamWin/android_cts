@@ -45,10 +45,10 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     private BufferedReader mInputConsole;
     private boolean mCecClientInitialised = false;
 
-    private CecDevice targetDevice;
+    private LogicalAddress targetDevice;
     private String clientParams[];
 
-    public HdmiCecClientWrapper(CecDevice targetDevice, String ...clientParams) {
+    public HdmiCecClientWrapper(LogicalAddress targetDevice, String ...clientParams) {
         this.targetDevice = targetDevice;
         this.clientParams = clientParams;
     }
@@ -109,14 +109,14 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      * through the output console of the cec-communication channel.
      */
     public void sendCecMessage(CecOperand message) throws Exception {
-        sendCecMessage(CecDevice.BROADCAST, targetDevice, message, "");
+        sendCecMessage(LogicalAddress.BROADCAST, targetDevice, message, "");
     }
 
     /**
      * Sends a CEC message from source device to the device passed in the constructor through the
      * output console of the cec-communication channel.
      */
-    public void sendCecMessage(CecDevice source, CecOperand message) throws Exception {
+    public void sendCecMessage(LogicalAddress source, CecOperand message) throws Exception {
         sendCecMessage(source, targetDevice, message, "");
     }
 
@@ -124,7 +124,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      * Sends a CEC message from source device to a destination device through the output console of
      * the cec-communication channel.
      */
-    public void sendCecMessage(CecDevice source, CecDevice destination,
+    public void sendCecMessage(LogicalAddress source, LogicalAddress destination,
         CecOperand message) throws Exception {
         sendCecMessage(source, destination, message, "");
     }
@@ -133,7 +133,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      * Sends a CEC message from source device to a destination device through the output console of
      * the cec-communication channel with the appended params.
      */
-    public void sendCecMessage(CecDevice source, CecDevice destination,
+    public void sendCecMessage(LogicalAddress source, LogicalAddress destination,
             CecOperand message, String params) throws Exception {
         checkCecClient();
         mOutputConsole.write("tx " + source + destination + ":" + message + params);
@@ -145,7 +145,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      * Sends a <USER_CONTROL_PRESSED> and <USER_CONTROL_RELEASED> from source to destination
      * through the output console of the cec-communication channel with the mentioned keycode.
      */
-    public void sendUserControlPressAndRelease(CecDevice source, CecDevice destination,
+    public void sendUserControlPressAndRelease(LogicalAddress source, LogicalAddress destination,
             int keycode, boolean holdKey) throws Exception {
         sendUserControlPress(source, destination, keycode, holdKey);
         /* Sleep less than 200ms between press and release */
@@ -160,7 +160,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      * cec-communication channel with the mentioned keycode. If holdKey is true, the method will
      * send multiple <UCP> messages to simulate a long press. No <UCR> will be sent.
      */
-    public void sendUserControlPress(CecDevice source, CecDevice destination,
+    public void sendUserControlPress(LogicalAddress source, LogicalAddress destination,
             int keycode, boolean holdKey) throws Exception {
         String key = String.format("%02x", keycode);
         String command = "tx " + source + destination + ":" +
@@ -188,7 +188,8 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      * of the cec-communication channel immediately followed by <UCP> [secondKeycode]. No <UCR>
      *  message is sent.
      */
-    public void sendUserControlInterruptedPressAndHold(CecDevice source, CecDevice destination,
+    public void sendUserControlInterruptedPressAndHold(
+        LogicalAddress source, LogicalAddress destination,
             int firstKeycode, int secondKeycode, boolean holdKey) throws Exception {
         sendUserControlPress(source, destination, firstKeycode, holdKey);
         /* Sleep less than 200ms between press and release */
@@ -232,7 +233,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     /** Gets all the messages received from the given source device during a period of duration
      * seconds.
      */
-    public List<CecOperand> getAllMessages(CecDevice source, int duration) throws Exception {
+    public List<CecOperand> getAllMessages(LogicalAddress source, int duration) throws Exception {
         List<CecOperand> receivedOperands = new ArrayList<>();
         long startTime = System.currentTimeMillis();
         long endTime = startTime;
@@ -262,7 +263,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      * is not found within the timeout, an exception is thrown.
      */
     public String checkExpectedOutput(CecOperand expectedMessage) throws Exception {
-        return checkExpectedOutput(CecDevice.BROADCAST, expectedMessage, DEFAULT_TIMEOUT);
+        return checkExpectedOutput(LogicalAddress.BROADCAST, expectedMessage, DEFAULT_TIMEOUT);
     }
 
     /**
@@ -270,7 +271,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      * communication channel and returns the first line that contains that message within
      * default timeout. If the CEC message is not found within the timeout, an exception is thrown.
      */
-    public String checkExpectedOutput(CecDevice toDevice,
+    public String checkExpectedOutput(LogicalAddress toDevice,
                                       CecOperand expectedMessage) throws Exception {
         return checkExpectedOutput(toDevice, expectedMessage, DEFAULT_TIMEOUT);
     }
@@ -282,7 +283,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      */
     public String checkExpectedOutput(CecOperand expectedMessage,
                                       long timeoutMillis) throws Exception {
-        return checkExpectedOutput(CecDevice.BROADCAST, expectedMessage, timeoutMillis);
+        return checkExpectedOutput(LogicalAddress.BROADCAST, expectedMessage, timeoutMillis);
     }
 
     /**
@@ -290,7 +291,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      * communication channel and returns the first line that contains that message within
      * timeoutMillis. If the CEC message is not found within the timeout, an exception is thrown.
      */
-    public String checkExpectedOutput(CecDevice toDevice, CecOperand expectedMessage,
+    public String checkExpectedOutput(LogicalAddress toDevice, CecOperand expectedMessage,
                                        long timeoutMillis) throws Exception {
         checkCecClient();
         long startTime = System.currentTimeMillis();
@@ -319,7 +320,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      * within the default timeout. If the CEC message is not found within the timeout, function
      * returns without error.
      */
-    public void checkOutputDoesNotContainMessage(CecDevice toDevice,
+    public void checkOutputDoesNotContainMessage(LogicalAddress toDevice,
             CecOperand incorrectMessage) throws Exception {
         checkOutputDoesNotContainMessage(toDevice, incorrectMessage, DEFAULT_TIMEOUT);
      }
@@ -330,7 +331,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      * within timeoutMillis. If the CEC message is not found within the timeout, function returns
      * without error.
      */
-    public void checkOutputDoesNotContainMessage(CecDevice toDevice, CecOperand incorrectMessage,
+    public void checkOutputDoesNotContainMessage(LogicalAddress toDevice, CecOperand incorrectMessage,
             long timeoutMillis) throws Exception {
 
         checkCecClient();

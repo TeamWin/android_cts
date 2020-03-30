@@ -18,11 +18,11 @@ package android.hdmicec.cts.playback;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
+import android.hdmicec.cts.LogicalAddress;
 import android.hdmicec.cts.RequiredPropertyRule;
 import android.hdmicec.cts.RequiredFeatureRule;
 
@@ -38,19 +38,19 @@ import org.junit.Test;
 /** HDMI CEC test to verify physical address after device reboot (Section 10.2.3) */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecLogicalAddressTest extends BaseHostJUnit4Test {
-    private static final CecDevice PLAYBACK_DEVICE = CecDevice.PLAYBACK_1;
+    private static final LogicalAddress PLAYBACK_DEVICE = LogicalAddress.PLAYBACK_1;
 
-    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(CecDevice.PLAYBACK_1);
+    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(LogicalAddress.PLAYBACK_1);
 
     @Rule
     public RuleChain ruleChain =
         RuleChain
-            .outerRule(new RequiredFeatureRule(this, CecDevice.HDMI_CEC_FEATURE))
-            .around(new RequiredFeatureRule(this, CecDevice.LEANBACK_FEATURE))
+            .outerRule(new RequiredFeatureRule(this, LogicalAddress.HDMI_CEC_FEATURE))
+            .around(new RequiredFeatureRule(this, LogicalAddress.LEANBACK_FEATURE))
             .around(RequiredPropertyRule.asCsvContainsValue(
                 this,
-                CecDevice.HDMI_DEVICE_TYPE_PROPERTY,
-                CecDevice.PLAYBACK_1.getDeviceType()))
+                LogicalAddress.HDMI_DEVICE_TYPE_PROPERTY,
+                LogicalAddress.PLAYBACK_1.getDeviceType()))
             .around(hdmiCecClient);
 
     /**

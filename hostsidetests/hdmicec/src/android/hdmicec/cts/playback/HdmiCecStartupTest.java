@@ -20,10 +20,10 @@ import static com.google.common.collect.Iterables.filter;
 import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assume.assumeTrue;
 
-import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
+import android.hdmicec.cts.LogicalAddress;
 import android.hdmicec.cts.RequiredPropertyRule;
 import android.hdmicec.cts.RequiredFeatureRule;
 
@@ -47,7 +47,7 @@ import java.util.List;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecStartupTest extends BaseHostJUnit4Test {
 
-  private static final CecDevice PLAYBACK_DEVICE = CecDevice.PLAYBACK_1;
+  private static final LogicalAddress PLAYBACK_DEVICE = LogicalAddress.PLAYBACK_1;
   private static final ImmutableList<CecOperand> necessaryMessages =
       new ImmutableList.Builder<CecOperand>()
           .add(CecOperand.REPORT_PHYSICAL_ADDRESS, CecOperand.CEC_VERSION,
@@ -57,16 +57,16 @@ public final class HdmiCecStartupTest extends BaseHostJUnit4Test {
           .add(CecOperand.VENDOR_COMMAND, CecOperand.GIVE_DEVICE_VENDOR_ID,
               CecOperand.SET_OSD_NAME, CecOperand.GIVE_OSD_NAME).build();
 
-  public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(CecDevice.PLAYBACK_1);
+  public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(LogicalAddress.PLAYBACK_1);
 
   @Rule
   public RuleChain ruleChain =
       RuleChain
-          .outerRule(new RequiredFeatureRule(this, CecDevice.HDMI_CEC_FEATURE))
-          .around(new RequiredFeatureRule(this, CecDevice.LEANBACK_FEATURE))
+          .outerRule(new RequiredFeatureRule(this, LogicalAddress.HDMI_CEC_FEATURE))
+          .around(new RequiredFeatureRule(this, LogicalAddress.LEANBACK_FEATURE))
           .around(RequiredPropertyRule.asCsvContainsValue(
               this,
-              CecDevice.HDMI_DEVICE_TYPE_PROPERTY,
+              LogicalAddress.HDMI_DEVICE_TYPE_PROPERTY,
               PLAYBACK_DEVICE.getDeviceType()))
           .around(hdmiCecClient);
 
@@ -80,12 +80,13 @@ public final class HdmiCecStartupTest extends BaseHostJUnit4Test {
 
     /* Make sure device is playback only. Not applicable to playback/audio combinations */
     String deviceTypeCsv = device.executeShellCommand("getprop ro.hdmi.device_type").trim();
-    assumeTrue(deviceTypeCsv.equals(CecDevice.PLAYBACK_1.getDeviceType()));
+    assumeTrue(deviceTypeCsv.equals(LogicalAddress.PLAYBACK_1.getDeviceType()));
 
     device.executeShellCommand("reboot");
     device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
     /* Monitor CEC messages for 20s after reboot */
-    final List<CecOperand> messagesReceived = hdmiCecClient.getAllMessages(CecDevice.PLAYBACK_1, 20);
+    final List<CecOperand> messagesReceived =
+        hdmiCecClient.getAllMessages(LogicalAddress.PLAYBACK_1, 20);
 
     /* Predicate to apply on necessaryMessages to ensure that all necessaryMessages are received. */
     final Predicate<CecOperand> notReceived = new Predicate<CecOperand>() {

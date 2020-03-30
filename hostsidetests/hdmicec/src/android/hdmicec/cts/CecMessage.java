@@ -117,17 +117,17 @@ public class CecMessage {
     /**
      * Gets the source logical address from a CEC message.
      */
-    public static CecDevice getSource(String message) {
+    public static LogicalAddress getSource(String message) {
         String param = getNibbles(message).substring(0, 1);
-        return CecDevice.getDevice(hexStringToInt(param));
+        return LogicalAddress.getLogicalAddress(hexStringToInt(param));
     }
 
     /**
      * Gets the destination logical address from a CEC message.
      */
-    public static CecDevice getDestination(String message) {
+    public static LogicalAddress getDestination(String message) {
         String param = getNibbles(message).substring(1, 2);
-        return CecDevice.getDevice(hexStringToInt(param));
+        return LogicalAddress.getLogicalAddress(hexStringToInt(param));
     }
 
     /**

@@ -18,11 +18,11 @@ package android.hdmicec.cts.playback;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
+import android.hdmicec.cts.LogicalAddress;
 import android.hdmicec.cts.RequiredPropertyRule;
 import android.hdmicec.cts.RequiredFeatureRule;
 
@@ -38,19 +38,19 @@ import org.junit.Test;
 /** HDMI CEC test to verify system audio control commands (Section 11.2.15) */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecSystemAudioControlTest extends BaseHostJUnit4Test {
-    private static final CecDevice PLAYBACK_DEVICE = CecDevice.PLAYBACK_1;
+    private static final LogicalAddress PLAYBACK_DEVICE = LogicalAddress.PLAYBACK_1;
 
     public HdmiCecClientWrapper hdmiCecClient =
-        new HdmiCecClientWrapper(CecDevice.PLAYBACK_1, "-t", "a");
+        new HdmiCecClientWrapper(LogicalAddress.PLAYBACK_1, "-t", "a");
 
     @Rule
     public RuleChain ruleChain =
         RuleChain
-            .outerRule(new RequiredFeatureRule(this, CecDevice.HDMI_CEC_FEATURE))
-            .around(new RequiredFeatureRule(this, CecDevice.LEANBACK_FEATURE))
+            .outerRule(new RequiredFeatureRule(this, LogicalAddress.HDMI_CEC_FEATURE))
+            .around(new RequiredFeatureRule(this, LogicalAddress.LEANBACK_FEATURE))
             .around(RequiredPropertyRule.asCsvContainsValue(
                 this,
-                CecDevice.HDMI_DEVICE_TYPE_PROPERTY,
+                LogicalAddress.HDMI_DEVICE_TYPE_PROPERTY,
                 PLAYBACK_DEVICE.getDeviceType()))
             .around(hdmiCecClient);
 
@@ -65,7 +65,7 @@ public final class HdmiCecSystemAudioControlTest extends BaseHostJUnit4Test {
         device.executeShellCommand("input keyevent KEYCODE_HOME");
         device.executeShellCommand("input keyevent KEYCODE_SLEEP");
         device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
-        hdmiCecClient.checkExpectedOutput(CecDevice.AUDIO_SYSTEM,
+        hdmiCecClient.checkExpectedOutput(LogicalAddress.AUDIO_SYSTEM,
                 CecOperand.GIVE_SYSTEM_AUDIO_MODE_STATUS);
     }
 
@@ -79,19 +79,19 @@ public final class HdmiCecSystemAudioControlTest extends BaseHostJUnit4Test {
     public void cect_11_2_15_11_VolumeUpDownUserControlPressed() throws Exception {
         ITestDevice device = getDevice();
         device.executeShellCommand("input keyevent KEYCODE_VOLUME_UP");
-        String message = hdmiCecClient.checkExpectedOutput(CecDevice.AUDIO_SYSTEM,
+        String message = hdmiCecClient.checkExpectedOutput(LogicalAddress.AUDIO_SYSTEM,
                 CecOperand.USER_CONTROL_PRESSED);
         assertThat(CecMessage.getParams(message))
                 .isEqualTo(HdmiCecConstants.CEC_CONTROL_VOLUME_UP);
-        hdmiCecClient.checkExpectedOutput(CecDevice.AUDIO_SYSTEM, CecOperand.USER_CONTROL_RELEASED);
+        hdmiCecClient.checkExpectedOutput(LogicalAddress.AUDIO_SYSTEM, CecOperand.USER_CONTROL_RELEASED);
 
 
         device.executeShellCommand("input keyevent KEYCODE_VOLUME_DOWN");
-        message = hdmiCecClient.checkExpectedOutput(CecDevice.AUDIO_SYSTEM,
+        message = hdmiCecClient.checkExpectedOutput(LogicalAddress.AUDIO_SYSTEM,
                 CecOperand.USER_CONTROL_PRESSED);
         assertThat(CecMessage.getParams(message))
                 .isEqualTo(HdmiCecConstants.CEC_CONTROL_VOLUME_DOWN);
-        hdmiCecClient.checkExpectedOutput(CecDevice.AUDIO_SYSTEM, CecOperand.USER_CONTROL_RELEASED);
+        hdmiCecClient.checkExpectedOutput(LogicalAddress.AUDIO_SYSTEM, CecOperand.USER_CONTROL_RELEASED);
     }
 
     /**
@@ -104,9 +104,9 @@ public final class HdmiCecSystemAudioControlTest extends BaseHostJUnit4Test {
     public void cect_11_2_15_12_MuteUserControlPressed() throws Exception {
         ITestDevice device = getDevice();
         device.executeShellCommand("input keyevent KEYCODE_MUTE");
-        String message = hdmiCecClient.checkExpectedOutput(CecDevice.AUDIO_SYSTEM,
+        String message = hdmiCecClient.checkExpectedOutput(LogicalAddress.AUDIO_SYSTEM,
                 CecOperand.USER_CONTROL_PRESSED);
         assertThat(CecMessage.getParams(message)).isEqualTo(HdmiCecConstants.CEC_CONTROL_MUTE);
-        hdmiCecClient.checkExpectedOutput(CecDevice.AUDIO_SYSTEM, CecOperand.USER_CONTROL_RELEASED);
+        hdmiCecClient.checkExpectedOutput(LogicalAddress.AUDIO_SYSTEM, CecOperand.USER_CONTROL_RELEASED);
     }
 }

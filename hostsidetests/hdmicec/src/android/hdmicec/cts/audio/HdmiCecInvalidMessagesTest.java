@@ -20,11 +20,11 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeTrue;
 
-import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
+import android.hdmicec.cts.LogicalAddress;
 import android.hdmicec.cts.RequiredPropertyRule;
 import android.hdmicec.cts.RequiredFeatureRule;
 
@@ -43,7 +43,7 @@ import java.util.concurrent.TimeUnit;
 /** HDMI CEC test to verify that device ignores invalid messages (Section 12) */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecInvalidMessagesTest extends BaseHostJUnit4Test {
-    private static final CecDevice AUDIO_DEVICE = CecDevice.AUDIO_SYSTEM;
+    private static final LogicalAddress AUDIO_DEVICE = LogicalAddress.AUDIO_SYSTEM;
     private static final String PROPERTY_LOCALE = "persist.sys.locale";
 
     /** The package name of the APK. */
@@ -66,11 +66,11 @@ public final class HdmiCecInvalidMessagesTest extends BaseHostJUnit4Test {
     @Rule
     public RuleChain ruleChain =
         RuleChain
-            .outerRule(new RequiredFeatureRule(this, CecDevice.HDMI_CEC_FEATURE))
-            .around(new RequiredFeatureRule(this, CecDevice.LEANBACK_FEATURE))
+            .outerRule(new RequiredFeatureRule(this, LogicalAddress.HDMI_CEC_FEATURE))
+            .around(new RequiredFeatureRule(this, LogicalAddress.LEANBACK_FEATURE))
             .around(RequiredPropertyRule.asCsvContainsValue(
                 this,
-                CecDevice.HDMI_DEVICE_TYPE_PROPERTY,
+                LogicalAddress.HDMI_DEVICE_TYPE_PROPERTY,
                 AUDIO_DEVICE.getDeviceType()))
             .around(hdmiCecClient);
 
@@ -95,9 +95,9 @@ public final class HdmiCecInvalidMessagesTest extends BaseHostJUnit4Test {
 
     private void checkArcIsInitiated(){
         try {
-            hdmiCecClient.sendCecMessage(CecDevice.TV, AUDIO_DEVICE,
+            hdmiCecClient.sendCecMessage(LogicalAddress.TV, AUDIO_DEVICE,
                 CecOperand.REQUEST_ARC_INITIATION);
-            hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecOperand.INITIATE_ARC);
+            hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.INITIATE_ARC);
         } catch(Exception e) {
             assumeNoException(e);
         }
@@ -135,7 +135,7 @@ public final class HdmiCecInvalidMessagesTest extends BaseHostJUnit4Test {
         final String language = originalLanguage.equals("spa") ? "eng" : "spa";
         try {
             hdmiCecClient.sendCecMessage(
-                    CecDevice.TV,
+                    LogicalAddress.TV,
                     AUDIO_DEVICE,
                     CecOperand.SET_MENU_LANGUAGE,
                     CecMessage.convertStringToHexParams(language));
@@ -154,11 +154,11 @@ public final class HdmiCecInvalidMessagesTest extends BaseHostJUnit4Test {
     @Test
     public void cect_12_2_DirectlyAddressedReceivedAsBroadcast_getCecVersion() throws Exception {
         hdmiCecClient.sendCecMessage(
-                CecDevice.TV,
-                CecDevice.BROADCAST,
+                LogicalAddress.TV,
+                LogicalAddress.BROADCAST,
                 CecOperand.GET_CEC_VERSION);
         hdmiCecClient.checkOutputDoesNotContainMessage(
-                CecDevice.TV,
+                LogicalAddress.TV,
                 CecOperand.CEC_VERSION);
     }
 
@@ -171,11 +171,11 @@ public final class HdmiCecInvalidMessagesTest extends BaseHostJUnit4Test {
     public void cect_12_2_DirectlyAddressedReceivedAsBroadcast_givePhysicalAddress()
         throws Exception {
         hdmiCecClient.sendCecMessage(
-                CecDevice.TV,
-                CecDevice.BROADCAST,
+                LogicalAddress.TV,
+                LogicalAddress.BROADCAST,
                 CecOperand.GIVE_PHYSICAL_ADDRESS);
         hdmiCecClient.checkOutputDoesNotContainMessage(
-                CecDevice.BROADCAST,
+                LogicalAddress.BROADCAST,
                 CecOperand.REPORT_PHYSICAL_ADDRESS);
     }
 
@@ -187,11 +187,11 @@ public final class HdmiCecInvalidMessagesTest extends BaseHostJUnit4Test {
     @Test
     public void cect_12_2_DirectlyAddressedReceivedAsBroadcast_giveAudioStatus() throws Exception {
         hdmiCecClient.sendCecMessage(
-                CecDevice.TV,
-                CecDevice.BROADCAST,
+                LogicalAddress.TV,
+                LogicalAddress.BROADCAST,
                 CecOperand.GIVE_AUDIO_STATUS);
         hdmiCecClient.checkOutputDoesNotContainMessage(
-                CecDevice.TV,
+                LogicalAddress.TV,
                 CecOperand.REPORT_AUDIO_STATUS);
     }
 
@@ -203,11 +203,11 @@ public final class HdmiCecInvalidMessagesTest extends BaseHostJUnit4Test {
     @Test
     public void cect_12_2_DirectlyAddressedReceivedAsBroadcast_givePowerStatus() throws Exception {
         hdmiCecClient.sendCecMessage(
-                CecDevice.TV,
-                CecDevice.BROADCAST,
+                LogicalAddress.TV,
+                LogicalAddress.BROADCAST,
                 CecOperand.GIVE_POWER_STATUS);
         hdmiCecClient.checkOutputDoesNotContainMessage(
-                CecDevice.TV,
+                LogicalAddress.TV,
                 CecOperand.REPORT_POWER_STATUS);
     }
 
@@ -220,11 +220,11 @@ public final class HdmiCecInvalidMessagesTest extends BaseHostJUnit4Test {
     public void cect_12_2_DirectlyAddressedReceivedAsBroadcast_giveDeviceVendorId()
         throws Exception {
         hdmiCecClient.sendCecMessage(
-                CecDevice.TV,
-                CecDevice.BROADCAST,
+                LogicalAddress.TV,
+                LogicalAddress.BROADCAST,
                 CecOperand.GIVE_DEVICE_VENDOR_ID);
         hdmiCecClient.checkOutputDoesNotContainMessage(
-                CecDevice.BROADCAST,
+                LogicalAddress.BROADCAST,
                 CecOperand.DEVICE_VENDOR_ID);
     }
 
@@ -236,11 +236,11 @@ public final class HdmiCecInvalidMessagesTest extends BaseHostJUnit4Test {
     @Test
     public void cect_12_2_DirectlyAddressedReceivedAsBroadcast_giveOsdName() throws Exception {
         hdmiCecClient.sendCecMessage(
-                CecDevice.TV,
-                CecDevice.BROADCAST,
+                LogicalAddress.TV,
+                LogicalAddress.BROADCAST,
                 CecOperand.GIVE_OSD_NAME);
         hdmiCecClient.checkOutputDoesNotContainMessage(
-                CecDevice.TV,
+                LogicalAddress.TV,
                 CecOperand.SET_OSD_NAME);
     }
 
@@ -253,11 +253,11 @@ public final class HdmiCecInvalidMessagesTest extends BaseHostJUnit4Test {
     public void cect_12_2_DirectlyAddressedReceivedAsBroadcast_giveSystemAudioModeStatus()
         throws Exception {
         hdmiCecClient.sendCecMessage(
-                CecDevice.TV,
-                CecDevice.BROADCAST,
+                LogicalAddress.TV,
+                LogicalAddress.BROADCAST,
                 CecOperand.GIVE_SYSTEM_AUDIO_MODE_STATUS);
         hdmiCecClient.checkOutputDoesNotContainMessage(
-                CecDevice.TV,
+                LogicalAddress.TV,
                 CecOperand.SYSTEM_AUDIO_MODE_STATUS);
     }
 
@@ -270,12 +270,12 @@ public final class HdmiCecInvalidMessagesTest extends BaseHostJUnit4Test {
     public void cect_12_2_DirectlyAddressedReceivedAsBroadcast_requestShortAudioDescriptor()
         throws Exception {
         hdmiCecClient.sendCecMessage(
-                CecDevice.TV,
-                CecDevice.BROADCAST,
+                LogicalAddress.TV,
+                LogicalAddress.BROADCAST,
                 CecOperand.REQUEST_SHORT_AUDIO_DESCRIPTOR,
                 CecMessage.formatParams("01020304"));
         hdmiCecClient.checkOutputDoesNotContainMessage(
-                CecDevice.TV,
+                LogicalAddress.TV,
                 CecOperand.REPORT_SHORT_AUDIO_DESCRIPTOR);
     }
 
@@ -288,11 +288,11 @@ public final class HdmiCecInvalidMessagesTest extends BaseHostJUnit4Test {
     public void cect_12_2_DirectlyAddressedReceivedAsBroadcast_systemAudioModeRequest()
         throws Exception {
         hdmiCecClient.sendCecMessage(
-                CecDevice.TV,
-                CecDevice.BROADCAST,
+                LogicalAddress.TV,
+                LogicalAddress.BROADCAST,
                 CecOperand.SYSTEM_AUDIO_MODE_REQUEST);
         hdmiCecClient.checkOutputDoesNotContainMessage(
-                CecDevice.BROADCAST,
+                LogicalAddress.BROADCAST,
                 CecOperand.SET_SYSTEM_AUDIO_MODE);
     }
 
@@ -305,11 +305,11 @@ public final class HdmiCecInvalidMessagesTest extends BaseHostJUnit4Test {
     public void cect_12_2_DirectlyAddressedReceivedAsBroadcast_requestArcInitiation()
         throws Exception {
         hdmiCecClient.sendCecMessage(
-                CecDevice.TV,
-                CecDevice.BROADCAST,
+                LogicalAddress.TV,
+                LogicalAddress.BROADCAST,
                 CecOperand.REQUEST_ARC_INITIATION);
         hdmiCecClient.checkOutputDoesNotContainMessage(
-                CecDevice.BROADCAST,
+                LogicalAddress.BROADCAST,
                 CecOperand.INITIATE_ARC);
     }
 
@@ -323,11 +323,11 @@ public final class HdmiCecInvalidMessagesTest extends BaseHostJUnit4Test {
         throws Exception {
         checkArcIsInitiated();
         hdmiCecClient.sendCecMessage(
-                CecDevice.TV,
-                CecDevice.BROADCAST,
+                LogicalAddress.TV,
+                LogicalAddress.BROADCAST,
                 CecOperand.REQUEST_ARC_TERMINATION);
         hdmiCecClient.checkOutputDoesNotContainMessage(
-                CecDevice.BROADCAST,
+                LogicalAddress.BROADCAST,
                 CecOperand.TERMINATE_ARC);
     }
 
@@ -347,8 +347,8 @@ public final class HdmiCecInvalidMessagesTest extends BaseHostJUnit4Test {
         // Start the APK and wait for it to complete.
         device.executeShellCommand(START_COMMAND);
         hdmiCecClient.sendUserControlPressAndRelease(
-                CecDevice.TV,
-                CecDevice.BROADCAST,
+                LogicalAddress.TV,
+                LogicalAddress.BROADCAST,
                 HdmiCecConstants.CEC_CONTROL_UP,
                 false);
         logShouldNotContain("Short press KEYCODE_DPAD_UP");
