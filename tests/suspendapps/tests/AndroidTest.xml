@@ -19,8 +19,7 @@
     <option name="config-descriptor:metadata" key="component" value="framework"/>
     <option name="config-descriptor:metadata" key="parameter" value="not_instant_app" />
     <option name="config-descriptor:metadata" key="parameter" value="not_multi_abi" />
-    <!-- TODO (b/150741315): Change when the module is ready for secondary user -->
-    <option name="config-descriptor:metadata" key="parameter" value="not_secondary_user" />
+    <option name="config-descriptor:metadata" key="parameter" value="secondary_user" />
 
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />

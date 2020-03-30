@@ -16,14 +16,12 @@
 
 package android.suspendapps.cts;
 
-import static android.suspendapps.cts.Constants.ACTION_REPORT_PACKAGE_UNSUSPENDED_MANUALLY;
-import static android.suspendapps.cts.Constants.EXTRA_RECEIVED_PACKAGE_NAME;
-import static android.suspendapps.cts.Constants.PACKAGE_NAME;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
+
+import java.util.concurrent.TimeUnit;
 
 public class UnsuspendReceiver extends BroadcastReceiver {
     private static final String TAG = UnsuspendReceiver.class.getSimpleName();
@@ -32,11 +30,16 @@ public class UnsuspendReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         switch (intent.getAction()) {
             case Intent.ACTION_PACKAGE_UNSUSPENDED_MANUALLY:
-                final String suspendedPackage = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
-                final Intent reportReceipt = new Intent(ACTION_REPORT_PACKAGE_UNSUSPENDED_MANUALLY)
-                        .setPackage(PACKAGE_NAME)
-                        .putExtra(EXTRA_RECEIVED_PACKAGE_NAME, suspendedPackage);
-                context.sendBroadcast(reportReceipt);
+                boolean offered;
+                try {
+                    offered = DialogTests.sIncomingIntent.offer(intent, 10, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    Log.w(TAG, "Interrupted while offering with wait. Retrying without wait");
+                    offered = DialogTests.sIncomingIntent.offer(intent);
+                }
+                if (!offered) {
+                    Log.e(TAG, "Unable to offer received intent to queue");
+                }
                 break;
             default:
                 Log.w(TAG, "Unknown action " + intent.getAction());
