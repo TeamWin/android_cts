@@ -26,7 +26,7 @@ import android.net.Uri;
 import android.os.Parcel;
 import android.service.autofill.InlinePresentation;
 import android.util.Size;
-import android.view.inline.InlinePresentationSpec;
+import android.widget.inline.InlinePresentationSpec;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;

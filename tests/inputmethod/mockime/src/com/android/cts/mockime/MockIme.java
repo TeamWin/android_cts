@@ -48,7 +48,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowManager;
-import android.view.inline.InlinePresentationSpec;
+import android.widget.inline.InlinePresentationSpec;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.CorrectionInfo;
 import android.view.inputmethod.CursorAnchorInfo;
@@ -731,7 +731,7 @@ public final class MockIme extends InputMethodService {
         for (int i = 0; i < totalSuggestionsCount; i++) {
             final int index = i;
             InlineSuggestion inlineSuggestion = inlineSuggestions.get(index);
-            Size size = inlineSuggestion.getInfo().getPresentationSpec().getMaxSize();
+            Size size = inlineSuggestion.getInfo().getInlinePresentationSpec().getMaxSize();
             Log.d(TAG, "Calling inflate on suggestion " + i);
             inlineSuggestion.inflate(this, size,
                     AsyncTask.THREAD_POOL_EXECUTOR,
