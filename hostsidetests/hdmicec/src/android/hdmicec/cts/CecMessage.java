@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,66 +16,154 @@
 
 package android.hdmicec.cts;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public enum CecMessage {
-    FEATURE_ABORT(0x00),
-    TEXT_VIEW_ON(0x0d),
-    SET_MENU_LANGUAGE(0x32),
-    STANDBY(0x36),
-    USER_CONTROL_PRESSED(0x44),
-    USER_CONTROL_RELEASED(0x45),
-    GIVE_OSD_NAME(0x46),
-    SET_OSD_NAME(0x47),
-    SYSTEM_AUDIO_MODE_REQUEST(0x70),
-    GIVE_AUDIO_STATUS(0x71),
-    SET_SYSTEM_AUDIO_MODE(0x72),
-    REPORT_AUDIO_STATUS(0x7a),
-    GIVE_SYSTEM_AUDIO_MODE_STATUS(0x7d),
-    SYSTEM_AUDIO_MODE_STATUS(0x7e),
-    ACTIVE_SOURCE(0x82),
-    GIVE_PHYSICAL_ADDRESS(0x83),
-    REPORT_PHYSICAL_ADDRESS(0x84),
-    REQUEST_ACTIVE_SOURCE(0x85),
-    SET_STREAM_PATH(0x86),
-    DEVICE_VENDOR_ID(0x87),
-    VENDOR_COMMAND(0x89),
-    GIVE_DEVICE_VENDOR_ID(0x8c),
-    GIVE_POWER_STATUS(0x8f),
-    REPORT_POWER_STATUS(0x90),
-    GET_MENU_LANGUAGE(0x91),
-    INACTIVE_SOURCE(0x9d),
-    CEC_VERSION(0x9e),
-    GET_CEC_VERSION(0x9f),
-    REPORT_SHORT_AUDIO_DESCRIPTOR(0xa3),
-    REQUEST_SHORT_AUDIO_DESCRIPTOR(0xa4),
-    INITIATE_ARC(0xc0),
-    ARC_INITIATED(0xc1),
-    REQUEST_ARC_INITIATION(0xc3),
-    REQUEST_ARC_TERMINATION(0xc4),
-    TERMINATE_ARC(0xc5),
-    ABORT(0xff);
+public class CecMessage {
 
-    private final int messageId;
-    private static Map messageMap = new HashMap<>();
+    private static final int HEXADECIMAL_RADIX = 16;
 
-    static {
-        for (CecMessage message : CecMessage.values()) {
-            messageMap.put(message.messageId, message);
+    /** Gets the hexadecimal ASCII character values of a string. */
+    public static String getHexAsciiString(String string) {
+        String asciiString = "";
+        byte[] ascii = string.trim().getBytes();
+
+        for (byte b : ascii) {
+            asciiString.concat(Integer.toHexString(b));
         }
+
+        return asciiString;
     }
 
-    public static CecMessage getMessage(int messageId) {
-        return (CecMessage) messageMap.get(messageId);
+    public static String formatParams(String rawParams) {
+        StringBuilder params = new StringBuilder("");
+        int position = 0;
+        int endPosition = 2;
+
+        do {
+            params.append(":" + rawParams.substring(position, endPosition));
+            position = endPosition;
+            endPosition += 2;
+        } while (endPosition <= rawParams.length());
+        return params.toString();
     }
 
-    @Override
-    public String toString() {
-        return String.format("%02x", messageId);
+    public static String formatParams(long rawParam) {
+        StringBuilder params = new StringBuilder("");
+
+        do {
+            params.insert(0, ":" + String.format("%02x", rawParam % 256));
+            rawParam >>= 8;
+        } while (rawParam > 0);
+
+        return params.toString();
     }
 
-    private CecMessage(int messageId) {
-        this.messageId = messageId;
+    /** Formats the rawParam into CEC message parameters. The parameters will be at least
+     * minimumNibbles long. */
+    public static String formatParams(long rawParam, int minimumNibbles) {
+        StringBuilder params = new StringBuilder("");
+
+        do {
+            params.insert(0, ":" + String.format("%02x", rawParam % 256));
+            rawParam >>= 8;
+            minimumNibbles -= 2;
+        } while (rawParam > 0 || minimumNibbles > 0);
+
+        return params.toString();
+    }
+
+    public static int hexStringToInt(String message) {
+        return Integer.parseInt(message, HEXADECIMAL_RADIX);
+    }
+
+    public static String getAsciiString(String message) {
+        String params = getNibbles(message).substring(4);
+        StringBuilder builder = new StringBuilder();
+
+        for (int i = 2; i <= params.length(); i += 2) {
+            builder.append((char) hexStringToInt(params.substring(i - 2, i)));
+        }
+
+        return builder.toString();
+    }
+
+    /**
+     * Gets the params from a CEC message.
+     */
+    public static int getParams(String message) {
+        return hexStringToInt(getNibbles(message).substring(4));
+    }
+
+    /**
+     * Gets the first 'numNibbles' number of param nibbles from a CEC message.
+     */
+    public static int getParams(String message, int numNibbles) {
+        int paramStart = 4;
+        int end = numNibbles + paramStart;
+        return hexStringToInt(getNibbles(message).substring(paramStart, end));
+    }
+
+    /**
+     * From the params of a CEC message, gets the nibbles from position start to position end.
+     * The start and end are relative to the beginning of the params. For example, in the following
+     * message - 4F:82:10:00:04, getParamsFromMessage(message, 0, 4) will return 0x1000 and
+     * getParamsFromMessage(message, 4, 6) will return 0x04.
+     */
+    public static int getParams(String message, int start, int end) {
+        return hexStringToInt(getNibbles(message).substring(4).substring(start, end));
+    }
+
+    /**
+     * Gets the source logical address from a CEC message.
+     */
+    public static CecDevice getSource(String message) {
+        String param = getNibbles(message).substring(0, 1);
+        return CecDevice.getDevice(hexStringToInt(param));
+    }
+
+    /**
+     * Gets the destination logical address from a CEC message.
+     */
+    public static CecDevice getDestination(String message) {
+        String param = getNibbles(message).substring(1, 2);
+        return CecDevice.getDevice(hexStringToInt(param));
+    }
+
+    /**
+     * Gets the operand from a CEC message.
+     */
+    public static CecOperand getOperand(String message) {
+        String param = getNibbles(message).substring(2, 4);
+        return CecOperand.getOperand(hexStringToInt(param));
+    }
+
+    /**
+     * Converts ascii characters to hexadecimal numbers that can be appended to a CEC message as
+     * params. For example, "spa" will be converted to ":73:70:61"
+     */
+    public static String convertStringToHexParams(String rawParams) {
+        StringBuilder params = new StringBuilder("");
+        for (int i = 0; i < rawParams.length(); i++) {
+            params.append(String.format(":%02x", (int) rawParams.charAt(i)));
+        }
+        return params.toString();
+    }
+
+    private static String getNibbles(String message) {
+        final String tag1 = "group1";
+        final String tag2 = "group2";
+        String paramsPattern = "(?:.*[>>|<<].*?)" +
+                "(?<" + tag1 + ">[\\p{XDigit}{2}:]+)" +
+                "(?<" + tag2 + ">\\p{XDigit}{2})" +
+                "(?:.*?)";
+        String nibbles = "";
+
+        Pattern p = Pattern.compile(paramsPattern);
+        Matcher m = p.matcher(message);
+        if (m.matches()) {
+            nibbles = m.group(tag1).replace(":", "") + m.group(tag2);
+        }
+        return nibbles;
     }
 }

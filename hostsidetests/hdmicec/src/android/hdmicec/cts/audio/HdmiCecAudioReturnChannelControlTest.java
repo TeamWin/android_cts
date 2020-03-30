@@ -20,6 +20,7 @@ import static org.junit.Assume.assumeNoException;
 
 import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.CecMessage;
+import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.RequiredPropertyRule;
@@ -54,8 +55,8 @@ public final class HdmiCecAudioReturnChannelControlTest extends BaseHostJUnit4Te
     private void checkArcIsInitiated(){
         try {
             hdmiCecClient.sendCecMessage(CecDevice.TV, AUDIO_DEVICE,
-                    CecMessage.REQUEST_ARC_INITIATION);
-            hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecMessage.INITIATE_ARC);
+                    CecOperand.REQUEST_ARC_INITIATION);
+            hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecOperand.INITIATE_ARC);
         } catch(Exception e) {
             assumeNoException(e);
         }
@@ -69,12 +70,12 @@ public final class HdmiCecAudioReturnChannelControlTest extends BaseHostJUnit4Te
     @Test
     public void cect_11_2_17_1_InitiateArc() throws Exception {
         hdmiCecClient.sendCecMessage(CecDevice.TV, CecDevice.BROADCAST,
-                CecMessage.REPORT_PHYSICAL_ADDRESS,
-                hdmiCecClient.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS,
+                CecOperand.REPORT_PHYSICAL_ADDRESS,
+                CecMessage.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS,
                 HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH));
         getDevice().executeShellCommand("reboot");
         getDevice().waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
-        hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecMessage.INITIATE_ARC);
+        hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecOperand.INITIATE_ARC);
     }
 
     /**
@@ -86,12 +87,12 @@ public final class HdmiCecAudioReturnChannelControlTest extends BaseHostJUnit4Te
     public void cect_11_2_17_2_TerminateArc() throws Exception {
         checkArcIsInitiated();
         hdmiCecClient.sendCecMessage(CecDevice.TV, CecDevice.BROADCAST,
-                CecMessage.REPORT_PHYSICAL_ADDRESS,
-                hdmiCecClient.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS,
+                CecOperand.REPORT_PHYSICAL_ADDRESS,
+                CecMessage.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS,
                         HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH));
         getDevice().executeShellCommand("input keyevent KEYCODE_SLEEP");
         try {
-            hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecMessage.TERMINATE_ARC);
+            hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecOperand.TERMINATE_ARC);
         } finally {
             getDevice().executeShellCommand("input keyevent KEYCODE_WAKEUP");
         }
@@ -105,12 +106,12 @@ public final class HdmiCecAudioReturnChannelControlTest extends BaseHostJUnit4Te
     @Test
     public void cect_11_2_17_3_RequestToInitiateArc() throws Exception {
         hdmiCecClient.sendCecMessage(CecDevice.TV, CecDevice.BROADCAST,
-                CecMessage.REPORT_PHYSICAL_ADDRESS,
-                hdmiCecClient.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS,
+                CecOperand.REPORT_PHYSICAL_ADDRESS,
+                CecMessage.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS,
                 HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH));
         hdmiCecClient.sendCecMessage(CecDevice.TV, AUDIO_DEVICE,
-                CecMessage.REQUEST_ARC_INITIATION);
-        hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecMessage.INITIATE_ARC);
+                CecOperand.REQUEST_ARC_INITIATION);
+        hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecOperand.INITIATE_ARC);
     }
 
     /**
@@ -122,11 +123,11 @@ public final class HdmiCecAudioReturnChannelControlTest extends BaseHostJUnit4Te
     public void cect_11_2_17_4_RequestToTerminateArc() throws Exception {
         checkArcIsInitiated();
         hdmiCecClient.sendCecMessage(CecDevice.TV, CecDevice.BROADCAST,
-                CecMessage.REPORT_PHYSICAL_ADDRESS,
-                hdmiCecClient.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS,
+                CecOperand.REPORT_PHYSICAL_ADDRESS,
+                CecMessage.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS,
                         HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH));
         hdmiCecClient.sendCecMessage(CecDevice.TV, AUDIO_DEVICE,
-                CecMessage.REQUEST_ARC_TERMINATION);
-        hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecMessage.TERMINATE_ARC);
+                CecOperand.REQUEST_ARC_TERMINATION);
+        hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecOperand.TERMINATE_ARC);
     }
 }

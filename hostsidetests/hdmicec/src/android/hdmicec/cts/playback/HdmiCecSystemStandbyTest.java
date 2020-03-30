@@ -19,15 +19,13 @@ package android.hdmicec.cts.playback;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.hdmicec.cts.CecDevice;
-import android.hdmicec.cts.CecMessage;
+import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.RequiredPropertyRule;
 import android.hdmicec.cts.RequiredFeatureRule;
 
 import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.device.TestDeviceState;
-import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
@@ -76,7 +74,7 @@ public final class HdmiCecSystemStandbyTest extends BaseHostJUnit4Test {
         try {
             device.executeShellCommand("input keyevent KEYCODE_HOME");
             TimeUnit.SECONDS.sleep(5);
-            hdmiCecClient.sendCecMessage(source, destination, CecMessage.STANDBY);
+            hdmiCecClient.sendCecMessage(source, destination, CecOperand.STANDBY);
             TimeUnit.SECONDS.sleep(5);
             String wakeState = device.executeShellCommand("dumpsys power | grep mWakefulness=");
             assertThat(wakeState.trim()).isEqualTo("mWakefulness=Asleep");
@@ -137,7 +135,7 @@ public final class HdmiCecSystemStandbyTest extends BaseHostJUnit4Test {
         boolean wasOn = setHdmiControlDeviceAutoOff(false);
         try {
             device.executeShellCommand("input keyevent KEYCODE_SLEEP");
-            hdmiCecClient.checkOutputDoesNotContainMessage(CecDevice.BROADCAST, CecMessage.STANDBY);
+            hdmiCecClient.checkOutputDoesNotContainMessage(CecDevice.BROADCAST, CecOperand.STANDBY);
             device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
         } finally {
             setHdmiControlDeviceAutoOff(wasOn);

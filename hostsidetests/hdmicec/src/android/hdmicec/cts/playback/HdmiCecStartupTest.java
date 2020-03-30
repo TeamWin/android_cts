@@ -21,7 +21,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assume.assumeTrue;
 
 import android.hdmicec.cts.CecDevice;
-import android.hdmicec.cts.CecMessage;
+import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.RequiredPropertyRule;
@@ -48,14 +48,14 @@ import java.util.List;
 public final class HdmiCecStartupTest extends BaseHostJUnit4Test {
 
   private static final CecDevice PLAYBACK_DEVICE = CecDevice.PLAYBACK_1;
-  private static final ImmutableList<CecMessage> necessaryMessages =
-      new ImmutableList.Builder<CecMessage>()
-          .add(CecMessage.REPORT_PHYSICAL_ADDRESS, CecMessage.CEC_VERSION,
-              CecMessage.DEVICE_VENDOR_ID, CecMessage.GIVE_POWER_STATUS).build();
-  private static final ImmutableList<CecMessage> permissibleMessages =
-      new ImmutableList.Builder<CecMessage>()
-          .add(CecMessage.VENDOR_COMMAND, CecMessage.GIVE_DEVICE_VENDOR_ID,
-              CecMessage.SET_OSD_NAME, CecMessage.GIVE_OSD_NAME).build();
+  private static final ImmutableList<CecOperand> necessaryMessages =
+      new ImmutableList.Builder<CecOperand>()
+          .add(CecOperand.REPORT_PHYSICAL_ADDRESS, CecOperand.CEC_VERSION,
+              CecOperand.DEVICE_VENDOR_ID, CecOperand.GIVE_POWER_STATUS).build();
+  private static final ImmutableList<CecOperand> permissibleMessages =
+      new ImmutableList.Builder<CecOperand>()
+          .add(CecOperand.VENDOR_COMMAND, CecOperand.GIVE_DEVICE_VENDOR_ID,
+              CecOperand.SET_OSD_NAME, CecOperand.GIVE_OSD_NAME).build();
 
   public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(CecDevice.PLAYBACK_1);
 
@@ -85,21 +85,21 @@ public final class HdmiCecStartupTest extends BaseHostJUnit4Test {
     device.executeShellCommand("reboot");
     device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
     /* Monitor CEC messages for 20s after reboot */
-    final List<CecMessage> messagesReceived = hdmiCecClient.getAllMessages(CecDevice.PLAYBACK_1, 20);
+    final List<CecOperand> messagesReceived = hdmiCecClient.getAllMessages(CecDevice.PLAYBACK_1, 20);
 
     /* Predicate to apply on necessaryMessages to ensure that all necessaryMessages are received. */
-    final Predicate<CecMessage> notReceived = new Predicate<CecMessage>() {
+    final Predicate<CecOperand> notReceived = new Predicate<CecOperand>() {
       @Override
-      public boolean apply(@Nullable CecMessage cecMessage) {
-        return !messagesReceived.contains(cecMessage);
+      public boolean apply(@Nullable CecOperand cecOperand) {
+        return !messagesReceived.contains(cecOperand);
       }
     };
 
     /* Predicate to apply on messagesReceived to ensure all messages received are permissible. */
-    final Predicate<CecMessage> notAllowed = new Predicate<CecMessage>() {
+    final Predicate<CecOperand> notAllowed = new Predicate<CecOperand>() {
       @Override
-      public boolean apply(@Nullable CecMessage cecMessage) {
-        return !(permissibleMessages.contains(cecMessage) || necessaryMessages.contains(cecMessage));
+      public boolean apply(@Nullable CecOperand cecOperand) {
+        return !(permissibleMessages.contains(cecOperand) || necessaryMessages.contains(cecOperand));
       }
     };
 

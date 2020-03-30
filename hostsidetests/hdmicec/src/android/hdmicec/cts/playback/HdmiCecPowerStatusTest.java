@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.CecMessage;
+import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.RequiredPropertyRule;
@@ -68,10 +69,10 @@ public final class HdmiCecPowerStatusTest extends BaseHostJUnit4Test {
         ITestDevice device = getDevice();
         /* Make sure the device is not booting up/in standby */
         device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
-        hdmiCecClient.sendCecMessage(CecDevice.TV, CecMessage.GIVE_POWER_STATUS);
+        hdmiCecClient.sendCecMessage(CecDevice.TV, CecOperand.GIVE_POWER_STATUS);
         String message = hdmiCecClient.checkExpectedOutput(CecDevice.TV,
-                                                            CecMessage.REPORT_POWER_STATUS);
-        assertThat(hdmiCecClient.getParamsFromMessage(message)).isEqualTo(ON);
+            CecOperand.REPORT_POWER_STATUS);
+        assertThat(CecMessage.getParams(message)).isEqualTo(ON);
     }
 
     /**
@@ -89,10 +90,10 @@ public final class HdmiCecPowerStatusTest extends BaseHostJUnit4Test {
             device.executeShellCommand("input keyevent KEYCODE_HOME");
             device.executeShellCommand("input keyevent KEYCODE_SLEEP");
             TimeUnit.SECONDS.sleep(WAIT_TIME);
-            hdmiCecClient.sendCecMessage(CecDevice.TV, CecMessage.GIVE_POWER_STATUS);
+            hdmiCecClient.sendCecMessage(CecDevice.TV, CecOperand.GIVE_POWER_STATUS);
             String message = hdmiCecClient.checkExpectedOutput(CecDevice.TV,
-                                                              CecMessage.REPORT_POWER_STATUS);
-            assertThat(hdmiCecClient.getParamsFromMessage(message)).isEqualTo(OFF);
+                CecOperand.REPORT_POWER_STATUS);
+            assertThat(CecMessage.getParams(message)).isEqualTo(OFF);
         } finally {
             /* Wake up the device */
             device.executeShellCommand("input keyevent KEYCODE_WAKEUP");

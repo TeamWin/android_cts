@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.CecMessage;
+import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.RequiredPropertyRule;
@@ -62,7 +63,7 @@ public final class HdmiCecLogicalAddressTest extends BaseHostJUnit4Test {
         ITestDevice device = getDevice();
         device.executeShellCommand("reboot");
         device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
-        String message = hdmiCecClient.checkExpectedOutput(CecMessage.REPORT_PHYSICAL_ADDRESS);
-        assertThat(hdmiCecClient.getSourceFromMessage(message)).isEqualTo(AUDIO_DEVICE);
+        String message = hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_PHYSICAL_ADDRESS);
+        assertThat(CecMessage.getSource(message)).isEqualTo(AUDIO_DEVICE);
     }
 }

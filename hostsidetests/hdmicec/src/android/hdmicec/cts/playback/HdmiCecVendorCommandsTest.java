@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.CecMessage;
+import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.RequiredPropertyRule;
@@ -65,10 +66,9 @@ public final class HdmiCecVendorCommandsTest extends BaseHostJUnit4Test {
             if (cecDevice == PLAYBACK_DEVICE) {
                 continue;
             }
-            hdmiCecClient.sendCecMessage(cecDevice, CecMessage.GIVE_DEVICE_VENDOR_ID);
-            String message = hdmiCecClient.checkExpectedOutput(CecMessage.DEVICE_VENDOR_ID);
-            assertThat(hdmiCecClient.getParamsFromMessage(message)).
-                    isNotEqualTo(INCORRECT_VENDOR_ID);
+            hdmiCecClient.sendCecMessage(cecDevice, CecOperand.GIVE_DEVICE_VENDOR_ID);
+            String message = hdmiCecClient.checkExpectedOutput(CecOperand.DEVICE_VENDOR_ID);
+            assertThat(CecMessage.getParams(message)).isNotEqualTo(INCORRECT_VENDOR_ID);
         }
     }
 
@@ -82,7 +82,7 @@ public final class HdmiCecVendorCommandsTest extends BaseHostJUnit4Test {
         ITestDevice device = getDevice();
         device.executeShellCommand("reboot");
         device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
-        String message = hdmiCecClient.checkExpectedOutput(CecMessage.DEVICE_VENDOR_ID);
-        assertThat(hdmiCecClient.getParamsFromMessage(message)).isNotEqualTo(INCORRECT_VENDOR_ID);
+        String message = hdmiCecClient.checkExpectedOutput(CecOperand.DEVICE_VENDOR_ID);
+        assertThat(CecMessage.getParams(message)).isNotEqualTo(INCORRECT_VENDOR_ID);
     }
 }

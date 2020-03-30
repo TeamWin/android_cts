@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.CecMessage;
+import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.RequiredPropertyRule;
@@ -33,8 +34,6 @@ import org.junit.Rule;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 import org.junit.Test;
-
-import java.util.concurrent.TimeUnit;
 
 /** HDMI CEC test to verify system audio control commands (Section 11.2.15) */
 @RunWith(DeviceJUnit4ClassRunner.class)
@@ -67,7 +66,7 @@ public final class HdmiCecSystemAudioControlTest extends BaseHostJUnit4Test {
         device.executeShellCommand("input keyevent KEYCODE_SLEEP");
         device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
         hdmiCecClient.checkExpectedOutput(CecDevice.AUDIO_SYSTEM,
-                CecMessage.GIVE_SYSTEM_AUDIO_MODE_STATUS);
+                CecOperand.GIVE_SYSTEM_AUDIO_MODE_STATUS);
     }
 
     /**
@@ -81,18 +80,18 @@ public final class HdmiCecSystemAudioControlTest extends BaseHostJUnit4Test {
         ITestDevice device = getDevice();
         device.executeShellCommand("input keyevent KEYCODE_VOLUME_UP");
         String message = hdmiCecClient.checkExpectedOutput(CecDevice.AUDIO_SYSTEM,
-                CecMessage.USER_CONTROL_PRESSED);
-        assertThat(hdmiCecClient.getParamsFromMessage(message))
+                CecOperand.USER_CONTROL_PRESSED);
+        assertThat(CecMessage.getParams(message))
                 .isEqualTo(HdmiCecConstants.CEC_CONTROL_VOLUME_UP);
-        hdmiCecClient.checkExpectedOutput(CecDevice.AUDIO_SYSTEM, CecMessage.USER_CONTROL_RELEASED);
+        hdmiCecClient.checkExpectedOutput(CecDevice.AUDIO_SYSTEM, CecOperand.USER_CONTROL_RELEASED);
 
 
         device.executeShellCommand("input keyevent KEYCODE_VOLUME_DOWN");
         message = hdmiCecClient.checkExpectedOutput(CecDevice.AUDIO_SYSTEM,
-                CecMessage.USER_CONTROL_PRESSED);
-        assertThat(hdmiCecClient.getParamsFromMessage(message))
+                CecOperand.USER_CONTROL_PRESSED);
+        assertThat(CecMessage.getParams(message))
                 .isEqualTo(HdmiCecConstants.CEC_CONTROL_VOLUME_DOWN);
-        hdmiCecClient.checkExpectedOutput(CecDevice.AUDIO_SYSTEM, CecMessage.USER_CONTROL_RELEASED);
+        hdmiCecClient.checkExpectedOutput(CecDevice.AUDIO_SYSTEM, CecOperand.USER_CONTROL_RELEASED);
     }
 
     /**
@@ -106,9 +105,8 @@ public final class HdmiCecSystemAudioControlTest extends BaseHostJUnit4Test {
         ITestDevice device = getDevice();
         device.executeShellCommand("input keyevent KEYCODE_MUTE");
         String message = hdmiCecClient.checkExpectedOutput(CecDevice.AUDIO_SYSTEM,
-                CecMessage.USER_CONTROL_PRESSED);
-        assertThat(hdmiCecClient.getParamsFromMessage(message))
-                .isEqualTo(HdmiCecConstants.CEC_CONTROL_MUTE);
-        hdmiCecClient.checkExpectedOutput(CecDevice.AUDIO_SYSTEM, CecMessage.USER_CONTROL_RELEASED);
+                CecOperand.USER_CONTROL_PRESSED);
+        assertThat(CecMessage.getParams(message)).isEqualTo(HdmiCecConstants.CEC_CONTROL_MUTE);
+        hdmiCecClient.checkExpectedOutput(CecDevice.AUDIO_SYSTEM, CecOperand.USER_CONTROL_RELEASED);
     }
 }
