@@ -238,6 +238,8 @@ public class JobThrottlingTest {
         sendScheduleJobBroadcast(false);
         assertFalse("Job started for restricted app",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        // Turn the screen on to ensure the app gets into the TOP state.
+        setScreenState(true);
         mTestAppInterface.startAndKeepTestActivity(true);
         assertTrue("Job did not start when app had an activity",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
