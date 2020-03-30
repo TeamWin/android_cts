@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2017 The Android Open Source Project
+<!-- Copyright (C) 2020 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -38,15 +38,15 @@
 
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
-        <option name="test-file-name" value="CtsPackageInstallTestCases.apk" />
+        <option name="test-file-name" value="CtsPackageInstallAppOpDeniedTestCases.apk" />
     </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
-        <option name="run-command" value="appops set android.packageinstaller.install.cts REQUEST_INSTALL_PACKAGES allow" />
+        <option name="run-command" value="appops set android.packageinstaller.install_appop_denied.cts REQUEST_INSTALL_PACKAGES deny" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
-        <option name="package" value="android.packageinstaller.install.cts" />
+        <option name="package" value="android.packageinstaller.install_appop_denied.cts" />
         <option name="runtime-hint" value="1m" />
     </test>
 </configuration>
