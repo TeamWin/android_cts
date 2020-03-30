@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.android.suspendapps.suspendtestapp;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
+import android.os.Bundle;
+import com.android.suspendapps.suspendtestapp.IBroadcastReporter;
 
-public class SuspendTestReceiver extends BroadcastReceiver {
-    private static final String TAG = SuspendTestReceiver.class.getSimpleName();
-
-    @Override
-    public void onReceive(Context context, Intent intent) {
-        Log.d(TAG, "onReceive: " + intent.getAction());
-        TestService.reportBroadcastIfNeeded(intent);
-    }
+interface ITestService {
+    boolean isPackageSuspended();
+    Bundle getSuspendedAppExtras();
+    Intent waitForActivityStart(long timeoutMs);
+    boolean waitForActivityStop(long timeoutMs);
+    void registerBroadcastReporter(String action, in IBroadcastReporter reporter);
+    void unregisterBroadcastReporter(String action);
 }
