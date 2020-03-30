@@ -16,7 +16,6 @@
 package android.packageinstaller.install.cts
 
 import android.app.Activity.RESULT_CANCELED
-import android.app.AppOpsManager.MODE_ALLOWED
 import android.content.pm.ApplicationInfo.CATEGORY_MAPS
 import android.content.pm.ApplicationInfo.CATEGORY_UNDEFINED
 import android.content.pm.PackageInstaller.STATUS_FAILURE_ABORTED
@@ -28,7 +27,6 @@ import com.android.compatibility.common.util.AppOpsUtils
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.concurrent.TimeUnit
@@ -41,11 +39,6 @@ private const val CANCEL_BUTTON_ID = "button2"
 class SessionTest : PackageInstallerTestBase() {
     private val context = InstrumentationRegistry.getTargetContext()
     private val pm = context.packageManager
-
-    @Before
-    fun allowToInstallPackages() {
-        AppOpsUtils.setOpMode(context.packageName, APP_OP_STR, MODE_ALLOWED)
-    }
 
     /**
      * Check that we can install an app via a package-installer session

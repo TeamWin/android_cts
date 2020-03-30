@@ -17,7 +17,6 @@ package android.packageinstaller.install.cts
 
 import android.app.Activity.RESULT_CANCELED
 import android.app.Activity.RESULT_OK
-import android.app.AppOpsManager.MODE_ALLOWED
 import android.content.Intent
 import android.net.Uri
 import android.platform.test.annotations.AppModeFull
@@ -25,13 +24,11 @@ import android.platform.test.annotations.AppModeFull
 import androidx.test.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
 
-import com.android.compatibility.common.util.AppOpsUtils
 import com.android.compatibility.common.util.SystemUtil.runShellCommand
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -49,11 +46,6 @@ class IntentTest : PackageInstallerTestBase() {
         runWithShellPermissionIdentity {
             runShellCommand("settings put secure secure_frp_mode ${if (secureFrp) 1 else 0}")
         }
-    }
-
-    @Before
-    fun allowToInstallPackages() {
-        AppOpsUtils.setOpMode(context.packageName, APP_OP_STR, MODE_ALLOWED)
     }
 
     @After
