@@ -19,6 +19,7 @@ package android.provider.cts.media;
 import static android.provider.cts.media.MediaStoreTest.TAG;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -27,7 +28,9 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.provider.MediaStore;
 import android.provider.MediaStore.Audio.Playlists;
+import android.provider.MediaStore.MediaColumns;
 import android.provider.cts.ProviderTestUtils;
 import android.util.Log;
 
@@ -96,6 +99,40 @@ public class MediaStore_Audio_PlaylistsTest {
             c.close();
         } finally {
             assertEquals(1, mContentResolver.delete(uri, null, null));
+        }
+    }
+
+    /**
+     * Verify that creating playlists using only {@link Playlists#NAME} defined
+     * will flow into the {@link MediaColumns#DISPLAY_NAME}, both during initial
+     * insert and subsequent updates.
+     */
+    @Test
+    public void testName() throws Exception {
+        final String name1 = "Playlist " + System.nanoTime();
+        final String name2 = "Playlist " + System.nanoTime();
+        assertNotEquals(name1, name2);
+
+        final ContentValues values = new ContentValues();
+        values.clear();
+        values.put(Playlists.NAME, name1);
+        final Uri playlist = mContentResolver
+                .insert(MediaStore.Audio.Playlists.getContentUri(mVolumeName), values);
+        try (Cursor c = mContentResolver.query(playlist,
+                new String[] { Playlists.NAME, MediaColumns.DISPLAY_NAME }, null, null)) {
+            assertTrue(c.moveToFirst());
+            assertTrue(c.getString(0).startsWith(name1));
+            assertTrue(c.getString(1).startsWith(name1));
+        }
+
+        values.clear();
+        values.put(Playlists.NAME, name2);
+        mContentResolver.update(playlist, values, null);
+        try (Cursor c = mContentResolver.query(playlist,
+                new String[] { Playlists.NAME, MediaColumns.DISPLAY_NAME }, null, null)) {
+            assertTrue(c.moveToFirst());
+            assertTrue(c.getString(0).startsWith(name2));
+            assertTrue(c.getString(1).startsWith(name2));
         }
     }
 }
