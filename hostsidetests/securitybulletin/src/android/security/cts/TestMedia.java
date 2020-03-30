@@ -161,14 +161,7 @@ public class TestMedia extends SecurityTestCase {
         if (cmdOut.length() > 0) {
             String[] segment = cmdOut.split("\\s+");
             if (segment.length > 1) {
-                int gid = -1;
-                if ((segment[1]).length() < Integer.toString(Integer.MAX_VALUE).length()) {
-                    try {
-                        gid = Integer.parseInt(segment[1]);
-                    } catch (NumberFormatException e) {
-                    }
-                }
-                if (gid == 0) {
+                if (segment[1].trim().equals("0")) {
                     Assert.fail("mediametrics has root group id");
                 }
             }
