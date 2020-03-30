@@ -74,6 +74,7 @@ public class ConcurrencyTest extends AndroidTestCase {
         public boolean valid = false;
 
         public boolean success;
+        public int failureReason;
         public int p2pState;
         public int discoveryState;
         public NetworkInfo networkInfo;
@@ -148,6 +149,7 @@ public class ConcurrencyTest extends AndroidTestCase {
                 Log.d(TAG, "failure reason: " + reason);
                 mMyResponse.valid = true;
                 mMyResponse.success = false;
+                mMyResponse.failureReason = reason;
                 mMyResponse.notify();
             }
         }
@@ -392,9 +394,23 @@ public class ConcurrencyTest extends AndroidTestCase {
         assertTrue(waitForServiceResponse(mMyResponse));
         assertEquals(WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED, mMyResponse.discoveryState);
 
-        resetResponse(mMyResponse);
-        mWifiP2pManager.discoverPeers(mWifiP2pChannel, mActionListener);
-        assertTrue(waitForServiceResponse(mMyResponse));
+        // If there is any saved network and this device is connecting to this saved network,
+        // p2p discovery might be blocked during DHCP provision.
+        int retryCount = 3;
+        while (retryCount > 0) {
+            resetResponse(mMyResponse);
+            mWifiP2pManager.discoverPeers(mWifiP2pChannel, mActionListener);
+            assertTrue(waitForServiceResponse(mMyResponse));
+            if (mMyResponse.success
+                    || mMyResponse.failureReason != WifiP2pManager.BUSY) {
+                break;
+            }
+            Log.w(TAG, "Discovery is blocked, try again!");
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException ex) {}
+            retryCount--;
+        }
         assertTrue(mMyResponse.success);
         assertTrue(waitForBroadcasts(MySync.DISCOVERY_STATE));
 
