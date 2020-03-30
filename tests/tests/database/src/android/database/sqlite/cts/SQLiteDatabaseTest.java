@@ -34,6 +34,8 @@ import android.database.sqlite.SQLiteGlobal;
 import android.database.sqlite.SQLiteQuery;
 import android.database.sqlite.SQLiteStatement;
 import android.database.sqlite.SQLiteTransactionListener;
+import android.icu.text.Collator;
+import android.icu.util.ULocale;
 import android.test.AndroidTestCase;
 import android.test.MoreAsserts;
 import android.test.suitebuilder.annotation.LargeTest;
@@ -42,11 +44,13 @@ import android.util.Log;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Semaphore;
 import java.util.function.BinaryOperator;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 
 public class SQLiteDatabaseTest extends AndroidTestCase {
 
@@ -298,6 +302,14 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         }
     }
 
+    private static List<String> collect(Cursor c) {
+        List<String> res = new ArrayList<>();
+        while (c.moveToNext()) {
+            res.add(c.getString(0));
+        }
+        return res;
+    }
+
     public void testAccessMaximumSize() {
         long curMaximumSize = mDatabase.getMaximumSize();
 
@@ -517,6 +529,35 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         assertEquals(40, cursor.getInt(COLUMN_AGE_INDEX));
         assertEquals("LA", cursor.getString(COLUMN_ADDR_INDEX));
         cursor.close();;
+    }
+
+    public void testExecPerConnectionSQL() {
+        final List<String> data = Arrays.asList(
+                "ABC", "abc", "pinyin", "가나다", "바사", "테스트", "马",
+                "嘛", "妈", "骂", "吗", "码", "玛", "麻", "中", "梵", "苹果", "久了", "伺候");
+        final String values = data.stream().map((d) -> "('" + d + "')")
+                .collect(Collectors.joining(","));
+
+        mDatabase.execSQL("CREATE TABLE employee (name TEXT);");
+        mDatabase.execSQL("INSERT INTO employee (name) VALUES " + values + ";");
+
+        for (ULocale locale : new ULocale[] {
+                new ULocale("zh"),
+                new ULocale("zh@collation=pinyin"),
+                new ULocale("zh@collation=stroke"),
+                new ULocale("zh@collation=zhuyin"),
+        }) {
+            final String collationName = "cts_" + System.nanoTime();
+            mDatabase.execPerConnectionSQL("SELECT icu_load_collation(?, ?);",
+                    new Object[] { locale.getName(), collationName });
+
+            // Assert that sorting is identical between SQLite and ICU4J
+            try (Cursor c = mDatabase.query(true, "employee", new String[] { "name" },
+                    null, null, null, null, "name COLLATE " + collationName + " ASC", null)) {
+                data.sort(Collator.getInstance(locale));
+                assertEquals(data, collect(c));
+            }
+        }
     }
 
     public void testFindEditTable() {
