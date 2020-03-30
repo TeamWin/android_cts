@@ -26,8 +26,6 @@ import android.os.ParcelFileDescriptor;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
-import androidx.test.filters.Suppress;
-
 import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.SettingsUtils;
 
@@ -50,6 +48,9 @@ public class UiModeManagerTest extends AndroidTestCase {
         super.setUp();
         mUiModeManager = (UiModeManager) getContext().getSystemService(Context.UI_MODE_SERVICE);
         assertNotNull(mUiModeManager);
+        // reset nightMode
+        setNightMode(UiModeManager.MODE_NIGHT_YES);
+        setNightMode(UiModeManager.MODE_NIGHT_NO);
     }
 
     public void testUiMode() throws Exception {
@@ -83,7 +84,6 @@ public class UiModeManagerTest extends AndroidTestCase {
         }
     }
 
-    @Suppress //("b/146764875")
     public void testNightModeYesPersisted() throws InterruptedException {
         // Reset the mode to no if it is set to another value
         setNightMode(UiModeManager.MODE_NIGHT_NO);
@@ -92,13 +92,22 @@ public class UiModeManagerTest extends AndroidTestCase {
         assertStoredNightModeSetting(UiModeManager.MODE_NIGHT_YES);
     }
 
-    @Suppress //("b/146764875")
     public void testNightModeAutoPersisted() throws InterruptedException {
         // Reset the mode to no if it is set to another value
         setNightMode(UiModeManager.MODE_NIGHT_NO);
 
         setNightMode(UiModeManager.MODE_NIGHT_AUTO);
         assertStoredNightModeSetting(UiModeManager.MODE_NIGHT_AUTO);
+    }
+
+    public void testNightModeAutoNotPersistedCarMode() {
+        // Reset the mode to no if it is set to another value
+        setNightMode(UiModeManager.MODE_NIGHT_NO);
+        mUiModeManager.enableCarMode(0);
+
+        setNightMode(UiModeManager.MODE_NIGHT_AUTO);
+        assertStoredNightModeSetting(UiModeManager.MODE_NIGHT_NO);
+        mUiModeManager.disableCarMode(0);
     }
 
     public void testNightModeInCarModeIsTransient() {
