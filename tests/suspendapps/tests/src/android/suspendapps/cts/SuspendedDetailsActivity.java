@@ -16,26 +16,29 @@
 
 package android.suspendapps.cts;
 
-import static android.suspendapps.cts.Constants.ACTION_REPORT_MORE_DETAILS_ACTIVITY_STARTED;
-import static android.suspendapps.cts.Constants.EXTRA_RECEIVED_PACKAGE_NAME;
-import static android.suspendapps.cts.Constants.PACKAGE_NAME;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.util.Log;
+
+import java.util.concurrent.TimeUnit;
 
 public class SuspendedDetailsActivity extends Activity {
     private static final String TAG = SuspendedDetailsActivity.class.getSimpleName();
 
     @Override
     protected void onStart() {
-        Log.d(TAG, "onStart");
-        final String suspendedPackage =  getIntent().getStringExtra(Intent.EXTRA_PACKAGE_NAME);
         super.onStart();
-        final Intent reportStart = new Intent(ACTION_REPORT_MORE_DETAILS_ACTIVITY_STARTED)
-                .putExtra(EXTRA_RECEIVED_PACKAGE_NAME, suspendedPackage)
-                .setPackage(PACKAGE_NAME);
-        sendBroadcast(reportStart);
+        final Intent startedIntent = getIntent();
+        boolean offered;
+        try {
+            offered = DialogTests.sIncomingIntent.offer(startedIntent, 10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Log.w(TAG, "Interrupted while offering intent to queue. Retrying without wait");
+            offered = DialogTests.sIncomingIntent.offer(startedIntent);
+        }
+        if (!offered) {
+            Log.e(TAG, "Failed to offer started intent " + startedIntent + " to queue");
+        }
         finish();
     }
 }

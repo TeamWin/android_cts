@@ -16,7 +16,6 @@
 
 package com.android.suspendapps.suspendtestapp;
 
-import static com.android.suspendapps.suspendtestapp.Constants.INSTRUMENTATION_PACKAGE;
 import static com.android.suspendapps.suspendtestapp.Constants.PACKAGE_NAME;
 
 import android.app.Activity;
@@ -24,17 +23,16 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
+import androidx.annotation.GuardedBy;
+
 public class SuspendTestActivity extends Activity {
     private static final String TAG = SuspendTestActivity.class.getSimpleName();
     private static final String ACTION_FINISH_TEST_ACTIVITY =
             PACKAGE_NAME + ".action.FINISH_TEST_ACTIVITY";
 
-    public static final String ACTION_REPORT_TEST_ACTIVITY_STOPPED =
-            PACKAGE_NAME + ".action.REPORT_TEST_ACTIVITY_STOPPED";
-    public static final String ACTION_REPORT_TEST_ACTIVITY_STARTED =
-            PACKAGE_NAME + ".action.REPORT_TEST_ACTIVITY_STARTED";
-
-    private boolean mReportStartStop;
+    static final Object sLock = new Object();
+    @GuardedBy("sLock")
+    static Intent sStartedIntent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,8 +40,6 @@ public class SuspendTestActivity extends Activity {
         super.onCreate(savedInstanceState);
         if (ACTION_FINISH_TEST_ACTIVITY.equals(getIntent().getAction())) {
             finish();
-        } else {
-            mReportStartStop = true;
         }
     }
 
@@ -51,11 +47,9 @@ public class SuspendTestActivity extends Activity {
     protected void onStart() {
         Log.d(TAG, "onStart");
         super.onStart();
-        if (mReportStartStop) {
-            final Intent reportStart = new Intent(ACTION_REPORT_TEST_ACTIVITY_STARTED)
-                    .putExtras(getIntent())
-                    .setPackage(INSTRUMENTATION_PACKAGE);
-            sendBroadcast(reportStart);
+        synchronized (sLock) {
+            sStartedIntent = getIntent();
+            sLock.notifyAll();
         }
     }
 
@@ -63,10 +57,9 @@ public class SuspendTestActivity extends Activity {
     public void onStop() {
         Log.d(TAG, "onStop");
         super.onStop();
-        if (mReportStartStop) {
-            final Intent reportStop = new Intent(ACTION_REPORT_TEST_ACTIVITY_STOPPED)
-                    .setPackage(INSTRUMENTATION_PACKAGE);
-            sendBroadcast(reportStop);
+        synchronized (sLock) {
+            sStartedIntent = null;
+            sLock.notifyAll();
         }
     }
 }
