@@ -15,6 +15,8 @@
  */
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.Helper.createInlinePresentation;
+import static android.autofillservice.cts.Helper.createPresentation;
 import static android.autofillservice.cts.Helper.getAutofillIds;
 
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -409,6 +411,17 @@ public final class CannedFillResponse {
          */
         public Builder setInlinePresentation(InlinePresentation inlinePresentation) {
             mInlinePresentation = inlinePresentation;
+            return this;
+        }
+
+        /**
+         * Sets views to present the response in the UI by the type.
+         */
+        public Builder setPresentation(String message, boolean inlineMode) {
+            mPresentation = createPresentation(message);
+            if (inlineMode) {
+                mInlinePresentation = createInlinePresentation(message);
+            }
             return this;
         }
 
@@ -832,6 +845,14 @@ public final class CannedFillResponse {
              */
             public Builder setInlinePresentation(InlinePresentation inlinePresentation) {
                 mInlinePresentation = inlinePresentation;
+                return this;
+            }
+
+            public Builder setPresentation(String message, boolean inlineMode) {
+                mPresentation = createPresentation(message);
+                if (inlineMode) {
+                    mInlinePresentation = createInlinePresentation(message);
+                }
                 return this;
             }
 

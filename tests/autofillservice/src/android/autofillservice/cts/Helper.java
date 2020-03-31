@@ -47,9 +47,11 @@ import android.service.autofill.FieldClassification;
 import android.service.autofill.FieldClassification.Match;
 import android.service.autofill.FillContext;
 import android.service.autofill.FillEventHistory;
+import android.service.autofill.InlinePresentation;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
+import android.util.Size;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewStructure.HtmlInfo;
@@ -58,9 +60,12 @@ import android.view.autofill.AutofillManager;
 import android.view.autofill.AutofillManager.AutofillCallback;
 import android.view.autofill.AutofillValue;
 import android.webkit.WebView;
+import android.widget.RemoteViews;
+import android.widget.inline.InlinePresentationSpec;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.autofill.InlinePresentationBuilder;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.BitmapUtils;
@@ -1503,6 +1508,25 @@ public final class Helper {
      */
     public static void disallowOverlays() {
         ShellUtils.setOverlayPermissions(MY_PACKAGE, false);
+    }
+
+    public static RemoteViews createPresentation(String message) {
+        final RemoteViews presentation = new RemoteViews(getContext()
+                .getPackageName(), R.layout.list_item);
+        presentation.setTextViewText(R.id.text1, message);
+        return presentation;
+    }
+
+    public static InlinePresentation createInlinePresentation(String message) {
+        return new InlinePresentation(new InlinePresentationBuilder(message).build(),
+                new InlinePresentationSpec.Builder(new Size(100, 100), new Size(400, 100))
+                        .build(), /* pinned= */ false);
+    }
+
+    public static InlinePresentation createPinnedInlinePresentation(String message) {
+        return new InlinePresentation(new InlinePresentationBuilder(message).build(),
+                new InlinePresentationSpec.Builder(new Size(100, 100), new Size(400, 100))
+                        .build(), /* pinned= */ true);
     }
 
     private Helper() {
