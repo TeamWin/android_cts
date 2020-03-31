@@ -25,6 +25,7 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
+import android.autofillservice.cts.inline.InlineUiBot;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
@@ -33,13 +34,10 @@ import android.provider.DeviceConfig;
 import android.provider.Settings;
 import android.service.autofill.InlinePresentation;
 import android.util.Log;
-import android.util.Size;
 import android.view.autofill.AutofillManager;
 import android.widget.RemoteViews;
-import android.widget.inline.InlinePresentationSpec;
 
 import androidx.annotation.NonNull;
-import androidx.autofill.InlinePresentationBuilder;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
@@ -90,12 +88,26 @@ public final class AutoFillServiceTestCase {
     public abstract static class AutoActivityLaunch<A extends AbstractAutoFillActivity>
             extends BaseTestCase {
 
+        /**
+         * Returns if inline suggestion is enabled.
+         */
+        protected boolean isInlineMode() {
+            return false;
+        }
+
+        protected static UiBot getInlineUiBot() {
+            return sDefaultUiBot2;
+        }
+
         @ClassRule
         public static final SettingsStateKeeperRule sPublicServiceSettingsKeeper =
                 sTheRealServiceSettingsKeeper;
 
         protected AutoActivityLaunch() {
             super(sDefaultUiBot);
+        }
+        protected AutoActivityLaunch(UiBot uiBot) {
+            super(uiBot);
         }
 
         @Override
@@ -412,10 +424,7 @@ public final class AutoFillServiceTestCase {
         }
 
         protected RemoteViews createPresentation(String message) {
-            final RemoteViews presentation = new RemoteViews(getContext()
-                    .getPackageName(), R.layout.list_item);
-            presentation.setTextViewText(R.id.text1, message);
-            return presentation;
+            return Helper.createPresentation(message);
         }
 
         protected RemoteViews createPresentationWithCancel(String message) {
@@ -426,15 +435,7 @@ public final class AutoFillServiceTestCase {
         }
 
         protected InlinePresentation createInlinePresentation(String message) {
-            return new InlinePresentation(new InlinePresentationBuilder(message).build(),
-                    new InlinePresentationSpec.Builder(new Size(100, 100), new Size(400, 100))
-                            .build(), /* pinned= */ false);
-        }
-
-        protected InlinePresentation createPinnedInlinePresentation(String message) {
-            return new InlinePresentation(new InlinePresentationBuilder(message).build(),
-                    new InlinePresentationSpec.Builder(new Size(100, 100), new Size(400, 100))
-                            .build(), /* pinned= */ true);
+            return Helper.createInlinePresentation(message);
         }
 
         @NonNull
@@ -444,6 +445,7 @@ public final class AutoFillServiceTestCase {
     }
 
     protected static final UiBot sDefaultUiBot = new UiBot();
+    protected static final UiBot sDefaultUiBot2 = new InlineUiBot();
 
     private AutoFillServiceTestCase() {
         throw new UnsupportedOperationException("Contain static stuff only");
