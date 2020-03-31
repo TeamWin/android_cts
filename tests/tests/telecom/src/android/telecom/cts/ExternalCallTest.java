@@ -106,8 +106,30 @@ public class ExternalCallTest extends BaseTelecomTestWithMockServices {
 
 
     /**
-     * Tests that when a user tries to pull an external call while we are in an ongoing emergency
-     * call, the request is not completed.
+     * Tests that when there is an external call and an emergency call is placed, the
+     * CAPABILITY_CAN_PLACE_CALL capability is removed.
+     */
+    public void testPullCallCapabilityRemovedInEmergencyCall() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        setupForEmergencyCalling(TEST_EMERGENCY_NUMBER);
+        Call call = placeExternalCall();
+
+        placeAndVerifyEmergencyCall(true /*supportsHold*/);
+        Call eCall = getInCallService().getLastCall();
+        assertCallState(eCall, Call.STATE_DIALING);
+        assertIsInCall(true);
+        assertIsInManagedCall(true);
+        TestUtils.waitOnAllHandlers(getInstrumentation());
+
+        // Ensure that an emergency call removes the ability to pull the call.
+        assertDoesNotHaveCallCapabilities(call, Call.Details.CAPABILITY_CAN_PULL_CALL);
+    }
+
+    /**
+     * Tests that when an InCallService tries to pull an external call anyway while we are in an
+     * ongoing emergency call, the request is not completed.
      */
     public void testTryToPullCallWhileInEmergencyCall() throws Exception {
         if (!mShouldTestTelecom) {
