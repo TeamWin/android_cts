@@ -68,31 +68,40 @@ def determine_sensor_aspect_ratio(props):
     return match_ar
 
 
-def aspect_ratio_scale_factors(ref_ar_string, props):
+def aspect_ratio_scale_factors(ref_ar_string, props, raw_avlb):
     """Determine scale factors for each aspect ratio to correct cropping.
 
     Args:
         ref_ar_string:      camera aspect ratio that is the reference
         props:              camera properties
+        raw_avlb:           bool; RAW available
     Returns:
         dict of correction ratios with AR_CHECKED values as keys
     """
     ref_ar = convert_ar_to_float(ref_ar_string)
 
-    # find sensor area
-    height_max = 0
-    width_max = 0
+    # find sensor area that is closest to 4:3 or 16:9
+    h_max = 0
+    w_max = 0
     for ar_string in AR_CHECKED:
         match_ar = [float(x) for x in ar_string.split(":")]
         try:
             f = its.objects.get_largest_jpeg_format(props, match_ar=match_ar)
-            if f["height"] > height_max:
-                height_max = f["height"]
-            if f["width"] > width_max:
-                width_max = f["width"]
+            h = f["height"]
+            w = f["width"]
+            if h > h_max:
+                h_max = h
+            if w > w_max:
+                w_max = w
         except IndexError:
             continue
-    sensor_ar = float(width_max) / height_max
+    if raw_avlb:
+        sensor_size = props["android.sensor.info.preCorrectionActiveArraySize"]
+        w_sensor = abs(sensor_size["right"] - sensor_size["left"])
+        h_sensor = abs(sensor_size["bottom"] - sensor_size["top"])
+        assert w_max <= w_sensor, "w_max: %d, w_sensor: %d" % (w_max, w_sensor)
+        assert h_max <= h_sensor, "h_max: %d, h_sensor: %d" % (h_max, h_sensor)
+    sensor_ar = float(w_max) / h_max
 
     # apply scaling
     ar_scaling = {}
@@ -212,30 +221,25 @@ def main():
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
         props = cam.override_with_hidden_physical_camera_props(props)
-        its.caps.skip_unless(its.caps.read_3a(props))
+        # determine skip conditions
+        first_api = its.device.get_first_api_level(its.device.get_device_id())
+        if first_api < 30:  # original constraint
+            its.caps.skip_unless(its.caps.read_3a(props))
+        else:  # loosen from read_3a to enable LIMITED coverage
+            its.caps.skip_unless(its.caps.ae_lock(props) and
+                                 its.caps.awb_lock(props))
+        # determine capabilities
         full_device = its.caps.full_or_better(props)
-        limited_device = its.caps.limited(props)
-        its.caps.skip_unless(full_device or limited_device)
         level3_device = its.caps.level3(props)
         raw_avlb = its.caps.raw16(props)
-        mono_camera = its.caps.mono_camera(props)
         run_crop_test = (level3_device or full_device) and raw_avlb
         if not run_crop_test:
             print "Crop test skipped"
         debug = its.caps.debug_mode()
-        # Converge 3A and get the estimates.
-        sens, exp, gains, xform, focus = cam.do_3a(get_results=True,
-                                                   lock_ae=True, lock_awb=True,
-                                                   mono_camera=mono_camera)
-        print "AE sensitivity %d, exposure %dms" % (sens, exp / 1000000.0)
-        print "AWB gains", gains
-        print "AWB transform", xform
-        print "AF distance", focus
-        req = its.objects.manual_capture_request(
-                sens, exp, focus, True, props)
-        xform_rat = its.objects.float_to_rational(xform)
-        req["android.colorCorrection.gains"] = gains
-        req["android.colorCorrection.transform"] = xform_rat
+
+        # Converge 3A
+        cam.do_3a()
+        req = its.objects.auto_capture_request()
 
         # If raw capture is available, use it as ground truth.
         if raw_avlb:
@@ -297,6 +301,7 @@ def main():
             w_raw = size_raw[1]
             h_raw = size_raw[0]
             img_name = "%s_%s_w%d_h%d.png" % (NAME, "raw", w_raw, h_raw)
+            its.image.write_image(img_raw, img_name, True)
             aspect_ratio_gt, cc_ct_gt, circle_size_raw = measure_aspect_ratio(
                     img_raw, raw_avlb, img_name, debug)
             raw_fov_percent = calc_circle_image_ratio(
@@ -319,7 +324,7 @@ def main():
             ref_fov = find_jpeg_fov_reference(cam, req, props)
 
         # Determine scaling factors for AR calculations
-        ar_scaling = aspect_ratio_scale_factors(ref_fov["fmt"], props)
+        ar_scaling = aspect_ratio_scale_factors(ref_fov["fmt"], props, raw_avlb)
 
         # Take pictures of each settings with all the image sizes available.
         for fmt in format_list:
