@@ -22,8 +22,10 @@ import android.app.UiAutomation;
 import android.platform.helpers.exceptions.TestHelperException;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.UiObjectNotFoundException;
+import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
 import android.util.Log;
 
@@ -104,6 +106,110 @@ public class DefaultCtsPrintHelper implements ICtsPrintHelper {
         } catch (Exception e) {
             dumpWindowHierarchy();
             throw new TestHelperException("Failed to select printer", e);
+        }
+    }
+
+    @Override
+    public void setPageOrientation(String orientation) throws TestHelperException {
+        try {
+            UiObject orientationSpinner = mDevice.findObject(new UiSelector().resourceId(
+                    "com.android.printspooler:id/orientation_spinner"));
+            orientationSpinner.click();
+            UiObject orientationOption = mDevice.findObject(new UiSelector().text(orientation));
+            orientationOption.click();
+        } catch (UiObjectNotFoundException e) {
+            dumpWindowHierarchy();
+            throw new TestHelperException("Failed to set page orientation to " + orientation, e);
+        }
+    }
+
+    @Override
+    public String getPageOrientation() throws TestHelperException {
+        try {
+            UiObject orientationSpinner = mDevice.findObject(new UiSelector().resourceId(
+                    "com.android.printspooler:id/orientation_spinner"));
+            return orientationSpinner.getText();
+        } catch (UiObjectNotFoundException e) {
+            dumpWindowHierarchy();
+            throw new TestHelperException("Failed to get page orientation", e);
+        }
+    }
+
+    @Override
+    public void setMediaSize(String mediaSize) throws TestHelperException {
+        try {
+            UiObject mediaSizeSpinner = mDevice.findObject(new UiSelector().resourceId(
+                    "com.android.printspooler:id/paper_size_spinner"));
+            mediaSizeSpinner.click();
+            UiObject mediaSizeOption = mDevice.findObject(new UiSelector().text(mediaSize));
+            mediaSizeOption.click();
+        } catch (UiObjectNotFoundException e) {
+            dumpWindowHierarchy();
+            throw new TestHelperException("Unable to set media size to " + mediaSize, e);
+        }
+    }
+
+    @Override
+    public void setColorMode(String color) throws TestHelperException {
+        try {
+            UiObject colorSpinner = mDevice.findObject(new UiSelector().resourceId(
+                    "com.android.printspooler:id/color_spinner"));
+            colorSpinner.click();
+            UiObject colorOption = mDevice.findObject(new UiSelector().text(color));
+            colorOption.click();
+        } catch (UiObjectNotFoundException e) {
+            dumpWindowHierarchy();
+            throw new TestHelperException("Unable to set color mode to " + color, e);
+        }
+    }
+
+    @Override
+    public String getColorMode() throws TestHelperException {
+        try {
+            UiObject colorSpinner = mDevice.findObject(new UiSelector().resourceId(
+                    "com.android.printspooler:id/color_spinner"));
+            return colorSpinner.getText();
+        } catch (UiObjectNotFoundException e) {
+            dumpWindowHierarchy();
+            throw new TestHelperException("Unable to get color mode", e);
+        }
+    }
+
+    @Override
+    public void setDuplexMode(String duplex) throws TestHelperException {
+        try {
+            UiObject duplexSpinner = mDevice.findObject(new UiSelector().resourceId(
+                    "com.android.printspooler:id/duplex_spinner"));
+            duplexSpinner.click();
+            UiObject duplexOption = mDevice.findObject(new UiSelector().text(duplex));
+            duplexOption.click();
+        } catch (UiObjectNotFoundException e) {
+            dumpWindowHierarchy();
+            throw new TestHelperException("Unable to set duplex mode to " + duplex, e);
+        }
+    }
+
+    @Override
+    public void setCopies(int newCopies) throws TestHelperException {
+        try {
+            UiObject copies = mDevice.findObject(new UiSelector().resourceId(
+                    "com.android.printspooler:id/copies_edittext"));
+            copies.setText(Integer.valueOf(newCopies).toString());
+        } catch (UiObjectNotFoundException e) {
+            dumpWindowHierarchy();
+            throw new TestHelperException("Unable to set copies to " + newCopies, e);
+        }
+    }
+
+    @Override
+    public int getCopies() throws TestHelperException {
+        try {
+            UiObject copies = mDevice.findObject(new UiSelector().resourceId(
+                    "com.android.printspooler:id/copies_edittext"));
+            return Integer.parseInt(copies.getText());
+        } catch (UiObjectNotFoundException e) {
+            dumpWindowHierarchy();
+            throw new TestHelperException("Unable to get number of copies", e);
         }
     }
 }

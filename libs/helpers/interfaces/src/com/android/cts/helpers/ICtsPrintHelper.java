@@ -34,4 +34,61 @@ public interface ICtsPrintHelper extends ICtsDeviceInteractionHelper {
      * @param timeout timeout in milliseconds
      */
     void selectPrinter(String printerName, long timeout);
+
+    /**
+     * Set the page orientation to portrait or landscape.
+     *
+     * @param orientation "Portrait" or "Landscape"
+     */
+    void setPageOrientation(String orientation);
+
+    /**
+     * Get the current page orientation.
+     *
+     * @return current orientation as "Portrait" or "Landscape"
+     */
+    String getPageOrientation();
+
+    /**
+     * Set the media size.
+     *
+     * @param mediaSize human-readable label matching one of the PrintAttributes.MediaSize values
+     */
+    void setMediaSize(String mediaSize);
+
+    /**
+     * Set the color mode to Color or Black &amp; White.
+     *
+     * @param color "Color" or "Black &amp; White"
+     */
+    void setColorMode(String color);
+
+    /**
+     * Get the current color mode.
+     *
+     * @return "Color" or "Black &amp; White"
+     */
+    String getColorMode();
+
+    /**
+     * Set the duplex mode.
+     *
+     * @param duplex human-readable label matching one of the DUPLEX_MODE constants from
+     *               PrintAttributes
+     */
+    void setDuplexMode(String duplex);
+
+    /**
+     * Set the number of copies to print.
+     *
+     * @param copies the new number of copies
+     */
+    void setCopies(int copies);
+
+    /**
+     * Get the current number of copies to print.
+     *
+     * @return the current number of copies
+     */
+    int getCopies();
 }
