@@ -46,8 +46,12 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
-
+import java.util.List;
 /**
  * TextClassifier value objects tests.
  *
@@ -168,11 +172,13 @@ public class TextClassifierValueObjectsTest {
     public void testTextSelectionRequest() {
         final TextSelection.Request request = new TextSelection.Request.Builder(TEXT, START, END)
                 .setDefaultLocales(LOCALES)
+                .setExtras(BUNDLE)
                 .build();
         assertEquals(TEXT, request.getText().toString());
         assertEquals(START, request.getStartIndex());
         assertEquals(END, request.getEndIndex());
         assertEquals(LOCALES, request.getDefaultLocales());
+        assertEquals(BUNDLE_VALUE, request.getExtras().getString(BUNDLE_KEY));
     }
 
     @Test
@@ -343,14 +349,36 @@ public class TextClassifierValueObjectsTest {
         final TextLinks textLinks = new TextLinks.Builder(TEXT)
                 .setExtras(BUNDLE)
                 .addLink(START, END, Collections.singletonMap(TextClassifier.TYPE_ADDRESS, 1.0f))
+                .addLink(START, END, Collections.singletonMap(TextClassifier.TYPE_PHONE, 1.0f),
+                        BUNDLE)
                 .build();
 
         assertEquals(TEXT, textLinks.getText());
         assertEquals(BUNDLE_VALUE, textLinks.getExtras().getString(BUNDLE_KEY));
-        assertEquals(1, textLinks.getLinks().size());
-        TextLinks.TextLink textLink = textLinks.getLinks().iterator().next();
-        assertEquals(TextClassifier.TYPE_ADDRESS, textLink.getEntity(0));
-        assertEquals(1.0f, textLink.getConfidenceScore(TextClassifier.TYPE_ADDRESS), EPSILON);
+        assertEquals(2, textLinks.getLinks().size());
+
+        final List<TextLinks.TextLink> resultList = new ArrayList<>(textLinks.getLinks());
+        final TextLinks.TextLink textLinkNoExtra = resultList.get(0);
+        assertEquals(TextClassifier.TYPE_ADDRESS, textLinkNoExtra.getEntity(0));
+        assertEquals(1.0f, textLinkNoExtra.getConfidenceScore(TextClassifier.TYPE_ADDRESS),
+                EPSILON);
+        assertEquals(Bundle.EMPTY, textLinkNoExtra.getExtras());
+
+        final TextLinks.TextLink textLinkHasExtra = resultList.get(1);
+        assertEquals(TextClassifier.TYPE_PHONE, textLinkHasExtra.getEntity(0));
+        assertEquals(1.0f, textLinkHasExtra.getConfidenceScore(TextClassifier.TYPE_PHONE),
+                EPSILON);
+        assertEquals(BUNDLE_VALUE, textLinkHasExtra.getExtras().getString(BUNDLE_KEY));
+    }
+
+    @Test
+    public void testTextLinks_clearTextLinks() {
+        final TextLinks textLinks = new TextLinks.Builder(TEXT)
+                .setExtras(BUNDLE)
+                .addLink(START, END, Collections.singletonMap(TextClassifier.TYPE_ADDRESS, 1.0f))
+                .clearTextLinks()
+                .build();
+        assertEquals(0, textLinks.getLinks().size());
     }
 
     @Test
@@ -365,11 +393,14 @@ public class TextClassifierValueObjectsTest {
 
     @Test
     public void testTextLinksRequest_full() {
+        final ZonedDateTime referenceTime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(1000L),
+                ZoneId.of("UTC"));
         final TextLinks.Request request = new TextLinks.Request.Builder(TEXT)
                 .setDefaultLocales(LOCALES)
                 .setExtras(BUNDLE)
                 .setEntityConfig(TextClassifier.EntityConfig.createWithHints(
                         Collections.singletonList(TextClassifier.HINT_TEXT_IS_EDITABLE)))
+                .setReferenceTime(referenceTime)
                 .build();
 
         assertEquals(TEXT, request.getText());
@@ -379,6 +410,7 @@ public class TextClassifierValueObjectsTest {
         assertEquals(
                 TextClassifier.HINT_TEXT_IS_EDITABLE,
                 request.getEntityConfig().getHints().iterator().next());
+        assertEquals(referenceTime, request.getReferenceTime());
     }
 
     @Test
@@ -423,6 +455,7 @@ public class TextClassifierValueObjectsTest {
 
         assertEquals(TEXT, request.getText());
         assertEquals(BUNDLE_VALUE, request.getExtras().getString(BUNDLE_KEY));
+        assertNull(request.getCallingPackageName());
     }
 
     // TODO: Add more tests.
