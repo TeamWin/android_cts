@@ -25,8 +25,8 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Parcel;
 import android.util.Size;
-import android.view.inline.InlineContentView;
-import android.view.inline.InlinePresentationSpec;
+import android.widget.inline.InlineContentView;
+import android.widget.inline.InlinePresentationSpec;
 import android.view.inputmethod.InlineSuggestion;
 import android.view.inputmethod.InlineSuggestionInfo;
 

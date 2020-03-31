@@ -2504,10 +2504,44 @@ public class WifiManagerTest extends AndroidTestCase {
             List<PasspointConfiguration> configurations = mWifiManager.getPasspointConfigurations();
             assertNotNull(configurations);
             assertEquals(passpointConfiguration, configurations.get(0));
-
+        } finally {
             // Clean up
             mWifiManager.removePasspointConfiguration(passpointConfiguration.getHomeSp().getFqdn());
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Tests {@link WifiManager#setPasspointMeteredOverride(String, int)}
+     * adds a Passpoint configuration correctly, check the default metered setting. Use API change
+     * metered override, verify Passpoint configuration changes with it.
+     */
+    public void testSetPasspointMeteredOverride() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        // Create and install a Passpoint configuration
+        PasspointConfiguration passpointConfiguration = createPasspointConfiguration();
+        String fqdn = passpointConfiguration.getHomeSp().getFqdn();
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            mWifiManager.addOrUpdatePasspointConfiguration(passpointConfiguration);
+
+            // Verify meter override setting.
+            assertEquals(WifiConfiguration.METERED_OVERRIDE_NONE,
+                    mWifiManager.getPasspointConfigurations().get(0).getMeteredOverride());
+            // Change the meter override setting.
+            mWifiManager.setPasspointMeteredOverride(fqdn,
+                    WifiConfiguration.METERED_OVERRIDE_METERED);
+            // Verify passpoint config change with the new setting.
+            assertEquals(WifiConfiguration.METERED_OVERRIDE_METERED,
+                    mWifiManager.getPasspointConfigurations().get(0).getMeteredOverride());
         } finally {
+            // Clean up
+            mWifiManager.removePasspointConfiguration(passpointConfiguration.getHomeSp().getFqdn());
             uiAutomation.dropShellPermissionIdentity();
         }
     }
@@ -2648,6 +2682,48 @@ public class WifiManagerTest extends AndroidTestCase {
         matchedResults = mWifiManager
                 .getMatchingScanResults(Arrays.asList(suggestion), Arrays.asList(scanResult));
         assertTrue(matchedResults.get(suggestion).isEmpty());
+    }
+
+    /**
+     * Tests {@link WifiManager#disableEphemeralNetwork(String)}.
+     */
+    public void testDisableEphemeralNetwork() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        // Trigger a scan & wait for connection to one of the saved networks.
+        mWifiManager.startScan();
+        waitForConnection();
+
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        List<WifiConfiguration> savedNetworks = null;
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            // Temporarily disable on all networks.
+            savedNetworks = mWifiManager.getConfiguredNetworks();
+            for (WifiConfiguration network : savedNetworks) {
+                mWifiManager.disableEphemeralNetwork(network.SSID);
+            }
+            // trigger a disconnect and wait for disconnect.
+            mWifiManager.disconnect();
+            waitForDisconnection();
+
+            // Now trigger scan and ensure that the device does not connect to any networks.
+            mWifiManager.startScan();
+            ensureNotConnected();
+
+            // Toggle Wifi off/on should clean the state.
+            setWifiEnabled(false);
+            setWifiEnabled(true);
+
+            // Trigger a scan & wait for connection to one of the saved networks.
+            mWifiManager.startScan();
+            waitForConnection();
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+            setWifiEnabled(false);
+        }
     }
 
     /**
