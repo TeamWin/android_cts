@@ -16,6 +16,7 @@
 
 package android.permission3.cts
 
+import androidx.test.filters.FlakyTest
 import org.junit.Before
 import org.junit.Test
 
@@ -229,6 +230,7 @@ class PermissionTest23 : BaseUsePermissionTest() {
     }
 
     @Test(timeout = 120000)
+    @FlakyTest
     fun testNoResidualPermissionsOnUninstall() {
         // Grant all permissions
         grantAppPermissions(
