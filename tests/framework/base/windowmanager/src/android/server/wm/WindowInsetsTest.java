@@ -16,9 +16,19 @@
 
 package android.server.wm;
 
+import static android.view.WindowInsets.Type.captionBar;
+import static android.view.WindowInsets.Type.displayCutout;
+import static android.view.WindowInsets.Type.ime;
+import static android.view.WindowInsets.Type.mandatorySystemGestures;
+import static android.view.WindowInsets.Type.navigationBars;
+import static android.view.WindowInsets.Type.statusBars;
+import static android.view.WindowInsets.Type.systemGestures;
+import static android.view.WindowInsets.Type.tappableElement;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -144,6 +154,95 @@ public class WindowInsetsTest {
     }
 
     @Test
+    public void testBuilder_typeMap() {
+        final WindowInsets insets = new WindowInsets.Builder()
+                .setInsets(statusBars(), Insets.of(0, 50, 0, 0))
+                .setInsets(navigationBars(), Insets.of(0, 0, 0, 100))
+                .setInsets(tappableElement(), Insets.of(0, 10, 0, 10))
+                .setInsets(mandatorySystemGestures(), Insets.of(0, 20, 0, 20))
+                .setInsets(systemGestures(), Insets.of(0, 30, 0, 30))
+                .setInsets(displayCutout(), Insets.of(0, 5, 0, 0))
+                .setInsets(captionBar(), Insets.of(0, 50, 0, 0))
+                .setInsets(ime(), Insets.of(0, 0, 0, 300))
+                .build();
+        assertEquals(Insets.of(0, 50, 0, 0), insets.getInsets(statusBars()));
+        assertEquals(Insets.of(0, 0, 0, 100), insets.getInsets(navigationBars()));
+        assertEquals(Insets.of(0, 10, 0, 10), insets.getInsets(tappableElement()));
+        assertEquals(Insets.of(0, 20, 0, 20), insets.getInsets(mandatorySystemGestures()));
+        assertEquals(Insets.of(0, 30, 0, 30), insets.getInsets(systemGestures()));
+        assertEquals(Insets.of(0, 5, 0, 0), insets.getInsets(displayCutout()));
+        assertEquals(Insets.of(0, 50, 0, 0), insets.getInsets(captionBar()));
+        assertEquals(Insets.of(0, 50, 0, 100), insets.getSystemWindowInsets());
+        assertEquals(Insets.of(0, 0, 0, 300), insets.getInsets(ime()));
+    }
+
+    @Test
+    public void testBuilder_typeMapIgnoringVisibility() {
+        final WindowInsets insets = new WindowInsets.Builder()
+                .setInsetsIgnoringVisibility(statusBars(), Insets.of(0, 50, 0, 0))
+                .setInsetsIgnoringVisibility(navigationBars(), Insets.of(0, 0, 0, 100))
+                .setInsetsIgnoringVisibility(tappableElement(), Insets.of(0, 10, 0, 10))
+                .setInsetsIgnoringVisibility(mandatorySystemGestures(), Insets.of(0, 20, 0, 20))
+                .setInsetsIgnoringVisibility(systemGestures(), Insets.of(0, 30, 0, 30))
+                .setInsetsIgnoringVisibility(displayCutout(), Insets.of(0, 5, 0, 0))
+                .setInsetsIgnoringVisibility(captionBar(), Insets.of(0, 50, 0, 0))
+                .build();
+        assertEquals(Insets.of(0, 50, 0, 0),
+                insets.getInsetsIgnoringVisibility(statusBars()));
+        assertEquals(Insets.of(0, 0, 0, 100),
+                insets.getInsetsIgnoringVisibility(navigationBars()));
+        assertEquals(Insets.of(0, 10, 0, 10),
+                insets.getInsetsIgnoringVisibility(tappableElement()));
+        assertEquals(Insets.of(0, 20, 0, 20),
+                insets.getInsetsIgnoringVisibility(mandatorySystemGestures()));
+        assertEquals(Insets.of(0, 30, 0, 30),
+                insets.getInsetsIgnoringVisibility(systemGestures()));
+        assertEquals(Insets.of(0, 5, 0, 0),
+                insets.getInsetsIgnoringVisibility(displayCutout()));
+        assertEquals(Insets.of(0, 50, 0, 0),
+                insets.getInsetsIgnoringVisibility(captionBar()));
+        assertEquals(Insets.of(0, 50, 0, 100), insets.getStableInsets());
+
+        Exception exception = null;
+        try {
+            new WindowInsets.Builder().setInsetsIgnoringVisibility(ime(), Insets.NONE);
+        } catch (Exception e) {
+            exception = e;
+        }
+        assertNotNull(exception);
+
+        exception = null;
+        try {
+            insets.getInsetsIgnoringVisibility(ime());
+        } catch (Exception e) {
+            exception = e;
+        }
+        assertNotNull(exception);
+    }
+
+    @Test
+    public void testBuilder_compatInsets() {
+        final WindowInsets insets = new WindowInsets.Builder()
+                .setSystemWindowInsets(Insets.of(0, 50, 30, 10))
+                .build();
+        assertEquals(Insets.of(0, 50, 0, 0), insets.getInsets(statusBars()));
+        assertEquals(Insets.of(0, 0, 30, 10), insets.getInsets(navigationBars()));
+    }
+
+    @Test
+    public void testBuilder_visibility() {
+        final WindowInsets insets = new WindowInsets.Builder()
+                .setInsets(navigationBars(), Insets.of(0, 0, 0, 100))
+                .setInsets(ime(), Insets.of(0, 0, 0, 300))
+                .setVisible(navigationBars(), true)
+                .setVisible(ime(), true)
+                .build();
+        assertTrue(insets.isVisible(navigationBars()));
+        assertTrue(insets.isVisible(navigationBars() | ime()));
+        assertFalse(insets.isVisible(navigationBars() | statusBars()));
+    }
+
+    @Test
     public void testEquality() {
         final WindowInsets insets = new WindowInsets.Builder()
                 .setSystemWindowInsets(Insets.of(1, 2, 3, 4))
@@ -181,6 +280,18 @@ public class WindowInsetsTest {
         assertNotEquals(insets, insets.consumeSystemWindowInsets());
         assertNotEquals(insets, insets.consumeStableInsets());
         assertNotEquals(insets, insets.consumeDisplayCutout());
+    }
+
+    @Test
+    public void testConsume_doesntChangeVisibility() {
+        final WindowInsets insets = new WindowInsets.Builder()
+                .setInsets(ime(), Insets.of(0, 0, 0, 300))
+                .setVisible(ime(), true)
+                .build();
+
+        final WindowInsets consumed = insets.consumeSystemWindowInsets();
+
+        assertTrue(consumed.isVisible(ime()));
     }
 
     @Test
