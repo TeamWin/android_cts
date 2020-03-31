@@ -325,11 +325,6 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.cve_2016_3920, new CrashUtils.Config().checkMinAddress(false));
     }
 
-    @SecurityTest(minPatchLevel = "2018-06")
-    public void testStagefright_bug_68953854() throws Exception {
-        doStagefrightTest(R.raw.bug_68953854, 1 * 60 * 1000);
-    }
-
     @SecurityTest(minPatchLevel = "2017-09")
     public void testStagefright_bug_38448381() throws Exception {
         doStagefrightTest(R.raw.bug_38448381);
