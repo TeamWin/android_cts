@@ -29,7 +29,6 @@ import android.view.inputmethod.InlineSuggestionInfo;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -80,7 +79,6 @@ public class InlineSuggestionInfoTest {
         assertTrue(info.isPinned());
     }
 
-    @Ignore("b/152811052")
     @Test
     public void testInlineSuggestionInfoParcelizeDeparcelize() {
         InlineSuggestionInfo info = InlineSuggestionInfo.newInlineSuggestionInfo(
