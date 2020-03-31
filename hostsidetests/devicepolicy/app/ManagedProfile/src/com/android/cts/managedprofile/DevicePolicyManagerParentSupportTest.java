@@ -84,6 +84,9 @@ public class DevicePolicyManagerParentSupportTest extends BaseManagedProfileTest
     }
 
     public void testGetMaximumPasswordLength_onParent() {
+        if (!mHasSecureLockScreen) {
+            return;
+        }
         final int actualMaximumPasswordLength =
                 mParentDevicePolicyManager.getPasswordMaximumLength(
                         PASSWORD_QUALITY_NUMERIC_COMPLEX);
