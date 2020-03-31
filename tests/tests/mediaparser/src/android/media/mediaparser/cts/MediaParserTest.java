@@ -18,6 +18,8 @@ package android.media.mediaparser.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.fail;
+
 import android.media.MediaFormat;
 import android.media.MediaParser;
 
@@ -28,7 +30,6 @@ import com.google.android.exoplayer2.testutil.FakeExtractorInput;
 import com.google.android.exoplayer2.testutil.FakeExtractorOutput;
 import com.google.android.exoplayer2.testutil.TestUtil;
 
-import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -110,7 +111,7 @@ public class MediaParserTest {
         testCreationByName(MediaParser.PARSER_NAME_FLAC);
         try {
             testCreationByName("android.media.mediaparser.ExtractorThatDoesNotExist");
-            Assert.fail();
+            fail();
         } catch (IllegalArgumentException e) {
             // Expected.
         }
@@ -135,6 +136,56 @@ public class MediaParserTest {
         assertSupportFor(MediaParser.PARAMETER_TS_IGNORE_SPLICE_INFO_STREAM);
         assertSupportFor(MediaParser.PARAMETER_TS_DETECT_ACCESS_UNITS);
         assertSupportFor(MediaParser.PARAMETER_TS_ENABLE_HDMV_DTS_AUDIO_STREAMS);
+    }
+
+    @Test
+    public void testSetKnownParameters() {
+        testValidAndInvalidValueForBooleanParameter(MediaParser.PARAMETER_ADTS_ENABLE_CBR_SEEKING);
+        testValidAndInvalidValueForBooleanParameter(MediaParser.PARAMETER_AMR_ENABLE_CBR_SEEKING);
+        testValidAndInvalidValueForBooleanParameter(MediaParser.PARAMETER_FLAC_DISABLE_ID3);
+        testValidAndInvalidValueForBooleanParameter(MediaParser.PARAMETER_MP4_IGNORE_EDIT_LISTS);
+        testValidAndInvalidValueForBooleanParameter(MediaParser.PARAMETER_MP4_IGNORE_TFDT_BOX);
+        testValidAndInvalidValueForBooleanParameter(
+                MediaParser.PARAMETER_MP4_TREAT_VIDEO_FRAMES_AS_KEYFRAMES);
+        testValidAndInvalidValueForBooleanParameter(
+                MediaParser.PARAMETER_MATROSKA_DISABLE_CUES_SEEKING);
+        testValidAndInvalidValueForBooleanParameter(MediaParser.PARAMETER_MP3_DISABLE_ID3);
+        testValidAndInvalidValueForBooleanParameter(MediaParser.PARAMETER_MP3_ENABLE_CBR_SEEKING);
+        testValidAndInvalidValueForBooleanParameter(MediaParser.PARAMETER_MP3_ENABLE_INDEX_SEEKING);
+        testValidAndInvalidValueForBooleanParameter(
+                MediaParser.PARAMETER_TS_ALLOW_NON_IDR_AVC_KEYFRAMES);
+        testValidAndInvalidValueForBooleanParameter(MediaParser.PARAMETER_TS_IGNORE_AAC_STREAM);
+        testValidAndInvalidValueForBooleanParameter(MediaParser.PARAMETER_TS_IGNORE_AVC_STREAM);
+        testValidAndInvalidValueForBooleanParameter(
+                MediaParser.PARAMETER_TS_IGNORE_SPLICE_INFO_STREAM);
+        testValidAndInvalidValueForBooleanParameter(MediaParser.PARAMETER_TS_DETECT_ACCESS_UNITS);
+        testValidAndInvalidValueForBooleanParameter(
+                MediaParser.PARAMETER_TS_ENABLE_HDMV_DTS_AUDIO_STREAMS);
+        testParameterSetting(
+                MediaParser.PARAMETER_TS_MODE, /* value= */ 1, /* valueIsIllegal= */ true);
+        testParameterSetting(
+                MediaParser.PARAMETER_TS_MODE,
+                /* value= */ "invalid_mode",
+                /* valueIsIllegal= */ true);
+        testParameterSetting(
+                MediaParser.PARAMETER_TS_MODE,
+                /* value= */ "single_pmt",
+                /* valueIsIllegal= */ false);
+        testParameterSetting(
+                MediaParser.PARAMETER_TS_MODE, /* value= */ "hls", /* valueIsIllegal= */ false);
+        testParameterSetting(
+                MediaParser.PARAMETER_TS_MODE,
+                /* value= */ "multi_pmt",
+                /* valueIsIllegal= */ false);
+    }
+
+    @Test
+    public void testSetUnknownParameter() {
+        String parameterName = "android.media.mediaparser.unsupportedParameterName";
+        // All of the following should be ignored.
+        testParameterSetting(parameterName, /* value= */ 1, /* valueIsIllegal= */ false);
+        testParameterSetting(parameterName, /* value= */ "string", /* valueIsIllegal= */ false);
+        testParameterSetting(parameterName, /* value= */ true, /* valueIsIllegal= */ false);
     }
 
     @Test
@@ -178,7 +229,7 @@ public class MediaParserTest {
         try {
             testSniffAsset(
                     "ogg/opus_header", /* expectedExtractorName= */ MediaParser.PARSER_NAME_OGG);
-            Assert.fail();
+            fail();
         } catch (MediaParser.UnrecognizedInputFormatException e) {
             // Expected.
         }
@@ -190,7 +241,7 @@ public class MediaParserTest {
             testSniffAsset(
                     "ogg/invalid_ogg_header",
                     /* expectedExtractorName= */ MediaParser.PARSER_NAME_OGG);
-            Assert.fail();
+            fail();
         } catch (MediaParser.UnrecognizedInputFormatException e) {
             // Expected.
         }
@@ -201,7 +252,7 @@ public class MediaParserTest {
         try {
             testSniffAsset(
                     "ogg/invalid_header", /* expectedExtractorName= */ MediaParser.PARSER_NAME_OGG);
-            Assert.fail();
+            fail();
         } catch (MediaParser.UnrecognizedInputFormatException e) {
             // Expected.
         }
@@ -463,6 +514,26 @@ public class MediaParserTest {
                 MediaParser.create(new MockMediaParserOutputConsumer(new FakeExtractorOutput()));
         assertThat(mediaParser.supportsParameter(parameterName)).isTrue();
         mediaParser.release();
+    }
+
+    private static void testValidAndInvalidValueForBooleanParameter(String parameterName) {
+        testParameterSetting(parameterName, /* value= */ "string", /* valueIsIllegal= */ true);
+        testParameterSetting(parameterName, /* value= */ true, /* valueIsIllegal= */ false);
+    }
+
+    private static void testParameterSetting(
+            String parameterName, Object value, boolean valueIsIllegal) {
+        MediaParser mediaParser =
+                MediaParser.create(new MockMediaParserOutputConsumer(new FakeExtractorOutput()));
+        boolean illegalArgument = false;
+        try {
+            mediaParser.setParameter(parameterName, value);
+        } catch (IllegalArgumentException e) {
+            illegalArgument = true;
+        }
+        if (valueIsIllegal != illegalArgument) {
+            fail();
+        }
     }
 
     private static void testSniffAsset(String assetPath, String expectedParserName)
