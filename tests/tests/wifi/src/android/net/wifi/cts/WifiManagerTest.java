@@ -2651,6 +2651,48 @@ public class WifiManagerTest extends AndroidTestCase {
     }
 
     /**
+     * Tests {@link WifiManager#disableEphemeralNetwork(String)}.
+     */
+    public void testDisableEphemeralNetwork() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        // Trigger a scan & wait for connection to one of the saved networks.
+        mWifiManager.startScan();
+        waitForConnection();
+
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        List<WifiConfiguration> savedNetworks = null;
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            // Temporarily disable on all networks.
+            savedNetworks = mWifiManager.getConfiguredNetworks();
+            for (WifiConfiguration network : savedNetworks) {
+                mWifiManager.disableEphemeralNetwork(network.SSID);
+            }
+            // trigger a disconnect and wait for disconnect.
+            mWifiManager.disconnect();
+            waitForDisconnection();
+
+            // Now trigger scan and ensure that the device does not connect to any networks.
+            mWifiManager.startScan();
+            ensureNotConnected();
+
+            // Toggle Wifi off/on should clean the state.
+            setWifiEnabled(false);
+            setWifiEnabled(true);
+
+            // Trigger a scan & wait for connection to one of the saved networks.
+            mWifiManager.startScan();
+            waitForConnection();
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+            setWifiEnabled(false);
+        }
+    }
+
+    /**
      * Tests {@link WifiManager#allowAutojoin(int, boolean)}.
      */
     public void testAllowAutojoin() throws Exception {
