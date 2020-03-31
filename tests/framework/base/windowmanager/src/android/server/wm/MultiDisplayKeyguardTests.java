@@ -19,7 +19,6 @@ package android.server.wm;
 import static android.server.wm.UiDeviceUtils.pressBackButton;
 import static android.server.wm.app.Components.DISMISS_KEYGUARD_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
-import static android.view.WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -31,8 +30,6 @@ import android.util.Size;
 
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.List;
 
 /**
  * Display tests that require a keyguard.
@@ -81,16 +78,12 @@ public class MultiDisplayKeyguardTests extends MultiDisplayTestBase {
                 .createDisplay();
 
         lockScreenSession.gotoKeyguard();
-        assertTrue("KeyguardDialog must show on external public display",
-                mWmState.waitForWithAmState(
-                        state -> isKeyguardOnDisplay(state, publicDisplay.mId),
-                        "keyguard window to show"));
+        mWmState.waitAndAssertKeyguardShownOnSecondaryDisplay(publicDisplay.mId);
 
         // Keyguard dialog mustn't be removed when press back key
         pressBackButton();
         mWmState.computeState();
-        assertTrue("KeyguardDialog must not be removed when press back key",
-                isKeyguardOnDisplay(mWmState, publicDisplay.mId));
+        mWmState.assertKeyguardShownOnSecondaryDisplay(publicDisplay.mId);
     }
 
     /**
@@ -106,19 +99,13 @@ public class MultiDisplayKeyguardTests extends MultiDisplayTestBase {
                 .createDisplay();
 
         lockScreenSession.gotoKeyguard();
-        assertTrue("KeyguardDialog must show on external public display",
-                mWmState.waitForWithAmState(
-                        state -> isKeyguardOnDisplay(state, publicDisplay.mId),
-                        "keyguard window to show"));
+        mWmState.waitAndAssertKeyguardShownOnSecondaryDisplay(publicDisplay.mId);
 
         // By default, a Presentation object should be dismissed if the DisplayMetrics changed.
         // But this rule should not apply to KeyguardPresentation.
         virtualDisplaySession.resizeDisplay();
         mWmState.computeState();
-        assertTrue("KeyguardDialog must show on external public display even display changed",
-                mWmState.waitForWithAmState(
-                        state -> isKeyguardOnDisplay(state, publicDisplay.mId),
-                        "keyguard window to show"));
+        mWmState.waitAndAssertKeyguardShownOnSecondaryDisplay(publicDisplay.mId);
     }
 
     /**
@@ -138,10 +125,7 @@ public class MultiDisplayKeyguardTests extends MultiDisplayTestBase {
                 .createDisplay();
 
         lockScreenSession.gotoKeyguard();
-        assertTrue("KeyguardDialog must show on external public display",
-                mWmState.waitForWithAmState(
-                        state -> isKeyguardOnDisplay(state, publicDisplay.mId),
-                        "keyguard window to show"));
+        mWmState.waitAndAssertKeyguardShownOnSecondaryDisplay(publicDisplay.mId);
 
         // Unlock then lock again, to ensure the display metrics has updated.
         lockScreenSession.wakeUpDevice().unlockDevice();
@@ -156,11 +140,7 @@ public class MultiDisplayKeyguardTests extends MultiDisplayTestBase {
         displayMetricsSession.overrideDisplayMetrics(overrideSize, overrideDensity);
 
         lockScreenSession.gotoKeyguard();
-        assertTrue("KeyguardDialog must show on external public display",
-                mWmState.waitForWithAmState(
-                        state -> isKeyguardOnDisplay(state, publicDisplay.mId),
-                        "keyguard window to show"));
-
+        mWmState.waitAndAssertKeyguardShownOnSecondaryDisplay(publicDisplay.mId);
     }
 
     /**
@@ -177,21 +157,66 @@ public class MultiDisplayKeyguardTests extends MultiDisplayTestBase {
                 virtualDisplaySession.setPublicDisplay(true).createDisplay();
 
         lockScreenSession.gotoKeyguard();
-        assertTrue("KeyguardDialog must show on external public display",
-                mWmState.waitForWithAmState(
-                        state -> isKeyguardOnDisplay(state, publicDisplay.mId),
-                        "keyguard window to show"));
-
-        assertFalse("KeyguardDialog must not show on external private display",
-                isKeyguardOnDisplay(mWmState, privateDisplay.mId));
+        mWmState.waitAndAssertKeyguardShownOnSecondaryDisplay(publicDisplay.mId);
+        mWmState.assertKeyguardGoneOnSecondaryDisplay(privateDisplay.mId);
     }
 
-    private boolean isKeyguardOnDisplay(WindowManagerState windowManagerState, int displayId) {
-        final List<WindowManagerState.WindowState> states =
-                windowManagerState.getMatchingWindowType(TYPE_KEYGUARD_DIALOG);
-        for (WindowManagerState.WindowState ws : states) {
-            if (ws.getDisplayId() == displayId) return true;
-        }
-        return false;
+    @Test
+    public void testUnlockScreen_secondDisplayChanged_dismissesKeyguardOnUnlock() {
+        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        final VirtualDisplaySession virtualDisplaySession = createManagedVirtualDisplaySession();
+        lockScreenSession.setLockCredential();
+
+        // Create second screen
+        final DisplayContent secondDisplay = virtualDisplaySession
+                .setPublicDisplay(true)
+                .createDisplay();
+        final int secondDisplayId = secondDisplay.mId;
+
+        // Lock screen. Keyguard should be shown on the second display
+        lockScreenSession.gotoKeyguard();
+        mWmState.assertKeyguardShowingAndNotOccluded();
+        mWmState.waitAndAssertKeyguardShownOnSecondaryDisplay(secondDisplayId);
+
+        // Change second display. Keyguard should still be shown on the second display
+        virtualDisplaySession.resizeDisplay();
+        mWmState.computeState();
+        mWmState.waitAndAssertKeyguardShownOnSecondaryDisplay(secondDisplayId);
+
+        // Unlock device. Keyguard should be dismissed on the second display
+        lockScreenSession.unlockDevice();
+        lockScreenSession.enterAndConfirmLockCredential();
+        mWmState.waitAndAssertKeyguardGone();
+        mWmState.waitAndAssertKeyguardGoneOnSecondaryDisplay(secondDisplayId);
+    }
+
+    @Test
+    public void testUnlockScreen_decoredSystemDisplayChanged_dismissesKeyguardOnUnlock() {
+        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        final VirtualDisplaySession virtualDisplaySession = createManagedVirtualDisplaySession();
+        lockScreenSession.setLockCredential();
+
+        // Create decored system screen
+        final DisplayContent decoredSystemDisplay = virtualDisplaySession
+                .setSimulateDisplay(true)
+                .setShowSystemDecorations(true)
+                .createDisplay();
+        final int decoredSystemDisplayId = decoredSystemDisplay.mId;
+
+        // Lock screen. Keyguard should be shown on the decored system display
+        lockScreenSession.gotoKeyguard();
+        mWmState.assertKeyguardShowingAndNotOccluded();
+        mWmState.waitAndAssertKeyguardShownOnSecondaryDisplay(decoredSystemDisplayId);
+
+        // Change decored display. Keyguard should still be shown on the decored system display
+        virtualDisplaySession.resizeDisplay();
+        mWmState.computeState();
+        mWmState.waitAndAssertKeyguardShownOnSecondaryDisplay(decoredSystemDisplayId);
+
+        // Unlock device. Keyguard should be dismissed on the decored system display
+        lockScreenSession.unlockDevice();
+        lockScreenSession.enterAndConfirmLockCredential();
+        mWmState.waitAndAssertKeyguardGone();
+        mWmState.waitAndAssertKeyguardGoneOnSecondaryDisplay(decoredSystemDisplayId);
     }
 }

@@ -79,8 +79,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
         lockScreenSession.unlockDevice().enterAndConfirmLockCredential();
 
-        mWmState.waitForKeyguardGone();
-        mWmState.assertKeyguardGone();
+        mWmState.waitAndAssertKeyguardGone();
         assertFalse(mKeyguardManager.isDeviceLocked());
         assertFalse(mKeyguardManager.isKeyguardLocked());
     }
@@ -111,8 +110,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         launchActivity(DISMISS_KEYGUARD_ACTIVITY);
         lockScreenSession.enterAndConfirmLockCredential();
 
-        mWmState.waitForKeyguardGone();
-        mWmState.assertKeyguardGone();
+        mWmState.waitAndAssertKeyguardGone();
         mWmState.assertVisibility(DISMISS_KEYGUARD_ACTIVITY, true);
     }
 
@@ -128,8 +126,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
         launchActivity(DISMISS_KEYGUARD_ACTIVITY);
         lockScreenSession.enterAndConfirmLockCredential();
-        mWmState.waitForKeyguardGone();
-        mWmState.assertKeyguardGone();
+        mWmState.waitAndAssertKeyguardGone();
         mWmState.computeState(DISMISS_KEYGUARD_ACTIVITY);
 
         final boolean isDismissTranslucent = mWmState
@@ -229,8 +226,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
         // Enter the credentials and ensure that the activity actually entered picture-in-picture.
         lockScreenSession.enterAndConfirmLockCredential();
-        mWmState.waitForKeyguardGone();
-        mWmState.assertKeyguardGone();
+        mWmState.waitAndAssertKeyguardGone();
         waitForEnterPip(PIP_ACTIVITY);
         mWmState.assertContainsStack("Must contain pinned stack.", WINDOWING_MODE_PINNED,
                 ACTIVITY_TYPE_STANDARD);
