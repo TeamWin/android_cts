@@ -81,8 +81,7 @@ public class MultiDisplayLockedKeyguardTests extends MultiDisplayTestBase {
         lockScreenSession.unlockDevice();
 
         lockScreenSession.enterAndConfirmLockCredential();
-        mWmState.waitForKeyguardGone();
-        mWmState.assertKeyguardGone();
+        mWmState.waitAndAssertKeyguardGone();
         waitAndAssertActivityState(TEST_ACTIVITY, STATE_RESUMED,
                 "Expected resumed activity on secondary display");
         mWmState.assertVisibility(TEST_ACTIVITY, true /* visible */);
@@ -130,8 +129,7 @@ public class MultiDisplayLockedKeyguardTests extends MultiDisplayTestBase {
         waitAndAssertActivityState(DISMISS_KEYGUARD_ACTIVITY, STATE_STOPPED,
                 "Expected stopped activity on secondary display");
         lockScreenSession.enterAndConfirmLockCredential();
-        mWmState.waitForKeyguardGone();
-        mWmState.assertKeyguardGone();
+        mWmState.waitAndAssertKeyguardGone();
         mWmState.assertVisibility(DISMISS_KEYGUARD_ACTIVITY, true);
     }
 
@@ -157,8 +155,7 @@ public class MultiDisplayLockedKeyguardTests extends MultiDisplayTestBase {
         waitAndAssertActivityState(DISMISS_KEYGUARD_ACTIVITY, STATE_STOPPED,
                 "Expected stopped activity on secondary display");
         lockScreenSession.enterAndConfirmLockCredential();
-        mWmState.waitForKeyguardGone();
-        mWmState.assertKeyguardGone();
+        mWmState.waitAndAssertKeyguardGone();
         mWmState.computeState(DISMISS_KEYGUARD_ACTIVITY);
         mWmState.assertVisibility(DISMISS_KEYGUARD_ACTIVITY, true);
         mWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
