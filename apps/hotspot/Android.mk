@@ -13,6 +13,6 @@ LOCAL_SDK_VERSION := current
 
 LOCAL_STATIC_JAVA_LIBRARIES := android-support-v4
 
-LOCAL_COMPATIBILITY_SUITE := cts sts vts vts10
+LOCAL_COMPATIBILITY_SUITE := cts sts vts10
 
 include $(BUILD_CTS_PACKAGE)
