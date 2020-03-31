@@ -76,8 +76,8 @@ public final class Timeouts {
     /**
      * Timeout for UI operations. Typically used by {@link UiBot}.
      */
-    static final Timeout UI_TIMEOUT = new Timeout("UI_TIMEOUT", ONE_TIMEOUT_TO_RULE_THEN_ALL_MS, 2F,
-            ONE_TIMEOUT_TO_RULE_THEN_ALL_MS);
+    public static final Timeout UI_TIMEOUT = new Timeout("UI_TIMEOUT",
+            ONE_TIMEOUT_TO_RULE_THEN_ALL_MS, 2F, ONE_TIMEOUT_TO_RULE_THEN_ALL_MS);
 
     /**
      * Timeout for a11y window change events.

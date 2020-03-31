@@ -82,7 +82,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * Helper for UI-related needs.
  */
-public final class UiBot {
+public class UiBot {
 
     private static final String TAG = "AutoFillCtsUiBot";
 
@@ -283,20 +283,14 @@ public final class UiBot {
      * @return the dataset picker object.
      */
     public UiObject2 assertDatasets(String...names) throws Exception {
-        // TODO: change run() so it can rethrow the original message
-        return UI_DATASET_PICKER_TIMEOUT.run("assertDatasets: " + Arrays.toString(names), () -> {
-            final UiObject2 picker = findDatasetPicker(UI_DATASET_PICKER_TIMEOUT);
-            try {
-                // TODO: use a library to check it contains, instead of asserThat + catch exception
-                assertWithMessage("wrong dataset names").that(getChildrenAsText(picker))
-                        .containsExactlyElementsIn(Arrays.asList(names)).inOrder();
-                return picker;
-            } catch (AssertionError e) {
-                // Value mismatch - most likely UI didn't change yet, try again
-                Log.w(TAG, "datasets don't match yet: " + e.getMessage());
-                return null;
-            }
-        });
+        final UiObject2 picker = findDatasetPicker(UI_DATASET_PICKER_TIMEOUT);
+        return assertDatasets(picker, names);
+    }
+
+    protected UiObject2 assertDatasets(UiObject2 picker, String...names) {
+        assertWithMessage("wrong dataset names").that(getChildrenAsText(picker))
+                .containsExactlyElementsIn(Arrays.asList(names)).inOrder();
+        return picker;
     }
 
     /**
@@ -305,20 +299,10 @@ public final class UiBot {
      * @return the dataset picker object.
      */
     public UiObject2 assertDatasetsContains(String...names) throws Exception {
-        // TODO: change run() so it can rethrow the original message
-        return UI_DATASET_PICKER_TIMEOUT.run("assertDatasets: " + Arrays.toString(names), () -> {
-            final UiObject2 picker = findDatasetPicker(UI_DATASET_PICKER_TIMEOUT);
-            try {
-                // TODO: use a library to check it contains, instead of asserThat + catch exception
-                assertWithMessage("wrong dataset names").that(getChildrenAsText(picker))
+        final UiObject2 picker = findDatasetPicker(UI_DATASET_PICKER_TIMEOUT);
+        assertWithMessage("wrong dataset names").that(getChildrenAsText(picker))
                 .containsAllIn(Arrays.asList(names)).inOrder();
-                return picker;
-            } catch (AssertionError e) {
-                // Value mismatch - most likely UI didn't change yet, try again
-                Log.w(TAG, "datasets don't match yet: " + e.getMessage());
-                return null;
-            }
-        });
+        return picker;
     }
 
     /**
@@ -579,7 +563,7 @@ public final class UiBot {
     /**
      * Asserts that a {@code selector} is not showing after {@code timeout} milliseconds.
      */
-    private void assertNeverShown(String description, BySelector selector, long timeout)
+    protected void assertNeverShown(String description, BySelector selector, long timeout)
             throws Exception {
         SystemClock.sleep(timeout);
         final UiObject2 object = mDevice.findObject(selector);
@@ -1004,7 +988,7 @@ public final class UiBot {
      * @param selector {@link BySelector} that identifies the object.
      * @param timeout timeout in ms
      */
-    private UiObject2 waitForObject(@NonNull BySelector selector, @NonNull Timeout timeout)
+    protected UiObject2 waitForObject(@NonNull BySelector selector, @NonNull Timeout timeout)
             throws Exception {
         return waitForObject(/* parent= */ null, selector, timeout);
     }
@@ -1083,7 +1067,7 @@ public final class UiBot {
         return picker;
     }
 
-    private UiObject2 findSuggestionStrip(Timeout timeout) throws Exception {
+    protected UiObject2 findSuggestionStrip(Timeout timeout) throws Exception {
         return waitForObject(SUGGESTION_STRIP_SELECTOR, timeout);
     }
 
