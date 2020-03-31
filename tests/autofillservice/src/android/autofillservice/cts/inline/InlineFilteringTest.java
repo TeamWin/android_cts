@@ -167,7 +167,7 @@ public class InlineFilteringTest extends AbstractLoginActivityTestCase {
                 .addDataset(new CannedFillResponse.CannedDataset.Builder()
                         .setField(ID_USERNAME, "pinned")
                         .setPresentation(createPresentation("pinned"))
-                        .setInlinePresentation(createPinnedInlinePresentation("pinned"))
+                        .setInlinePresentation(Helper.createPinnedInlinePresentation("pinned"))
                         .build());
         sReplier.addResponse(builder.build());
 
