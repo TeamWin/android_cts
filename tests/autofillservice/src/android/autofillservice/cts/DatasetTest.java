@@ -30,8 +30,8 @@ import android.service.autofill.InlinePresentation;
 import android.util.Size;
 import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillValue;
-import android.view.inline.InlinePresentationSpec;
 import android.widget.RemoteViews;
+import android.widget.inline.InlinePresentationSpec;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 

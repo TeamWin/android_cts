@@ -20,10 +20,11 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import android.os.Bundle;
 import android.os.LocaleList;
 import android.os.Parcel;
 import android.util.Size;
-import android.view.inline.InlinePresentationSpec;
+import android.widget.inline.InlinePresentationSpec;
 import android.view.inputmethod.InlineSuggestionsRequest;
 
 import androidx.test.filters.SmallTest;
@@ -75,23 +76,47 @@ public class InlineSuggestionsRequestTest {
     }
 
     @Test
+    public void testInlineSuggestionsRequestValuesWithDefaults() {
+        final int suggestionCount = 3;
+        ArrayList<InlinePresentationSpec> presentationSpecs = new ArrayList<>();
+        InlineSuggestionsRequest request =
+                new InlineSuggestionsRequest.Builder(presentationSpecs)
+                        .addInlinePresentationSpecs(
+                                new InlinePresentationSpec.Builder(new Size(100, 100),
+                                        new Size(400, 100)).build())
+                        .setMaxSuggestionCount(suggestionCount).build();
+
+        assertThat(request.getMaxSuggestionCount()).isEqualTo(suggestionCount);
+        assertThat(request.getInlinePresentationSpecs()).isNotNull();
+        assertThat(request.getInlinePresentationSpecs().size()).isEqualTo(1);
+        assertThat(request.getInlinePresentationSpecs().get(0).getStyle()).isNull();
+        assertThat(request.getExtras()).isNull();
+        assertThat(request.getSupportedLocales()).isEqualTo(LocaleList.getDefault());
+    }
+
+    @Test
     public void testInlineSuggestionsRequestValues() {
         final int suggestionCount = 3;
         ArrayList<InlinePresentationSpec> presentationSpecs = new ArrayList<>();
         LocaleList localeList = LocaleList.forLanguageTags("fa-IR");
+        Bundle extra = new Bundle();
+        extra.putString("key", "value");
+        Bundle style = new Bundle();
+        style.putString("style", "value");
         InlineSuggestionsRequest request =
                 new InlineSuggestionsRequest.Builder(presentationSpecs)
-                        .addPresentationSpecs(
+                        .addInlinePresentationSpecs(
                                 new InlinePresentationSpec.Builder(new Size(100, 100),
-                                        new Size(400, 100)).build())
+                                        new Size(400, 100)).setStyle(style).build())
                         .setSupportedLocales(LocaleList.forLanguageTags("fa-IR"))
-                        .setExtras(/* value */ null)
+                        .setExtras(/* value */ extra)
                         .setMaxSuggestionCount(suggestionCount).build();
 
         assertThat(request.getMaxSuggestionCount()).isEqualTo(suggestionCount);
-        assertThat(request.getPresentationSpecs()).isNotNull();
-        assertThat(request.getPresentationSpecs().size()).isEqualTo(1);
-        assertThat(request.getExtras()).isNull();
+        assertThat(request.getInlinePresentationSpecs()).isNotNull();
+        assertThat(request.getInlinePresentationSpecs().size()).isEqualTo(1);
+        assertThat(request.getInlinePresentationSpecs().get(0).getStyle()).isEqualTo(style);
+        assertThat(request.getExtras()).isEqualTo(extra);
         assertThat(request.getSupportedLocales()).isEqualTo(localeList);
     }
 

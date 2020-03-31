@@ -74,6 +74,10 @@ public class Constants {
     /** A package that offers an activity that handles browsable web intents for a specific host */
     public static final String TARGET_WEB = PKG_BASE + "web.activity";
 
+    private static final String BASE_PATH = "/data/local/tmp/cts/appenumeration/";
+    public static final String TARGET_NO_API_APK = BASE_PATH + "CtsAppEnumerationNoApi.apk";
+    public static final String TARGET_FILTERS_APK = BASE_PATH + "CtsAppEnumerationFilters.apk";
+
     public static final String[] ALL_QUERIES_TARGETING_R_PACKAGES = {
             QUERIES_NOTHING,
             QUERIES_NOTHING_PERM,
@@ -103,6 +107,11 @@ public class Constants {
     public static final String ACTION_GET_PACKAGE_INFO = PKG_BASE + "cts.action.GET_PACKAGE_INFO";
     public static final String ACTION_START_FOR_RESULT = PKG_BASE + "cts.action.START_FOR_RESULT";
     public static final String ACTION_START_DIRECTLY = PKG_BASE + "cts.action.START_DIRECTLY";
+    public static final String ACTION_AWAIT_PACKAGE_REMOVED =
+            PKG_BASE + "cts.action.AWAIT_PACKAGE_REMOVED";
+    public static final String ACTION_AWAIT_PACKAGE_ADDED =
+            PKG_BASE + "cts.action.AWAIT_PACKAGE_ADDED";
+
     public static final String ACTION_QUERY_ACTIVITIES =
             PKG_BASE + "cts.action.QUERY_INTENT_ACTIVITIES";
     public static final String ACTION_QUERY_SERVICES =
@@ -117,5 +126,5 @@ public class Constants {
     public static final String EXTRA_REMOTE_CALLBACK = "remoteCallback";
     public static final String EXTRA_ERROR = "error";
     public static final String EXTRA_FLAGS = "flags";
-
+    public static final String EXTRA_DATA = "data";
 }

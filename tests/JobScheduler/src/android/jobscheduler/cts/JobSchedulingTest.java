@@ -72,7 +72,7 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
     public void testFailingScheduleOnQuotaExceeded() {
         Settings.Global.putString(getContext().getContentResolver(),
                 Settings.Global.JOB_SCHEDULER_CONSTANTS,
-                "enable_api_quotas=true,aq_schedule_count=300,aq_schedule_window_ms=60000,"
+                "enable_api_quotas=true,aq_schedule_count=300,aq_schedule_window_ms=300000,"
                         + "aq_schedule_throw_exception=false");
 
         JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
@@ -83,7 +83,8 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
         for (int i = 0; i < 500; ++i) {
             final int expected =
                     i < 300 ? JobScheduler.RESULT_SUCCESS : JobScheduler.RESULT_FAILURE;
-            assertEquals(expected, mJobScheduler.schedule(jobInfo));
+            assertEquals("Got unexpected result for schedule #" + (i + 1),
+                    expected, mJobScheduler.schedule(jobInfo));
         }
     }
 

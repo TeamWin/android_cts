@@ -18,35 +18,40 @@ package android.suspendapps.cts;
 
 import static android.app.Activity.RESULT_CANCELED;
 import static android.app.Activity.RESULT_OK;
-
 import static android.suspendapps.cts.Constants.ALL_TEST_PACKAGES;
 import static android.suspendapps.cts.Constants.DEVICE_ADMIN_COMPONENT;
 import static android.suspendapps.cts.Constants.DEVICE_ADMIN_PACKAGE;
+import static android.suspendapps.cts.Constants.TEST_APP_PACKAGE_NAME;
 import static android.suspendapps.cts.Constants.TEST_PACKAGE_ARRAY;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import android.annotation.Nullable;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.SuspendDialogInfo;
+import android.os.BaseBundle;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.PersistableBundle;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.internal.util.ArrayUtils;
+import com.android.suspendapps.suspendtestapp.SuspendTestActivity;
 import com.android.suspendapps.testdeviceadmin.TestCommsReceiver;
 
 import libcore.util.EmptyArray;
 
 import java.util.Arrays;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -132,5 +137,47 @@ public class SuspendTestUtils {
         assertTrue("Broadcast " + requestIntent.getAction() + " timed out",
                 resultLatch.await(10, TimeUnit.SECONDS));
         return result.get() == RESULT_OK;
+    }
+
+    static boolean areSameExtras(BaseBundle expected, BaseBundle received) {
+        if (expected == null || received == null) {
+            return expected == received;
+        }
+        final Set<String> keys = expected.keySet();
+        if (keys.size() != received.keySet().size()) {
+            return false;
+        }
+        for (String key : keys) {
+            if (!Objects.equals(expected.get(key), received.get(key))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    static void assertSameExtras(String message, BaseBundle expected, BaseBundle received) {
+        if (!areSameExtras(expected, received)) {
+            fail(message + ": [expected: " + expected + "; received: " + received + "]");
+        }
+    }
+
+    static void startTestAppActivity(@Nullable Bundle extras) {
+        final Intent testActivity = new Intent()
+                .setComponent(new ComponentName(TEST_APP_PACKAGE_NAME,
+                        SuspendTestActivity.class.getCanonicalName()))
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (extras != null) {
+            testActivity.putExtras(extras);
+        }
+        getContext().startActivity(testActivity);
+    }
+
+    static PersistableBundle createExtras(String keyPrefix, long lval, String sval,
+            double dval) {
+        final PersistableBundle extras = new PersistableBundle(3);
+        extras.putLong(keyPrefix + ".LONG_VALUE", lval);
+        extras.putDouble(keyPrefix + ".DOUBLE_VALUE", dval);
+        extras.putString(keyPrefix + ".STRING_VALUE", sval);
+        return extras;
     }
 }

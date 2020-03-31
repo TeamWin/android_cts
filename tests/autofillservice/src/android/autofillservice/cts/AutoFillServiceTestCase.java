@@ -35,8 +35,8 @@ import android.service.autofill.InlinePresentation;
 import android.util.Log;
 import android.util.Size;
 import android.view.autofill.AutofillManager;
-import android.view.inline.InlinePresentationSpec;
 import android.widget.RemoteViews;
+import android.widget.inline.InlinePresentationSpec;
 
 import androidx.annotation.NonNull;
 import androidx.autofill.InlinePresentationBuilder;
