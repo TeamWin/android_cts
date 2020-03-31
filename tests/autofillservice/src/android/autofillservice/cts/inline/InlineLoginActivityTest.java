@@ -22,22 +22,20 @@ import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.findAutofillIdByResourceId;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.getContext;
-import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
 import static android.autofillservice.cts.inline.InstrumentedAutoFillServiceInlineEnabled.SERVICE_NAME;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import android.autofillservice.cts.AbstractLoginActivityTestCase;
 import android.autofillservice.cts.CannedFillResponse;
 import android.autofillservice.cts.Helper;
 import android.autofillservice.cts.InstrumentedAutoFillService;
+import android.autofillservice.cts.LoginActivityCommonTestCase;
 import android.service.autofill.FillContext;
-import android.view.View;
 
 import org.junit.Test;
 
-public class InlineLoginActivityTest extends AbstractLoginActivityTestCase {
+public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
 
     private static final String TAG = "InlineLoginActivityTest";
 
@@ -46,90 +44,13 @@ public class InlineLoginActivityTest extends AbstractLoginActivityTestCase {
         Helper.enableAutofillService(getContext(), SERVICE_NAME);
     }
 
-    @Test
-    public void testAutofill_noDataset() throws Exception {
-        // Set service.
-        enableService();
-
-        sReplier.addResponse(CannedFillResponse.NO_RESPONSE);
-
-        // Trigger auto-fill.
-        mUiBot.selectByRelativeId(ID_USERNAME);
-        mUiBot.waitForIdleSync();
-
-        sReplier.getNextFillRequest();
-
-        mUiBot.assertNoSuggestionStripEver();
-        mUiBot.assertNoDatasetsEver();
-
-        waitUntilDisconnected();
+    public InlineLoginActivityTest() {
+        super(getInlineUiBot());
     }
 
-    @Test
-    public void testAutofill_oneDataset() throws Exception {
-        testBasicLoginAutofill(/* numDatasets= */ 1, /* selectedDatasetIndex= */ 0);
-    }
-
-    @Test
-    public void testAutofill_twoDatasets_selectFirstDataset() throws Exception {
-        testBasicLoginAutofill(/* numDatasets= */ 2, /* selectedDatasetIndex= */ 0);
-
-    }
-
-    @Test
-    public void testAutofill_twoDatasets_selectSecondDataset() throws Exception {
-        testBasicLoginAutofill(/* numDatasets= */ 2, /* selectedDatasetIndex= */ 1);
-    }
-
-    private void testBasicLoginAutofill(int numDatasets, int selectedDatasetIndex)
-            throws Exception {
-        // Set service.
-        enableService();
-
-        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder();
-        for (int i = 0; i < numDatasets; i++) {
-            builder.addDataset(new CannedFillResponse.CannedDataset.Builder()
-                    .setField(ID_USERNAME, "dude" + i)
-                    .setField(ID_PASSWORD, "sweet" + i)
-                    .setPresentation(createPresentation("The Dude" + i))
-                    .setInlinePresentation(createInlinePresentation("The Dude" + i))
-                    .build());
-        }
-
-        sReplier.addResponse(builder.build());
-        mActivity.expectAutoFill("dude" + selectedDatasetIndex, "sweet" + selectedDatasetIndex);
-
-        // Dynamically set password to make sure it's sanitized.
-        mActivity.syncRunOnUiThread(() ->  mActivity.onPassword((v) -> v.setText("I AM GROOT")));
-        mUiBot.waitForIdleSync();
-
-        // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
-        mUiBot.selectByRelativeId(ID_USERNAME);
-        mUiBot.waitForIdleSync();
-
-        mUiBot.assertSuggestionStrip(numDatasets);
-        mUiBot.assertNoDatasetsEver();
-
-        mUiBot.selectSuggestion(selectedDatasetIndex);
-        mUiBot.waitForIdleSync();
-
-        // Check the results.
-        mActivity.assertAutoFilled();
-
-        // Make sure input was sanitized.
-        final InstrumentedAutoFillService.FillRequest request = sReplier.getNextFillRequest();
-        assertWithMessage("CancelationSignal is null").that(request.cancellationSignal).isNotNull();
-        assertTextIsSanitized(request.structure, ID_PASSWORD);
-        final FillContext fillContext = request.contexts.get(request.contexts.size() - 1);
-        assertThat(fillContext.getFocusedId())
-                .isEqualTo(findAutofillIdByResourceId(fillContext, ID_USERNAME));
-
-        // Make sure initial focus was properly set.
-        assertWithMessage("Username node is not focused").that(
-                findNodeByResourceId(request.structure, ID_USERNAME).isFocused()).isTrue();
-        assertWithMessage("Password node is focused").that(
-                findNodeByResourceId(request.structure, ID_PASSWORD).isFocused()).isFalse();
+    @Override
+    protected boolean isInlineMode() {
+        return true;
     }
 
     @Test
@@ -161,21 +82,20 @@ public class InlineLoginActivityTest extends AbstractLoginActivityTestCase {
         mUiBot.selectByRelativeId(ID_USERNAME);
         mUiBot.waitForIdleSync();
 
-        mUiBot.assertNoDatasetsEver();
-        mUiBot.assertSuggestionStrip(1);
+        mUiBot.assertDatasets("The Username");
 
         // Switch focus to password
         mUiBot.selectByRelativeId(ID_PASSWORD);
         mUiBot.waitForIdleSync();
 
-        mUiBot.assertSuggestionStrip(2);
+        mUiBot.assertDatasets("The Password", "The Password2");
 
         // Switch focus back to username
         mUiBot.selectByRelativeId(ID_USERNAME);
         mUiBot.waitForIdleSync();
 
-        mUiBot.assertSuggestionStrip(1);
-        mUiBot.selectSuggestion(0);
+        mUiBot.assertDatasets("The Username");
+        mUiBot.selectDataset("The Username");
         mUiBot.waitForIdleSync();
 
         // Check the results.

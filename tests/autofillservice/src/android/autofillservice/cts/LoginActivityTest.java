@@ -18,7 +18,6 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.CannedFillResponse.DO_NOT_REPLY_RESPONSE;
 import static android.autofillservice.cts.CannedFillResponse.FAIL;
-import static android.autofillservice.cts.CannedFillResponse.NO_MOAR_RESPONSES;
 import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
 import static android.autofillservice.cts.Helper.ID_CANCEL_FILL;
 import static android.autofillservice.cts.Helper.ID_EMPTY;
@@ -116,59 +115,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * This is the test case covering most scenarios - other test cases will cover characteristics
  * specific to that test's activity (for example, custom views).
  */
-public class LoginActivityTest extends AbstractLoginActivityTestCase {
+public class LoginActivityTest extends LoginActivityCommonTestCase {
 
     private static final String TAG = "LoginActivityTest";
-
-    @Test
-    public void testAutoFillNoDatasets() throws Exception {
-        // Set service.
-        enableService();
-
-        // Set expectations.
-        sReplier.addResponse(NO_RESPONSE);
-
-        // Trigger autofill.
-        mActivity.onUsername(View::requestFocus);
-
-        // Make sure a fill request is called but don't check for connected() - as we're returning
-        // a null response, the service might have been disconnected already by the time we assert
-        // it.
-        sReplier.getNextFillRequest();
-
-        // Make sure UI is not shown.
-        mUiBot.assertNoDatasetsEver();
-
-        // Test connection lifecycle.
-        waitUntilDisconnected();
-    }
-
-    @Test
-    public void testAutoFillNoDatasets_multipleFields_alwaysNull() throws Exception {
-        // Set service.
-        enableService();
-
-        // Set expectations.
-        sReplier
-            .addResponse(NO_RESPONSE)
-            .addResponse(NO_MOAR_RESPONSES);
-
-        // Trigger autofill
-        mActivity.onUsername(View::requestFocus);
-        sReplier.getNextFillRequest();
-        mUiBot.assertNoDatasetsEver();
-
-        // Tap back and forth to make sure no more requests are shown
-
-        mActivity.onPassword(View::requestFocus);
-        mUiBot.assertNoDatasetsEver();
-
-        mActivity.onUsername(View::requestFocus);
-        mUiBot.assertNoDatasetsEver();
-
-        mActivity.onPassword(View::requestFocus);
-        mUiBot.assertNoDatasetsEver();
-    }
 
     @Test
     @AppModeFull(reason = "testAutoFillOneDataset() is enough")
