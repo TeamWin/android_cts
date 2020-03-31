@@ -20,9 +20,7 @@ import android.graphics.ImageFormat;
 import android.media.Image;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
-import android.media.MediaCodecList;
 import android.media.MediaFormat;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.util.Log;
@@ -45,7 +43,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -348,8 +345,9 @@ public class CodecEncoderTest extends CodecTestBase {
 
     @Parameterized.Parameters(name = "{index}({0})")
     public static Collection<Object[]> input() {
-        final List<String> cddRequiredMimeList =
-                Arrays.asList(MediaFormat.MIMETYPE_AUDIO_FLAC,
+        final ArrayList<String> cddRequiredMimeList =
+                new ArrayList<>(Arrays.asList(
+                        MediaFormat.MIMETYPE_AUDIO_FLAC,
                         MediaFormat.MIMETYPE_AUDIO_OPUS,
                         MediaFormat.MIMETYPE_AUDIO_AAC,
                         MediaFormat.MIMETYPE_AUDIO_AMR_NB,
@@ -359,7 +357,7 @@ public class CodecEncoderTest extends CodecTestBase {
                         MediaFormat.MIMETYPE_VIDEO_AVC,
                         MediaFormat.MIMETYPE_VIDEO_HEVC,
                         MediaFormat.MIMETYPE_VIDEO_VP8,
-                        MediaFormat.MIMETYPE_VIDEO_VP9);
+                        MediaFormat.MIMETYPE_VIDEO_VP9));
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 // Audio - CodecMime, arrays of bit-rates, sample rates, channel counts
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new int[]{64000, 128000}, new int[]{8000, 11025,
@@ -389,50 +387,7 @@ public class CodecEncoderTest extends CodecTestBase {
                 {MediaFormat.MIMETYPE_VIDEO_AV1, new int[]{256000, 512000}, new int[]{176, 352,
                         352, 480}, new int[]{144, 240, 288, 360}},
         });
-
-        ArrayList<String> mimes = new ArrayList<>();
-        if (codecSelKeys.contains(CODEC_SEL_VALUE)) {
-            MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
-            MediaCodecInfo[] codecInfos = codecList.getCodecInfos();
-            for (MediaCodecInfo codecInfo : codecInfos) {
-                if (!codecInfo.isEncoder()) continue;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && codecInfo.isAlias()) continue;
-                String[] types = codecInfo.getSupportedTypes();
-                for (String type : types) {
-                    if (!mimes.contains(type)) {
-                        mimes.add(type);
-                    }
-                }
-            }
-            for (String mime : cddRequiredMimeList) {
-                if (!mimes.contains(mime)) {
-                    fail("no codec found to encoder mime " + mime + " as required by cdd");
-                }
-            }
-        } else {
-            for (Map.Entry<String, String> entry : codecSelKeyMimeMap.entrySet()) {
-                String key = entry.getKey();
-                String value = entry.getValue();
-                if (codecSelKeys.contains(key) && !mimes.contains(value)) mimes.add(value);
-            }
-        }
-        final List<Object[]> argsList = new ArrayList<>();
-        for (String mime : mimes) {
-            boolean miss = true;
-            for (int i = 0; i < exhaustiveArgsList.size(); i++) {
-                if (mime.equals(exhaustiveArgsList.get(i)[0])) {
-                    argsList.add(exhaustiveArgsList.get(i));
-                    miss = false;
-                }
-            }
-            if (miss) {
-                if (cddRequiredMimeList.contains(mime)) {
-                    fail("no testvectors for required mimetype " + mime);
-                }
-                Log.w(LOG_TAG, "no test vectors available for optional mime type " + mime);
-            }
-        }
-        return argsList;
+        return prepareParamList(cddRequiredMimeList, exhaustiveArgsList, true);
     }
 
     private void setUpParams(int limit) {
