@@ -610,105 +610,36 @@ public abstract class BasePrintTest {
         button.click();
     }
 
-    protected void changeOrientation(String orientation) throws UiObjectNotFoundException,
-            IOException {
-        try {
-            UiDevice uiDevice = getUiDevice();
-            UiObject orientationSpinner = uiDevice.findObject(new UiSelector().resourceId(
-                    "com.android.printspooler:id/orientation_spinner"));
-            orientationSpinner.click();
-            UiObject orientationOption = uiDevice.findObject(new UiSelector().text(orientation));
-            orientationOption.click();
-        } catch (UiObjectNotFoundException e) {
-            dumpWindowHierarchy();
-            throw e;
-        }
+    protected void changeOrientation(String orientation) throws TestHelperException {
+        mPrintHelper.setPageOrientation(orientation);
     }
 
-    public String getOrientation() throws UiObjectNotFoundException, IOException {
-        try {
-            UiObject orientationSpinner = getUiDevice().findObject(new UiSelector().resourceId(
-                    "com.android.printspooler:id/orientation_spinner"));
-            return orientationSpinner.getText();
-        } catch (UiObjectNotFoundException e) {
-            dumpWindowHierarchy();
-            throw e;
-        }
+    public String getOrientation() throws TestHelperException {
+        return mPrintHelper.getPageOrientation();
     }
 
-    protected void changeMediaSize(String mediaSize) throws UiObjectNotFoundException, IOException {
-        try {
-            UiDevice uiDevice = getUiDevice();
-            UiObject mediaSizeSpinner = uiDevice.findObject(new UiSelector().resourceId(
-                    "com.android.printspooler:id/paper_size_spinner"));
-            mediaSizeSpinner.click();
-            UiObject mediaSizeOption = uiDevice.findObject(new UiSelector().text(mediaSize));
-            mediaSizeOption.click();
-        } catch (UiObjectNotFoundException e) {
-            dumpWindowHierarchy();
-            throw e;
-        }
+    protected void changeMediaSize(String mediaSize) throws TestHelperException {
+        mPrintHelper.setMediaSize(mediaSize);
     }
 
-    protected void changeColor(String color) throws UiObjectNotFoundException, IOException {
-        try {
-            UiDevice uiDevice = getUiDevice();
-            UiObject colorSpinner = uiDevice.findObject(new UiSelector().resourceId(
-                    "com.android.printspooler:id/color_spinner"));
-            colorSpinner.click();
-            UiObject colorOption = uiDevice.findObject(new UiSelector().text(color));
-            colorOption.click();
-        } catch (UiObjectNotFoundException e) {
-            dumpWindowHierarchy();
-            throw e;
-        }
+    protected void changeColor(String color) throws TestHelperException {
+        mPrintHelper.setColorMode(color);
     }
 
     public String getColor() throws UiObjectNotFoundException, IOException {
-        try {
-            UiObject colorSpinner = getUiDevice().findObject(new UiSelector().resourceId(
-                    "com.android.printspooler:id/color_spinner"));
-            return colorSpinner.getText();
-        } catch (UiObjectNotFoundException e) {
-            dumpWindowHierarchy();
-            throw e;
-        }
+        return mPrintHelper.getColorMode();
     }
 
-    protected void changeDuplex(String duplex) throws UiObjectNotFoundException, IOException {
-        try {
-            UiDevice uiDevice = getUiDevice();
-            UiObject duplexSpinner = uiDevice.findObject(new UiSelector().resourceId(
-                    "com.android.printspooler:id/duplex_spinner"));
-            duplexSpinner.click();
-            UiObject duplexOption = uiDevice.findObject(new UiSelector().text(duplex));
-            duplexOption.click();
-        } catch (UiObjectNotFoundException e) {
-            dumpWindowHierarchy();
-            throw e;
-        }
+    protected void changeDuplex(String duplex) throws TestHelperException {
+        mPrintHelper.setDuplexMode(duplex);
     }
 
-    protected void changeCopies(int newCopies) throws UiObjectNotFoundException, IOException {
-        try {
-            UiObject copies = getUiDevice().findObject(new UiSelector().resourceId(
-                    "com.android.printspooler:id/copies_edittext"));
-            copies.setText(Integer.valueOf(newCopies).toString());
-        } catch (UiObjectNotFoundException e) {
-            dumpWindowHierarchy();
-            throw e;
-        }
+    protected void changeCopies(int newCopies) throws TestHelperException {
+        mPrintHelper.setCopies(newCopies);
     }
 
-    protected String getCopies() throws UiObjectNotFoundException, IOException {
-        try {
-            UiObject copies = getUiDevice().findObject(new UiSelector().resourceId(
-                    "com.android.printspooler:id/copies_edittext"));
-            return copies.getText();
-        } catch (UiObjectNotFoundException e) {
-            dumpWindowHierarchy();
-            throw e;
-        }
+    protected int getCopies() throws TestHelperException {
+        return mPrintHelper.getCopies();
     }
 
     protected void assertNoPrintButton() throws UiObjectNotFoundException, IOException {
