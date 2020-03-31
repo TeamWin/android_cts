@@ -32,13 +32,20 @@ import static android.content.Intent.EXTRA_RETURN_RESULT;
 
 import android.app.Activity;
 import android.app.PendingIntent;
+import android.appenumeration.cts.Constants;
+import android.appenumeration.cts.MissingBroadcastException;
 import android.content.ActivityNotFoundException;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.PatternMatcher;
 import android.os.RemoteCallback;
 import android.util.SparseArray;
 
@@ -46,8 +53,11 @@ public class TestActivity extends Activity {
 
     SparseArray<RemoteCallback> callbacks = new SparseArray<>();
 
+    private Handler mainHandler;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        mainHandler = new Handler(getMainLooper());
         super.onCreate(savedInstanceState);
         handleIntent(getIntent());
     }
@@ -105,12 +115,42 @@ public class TestActivity extends Activity {
                 } catch (IntentSender.SendIntentException e) {
                     sendError(remoteCallback, e);
                 }
+            } else if (Constants.ACTION_AWAIT_PACKAGE_REMOVED.equals(action)) {
+                final String packageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
+                awaitPackageBroadcast(
+                        remoteCallback, packageName, Intent.ACTION_PACKAGE_REMOVED, 3000);
+            } else if (Constants.ACTION_AWAIT_PACKAGE_ADDED.equals(action)) {
+                final String packageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
+                awaitPackageBroadcast(
+                        remoteCallback, packageName, Intent.ACTION_PACKAGE_ADDED, 3000);
             } else {
                 sendError(remoteCallback, new Exception("unknown action " + action));
             }
         } catch (Exception e) {
             sendError(remoteCallback, e);
         }
+    }
+
+    private void awaitPackageBroadcast(RemoteCallback remoteCallback, String packageName,
+            String action, long timeoutMs) {
+        final IntentFilter filter = new IntentFilter(action);
+        filter.addDataScheme("package");
+        filter.addDataSchemeSpecificPart(packageName, PatternMatcher.PATTERN_LITERAL);
+        final Object token = new Object();
+        registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                final Bundle result = new Bundle();
+                result.putString(Constants.EXTRA_DATA, intent.getDataString());
+                remoteCallback.sendResult(result);
+                mainHandler.removeCallbacksAndMessages(token);
+                finish();
+            }
+        }, filter);
+        mainHandler.postDelayed(
+                () -> sendError(remoteCallback,
+                        new MissingBroadcastException(action, timeoutMs)),
+                token, timeoutMs);
     }
 
     private void sendGetInstalledPackages(RemoteCallback remoteCallback, int flags) {
