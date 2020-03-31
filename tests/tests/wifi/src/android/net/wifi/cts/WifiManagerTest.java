@@ -2504,10 +2504,44 @@ public class WifiManagerTest extends AndroidTestCase {
             List<PasspointConfiguration> configurations = mWifiManager.getPasspointConfigurations();
             assertNotNull(configurations);
             assertEquals(passpointConfiguration, configurations.get(0));
-
+        } finally {
             // Clean up
             mWifiManager.removePasspointConfiguration(passpointConfiguration.getHomeSp().getFqdn());
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Tests {@link WifiManager#setPasspointMeteredOverride(String, int)}
+     * adds a Passpoint configuration correctly, check the default metered setting. Use API change
+     * metered override, verify Passpoint configuration changes with it.
+     */
+    public void testSetPasspointMeteredOverride() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        // Create and install a Passpoint configuration
+        PasspointConfiguration passpointConfiguration = createPasspointConfiguration();
+        String fqdn = passpointConfiguration.getHomeSp().getFqdn();
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            mWifiManager.addOrUpdatePasspointConfiguration(passpointConfiguration);
+
+            // Verify meter override setting.
+            assertEquals(WifiConfiguration.METERED_OVERRIDE_NONE,
+                    mWifiManager.getPasspointConfigurations().get(0).getMeteredOverride());
+            // Change the meter override setting.
+            mWifiManager.setPasspointMeteredOverride(fqdn,
+                    WifiConfiguration.METERED_OVERRIDE_METERED);
+            // Verify passpoint config change with the new setting.
+            assertEquals(WifiConfiguration.METERED_OVERRIDE_METERED,
+                    mWifiManager.getPasspointConfigurations().get(0).getMeteredOverride());
         } finally {
+            // Clean up
+            mWifiManager.removePasspointConfiguration(passpointConfiguration.getHomeSp().getFqdn());
             uiAutomation.dropShellPermissionIdentity();
         }
     }
