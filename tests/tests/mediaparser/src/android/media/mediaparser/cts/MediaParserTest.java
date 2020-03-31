@@ -116,6 +116,36 @@ public class MediaParserTest {
         }
     }
 
+    @Test
+    public void testSupportsParameter() {
+        assertSupportFor(MediaParser.PARAMETER_ADTS_ENABLE_CBR_SEEKING);
+        assertSupportFor(MediaParser.PARAMETER_AMR_ENABLE_CBR_SEEKING);
+        assertSupportFor(MediaParser.PARAMETER_FLAC_DISABLE_ID3);
+        assertSupportFor(MediaParser.PARAMETER_MP4_IGNORE_EDIT_LISTS);
+        assertSupportFor(MediaParser.PARAMETER_MP4_IGNORE_TFDT_BOX);
+        assertSupportFor(MediaParser.PARAMETER_MP4_TREAT_VIDEO_FRAMES_AS_KEYFRAMES);
+        assertSupportFor(MediaParser.PARAMETER_MATROSKA_DISABLE_CUES_SEEKING);
+        assertSupportFor(MediaParser.PARAMETER_MP3_DISABLE_ID3);
+        assertSupportFor(MediaParser.PARAMETER_MP3_ENABLE_CBR_SEEKING);
+        assertSupportFor(MediaParser.PARAMETER_MP3_ENABLE_INDEX_SEEKING);
+        assertSupportFor(MediaParser.PARAMETER_TS_MODE);
+        assertSupportFor(MediaParser.PARAMETER_TS_ALLOW_NON_IDR_AVC_KEYFRAMES);
+        assertSupportFor(MediaParser.PARAMETER_TS_IGNORE_AAC_STREAM);
+        assertSupportFor(MediaParser.PARAMETER_TS_IGNORE_AVC_STREAM);
+        assertSupportFor(MediaParser.PARAMETER_TS_IGNORE_SPLICE_INFO_STREAM);
+        assertSupportFor(MediaParser.PARAMETER_TS_DETECT_ACCESS_UNITS);
+        assertSupportFor(MediaParser.PARAMETER_TS_ENABLE_HDMV_DTS_AUDIO_STREAMS);
+    }
+
+    @Test
+    public void testLackOfSupportForUnsupportedParameter() {
+        MediaParser mediaParser =
+                MediaParser.create(new MockMediaParserOutputConsumer(new FakeExtractorOutput()));
+        assertThat(mediaParser.supportsParameter("android.media.mediaparser.UNSUPPORTED_PARAMETER"))
+                .isFalse();
+        mediaParser.release();
+    }
+
     // OGG.
 
     @Test
@@ -426,6 +456,13 @@ public class MediaParserTest {
     private static void testCreationByName(String name) {
         MediaParser.createByName(name, new MockMediaParserOutputConsumer(new FakeExtractorOutput()))
                 .release();
+    }
+
+    private static void assertSupportFor(String parameterName) {
+        MediaParser mediaParser =
+                MediaParser.create(new MockMediaParserOutputConsumer(new FakeExtractorOutput()));
+        assertThat(mediaParser.supportsParameter(parameterName)).isTrue();
+        mediaParser.release();
     }
 
     private static void testSniffAsset(String assetPath, String expectedParserName)

@@ -23,7 +23,7 @@ import static org.testng.Assert.assertThrows;
 import android.os.LocaleList;
 import android.os.Parcel;
 import android.util.Size;
-import android.view.inline.InlinePresentationSpec;
+import android.widget.inline.InlinePresentationSpec;
 import android.view.inputmethod.InlineSuggestionsRequest;
 
 import androidx.test.filters.SmallTest;
@@ -81,7 +81,7 @@ public class InlineSuggestionsRequestTest {
         LocaleList localeList = LocaleList.forLanguageTags("fa-IR");
         InlineSuggestionsRequest request =
                 new InlineSuggestionsRequest.Builder(presentationSpecs)
-                        .addPresentationSpecs(
+                        .addInlinePresentationSpecs(
                                 new InlinePresentationSpec.Builder(new Size(100, 100),
                                         new Size(400, 100)).build())
                         .setSupportedLocales(LocaleList.forLanguageTags("fa-IR"))
@@ -89,8 +89,8 @@ public class InlineSuggestionsRequestTest {
                         .setMaxSuggestionCount(suggestionCount).build();
 
         assertThat(request.getMaxSuggestionCount()).isEqualTo(suggestionCount);
-        assertThat(request.getPresentationSpecs()).isNotNull();
-        assertThat(request.getPresentationSpecs().size()).isEqualTo(1);
+        assertThat(request.getInlinePresentationSpecs()).isNotNull();
+        assertThat(request.getInlinePresentationSpecs().size()).isEqualTo(1);
         assertThat(request.getExtras()).isNull();
         assertThat(request.getSupportedLocales()).isEqualTo(localeList);
     }

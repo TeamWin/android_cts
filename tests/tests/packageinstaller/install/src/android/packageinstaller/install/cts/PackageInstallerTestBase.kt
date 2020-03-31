@@ -37,7 +37,6 @@ import androidx.test.rule.ActivityTestRule
 import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.Until
 import androidx.core.content.FileProvider
-import com.android.compatibility.common.util.AppOpsUtils
 import com.android.compatibility.common.util.FutureResultActivity
 import org.junit.After
 import org.junit.Assert
@@ -210,10 +209,5 @@ open class PackageInstallerTestBase {
     @After
     fun uninstallTestPackage() {
         uiDevice.executeShellCommand("pm uninstall $TEST_APK_PACKAGE_NAME")
-    }
-
-    @After
-    fun resetAppOps() {
-        AppOpsUtils.reset(context.packageName)
     }
 }
