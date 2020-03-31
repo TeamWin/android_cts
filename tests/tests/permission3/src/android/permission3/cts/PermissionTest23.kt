@@ -228,7 +228,7 @@ class PermissionTest23 : BaseUsePermissionTest() {
         assertAppHasPermission(android.Manifest.permission.READ_CONTACTS, false)
     }
 
-    @Test
+    @Test(timeout = 120000)
     fun testNoResidualPermissionsOnUninstall() {
         // Grant all permissions
         grantAppPermissions(
