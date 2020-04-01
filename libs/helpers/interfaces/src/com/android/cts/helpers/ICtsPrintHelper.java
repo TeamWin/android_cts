@@ -28,6 +28,31 @@ public interface ICtsPrintHelper extends ICtsDeviceInteractionHelper {
     void submitPrintJob();
 
     /**
+     * Retry a failed print job with the current settings.
+     *
+     * <p>This is the equivalent of the user clicking the "Retry" action button in the
+     * print error fragment.
+     */
+    void retryPrintJob();
+
+    /**
+     * Check if the print job can be submitted.
+     *
+     * <p>A print job can be submitted when a valid printer is selected and all of the options
+     * contain valid values.
+     *
+     * @return true if the print button is enabled, false if not.
+     */
+    boolean canSubmitJob();
+
+    /**
+     * Respond to the first-time dialog when printing to a new service.
+     *
+     * @param confirm true to accept printing, or false to cancel.
+     */
+    void answerPrintServicesWarning(boolean confirm);
+
+    /**
      * Select a specific printer from the list of available printers.
      *
      * @param printerName name of the printer
@@ -91,4 +116,47 @@ public interface ICtsPrintHelper extends ICtsDeviceInteractionHelper {
      * @return the current number of copies
      */
     int getCopies();
+
+    /**
+     * Set the page range to print.
+     *
+     * @param pages a range to print, e.g. "1", "1, 3"
+     * @param expectedPages the total number of pages included in the range
+     */
+    void setPageRange(String pages, int expectedPages);
+
+    /**
+     * Get the current page range.
+     *
+     * <p>If the full page range is selected, "All N" will be returned, where N is the number of
+     * pages passed in docPages.  Otherwise, the user's entered range string will be returned.
+     *
+     * @param docPages the total number of pages in the doc.
+     *
+     * @return the current page range, e.g. "All 3", "1-2", "1, 3"
+     */
+    String getPageRange(int docPages);
+
+    /**
+     * Get the current status message.
+     *
+     * @return the text content of the current status message
+     */
+    String getStatusMessage();
+
+    /**
+     * Ensure the basic print options are visible.
+     *
+     * <p>This is the equivalent of clicking the chevron to expose the basic print options.
+     */
+    void openPrintOptions();
+
+    /**
+     * Ensure the custom print options are visible.
+     *
+     * <p>This is the equivalent of clicking the "more options" button to open the print service's
+     * custom print options.  openPrintOptions() must have been called first to expose the basic
+     * print options.
+     */
+    void openCustomPrintOptions();
 }
