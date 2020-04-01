@@ -974,6 +974,9 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                     "testForceStopWithUserControlDisabled");
             // Reboot and verify protected packages are persisted
             rebootAndWaitUntilReady();
+            // The simple app package seems to be set into stopped state on reboot.
+            // Launch the activity again to get it out of stopped state.
+            startActivityAsUser(mPrimaryUserId, SIMPLE_APP_PKG, SIMPLE_APP_ACTIVITY);
             forceStopPackageForUser(SIMPLE_APP_PKG, mPrimaryUserId);
             executeDeviceTestMethod(".UserControlDisabledPackagesTest",
                     "testForceStopWithUserControlDisabled");
