@@ -18,6 +18,7 @@ android_test_helper_app {
 
     srcs: [
         "src/**/*.java",
+        ":CtsSuspendHelpersAidl",
     ],
 
     sdk_version: "current",
@@ -27,6 +28,10 @@ android_test_helper_app {
         "vts",
         "vts10",
         "general-tests",
+    ],
+
+    static_libs: [
+        "androidx.test.rules",
     ],
 }
 
@@ -38,6 +43,7 @@ android_test_helper_app {
 
     srcs: [
         "src/**/*.java",
+        ":CtsSuspendHelpersAidl",
     ],
 
     sdk_version: "current",
@@ -47,6 +53,10 @@ android_test_helper_app {
         "vts",
         "vts10",
         "general-tests",
+    ],
+
+    static_libs: [
+        "androidx.test.rules",
     ],
 
     aaptflags: [

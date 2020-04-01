@@ -23,8 +23,15 @@ import static android.net.wifi.WifiConfiguration.METERED_OVERRIDE_NOT_METERED;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.app.UiAutomation;
 import android.content.Context;
+import android.net.IpConfiguration;
+import android.net.LinkAddress;
+import android.net.ProxyInfo;
+import android.net.StaticIpConfiguration;
+import android.net.Uri;
 import android.net.wifi.SoftApConfiguration;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
@@ -38,13 +45,24 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.ThrowingRunnable;
+
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Tests for wifi backup/restore functionality.
@@ -53,6 +71,24 @@ import java.util.List;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class WifiBackupRestoreTest {
+    private static final String LEGACY_SUPP_CONF_FILE =
+            "assets/BackupLegacyFormatSupplicantConf.txt";
+    private static final String LEGACY_IP_CONF_FILE =
+            "assets/BackupLegacyFormatIpConf.txt";
+    private static final String V1_0_FILE = "assets/BackupV1.0Format.xml";
+    private static final String V1_1_FILE = "assets/BackupV1.1Format.xml";
+    private static final String V1_2_FILE = "assets/BackupV1.2Format.xml";
+
+    public static final String EXPECTED_LEGACY_STATIC_IP_LINK_ADDRESS = "192.168.48.2";
+    public static final int EXPECTED_LEGACY_STATIC_IP_LINK_PREFIX_LENGTH = 8;
+    public static final String EXPECTED_LEGACY_STATIC_IP_GATEWAY_ADDRESS = "192.168.48.1";
+    public static final String[] EXPECTED_LEGACY_STATIC_IP_DNS_SERVER_ADDRESSES =
+            new String[]{"192.168.48.1", "192.168.48.10"};
+    public static final String EXPECTED_LEGACY_STATIC_PROXY_HOST = "192.168.48.1";
+    public static final int EXPECTED_LEGACY_STATIC_PROXY_PORT = 8000;
+    public static final String EXPECTED_LEGACY_STATIC_PROXY_EXCLUSION_LIST = "";
+    public static final String EXPECTED_LEGACY_PAC_PROXY_LOCATION = "http://";
+
     private Context mContext;
     private WifiManager mWifiManager;
     private UiDevice mUiDevice;
@@ -64,10 +100,9 @@ public class WifiBackupRestoreTest {
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        if (!WifiFeature.isWifiSupported(mContext)) {
-            // skip the test if WiFi is not supported
-            return;
-        }
+        // skip the test if WiFi is not supported
+        assumeTrue(WifiFeature.isWifiSupported(mContext));
+
         mWifiManager = mContext.getSystemService(WifiManager.class);
         assertThat(mWifiManager).isNotNull();
 
@@ -92,10 +127,7 @@ public class WifiBackupRestoreTest {
 
     @After
     public void tearDown() throws Exception {
-        if (!WifiFeature.isWifiSupported(mContext)) {
-            // skip the test if WiFi is not supported
-            return;
-        }
+        if (!WifiFeature.isWifiSupported(mContext)) return;
         if (!mWifiManager.isWifiEnabled()) setWifiEnabled(true);
         turnScreenOff();
         ShellIdentityUtils.invokeWithShellPermissions(
@@ -136,10 +168,6 @@ public class WifiBackupRestoreTest {
      */
     @Test
     public void testCanRestoreBackupData() {
-        if (!WifiFeature.isWifiSupported(mContext)) {
-            // skip the test if WiFi is not supported
-            return;
-        }
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         WifiConfiguration origNetwork = null;
         try {
@@ -187,10 +215,6 @@ public class WifiBackupRestoreTest {
      */
     @Test
     public void testCanRestoreSoftApBackupData() {
-        if (!WifiFeature.isWifiSupported(mContext)) {
-            // skip the test if WiFi is not supported
-            return;
-        }
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         SoftApConfiguration origSoftApConfig = null;
         try {
@@ -219,5 +243,300 @@ public class WifiBackupRestoreTest {
             }
             uiAutomation.dropShellPermissionIdentity();
         }
+    }
+
+    /**
+     * Read the content of the given resource file into a String.
+     *
+     * @param filename String name of the file
+     * @return Byte array of the contents of the file.
+     * @throws IOException
+     */
+    private byte[] loadResourceFile(String filename) throws IOException {
+        InputStream in = getClass().getClassLoader().getResourceAsStream(filename);
+        DataInputStream dis = new DataInputStream(in);
+        byte[] data = new byte[dis.available()];
+        dis.readFully(data);
+        return data;
+    }
+
+    private WifiConfiguration createExpectedLegacyWepWifiConfiguration() {
+        WifiConfiguration configuration = new WifiConfiguration();
+        configuration.SSID = "\"TestSsid1\"";
+        configuration.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+        configuration.wepKeys = new String[4];
+        configuration.wepKeys[0] = "\"WepAscii1\"";
+        configuration.wepKeys[1] = "\"WepAscii2\"";
+        configuration.wepKeys[2] = "45342312ab";
+        configuration.wepKeys[3] = "45342312ab45342312ab34ac12";
+        configuration.wepTxKeyIndex = 1;
+        return configuration;
+    }
+
+    private WifiConfiguration createExpectedLegacyPskWifiConfiguration() {
+        WifiConfiguration configuration = new WifiConfiguration();
+        configuration.SSID = "\"TestSsid2\"";
+        configuration.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
+        configuration.preSharedKey = "\"TestPsk123\"";
+        return configuration;
+    }
+
+    private WifiConfiguration createExpectedLegacyOpenWifiConfiguration() {
+        WifiConfiguration configuration = new WifiConfiguration();
+        configuration.SSID = "\"TestSsid3\"";
+        configuration.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+        return configuration;
+    }
+
+    private IpConfiguration createExpectedLegacyDHCPIpConfigurationWithPacProxy() throws Exception {
+        IpConfiguration ipConfiguration = new IpConfiguration();
+        ipConfiguration.setIpAssignment(IpConfiguration.IpAssignment.DHCP);
+        ipConfiguration.setProxySettings(IpConfiguration.ProxySettings.PAC);
+        ipConfiguration.setHttpProxy(ProxyInfo.buildPacProxy(
+                Uri.parse(EXPECTED_LEGACY_PAC_PROXY_LOCATION)));
+        return ipConfiguration;
+    }
+
+    private StaticIpConfiguration createExpectedLegacyStaticIpconfiguration() throws Exception {
+        return new StaticIpConfiguration.Builder()
+                .setIpAddress(
+                        new LinkAddress(
+                                InetAddress.getByName(EXPECTED_LEGACY_STATIC_IP_LINK_ADDRESS),
+                                EXPECTED_LEGACY_STATIC_IP_LINK_PREFIX_LENGTH))
+                .setGateway(InetAddress.getByName(EXPECTED_LEGACY_STATIC_IP_GATEWAY_ADDRESS))
+                .setDnsServers(Arrays.asList(EXPECTED_LEGACY_STATIC_IP_DNS_SERVER_ADDRESSES)
+                        .stream()
+                        .map(s -> {
+                            try {
+                                return InetAddress.getByName(s);
+                            } catch (UnknownHostException e) {
+                                return null;
+                            }
+                        })
+                        .collect(Collectors.toList()))
+                .build();
+    }
+
+    private IpConfiguration createExpectedLegacyStaticIpConfigurationWithPacProxy()
+            throws Exception {
+        IpConfiguration ipConfiguration = new IpConfiguration();
+        ipConfiguration.setIpAssignment(IpConfiguration.IpAssignment.STATIC);
+        ipConfiguration.setStaticIpConfiguration(createExpectedLegacyStaticIpconfiguration());
+        ipConfiguration.setProxySettings(IpConfiguration.ProxySettings.PAC);
+        ipConfiguration.setHttpProxy(ProxyInfo.buildPacProxy(
+                Uri.parse(EXPECTED_LEGACY_PAC_PROXY_LOCATION)));
+        return ipConfiguration;
+    }
+
+    private IpConfiguration createExpectedLegacyStaticIpConfigurationWithStaticProxy()
+            throws Exception {
+        IpConfiguration ipConfiguration = new IpConfiguration();
+        ipConfiguration.setIpAssignment(IpConfiguration.IpAssignment.STATIC);
+        ipConfiguration.setStaticIpConfiguration(createExpectedLegacyStaticIpconfiguration());
+        ipConfiguration.setProxySettings(IpConfiguration.ProxySettings.STATIC);
+        ipConfiguration.setHttpProxy(ProxyInfo.buildDirectProxy(
+                EXPECTED_LEGACY_STATIC_PROXY_HOST, EXPECTED_LEGACY_STATIC_PROXY_PORT,
+                Arrays.asList(EXPECTED_LEGACY_STATIC_PROXY_EXCLUSION_LIST)));
+        return ipConfiguration;
+    }
+
+    /**
+     * Asserts that the 2 lists of WifiConfigurations are equal. This compares all the elements
+     * saved for backup/restore.
+     */
+    public static void assertConfigurationsEqual(
+            List<WifiConfiguration> expected, List<WifiConfiguration> actual) {
+        assertThat(actual.size()).isEqualTo(expected.size());
+        for (WifiConfiguration expectedConfiguration : expected) {
+            String expectedConfigKey = expectedConfiguration.getKey();
+            boolean didCompare = false;
+            for (WifiConfiguration actualConfiguration : actual) {
+                String actualConfigKey = actualConfiguration.getKey();
+                if (actualConfigKey.equals(expectedConfigKey)) {
+                    assertConfigurationEqual(
+                            expectedConfiguration, actualConfiguration);
+                    didCompare = true;
+                }
+            }
+            assertWithMessage("Didn't find matching config for key = "
+                    + expectedConfigKey).that(didCompare).isTrue();
+        }
+    }
+
+    /**
+     * Asserts that the 2 WifiConfigurations are equal.
+     */
+    private static void assertConfigurationEqual(
+            WifiConfiguration expected, WifiConfiguration actual) {
+        assertThat(actual).isNotNull();
+        assertThat(expected).isNotNull();
+        assertWithMessage("Network: " + actual.toString())
+                .that(actual.SSID).isEqualTo(expected.SSID);
+        assertWithMessage("Network: " + actual.toString())
+                .that(actual.preSharedKey).isEqualTo(expected.preSharedKey);
+        assertWithMessage("Network: " + actual.toString())
+                .that(actual.wepKeys).isEqualTo(expected.wepKeys);
+        assertWithMessage("Network: " + actual.toString())
+                .that(actual.wepTxKeyIndex).isEqualTo(expected.wepTxKeyIndex);
+        assertWithMessage("Network: " + actual.toString())
+                .that(actual.hiddenSSID).isEqualTo(expected.hiddenSSID);
+        assertWithMessage("Network: " + actual.toString())
+                .that(actual.requirePmf).isEqualTo(expected.requirePmf);
+        assertWithMessage("Network: " + actual.toString())
+                .that(actual.allowedKeyManagement).isEqualTo(expected.allowedKeyManagement);
+        assertWithMessage("Network: " + actual.toString())
+                .that(actual.shared).isEqualTo(expected.shared);
+        assertWithMessage("Network: " + actual.toString())
+                .that(actual.allowAutojoin).isEqualTo(expected.allowAutojoin);
+        assertWithMessage("Network: " + actual.toString())
+                .that(actual.getIpConfiguration()).isEqualTo(expected.getIpConfiguration());
+        assertWithMessage("Network: " + actual.toString())
+                .that(actual.meteredOverride).isEqualTo(expected.meteredOverride);
+    }
+
+    private void testRestoreFromBackupData(
+            List<WifiConfiguration> expectedConfigurations, ThrowingRunnable restoreMethod)
+        throws Exception {
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        List<WifiConfiguration> restoredSavedNetworks = null;
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            Set<String> origSavedSsids = mWifiManager.getConfiguredNetworks().stream()
+                    .map(n -> n.SSID)
+                    .collect(Collectors.toSet());
+
+            restoreMethod.run();
+
+            restoredSavedNetworks = mWifiManager.getPrivilegedConfiguredNetworks().stream()
+                    .filter(n -> !origSavedSsids.contains(n.SSID))
+                    .collect(Collectors.toList());
+            assertConfigurationsEqual(
+                    expectedConfigurations, restoredSavedNetworks);
+        } finally {
+            // clean up all restored networks.
+            if (restoredSavedNetworks != null) {
+                for (WifiConfiguration network : restoredSavedNetworks) {
+                    mWifiManager.removeNetwork(network.networkId);
+                }
+            }
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    private List<WifiConfiguration> createExpectedLegacyConfigurations() throws Exception {
+        List<WifiConfiguration> expectedConfigurations = new ArrayList<>();
+        WifiConfiguration wepNetwork = createExpectedLegacyWepWifiConfiguration();
+        wepNetwork.setIpConfiguration(createExpectedLegacyDHCPIpConfigurationWithPacProxy());
+        expectedConfigurations.add(wepNetwork);
+
+        WifiConfiguration pskNetwork = createExpectedLegacyPskWifiConfiguration();
+        pskNetwork.setIpConfiguration(createExpectedLegacyStaticIpConfigurationWithPacProxy());
+        expectedConfigurations.add(pskNetwork);
+
+        WifiConfiguration openNetwork = createExpectedLegacyOpenWifiConfiguration();
+        openNetwork.setIpConfiguration(
+                createExpectedLegacyStaticIpConfigurationWithStaticProxy());
+        expectedConfigurations.add(openNetwork);
+        return expectedConfigurations;
+    }
+
+    /**
+     * Verify that 3 network configuration is serialized & deserialized correctly from
+     * legacy supplicant/ipconf backup data format.
+     */
+    @Test
+    public void testRestoreFromLegacyBackupFormat() throws Exception {
+        testRestoreFromBackupData(createExpectedLegacyConfigurations(),
+                () -> mWifiManager.restoreSupplicantBackupData(
+                        loadResourceFile(LEGACY_SUPP_CONF_FILE),
+                        loadResourceFile(LEGACY_IP_CONF_FILE)));
+
+    }
+
+    private List<WifiConfiguration> createExpectedV1_0Configurations() throws Exception {
+        List<WifiConfiguration> expectedConfigurations = new ArrayList<>();
+        WifiConfiguration wepNetwork = createExpectedLegacyWepWifiConfiguration();
+        wepNetwork.setIpConfiguration(createExpectedLegacyDHCPIpConfigurationWithPacProxy());
+        expectedConfigurations.add(wepNetwork);
+
+        WifiConfiguration pskNetwork = createExpectedLegacyPskWifiConfiguration();
+        pskNetwork.setIpConfiguration(createExpectedLegacyStaticIpConfigurationWithPacProxy());
+        expectedConfigurations.add(pskNetwork);
+
+        WifiConfiguration openNetwork = createExpectedLegacyOpenWifiConfiguration();
+        openNetwork.setIpConfiguration(
+                createExpectedLegacyStaticIpConfigurationWithStaticProxy());
+        expectedConfigurations.add(openNetwork);
+        return expectedConfigurations;
+    }
+
+    /**
+     * Verify that 3 network configuration is serialized & deserialized correctly from 1.0 format.
+     */
+    @Test
+    public void testRestoreFromV1_0BackupFormat() throws Exception {
+        testRestoreFromBackupData(createExpectedV1_0Configurations(),
+                () -> mWifiManager.restoreBackupData(loadResourceFile(V1_0_FILE)));
+    }
+
+    private List<WifiConfiguration> createExpectedV1_1Configurations() throws Exception {
+        List<WifiConfiguration> expectedConfigurations = new ArrayList<>();
+        WifiConfiguration wepNetwork = createExpectedLegacyWepWifiConfiguration();
+        wepNetwork.setIpConfiguration(createExpectedLegacyDHCPIpConfigurationWithPacProxy());
+        wepNetwork.meteredOverride = METERED_OVERRIDE_METERED;
+        expectedConfigurations.add(wepNetwork);
+
+        WifiConfiguration pskNetwork = createExpectedLegacyPskWifiConfiguration();
+        pskNetwork.setIpConfiguration(createExpectedLegacyStaticIpConfigurationWithPacProxy());
+        pskNetwork.meteredOverride = METERED_OVERRIDE_NONE;
+        expectedConfigurations.add(pskNetwork);
+
+        WifiConfiguration openNetwork = createExpectedLegacyOpenWifiConfiguration();
+        openNetwork.setIpConfiguration(
+                createExpectedLegacyStaticIpConfigurationWithStaticProxy());
+        openNetwork.meteredOverride = METERED_OVERRIDE_NOT_METERED;
+        expectedConfigurations.add(openNetwork);
+        return expectedConfigurations;
+    }
+
+    /**
+     * Verify that 3 network configuration is serialized & deserialized correctly from 1.1 format.
+     */
+    @Test
+    public void testRestoreFromV1_1BackupFormat() throws Exception {
+        testRestoreFromBackupData(createExpectedV1_1Configurations(),
+                () -> mWifiManager.restoreBackupData(loadResourceFile(V1_1_FILE)));
+    }
+
+    private List<WifiConfiguration> createExpectedV1_2Configurations() throws Exception {
+        List<WifiConfiguration> expectedConfigurations = new ArrayList<>();
+        WifiConfiguration wepNetwork = createExpectedLegacyWepWifiConfiguration();
+        wepNetwork.setIpConfiguration(createExpectedLegacyDHCPIpConfigurationWithPacProxy());
+        wepNetwork.meteredOverride = METERED_OVERRIDE_METERED;
+        wepNetwork.allowAutojoin = true;
+        expectedConfigurations.add(wepNetwork);
+
+        WifiConfiguration pskNetwork = createExpectedLegacyPskWifiConfiguration();
+        pskNetwork.setIpConfiguration(createExpectedLegacyStaticIpConfigurationWithPacProxy());
+        pskNetwork.meteredOverride = METERED_OVERRIDE_NONE;
+        pskNetwork.allowAutojoin = false;
+        expectedConfigurations.add(pskNetwork);
+
+        WifiConfiguration openNetwork = createExpectedLegacyOpenWifiConfiguration();
+        openNetwork.setIpConfiguration(
+                createExpectedLegacyStaticIpConfigurationWithStaticProxy());
+        openNetwork.meteredOverride = METERED_OVERRIDE_NOT_METERED;
+        openNetwork.allowAutojoin = false;
+        expectedConfigurations.add(openNetwork);
+        return expectedConfigurations;
+    }
+
+    /**
+     * Verify that 3 network configuration is serialized & deserialized correctly from 1.2 format.
+     */
+    @Test
+    public void testRestoreFromV1_2BackupFormat() throws Exception {
+        testRestoreFromBackupData(createExpectedV1_2Configurations(),
+                () -> mWifiManager.restoreBackupData(loadResourceFile(V1_2_FILE)));
     }
 }

@@ -18,3 +18,13 @@ filegroup {
         "test-apps/**/*.java",
     ],
 }
+
+filegroup {
+    name: "CtsSuspendHelpersAidl",
+
+    srcs: [
+        "test-apps/**/*.aidl",
+    ],
+
+    path: "test-apps/SuspendTestApp/aidl",
+}

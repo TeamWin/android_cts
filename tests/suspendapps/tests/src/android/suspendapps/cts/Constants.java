@@ -21,16 +21,12 @@ import com.android.suspendapps.testdeviceadmin.TestDeviceAdmin;
 
 public interface Constants {
     String PACKAGE_NAME = "android.suspendapps.cts";
-    String ACTION_REPORT_MORE_DETAILS_ACTIVITY_STARTED =
-            PACKAGE_NAME + ".action.REPORT_MORE_DETAILS_ACTIVITY_STARTED";
-    String ACTION_REPORT_PACKAGE_UNSUSPENDED_MANUALLY =
-            PACKAGE_NAME + ".action.REPORT_PACKAGE_UNSUSPENDED_MANUALLY";
-    String EXTRA_RECEIVED_PACKAGE_NAME = PACKAGE_NAME + ".extra.RECEIVED_PACKAGE_NAME";
     String TEST_APP_PACKAGE_NAME = com.android.suspendapps.suspendtestapp.Constants.PACKAGE_NAME;
-    String TEST_APP_2_PACKAGE_NAME =
-            com.android.suspendapps.suspendtestapp.Constants.ANDROID_PACKAGE_NAME_2;
     String[] TEST_PACKAGE_ARRAY = new String[] {TEST_APP_PACKAGE_NAME};
-    String[] ALL_TEST_PACKAGES = new String[] {TEST_APP_PACKAGE_NAME, TEST_APP_2_PACKAGE_NAME};
+    String[] ALL_TEST_PACKAGES = new String[] {
+            TEST_APP_PACKAGE_NAME,
+            com.android.suspendapps.suspendtestapp.Constants.ANDROID_PACKAGE_NAME_2
+    };
     String DEVICE_ADMIN_PACKAGE = TestCommsReceiver.PACKAGE_NAME;
     String DEVICE_ADMIN_COMPONENT =
             DEVICE_ADMIN_PACKAGE + "/" + TestDeviceAdmin.class.getName();
