@@ -29,7 +29,6 @@ java_test_host {
         "arcts",
         "cts",
         "general-tests",
-        "vts",
         "vts10",
     ],
     java_resource_dirs: ["res"],

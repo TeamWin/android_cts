@@ -28,7 +28,6 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "mts",
-        "vts",
         "vts10",
     ],
 }
