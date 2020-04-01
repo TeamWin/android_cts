@@ -46,6 +46,18 @@ java_test_host {
         "CtsCorruptApkTests_b79488511",
     ],
 
+    data: [
+        ":CtsApkVerityTestApp",
+        ":CtsApkVerityTestAppFsvSig",
+        ":CtsApkVerityTestAppDm",
+        ":CtsApkVerityTestAppDmFsvSig",
+        ":CtsApkVerityTestAppSplit",
+        ":CtsApkVerityTestAppSplitFsvSig",
+        ":CtsApkVerityTestAppSplitDm",
+        ":CtsApkVerityTestAppSplitDmFsvSig",
+        ":CtsApkVerityTestApp2",
+        ":CtsApkVerityTestApp2FsvSig",
+    ],
 }
 
 filegroup {
