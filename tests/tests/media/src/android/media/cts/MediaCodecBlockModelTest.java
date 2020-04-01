@@ -40,6 +40,7 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 
 /**
@@ -106,18 +107,24 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
     }
 
     private void runThread(BooleanSupplier supplier) throws InterruptedException {
-        final AtomicBoolean completed = new AtomicBoolean();
-        completed.set(false);
+        final AtomicBoolean completed = new AtomicBoolean(false);
         Thread videoDecodingThread = new Thread(new Runnable() {
             public void run() {
                 completed.set(supplier.getAsBoolean());
             }
         });
+        final AtomicReference<Throwable> throwable = new AtomicReference<>();
+        videoDecodingThread.setUncaughtExceptionHandler((Thread t, Throwable e) -> {
+            throwable.set(e);
+        });
         videoDecodingThread.start();
         videoDecodingThread.join(DECODING_TIMEOUT_MS);
-        if (!completed.get()) {
-            throw new RuntimeException("timed out decoding to end-of-stream");
+        Throwable t = throwable.get();
+        if (t != null) {
+            Log.i(TAG, "Video decoding thread has thrown", t);
+            fail("Video decoding thread has thrown, please check log");
         }
+        assertTrue("timed out decoding to end-of-stream", completed.get());
     }
 
     private static class InputBlock {
@@ -151,6 +158,8 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             if (mObtainBlockForEachBuffer) {
                 input.block.recycle();
                 input.block = MediaCodec.LinearBlock.obtain(Math.toIntExact(size), codecNames);
+                assertTrue("Blocks obtained through LinearBlock.obtain must be mappable",
+                        input.block.isMappable());
                 input.buffer = input.block.map();
                 input.offset = 0;
             }
@@ -158,6 +167,8 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
                 input.block.recycle();
                 input.block = MediaCodec.LinearBlock.obtain(
                         Math.toIntExact(size * 2), codecNames);
+                assertTrue("Blocks obtained through LinearBlock.obtain must be mappable",
+                        input.block.isMappable());
                 input.buffer = input.block.map();
                 input.offset = 0;
             } else if (input.buffer.capacity() - input.offset < size) {
@@ -165,6 +176,8 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
                 input.block.recycle();
                 input.block = MediaCodec.LinearBlock.obtain(
                         Math.toIntExact(capacity), codecNames);
+                assertTrue("Blocks obtained through LinearBlock.obtain must be mappable",
+                        input.block.isMappable());
                 input.buffer = input.block.map();
                 input.offset = 0;
             }
@@ -413,8 +426,14 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
         });
         String[] codecNames = new String[]{ mediaCodec.getName() };
         InputBlock input = new InputBlock();
+        if (!mediaCodec.getCodecInfo().isVendor() && mediaCodec.getName().startsWith("c2.")) {
+            assertTrue("Google default c2.* codecs are copy-free compatible with LinearBlocks",
+                    MediaCodec.LinearBlock.isCodecCopyFreeCompatible(codecNames));
+        }
         input.block = MediaCodec.LinearBlock.obtain(
                 APP_BUFFER_SIZE, codecNames);
+        assertTrue("Blocks obtained through LinearBlock.obtain must be mappable",
+                input.block.isMappable());
         input.buffer = input.block.map();
         input.offset = 0;
 
