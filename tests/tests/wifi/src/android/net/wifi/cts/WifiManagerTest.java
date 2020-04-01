@@ -449,7 +449,7 @@ public class WifiManagerTest extends AndroidTestCase {
     }
 
     /**
-     * Test wifi scanning when location scan is turned off.
+     * Test wifi scanning when Wifi is off and location scanning is turned on.
      */
     public void testWifiManagerScanWhenWifiOffLocationTurnedOn() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
@@ -464,20 +464,22 @@ public class WifiManagerTest extends AndroidTestCase {
             fail("Please enable location for this test - since Marshmallow WiFi scan results are"
                     + " empty when location is disabled!");
         }
-        setWifiEnabled(false);
-        Thread.sleep(TEST_WAIT_DURATION_MS);
-        startScan();
-        if (mWifiManager.isScanAlwaysAvailable() && isScanCurrentlyAvailable()) {
-            // Make sure at least one AP is found.
-            assertNotNull("mScanResult should not be null!", mScanResults);
-            assertFalse("empty scan results!", mScanResults.isEmpty());
-        } else {
-            // Make sure no scan results are available.
-            assertNull("mScanResult should be null!", mScanResults);
-        }
-        final String TAG = "Test";
-        assertNotNull(mWifiManager.createWifiLock(TAG));
-        assertNotNull(mWifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL, TAG));
+        runWithScanningEnabled(() -> {
+            setWifiEnabled(false);
+            Thread.sleep(TEST_WAIT_DURATION_MS);
+            startScan();
+            if (mWifiManager.isScanAlwaysAvailable() && isScanCurrentlyAvailable()) {
+                // Make sure at least one AP is found.
+                assertNotNull("mScanResult should not be null!", mScanResults);
+                assertFalse("empty scan results!", mScanResults.isEmpty());
+            } else {
+                // Make sure no scan results are available.
+                assertNull("mScanResult should be null!", mScanResults);
+            }
+            final String TAG = "Test";
+            assertNotNull(mWifiManager.createWifiLock(TAG));
+            assertNotNull(mWifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL, TAG));
+        });
     }
 
     /**
