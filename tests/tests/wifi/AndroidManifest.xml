@@ -35,7 +35,9 @@
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
 
-    <application>
+    <!-- usesCleartextTraffic is needed by WifiManagerTest#sendTraffic to send HTTP traffic
+         (as opposed to HTTPS). -->
+    <application android:usesCleartextTraffic="true">
         <uses-library android:name="android.test.runner" />
     </application>
 
