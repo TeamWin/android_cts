@@ -16,7 +16,12 @@
 
 package android.os.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import android.app.UiAutomation;
 import android.media.AudioAttributes;
@@ -34,11 +39,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
@@ -142,6 +142,53 @@ public class VibratorTest {
         // Just make sure it doesn't crash when this is called; we don't really have a way to test
         // if the amplitude control works or not.
         mVibrator.hasAmplitudeControl();
+    }
+
+    @Test
+    public void testVibratorEffectsAreSupported() {
+        // Just make sure it doesn't crash when this is called and that it returns all queries;
+        // We don't really have a way to test if the device supports each effect or not.
+        int[] result = mVibrator.areEffectsSupported(
+                VibrationEffect.EFFECT_TICK, VibrationEffect.EFFECT_CLICK);
+
+        assertEquals(2, result.length);
+        assertEquals(0, mVibrator.areEffectsSupported().length);
+    }
+
+    @Test
+    public void testVibratorAllEffectsAreSupported() {
+        // Just make sure it doesn't crash when this is called;
+        // We don't really have a way to test if the device supports each effect or not.
+        mVibrator.areAllEffectsSupported(
+                VibrationEffect.EFFECT_TICK,
+                VibrationEffect.EFFECT_CLICK,
+                VibrationEffect.EFFECT_DOUBLE_CLICK,
+                VibrationEffect.EFFECT_HEAVY_CLICK);
+
+        assertEquals(Vibrator.VIBRATION_EFFECT_SUPPORT_YES, mVibrator.areAllEffectsSupported());
+    }
+
+    @Test
+    public void testVibratorPrimitivesAreSupported() {
+        // Just make sure it doesn't crash when this is called;
+        // We don't really have a way to test if the device supports each effect or not.
+        boolean[] result = mVibrator.arePrimitivesSupported(
+                VibrationEffect.Composition.PRIMITIVE_CLICK,
+                VibrationEffect.Composition.PRIMITIVE_QUICK_RISE,
+                VibrationEffect.Composition.PRIMITIVE_TICK);
+
+        assertEquals(3, result.length);
+        assertEquals(0, mVibrator.arePrimitivesSupported().length);
+    }
+
+    @Test
+    public void testVibratorAllPrimitivesAreSupported() {
+        // Just make sure it doesn't crash when this is called;
+        // We don't really have a way to test if the device supports each effect or not.
+        mVibrator.areAllPrimitivesSupported(
+                VibrationEffect.Composition.PRIMITIVE_TICK);
+
+        assertTrue(mVibrator.areAllPrimitivesSupported());
     }
 
     /**
