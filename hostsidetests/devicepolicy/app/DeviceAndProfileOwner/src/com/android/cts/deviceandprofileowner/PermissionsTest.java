@@ -314,10 +314,7 @@ public class PermissionsTest extends BaseDeviceAdminTest {
         for (String locationPermission : LOCATION_PERMISSIONS) {
             CountDownLatch notificationLatch = initLocationPermissionNotificationLatch();
 
-            //TODO: Switch to using assertSetPermissionGrantState once we figrue out what to do
-            // regarding app-ops associated with permissions.
-            mDevicePolicyManager.setPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
-                    PERMISSION_APP_PACKAGE_NAME, locationPermission,
+            assertSetPermissionGrantState(locationPermission,
                     DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED);
 
             assertPermissionGrantState(locationPermission, PackageManager.PERMISSION_GRANTED);

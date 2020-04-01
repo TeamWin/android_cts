@@ -44,6 +44,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
     private static final String DEVICE_TESTS_PKG = "android.appsecurity.cts.v3rotationtests";
     private static final String DEVICE_TESTS_CLASS = DEVICE_TESTS_PKG + ".V3RotationTest";
     private static final String TEST_APK_RESOURCE_PREFIX = "/pkgsigverify/";
+    private static final String INSTALL_ARG_FORCE_QUERYABLE = "--force-queryable";
 
     private static final String[] DSA_KEY_NAMES = {"1024", "2048", "3072"};
     private static final String[] EC_KEY_NAMES = {"p256", "p384", "p521"};
@@ -879,9 +880,10 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
                 }
             }
             if (ephemeral) {
-                return getDevice().installPackage(apkFile, true, "--ephemeral");
+                return getDevice().installPackage(apkFile, true, "--ephemeral",
+                        INSTALL_ARG_FORCE_QUERYABLE);
             } else {
-                return getDevice().installPackage(apkFile, true);
+                return getDevice().installPackage(apkFile, true, INSTALL_ARG_FORCE_QUERYABLE);
             }
         } finally {
             apkFile.delete();

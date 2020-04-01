@@ -25,6 +25,7 @@ import static android.server.wm.ComponentNameUtils.getWindowName;
 import static android.server.wm.StateLogger.logAlways;
 import static android.server.wm.StateLogger.logE;
 import static android.view.Display.DEFAULT_DISPLAY;
+import static android.view.WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -170,6 +171,13 @@ public class WindowManagerStateHelper extends WindowManagerState {
                 "Keyguard gone");
     }
 
+    void waitAndAssertKeyguardGone() {
+        assertTrue("Keyguard must be gone",
+                waitForWithAmState(
+                        state -> !state.getKeyguardControllerState().keyguardShowing,
+                        "Keyguard gone"));
+    }
+
     /** Wait for specific rotation for the default display. Values are Surface#Rotation */
     void waitForRotation(int rotation) {
         waitForWithAmState(state -> state.getRotation() == rotation, "Rotation: " + rotation);
@@ -249,6 +257,20 @@ public class WindowManagerStateHelper extends WindowManagerState {
         assertTrue(waitForWithAmState(
                 state -> state.getAndAssertSingleNavBarWindowOnDisplay(displayId) != null,
                 "navigation bar #" + displayId + " show"));
+    }
+
+    void waitAndAssertKeyguardShownOnSecondaryDisplay(int displayId) {
+        assertTrue("KeyguardDialog must be shown on secondary display " + displayId,
+                waitForWithAmState(
+                        state -> isKeyguardOnSecondaryDisplay(state, displayId),
+                        "keyguard window to show"));
+    }
+
+    void waitAndAssertKeyguardGoneOnSecondaryDisplay(int displayId) {
+        assertTrue("KeyguardDialog must be gone on secondary display " + displayId,
+                waitForWithAmState(
+                        state -> !isKeyguardOnSecondaryDisplay(state, displayId),
+                        "keyguard window to dismiss"));
     }
 
     public boolean waitForWithAmState(Predicate<WindowManagerState> waitCondition,
@@ -585,6 +607,16 @@ public class WindowManagerStateHelper extends WindowManagerState {
                 getKeyguardControllerState().keyguardShowing);
     }
 
+    void assertKeyguardShownOnSecondaryDisplay(int displayId) {
+        assertTrue("KeyguardDialog must be shown on display " + displayId,
+                isKeyguardOnSecondaryDisplay(this, displayId));
+    }
+
+    void assertKeyguardGoneOnSecondaryDisplay(int displayId) {
+        assertFalse("KeyguardDialog must be gone on display " + displayId,
+                isKeyguardOnSecondaryDisplay(this, displayId));
+    }
+
     public void assertAodShowing() {
         assertTrue("AOD is showing",
                 getKeyguardControllerState().aodShowing);
@@ -647,5 +679,13 @@ public class WindowManagerStateHelper extends WindowManagerState {
         return displayRect.height() > displayRect.width();
     }
 
-
+    private static boolean isKeyguardOnSecondaryDisplay(
+            WindowManagerState windowManagerState, int displayId) {
+        final List<WindowManagerState.WindowState> states =
+                windowManagerState.getMatchingWindowType(TYPE_KEYGUARD_DIALOG);
+        for (WindowManagerState.WindowState ws : states) {
+            if (ws.getDisplayId() == displayId) return true;
+        }
+        return false;
+    }
 }
