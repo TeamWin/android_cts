@@ -41,7 +41,7 @@ import java.time.Duration;
 public class UserspaceRebootHostTest extends BaseHostJUnit4Test  {
 
     private static final String USERSPACE_REBOOT_SUPPORTED_PROP =
-            "ro.init.userspace_reboot.is_supported";
+            "init.userspace_reboot.is_supported";
 
     private static final String BASIC_TEST_APP_APK = "BasicUserspaceRebootTestApp.apk";
     private static final String BASIC_TEST_APP_PACKAGE_NAME =
