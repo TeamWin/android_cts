@@ -19,6 +19,7 @@ package android.appsecurity.cts;
 import android.platform.test.annotations.SecurityTest;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.tradefed.util.FileUtil;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceTestCase;
@@ -776,6 +777,24 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         assertInstallSucceeds("v1v2-target-r.apk");
     }
 
+    public void testInstallV4WithV2Signer() throws Exception {
+        // APK generated with:
+        // apksigner sign --v2-signing-enabled true --v3-signing-enabled false --v4-signing-enabled
+        assertInstallV4Succeeds("v4-digest-v2.apk");
+    }
+
+    public void testInstallV4WithV3Signer() throws Exception {
+        // APK generated with:
+        // apksigner sign --v2-signing-enabled false --v3-signing-enabled true --v4-signing-enabled
+        assertInstallV4Succeeds("v4-digest-v3.apk");
+    }
+
+    public void testInstallV4WithV2V3Signer() throws Exception {
+        // APK generated with:
+        // apksigner sign --v2-signing-enabled true --v3-signing-enabled true --v4-signing-enabled
+        assertInstallV4Succeeds("v4-digest-v2v3.apk");
+    }
+
     private void assertInstallSucceeds(String apkFilenameInResources) throws Exception {
         String installResult = installPackageFromResource(apkFilenameInResources);
         if (installResult != null) {
@@ -805,6 +824,13 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
                 throw new RuntimeException(
                         "Failed to uninstall after installing " + apkFilenameInResources, e);
             }
+        }
+    }
+
+    private void assertInstallV4Succeeds(String apkFilenameInResources) throws Exception {
+        String installResult = installV4PackageFromResource(apkFilenameInResources);
+        if (!installResult.equals("Success\n")) {
+            fail("Failed to install " + apkFilenameInResources + ": " + installResult);
         }
     }
 
@@ -864,21 +890,9 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         // ITestDevice.installPackage API requires the APK to be install to be a File. We thus
         // copy the requested resource into a temporary file, attempt to install it, and delete the
         // file during cleanup.
-
-        String fullResourceName = TEST_APK_RESOURCE_PREFIX + apkFilenameInResources;
-        File apkFile = File.createTempFile("pkginstalltest", ".apk");
+        File apkFile = null;
         try {
-            try (InputStream in = getClass().getResourceAsStream(fullResourceName);
-                    OutputStream out = new BufferedOutputStream(new FileOutputStream(apkFile))) {
-                if (in == null) {
-                    throw new IllegalArgumentException("Resource not found: " + fullResourceName);
-                }
-                byte[] buf = new byte[65536];
-                int chunkSize;
-                while ((chunkSize = in.read(buf)) != -1) {
-                    out.write(buf, 0, chunkSize);
-                }
-            }
+            apkFile = getFileFromResource(apkFilenameInResources);
             if (ephemeral) {
                 return getDevice().installPackage(apkFile, true, "--ephemeral",
                         INSTALL_ARG_FORCE_QUERYABLE);
@@ -886,7 +900,60 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
                 return getDevice().installPackage(apkFile, true, INSTALL_ARG_FORCE_QUERYABLE);
             }
         } finally {
-            apkFile.delete();
+            cleanUpFile(apkFile);
+        }
+    }
+
+    private String installV4PackageFromResource(String apkFilenameInResources)
+            throws IOException, DeviceNotAvailableException {
+        File apkFile = null;
+        File v4SignatureFile = null;
+        try {
+            apkFile = getFileFromResource(apkFilenameInResources);
+            v4SignatureFile = getFileFromResource(apkFilenameInResources + ".idsig");
+            String remoteApkFilePath = pushFileToRemote(apkFile);
+            pushFileToRemote(v4SignatureFile);
+            return installV4Package(remoteApkFilePath);
+        } finally {
+            cleanUpFile(apkFile);
+            cleanUpFile(v4SignatureFile);
+        }
+    }
+
+    private String pushFileToRemote(File localFile) throws DeviceNotAvailableException{
+        String remotePath = "/data/local/tmp/pkginstalltest-" + localFile.getName();
+        getDevice().pushFile(localFile, remotePath);
+        return remotePath;
+    }
+
+    private String installV4Package(String remoteApkPath)
+            throws DeviceNotAvailableException {
+        String command = "pm install-incremental -t -g " + remoteApkPath;
+        return getDevice().executeShellCommand(command);
+    }
+
+    private File getFileFromResource(String filenameInResources)
+            throws IOException, IllegalArgumentException {
+        String fullResourceName = TEST_APK_RESOURCE_PREFIX + filenameInResources;
+        File tempDir = FileUtil.createTempDir("pkginstalltest");
+        File file = new File(tempDir, filenameInResources);
+        InputStream in = getClass().getResourceAsStream(fullResourceName);
+        if (in == null) {
+            throw new IllegalArgumentException("Resource not found: " + fullResourceName);
+        }
+        OutputStream out = new BufferedOutputStream(new FileOutputStream(file));
+        byte[] buf = new byte[65536];
+        int chunkSize;
+        while ((chunkSize = in.read(buf)) != -1) {
+            out.write(buf, 0, chunkSize);
+        }
+        out.close();
+        return file;
+    }
+
+    private void cleanUpFile(File file) {
+        if (file != null && file.exists()) {
+            file.delete();
         }
     }
 
