@@ -34,6 +34,7 @@ public class AppBindingHostTest extends DeviceTestCase implements IBuildReceiver
     private static final String APK_4 = "CtsAppBindingService4.apk";
     private static final String APK_5 = "CtsAppBindingService5.apk";
     private static final String APK_6 = "CtsAppBindingService6.apk";
+    private static final String APK_7 = "CtsAppBindingService7.apk";
     private static final String APK_B = "CtsAppBindingServiceB.apk";
 
     private static final String PACKAGE_A = "com.android.cts.appbinding.app";
@@ -428,6 +429,64 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
                 "must be protected with android.permission.BIND_CARRIER_MESSAGING_CLIENT_SERVICE");
         installAndCheckBound(APK_1, PACKAGE_A, SERVICE_1, USER_SYSTEM);
         installAndCheckNotBound(APK_4, PACKAGE_A, USER_SYSTEM, "More than one");
+    }
+
+    /**
+     * Make sure the service responds to setComponentEnabled.
+     */
+    public void testServiceEnabledByDefault() throws Throwable {
+        if (!isSmsCapable()) {
+            // device not supporting sms. cannot run the test.
+            return;
+        }
+
+        installAndCheckBound(APK_1, PACKAGE_A, SERVICE_1, USER_SYSTEM);
+
+        // Disable the component and now it should be unbound.
+
+        runCommand(String.format("pm disable %s/%s", PACKAGE_A, SERVICE_1));
+
+        Thread.sleep(2); // Technically not needed, but allow the system to handle the broadcast.
+
+        checkNotBoundWithError(PACKAGE_A, USER_SYSTEM,
+                "Service with android.telephony.action.CARRIER_MESSAGING_CLIENT_SERVICE not found");
+
+        // Enable the component and now it should be bound.
+        runCommand(String.format("pm enable %s/%s", PACKAGE_A, SERVICE_1));
+
+        Thread.sleep(2); // Technically not needed, but allow the system to handle the broadcast.
+
+        checkBound(PACKAGE_A, SERVICE_1, USER_SYSTEM);
+    }
+
+    /**
+     * Make sure the service responds to setComponentEnabled.
+     */
+    public void testServiceDisabledByDefault() throws Throwable {
+        if (!isSmsCapable()) {
+            // device not supporting sms. cannot run the test.
+            return;
+        }
+
+        // The service is disabled by default, so not bound.
+        installAndCheckNotBound(APK_7, PACKAGE_A, USER_SYSTEM,
+                "Service with android.telephony.action.CARRIER_MESSAGING_CLIENT_SERVICE not found");
+
+        // Enable the component and now it should be bound.
+        runCommand(String.format("pm enable %s/%s", PACKAGE_A, SERVICE_1));
+
+        Thread.sleep(2); // Technically not needed, but allow the system to handle the broadcast.
+
+        checkBound(PACKAGE_A, SERVICE_1, USER_SYSTEM);
+
+        // Disable the component and now it should be unbound.
+
+        runCommand(String.format("pm disable %s/%s", PACKAGE_A, SERVICE_1));
+
+        Thread.sleep(2); // Technically not needed, but allow the system to handle the broadcast.
+
+        checkNotBoundWithError(PACKAGE_A, USER_SYSTEM,
+                "Service with android.telephony.action.CARRIER_MESSAGING_CLIENT_SERVICE not found");
     }
 
     /**
