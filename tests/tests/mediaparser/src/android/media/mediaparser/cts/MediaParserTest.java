@@ -19,9 +19,11 @@ package android.media.mediaparser.cts;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.media.MediaFormat;
 import android.media.MediaParser;
+import android.os.Build;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -30,6 +32,7 @@ import com.google.android.exoplayer2.testutil.FakeExtractorInput;
 import com.google.android.exoplayer2.testutil.FakeExtractorOutput;
 import com.google.android.exoplayer2.testutil.TestUtil;
 
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,6 +41,14 @@ import java.io.IOException;
 
 @RunWith(AndroidJUnit4.class)
 public class MediaParserTest {
+
+    @Before
+    public void setUp() {
+        String version = Build.VERSION.CODENAME;
+        // Avoid running these tests before R, on which MediaParser was defined.
+        // These check is inlined from BuildCompat to avoid bringing in the entire dependency.
+        assumeTrue(version.length() == 1 && version.charAt(0) >= 'R' && version.charAt(0) <= 'Z');
+    }
 
     @Test
     public void testGetAllParserNames() {
