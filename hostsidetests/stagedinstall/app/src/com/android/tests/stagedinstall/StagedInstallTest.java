@@ -27,11 +27,13 @@ import static org.junit.Assert.fail;
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.storage.StorageManager;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -231,72 +233,6 @@ public class StagedInstallTest {
     public void testInstallMultipleStagedApks_VerifyPostReboot() throws Exception {
         int sessionId = retrieveLastSessionId();
         assertSessionApplied(sessionId);
-        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(1);
-        assertThat(getInstalledVersion(TestApp.B)).isEqualTo(1);
-    }
-
-    @Test
-    public void testFailOverlappingMultipleStagedInstall_BothSinglePackage_Apk() throws Exception {
-        int sessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
-        StageSessionResult failedSessionResult = stageSingleApk(TestApp.A1);
-        assertThat(failedSessionResult.getErrorMessage()).contains(
-                "has been staged already by session");
-        // Currently abandoning a session before pre-reboot verification finishes might result in
-        // a system_server crash. Before that issue is resolved we need to manually wait for
-        // pre-reboot verification to finish before abandoning sessions.
-        // TODO(b/145925842): remove following line after fixing the bug.
-        waitForIsReadyBroadcast(sessionId);
-        getPackageInstaller().abandonSession(sessionId);
-    }
-
-    @Test
-    public void testAllowNonOverlappingMultipleStagedInstall_MultiPackageSinglePackage_Apk()
-            throws Exception {
-        stageMultipleApks(TestApp.A1, TestApp.B1).assertSuccessful();
-        stageSingleApk(TestApp.C1).assertSuccessful();
-    }
-
-    @Test
-    public void testFailOverlappingMultipleStagedInstall_BothMultiPackage_Apk() throws Exception {
-        int sessionId = stageMultipleApks(TestApp.A1, TestApp.B1).assertSuccessful().getSessionId();
-        StageSessionResult failedSessionResult = stageMultipleApks(TestApp.A2, TestApp.C1);
-        assertThat(failedSessionResult.getErrorMessage()).contains(
-                "has been staged already by session");
-        // Currently abandoning a session before pre-reboot verification finishes might result in
-        // a system_server crash. Before that issue is resolved we need to manually wait for
-        // pre-reboot verification to finish before abandoning sessions.
-        // TODO(b/145925842): remove following line after fixing the bug.
-        waitForIsReadyBroadcast(sessionId);
-        getPackageInstaller().abandonSession(sessionId);
-    }
-
-    @Test
-    public void testMultipleStagedInstall_ApkOnly_Commit()
-            throws Exception {
-        int firstSessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
-        // Currently abandoning a session before pre-reboot verification finishes might result in
-        // a system_server crash. Before that issue is resolved we need to manually wait for
-        // pre-reboot verification to finish before abandoning sessions.
-        // TODO(b/145925842): remove following line after fixing the bug.
-        waitForIsReadyBroadcast(firstSessionId);
-        int secondSessionId = stageSingleApk(TestApp.B1).assertSuccessful().getSessionId();
-        // Currently abandoning a session before pre-reboot verification finishes might result in
-        // a system_server crash. Before that issue is resolved we need to manually wait for
-        // pre-reboot verification to finish before abandoning sessions.
-        // TODO(b/145925842): remove following line after fixing the bug.
-        waitForIsReadyBroadcast(secondSessionId);
-        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
-        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
-        storeSessionIds(Arrays.asList(firstSessionId, secondSessionId));
-    }
-
-    @Test
-    public void testMultipleStagedInstall_ApkOnly_VerifyPostReboot()
-            throws Exception {
-        List<Integer> sessionIds = retrieveLastSessionIds();
-        for (int sessionId: sessionIds) {
-            assertSessionApplied(sessionId);
-        }
         assertThat(getInstalledVersion(TestApp.A)).isEqualTo(1);
         assertThat(getInstalledVersion(TestApp.B)).isEqualTo(1);
     }
@@ -888,6 +824,133 @@ public class StagedInstallTest {
         waitForIsReadyBroadcast(sessionId);
     }
 
+    /**
+     * Tests for staging and installing multiple staged sessions.
+     */
+
+    // Should fail to stage multiple sessions when check-point is not available
+    @Test
+    public void testFailStagingMultipleSessionsIfNoCheckPoint() throws Exception {
+        stageSingleApk(TestApp.A1).assertSuccessful();
+        StageSessionResult failedSessionResult = stageSingleApk(TestApp.B1);
+        assertThat(failedSessionResult.getErrorMessage()).contains(
+                "Cannot stage multiple sessions without checkpoint support");
+    }
+
+    @Test
+    public void testFailOverlappingMultipleStagedInstall_BothSinglePackage_Apk() throws Exception {
+        stageSingleApk(TestApp.A1).assertSuccessful();
+        StageSessionResult failedSessionResult = stageSingleApk(TestApp.A1);
+        assertThat(failedSessionResult.getErrorMessage()).contains(
+                "has been staged already by session");
+    }
+
+    @Test
+    public void testAllowNonOverlappingMultipleStagedInstall_MultiPackageSinglePackage_Apk()
+            throws Exception {
+        stageMultipleApks(TestApp.A1, TestApp.B1).assertSuccessful();
+        stageSingleApk(TestApp.C1).assertSuccessful();
+    }
+
+    @Test
+    public void testFailOverlappingMultipleStagedInstall_BothMultiPackage_Apk() throws Exception {
+        stageMultipleApks(TestApp.A1, TestApp.B1).assertSuccessful();
+        StageSessionResult failedSessionResult = stageMultipleApks(TestApp.A2, TestApp.C1);
+        assertThat(failedSessionResult.getErrorMessage()).contains(
+                "has been staged already by session");
+    }
+
+    // Should succeed in installing multiple staged sessions together
+    @Test
+    public void testMultipleStagedInstall_ApkOnly_Commit()
+            throws Exception {
+        int firstSessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
+        waitForIsReadyBroadcast(firstSessionId);
+        int secondSessionId = stageSingleApk(TestApp.B1).assertSuccessful().getSessionId();
+        waitForIsReadyBroadcast(secondSessionId);
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
+        assertThat(getInstalledVersion(TestApp.B)).isEqualTo(-1);
+        storeSessionIds(Arrays.asList(firstSessionId, secondSessionId));
+    }
+
+    @Test
+    public void testMultipleStagedInstall_ApkOnly_VerifyPostReboot()
+            throws Exception {
+        List<Integer> sessionIds = retrieveLastSessionIds();
+        for (int sessionId: sessionIds) {
+            assertSessionApplied(sessionId);
+        }
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(1);
+        assertThat(getInstalledVersion(TestApp.B)).isEqualTo(1);
+    }
+
+    // If apk installation fails in one staged session, then all staged session should fail.
+    @Test
+    public void testInstallMultipleStagedSession_PartialFail_ApkOnly_Commit()
+            throws Exception {
+        int firstSessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
+        waitForIsReadyBroadcast(firstSessionId);
+        int secondSessionId = stageSingleApk(TestApp.B1).assertSuccessful().getSessionId();
+        waitForIsReadyBroadcast(secondSessionId);
+
+        // Install TestApp.A2 so that after reboot TestApp.A1 fails to install as it is downgrade
+        Install.single(TestApp.A2).commit();
+
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(2);
+        assertThat(getInstalledVersion(TestApp.B)).isEqualTo(-1);
+        storeSessionIds(Arrays.asList(firstSessionId, secondSessionId));
+    }
+
+    @Test
+    public void testInstallMultipleStagedSession_PartialFail_ApkOnly_VerifyPostReboot()
+            throws Exception {
+        List<Integer> sessionIds = retrieveLastSessionIds();
+        for (int sessionId: sessionIds) {
+            assertSessionFailed(sessionId);
+        }
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(2);
+        assertThat(getInstalledVersion(TestApp.B)).isEqualTo(-1);
+    }
+
+    @Test
+    public void testSamegradeSystemApex_Commit() throws Exception {
+        final PackageInfo shim = InstrumentationRegistry.getInstrumentation().getContext()
+                .getPackageManager().getPackageInfo(SHIM_PACKAGE_NAME, PackageManager.MATCH_APEX);
+        assertThat(shim.getLongVersionCode()).isEqualTo(1);
+        assertThat(shim.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM).isEqualTo(
+                ApplicationInfo.FLAG_SYSTEM);
+        assertThat(shim.applicationInfo.flags & ApplicationInfo.FLAG_INSTALLED).isEqualTo(
+                ApplicationInfo.FLAG_INSTALLED);
+        int sessionId = stageDowngradeSingleApk(TestApp.Apex1).assertSuccessful().getSessionId();
+        waitForIsReadyBroadcast(sessionId);
+        storeSessionId(sessionId);
+    }
+
+    @Test
+    public void testSamegradeSystemApex_VerifyPostReboot() throws Exception {
+        int sessionId = retrieveLastSessionId();
+        assertSessionApplied(sessionId);
+        final PackageInfo shim = InstrumentationRegistry.getInstrumentation().getContext()
+                .getPackageManager().getPackageInfo(SHIM_PACKAGE_NAME, PackageManager.MATCH_APEX);
+        assertThat(shim.getLongVersionCode()).isEqualTo(1);
+        // Check that APEX on /data wins.
+        assertThat(shim.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM).isEqualTo(0);
+        assertThat(shim.applicationInfo.flags & ApplicationInfo.FLAG_INSTALLED).isEqualTo(
+                ApplicationInfo.FLAG_INSTALLED);
+    }
+
+    @Test
+    public void testInstallApkChangingFingerprint() throws Exception {
+        int sessionId = Install.single(TestApp.A1).setStaged().commit();
+        storeSessionId(sessionId);
+    }
+
+    @Test
+    public void testInstallApkChangingFingerprint_VerifyAborted() throws Exception {
+        int sessionId = retrieveLastSessionId();
+        assertSessionFailed(sessionId);
+    }
+
     private static long getInstalledVersion(String packageName) {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         PackageManager pm = context.getPackageManager();
@@ -1129,5 +1192,12 @@ public class StagedInstallTest {
                 .that(info).isNotNull();
         assertThat(info.getSessionId()).isEqualTo(sessionId);
         return info;
+    }
+
+    @Test
+    public void isCheckpointSupported() {
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        StorageManager sm = (StorageManager) context.getSystemService(Context.STORAGE_SERVICE);
+        assertThat(sm.isCheckpointSupported()).isTrue();
     }
 }

@@ -94,33 +94,6 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void testFailOverlappingMultipleStagedInstall_BothSinglePackage_Apk() throws Exception {
-        runPhase("testFailOverlappingMultipleStagedInstall_BothSinglePackage_Apk");
-    }
-
-    @Test
-    public void testAllowNonOverlappingMultipleStagedInstall_MultiPackageSinglePackage_Apk()
-            throws Exception {
-        runPhase("testAllowNonOverlappingMultipleStagedInstall_MultiPackageSinglePackage_Apk");
-    }
-
-    @Test
-    public void testFailOverlappingMultipleStagedInstall_BothMultiPackage_Apk() throws Exception {
-        runPhase("testFailOverlappingMultipleStagedInstall_BothMultiPackage_Apk");
-    }
-
-    /**
-     * Tests for installing multiple staged sessions at the same time
-     */
-    @Test
-    @LargeTest
-    public void testMultipleStagedInstall_ApkOnly() throws Exception {
-        runPhase("testMultipleStagedInstall_ApkOnly_Commit");
-        getDevice().reboot();
-        runPhase("testMultipleStagedInstall_ApkOnly_VerifyPostReboot");
-    }
-
-    @Test
     @LargeTest
     public void testAbandonStagedApkBeforeReboot() throws Exception {
         runPhase("testAbandonStagedApkBeforeReboot_CommitAndAbandon");
@@ -145,6 +118,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
 
     @Test
     public void testGetActiveStagedSessions() throws Exception {
+        assumeTrue(isCheckpointSupported());
         runPhase("testGetActiveStagedSessions");
     }
 
@@ -155,6 +129,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
 
     @Test
     public void testGetActiveStagedSessions_MultiApkSession() throws Exception {
+        assumeTrue(isCheckpointSupported());
         runPhase("testGetActiveStagedSessions_MultiApkSession");
     }
 
@@ -432,6 +407,79 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testAfterRotationNewKeyCanUpdateFurtherWithoutLineage");
     }
 
+    /**
+     * Tests for staging and installing multiple staged sessions.
+     */
+
+    // Should fail to stage multiple sessions when check-point is not available
+    @Test
+    public void testFailStagingMultipleSessionsIfNoCheckPoint() throws Exception {
+        assumeFalse(isCheckpointSupported());
+        runPhase("testFailStagingMultipleSessionsIfNoCheckPoint");
+    }
+
+    @Test
+    public void testFailOverlappingMultipleStagedInstall_BothSinglePackage_Apk() throws Exception {
+        runPhase("testFailOverlappingMultipleStagedInstall_BothSinglePackage_Apk");
+    }
+
+    @Test
+    public void testAllowNonOverlappingMultipleStagedInstall_MultiPackageSinglePackage_Apk()
+            throws Exception {
+        assumeTrue(isCheckpointSupported());
+        runPhase("testAllowNonOverlappingMultipleStagedInstall_MultiPackageSinglePackage_Apk");
+    }
+
+    @Test
+    public void testFailOverlappingMultipleStagedInstall_BothMultiPackage_Apk() throws Exception {
+        assumeTrue(isCheckpointSupported());
+        runPhase("testFailOverlappingMultipleStagedInstall_BothMultiPackage_Apk");
+    }
+
+    // Test for installing multiple staged sessions at the same time
+    @Test
+    @LargeTest
+    public void testMultipleStagedInstall_ApkOnly() throws Exception {
+        runPhase("testMultipleStagedInstall_ApkOnly_Commit");
+        getDevice().reboot();
+        runPhase("testMultipleStagedInstall_ApkOnly_VerifyPostReboot");
+    }
+
+    // If apk installation fails in one staged session, then all staged session should fail.
+    @Test
+    @LargeTest
+    public void testInstallMultipleStagedSession_PartialFail_ApkOnly() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
+        runPhase("testInstallMultipleStagedSession_PartialFail_ApkOnly_Commit");
+        getDevice().reboot();
+        runPhase("testInstallMultipleStagedSession_PartialFail_ApkOnly_VerifyPostReboot");
+    }
+
+    @Test
+    @LargeTest
+    public void testSamegradeSystemApex() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
+        runPhase("testSamegradeSystemApex_Commit");
+        getDevice().reboot();
+        runPhase("testSamegradeSystemApex_VerifyPostReboot");
+    }
+
+    @Test
+    public void testInstallApkChangingFingerprint() throws Exception {
+        assumeThat(getDevice().getBuildFlavor(), not(endsWith("-user")));
+
+        try {
+            getDevice().executeShellCommand("setprop persist.pm.mock-upgrade true");
+            runPhase("testInstallApkChangingFingerprint");
+            getDevice().reboot();
+            runPhase("testInstallApkChangingFingerprint_VerifyAborted");
+        } finally {
+            getDevice().executeShellCommand("setprop persist.pm.mock-upgrade false");
+        }
+    }
+
     private boolean isUpdatingApexSupported() throws Exception {
         final String updatable = getDevice().getProperty("ro.apex.updatable");
         return updatable != null && updatable.equals("true");
@@ -501,6 +549,14 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
                 return "Failed to get staged sessions";
             }
         }
+    }
 
+    private boolean isCheckpointSupported() throws Exception {
+        try {
+            runPhase("isCheckpointSupported");
+            return true;
+        } catch (AssertionError ignore) {
+            return false;
+        }
     }
 }
