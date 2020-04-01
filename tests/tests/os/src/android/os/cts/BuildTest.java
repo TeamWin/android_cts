@@ -223,6 +223,8 @@ public class BuildTest extends TestCase {
         Pattern.compile("^([0-9A-Za-z._-]+)$");
     private static final Pattern SERIAL_NUMBER_PATTERN =
         Pattern.compile("^([0-9A-Za-z]{6,20})$");
+    private static final Pattern SKU_PATTERN =
+        Pattern.compile("^([0-9A-Za-z.,_-]+)$");
     private static final Pattern TAGS_PATTERN =
         Pattern.compile("^([0-9A-Za-z.,_-]+)$");
     private static final Pattern TYPE_PATTERN =
@@ -253,6 +255,8 @@ public class BuildTest extends TestCase {
         assertTrue(PRODUCT_PATTERN.matcher(Build.PRODUCT).matches());
 
         assertTrue(SERIAL_NUMBER_PATTERN.matcher(Build.SERIAL).matches());
+
+        assertTrue(SKU_PATTERN.matcher(Build.SKU).matches());
 
         assertTrue(TAGS_PATTERN.matcher(Build.TAGS).matches());
 
