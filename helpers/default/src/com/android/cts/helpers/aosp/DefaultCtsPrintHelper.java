@@ -18,6 +18,7 @@ package com.android.cts.helpers.aosp;
 
 import android.app.Instrumentation;
 import android.app.UiAutomation;
+import android.os.RemoteException;
 
 import android.platform.helpers.exceptions.TestHelperException;
 import android.support.test.uiautomator.By;
@@ -64,6 +65,30 @@ public class DefaultCtsPrintHelper implements ICtsPrintHelper {
     }
 
     @Override
+    public void setUp() throws TestHelperException {
+        try {
+            // Prevent rotation
+            mDevice.freezeRotation();
+            while (!mDevice.isNaturalOrientation()) {
+                mDevice.setOrientationNatural();
+                mDevice.waitForIdle();
+            }
+        } catch (RemoteException e) {
+            throw new TestHelperException("Failed to freeze device rotation", e);
+        }
+    }
+
+    @Override
+    public void tearDown() throws TestHelperException {
+        try {
+            // Allow rotation
+            mDevice.unfreezeRotation();
+        } catch (RemoteException e) {
+            throw new TestHelperException("Failed to unfreeze device rotation", e);
+        }
+    }
+
+    @Override
     public void submitPrintJob() throws TestHelperException {
         Log.d(LOG_TAG, "Clicking print button");
 
@@ -79,6 +104,40 @@ public class DefaultCtsPrintHelper implements ICtsPrintHelper {
         }
 
         printButton.click();
+    }
+
+    @Override
+    public void retryPrintJob() throws TestHelperException {
+        try {
+            UiObject retryButton = mDevice.findObject(new UiSelector().resourceId(
+                    "com.android.printspooler:id/action_button"));
+            retryButton.click();
+        } catch (UiObjectNotFoundException e) {
+            dumpWindowHierarchy();
+            throw new TestHelperException("Retry button not found", e);
+        }
+    }
+
+    @Override
+    public boolean canSubmitJob() {
+        return mDevice.hasObject(By.res("com.android.printspooler:id/print_button"));
+    }
+
+    @Override
+    public void answerPrintServicesWarning(boolean confirm) throws TestHelperException {
+        try {
+            mDevice.waitForIdle();
+            UiObject button;
+            if (confirm) {
+                button = mDevice.findObject(new UiSelector().resourceId("android:id/button1"));
+            } else {
+                button = mDevice.findObject(new UiSelector().resourceId("android:id/button2"));
+            }
+            button.click();
+        } catch (UiObjectNotFoundException e) {
+            dumpWindowHierarchy();
+            throw new TestHelperException("Unable to find print service dialog button", e);
+        }
     }
 
     @Override
@@ -210,6 +269,89 @@ public class DefaultCtsPrintHelper implements ICtsPrintHelper {
         } catch (UiObjectNotFoundException e) {
             dumpWindowHierarchy();
             throw new TestHelperException("Unable to get number of copies", e);
+        }
+    }
+
+    @Override
+    public void setPageRange(String pages, int expectedPages) throws TestHelperException {
+        try {
+            mDevice.waitForIdle();
+            UiObject pagesSpinner = mDevice.findObject(new UiSelector().resourceId(
+                    "com.android.printspooler:id/range_options_spinner"));
+            pagesSpinner.click();
+
+            mDevice.waitForIdle();
+            UiObject rangeOption = mDevice.findObject(new UiSelector().textContains("Range of "
+                    + expectedPages));
+            rangeOption.click();
+
+            mDevice.waitForIdle();
+            UiObject pagesEditText = mDevice.findObject(new UiSelector().resourceId(
+                    "com.android.printspooler:id/page_range_edittext"));
+            pagesEditText.setText(pages);
+
+            mDevice.waitForIdle();
+            // Hide the keyboard.
+            mDevice.pressBack();
+        } catch (UiObjectNotFoundException e) {
+            dumpWindowHierarchy();
+            throw new TestHelperException("Unable to set page range", e);
+        }
+    }
+
+    @Override
+    public String getPageRange(int docPages) throws TestHelperException {
+        final String fullRange = "All " + docPages;
+
+        try {
+            if (mDevice.hasObject(By.text(fullRange))) {
+                return fullRange;
+            }
+
+            UiObject pagesEditText = mDevice.findObject(new UiSelector().resourceId(
+                    "com.android.printspooler:id/page_range_edittext"));
+
+            return pagesEditText.getText();
+        } catch (UiObjectNotFoundException e) {
+            dumpWindowHierarchy();
+            throw new TestHelperException("Unable to get page range", e);
+        }
+    }
+
+    @Override
+    public String getStatusMessage() throws TestHelperException {
+        UiObject2 message = mDevice.wait(Until.findObject(
+                By.res("com.android.printspooler:id/message")), OPERATION_TIMEOUT_MILLIS);
+
+        if (message == null) {
+            dumpWindowHierarchy();
+            throw new TestHelperException("Cannot find status message");
+        }
+
+        return message.getText();
+    }
+
+    @Override
+    public void openPrintOptions() throws TestHelperException {
+        try {
+            UiObject expandHandle = mDevice.findObject(new UiSelector().resourceId(
+                    "com.android.printspooler:id/expand_collapse_handle"));
+            expandHandle.click();
+        } catch (UiObjectNotFoundException e) {
+            dumpWindowHierarchy();
+            throw new TestHelperException("Unable to find print options handle", e);
+        }
+    }
+
+    @Override
+    public void openCustomPrintOptions() throws TestHelperException {
+        try {
+            UiObject expandHandle = mDevice.findObject(new UiSelector().resourceId(
+                    "com.android.printspooler:id/more_options_button"));
+            expandHandle.click();
+        } catch (UiObjectNotFoundException e) {
+            dumpWindowHierarchy();
+            throw new TestHelperException("Unable to find print options handle", e);
         }
     }
 }
